@@ -1,0 +1,26 @@
+stage: "S2"
+uc_id: "6078c4ed"
+manifest_sha256: "d8d487ee2db074a5c36469b46da46bc9039fb050a51d40b4d57dff74c700fae2"
+manifest_projection: v2
+result: pass
+red_baseline: pass
+scaffold:
+  tiers:
+    - "tier-facade"
+  uc_feature: "features/uc/6078c4ed.feature"
+  tier_feature: "facade/features/6078c4ed.feature"
+  tdd_test: "facade/test/6078c4ed_select_slot.bats"
+  atdd_scenarios:
+    - "SPEC-001-01-1"
+    - "SPEC-001-02-1"
+    - "SPEC-001-03-1"
+    - "SPEC-009-01-1"
+    - "SPEC-009-02-1"
+    - "SPEC-009-03-1"
+red_baseline_checks:
+  tdd: {result: pass, exit_code: 1, reason: "未実装: relaygate concurrent-run select-slot"}
+  tier_bdd: {result: pass, exit_code: 1, reason: "未実装: 6078c4ed tier-facade BDD step"}
+  uc_bdd: {result: pass, exit_code: 1, reason: "未実装: 6078c4ed UC BDD step"}
+  atdd: {result: pass, exit_code: 1, reason: "未実装: 6078c4ed ATDD step", scenarios: 6}
+completed_at: "2026-08-17T21:44:57+09:00"
+completed_by: "dist-impl-implement@0.8.0"

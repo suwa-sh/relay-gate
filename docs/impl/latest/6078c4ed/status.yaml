@@ -10,7 +10,7 @@ resolved_models:
   verifier: "gpt-5.6-sol"
 stages:
   S1_uc_init: {status: done}
-  S2_test_scaffold: {status: pending}
+  S2_test_scaffold: {status: done, red_baseline: pass}
   S3_contracts: {status: pending}
   S4_tier_impl:
     tier-facade: {status: pending, attempt: 1}
@@ -20,4 +20,4 @@ stages:
   S7_atdd: {status: pending}
   S8_feedback: {status: pending}
   S9_review: {status: pending}
-updated_at: "2026-08-17T21:40:58+09:00"
+updated_at: "2026-08-17T21:46:07+09:00"
