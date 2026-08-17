@@ -1,0 +1,86 @@
+schema_version: "1.0"
+uc_id: "6078c4ed"
+tier: "tier-facade"
+attempt: 2
+verified_at: "2026-08-17T22:32:46+09:00"
+gate_reexec: {format: pass, lint: pass, tdd: pass, bdd_tier: pass}
+viewpoints_checked:
+  spec_conformance: {status: done, note: "CLI、データ操作、ビジネスルール、feature転写を突合"}
+  readability_maintainability: {status: done}
+  security: {status: done, note: "入力型、SSH非対話性、SQL値を防御的に確認"}
+  performance: {status: done, note: "CLI全体の10秒deadlineを確認"}
+  operability: {status: done}
+  fault_tolerance: {status: done}
+  refactoring: {status: done}
+findings:
+  - id: "F2-001"
+    viewpoint: spec_conformance
+    severity: blocker
+    target: "facade/bin/relaygate:execution spec persistence and launch_slot"
+    claim: "execution-spec.jsonを確定保存せず、runnerへrun_idまたはexecution-spec参照を渡していない。"
+    evidence: "tier仕様はexecution-spec.json保存を明記するが、実装はDB INSERTのみ。SSHへslot/role/rapid mode/script/argsだけを渡し、run_idを伝播しない。"
+    suggested_fix: "execution-spec.jsonを一時ファイルから原子的renameで保存し、run_idと参照pathをremote起動環境へ渡す。"
+  - id: "F2-002"
+    viewpoint: performance
+    severity: blocker
+    target: "facade/bin/relaygate:global response deadline"
+    claim: "9秒timeoutがSSHごとであり、2 slot累積でCLI全体10秒を超える。"
+    evidence: "blueで最大9秒待った後greenでも最大9秒待て、DB/jq等もdeadline外。既存testは1 slotのみhang。"
+    suggested_fix: "CLI開始から単一deadlineを計算し各処理へ残余時間を渡し、2 slot累積経路を実時間testする。"
+  - id: "F2-003"
+    viewpoint: fault_tolerance
+    severity: major
+    target: "facade/bin/relaygate:database writes"
+    claim: "execution_specsとrunner_resultsの事前INSERTおよび失敗補償が別Txで、DB障害時に部分状態を残す。"
+    evidence: "各SQLが独立sqlite3 process。後段INSERT/補償UPDATE失敗時に前段状態が残る。"
+    suggested_fix: "関連事前INSERTを単一Txにし、状態遷移更新の失敗を再試行可能に記録する。"
+  - id: "F2-004"
+    viewpoint: fault_tolerance
+    severity: major
+    target: "facade/bin/relaygate:timeout and partial launch state"
+    claim: "timeoutをFAILEDと断定し、background成功/失敗の記録が非対称で部分起動をDBから識別できない。"
+    evidence: "SSH切断後もremote processが動作し得る。background成功行はなく失敗時だけFAILED行を作る。"
+    suggested_fix: "remote handshakeと起動試行状態の契約を定義し、各slotを一貫して記録する。"
+  - id: "F2-005"
+    viewpoint: security
+    severity: major
+    target: "facade/bin/relaygate:resolve_job_map"
+    claim: "必須string項目とcredential_refの型を検証しない。"
+    evidence: "host、exec_user、script_path、work_dir、impl_version、job_map_versionはjq -r後の非空のみでobject等も文字列化される。"
+    suggested_fix: "ジョブマップをschema相当で検証し、必須非空string・nullable型・整数上限を確認する。"
+  - id: "F2-006"
+    viewpoint: spec_conformance
+    severity: major
+    target: "facade/bin/relaygate:resolve_sqlite_path"
+    claim: "仕様上のRDB接続文字列をSQLite限定IFへ狭めている。"
+    evidence: "sqlite://以外を拒否しsqlite3 CLIへ固定するが、tier仕様/契約はSQLite限定を宣言しない。"
+    suggested_fix: "正式RDB gateway契約へ合わせるか、SQLite限定を仕様feedbackにする。"
+  - id: "F2-007"
+    viewpoint: security
+    severity: major
+    target: "facade/bin/relaygate:launch_slot"
+    claim: "SSHが標準入力なし・非対話実行を保証しない。"
+    evidence: "-n、BatchMode=yesがなくhost key/password確認を読み得る。host/userのoption-like値も未検証。"
+    suggested_fix: "ssh -n -o BatchMode=yesを使い、host/userを厳格検証する。"
+  - id: "F2-008"
+    viewpoint: refactoring
+    severity: major
+    target: "impl-config lint and facade tests"
+    claim: "公式lintとtestが主要契約欠陥を検出できない。"
+    evidence: "公式lintはentrypointを除外。testはexecution-spec、run_id伝播、2-slot deadline、途中DB失敗、stdin非対話を未検証。"
+    suggested_fix: "lint設定をfeedback化し、契約準拠fixtureと障害注入testを追加する。"
+  - id: "F2-009"
+    viewpoint: operability
+    severity: minor
+    target: "facade/bin/relaygate:error classification"
+    claim: "入力/RDBエラー分類を潰しており運用調査性が低い。"
+    evidence: "JSON破損・型違反等をjob未検出へ集約し、sqlite詳細も破棄する。"
+    suggested_fix: "秘密を出さずboundary、field、category、run_idを返す。"
+  - id: "F2-010"
+    viewpoint: readability_maintainability
+    severity: minor
+    target: "facade/bin/relaygate:nullable serialization"
+    claim: "fixed_args/additional_argsの不在を[]として保存しNULLと区別しない。"
+    evidence: "契約ではnullableだが、不在と空配列が同じJSONとなる。"
+    suggested_fix: "保存形式を仕様化し、不在はNULL、配列は決定論的JSONにする。"
+summary: {blocker: 2, major: 6, minor: 2}

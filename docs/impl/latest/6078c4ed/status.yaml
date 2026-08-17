@@ -15,9 +15,9 @@ stages:
   S4_tier_impl:
     tier-facade: {status: done, attempt: 2, gates: {format: pass, lint: pass, tdd: pass, bdd_tier: pass}}
   S5_verify:
-    tier-facade: {status: pending, attempt: 2}
+    tier-facade: {status: done, attempt: 2, open_blockers: 2}
   S6_uc_bdd: {status: pending}
   S7_atdd: {status: pending}
   S8_feedback: {status: pending}
   S9_review: {status: pending}
-updated_at: "2026-08-17T22:26:15+09:00"
+updated_at: "2026-08-17T22:32:46+09:00"
