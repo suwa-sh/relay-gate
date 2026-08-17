@@ -1,0 +1,122 @@
+#!/usr/bin/env bash
+# relaygate は facade の CLI エントリポイントを提供する。
+set -o errexit -o nounset -o pipefail
+readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=../../packages/contracts/relay-gate-db/schema-constants.sh
+source "$SCRIPT_DIR/../../packages/contracts/relay-gate-db/schema-constants.sh"
+
+validation_error() {
+	printf '%s\n' "$1" >&2
+	exit 2
+}
+business_error() {
+	printf '%s\n' "$1" >&2
+	exit 1
+}
+
+# sql_literal は SQLite CLI 用に文字列リテラルを安全に組み立てる。
+sql_literal() {
+	local value="$1"
+	value="${value//\'/\'\'}"
+	printf "'%s'" "$value"
+}
+
+# parse_select_slot_request は select-slot の CLI 引数を request DTO に変換する。
+parse_select_slot_request() {
+	[[ $# -ge 2 && "$1" == "--job-id" && -n "$2" ]] || validation_error "JOB_ID is required"
+	job_id="$2"
+	shift 2
+	additional_args=()
+	if [[ $# -gt 0 ]]; then
+		[[ "$1" == "--" ]] || validation_error "unexpected argument: $1"
+		shift
+		additional_args=("$@")
+	fi
+}
+
+# validate_modes は feature flag の列挙値と排他制約を検証する。
+validate_modes() {
+	for pair in "BLUE_MODE:$blue_mode" "GREEN_MODE:$green_mode"; do
+		case "${pair#*:}" in off | background | foreground) ;; *) validation_error "${pair%%:*} must be off, background, or foreground" ;; esac
+	done
+	case "$rapid_crosscheck_mode" in on | off) ;; *) validation_error "RAPID_CROSSCHECK_MODE must be on or off" ;; esac
+	if [[ "$blue_mode" == foreground && "$green_mode" == foreground ]]; then
+		validation_error "BLUE_MODEとGREEN_MODEを同時にforegroundにすることはできません"
+	fi
+}
+
+# resolve_job_map はジョブマップの対象ジョブを解決する。
+resolve_job_map() {
+	[[ -n "${RELAYGATE_JOB_MAP_PATH:-}" && -r "${RELAYGATE_JOB_MAP_PATH:-}" ]] || business_error "JOB_IDに対応するジョブマップが見つかりません: $job_id"
+	job_map_entry="$(jq -cer --arg id "$job_id" '.jobs[$id] // empty' "$RELAYGATE_JOB_MAP_PATH" 2>/dev/null || true)"
+	[[ -n "$job_map_entry" ]] || business_error "JOB_IDに対応するジョブマップが見つかりません: $job_id"
+	job_map_version="$(jq -er '.version' "$RELAYGATE_JOB_MAP_PATH" 2>/dev/null || true)"
+	host="$(jq -er '.host' <<<"$job_map_entry" 2>/dev/null || true)"
+	exec_user="$(jq -er '.exec_user' <<<"$job_map_entry" 2>/dev/null || true)"
+	script_path="$(jq -er '.script_path' <<<"$job_map_entry" 2>/dev/null || true)"
+	work_dir="$(jq -er '.work_dir' <<<"$job_map_entry" 2>/dev/null || true)"
+	impl_version="$(jq -er '.impl_version' <<<"$job_map_entry" 2>/dev/null || true)"
+	hang_detect_limit_minutes="$(jq -er '.hang_detect_limit_minutes' <<<"$job_map_entry" 2>/dev/null || true)"
+	credential_ref="$(jq -cer '.credential_ref // empty' <<<"$job_map_entry" 2>/dev/null || true)"
+	fixed_args="$(jq -c '.fixed_args // []' <<<"$job_map_entry" 2>/dev/null || true)"
+	[[ -n "$job_map_version" && -n "$host" && -n "$exec_user" && -n "$script_path" && -n "$work_dir" && -n "$impl_version" && -n "$hang_detect_limit_minutes" && -n "$fixed_args" ]] || business_error "JOB_IDに対応するジョブマップが見つかりません: $job_id"
+}
+
+# resolve_sqlite_path は限定的な SQLite DSN を接続先ファイルへ変換する。
+resolve_sqlite_path() { case "${RELAYGATE_RDB_DSN:-}" in sqlite://*) sqlite_path="${RELAYGATE_RDB_DSN#sqlite://}" ;; *) business_error "RDB connection failed" ;; esac }
+
+# persist_execution_spec は確定済み execution-spec を一度だけ記録する。
+persist_execution_spec() {
+	local columns values additional_args_json
+	additional_args_json="$(jq -cn '$ARGS.positional' --args -- "${additional_args[@]}")"
+	run_id="$(uuidgen | tr '[:upper:]' '[:lower:]')"
+	columns=$(
+		IFS=,
+		printf '%s' "${COLS_EXECUTION_SPECS[*]}"
+	)
+	values="$(sql_literal "$run_id"),NULL,$(sql_literal "$job_id"),$(sql_literal "$host"),$(sql_literal "$exec_user"),$(sql_literal "$script_path"),$(sql_literal "$work_dir"),$(sql_literal "$fixed_args"),$(sql_literal "$additional_args_json"),$(sql_literal "$job_map_version"),$(sql_literal "$impl_version"),$hang_detect_limit_minutes,$(sql_literal "$credential_ref")"
+	sqlite3 "$sqlite_path" "INSERT INTO $TBL_EXECUTION_SPECS ($columns) VALUES ($values);" >/dev/null 2>&1 || business_error "RDB connection failed"
+}
+
+# persist_foreground_result は foreground slot の RUNNING レコードを起動前に記録する。
+persist_foreground_result() {
+	local slot="$1" columns
+	columns=$(
+		IFS=,
+		printf '%s' "${COLS_RUNNER_RESULTS[*]}"
+	)
+	sqlite3 "$sqlite_path" "INSERT INTO $TBL_RUNNER_RESULTS ($columns) VALUES ($(sql_literal "$run_id"),$(sql_literal "$slot"),'foreground',$(sql_literal "$(date -u '+%Y-%m-%dT%H:%M:%SZ')"),NULL,NULL,NULL,'RUNNING');" >/dev/null 2>&1 || business_error "RDB connection failed"
+}
+
+# launch_slot は SSH を介して off 以外の slot を指定された役割で起動する。
+launch_slot() {
+	local slot="$1" role="$2" remote_command argument
+	[[ "$role" != off ]] || return 0
+	[[ "$role" != foreground ]] || persist_foreground_result "$slot"
+	printf -v remote_command 'cd %q && RELAYGATE_SLOT=%q RELAYGATE_ROLE=%q RELAYGATE_RAPID_CROSSCHECK_MODE=%q %q' "$work_dir" "$slot" "$role" "$rapid_crosscheck_mode" "$script_path"
+	while IFS= read -r argument; do printf -v remote_command '%s %q' "$remote_command" "$argument"; done < <(jq -r '.[]' <<<"$fixed_args")
+	for argument in "${additional_args[@]}"; do printf -v remote_command '%s %q' "$remote_command" "$argument"; done
+	ssh "$exec_user@$host" "$remote_command" >/dev/null || business_error "Failed to start $slot slot"
+}
+
+# select_and_start_slot は feature flag 判定、記録、起動を順に実行する。
+select_and_start_slot() {
+	blue_mode="$1"
+	green_mode="$2"
+	rapid_crosscheck_mode="$3"
+	validate_modes
+	resolve_job_map
+	resolve_sqlite_path
+	persist_execution_spec
+	launch_slot blue "$blue_mode"
+	launch_slot green "$green_mode"
+	printf 'blue: %s\ngreen: %s\nrun_id: %s\n' "$blue_mode" "$green_mode" "$run_id"
+}
+
+main() {
+	[[ $# -ge 2 && "$1" == concurrent-run && "$2" == select-slot ]] || validation_error "usage: relaygate concurrent-run select-slot --job-id <JOB_ID> [-- <additional args...>]"
+	shift 2
+	parse_select_slot_request "$@"
+	select_and_start_slot "${BLUE_MODE:-}" "${GREEN_MODE:-}" "${RAPID_CROSSCHECK_MODE:-}"
+}
+main "$@"

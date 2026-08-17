@@ -1,0 +1,28 @@
+schema_version: "1.0"
+uc_id: "6078c4ed"
+stage: "S4"
+tier: "tier-facade"
+attempt: 1
+result: pass
+completed_at: "2026-08-17T13:08:00Z"
+completed_by: "dist-impl-implement@0.8.0"
+manifest_projection: v2
+manifest_sha256: "74580804fb12e6b9536f1e18695b4383963a788b12e58dcb7ee4d49f5f2c2256"
+gates:
+  format: pass
+  lint: pass
+  tdd: pass
+  bdd_tier: pass
+gate_commands:
+  format:
+    command: "shfmt -d facade"
+    exit_code: 0
+  lint:
+    command: "find facade -name '*.sh' -print0 | xargs -0 -r shellcheck -x"
+    exit_code: 0
+  tdd:
+    command: "bats facade/test"
+    exit_code: 0
+  bdd_tier:
+    command: "npx cucumber-js --config cucumber.cjs --profile tier-facade"
+    exit_code: 0
