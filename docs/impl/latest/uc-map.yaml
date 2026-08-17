@@ -1,15 +1,13 @@
+# 並び順 = 実施順(依存関係を考慮。dist-impl-run はこの順で UC に着手する):
+#   ① 並行稼働実行(execution-spec / Runner Result を生む中核)
+#   ② 速報クロスチェック(① の runner 完了通知に依存)
+#   ③ 確報クロスチェック(② で確立した queue/lease パターンを再利用)
+#   ④ ハング監視(① の成果物と ②③ の依頼状態を走査)
+#   ⑤ 中止系(① の background 実行・②③ の比較依頼が前提。依頼 → ABORTED 遷移の順)
+#   ⑥ background側リラン(⑤ の ABORTED と ① の execution-spec.json に依存)
 schema_version: '1.0'
 id_length: 8
 use_cases:
-- uc_id: ecfa1711
-  business: 並行稼働実行業務
-  buc: 並行稼働実行フロー
-  uc: 並行稼働実行結果を確認する
-  path: docs/specs/latest/並行稼働実行業務/並行稼働実行フロー/並行稼働実行結果を確認する
-  tiers:
-  - tier-facade
-  atdd_scenarios: []
-  atdd_confirmed: false
 - uc_id: 6078c4ed
   business: 並行稼働実行業務
   buc: 並行稼働実行フロー
@@ -38,13 +36,13 @@ use_cases:
   - tier-facade
   atdd_scenarios: []
   atdd_confirmed: false
-- uc_id: 590a4da4
-  business: クロスチェック業務
-  buc: 速報クロスチェックフロー
-  uc: 速報クロスチェック結果を確認する
-  path: docs/specs/latest/クロスチェック業務/速報クロスチェックフロー/速報クロスチェック結果を確認する
+- uc_id: ecfa1711
+  business: 並行稼働実行業務
+  buc: 並行稼働実行フロー
+  uc: 並行稼働実行結果を確認する
+  path: docs/specs/latest/並行稼働実行業務/並行稼働実行フロー/並行稼働実行結果を確認する
   tiers:
-  - tier-worker
+  - tier-facade
   atdd_scenarios: []
   atdd_confirmed: false
 - uc_id: bf264d12
@@ -65,11 +63,11 @@ use_cases:
   - tier-worker
   atdd_scenarios: []
   atdd_confirmed: false
-- uc_id: 4145bcb9
+- uc_id: 590a4da4
   business: クロスチェック業務
-  buc: 確報クロスチェックフロー
-  uc: 確報クロスチェック結果を確認する
-  path: docs/specs/latest/クロスチェック業務/確報クロスチェックフロー/確報クロスチェック結果を確認する
+  buc: 速報クロスチェックフロー
+  uc: 速報クロスチェック結果を確認する
+  path: docs/specs/latest/クロスチェック業務/速報クロスチェックフロー/速報クロスチェック結果を確認する
   tiers:
   - tier-worker
   atdd_scenarios: []
@@ -92,11 +90,11 @@ use_cases:
   - tier-worker
   atdd_scenarios: []
   atdd_confirmed: false
-- uc_id: f2b8611a
-  business: 実行監視業務
-  buc: ハング監視フロー
-  uc: ハング疑い・異常の通知を確認する
-  path: docs/specs/latest/実行監視業務/ハング監視フロー/ハング疑い・異常の通知を確認する
+- uc_id: 4145bcb9
+  business: クロスチェック業務
+  buc: 確報クロスチェックフロー
+  uc: 確報クロスチェック結果を確認する
+  path: docs/specs/latest/クロスチェック業務/確報クロスチェックフロー/確報クロスチェック結果を確認する
   tiers:
   - tier-worker
   atdd_scenarios: []
@@ -115,6 +113,15 @@ use_cases:
   buc: ハング監視フロー
   uc: ハング疑い・異常を運用者へ通知する
   path: docs/specs/latest/実行監視業務/ハング監視フロー/ハング疑い・異常を運用者へ通知する
+  tiers:
+  - tier-worker
+  atdd_scenarios: []
+  atdd_confirmed: false
+- uc_id: f2b8611a
+  business: 実行監視業務
+  buc: ハング監視フロー
+  uc: ハング疑い・異常の通知を確認する
+  path: docs/specs/latest/実行監視業務/ハング監視フロー/ハング疑い・異常の通知を確認する
   tiers:
   - tier-worker
   atdd_scenarios: []
