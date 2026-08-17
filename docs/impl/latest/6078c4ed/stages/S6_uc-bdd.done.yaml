@@ -1,0 +1,10 @@
+schema_version: "1.0"
+stage: "S6"
+uc_id: "6078c4ed"
+result: "pass"
+integration_command: "npx cucumber-js --config cucumber.cjs --profile uc"
+scenarios: 5
+manifest_sha256: "74580804fb12e6b9536f1e18695b4383963a788b12e58dcb7ee4d49f5f2c2256"
+manifest_projection: "v2"
+completed_at: "2026-08-17T14:39:41Z"
+completed_by: "dist-impl-implement@0.8.0"
