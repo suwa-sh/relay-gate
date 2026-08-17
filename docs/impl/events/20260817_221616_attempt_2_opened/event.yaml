@@ -1,0 +1,13 @@
+event_id: "20260817_221616_attempt_2_opened"
+type: attempt_opened
+uc_id: "6078c4ed"
+stage: "S4"
+attempt: 2
+payload:
+  previous_attempt: 1
+  reason: "S5 blocker findings"
+  blocker_tiers: ["tier-facade"]
+  findings:
+    tier-facade:
+      verify: "docs/impl/latest/6078c4ed/stages/attempt-1/S5_verify.tier-facade.findings.yaml"
+created_at: "2026-08-17T22:16:16+09:00"
