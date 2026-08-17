@@ -11,6 +11,8 @@ A strangler-facade execution gateway for running a legacy (blue) and a new (gree
 
 ## Overview
 
+![RelayGate — strangler-facade parallel run gateway](docs/assets/ogp.png)
+
 Migrating a batch system to a new implementation is risky when you cannot prove the new one behaves identically. RelayGate lets a job scheduler keep calling one job definition, while a feature-flagged facade launches both the current (blue) and the new (green) implementation in parallel. Only the foreground result is returned to the scheduler; per-job rapid cross-checks and daily full-volume final cross-checks compare the outputs of both implementations so that operators can decide the cutover based on evidence.
 
 RelayGate targets air-gapped, on-premises Linux environments. It is built around shell scripts, SSH, and an RDB used as both a job queue and a management database — no internet access or cloud services required.
