@@ -3,8 +3,10 @@
 set -o errexit -o nounset -o pipefail
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly SCRIPT_DIR="$script_dir"
-readonly MAX_SSH_TIMEOUT_SECONDS=9
+readonly MAX_SSH_TIMEOUT_SECONDS=8
+readonly CLI_DEADLINE_SECONDS=8
 # shellcheck source=../../packages/contracts/relay-gate-db/schema-constants.sh
+# shellcheck disable=SC1091
 source "$SCRIPT_DIR/../../packages/contracts/relay-gate-db/schema-constants.sh"
 
 validation_error() {
@@ -14,6 +16,11 @@ validation_error() {
 business_error() {
 	printf '%s\n' "$1" >&2
 	exit 1
+}
+
+# job_map_error はジョブマップ境界の診断情報を秘密値なしで返す。
+job_map_error() {
+	business_error "JOB_IDに対応するジョブマップが見つかりません: $job_id (boundary=job_map, field=$1, category=$2)"
 }
 
 # sql_literal は SQLite CLI 用に文字列リテラルを安全に組み立てる。
@@ -49,58 +56,79 @@ validate_modes() {
 
 # resolve_job_map はジョブマップの対象ジョブを解決する。
 resolve_job_map() {
-	[[ -n "${RELAYGATE_JOB_MAP_PATH:-}" && -r "${RELAYGATE_JOB_MAP_PATH:-}" ]] || business_error "JOB_IDに対応するジョブマップが見つかりません: $job_id"
-	job_map_entry="$(jq -cer --arg id "$job_id" '.jobs[$id] // empty' "$RELAYGATE_JOB_MAP_PATH" 2>/dev/null || true)"
-	[[ -n "$job_map_entry" ]] || business_error "JOB_IDに対応するジョブマップが見つかりません: $job_id"
-	job_map_version="$(jq -er '.version' "$RELAYGATE_JOB_MAP_PATH" 2>/dev/null || true)"
-	host="$(jq -er '.host' <<<"$job_map_entry" 2>/dev/null || true)"
-	exec_user="$(jq -er '.exec_user' <<<"$job_map_entry" 2>/dev/null || true)"
-	script_path="$(jq -er '.script_path' <<<"$job_map_entry" 2>/dev/null || true)"
-	work_dir="$(jq -er '.work_dir' <<<"$job_map_entry" 2>/dev/null || true)"
-	impl_version="$(jq -er '.impl_version' <<<"$job_map_entry" 2>/dev/null || true)"
+	[[ -n "${RELAYGATE_JOB_MAP_PATH:-}" && -r "${RELAYGATE_JOB_MAP_PATH:-}" ]] || job_map_error path unavailable
+	job_map_entry="$(jq -cer --arg id "$job_id" '.jobs[$id] | select(type == "object")' "$RELAYGATE_JOB_MAP_PATH" 2>/dev/null || true)"
+	[[ -n "$job_map_entry" ]] || job_map_error jobs not_found
+	job_map_version="$(jq -er 'if (.version | type) == "string" and (.version | length) > 0 then .version else empty end' "$RELAYGATE_JOB_MAP_PATH" 2>/dev/null || true)"
+	host="$(jq -er 'if (.host | type) == "string" and (.host | length) > 0 then .host else empty end' <<<"$job_map_entry" 2>/dev/null || true)"
+	exec_user="$(jq -er 'if (.exec_user | type) == "string" and (.exec_user | length) > 0 then .exec_user else empty end' <<<"$job_map_entry" 2>/dev/null || true)"
+	script_path="$(jq -er 'if (.script_path | type) == "string" and (.script_path | length) > 0 then .script_path else empty end' <<<"$job_map_entry" 2>/dev/null || true)"
+	work_dir="$(jq -er 'if (.work_dir | type) == "string" and (.work_dir | length) > 0 then .work_dir else empty end' <<<"$job_map_entry" 2>/dev/null || true)"
+	impl_version="$(jq -er 'if (.impl_version | type) == "string" and (.impl_version | length) > 0 then .impl_version else empty end' <<<"$job_map_entry" 2>/dev/null || true)"
 	hang_detect_limit_minutes="$(jq -er 'if (.hang_detect_limit_minutes | type) == "number" then .hang_detect_limit_minutes | tostring else empty end' <<<"$job_map_entry" 2>/dev/null || true)"
-	credential_ref="$(jq -cer '.credential_ref // empty' <<<"$job_map_entry" 2>/dev/null || true)"
-	fixed_args="$(jq -ce '(.fixed_args // []) as $args | if ($args | type) == "array" and ($args | all(.[]; type == "string")) then $args else empty end' <<<"$job_map_entry" 2>/dev/null || true)"
-	[[ "$hang_detect_limit_minutes" =~ ^[1-9][0-9]*$ ]] || business_error "JOB_IDに対応するジョブマップが見つかりません: $job_id"
-	[[ -n "$job_map_version" && -n "$host" && -n "$exec_user" && -n "$script_path" && -n "$work_dir" && -n "$impl_version" && -n "$fixed_args" ]] || business_error "JOB_IDに対応するジョブマップが見つかりません: $job_id"
+	credential_ref_json="$(jq -ce 'if .credential_ref == null then null elif (.credential_ref | type) == "string" and (.credential_ref | length) > 0 then .credential_ref else empty end' <<<"$job_map_entry" 2>/dev/null || true)"
+	fixed_args_json="$(jq -ce 'if .fixed_args == null then null elif (.fixed_args | type) == "array" and (.fixed_args | all(.[]; type == "string")) then .fixed_args else empty end' <<<"$job_map_entry" 2>/dev/null || true)"
+	[[ "$hang_detect_limit_minutes" =~ ^[1-9][0-9]*$ ]] || job_map_error hang_detect_limit_minutes invalid_value
+	[[ -n "$job_map_version" && -n "$host" && -n "$exec_user" && -n "$script_path" && -n "$work_dir" && -n "$impl_version" && -n "$fixed_args_json" && -n "$credential_ref_json" ]] || job_map_error entry invalid_type
+	[[ "$host" =~ ^[A-Za-z0-9][A-Za-z0-9.-]*$ && "$exec_user" =~ ^[a-z_][a-z0-9_-]*\$?$ ]] || job_map_error ssh_target invalid_value
 }
 
 # resolve_sqlite_path は限定的な SQLite DSN を接続先ファイルへ変換する。
 resolve_sqlite_path() { case "${RELAYGATE_RDB_DSN:-}" in sqlite://*) sqlite_path="${RELAYGATE_RDB_DSN#sqlite://}" ;; *) business_error "RDB connection failed" ;; esac }
 
-# resolve_ssh_timeout はCLI応答を10秒以内に収めるSSH待機上限を検証する。
+# resolve_ssh_timeout はCLI全体のdeadline内に収めるSSH待機上限を検証する。
 resolve_ssh_timeout() {
 	ssh_timeout_seconds="${RELAYGATE_SSH_TIMEOUT_SECONDS:-$MAX_SSH_TIMEOUT_SECONDS}"
 	[[ "$ssh_timeout_seconds" =~ ^[1-9]$ && "$ssh_timeout_seconds" -le "$MAX_SSH_TIMEOUT_SECONDS" ]] || validation_error "RELAYGATE_SSH_TIMEOUT_SECONDS must be between 1 and $MAX_SSH_TIMEOUT_SECONDS"
 	command -v timeout >/dev/null 2>&1 || business_error "SSH timeout utility is unavailable"
 }
 
-# persist_execution_spec は確定済み execution-spec を一度だけ記録する。
-persist_execution_spec() {
-	local additional_args_json columns credential_ref_value values
+# remaining_deadline_seconds はCLI開始時点からの残余時間を秒単位で返す。
+remaining_deadline_seconds() {
+	local remaining_seconds=$((CLI_DEADLINE_SECONDS - SECONDS))
+	((remaining_seconds > 0)) || return 1
+	printf '%s' "$remaining_seconds"
+}
+
+# write_execution_spec はexecution-spec.jsonを一時ファイルから原子的に確定保存する。
+write_execution_spec() {
+	local execution_spec_parent temporary_path
 	additional_args_json="$(jq -cn '$ARGS.positional' --args -- "${additional_args[@]}")"
 	run_id="$(uuidgen | tr '[:upper:]' '[:lower:]')"
+	if [[ "$fixed_args_json" == null ]]; then fixed_args_value="NULL"; else fixed_args_value="$(sql_literal "$fixed_args_json")"; fi
+	if [[ "$credential_ref_json" == null ]]; then credential_ref_value="NULL"; else credential_ref_value="$(sql_literal "$(jq -r '.' <<<"$credential_ref_json")")"; fi
+	if [[ ${#additional_args[@]} -eq 0 ]]; then additional_args_value="NULL"; else additional_args_value="$(sql_literal "$additional_args_json")"; fi
+	execution_spec_dir="${RELAYGATE_EXECUTION_SPEC_DIR:-$work_dir}"
+	execution_spec_path="$execution_spec_dir/$run_id/execution-spec.json"
+	execution_spec_parent="$(dirname "$execution_spec_path")"
+	(umask 077 && mkdir -p "$execution_spec_parent") || business_error "execution-spec persistence failed (run_id=$run_id, boundary=filesystem)"
+	temporary_path="$(mktemp "$execution_spec_parent/.execution-spec.json.XXXXXX")" || business_error "execution-spec persistence failed (run_id=$run_id, boundary=filesystem)"
+	if ! jq -cn --arg run_id "$run_id" --arg job_id "$job_id" --arg host "$host" --arg exec_user "$exec_user" --arg script_path "$script_path" --arg work_dir "$work_dir" --arg job_map_version "$job_map_version" --arg impl_version "$impl_version" --argjson fixed_args "$fixed_args_json" --argjson additional_args "$additional_args_json" --argjson credential_ref "$credential_ref_json" --argjson hang_detect_limit_minutes "$hang_detect_limit_minutes" '{run_id: $run_id, parent_run_id: null, job_id: $job_id, host: $host, exec_user: $exec_user, script_path: $script_path, work_dir: $work_dir, fixed_args: $fixed_args, additional_args: (if ($additional_args | length) == 0 then null else $additional_args end), job_map_version: $job_map_version, impl_version: $impl_version, hang_detect_limit_minutes: $hang_detect_limit_minutes, credential_ref: $credential_ref}' >"$temporary_path"; then
+		rm -f "$temporary_path"
+		business_error "execution-spec persistence failed (run_id=$run_id, boundary=filesystem)"
+	fi
+	if ! chmod 600 "$temporary_path" || ! mv -f "$temporary_path" "$execution_spec_path"; then
+		business_error "execution-spec persistence failed (run_id=$run_id, boundary=filesystem)"
+	fi
+}
+
+# persist_initial_records はexecution-specとforeground初期結果を単一トランザクションで記録する。
+persist_initial_records() {
+	local columns initial_records_sql runner_columns values
 	columns=$(
 		IFS=,
 		printf '%s' "${COLS_EXECUTION_SPECS[*]}"
 	)
-	if [[ -n "$credential_ref" ]]; then
-		credential_ref_value="$(sql_literal "$credential_ref")"
-	else
-		credential_ref_value="NULL"
-	fi
-	values="$(sql_literal "$run_id"),NULL,$(sql_literal "$job_id"),$(sql_literal "$host"),$(sql_literal "$exec_user"),$(sql_literal "$script_path"),$(sql_literal "$work_dir"),$(sql_literal "$fixed_args"),$(sql_literal "$additional_args_json"),$(sql_literal "$job_map_version"),$(sql_literal "$impl_version"),$hang_detect_limit_minutes,$credential_ref_value"
-	sqlite3 "$sqlite_path" "INSERT INTO $TBL_EXECUTION_SPECS ($columns) VALUES ($values);" >/dev/null 2>&1 || business_error "RDB connection failed (run_id=$run_id, boundary=rdb)"
-}
-
-# persist_foreground_result は foreground slot の RUNNING レコードを起動前に記録する。
-persist_foreground_result() {
-	local slot="$1" columns
-	columns=$(
+	values="$(sql_literal "$run_id"),NULL,$(sql_literal "$job_id"),$(sql_literal "$host"),$(sql_literal "$exec_user"),$(sql_literal "$script_path"),$(sql_literal "$work_dir"),$fixed_args_value,$additional_args_value,$(sql_literal "$job_map_version"),$(sql_literal "$impl_version"),$hang_detect_limit_minutes,$credential_ref_value"
+	runner_columns=$(
 		IFS=,
 		printf '%s' "${COLS_RUNNER_RESULTS[*]}"
 	)
-	sqlite3 "$sqlite_path" "INSERT INTO $TBL_RUNNER_RESULTS ($columns) VALUES ($(sql_literal "$run_id"),$(sql_literal "$slot"),'foreground',$(sql_literal "$(date -u '+%Y-%m-%dT%H:%M:%SZ')"),NULL,NULL,NULL,'RUNNING');" >/dev/null 2>&1 || business_error "RDB connection failed (run_id=$run_id, slot=$slot, boundary=rdb)"
+	initial_records_sql="BEGIN IMMEDIATE; INSERT INTO $TBL_EXECUTION_SPECS ($columns) VALUES ($values);"
+	if [[ "$blue_mode" == foreground ]]; then initial_records_sql+=" INSERT INTO $TBL_RUNNER_RESULTS ($runner_columns) VALUES ($(sql_literal "$run_id"),'blue','foreground',$(sql_literal "$(date -u '+%Y-%m-%dT%H:%M:%SZ')"),NULL,NULL,NULL,'RUNNING');"; fi
+	if [[ "$green_mode" == foreground ]]; then initial_records_sql+=" INSERT INTO $TBL_RUNNER_RESULTS ($runner_columns) VALUES ($(sql_literal "$run_id"),'green','foreground',$(sql_literal "$(date -u '+%Y-%m-%dT%H:%M:%SZ')"),NULL,NULL,NULL,'RUNNING');"; fi
+	initial_records_sql+=" COMMIT;"
+	sqlite3 "$sqlite_path" "$initial_records_sql" >/dev/null 2>&1 || business_error "RDB connection failed (run_id=$run_id, boundary=rdb)"
 }
 
 # persist_failed_result はSSH起動失敗をFAILEDとして補償記録する。
@@ -115,13 +143,18 @@ persist_failed_result() {
 
 # launch_slot は SSH を介して off 以外の slot を指定された役割で起動する。
 launch_slot() {
-	local argument reason remote_command role="$2" slot="$1" ssh_exit_code
+	local argument remaining_seconds reason remote_command role="$2" slot="$1" ssh_exit_code
 	[[ "$role" != off ]] || return 0
-	[[ "$role" != foreground ]] || persist_foreground_result "$slot"
-	printf -v remote_command 'cd %q && RELAYGATE_SLOT=%q RELAYGATE_ROLE=%q RELAYGATE_RAPID_CROSSCHECK_MODE=%q %q' "$work_dir" "$slot" "$role" "$rapid_crosscheck_mode" "$script_path"
-	while IFS= read -r argument; do printf -v remote_command '%s %q' "$remote_command" "$argument"; done < <(jq -r '.[]' <<<"$fixed_args")
+	remaining_seconds="$(remaining_deadline_seconds || true)"
+	if [[ -z "$remaining_seconds" ]]; then
+		persist_failed_result "$slot" "$role" 124
+		business_error "Failed to start $slot slot (run_id=$run_id, boundary=ssh, reason=timeout)"
+	fi
+	if ((ssh_timeout_seconds < remaining_seconds)); then remaining_seconds="$ssh_timeout_seconds"; fi
+	printf -v remote_command 'cd %q && RELAYGATE_SLOT=%q RELAYGATE_ROLE=%q RELAYGATE_RUN_ID=%q RELAYGATE_EXECUTION_SPEC_PATH=%q RELAYGATE_RAPID_CROSSCHECK_MODE=%q %q' "$work_dir" "$slot" "$role" "$run_id" "$execution_spec_path" "$rapid_crosscheck_mode" "$script_path"
+	if [[ "$fixed_args_json" != null ]]; then while IFS= read -r argument; do printf -v remote_command '%s %q' "$remote_command" "$argument"; done < <(jq -r '.[]' <<<"$fixed_args_json"); fi
 	for argument in "${additional_args[@]}"; do printf -v remote_command '%s %q' "$remote_command" "$argument"; done
-	if timeout --foreground "${ssh_timeout_seconds}s" ssh "$exec_user@$host" "$remote_command" >/dev/null; then
+	if timeout --foreground "${remaining_seconds}s" ssh -n -o BatchMode=yes -- "$exec_user@$host" "$remote_command" >/dev/null; then
 		return 0
 	else
 		ssh_exit_code=$?
@@ -140,13 +173,15 @@ select_and_start_slot() {
 	resolve_job_map
 	resolve_sqlite_path
 	resolve_ssh_timeout
-	persist_execution_spec
+	write_execution_spec
+	persist_initial_records
 	launch_slot blue "$blue_mode"
 	launch_slot green "$green_mode"
 	printf 'blue: %s\ngreen: %s\nrun_id: %s\n' "$blue_mode" "$green_mode" "$run_id"
 }
 
 main() {
+	SECONDS=0
 	[[ $# -ge 2 && "$1" == concurrent-run && "$2" == select-slot ]] || validation_error "usage: relaygate concurrent-run select-slot --job-id <JOB_ID> [-- <additional args...>]"
 	shift 2
 	parse_select_slot_request "$@"
