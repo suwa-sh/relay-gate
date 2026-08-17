@@ -1,6 +1,9 @@
 tmp/
 node_modules/
 
+# Regenerable implementation-review aid
+docs/impl/**/review/*.html
+
 # Storybook (docs/design)
 docs/design/**/storybook-app/node_modules/
 docs/design/**/storybook-app/.next/

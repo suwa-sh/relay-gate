@@ -8,6 +8,14 @@ current_attempt: 5
 resolved_models:
   implementer: "gpt-5.6-terra"
   verifier: "gpt-5.6-sol"
+git_delivery:
+  required: true
+  uc_english_name: "Select and launch slots based on feature flags"
+  branch_slug: "select-and-launch-slots-by-feature-flags"
+  base_branch: "main"
+  base_head: "a4c2bc2f0f2aeb19e71bb1e87c57863212a76822"
+  feature_branch: "feature/select-and-launch-slots-by-feature-flags"
+  remote: "origin"
 stages:
   S1_uc_init: {status: done}
   S2_test_scaffold: {status: done, red_baseline: pass}
