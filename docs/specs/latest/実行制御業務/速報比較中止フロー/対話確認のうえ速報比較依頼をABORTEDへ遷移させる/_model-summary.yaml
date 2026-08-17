@@ -1,0 +1,68 @@
+uc: "対話確認のうえ速報比較依頼をABORTEDへ遷移させる"
+business: "実行制御業務"
+buc: "速報比較中止フロー"
+
+bounded_context_id: "BC-002"
+aggregate_id: "AG-003"
+
+models:
+  - name: "AbortRapidCrosscheckConfirm CLI"
+    tier: "tier-worker"
+    layer: "presentation"
+    type: "request"
+    rdra_info: "速報比較依頼"
+  - name: "ConfirmAbortRapidCrosscheckCommand"
+    tier: "tier-worker"
+    layer: "usecase"
+    type: "command"
+    rdra_info: "速報比較依頼"
+  - name: "速報比較依頼"
+    tier: "tier-worker"
+    layer: "domain"
+    type: "entity"
+    rdra_info: "速報比較依頼"
+  - name: "RapidCrosscheckRequestRecord"
+    tier: "tier-worker"
+    layer: "gateway"
+    type: "record"
+    rdra_info: "速報比較依頼"
+
+tables:
+  - name: "rapid_crosscheck_requests"
+    rdra_info: "速報比較依頼"
+    operations:
+      - type: "SELECT"
+        columns: []
+        where: "run_id = ?"
+      - type: "UPDATE"
+        columns:
+          - name: "status"
+            value: "'ABORTED'"
+        where: "run_id = ? AND status = 'RUNNING'"
+    indexes_needed:
+      - columns: ["run_id", "status"]
+        reason: "楽観的競合検知のための条件付きUPDATE（WHERE run_id=? AND status='RUNNING'）を高速化する"
+        access_pattern: "run_id指定+status条件によるUPDATE"
+  - name: "audit_logs"
+    rdra_info: "該当なし（RDRAに明示定義なし。CTP-005監査ログ要件・CTP-004実行系譜トレーサビリティから導出。列定義は_cross-cutting/datastore/rdb-schema.yamlのaudit_logsに正規化済み）"
+    operations:
+      - type: "INSERT"
+        columns:
+          - name: "log_id"
+            value: "新規発行するUUID"
+          - name: "operator"
+            value: "RELAYGATE_OPERATOR環境変数の値"
+          - name: "operated_at"
+            value: "操作日時"
+          - name: "run_id"
+            value: "対象run_id"
+          - name: "action"
+            value: "'abort_confirm'固定"
+        where: ""
+    indexes_needed:
+      - columns: ["run_id"]
+        reason: "run_id単位の監査ログ追跡（実行系譜トレーサビリティ CTP-004）"
+        access_pattern: "run_id指定による監査ログ一覧参照"
+
+kvs: []
+object_storage: []

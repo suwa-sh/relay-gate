@@ -1,0 +1,59 @@
+uc: "background roleを起動する"
+business: "並行稼働実行業務"
+buc: "並行稼働実行フロー"
+commands:
+  - name: "relaygate concurrent-run start-background"
+    tier: "tier-facade"
+    summary: "execution-spec.jsonで確定済みのbackground対象slotについてworkerへ起動トリガーを送出する"
+    args:
+      - name: "--run-id"
+        required: true
+        description: "起動対象run_id"
+    env_vars:
+      - name: "RELAYGATE_RDB_DSN"
+        required: true
+        description: "RDB接続文字列"
+      - name: "RELAYGATE_WORKER_TRIGGER_ENDPOINT"
+        required: true
+        description: "tier-workerへの起動トリガー送出先"
+    stdin: "なし"
+    stdout_contract: "background起動: slot/run_id/statusの1行"
+    stderr_contract: "background対象slotなし・接続失敗時のエラーメッセージ"
+    exit_codes:
+      - code: 0
+        meaning: "正常終了"
+      - code: 1
+        meaning: "業務エラー（background対象slotなし・接続失敗）"
+      - code: 2
+        meaning: "バリデーションエラー（run_id未指定）"
+  - name: "relaygate worker start-background-execution"
+    tier: "tier-worker"
+    summary: "facadeからのトリガーを受けてbackground実行を開始しRunner実行結果を記録する"
+    args:
+      - name: "--run-id"
+        required: true
+        description: "facadeから引き継いだrun_id"
+      - name: "--slot-type"
+        required: true
+        description: "起動対象slot種別（blue/green）"
+    env_vars:
+      - name: "RELAYGATE_RDB_DSN"
+        required: true
+        description: "RDB接続文字列"
+      - name: "RELAYGATE_SSH_KEY_PATH"
+        required: true
+        description: "blue/green実装ホストへのSSH接続鍵パス"
+    stdin: "なし"
+    stdout_contract: "background実行開始: run_id/slot/statusの1行"
+    stderr_contract: "SSH接続失敗・RDB書込み失敗時のエラーメッセージ"
+    exit_codes:
+      - code: 0
+        meaning: "正常終了"
+      - code: 1
+        meaning: "業務エラー（起動先接続失敗）"
+      - code: 2
+        meaning: "バリデーションエラー（run_id/slot-type未指定）"
+screens:
+  - name: "background role起動画面"
+    route: "/cli/concurrent-run/start-background"
+    components: ["ExecutionSpecCard", "RunnerResultPanel"]

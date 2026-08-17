@@ -1,0 +1,51 @@
+schema_version: "1.0"
+artifact_type: "context"
+skill_type: "foundation"
+artifact_id: "foundation-context"
+title: "Foundation Context（最小構成・オンプレミス単一サイト）"
+status: "draft"
+generated_at: "2026-08-17T15:10:23"
+source_refs: []
+decision_refs: []
+inputs_ref: []
+
+organization_structure:
+  business_units: [default]
+  environments: [prod, stg, dev]
+  account_pattern: "{env}"
+  core_accounts: []
+
+identity_guardrails:
+  federation_required: false
+  local_users_forbidden: false
+  privileged_access: ssh_key_based
+  breakglass_accounts: 1
+
+network_guardrails:
+  topology: single_site_onprem
+  prod_nonprod_isolation: true
+  central_egress: false
+  inter_cloud_encryption: not_applicable
+
+policy_guardrails:
+  allowed_regions:
+    onprem: [onprem-dc]
+  public_storage_forbidden: true
+  required_tags: [environment]
+
+logging_guardrails:
+  central_aggregation: false
+  retention_days: 365
+  tamper_protection: not_required
+
+billing_boundaries:
+  budget_owner: business_unit
+  cost_allocation_model: fixed_capital
+  fixed_split: not_applicable
+  variable_split: not_applicable
+  required_tags: [environment]
+
+approved_deviations:
+  - id: "deviation-cloud-managed-services"
+    description: "エアギャップ環境のオンプレミスLinuxサーバへのデプロイのため、クラウドマネージドサービス・IaC（クラウド向け）・コスト最適化ヒントは対象外とする"
+    reason: "プロジェクト背景: エアギャップ環境のオンプレミスLinuxサーバ（インターネット接続なし）"

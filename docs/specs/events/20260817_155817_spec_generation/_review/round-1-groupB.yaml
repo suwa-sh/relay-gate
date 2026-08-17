@@ -1,0 +1,39 @@
+round: 1
+findings:
+  - id: "B-001"
+    viewpoint: "model-summary/spec.mdのデータフロー整合性（観点4）"
+    severity: "blocker"
+    target: "docs/specs/events/20260817_155817_spec_generation/クロスチェック業務/速報クロスチェックフロー/blue-green runnerの完了通知を受けて速報比較依頼を作成する/{spec.md,tier-worker.md,_model-summary.yaml}"
+    claim: "速報比較依頼(rapid_crosscheck_requests)へINSERTするjob_idの取得元を「runner_results.job_idを引き継ぐ」としているが、runner_results（RDRA情報.tsv「Runner実行結果」／arch-design E-002）にはjob_id属性が存在しない。job_idはexecution-spec.json（E-001）にのみ存在する属性であり、この設計のままではSELECT/INSERT文が実装不能（存在しないカラムの参照）になる。"
+    evidence: "_model-summary.yaml INSERT columns: job_id value=\"runner_results.job_idを引き継ぐ\"（44-54行目付近）。spec.mdのsequenceDiagramも `SELECT run_id, job_id FROM runner_results ...` としている（54行目）。一方、docs/rdra/latest/情報.tsv 3行目のRunner実行結果属性一覧に「run_id、slot種別、role区分、開始時刻、標準出力、標準エラー、終了コード、実行状態」しかなくJOB_IDは含まれない。JOB_IDはexecution-spec.json（情報.tsv 2行目）の属性。_inputs-digest.md のE-002定義にもjob_idはない。"
+    suggested_fix: "gateway層のクエリをexecution_specs（またはexecution-spec.jsonに対応するテーブル）とrunner_resultsをrun_idでJOINし、job_idはexecution_specs側から取得するようデータフロー図・シーケンス図・_model-summary.yamlのINSERT定義を修正する。"
+
+  - id: "B-002"
+    viewpoint: "spec.mdの関連RDRAモデル・データフロー整合性（観点1・4）"
+    severity: "major"
+    target: "docs/specs/events/20260817_155817_spec_generation/クロスチェック業務/速報クロスチェックフロー/blue-green runnerの完了通知を受けて速報比較依頼を作成する/spec.md"
+    claim: "概要では「blue実装・green実装の両background runnerが完了したジョブについて」速報比較依頼を作成するとしているが（RDRA情報.tsv 4行目「blueとgreenの完了通知を受けて作成する」とも整合する記述）、実際のデータフロー・処理フロー・BDDシナリオはrunner_resultsの単一行（1件のrun_id・role=background）がSUCCEEDED/FAILEDになった時点で即座に依頼を作成しており、blue/green双方の完了を確認するロジック（job_id単位でのペア判定・両slot_typeの存在確認）が一切実装されていない。"
+    evidence: "spec.md 5行目の概要記述と、実際のクエリ `SELECT run_id, job_id FROM runner_results WHERE role='background' AND status IN ('SUCCEEDED','FAILED') AND run_id NOT IN (...)`（53-54行目）・状態遷移一覧の事前条件（96行目「対象run_idのRunner実行結果（role=background）がSUCCEEDED/FAILEDで確定済み」、単数形での言及）が矛盾する。BDDシナリオ（119-130行目）も単一のRunner実行結果1件のみをGivenとしており、blue/green双方の存在を検証していない。"
+    suggested_fix: "job_id単位でblue/green双方のRunner実行結果（role=background）がSUCCEEDED/FAILEDで確定していることを確認するクエリ・ロジックに修正するか、概要の記述を実装に合わせて「いずれか一方のbackground runner完了時点」に修正する（RDRA情報.tsv側の記述との整合も要確認）。"
+
+  - id: "B-003"
+    viewpoint: "tier-worker.mdのイベント処理仕様（観点3）"
+    severity: "major"
+    target: "docs/specs/events/20260817_155817_spec_generation/実行監視業務/ハング監視フロー/background実行の未完了・非0終了・速報比較異常を定期検知する/{spec.md,tier-worker.md,_model-summary.yaml}"
+    claim: "UC名およびRDRA BUC.tsv上の説明は「background実行の未完了・非0終了・速報クロスチェック異常」を検知対象としているが、実際のRunner実行結果走査クエリ `SELECT * FROM runner_results WHERE status='RUNNING'` にrole区分（role_type='background'）の絞り込みがなく、foreground・rapid-crosscheck役割のRUNNING行も検知対象に含まれてしまう。"
+    evidence: "情報.tsv 3行目のバリエーション「role区分」にforeground/background/rapid-crosscheckの3値がある。tier-worker.md 12-17行目の処理フロー・_model-summary.yaml 44-46行目のSELECT where句がいずれも `status = 'RUNNING'` のみでrole条件を含まない。"
+    suggested_fix: "SELECT文のWHERE句にrole_type='background'（または相当のrole条件）を追加し、foreground/rapid-crosscheckのRUNNING行を検知対象から除外する。"
+
+  - id: "B-004"
+    viewpoint: "tier-worker.mdのエラーハンドリング/冪等性（観点3）"
+    severity: "major"
+    target: "docs/specs/events/20260817_155817_spec_generation/実行監視業務/ハング監視フロー/background実行の未完了・非0終了・速報比較異常を定期検知する/tier-worker.md"
+    claim: "hang-detectorのCronJob（1分間隔）は、しきい値超過が継続するRUNNING行（ハング疑い）や、comparison_result='NG'のまま状態が変わらない速報比較結果（速報クロスチェック異常）を毎サイクル再検知するが、重複防止は「同一実行サイクル内」の一意制約違反のみに限定されており、サイクルをまたいだ重複検知記録の生成を防ぐ仕組みがない。detection_idは検知処理内で都度新規生成されるため、同一run_id・同一異常種別の重複検知が1分ごとに際限なく蓄積し、後続の「ハング疑い・異常を運用者へ通知する」UCが未通知（notified_at IS NULL）分をすべて通知対象とするため、同一異常について通知が無限に繰り返される。"
+    evidence: "tier-worker.md 53行目「同一run_idに対する重複検知（同一detection_type・同一実行サイクル内）を防止するため」との記述はサイクル間の重複を対象外としている。速報比較結果は本UC・他UCのいずれからもcomparison_result='NG'から状態を変更する処理がなく（速報比較結果はE-004でイベント型、更新不可）、hang_detections.INSERTクエリ（_model-summary.yaml 66-85行目）もdetection_idを都度生成するのみで既存検知記録との重複チェックを行わない。"
+    suggested_fix: "同一run_id・同一detection_typeについて未解消（前回検知から状態変化なし）の場合は新規レコードを作成しない、または直近の検知記録が存在する場合は再検知をスキップする重複排除ロジックを追加する。ハング疑いについては対象実行がRUNNINGのままである限り再検知を抑制する仕組み（例: 直近detected_atからの再検知間隔制御）を明記する。"
+
+resolved:
+  - {id: "B-001", resolution: "fixed"}
+  - {id: "B-002", resolution: "fixed"}
+  - {id: "B-003", resolution: "fixed"}
+  - {id: "B-004", resolution: "fixed"}

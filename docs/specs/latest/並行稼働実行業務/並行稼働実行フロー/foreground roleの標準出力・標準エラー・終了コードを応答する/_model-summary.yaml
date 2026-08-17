@@ -1,0 +1,43 @@
+uc: "foreground roleの標準出力・標準エラー・終了コードを応答する"
+business: "並行稼働実行業務"
+buc: "並行稼働実行フロー"
+
+bounded_context_id: "BC-001"
+aggregate_id: "AG-002"
+
+models:
+  - name: "RespondForegroundRequest"
+    tier: "tier-facade"
+    layer: "presentation"
+    type: "request-dto"
+    rdra_info: "Runner実行結果（started-at.txt/stdout.log/stderr.log/exitcode.txt）"
+  - name: "RespondForegroundResultCommand"
+    tier: "tier-facade"
+    layer: "usecase"
+    type: "command"
+    rdra_info: "Runner実行結果（started-at.txt/stdout.log/stderr.log/exitcode.txt）"
+  - name: "RunnerExecutionResult"
+    tier: "tier-facade"
+    layer: "domain"
+    type: "entity"
+    rdra_info: "Runner実行結果（started-at.txt/stdout.log/stderr.log/exitcode.txt）"
+  - name: "RunnerResultRecord"
+    tier: "tier-facade"
+    layer: "gateway"
+    type: "record"
+    rdra_info: "Runner実行結果（started-at.txt/stdout.log/stderr.log/exitcode.txt）"
+
+tables:
+  - name: "runner_results"
+    rdra_info: "Runner実行結果（started-at.txt/stdout.log/stderr.log/exitcode.txt）"
+    operations:
+      - type: "SELECT"
+        columns: []
+        where: "run_id = :run_id AND role_type = 'foreground'"
+    indexes_needed:
+      - columns: ["run_id", "role_type"]
+        reason: "foreground役割実行結果の一意特定"
+        access_pattern: "relaygate concurrent-run respond-foreground --run-id"
+
+kvs: []
+object_storage: []

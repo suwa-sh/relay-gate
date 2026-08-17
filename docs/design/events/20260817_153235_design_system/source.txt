@@ -1,0 +1,17 @@
+trigger: pipeline step5 (dist-design-system)
+trigger_event: rdra:20260817_142258_initial_build, arch:20260817_152155_arch_infra_feedback
+requested_by: team-lead (session orchestrator)
+inputs:
+  - docs/rdra/latest/BUC.tsv
+  - docs/rdra/latest/アクター.tsv
+  - docs/rdra/latest/情報.tsv
+  - docs/rdra/latest/状態.tsv
+  - docs/rdra/latest/バリエーション.tsv
+  - docs/nfr/latest/nfr-grade.yaml
+  - docs/arch/latest/arch-design.yaml
+  - docs/infra/latest/
+dialogue_policy: auto_adopt
+note: |
+  RelayGate はWeb UIを持たないCLI/バッチ運用中心の実行基盤。
+  arch-design.yaml でフロントエンドティア不要と判定されているため、
+  デザインシステムはCLI出力の表示規約 + 最小トークンに限定して構築した（design-decision-001参照）。

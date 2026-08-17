@@ -1,0 +1,644 @@
+# RelayGate のしくみ
+
+index
+- [目的と境界](#目的と境界)
+- [C1 Context](#c1-context)
+- [C2 Container](#c2-container)
+  - [Hang Detection](#hang-detection)
+  - [Background Rerun](#background-rerun)
+- [Runner Result Contract](#runner-result-contract)
+- [C3 Component](#c3-component)
+  - [facade](#facade)
+  - [rapid-crosscheck](#rapid-crosscheck)
+  - [final-crosscheck](#final-crosscheck)
+- [C4 Code](#c4-code)
+  - [`hang-detector.sh`](#hang-detectorsh)
+  - [`background-rerun.sh`](#background-rerunsh)
+  - [`abort-blue.sh` と `abort-green.sh`](#abort-bluesh-と-abort-greensh)
+  - [`abort-rapid-crosscheck.sh`](#abort-rapid-crosschecksh)
+  - [`abort-final-crosscheck.sh`](#abort-final-crosschecksh)
+- [設定契約](#設定契約)
+  - [ジョブ解決契約](#ジョブ解決契約)
+- [データモデル](#データモデル)
+- [ハング検知とbackground側リラン](#ハング検知とbackground側リラン)
+- [配置図](#配置図)
+- [シーケンス図](#シーケンス図)
+- [状態と運用](#状態と運用)
+- [拡張点と受入条件](#拡張点と受入条件)
+  - [拡張点](#拡張点)
+  - [受入条件](#受入条件)
+
+## 目的と境界
+
+RelayGate は、実装を段階的に切り替えるための並行稼働プロダクトです。既存実装と新実装をジョブスケジューラの同じジョブ定義から起動します。
+
+- feature flag 付きストラングラーファサードが blue と green の実装を選択
+- foreground の実行結果だけをジョブスケジューラへ返す
+- 速報クロスチェックが blue と green の完了結果を非同期に比較
+- 確報クロスチェックが全テーブルと全ファイルを比較し、実行結果をジョブスケジューラへ返す
+- 実装固有の起動方式、ホスト、OS、プロトコルを slot の runner に閉じ込めます
+- ハング監視とbackground側の選択リランは、通常起動の facade から分離します
+
+外部 IF の送受信方針は、適用側で定義します。比較対象の定義は、適用側で定義します。個別製品のネットワーク制約は、適用側で定義します。
+
+## C1 Context
+
+```mermaid
+flowchart LR
+  Scheduler[ジョブスケジューラ] --> Facade[feature flag付き<br/>ストラングラーファサード<br/>facade.sh]
+  Facade --> Blue[blue 実装]
+  Facade --> Green[green 実装]
+  Blue --> Rapid[速報クロスチェック<br/>rapid-crosscheck-runner.sh]
+  Green --> Rapid
+  Scheduler --> FinalRunner[確報クロスチェック<br/>final-crosscheck-runner.sh]
+  Scheduler --> HangDetector[ハング検知<br/>hang-detector.sh]
+  Rapid --> Operator[運用者]
+  FinalRunner ----> Operator
+  HangDetector ----> Operator
+  Operator --> AbortBlue[blueの中止<br/>abort-blue.sh]
+  Operator --> AbortGreen[greenの中止<br/>abort-green.sh]
+  Operator --> AbortRapid[速報比較の中止<br/>abort-rapid-crosscheck.sh]
+  Operator --> AbortFinal[確報比較の中止<br/>abort-final-crosscheck.sh]
+
+  Scheduler --> BackgroundRerun[background側リラン<br/>background-rerun.sh]
+```
+
+| 要素 | 関係 |
+|---|---|
+| ジョブスケジューラ | 通常実行、確報、ハング検知、background側リランの専用ジョブ定義から各スクリプトを起動する |
+| RelayGate | blue と green の実装選択とジョブスケジューラとの契約を維持する |
+| blue と green 実装 | 業務処理を実行して完了事実を通知する |
+| 速報クロスチェック | 両系の結果を比較して差分を運用者へ提供する |
+| 確報クロスチェック | 全量比較により日次整合性を正式確認する |
+| ハング検知 | 実行管理データと成果物を定期監視しハング疑いを運用者へ通知する |
+| blueの中止 | 停止確認済みのbackground blue slotを `ABORTED` へ遷移させる |
+| greenの中止 | 停止確認済みのbackground green slotを `ABORTED` へ遷移させる |
+| 速報比較の中止 | 停止確認済みの速報比較依頼を `ABORTED` へ遷移させ、再実行可能にする |
+| 確報比較の中止 | 停止確認済みの確報比較依頼を `ABORTED` へ遷移させる |
+| background側リラン | ジョブスケジューラの専用ジョブが元の実行を参照し、background slotまたは速報比較依頼を再作成する |
+
+## C2 Container
+
+```mermaid
+flowchart LR
+  Config[feature flag設定] --> Facade
+  Scheduler[ジョブスケジューラ] --> Facade[RelayGate Facade<br/>facade.sh]
+  Facade --> BlueRunner[blue runner<br/>$BLUE_RUNNER]
+  Facade --> GreenRunner[green runner<br/>$GREEN_RUNNER]
+  BlueRunner --> BlueImpl[blue 実装]
+  GreenRunner --> GreenImpl[green 実装]
+  BlueRunner --> RapidRunner[rapid-crosscheck-runner.sh]
+  GreenRunner --> RapidRunner
+  RapidRunner --> RapidQueue[(rapid-crosscheck job queue)]
+  RapidQueue --> RapidWorker[rapid-crosscheck-worker.sh]
+  RapidWorker --> RapidCompare[ジョブ単位比較]
+  Scheduler ----> FinalRunner[final-crosscheck-runner.sh]
+  FinalRunner --> FinalQueue[(final-crosscheck job queue)]
+  FinalQueue --> FinalWorker[final-crosscheck-worker]
+  FinalWorker --> FinalCompare[全量比較]
+
+```
+
+### Hang Detection
+
+```mermaid
+flowchart LR
+  Scheduler[ジョブスケジューラ] -->|"サイクル実行"| HangDetector[hang-detector.sh]
+  subgraph Runners[Runner]
+    BlueRunner[blue runner<br/>$BLUE_RUNNER]
+    GreenRunner[green runner<br/>$GREEN_RUNNER]
+    RapidRunner[rapid-crosscheck-runner.sh]
+    FinalRunner[final-crosscheck-runner.sh]
+  end
+  HangDetector -.-> BlueRunner
+  HangDetector -.-> GreenRunner
+  HangDetector -.-> RapidQueue[(rapid-crosscheck job queue)]
+
+  BlueRunner --> RapidRunner
+  GreenRunner --> RapidRunner
+  RapidRunner --> RapidQueue
+
+  FinalRunner ---> FinalQueue
+
+  HangDetector -.-> FinalQueue[(final-crosscheck job queue)]
+
+```
+
+### Background Rerun
+
+```mermaid
+flowchart LR
+  Scheduler[ジョブスケジューラ] --> BackgroundRerun[background-rerun.sh]
+  subgraph Runners[Runner]
+    BlueRunner[blue runner<br/>$BLUE_RUNNER]
+    GreenRunner[green runner<br/>$GREEN_RUNNER]
+    RapidRunner[rapid-crosscheck-runner.sh]
+  end
+  BlueRunner --> RapidRunner
+  GreenRunner --> RapidRunner
+  RapidRunner --> RapidQueue[(rapid-crosscheck job queue)]
+  BackgroundRerun --> BlueRunner
+  BackgroundRerun --> GreenRunner
+  BackgroundRerun --> RapidRunner
+```
+
+| コンテナ | 責務 |
+|---|---|
+| RelayGate Facade<br/>`facade.sh` | ・feature flag を読み込む<br/>・blue と green を起動する<br/>・foreground の結果をジョブスケジューラへ返す |
+| blue runner<br/>`$BLUE_RUNNER` | ・設定で実体スクリプトを割り当てる<br/>・blue 実装を起動する<br/>・blue 完了を通知する |
+| green runner<br/>`$GREEN_RUNNER` | ・設定で実体スクリプトを割り当てる<br/>・green 実装を起動する<br/>・green 完了を通知する |
+| `rapid-crosscheck-runner.sh`<br/>dispatcher | ・完了通知を受ける<br/>・比較依頼を一意に作成する |
+| `rapid-crosscheck-worker.sh` | ・比較依頼を取得する<br/>・比較を実行する<br/>・結果を登録する |
+| rapid-crosscheck job queue | ・blue と green の完了結果を保持する<br/>・比較依頼を保持する<br/>・比較結果を保持する |
+| `final-crosscheck-runner.sh` | ・ジョブスケジューラから確報比較の依頼を受ける<br/>・比較依頼を登録する<br/>・完了まで同期 polling する<br/>・stdout、stderr、exitcode をジョブスケジューラへ返す |
+| `final-crosscheck-worker.sh` | ・DB セグメントで比較依頼を poll / claim する<br/>・全量比較を実行する<br/>・stdout、stderr、exitcode を保存する |
+| final-crosscheck job queue | ・確報比較依頼と対象カタログを保持する<br/>・worker の claim と lease を保持する<br/>・実行結果の stdout、stderr、exitcode を保持する |
+| `hang-detector.sh` | ・未完了のbackground成果物を定期走査する<br/>・`hang_detect_limit_minutes` 超過をハング疑いとして通知する<br/>・自動中止と自動再実行はしない |
+| `background-rerun.sh` | ・元のbackground slotまたは速報をリランする<br/>・新しい run_id を発行する<br/>・親 run_id と実行設定のスナップショットを保持する |
+
+## Runner Result Contract
+
+blue runner と green runner は、foreground と background のどちらでも実装の終了結果を3ファイルとして出力します。3ファイルは runner の必須成果物です。ジョブスケジューラへの応答、完了通知、障害調査で3ファイルを共通に使用します。
+
+```text
+<FACADE_RUN_DIR>/
+  execution-spec.json
+  <FACADE_RUN_ROLE>/
+    started-at.txt
+    stdout.log
+    stderr.log
+    exitcode.txt
+```
+
+| 成果物 | 契約 |
+|---|---|
+| `stdout.log` | 実装の標準出力を保持する |
+| `stderr.log` | 実装の標準エラーを保持する |
+| `exitcode.txt` | 数値だけを1行で保持する |
+| `execution-spec.json` | 実行先と固定引数、ジョブスケジューラから渡された追加引数、マップ版、実装版、roleごとの `hang_detect_limit_minutes` を保持する |
+| `started-at.txt` | roleの起動時刻を保持する |
+| runner の終了コード | `exitcode.txt` と一致する |
+| 公開タイミング | 実行終了後に3ファイルを揃えて公開する |
+
+- 起動失敗、マップ未定義、SSH 失敗でも、可能な限り3ファイルを出力します
+- foreground のとき、`facade.sh` は3ファイルを標準出力、標準エラー、終了コードとしてジョブスケジューラへ中継します
+- background のときも、同じ3ファイルを残します
+- `execution-spec.json` はrun開始時に一度だけ確定し、リラン時の正本として使用します
+- `hang-detector.sh` は `started-at.txt`、`exitcode.txt`、`hang_detect_limit_minutes` を使ってbackground実行を判定します
+- `rapid-crosscheck-runner.sh` には、`run_id`、終了コード、成果物ディレクトリまたは `artifact_uri` を完了結果として通知します
+- 後続処理が書き込み途中のファイルを読まないよう、一時ファイルへ出力してから確定名へリネームできます
+
+## C3 Component
+
+### facade
+
+```mermaid
+flowchart LR
+  Input[ジョブスケジューラ: JOB_ID と PARAM] --> Validate[入力検証]
+  Config[feature flag] --> Select[slot 選択]
+  Validate --> Select
+  Select --> Background[background roleを先に起動]
+  Background --> ForegroundLaunch[foreground roleを起動]
+  ForegroundLaunch --> Foreground[foreground 結果の待機]
+  Foreground --> Response[ジョブスケジューラへの応答]
+```
+
+`facade.sh` は RelayGate Facade の実装です。ジョブスケジューラは `JOB_ID [PARAM...]` だけを渡します。RelayGate Facade は、比較対象や実装固有の起動方式を判断しません。slot runner が `JOB_ID` を実装固有のジョブマップで解決します。RelayGate Facade は、slot と mode を選択し、foreground 結果をジョブスケジューラへ応答します。
+
+実行は並走させるため、次の順序を固定します。
+
+1. `background` のblue・green slotをすべて起動し、PIDと成果物ディレクトリを確定する
+2. `foreground` のslotを起動する。この時点では待機しない
+3. すべてのslotを起動してから、foregroundのPIDだけを待機し、3ファイルをジョブスケジューラへ中継する
+
+この順序により、foregroundが長時間実行中でもbackground slotは同時に実行されます。blueとgreenの両方が `foreground` になる構成は許可しません。
+
+### rapid-crosscheck
+
+速報クロスチェックは、ジョブの実行ごとに、ジョブの出力を比較します。
+
+```mermaid
+flowchart LR
+  BlueCompleted[blue-completed] --> Register[完了結果の登録]
+  GreenCompleted[green-completed] --> Register
+  Register --> Ready{blue と green が<br/>両方成功}
+  Ready -->|yes| Request[比較依頼を一意に作成]
+  Ready -->|no| End[終了]
+  Request --> Worker[rapid-crosscheck-worker.sh]
+```
+
+公開 function は、完了した系統ごとに分けます。
+
+```text
+blue runner ($BLUE_RUNNER)
+  -> rapid-crosscheck-runner.sh blue-completed(run_id, job_id, result)
+
+green runner ($GREEN_RUNNER)
+  -> rapid-crosscheck-runner.sh green-completed(run_id, job_id, result)
+```
+
+blue / green runner は相手側の状態や比較依頼を判断しません。比較規約は、`rapid-crosscheck-runner.sh` と `rapid-crosscheck-worker.sh` に閉じ込めます。
+
+`RAPID_CROSSCHECK_MODE=off` のとき、blue / green runner は `rapid-crosscheck-runner.sh` へ完了通知しません。速報管理DBへの接続、完了結果、比較依頼、比較結果の書込みを行わないため、速報クロスチェック用のDB接続設定なしでslot実行できます。
+
+### final-crosscheck
+
+確報クロスチェックは、速報クロスチェックと異なるデータモデルを持ちます。日次処理が落ち着いた時点に、ジョブスケジューラの別ジョブ定義から `final-crosscheck-runner.sh` を起動します。全テーブルと全ファイルを対象にします。
+
+```mermaid
+flowchart LR
+  Scheduler[ジョブスケジューラ] --> Runner[final-crosscheck-runner.sh]
+  Runner --> Queue[(final-crosscheck job queue)]
+  Queue --> Worker[final-crosscheck-worker.sh]
+  Worker --> Compare[全テーブル・全ファイル比較]
+  Compare --> Worker
+  Worker --> Queue
+  Queue --> Runner
+  Runner -->|stdout stderr exitcode| Scheduler
+```
+
+`final-crosscheck-runner.sh` は比較依頼を登録後、対象依頼の完了を同期 polling します。完了した依頼に保存された `stdout`、`stderr`、`exitcode` を、そのまま標準出力、標準エラー、終了コードとしてジョブスケジューラへ返します。
+
+`final-crosscheck-worker.sh` は DB セグメントで依頼を poll / claim し、クロスチェック実装を起動します。worker は起動した実装の `stdout`、`stderr`、`exitcode` を依頼レコードへ保存します。チェック結果、差分件数、レポート URI などをジョブスケジューラへの応答の連携データとして追加しません。
+
+依頼の `SUCCEEDED`、`FAILED`、`ABORTED` は管理DB内の実行状態です。`final-crosscheck-runner.sh` は終端状態を待ちますが、その状態名をジョブスケジューラへ返しません。ジョブスケジューラへ返すのはworkerが保存した `stdout`、`stderr`、`exitcode` だけです。
+
+## C4 Code
+
+### `hang-detector.sh`
+
+`hang-detector.sh` は、RelayGateを配置したディレクトリから定期実行するbackground実行の監視スクリプトです。未完了のbackground roleについて、`started-at.txt` と `execution-spec.json` の `hang_detect_limit_minutes` から経過時間を判定し、ハング疑いを記録して通知します。終了済みのbackground roleは `exitcode.txt` を確認し、非0終了を通知します。速報クロスチェックは依頼状態と終了コードを確認し、`FAILED` または比較NGを通知します。
+
+```mermaid
+flowchart LR
+  Schedule[5分ごとの定期起動] --> Detector[hang-detector.sh]
+  Detector --> Runs[(実行管理データ)]
+  Detector --> Artifacts[成果物ログ]
+  Detector --> Alert[background異常の記録と通知]
+```
+
+- `RUNNING` を `ABORTED` へ変更しません
+- 実行プロセスを停止しません
+- 新しい実行依頼を作成しません
+
+### `background-rerun.sh`
+
+`background-rerun.sh` は、ジョブスケジューラのbackground側リラン専用ジョブから起動するスクリプトです。完了済みまたは明示中止済みのbackground slot実行または速報比較依頼を読み取り、新しい `run_id` を発行して再実行します。新しい実行の `parent_run_id` には直前のリラン元 `run_id` を設定します。foreground実行は、ジョブスケジューラから正規の `facade.sh` ジョブを再実行します。
+
+```mermaid
+flowchart LR
+  Operator[運用者] -->|元の run_id と対象role| Scheduler[ジョブスケジューラの<br/>background側リランジョブ]
+  Scheduler --> BackgroundRerun[background-rerun.sh]
+  BackgroundRerun --> Source[元の execution-spec.json]
+  BackgroundRerun --> NewRun[新しい run_id を発行]
+  NewRun --> BackgroundSlot[background slot runner]
+  NewRun --> Crosscheck[比較依頼]
+```
+
+- `RUNNING` の実行は受け付けません
+- 中止済み実行は、新しい `run_id` と `parent_run_id` で再実行します
+- 最新のjob mapではなく、元の `execution-spec.json` を使用します
+- 実行パラメータ、ホスト、実行ユーザー、スクリプト、作業ディレクトリは元の `execution-spec.json` から復元します
+
+| 事前検証 | `background-rerun.sh` の動作 |
+|---|---|
+| `--role` が `blue` または `green` で元のslot modeが `background` | 新しい `run_id` を発行してリラン |
+| `--role` が `blue` または `green` で元のslot modeが `foreground` または `off` | リランせず、呼び出し元の専用ジョブをエラー終了 |
+| `--role` が `rapid-crosscheck` | 比較依頼だけを新規作成 |
+| 未対応のroleまたは元の実行が見つからない | リランせず、呼び出し元の専用ジョブをエラー終了 |
+| 元の実行が `RUNNING` または中止未確認 | リランせず、呼び出し元の専用ジョブをエラー終了 |
+
+### `abort-blue.sh` と `abort-green.sh`
+
+`abort-blue.sh` と `abort-green.sh` は、運用者がRelayGateの配置ディレクトリから直接起動するbackground slotの中止スクリプトです。対象の実行プロセスを停止したことを対話確認した後、対象slotを `ABORTED` へ遷移させます。
+
+```text
+abort-blue.sh --run-id RUN_ID
+abort-green.sh --run-id RUN_ID
+```
+
+- 対象slotが `background` かつ `RUNNING` のときだけ中止できます
+- 対象slotが `foreground` または `off` の場合、状態を変更せずエラー終了します
+- 現在状態を表示後、`対象ジョブのプロセスは強制終了してありますか？ [yes/no]` と対話確認します
+- `yes` 以外の場合、状態を変更せず終了します
+- プロセス、Pod、SSH接続先の処理を停止しません
+
+### `abort-rapid-crosscheck.sh`
+
+`abort-rapid-crosscheck.sh` は、運用者がRelayGateの配置ディレクトリから直接起動する速報比較依頼の中止スクリプトです。プロセスを強制終了せず、対話確認で停止を確認した後に `rapid_crosscheck_request` を `ABORTED` へ遷移させます。
+
+```text
+abort-rapid-crosscheck.sh --run-id RUN_ID
+```
+
+- 現在状態を表示後、`対象ジョブのプロセスは強制終了してありますか？ [yes/no]` と対話確認します
+- `yes` 以外の場合、状態を変更せず終了します
+- 速報比較依頼が `RUNNING` でない場合、状態を変更せずエラー終了します
+- プロセス、Pod、SSH接続先の処理を停止しません
+
+### `abort-final-crosscheck.sh`
+
+`abort-final-crosscheck.sh` は、運用者がRelayGateの配置ディレクトリから直接起動する確報比較依頼の中止スクリプトです。プロセスを強制終了せず、対話確認で停止を確認した後に `final_crosscheck_request` を `ABORTED` へ遷移させます。
+
+```text
+abort-final-crosscheck.sh --run-id RUN_ID
+```
+
+- 現在状態を表示後、`対象ジョブのプロセスは強制終了してありますか？ [yes/no]` と対話確認します
+- `yes` 以外の場合、状態を変更せず終了します
+- 確報比較依頼が `RUNNING` でない場合、状態を変更せずエラー終了します
+- プロセス、Pod、SSH接続先の処理を停止しません
+
+
+## 設定契約
+
+```env
+# RelayGate Facade の実行モード。
+# foreground: 終了を待ち、ジョブスケジューラへ結果を返す。
+# background: 起動後に facade は戻る。
+# off:        起動しない。
+BLUE_MODE=foreground
+GREEN_MODE=background
+RAPID_CROSSCHECK_MODE=background
+
+BLUE_IMPL=legacy
+GREEN_IMPL=next
+BLUE_RUNNER=./blue-runner.sh
+GREEN_RUNNER=./green-runner.sh
+RAPID_CROSSCHECK_RUNNER=./rapid-crosscheck-runner.sh
+RAPID_CROSSCHECK_WORKER=./rapid-crosscheck-worker.sh
+```
+
+`RAPID_CROSSCHECK_MODE` は、facade が起動する速報クロスチェックの制御に限ります。確報クロスチェックは `final-crosscheck-runner.sh` をジョブスケジューラから直接起動するため、facade の設定には含めません。
+
+| `RAPID_CROSSCHECK_MODE` | 完了通知と速報管理DB |
+|---|---|
+| `foreground` / `background` | runner が完了通知を送信し、速報管理DBへ完了結果と比較依頼を書き込む |
+| `off` | 完了通知を送信せず、速報管理DBへ接続も書込みもしない |
+
+`$BLUE_RUNNER` と `$GREEN_RUNNER` は適用ごとに実体を割り当てます。`rapid-crosscheck-runner.sh` は dispatcherを持つ一回ごとの起動スクリプト、`rapid-crosscheck-worker.sh` はキューを継続的に処理する worker スクリプトです。既存の `crosscheck-runner.sh` は暫定の汎用実装であり、目標構成の `rapid-crosscheck-runner.sh` とは区別します。
+
+### ジョブ解決契約
+
+ジョブスケジューラに登録するジョブ定義は、実際に動かす処理のホスト名、実行ユーザー、スクリプトパスを持ちません。持つのはfacade.shの呼び出し定義だけです。ジョブスケジューラは `JOB_ID [PARAM...]` を渡し、slot runner が実装固有のジョブマップから実行先を解決します。
+
+| 解決する情報 | 所有者 |
+|---|---|
+| 実装スロットと runner | RelayGate の feature flag |
+| ホスト、実行ユーザー、スクリプト、作業ディレクトリ | 該当 slot の job map |
+| 固定引数、`hang_detect_limit_minutes` | 該当 slot の job map |
+| 比較対象と対象カタログ | クロスチェックの job map |
+
+- job map の固定引数の後ろに、ジョブスケジューラから渡された `PARAM...` を順序を変えずに連結します
+- job map を変更しても、実行済みまたはリラン対象の設定を上書きしません
+- 起動時に、解決済みのホスト、スクリプト、作業ディレクトリ、固定引数、ジョブスケジューラから渡された追加引数、マップ版、実装版、roleごとの `hang_detect_limit_minutes` を `facade/<run_id>/execution-spec.json` として保存します
+- 認証情報そのものは保存せず、認証情報の参照名だけを保存します
+
+| 運用モード | BLUE | GREEN | CROSSCHECK | ジョブスケジューラに返す結果 |
+|---|---|---|---|---|
+| 並行稼働 | foreground | background | background | blue |
+| 新実装の単独本番 | off | foreground | off | green |
+| 次世代実装との並行稼働 | background | foreground | background | green |
+
+## データモデル
+
+`run_id` は、1回の並行稼働を相関付ける識別子です。速報と確報の比較規約は、それぞれ別ドメインが所有します。
+
+```mermaid
+erDiagram
+  parallel_run ||--|| rapid_run : "correlates"
+  rapid_run ||--o| rapid_crosscheck_request : "requests"
+  rapid_crosscheck_request ||--o{ comparison_result : "produces"
+
+  parallel_run {
+    uuid run_id PK
+    uuid parent_run_id FK
+    string job_id
+    json parameters
+    string execution_spec_uri
+    string status
+    timestamp requested_at
+    timestamp completed_at
+  }
+
+  rapid_run {
+    uuid run_id PK, FK
+    string blue_status
+    string green_status
+    string blue_artifact_uri
+    string green_artifact_uri
+    timestamp blue_completed_at
+    timestamp green_completed_at
+  }
+
+  rapid_crosscheck_request {
+    uuid run_id PK, FK
+    string status
+    string worker_id
+    timestamp lease_until
+    timestamp requested_at
+    timestamp started_at
+    timestamp completed_at
+    int exit_code
+    text stdout
+    text stderr
+    string error_summary
+  }
+
+  comparison_result {
+    uuid comparison_result_id PK
+    uuid run_id FK
+    string comparison_type
+    string status
+    int difference_count
+    string report_uri
+    timestamp compared_at
+  }
+```
+
+確報側は、速報側の `rapid_run` や `rapid_crosscheck_request` を再利用しません。確報の起動と結果返却は、次の別モデルで管理します。
+
+```text
+final_crosscheck_request
+  ・final_crosscheck_id
+  ・business_date
+  ・対象カタログの版
+  ・status: REQUESTED / CLAIMED / RUNNING / SUCCEEDED / FAILED / ABORTED
+  ・worker_id
+  ・lease_until
+  ・requested_at / started_at / completed_at
+  ・exit_code
+  ・stdout
+  ・stderr
+  ・error_summary
+```
+
+`execution-spec.json` は、ジョブマップから解決した実行設定の正本です。速報クロスチェックを有効にする場合、管理DBの `parallel_run.execution_spec_uri` はこの成果物ファイルを参照します。`RAPID_CROSSCHECK_MODE=off` の場合は `parallel_run` を作成せず、slot実行とbackground側リランは成果物ファイルだけで動作します。
+
+複数回リランする場合、各新規実行の `parent_run_id` には直前にリラン元として指定した `run_id` を設定します。このため、最新の `run_id` から `parent_run_id` をたどると、元の実行まで数珠つなぎに追跡できます。
+
+## ハング検知とbackground側リラン
+
+`hang-detector.sh` は、5分ごとなどの定期ジョブとして実行します。background roleの成果物と速報比較依頼を走査し、background異常をアラートします。`RAPID_CROSSCHECK_MODE=off` の場合も、slot成果物だけで監視します。
+
+- 導入時は全ジョブの `hang_detect_limit_minutes` を60分に設定します
+- 通知後に正常終了した実行についても、警告した経過時間を記録して通常処理の警告傾向を確認します
+- 正常終了パターンの警告が出そろった時点で、ジョブごとに最後の警告の経過時間を基準として `hang_detect_limit_minutes` を調整します
+
+| 検知条件 | 判定 |
+|---|---|
+| `exitcode.txt` が存在し、終了コードが0 | 正常終了として対象外 |
+| `exitcode.txt` が存在し、終了コードが非0 | background実行エラーとして通知 |
+| `exitcode.txt` がなく、経過時間が `hang_detect_limit_minutes` 以内 | 実行中として継続監視 |
+| `exitcode.txt` がなく、経過時間が `hang_detect_limit_minutes` を超過 | ハング疑いとして通知 |
+| 速報比較依頼が `FAILED` または比較NG | 速報クロスチェック異常として通知 |
+
+- 監視は `monitor_status`、`hang_suspected_at`、`alerted_at` を記録して運用者へ通知します
+- 実行依頼の状態は `RUNNING` のまま保持し、監視ジョブは `ABORTED` へ遷移させません
+- `RUNNING` の自動再実行はしません
+
+`background-rerun.sh` は、ジョブスケジューラのbackground側リラン専用ジョブから、完了済みまたは明示中止済みのbackground slot実行または速報比較依頼を選択してリランします。
+
+```text
+background-rerun.sh --source-run-id RUN_ID --role blue
+background-rerun.sh --source-run-id RUN_ID --role green
+background-rerun.sh --source-run-id RUN_ID --role rapid-crosscheck
+```
+
+- blue / green のうち、元の実行でbackgroundだったslotだけが元の `execution-spec.json` から新しい `run_id` を発行して起動します
+- rapid-crosscheck は業務ジョブを再実行せず、比較依頼だけを新規作成します
+- `RUNNING` のrapid-crosscheckは、運用者が `ABORTED` に更新してから比較依頼を再作成します
+- foreground slot実行とfinal-crosscheckは `background-rerun.sh` を使用せず、ジョブスケジューラの正規ジョブを直接再実行します
+- `RUNNING` のbackground実行は、運用者が明示中止してからリランします
+- foregroundまたは `off` だったslotを指定した場合は、リランせず、呼び出し元の専用ジョブをエラー終了します
+
+## 配置図
+
+```mermaid
+flowchart TB
+  subgraph Orchestration[起動・制御]
+    Scheduler[ジョブスケジューラ]
+    Facade[facade.sh]
+    BlueRunner[blue runner<br/>$BLUE_RUNNER]
+    GreenRunner[green runner<br/>$GREEN_RUNNER]
+    HangDetector[hang-detector.sh]
+    AbortRapid[abort-rapid-crosscheck.sh]
+    AbortFinal[abort-final-crosscheck.sh]
+    BackgroundRerun[background-rerun.sh]
+  end
+
+  subgraph Validation[速報クロスチェック]
+    RapidRunner[rapid-crosscheck-runner.sh<br/>dispatcher]
+    RapidQueue[(rapid-crosscheck job queue)]
+    RapidWorker[rapid-crosscheck-worker.sh]
+  end
+
+  subgraph FinalValidation[確報クロスチェック]
+    FinalRunner[final-crosscheck-runner.sh]
+    FinalQueue[(final-crosscheck job queue)]
+    FinalWorker[final-crosscheck-worker.sh]
+  end
+
+  Scheduler --> Facade
+  Scheduler ----> FinalRunner
+  Facade --> BlueRunner
+  Facade --> GreenRunner
+  BlueRunner --> RapidRunner
+  GreenRunner --> RapidRunner
+  RapidRunner --> RapidQueue
+  RapidQueue --> RapidWorker
+  FinalRunner --> FinalQueue
+  FinalQueue --> FinalWorker
+  FinalWorker --> FinalQueue
+```
+
+実装固有のホスト配置は、適用文書で定義します。
+
+## シーケンス図
+
+```mermaid
+sequenceDiagram
+  participant Scheduler as ジョブスケジューラ
+  participant Facade as facade.sh
+  participant Blue as blue runner ($BLUE_RUNNER)
+  participant Green as green runner ($GREEN_RUNNER)
+  participant Rapid as rapid-crosscheck-runner.sh
+  participant Data as rapid-crosscheck job queue
+  participant Worker as rapid-crosscheck-worker.sh
+
+  Scheduler->>Facade: ジョブ起動
+  alt GREEN_MODE = background
+    Facade->>Green: background 起動
+  end
+  alt BLUE_MODE = background
+    Facade->>Blue: background 起動
+  end
+  alt BLUE_MODE = foreground
+    Facade->>Blue: foreground 起動
+    Blue-->>Facade: foreground 結果を待機
+  else GREEN_MODE = foreground
+    Facade->>Green: foreground 起動
+    Green-->>Facade: foreground 結果を待機
+  end
+  Facade-->>Scheduler: foreground の結果
+  Blue->>Rapid: blue-completed
+  Green->>Rapid: green-completed
+  Rapid->>Data: 完了結果を登録
+  Rapid->>Data: 両系成功なら比較依頼を一意に作成
+  Data->>Worker: 比較依頼
+  Worker->>Data: 比較結果
+```
+
+## 状態と運用
+
+速報と確報は、同じクロスチェック依頼ライフサイクルを持ちます。worker は終了時に `stdout`、`stderr`、`exitcode` を依頼へ保存します。`exitcode = 0` なら `SUCCEEDED`、非0または実行エラーなら `FAILED` とします。
+
+```mermaid
+stateDiagram-v2
+  [*] --> REQUESTED
+  REQUESTED --> CLAIMED: worker が取得
+  CLAIMED --> RUNNING: 比較開始
+  CLAIMED --> REQUESTED: lease 失効かつ未開始
+  RUNNING --> SUCCEEDED: exitcode が 0
+  RUNNING --> FAILED: exitcode が非 0 または実行エラー
+  RUNNING --> ABORTED: 停止確認後に中止
+  SUCCEEDED --> [*]
+  FAILED --> [*]
+  ABORTED --> [*]
+```
+
+比較ツールで実装した場合の終了コードと状態の対応例は、次のとおりです。
+
+| 比較ツールの結果 | 比較ツールのexitcode | クロスチェック依頼の状態 | ジョブスケジューラの確報ジョブへ返すexitcode |
+|---|---|---|---|
+| 比較OK | `0` | `SUCCEEDED` | `0` |
+| 比較NG | `3` | `FAILED` | `3` 警告終了 |
+| 実行エラー | `6` | `FAILED` | `6` エラー終了 |
+
+- 速報クロスチェックはbackground処理のため、上記のexitcodeを通常業務ジョブの結果としてジョブスケジューラへ返しません
+- 確報はworkerが保存したexitcodeをそのままジョブスケジューラへ中継します
+- 比較ツール以外の比較実装を使う場合、exitcodeの値とジョブスケジューラ側の判定はその実装の契約に従います
+
+- 比較差分の詳細は `comparison_result`、`stdout`、`stderr` に保持します。クロスチェック依頼の状態はworkerの `exitcode` に従います
+- 速報クロスチェックは、原因調査に使用します
+- 日次全量比較は、リリース判断の正本とします
+- 確報クロスチェックは、`final-crosscheck-runner.sh` が終端状態まで pollingした後、保存済みの `stdout`、`stderr`、`exitcode` だけをジョブスケジューラへ返します
+- 速報クロスチェックが `RUNNING` のとき、監視は状態を変更せずハング疑いとして通知します
+- 停止確認後に、運用者が対象の速報または確報比較依頼を `ABORTED` に更新します
+
+## 拡張点と受入条件
+
+### 拡張点
+
+- blue / green の runner を差し替えて、異なる世代の実装を並行稼働できます
+- `RAPID_CROSSCHECK_MODE=off` で、facade から起動する速報クロスチェックを停止できます
+- 比較定義は、`job_id` ごとに差し替えられます
+
+### 受入条件
+
+- ジョブスケジューラの同じジョブ定義で、並行稼働と単独本番を設定だけで切り替えられます
+- ジョブスケジューラは、foreground の標準出力、標準エラー、終了コードを受け取れます
+- ジョブスケジューラは、確報クロスチェックでも `final-crosscheck-runner.sh` から標準出力、標準エラー、終了コードを受け取れます
+- blue / green の完了順にかかわらず、比較依頼は一件だけ作られます
+- 速報クロスチェックの失敗は、foreground のジョブスケジューラへの応答を変更しません
+- 確報クロスチェックの比較結果は、stdout、stderr、exitcode 以外の連携データとしてジョブスケジューラへ返さない

@@ -1,0 +1,100 @@
+schema_version: "1.0"
+artifact_type: "implementation_spec"
+skill_type: "product"
+artifact_id: "product-impl-onprem"
+title: "ジョブ実行中継基盤 オンプレミス実装仕様"
+status: "draft"
+generated_at: "2026-08-17T15:10:23"
+source_refs:
+  - "product-mapping-onprem"
+decision_refs:
+  - "product-decision-onprem-only"
+  - "product-decision-storage-approach"
+inputs_ref:
+  - "product-workload-model"
+  - "product-mapping-onprem"
+
+vendor: "onprem"
+canonical_ref: "product-job-relay-canonical"
+mapping_ref: "product-mapping-onprem"
+
+components:
+  - id: "comp-facade"
+    name: "facade実行コンポーネント"
+    canonical_element_id: "product.workload_type"
+    vendor_service: "systemd管理下のシェルスクリプト実行"
+    configuration:
+      entrypoint: "CLI（JOB_ID・追加引数を標準入力/引数で受け取る）"
+      response_channel: "標準出力・標準エラー・終了コードのみ"
+      exclusion_rule: "BLUE_MODEとGREEN_MODEの同時foreground起動を起動前検証で拒否"
+    dependencies:
+      - "comp-datastore"
+    iac_module: "infra/product/onprem/facade"
+    validation_rules:
+      - rule: "起動前にfeature flag組合せを検証する"
+        type: "static"
+        description: "同時foreground禁止制約の静的検証"
+
+  - id: "comp-worker"
+    name: "バックエンドワーカーコンポーネント"
+    canonical_element_id: "product.scheduled_execution"
+    vendor_service: "cron / systemdタイマー + シェルスクリプト（RDB lease/claim利用）"
+    configuration:
+      hang_detector_interval: "分オーダー（hang_detect_limit_minutesに応じ設定）"
+      daily_batch_schedule: "日次1回、8時間以内完了目標"
+      lease_mechanism: "PostgreSQLの行ロック（SELECT ... FOR UPDATE SKIP LOCKED相当）によるclaim"
+    dependencies:
+      - "comp-datastore"
+    iac_module: "infra/product/onprem/worker"
+    validation_rules:
+      - rule: "lease失効かつ未着手の場合はREQUESTEDへ差し戻す"
+        type: "runtime"
+        description: "重複実行防止ロジックの実行時検証"
+
+  - id: "comp-datastore-rdb"
+    name: "RDB（ジョブキュー兼管理DB）"
+    canonical_element_id: "product.persistence"
+    vendor_service: "PostgreSQL（プライマリ + ウォームスタンバイ、ストリーミングレプリケーション）"
+    configuration:
+      ha_mode: "ストリーミングレプリケーション（ウォームスタンバイ、手動昇格）"
+      backup: "pg_basebackup + WALアーカイブ、フル+差分（日次）、7世代保持"
+      tables: "execution-spec / runner実行結果 / 速報比較依頼 / 速報比較結果 / 確報比較依頼 / ハング検知記録"
+    dependencies: []
+    iac_module: "infra/product/onprem/datastore"
+    validation_rules:
+      - rule: "run_id/parent_run_idを主キー・相関キーとして一貫利用する"
+        type: "static"
+        description: "実行系譜追跡の整合性検証"
+
+  - id: "comp-datastore-fs"
+    name: "実行ログファイルストレージ"
+    canonical_element_id: "product.persistence"
+    vendor_service: "ローカルファイルシステム（RAID5構成）"
+    configuration:
+      layout: "run_id単位のディレクトリに started-at.txt/stdout.log/stderr.log/exitcode.txt を配置"
+      backup: "フル+差分バックアップ（日次）、7世代保持"
+      redundancy: "RAID5（パリティ）"
+    dependencies:
+      - "comp-datastore-rdb"
+    iac_module: "infra/product/onprem/datastore"
+    validation_rules:
+      - rule: "RDBに記録されたパス参照とファイル実体の整合性を定期検証する"
+        type: "runtime"
+        description: "参照切れ検知"
+
+  - id: "comp-observability"
+    name: "オブザーバビリティ基盤"
+    canonical_element_id: "product.observability_needs"
+    vendor_service: "JSON構造化ログ（stdout/stderr）+ logrotate + 閉域内ログ集約（既存の共有プラットフォームがあれば連携）"
+    configuration:
+      log_format: "JSON構造化。run_id/timestamp/serviceを必須フィールドとする"
+      retention: "6ヶ月"
+      rotation: "サイズ+時間ベース併用"
+    dependencies:
+      - "comp-facade"
+      - "comp-worker"
+    iac_module: ""
+    validation_rules:
+      - rule: "全ティアのログにrun_idを含める"
+        type: "static"
+        description: "横断検索・障害調査の実効性確保"

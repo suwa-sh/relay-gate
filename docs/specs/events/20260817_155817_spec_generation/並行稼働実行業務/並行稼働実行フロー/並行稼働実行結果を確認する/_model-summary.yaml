@@ -1,0 +1,45 @@
+uc: "並行稼働実行結果を確認する"
+business: "並行稼働実行業務"
+buc: "並行稼働実行フロー"
+
+bounded_context_id: "BC-001"
+
+models:
+  - name: "ConcurrentRunResultRequest"
+    tier: "tier-facade"
+    layer: "presentation"
+    type: "request-dto"
+    rdra_info: "Runner実行結果（started-at.txt/stdout.log/stderr.log/exitcode.txt）"
+  - name: "GetConcurrentRunResultQuery"
+    tier: "tier-facade"
+    layer: "usecase"
+    type: "query"
+    rdra_info: "Runner実行結果（started-at.txt/stdout.log/stderr.log/exitcode.txt）"
+  - name: "RunnerExecutionResult"
+    tier: "tier-facade"
+    layer: "domain"
+    type: "entity"
+    rdra_info: "Runner実行結果（started-at.txt/stdout.log/stderr.log/exitcode.txt）"
+  - name: "RunnerResultRecord"
+    tier: "tier-facade"
+    layer: "gateway"
+    type: "record"
+    rdra_info: "Runner実行結果（started-at.txt/stdout.log/stderr.log/exitcode.txt）"
+
+tables:
+  - name: "runner_results"
+    rdra_info: "Runner実行結果（started-at.txt/stdout.log/stderr.log/exitcode.txt）"
+    operations:
+      - type: "SELECT"
+        columns: []
+        where: "run_id = :run_id OR job_id = :job_id（execution-spec.json経由の結合参照）"
+    indexes_needed:
+      - columns: ["run_id"]
+        reason: "run_id指定での単一実行結果取得"
+        access_pattern: "relaygate concurrent-run result --run-id"
+      - columns: ["job_id"]
+        reason: "job_id指定でのblue/green両slot実行結果一括取得"
+        access_pattern: "relaygate concurrent-run result --job-id"
+
+kvs: []
+object_storage: []

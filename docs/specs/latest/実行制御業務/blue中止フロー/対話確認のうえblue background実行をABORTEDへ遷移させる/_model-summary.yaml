@@ -1,0 +1,73 @@
+uc: "対話確認のうえblue background実行をABORTEDへ遷移させる"
+business: "実行制御業務"
+buc: "blue中止フロー"
+
+bounded_context_id: "BC-001"
+aggregate_id: "AG-002"
+
+models:
+  - name: "ConfirmAbortBlueRequest"
+    tier: "tier-facade"
+    layer: "presentation"
+    type: "request-dto"
+    rdra_info: "Runner実行結果（started-at.txt/stdout.log/stderr.log/exitcode.txt）"
+  - name: "ConfirmAbortBlueCommand"
+    tier: "tier-facade"
+    layer: "usecase"
+    type: "command"
+    rdra_info: "Runner実行結果（started-at.txt/stdout.log/stderr.log/exitcode.txt）"
+  - name: "RunnerExecutionResult"
+    tier: "tier-facade"
+    layer: "domain"
+    type: "entity"
+    rdra_info: "Runner実行結果（started-at.txt/stdout.log/stderr.log/exitcode.txt）"
+  - name: "RunnerResultRecord"
+    tier: "tier-facade"
+    layer: "gateway"
+    type: "record"
+    rdra_info: "Runner実行結果（started-at.txt/stdout.log/stderr.log/exitcode.txt）"
+  - name: "AuditLogRecord"
+    tier: "tier-facade"
+    layer: "gateway"
+    type: "record"
+    rdra_info: "Runner実行結果（started-at.txt/stdout.log/stderr.log/exitcode.txt）"
+
+tables:
+  - name: "runner_results"
+    rdra_info: "Runner実行結果（started-at.txt/stdout.log/stderr.log/exitcode.txt）"
+    operations:
+      - type: "SELECT"
+        columns: []
+        where: "run_id = :run_id AND slot_type = 'blue' AND role_type = 'background'"
+      - type: "UPDATE"
+        columns:
+          - name: "status"
+            value: "'ABORTED'"
+        where: "run_id = :run_id AND slot_type = 'blue' AND role_type = 'background'"
+    indexes_needed:
+      - columns: ["run_id", "slot_type", "role_type"]
+        reason: "ABORTED遷移対象の一意特定"
+        access_pattern: "relaygate abort blue confirm --run-id"
+  - name: "audit_logs"
+    rdra_info: "該当なし（RDRAに明示定義なし。CTP-005監査ログ要件・CTP-004実行系譜トレーサビリティから導出。列定義は_cross-cutting/datastore/rdb-schema.yamlのaudit_logsに正規化済み）"
+    operations:
+      - type: "INSERT"
+        columns:
+          - name: "log_id"
+            value: "新規発行するUUID"
+          - name: "operator"
+            value: "RELAYGATE_OPERATOR環境変数の値"
+          - name: "operated_at"
+            value: "操作日時"
+          - name: "run_id"
+            value: "対象run_id"
+          - name: "action"
+            value: "'abort_confirm'固定"
+        where: ""
+    indexes_needed:
+      - columns: ["run_id"]
+        reason: "run_id単位の監査ログ追跡（実行系譜トレーサビリティ CTP-004）"
+        access_pattern: "run_id指定による監査ログ一覧参照"
+
+kvs: []
+object_storage: []

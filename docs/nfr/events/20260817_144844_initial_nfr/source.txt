@@ -1,0 +1,11 @@
+RDRA モデルからの初期 NFR グレード構築
+
+trigger_event: rdra:20260817_142258_initial_build
+
+distillery:dist-pipeline から dist-quality-attributes (Step2) が dialogue_policy: auto_adopt で起動され、
+docs/rdra/latest/ の RDRA モデルと以下のプロジェクト背景を入力に、IPA 非機能要求グレード（初期構築）を推論した。
+
+プロジェクト背景:
+- RelayGate は、既存実装と新実装をジョブスケジューラの同一ジョブ定義から並行稼働させ、段階的に切り替えるためのシェルスクリプト中心の実行基盤である。
+- デプロイ先はエアーギャップ環境のオンプレミス Linux サーバ。インターネット接続なし・クラウドサービス利用なしを前提とする。
+- 利用者はエンタープライズの運用者・保守担当（少人数）で、Web UI を持たない CLI/バッチ運用が中心である。

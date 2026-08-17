@@ -1,0 +1,554 @@
+version: '1.0'
+event_id: 20260817_153235_design_system
+created_at: '2026-08-17T15:32:35+09:00'
+source: 'dist-design-system: RDRA/NFR/Arch フィードバックからの初期デザインシステム構築'
+trigger_event:
+  - rdra:20260817_142258_initial_build
+  - arch:20260817_152155_arch_infra_feedback
+brand:
+  name: RelayGate Ops
+  colors:
+    primary:
+      hex: '#475569'
+      name: slate-600
+    secondary:
+      hex: '#D97706'
+      name: amber-600
+  typography:
+    sans: Noto Sans JP, Inter, system-ui, sans-serif
+    mono: JetBrains Mono, ui-monospace, SFMono-Regular, Menlo, monospace
+    scale:
+      xs: 12px
+      sm: 14px
+      base: 16px
+      lg: 18px
+      xl: 20px
+  voice:
+    tone: 簡潔・断定的・運用者向け。装飾語を排し、状態と次のアクションを明示する
+    principles:
+      - エラー/警告メッセージは原因と次アクションを1文ずつで示す
+      - 対話確認（対象・影響範囲・取消不可の明示）は省略しない
+      - 個人的な言い回しや絵文字を使わない
+  logo:
+    variants:
+      - name: full
+        path: assets/logo-full.svg
+      - name: icon
+        path: assets/logo-icon.svg
+      - name: stacked
+        path: assets/logo-stacked.svg
+  icons:
+    style: outline-minimal (stroke-based, 24x24)
+    source_dir: assets/icons
+portals:
+  - id: ops
+    name: 運用ポータル（CLI出力／将来運用ダッシュボード）
+    actor: 運用者・移行運用責任者・障害調査担当者・リリース判断者（社内・全て提供者/受益者の内部運用ロール）
+    primary_color: '#475569'
+    screen_count: 23
+tokens:
+  primitive:
+    colors:
+      slate-900: '#0F172A'
+      slate-700: '#334155'
+      slate-600: '#475569'
+      slate-400: '#94A3B8'
+      slate-200: '#E2E8F0'
+      slate-100: '#F1F5F9'
+      slate-50: '#F8FAFC'
+      white: '#FFFFFF'
+      black: '#000000'
+      green-600: '#16A34A'
+      green-100: '#DCFCE7'
+      red-600: '#DC2626'
+      red-100: '#FEE2E2'
+      amber-600: '#D97706'
+      amber-100: '#FEF3C7'
+      blue-600: '#2563EB'
+      blue-100: '#DBEAFE'
+      violet-600: '#7C3AED'
+      violet-100: '#EDE9FE'
+    spacing:
+      space-1: 4px
+      space-2: 8px
+      space-3: 12px
+      space-4: 16px
+      space-6: 24px
+      space-8: 32px
+    radius:
+      radius-none: 0px
+      radius-sm: 2px
+      radius-md: 4px
+    shadow:
+      shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.08)
+      shadow-md: 0 2px 8px rgba(15, 23, 42, 0.12)
+    font_size:
+      fs-xs: 12px
+      fs-sm: 14px
+      fs-base: 16px
+      fs-lg: 18px
+    font_family:
+      ff-sans: Noto Sans JP, Inter, system-ui, sans-serif
+      ff-mono: JetBrains Mono, ui-monospace, SFMono-Regular, Menlo, monospace
+    font_weight:
+      fw-regular: '400'
+      fw-medium: '500'
+      fw-bold: '700'
+    duration:
+      duration-fast: 120ms
+      duration-base: 200ms
+  semantic:
+    background: var(--color-white)
+    foreground: var(--color-slate-900)
+    border: var(--color-slate-200)
+    success: var(--color-green-600)
+    warning: var(--color-amber-600)
+    destructive: var(--color-red-600)
+    info: var(--color-blue-600)
+    rating: var(--color-violet-600)
+  component:
+    terminal-panel:
+      background: var(--color-slate-900)
+      foreground: var(--color-slate-100)
+      font: var(--font-family-ff-mono)
+      padding: var(--space-4)
+      radius: var(--radius-sm)
+    status-badge-running:
+      background: var(--color-blue-100)
+      foreground: var(--color-blue-600)
+    status-badge-succeeded:
+      background: var(--color-green-100)
+      foreground: var(--color-green-600)
+    status-badge-failed:
+      background: var(--color-red-100)
+      foreground: var(--color-red-600)
+    status-badge-aborted:
+      background: var(--color-slate-200)
+      foreground: var(--color-slate-700)
+    status-badge-requested:
+      background: var(--color-amber-100)
+      foreground: var(--color-amber-600)
+    status-badge-claimed:
+      background: var(--color-violet-100)
+      foreground: var(--color-violet-600)
+    confirm-prompt:
+      background: var(--color-slate-50)
+      border: var(--color-slate-200)
+      destructive-border: var(--color-red-600)
+    banner-info:
+      background: var(--color-blue-100)
+      foreground: var(--color-blue-600)
+    banner-warning:
+      background: var(--color-amber-100)
+      foreground: var(--color-amber-600)
+    banner-error:
+      background: var(--color-red-100)
+      foreground: var(--color-red-600)
+    banner-success:
+      background: var(--color-green-100)
+      foreground: var(--color-green-600)
+  dark_overrides:
+    semantic:
+      background: var(--color-slate-900)
+      foreground: var(--color-slate-100)
+      border: var(--color-slate-700)
+    component:
+      status-badge-succeeded:
+        background: rgba(22, 163, 74, 0.16)
+        foreground: '#4ADE80'
+      status-badge-failed:
+        background: rgba(220, 38, 38, 0.16)
+        foreground: '#F87171'
+      status-badge-requested:
+        background: rgba(217, 119, 6, 0.16)
+        foreground: '#FBBF24'
+      status-badge-claimed:
+        background: rgba(124, 58, 237, 0.16)
+        foreground: '#A78BFA'
+      status-badge-running:
+        background: rgba(37, 99, 235, 0.16)
+        foreground: '#60A5FA'
+      status-badge-aborted:
+        background: rgba(148, 163, 184, 0.16)
+        foreground: '#CBD5E1'
+components:
+  ui:
+    - name: TerminalPanel
+      variants:
+        - default
+        - compact
+      sizes:
+        - sm
+        - md
+        - lg
+    - name: StatusBadge
+      variants:
+        - running
+        - succeeded
+        - failed
+        - aborted
+        - requested
+        - claimed
+      sizes:
+        - sm
+        - md
+    - name: ConfirmPrompt
+      variants:
+        - default
+        - destructive
+      sizes:
+        - md
+    - name: Banner
+      variants:
+        - info
+        - success
+        - warning
+        - error
+      sizes:
+        - md
+    - name: ResultTable
+      variants:
+        - default
+        - compact
+      sizes:
+        - md
+    - name: Button
+      variants:
+        - primary
+        - secondary
+        - destructive
+      sizes:
+        - sm
+        - md
+  domain:
+    - name: ExecutionSpecCard
+      description: execution-spec.json（run_id/JOB_ID/host/実行ユーザー/スクリプト/固定引数・追加引数/マップ版・実装版/hang_detect_limit_minutes）を表示するカード。認証情報は参照名のみ表示し実値は表示しない
+      screens:
+        - 起動slot選択画面
+        - リラン実行画面
+      props:
+        - run_id
+        - job_id
+        - host
+        - script
+        - mapVersion
+        - implVersion
+        - hangDetectLimitMinutes
+        - credentialRef
+      variants:
+        - default
+      states: []
+    - name: RunnerResultPanel
+      description: Runner実行結果（started-at/stdout/stderr/exitcode）を表示するターミナル調パネル。foreground役割の応答はstdout/stderr/exitcodeのみに限定表示する
+      screens:
+        - 並行稼働実行結果確認画面
+        - 実行結果応答管理画面
+        - 確報結果応答画面
+      props:
+        - runId
+        - slot
+        - role
+        - startedAt
+        - stdout
+        - stderr
+        - exitCode
+      variants:
+        - foreground
+        - background
+      states:
+        - RUNNING
+        - SUCCEEDED
+        - FAILED
+        - ABORTED
+    - name: CrossCheckRequestRow
+      description: 速報比較依頼・確報比較依頼の一覧行。状態バッジ・lease期限・worker識別子を表示する
+      screens:
+        - 速報クロスチェック結果確認画面
+        - 速報比較依頼作成画面
+        - 確報クロスチェック結果確認画面
+        - リラン対象選定画面
+      props:
+        - runId
+        - jobIdOrTargetDate
+        - state
+        - leaseExpiry
+        - workerId
+      variants:
+        - rapid
+        - final
+      states:
+        - REQUESTED
+        - CLAIMED
+        - RUNNING
+        - SUCCEEDED
+        - FAILED
+        - ABORTED
+    - name: HangDetectionNotice
+      description: ハング検知記録（異常検知種別・検知日時・しきい値・対象slot・通知先）を表示する通知バナー／通知メール本文の共通表現
+      screens:
+        - ハング異常通知確認画面
+        - background実行異常検知画面
+        - 異常通知発信画面
+      props:
+        - runId
+        - anomalyType
+        - detectedAt
+        - thresholdMinutes
+        - slot
+        - notifyTo
+      variants:
+        - banner
+        - email
+      states: []
+    - name: AbortConfirmDialog
+      description: blue/green background実行・速報/確報比較依頼の中止に対する対話確認。対象run_id・影響範囲・取消不可であることを明示し、y/nの二択のみ許可する
+      screens:
+        - blue background中止確認画面
+        - green background中止確認画面
+        - 速報比較中止確認画面
+        - 確報比較中止確認画面
+      props:
+        - runId
+        - target
+        - impactSummary
+      variants:
+        - default
+      states: []
+  common:
+    - name: Icon
+      description: assets/icons 配下のSVGをname指定で描画する共通アイコンコンポーネント
+      path: src/components/ui/Icon.tsx
+screens:
+  - name: 並行稼働実行結果確認画面
+    portal: ops
+    route: /cli/concurrent-run/result
+    components:
+      - RunnerResultPanel
+      - StatusBadge
+    uc: 並行稼働実行結果を確認する
+  - name: 起動slot選択画面
+    portal: ops
+    route: /cli/concurrent-run/select-slot
+    components:
+      - ExecutionSpecCard
+      - Banner
+    uc: feature flag設定に基づきslotを選択して起動する
+  - name: background role起動画面
+    portal: ops
+    route: /cli/concurrent-run/start-background
+    components:
+      - ExecutionSpecCard
+      - RunnerResultPanel
+    uc: background roleを起動する
+  - name: 実行結果応答管理画面
+    portal: ops
+    route: /cli/concurrent-run/respond-foreground
+    components:
+      - RunnerResultPanel
+    uc: foreground roleの標準出力・標準エラー・終了コードを応答する
+  - name: 速報クロスチェック結果確認画面
+    portal: ops
+    route: /cli/rapid-crosscheck/result
+    components:
+      - CrossCheckRequestRow
+      - StatusBadge
+    uc: 速報クロスチェック結果を確認する
+  - name: 速報比較依頼作成画面
+    portal: ops
+    route: /cli/rapid-crosscheck/create
+    components:
+      - CrossCheckRequestRow
+      - Banner
+    uc: blue/green runnerの完了通知を受けて速報比較依頼を作成する
+  - name: 速報クロスチェック実行画面
+    portal: ops
+    route: /cli/rapid-crosscheck/run
+    components:
+      - RunnerResultPanel
+      - StatusBadge
+    uc: 速報クロスチェックを実行し差分を検知する
+  - name: 確報クロスチェック結果確認画面
+    portal: ops
+    route: /cli/final-crosscheck/result
+    components:
+      - CrossCheckRequestRow
+      - StatusBadge
+    uc: 確報クロスチェック結果を確認する
+  - name: 確報クロスチェック実行画面
+    portal: ops
+    route: /cli/final-crosscheck/run
+    components:
+      - CrossCheckRequestRow
+      - RunnerResultPanel
+    uc: 全テーブル・全ファイルを対象に確報クロスチェックを実行する
+  - name: 確報結果応答画面
+    portal: ops
+    route: /cli/final-crosscheck/respond
+    components:
+      - RunnerResultPanel
+    uc: 確報クロスチェック結果をstdout/stderr/exitcodeで応答する
+  - name: ハング異常通知確認画面
+    portal: ops
+    route: /cli/hang-watch/notice
+    components:
+      - HangDetectionNotice
+    uc: ハング疑い・異常の通知を確認する
+  - name: background実行異常検知画面
+    portal: ops
+    route: /cli/hang-watch/detect
+    components:
+      - HangDetectionNotice
+      - RunnerResultPanel
+    uc: background実行の未完了・非0終了・速報比較異常を定期検知する
+  - name: 異常通知発信画面
+    portal: ops
+    route: /cli/hang-watch/notify
+    components:
+      - HangDetectionNotice
+    variants:
+      - banner
+      - email
+    uc: ハング疑い・異常を運用者へ通知する
+  - name: blue background中止依頼画面
+    portal: ops
+    route: /cli/abort/blue/request
+    components:
+      - RunnerResultPanel
+      - Button
+    uc: blue background実行の中止を依頼する
+  - name: blue background中止確認画面
+    portal: ops
+    route: /cli/abort/blue/confirm
+    components:
+      - AbortConfirmDialog
+    uc: 対話確認のうえblue background実行をABORTEDへ遷移させる
+  - name: green background中止依頼画面
+    portal: ops
+    route: /cli/abort/green/request
+    components:
+      - RunnerResultPanel
+      - Button
+    uc: green background実行の中止を依頼する
+  - name: green background中止確認画面
+    portal: ops
+    route: /cli/abort/green/confirm
+    components:
+      - AbortConfirmDialog
+    uc: 対話確認のうえgreen background実行をABORTEDへ遷移させる
+  - name: 速報比較中止依頼画面
+    portal: ops
+    route: /cli/abort/rapid-crosscheck/request
+    components:
+      - CrossCheckRequestRow
+      - Button
+    uc: RUNNING中の速報比較依頼の中止を依頼する
+  - name: 速報比較中止確認画面
+    portal: ops
+    route: /cli/abort/rapid-crosscheck/confirm
+    components:
+      - AbortConfirmDialog
+    uc: 対話確認のうえ速報比較依頼をABORTEDへ遷移させる
+  - name: 確報比較中止依頼画面
+    portal: ops
+    route: /cli/abort/final-crosscheck/request
+    components:
+      - CrossCheckRequestRow
+      - Button
+    uc: RUNNING中の確報比較依頼の中止を依頼する
+  - name: 確報比較中止確認画面
+    portal: ops
+    route: /cli/abort/final-crosscheck/confirm
+    components:
+      - AbortConfirmDialog
+    uc: 対話確認のうえ確報比較依頼をABORTEDへ遷移させる
+  - name: リラン対象選定画面
+    portal: ops
+    route: /cli/rerun/select
+    components:
+      - CrossCheckRequestRow
+      - RunnerResultPanel
+    uc: 再実行対象のbackground実行・速報比較依頼を選択する
+  - name: リラン実行画面
+    portal: ops
+    route: /cli/rerun/run
+    components:
+      - ExecutionSpecCard
+      - RunnerResultPanel
+    uc: execution-spec.jsonの実行設定を保ったまま再実行する
+states:
+  - model: background slot実行状態
+    entries:
+      - state: RUNNING
+        label: 実行中
+        color: blue
+      - state: SUCCEEDED
+        label: 正常終了
+        color: green
+      - state: FAILED
+        label: 異常終了
+        color: red
+      - state: ABORTED
+        label: 中止済み
+        color: gray
+  - model: 速報比較依頼状態
+    entries:
+      - state: REQUESTED
+        label: 依頼中
+        color: amber
+      - state: CLAIMED
+        label: 取得済み
+        color: violet
+      - state: RUNNING
+        label: 実行中
+        color: blue
+      - state: SUCCEEDED
+        label: 正常終了
+        color: green
+      - state: FAILED
+        label: 異常終了
+        color: red
+      - state: ABORTED
+        label: 中止済み
+        color: gray
+  - model: 確報比較依頼状態
+    entries:
+      - state: REQUESTED
+        label: 依頼中
+        color: amber
+      - state: CLAIMED
+        label: 取得済み
+        color: violet
+      - state: RUNNING
+        label: 実行中
+        color: blue
+      - state: SUCCEEDED
+        label: 正常終了
+        color: green
+      - state: FAILED
+        label: 異常終了
+        color: red
+      - state: ABORTED
+        label: 中止済み
+        color: gray
+nfr_decisions:
+  - nfr: 可用性 A.1.1.1（24時間無停止運用）
+    decision: StatusBadge/RunnerResultPanelは常時いずれかの状態を明示し、未定義状態（空白）を許容しない。ハング検知通知は24時間いつでも発生しうる前提でBannerのみで完結する表現とする
+  - nfr: '運用・保守性（障害時運用: ハング検知→運用者→移行運用責任者のエスカレーション）'
+    decision: HangDetectionNoticeはbanner/emailの2variantを持ち、CLI通知と将来のメール通知で同一の情報構造（run_id/検知種別/検知日時/しきい値/対象slot/通知先）を共有する
+  - nfr: セキュリティ（認証情報は参照名のみ保存し実値は保存しない）
+    decision: ExecutionSpecCardのcredentialRefは参照名のみを表示するpropとし、実値表示用のpropを設けない
+  - nfr: 運用性（応答はstdout/stderr/exitcodeのみに限定）
+    decision: RunnerResultPanelのforeground variantは比較結果・差分件数・レポートURIなどの詳細を表示せず、stdout/stderr/exitCodeのみをレンダリングする
+  - nfr: 運用・保守性（対話確認による明示的なABORTED遷移）
+    decision: AbortConfirmDialogは対象run_id・影響範囲を明示したうえでy/nの二択のみを許可し、誤操作防止のためdestructiveスタイル（赤系ボーダー）を強制する
+storybook:
+  framework: Next.js 15 + TypeScript + Tailwind CSS + Storybook 10 (CSF3)
+  addons:
+    - '@storybook/addon-docs'
+    - '@storybook/addon-a11y'
+  categories:
+    ui: UI/*
+    domain: Domain/*
+    screens: Screens/*
+    tokens: Foundations/Design Tokens
+    brand: Foundations/Brand

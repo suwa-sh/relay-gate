@@ -1,0 +1,14 @@
+# docs/pipeline/pipeline-config.yaml
+schema_version: distillery.pipeline-config/v1
+
+# Step 別モデル指定。null = 未指定（セッション既定モデルを使う）。
+step_models:
+  step0h: null
+  step1: null
+  step2: null
+  step3: null
+  step4a: null
+  step4b: "sonnet"
+  step5: null
+  step6: null
+  step6a: "sonnet"

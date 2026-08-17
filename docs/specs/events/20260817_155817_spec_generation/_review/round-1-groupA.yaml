@@ -1,0 +1,30 @@
+round: 1
+findings:
+  - id: "A-001"
+    viewpoint: "状態遷移モデル整合性"
+    severity: "major"
+    target: "並行稼働実行業務/並行稼働実行フロー/feature flag設定に基づきslotを選択して起動する/spec.md"
+    claim: "本UCの「状態遷移一覧」が background slot実行状態 の (未作成)→RUNNING 遷移を自らのトリガーとして記載しているが、この遷移の所有UCは RDRA BUC.tsv 上「background roleを起動する」であり、かつ同UCの spec.md も同一の (未作成)→RUNNING 遷移を自らのトリガーとして重複記載している。1つの状態遷移が2つのUCで二重にオーナーシップを主張しており、実装者が実際にどちらがrunner_execution_resultsへstatus=RUNNINGを書き込むのか誤認する。"
+    evidence: "docs/rdra/latest/BUC.tsv 9行目: 「background roleを起動する」の説明に『foreground roleの実行に先立ちbackground roleを起動し、background slot実行状態をRUNNINGへ遷移させる』と明記。docs/rdra/latest/状態.tsv: 『実行管理 background slot実行状態 (空) RUNNING (トリガーUC欄空欄) background roleの実行を開始する』。一方 feature flag設定に基づきslotを選択して起動する/spec.md 96行目の状態遷移一覧は『(未作成)→RUNNING トリガー: feature flag設定に基づきslotを選択して起動する』と記載し、かつ同UCの_model-summary.yaml/データフローには runner_execution_results へのINSERTが一切存在しない（execution_specsへのINSERTのみ）。実際にrunner_execution_resultsへstatus=RUNNINGでINSERTしているのは background roleを起動する/tier-worker.md のみ。"
+    suggested_fix: "「feature flag設定に基づきslotを選択して起動する」の状態遷移一覧から (未作成)→RUNNING の遷移主張を削除するか、『本UCではRUNNING遷移は発生せず、後続UC「background roleを起動する」への前提条件（execution-spec.json確定）を提供するのみ』と明記して二重主張を解消する。"
+
+  - id: "A-002"
+    viewpoint: "中止系UC 監査ログのビジネスルール整合性"
+    severity: "major"
+    target: "実行制御業務/blue中止フロー/blue background実行の中止を依頼する/tier-facade.md, 実行制御業務/green中止フロー/green background実行の中止を依頼する/tier-facade.md"
+    claim: "『中止依頼を発行する』UC（依頼のみ・状態遷移なし）のtier-facade.md ビジネスルール節に『中止依頼操作は、操作者・操作日時・対象run_idを含む監査ログとして記録する』と記載されているが、対応する audit_logs テーブルへのINSERT・データモデル変更が spec.md / tier-facade.md / _model-summary.yaml のいずれにも存在しない。監査ログの実体は後続の『対話確認のうえ...ABORTEDへ遷移させる』UC側にのみ実装されている。CTP-005の適用範囲（_inputs-digest.md）とも矛盾する。"
+    evidence: "_inputs-digest.md CTP-005: 『対話確認を経た中止操作（ABORTEDへの遷移）・リラン操作は、操作者・操作日時・対象run_idを含む監査ログとして記録』——対象は明示的に『対話確認を経たABORTEDへの遷移』のみ。対して blue background実行の中止を依頼する/tier-facade.md 46行目『中止依頼操作は、操作者・操作日時・対象run_idを含む監査ログとして記録する』というビジネスルールがあるが、同ファイルの『データモデル変更』節はrunner_execution_resultsの参照のみでaudit_logsへの言及なし。_model-summary.yamlのtablesもrunner_execution_resultsのSELECTのみでaudit_logsテーブルは存在しない。同一パターンが green background実行の中止を依頼する/tier-facade.md 46行目にも重複して存在する。"
+    suggested_fix: "『blue/green background実行の中止を依頼する』UCのビジネスルールから『中止依頼操作は...監査ログとして記録する』の一文を削除し、監査ログはCTP-005どおり『対話確認のうえABORTEDへ遷移させる』UCの責務であることを明記する。もし依頼時点でも監査ログを残す設計にするなら、audit_logsへのINSERT処理をデータフロー・tier-facade.md データモデル変更・_model-summary.yamlに追加する。"
+
+  - id: "A-003"
+    viewpoint: "spec.md内 関連RDRAモデルの整合性"
+    severity: "minor"
+    target: "並行稼働実行業務/並行稼働実行フロー/foreground roleの標準出力・標準エラー・終了コードを応答する/spec.md"
+    claim: "『状態遷移一覧』表では background slot実行状態 を適用対象として明記（遷移は発生しないが参照する、と記載）している一方、直後の『関連 RDRA モデル』表の「状態」欄は『なし』となっており、同一spec.md内で状態モデルの関連有無の記載が矛盾している。"
+    evidence: "spec.md 85行目: 状態遷移一覧に『background slot実行状態 | - | - | foreground roleの標準出力・標準エラー・終了コードを応答する | foreground役割のRunner実行結果が確定していること | 状態遷移は発生しない（参照・応答のみ）| tier-facade』と明記。95行目: 関連RDRAモデル表『状態 | なし | -』。"
+    suggested_fix: "関連RDRAモデル表の状態欄を『background slot実行状態（参照のみ、遷移なし）』に修正し、状態遷移一覧の記載と整合させる。"
+
+resolved:
+  - {id: "A-001", resolution: "fixed"}
+  - {id: "A-002", resolution: "fixed"}
+  - {id: "A-003", resolution: "fixed"}

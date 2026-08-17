@@ -1,0 +1,43 @@
+uc: "RUNNING中の確報比較依頼の中止を依頼する"
+business: "実行制御業務"
+buc: "確報比較中止フロー"
+
+bounded_context_id: "BC-003"
+aggregate_id: "AG-004"
+
+models:
+  - name: "AbortFinalCrosscheckRequest CLI"
+    tier: "tier-worker"
+    layer: "presentation"
+    type: "request"
+    rdra_info: "確報比較依頼"
+  - name: "RequestAbortFinalCrosscheckCommand"
+    tier: "tier-worker"
+    layer: "usecase"
+    type: "command"
+    rdra_info: "確報比較依頼"
+  - name: "確報比較依頼"
+    tier: "tier-worker"
+    layer: "domain"
+    type: "entity"
+    rdra_info: "確報比較依頼"
+  - name: "FinalCrosscheckRequestRecord"
+    tier: "tier-worker"
+    layer: "gateway"
+    type: "record"
+    rdra_info: "確報比較依頼"
+
+tables:
+  - name: "final_crosscheck_requests"
+    rdra_info: "確報比較依頼"
+    operations:
+      - type: "SELECT"
+        columns: []
+        where: "run_id = ?"
+    indexes_needed:
+      - columns: ["run_id"]
+        reason: "run_id単位での中止依頼対象の一意特定"
+        access_pattern: "run_id指定によるポイントルックアップ"
+
+kvs: []
+object_storage: []

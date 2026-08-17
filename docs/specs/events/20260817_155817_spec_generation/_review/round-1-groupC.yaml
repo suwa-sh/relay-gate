@@ -1,0 +1,33 @@
+round: 1
+findings:
+  - id: "C-001"
+    viewpoint: "関連RDRAモデル整合性（aggregate_id誤り）"
+    severity: "major"
+    target: "実行制御業務/background側リランフロー/execution-spec.jsonの実行設定を保ったまま再実行する/spec.md, tier-facade.md, _model-summary.yaml"
+    claim: "execution-spec.json（RDRA情報.tsv E-001）を、arch-design.yamlのaggregate_hypothesesでは AG-001 が正しい紐付け（root_entity_id: E-001）であるにもかかわらず、spec.md/tier-facade.md/_model-summary.yaml のいずれも一貫して execution-spec.json を AG-002 として記載している。AG-002 の root_entity_id は E-002（Runner実行結果）であり、facade/再実行対象のbackground実行・速報比較依頼を選択する UC が使う『background実行(Runner実行結果)=AG-002』の意味と混同されている。"
+    evidence: "docs/arch/latest/arch-design.yaml 175-194行目: aggregate_hypotheses に `id: AG-001, bounded_context_id: BC-001, root_entity_id: E-001`（source_model: 情報: execution-spec.json）、`id: AG-002, bounded_context_id: BC-001, root_entity_id: E-002`（source_model: 情報: Runner実行結果, 状態: background slot実行状態）と明記。対して spec.md 5行目・53行目、tier-facade.md 5行目、_model-summary.yaml 5,9行目はいずれも『execution-spec.json（E-001, AG-002）』『execution-spec.json(BC-001/AG-002)』としてAG-002を割り当てている。同じフォルダ内『再実行対象のbackground実行・速報比較依頼を選択する』UCではAG-002をRunner実行結果（background実行）の意味で正しく使っており、同一UC群内でAG-002の指す対象が矛盾している。"
+    suggested_fix: "『execution-spec.jsonの実行設定を保ったまま再実行する』のspec.md/tier-facade.md/_model-summary.yamlにおける execution-spec.json のaggregate参照を AG-002 から AG-001 に修正する。修正対象: spec.md（概要文中の記載は無いが「facade domain」データフロー表の『execution-spec.json（AG-002）』の1行）、tier-facade.md変更概要1行目、_model-summary.yamlのコメント2行および aggregate_id フィールド（現状 primary aggregate として AG-002 を採用しているが、execution-spec.json主体ならAG-001が正）。"
+
+  - id: "C-002"
+    viewpoint: "audit_logsテーブル新規追加の正当性（CTP-005適用範囲）"
+    severity: "major"
+    target: "実行制御業務/速報比較中止フロー/RUNNING中の速報比較依頼の中止を依頼する/_model-summary.yaml, tier-worker.md, spec.md 及び 実行制御業務/確報比較中止フロー/RUNNING中の確報比較依頼の中止を依頼する/_model-summary.yaml, tier-worker.md, spec.md"
+    claim: "『RUNNING中の速報比較依頼の中止を依頼する』『RUNNING中の確報比較依頼の中止を依頼する』の両UCは状態遷移を一切発生させない読み取り専用の中止意思表示UCであるにもかかわらず、audit_logsテーブル（RDRA情報.tsvに存在しない新規テーブル）へのINSERTを実装し、その正当化として『CTP-005監査ログ要件から導出』と記載している。しかしCTP-005の説明文は明示的に『対話確認を経た中止操作（ABORTEDへの遷移）・リラン操作』のみを対象範囲としており、ABORTEDへの状態遷移を伴わない『依頼』段階への適用はarch-design.yaml上の根拠がない。"
+    evidence: "docs/arch/latest/arch-design.yaml 394-399行目 CTP-005: 『対話確認を経た中止操作（ABORTEDへの遷移）・リラン操作は、操作者・操作日時・対象run_idを含む監査ログとして記録し改ざん検知を行う』（source_model: BUC「対話確認のうえ...ABORTEDへ遷移させる」、NFR E.7.1.1）。docs/rdra/latest/情報.tsvにはaudit_logs相当の情報は存在しない。一方、RUNNING中の速報比較依頼の中止を依頼する/_model-summary.yaml（tables.audit_logs.rdra_info=『該当なし（RDRAに明示定義なし。CTP-005監査ログ要件から導出）』）およびtier-worker.mdビジネスルール『操作者・操作日時・対象run_idを含む監査ログとして記録する（CTP-005準拠）』は、状態遷移を発生させないUC（本UCの状態遷移一覧は『-→-、本UCでは状態遷移を発生させない』）にまで同ルールを適用しており、CTP-005が明示する適用範囲（ABORTEDへの遷移・リラン操作）を超えている。RUNNING中の確報比較依頼の中止を依頼するも同一パターン。"
+    suggested_fix: "(a) CTP-005の適用範囲を『依頼』段階にも広げる場合はarch-design.yaml CTP-005のdescription/reasonに明示的に追記し、根拠を明確化したうえでspec側に反映する。(b) 適用範囲を広げない場合は『RUNNING中の速報比較依頼の中止を依頼する』『RUNNING中の確報比較依頼の中止を依頼する』からaudit_logsへのINSERT・関連ビジネスルール・データモデル変更を削除し、監査ログは対話確認を経てABORTEDへ遷移させるUC（速報比較中止フロー/確報比較中止フロー双方の後段UC）のみに限定する。いずれの対応を取るかをdocs/todo.mdへappendTodoし、アーキテクトの承認を得ることを推奨する。"
+
+  - id: "C-003"
+    viewpoint: "関連RDRAモデルの網羅性（フォーマット一貫性）"
+    severity: "minor"
+    target: "実行制御業務/background側リランフロー/execution-spec.jsonの実行設定を保ったまま再実行する/spec.md"
+    claim: "『関連 RDRA モデル』表に『条件』カテゴリの行が存在しない。同じレビュー対象グループの他5 UC（RUNNING中の速報比較依頼の中止を依頼する、対話確認のうえ速報比較依頼をABORTEDへ遷移させる、RUNNING中の確報比較依頼の中止を依頼する、対話確認のうえ確報比較依頼をABORTEDへ遷移させる、再実行対象のbackground実行・速報比較依頼を選択する）は該当が無い場合でも『条件 | 該当なし | -』の行を明記しており、本UCのみカテゴリ行自体が欠落している。"
+    evidence: "対象spec.mdの関連RDRAモデル表は 業務/BUC/アクター/情報x3/状態x2/外部システムx2 の9行のみで『条件』行が無い。他5ファイルはいずれも『条件 | 該当なし | -』の行を含む（例: RUNNING中の速報比較依頼の中止を依頼する/spec.md の該当節）。"
+    suggested_fix: "『関連 RDRA モデル』表に『条件 | 該当なし | -』の行を追加し、他UCとフォーマットを揃える。"
+
+resolved:
+  - id: "C-001"
+    fix: "『execution-spec.jsonの実行設定を保ったまま再実行する』のspec.md（facade domainデータフロー表 1行）、tier-facade.md（変更概要1行）、_model-summary.yaml（コメント1行 + aggregate_idフィールド）における execution-spec.json 関連の aggregate_id 参照を AG-002 から AG-001 に修正した。同UC内のRunner実行結果（background実行）に関するAG-002表記（worker domain行、gateway/audit記述等）は変更していない。兄弟UC「再実行対象のbackground実行・速報比較依頼を選択する」を確認したところ、AG-002=Runner実行結果（background実行）の対応は元々正しく、修正不要だった。"
+  - id: "C-002"
+    fix: "『RUNNING中の速報比較依頼の中止を依頼する』『RUNNING中の確報比較依頼の中止を依頼する』の両UCについて、audit_logsテーブルへのINSERT（データフロー図・データモデル変換表・処理フローシーケンス・状態遷移一覧の事後処理・E2E Gherkinシナリオ）、tier-worker.mdのaudit_logsデータモデル変更セクション・関連ビジネスルール、_model-summary.yamlのaudit_logsテーブル定義、_cli-summary.yamlのRELAYGATE_OPERATOR環境変数およびaudit_logs関連説明を削除した。監査ログの実装は対応する『対話確認のうえ...ABORTEDへ遷移させる』側のUCにのみ残し、変更していない。"
+  - id: "C-003"
+    fix: "『execution-spec.jsonの実行設定を保ったまま再実行する/spec.md』の『関連 RDRA モデル』表に、他5UCと同じフォーマットで『条件 | 該当なし | -』の行を状態行の直後・外部システム行の直前に追加した。"

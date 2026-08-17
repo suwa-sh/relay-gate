@@ -1,0 +1,315 @@
+event_id: 20260817_180235_spec_stories
+trigger_event: design:20260817_153235_design_system
+created_at: '2026-08-17T18:02:35+09:00'
+source: 'dist-spec-stories: 全23 UC のページ Story 生成 + 共通レイアウトシェル(OpsPortalShell)/Logo コンポーネント実装'
+components:
+  ui:
+  - name: Logo
+    description: brand.logo.variants (full/icon/stacked) の SVG を variant 指定で描画するロゴコンポーネント
+    path: src/components/ui/Logo.tsx
+  common:
+  - name: OpsPortalShell
+    description: 運用ポータル(ops)の共通レイアウトシェル。header(Logo+運用モードバッジ)/sidebar(5セクションナビ)/main/footer(バージョン表示)で構成。headless
+      propでCLI単体運用時のヘッドレス表示に切替可能
+    path: src/components/common/OpsPortalShell.tsx
+screens:
+- name: 並行稼働実行結果確認画面
+  portal: ops
+  route: /cli/concurrent-run/result
+  components:
+  - RunnerResultPanel
+  - StatusBadge
+  uc: 並行稼働実行結果を確認する
+  story: src/stories/Pages/運用ポータル/並行稼働実行結果確認画面.stories.tsx
+  variants:
+  - BlueGreenComparisonDashboard
+  - BlueGreenDivergedDashboard
+  - NotFoundDashboard
+  - BlueGreenComparisonHeadless
+- name: 起動slot選択画面
+  portal: ops
+  route: /cli/concurrent-run/select-slot
+  components:
+  - ExecutionSpecCard
+  - Banner
+  uc: feature flag設定に基づきslotを選択して起動する
+  story: src/stories/Pages/運用ポータル/起動slot選択画面.stories.tsx
+  variants:
+  - ConcurrentModeDashboard
+  - GreenSoloModeDashboard
+  - BothForegroundRejectedDashboard
+  - JobMapUnresolvedDashboard
+  - ConcurrentModeHeadless
+- name: background role起動画面
+  portal: ops
+  route: /cli/concurrent-run/start-background
+  components:
+  - ExecutionSpecCard
+  - RunnerResultPanel
+  uc: background roleを起動する
+  story: src/stories/Pages/運用ポータル/background role起動画面.stories.tsx
+  variants:
+  - StartedDashboard
+  - StartFailedDashboard
+  - StartedHeadless
+- name: 実行結果応答管理画面
+  portal: ops
+  route: /cli/concurrent-run/respond-foreground
+  components:
+  - RunnerResultPanel
+  uc: foreground roleの標準出力・標準エラー・終了コードを応答する
+  story: src/stories/Pages/運用ポータル/実行結果応答管理画面.stories.tsx
+  variants:
+  - SucceededDashboard
+  - FailedDashboard
+  - UnresolvedDashboard
+  - SucceededHeadless
+- name: 速報クロスチェック結果確認画面
+  portal: ops
+  route: /cli/rapid-crosscheck/result
+  components:
+  - CrossCheckRequestRow
+  - StatusBadge
+  uc: 速報クロスチェック結果を確認する
+  story: src/stories/Pages/運用ポータル/速報クロスチェック結果確認画面.stories.tsx
+  variants:
+  - OkDashboard
+  - NgDashboard
+  - NotFoundDashboard
+  - ValidationErrorDashboard
+  - NgHeadless
+- name: 速報比較依頼作成画面
+  portal: ops
+  route: /cli/rapid-crosscheck/create
+  components:
+  - CrossCheckRequestRow
+  - Banner
+  uc: blue/green runnerの完了通知を受けて速報比較依頼を作成する
+  story: src/stories/Pages/運用ポータル/速報比較依頼作成画面.stories.tsx
+  variants:
+  - CreatedDashboard
+  - NoneCreatedDashboard
+  - ModeOffDashboard
+  - FailedDashboard
+  - CreatedHeadless
+- name: 速報クロスチェック実行画面
+  portal: ops
+  route: /cli/rapid-crosscheck/run
+  components:
+  - RunnerResultPanel
+  - StatusBadge
+  uc: 速報クロスチェックを実行し差分を検知する
+  story: src/stories/Pages/運用ポータル/速報クロスチェック実行画面.stories.tsx
+  variants:
+  - NoDiffDashboard
+  - DiffDetectedDashboard
+  - FailedDashboard
+  - NoTargetsDashboard
+  - DiffDetectedHeadless
+- name: 確報クロスチェック結果確認画面
+  portal: ops
+  route: /cli/final-crosscheck/result
+  components:
+  - CrossCheckRequestRow
+  - StatusBadge
+  uc: 確報クロスチェック結果を確認する
+  story: src/stories/Pages/運用ポータル/確報クロスチェック結果確認画面.stories.tsx
+  variants:
+  - SucceededDashboard
+  - FailedDashboard
+  - NotFoundDashboard
+  - ValidationErrorDashboard
+  - SucceededHeadless
+- name: 確報クロスチェック実行画面
+  portal: ops
+  route: /cli/final-crosscheck/run
+  components:
+  - CrossCheckRequestRow
+  - RunnerResultPanel
+  uc: 全テーブル・全ファイルを対象に確報クロスチェックを実行する
+  story: src/stories/Pages/運用ポータル/確報クロスチェック実行画面.stories.tsx
+  variants:
+  - SucceededDashboard
+  - FailedDashboard
+  - NoTargetsDashboard
+  - SucceededHeadless
+- name: 確報結果応答画面
+  portal: ops
+  route: /cli/final-crosscheck/respond
+  components:
+  - RunnerResultPanel
+  uc: 確報クロスチェック結果をstdout/stderr/exitcodeで応答する
+  story: src/stories/Pages/運用ポータル/確報結果応答画面.stories.tsx
+  variants:
+  - SucceededDashboard
+  - FailedDashboard
+  - SucceededHeadless
+  - UndeterminedHeadless
+- name: ハング異常通知確認画面
+  portal: ops
+  route: /cli/hang-watch/notice
+  components:
+  - HangDetectionNotice
+  uc: ハング疑い・異常の通知を確認する
+  story: src/stories/Pages/運用ポータル/ハング異常通知確認画面.stories.tsx
+  variants:
+  - ListDashboard
+  - FilteredByRunIdDashboard
+  - EmptyDashboard
+  - ValidationErrorDashboard
+  - ListHeadless
+- name: background実行異常検知画面
+  portal: ops
+  route: /cli/hang-watch/detect
+  components:
+  - HangDetectionNotice
+  - RunnerResultPanel
+  uc: background実行の未完了・非0終了・速報比較異常を定期検知する
+  story: src/stories/Pages/運用ポータル/background実行異常検知画面.stories.tsx
+  variants:
+  - DetectedDashboard
+  - NoDetectionDashboard
+  - FailedDashboard
+  - DetectedHeadless
+- name: 異常通知発信画面
+  portal: ops
+  route: /cli/hang-watch/notify
+  components:
+  - HangDetectionNotice
+  uc: ハング疑い・異常を運用者へ通知する
+  story: src/stories/Pages/運用ポータル/異常通知発信画面.stories.tsx
+  variants:
+  - BannerDashboard
+  - EmailDashboard
+  - NoneToNotifyDashboard
+  - FailedDashboard
+  - BannerHeadless
+  - EmailHeadless
+- name: blue background中止依頼画面
+  portal: ops
+  route: /cli/abort/blue/request
+  components:
+  - RunnerResultPanel
+  - Button
+  uc: blue background実行の中止を依頼する
+  story: src/stories/Pages/運用ポータル/blue background中止依頼画面.stories.tsx
+  variants:
+  - Dashboard
+  - Accepted
+  - ValidationError
+  - Headless
+- name: blue background中止確認画面
+  portal: ops
+  route: /cli/abort/blue/confirm
+  components:
+  - AbortConfirmDialog
+  uc: 対話確認のうえblue background実行をABORTEDへ遷移させる
+  story: src/stories/Pages/運用ポータル/blue background中止確認画面.stories.tsx
+  variants:
+  - Dashboard
+  - Success
+  - Error
+  - Headless
+- name: green background中止依頼画面
+  portal: ops
+  route: /cli/abort/green/request
+  components:
+  - RunnerResultPanel
+  - Button
+  uc: green background実行の中止を依頼する
+  story: src/stories/Pages/運用ポータル/green background中止依頼画面.stories.tsx
+  variants:
+  - Dashboard
+  - Accepted
+  - ValidationError
+  - Headless
+- name: green background中止確認画面
+  portal: ops
+  route: /cli/abort/green/confirm
+  components:
+  - AbortConfirmDialog
+  uc: 対話確認のうえgreen background実行をABORTEDへ遷移させる
+  story: src/stories/Pages/運用ポータル/green background中止確認画面.stories.tsx
+  variants:
+  - Dashboard
+  - Success
+  - Error
+  - Headless
+- name: 速報比較中止依頼画面
+  portal: ops
+  route: /cli/abort/rapid-crosscheck/request
+  components:
+  - CrossCheckRequestRow
+  - Button
+  uc: RUNNING中の速報比較依頼の中止を依頼する
+  story: src/stories/Pages/運用ポータル/速報比較中止依頼画面.stories.tsx
+  variants:
+  - Dashboard
+  - Accepted
+  - ValidationError
+  - Headless
+- name: 速報比較中止確認画面
+  portal: ops
+  route: /cli/abort/rapid-crosscheck/confirm
+  components:
+  - AbortConfirmDialog
+  uc: 対話確認のうえ速報比較依頼をABORTEDへ遷移させる
+  story: src/stories/Pages/運用ポータル/速報比較中止確認画面.stories.tsx
+  variants:
+  - Dashboard
+  - Success
+  - Error
+  - Headless
+- name: 確報比較中止依頼画面
+  portal: ops
+  route: /cli/abort/final-crosscheck/request
+  components:
+  - CrossCheckRequestRow
+  - Button
+  uc: RUNNING中の確報比較依頼の中止を依頼する
+  story: src/stories/Pages/運用ポータル/確報比較中止依頼画面.stories.tsx
+  variants:
+  - Dashboard
+  - Accepted
+  - ValidationError
+  - Headless
+- name: 確報比較中止確認画面
+  portal: ops
+  route: /cli/abort/final-crosscheck/confirm
+  components:
+  - AbortConfirmDialog
+  uc: 対話確認のうえ確報比較依頼をABORTEDへ遷移させる
+  story: src/stories/Pages/運用ポータル/確報比較中止確認画面.stories.tsx
+  variants:
+  - Dashboard
+  - Success
+  - Error
+  - Headless
+- name: リラン対象選定画面
+  portal: ops
+  route: /cli/rerun/select
+  components:
+  - CrossCheckRequestRow
+  - RunnerResultPanel
+  uc: 再実行対象のbackground実行・速報比較依頼を選択する
+  story: src/stories/Pages/運用ポータル/リラン対象選定画面.stories.tsx
+  variants:
+  - BackgroundCandidatesDashboard
+  - RapidCrosscheckCandidatesDashboard
+  - EmptyDashboard
+  - BackgroundCandidatesHeadless
+- name: リラン実行画面
+  portal: ops
+  route: /cli/rerun/run
+  components:
+  - ExecutionSpecCard
+  - RunnerResultPanel
+  uc: execution-spec.jsonの実行設定を保ったまま再実行する
+  story: src/stories/Pages/運用ポータル/リラン実行画面.stories.tsx
+  variants:
+  - AcceptedDashboard
+  - RerunFailedDashboard
+  - AcceptedHeadless
+storybook:
+  categories:
+    screens: Pages/*

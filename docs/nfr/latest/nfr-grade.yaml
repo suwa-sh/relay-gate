@@ -1,0 +1,1162 @@
+version: "1.0"
+event_id: "20260817_144844_initial_nfr"
+created_at: "2026-08-17T14:48:44"
+source: "RDRAモデルからの初期NFRグレード構築"
+trigger_event: "rdra:20260817_142258_initial_build"
+
+model_system:
+  type: "model2"
+  reason: "本システムはジョブスケジューラ経由で実行される本番バッチジョブの実行結果を中継・比較検証する基盤であり、リリース判断者による確報クロスチェック結果が本番リリース判断の正本として利用される（BUC「確報クロスチェックフロー」）。停止・誤動作時は本番バッチジョブの実行継続性やリリース判断に影響するため、IPAカタログの「企業基幹業務」に相当するモデルシステム2（社会的影響が限定的なシステム）と推定した。ただし利用者は社内の少人数運用者（アクター4種、全て社内）に限定され外部一般ユーザーは存在しないためモデルシステム1寄りの側面もあり、confidenceはmediumとする。"
+
+categories:
+  - id: "A"
+    name: "可用性"
+    subcategories:
+      - id: "A.1"
+        name: "継続性"
+        items:
+          - id: "A.1.1"
+            name: "運用スケジュール"
+            important: true
+            metrics:
+              - id: "A.1.1.1"
+                name: "運用時間（通常）"
+                important: true
+                grade: 5
+                grade_description: "24時間無停止"
+                reason: "ジョブスケジューラから随時起動されうる基盤であり、Step0確認(自動採用)でも24/7運用と確認したため"
+                source_model: "BUC「並行稼働実行フロー」「ハング監視フロー」/ Step0確認(自動採用)"
+                confidence: "high"
+              - id: "A.1.1.2"
+                name: "運用時間（特定日）"
+                important: false
+                grade: 0
+                grade_description: "規定なし"
+                reason: "モデルシステム2のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+              - id: "A.1.1.3"
+                name: "計画停止の有無"
+                important: true
+                grade: 3
+                grade_description: "不定期に計画停止あり（事前通知3日前）"
+                reason: "モデルシステム2のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+          - id: "A.1.2"
+            name: "サービス切替時間"
+            important: true
+            metrics:
+              - id: "A.1.2.1"
+                name: "サービス切替時間"
+                important: true
+                grade: 3
+                grade_description: "60分未満（コールドスタンバイ）"
+                reason: "モデルシステム2のデフォルト値を適用（エアギャップオンプレのためクラウド補正なし）"
+                source_model: "プロジェクト背景: オンプレミス"
+                confidence: "default"
+      - id: "A.2"
+        name: "耐障害性"
+        items:
+          - id: "A.2.1"
+            name: "サーバ"
+            important: false
+            metrics:
+              - id: "A.2.1.1"
+                name: "サーバ内の冗長化"
+                important: true
+                grade: 3
+                grade_description: "N+1冗長（手動切替）"
+                reason: "モデルシステム2のデフォルト値を適用（エアギャップオンプレのためクラウド補正なし）"
+                source_model: "プロジェクト背景: オンプレミスLinuxサーバ"
+                confidence: "default"
+          - id: "A.2.2"
+            name: "端末"
+            important: false
+            metrics:
+              - id: "A.2.2.1"
+                name: "端末の冗長化"
+                important: false
+                grade: 1
+                grade_description: "冗長化なし"
+                reason: "モデルシステム2のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+          - id: "A.2.3"
+            name: "ネットワーク機器"
+            important: false
+            metrics:
+              - id: "A.2.3.1"
+                name: "ネットワーク機器の冗長化"
+                important: true
+                grade: 2
+                grade_description: "一部機器の冗長化"
+                reason: "モデルシステム2のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+          - id: "A.2.4"
+            name: "ネットワーク回線"
+            important: false
+            metrics:
+              - id: "A.2.4.1"
+                name: "回線の冗長化"
+                important: false
+                grade: 2
+                grade_description: "一部回線の冗長化"
+                reason: "モデルシステム2のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+          - id: "A.2.5"
+            name: "ストレージ"
+            important: false
+            metrics:
+              - id: "A.2.5.1"
+                name: "ストレージの冗長化"
+                important: true
+                grade: 2
+                grade_description: "RAID5（パリティ）"
+                reason: "モデルシステム2のデフォルト値を適用（エアギャップオンプレのためクラウド補正なし）"
+                source_model: "プロジェクト背景: オンプレミス"
+                confidence: "default"
+          - id: "A.2.6"
+            name: "建物・電源"
+            important: false
+            metrics:
+              - id: "A.2.6.1"
+                name: "建物の耐震・免震"
+                important: false
+                grade: 2
+                grade_description: "耐震構造"
+                reason: "モデルシステム2のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+              - id: "A.2.6.2"
+                name: "電源の冗長化"
+                important: true
+                grade: 2
+                grade_description: "UPS（無停電電源装置）"
+                reason: "モデルシステム2のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+      - id: "A.3"
+        name: "災害対策"
+        items:
+          - id: "A.3.1"
+            name: "災害対策"
+            important: false
+            metrics:
+              - id: "A.3.1.1"
+                name: "災害対策の範囲"
+                important: true
+                grade: 2
+                grade_description: "コールドスタンバイ拠点を用意"
+                reason: "Step0確認(自動採用)でDRはRPO/RTO 24h許容と仮置きしたため、モデルシステム2のデフォルト水準を採用"
+                source_model: "Step0確認(自動採用): 運用時間帯・DR要否"
+                confidence: "medium"
+              - id: "A.3.1.2"
+                name: "業務継続の要否"
+                important: true
+                grade: 1
+                grade_description: "業務継続要（24時間以内に復旧）"
+                reason: "Step0確認(自動採用)でDRはRPO/RTO 24h許容と仮置きしたため"
+                source_model: "Step0確認(自動採用): 運用時間帯・DR要否"
+                confidence: "medium"
+      - id: "A.4"
+        name: "回復性"
+        items:
+          - id: "A.4.1"
+            name: "目標復旧水準"
+            important: true
+            metrics:
+              - id: "A.4.1.1"
+                name: "RPO（目標復旧地点）"
+                important: true
+                grade: 1
+                grade_description: "前日の最終バックアップまで"
+                reason: "Step0確認(自動採用): DRはRPO/RTO 24h許容と仮置きしたため"
+                source_model: "Step0確認(自動採用): 運用時間帯・DR要否"
+                confidence: "medium"
+              - id: "A.4.1.2"
+                name: "RTO（目標復旧時間）"
+                important: true
+                grade: 1
+                grade_description: "1営業日以内"
+                reason: "Step0確認(自動採用): DRはRPO/RTO 24h許容と仮置きしたため"
+                source_model: "Step0確認(自動採用): 運用時間帯・DR要否"
+                confidence: "medium"
+              - id: "A.4.1.3"
+                name: "RLO（目標復旧レベル）"
+                important: false
+                grade: 2
+                grade_description: "平常時の80%の処理能力"
+                reason: "モデルシステム2のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+  - id: "B"
+    name: "性能・拡張性"
+    subcategories:
+      - id: "B.1"
+        name: "業務処理量"
+        items:
+          - id: "B.1.1"
+            name: "通常時の業務量"
+            important: false
+            metrics:
+              - id: "B.1.1.1"
+                name: "同時アクセス数"
+                important: true
+                grade: 1
+                grade_description: "〜100"
+                reason: "利用者はエンタープライズの少人数運用者に限定され、Web UIを持たないCLI/バッチ運用のため一般的な同時アクセス概念が当てはまりにくく、保守的にLv1と推定"
+                source_model: "アクター.tsv: 運用者/移行運用責任者/障害調査担当者/リリース判断者（社内4種）"
+                confidence: "low"
+              - id: "B.1.1.2"
+                name: "データ量"
+                important: false
+                grade: 1
+                grade_description: "〜100GB相当（実行結果ログ・比較結果等の総量）"
+                reason: "実行結果はstdout/stderr/exitcode等の軽量テキストが中心であり総量は限定的と推定"
+                source_model: "情報「Runner実行結果」「速報比較結果」「確報比較依頼」"
+                confidence: "medium"
+              - id: "B.1.1.3"
+                name: "オンラインリクエスト件数"
+                important: true
+                grade: 2
+                grade_description: "〜10,000件/日相当（ジョブ起動件数の代替指標）"
+                reason: "ジョブスケジューラからのジョブ起動頻度がRDRAから具体化できないため保守的に推定"
+                source_model: "外部システム「ジョブスケジューラ」"
+                confidence: "low"
+              - id: "B.1.1.4"
+                name: "バッチ処理件数"
+                important: false
+                grade: 2
+                grade_description: "日次確報クロスチェックで全テーブル・全ファイルを対象とする中規模バッチ"
+                reason: "確報クロスチェックが全テーブル・全ファイルを対象とする日次バッチであるため"
+                source_model: "BUC「確報クロスチェックフロー」"
+                confidence: "low"
+          - id: "B.1.2"
+            name: "ピーク時の業務量"
+            important: false
+            metrics:
+              - id: "B.1.2.1"
+                name: "ピーク時同時アクセス数"
+                important: true
+                grade: 2
+                grade_description: "通常時の2倍"
+                reason: "モデルシステム2のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+              - id: "B.1.2.2"
+                name: "ピーク時データ量"
+                important: false
+                grade: 1
+                grade_description: "通常時と同程度（バッチ集中時間帯を除き急増要因なし）"
+                reason: "モデルシステム2のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+      - id: "B.2"
+        name: "性能目標値"
+        items:
+          - id: "B.2.1"
+            name: "オンライン"
+            important: false
+            metrics:
+              - id: "B.2.1.1"
+                name: "レスポンスタイム"
+                important: true
+                grade: 2
+                grade_description: "10秒以内"
+                reason: "Web UIを持たないCLI起動のため一般的なオンラインレスポンス基準の直接適用は難しく、保守的に推定"
+                source_model: "プロジェクト背景: Web UIを持たないCLI/バッチ運用"
+                confidence: "low"
+              - id: "B.2.1.2"
+                name: "スループット"
+                important: true
+                grade: 1
+                grade_description: "〜10 TPS"
+                reason: "CLI/バッチ中心のジョブ実行のため一般的なオンラインTPS概念は該当しにくく、保守的に推定"
+                source_model: "プロジェクト背景: CLI/バッチ運用中心"
+                confidence: "low"
+              - id: "B.2.1.3"
+                name: "ターンアラウンドタイム"
+                important: false
+                grade: 1
+                grade_description: "数分以内（slot起動からforeground結果応答まで）"
+                reason: "モデルシステム2のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+          - id: "B.2.2"
+            name: "バッチ"
+            important: false
+            metrics:
+              - id: "B.2.2.1"
+                name: "バッチ処理時間"
+                important: true
+                grade: 2
+                grade_description: "8時間以内"
+                reason: "確報クロスチェックが日次全量バッチとして実行されるため"
+                source_model: "BUC「確報クロスチェックフロー」日次バッチ"
+                confidence: "medium"
+              - id: "B.2.2.2"
+                name: "バッチ処理量"
+                important: false
+                grade: 2
+                grade_description: "全テーブル・全ファイルを対象とする日次確報バッチ"
+                reason: "確報クロスチェックが全テーブル・全ファイルを対象とするため"
+                source_model: "BUC「確報比較を実行する」"
+                confidence: "medium"
+      - id: "B.3"
+        name: "リソース拡張性"
+        items:
+          - id: "B.3.1"
+            name: "CPU"
+            important: false
+            metrics:
+              - id: "B.3.1.1"
+                name: "CPU拡張性"
+                important: true
+                grade: 1
+                grade_description: "スケールアップ（CPU追加・交換）"
+                reason: "エアギャップオンプレの物理/VMサーバであり、クラウドのような自動スケールアウトは想定しにくいため"
+                source_model: "プロジェクト背景: エアギャップ環境のオンプレミスLinuxサーバ"
+                confidence: "medium"
+          - id: "B.3.2"
+            name: "メモリ"
+            important: false
+            metrics:
+              - id: "B.3.2.1"
+                name: "メモリ拡張性"
+                important: false
+                grade: 1
+                grade_description: "スケールアップ（メモリ追加）"
+                reason: "エアギャップオンプレの物理/VMサーバであるため"
+                source_model: "プロジェクト背景: オンプレミス"
+                confidence: "medium"
+          - id: "B.3.3"
+            name: "ストレージ"
+            important: false
+            metrics:
+              - id: "B.3.3.1"
+                name: "ストレージ拡張性"
+                important: false
+                grade: 1
+                grade_description: "ディスク追加によるスケールアップ"
+                reason: "エアギャップオンプレの物理/VMサーバであるため"
+                source_model: "プロジェクト背景: オンプレミス"
+                confidence: "medium"
+          - id: "B.3.4"
+            name: "ネットワーク"
+            important: false
+            metrics:
+              - id: "B.3.4.1"
+                name: "ネットワーク拡張性"
+                important: false
+                grade: 1
+                grade_description: "既存回線内での運用（拡張は個別対応）"
+                reason: "モデルシステム2のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+      - id: "B.4"
+        name: "性能品質保証"
+        items:
+          - id: "B.4.1"
+            name: "性能テスト"
+            important: true
+            metrics:
+              - id: "B.4.1.1"
+                name: "性能テスト"
+                important: true
+                grade: 3
+                grade_description: "負荷テスト（ピーク時想定）"
+                reason: "モデルシステム2のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+  - id: "C"
+    name: "運用・保守性"
+    subcategories:
+      - id: "C.1"
+        name: "通常運用"
+        items:
+          - id: "C.1.1"
+            name: "運用時間"
+            important: true
+            metrics:
+              - id: "C.1.1.1"
+                name: "運用監視時間"
+                important: true
+                grade: 5
+                grade_description: "24時間監視"
+                reason: "可用性A.1.1.1（24時間無停止）に連動し、運用監視時間も24時間とする"
+                source_model: "A.1.1.1 運用時間（通常）との整合"
+                confidence: "high"
+              - id: "C.1.1.2"
+                name: "バックアップ時間帯"
+                important: false
+                grade: 1
+                grade_description: "夜間バッチ帯（業務影響の少ない時間帯）"
+                reason: "モデルシステム2のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+              - id: "C.1.1.3"
+                name: "計画停止対応時間"
+                important: false
+                grade: 1
+                grade_description: "数時間程度（事前調整の上で実施）"
+                reason: "モデルシステム2のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+          - id: "C.1.2"
+            name: "バックアップ"
+            important: true
+            metrics:
+              - id: "C.1.2.1"
+                name: "バックアップ方式"
+                important: true
+                grade: 2
+                grade_description: "フル+差分バックアップ（日次）"
+                reason: "モデルシステム2のデフォルト値を適用（エアギャップオンプレのためクラウド補正なし）"
+                source_model: "プロジェクト背景: オンプレミス"
+                confidence: "default"
+              - id: "C.1.2.2"
+                name: "バックアップ対象"
+                important: false
+                grade: 2
+                grade_description: "execution-spec.json・実行結果ログ・速報/確報比較結果等の全データ"
+                reason: "情報モデルに定義された全エンティティを対象とする"
+                source_model: "情報.tsv 全般"
+                confidence: "medium"
+              - id: "C.1.2.3"
+                name: "バックアップ世代管理"
+                important: false
+                grade: 2
+                grade_description: "7世代程度の保持"
+                reason: "モデルシステム2のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+          - id: "C.1.3"
+            name: "運用監視"
+            important: true
+            metrics:
+              - id: "C.1.3.1"
+                name: "監視範囲"
+                important: true
+                grade: 3
+                grade_description: "+アプリケーション監視"
+                reason: "background実行の未完了・非0終了・速報クロスチェック異常を定期検知するアプリケーションレベルの監視が明示されているため"
+                source_model: "BUC「ハング監視フロー」「background実行異常を定期検知する」"
+                confidence: "medium"
+              - id: "C.1.3.2"
+                name: "監視方式"
+                important: false
+                grade: 2
+                grade_description: "hang-detectorによる定期ポーリング型監視"
+                reason: "hang_detect_limit_minutesを用いた定期検知の仕組みが定義されているため"
+                source_model: "条件「hang_detect_limit_minutes」"
+                confidence: "medium"
+              - id: "C.1.3.3"
+                name: "監視間隔"
+                important: false
+                grade: 2
+                grade_description: "数分〜十数分間隔（想定）"
+                reason: "RDRAに具体的な間隔の記載がないため保守的に推定"
+                source_model: "条件「hang_detect_limit_minutes」"
+                confidence: "low"
+      - id: "C.2"
+        name: "保守運用"
+        items:
+          - id: "C.2.1"
+            name: "計画保守"
+            important: false
+            metrics:
+              - id: "C.2.1.1"
+                name: "計画保守の時間帯"
+                important: false
+                grade: 1
+                grade_description: "夜間・休日等業務影響の少ない時間帯"
+                reason: "モデルシステム2のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+              - id: "C.2.1.2"
+                name: "パッチ適用方針"
+                important: true
+                grade: 2
+                grade_description: "定期的パッチ適用（四半期）"
+                reason: "モデルシステム2のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+          - id: "C.2.2"
+            name: "ソフトウェア保守"
+            important: false
+            metrics:
+              - id: "C.2.2.1"
+                name: "ライフサイクル管理"
+                important: false
+                grade: 1
+                grade_description: "定期的なバージョン確認・EOL対応（手動）"
+                reason: "モデルシステム2のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+      - id: "C.3"
+        name: "障害時運用"
+        items:
+          - id: "C.3.1"
+            name: "障害検知"
+            important: true
+            metrics:
+              - id: "C.3.1.1"
+                name: "障害検知方式"
+                important: true
+                grade: 3
+                grade_description: "自動検知+自動通知+自動記録"
+                reason: "hang-detectorによる定期検知とハング検知記録への自動記録、運用者への通知フローが明示されているため"
+                source_model: "BUC「ハング監視フロー」「異常を運用者へ通知する」/ 情報「ハング検知記録」"
+                confidence: "high"
+          - id: "C.3.2"
+            name: "障害通知"
+            important: false
+            metrics:
+              - id: "C.3.2.1"
+                name: "障害通知方式"
+                important: false
+                grade: 2
+                grade_description: "定期検知結果を移行運用責任者・運用者へ通知"
+                reason: "検知したハング疑いや異常を運用者へ通知するフローが明示されているため"
+                source_model: "BUC「異常を運用者へ通知する」"
+                confidence: "high"
+          - id: "C.3.3"
+            name: "障害復旧"
+            important: false
+            metrics:
+              - id: "C.3.3.1"
+                name: "障害復旧方式"
+                important: false
+                grade: 2
+                grade_description: "対話確認を伴う中止操作＋元の実行設定を保った選択的リラン"
+                reason: "対話確認のうえABORTEDへ遷移させる中止フローと、元のexecution-spec.jsonを保った選択的リランフローが明示されているため"
+                source_model: "BUC「blue中止フロー」「green中止フロー」「background側リランフロー」"
+                confidence: "high"
+      - id: "C.4"
+        name: "運用環境"
+        items:
+          - id: "C.4.1"
+            name: "テスト環境"
+            important: true
+            metrics:
+              - id: "C.4.1.1"
+                name: "テスト環境"
+                important: true
+                grade: 2
+                grade_description: "簡易テスト環境（本番縮小構成）"
+                reason: "モデルシステム2のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+          - id: "C.4.2"
+            name: "開発環境"
+            important: false
+            metrics:
+              - id: "C.4.2.1"
+                name: "開発環境"
+                important: false
+                grade: 1
+                grade_description: "本番と異なる縮小構成"
+                reason: "モデルシステム2のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+      - id: "C.5"
+        name: "サポート体制"
+        items:
+          - id: "C.5.1"
+            name: "サポート時間"
+            important: true
+            metrics:
+              - id: "C.5.1.1"
+                name: "サポート時間"
+                important: true
+                grade: 4
+                grade_description: "24時間365日対応"
+                reason: "可用性A.1.1.1（24時間無停止）に連動し、依存関係ルール「A.1継続性(高レベル)→C.5サポート体制」を適用"
+                source_model: "A.1.1.1 運用時間（通常）との整合"
+                confidence: "medium"
+          - id: "C.5.2"
+            name: "エスカレーション"
+            important: false
+            metrics:
+              - id: "C.5.2.1"
+                name: "エスカレーション体制"
+                important: false
+                grade: 2
+                grade_description: "運用者→移行運用責任者への段階的エスカレーション"
+                reason: "アクターの役割分担（運用者/移行運用責任者）から推定"
+                source_model: "アクター.tsv: 運用者/移行運用責任者"
+                confidence: "medium"
+      - id: "C.6"
+        name: "その他の運用管理方針"
+        items:
+          - id: "C.6.1"
+            name: "ログ管理"
+            important: true
+            metrics:
+              - id: "C.6.1.1"
+                name: "ログ保管期間"
+                important: true
+                grade: 3
+                grade_description: "6ヶ月"
+                reason: "確報クロスチェック結果がリリース判断の正本として利用されるため、モデルシステム2のデフォルト水準（6ヶ月）を適用"
+                source_model: "BUC「確報クロスチェックフロー」リリース判断の正本"
+                confidence: "medium"
+              - id: "C.6.1.2"
+                name: "ログ種別"
+                important: false
+                grade: 3
+                grade_description: "実行ログ（stdout/stderr/exitcode）＋速報/確報比較結果＋ハング検知記録"
+                reason: "情報モデルに定義された実行結果・比較結果・検知記録を包括的に保持する必要があるため"
+                source_model: "情報.tsv 全般"
+                confidence: "high"
+  - id: "D"
+    name: "移行性"
+    subcategories:
+      - id: "D.1"
+        name: "移行時期"
+        items:
+          - id: "D.1.1"
+            name: "移行時期"
+            important: false
+            metrics:
+              - id: "D.1.1.1"
+                name: "移行時期"
+                important: false
+                grade: 1
+                grade_description: "新規導入。既存実装（blue）は置き換えず並行稼働から段階移行"
+                reason: "Step0確認(自動採用): 既存システムとの関係で「新規、移行なし」を仮置きしたため"
+                source_model: "Step0確認(自動採用): 既存システムとの関係"
+                confidence: "medium"
+      - id: "D.2"
+        name: "移行方式"
+        items:
+          - id: "D.2.1"
+            name: "移行方式"
+            important: true
+            metrics:
+              - id: "D.2.1.1"
+                name: "移行方式"
+                important: true
+                grade: 3
+                grade_description: "並行運用+段階移行"
+                reason: "既存実装（blue）と新実装（green）をジョブ定義を変更せず並行稼働させ、feature flag設定により段階的に切替える方式が明示されているため"
+                source_model: "システム概要: 「既存実装（blue）と新実装（green）を並行稼働・段階的に切替」"
+                confidence: "high"
+      - id: "D.3"
+        name: "移行対象（機器）"
+        items:
+          - id: "D.3.1"
+            name: "移行対象機器"
+            important: false
+            metrics:
+              - id: "D.3.1.1"
+                name: "移行対象機器"
+                important: false
+                grade: 1
+                grade_description: "既存ジョブスケジューラのジョブ定義・機器構成は変更せず、facade層のみ追加導入"
+                reason: "ジョブ定義を変更しない前提が明示されているため"
+                source_model: "システム概要: 「ジョブスケジューラのジョブ定義を変更せず」"
+                confidence: "medium"
+              - id: "D.3.1.2"
+                name: "移行元環境の廃棄"
+                important: false
+                grade: 0
+                grade_description: "既存実装（blue）は切替完了後に順次廃止予定（詳細方針は未定）"
+                reason: "RDRAにblue実装の廃棄方針の記載がなく判断できないため保守的に推定"
+                source_model: "システム概要: strangler対象としてのblue実装"
+                confidence: "low"
+      - id: "D.4"
+        name: "移行対象（データ）"
+        items:
+          - id: "D.4.1"
+            name: "移行データ"
+            important: true
+            metrics:
+              - id: "D.4.1.1"
+                name: "データ移行量"
+                important: true
+                grade: 1
+                grade_description: "〜100GB"
+                reason: "RDRAにデータ移行に関する記載がなく、facade自体は新規導入のため移行データ量は限定的と推定"
+                source_model: "RDRAにデータ移行の直接記載なし"
+                confidence: "low"
+              - id: "D.4.1.2"
+                name: "データ変換"
+                important: false
+                grade: 1
+                grade_description: "変換なし（Runner Result Contractによる実行結果形式の標準化のみ）"
+                reason: "blue/greenの実行結果を共通形式で標準化する方式が明示されているため"
+                source_model: "情報「Runner実行結果」共通形式"
+                confidence: "medium"
+              - id: "D.4.1.3"
+                name: "データクレンジング"
+                important: false
+                grade: 0
+                grade_description: "実施なし"
+                reason: "RDRAにデータクレンジングの記載がないため保守的に推定"
+                source_model: ""
+                confidence: "low"
+      - id: "D.5"
+        name: "移行計画"
+        items:
+          - id: "D.5.1"
+            name: "移行計画"
+            important: true
+            metrics:
+              - id: "D.5.1.1"
+                name: "移行リハーサル"
+                important: true
+                grade: 2
+                grade_description: "2回実施"
+                reason: "モデルシステム2のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+              - id: "D.5.1.2"
+                name: "移行判定基準"
+                important: false
+                grade: 2
+                grade_description: "速報クロスチェック・確報クロスチェックのOK判定を段階的切替の判断材料とする"
+                reason: "速報/確報クロスチェックにより整合性を確認し切替判断に用いる旨が明示されているため"
+                source_model: "BUC「速報クロスチェックフロー」「確報クロスチェックフロー」"
+                confidence: "high"
+              - id: "D.5.1.3"
+                name: "切り戻し計画"
+                important: false
+                grade: 2
+                grade_description: "feature flag設定（BLUE_MODE/GREEN_MODE）の変更によるslot切替で即時切り戻し可能"
+                reason: "feature flag設定により起動slotを切り替える方式が明示されているため"
+                source_model: "条件「feature flag設定（BLUE_MODE/GREEN_MODE/RAPID_CROSSCHECK_MODE）」"
+                confidence: "high"
+  - id: "E"
+    name: "セキュリティ"
+    subcategories:
+      - id: "E.1"
+        name: "前提条件・制約条件"
+        items:
+          - id: "E.1.1"
+            name: "セキュリティポリシー"
+            important: true
+            metrics:
+              - id: "E.1.1.1"
+                name: "セキュリティポリシー"
+                important: true
+                grade: 2
+                grade_description: "組織のセキュリティポリシーに準拠"
+                reason: "モデルシステム2のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+          - id: "E.1.2"
+            name: "セキュリティ関連法規"
+            important: false
+            metrics:
+              - id: "E.1.2.1"
+                name: "準拠すべき法規・基準"
+                important: false
+                grade: 1
+                grade_description: "特定の法規制の記載なし（社内利用システムのため一般的な社内規程に準拠と推定）"
+                reason: "RDRAに準拠法規の記載がなく判断できないため保守的に推定"
+                source_model: ""
+                confidence: "low"
+      - id: "E.2"
+        name: "セキュリティリスク分析"
+        items:
+          - id: "E.2.1"
+            name: "リスク分析"
+            important: false
+            metrics:
+              - id: "E.2.1.1"
+                name: "セキュリティリスク分析"
+                important: true
+                grade: 2
+                grade_description: "リスク分析（脅威・脆弱性評価）"
+                reason: "モデルシステム2のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+      - id: "E.3"
+        name: "セキュリティ診断"
+        items:
+          - id: "E.3.1"
+            name: "セキュリティ診断"
+            important: false
+            metrics:
+              - id: "E.3.1.1"
+                name: "セキュリティ診断"
+                important: true
+                grade: 2
+                grade_description: "手動による脆弱性診断"
+                reason: "モデルシステム2のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+      - id: "E.4"
+        name: "セキュリティリスク管理"
+        items:
+          - id: "E.4.1"
+            name: "リスク管理"
+            important: false
+            metrics:
+              - id: "E.4.1.1"
+                name: "リスク管理プロセス"
+                important: false
+                grade: 2
+                grade_description: "定期的なリスク評価の見直し（年次想定）"
+                reason: "モデルシステム2のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+      - id: "E.5"
+        name: "アクセス・利用制限"
+        items:
+          - id: "E.5.1"
+            name: "認証"
+            important: true
+            metrics:
+              - id: "E.5.1.1"
+                name: "認証方式"
+                important: true
+                grade: 3
+                grade_description: "多要素認証（MFA）"
+                reason: "CLI/シェル実行環境における具体的な認証方式（SSH鍵等）の詳細がRDRAから判断できないため、モデルシステム2のデフォルト値を保守的に仮置き"
+                source_model: ""
+                confidence: "low"
+          - id: "E.5.2"
+            name: "アクセス制御"
+            important: true
+            metrics:
+              - id: "E.5.2.1"
+                name: "アクセス制御"
+                important: true
+                grade: 2
+                grade_description: "ロールベースアクセス制御（RBAC）"
+                reason: "アクター種別（運用者/移行運用責任者/障害調査担当者/リリース判断者）ごとに役割が分かれているが、権限制御方式自体はRDRAに明記がないため保守的に仮置き"
+                source_model: "アクター.tsv: 4アクター種別の役割分担"
+                confidence: "low"
+          - id: "E.5.3"
+            name: "利用制限"
+            important: false
+            metrics:
+              - id: "E.5.3.1"
+                name: "利用制限"
+                important: false
+                grade: 1
+                grade_description: "運用端末・踏み台サーバ等特定の接続元からの利用に限定（推定）"
+                reason: "エアギャップ環境のため接続元は限定されると推定されるが詳細はRDRAに記載がないため保守的に仮置き"
+                source_model: "プロジェクト背景: エアギャップ環境"
+                confidence: "low"
+      - id: "E.6"
+        name: "データ秘匿"
+        items:
+          - id: "E.6.1"
+            name: "暗号化"
+            important: true
+            metrics:
+              - id: "E.6.1.1"
+                name: "データ暗号化（保管時）"
+                important: true
+                grade: 1
+                grade_description: "機密データのみ暗号化"
+                reason: "execution-spec.jsonでは認証情報は参照名のみを保存し実値は保存しない設計のため、機密データの直接保存を避ける前提がある"
+                source_model: "情報「execution-spec.json」: 認証情報は参照名のみ保存し実値は保存しない"
+                confidence: "medium"
+              - id: "E.6.1.2"
+                name: "データ暗号化（通信時）"
+                important: true
+                grade: 2
+                grade_description: "全通信暗号化（内部通信含む）"
+                reason: "モデルシステム2のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+          - id: "E.6.2"
+            name: "データマスキング"
+            important: false
+            metrics:
+              - id: "E.6.2.1"
+                name: "データマスキング"
+                important: false
+                grade: 1
+                grade_description: "テスト環境での機密データマスキングは限定的（推定）"
+                reason: "RDRAにマスキング方針の記載がないため保守的に仮置き"
+                source_model: ""
+                confidence: "low"
+      - id: "E.7"
+        name: "不正追跡・監視"
+        items:
+          - id: "E.7.1"
+            name: "監査ログ"
+            important: true
+            metrics:
+              - id: "E.7.1.1"
+                name: "監査ログ"
+                important: true
+                grade: 3
+                grade_description: "+操作ログ+改ざん検知"
+                reason: "run_id/parent_run_idによる実行系譜の追跡、および対話確認を経たABORTED遷移など操作記録の明確な要求があるため"
+                source_model: "システム概要: 「run_id/parent_run_idによる実行系譜の追跡」/ BUC「対話確認のうえ...ABORTEDへ遷移させる」"
+                confidence: "high"
+          - id: "E.7.2"
+            name: "不正監視"
+            important: false
+            metrics:
+              - id: "E.7.2.1"
+                name: "不正監視"
+                important: false
+                grade: 1
+                grade_description: "基本的なログレビューによる事後確認"
+                reason: "モデルシステム2のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+      - id: "E.8"
+        name: "ネットワーク対策"
+        items:
+          - id: "E.8.1"
+            name: "ファイアウォール"
+            important: true
+            metrics:
+              - id: "E.8.1.1"
+                name: "ファイアウォール"
+                important: true
+                grade: 2
+                grade_description: "ステートフルインスペクション"
+                reason: "モデルシステム2のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+          - id: "E.8.2"
+            name: "IDS/IPS"
+            important: false
+            metrics:
+              - id: "E.8.2.1"
+                name: "IDS/IPS"
+                important: false
+                grade: 1
+                grade_description: "基本的な侵入検知（導入検討レベル）"
+                reason: "モデルシステム2のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+          - id: "E.8.3"
+            name: "ネットワーク分離"
+            important: false
+            metrics:
+              - id: "E.8.3.1"
+                name: "ネットワーク分離"
+                important: false
+                grade: 2
+                grade_description: "エアギャップ環境のため外部ネットワークから完全分離"
+                reason: "インターネット接続なし・クラウドサービス利用なしが前提として明示されているため"
+                source_model: "プロジェクト背景: 「インターネット接続なし・クラウドサービス利用なし」"
+                confidence: "high"
+      - id: "E.9"
+        name: "マルウェア対策"
+        items:
+          - id: "E.9.1"
+            name: "マルウェア対策"
+            important: true
+            metrics:
+              - id: "E.9.1.1"
+                name: "マルウェア対策"
+                important: true
+                grade: 1
+                grade_description: "ウイルス対策ソフト導入（定義ファイルは手動更新）"
+                reason: "エアギャップ環境のためインターネット経由の自動定義ファイル更新が困難なため、モデルシステム2デフォルトより引き下げ"
+                source_model: "プロジェクト背景: エアギャップ環境（インターネット接続なし）"
+                confidence: "medium"
+      - id: "E.10"
+        name: "Web対策"
+        items:
+          - id: "E.10.1"
+            name: "WAF"
+            important: false
+            metrics:
+              - id: "E.10.1.1"
+                name: "WAF"
+                important: true
+                grade: 0
+                grade_description: "WAFなし"
+                reason: "Web UIを持たないCLI/バッチ運用のためWebアプリケーション対策の対象がない"
+                source_model: "プロジェクト背景: 「Web UIを持たないCLI/バッチ運用」"
+                confidence: "high"
+          - id: "E.10.2"
+            name: "Webアプリケーション対策"
+            important: false
+            metrics:
+              - id: "E.10.2.1"
+                name: "Webアプリケーション対策"
+                important: false
+                grade: 0
+                grade_description: "該当なし（Web UIなし）"
+                reason: "Web UIを持たないCLI/バッチ運用のため該当しない"
+                source_model: "プロジェクト背景: 「Web UIを持たないCLI/バッチ運用」"
+                confidence: "high"
+      - id: "E.11"
+        name: "セキュリティインシデント対応"
+        items:
+          - id: "E.11.1"
+            name: "インシデント対応"
+            important: true
+            metrics:
+              - id: "E.11.1.1"
+                name: "インシデント対応計画"
+                important: true
+                grade: 2
+                grade_description: "インシデント対応手順書+定期訓練"
+                reason: "モデルシステム2のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+  - id: "F"
+    name: "システム環境・エコロジー"
+    subcategories:
+      - id: "F.1"
+        name: "システム制約・前提条件"
+        items:
+          - id: "F.1.1"
+            name: "システム制約"
+            important: false
+            metrics:
+              - id: "F.1.1.1"
+                name: "対応OS"
+                important: true
+                grade: 1
+                grade_description: "単一OS（Linux）"
+                reason: "デプロイ先はエアギャップ環境のオンプレミスLinuxサーバに限定されるため"
+                source_model: "プロジェクト背景: 「エアギャップ環境のオンプレミスLinuxサーバ」"
+                confidence: "high"
+              - id: "F.1.1.2"
+                name: "対応ブラウザ"
+                important: true
+                grade: 1
+                grade_description: "該当なし（Web UIなし、CLI/バッチ運用のためブラウザを使用しない）"
+                reason: "Web UIを持たないCLI/バッチ運用が中心であるため"
+                source_model: "プロジェクト背景: 「Web UIを持たないCLI/バッチ運用」"
+                confidence: "high"
+              - id: "F.1.1.3"
+                name: "対応デバイス"
+                important: false
+                grade: 1
+                grade_description: "サーバ機のみ、クライアントデバイスは非対応"
+                reason: "Web UIを持たないCLI/バッチ運用が中心であるため"
+                source_model: "プロジェクト背景: 「Web UIを持たないCLI/バッチ運用」"
+                confidence: "high"
+          - id: "F.1.2"
+            name: "ネットワーク制約"
+            important: false
+            metrics:
+              - id: "F.1.2.1"
+                name: "通信プロトコル"
+                important: false
+                grade: 1
+                grade_description: "エアギャップ環境内のローカル/内部ネットワーク通信のみ"
+                reason: "インターネット接続なしが前提として明示されているため"
+                source_model: "プロジェクト背景: 「インターネット接続なし」"
+                confidence: "medium"
+              - id: "F.1.2.2"
+                name: "帯域要件"
+                important: false
+                grade: 1
+                grade_description: "内部ネットワークの標準帯域で十分（推定）"
+                reason: "モデルシステム2のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+      - id: "F.2"
+        name: "システム特性"
+        items:
+          - id: "F.2.1"
+            name: "可搬性"
+            important: false
+            metrics:
+              - id: "F.2.1.1"
+                name: "可搬性"
+                important: false
+                grade: 1
+                grade_description: "特定環境固定"
+                reason: "クラウドサービス利用なしが前提として明示されており、エアギャップオンプレミス環境に固定されるため"
+                source_model: "プロジェクト背景: 「クラウドサービス利用なし」"
+                confidence: "high"
+          - id: "F.2.2"
+            name: "拡張性"
+            important: false
+            metrics:
+              - id: "F.2.2.1"
+                name: "アーキテクチャ拡張性"
+                important: false
+                grade: 1
+                grade_description: "シェルスクリプト中心のシンプルな構成。runnerの差し替えによる段階的な実装世代交代の拡張性を備える"
+                reason: "システム概要にrunner差し替えによる拡張性が明示されているため"
+                source_model: "システム概要: 「runnerの差し替えによる段階的な実装世代交代の拡張性」"
+                confidence: "medium"
+      - id: "F.3"
+        name: "適合規格"
+        items:
+          - id: "F.3.1"
+            name: "適合規格"
+            important: false
+            metrics:
+              - id: "F.3.1.1"
+                name: "業界標準・規格"
+                important: false
+                grade: 1
+                grade_description: "特定の業界標準・規格への準拠要求は記載なし"
+                reason: "RDRAに準拠すべき規格の記載がなく判断できないため保守的に仮置き"
+                source_model: ""
+                confidence: "low"
+              - id: "F.3.1.2"
+                name: "アクセシビリティ"
+                important: false
+                grade: 0
+                grade_description: "非該当（Web UIなし）"
+                reason: "Web UIを持たないCLI/バッチ運用のため該当しない"
+                source_model: "プロジェクト背景: 「Web UIを持たないCLI/バッチ運用」"
+                confidence: "high"
+      - id: "F.4"
+        name: "機材設置環境条件"
+        items:
+          - id: "F.4.1"
+            name: "設置環境"
+            important: false
+            metrics:
+              - id: "F.4.1.1"
+                name: "耐震クラス"
+                important: false
+                grade: 2
+                grade_description: "データセンタ（耐震）"
+                reason: "モデルシステム2のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+              - id: "F.4.1.2"
+                name: "空調・温度管理"
+                important: false
+                grade: 1
+                grade_description: "一般的なデータセンタ空調基準"
+                reason: "モデルシステム2のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+              - id: "F.4.1.3"
+                name: "物理セキュリティ"
+                important: false
+                grade: 1
+                grade_description: "入退室管理あり（一般的なデータセンタ水準）"
+                reason: "モデルシステム2のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+      - id: "F.5"
+        name: "環境マネージメント"
+        items:
+          - id: "F.5.1"
+            name: "環境対策"
+            important: false
+            metrics:
+              - id: "F.5.1.1"
+                name: "CO2排出量"
+                important: false
+                grade: 1
+                grade_description: "省電力機器の選定"
+                reason: "モデルシステム2のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+              - id: "F.5.1.2"
+                name: "廃棄物・リサイクル"
+                important: false
+                grade: 1
+                grade_description: "一般的なIT機器廃棄・リサイクル方針に準拠"
+                reason: "モデルシステム2のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"

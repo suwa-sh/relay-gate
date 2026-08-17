@@ -1,0 +1,52 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "design_system"
+artifact_id: "design-decision-002"
+title: "ブランド・トークン・コンポーネントスタイルの採用（auto_adopt方針）"
+status: "approved"
+generated_at: "2026-08-17T15:32:35+09:00"
+context: |
+  pipelineからdialogue_policy: auto_adoptが指示されているため、ブランド・カラー・フォント・
+  レイアウト・コンポーネントスタイル・アイコンの各確認推奨項目は、3案+⭐推奨形式で作成したうえで
+  ユーザーへ中継せず⭐推奨を採用した。各項目の3案と採用理由は以下のとおり。
+decision: |
+  【カラーパレット】
+  A) Blue (#2563EB/#3B82F6/#DBEAFE) — 汎用的な運用ツール配色
+  B) ⭐ Slate (#334155/#64748B/#E2E8F0) — 採用。CLI/ターミナル中心でブランド演出の必要性が低く、
+     状態色（success/warning/destructive/info）を主役にするため主張の弱いニュートラル配色が適する
+  C) Teal (#0F766E/#14B8A6/#CCFBF1) — 差別化重視だがCLIの黒背景との親和性が低く不採用
+
+  【タイポグラフィ（和欧ペア）】
+  A) ⭐ Noto Sans JP + Inter（UI）/ JetBrains Mono（CLI出力・ログ） — 採用。
+     JetBrains Monoはターミナル出力の可読性・記号の判別性に優れ、本システムの主表示面（stdout/stderr）
+     に最適。Inter/Noto Sans JPは将来ダッシュボードでも実績のある組み合わせ
+  B) Noto Sans JP + IBM Plex Sans / IBM Plex Mono — エンタープライズ感は出るが不採用（差別化不要）
+  C) Hiragino Kaku Gothic + system-ui / Menlo — OSネイティブだが環境非依存性に欠けるため不採用
+
+  【コンポーネントスタイル（角丸・影）】
+  A) ⭐ Sharp/最小角丸（radius 0〜2px） — 採用。CLI/ターミナル的な実直さを表現し、
+     コンシューマアプリ的な印象を避ける。エアーギャップの業務運用ツールとして適切
+  B) Soft rounded（6〜8px） — 一般的なSaaS的印象になり不採用
+  C) Pill形状 — 過度にカジュアルで不採用
+
+  【アイコノグラフィ】
+  A) Lucide（外部ライブラリ） — MIT/軽量だが依存追加が発生するため不採用
+  B) Heroicons（外部ライブラリ） — 同上の理由で不採用
+  C) ⭐ カスタム最小SVGセット（check/x-circle/alert-triangle/clock/refresh-cw/terminal/mail/chevron） — 採用。
+     RDRA/CLI運用に必要な最小限のみを自前SVGで用意し、外部依存を持たない
+     （エアーギャップ環境でのビルド再現性・オフライン性を重視）
+
+  【レイアウト方針】
+  実画面が存在しないため、グリッド/カラム構成の3案提示は本イベントでは対象外とし、
+  将来ダッシュボード実装時の再検討項目としてdocs/todo.mdに登録した（confidence: low）。
+consequences:
+  positive:
+    - "auto_adopt方針に沿って対話を省略しつつ、採用根拠を決定記録として追跡可能にした"
+    - "外部アイコン/フォントライブラリへの依存を避け、エアーギャップ環境での再現性を確保した"
+  negative:
+    - "実際のユーザーによる確認は未実施のため、将来のフィードバックで変更される可能性がある"
+alternatives_considered:
+  - name: "Blue primary color"
+    reason_rejected: "CLI中心のツールでブランド主張が不要なため、状態色を邪魔しないSlateを優先した"
+  - name: "外部アイコンライブラリ（Lucide/Heroicons）採用"
+    reason_rejected: "エアーギャップ環境でのオフラインビルド再現性・依存最小化のためカスタムSVGを採用した"

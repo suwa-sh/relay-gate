@@ -1,0 +1,32 @@
+uc: "blue background実行の中止を依頼する"
+business: "実行制御業務"
+buc: "blue中止フロー"
+commands:
+  - name: "relaygate abort blue request"
+    tier: "tier-facade"
+    summary: "RUNNING中のblue background実行に中止依頼を発行する"
+    args:
+      - name: "--run-id"
+        required: true
+        description: "中止依頼対象のblue background実行run_id"
+    env_vars:
+      - name: "RELAYGATE_RDB_DSN"
+        required: true
+        description: "RDB接続文字列"
+      - name: "RELAYGATE_SSH_KEY_PATH"
+        required: true
+        description: "blue実装ホストへのSSH接続鍵パス"
+    stdin: "なし"
+    stdout_contract: "中止依頼受理: run_idの1行"
+    stderr_contract: "対象なし・既に完了済みの場合のエラーメッセージ"
+    exit_codes:
+      - code: 0
+        meaning: "正常終了"
+      - code: 1
+        meaning: "業務エラー（対象なし・状態不整合）"
+      - code: 2
+        meaning: "バリデーションエラー（run_id未指定）"
+screens:
+  - name: "blue background中止依頼画面"
+    route: "/cli/abort/blue/request"
+    components: ["RunnerResultPanel", "Button"]

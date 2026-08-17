@@ -1,0 +1,36 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "architecture"
+artifact_id: "arch-decision-002"
+title: "ティア構成: Web UI/IdP/API Gatewayを持たないシェルスクリプト中心の4ティア構成"
+status: "approved"
+generated_at: "2026-08-17T15:05:12"
+context: |
+  RelayGateのアクターは運用者・移行運用責任者・障害調査担当者・リリース判断者の4種いずれも社内アクターで、
+  外部アクターは存在しない。プロジェクト背景として「Web UIを持たないCLI/バッチ運用中心」「エアギャップ環境の
+  オンプレミスLinuxサーバへのデプロイ」「インターネット接続なし・クラウドマネージドサービス利用なし」が
+  明示されている。一般的なWebシステム向けアーキテクチャ推論ルール（フロントエンド/API Gateway/IdPティア）を
+  そのまま適用すべきか、CLI/バッチ運用の実態に即したティア構成にすべきかが論点となった。
+decision: |
+  フロントエンドティア・API Gatewayティア・IdPティア・認可サービスティアはいずれも「不要」と判定した。
+  外部アクターが存在せず、Web UIを持たないCLI/バッチ運用が明示されているため、OAuth2/OIDC等の外部向け
+  認証基盤やAPI Gatewayによる経路制御は本システムの実態に合わない。代わりに facade実行ティア
+  （CLIエントリポイント）・バックエンドワーカーティア（background実行・クロスチェック・hang-detector）・
+  データストアティア（RDBをジョブキュー兼管理DBとして利用）・外部連携ティア（ジョブスケジューラ/blue実装/
+  green実装とのアダプタ）の4ティア構成とした。テクノロジー候補もCaaS(k8s)/FaaS等のコンテナ・サーバーレス
+  基盤ではなく、シェルスクリプト実行基盤・SSH・RDB・cron/systemdタイマー・ファイルシステムといった
+  エアギャップオンプレミスで実現可能なベンダーニュートラル用語を優先した。認証はOS/SSHレベルのSSH鍵認証+MFA、
+  アクセス制御はRBAC（OS/SSHユーザー・グループ権限とRDBアクセス権限）とした。
+consequences:
+  positive:
+    - "プロジェクトの前提（エアギャップオンプレ、CLI/バッチ運用、ジョブ定義非変更）に忠実な、過剰な抽象化のない構成になる"
+    - "Web UI/IdP/API Gatewayを持たないことで、実装・運用コストと攻撃対象領域を削減できる"
+    - "RDBをジョブキュー兼管理DBとして一元化することで、速報/確報クロスチェックのlease/claim機構と実行系譜追跡を単一のデータストアで完結できる"
+  negative:
+    - "認証方式（CTP-001: SSH鍵+MFA）、アクセス制御（CTP-002: RBAC詳細方式）はRDRAに具体的な記載がなく、confidence: low/mediumの仮置きである点に留意が必要"
+    - "将来Web UIによる可視化ダッシュボード等の要件が追加された場合は、フロントエンドティア・API Gatewayティアの再検討が必要になる"
+alternatives_considered:
+  - name: "一般的なWebシステムパターンに従いフロントエンド+API Gatewayティアを追加"
+    reason_rejected: "外部アクターが存在せず、Web UIを持たないCLI/バッチ運用が前提として明示されているため不採用"
+  - name: "認可サービスティア（OPA/Cedar等のPolicy Engine）を導入"
+    reason_rejected: "検出された認可パターンはロールベースのみで、所有権・条件ベースの複雑な認可パターンがRDRAから検出されなかったため、RBAC+Backend作り込みで十分と判断"

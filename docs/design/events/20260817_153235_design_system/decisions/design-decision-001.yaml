@@ -1,0 +1,35 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "design_system"
+artifact_id: "design-decision-001"
+title: "デザインシステムの適用範囲をCLI出力規約 + 最小トークンに限定する"
+status: "approved"
+generated_at: "2026-08-17T15:32:35+09:00"
+context: |
+  arch-design.yaml（docs/arch/latest/arch-design.yaml）でtier-facade/tier-workerの
+  presentation層はいずれも「Driver Sideの入出力（ジョブスケジューラからの引数解析、
+  foreground role実行結果の標準出力・標準エラー・終了コードのみへの整形出力）」と定義されており、
+  Webフロントエンドティアは存在しない。デプロイ先はエアーギャップ環境のオンプレミスLinuxであり、
+  実運用でブラウザGUIは提供されない。
+  一方でRDRA（docs/rdra/latest/BUC.tsv）には23件の「画面」列エントリが存在し、
+  これらは対話確認・結果確認・通知確認などCLI上の入出力ポイントを表す（Webページではない）。
+decision: |
+  本デザインシステムは、実運用で人が実際に触れる出力面（CLI標準出力・標準エラー・対話確認プロンプト・
+  ハング検知通知）の表示規約を中核成果物とし、Web GUIのワイヤーフレームは作成しない。
+  RDRAの23件の「画面」はいずれもCLIインタラクションのタッチポイントとして解釈し、
+  design-event.yamlのscreensセクションにroute（/cli/...）・components（CLI表現コンポーネント）として
+  1件ずつマッピングした。将来的な運用ダッシュボードに備え、primitive/semantic/componentの3層トークンは
+  Web実装にもそのまま転用できる形（CSS変数）で最小限定義した。
+consequences:
+  positive:
+    - "実際に運用者が目にするCLI出力・通知メールの表示規約が明文化され、実装時の表記ゆれを防げる"
+    - "将来運用ダッシュボードを構築する際に、トークン・状態色マッピングをそのまま再利用できる"
+    - "RDRAに存在しない画面を新規発明せず、アーキテクチャ判定（フロントエンドティア不要）と整合させた"
+  negative:
+    - "Storybookで表現するのはCLI/ターミナル調のUIモックであり、実際の端末出力とは見た目の忠実度に差がある"
+    - "将来ダッシュボードの具体的な画面構成（一覧/詳細の分割等）は本イベントでは未確定（confidence: low、docs/todo.md参照）"
+alternatives_considered:
+  - name: "Web管理ダッシュボードのフル画面設計を新規作成する"
+    reason_rejected: "アーキテクチャ設計でフロントエンドティア不要と判定されており、RDRAにもダッシュボード画面の定義が存在しないため。無断で画面を追加するとRDRA整合性ルールに違反する"
+  - name: "デザインシステムをスキップし成果物なしとする"
+    reason_rejected: "パイプラインの完了条件（design-event.yaml + storybook-app）を満たせず、後続spec/実装フェーズの入力が欠落するため"

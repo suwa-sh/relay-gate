@@ -1,0 +1,32 @@
+uc: "並行稼働実行結果を確認する"
+business: "並行稼働実行業務"
+buc: "並行稼働実行フロー"
+commands:
+  - name: "relaygate concurrent-run result"
+    tier: "tier-facade"
+    summary: "job_idまたはrun_id指定でblue/green並行稼働の実行結果を参照する"
+    args:
+      - name: "--job-id"
+        required: false
+        description: "ジョブスケジューラのJOB_ID。job_id/run_idいずれか必須"
+      - name: "--run-id"
+        required: false
+        description: "単一実行結果を特定するrun_id。job_id/run_idいずれか必須"
+    env_vars:
+      - name: "RELAYGATE_RDB_DSN"
+        required: true
+        description: "RDB（ジョブキュー兼管理DB）接続文字列"
+    stdin: "なし"
+    stdout_contract: "slot_typeごとにセクション分割した実行結果一覧テキスト"
+    stderr_contract: "該当データなし・パラメータ不足時のエラーメッセージ"
+    exit_codes:
+      - code: 0
+        meaning: "正常終了"
+      - code: 1
+        meaning: "業務エラー（該当データなし）"
+      - code: 2
+        meaning: "バリデーションエラー（job_id・run_id未指定）"
+screens:
+  - name: "並行稼働実行結果確認画面"
+    route: "/cli/concurrent-run/result"
+    components: ["RunnerResultPanel", "StatusBadge"]

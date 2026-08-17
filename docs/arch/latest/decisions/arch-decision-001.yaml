@@ -1,0 +1,36 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "architecture"
+artifact_id: "arch-decision-001"
+title: "サブドメイン分類とBC分割: 並行稼働実行とクロスチェック検証をCoreとする"
+status: "approved"
+generated_at: "2026-08-17T15:05:12"
+context: |
+  RelayGateは、既存実装（blue）と新実装（green）をジョブスケジューラの同一ジョブ定義から並行稼働させ、
+  段階的に切り替えるためのstrangler facade基盤である。RDRAモデルからは「並行稼働実行業務」
+  「クロスチェック業務」「実行監視業務」「実行制御業務」の4業務が識別され、情報.tsvは
+  「実行管理」「速報クロスチェック管理」「確報クロスチェック管理」「異常監視管理」の4コンテキストに
+  分かれている。ドメイン設計（Core/Supporting/Generic分類、BC境界）をどう定めるかが問題となった。
+decision: |
+  並行稼働実行（SD-001）とクロスチェック検証（SD-002）をCoreサブドメインとし、実行監視（SD-003）・
+  実行制御（SD-004）をSupportingサブドメインとした。並行稼働実行はfeature flag設定によるslot起動制御と
+  foreground結果中継というstrangler facadeパターンそのものであり、クロスチェック検証は速報・確報の
+  二段階比較によって安全な段階移行を担保する本システム固有の価値提供部分であるため、両者をCoreと判断した。
+  実行監視・実行制御は両Coreサブドメインを支える運用支援機能と位置付けSupportingとした。
+  BCは情報.tsvのコンテキスト列に対応させ、実行管理（BC-001）・速報クロスチェック（BC-002）・
+  確報クロスチェック（BC-003）・異常監視（BC-004）の4BCとした。BC-001が提供する
+  「Runner Result Contract」（execution-spec.json / Runner実行結果の共通形式）を、他3BCがrun_idで
+  相関付けて消費するOHS+Published Languageパターンとして整理した。
+consequences:
+  positive:
+    - "Core/Supportingの投資配分が明確になり、並行稼働実行とクロスチェック検証のモデリング・リファクタリングに優先投資できる"
+    - "情報.tsvのコンテキスト列と1:1対応するBC境界により、既存のRDRAモデルとの追跡可能性が高い"
+    - "Runner Result Contractを公開言語として明示することで、blue/green実装差異の内部ドメインへの漏出を防げる"
+  negative:
+    - "Core判定（並行稼働実行・クロスチェック検証）は経営判断の要素を含み自動推論の限界があるため、confidence: mediumに留まる。将来的な事業方針変更時は再確認が必要"
+    - "BC分割は同名異義語検出等の機械判定に基づく仮説であり、チーム編成（team_ownership）は未確定のままnullとしている"
+alternatives_considered:
+  - name: "並行稼働実行のみをCore、クロスチェック検証をSupportingとする"
+    reason_rejected: "速報/確報クロスチェックはリリース判断の正本として明記されており、単なる付随機能ではなく安全な段階移行を実現する中核価値であるため不採用"
+  - name: "4コンテキストを1BCに統合（モノリス想定）"
+    reason_rejected: "速報/確報クロスチェックは独立したlease機構・状態遷移パスを持ち、異常監視は複数BCの結果を横断参照する独立の関心事であるため、統合すると言語境界が曖昧になる"

@@ -1,0 +1,87 @@
+uc: "feature flag設定に基づきslotを選択して起動する"
+business: "並行稼働実行業務"
+buc: "並行稼働実行フロー"
+
+bounded_context_id: "BC-001"
+aggregate_id: "AG-001"
+
+models:
+  - name: "SelectSlotRequest"
+    tier: "tier-facade"
+    layer: "presentation"
+    type: "request-dto"
+    rdra_info: "execution-spec.json"
+  - name: "SelectAndStartSlotCommand"
+    tier: "tier-facade"
+    layer: "usecase"
+    type: "command"
+    rdra_info: "execution-spec.json"
+  - name: "ExecutionSpec"
+    tier: "tier-facade"
+    layer: "domain"
+    type: "entity"
+    rdra_info: "execution-spec.json"
+  - name: "ExecutionSpecRecord"
+    tier: "tier-facade"
+    layer: "gateway"
+    type: "record"
+    rdra_info: "execution-spec.json"
+
+tables:
+  - name: "execution_specs"
+    rdra_info: "execution-spec.json"
+    operations:
+      - type: "INSERT"
+        columns:
+          - name: "run_id"
+            value: "起動時に新規発番するUUID"
+          - name: "job_id"
+            value: "CLI引数 --job-id の値"
+          - name: "host"
+            value: "ジョブマップ解決結果"
+          - name: "exec_user"
+            value: "ジョブマップ解決結果"
+          - name: "script_path"
+            value: "ジョブマップ解決結果"
+          - name: "work_dir"
+            value: "ジョブマップ解決結果"
+          - name: "fixed_args"
+            value: "ジョブマップ解決結果（nullable）"
+          - name: "additional_args"
+            value: "CLI追加引数（nullable）"
+          - name: "job_map_version"
+            value: "ジョブマップのバージョン"
+          - name: "impl_version"
+            value: "選択されたslotの実装バージョン"
+          - name: "hang_detect_limit_minutes"
+            value: "ジョブマップ解決結果"
+          - name: "credential_ref"
+            value: "認証情報参照名のみ（実値は保存しない、nullable）"
+        where: ""
+    indexes_needed:
+      - columns: ["job_id"]
+        reason: "同一JOB_IDに紐づくblue/green実行結果の相関取得に使用"
+        access_pattern: "並行稼働実行結果を確認するUCからのjob_id検索"
+  - name: "runner_results"
+    rdra_info: "Runner実行結果（started-at.txt/stdout.log/stderr.log/exitcode.txt）"
+    operations:
+      - type: "INSERT"
+        columns:
+          - name: "run_id"
+            value: "本UCで新規発番したrun_id"
+          - name: "slot_type"
+            value: "選択されたslot（blue/green）"
+          - name: "role_type"
+            value: "固定値 foreground"
+          - name: "started_at"
+            value: "起動時刻"
+          - name: "status"
+            value: "固定値 RUNNING"
+        where: ""
+    indexes_needed:
+      - columns: ["run_id", "slot_type", "role_type"]
+        reason: "同一run_id・slot・roleの重複起動防止（ユニーク制約）。foreground roleの標準出力・標準エラー・終了コードを応答するUCがrole_type='foreground'で本レコードを参照するための基礎データ"
+        access_pattern: "foreground起動の冪等性チェックおよび後続UCからのrole_type='foreground'検索"
+
+kvs: []
+object_storage: []

@@ -1,0 +1,212 @@
+version: "1.0"
+event_id: "20260817_155817_spec_generation"
+created_at: "2026-08-17T15:58:17+09:00"
+source: "Spec 生成: RDRA(rdra:20260817_142258_initial_build) / NFR / アーキテクチャ(arch:20260817_152155_arch_infra_feedback) / デザインシステム(design:20260817_153235_design_system) からのUC単位詳細仕様・全体横断UX/UI/API/データストア設計の生成"
+trigger_event:
+  - "rdra:20260817_142258_initial_build"
+  - "arch:20260817_152155_arch_infra_feedback"
+  - "design:20260817_153235_design_system"
+
+system_name: "RelayGate"
+system_name_brand: "RelayGate Ops"
+
+# HTTP APIを持たないプロジェクトのため、openapi.yaml/asyncapi.yamlは生成せず
+# 独自スキーマのCLIコマンド契約を正本とする（decisions/spec-decision-001.yaml参照）
+api_contract_style: "cli-command-contract"
+
+use_cases:
+  - business: "並行稼働実行業務"
+    buc: "並行稼働実行フロー"
+    uc: "並行稼働実行結果を確認する"
+    files: ["spec.md", "tier-facade.md"]
+    api_count: 1
+    async_event_count: 0
+  - business: "並行稼働実行業務"
+    buc: "並行稼働実行フロー"
+    uc: "feature flag設定に基づきslotを選択して起動する"
+    files: ["spec.md", "tier-facade.md"]
+    api_count: 1
+    async_event_count: 0
+  - business: "並行稼働実行業務"
+    buc: "並行稼働実行フロー"
+    uc: "background roleを起動する"
+    files: ["spec.md", "tier-facade.md", "tier-worker.md"]
+    api_count: 2
+    async_event_count: 0
+  - business: "並行稼働実行業務"
+    buc: "並行稼働実行フロー"
+    uc: "foreground roleの標準出力・標準エラー・終了コードを応答する"
+    files: ["spec.md", "tier-facade.md"]
+    api_count: 1
+    async_event_count: 0
+  - business: "クロスチェック業務"
+    buc: "速報クロスチェックフロー"
+    uc: "速報クロスチェック結果を確認する"
+    files: ["spec.md", "tier-worker.md"]
+    api_count: 1
+    async_event_count: 0
+  - business: "クロスチェック業務"
+    buc: "速報クロスチェックフロー"
+    uc: "blue/green runnerの完了通知を受けて速報比較依頼を作成する"
+    files: ["spec.md", "tier-worker.md"]
+    api_count: 1
+    async_event_count: 0
+  - business: "クロスチェック業務"
+    buc: "速報クロスチェックフロー"
+    uc: "速報クロスチェックを実行し差分を検知する"
+    files: ["spec.md", "tier-worker.md"]
+    api_count: 1
+    async_event_count: 0
+  - business: "クロスチェック業務"
+    buc: "確報クロスチェックフロー"
+    uc: "確報クロスチェック結果を確認する"
+    files: ["spec.md", "tier-worker.md"]
+    api_count: 1
+    async_event_count: 0
+  - business: "クロスチェック業務"
+    buc: "確報クロスチェックフロー"
+    uc: "全テーブル・全ファイルを対象に確報クロスチェックを実行する"
+    files: ["spec.md", "tier-worker.md"]
+    api_count: 1
+    async_event_count: 0
+  - business: "クロスチェック業務"
+    buc: "確報クロスチェックフロー"
+    uc: "確報クロスチェック結果をstdout/stderr/exitcodeで応答する"
+    files: ["spec.md", "tier-worker.md"]
+    api_count: 1
+    async_event_count: 0
+  - business: "実行監視業務"
+    buc: "ハング監視フロー"
+    uc: "ハング疑い・異常の通知を確認する"
+    files: ["spec.md", "tier-worker.md"]
+    api_count: 1
+    async_event_count: 0
+  - business: "実行監視業務"
+    buc: "ハング監視フロー"
+    uc: "background実行の未完了・非0終了・速報比較異常を定期検知する"
+    files: ["spec.md", "tier-worker.md"]
+    api_count: 1
+    async_event_count: 0
+  - business: "実行監視業務"
+    buc: "ハング監視フロー"
+    uc: "ハング疑い・異常を運用者へ通知する"
+    files: ["spec.md", "tier-worker.md"]
+    api_count: 1
+    async_event_count: 0
+  - business: "実行制御業務"
+    buc: "blue中止フロー"
+    uc: "blue background実行の中止を依頼する"
+    files: ["spec.md", "tier-facade.md"]
+    api_count: 1
+    async_event_count: 0
+  - business: "実行制御業務"
+    buc: "blue中止フロー"
+    uc: "対話確認のうえblue background実行をABORTEDへ遷移させる"
+    files: ["spec.md", "tier-facade.md"]
+    api_count: 1
+    async_event_count: 0
+  - business: "実行制御業務"
+    buc: "green中止フロー"
+    uc: "green background実行の中止を依頼する"
+    files: ["spec.md", "tier-facade.md"]
+    api_count: 1
+    async_event_count: 0
+  - business: "実行制御業務"
+    buc: "green中止フロー"
+    uc: "対話確認のうえgreen background実行をABORTEDへ遷移させる"
+    files: ["spec.md", "tier-facade.md"]
+    api_count: 1
+    async_event_count: 0
+  - business: "実行制御業務"
+    buc: "速報比較中止フロー"
+    uc: "RUNNING中の速報比較依頼の中止を依頼する"
+    files: ["spec.md", "tier-worker.md"]
+    api_count: 1
+    async_event_count: 0
+  - business: "実行制御業務"
+    buc: "速報比較中止フロー"
+    uc: "対話確認のうえ速報比較依頼をABORTEDへ遷移させる"
+    files: ["spec.md", "tier-worker.md"]
+    api_count: 1
+    async_event_count: 0
+  - business: "実行制御業務"
+    buc: "確報比較中止フロー"
+    uc: "RUNNING中の確報比較依頼の中止を依頼する"
+    files: ["spec.md", "tier-worker.md"]
+    api_count: 1
+    async_event_count: 0
+  - business: "実行制御業務"
+    buc: "確報比較中止フロー"
+    uc: "対話確認のうえ確報比較依頼をABORTEDへ遷移させる"
+    files: ["spec.md", "tier-worker.md"]
+    api_count: 1
+    async_event_count: 0
+  - business: "実行制御業務"
+    buc: "background側リランフロー"
+    uc: "再実行対象のbackground実行・速報比較依頼を選択する"
+    files: ["spec.md", "tier-facade.md", "tier-worker.md"]
+    api_count: 1
+    async_event_count: 0
+  - business: "実行制御業務"
+    buc: "background側リランフロー"
+    uc: "execution-spec.jsonの実行設定を保ったまま再実行する"
+    files: ["spec.md", "tier-facade.md", "tier-worker.md"]
+    api_count: 1
+    async_event_count: 0
+
+cross_cutting:
+  ux_design:
+    user_flows: 6
+    ia_pages: 23
+    psychology_principles: 5
+  ui_design:
+    layout_patterns: 2
+    responsive_breakpoints: 3
+    component_guidelines: 4
+  data_visualization:
+    target_screens: 5
+    chart_types: 3
+  openapi:
+    api_count: 0
+  asyncapi:
+    async_event_count: 0
+  cli_command_contract:
+    file: "_cross-cutting/api/cli-command-contract.yaml"
+    command_count: 24
+  datastore:
+    rdb_table_count: 7
+    kvs: false
+    object_storage: false
+  common_components:
+    file: "_cross-cutting/ux-ui/common-components.md"
+    shared_patterns: 3
+  traceability:
+    file: "_cross-cutting/traceability-matrix.md"
+    total_coverage_percent: 100
+    rdra_feedback_generated: false
+
+decisions:
+  count: 4
+  files:
+    - "decisions/spec-decision-001.yaml"
+    - "decisions/spec-decision-002.yaml"
+    - "decisions/spec-decision-003.yaml"
+    - "decisions/spec-decision-004.yaml"
+
+review:
+  step3_review_rounds: 1
+  step3_review_result: "round-1で1 blocker/6 major/1 minor検出、全件修正済み。resolved記録済み"
+  files:
+    - "_review/round-1-groupA.yaml"
+    - "_review/round-1-groupB.yaml"
+    - "_review/round-1-groupC.yaml"
+
+# Storybook Story 生成は spec-stories スキルで別途実施する（本スキルの責務範囲外）
+story_generation: required
+
+stats:
+  total_ucs: 23
+  total_apis: 24
+  total_async_events: 0
+  businesses: 4
+  bucs: 9

@@ -1,0 +1,41 @@
+uc: "対話確認のうえ確報比較依頼をABORTEDへ遷移させる"
+business: "実行制御業務"
+buc: "確報比較中止フロー"
+commands:
+  - name: "relaygate abort final-crosscheck confirm"
+    tier: "tier-worker"
+    summary: "対話確認のうえRUNNING中の確報比較依頼をABORTEDへ明示的に遷移させる"
+    args:
+      - name: "--run-id"
+        type: "string"
+        required: true
+        description: "ABORTEDへ遷移させる対象の確報比較依頼のrun_id"
+      - name: "--yes"
+        type: "boolean"
+        required: false
+        description: "対話確認をスキップし中止を実行する明示フラグ（非TTY実行時は必須）"
+    env_vars:
+      - name: "RELAYGATE_RDB_DSN"
+        required: true
+        description: "final_crosscheck_requests / audit_logsへ接続するRDB接続文字列"
+      - name: "RELAYGATE_OPERATOR"
+        required: true
+        description: "監査ログに記録する操作者識別子"
+    stdin: "TTY接続時のみ、対象・影響範囲・取消不可を明示したy/nの二択入力を受け付ける"
+    stdout_contract: "遷移完了時 '確報比較依頼をABORTEDへ遷移させました run_id=...'、キャンセル時 '中止をキャンセルしました run_id=...' を出力する"
+    stderr_contract: "非TTYで--yes未指定、対象未存在、状態競合の場合に原因を1文で出力する"
+    exit_codes:
+      - code: 0
+        meaning: "正常終了（遷移完了またはキャンセル）"
+      - code: 1
+        meaning: "業務エラー（対象未存在、または状態競合）"
+      - code: 2
+        meaning: "バリデーションエラー（run_id未指定、非TTYで--yes未指定）"
+      - code: 124
+        meaning: "タイムアウト（RDB接続タイムアウト）"
+      - code: 130
+        meaning: "SIGINT中断"
+screens:
+  - name: "確報比較中止確認画面"
+    route: "/cli/abort/final-crosscheck/confirm"
+    components: ["AbortConfirmDialog"]

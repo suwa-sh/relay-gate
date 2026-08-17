@@ -1,0 +1,77 @@
+uc: "execution-spec.jsonの実行設定を保ったまま再実行する"
+business: "実行制御業務"
+buc: "background側リランフロー"
+commands:
+  - name: "relaygate rerun run"
+    tier: "tier-facade"
+    summary: "元のexecution-spec.jsonの実行設定を保ったまま新規run_id（parent_run_id=元run_id）でbackground roleを再実行する（--target background指定時）"
+    args:
+      - name: "--target"
+        type: "string(enum: background|rapid-crosscheck)"
+        required: true
+        description: "リラン対象種別。facadeはbackground指定時のみ処理する"
+      - name: "--run-id"
+        type: "string"
+        required: true
+        description: "リラン元となる完了済み・中止済みのbackground実行のrun_id"
+    env_vars:
+      - name: "RELAYGATE_RDB_DSN"
+        required: true
+        description: "execution_specs / runner_results / audit_logsへ接続するRDB接続文字列"
+      - name: "RELAYGATE_OPERATOR"
+        required: true
+        description: "監査ログに記録する操作者識別子"
+      - name: "RELAYGATE_SSH_KEY_PATH"
+        required: true
+        description: "blue/green実装への起動に用いるSSH秘密鍵のパス"
+    stdin: "なし"
+    stdout_contract: "再実行受理時のみ新規run_id・parent_run_id・status=RUNNINGを1行で出力する"
+    stderr_contract: "対象run_id未存在、SSH起動失敗の場合に原因を1文で出力する"
+    exit_codes:
+      - code: 0
+        meaning: "正常終了（再実行を開始）"
+      - code: 1
+        meaning: "業務エラー（元のexecution-spec.json未存在、SSH起動失敗）"
+      - code: 2
+        meaning: "バリデーションエラー（--run-id未指定）"
+      - code: 124
+        meaning: "タイムアウト（SSH起動タイムアウト）"
+      - code: 130
+        meaning: "SIGINT中断"
+  - name: "relaygate rerun run"
+    tier: "tier-worker"
+    summary: "完了済み・中止済みの速報比較依頼を同一run_idのままREQUESTEDへ差し戻す（--target rapid-crosscheck指定時）"
+    args:
+      - name: "--target"
+        type: "string(enum: background|rapid-crosscheck)"
+        required: true
+        description: "リラン対象種別。workerはrapid-crosscheck指定時のみ処理する"
+      - name: "--run-id"
+        type: "string"
+        required: true
+        description: "REQUESTEDへ差し戻す対象の速報比較依頼のrun_id"
+    env_vars:
+      - name: "RELAYGATE_RDB_DSN"
+        required: true
+        description: "rapid_crosscheck_requests / audit_logsへ接続するRDB接続文字列"
+      - name: "RELAYGATE_OPERATOR"
+        required: true
+        description: "監査ログに記録する操作者識別子"
+    stdin: "なし"
+    stdout_contract: "差し戻し完了時のみ対象run_id・遷移先状態（REQUESTED）を1行で出力する"
+    stderr_contract: "対象未存在、状態不一致（REQUESTED/CLAIMED/RUNNING中の対象を指定）の場合に原因を1文で出力する"
+    exit_codes:
+      - code: 0
+        meaning: "正常終了（REQUESTEDへの差し戻し完了）"
+      - code: 1
+        meaning: "業務エラー（対象未存在、またはstatusがSUCCEEDED/FAILED/ABORTED以外）"
+      - code: 2
+        meaning: "バリデーションエラー（run_id未指定）"
+      - code: 124
+        meaning: "タイムアウト（RDB接続タイムアウト）"
+      - code: 130
+        meaning: "SIGINT中断"
+screens:
+  - name: "リラン実行画面"
+    route: "/cli/rerun/run"
+    components: ["ExecutionSpecCard", "RunnerResultPanel"]

@@ -1,0 +1,7 @@
+round: 2
+findings: []
+resolved: true
+note: >-
+  round 1 の findings 3件（major 1, minor 2）はすべて resolved を独立レビュアーが確認した。
+  validateDesignEvent.js は PASS（Portals:1 / Components:14 / Screens:23 / State Models:3）。
+  npx storybook build はエラーなく完走。新規指摘なし。収束条件（blocker 0 かつ未解決major 0）を満たした。

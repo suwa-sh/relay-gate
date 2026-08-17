@@ -1,0 +1,35 @@
+round: 1
+findings:
+  - id: 1
+    severity: major
+    location: docs/design/latest/design-event.yaml:552 (storybook.categories.screens)
+    description: >-
+      storybook.categories.screens は "Screens/*" を宣言しているが、実装した23画面すべての
+      Story title は "Pages/運用ポータル/{画面名}" になっており、宣言された命名規則と一致しない。
+    resolution: resolved
+    resolution_note: >-
+      spec-stories スキルの配置パス規約（大文字 Pages 固定）に従い、design-event.yaml の
+      storybook.categories.screens を "Pages/*" に更新して一致させた（本イベントの diff で反映）。
+  - id: 2
+    severity: minor
+    location: >-
+      src/stories/Pages/運用ポータル/リラン実行画面.stories.tsx,
+      src/stories/Pages/運用ポータル/リラン対象選定画面.stories.tsx
+    description: >-
+      リラン系2画面（実行制御業務/background側リランフローに属する）の OpsPortalShell
+      activeNavKey が 'concurrent-run' になっており、blue/green中止系画面群が使う 'control'
+      とナビゲーション表示上の整合が取れていない。
+    resolution: resolved
+    resolution_note: >-
+      両ファイルの activeNavKey をすべて 'control' に修正し、npx storybook build で再検証した。
+  - id: 3
+    severity: minor
+    location: docs/design/latest/design-event.yaml (components.ui / components.common)
+    description: >-
+      新規実装した Logo（src/components/ui/Logo.tsx）と OpsPortalShell
+      （src/components/common/OpsPortalShell.tsx）が design-event.yaml に未宣言（マージ漏れリスク）。
+    resolution: resolved
+    resolution_note: >-
+      本イベントの diff で components.ui に Logo、components.common に OpsPortalShell を追加し、
+      latest/design-event.yaml にマージした。
+resolved: true

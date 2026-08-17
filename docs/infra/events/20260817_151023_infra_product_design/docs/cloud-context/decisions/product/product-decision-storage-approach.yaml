@@ -1,0 +1,35 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "product"
+artifact_id: "product-decision-storage-approach"
+title: "永続化はRDB（PostgreSQL）+ ローカルファイルシステムの組合せとする"
+status: "accepted"
+generated_at: "2026-08-17T15:10:23"
+source_refs:
+  - "arch-design:20260817_150512_initial_arch (data_architecture.storage_mapping)"
+inputs_ref:
+  - "product-workload-model"
+
+decision:
+  context: "全永続化対象エンティティはトランザクション整合性・リース/claim排他制御を要求する一方、実行ログ本体（stdout/stderr等）は大容量テキストであり、RDBに直接格納するかファイルシステムに分離するかの選択が必要"
+  conflict_type: "granularity"
+  options:
+    - id: "opt-rdb-only"
+      description: "実行ログ本体も含めて全てRDBに格納する"
+      pros:
+        - "参照経路が単純"
+      cons:
+        - "大容量テキストのRDB格納はパフォーマンス・バックアップサイズに悪影響"
+    - id: "opt-rdb-plus-filesystem"
+      description: "状態・メタデータはRDB、ログ本体はファイルシステムに分離しRDBからパス参照する"
+      pros:
+        - "RDBのトランザクション整合性を状態管理に限定して活用できる"
+        - "ログ本体のバックアップ・ローテーションを独立して運用できる"
+      cons:
+        - "RDBとファイルシステムの整合性（参照切れ）を運用で担保する必要がある"
+  chosen_option: "opt-rdb-plus-filesystem"
+  rationale: "arch-design.yaml の data_architecture.storage_mapping で、状態管理系エンティティはRDB、ログ本体はファイルシステム参照とする方針が既に示されているため、これに従う"
+  risk_assessment: "ファイルシステムとRDBのバックアップタイミングがずれると参照整合性が一時的に崩れる可能性がある。同一バックアップウィンドウ内での取得を運用手順で担保する"
+  affected_elements:
+    - "product.persistence"
+  review_date: ""

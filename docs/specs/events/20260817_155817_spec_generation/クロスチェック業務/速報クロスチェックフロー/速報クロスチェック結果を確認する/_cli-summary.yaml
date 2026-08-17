@@ -1,0 +1,29 @@
+uc: "速報クロスチェック結果を確認する"
+business: "クロスチェック業務"
+buc: "速報クロスチェックフロー"
+commands:
+  - name: "relaygate rapid-crosscheck result"
+    tier: "tier-worker"
+    summary: "job_idまたはrun_id指定で速報比較依頼・速報比較結果を参照し標準出力へ表示する"
+    args:
+      - name: "--job-id"
+        required: false
+        description: "対象ジョブID（--run-idと排他的ではないがいずれか必須）"
+      - name: "--run-id"
+        required: false
+        description: "対象run_id（--job-idと排他的ではないがいずれか必須）"
+    env_vars: []
+    stdin: "なし"
+    stdout_contract: "run_id/job_id/状態/comparison_result(OK-NG)/diff_count/diff_detail_uriを1行または表形式で出力する"
+    stderr_contract: "対象が見つからない場合・引数未指定の場合のエラーメッセージのみ出力する"
+    exit_codes:
+      - code: 0
+        meaning: "正常終了（結果取得成功）"
+      - code: 1
+        meaning: "業務エラー（対象job_id/run_idの速報比較依頼が存在しない）"
+      - code: 2
+        meaning: "バリデーションエラー（job_id/run_idいずれも未指定）"
+screens:
+  - name: "速報クロスチェック結果確認画面"
+    route: "/cli/rapid-crosscheck/result"
+    components: ["CrossCheckRequestRow", "StatusBadge"]
