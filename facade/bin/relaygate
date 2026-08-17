@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # relaygate は facade の CLI エントリポイントを提供する。
 set -o errexit -o nounset -o pipefail
-readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly SCRIPT_DIR="$script_dir"
+readonly MAX_SSH_TIMEOUT_SECONDS=9
 # shellcheck source=../../packages/contracts/relay-gate-db/schema-constants.sh
 source "$SCRIPT_DIR/../../packages/contracts/relay-gate-db/schema-constants.sh"
 
@@ -56,26 +58,39 @@ resolve_job_map() {
 	script_path="$(jq -er '.script_path' <<<"$job_map_entry" 2>/dev/null || true)"
 	work_dir="$(jq -er '.work_dir' <<<"$job_map_entry" 2>/dev/null || true)"
 	impl_version="$(jq -er '.impl_version' <<<"$job_map_entry" 2>/dev/null || true)"
-	hang_detect_limit_minutes="$(jq -er '.hang_detect_limit_minutes' <<<"$job_map_entry" 2>/dev/null || true)"
+	hang_detect_limit_minutes="$(jq -er 'if (.hang_detect_limit_minutes | type) == "number" then .hang_detect_limit_minutes | tostring else empty end' <<<"$job_map_entry" 2>/dev/null || true)"
 	credential_ref="$(jq -cer '.credential_ref // empty' <<<"$job_map_entry" 2>/dev/null || true)"
-	fixed_args="$(jq -c '.fixed_args // []' <<<"$job_map_entry" 2>/dev/null || true)"
-	[[ -n "$job_map_version" && -n "$host" && -n "$exec_user" && -n "$script_path" && -n "$work_dir" && -n "$impl_version" && -n "$hang_detect_limit_minutes" && -n "$fixed_args" ]] || business_error "JOB_IDに対応するジョブマップが見つかりません: $job_id"
+	fixed_args="$(jq -ce '(.fixed_args // []) as $args | if ($args | type) == "array" and ($args | all(.[]; type == "string")) then $args else empty end' <<<"$job_map_entry" 2>/dev/null || true)"
+	[[ "$hang_detect_limit_minutes" =~ ^[1-9][0-9]*$ ]] || business_error "JOB_IDに対応するジョブマップが見つかりません: $job_id"
+	[[ -n "$job_map_version" && -n "$host" && -n "$exec_user" && -n "$script_path" && -n "$work_dir" && -n "$impl_version" && -n "$fixed_args" ]] || business_error "JOB_IDに対応するジョブマップが見つかりません: $job_id"
 }
 
 # resolve_sqlite_path は限定的な SQLite DSN を接続先ファイルへ変換する。
 resolve_sqlite_path() { case "${RELAYGATE_RDB_DSN:-}" in sqlite://*) sqlite_path="${RELAYGATE_RDB_DSN#sqlite://}" ;; *) business_error "RDB connection failed" ;; esac }
 
+# resolve_ssh_timeout はCLI応答を10秒以内に収めるSSH待機上限を検証する。
+resolve_ssh_timeout() {
+	ssh_timeout_seconds="${RELAYGATE_SSH_TIMEOUT_SECONDS:-$MAX_SSH_TIMEOUT_SECONDS}"
+	[[ "$ssh_timeout_seconds" =~ ^[1-9]$ && "$ssh_timeout_seconds" -le "$MAX_SSH_TIMEOUT_SECONDS" ]] || validation_error "RELAYGATE_SSH_TIMEOUT_SECONDS must be between 1 and $MAX_SSH_TIMEOUT_SECONDS"
+	command -v timeout >/dev/null 2>&1 || business_error "SSH timeout utility is unavailable"
+}
+
 # persist_execution_spec は確定済み execution-spec を一度だけ記録する。
 persist_execution_spec() {
-	local columns values additional_args_json
+	local additional_args_json columns credential_ref_value values
 	additional_args_json="$(jq -cn '$ARGS.positional' --args -- "${additional_args[@]}")"
 	run_id="$(uuidgen | tr '[:upper:]' '[:lower:]')"
 	columns=$(
 		IFS=,
 		printf '%s' "${COLS_EXECUTION_SPECS[*]}"
 	)
-	values="$(sql_literal "$run_id"),NULL,$(sql_literal "$job_id"),$(sql_literal "$host"),$(sql_literal "$exec_user"),$(sql_literal "$script_path"),$(sql_literal "$work_dir"),$(sql_literal "$fixed_args"),$(sql_literal "$additional_args_json"),$(sql_literal "$job_map_version"),$(sql_literal "$impl_version"),$hang_detect_limit_minutes,$(sql_literal "$credential_ref")"
-	sqlite3 "$sqlite_path" "INSERT INTO $TBL_EXECUTION_SPECS ($columns) VALUES ($values);" >/dev/null 2>&1 || business_error "RDB connection failed"
+	if [[ -n "$credential_ref" ]]; then
+		credential_ref_value="$(sql_literal "$credential_ref")"
+	else
+		credential_ref_value="NULL"
+	fi
+	values="$(sql_literal "$run_id"),NULL,$(sql_literal "$job_id"),$(sql_literal "$host"),$(sql_literal "$exec_user"),$(sql_literal "$script_path"),$(sql_literal "$work_dir"),$(sql_literal "$fixed_args"),$(sql_literal "$additional_args_json"),$(sql_literal "$job_map_version"),$(sql_literal "$impl_version"),$hang_detect_limit_minutes,$credential_ref_value"
+	sqlite3 "$sqlite_path" "INSERT INTO $TBL_EXECUTION_SPECS ($columns) VALUES ($values);" >/dev/null 2>&1 || business_error "RDB connection failed (run_id=$run_id, boundary=rdb)"
 }
 
 # persist_foreground_result は foreground slot の RUNNING レコードを起動前に記録する。
@@ -85,18 +100,35 @@ persist_foreground_result() {
 		IFS=,
 		printf '%s' "${COLS_RUNNER_RESULTS[*]}"
 	)
-	sqlite3 "$sqlite_path" "INSERT INTO $TBL_RUNNER_RESULTS ($columns) VALUES ($(sql_literal "$run_id"),$(sql_literal "$slot"),'foreground',$(sql_literal "$(date -u '+%Y-%m-%dT%H:%M:%SZ')"),NULL,NULL,NULL,'RUNNING');" >/dev/null 2>&1 || business_error "RDB connection failed"
+	sqlite3 "$sqlite_path" "INSERT INTO $TBL_RUNNER_RESULTS ($columns) VALUES ($(sql_literal "$run_id"),$(sql_literal "$slot"),'foreground',$(sql_literal "$(date -u '+%Y-%m-%dT%H:%M:%SZ')"),NULL,NULL,NULL,'RUNNING');" >/dev/null 2>&1 || business_error "RDB connection failed (run_id=$run_id, slot=$slot, boundary=rdb)"
+}
+
+# persist_failed_result はSSH起動失敗をFAILEDとして補償記録する。
+persist_failed_result() {
+	local columns exit_code="$3" role="$2" slot="$1"
+	columns=$(
+		IFS=,
+		printf '%s' "${COLS_RUNNER_RESULTS[*]}"
+	)
+	sqlite3 "$sqlite_path" "INSERT INTO $TBL_RUNNER_RESULTS ($columns) VALUES ($(sql_literal "$run_id"),$(sql_literal "$slot"),$(sql_literal "$role"),$(sql_literal "$(date -u '+%Y-%m-%dT%H:%M:%SZ')"),NULL,NULL,$exit_code,'FAILED') ON CONFLICT(run_id,role_type) DO UPDATE SET exit_code=excluded.exit_code,status=excluded.status;" >/dev/null 2>&1 || business_error "RDB connection failed (run_id=$run_id, slot=$slot, boundary=rdb)"
 }
 
 # launch_slot は SSH を介して off 以外の slot を指定された役割で起動する。
 launch_slot() {
-	local slot="$1" role="$2" remote_command argument
+	local argument reason remote_command role="$2" slot="$1" ssh_exit_code
 	[[ "$role" != off ]] || return 0
 	[[ "$role" != foreground ]] || persist_foreground_result "$slot"
 	printf -v remote_command 'cd %q && RELAYGATE_SLOT=%q RELAYGATE_ROLE=%q RELAYGATE_RAPID_CROSSCHECK_MODE=%q %q' "$work_dir" "$slot" "$role" "$rapid_crosscheck_mode" "$script_path"
 	while IFS= read -r argument; do printf -v remote_command '%s %q' "$remote_command" "$argument"; done < <(jq -r '.[]' <<<"$fixed_args")
 	for argument in "${additional_args[@]}"; do printf -v remote_command '%s %q' "$remote_command" "$argument"; done
-	ssh "$exec_user@$host" "$remote_command" >/dev/null || business_error "Failed to start $slot slot"
+	if timeout --foreground "${ssh_timeout_seconds}s" ssh "$exec_user@$host" "$remote_command" >/dev/null; then
+		return 0
+	else
+		ssh_exit_code=$?
+	fi
+	if [[ "$ssh_exit_code" -eq 124 ]]; then reason="timeout"; else reason="ssh_failure"; fi
+	persist_failed_result "$slot" "$role" "$ssh_exit_code"
+	business_error "Failed to start $slot slot (run_id=$run_id, boundary=ssh, reason=$reason)"
 }
 
 # select_and_start_slot は feature flag 判定、記録、起動を順に実行する。
@@ -107,6 +139,7 @@ select_and_start_slot() {
 	validate_modes
 	resolve_job_map
 	resolve_sqlite_path
+	resolve_ssh_timeout
 	persist_execution_spec
 	launch_slot blue "$blue_mode"
 	launch_slot green "$green_mode"

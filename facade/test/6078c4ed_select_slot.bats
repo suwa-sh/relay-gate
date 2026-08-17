@@ -12,6 +12,13 @@ setup() {
 	cat >"$test_dir/bin/ssh" <<'EOF'
 #!/usr/bin/env bash
 printf '%s\n' "$*" >>"$RELAYGATE_TEST_LAUNCH_LOG"
+case "${RELAYGATE_TEST_SSH_MODE:-success}" in
+success) ;;
+fail) exit 255 ;;
+hang) sleep 20 ;;
+fail-green) case "$*" in *RELAYGATE_SLOT=green*) exit 255 ;; esac ;;
+*) exit 64 ;;
+esac
 EOF
 	chmod +x "$test_dir/bin/ssh"
 
@@ -50,6 +57,12 @@ JSON
 
 teardown() {
 	rm -rf "$test_dir"
+}
+
+set_job_map_field() {
+	local field="$1" value="$2"
+	jq --argjson value "$value" ".jobs[\"JOB-2026-0817-001\"].$field = \$value" "$job_map_path" >"$job_map_path.next"
+	mv "$job_map_path.next" "$job_map_path"
 }
 
 run_select_slot() {
@@ -103,6 +116,7 @@ run_select_slot_with_args() {
 	[ "$status" -eq 0 ]
 	[ "$(sqlite3 "$db_path" 'SELECT additional_args FROM execution_specs;')" = '["--date","2026-08-17"]' ]
 	[ "$(sqlite3 "$db_path" 'SELECT slot_type FROM runner_results;')" = "green" ]
+	[[ "$(<"$launch_log")" == *"--fixed --date 2026-08-17"* ]]
 }
 
 @test "relaygate_concurrent_run_select_slot_両slotがforegroundの場合_検証エラーで永続化も起動もしないこと" {
@@ -126,6 +140,83 @@ run_select_slot_with_args() {
 	[ "$status" -eq 1 ]
 	[[ "$stderr" == *"JOB_IDに対応するジョブマップが見つかりません: JOB-UNKNOWN-999"* ]]
 	[ "$(sqlite3 "$db_path" 'SELECT COUNT(*) FROM execution_specs;')" = "0" ]
+}
+
+@test "relaygate_concurrent_run_select_slot_SSH起動失敗の場合_foreground結果をFAILEDへ補償して診断情報を返すこと" {
+	# Arrange
+	export RELAYGATE_TEST_SSH_MODE=fail
+
+	# Act & Assert
+	run --separate-stderr run_select_slot foreground off on JOB-2026-0817-001
+	[ "$status" -eq 1 ]
+	[[ "$stderr" == *"Failed to start blue slot"* ]]
+	[[ "$stderr" == *"boundary=ssh"* ]]
+	[[ "$stderr" == *"run_id="* ]]
+	[ "$(sqlite3 "$db_path" 'SELECT status FROM runner_results;')" = "FAILED" ]
+	[ "$(sqlite3 "$db_path" 'SELECT exit_code FROM runner_results;')" = "255" ]
+}
+
+@test "relaygate_concurrent_run_select_slot_SSHが応答しない場合_10秒以内にFAILEDへ補償すること" {
+	# Arrange
+	export RELAYGATE_TEST_SSH_MODE=hang
+	export RELAYGATE_SSH_TIMEOUT_SECONDS=9
+	started_seconds="$(perl -MTime::HiRes=time -e 'printf "%.6f", time')"
+
+	# Act
+	run --separate-stderr run_select_slot foreground off on JOB-2026-0817-001
+	elapsed_seconds="$(perl -MTime::HiRes=time -e 'printf "%.6f", time')"
+
+	# Assert
+	[ "$status" -eq 1 ]
+	[[ "$stderr" == *"reason=timeout"* ]]
+	awk -v started="$started_seconds" -v ended="$elapsed_seconds" 'BEGIN { exit !(ended - started < 10) }'
+	[ "$(sqlite3 "$db_path" 'SELECT status FROM runner_results;')" = "FAILED" ]
+	[ "$(sqlite3 "$db_path" 'SELECT exit_code FROM runner_results;')" = "124" ]
+}
+
+@test "relaygate_concurrent_run_select_slot_後続slotのSSH起動失敗の場合_成功済みslotを保ったまま失敗slotを記録すること" {
+	# Arrange
+	export RELAYGATE_TEST_SSH_MODE=fail-green
+
+	# Act & Assert
+	run --separate-stderr run_select_slot foreground background on JOB-2026-0817-001
+	[ "$status" -eq 1 ]
+	[[ "$stderr" == *"Failed to start green slot"* ]]
+	[ "$(sqlite3 "$db_path" "SELECT slot_type || ':' || role_type || ':' || status FROM runner_results ORDER BY role_type;")" = $'green:background:FAILED\nblue:foreground:RUNNING' ]
+}
+
+@test "relaygate_concurrent_run_select_slot_不正なハング検知しきい値の場合_業務エラーで永続化しないこと" {
+	# Arrange
+	set_job_map_field hang_detect_limit_minutes '"15; DROP TABLE execution_specs;"'
+
+	# Act & Assert
+	run --separate-stderr run_select_slot off background off JOB-2026-0817-001
+	[ "$status" -eq 1 ]
+	[[ "$stderr" == *"JOB_IDに対応するジョブマップが見つかりません"* ]]
+	[ "$(sqlite3 "$db_path" 'SELECT COUNT(*) FROM execution_specs;')" = "0" ]
+}
+
+@test "relaygate_concurrent_run_select_slot_fixed_argsが文字列配列以外の場合_業務エラーで永続化しないこと" {
+	# Arrange
+	set_job_map_field fixed_args '["--fixed", 42]'
+
+	# Act & Assert
+	run --separate-stderr run_select_slot off background off JOB-2026-0817-001
+	[ "$status" -eq 1 ]
+	[[ "$stderr" == *"JOB_IDに対応するジョブマップが見つかりません"* ]]
+	[ "$(sqlite3 "$db_path" 'SELECT COUNT(*) FROM execution_specs;')" = "0" ]
+}
+
+@test "relaygate_concurrent_run_select_slot_credential_refが欠落した場合_NULLを保存すること" {
+	# Arrange
+	set_job_map_field credential_ref null
+
+	# Act
+	run --separate-stderr run_select_slot off background off JOB-2026-0817-001
+
+	# Assert
+	[ "$status" -eq 0 ]
+	[ "$(sqlite3 "$db_path" 'SELECT credential_ref IS NULL FROM execution_specs;')" = "1" ]
 }
 
 @test "relaygate_concurrent_run_select_slot_不正なfeature_flagの場合_検証エラーで永続化しないこと" {
