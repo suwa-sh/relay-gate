@@ -10,8 +10,14 @@
 
 ## 未確定または矛盾する仕様
 
-- remote 受理・開始・冪等再送・timeout 後状態、execution-spec の共有配送、ジョブマップ/RDB/SSH の相互運用契約、slot 別 impl_version と runner_results 識別は未確定である。
-- slot 起動の監査 event schema、sink、保持・保全、run_id 相関は未確定である。
+- RDB 製品は PostgreSQL に決定した。DSN、driver、lock・transaction timeout、remote 受理・開始・冪等再送・timeout 後状態、execution-spec の共有配送、ジョブマップ/RDB/SSH の相互運用契約、slot 別 impl_version と runner_results 識別は未確定である。
+- slot 起動の監査ログを追記することは決定した。event schema、sink、保持・保全、run_id 相関は未確定である。
+
+## レビュー回答の反映
+
+- 機能の到達点は承認された。
+- CR-6078c4ed-001 は RDB 製品を PostgreSQL に確定し、未回答の DSN、driver、timeout 等は仕様化対象として維持した。
+- CR-6078c4ed-002 は slot 起動の監査ログ追記を確定し、未回答の event schema、sink、保持・保全等は仕様化対象として維持した。
 
 ## issues の分類
 

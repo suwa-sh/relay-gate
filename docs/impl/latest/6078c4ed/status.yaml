@@ -26,6 +26,6 @@ stages:
     tier-facade: {status: done, attempt: 5, open_blockers: 0}
   S6_uc_bdd: {status: done, scenarios: 5, steps: 33}
   S7_atdd: {status: done, scenarios: 6, steps: 30}
-  S8_feedback: {status: done, request_count: 2, blocker_count: 0}
-  S9_review: {status: done, event_id: "20260817_235737_s9_review_generated"}
-updated_at: "2026-08-17T23:57:37+09:00"
+  S8_feedback: {status: done, mode: refresh, request_count: 2, blocker_count: 0}
+  S9_review: {status: pending}
+updated_at: "2026-08-18T08:07:39+09:00"
