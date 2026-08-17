@@ -11,7 +11,7 @@ resolved_models:
 stages:
   S1_uc_init: {status: done}
   S2_test_scaffold: {status: done, red_baseline: pass}
-  S3_contracts: {status: pending}
+  S3_contracts: {status: done}
   S4_tier_impl:
     tier-facade: {status: pending, attempt: 1}
   S5_verify:
@@ -20,4 +20,4 @@ stages:
   S7_atdd: {status: pending}
   S8_feedback: {status: pending}
   S9_review: {status: pending}
-updated_at: "2026-08-17T21:46:07+09:00"
+updated_at: "2026-08-17T21:46:51+09:00"

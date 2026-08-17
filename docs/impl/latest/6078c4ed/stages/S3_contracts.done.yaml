@@ -1,0 +1,11 @@
+stage: "S3"
+uc_id: "6078c4ed"
+manifest_sha256: "74580804fb12e6b9536f1e18695b4383963a788b12e58dcb7ee4d49f5f2c2256"
+manifest_projection: v2
+result: pass
+contracts_verified:
+  - id: "relay-gate-db"
+    result: pass
+    detail: "lock input SHA matched; 2 referenced tables and 17 referenced columns exist; all 7 provider scope tables exist"
+completed_at: "2026-08-17T21:46:51+09:00"
+completed_by: "dist-impl-run@0.8.0"
