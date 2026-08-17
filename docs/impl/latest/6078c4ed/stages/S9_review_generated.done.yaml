@@ -1,0 +1,19 @@
+schema_version: "1.0"
+stage: "S9"
+uc_id: "6078c4ed"
+result: "pass"
+feedback_request_count: 2
+manifest_sha256: "74580804fb12e6b9536f1e18695b4383963a788b12e58dcb7ee4d49f5f2c2256"
+manifest_projection: "v2"
+feedback_review_evidence:
+  feedback_id: "20260817_234841_impl_feedback_6078c4ed"
+  draft_sha256: "3bf63f83d6dc4a8da4a269197b072cb8e8db1a081edbfff51a45d26860aa5ab9"
+  request_count: 2
+implementation_review_evidence:
+  review_html_sha256: "71f5ac7ea45f5834020b9c39ef10de2577f86e8affac77eea8a0b445cb80b655"
+  gate_result: "6/6 pass"
+  open_blocker_count: 0
+  open_major_count: 2
+  captures_sha256: null
+completed_at: "2026-08-17T23:55:07+09:00"
+completed_by: "dist-impl-review@0.8.0"
