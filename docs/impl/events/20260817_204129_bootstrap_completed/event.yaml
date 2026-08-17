@@ -1,0 +1,13 @@
+event_id: "20260817_204129_bootstrap_completed"
+type: bootstrap_completed
+uc_id: null
+payload:
+  phases: [P1_preflight, P2_config, P3_skeleton, P4_contracts, P5_ui, P6_ci, P7_atdd]
+  uc_count: 23
+  uc_id_length: 8
+  atdd: {spec_files: 38, scenarios: 41, criteria_missing: []}
+  contracts: [relay-gate-db]
+  degraded: []
+  ui_imported_files: 59
+  qlty: "check --all --fail-level medium → No issues"
+created_at: "2026-08-17T20:41:29+09:00"

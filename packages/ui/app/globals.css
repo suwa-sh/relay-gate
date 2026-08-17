@@ -1,0 +1,21 @@
+@import "tailwindcss";
+@import "../styles/design-tokens.css";
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-border: var(--border);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-destructive: var(--destructive);
+  --color-info: var(--info);
+  --color-foreground-secondary: var(--foreground-secondary);
+  --font-sans: var(--font-family-sans);
+  --font-mono: var(--font-family-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-family-sans);
+}

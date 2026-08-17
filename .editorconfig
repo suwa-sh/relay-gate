@@ -1,0 +1,15 @@
+# shfmt は .editorconfig を読む(formatter 設定の正本)
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+
+[*.sh]
+indent_style = space
+indent_size = 2
+# shfmt: bash 方言・switch case のインデント
+shell_variant = bash
+switch_case_indent = true
+binary_next_line = true

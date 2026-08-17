@@ -1,0 +1,5 @@
+# shellcheck 設定(lint コマンドの正は docs/impl/latest/impl-config.yaml の commands)
+# 実装は bash 前提
+shell=bash
+# source されるファイルの追跡を有効化(-x と併用)
+external-sources=true

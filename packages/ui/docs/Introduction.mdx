@@ -1,0 +1,35 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Foundations/Introduction" />
+
+<img src="/assets/logo-full.svg" alt="RelayGate Ops" style={{ height: 40, marginBottom: 24 }} />
+
+# RelayGate Ops デザインシステム
+
+RelayGate は Web UI を持たない CLI / バッチ運用中心の実行基盤です。アーキテクチャ設計上、
+presentation 層は「ジョブスケジューラからの入力解析」と「標準出力・標準エラー・終了コードのみへの
+整形出力」に限定されており、Web フロントエンドティアは存在しません（`docs/arch/latest/arch-design.yaml`）。
+
+このデザインシステムは、運用者が実際に接する **CLI 出力・対話確認・通知メールの表示規約** と、
+将来の運用ダッシュボード構築に備えた **最小限のデザイントークン** を対象とします。
+RDRA モデルに存在しない Web 画面は発明せず、BUC.tsv の「画面」列（23件）を
+CLI 上のインタラクションのタッチポイントとして再解釈しています。
+
+## 構成
+
+<table>
+  <thead>
+    <tr><th>カテゴリ</th><th>内容</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Foundations</td><td>デザイントークン・ブランド（ロゴ/アイコン）</td></tr>
+    <tr><td>UI</td><td>汎用コンポーネント（TerminalPanel, StatusBadge, ConfirmPrompt, Banner, ResultTable, Button）</td></tr>
+    <tr><td>Domain</td><td>RDRA 情報モデル由来のドメインコンポーネント（ExecutionSpecCard 等）</td></tr>
+  </tbody>
+</table>
+
+## 参照元
+
+- `docs/design/latest/design-event.yaml` — 本デザインシステムの正本（機械可読）
+- `docs/design/latest/design-event.md` — 人が読める要約
+- `docs/design/latest/decisions/` — 決定記録（採用理由・代替案）

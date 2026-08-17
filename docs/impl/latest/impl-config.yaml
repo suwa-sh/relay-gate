@@ -1,0 +1,48 @@
+schema_version: "1.0"
+specs_root: "docs"
+repo_root: "."
+tiers:
+  - id: tier-facade
+    dir: facade
+    kind: cli
+    lang: bash
+    commands:
+      format_check: "shfmt -d facade"
+      lint: "find facade -name '*.sh' -print0 | xargs -0 -r shellcheck -x"
+      test: "bats facade/test"
+      bdd: "npx cucumber-js --config cucumber.cjs --profile tier-facade"
+  - id: tier-worker
+    dir: worker
+    kind: worker
+    lang: bash
+    commands:
+      format_check: "shfmt -d worker"
+      lint: "find worker -name '*.sh' -print0 | xargs -0 -r shellcheck -x"
+      test: "bats worker/test"
+      bdd: "npx cucumber-js --config cucumber.cjs --profile tier-worker"
+datastore_owner: tier-worker
+contracts:
+  - id: relay-gate-db
+    type: rdb-schema
+    source: "specs/latest/_cross-cutting/datastore/rdb-schema.yaml"
+    scope:
+      - execution_specs
+      - runner_results
+      - rapid_crosscheck_requests
+      - rapid_crosscheck_results
+      - final_crosscheck_requests
+      - hang_detections
+      - audit_logs
+    provider: tier-worker
+    consumers: [tier-facade]
+backend_framework: null
+integration_commands:
+  uc_bdd: "npx cucumber-js --config cucumber.cjs --profile uc"
+  atdd: "npx cucumber-js --config cucumber.cjs --profile atdd"
+implementer_model: null
+verifier_model: null
+capabilities:
+  has_asyncapi: false
+  has_kvs: false
+  has_object_storage: false
+  has_design_system: true

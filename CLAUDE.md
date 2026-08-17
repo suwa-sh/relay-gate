@@ -4,7 +4,30 @@
 
 **relay-gate** — 既存実装(blue)と新実装(green)をジョブスケジューラの同一ジョブ定義から並行稼働させ、クロスチェックで整合性を検証しながら段階的に切り替えるための、feature flag 付きストラングラーファサード型の実行基盤。シェルスクリプト + RDB(ジョブキュー兼管理DB)で構成し、エアーギャップ環境のオンプレミス Linux で動作する。MIT の OSS。
 
-**現在のステータス**: 仕様策定フェーズ完了(distillery パイプライン Step1〜6b 実施済み)。実装は未着手。
+**現在のステータス**: 仕様策定フェーズ完了(distillery パイプライン Step1〜6b 実施済み)。実装フェーズは distillery-impl でブートストラップ済み(実装本体は未着手)。
+
+## 開発規約の必須 5 項(正本: docs/dev-rules/)
+
+Verifier が reject する違反。詳細は `docs/dev-rules/`(coding-rules.md / test-strategy.md / tier-rules.md)を必ず読むこと。
+
+1. **契約型の直接編集禁止**: `packages/contracts/` 配下(contracts[] からの生成物)を手で書き換えない。再生成は S0/S3 のみ
+2. **UI コンポーネントは `packages/ui/` のみ使用**: 新規自作は禁止。不足は design への変更要求を経由する
+3. **formatter / linter を通過する**: コマンドは `docs/impl/latest/impl-config.yaml` の `commands` が正。S4 並走中は check-only
+4. **仕様を実装側で曲げない**: 矛盾したら実装を仕様に合わせるか issues/ に起票する
+5. **Conventional Commits**: コミットはオーケストレータのみが `impl({uc_id}): ...` 形式で行う
+
+## 実装フェーズの構成(distillery-impl)
+
+| 項目 | 場所 |
+|---|---|
+| 実装状態(イベントソーシング) | `docs/impl/`(events/ + latest/。正本は events + done ファイル) |
+| 実装構成 | `docs/impl/latest/impl-config.yaml`(tier / 契約 / コマンドの正) |
+| UC 対応表 | `docs/impl/latest/uc-map.yaml`(23UC、uc_id 8桁) |
+| 実装 tier | `facade/`(tier-facade, cli, bash) / `worker/`(tier-worker, worker, bash) |
+| 契約生成物 | `packages/contracts/relay-gate-db/`(rdb-schema → bash 定数。S4 中 read-only) |
+| UI 資産 | `packages/ui/`(design の storybook-app 由来。read-only) |
+| DB migration | `worker/migrations/`(datastore_owner: tier-worker) |
+| テスト 4 段 | `features/atdd/`(①) / `features/uc/`(②) / `{tier}/features/`(③) / `{tier}/test/`(④) |
 
 ## 開発プロセス(必ずこの順で)
 

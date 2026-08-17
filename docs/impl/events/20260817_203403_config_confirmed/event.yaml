@@ -1,0 +1,16 @@
+event_id: "20260817_203403_config_confirmed"
+type: config_confirmed
+uc_id: null
+payload:
+  confirmed_by: user
+  items:
+    - {field: "tiers", before: null, after: "tier-facade(dir=facade, kind=cli, lang=bash) / tier-worker(dir=worker, kind=worker, lang=bash)"}
+    - {field: "datastore_owner", before: null, after: "tier-worker"}
+    - {field: "contracts", before: null, after: "relay-gate-db(type=rdb-schema, provider=tier-worker, consumers=[tier-facade], scope=全7テーブル)"}
+    - {field: "backend_framework", before: null, after: null}
+    - {field: "commands", before: null, after: "shfmt / shellcheck / bats / cucumber-js"}
+  note: >-
+    openapi.yaml は paths 空の互換スタブのため契約に載せない。
+    frontend 種別の tier が無いため tiers[].capabilities.ui_review は対象外。
+    承認は tmp/reviews/impl-bootstrap-config-review.html 提示のうえチャットで取得。
+created_at: "2026-08-17T20:34:03+09:00"

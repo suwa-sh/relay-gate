@@ -1,0 +1,15 @@
+{
+  "name": "relay-gate",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Strangler-facade execution gateway (implementation harness)",
+  "scripts": {
+    "bdd:tier-facade": "cucumber-js --config cucumber.cjs --profile tier-facade",
+    "bdd:tier-worker": "cucumber-js --config cucumber.cjs --profile tier-worker",
+    "bdd:uc": "cucumber-js --config cucumber.cjs --profile uc",
+    "bdd:atdd": "cucumber-js --config cucumber.cjs --profile atdd"
+  },
+  "devDependencies": {
+    "@cucumber/cucumber": "^13.2.1"
+  }
+}

@@ -1,0 +1,17 @@
+schema_version: "1.1"
+contracts:
+  - id: relay-gate-db
+    type: rdb-schema
+    scope:
+      - execution_specs
+      - runner_results
+      - rapid_crosscheck_requests
+      - rapid_crosscheck_results
+      - final_crosscheck_requests
+      - hang_detections
+      - audit_logs
+    source_read: scope
+    input: {path: "docs/specs/latest/_cross-cutting/datastore/rdb-schema.yaml", sha256: "b4ea9b55206d0f9fa0370e96f884800ff52870e57f8001f57bb41155f5d24dba"}
+    generated:
+      - {dir: "packages/contracts/relay-gate-db", generator: "direct-from-yaml", audience: both, at: "2026-08-17T20:45:00+09:00"}
+generated_at: "2026-08-17T20:45:00+09:00"
