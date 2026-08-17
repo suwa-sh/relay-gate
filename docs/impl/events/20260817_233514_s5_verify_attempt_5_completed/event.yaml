@@ -1,0 +1,14 @@
+event_id: "20260817_233514_s5_verify_attempt_5_completed"
+type: stage_completed
+uc_id: "6078c4ed"
+stage: "S5"
+tier: "tier-facade"
+attempt: 5
+lane: verify
+payload:
+  result: pass
+  manifest_sha256: "74580804fb12e6b9536f1e18695b4383963a788b12e58dcb7ee4d49f5f2c2256"
+  manifest_projection: v2
+  open_blockers: 0
+  summary: {blocker: 0, major: 2, minor: 0}
+created_at: "2026-08-17T23:35:14+09:00"

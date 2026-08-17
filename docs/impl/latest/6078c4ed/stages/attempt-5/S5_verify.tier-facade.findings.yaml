@@ -1,0 +1,33 @@
+schema_version: "1.0"
+uc_id: "6078c4ed"
+tier: "tier-facade"
+attempt: 5
+verified_at: "2026-08-17T23:35:14+09:00"
+gate_reexec: {format: pass, lint: pass, tdd: pass, bdd_tier: pass}
+viewpoints_checked:
+  spec_conformance: {status: done, note: "CLI、feature、execution-spec、mode完全保存、SSH伝播、DB操作を照合"}
+  readability_maintainability: {status: done, note: "関数分割、コメント、テスト命名、契約定数利用を確認"}
+  security: {status: done, note: "型、SQL literal、SSH引数、credential_ref、秘密値非出力を確認"}
+  performance: {status: done, note: "8秒deadline、初期化、job-map、DB、SSH、fixed_args後再計算を実走"}
+  operability: {status: done, note: "境界診断と既存監査契約issueを確認"}
+  fault_tolerance: {status: done, note: "DB/file/SSH補償、通常子とTERM無視子の終了を確認"}
+  refactoring: {status: done, note: "mode、改行引数、NULL/型、DB遅延、部分失敗を回帰確認"}
+findings:
+  - id: "F5-001"
+    viewpoint: spec_conformance
+    severity: major
+    target: "facade runtime integration boundaries"
+    claim: "remote handshake、共有execution-spec配布、RDB製品・gateway timeout、runner_results識別契約が未確定。"
+    evidence: "既存runtime-contract issuesに記録済みで、現入力仕様には一意な実装値がない。"
+    suggested_fix: "feedbackでcross-cutting契約を確定後、相互運用境界を更新する。"
+  - id: "F5-002"
+    viewpoint: operability
+    severity: major
+    target: "facade structured audit boundary"
+    claim: "起動操作の監査event schema、sink、保持・相関規則が未確定。"
+    evidence: "既存remote-handshake-rdb-audit-contract issueに記録済みで、CLI stdout契約だけから監査出力を一意に決定できない。"
+    suggested_fix: "監査契約を仕様化してから実装する。"
+summary: {blocker: 0, major: 2, minor: 0}
+closure:
+  F4-001: {status: closed, evidence: "deadlineを最初の測定境界で確定し、初期化・contract・job-map遅延testが10秒未満"}
+  F4-002: {status: closed, evidence: "通常子とTERM無視子をprocess groupで終了し、単独壁時計は約7.7秒"}
