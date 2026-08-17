@@ -4,7 +4,7 @@ business: "並行稼働実行業務"
 buc: "並行稼働実行フロー"
 uc: "feature flag設定に基づきslotを選択して起動する"
 state: running
-current_attempt: 2
+current_attempt: 3
 resolved_models:
   implementer: "gpt-5.6-terra"
   verifier: "gpt-5.6-sol"
@@ -13,11 +13,11 @@ stages:
   S2_test_scaffold: {status: done, red_baseline: pass}
   S3_contracts: {status: done}
   S4_tier_impl:
-    tier-facade: {status: done, attempt: 2, gates: {format: pass, lint: pass, tdd: pass, bdd_tier: pass}}
+    tier-facade: {status: pending, attempt: 3}
   S5_verify:
-    tier-facade: {status: done, attempt: 2, open_blockers: 2}
+    tier-facade: {status: pending, attempt: 3}
   S6_uc_bdd: {status: pending}
   S7_atdd: {status: pending}
   S8_feedback: {status: pending}
   S9_review: {status: pending}
-updated_at: "2026-08-17T22:32:46+09:00"
+updated_at: "2026-08-17T22:33:56+09:00"
