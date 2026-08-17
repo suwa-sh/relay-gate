@@ -1,0 +1,15 @@
+schema_version: "1.0"
+stage: "S4"
+uc_id: "6078c4ed"
+tier: "tier-facade"
+attempt: 4
+result: pass
+gates:
+  format: pass
+  lint: pass
+  tdd: pass
+  bdd_tier: pass
+manifest_sha256: "74580804fb12e6b9536f1e18695b4383963a788b12e58dcb7ee4d49f5f2c2256"
+manifest_projection: "v2"
+completed_at: "2026-08-17T14:05:11Z"
+completed_by: "dist-impl-implement@0.8.0"

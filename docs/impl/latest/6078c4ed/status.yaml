@@ -13,11 +13,11 @@ stages:
   S2_test_scaffold: {status: done, red_baseline: pass}
   S3_contracts: {status: done}
   S4_tier_impl:
-    tier-facade: {status: pending, attempt: 4}
+    tier-facade: {status: done, attempt: 4}
   S5_verify:
     tier-facade: {status: pending, attempt: 4}
   S6_uc_bdd: {status: pending}
   S7_atdd: {status: pending}
   S8_feedback: {status: pending}
   S9_review: {status: pending}
-updated_at: "2026-08-17T22:55:56+09:00"
+updated_at: "2026-08-17T23:08:14+09:00"

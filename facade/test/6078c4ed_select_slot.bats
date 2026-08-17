@@ -8,6 +8,7 @@ setup() {
 	job_map_path="$test_dir/job-map.json"
 	launch_log="$test_dir/launch.log"
 	execution_spec_dir="$test_dir/execution-specs"
+	system_sqlite="$(command -v sqlite3)"
 	mkdir -p "$test_dir/bin"
 
 	cat >"$test_dir/bin/ssh" <<'EOF'
@@ -23,6 +24,15 @@ fail-green) case "$*" in *RELAYGATE_SLOT=green*) exit 255 ;; esac ;;
 esac
 EOF
 	chmod +x "$test_dir/bin/ssh"
+
+	cat >"$test_dir/bin/sqlite3" <<'EOF'
+#!/usr/bin/env bash
+if [[ -n "${RELAYGATE_TEST_SQLITE_DELAY_SECONDS:-}" ]]; then
+	sleep "$RELAYGATE_TEST_SQLITE_DELAY_SECONDS"
+fi
+exec "$RELAYGATE_TEST_SYSTEM_SQLITE3" "$@"
+EOF
+	chmod +x "$test_dir/bin/sqlite3"
 
 	sqlite3 "$db_path" <<'SQL'
 CREATE TABLE execution_specs (
@@ -70,6 +80,7 @@ set_job_map_field() {
 run_select_slot() {
 	env \
 		PATH="$test_dir/bin:$PATH" \
+		RELAYGATE_TEST_SYSTEM_SQLITE3="$system_sqlite" \
 		RELAYGATE_TEST_LAUNCH_LOG="$launch_log" \
 		RELAYGATE_RDB_DSN="sqlite://$db_path" \
 		RELAYGATE_JOB_MAP_PATH="$job_map_path" \
@@ -81,6 +92,7 @@ run_select_slot() {
 run_select_slot_with_args() {
 	env \
 		PATH="$test_dir/bin:$PATH" \
+		RELAYGATE_TEST_SYSTEM_SQLITE3="$system_sqlite" \
 		RELAYGATE_TEST_LAUNCH_LOG="$launch_log" \
 		RELAYGATE_RDB_DSN="sqlite://$db_path" \
 		RELAYGATE_JOB_MAP_PATH="$job_map_path" \
@@ -111,11 +123,60 @@ run_select_slot_with_args() {
 	execution_spec_path="$execution_spec_dir/$run_id/execution-spec.json"
 	[ -f "$execution_spec_path" ]
 	[ ! -e "$execution_spec_dir/$run_id/.execution-spec.json.tmp" ]
-	[ "$(jq -r '.run_id' "$execution_spec_path")" = "$run_id" ]
-	[ "$(jq -r '.additional_args == null' "$execution_spec_path")" = "true" ]
+	jq -e --arg run_id "$run_id" '. == {
+		run_id: $run_id,
+		parent_run_id: null,
+		job_id: "JOB-2026-0817-001",
+		host: "runner.example.test",
+		exec_user: "relay",
+		script_path: "/opt/jobs/example.sh",
+		work_dir: "/var/tmp/relay",
+		fixed_args: ["--fixed"],
+		additional_args: null,
+		job_map_version: "map-v1",
+		impl_version: "green-v1",
+		hang_detect_limit_minutes: 15,
+		credential_ref: "ssh-key-reference",
+		blue_mode: "foreground",
+		green_mode: "background",
+		rapid_crosscheck_mode: "on"
+	}' "$execution_spec_path" >/dev/null
 	[[ "$(<"$launch_log")" == *"RELAYGATE_RUN_ID=$run_id"* ]]
 	[[ "$(<"$launch_log")" == *"RELAYGATE_EXECUTION_SPEC_PATH=$execution_spec_path"* ]]
+	[[ "$(<"$launch_log")" == *"RELAYGATE_BLUE_MODE=foreground"* ]]
+	[[ "$(<"$launch_log")" == *"RELAYGATE_GREEN_MODE=background"* ]]
+	[[ "$(<"$launch_log")" == *"RELAYGATE_RAPID_CROSSCHECK_MODE=on"* ]]
 	[[ "$(<"$launch_log")" == *"-n -o BatchMode=yes -- relay@runner.example.test"* ]]
+}
+
+@test "relaygate_concurrent_run_select_slot_fixed_argsに改行がある場合_SSHへ単一引数として伝播すること" {
+	# Arrange
+	set_job_map_field fixed_args '["--fixed=first\nsecond", "spaced value"]'
+	expected_fixed_args="$(printf '%q %q' $'--fixed=first\nsecond' 'spaced value')"
+
+	# Act
+	run --separate-stderr run_select_slot off foreground off JOB-2026-0817-001
+
+	# Assert
+	[ "$status" -eq 0 ]
+	[[ "$(<"$launch_log")" == *"$expected_fixed_args"* ]]
+}
+
+@test "relaygate_concurrent_run_select_slot_初期DB書込みが遅延した場合_全体deadline内にファイル補償すること" {
+	# Arrange
+	export RELAYGATE_TEST_SQLITE_DELAY_SECONDS=20
+	started_seconds="$(perl -MTime::HiRes=time -e 'printf "%.6f", time')"
+
+	# Act
+	run --separate-stderr run_select_slot foreground off on JOB-2026-0817-001
+	elapsed_seconds="$(perl -MTime::HiRes=time -e 'printf "%.6f", time')"
+
+	# Assert
+	[ "$status" -eq 1 ]
+	[[ "$stderr" == *"boundary=rdb"* ]]
+	awk -v started="$started_seconds" -v ended="$elapsed_seconds" 'BEGIN { exit !(ended - started < 10) }'
+	[ "$(sqlite3 "$db_path" 'SELECT COUNT(*) FROM execution_specs;')" = "0" ]
+	[ "$(find "$execution_spec_dir" -name execution-spec.json -print 2>/dev/null | wc -l | tr -d ' ')" = "0" ]
 }
 
 @test "relaygate_concurrent_run_select_slot_両slotが遅延した場合_CLI全体deadline内に2回目を打ち切ること" {

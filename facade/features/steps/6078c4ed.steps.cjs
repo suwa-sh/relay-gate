@@ -16,12 +16,13 @@ Before(function () {
   this.dbPath = join(this.testDir, "relaygate.db");
   this.jobMapPath = join(this.testDir, "job-map.json");
   this.launchLogPath = join(this.testDir, "launch.log");
+  this.executionSpecDir = join(this.testDir, "execution-specs");
   const binDir = join(this.testDir, "bin");
   mkdirSync(binDir);
   writeFileSync(join(binDir, "ssh"), "#!/usr/bin/env bash\nprintf '%s\\n' \"$*\" >>\"$RELAYGATE_TEST_LAUNCH_LOG\"\n", { mode: 0o755 });
   writeFileSync(this.jobMapPath, JSON.stringify({ version: "map-v1", jobs: { "JOB-2026-0817-001": { host: "runner.example.test", exec_user: "relay", script_path: "/opt/jobs/example.sh", work_dir: "/var/tmp/relay", fixed_args: ["--fixed"], impl_version: "green-v1", hang_detect_limit_minutes: 15, credential_ref: "ssh-key-reference" } } }));
   execute("sqlite3", [this.dbPath, "CREATE TABLE execution_specs (run_id TEXT PRIMARY KEY, parent_run_id TEXT, job_id TEXT, host TEXT, exec_user TEXT, script_path TEXT, work_dir TEXT, fixed_args TEXT, additional_args TEXT, job_map_version TEXT, impl_version TEXT, hang_detect_limit_minutes INTEGER, credential_ref TEXT); CREATE TABLE runner_results (run_id TEXT, slot_type TEXT, role_type TEXT, started_at TEXT, stdout_path TEXT, stderr_path TEXT, exit_code INTEGER, status TEXT, PRIMARY KEY (run_id, role_type));"]);
-  this.env = { ...process.env, PATH: `${binDir}:${process.env.PATH}`, RELAYGATE_TEST_LAUNCH_LOG: this.launchLogPath, RELAYGATE_RDB_DSN: `sqlite://${this.dbPath}`, RELAYGATE_JOB_MAP_PATH: this.jobMapPath };
+  this.env = { ...process.env, PATH: `${binDir}:${process.env.PATH}`, RELAYGATE_TEST_LAUNCH_LOG: this.launchLogPath, RELAYGATE_RDB_DSN: `sqlite://${this.dbPath}`, RELAYGATE_JOB_MAP_PATH: this.jobMapPath, RELAYGATE_EXECUTION_SPEC_DIR: this.executionSpecDir };
 });
 
 After(function () { rmSync(this.testDir, { recursive: true, force: true }); });
