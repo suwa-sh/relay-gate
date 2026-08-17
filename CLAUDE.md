@@ -78,8 +78,7 @@ Verifier が reject する違反。詳細は `docs/dev-rules/`(coding-rules.md /
 
 ### 5. qlty check 指摘ゼロをキープ
 
-- 実装開始時に `qlty init` で formatter / linter / SAST を導入し、security 指摘ゼロまで潰してからこの節を「指摘ゼロをキープ」に確定する(現時点は未導入)
-- 導入後は変更のたびにローカルで実行する:
+- 導入済み(shellcheck / shfmt / osv-scanner / trufflehog / ripgrep)。security 指摘ゼロを確認済み(2026-08-17)。変更のたびにローカルで実行する:
 
 ```bash
 qlty check --all --no-progress --no-formatters --fail-level medium   # CI と同じゲート。exit 0 を維持
@@ -101,13 +100,13 @@ qlty fmt --all                                                        # formatte
 
 ## 実装規約
 
-- 実装言語はシェルスクリプト(bash)中心。DB アクセス・比較処理等の補助実装の言語は実装フェーズ開始時に確定し、本節へ追記する
+- 実装言語はシェルスクリプト(bash)中心。BDD の step 定義のみ JavaScript(CommonJS `.cjs`。cucumber-js から実 bash プロセスを起動して検証する)。Node はテストハーネスのビルド時依存であり、実行時のエアーギャップ制約に影響させない
 - **コメントは日本語**で書く(仕様の制約・設計判断を示す最小限のもの。コード・識別子・エラーメッセージ・ログは英語)
 - 関数ヘッダコメントも日本語(`# func_name は〜する。` のように対象名から始める)
 
 ## テスト規約
 
-- テストフレームワークは実装フェーズ開始時に確定する(bash なら bats 系を第一候補)。確定したら本節に追記する
+- テストフレームワーク確定済み: TDD 単体 = **bats-core**、BDD(tier / UC / ATDD)= **cucumber-js v13**(profiles は `cucumber.cjs`)。4 段テスト階層の正本は `docs/dev-rules/test-strategy.md`
 - **AAA パターン**: 各テスト本文を `Arrange` / `Act` / `Assert` のコメントで 3 区画に分ける(準備・実行・検証を混ぜない)
   - 準備が不要なテストは `Arrange` を省く。空の区画にコメントだけ置かない
   - 異常終了だけを検証するテストは実行と検証が同一文になるので `Act & Assert` に統合する
@@ -135,10 +134,23 @@ qlty fmt --all                                                        # formatte
 ## 検証コマンド
 
 ```bash
-# 実装フェーズ開始時に test / lint / build のコマンド一式を確定して本節へ追記する
-# 現時点で実行できる検証:
-cd docs/design/latest/storybook-app && npm install && npx storybook build   # Storybook build
+# format / lint(コマンドの正は docs/impl/latest/impl-config.yaml の commands)
+shfmt -d facade worker packages/contracts
+find facade worker packages/contracts -name '*.sh' -print0 | xargs -0 -r shellcheck -x
+
+# テスト 4 段(CI の 6 段ゲートと同一コマンド)
+bats facade/test && bats worker/test                  # ④ TDD
+npm run bdd:tier-facade && npm run bdd:tier-worker    # ③ tier BDD
+npm run bdd:uc                                        # ② UC BDD
+npm run bdd:atdd                                      # ① ATDD
+
+# 品質ゲート
+qlty check --all --no-progress --no-formatters --fail-level medium   # exit 0 を維持
+qlty fmt --all
+
+# ドキュメント
 find docs/guide docs/development README.md README.ja.md -name '*.md' -print0 2>/dev/null | xargs -0 npx md-mermaid-lint   # mermaid 構文
+cd docs/design/latest/storybook-app && npm install && npx storybook build   # Storybook build
 ```
 
 ## 横断的な注意点
@@ -146,5 +158,6 @@ find docs/guide docs/development README.md README.ja.md -name '*.md' -print0 2>/
 - **並行実行の一貫性**: ジョブキューは RDB の lease / claim による排他制御を正本とする(`docs/arch/latest/arch-design.yaml` CTP-006)。重複比較依頼を作らない冪等性を常に維持する
 - **Runner Result Contract**: `stdout.log` / `stderr.log` / `exitcode.txt` + `execution-spec.json` の 3 ファイル契約が外部 IF の正本。一時ファイル → リネームで書き込み途中の読み取りを防ぐ
 - **エアーギャップ前提**: 実行時にインターネット接続・外部 SaaS を要求する実装を入れない
-- **CI / リリース**: 未整備。実装フェーズで `.github/workflows/` を整備したら本節を実態に合わせて更新する(GitHub Actions は SHA ピン + workflow トップ `permissions: {}` + `persist-credentials: false`)
+- **CI**(`.github/workflows/ci.yml`): 6 段ゲート(format-check → lint → tdd(tier matrix) → tier-bdd(tier matrix) → uc-bdd → atdd)。GitHub Actions は SHA ピン + workflow トップ `permissions: {}` + `persist-credentials: false` を維持する。テスト未実装の間は tdd 以降が赤になる(テスト先行の設計どおり)
+- **リリース**: 未整備。配布形態(tar.gz / タグ運用)は実装が動く状態になってから確定する。version / 配布タグを進めた状態は release pending として扱い、README の実行コマンドには未公開タグを書かない
 - 自動生成物(`docs/README.md`)は手動編集しない

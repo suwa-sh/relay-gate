@@ -2,11 +2,12 @@
 
 既存実装(blue)と新実装(green)を、ジョブスケジューラの同じジョブ定義から並行稼働させ、クロスチェックで検証しながら段階的に切り替えるためのストラングラーファサード型実行基盤。
 
+[![ci](https://github.com/suwa-sh/relay-gate/actions/workflows/ci.yml/badge.svg)](https://github.com/suwa-sh/relay-gate/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 [English README](README.md)
 
-> **ステータス**: 仕様策定フェーズ完了(要件 → NFR → アーキテクチャ → インフラ → デザイン → 仕様)。実装は未着手です。
+> **ステータス**: 仕様策定フェーズ完了・実装進行中(仕様駆動・テスト先行のため、各ユースケースの実装が終わるまで CI のテストゲートは赤になります)。
 
 ## 概要
 
@@ -59,6 +60,7 @@ npm run storybook   # CLI 出力デザインカタログ(23 ユースケース�
 |---|---|
 | [`docs/README.md`](docs/README.md) | 全仕様成果物(USDM / RDRA / NFR / アーキテクチャ / インフラ / デザイン / 仕様)の自動生成ナビゲーション |
 | [`docs/specs/latest/`](docs/specs/latest/) | 実装の正本: 23 ユースケース仕様、CLI コマンド契約(24 コマンド)、RDB スキーマ |
+| [`docs/development/README.md`](docs/development/README.md) | 開発者マニュアル: 開発環境セットアップ・テスト 4 段・仕様駆動ワークフロー |
 | [`docs/todo.md`](docs/todo.md) | 保留判断の記録(保守的な既定値で確定済み。実運用値の判明時に見直し) |
 | [Issues](https://github.com/suwa-sh/relay-gate/issues) | ヘルプ・問い合わせ |
 | [`CONTRIBUTING.md`](CONTRIBUTING.md) | コントリビュート方法 |

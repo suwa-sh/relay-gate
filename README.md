@@ -2,11 +2,12 @@
 
 A strangler-facade execution gateway for running a legacy (blue) and a new (green) implementation side by side from the same job scheduler definition, with automated cross-checking.
 
+[![ci](https://github.com/suwa-sh/relay-gate/actions/workflows/ci.yml/badge.svg)](https://github.com/suwa-sh/relay-gate/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 [日本語 README](README.ja.md) — Internal documentation (`docs/`, code comments) is written in Japanese.
 
-> **Status**: Specification phase complete (requirements → NFR → architecture → infrastructure → design → specs). Implementation has not started yet.
+> **Status**: Specification phase complete; implementation is in progress (spec-driven, tests-first — the CI test gates stay red until each use case is implemented).
 
 ## Overview
 
@@ -59,6 +60,7 @@ Start reading the specs at [`docs/README.md`](docs/README.md).
 |---|---|
 | [`docs/README.md`](docs/README.md) | Auto-generated navigation over all specification artifacts (USDM / RDRA / NFR / architecture / infra / design / specs) |
 | [`docs/specs/latest/`](docs/specs/latest/) | The implementation source of truth: 23 use-case specs, CLI command contract (24 commands), RDB schema |
+| [`docs/development/README.md`](docs/development/README.md) | Developer manual: environment setup, test layers, and the spec-driven workflow |
 | [`docs/todo.md`](docs/todo.md) | Deferred decisions (adopted conservative defaults; revisit when real operational values are known) |
 | [Issues](https://github.com/suwa-sh/relay-gate/issues) | Help and questions |
 | [`CONTRIBUTING.md`](CONTRIBUTING.md) | How to contribute |
