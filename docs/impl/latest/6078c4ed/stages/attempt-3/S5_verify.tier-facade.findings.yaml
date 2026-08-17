@@ -1,0 +1,86 @@
+schema_version: "1.0"
+uc_id: "6078c4ed"
+tier: "tier-facade"
+attempt: 3
+verified_at: "2026-08-17T22:54:51+09:00"
+gate_reexec: {format: pass, lint: pass, tdd: pass, bdd_tier: pass}
+viewpoints_checked:
+  spec_conformance: {status: done, note: "CLI、execution-spec、DB、ビジネスルール、feature転写を突合"}
+  readability_maintainability: {status: done}
+  security: {status: done, note: "入力、SSH非対話、秘密値、SQLを確認"}
+  performance: {status: done, note: "CLI全blocking I/Oのdeadlineを確認"}
+  operability: {status: done}
+  fault_tolerance: {status: done}
+  refactoring: {status: done}
+findings:
+  - id: "F3-001"
+    viewpoint: spec_conformance
+    severity: blocker
+    target: "facade/bin/relaygate:write_execution_spec"
+    claim: "execution-spec.jsonにBLUE_MODE、GREEN_MODE、RAPID_CROSSCHECK_MODEが保存されない。"
+    evidence: "spec.mdはmode値をexecution-specへ記録し運用モードを表現すると明記するが、生成JSONに3項目がない。"
+    suggested_fix: "3 modeを原子保存対象へ追加し、remoteとリランが同じ確定値を参照する完全内容testを追加する。"
+  - id: "F3-002"
+    viewpoint: performance
+    severity: blocker
+    target: "facade/bin/relaygate:main global deadline"
+    claim: "単一deadlineの残余時間をSSH以外のblocking I/Oへ適用していない。"
+    evidence: "job-map読込、filesystem、初期DB Tx、補償DB書込は無期限で、CLI全体10秒を保証できない。"
+    suggested_fix: "CLI全体をmonotonic deadline guardで囲み、全blocking I/Oと補償処理を期限内に打ち切るtestを追加する。"
+  - id: "F3-003"
+    viewpoint: spec_conformance
+    severity: major
+    target: "facade runtime boundaries"
+    claim: "入力ソース不足により本番job-map/RDB/SSH/shared-file/slot別version契約を確定できない。"
+    evidence: "実装は独自JSON、SQLite、共有path、PATH上SSH、単一host/script/versionへ固定。runtime-contract issueに記録済み。"
+    suggested_fix: "feedbackで境界契約を確定し、認証、remote transfer/handshake、slot別値を実装する。"
+  - id: "F3-004"
+    viewpoint: fault_tolerance
+    severity: major
+    target: "facade/bin/relaygate:write_execution_spec to persist_initial_records"
+    claim: "filesystemとDBのcross-resource失敗整合性・クラッシュ耐性がない。"
+    evidence: "JSON rename後のDB失敗でJSONを補償せず、DB commit後SSH前の中断でRUNNINGが残る。"
+    suggested_fix: "明示的な永続化状態機械または確実な補償を導入し、各境界の中断testを追加する。"
+  - id: "F3-005"
+    viewpoint: fault_tolerance
+    severity: major
+    target: "facade/bin/relaygate:timeout and partial launch"
+    claim: "remote handshake不足によりtimeout/部分起動の最終状態を確定できない。"
+    evidence: "SSH timeout後のremote継続を確認できず即FAILED。issue記録済み。"
+    suggested_fix: "run_idによるremote受理/開始handshakeと冪等起動、UNKNOWN/STARTING状態を仕様化する。"
+  - id: "F3-006"
+    viewpoint: security
+    severity: major
+    target: "facade/bin/relaygate:fixed_args transfer"
+    claim: "改行を含むfixed argをjq -rとreadで複数引数へ分割する。"
+    evidence: "改行区切りのprocess substitutionで文字列配列の要素境界を保持しない。"
+    suggested_fix: "NUL安全な転送または境界保持方式と特殊文字testを追加する。"
+  - id: "F3-007"
+    viewpoint: operability
+    severity: major
+    target: "facade structured audit logging"
+    claim: "アーキテクチャ/NFRの構造化・監査ログが未実装。"
+    evidence: "SSH開始/終了/処理時間/成否のJSONログとslot起動監査がなく、失敗時は平文のみ。"
+    suggested_fix: "stdout契約を汚さずrun_id/timestamp/boundary/duration/resultを構造化出力する。"
+  - id: "F3-008"
+    viewpoint: refactoring
+    severity: major
+    target: "facade tests and lint"
+    claim: "green gateがmode完全内容、全I/O timeout、cross-resource失敗、remote実行、成果物cleanupを検出できない。"
+    evidence: "temp残留patternが実名と異なり、BDD後に/var/tmp/relay配下の0600成果物が残る。公式lintはentrypointを除外。"
+    suggested_fix: "完全内容/permission、全I/O障害注入、remote縮小実行、cleanup、lint対象修正を追加する。"
+  - id: "F3-009"
+    viewpoint: operability
+    severity: minor
+    target: "facade/bin/relaygate:resolve_job_map"
+    claim: "JSON破損、tool欠落、型違反、not-foundの原因分類を潰す。"
+    evidence: "異なる原因をJOB_ID未検出へ集約する。"
+    suggested_fix: "parse/schema/tool/not-foundを秘密なしで区別する。"
+  - id: "F3-010"
+    viewpoint: readability_maintainability
+    severity: minor
+    target: "rdb-schema.yaml used_by"
+    claim: "本UCのrunner_results INSERTがmodel summaryとrdb-schema used_byでドリフトしている。"
+    evidence: "model summaryはINSERTを要求するがrdb-schema used_byに本UCがない。"
+    suggested_fix: "仕様正本を整合しdrift testを追加する。"
+summary: {blocker: 2, major: 6, minor: 2}
