@@ -17,7 +17,7 @@ stages:
   S5_verify:
     tier-facade: {status: done, attempt: 5, open_blockers: 0}
   S6_uc_bdd: {status: done, scenarios: 5, steps: 33}
-  S7_atdd: {status: pending}
+  S7_atdd: {status: done, scenarios: 6, steps: 30}
   S8_feedback: {status: pending}
   S9_review: {status: pending}
-updated_at: "2026-08-17T23:40:15+09:00"
+updated_at: "2026-08-17T23:46:40+09:00"
