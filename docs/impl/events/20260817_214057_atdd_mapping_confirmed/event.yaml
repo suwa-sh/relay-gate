@@ -1,0 +1,19 @@
+event_id: "20260817_214057_atdd_mapping_confirmed"
+type: config_confirmed
+uc_id: "6078c4ed"
+stage: "S1"
+payload:
+  atdd_scenarios:
+    before: []
+    after:
+      - "SPEC-001-01-1"
+      - "SPEC-001-02-1"
+      - "SPEC-001-03-1"
+      - "SPEC-009-01-1"
+      - "SPEC-009-02-1"
+      - "SPEC-009-03-1"
+  atdd_confirmed:
+    before: false
+    after: true
+  confirmed_by: "user_recommended_auto"
+created_at: "2026-08-17T21:40:57+09:00"

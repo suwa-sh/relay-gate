@@ -15,8 +15,14 @@ use_cases:
   path: docs/specs/latest/並行稼働実行業務/並行稼働実行フロー/feature flag設定に基づきslotを選択して起動する
   tiers:
   - tier-facade
-  atdd_scenarios: []
-  atdd_confirmed: false
+  atdd_scenarios:
+  - SPEC-001-01-1
+  - SPEC-001-02-1
+  - SPEC-001-03-1
+  - SPEC-009-01-1
+  - SPEC-009-02-1
+  - SPEC-009-03-1
+  atdd_confirmed: true
 - uc_id: c3c7ab31
   business: 並行稼働実行業務
   buc: 並行稼働実行フロー

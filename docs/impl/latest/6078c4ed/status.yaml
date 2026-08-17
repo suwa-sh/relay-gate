@@ -1,0 +1,23 @@
+schema_version: "1.0"
+uc_id: "6078c4ed"
+business: "並行稼働実行業務"
+buc: "並行稼働実行フロー"
+uc: "feature flag設定に基づきslotを選択して起動する"
+state: running
+current_attempt: 1
+resolved_models:
+  implementer: "gpt-5.6-terra"
+  verifier: "gpt-5.6-sol"
+stages:
+  S1_uc_init: {status: done}
+  S2_test_scaffold: {status: pending}
+  S3_contracts: {status: pending}
+  S4_tier_impl:
+    tier-facade: {status: pending, attempt: 1}
+  S5_verify:
+    tier-facade: {status: pending, attempt: 1}
+  S6_uc_bdd: {status: pending}
+  S7_atdd: {status: pending}
+  S8_feedback: {status: pending}
+  S9_review: {status: pending}
+updated_at: "2026-08-17T21:40:58+09:00"
