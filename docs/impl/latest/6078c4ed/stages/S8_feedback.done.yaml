@@ -3,9 +3,15 @@ stage: "S8"
 uc_id: "6078c4ed"
 result: "pass"
 feedback_request:
-  draft_path: "docs/impl/latest/6078c4ed/feedback/draft.md"
+  draft_path: null
   request_count: 2
   blocker_count: 0
+  published_path: "docs/impl/latest/6078c4ed/feedback-requests/20260817_234841_impl_feedback_6078c4ed.md"
+  feedback_id: "20260817_234841_impl_feedback_6078c4ed"
+  input_sha256: "bc64202288e80a7c6a299affcff26d45d91238a851ec5483b2d9eecb1bdabb54"
+  review_approved_event_id: "20260818_081744_feedback_publication_approved"
+  review_evidence_event_id: "20260818_081743_s9_review_refreshed"
+  published_at: "2026-08-18T08:21:22+09:00"
 learnings: 5
 proposals:
   skill: true
