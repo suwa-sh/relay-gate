@@ -1,14 +1,22 @@
 #!/usr/bin/env bash
 # relaygate は facade の CLI エントリポイントを提供する。
 set -o errexit -o nounset -o pipefail
-script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-readonly SCRIPT_DIR="$script_dir"
 readonly MAX_SSH_TIMEOUT_SECONDS=8
 readonly CLI_DEADLINE_SECONDS=8
 readonly COMPENSATION_RESERVE_MILLISECONDS=750
-# shellcheck source=../../packages/contracts/relay-gate-db/schema-constants.sh
-# shellcheck disable=SC1091
-source "$SCRIPT_DIR/../../packages/contracts/relay-gate-db/schema-constants.sh"
+
+# monotonic_milliseconds は単一CLI実行の単調時刻をミリ秒で返す。
+monotonic_milliseconds() {
+	perl -MTime::HiRes=clock_gettime,CLOCK_MONOTONIC -e 'printf "%.0f", clock_gettime(CLOCK_MONOTONIC) * 1000'
+}
+
+# CLI の最初の実行境界で単一 deadline を確定する。
+deadline_milliseconds=$(($(monotonic_milliseconds) + CLI_DEADLINE_SECONDS * 1000))
+
+initialization_error() {
+	printf '%s\n' 'CLI initialization failed (boundary=initialization)' >&2
+	exit 1
+}
 
 validation_error() {
 	printf '%s\n' "$1" >&2
@@ -17,11 +25,6 @@ validation_error() {
 business_error() {
 	printf '%s\n' "$1" >&2
 	exit 1
-}
-
-# monotonic_milliseconds は単一CLI実行の単調時刻をミリ秒で返す。
-monotonic_milliseconds() {
-	perl -MTime::HiRes=clock_gettime,CLOCK_MONOTONIC -e 'printf "%.0f", clock_gettime(CLOCK_MONOTONIC) * 1000'
 }
 
 # remaining_deadline_milliseconds はCLI開始時点からの残余時間を返す。
@@ -33,12 +36,25 @@ remaining_deadline_milliseconds() {
 	printf '%s' "$remaining_milliseconds"
 }
 
+# deadline_run_for は専用session内のI/Oとその子プロセス群を期限で終了する。
+deadline_run_for() {
+	local timeout_duration="$1"
+	shift
+	# shellcheck disable=SC2016
+	timeout --kill-after=1s "$timeout_duration" bash -c '
+		perl -MPOSIX=setsid -e '\''setsid() or die "setsid failed: $!"; exec @ARGV or die "exec failed: $!"'\'' "$@" <&0 &
+		child_pid=$!
+		trap '\''kill -TERM -- "-$child_pid" 2>/dev/null || true; kill -KILL -- "-$child_pid" 2>/dev/null || true; wait "$child_pid" 2>/dev/null || true; exit 124'\'' TERM
+		wait "$child_pid"
+	' bash "$@"
+}
+
 # deadline_run は全ての外部I/Oを単一CLI deadlineまでに打ち切る。
 deadline_run() {
 	local remaining_milliseconds timeout_duration
 	remaining_milliseconds="$(remaining_deadline_milliseconds)" || return 124
 	printf -v timeout_duration '%d.%03ds' "$((remaining_milliseconds / 1000))" "$((remaining_milliseconds % 1000))"
-	timeout --foreground --kill-after=1s "$timeout_duration" "$@"
+	deadline_run_for "$timeout_duration" "$@"
 }
 
 # deadline_run_with_compensation_reserve は失敗後の補償時間を残してI/Oを実行する。
@@ -48,8 +64,19 @@ deadline_run_with_compensation_reserve() {
 	remaining_milliseconds=$((remaining_milliseconds - COMPENSATION_RESERVE_MILLISECONDS))
 	((remaining_milliseconds > 0)) || return 124
 	printf -v timeout_duration '%d.%03ds' "$((remaining_milliseconds / 1000))" "$((remaining_milliseconds % 1000))"
-	timeout --foreground --kill-after=1s "$timeout_duration" "$@"
+	deadline_run_for "$timeout_duration" "$@"
 }
+
+# SCRIPT_DIR と契約定数は同じCLI deadlineの内側で解決する。
+# shellcheck disable=SC2016
+script_dir="$(deadline_run bash -c 'cd -- "$(dirname -- "$1")" && pwd -P' bash "${BASH_SOURCE[0]}")" || initialization_error
+readonly SCRIPT_DIR="$script_dir"
+contract_path="$SCRIPT_DIR/../../packages/contracts/relay-gate-db/schema-constants.sh"
+# shellcheck disable=SC2016
+contract_declarations="$(deadline_run bash -c 'source "$1"; declare -p TBL_EXECUTION_SPECS TBL_RUNNER_RESULTS COLS_EXECUTION_SPECS COLS_RUNNER_RESULTS' bash "$contract_path")" || initialization_error
+# 契約生成物が出力した定数宣言だけを親shellに復元する。
+# shellcheck disable=SC2294
+eval "$contract_declarations"
 
 # job_map_error はジョブマップ境界の診断情報を秘密値なしで返す。
 job_map_error() {
@@ -89,7 +116,9 @@ validate_modes() {
 
 # resolve_job_map はジョブマップの対象ジョブを解決する。
 resolve_job_map() {
-	[[ -n "${RELAYGATE_JOB_MAP_PATH:-}" && -r "${RELAYGATE_JOB_MAP_PATH:-}" ]] || job_map_error path unavailable
+	if [[ -z "${RELAYGATE_JOB_MAP_PATH:-}" ]] || ! deadline_run test -r "$RELAYGATE_JOB_MAP_PATH"; then
+		job_map_error path unavailable
+	fi
 	# shellcheck disable=SC2016
 	job_map_entry="$(deadline_run jq -cer --arg id "$job_id" '.jobs[$id] | select(type == "object")' "$RELAYGATE_JOB_MAP_PATH" 2>/dev/null || true)"
 	[[ -n "$job_map_entry" ]] || job_map_error jobs not_found
@@ -184,8 +213,19 @@ persist_failed_result() {
 
 # launch_slot は SSH を介して off 以外の slot を指定された役割で起動する。
 launch_slot() {
-	local argument remaining_milliseconds reason remote_command role="$2" slot="$1" ssh_exit_code
+	local argument fixed_args_shell remaining_milliseconds reason remote_command role="$2" slot="$1" ssh_exit_code ssh_timeout_duration
+	local -a fixed_args=()
 	[[ "$role" != off ]] || return 0
+	printf -v remote_command 'cd %q && RELAYGATE_SLOT=%q RELAYGATE_ROLE=%q RELAYGATE_RUN_ID=%q RELAYGATE_EXECUTION_SPEC_PATH=%q RELAYGATE_BLUE_MODE=%q RELAYGATE_GREEN_MODE=%q RELAYGATE_RAPID_CROSSCHECK_MODE=%q %q' "$work_dir" "$slot" "$role" "$run_id" "$execution_spec_path" "$blue_mode" "$green_mode" "$rapid_crosscheck_mode" "$script_path"
+	if [[ "$fixed_args_json" != null ]]; then
+		fixed_args_shell="$(deadline_run jq -er '[.[] | @sh] | join(" ")' <<<"$fixed_args_json")" || business_error "Failed to start $slot slot (run_id=$run_id, boundary=job_map, reason=deadline)"
+		# jq の @sh 出力だけを配列に復元し、改行を含む固定引数も1要素として保持する。
+		# shellcheck disable=SC2294
+		eval "fixed_args=($fixed_args_shell)"
+		for argument in "${fixed_args[@]}"; do printf -v remote_command '%s %q' "$remote_command" "$argument"; done
+	fi
+	for argument in "${additional_args[@]}"; do printf -v remote_command '%s %q' "$remote_command" "$argument"; done
+	# fixed_args の抽出後に再計算し、古い残余時間でSSHを開始しない。
 	remaining_milliseconds="$(remaining_deadline_milliseconds || true)"
 	if [[ -z "$remaining_milliseconds" ]]; then
 		persist_failed_result "$slot" "$role" 124
@@ -197,12 +237,8 @@ launch_slot() {
 		business_error "Failed to start $slot slot (run_id=$run_id, boundary=ssh, reason=timeout)"
 	fi
 	if ((ssh_timeout_seconds * 1000 < remaining_milliseconds)); then remaining_milliseconds=$((ssh_timeout_seconds * 1000)); fi
-	printf -v remote_command 'cd %q && RELAYGATE_SLOT=%q RELAYGATE_ROLE=%q RELAYGATE_RUN_ID=%q RELAYGATE_EXECUTION_SPEC_PATH=%q RELAYGATE_BLUE_MODE=%q RELAYGATE_GREEN_MODE=%q RELAYGATE_RAPID_CROSSCHECK_MODE=%q %q' "$work_dir" "$slot" "$role" "$run_id" "$execution_spec_path" "$blue_mode" "$green_mode" "$rapid_crosscheck_mode" "$script_path"
-	if [[ "$fixed_args_json" != null ]]; then while IFS= read -r -d '' argument; do printf -v remote_command '%s %q' "$remote_command" "$argument"; done < <(deadline_run jq -j '.[] + "\u0000"' <<<"$fixed_args_json"); fi
-	for argument in "${additional_args[@]}"; do printf -v remote_command '%s %q' "$remote_command" "$argument"; done
-	local ssh_timeout_duration
 	printf -v ssh_timeout_duration '%d.%03ds' "$((remaining_milliseconds / 1000))" "$((remaining_milliseconds % 1000))"
-	if timeout --foreground --kill-after=1s "$ssh_timeout_duration" ssh -n -o BatchMode=yes -- "$exec_user@$host" "$remote_command" >/dev/null; then
+	if deadline_run_for "$ssh_timeout_duration" ssh -n -o BatchMode=yes -- "$exec_user@$host" "$remote_command" >/dev/null; then
 		return 0
 	else
 		ssh_exit_code=$?
@@ -229,8 +265,6 @@ select_and_start_slot() {
 }
 
 main() {
-	command -v timeout >/dev/null 2>&1 || business_error "CLI deadline utility is unavailable"
-	deadline_milliseconds=$(($(monotonic_milliseconds) + CLI_DEADLINE_SECONDS * 1000))
 	[[ $# -ge 2 && "$1" == concurrent-run && "$2" == select-slot ]] || validation_error "usage: relaygate concurrent-run select-slot --job-id <JOB_ID> [-- <additional args...>]"
 	shift 2
 	parse_select_slot_request "$@"

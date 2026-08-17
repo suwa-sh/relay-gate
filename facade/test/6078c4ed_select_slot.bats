@@ -18,6 +18,8 @@ case "${RELAYGATE_TEST_SSH_MODE:-success}" in
 success) ;;
 fail) exit 255 ;;
 hang) sleep 20 ;;
+spawn-child-hang) sleep 20 & child_pid=$!; printf '%s' "$child_pid" >"$RELAYGATE_TEST_CHILD_PID_PATH"; wait "$child_pid" ;;
+spawn-term-ignoring-child) bash -c 'trap "" TERM; sleep 20' & child_pid=$!; printf '%s' "$child_pid" >"$RELAYGATE_TEST_CHILD_PID_PATH"; wait "$child_pid" ;;
 delayed-success) sleep "${RELAYGATE_TEST_SSH_DELAY_SECONDS:-4}" ;;
 fail-green) case "$*" in *RELAYGATE_SLOT=green*) exit 255 ;; esac ;;
 *) exit 64 ;;
@@ -64,6 +66,7 @@ SQL
     }
   }
 }
+
 JSON
 }
 
@@ -99,6 +102,100 @@ run_select_slot_with_args() {
 		RELAYGATE_EXECUTION_SPEC_DIR="$execution_spec_dir" \
 		BLUE_MODE=off GREEN_MODE=foreground RAPID_CROSSCHECK_MODE=off \
 		"$project_root/facade/bin/relaygate" concurrent-run select-slot --job-id JOB-2026-0817-001 -- --date 2026-08-17
+}
+
+@test "relaygate_concurrent_run_select_slot_初期化filesystemが遅延した場合_CLI全体deadline内に打ち切ること" {
+	# Arrange
+	cat >"$test_dir/bin/dirname" <<'EOF'
+#!/usr/bin/env bash
+sleep 20
+exec /usr/bin/dirname "$@"
+EOF
+	chmod +x "$test_dir/bin/dirname"
+	started_seconds="$(perl -MTime::HiRes=time -e 'printf "%.6f", time')"
+
+	# Act
+	run --separate-stderr run_select_slot foreground off on JOB-2026-0817-001
+	elapsed_seconds="$(perl -MTime::HiRes=time -e 'printf "%.6f", time')"
+
+	# Assert
+	[ "$status" -eq 1 ]
+	[[ "$stderr" == *"initialization"* ]]
+	awk -v started="$started_seconds" -v ended="$elapsed_seconds" 'BEGIN { exit !(ended - started < 10) }'
+}
+
+@test "relaygate_concurrent_run_select_slot_job_map可読性確認が遅延した場合_CLI全体deadline内に打ち切ること" {
+	# Arrange
+	cat >"$test_dir/bin/test" <<'EOF'
+#!/usr/bin/env bash
+sleep 20
+exec /usr/bin/test "$@"
+EOF
+	chmod +x "$test_dir/bin/test"
+	started_seconds="$(perl -MTime::HiRes=time -e 'printf "%.6f", time')"
+
+	# Act
+	run --separate-stderr run_select_slot foreground off on JOB-2026-0817-001
+	elapsed_seconds="$(perl -MTime::HiRes=time -e 'printf "%.6f", time')"
+
+	# Assert
+	[ "$status" -eq 1 ]
+	[[ "$stderr" == *"boundary=job_map, field=path, category=unavailable"* ]]
+	awk -v started="$started_seconds" -v ended="$elapsed_seconds" 'BEGIN { exit !(ended - started < 10) }'
+}
+
+@test "relaygate_concurrent_run_select_slot_SSHが子プロセスを生成した場合_deadline後に子PIDを残さないこと" {
+	# Arrange
+	export RELAYGATE_TEST_SSH_MODE=spawn-child-hang
+	export RELAYGATE_TEST_CHILD_PID_PATH="$test_dir/child.pid"
+	started_seconds="$(perl -MTime::HiRes=time -e 'printf "%.6f", time')"
+
+	# Act
+	run --separate-stderr run_select_slot foreground off on JOB-2026-0817-001
+	elapsed_seconds="$(perl -MTime::HiRes=time -e 'printf "%.6f", time')"
+
+	# Assert
+	[ "$status" -eq 1 ]
+	[[ "$stderr" == *"reason=timeout"* ]]
+	awk -v started="$started_seconds" -v ended="$elapsed_seconds" 'BEGIN { exit !(ended - started < 10) }'
+	child_pid="$(<"$RELAYGATE_TEST_CHILD_PID_PATH")"
+	! kill -0 "$child_pid" 2>/dev/null
+}
+
+@test "relaygate_concurrent_run_select_slot_SSHの子プロセスがTERMを無視する場合_KILLでPIDを残さないこと" {
+	# Arrange
+	export RELAYGATE_TEST_SSH_MODE=spawn-term-ignoring-child
+	export RELAYGATE_TEST_CHILD_PID_PATH="$test_dir/child.pid"
+
+	# Act
+	run --separate-stderr run_select_slot foreground off on JOB-2026-0817-001
+
+	# Assert
+	[ "$status" -eq 1 ]
+	[[ "$stderr" == *"reason=timeout"* ]]
+	child_pid="$(<"$RELAYGATE_TEST_CHILD_PID_PATH")"
+	! kill -0 "$child_pid" 2>/dev/null
+}
+
+@test "relaygate_concurrent_run_select_slot_fixed_args抽出が遅延した場合_SSH直前の残余時間でdeadlineを超えないこと" {
+	# Arrange
+	cat >"$test_dir/bin/jq" <<'EOF'
+#!/usr/bin/env bash
+if [[ "$*" == *'@sh'* ]]; then sleep 5; fi
+exec /usr/bin/jq "$@"
+EOF
+	chmod +x "$test_dir/bin/jq"
+	export RELAYGATE_TEST_SSH_MODE=hang
+	started_seconds="$(perl -MTime::HiRes=time -e 'printf "%.6f", time')"
+
+	# Act
+	run --separate-stderr run_select_slot off foreground off JOB-2026-0817-001
+	elapsed_seconds="$(perl -MTime::HiRes=time -e 'printf "%.6f", time')"
+
+	# Assert
+	[ "$status" -eq 1 ]
+	[[ "$stderr" == *"reason=timeout"* ]]
+	awk -v started="$started_seconds" -v ended="$elapsed_seconds" 'BEGIN { exit !(ended - started < 10) }'
 }
 
 @test "relaygate_concurrent_run_select_slot_排他的foreground設定の場合_execution_specとforeground結果を保存して両slotを起動すること" {
