@@ -1,0 +1,17 @@
+event_id: "20260817_225556_attempt_4_opened"
+type: attempt_opened
+uc_id: "6078c4ed"
+stage: "S4"
+attempt: 4
+payload:
+  previous_attempt: 3
+  reason: "S5 blocker findings after attempt limit"
+  blocker_tiers: ["tier-facade"]
+  findings:
+    tier-facade:
+      verify: "docs/impl/latest/6078c4ed/stages/attempt-3/S5_verify.tier-facade.findings.yaml"
+  limit_decision:
+    choice: "continue"
+    basis: "user standing instruction to adopt recommended choices until human review"
+    rationale: "both blockers are implementation-correctable and do not require a new specification decision"
+created_at: "2026-08-17T22:55:56+09:00"
