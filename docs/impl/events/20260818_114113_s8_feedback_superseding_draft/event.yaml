@@ -1,0 +1,14 @@
+event_id: "20260818_114113_s8_feedback_superseding_draft"
+type: stage_completed
+uc_id: "6078c4ed"
+stage: "S8"
+payload:
+  mode: initial
+  feedback_id: "20260818_113601_impl_feedback_6078c4ed"
+  supersedes: "20260817_234841_impl_feedback_6078c4ed"
+  draft_path: "docs/impl/latest/6078c4ed/feedback/draft.md"
+  draft_sha256: "57396b15a51da62949a111f13ef986398ac2e22674e9f47751100f6b24960746"
+  request_count: 5
+  blocker_count: 4
+  reason: "dist-pipeline run aborted at spec stage with 4 upstream conflicts; superseding draft per correction-after-publish rule"
+created_at: "2026-08-18T11:41:13+09:00"

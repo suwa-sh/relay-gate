@@ -3,24 +3,24 @@ stage: "S8"
 uc_id: "6078c4ed"
 result: "pass"
 feedback_request:
-  draft_path: null
-  request_count: 2
-  blocker_count: 0
-  published_path: "docs/impl/latest/6078c4ed/feedback-requests/20260817_234841_impl_feedback_6078c4ed.md"
+  draft_path: "docs/impl/latest/6078c4ed/feedback/draft.md"
+  feedback_id: "20260818_113601_impl_feedback_6078c4ed"
+  supersedes: "20260817_234841_impl_feedback_6078c4ed"
+  request_count: 5
+  blocker_count: 4
+superseded_feedback_request:
   feedback_id: "20260817_234841_impl_feedback_6078c4ed"
+  published_path: "docs/impl/latest/6078c4ed/feedback-requests/20260817_234841_impl_feedback_6078c4ed.md"
   input_sha256: "bc64202288e80a7c6a299affcff26d45d91238a851ec5483b2d9eecb1bdabb54"
   review_approved_event_id: "20260818_081744_feedback_publication_approved"
   review_evidence_event_id: "20260818_081743_s9_review_refreshed"
   published_at: "2026-08-18T08:21:22+09:00"
-learnings: 5
+  superseded_reason: "仕様生成の整合検証で上流矛盾4件が確認され、run が中止されたため訂正版を作成"
+learnings: 6
 proposals:
   skill: true
   context: true
 manifest_sha256: "74580804fb12e6b9536f1e18695b4383963a788b12e58dcb7ee4d49f5f2c2256"
 manifest_projection: "v2"
-completed_at: "2026-08-17T23:48:41+09:00"
-completed_by: "dist-impl-feedback@0.8.0"
-refreshed_at: "2026-08-18T08:03:39+09:00"
-updated: 2
-added: 0
-removed: 0
+completed_at: "2026-08-18T11:36:01+09:00"
+completed_by: "dist-impl-feedback@0.11.1"
