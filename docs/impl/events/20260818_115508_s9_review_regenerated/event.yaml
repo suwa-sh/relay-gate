@@ -1,0 +1,19 @@
+event_id: "20260818_115508_s9_review_regenerated"
+type: stage_completed
+uc_id: "6078c4ed"
+stage: "S9"
+payload:
+  feedback_review_evidence:
+    feedback_id: "20260818_113601_impl_feedback_6078c4ed"
+    draft_sha256: "57396b15a51da62949a111f13ef986398ac2e22674e9f47751100f6b24960746"
+    request_count: 5
+  implementation_review_evidence:
+    gate_result: "6/6 pass"
+    open_blocker_count: 0
+    open_major_count: 2
+  decision_summary:
+    approval_questions: 1
+    selection_questions: 4
+    recommended_choices: 5
+  reason: "superseding feedback draft review materials regenerated (correction-after-publish cycle)"
+created_at: "2026-08-18T11:55:08+09:00"
