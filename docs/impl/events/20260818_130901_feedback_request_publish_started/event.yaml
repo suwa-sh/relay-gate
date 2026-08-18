@@ -1,0 +1,14 @@
+event_id: "20260818_130901_feedback_request_publish_started"
+type: feedback_request_publish_started
+uc_id: "6078c4ed"
+stage: "S8"
+payload:
+  feedback_id: "20260818_113601_impl_feedback_6078c4ed"
+  path: "docs/impl/latest/6078c4ed/feedback-requests/20260818_113601_impl_feedback_6078c4ed.md"
+  input_sha256: "57396b15a51da62949a111f13ef986398ac2e22674e9f47751100f6b24960746"
+  request_count: 5
+  blocker_count: 4
+  supersedes: "20260817_234841_impl_feedback_6078c4ed"
+  review_approved_event_id: "20260818_130533_superseding_feedback_publication_approved"
+  review_evidence_event_id: "20260818_115508_s9_review_regenerated"
+created_at: "2026-08-18T13:09:01+09:00"

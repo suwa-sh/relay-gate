@@ -3,7 +3,7 @@ uc_id: "6078c4ed"
 business: "並行稼働実行業務"
 buc: "並行稼働実行フロー"
 uc: "feature flag設定に基づきslotを選択して起動する"
-state: awaiting_review
+state: blocked_on_spec
 current_attempt: 5
 resolved_models:
   implementer: "gpt-5.6-terra"
@@ -28,10 +28,10 @@ stages:
   S7_atdd: {status: done, scenarios: 6, steps: 30}
   S8_feedback:
     status: done
-    mode: initial
+    mode: publish
     feedback_id: "20260818_113601_impl_feedback_6078c4ed"
     supersedes: "20260817_234841_impl_feedback_6078c4ed"
     request_count: 5
     blocker_count: 4
   S9_review: {status: done, event_id: "20260818_115508_s9_review_regenerated"}
-updated_at: "2026-08-18T11:55:08+09:00"
+updated_at: "2026-08-18T13:09:35+09:00"

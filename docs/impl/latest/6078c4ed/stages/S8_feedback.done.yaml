@@ -3,11 +3,18 @@ stage: "S8"
 uc_id: "6078c4ed"
 result: "pass"
 feedback_request:
-  draft_path: "docs/impl/latest/6078c4ed/feedback/draft.md"
+  draft_path: null
+  published_path: "docs/impl/latest/6078c4ed/feedback-requests/20260818_113601_impl_feedback_6078c4ed.md"
   feedback_id: "20260818_113601_impl_feedback_6078c4ed"
   supersedes: "20260817_234841_impl_feedback_6078c4ed"
+  input_sha256: "57396b15a51da62949a111f13ef986398ac2e22674e9f47751100f6b24960746"
   request_count: 5
   blocker_count: 4
+  review_approved_event_id: "20260818_130533_superseding_feedback_publication_approved"
+  review_evidence_event_id: "20260818_115508_s9_review_regenerated"
+  publish_started_event_id: "20260818_130901_feedback_request_publish_started"
+  published_event_id: "20260818_130935_feedback_request_published"
+  published_at: "2026-08-18T13:09:35+09:00"
 superseded_feedback_request:
   feedback_id: "20260817_234841_impl_feedback_6078c4ed"
   published_path: "docs/impl/latest/6078c4ed/feedback-requests/20260817_234841_impl_feedback_6078c4ed.md"
@@ -22,5 +29,5 @@ proposals:
   context: true
 manifest_sha256: "74580804fb12e6b9536f1e18695b4383963a788b12e58dcb7ee4d49f5f2c2256"
 manifest_projection: "v2"
-completed_at: "2026-08-18T11:36:01+09:00"
+completed_at: "2026-08-18T13:09:35+09:00"
 completed_by: "dist-impl-feedback@0.11.1"
