@@ -1,0 +1,48 @@
+event_id: 20260818_162251_spec_stories
+trigger_event: design:20260818_143057_design_system
+created_at: '2026-08-18T16:22:51+09:00'
+source: 'dist-spec-stories: feedback request 20260818_113601_impl_feedback_6078c4ed の差分反映(CR-6078c4ed-003/005によるExecutionSpecCard/RunnerResultPanel拡張へページStoryを追随)'
+feedback_request:
+  feedback_request_id: "20260818_113601_impl_feedback_6078c4ed"
+  input_sha256: "57396b15a51da62949a111f13ef986398ac2e22674e9f47751100f6b24960746"
+  request_ids: ["CR-6078c4ed-003","CR-6078c4ed-004","CR-6078c4ed-005","CR-6078c4ed-006","CR-6078c4ed-007"]
+  work_unit_ids: ["CR-6078c4ed-003#1","CR-6078c4ed-004#1","CR-6078c4ed-005#1","CR-6078c4ed-006#1","CR-6078c4ed-007#1"]
+screens:
+  - name: リラン実行画面
+    portal: ops
+    route: /cli/rerun/run
+    components:
+      - ExecutionSpecCard
+      - RunnerResultPanel
+    uc: execution-spec.jsonの実行設定を保ったまま再実行する
+    story: src/stories/Pages/運用ポータル/リラン実行画面.stories.tsx
+    variants:
+      - AcceptedDashboard
+      - RerunFailedDashboard
+      - AcceptedHeadless
+  - name: リラン対象選定画面
+    portal: ops
+    route: /cli/rerun/select
+    components:
+      - CrossCheckRequestRow
+      - RunnerResultPanel
+    uc: 再実行対象のbackground実行・速報比較依頼を選択する
+    story: src/stories/Pages/運用ポータル/リラン対象選定画面.stories.tsx
+    variants:
+      - BackgroundCandidatesDashboard
+      - RapidCrosscheckCandidatesDashboard
+      - EmptyDashboard
+      - BackgroundCandidatesHeadless
+  - name: background role起動画面
+    portal: ops
+    route: /cli/concurrent-run/start-background
+    components:
+      - ExecutionSpecCard
+      - RunnerResultPanel
+    uc: background roleを起動する
+    story: src/stories/Pages/運用ポータル/background role起動画面.stories.tsx
+    variants:
+      - StartedDashboard
+      - StartFailedDashboard
+      - StartUnknownDashboard
+      - StartedHeadless

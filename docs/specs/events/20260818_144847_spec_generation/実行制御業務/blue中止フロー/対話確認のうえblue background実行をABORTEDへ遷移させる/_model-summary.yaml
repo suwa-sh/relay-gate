@@ -1,0 +1,101 @@
+uc: "対話確認のうえblue background実行をABORTEDへ遷移させる"
+business: "実行制御業務"
+buc: "blue中止フロー"
+
+bounded_context_id: "BC-001"
+aggregate_id: "AG-002"
+
+models:
+  - name: "ConfirmAbortBlueRequest"
+    tier: "tier-facade"
+    layer: "presentation"
+    type: "request-dto"
+    rdra_info: "Runner実行結果（started-at.txt/stdout.log/stderr.log/exitcode.txt）"
+  - name: "ConfirmAbortBlueCommand"
+    tier: "tier-facade"
+    layer: "usecase"
+    type: "command"
+    rdra_info: "Runner実行結果（started-at.txt/stdout.log/stderr.log/exitcode.txt）"
+  - name: "RunnerExecutionResult"
+    tier: "tier-facade"
+    layer: "domain"
+    type: "entity"
+    rdra_info: "Runner実行結果（started-at.txt/stdout.log/stderr.log/exitcode.txt）"
+  - name: "RunnerResultRecord"
+    tier: "tier-facade"
+    layer: "gateway"
+    type: "record"
+    rdra_info: "Runner実行結果（started-at.txt/stdout.log/stderr.log/exitcode.txt）"
+  - name: "AuditLogRecord"
+    tier: "tier-facade"
+    layer: "gateway"
+    type: "record"
+    rdra_info: "Runner実行結果（started-at.txt/stdout.log/stderr.log/exitcode.txt）"
+
+tables:
+  - name: "runner_results"
+    rdra_info: "Runner実行結果（started-at.txt/stdout.log/stderr.log/exitcode.txt）"
+    operations:
+      - type: "SELECT"
+        columns: []
+        where: "run_id = :run_id AND slot_type = 'blue' AND role_type = 'background'"
+      - type: "UPDATE"
+        columns:
+          - name: "status"
+            value: "'ABORTED'（runner_result_eventsへの履歴INSERTと同一transactionでUPSERT。LR-002）"
+        where: "run_id = :run_id AND slot_type = 'blue' AND role_type = 'background' AND attempt_id = :attempt_id"
+    indexes_needed:
+      - columns: ["slot_type", "status"]
+        reason: "ABORTED遷移対象の特定と状態確認"
+        access_pattern: "relaygate abort blue confirm --run-id"
+  - name: "runner_result_events"
+    rdra_info: "Runner実行結果（started-at.txt/stdout.log/stderr.log/exitcode.txt）"
+    operations:
+      - type: "INSERT"
+        columns:
+          - name: "event_name"
+            value: "attempt_aborted"
+          - name: "status"
+            value: "ABORTED"
+        where: "runner_resultsのsnapshot UPSERTと同一transactionでappend-only INSERT（片方だけのcommitを許容しない）"
+  - name: "audit_logs"
+    rdra_info: "該当なし（RDRAに明示定義なし。CTP-005監査ログ要件から導出。フィールド定義は_cross-cutting/api/audit-event-contract.yamlが正本）"
+    operations:
+      - type: "INSERT"
+        columns:
+          - name: "event_id"
+            value: "新規発行するUUID"
+          - name: "event_name"
+            value: "abort_confirmed"
+          - name: "actor"
+            value: "RELAYGATE_OPERATOR環境変数の値"
+          - name: "operation"
+            value: "abort"
+          - name: "outcome"
+            value: "succeeded / rejected（y以外の回答による中断）"
+          - name: "slot"
+            value: "blue"
+          - name: "attempt_id"
+            value: "対象起動試行のattempt_id"
+          - name: "occurred_at"
+            value: "イベント発生時刻"
+        where: "冪等キー (run_id, slot, attempt_id, event_name) で重複追記を防止する"
+    indexes_needed:
+      - columns: ["run_id", "occurred_at"]
+        reason: "run_id単位の監査イベント時系列照会とhash-chain検証（CTP-004）"
+        access_pattern: "run_id指定による監査イベント一覧参照"
+  - name: "audit_chain_heads"
+    rdra_info: "該当なし（CTP-005ハッシュチェーン要件から導出）"
+    operations:
+      - type: "SELECT"
+        columns: ["head_hash"]
+        where: "run_id = :run_id（SELECT ... FOR UPDATEで排他ロックしprevious_hashを確定）"
+      - type: "INSERT"
+        columns: []
+        where: "対象run_idの行が存在しない場合の初期作成"
+      - type: "UPDATE"
+        columns: ["head_event_id", "head_hash", "chain_length", "updated_at"]
+        where: "run_id = :run_id（audit_logsのINSERTと同一transaction）"
+
+kvs: []
+object_storage: []

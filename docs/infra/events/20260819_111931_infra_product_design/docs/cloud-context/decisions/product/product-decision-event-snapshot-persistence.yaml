@@ -1,0 +1,45 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "product"
+artifact_id: "product-decision-event-snapshot-persistence"
+title: "Runner実行結果等の状態遷移エンティティはEvent/Snapshot併用方式で永続化する"
+status: "accepted"
+generated_at: "2026-08-18T14:11:49"
+source_refs:
+  - "arch-design:20260818_135504_arch_slot_config_attempt_identity (LR-002)"
+decision_refs:
+  - "product-decision-storage-approach"
+inputs_ref:
+  - "product-workload-model"
+
+decision:
+  context: "Runner実行結果・速報比較依頼・確報比較依頼はarch-design.yamlでevent_snapshot型（LR-002: repository.save = historyAdapter.insert + snapshotAdapter.upsert）と定義されている。インフラ側の従来判断は現在状態のみのsnapshot-onlyを暗黙前提としており、起動試行の経過履歴と監査系譜照会が追跡できない矛盾があった"
+  conflict_type: "granularity"
+  options:
+    - id: "opt-snapshot-only"
+      description: "現在状態のみをUPSERTで保持する（従来の暗黙前提）"
+      pros:
+        - "テーブル数と書込み量が最小"
+      cons:
+        - "起動試行の経過履歴が失われ、リラン・障害調査の系譜照会と監査に必要な履歴保全ができない"
+        - "アーキテクチャ設計LR-002（Event/Snapshot併用）と矛盾する"
+    - id: "opt-event-only"
+      description: "append-onlyのイベント履歴のみを保持し、現在状態は都度導出する"
+      pros:
+        - "履歴が完全に残る"
+      cons:
+        - "現在状態の照会が集約クエリになり、lease/claimやポーリングの実装が複雑化する"
+    - id: "opt-event-plus-snapshot"
+      description: "append-onlyのrunner_result_events（履歴INSERT）と現在状態のrunner_results（snapshot UPSERT）を同一transactionで更新する併用方式"
+      pros:
+        - "履歴保全と現在状態の高速照会を両立し、アーキテクチャ設計LR-002と一致する"
+        - "同一transaction更新により履歴と現在状態の乖離を防げる"
+      cons:
+        - "書込みが2テーブルになり、履歴テーブルの容量管理が必要"
+  chosen_option: "opt-event-plus-snapshot"
+  rationale: "アーキテクチャ設計LR-002がRunner実行結果等のevent_snapshot型エンティティにEvent/Snapshot併用を確定しており、実装フィードバックで採用案として確定済み（詳細はinfraイベント20260818_141149_infra_product_designの_changes.mdを参照）。履歴INSERTとsnapshot UPSERTを同一transactionで統一することで、repository実装（historyAdapter / snapshotAdapter）と矛盾なく対応する"
+  risk_assessment: "履歴テーブルはappend-onlyで増加し続けるため、容量監視と保持方針の運用が必要。同一transaction更新を守らない実装が入ると履歴と現在状態が乖離するため、実装仕様のvalidation_rulesで検証する"
+  affected_elements:
+    - "product.persistence"
+    - "product.consistency_needs"
+  review_date: ""

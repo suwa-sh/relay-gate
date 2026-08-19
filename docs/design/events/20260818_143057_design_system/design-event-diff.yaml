@@ -1,0 +1,114 @@
+# design-event 差分 (feedback reconciliation)
+# 対象CR: CR-6078c4ed-003(再実行identity = 新run_id + parent_run_id) / CR-6078c4ed-005(slot別実行設定と起動試行identity・実行状態6値)
+# CR-6078c4ed-004(audit_logs DDL) / CR-6078c4ed-006(event+snapshot併用transaction)はバックエンド永続化内部のためデザイン影響なし
+version: '1.0'
+event_id: 20260818_143057_design_system
+created_at: '2026-08-18T14:30:57+09:00'
+source: 'dist-design-system: feedback差分反映(CR-6078c4ed-003/005)。Runner実行結果の6値実行状態(STARTING/UNKNOWN追加)とattempt表示、run共通execution specとslot別実行設定の分離表示、再実行系譜(parent_run_id)表示を反映'
+trigger_event:
+  - rdra:20260818_133855_rerun_identity_new_run_id
+  - arch:20260818_135504_arch_slot_config_attempt_identity
+feedback_request:
+  feedback_request_id: "20260818_113601_impl_feedback_6078c4ed"
+  input_sha256: "57396b15a51da62949a111f13ef986398ac2e22674e9f47751100f6b24960746"
+  request_ids: ["CR-6078c4ed-003","CR-6078c4ed-004","CR-6078c4ed-005","CR-6078c4ed-006"]
+  work_unit_ids: ["CR-6078c4ed-003#1","CR-6078c4ed-004#1","CR-6078c4ed-005#1","CR-6078c4ed-006#1"]
+diff:
+  tokens:
+    primitive:
+      colors:
+        # STARTING(起動受付)バッジ用。既存6状態色と識別可能な色相を追加
+        cyan-600: '#0891B2'
+        cyan-100: '#CFFAFE'
+        # UNKNOWN(結果不明)バッジ用。要注意状態として requested(amber) と区別する
+        orange-600: '#EA580C'
+        orange-100: '#FFEDD5'
+    component:
+      status-badge-starting:
+        background: var(--color-cyan-100)
+        foreground: var(--color-cyan-600)
+      status-badge-unknown:
+        background: var(--color-orange-100)
+        foreground: var(--color-orange-600)
+    dark_overrides:
+      component:
+        status-badge-starting:
+          background: rgba(8, 145, 178, 0.16)
+          foreground: '#22D3EE'
+        status-badge-unknown:
+          background: rgba(234, 88, 12, 0.16)
+          foreground: '#FB923C'
+  components:
+    ui:
+      - name: StatusBadge
+        # variants に starting / unknown を追加(arch正本のRunner実行結果6値状態に対応)
+        variants:
+          - running
+          - succeeded
+          - failed
+          - aborted
+          - requested
+          - claimed
+          - starting
+          - unknown
+        sizes:
+          - sm
+          - md
+    domain:
+      - name: ExecutionSpecCard
+        description: run共通execution spec(run_id/parent_run_id/JOB_ID/固定引数・追加引数/マップ版/hang_detect_limit_minutes)とslot別実行設定(slot/host/実行ユーザー/スクリプト/作業ディレクトリ/実装版)を分離して表示するカード。再実行では系譜(parent_run_id)を明示する。認証情報は参照名のみ表示し実値は表示しない
+        screens:
+          - 起動slot選択画面
+          - リラン実行画面
+        props:
+          - run_id
+          - parentRunId
+          - job_id
+          - slot
+          - host
+          - execUser
+          - script
+          - workDir
+          - mapVersion
+          - implVersion
+          - hangDetectLimitMinutes
+          - credentialRef
+        variants:
+          - default
+        states: []
+      - name: RunnerResultPanel
+        description: Runner実行結果(started-at/stdout/stderr/exitcode)を表示するターミナル調パネル。実行結果identityは(run_id, slot, role, attempt)でattempt_no/attempt_idを併記する。実行状態はarch正本の6値(STARTING/RUNNING/SUCCEEDED/FAILED/UNKNOWN/ABORTED)を表示し、timeout後は推測でFAILEDを表示せずUNKNOWNを明示する。foreground役割の応答はstdout/stderr/exitcodeのみに限定表示する
+        screens:
+          - 並行稼働実行結果確認画面
+          - 実行結果応答管理画面
+          - 確報結果応答画面
+        props:
+          - runId
+          - slot
+          - role
+          - attemptId
+          - attemptNo
+          - state
+          - startedAt
+          - stdout
+          - stderr
+          - exitCode
+        variants:
+          - foreground
+          - background
+        states:
+          - STARTING
+          - RUNNING
+          - SUCCEEDED
+          - FAILED
+          - UNKNOWN
+          - ABORTED
+  nfr_decisions:
+    - nfr: 運用・保守性(timeout後の結果不明はUNKNOWNとし推測でFAILEDを確定しない)
+      decision: RunnerResultPanel/StatusBadgeはtimeoutや結果取得不能時にunknownバッジで結果不明を明示し、failed表示への推測倒しをしない。UNKNOWNからの確定は回復処理(実結果の回収または対話確認)へ誘導する
+notes: |
+  - states セクション(RDRA 状態モデル由来)は変更しない。STARTING/UNKNOWN は RDRA 状態.tsv に存在せず、
+    arch データモデル(Runner実行結果)の状態のため、コンポーネント層でのみ反映した。
+    RDRA 状態モデルへの追加提案は docs/todo.md に登録済み(確認推奨項目)。
+  - CR-6078c4ed-004(audit_logs 非partition化) / CR-6078c4ed-006(runner_result_events+runner_results 同一transaction)は
+    CLI 出力・画面・コンポーネント契約に影響しないため差分なし。

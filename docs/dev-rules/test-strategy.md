@@ -6,9 +6,13 @@ distillery-impl が生成・運用するテストは 4 段。**上 3 段の gher
 | 段 | 名称 | gherkin の出典(転写元) | 配置 | 実行ゲート |
 |---|---|---|---|---|
 | ① | ATDD(受け入れ) | `docs/usdm/latest/requirements.yaml` の `requirements[].specifications[].acceptance_criteria[]` | `features/atdd/{spec_id}.feature` | ゲート 6(S7) |
-| ② | UC BDD | `docs/specs/latest/{業務}/{BUC}/{UC}/spec.md` の「E2E 完了条件(BDD)」gherkin ブロック | `features/uc/{uc_id}.feature` | ゲート 5(S6) |
-| ③ | tier BDD | 同 UC 配下 `{tier_id}.md`(例 `tier-frontend.md`)の「ティア完了条件(BDD)」gherkin ブロック | `{tier_dir}/features/{uc_id}.feature` | ゲート 4(S4) |
+| ② | UC BDD | `docs/specs/latest/{業務}/{BUC}/{UC}/spec.md` の「E2E 完了条件(BDD)」gherkin ブロック | `features/uc/{uc_slug}.feature` | ゲート 5(S6) |
+| ③ | tier BDD | 同 UC 配下 `{tier_id}.md`(例 `tier-frontend.md`)の「ティア完了条件(BDD)」gherkin ブロック | `{tier_dir}/features/{uc_slug}.feature` | ゲート 4(S4) |
 | ④ | TDD(単体) | 出典なし(実装者が red→green→refactor で設計) | `{tier_dir}/test/` | ゲート 3(S4) |
+
+`{uc_slug}` = uc-map(`docs/impl/latest/uc-map.yaml`)の `branch_slug`(UC 英語名の kebab-case)。
+uc_id ハッシュはファイル名に使わない(外側から UC の意味が読み取れないため)。step definition
+(`steps/{uc_slug}.steps.cjs`)も同じ slug で揃える。uc_id との対応は uc-map が正本。
 
 ## 転写ルール(①〜③)
 

@@ -1,0 +1,106 @@
+{
+  "schema_version": "distillery.feedback-result/v1",
+  "run_id": "feedback-20260817_234841_impl_feedback_6078c4ed-20260818_092759-21457",
+  "attempt": 2,
+  "feedback_request_id": "20260817_234841_impl_feedback_6078c4ed",
+  "input_sha256": "bc64202288e80a7c6a299affcff26d45d91238a851ec5483b2d9eecb1bdabb54",
+  "status": "blocked",
+  "stages": [
+    {
+      "stage_id": "architecture",
+      "state": "succeeded",
+      "event_ids": [
+        "20260818_090630_feedback_stage_architecture"
+      ],
+      "direct_work_unit_ids": [
+        "CR-6078c4ed-002#1"
+      ],
+      "causal_work_unit_ids": [
+        "CR-6078c4ed-002#1"
+      ]
+    },
+    {
+      "stage_id": "infrastructure",
+      "state": "succeeded",
+      "event_ids": [
+        "20260818_094318_feedback_stage_infrastructure"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-6078c4ed-002#1"
+      ]
+    },
+    {
+      "stage_id": "design_system",
+      "state": "succeeded",
+      "event_ids": [
+        "20260818_094841_feedback_stage_design_system"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-6078c4ed-002#1"
+      ]
+    },
+    {
+      "stage_id": "spec",
+      "state": "failed",
+      "event_ids": [
+        "20260818_103940_feedback_stage_spec"
+      ],
+      "direct_work_unit_ids": [
+        "CR-6078c4ed-001#1"
+      ],
+      "causal_work_unit_ids": [
+        "CR-6078c4ed-001#1",
+        "CR-6078c4ed-002#1"
+      ]
+    },
+    {
+      "stage_id": "spec_stories",
+      "state": "not_attempted",
+      "event_ids": [],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-6078c4ed-001#1",
+        "CR-6078c4ed-002#1"
+      ]
+    }
+  ],
+  "work_units": [
+    {
+      "work_unit_id": "CR-6078c4ed-001#1",
+      "disposition": "execution_failed",
+      "reason": "Execution failed in spec during semantic_refutation: Upstream domain contracts conflict and the PostgreSQL partition contract is not implementable, so specification reconciliation cannot complete.",
+      "artifact_refs": [],
+      "failure_stage": "spec",
+      "caused_by_event_id": "20260818_103940_feedback_stage_spec"
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-002#1",
+      "disposition": "execution_failed",
+      "reason": "Execution failed in spec during semantic_refutation: Upstream domain contracts conflict and the PostgreSQL partition contract is not implementable, so specification reconciliation cannot complete.",
+      "artifact_refs": [],
+      "failure_stage": "spec",
+      "caused_by_event_id": "20260818_103940_feedback_stage_spec"
+    }
+  ],
+  "requests": [
+    {
+      "request_id": "CR-6078c4ed-001",
+      "work_unit_ids": [
+        "CR-6078c4ed-001#1"
+      ],
+      "disposition": "execution_failed",
+      "reason": "Execution failed before every work unit completed its required stage closure."
+    },
+    {
+      "request_id": "CR-6078c4ed-002",
+      "work_unit_ids": [
+        "CR-6078c4ed-002#1"
+      ],
+      "disposition": "execution_failed",
+      "reason": "Execution failed before every work unit completed its required stage closure."
+    }
+  ],
+  "terminal_event_id": "20260818_104217_feedback_run_aborted"
+}

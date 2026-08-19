@@ -1,0 +1,5 @@
+feedback_request_id: 20260818_164000_rdra_followup_6078c4ed
+stage_packet: docs/pipeline/feedback-runs/20260818_164000_rdra_followup_6078c4ed/stage-packets/spec_stories.md
+causal_work_unit_ids: CR-6078c4ed-008#1, CR-6078c4ed-009#1, CR-6078c4ed-010#1
+direct_work_unit_ids: (none)
+trigger_event: design:20260819_113049_design_system

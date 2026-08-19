@@ -1,0 +1,79 @@
+version: "1.0"
+event_id: "20260818_093020_infra_product_design"
+created_at: "2026-08-18T09:30:20"
+source: "実装フィードバックに基づくslot起動監査イベントのインフラ具体化"
+
+feedback_request:
+  feedback_request_id: "20260817_234841_impl_feedback_6078c4ed"
+  input_sha256: "bc64202288e80a7c6a299affcff26d45d91238a851ec5483b2d9eecb1bdabb54"
+  request_ids: ["CR-6078c4ed-002"]
+  work_unit_ids: ["CR-6078c4ed-002#1"]
+direct_work_unit_ids: []
+feedback_packet: "docs/pipeline/feedback-runs/20260817_234841_impl_feedback_6078c4ed/stage-packets/infrastructure.md"
+
+arch_event_ref: "20260818_090120_arch_audit_contract_feedback"
+nfr_event_ref: "20260817_144844_initial_nfr"
+foundation_context_ref: "foundation-context"
+shared_platform_context_ref: "shared-platform-context"
+
+translation:
+  workload_type: "api"
+  availability_tier: "99.9%"
+  latency_target_p99: "1s"
+  data_classification: "internal"
+  traffic_pattern_type: "scheduled"
+  consistency_model: "strong"
+  cost_posture: "cost_optimized"
+  target_clouds:
+    - "onprem"
+
+mcl_execution:
+  status: "completed"
+  completed_at: "2026-08-18T09:35:37"
+  outputs:
+    - path: "docs/mcl/product/input/product-input.yaml"
+      status: "generated"
+      description: "MCL ワークロード入力（arch-design.yaml + nfr-grade.yaml からの変換）"
+    - path: "docs/mcl/product/output/product-workload-model.yaml"
+      status: "generated"
+      description: "slot起動監査イベント永続化capabilityを含むベンダーニュートラルなワークロードモデル"
+    - path: "docs/mcl/product/output/product-mapping-onprem.yaml"
+      status: "generated"
+      description: "PostgreSQL追記専用監査テーブルを含むオンプレミス ベンダーマッピング"
+    - path: "docs/mcl/product/output/product-impl-onprem.yaml"
+      status: "generated"
+      description: "監査イベントストアと永続再試行・照合ワーカーを含むオンプレミス実装仕様"
+    - path: "docs/mcl/product/output/product-observability.yaml"
+      status: "generated"
+      description: "SLI/SLO・ログ・トレーシング・アラート方針"
+    - path: "docs/mcl/product/output/product-cost-hints.yaml"
+      status: "generated"
+      description: "オンプレミス資産運用観点のコストヒント（クラウド従量課金系は対象外）"
+    - path: "docs/cloud-context/decisions/product/product-decision-onprem-only.yaml"
+      status: "generated"
+      description: "オンプレミス単一ベンダー選定の Decision Record"
+    - path: "docs/cloud-context/decisions/product/product-decision-storage-approach.yaml"
+      status: "generated"
+      description: "ストレージ構成方針の Decision Record"
+    - path: "docs/cloud-context/decisions/product/product-decision-audit-persistence.yaml"
+      status: "generated"
+      description: "PostgreSQL追記専用監査テーブルとローカル永続outboxの Decision Record"
+    - path: "docs/cloud-context/conformance/product/product-conformance-onprem.yaml"
+      status: "generated"
+      description: "オンプレミス構成の準拠レポート"
+    - path: "docs/cloud-context/sources/onprem/postgresql-high-availability.md"
+      status: "generated"
+      description: "参照ソース: PostgreSQL 高可用性"
+    - path: "docs/cloud-context/sources/onprem/minio-object-storage.md"
+      status: "generated"
+      description: "参照ソース: MinIO オブジェクトストレージ"
+    - path: "docs/cloud-context/sources/onprem/rabbitmq-production-checklist.md"
+      status: "generated"
+      description: "参照ソース: RabbitMQ 本番運用チェックリスト"
+    - path: "docs/cloud-context/sources/onprem/redis-replication.md"
+      status: "generated"
+      description: "参照ソース: Redis レプリケーション"
+
+arch_feedback:
+  arch_feedback_event_id: "20260818_090120_arch_audit_contract_feedback"
+  feedback_items: []

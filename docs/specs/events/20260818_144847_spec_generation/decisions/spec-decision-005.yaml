@@ -1,0 +1,69 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "specification"
+artifact_id: "spec-decision-005"
+title: "監査イベントの永続化・冪等化・ハッシュチェーン直列化の仕様確定"
+status: "approved"
+generated_at: "2026-08-18T14:48:47+09:00"
+context: |
+  実装フィードバック 20260818_113601_impl_feedback_6078c4ed により、監査ログの仕様に 3 つの欠落が確認された。
+  1) 監査テーブルが CTP-005 の 15 フィールド schema を持たず、operator / operated_at / action という独自フィールドで
+     定義されていた。イベント種別ごとにフィールド名が揺れ、成否判定を横断的に行えない。
+  2) インフラ側では非 partition の追記専用 audit_logs（event_id 単独主キー + (run_id, slot, attempt_id, event_name)
+     一意制約）が確定していたが、データストア契約へ落とし込まれていなかった。PostgreSQL の partitioned table は
+     PRIMARY KEY / UNIQUE に partition key の包含を要求するため、partition 設計と冪等一意性は両立しない。
+  3) ハッシュチェーンの整合性を保つための直列化契約が未定義で、同一 run に対する並行追記（blue/green 同時起動）で
+     チェーンが分岐しうる。
+  あわせて、Runner 実行結果の永続化方式がアーキテクチャ設計（LR-002 Event/Snapshot 併用）と食い違い、
+  データストア契約側は snapshot-only を採用していた。
+decision: |
+  監査イベントの正本を `_cross-cutting/api/audit-event-contract.yaml` として新設し、フィールドを
+  actor（誰が）/ operation（何を）/ outcome（結果）へ統一する。イベント種別ごとの独自フィールドを禁止し、
+  最終状態のみ final_status、失敗種別のみ error_code で補う。
+
+  永続化先は非 partition の追記専用テーブル audit_logs とする。event_id を単独主キーとし、
+  (run_id, slot, attempt_id, event_name) を一意制約として再試行を冪等化する。slot / attempt_id が
+  非該当のイベントでは NULL ではなくセンチネル値 '-' を格納する（PostgreSQL では NULL を含む行が
+  一意制約の重複判定から外れ、冪等化が無効になるため）。索引は occurred_at / (run_id, occurred_at) /
+  (parent_run_id, occurred_at) の 3 本、保持期間は 6 ヶ月とする。
+
+  ハッシュチェーンは run_id 単位で構成し、直列化のために audit_chain_heads テーブルを新設する。
+  監査追記は「対象 run_id の audit_chain_heads 行を排他ロック（SELECT ... FOR UPDATE）→ previous_hash 確定 →
+  audit_logs へ INSERT → audit_chain_heads 更新」を同一 transaction で完了する。ロック単位を run_id に
+  限定するため、異なる run 間の監査追記は並行実行できる。
+
+  Runner 実行結果は append-only の runner_result_events（履歴 INSERT）と runner_results（snapshot UPSERT）の
+  併用へ変更し、両者を同一 transaction で更新する（LR-002 準拠）。
+
+  slot 起動では、execution_specs / slot_execution_specs の INSERT、runner_result_events + runner_results の
+  STARTING 記録、起動前監査イベントの追記を、すべて同一 transaction で commit してから外部 slot を起動する
+  （起動前監査ゲート）。commit できない場合は外部 slot を起動しない。
+consequences:
+  positive:
+    - "監査イベントの成否判定と操作主体の特定を、イベント種別に依存しない単一のフィールド組で行える"
+    - "一意制約がそのまま冪等キーになるため、CTR-008 の追記再試行を重複なく実装できる"
+    - "実 PostgreSQL で主キー・一意制約・索引・権限を含めて CREATE TABLE できる DDL として成立する"
+    - "run_id 単位のロックにより、blue/green 同時起動でもハッシュチェーンが分岐しない"
+    - "起動試行の経過を履歴から追跡でき、監査の実行系譜照会が snapshot の上書きで失われない"
+  negative:
+    - "非 partition のため保持境界の削除が範囲 DELETE となり、削除ジョブの実行時間と bloat の監視が必要になる"
+    - "audit_chain_heads の行ロックが run_id 単位のホットスポットになりうる（同一 run への高頻度追記時）"
+    - "履歴テーブルの追加により Runner 実行結果の書き込み量が増える"
+    - "センチネル値 '-' の運用は、NULL 許容の直感に反するため実装時の取り違えリスクがある"
+alternatives_considered:
+  - name: "occurred_at による月次 partition を維持する"
+    reason_rejected: "PostgreSQL の partitioned table は PRIMARY KEY / UNIQUE に partition key の包含を要求するため、event_id 単独主キーおよび (run_id, slot, attempt_id, event_name) 一意制約と両立せず、実 DDL として成立しない"
+  - name: "slot / attempt_id を NULL 許容のまま一意制約に含める"
+    reason_rejected: "PostgreSQL では NULL を含む行が一意制約の重複判定から外れるため、run 単位イベントの再試行が重複追記される"
+  - name: "監査ログを追記専用ファイルへ出力する"
+    reason_rejected: "run_id 横断照会・同時追記・保持運用・既存の実行系譜照会との統合が複雑になる（infra product-decision-audit-persistence で不採用）"
+  - name: "Runner 実行結果を snapshot-only で保持する"
+    reason_rejected: "起動試行の経過を追跡できず、監査の実行系譜照会が履歴の保全を前提とする要件を満たせない（arch LR-002 と不整合）"
+  - name: "ハッシュチェーンをテーブル全体のロックで直列化する"
+    reason_rejected: "異なる run 間の監査追記まで直列化され、並行稼働のスループットを不必要に損なう"
+
+feedback_request:
+  feedback_request_id: "20260818_113601_impl_feedback_6078c4ed"
+  input_sha256: "57396b15a51da62949a111f13ef986398ac2e22674e9f47751100f6b24960746"
+  request_ids: ["CR-6078c4ed-003","CR-6078c4ed-004","CR-6078c4ed-005","CR-6078c4ed-006","CR-6078c4ed-007"]
+  work_unit_ids: ["CR-6078c4ed-003#1","CR-6078c4ed-004#1","CR-6078c4ed-005#1","CR-6078c4ed-006#1","CR-6078c4ed-007#1"]

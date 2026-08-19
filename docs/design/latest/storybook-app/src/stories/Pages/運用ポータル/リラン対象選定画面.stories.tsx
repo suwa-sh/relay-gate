@@ -8,7 +8,7 @@ import { RunnerResultPanel } from '../../../components/domain/RunnerResultPanel'
  *
  * UC: 再実行対象のbackground実行・速報比較依頼を選択する
  * - `relaygate rerun select --target background|rapid-crosscheck` の結果表示に対応する
- * - background対象: 完了済み・中止済みのRunner実行結果（RunnerResultPanel background variant）を候補一覧表示する
+ * - background対象: 完了済み・中止済みのRunner実行結果（RunnerResultPanel background variant）をattempt_id/attempt_no付きで候補一覧表示する
  * - rapid-crosscheck対象: 完了済み・中止済みの速報比較依頼（CrossCheckRequestRow rapid variant）を候補一覧表示する
  * - 候補0件時は「該当するリラン候補はありません」を表示する
  */
@@ -24,9 +24,42 @@ export default meta
 type Story = StoryObj<typeof OpsPortalShell>
 
 const backgroundCandidates = [
-  { runId: 'run-20260815-004', slot: 'blue' as const, role: 'background' as const, startedAt: '2026-08-15T09:00:03+09:00', stdout: 'batch job completed. rows_processed=48213', stderr: '', exitCode: 0 },
-  { runId: 'run-20260816-002', slot: 'green' as const, role: 'background' as const, startedAt: '2026-08-16T09:00:05+09:00', stdout: 'processing...\nfailed at step 3', stderr: 'Error: connection timeout after 30000ms', exitCode: 1 },
-  { runId: 'run-20260816-005', slot: 'blue' as const, role: 'background' as const, startedAt: '2026-08-16T21:10:00+09:00', stdout: '中止操作により停止', stderr: '', exitCode: 130 },
+  {
+    runId: 'run-20260815-004',
+    slot: 'blue' as const,
+    role: 'background' as const,
+    attemptId: 'att-blue-0001',
+    attemptNo: 1,
+    state: 'succeeded' as const,
+    startedAt: '2026-08-15T09:00:03+09:00',
+    stdout: 'batch job completed. rows_processed=48213',
+    stderr: '',
+    exitCode: 0,
+  },
+  {
+    runId: 'run-20260816-002',
+    slot: 'green' as const,
+    role: 'background' as const,
+    attemptId: 'att-green-0003',
+    attemptNo: 1,
+    state: 'failed' as const,
+    startedAt: '2026-08-16T09:00:05+09:00',
+    stdout: 'processing...\nfailed at step 3',
+    stderr: 'Error: connection timeout after 30000ms',
+    exitCode: 1,
+  },
+  {
+    runId: 'run-20260816-005',
+    slot: 'blue' as const,
+    role: 'background' as const,
+    attemptId: 'att-blue-0007',
+    attemptNo: 2,
+    state: 'aborted' as const,
+    startedAt: '2026-08-16T21:10:00+09:00',
+    stdout: '中止操作により停止',
+    stderr: '',
+    exitCode: 130,
+  },
 ]
 
 const rapidCandidates: CrossCheckRequest[] = [

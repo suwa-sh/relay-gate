@@ -1,0 +1,29 @@
+{
+  "schema_version": "distillery.feedback-no-domain-change/v1",
+  "type": "feedback_no_domain_change",
+  "event_id": "20260818_094841_design_system_feedback_disposition",
+  "created_at": "2026-08-18T09:48:41+09:00",
+  "stage": "design_system",
+  "domain_event_root": "design/events",
+  "reason": "The PostgreSQL append-only audit persistence contract does not change the existing CLI output, interaction, screen, component, token, or Storybook contracts.",
+  "feedback_request": {
+    "feedback_request_id": "20260817_234841_impl_feedback_6078c4ed",
+    "input_sha256": "bc64202288e80a7c6a299affcff26d45d91238a851ec5483b2d9eecb1bdabb54",
+    "request_ids": [
+      "CR-6078c4ed-002"
+    ],
+    "work_unit_ids": [
+      "CR-6078c4ed-002#1"
+    ]
+  },
+  "work_unit_results": [],
+  "reconciliation_results": [
+    {
+      "work_unit_id": "CR-6078c4ed-002#1",
+      "status": "not_impacted",
+      "reason": "The audit persistence and recovery behavior is internal to backend infrastructure; the CLI stdout, stderr, and exit-code contract remains unchanged and no RDRA screen or interaction is added.",
+      "artifact_refs": []
+    }
+  ],
+  "evidence_refs": []
+}

@@ -1,0 +1,119 @@
+schema_version: "1.0"
+artifact_type: "product_input"
+skill_type: "product"
+artifact_id: "product-job-relay-input"
+title: "ジョブ実行中継基盤 ワークロード入力"
+status: "draft"
+generated_at: "2026-08-18T09:30:20"
+source_refs:
+  - "arch-design:20260818_090120_arch_audit_contract_feedback"
+  - "nfr-grade:20260817_144844_initial_nfr"
+decision_refs: []
+inputs_ref:
+  - "foundation-context"
+  - "shared-platform-context"
+
+workload:
+  name: "ジョブ実行中継基盤"
+  description: "ジョブスケジューラのジョブ定義を変更せず、現行実装と新実装を並行稼働・段階的に切替できるストラングラーファサード基盤。feature flag設定によりslotの起動可否とforeground/background roleの実行順序を制御し、foreground実行結果（標準出力・標準エラー・終了コード）のみをジョブスケジューラへ中継する。現行実装・新実装それぞれのrunner実行結果を共通形式（Runner Result Contract）で標準化し、ジョブ単位の速報クロスチェックと日次全量の確報クロスチェックにより整合性を確認する。background実行の未完了・異常やクロスチェック異常を定期検知して運用者へ通知し、対話確認を伴う中止操作と元の実行設定を保った選択的リランを提供する。"
+  target_clouds:
+    - "onprem"
+
+workload_type: "api"
+
+availability_target:
+  sla: "99.9%"
+  failover: "warm_standby"
+
+latency_sensitivity:
+  category: "interactive"
+  target_p99: "1s"
+
+data_sensitivity:
+  classification: "internal"
+  pii: false
+  encryption: "in_transit_only"
+  compliance: []
+  data_residency: "none"
+
+traffic_pattern:
+  type: "scheduled"
+  baseline_rps: 1
+  spike_multiplier: 3
+
+consistency_needs:
+  type: "strong"
+
+recovery_target:
+  rpo: "72h"
+  rto: "72h"
+  backup: "daily"
+
+observability_needs:
+  metrics:
+    - "cpu"
+    - "memory"
+    - "disk"
+    - "network"
+    - "latency"
+    - "error_rate"
+    - "throughput"
+  logs:
+    - "access"
+    - "audit"
+    - "diagnostic"
+    - "dependency"
+  sli:
+    - "availability"
+    - "latency"
+    - "error_rate"
+    - "throughput"
+  alerting:
+    - "health_check"
+    - "error_rate"
+    - "latency_p99"
+
+cost_posture:
+  strategy: "cost_optimized"
+
+elements:
+  - category: "database"
+    type: "rdb"
+    description: "ジョブキュー兼管理DB。run共通実行設定（execution-spec.json）・slot別実行設定・runner実行結果（append-only履歴+現在状態snapshot）・速報/確報比較依頼・速報比較結果・ハング検知記録に加え、slot起動の構造化監査イベントを保持する"
+    entities:
+      - "E-001: execution-spec.json（run共通実行設定）"
+      - "E-007: slot実行設定（host/exec_user/script_path/work_dir/fixed_args/impl_version/credential_ref）"
+      - "E-002: Runner実行結果（(run_id, slot_type, role_type, attempt_id) identity、状態6値、event_snapshot型）"
+      - "E-003: 速報比較依頼"
+      - "E-004: 速報比較結果"
+      - "E-005: 確報比較依頼"
+      - "E-006: ハング検知記録"
+    requirements:
+      - "lease/claim機構による排他制御（速報/確報比較依頼の重複実行防止）"
+      - "run_id/parent_run_idによる実行系譜の相関・追跡（再実行は新run_id発行+parent_run_id関連付け、既存履歴不変）"
+      - "runner実行結果は（run_id, slot_type, role_type, attempt_id）で一意識別し、実行状態はSTARTING/RUNNING/SUCCEEDED/FAILED/UNKNOWN/ABORTEDの6値とする"
+      - "event_snapshot型エンティティはappend-only履歴INSERTとsnapshot UPSERTを同一トランザクションで更新する"
+      - "PostgreSQLのappend-only監査テーブルに、操作受付・slot別起動試行・成功・失敗・timeout・最終状態を同一schemaで追記する"
+      - "監査イベントはevent_id、event_name、schema_version、run_id、parent_run_id、slot、attempt_id、occurred_at、actor、operation、outcome、final_status、error_code、previous_hash、event_hashを事象に応じて保持する"
+      - "監査イベントはrun_id/parent_run_idで照会可能とし、6ヶ月保持する"
+      - "監査イベントのハッシュチェーンを定期検証し、欠損・改ざんを検知する"
+      - "認証情報、起動引数の実値、stdout/stderr本文を監査イベントへ保存しない"
+      - "外部slot起動前の監査追記失敗は起動を中止し、起動後の追記失敗は結果と未記録状態を永続化して再試行・照合する"
+      - "フル+差分バックアップ（日次）、7世代程度保持"
+      - "コールドスタンバイ構成、サービス切替60分未満"
+      - "認証情報は参照名のみを保存し実値は保存しない"
+  - category: "storage"
+    type: "filesystem"
+    description: "実行ログ本体（started-at.txt/stdout.log/stderr.log/exitcode.txt）を保持するファイルシステム成果物ディレクトリ。RDBからパス参照される"
+    entities:
+      - "E-002: Runner実行結果（ログファイル本体）"
+    requirements:
+      - "日次バックアップ対象、7世代程度保持"
+      - "RAID5等のストレージ冗長化を前提"
+  - category: "cron"
+    type: "scheduled_task"
+    description: "hang-detectorによるbackground実行異常の24時間定期監視、日次確報クロスチェックバッチ（全テーブル・全ファイル対象、8時間以内完了目標）"
+    requirements:
+      - "cron/systemdタイマー等の定期実行機構"
+      - "lease/claim機構による重複実行防止"
+      - "ジョブ実行IDによる冪等性保証"

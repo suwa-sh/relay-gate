@@ -1,0 +1,7 @@
+dist-spec-stories スキル実行(feedback mode): feedback request 20260818_113601_impl_feedback_6078c4ed の
+reconciliation stageとして、design_system stage(20260818_143057_design_system)が拡張した
+ExecutionSpecCard(parentRunId/slot/execUser/workDir)・RunnerResultPanel(attemptId/attemptNo/state,
+6状態対応)・StatusBadge(starting/unknown追加)を使用する全14ページStoryを対象UC spec.mdと突合し、
+表示内容が乖離していた3画面(リラン実行画面・リラン対象選定画面・background role起動画面)のみ更新した。
+このstageはdirect work unitを持たない(全direct workは requirements/infrastructure/architecture/spec の
+各direct stageが処理済み)。npx storybook build による検証済み。

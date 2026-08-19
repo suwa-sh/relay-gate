@@ -1,0 +1,7 @@
+RDRA 差分 20260819_104301_slot_config_comparison_def_exitcode に基づくアーキテクチャ再評価（比較定義コンテキストの追加、relay-gate エラーの退避終了コードと foreground 終了コード透過の反映、slot別実行設定の RDRA 名称整合）
+feedback_request_id: 20260818_164000_rdra_followup_6078c4ed
+input_sha256: b4b730a7e786c58c6d949948b78ce20988e293d795ae752239a546e36557bf72
+request_ids: CR-6078c4ed-008, CR-6078c4ed-009, CR-6078c4ed-010
+direct_work_unit_ids: (none)
+causal_work_unit_ids: CR-6078c4ed-008#1, CR-6078c4ed-009#1, CR-6078c4ed-010#1
+feedback_packet: docs/pipeline/feedback-runs/20260818_164000_rdra_followup_6078c4ed/stage-packets/architecture.md

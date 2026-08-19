@@ -1,0 +1,49 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "design_system"
+artifact_id: "design-decision-004"
+title: "states セクションの6値整合とforeground exitcode全値透過・退避終了コードの表示契約"
+status: "approved"
+generated_at: "2026-08-19T11:30:49+09:00"
+context: |
+  上流正本が更新され、design-decision-003 で保留していた粒度差が解消可能になった。
+  - RDRA: 状態.tsv の background slot実行状態へ STARTING/UNKNOWN の遷移が正式追加され6値になった
+    (STARTING は起動受付、UNKNOWN は timeout・結果取得不能時の結果不明。UNKNOWN からは実結果回収または
+    対話確認で SUCCEEDED/FAILED/ABORTED へ確定する)。
+  - RDRA/arch: relay-gate自身のエラーは退避終了コード(実行結果未確定・取得不能・中止済み=125、
+    バリデーションエラー=124)で応答し、foreground の exitcode.txt の値は0を含む全値をそのまま透過する。
+    relay-gateエラー時の標準エラーには foreground stderr.log の内容と relay-gate のエラー内容を併記する。
+  - RDRA: 情報モデルへ比較定義(JOB_IDごとの比較対象・比較実装・有効期間)が追加された。
+  デザインシステム側は states セクションが4値のままで、exitcode の透過契約も未記載だった。
+decision: |
+  - states セクションの background slot実行状態を6値
+    (STARTING=起動受付/violet、RUNNING=実行中/blue、SUCCEEDED=正常終了/green、FAILED=異常終了/red、
+    UNKNOWN=結果不明/orange、ABORTED=中止済み/gray)へ整合させる。ラベルはコンポーネント層で既に定義済みの
+    StatusBadge(起動受付/結果不明)に一致させ、二重定義を作らない。states の color は
+    スキーマ enum(amber/green/blue/gray/red/violet/orange)に制約されるためモデル内で識別可能な粗い色区分とし、
+    実際の描画色の正本は status-badge-starting(cyan系)/status-badge-unknown(orange系)トークンに置く。
+  - RunnerResultPanel の表示契約に、exitCode は0を含む全値をそのまま表示し退避終了コードへ丸めないこと、
+    relay-gateエラー時は125/124を表示しstderr欄へ foreground stderr.log と relay-gate エラー内容
+    (原因と次アクション)を併記することを明記する。props の増減は行わない(既存の stderr prop が両者を保持する)。
+  - 比較定義は設定マスタであり、RDRA BUC に管理画面が定義されていない。RDRA 整合性ルールにより
+    画面・コンポーネントを発明せず、デザインシステムは変更しない。
+consequences:
+  positive:
+    - RDRA 状態モデルとコンポーネント states の粒度差が解消し、docs/todo.md の DIST-023/DIST-024 を closed にできる
+    - 下流(spec/spec-stories)が退避終了コードと業務終了コードの表示差を仕様から一意に導ける
+    - UNKNOWN を推測で FAILED 相当へ丸めない表示規約が exitcode 側にも拡張される
+  negative:
+    - 退避終了コードの具体値(125/124)がデザイン記述に現れるため、値変更時は design 側も追随が必要になる
+alternatives_considered:
+  - name: "RunnerResultPanel へ relayGateError 専用 prop を追加する"
+    reason_rejected: "既存の stderr prop で併記表現が成立し、storybook-app の再ビルドを要する構造変更に見合う利得がない"
+  - name: "比較定義の管理画面コンポーネントを追加する"
+    reason_rejected: "RDRA BUC に画面定義が無い。RDRA に無い画面の自動追加は整合性ルールで禁止"
+  - name: "退避終了コードを UNKNOWN 表示のみに委ね exitcode 表示規約を書かない"
+    reason_rejected: "業務ジョブの終了コードと relay-gate エラーの区別が表示上失われ、CR の完了条件を満たさない"
+
+feedback_request:
+  feedback_request_id: "20260818_164000_rdra_followup_6078c4ed"
+  input_sha256: "b4b730a7e786c58c6d949948b78ce20988e293d795ae752239a546e36557bf72"
+  request_ids: ["CR-6078c4ed-008","CR-6078c4ed-009","CR-6078c4ed-010"]
+  work_unit_ids: ["CR-6078c4ed-008#1","CR-6078c4ed-009#1","CR-6078c4ed-010#1"]

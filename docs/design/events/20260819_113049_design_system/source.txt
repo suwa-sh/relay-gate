@@ -1,0 +1,7 @@
+trigger: distillery-impl feedback reconciliation (dist-design-system feedback mode)
+feedback_request_id: 20260818_164000_rdra_followup_6078c4ed
+input_sha256: b4b730a7e786c58c6d949948b78ce20988e293d795ae752239a546e36557bf72
+stage_packet: docs/pipeline/feedback-runs/20260818_164000_rdra_followup_6078c4ed/stage-packets/design_system.md
+direct_work_unit_ids: (none)
+causal_work_unit_ids: CR-6078c4ed-008#1, CR-6078c4ed-009#1, CR-6078c4ed-010#1
+upstream_events: rdra:20260819_104301_slot_config_comparison_def_exitcode, arch:20260819_110531_arch_comparison_definition_exitcode

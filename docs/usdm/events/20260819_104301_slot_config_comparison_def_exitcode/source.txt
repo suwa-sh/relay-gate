@@ -1,0 +1,40 @@
+feedback_request_id: 20260818_164000_rdra_followup_6078c4ed
+input_sha256: b4b730a7e786c58c6d949948b78ce20988e293d795ae752239a546e36557bf72
+request_ids: CR-6078c4ed-008, CR-6078c4ed-009, CR-6078c4ed-010
+direct_work_unit_ids: CR-6078c4ed-008#1, CR-6078c4ed-009#1, CR-6078c4ed-010#1
+causal_work_unit_ids: CR-6078c4ed-008#1, CR-6078c4ed-009#1, CR-6078c4ed-010#1
+packet_path: docs/pipeline/feedback-runs/20260818_164000_rdra_followup_6078c4ed/stage-packets/requirements.md
+
+## CR-6078c4ed-008: slot別実行設定・起動試行identity・実行状態6値をRDRAへ追随反映する（要約）
+
+- severity: spec-gap
+- related_ids: [E-001, E-007, SPEC-008-01]
+- 内容: arch イベント 20260818_135504 が run 共通 execution spec と slot 別実行設定の分離、
+  Runner 実行結果の attempt identity（attempt_id / attempt_no / accepted_at）、実行状態 6 値
+  （STARTING / RUNNING / SUCCEEDED / FAILED / UNKNOWN / ABORTED）を正式定義した一方、
+  RDRA の情報・状態モデルは分離前・4 状態のままで二重正本になっていた。
+- 確定した採用案: arch イベント 20260818_135504 の定義を正とし、意味を変えずに RDRA の情報モデル
+  （slot別実行設定の分離、attempt identity）と状態モデル（STARTING / UNKNOWN 遷移）へ写像する。
+
+## CR-6078c4ed-009: 比較定義の情報エンティティをRDRAへ追加する（要約）
+
+- severity: spec-gap
+- related_ids: [SPEC-012-03, REQ-012]
+- 内容: SPEC-012-03「比較定義は job_id ごとに差し替えられる」に対応する情報が RDRA に無く、
+  検証 Scenario を定義できずに USDM acceptance criteria 逆引き行列の網羅率が 42/43 に留まっていた。
+- 確定した採用案: RDRA 情報モデルへ「比較定義」（JOB_ID / 比較対象テーブル / 比較対象ファイル /
+  比較実装識別子 / 有効期間）を追加し、速報・確報クロスチェックの実行 UC から参照させる。
+
+## CR-6078c4ed-010: respond-foregroundの終了コードを透過にしrelay-gateエラーを分離する（要約）
+
+- severity: spec-gap
+- related_ids: [REQ-002, SPEC-002-01]
+- 内容: USDM・UC spec は exitcode.txt の透過を規定する一方、CLI コマンド契約は非 0 を一律 1 へ
+  丸める写像を定義しており、業務ジョブの終了コード分岐が既存ジョブ直接実行時と互換にならない。
+  業務ジョブの失敗と relay-gate 自身のエラーも同じ 1 で区別できなかった。
+- 確定した採用案: foreground の exitcode.txt 値を 0 を含む全値そのまま透過する。relay-gate 自身の
+  エラーは専用の退避終了コードへ分離する（採用値: 実行結果未確定・取得不能・中止済み = 125、
+  バリデーションエラー = 124。bash 予約コード 126 / 127 との衝突を避けるため、候補の 126 に代えて
+  124 を採用した）。relay-gate エラー時の標準エラーは foreground の stderr.log の内容（取得可能な
+  場合）と relay-gate のエラー内容（原因と次アクション）を併記する。UNKNOWN を推測で FAILED 相当の
+  終了コードへ変換しない方針は維持する。

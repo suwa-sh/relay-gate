@@ -1,0 +1,618 @@
+{
+  "event_id": "20260819_114307_spec_generation",
+  "file_count": 153,
+  "files": [
+    {
+      "path": "specs/events/20260819_114307_spec_generation/README.md",
+      "sha256": "c2644783d304364059bf3fd229c7cc0473d4db0a8096a6609945a94364e77d7e"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/_cross-cutting/api/audit-event-contract.yaml",
+      "sha256": "ceadacd7ed9e90428d923c9e03aa1bea1a5c6fee8c7f2c35c1d85bcd32e2a942"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/_cross-cutting/api/cli-command-contract.yaml",
+      "sha256": "5e00a3c7c79f15acbdcb1ba335865f07f1ad205c96a1e6e0859b1c496c13657e"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/_cross-cutting/api/openapi.yaml",
+      "sha256": "63bea4137c06f24833eaf8ead824f41d7d1824e9a0313828c37d3e2699297ef7"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/_cross-cutting/datastore/datastore-schema.md",
+      "sha256": "38f5ca40c1b463af1890c8b969ef2ce44949e1910f22b7de4e71e6a55c54b3b0"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/_cross-cutting/datastore/rdb-schema.yaml",
+      "sha256": "d6068bdd9e89906bab7216b7e0bf545c9c8e438f89c6a6ef0dd0a575c10b40f5"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/_cross-cutting/rdra-feedback.md",
+      "sha256": "3ed90c84aa2fd414d9982e3e125c8e08c8b943bbf153ff771a4f180346d44e10"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/_cross-cutting/traceability-matrix.md",
+      "sha256": "d2278f2c86230060bdfc1b23e31661a04047750df00514c75d20a4fb1ca4bcda"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/_cross-cutting/uc-dependencies.md",
+      "sha256": "b13015b7f814231be37a848e05dd8a2f85b8bb9f46a9944f5a7566778b4aeeb8"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/_cross-cutting/usdm-acceptance-matrix.md",
+      "sha256": "5f4fc328e3416b8ac6fd7a2b60a9b1c5c6f9207fb5015094845979c3cf97acf6"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/_cross-cutting/ux-ui/common-components.md",
+      "sha256": "f6cb39e2b1561b4394226d35949283111bfa9c02c9677ebd6c485c3a69135d62"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/_cross-cutting/ux-ui/data-visualization.md",
+      "sha256": "3fd2542db4676f12b1bfa5e02af2985719b9c5d5c23d618344da3d91d37ca995"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/_cross-cutting/ux-ui/ui-design.md",
+      "sha256": "b0e3ea9e41818f273678bff01d03e4308fcdc65ebcd9b326987f4b9bee4bd578"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/_cross-cutting/ux-ui/ux-design.md",
+      "sha256": "20ade9541b47127a9daf19c3f4b83bd3b6d8fa1d9e5693d6085207aabb419476"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/_inference.md",
+      "sha256": "e25525d414c1f456a4385069b0b0c7a96bd88d27f577784e44aa7b92f754223e"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/_inputs-digest.md",
+      "sha256": "600e2952f775677dfd3c1e2b4a045aef8225b617292894c69aec5712789ccbe4"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/decisions/spec-decision-001.yaml",
+      "sha256": "08985b75eed0c5f59dfb2f717a9574fb2a9f86d818ca79cc8d5a0977057cd16c"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/decisions/spec-decision-002.yaml",
+      "sha256": "06b2f6ba469cf1ab1f52d6d14572cc31112f0a753092cb3ef8cc07530544ea4c"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/decisions/spec-decision-003.yaml",
+      "sha256": "8a8adacadcd77a5e33d11f509e8653cd99c75f131212c14c277d34560fb01167"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/decisions/spec-decision-004.yaml",
+      "sha256": "2153d8d3d28f6030277335f32f3411dc3e42762607a71aabb45d8154b5ee2024"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/decisions/spec-decision-005.yaml",
+      "sha256": "fc240991ea583b4380cb7104c6ea3971b3f46ccf3288c8686e4af5a4f1a178e4"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/decisions/spec-decision-006.yaml",
+      "sha256": "727eef10af6b6e8d15a86f7460fe4dd7009a10707c3318cba23d252ac4b47865"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/decisions/spec-decision-007.yaml",
+      "sha256": "44204d6b6d655b1b28ae944ae7b434854004448ab2fb4b8a541b9e08b135a838"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/source.txt",
+      "sha256": "46b07d019bd485a344e6cae4fcb1afd11c53291695101483a9e72ac3070f2dd3"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/spec-event.md",
+      "sha256": "655e707f96cdf461eccc0b61cff0512cc51dc4b818d035f1c77e2b7347716674"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/spec-event.yaml",
+      "sha256": "4b8a85b842fec4767ba46041bc2560facabc4445998c0d0630e68bdae04568e1"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/クロスチェック業務/確報クロスチェックフロー/buc-spec.md",
+      "sha256": "5fbbbcc9409104ed384c9aaa60d234025699480e40ea53f0bc9af2ac097bde78"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/クロスチェック業務/確報クロスチェックフロー/全テーブル・全ファイルを対象に確報クロスチェックを実行する/_api-summary.yaml",
+      "sha256": "ebc349eb2aea57d927cae1f2d22b99c2cf2aed36f188ab3fd05d7e8aef47aca4"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/クロスチェック業務/確報クロスチェックフロー/全テーブル・全ファイルを対象に確報クロスチェックを実行する/_cli-summary.yaml",
+      "sha256": "1187165b3746c93527518ea80db3d32a709e745a1ded4be2b680c8e2f970df36"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/クロスチェック業務/確報クロスチェックフロー/全テーブル・全ファイルを対象に確報クロスチェックを実行する/_model-summary.yaml",
+      "sha256": "c5524e448e1ad424f66e8adabb345fed27b0bb1db84290677f03cfeae1c9ba27"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/クロスチェック業務/確報クロスチェックフロー/全テーブル・全ファイルを対象に確報クロスチェックを実行する/spec.md",
+      "sha256": "2ce1a35f850e60188175cb897a1fc948bfa66d5659a4cbb4222e1181d6f42953"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/クロスチェック業務/確報クロスチェックフロー/全テーブル・全ファイルを対象に確報クロスチェックを実行する/tier-worker.md",
+      "sha256": "eb427ffed9231a508f5bc4ef81b4a48724df79c16a91b5c367b4936a60e7f62a"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/クロスチェック業務/確報クロスチェックフロー/確報クロスチェック結果をstdout-stderr-exitcodeで応答する/_api-summary.yaml",
+      "sha256": "38e848c8f7b6154a98d1fce51bf4dc245d98090554f3f9ad99f36c65bbe12103"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/クロスチェック業務/確報クロスチェックフロー/確報クロスチェック結果をstdout-stderr-exitcodeで応答する/_cli-summary.yaml",
+      "sha256": "3d90345b79906762535a28506fc4439577559b95025db8855e9e2f904d796b34"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/クロスチェック業務/確報クロスチェックフロー/確報クロスチェック結果をstdout-stderr-exitcodeで応答する/_model-summary.yaml",
+      "sha256": "fadc6a3dc09520519c6e40506ff5dd4003429bd84f6feb775dfb6fbad3da69ca"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/クロスチェック業務/確報クロスチェックフロー/確報クロスチェック結果をstdout-stderr-exitcodeで応答する/spec.md",
+      "sha256": "dd5f178c5cd4c006b8ed4951ef919b3739ec7c35a10f09af6283c4efebee296a"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/クロスチェック業務/確報クロスチェックフロー/確報クロスチェック結果をstdout-stderr-exitcodeで応答する/tier-worker.md",
+      "sha256": "82d44312b3d9249a55001ab05d0625402786f34a3bdbd5ebb075a15f727b6683"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/クロスチェック業務/確報クロスチェックフロー/確報クロスチェック結果を確認する/_api-summary.yaml",
+      "sha256": "b13c02c56f09c5ae6b3312ca28a1229eff91501c3aafb2ad5a3712899e884678"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/クロスチェック業務/確報クロスチェックフロー/確報クロスチェック結果を確認する/_cli-summary.yaml",
+      "sha256": "b039d738d861cb82af5ab316063ea087548ad28daf18370baa058c2e3a467442"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/クロスチェック業務/確報クロスチェックフロー/確報クロスチェック結果を確認する/_model-summary.yaml",
+      "sha256": "f91d8ba112c6263f35ea04c28a62573fc277f9ef1ba62c15c9da7884eaf2c8eb"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/クロスチェック業務/確報クロスチェックフロー/確報クロスチェック結果を確認する/spec.md",
+      "sha256": "2563dead412df048d879d0df82ec5aeef74a0e2f4aef90ba39830d5be69e76d8"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/クロスチェック業務/確報クロスチェックフロー/確報クロスチェック結果を確認する/tier-worker.md",
+      "sha256": "5b286922aee29c1bcc71dbd2a7adb8578263b8f162884d5bee2cacf1c47b303f"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/クロスチェック業務/速報クロスチェックフロー/blue-green runnerの完了通知を受けて速報比較依頼を作成する/_api-summary.yaml",
+      "sha256": "ddf8ca5445520521ea4185e904a271dadbebdb488faad1eec804adda4a802e5d"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/クロスチェック業務/速報クロスチェックフロー/blue-green runnerの完了通知を受けて速報比較依頼を作成する/_cli-summary.yaml",
+      "sha256": "4cb04acc51bf6d0f215f710383d78b848761ce114025e002b525264edae6dc4a"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/クロスチェック業務/速報クロスチェックフロー/blue-green runnerの完了通知を受けて速報比較依頼を作成する/_model-summary.yaml",
+      "sha256": "0e290ab0505e55dfcc5e1c1bf3ba2c15582168f62771563a9c76c620c4832838"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/クロスチェック業務/速報クロスチェックフロー/blue-green runnerの完了通知を受けて速報比較依頼を作成する/spec.md",
+      "sha256": "d836be8b40e878e001c3ea321a5a1d3c667625044430e11f265acc927a40a826"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/クロスチェック業務/速報クロスチェックフロー/blue-green runnerの完了通知を受けて速報比較依頼を作成する/tier-worker.md",
+      "sha256": "75fbe1240ecffe1faee79b2796c806b184ebb958b3bc21cd2fbff67c71438314"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/クロスチェック業務/速報クロスチェックフロー/buc-spec.md",
+      "sha256": "4b050dfb4c9c930561f548a98cad77dfbf54173eb595d5673c1fefa80d4f02d6"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/クロスチェック業務/速報クロスチェックフロー/速報クロスチェックを実行し差分を検知する/_api-summary.yaml",
+      "sha256": "51e164e90ed741a1fcd520eb3f2d2ee2863e052402024336bd71f52cf9ccc58f"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/クロスチェック業務/速報クロスチェックフロー/速報クロスチェックを実行し差分を検知する/_cli-summary.yaml",
+      "sha256": "371fde37c64c2c786409989ad85fc10c0cf23b54281136a583cf18b3ba54461c"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/クロスチェック業務/速報クロスチェックフロー/速報クロスチェックを実行し差分を検知する/_model-summary.yaml",
+      "sha256": "5e8fa8322fed3bb271bc00283b1e9c88b07703f4faebb6020b92455022b6ac96"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/クロスチェック業務/速報クロスチェックフロー/速報クロスチェックを実行し差分を検知する/spec.md",
+      "sha256": "0808daf95c2512bed0f313454d0418ca454d01fc888164c3fc5ae5afecdf7a3a"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/クロスチェック業務/速報クロスチェックフロー/速報クロスチェックを実行し差分を検知する/tier-worker.md",
+      "sha256": "8e85d35d7c244cc5fee048265912ac84a45352bd37741bf3d63af86898916814"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/クロスチェック業務/速報クロスチェックフロー/速報クロスチェック結果を確認する/_api-summary.yaml",
+      "sha256": "47d7708f4d3360c177ae011f5d9d7df71c4ed8b8776451d5e4e156bb3e0a0cd2"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/クロスチェック業務/速報クロスチェックフロー/速報クロスチェック結果を確認する/_cli-summary.yaml",
+      "sha256": "86190246243f12aff45aeaa051ea73aade084363de9c030d56ec693acf6f8086"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/クロスチェック業務/速報クロスチェックフロー/速報クロスチェック結果を確認する/_model-summary.yaml",
+      "sha256": "a88f3934bb68dde0f9d1db51887e6d2c08ec3c0297b387d743fc38780fc0904b"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/クロスチェック業務/速報クロスチェックフロー/速報クロスチェック結果を確認する/spec.md",
+      "sha256": "d171b41c7d6b1016593cbb7553db290661cf6d6e2223ae5e3cec5a9baef04e91"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/クロスチェック業務/速報クロスチェックフロー/速報クロスチェック結果を確認する/tier-worker.md",
+      "sha256": "b2b8d0eb053c24cf14d5e801406e7a6c0c47a3677a52bb47efd5dede09f0a357"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/並行稼働実行業務/並行稼働実行フロー/background roleを起動する/_api-summary.yaml",
+      "sha256": "74d3d20fae1be1297539d2d45f8afcabad806253e941762b36d5c3fd06554e39"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/並行稼働実行業務/並行稼働実行フロー/background roleを起動する/_cli-summary.yaml",
+      "sha256": "355b1629f604f2106eef2a72ea080d33a62bfb6799eea92422cc83b98dd5135c"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/並行稼働実行業務/並行稼働実行フロー/background roleを起動する/_model-summary.yaml",
+      "sha256": "2d1502cebf951fbb3210e922863f30de88d91fc943c53f8a7afae453e4f05d41"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/並行稼働実行業務/並行稼働実行フロー/background roleを起動する/spec.md",
+      "sha256": "04859412e63345874e92958371a76b97182a65725ecf80b29f805fdd818f9631"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/並行稼働実行業務/並行稼働実行フロー/background roleを起動する/tier-facade.md",
+      "sha256": "7d9e3400640e7579d184c8a240a4c117977ca3f9aed64ee7330c2d74e940220d"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/並行稼働実行業務/並行稼働実行フロー/background roleを起動する/tier-worker.md",
+      "sha256": "e4e6d0195e2c27cfde9c103813a5bf0c8ca80a3a2619f2067adc28edde8f8e41"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/並行稼働実行業務/並行稼働実行フロー/buc-spec.md",
+      "sha256": "1f74944ede9625d065fb71945da1431f2cdef499a8ed9ca81f2db60f23544bb1"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/並行稼働実行業務/並行稼働実行フロー/feature flag設定に基づきslotを選択して起動する/_api-summary.yaml",
+      "sha256": "f4f20727d217eec705b651caa7ce050886e6d4d88179b4c443600c7253699f0a"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/並行稼働実行業務/並行稼働実行フロー/feature flag設定に基づきslotを選択して起動する/_cli-summary.yaml",
+      "sha256": "61078ec448faca340571acf29ce2f0c172325e1aadb92798e9b653ac48fd0fa9"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/並行稼働実行業務/並行稼働実行フロー/feature flag設定に基づきslotを選択して起動する/_model-summary.yaml",
+      "sha256": "7a7934daa1fa07ad5a793cc40d2118d82bf07ae0767bee517dea517dc17fd2fa"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/並行稼働実行業務/並行稼働実行フロー/feature flag設定に基づきslotを選択して起動する/spec.md",
+      "sha256": "2fe6c382fd68f120229b318ab1eb41a9067ec752ac66be1b723a430f7853d875"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/並行稼働実行業務/並行稼働実行フロー/feature flag設定に基づきslotを選択して起動する/tier-facade.md",
+      "sha256": "e6246f256500d05cd41ccb2586751a7d202dc7058e819739a4d6e4114f8b1627"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/並行稼働実行業務/並行稼働実行フロー/foreground roleの標準出力・標準エラー・終了コードを応答する/_api-summary.yaml",
+      "sha256": "603ab07f1f023ac021e5ba2aeae886a0b32275ffad1ae85008bd8811eb9e2ff1"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/並行稼働実行業務/並行稼働実行フロー/foreground roleの標準出力・標準エラー・終了コードを応答する/_cli-summary.yaml",
+      "sha256": "1b20f305267f9cc086aed248f98b05aebe999ff84f7425d1dc50bce13b38efee"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/並行稼働実行業務/並行稼働実行フロー/foreground roleの標準出力・標準エラー・終了コードを応答する/_model-summary.yaml",
+      "sha256": "02b0ab0a1bd9a1bad1cc87e73671414594933a6916d018edac3cd953177a9405"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/並行稼働実行業務/並行稼働実行フロー/foreground roleの標準出力・標準エラー・終了コードを応答する/spec.md",
+      "sha256": "5df539f114b4de0da5799264df09480c7d03ccd23b2340012fd2fa2184eaec73"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/並行稼働実行業務/並行稼働実行フロー/foreground roleの標準出力・標準エラー・終了コードを応答する/tier-facade.md",
+      "sha256": "af42c8bbd5332a80b00aeb52062e20ccc27367c3cb47c91257c649e3378ffce1"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/並行稼働実行業務/並行稼働実行フロー/並行稼働実行結果を確認する/_api-summary.yaml",
+      "sha256": "fea8f7fe060bd6d38711914c0449517acb89423ae6cc8b0db2847184e7f0ce61"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/並行稼働実行業務/並行稼働実行フロー/並行稼働実行結果を確認する/_cli-summary.yaml",
+      "sha256": "1ccca4c898fee4099f7652d0045ec1da7bee1e76c27696caebcc3717afd3df3a"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/並行稼働実行業務/並行稼働実行フロー/並行稼働実行結果を確認する/_model-summary.yaml",
+      "sha256": "ac7facfe24988481e45d35c1a88ad91e89371f466901f7deef9e1411c95ce67b"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/並行稼働実行業務/並行稼働実行フロー/並行稼働実行結果を確認する/spec.md",
+      "sha256": "e02838aac84e3590c2d94678cebc7e9c4ae21632eb4b8ef61d620c61ecab2686"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/並行稼働実行業務/並行稼働実行フロー/並行稼働実行結果を確認する/tier-facade.md",
+      "sha256": "220fafef41c450204a56c7ebb6b8d4f6fd4367fe11f25d034b212fee13d6bc69"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/background側リランフロー/buc-spec.md",
+      "sha256": "d3157ece44d303985342dbda940773d42ac4e83946a1329261014448f85779a1"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/background側リランフロー/execution-spec.jsonの実行設定を保ったまま再実行する/_api-summary.yaml",
+      "sha256": "fae04f24be423b960f279d4162326cfce69922d9954f25968556a7c61da43766"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/background側リランフロー/execution-spec.jsonの実行設定を保ったまま再実行する/_cli-summary.yaml",
+      "sha256": "cb3fa4c932f043291210db46312fe70535cbd646f3ce7562fa1f8e6abf7fb061"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/background側リランフロー/execution-spec.jsonの実行設定を保ったまま再実行する/_model-summary.yaml",
+      "sha256": "8fdddba41ce9af31a11dc9c178b8655a70fb39cd6d1219b40b60c2ca850d8381"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/background側リランフロー/execution-spec.jsonの実行設定を保ったまま再実行する/spec.md",
+      "sha256": "3234392605942f936b56a88659c0d29c13ac07ee2f8c044225dc6c0f0f84d2d3"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/background側リランフロー/execution-spec.jsonの実行設定を保ったまま再実行する/tier-facade.md",
+      "sha256": "ac33a61b802e62c7c5a7f926d853f3943ad3a367e4d569b1c4207d577fb889ac"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/background側リランフロー/execution-spec.jsonの実行設定を保ったまま再実行する/tier-worker.md",
+      "sha256": "fb1eb57bcb6918fd3fd96243282128a5681d802af4197429d2c3e2b4b14e88be"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/background側リランフロー/再実行対象のbackground実行・速報比較依頼を選択する/_api-summary.yaml",
+      "sha256": "a41a70bb786c794e2fa86b33d4cb06df053f66a11d5b16a16f556cffda8c7532"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/background側リランフロー/再実行対象のbackground実行・速報比較依頼を選択する/_cli-summary.yaml",
+      "sha256": "fd9503fc2bde4809d6d71b2ba431bccd6fa4907d67e30ffae9c7b4d34038956d"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/background側リランフロー/再実行対象のbackground実行・速報比較依頼を選択する/_model-summary.yaml",
+      "sha256": "a9cb915f8514294f6ea7135145115c1c041d862822d623806b7567e0d6dc0c1b"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/background側リランフロー/再実行対象のbackground実行・速報比較依頼を選択する/spec.md",
+      "sha256": "91f4e79e9072369f0fcd3bccf550babcc5cba29db00c4e2f65e17cbf635d31a1"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/background側リランフロー/再実行対象のbackground実行・速報比較依頼を選択する/tier-facade.md",
+      "sha256": "9985a0b532d441d9b8373fdfd6a7eba07455d3ffa6c2bffa55e4adac2514a858"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/background側リランフロー/再実行対象のbackground実行・速報比較依頼を選択する/tier-worker.md",
+      "sha256": "bbce5af2f4c9899ba54eee44901c61eeaec06adcba1ae9820f7baf695d840975"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/blue中止フロー/blue background実行の中止を依頼する/_api-summary.yaml",
+      "sha256": "3468f45c95c420d41eb4c2bbd87244732de4a690d63ef944f390b2f45dfd80c3"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/blue中止フロー/blue background実行の中止を依頼する/_cli-summary.yaml",
+      "sha256": "400180dec984fe726e551bcb1277371eb2afd2a0a2d22cbcf66f04cea114516b"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/blue中止フロー/blue background実行の中止を依頼する/_model-summary.yaml",
+      "sha256": "b430e4cb0e30b22d69fdb57bb17d6f4ae6d76f1b8685b636a1c572cc760fec41"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/blue中止フロー/blue background実行の中止を依頼する/spec.md",
+      "sha256": "d29dcbb868548666873a6f05059f4c90473a576205932779d7e5bae22fdbf944"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/blue中止フロー/blue background実行の中止を依頼する/tier-facade.md",
+      "sha256": "1ab9d65d1efc58dacae17d7b93f496a4df30fd3106feb3927b1268a9cc0c9aef"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/blue中止フロー/buc-spec.md",
+      "sha256": "5a5d4891e87de9c8d3967b159ab1847f464736b12051dcb5903c7095a7c30325"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/blue中止フロー/対話確認のうえblue background実行をABORTEDへ遷移させる/_api-summary.yaml",
+      "sha256": "bc1745d65878296bc43fd51f66ba820080d289bdb2261fdfb09ccb742ec887c9"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/blue中止フロー/対話確認のうえblue background実行をABORTEDへ遷移させる/_cli-summary.yaml",
+      "sha256": "65fa0fd832405f6d0e6e61dbfebdaf746a815286ac86e4f8f64c0f432e869ca5"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/blue中止フロー/対話確認のうえblue background実行をABORTEDへ遷移させる/_model-summary.yaml",
+      "sha256": "2bb618f2b15f90b08f11a1938e1de590e0404bc2a6cccb381ddae639b1d74522"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/blue中止フロー/対話確認のうえblue background実行をABORTEDへ遷移させる/spec.md",
+      "sha256": "b39aeca9a412405c7775738616bf4a1725a71dd9ecbc3024e8eb5bd1cae25424"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/blue中止フロー/対話確認のうえblue background実行をABORTEDへ遷移させる/tier-facade.md",
+      "sha256": "356acc0ac0abbb77160f857e3e06842a13bfb2cf8275471b8aab9dde8b83ac94"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/green中止フロー/buc-spec.md",
+      "sha256": "2960584efa937fbaf2623765ac943f0e33fab8f26eb6971d758c55abea61a9d3"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/green中止フロー/green background実行の中止を依頼する/_api-summary.yaml",
+      "sha256": "dd62d5927384f754a0830ecd9b7e5f91ee6a4e3935aee0d582c4a566147f1cc0"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/green中止フロー/green background実行の中止を依頼する/_cli-summary.yaml",
+      "sha256": "27f360685eca62bbb996b88a9f0e6bbd6b757cebe5f6bbdbe8a45aeeee54813b"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/green中止フロー/green background実行の中止を依頼する/_model-summary.yaml",
+      "sha256": "366a933e1303c022a0e8a585fec1bc5265387680aea9e47c85aec7dd7932cd99"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/green中止フロー/green background実行の中止を依頼する/spec.md",
+      "sha256": "b3f8c9d6680f1f9c00a9bfe8062e2e32edb50b73fa4d3cfb6e70eb16e192dd44"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/green中止フロー/green background実行の中止を依頼する/tier-facade.md",
+      "sha256": "7aa111534f6cb72e24f0b467343d2ff564ffc63468b1cc46be6adbb745238110"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/green中止フロー/対話確認のうえgreen background実行をABORTEDへ遷移させる/_api-summary.yaml",
+      "sha256": "3d8383df35263554d3b979a7291b73551dbdedc2d583a9684bd9ea087da802a8"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/green中止フロー/対話確認のうえgreen background実行をABORTEDへ遷移させる/_cli-summary.yaml",
+      "sha256": "eb181caec9dba76f7bdc115b6263d0dcc71b6fdac23c68341417947f3de293a0"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/green中止フロー/対話確認のうえgreen background実行をABORTEDへ遷移させる/_model-summary.yaml",
+      "sha256": "ae2ac9af408947dba8697c0b4b67080498f2812d3a5f813dc5a933581dd8e523"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/green中止フロー/対話確認のうえgreen background実行をABORTEDへ遷移させる/spec.md",
+      "sha256": "523439a768c035ba731240944ed5fd652523d2447b84b2820c5cb1547ce2711f"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/green中止フロー/対話確認のうえgreen background実行をABORTEDへ遷移させる/tier-facade.md",
+      "sha256": "8a0e2dc7164a1bab0cb51603341883cae9332edb6a05e57c4cdba3f3d8827373"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/確報比較中止フロー/RUNNING中の確報比較依頼の中止を依頼する/_api-summary.yaml",
+      "sha256": "3c1c3c93648cb5eba0177d7960ee762a235080628d94355e7c255304bcf45c2d"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/確報比較中止フロー/RUNNING中の確報比較依頼の中止を依頼する/_cli-summary.yaml",
+      "sha256": "ec8b08726b0ef9f7b7408b4945d28ac5e010c54e171ef9112e90e2b505d76df4"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/確報比較中止フロー/RUNNING中の確報比較依頼の中止を依頼する/_model-summary.yaml",
+      "sha256": "b825d24b9146459ddc3e962d98299e929fc483e24bd2be843a6f00d14855cef7"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/確報比較中止フロー/RUNNING中の確報比較依頼の中止を依頼する/spec.md",
+      "sha256": "5b975e45de7a25aa3df11b426c344d193bcd35c84e3c04c6710bbcbae3cd4e26"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/確報比較中止フロー/RUNNING中の確報比較依頼の中止を依頼する/tier-worker.md",
+      "sha256": "735833b993678af0950a3f503777d0e3fb7796f3b84d2acab7f1ef49706434dc"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/確報比較中止フロー/buc-spec.md",
+      "sha256": "5b49773fa8e813b67f43fad0a66fbc9580f5f00d967c336af88bfe5874700070"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/確報比較中止フロー/対話確認のうえ確報比較依頼をABORTEDへ遷移させる/_api-summary.yaml",
+      "sha256": "2a6cb19f49dd5ce81c76912894429a47f2ee7220ad7e959a948bfe1050e76509"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/確報比較中止フロー/対話確認のうえ確報比較依頼をABORTEDへ遷移させる/_cli-summary.yaml",
+      "sha256": "0cc4f65422e71d08288bcfd799aca406a6d0b4ea90a64384accd674470ef65df"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/確報比較中止フロー/対話確認のうえ確報比較依頼をABORTEDへ遷移させる/_model-summary.yaml",
+      "sha256": "846b8f0428dc39c89dddc86d6158c8023ff531f84062d5983ab9048b2f29c8fd"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/確報比較中止フロー/対話確認のうえ確報比較依頼をABORTEDへ遷移させる/spec.md",
+      "sha256": "61fe554aa0352950bfac29963b39c3277053c8367c88da0f759f68168a81bbe9"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/確報比較中止フロー/対話確認のうえ確報比較依頼をABORTEDへ遷移させる/tier-worker.md",
+      "sha256": "151977bbbab2a394a2ecc83993ffecc7b5170f04eea00df70a98f25a10623dbb"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/速報比較中止フロー/RUNNING中の速報比較依頼の中止を依頼する/_api-summary.yaml",
+      "sha256": "53260b82cba7889cf61936834556b449906aff283146ca5fc2e35a8b0e8d7fcd"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/速報比較中止フロー/RUNNING中の速報比較依頼の中止を依頼する/_cli-summary.yaml",
+      "sha256": "58f315b5e5cbdbd99602aede99c21fe8821e96188fe7dc550bfdc5a63affb591"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/速報比較中止フロー/RUNNING中の速報比較依頼の中止を依頼する/_model-summary.yaml",
+      "sha256": "7431198b09d0b765268b184e8e87869be153e294e82226f8ab9c9943b3bcf9ad"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/速報比較中止フロー/RUNNING中の速報比較依頼の中止を依頼する/spec.md",
+      "sha256": "08b1be190e01e0d21531e9fcd02da38dcf635b97b1dd5482847eac8e4db6a1ae"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/速報比較中止フロー/RUNNING中の速報比較依頼の中止を依頼する/tier-worker.md",
+      "sha256": "603a8f7727177014329b8f682e63cb151991e85a9945e5329e8c6e8dfb751f02"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/速報比較中止フロー/buc-spec.md",
+      "sha256": "c6fb6bdc5eda00d8e09d21b9938b9532542a1abe3491e791aad30112e4b03e04"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/速報比較中止フロー/対話確認のうえ速報比較依頼をABORTEDへ遷移させる/_api-summary.yaml",
+      "sha256": "b53b9f19b476e0634edc51f3b93b1d65b793e9951a7c63dd9e06d582edc16858"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/速報比較中止フロー/対話確認のうえ速報比較依頼をABORTEDへ遷移させる/_cli-summary.yaml",
+      "sha256": "1c187f9f965dc95cc4dc5a5a87f70bd67ae82cda2bb5c5e5fdb9eecc8752b6e4"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/速報比較中止フロー/対話確認のうえ速報比較依頼をABORTEDへ遷移させる/_model-summary.yaml",
+      "sha256": "b38bfee89b6983aea4d34c758dd27bac01c1040dcfc130abab9cc87bc3b62ea9"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/速報比較中止フロー/対話確認のうえ速報比較依頼をABORTEDへ遷移させる/spec.md",
+      "sha256": "f74ca29d4bac82954b33e528bcc6bb9212c393b6e34b611ab80e76a04c069ea9"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行制御業務/速報比較中止フロー/対話確認のうえ速報比較依頼をABORTEDへ遷移させる/tier-worker.md",
+      "sha256": "cb82e95451d80fd002d292cda834f15fd4b9a149440aecffacd3e8b57f81ff69"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行監視業務/ハング監視フロー/background実行の未完了・非0終了・速報比較異常を定期検知する/_api-summary.yaml",
+      "sha256": "8cfa756aa6e3651bdbd2975b26bf8c03c5f5ab473dfdc4397631e5c68edf73a7"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行監視業務/ハング監視フロー/background実行の未完了・非0終了・速報比較異常を定期検知する/_cli-summary.yaml",
+      "sha256": "77d6be0a964f28999649cd53555db9523f1532010f40c4e158c2740a6a92b1b4"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行監視業務/ハング監視フロー/background実行の未完了・非0終了・速報比較異常を定期検知する/_model-summary.yaml",
+      "sha256": "ae384343d40d0fb23892b6503bc0845a0a83084643cdc87a3b3786ae109b1f3c"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行監視業務/ハング監視フロー/background実行の未完了・非0終了・速報比較異常を定期検知する/spec.md",
+      "sha256": "6879608579ca3ad37059b04904e300a1cc21d8107514058a9285b646817439f3"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行監視業務/ハング監視フロー/background実行の未完了・非0終了・速報比較異常を定期検知する/tier-worker.md",
+      "sha256": "93048e57f8d53a118afada3a0cc0c99513f575b116ea34b933c615119f50dbb6"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行監視業務/ハング監視フロー/buc-spec.md",
+      "sha256": "dd61d5529340d6c70a8843390b0295a5d2f0ec96367542946142420ff994921a"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行監視業務/ハング監視フロー/ハング疑い・異常の通知を確認する/_api-summary.yaml",
+      "sha256": "aa285f522825db22e2011bb2f4c051edab5718eb5083945a6185e48b2c6dface"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行監視業務/ハング監視フロー/ハング疑い・異常の通知を確認する/_cli-summary.yaml",
+      "sha256": "0169bc46b9dc5f5576fa80345aec7ad85fe03187907ce0e9aab6bdd605c6a159"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行監視業務/ハング監視フロー/ハング疑い・異常の通知を確認する/_model-summary.yaml",
+      "sha256": "a5e866fa70b8d3f0e0c3fb13263d7df5629d888df25ef2aef7639a31baa095f8"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行監視業務/ハング監視フロー/ハング疑い・異常の通知を確認する/spec.md",
+      "sha256": "e16b4d67f23b332c9b8df93abce1d3efecbed6368a669ef53639b27758505f86"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行監視業務/ハング監視フロー/ハング疑い・異常の通知を確認する/tier-worker.md",
+      "sha256": "bdd152e258402c9e771b9b70ea0371acb206c6b98ebe0f8506c438e5f65f276a"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行監視業務/ハング監視フロー/ハング疑い・異常を運用者へ通知する/_api-summary.yaml",
+      "sha256": "c4cae6c2cee27bd55b7e4c756b8e0689be2852cf50eed3bc05f0448fe104a8c6"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行監視業務/ハング監視フロー/ハング疑い・異常を運用者へ通知する/_cli-summary.yaml",
+      "sha256": "33040052edaf7fe05c4fcf966a6139c814a923d24b5ab62f99adaaa729806b67"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行監視業務/ハング監視フロー/ハング疑い・異常を運用者へ通知する/_model-summary.yaml",
+      "sha256": "7ac8adb130c9be308e7e28eb5a6522618c0c7f2cc4c34ab2bce2dba95834c255"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行監視業務/ハング監視フロー/ハング疑い・異常を運用者へ通知する/spec.md",
+      "sha256": "54d91f9126c35210bd3c35128424d80467bb55ad78157679904ed444b9f82f7d"
+    },
+    {
+      "path": "specs/events/20260819_114307_spec_generation/実行監視業務/ハング監視フロー/ハング疑い・異常を運用者へ通知する/tier-worker.md",
+      "sha256": "46274f8fced581372848de516e394fa1c97553c5f69c7aae805514b8ecc36251"
+    }
+  ]
+}

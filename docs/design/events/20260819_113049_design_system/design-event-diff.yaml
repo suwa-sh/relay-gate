@@ -1,0 +1,48 @@
+# design-event 差分 (feedback reconciliation)
+# 対象CR: CR-6078c4ed-008(RDRA状態モデル6値への追随) / CR-6078c4ed-010(foreground exitcode全値透過とrelay-gate退避コード分離)
+# CR-6078c4ed-009(比較定義エンティティ追加)はRDRA BUCに管理画面の定義が無く、CLI出力・画面への新規要件が生じないためデザイン影響なし
+version: '1.0'
+event_id: 20260819_113049_design_system
+created_at: '2026-08-19T11:30:49+09:00'
+source: 'dist-design-system: feedback差分反映(CR-6078c4ed-008/010)。RDRA状態モデル由来のstatesセクションをbackground slot実行状態6値(STARTING/UNKNOWN追加)へ整合させ、foreground応答のexitcode全値透過とrelay-gateエラーの退避終了コード(125/124)・stderr併記の表示契約を反映'
+trigger_event:
+  - rdra:20260819_104301_slot_config_comparison_def_exitcode
+  - arch:20260819_110531_arch_comparison_definition_exitcode
+feedback_request:
+  feedback_request_id: "20260818_164000_rdra_followup_6078c4ed"
+  input_sha256: "b4b730a7e786c58c6d949948b78ce20988e293d795ae752239a546e36557bf72"
+  request_ids: ["CR-6078c4ed-008","CR-6078c4ed-009","CR-6078c4ed-010"]
+  work_unit_ids: ["CR-6078c4ed-008#1","CR-6078c4ed-009#1","CR-6078c4ed-010#1"]
+diff:
+  components:
+    domain:
+      # exitcode全値透過とrelay-gate退避終了コードの区別を表示契約として明記する(propsの増減は無い)
+      - name: RunnerResultPanel
+        description: Runner実行結果(started-at/stdout/stderr/exitcode)を表示するターミナル調パネル。実行結果identityは(run_id, slot, role, attempt)でattempt_no/attempt_idを併記する。実行状態はarch正本の6値(STARTING/RUNNING/SUCCEEDED/FAILED/UNKNOWN/ABORTED)を表示し、timeout後は推測でFAILEDを表示せずUNKNOWNを明示する。foreground役割の応答はstdout/stderr/exitcodeのみに限定表示し、exitCodeは0を含む全値をそのまま表示して退避終了コードへ丸めない。relay-gate自身のエラーは退避終了コード(実行結果未確定・取得不能・中止済み=125、バリデーションエラー=124)として表示し、stderr欄にはforeground stderr.logの内容とrelay-gateのエラー内容(原因と次アクション)を併記する
+  states:
+    # RDRA 状態.tsv の background slot実行状態が6値へ拡張されたことへの追随(DIST-023/DIST-024の解消)
+    - model: background slot実行状態
+      entries:
+        # color はスキーマの enum(amber/green/blue/gray/red/violet/orange)に制約される。
+        # 実際の表示色トークンは status-badge-starting(cyan系)が正で、ここは同一モデル内で識別可能な粗い色区分を指す
+        - state: STARTING
+          label: 起動受付
+          color: violet
+        - state: RUNNING
+          label: 実行中
+          color: blue
+        - state: SUCCEEDED
+          label: 正常終了
+          color: green
+        - state: FAILED
+          label: 異常終了
+          color: red
+        - state: UNKNOWN
+          label: 結果不明
+          color: orange
+        - state: ABORTED
+          label: 中止済み
+          color: gray
+  nfr_decisions:
+    - nfr: 運用・保守性(relay-gate自身のエラーと業務ジョブの終了コードの区別)
+      decision: RunnerResultPanelのforeground variantはexitcode.txtの値を0を含む全値そのまま表示し、relay-gate自身のエラーだけを退避終了コード(125=実行結果未確定・取得不能・中止済み、124=バリデーションエラー)として表示する。relay-gateエラー時のstderr欄はforeground stderr.logの内容とrelay-gateのエラー内容(原因と次アクション)を併記し、UNKNOWNを推測でFAILED相当の業務終了コードへ変換した表示をしない

@@ -1,0 +1,21 @@
+{
+  "event_id": "20260819_103641_feedback_run_started",
+  "type": "feedback_run_started",
+  "run_id": "feedback-20260818_164000_rdra_followup_6078c4ed-20260819_103601-46104",
+  "attempt": 1,
+  "created_at": "2026-08-19T01:36:41Z",
+  "feedback_request": {
+    "feedback_request_id": "20260818_164000_rdra_followup_6078c4ed",
+    "input_sha256": "b4b730a7e786c58c6d949948b78ce20988e293d795ae752239a546e36557bf72",
+    "request_ids": [
+      "CR-6078c4ed-008",
+      "CR-6078c4ed-009",
+      "CR-6078c4ed-010"
+    ],
+    "work_unit_ids": [
+      "CR-6078c4ed-008#1",
+      "CR-6078c4ed-009#1",
+      "CR-6078c4ed-010#1"
+    ]
+  }
+}

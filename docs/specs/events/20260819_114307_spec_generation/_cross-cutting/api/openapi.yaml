@@ -1,0 +1,16 @@
+openapi: "3.1.0"
+info:
+  title: "RelayGate（HTTP APIは存在しません）"
+  version: "1.0.0"
+  description: |
+    このファイルは dist-spec スキルの構造バリデータ（validateSpecEvent.js）が
+    _cross-cutting/api/openapi.yaml の存在を必須としているために生成した互換スタブです。
+
+    RelayGate は Web UI・HTTP API を持たない CLI/バッチ運用基盤であり、実装すべき
+    HTTPエンドポイントは存在しません（decisions/spec-decision-001.yaml 参照）。
+    API契約の正本は `_cross-cutting/api/cli-command-contract.yaml`（CLIコマンド契約、
+    26コマンド）です。実装・レビュー時は本ファイルではなく cli-command-contract.yaml を参照してください。
+servers:
+  - url: "cli://relaygate"
+    description: "HTTPサーバは存在しません。この値はredocly lintのno-empty-serversルールを満たすためのプレースホルダです。実際のインターフェースはCLI（_cross-cutting/api/cli-command-contract.yaml参照）です"
+paths: {}

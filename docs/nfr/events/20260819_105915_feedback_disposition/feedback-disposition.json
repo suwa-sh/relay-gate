@@ -1,0 +1,45 @@
+{
+  "schema_version": "distillery.feedback-no-domain-change/v1",
+  "type": "feedback_no_domain_change",
+  "event_id": "20260819_105915_feedback_disposition",
+  "created_at": "2026-08-19T01:59:15Z",
+  "stage": "quality_attributes",
+  "domain_event_root": "nfr/events",
+  "reason": "slot別実行設定の分離・attempt identity・実行状態6値、比較定義エンティティ追加、終了コード透過とrelay-gate退避コードはいずれも機能仕様レベルの精緻化であり、IPA非機能要求グレードのメトリクス値・水準を変更しないため、nfr/latest を更新しない。",
+  "feedback_request": {
+    "feedback_request_id": "20260818_164000_rdra_followup_6078c4ed",
+    "input_sha256": "b4b730a7e786c58c6d949948b78ce20988e293d795ae752239a546e36557bf72",
+    "request_ids": [
+      "CR-6078c4ed-008",
+      "CR-6078c4ed-009",
+      "CR-6078c4ed-010"
+    ],
+    "work_unit_ids": [
+      "CR-6078c4ed-008#1",
+      "CR-6078c4ed-009#1",
+      "CR-6078c4ed-010#1"
+    ]
+  },
+  "work_unit_results": [],
+  "reconciliation_results": [
+    {
+      "work_unit_id": "CR-6078c4ed-008#1",
+      "status": "not_impacted",
+      "reason": "slot別実行設定の分離・attempt identity(attempt_id/attempt_no/accepted_at)・実行状態6値(STARTING/UNKNOWN追加)は情報/状態モデルの粒度整合であり、NFRメトリクスの水準を変えない。E.1.1.2(feature flagによるslot切替で即時切り戻し)はslot別設定分離後も成立し、C.4.1系の監視範囲(アプリケーション監視)・C.5系の障害検知/通知はUNKNOWN追加後も同一水準で妥当。B.1系の応答時間(slot起動からforeground結果応答まで)も変更なし。",
+      "artifact_refs": []
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-009#1",
+      "status": "not_impacted",
+      "reason": "比較定義エンティティ(job_idごとの比較対象・比較実装)の追加は情報モデルへの構造追加であり、NFRメトリクス水準に影響しない。C.6.1.2(ログ種別=実行ログ+速報/確報比較結果+ハング検知記録)はログ対象の定義であり、設定マスタである比較定義は対象外。データ量(B.2系)も設定行数は既存推定レンジ内で水準変更に至らない。",
+      "artifact_refs": []
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-010#1",
+      "status": "not_impacted",
+      "reason": "終了コード透過(0を含む全値)とrelay-gate自身のエラー退避コード(125/126)、エラー時stderr併記はCLI外部IF規約であり、NFRメトリクスの水準を変えない。C.6.1.2は既にstdout/stderr/exitcodeを保持対象として記載済みで整合。C.5系の障害検知/通知方式も退避コード分離後の水準は同一。",
+      "artifact_refs": []
+    }
+  ],
+  "evidence_refs": []
+}

@@ -1,0 +1,24 @@
+uc: "blue/green runnerの完了通知を受けて速報比較依頼を作成する"
+business: "クロスチェック業務"
+buc: "速報クロスチェックフロー"
+commands:
+  - name: "relaygate rapid-crosscheck create"
+    tier: "tier-worker"
+    summary: "job_id単位でblue/green双方の完了済みbackground実行が揃った未依頼ジョブを検知し速報比較依頼をREQUESTED状態で新規作成する（CronJob定期実行）"
+    args: []
+    env_vars:
+      - name: "RAPID_CROSSCHECK_MODE"
+        required: true
+        description: "on/off。offの場合は速報比較依頼を作成しない"
+    stdin: "なし"
+    stdout_contract: "処理件数・作成したjob_id一覧を構造化ログとして出力する"
+    stderr_contract: "RDB接続エラー等の技術例外のみ出力する"
+    exit_codes:
+      - code: 0
+        meaning: "正常終了（0件処理を含む）"
+      - code: 1
+        meaning: "業務エラー（RDB接続エラー等）"
+screens:
+  - name: "速報比較依頼作成画面"
+    route: "/cli/rapid-crosscheck/create"
+    components: ["CrossCheckRequestRow", "Banner"]

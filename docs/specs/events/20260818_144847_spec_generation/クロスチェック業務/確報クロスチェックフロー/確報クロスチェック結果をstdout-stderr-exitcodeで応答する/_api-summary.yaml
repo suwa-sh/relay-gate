@@ -1,0 +1,3 @@
+uc: "確報クロスチェック結果をstdout/stderr/exitcodeで応答する"
+business: "クロスチェック業務"
+buc: "確報クロスチェックフロー"

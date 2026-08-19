@@ -1,0 +1,106 @@
+{
+  "schema_version": "distillery.feedback-run-status/v1",
+  "feedback_request_id": "20260818_164000_rdra_followup_6078c4ed",
+  "input_sha256": "b4b730a7e786c58c6d949948b78ce20988e293d795ae752239a546e36557bf72",
+  "ambiguity_policy": "recommended_auto",
+  "state": "completed",
+  "stages": [
+    {
+      "id": "requirements",
+      "state": "completed",
+      "event_ids": [
+        "20260819_105639_feedback_stage_requirements"
+      ],
+      "direct_work_unit_ids": [
+        "CR-6078c4ed-008#1",
+        "CR-6078c4ed-009#1",
+        "CR-6078c4ed-010#1"
+      ],
+      "causal_work_unit_ids": [
+        "CR-6078c4ed-008#1",
+        "CR-6078c4ed-009#1",
+        "CR-6078c4ed-010#1"
+      ]
+    },
+    {
+      "id": "quality_attributes",
+      "state": "completed",
+      "event_ids": [
+        "20260819_110157_feedback_stage_quality_attributes"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-6078c4ed-008#1",
+        "CR-6078c4ed-009#1",
+        "CR-6078c4ed-010#1"
+      ]
+    },
+    {
+      "id": "architecture",
+      "state": "completed",
+      "event_ids": [
+        "20260819_111609_feedback_stage_architecture"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-6078c4ed-008#1",
+        "CR-6078c4ed-009#1",
+        "CR-6078c4ed-010#1"
+      ]
+    },
+    {
+      "id": "infrastructure",
+      "state": "completed",
+      "event_ids": [
+        "20260819_112750_feedback_stage_infrastructure"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-6078c4ed-008#1",
+        "CR-6078c4ed-009#1",
+        "CR-6078c4ed-010#1"
+      ]
+    },
+    {
+      "id": "design_system",
+      "state": "completed",
+      "event_ids": [
+        "20260819_113858_feedback_stage_design_system"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-6078c4ed-008#1",
+        "CR-6078c4ed-009#1",
+        "CR-6078c4ed-010#1"
+      ]
+    },
+    {
+      "id": "spec",
+      "state": "completed",
+      "event_ids": [
+        "20260819_125413_feedback_stage_spec"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-6078c4ed-008#1",
+        "CR-6078c4ed-009#1",
+        "CR-6078c4ed-010#1"
+      ]
+    },
+    {
+      "id": "spec_stories",
+      "state": "completed",
+      "event_ids": [
+        "20260819_130131_feedback_stage_spec_stories"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-6078c4ed-008#1",
+        "CR-6078c4ed-009#1",
+        "CR-6078c4ed-010#1"
+      ]
+    }
+  ],
+  "run_id": "feedback-20260818_164000_rdra_followup_6078c4ed-20260819_103601-46104",
+  "attempt": 1
+}

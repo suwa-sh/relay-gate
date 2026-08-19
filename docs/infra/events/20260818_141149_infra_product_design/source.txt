@@ -1,0 +1,10 @@
+実装フィードバックに基づく監査テーブルDDL契約の是正とEvent/Snapshot併用永続化への更新
+feedback_request_id: 20260818_113601_impl_feedback_6078c4ed
+input_sha256: 57396b15a51da62949a111f13ef986398ac2e22674e9f47751100f6b24960746
+request_ids: CR-6078c4ed-003, CR-6078c4ed-004, CR-6078c4ed-005, CR-6078c4ed-006
+direct_work_unit_ids: CR-6078c4ed-004#1, CR-6078c4ed-006#1
+causal_work_unit_ids: CR-6078c4ed-003#1, CR-6078c4ed-004#1, CR-6078c4ed-005#1, CR-6078c4ed-006#1
+allowed_work_unit_ids: CR-6078c4ed-003#1, CR-6078c4ed-004#1, CR-6078c4ed-005#1, CR-6078c4ed-006#1
+feedback_packet: docs/pipeline/feedback-runs/20260818_113601_impl_feedback_6078c4ed/stage-packets/infrastructure.md
+trigger_event: arch:20260818_135504_arch_slot_config_attempt_identity, nfr:20260817_144844_initial_nfr
+user_selection: CR-6078c4ed-004 推奨案（非partitionの追記専用audit_logs、occurred_at/run_id/parent_run_id索引、専用保守権限による6ヶ月保持、実測負荷時にregistry分離を含むpartition設計へ移行）、CR-6078c4ed-006 推奨案（append-only runner_result_events + runner_results snapshotの同一transaction併用方式、LR-002整合）

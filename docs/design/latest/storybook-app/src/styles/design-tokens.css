@@ -29,6 +29,10 @@
   --color-blue-100: #DBEAFE;
   --color-violet-600: #7C3AED;
   --color-violet-100: #EDE9FE;
+  --color-cyan-600: #0891B2;
+  --color-cyan-100: #CFFAFE;
+  --color-orange-600: #EA580C;
+  --color-orange-100: #FFEDD5;
 
   /* -------------------------------------------------------------------- */
   /* Primitive: spacing / radius / shadow                                 */
@@ -101,6 +105,10 @@
   --status-badge-requested-fg: var(--color-amber-600);
   --status-badge-claimed-bg: var(--color-violet-100);
   --status-badge-claimed-fg: var(--color-violet-600);
+  --status-badge-starting-bg: var(--color-cyan-100);
+  --status-badge-starting-fg: var(--color-cyan-600);
+  --status-badge-unknown-bg: var(--color-orange-100);
+  --status-badge-unknown-fg: var(--color-orange-600);
 
   --confirm-prompt-bg: var(--color-slate-50);
   --confirm-prompt-border: var(--color-slate-200);
@@ -142,6 +150,10 @@
     --status-badge-requested-fg: #FBBF24;
     --status-badge-claimed-bg: rgba(124, 58, 237, 0.16);
     --status-badge-claimed-fg: #A78BFA;
+    --status-badge-starting-bg: rgba(8, 145, 178, 0.16);
+    --status-badge-starting-fg: #22D3EE;
+    --status-badge-unknown-bg: rgba(234, 88, 12, 0.16);
+    --status-badge-unknown-fg: #FB923C;
 
     --banner-info-bg: rgba(37, 99, 235, 0.16);
     --banner-warning-bg: rgba(217, 119, 6, 0.16);
@@ -169,6 +181,10 @@
   --status-badge-requested-fg: #FBBF24;
   --status-badge-claimed-bg: rgba(124, 58, 237, 0.16);
   --status-badge-claimed-fg: #A78BFA;
+  --status-badge-starting-bg: rgba(8, 145, 178, 0.16);
+  --status-badge-starting-fg: #22D3EE;
+  --status-badge-unknown-bg: rgba(234, 88, 12, 0.16);
+  --status-badge-unknown-fg: #FB923C;
 
   --banner-info-bg: rgba(37, 99, 235, 0.16);
   --banner-warning-bg: rgba(217, 119, 6, 0.16);

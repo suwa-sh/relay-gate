@@ -245,3 +245,25 @@ RDRA に存在しない要素を追加する前に、ここで合意を得てか
 - **推奨対応**: [ ] requirements スキル再実行で反映 / [ ] 却下 / [ ] 保留
 - **ステータス**: closed (2026-08-17 ユーザー承認: OSS利用側で決まる値のため仮置きで確定。実運用値の判明時に feedback request で見直し)
 
+## 2026-08-18 dist-architecture からの追加提案
+
+### DIST-023: slot別実行設定と起動試行identity・実行状態6値のRDRAへの追随
+- **発生元**: dist-architecture (20260818_135504_arch_slot_config_attempt_identity)
+- **種別**: RDRA追加
+- **提案内容**: arch差分イベント20260818_135504でE-007 slot実行設定(host/exec_user/script_path/work_dir/fixed_args/impl_version/credential_refをrun共通execution specから分離)、Runner実行結果のattempt_id/attempt_no/accepted_at、実行状態STARTING/UNKNOWNを上位モデルに定義した(CR-6078c4ed-005確定採用)。RDRAの情報.tsvはexecution-spec.jsonを単一情報のまま保持し、状態.tsvのbackground slot実行状態はRUNNING/SUCCEEDED/FAILED/ABORTEDの4状態のみ。RDRA(情報.tsv/状態.tsv)へslot別実行設定の分離・attempt identity・STARTING/UNKNOWN遷移を追随反映するかをユーザー確認のうえdist-requirementsで更新する。
+- **根拠**: (サブエージェントが記入)
+- **影響範囲**: (サブエージェントが記入)
+- **推奨対応**: [x] requirements スキル再実行で反映 / [ ] 却下 / [ ] 保留
+- **ステータス**: closed (2026-08-19 CR-6078c4ed-008 で RDRA 情報.tsv/状態.tsv へ slot別実行設定・attempt identity・STARTING/UNKNOWN 遷移を反映済み。design の states セクションも6値へ整合済み: 20260819_113049_design_system)
+
+## 2026-08-18 dist-design-system からの追加提案
+
+### DIST-024: RDRA 状態モデルへ STARTING/UNKNOWN(起動試行の実行状態)を追加するか
+- **発生元**: dist-design-system (20260818_143057_design_system)
+- **種別**: RDRA追加
+- **提案内容**: arch 正本は Runner 実行結果の実行状態を6値(STARTING/RUNNING/SUCCEEDED/FAILED/UNKNOWN/ABORTED)で定義したが、RDRA 状態.tsv の background slot実行状態は4値のまま。デザインシステムはコンポーネント層(StatusBadge/RunnerResultPanel)でのみ6値を反映し、RDRA 状態モデルへの自動追加は整合性ルールにより行っていない。RDRA へ追加する場合は dist-requirements の差分更新で反映すること。
+- **根拠**: (サブエージェントが記入)
+- **影響範囲**: (サブエージェントが記入)
+- **推奨対応**: [x] requirements スキル再実行で反映 / [ ] 却下 / [ ] 保留
+- **ステータス**: closed (2026-08-19 CR-6078c4ed-008 で RDRA 状態.tsv が6値になり、design の states セクションを6値へ整合済み: 20260819_113049_design_system)
+
