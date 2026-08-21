@@ -209,3 +209,34 @@ UC BDD(`features/uc/select-and-launch-slots-by-feature-flags.feature`、9 Scenar
 
 - 「facade本体のコード・設定はジョブマップ以外に一切変更されていない」は、同一の `facade/bin/relaygate` をハーネス基準以外の RELAYGATE_* 設定を足さずに実行することの確認として結線した(ソースツリーのハッシュ比較は同一 Scenario 内では自明なため行わない)
 - 「green実装への起動イベントは slot_execution_specs の値のみから構成され…」は、起動ログの remote_command が `cd <work_dir> && <run 実行コンテキスト env> <script_path> [<fixed_args>]` の形で DB 行の値と一致し、impl_version・実装名を含まないことで検証した。run 実行コンテキスト(RELAYGATE_RUN_ID / ATTEMPT_ID / SLOT / ROLE / RAPID_CROSSCHECK_MODE)は slot_execution_specs 外の値だが、実装固有の分岐ではなく run 共通の伝播項目として許容した。credential_ref は起動コマンドに現れない(§8: 鍵解決方式が未契約)
+
+---
+
+## S7 atdd での対応状況(ATDD 6 Scenario の結線。ハーネス注入なし)
+
+uc-map `atdd_scenarios` の 6 件(`@atdd_SPEC-001-01-1` / `-001-02-1` / `-001-03-1` / `@atdd_SPEC-009-01-1` / `-009-02-1` / `-009-03-1`)を、タグ完全一致の選択実行で tier-facade attempt 6 の実装に結線した(6/6 pass)。tier 実装は変更していない。本 6 Scenario は後続 UC に依存しないため、S6 §2 / §7 のようなハーネス注入は不要だった。受け入れ基準は具体値を持たないため、具体値は spec.md の E2E 完了条件の Given 値をそのまま使った。
+
+### §12 SPEC-009-03 の「execution-spec.json」「roleごとのhang_detect_limit_minutes」と RDB 分離保存の対応(軽微・仕様側で確認が望ましい)
+
+#### 仕様の記載
+
+- USDM SPEC-009-03: 「起動時に解決済みのホスト・スクリプト・作業ディレクトリ・固定引数・追加引数・マップ版・実装版・**roleごとの** hang_detect_limit_minutes を **execution-spec.json** として保存する」
+- spec.md 関連 RDRA モデル: 「情報 execution-spec.json — run共通の execution_specs と slot別の slot_execution_specs に分離して保存する」
+- rdb-schema.yaml: `hang_detect_limit_minutes` は execution_specs(run 共通)の 1 列。role / slot 別の列は無い
+
+#### 実装で判明した事実
+
+- facade は execution-spec.json ファイルを生成せず、RDB の 2 テーブルへ保存する(spec.md のとおり)。ATDD では「execution-spec.json への保存」を execution_specs(1 行)+ slot_execution_specs(slot ごと 1 行)の実体で検証した
+- hang_detect_limit_minutes は run 共通の 1 値(ジョブマップの job 直下)として解決・保存される。「roleごと」の値は契約・実装ともに存在しない
+
+#### 提案
+
+- USDM SPEC-009-03 の文言を spec.md / rdb-schema に合わせて「execution spec(execution_specs + slot_execution_specs)として保存」「hang_detect_limit_minutes は run 共通」へ改める(または role 別が要件なら rdb-schema / ジョブマップ形式へ feedback request を出す)
+
+### §13 「認証情報そのものは含まれない」の検証方法(記録)
+
+- ジョブマップに facade が読まない余剰フィールド `credential_secret`(秘密鍵風の文字列)を混入させ、RDB の `.dump` 全体・起動イベント(ssh 引数列)・標準出力のいずれにも実値が現れないこと、slot_execution_specs に秘密値を持つ列が無いことで検証した。facade は jq でフィールド名を指定して読むため余剰フィールドは無視される(ジョブマップ形式の厳格検証は未契約。issues/20260817T000000Z)
+
+### §14 ATDD feature への uc タグ付与(記録)
+
+- 選択した 6 Scenario のタグ行に `@uc_6078c4ed` を併記した(Scenario 文言は無変更)。選択実行の正本は引き続き `@atdd_{SPEC-ID}-{連番}` の完全一致であり、uc タグは UC との対応の可視化のみに使う。bootstrap P7 が features/atdd を再生成する場合は本タグが失われるため、再生成時の保持ルールは orchestrator 側の判断に委ねる
