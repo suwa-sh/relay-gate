@@ -4,7 +4,7 @@ business: 並行稼働実行業務
 buc: 並行稼働実行フロー
 uc: feature flag設定に基づきslotを選択して起動する
 state: running
-current_attempt: 5
+current_attempt: 6
 resolved_models:
   implementer: claude-fable-5
   verifier: gpt-5.6-sol
@@ -28,21 +28,12 @@ stages:
     status: done
   S4_tier_impl:
     tier-facade:
-      status: done
-      attempt: 5
-      rerun: stale
-      gates:
-        format: pass
-        lint: pass
-        tdd: pass
-        bdd_tier: pass
+      status: pending
+      attempt: 6
   S5_verify:
     tier-facade:
-      status: done
-      attempt: 5
-      result: fail
-      open_blockers: 3
-      rerun: stale
+      status: pending
+      attempt: 6
   S6_uc_bdd:
     status: pending
   S7_atdd:
@@ -51,4 +42,4 @@ stages:
     status: pending
   S9_review:
     status: pending
-updated_at: '2026-08-22T07:33:14+09:00'
+updated_at: '2026-08-22T07:52:14+09:00'

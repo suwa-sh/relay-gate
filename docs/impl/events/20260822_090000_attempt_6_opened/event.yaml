@@ -1,0 +1,14 @@
+event_id: "20260822_090000_attempt_6_opened"
+type: attempt_opened
+uc_id: "6078c4ed"
+stage: "S4"
+attempt: 6
+payload:
+  previous_attempt: 5
+  reason: "S5 verify attempt-5 reported 3 blockers (F-001 PostgreSQL path, F-002 flaky event ordering, F-003 STARTING fixed status)"
+  over_limit_approval: "attempt > 3. user approved continuation (option A: fix all 3) on 2026-08-22 via tmp/reviews/attempt-6-decision-review.html"
+  tiers_to_rerun: [tier-facade]
+  findings_passed_to_implementer:
+    tier-facade: "docs/impl/latest/6078c4ed/stages/attempt-5/S5_verify.tier-facade.findings.yaml"
+  carry_forward: []
+created_at: "2026-08-22T09:00:00+09:00"
