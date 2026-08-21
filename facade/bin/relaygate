@@ -1,11 +1,15 @@
 #!/usr/bin/env bash
 # relaygate は facade の CLI エントリポイントを提供する。
+# 本ファイルは CLI deadline(CTP-009: 応答 10 秒以内)の制御と初期化だけを持ち、
+# 層別のロジックは facade/src/*.sh(presentation / domain / gateway / usecase)に置く。
+# shellcheck source-path=SCRIPTDIR
+# 層別ライブラリへ渡す CLI 実行コンテキスト(グローバル)は sourced ファイル側で参照するため未使用警告は対象外
+# shellcheck disable=SC2034
 set -o errexit -o nounset -o pipefail
-readonly MAX_SSH_TIMEOUT_SECONDS=8
 readonly CLI_DEADLINE_SECONDS=8
 readonly COMPENSATION_RESERVE_MILLISECONDS=750
 
-# monotonic_milliseconds は単一CLI実行の単調時刻をミリ秒で返す。
+# monotonic_milliseconds は単一 CLI 実行の単調時刻をミリ秒で返す。
 monotonic_milliseconds() {
 	perl -MTime::HiRes=clock_gettime,CLOCK_MONOTONIC -e 'printf "%.0f", clock_gettime(CLOCK_MONOTONIC) * 1000'
 }
@@ -13,21 +17,13 @@ monotonic_milliseconds() {
 # CLI の最初の実行境界で単一 deadline を確定する。
 deadline_milliseconds=$(($(monotonic_milliseconds) + CLI_DEADLINE_SECONDS * 1000))
 
+# initialization_error は初期化境界(スクリプト位置解決・ライブラリ読込)の失敗で終了する。
 initialization_error() {
 	printf '%s\n' 'CLI initialization failed (boundary=initialization)' >&2
 	exit 1
 }
 
-validation_error() {
-	printf '%s\n' "$1" >&2
-	exit 2
-}
-business_error() {
-	printf '%s\n' "$1" >&2
-	exit 1
-}
-
-# remaining_deadline_milliseconds はCLI開始時点からの残余時間を返す。
+# remaining_deadline_milliseconds は CLI 開始時点からの残余時間を返す。
 remaining_deadline_milliseconds() {
 	local now_milliseconds remaining_milliseconds
 	now_milliseconds="$(monotonic_milliseconds)" || return 1
@@ -36,7 +32,7 @@ remaining_deadline_milliseconds() {
 	printf '%s' "$remaining_milliseconds"
 }
 
-# deadline_run_for は専用session内のI/Oとその子プロセス群を期限で終了する。
+# deadline_run_for は専用 session 内の I/O とその子プロセス群を期限で終了する。
 deadline_run_for() {
 	local timeout_duration="$1"
 	shift
@@ -49,7 +45,7 @@ deadline_run_for() {
 	' bash "$@"
 }
 
-# deadline_run は全ての外部I/Oを単一CLI deadlineまでに打ち切る。
+# deadline_run は全ての外部 I/O を単一 CLI deadline までに打ち切る。
 deadline_run() {
 	local remaining_milliseconds timeout_duration
 	remaining_milliseconds="$(remaining_deadline_milliseconds)" || return 124
@@ -57,7 +53,7 @@ deadline_run() {
 	deadline_run_for "$timeout_duration" "$@"
 }
 
-# deadline_run_with_compensation_reserve は失敗後の補償時間を残してI/Oを実行する。
+# deadline_run_with_compensation_reserve は失敗後の補償時間を残して I/O を実行する。
 deadline_run_with_compensation_reserve() {
 	local remaining_milliseconds timeout_duration
 	remaining_milliseconds="$(remaining_deadline_milliseconds)" || return 124
@@ -67,207 +63,28 @@ deadline_run_with_compensation_reserve() {
 	deadline_run_for "$timeout_duration" "$@"
 }
 
-# SCRIPT_DIR と契約定数は同じCLI deadlineの内側で解決する。
+# SCRIPT_DIR は同じ CLI deadline の内側で解決する。
 # shellcheck disable=SC2016
 script_dir="$(deadline_run bash -c 'cd -- "$(dirname -- "$1")" && pwd -P' bash "${BASH_SOURCE[0]}")" || initialization_error
 readonly SCRIPT_DIR="$script_dir"
-contract_path="$SCRIPT_DIR/../../packages/contracts/relay-gate-db/schema-constants.sh"
-# shellcheck disable=SC2016
-contract_declarations="$(deadline_run bash -c 'source "$1"; declare -p TBL_EXECUTION_SPECS TBL_RUNNER_RESULTS COLS_EXECUTION_SPECS COLS_RUNNER_RESULTS' bash "$contract_path")" || initialization_error
-# 契約生成物が出力した定数宣言だけを親shellに復元する。
-# shellcheck disable=SC2294
-eval "$contract_declarations"
-
-# job_map_error はジョブマップ境界の診断情報を秘密値なしで返す。
-job_map_error() {
-	business_error "JOB_IDに対応するジョブマップが見つかりません: $job_id (boundary=job_map, field=$1, category=$2)"
-}
-
-# sql_literal は SQLite CLI 用に文字列リテラルを安全に組み立てる。
-sql_literal() {
-	local value="$1"
-	value="${value//\'/\'\'}"
-	printf "'%s'" "$value"
-}
-
-# parse_select_slot_request は select-slot の CLI 引数を request DTO に変換する。
-parse_select_slot_request() {
-	[[ $# -ge 2 && "$1" == "--job-id" && -n "$2" ]] || validation_error "JOB_ID is required"
-	job_id="$2"
-	shift 2
-	additional_args=()
-	if [[ $# -gt 0 ]]; then
-		[[ "$1" == "--" ]] || validation_error "unexpected argument: $1"
-		shift
-		additional_args=("$@")
-	fi
-}
-
-# validate_modes は feature flag の列挙値と排他制約を検証する。
-validate_modes() {
-	for pair in "BLUE_MODE:$blue_mode" "GREEN_MODE:$green_mode"; do
-		case "${pair#*:}" in off | background | foreground) ;; *) validation_error "${pair%%:*} must be off, background, or foreground" ;; esac
-	done
-	case "$rapid_crosscheck_mode" in on | off) ;; *) validation_error "RAPID_CROSSCHECK_MODE must be on or off" ;; esac
-	if [[ "$blue_mode" == foreground && "$green_mode" == foreground ]]; then
-		validation_error "BLUE_MODEとGREEN_MODEを同時にforegroundにすることはできません"
-	fi
-}
-
-# resolve_job_map はジョブマップの対象ジョブを解決する。
-resolve_job_map() {
-	if [[ -z "${RELAYGATE_JOB_MAP_PATH:-}" ]] || ! deadline_run test -r "$RELAYGATE_JOB_MAP_PATH"; then
-		job_map_error path unavailable
-	fi
-	# shellcheck disable=SC2016
-	job_map_entry="$(deadline_run jq -cer --arg id "$job_id" '.jobs[$id] | select(type == "object")' "$RELAYGATE_JOB_MAP_PATH" 2>/dev/null || true)"
-	[[ -n "$job_map_entry" ]] || job_map_error jobs not_found
-	job_map_version="$(deadline_run jq -er 'if (.version | type) == "string" and (.version | length) > 0 then .version else empty end' "$RELAYGATE_JOB_MAP_PATH" 2>/dev/null || true)"
-	host="$(deadline_run jq -er 'if (.host | type) == "string" and (.host | length) > 0 then .host else empty end' <<<"$job_map_entry" 2>/dev/null || true)"
-	exec_user="$(deadline_run jq -er 'if (.exec_user | type) == "string" and (.exec_user | length) > 0 then .exec_user else empty end' <<<"$job_map_entry" 2>/dev/null || true)"
-	script_path="$(deadline_run jq -er 'if (.script_path | type) == "string" and (.script_path | length) > 0 then .script_path else empty end' <<<"$job_map_entry" 2>/dev/null || true)"
-	work_dir="$(deadline_run jq -er 'if (.work_dir | type) == "string" and (.work_dir | length) > 0 then .work_dir else empty end' <<<"$job_map_entry" 2>/dev/null || true)"
-	impl_version="$(deadline_run jq -er 'if (.impl_version | type) == "string" and (.impl_version | length) > 0 then .impl_version else empty end' <<<"$job_map_entry" 2>/dev/null || true)"
-	hang_detect_limit_minutes="$(deadline_run jq -er 'if (.hang_detect_limit_minutes | type) == "number" then .hang_detect_limit_minutes | tostring else empty end' <<<"$job_map_entry" 2>/dev/null || true)"
-	credential_ref_json="$(deadline_run jq -ce 'if .credential_ref == null then null elif (.credential_ref | type) == "string" and (.credential_ref | length) > 0 then .credential_ref else empty end' <<<"$job_map_entry" 2>/dev/null || true)"
-	fixed_args_json="$(deadline_run jq -ce 'if .fixed_args == null then null elif (.fixed_args | type) == "array" and (.fixed_args | all(.[]; type == "string")) then .fixed_args else empty end' <<<"$job_map_entry" 2>/dev/null || true)"
-	[[ "$hang_detect_limit_minutes" =~ ^[1-9][0-9]*$ ]] || job_map_error hang_detect_limit_minutes invalid_value
-	[[ -n "$job_map_version" && -n "$host" && -n "$exec_user" && -n "$script_path" && -n "$work_dir" && -n "$impl_version" && -n "$fixed_args_json" && -n "$credential_ref_json" ]] || job_map_error entry invalid_type
-	[[ "$host" =~ ^[A-Za-z0-9][A-Za-z0-9.-]*$ && "$exec_user" =~ ^[a-z_][a-z0-9_-]*\$?$ ]] || job_map_error ssh_target invalid_value
-}
-
-# resolve_sqlite_path は限定的な SQLite DSN を接続先ファイルへ変換する。
-resolve_sqlite_path() { case "${RELAYGATE_RDB_DSN:-}" in sqlite://*) sqlite_path="${RELAYGATE_RDB_DSN#sqlite://}" ;; *) business_error "RDB connection failed" ;; esac }
-
-# resolve_ssh_timeout はCLI全体のdeadline内に収めるSSH待機上限を検証する。
-resolve_ssh_timeout() {
-	ssh_timeout_seconds="${RELAYGATE_SSH_TIMEOUT_SECONDS:-$MAX_SSH_TIMEOUT_SECONDS}"
-	[[ "$ssh_timeout_seconds" =~ ^[1-9]$ && "$ssh_timeout_seconds" -le "$MAX_SSH_TIMEOUT_SECONDS" ]] || validation_error "RELAYGATE_SSH_TIMEOUT_SECONDS must be between 1 and $MAX_SSH_TIMEOUT_SECONDS"
-	command -v timeout >/dev/null 2>&1 || business_error "SSH timeout utility is unavailable"
-}
-
-# write_execution_spec はexecution-spec.jsonを一時ファイルから原子的に確定保存する。
-write_execution_spec() {
-	local execution_spec_json execution_spec_parent temporary_path
-	# shellcheck disable=SC2016
-	additional_args_json="$(deadline_run jq -cn '$ARGS.positional' --args -- "${additional_args[@]}")" || business_error "execution-spec persistence failed (boundary=deadline)"
-	run_id="$(deadline_run uuidgen)" || business_error "execution-spec persistence failed (boundary=deadline)"
-	run_id="${run_id,,}"
-	if [[ "$fixed_args_json" == null ]]; then fixed_args_value="NULL"; else fixed_args_value="$(sql_literal "$fixed_args_json")"; fi
-	if [[ "$credential_ref_json" == null ]]; then credential_ref_value="NULL"; else credential_ref_value="$(sql_literal "$(deadline_run jq -r '.' <<<"$credential_ref_json")")"; fi
-	if [[ ${#additional_args[@]} -eq 0 ]]; then additional_args_value="NULL"; else additional_args_value="$(sql_literal "$additional_args_json")"; fi
-	execution_spec_dir="${RELAYGATE_EXECUTION_SPEC_DIR:-$work_dir}"
-	execution_spec_path="$execution_spec_dir/$run_id/execution-spec.json"
-	execution_spec_parent="${execution_spec_path%/*}"
-	(umask 077 && deadline_run mkdir -p "$execution_spec_parent") || business_error "execution-spec persistence failed (run_id=$run_id, boundary=filesystem)"
-	temporary_path="$(deadline_run mktemp "$execution_spec_parent/.execution-spec.json.XXXXXX")" || business_error "execution-spec persistence failed (run_id=$run_id, boundary=filesystem)"
-	# shellcheck disable=SC2016
-	execution_spec_json="$(deadline_run jq -cn --arg run_id "$run_id" --arg job_id "$job_id" --arg host "$host" --arg exec_user "$exec_user" --arg script_path "$script_path" --arg work_dir "$work_dir" --arg job_map_version "$job_map_version" --arg impl_version "$impl_version" --arg blue_mode "$blue_mode" --arg green_mode "$green_mode" --arg rapid_crosscheck_mode "$rapid_crosscheck_mode" --argjson fixed_args "$fixed_args_json" --argjson additional_args "$additional_args_json" --argjson credential_ref "$credential_ref_json" --argjson hang_detect_limit_minutes "$hang_detect_limit_minutes" '{run_id: $run_id, parent_run_id: null, job_id: $job_id, host: $host, exec_user: $exec_user, script_path: $script_path, work_dir: $work_dir, fixed_args: $fixed_args, additional_args: (if ($additional_args | length) == 0 then null else $additional_args end), job_map_version: $job_map_version, impl_version: $impl_version, hang_detect_limit_minutes: $hang_detect_limit_minutes, credential_ref: $credential_ref, blue_mode: $blue_mode, green_mode: $green_mode, rapid_crosscheck_mode: $rapid_crosscheck_mode}')" || {
-		deadline_run rm -f "$temporary_path" || true
-		business_error "execution-spec persistence failed (run_id=$run_id, boundary=filesystem)"
-	}
-	# shellcheck disable=SC2016
-	if ! deadline_run bash -c 'printf "%s" "$1" > "$2"' bash "$execution_spec_json" "$temporary_path" || ! deadline_run chmod 600 "$temporary_path" || ! deadline_run mv -f "$temporary_path" "$execution_spec_path"; then
-		deadline_run rm -f "$temporary_path" || true
-		business_error "execution-spec persistence failed (run_id=$run_id, boundary=filesystem)"
-	fi
-}
-
-# remove_execution_spec はDB永続化失敗時に確定前ファイルを補償削除する。
-remove_execution_spec() {
-	deadline_run rm -f "$execution_spec_path" || true
-	deadline_run rmdir "${execution_spec_path%/*}" 2>/dev/null || true
-}
-
-# persist_initial_records はexecution-specとforeground初期結果を単一トランザクションで記録する。
-persist_initial_records() {
-	local columns initial_records_sql runner_columns values
-	columns=$(
-		IFS=,
-		printf '%s' "${COLS_EXECUTION_SPECS[*]}"
-	)
-	values="$(sql_literal "$run_id"),NULL,$(sql_literal "$job_id"),$(sql_literal "$host"),$(sql_literal "$exec_user"),$(sql_literal "$script_path"),$(sql_literal "$work_dir"),$fixed_args_value,$additional_args_value,$(sql_literal "$job_map_version"),$(sql_literal "$impl_version"),$hang_detect_limit_minutes,$credential_ref_value"
-	runner_columns=$(
-		IFS=,
-		printf '%s' "${COLS_RUNNER_RESULTS[*]}"
-	)
-	initial_records_sql="BEGIN IMMEDIATE; INSERT INTO $TBL_EXECUTION_SPECS ($columns) VALUES ($values);"
-	if [[ "$blue_mode" == foreground ]]; then initial_records_sql+=" INSERT INTO $TBL_RUNNER_RESULTS ($runner_columns) VALUES ($(sql_literal "$run_id"),'blue','foreground',$(sql_literal "$(deadline_run date -u '+%Y-%m-%dT%H:%M:%SZ')"),NULL,NULL,NULL,'RUNNING');"; fi
-	if [[ "$green_mode" == foreground ]]; then initial_records_sql+=" INSERT INTO $TBL_RUNNER_RESULTS ($runner_columns) VALUES ($(sql_literal "$run_id"),'green','foreground',$(sql_literal "$(deadline_run date -u '+%Y-%m-%dT%H:%M:%SZ')"),NULL,NULL,NULL,'RUNNING');"; fi
-	initial_records_sql+=" COMMIT;"
-	if ! deadline_run_with_compensation_reserve sqlite3 "$sqlite_path" "$initial_records_sql" >/dev/null 2>&1; then
-		remove_execution_spec
-		business_error "RDB connection failed (run_id=$run_id, boundary=rdb)"
-	fi
-}
-
-# persist_failed_result はSSH起動失敗をFAILEDとして補償記録する。
-persist_failed_result() {
-	local columns exit_code="$3" role="$2" slot="$1"
-	columns=$(
-		IFS=,
-		printf '%s' "${COLS_RUNNER_RESULTS[*]}"
-	)
-	deadline_run sqlite3 "$sqlite_path" "INSERT INTO $TBL_RUNNER_RESULTS ($columns) VALUES ($(sql_literal "$run_id"),$(sql_literal "$slot"),$(sql_literal "$role"),$(sql_literal "$(deadline_run date -u '+%Y-%m-%dT%H:%M:%SZ')"),NULL,NULL,$exit_code,'FAILED') ON CONFLICT(run_id,role_type) DO UPDATE SET exit_code=excluded.exit_code,status=excluded.status;" >/dev/null 2>&1 || business_error "RDB connection failed (run_id=$run_id, slot=$slot, boundary=rdb)"
-}
-
-# launch_slot は SSH を介して off 以外の slot を指定された役割で起動する。
-launch_slot() {
-	local argument fixed_args_shell remaining_milliseconds reason remote_command role="$2" slot="$1" ssh_exit_code ssh_timeout_duration
-	local -a fixed_args=()
-	[[ "$role" != off ]] || return 0
-	printf -v remote_command 'cd %q && RELAYGATE_SLOT=%q RELAYGATE_ROLE=%q RELAYGATE_RUN_ID=%q RELAYGATE_EXECUTION_SPEC_PATH=%q RELAYGATE_BLUE_MODE=%q RELAYGATE_GREEN_MODE=%q RELAYGATE_RAPID_CROSSCHECK_MODE=%q %q' "$work_dir" "$slot" "$role" "$run_id" "$execution_spec_path" "$blue_mode" "$green_mode" "$rapid_crosscheck_mode" "$script_path"
-	if [[ "$fixed_args_json" != null ]]; then
-		fixed_args_shell="$(deadline_run jq -er '[.[] | @sh] | join(" ")' <<<"$fixed_args_json")" || business_error "Failed to start $slot slot (run_id=$run_id, boundary=job_map, reason=deadline)"
-		# jq の @sh 出力だけを配列に復元し、改行を含む固定引数も1要素として保持する。
-		# shellcheck disable=SC2294
-		eval "fixed_args=($fixed_args_shell)"
-		for argument in "${fixed_args[@]}"; do printf -v remote_command '%s %q' "$remote_command" "$argument"; done
-	fi
-	for argument in "${additional_args[@]}"; do printf -v remote_command '%s %q' "$remote_command" "$argument"; done
-	# fixed_args の抽出後に再計算し、古い残余時間でSSHを開始しない。
-	remaining_milliseconds="$(remaining_deadline_milliseconds || true)"
-	if [[ -z "$remaining_milliseconds" ]]; then
-		persist_failed_result "$slot" "$role" 124
-		business_error "Failed to start $slot slot (run_id=$run_id, boundary=ssh, reason=timeout)"
-	fi
-	remaining_milliseconds=$((remaining_milliseconds - COMPENSATION_RESERVE_MILLISECONDS))
-	if ((remaining_milliseconds <= 0)); then
-		persist_failed_result "$slot" "$role" 124
-		business_error "Failed to start $slot slot (run_id=$run_id, boundary=ssh, reason=timeout)"
-	fi
-	if ((ssh_timeout_seconds * 1000 < remaining_milliseconds)); then remaining_milliseconds=$((ssh_timeout_seconds * 1000)); fi
-	printf -v ssh_timeout_duration '%d.%03ds' "$((remaining_milliseconds / 1000))" "$((remaining_milliseconds % 1000))"
-	if deadline_run_for "$ssh_timeout_duration" ssh -n -o BatchMode=yes -- "$exec_user@$host" "$remote_command" >/dev/null; then
-		return 0
-	else
-		ssh_exit_code=$?
-	fi
-	if [[ "$ssh_exit_code" -eq 124 ]]; then reason="timeout"; else reason="ssh_failure"; fi
-	persist_failed_result "$slot" "$role" "$ssh_exit_code"
-	business_error "Failed to start $slot slot (run_id=$run_id, boundary=ssh, reason=$reason)"
-}
-
-# select_and_start_slot は feature flag 判定、記録、起動を順に実行する。
-select_and_start_slot() {
-	blue_mode="$1"
-	green_mode="$2"
-	rapid_crosscheck_mode="$3"
-	validate_modes
-	resolve_job_map
-	resolve_sqlite_path
-	resolve_ssh_timeout
-	write_execution_spec
-	persist_initial_records
-	launch_slot blue "$blue_mode"
-	launch_slot green "$green_mode"
-	printf 'blue: %s\ngreen: %s\nrun_id: %s\n' "$blue_mode" "$green_mode" "$run_id"
-}
+# 契約生成物(テーブル名・列名の定数)。手動編集禁止・定数経由でのみ SQL を組み立てる
+# shellcheck source=../../packages/contracts/relay-gate-db/schema-constants.sh
+source "$SCRIPT_DIR/../../packages/contracts/relay-gate-db/schema-constants.sh" || initialization_error
+# 層別ライブラリ(依存方向: presentation → usecase → domain → gateway)
+for library in presentation domain id_gateway job_map_gateway rdb_gateway launch_gateway usecase; do
+	# shellcheck source=/dev/null
+	source "$SCRIPT_DIR/../src/$library.sh" || initialization_error
+done
 
 main() {
 	[[ $# -ge 2 && "$1" == concurrent-run && "$2" == select-slot ]] || validation_error "usage: relaygate concurrent-run select-slot --job-id <JOB_ID> [-- <additional args...>]"
 	shift 2
 	parse_select_slot_request "$@"
-	select_and_start_slot "${BLUE_MODE:-}" "${GREEN_MODE:-}" "${RAPID_CROSSCHECK_MODE:-}"
+	blue_mode="${BLUE_MODE:-}"
+	green_mode="${GREEN_MODE:-}"
+	rapid_crosscheck_mode="${RAPID_CROSSCHECK_MODE:-}"
+	operator="${RELAYGATE_OPERATOR:-}"
+	validate_select_slot_environment
+	select_and_start_slot
 }
 main "$@"

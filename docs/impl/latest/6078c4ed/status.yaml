@@ -28,9 +28,14 @@ stages:
     status: done
   S4_tier_impl:
     tier-facade:
-      status: pending
+      status: done
       attempt: 5
       rerun: stale
+      gates:
+        format: pass
+        lint: pass
+        tdd: pass
+        bdd_tier: pass
   S5_verify:
     tier-facade:
       status: pending
@@ -44,4 +49,4 @@ stages:
     status: pending
   S9_review:
     status: pending
-updated_at: '2026-08-22T07:02:46+09:00'
+updated_at: '2026-08-22T07:22:54+09:00'
