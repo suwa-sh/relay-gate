@@ -37,8 +37,10 @@ stages:
         bdd_tier: pass
   S5_verify:
     tier-facade:
-      status: pending
+      status: done
       attempt: 6
+      result: pass
+      open_blockers: 0
   S6_uc_bdd:
     status: pending
   S7_atdd:
@@ -47,4 +49,4 @@ stages:
     status: pending
   S9_review:
     status: pending
-updated_at: '2026-08-22T08:12:21+09:00'
+updated_at: '2026-08-22T08:36:47+09:00'
