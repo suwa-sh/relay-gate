@@ -1,37 +1,47 @@
-schema_version: "1.0"
-uc_id: "6078c4ed"
-business: "並行稼働実行業務"
-buc: "並行稼働実行フロー"
-uc: "feature flag設定に基づきslotを選択して起動する"
-state: blocked_on_spec
+schema_version: '1.0'
+uc_id: 6078c4ed
+business: 並行稼働実行業務
+buc: 並行稼働実行フロー
+uc: feature flag設定に基づきslotを選択して起動する
+state: running
 current_attempt: 5
 resolved_models:
-  implementer: "gpt-5.6-terra"
-  verifier: "gpt-5.6-sol"
+  implementer: claude-fable-5
+  verifier: gpt-5.6-sol
 git_delivery:
   required: true
-  uc_english_name: "Select and launch slots based on feature flags"
-  branch_slug: "select-and-launch-slots-by-feature-flags"
-  base_branch: "main"
-  base_head: "a4c2bc2f0f2aeb19e71bb1e87c57863212a76822"
-  feature_branch: "feature/select-and-launch-slots-by-feature-flags"
-  remote: "origin"
+  uc_english_name: Select and launch slots based on feature flags
+  branch_slug: select-and-launch-slots-by-feature-flags
+  base_branch: main
+  base_head: a4c2bc2f0f2aeb19e71bb1e87c57863212a76822
+  feature_branch: feature/select-and-launch-slots-by-feature-flags
+  remote: origin
 stages:
-  S1_uc_init: {status: done}
-  S2_test_scaffold: {status: done, red_baseline: pass}
-  S3_contracts: {status: done}
-  S4_tier_impl:
-    tier-facade: {status: done, attempt: 5, gates: {format: pass, lint: pass, tdd: pass, bdd_tier: pass}}
-  S5_verify:
-    tier-facade: {status: done, attempt: 5, open_blockers: 0}
-  S6_uc_bdd: {status: done, scenarios: 5, steps: 33}
-  S7_atdd: {status: done, scenarios: 6, steps: 30}
-  S8_feedback:
+  S1_uc_init:
     status: done
-    mode: publish
-    feedback_id: "20260818_113601_impl_feedback_6078c4ed"
-    supersedes: "20260817_234841_impl_feedback_6078c4ed"
-    request_count: 5
-    blocker_count: 4
-  S9_review: {status: done, event_id: "20260818_115508_s9_review_regenerated"}
-updated_at: "2026-08-18T13:09:35+09:00"
+    rerun: stale
+  S2_test_scaffold:
+    status: pending
+    rerun: stale
+  S3_contracts:
+    status: pending
+    rerun: stale
+  S4_tier_impl:
+    tier-facade:
+      status: pending
+      attempt: 5
+      rerun: stale
+  S5_verify:
+    tier-facade:
+      status: pending
+      attempt: 5
+      rerun: stale
+  S6_uc_bdd:
+    status: pending
+  S7_atdd:
+    status: pending
+  S8_feedback:
+    status: pending
+  S9_review:
+    status: pending
+updated_at: '2026-08-22T06:51:09+09:00'

@@ -1,16 +1,16 @@
 stage: "S1"
 uc_id: "6078c4ed"
-manifest_sha256: "1c1a4607e07969d54eac96b4a17b335a757f7963e9959837ff8d1c5280a0f13b"
+manifest_sha256: "b53c893c5d98fc07cc751746d726fc11c4e28c7acd366d0119c5cc3bd20bbef4"
 manifest_projection: v2
 result: pass
 preflight:
   files_exist: pass
   yaml_parse: pass
-  gherkin_blocks: pass
+  gherkin_blocks: "pass (spec.md 2 blocks, tier-facade.md 1 block)"
   tier_ids: pass
   conditional_outputs: pass
-  ui_imported: pass
-  lineage: "old_design_premise_confirmed"
+  ui_imported: "pass (59 files, tree_hash 0d7c96fd…)"
+  lineage: "old_design_premise_confirmed (spec trigger design:20260819_113049, current design latest includes後続 spec_stories 20260819_125615 のみ)"
 atdd_scenarios:
   - "SPEC-001-01-1"
   - "SPEC-001-02-1"
@@ -18,5 +18,7 @@ atdd_scenarios:
   - "SPEC-009-01-1"
   - "SPEC-009-02-1"
   - "SPEC-009-03-1"
-completed_at: "2026-08-17T21:40:58+09:00"
-completed_by: "dist-impl-run@0.8.0"
+atdd_confirmed: true
+rerun_reason: "stale (feedback reflow 20260819 + S0 rerun). invalidated event 20260822_065300_stale_done_invalidated"
+completed_at: "2026-08-22T06:55:00+09:00"
+completed_by: "dist-impl-run@0.11.1"
