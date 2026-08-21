@@ -5,22 +5,22 @@ phases:
     at: '2026-08-17T19:05:00+09:00'
   P2_config:
     status: done
-    at: '2026-08-17T20:35:00+09:00'
+    at: '2026-08-22T06:48:12+09:00'
   P3_skeleton:
     status: done
-    at: '2026-08-17T20:40:00+09:00'
+    at: '2026-08-22T06:48:12+09:00'
   P4_contracts:
     status: done
-    at: '2026-08-17T20:45:00+09:00'
+    at: '2026-08-22T06:48:12+09:00'
   P5_ui:
     status: done
-    at: '2026-08-17T20:50:00+09:00'
+    at: '2026-08-22T06:48:12+09:00'
   P6_ci:
     status: done
-    at: '2026-08-17T20:58:00+09:00'
+    at: '2026-08-22T06:48:12+09:00'
   P7_atdd:
     status: done
-    at: '2026-08-17T21:02:00+09:00'
+    at: '2026-08-22T06:48:12+09:00'
 preflight_probe:
   java: openjdk 25.0.3
   node: v22.17.0
@@ -31,9 +31,10 @@ preflight_probe:
   has_design_system: true
   tools:
     shellcheck: present
-    shfmt: present (P3 で導入)
-    bats: present (P3 で導入)
-  contradiction_check: async_event_count > 0 の UC は 0 件。asyncapi 欠落との矛盾なし
+    shfmt: present
+    bats: present
+    qlty: present
+  contradiction_check: "async_event_count > 0 の UC は 0 件。asyncapi 欠落との矛盾なし"
 preflight_evidence:
   ui_review:
     ssr_renderer:
@@ -43,18 +44,18 @@ preflight_evidence:
       detected: true
       path: docs/design/latest/storybook-app/.storybook
 inputs_sha256:
-  spec_event: 42c08d0c2b9f52ca2f3cd4700c9148e0bcdc20d8cb5ecdb1a1cfebff1f5ac3a4
-  arch: c161278cb3e3e4d8d2701cc8e8f5c04a55d23683149d2402078a545bf6a25c23
-  usdm: 7e9bd365421daa45b182ce665d18b89cf4d68a8297e928856b95248df5b2d1e1
-  design: b0e775f312b6002795a8237c5d8ae9c9f94787b689e743b278d295f2c885f1d7
-  design_storybook_src: 5ad8463172c034b0031dced46b0f79fe5a58d1b3e75a24a4f76aaee89c202e25
+  spec_event: 4b8a85b842fec4767ba46041bc2560facabc4445998c0d0630e68bdae04568e1
+  arch: a9c9baff90655813ce9c64673bacecb5ee87206a0dc02e5e60882858b86b9792
+  usdm: 61621837f4b5fe2f6e2ecb73693a8ddc0f2d7311c43873d7b9d2e936cab92cce
+  design: 4765757df1079cf568177b5f16057d3e7a457f46daef9f79dbabeb8c21b09764
+  design_storybook_src: 0d7c96fd1ef6640f30e243e57bf1f69f0ab001d7a3f7218590b8c8781d8bfb2e
   contracts:
-    relay-gate-db: b4ea9b55206d0f9fa0370e96f884800ff52870e57f8001f57bb41155f5d24dba
-  contracts_decl: 0da2374c135029e4979edc20f44476808ace057489d0824f9d49948df92de6da
+    relay-gate-db: d6068bdd9e89906bab7216b7e0bf545c9c8e438f89c6a6ef0dd0a575c10b40f5
+  contracts_decl: 7f283f308e881019d323b24a39f18ccf0b06671069ccb4265802a7d5ea814591
   conditional_inputs_exists:
     asyncapi: false
     kvs_schema: false
     object_storage_schema: false
     storybook_app: true
-generated_at: '2026-08-17T21:02:00+09:00'
-generated_by: distillery-impl@0.7.0
+generated_at: '2026-08-22T06:48:12+09:00'
+generated_by: distillery-impl@0.11.1

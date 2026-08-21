@@ -1,46 +1,88 @@
 #!/usr/bin/env bash
-# contract-codegen: from rdb-schema.yaml scope={execution_specs,runner_results,rapid_crosscheck_requests,rapid_crosscheck_results,final_crosscheck_requests,hang_detections,audit_logs}
+# contract-codegen: from rdb-schema.yaml scope={execution_specs,slot_execution_specs,runner_result_events,runner_results,comparison_definitions,rapid_crosscheck_requests,rapid_crosscheck_results,final_crosscheck_requests,hang_detections,audit_logs,audit_chain_heads}
 # 契約 relay-gate-db の生成物。手動編集禁止(再生成は bootstrap P4 / S3 のみ)。
 # テーブル名・列名の定数。実装は必ずこの定数を経由して SQL を組み立てる。
 # source 専用ライブラリのため未使用警告は対象外
 # shellcheck disable=SC2034
 
-# execution_specs: 起動時に解決済みのホスト・実行ユーザー・スクリプト・作業ディレクトリ・固定引数・追加引数・マップ版・実装版・hang_d
+# execution_specs: run共通のexecution spec（アーキテクチャE-001）。run_id・parent_run_id・job_
 readonly TBL_EXECUTION_SPECS="execution_specs"
-readonly COLS_EXECUTION_SPECS=(run_id parent_run_id job_id host exec_user script_path work_dir fixed_args additional_args job_map_version impl_version hang_detect_limit_minutes credential_ref)
+readonly COLS_EXECUTION_SPECS=(run_id parent_run_id job_id additional_args job_map_version hang_detect_limit_minutes)
 readonly COL_EXECUTION_SPECS__RUN_ID="run_id"
 readonly COL_EXECUTION_SPECS__PARENT_RUN_ID="parent_run_id"
 readonly COL_EXECUTION_SPECS__JOB_ID="job_id"
-readonly COL_EXECUTION_SPECS__HOST="host"
-readonly COL_EXECUTION_SPECS__EXEC_USER="exec_user"
-readonly COL_EXECUTION_SPECS__SCRIPT_PATH="script_path"
-readonly COL_EXECUTION_SPECS__WORK_DIR="work_dir"
-readonly COL_EXECUTION_SPECS__FIXED_ARGS="fixed_args"
 readonly COL_EXECUTION_SPECS__ADDITIONAL_ARGS="additional_args"
 readonly COL_EXECUTION_SPECS__JOB_MAP_VERSION="job_map_version"
-readonly COL_EXECUTION_SPECS__IMPL_VERSION="impl_version"
 readonly COL_EXECUTION_SPECS__HANG_DETECT_LIMIT_MINUTES="hang_detect_limit_minutes"
-readonly COL_EXECUTION_SPECS__CREDENTIAL_REF="credential_ref"
 
-# runner_results: blue/green runnerのforeground・background・rapid-crosscheck実行結果
+# slot_execution_specs: slotごとに解決したexecution spec（アーキテクチャE-007）。同一runでもblue/greenでho
+readonly TBL_SLOT_EXECUTION_SPECS="slot_execution_specs"
+readonly COLS_SLOT_EXECUTION_SPECS=(run_id slot_type host exec_user script_path work_dir fixed_args impl_version credential_ref)
+readonly COL_SLOT_EXECUTION_SPECS__RUN_ID="run_id"
+readonly COL_SLOT_EXECUTION_SPECS__SLOT_TYPE="slot_type"
+readonly COL_SLOT_EXECUTION_SPECS__HOST="host"
+readonly COL_SLOT_EXECUTION_SPECS__EXEC_USER="exec_user"
+readonly COL_SLOT_EXECUTION_SPECS__SCRIPT_PATH="script_path"
+readonly COL_SLOT_EXECUTION_SPECS__WORK_DIR="work_dir"
+readonly COL_SLOT_EXECUTION_SPECS__FIXED_ARGS="fixed_args"
+readonly COL_SLOT_EXECUTION_SPECS__IMPL_VERSION="impl_version"
+readonly COL_SLOT_EXECUTION_SPECS__CREDENTIAL_REF="credential_ref"
+
+# runner_result_events: Runner実行結果の状態遷移をappend-onlyで記録する履歴テーブル（アーキテクチャLR-002 Event/S
+readonly TBL_RUNNER_RESULT_EVENTS="runner_result_events"
+readonly COLS_RUNNER_RESULT_EVENTS=(event_id run_id slot_type role_type attempt_id attempt_no event_name status occurred_at started_at stdout_path stderr_path exit_code)
+readonly COL_RUNNER_RESULT_EVENTS__EVENT_ID="event_id"
+readonly COL_RUNNER_RESULT_EVENTS__RUN_ID="run_id"
+readonly COL_RUNNER_RESULT_EVENTS__SLOT_TYPE="slot_type"
+readonly COL_RUNNER_RESULT_EVENTS__ROLE_TYPE="role_type"
+readonly COL_RUNNER_RESULT_EVENTS__ATTEMPT_ID="attempt_id"
+readonly COL_RUNNER_RESULT_EVENTS__ATTEMPT_NO="attempt_no"
+readonly COL_RUNNER_RESULT_EVENTS__EVENT_NAME="event_name"
+readonly COL_RUNNER_RESULT_EVENTS__STATUS="status"
+readonly COL_RUNNER_RESULT_EVENTS__OCCURRED_AT="occurred_at"
+readonly COL_RUNNER_RESULT_EVENTS__STARTED_AT="started_at"
+readonly COL_RUNNER_RESULT_EVENTS__STDOUT_PATH="stdout_path"
+readonly COL_RUNNER_RESULT_EVENTS__STDERR_PATH="stderr_path"
+readonly COL_RUNNER_RESULT_EVENTS__EXIT_CODE="exit_code"
+
+# runner_results: Runner実行結果の現在状態を保持するsnapshotテーブル（アーキテクチャLR-002 Event/Snapsho
 readonly TBL_RUNNER_RESULTS="runner_results"
-readonly COLS_RUNNER_RESULTS=(run_id slot_type role_type started_at stdout_path stderr_path exit_code status)
+readonly COLS_RUNNER_RESULTS=(run_id slot_type role_type attempt_id attempt_no accepted_at started_at stdout_path stderr_path exit_code status updated_at)
 readonly COL_RUNNER_RESULTS__RUN_ID="run_id"
 readonly COL_RUNNER_RESULTS__SLOT_TYPE="slot_type"
 readonly COL_RUNNER_RESULTS__ROLE_TYPE="role_type"
+readonly COL_RUNNER_RESULTS__ATTEMPT_ID="attempt_id"
+readonly COL_RUNNER_RESULTS__ATTEMPT_NO="attempt_no"
+readonly COL_RUNNER_RESULTS__ACCEPTED_AT="accepted_at"
 readonly COL_RUNNER_RESULTS__STARTED_AT="started_at"
 readonly COL_RUNNER_RESULTS__STDOUT_PATH="stdout_path"
 readonly COL_RUNNER_RESULTS__STDERR_PATH="stderr_path"
 readonly COL_RUNNER_RESULTS__EXIT_CODE="exit_code"
 readonly COL_RUNNER_RESULTS__STATUS="status"
+readonly COL_RUNNER_RESULTS__UPDATED_AT="updated_at"
+
+# comparison_definitions: job_idごとの比較対象（テーブル・ファイル）と比較実装を保持し、速報クロスチェック・確報クロスチェックの実行時に適用
+readonly TBL_COMPARISON_DEFINITIONS="comparison_definitions"
+readonly COLS_COMPARISON_DEFINITIONS=(job_id valid_from valid_to target_tables target_files comparator_id registered_at)
+readonly COL_COMPARISON_DEFINITIONS__JOB_ID="job_id"
+readonly COL_COMPARISON_DEFINITIONS__VALID_FROM="valid_from"
+readonly COL_COMPARISON_DEFINITIONS__VALID_TO="valid_to"
+readonly COL_COMPARISON_DEFINITIONS__TARGET_TABLES="target_tables"
+readonly COL_COMPARISON_DEFINITIONS__TARGET_FILES="target_files"
+readonly COL_COMPARISON_DEFINITIONS__COMPARATOR_ID="comparator_id"
+readonly COL_COMPARISON_DEFINITIONS__REGISTERED_AT="registered_at"
 
 # rapid_crosscheck_requests: blueとgreenの完了通知を受けて作成する、ジョブ単位で非同期に行う速報クロスチェックの比較実行依頼。run_idで
 readonly TBL_RAPID_CROSSCHECK_REQUESTS="rapid_crosscheck_requests"
-readonly COLS_RAPID_CROSSCHECK_REQUESTS=(run_id job_id blue_run_id green_run_id requested_at status lease_expires_at worker_id)
+readonly COLS_RAPID_CROSSCHECK_REQUESTS=(run_id parent_run_id job_id blue_run_id green_run_id blue_attempt_id green_attempt_id comparison_definition_valid_from requested_at status lease_expires_at worker_id)
 readonly COL_RAPID_CROSSCHECK_REQUESTS__RUN_ID="run_id"
+readonly COL_RAPID_CROSSCHECK_REQUESTS__PARENT_RUN_ID="parent_run_id"
 readonly COL_RAPID_CROSSCHECK_REQUESTS__JOB_ID="job_id"
 readonly COL_RAPID_CROSSCHECK_REQUESTS__BLUE_RUN_ID="blue_run_id"
 readonly COL_RAPID_CROSSCHECK_REQUESTS__GREEN_RUN_ID="green_run_id"
+readonly COL_RAPID_CROSSCHECK_REQUESTS__BLUE_ATTEMPT_ID="blue_attempt_id"
+readonly COL_RAPID_CROSSCHECK_REQUESTS__GREEN_ATTEMPT_ID="green_attempt_id"
+readonly COL_RAPID_CROSSCHECK_REQUESTS__COMPARISON_DEFINITION_VALID_FROM="comparison_definition_valid_from"
 readonly COL_RAPID_CROSSCHECK_REQUESTS__REQUESTED_AT="requested_at"
 readonly COL_RAPID_CROSSCHECK_REQUESTS__STATUS="status"
 readonly COL_RAPID_CROSSCHECK_REQUESTS__LEASE_EXPIRES_AT="lease_expires_at"
@@ -57,8 +99,10 @@ readonly COL_RAPID_CROSSCHECK_RESULTS__COMPLETED_AT="completed_at"
 
 # final_crosscheck_requests: 日次で全テーブル・全ファイルを対象に行う確報クロスチェックの比較実行依頼。速報側のエンティティと独立してrun_idで相
 readonly TBL_FINAL_CROSSCHECK_REQUESTS="final_crosscheck_requests"
-readonly COLS_FINAL_CROSSCHECK_REQUESTS=(run_id target_date status lease_expires_at worker_id target_tables target_files completed_at)
+readonly COLS_FINAL_CROSSCHECK_REQUESTS=(run_id job_id comparison_definition_valid_from target_date status lease_expires_at worker_id target_tables target_files completed_at)
 readonly COL_FINAL_CROSSCHECK_REQUESTS__RUN_ID="run_id"
+readonly COL_FINAL_CROSSCHECK_REQUESTS__JOB_ID="job_id"
+readonly COL_FINAL_CROSSCHECK_REQUESTS__COMPARISON_DEFINITION_VALID_FROM="comparison_definition_valid_from"
 readonly COL_FINAL_CROSSCHECK_REQUESTS__TARGET_DATE="target_date"
 readonly COL_FINAL_CROSSCHECK_REQUESTS__STATUS="status"
 readonly COL_FINAL_CROSSCHECK_REQUESTS__LEASE_EXPIRES_AT="lease_expires_at"
@@ -69,22 +113,42 @@ readonly COL_FINAL_CROSSCHECK_REQUESTS__COMPLETED_AT="completed_at"
 
 # hang_detections: background実行の未完了超過（ハング疑い）・非0終了エラー・速報クロスチェック異常を記録し、定期的な監視と運用者
 readonly TBL_HANG_DETECTIONS="hang_detections"
-readonly COLS_HANG_DETECTIONS=(detection_id run_id detection_type detected_at threshold_minutes slot_type notify_target resolved_at notified_at)
+readonly COLS_HANG_DETECTIONS=(detection_id run_id detection_type detected_at threshold_minutes slot_type attempt_id notify_target resolved_at notified_at)
 readonly COL_HANG_DETECTIONS__DETECTION_ID="detection_id"
 readonly COL_HANG_DETECTIONS__RUN_ID="run_id"
 readonly COL_HANG_DETECTIONS__DETECTION_TYPE="detection_type"
 readonly COL_HANG_DETECTIONS__DETECTED_AT="detected_at"
 readonly COL_HANG_DETECTIONS__THRESHOLD_MINUTES="threshold_minutes"
 readonly COL_HANG_DETECTIONS__SLOT_TYPE="slot_type"
+readonly COL_HANG_DETECTIONS__ATTEMPT_ID="attempt_id"
 readonly COL_HANG_DETECTIONS__NOTIFY_TARGET="notify_target"
 readonly COL_HANG_DETECTIONS__RESOLVED_AT="resolved_at"
 readonly COL_HANG_DETECTIONS__NOTIFIED_AT="notified_at"
 
-# audit_logs: リラン・中止（abort/abort_confirm）等、運用者による重要操作の監査証跡を記録する。RDRA情報モデルに
+# audit_logs: slot起動の操作受付・起動試行・成功・失敗・timeout・最終状態、および対話確認を経た中止・リラン操作を同一sch
 readonly TBL_AUDIT_LOGS="audit_logs"
-readonly COLS_AUDIT_LOGS=(log_id operator operated_at run_id action)
-readonly COL_AUDIT_LOGS__LOG_ID="log_id"
-readonly COL_AUDIT_LOGS__OPERATOR="operator"
-readonly COL_AUDIT_LOGS__OPERATED_AT="operated_at"
+readonly COLS_AUDIT_LOGS=(event_id event_name schema_version run_id parent_run_id slot attempt_id occurred_at actor operation outcome final_status error_code previous_hash event_hash)
+readonly COL_AUDIT_LOGS__EVENT_ID="event_id"
+readonly COL_AUDIT_LOGS__EVENT_NAME="event_name"
+readonly COL_AUDIT_LOGS__SCHEMA_VERSION="schema_version"
 readonly COL_AUDIT_LOGS__RUN_ID="run_id"
-readonly COL_AUDIT_LOGS__ACTION="action"
+readonly COL_AUDIT_LOGS__PARENT_RUN_ID="parent_run_id"
+readonly COL_AUDIT_LOGS__SLOT="slot"
+readonly COL_AUDIT_LOGS__ATTEMPT_ID="attempt_id"
+readonly COL_AUDIT_LOGS__OCCURRED_AT="occurred_at"
+readonly COL_AUDIT_LOGS__ACTOR="actor"
+readonly COL_AUDIT_LOGS__OPERATION="operation"
+readonly COL_AUDIT_LOGS__OUTCOME="outcome"
+readonly COL_AUDIT_LOGS__FINAL_STATUS="final_status"
+readonly COL_AUDIT_LOGS__ERROR_CODE="error_code"
+readonly COL_AUDIT_LOGS__PREVIOUS_HASH="previous_hash"
+readonly COL_AUDIT_LOGS__EVENT_HASH="event_hash"
+
+# audit_chain_heads: run_id単位のハッシュチェーンの先頭（最新イベント）を保持し、監査イベント追記の直列化ロックの対象とする。監査イベン
+readonly TBL_AUDIT_CHAIN_HEADS="audit_chain_heads"
+readonly COLS_AUDIT_CHAIN_HEADS=(run_id head_event_id head_hash chain_length updated_at)
+readonly COL_AUDIT_CHAIN_HEADS__RUN_ID="run_id"
+readonly COL_AUDIT_CHAIN_HEADS__HEAD_EVENT_ID="head_event_id"
+readonly COL_AUDIT_CHAIN_HEADS__HEAD_HASH="head_hash"
+readonly COL_AUDIT_CHAIN_HEADS__CHAIN_LENGTH="chain_length"
+readonly COL_AUDIT_CHAIN_HEADS__UPDATED_AT="updated_at"

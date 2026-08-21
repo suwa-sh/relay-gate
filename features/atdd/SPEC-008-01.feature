@@ -7,3 +7,9 @@ Feature: SPEC-008-01 background-rerun.shは、元のexecution-spec.jsonからホ
     Given 元のbackground slot実行が完了済みまたは中止済みである
     When background-rerun.shを実行する
     Then 元のexecution-spec.jsonの設定で新しいrun_idの実行が開始され、parent_run_idが元のrun_idに設定される
+
+  @atdd_SPEC-008-01-2
+  Scenario: SPEC-008-01-2
+    Given background-rerun.shによる再実行が開始される
+    When 元のbackground slot実行のレコードを参照する
+    Then 元の実行の状態・履歴は変更されていない

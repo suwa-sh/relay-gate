@@ -1,6 +1,6 @@
-design_event_id: 20260817_180235_spec_stories
+design_event_id: 20260819_125615_spec_stories
 imported_from: docs/design/latest/storybook-app/src
-imported_at: '2026-08-17T20:50:00+09:00'
+imported_at: '2026-08-22T06:48:12+09:00'
 files:
 - path: app/favicon.ico
   sha256: 2b8ad2d33455a8f736fc3a8ebf8f0bdea8848ad4c0db48a2833bd0f9cd775932
@@ -21,17 +21,17 @@ files:
 - path: components/domain/CrossCheckRequestRow.tsx
   sha256: c96ccb0f0138404d981ccfe8838b88a3bf10d6875819186c3a8e60b715bd4d51
 - path: components/domain/ExecutionSpecCard.stories.tsx
-  sha256: e77eed89468fbb104775d0386e810f2a590b0fe43b07c1f5918d5e56f7f25eed
+  sha256: f641723474ce4634154133609f0eb07ee6f224c21118aabc9182c6f77ef54067
 - path: components/domain/ExecutionSpecCard.tsx
-  sha256: 8d984cc7346f4f9cac4b674aa4bc6c555fa9172a12d4640e64e75e4560451794
+  sha256: 2e37b18ab4b4c5ece16e24992f8ab584dfd2b5400976eb8d338180f0468e6caa
 - path: components/domain/HangDetectionNotice.stories.tsx
   sha256: fe3030d72ee0fa29c621eb2e3cd1059ddb341d54c8427c09a71fccc7011c7469
 - path: components/domain/HangDetectionNotice.tsx
   sha256: 813defc2f81b279ef90efd15987b6d618b236f3347d96af9f5665a74deed054a
 - path: components/domain/RunnerResultPanel.stories.tsx
-  sha256: 19e7c9822ea1ac9035d42d47308cf5560a331489b85afb84fad82fafcc7ee63a
+  sha256: c65d6776509c052d55af711340a083876dd88d92830b8b400e9ace79f5bff29d
 - path: components/domain/RunnerResultPanel.tsx
-  sha256: 9db47ace4157101c00221c887824308d838f825871636b85f2deec8113a66076
+  sha256: c765efab479d4623caddba38f138170d4a11a0ae4a5e8b0f0025b0b96b59072c
 - path: components/ui/Banner.stories.tsx
   sha256: 01cfedb1bb62689734404f028a26cd15cc8311d5b8f71965e563d52580df70a4
 - path: components/ui/Banner.tsx
@@ -57,21 +57,21 @@ files:
 - path: components/ui/ResultTable.tsx
   sha256: 7e754d914c9caaf744eaca3eec6ffbf08de4da754a1da7843dafb1f4b044637a
 - path: components/ui/StatusBadge.stories.tsx
-  sha256: d8478460dc54bb994b1b790e60cd301fd1931fea40d171a63e609deb1425769b
+  sha256: f4f1b27194f6af90a7ffa5d89d8b967bdb1172f37cf32edc23a9f9e640644862
 - path: components/ui/StatusBadge.tsx
-  sha256: 8a10819d0edd2914a1bbfaf86897be0dd01e27718a6c496b257b02ee6b9cf529
+  sha256: efe6db19040c79ece2856472e6167c557146fb2117d2372ec13c361d1ec10172
 - path: components/ui/TerminalPanel.stories.tsx
   sha256: 2e6c5325adbcb698dd818b3b5d94bd6b0e0007f00f9565695bdaeec4fdf94d52
 - path: components/ui/TerminalPanel.tsx
   sha256: 90b53d7fad8392607c5a0d592984cab64eb321e375777c94c0ac0143475c3e48
 - path: docs/DesignTokens.mdx
-  sha256: 774c1824c2a879ff2c9dbdd05e1b3fe0bf9faa1233800ec80aab3ef591e18eab
+  sha256: 7263e8b8972c9675737a73c0d78c2563910951a41bf524cdc46cd06330e36df1
 - path: docs/Introduction.mdx
   sha256: b5530efd42ca48a4b0dd7a5b29a4efefb1d91854f1607b8c732f5cc5094b2f1f
 - path: docs/ScreenMapping.mdx
   sha256: 46da0b5b88d04ddb095dcf7eee924c1cdf5f7bb0cdb4516b74eeb16b27b195ba
 - path: stories/Pages/運用ポータル/background role起動画面.stories.tsx
-  sha256: 54582987d0d9424b4850ec542753b3f4cf284fd5b0952a9bd67af11b87badc90
+  sha256: ba8903d9b3fa4894194b27453c3924c9a22f28d69b9e648fc542bb6aa71d78b8
 - path: stories/Pages/運用ポータル/background実行異常検知画面.stories.tsx
   sha256: eba082979e86767c9429628f75cfb6eb5b9aa12468361df22d688ad53a0f0f7b
 - path: stories/Pages/運用ポータル/blue background中止依頼画面.stories.tsx
@@ -85,13 +85,13 @@ files:
 - path: stories/Pages/運用ポータル/ハング異常通知確認画面.stories.tsx
   sha256: 9be015f3668f1950e81d7e225e4827a15e2808a8b7f9e70f70c56589480c3cbb
 - path: stories/Pages/運用ポータル/リラン実行画面.stories.tsx
-  sha256: 3a2ac62fc64f813c7c1e4f86913945b010d3312c68d2454feed04d546de424b4
+  sha256: 89cdb9fe1835d296215e34ae87a75428c935433851e143d322f415936eaf3085
 - path: stories/Pages/運用ポータル/リラン対象選定画面.stories.tsx
-  sha256: 3bb703752b79595960c8e440257259980a98748dd0906456843830e919521976
+  sha256: faa40c3784f71715d38b4553d101db420f2e0cdc284237de82ab8149478162c3
 - path: stories/Pages/運用ポータル/並行稼働実行結果確認画面.stories.tsx
   sha256: 8718c15eeb4ebf964ec217449fa20dbe11722ddbb9f07b73185608717b1209ec
 - path: stories/Pages/運用ポータル/実行結果応答管理画面.stories.tsx
-  sha256: bece4fe6b224e4f5adafb0c0a4b4107306985ddf6e810514853c108af4566f15
+  sha256: 35a4d14b4ec020d30e6af3bc2825594f3b67c1d6eaf90d0d1e271c40396c1cfc
 - path: stories/Pages/運用ポータル/異常通知発信画面.stories.tsx
   sha256: 32f8f47d8adb657ab08c84cfbf699c493b09e7f6f187dadfe4d45fbde8b0330a
 - path: stories/Pages/運用ポータル/確報クロスチェック実行画面.stories.tsx
@@ -119,4 +119,4 @@ files:
 - path: stories/layout/OpsPortalShell.stories.tsx
   sha256: ae363a5ae5655d3c1c0c351fdd62b599f66758cb5d3690431fe10e16988176a4
 - path: styles/design-tokens.css
-  sha256: 781b6a1c847c397ea6423210d481746612730b0e42c8ee3d41054871c71c627b
+  sha256: 6657d7527a3861f1b65acaeb5ae59b6d20ca3f92b3d13d84cf40da68157a5451

@@ -9,14 +9,16 @@ const meta: Meta<typeof StatusBadge> = {
 export default meta
 type Story = StoryObj<typeof StatusBadge>
 
+export const Starting: Story = { args: { status: 'starting' } }
 export const Running: Story = { args: { status: 'running' } }
 export const Succeeded: Story = { args: { status: 'succeeded' } }
 export const Failed: Story = { args: { status: 'failed' } }
 export const Aborted: Story = { args: { status: 'aborted' } }
 export const Requested: Story = { args: { status: 'requested' } }
 export const Claimed: Story = { args: { status: 'claimed' } }
+export const Unknown: Story = { args: { status: 'unknown' } }
 
-const allStatuses: Status[] = ['requested', 'claimed', 'running', 'succeeded', 'failed', 'aborted']
+const allStatuses: Status[] = ['requested', 'claimed', 'starting', 'running', 'succeeded', 'failed', 'unknown', 'aborted']
 
 export const AllStates: Story = {
   render: () => (

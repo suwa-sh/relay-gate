@@ -27,12 +27,16 @@ contracts:
     source: "specs/latest/_cross-cutting/datastore/rdb-schema.yaml"
     scope:
       - execution_specs
+      - slot_execution_specs
+      - runner_result_events
       - runner_results
+      - comparison_definitions
       - rapid_crosscheck_requests
       - rapid_crosscheck_results
       - final_crosscheck_requests
       - hang_detections
       - audit_logs
+      - audit_chain_heads
     provider: tier-worker
     consumers: [tier-facade]
 backend_framework: null
