@@ -1,0 +1,19 @@
+stage: "S5_verify"
+tier: "tier-facade"
+attempt: 6
+uc_id: "6078c4ed"
+manifest_sha256: "836dfd9cbb6af8c8a7f63043c45bc2beffc5469d632e523cf27748859f89b1c2"
+manifest_projection: "v2"
+result: "fail"
+gate_reexec:
+  format: "pass"
+  lint: "pass"
+  tdd: "fail"
+  bdd_tier: "pass"
+summary:
+  blocker: 1
+  major: 0
+  minor: 0
+open_blockers: 1
+completed_at: "2026-08-22T08:23:02+09:00"
+completed_by: "dist-impl-verify@0.11.1"
