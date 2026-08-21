@@ -13,7 +13,7 @@ readonly MAX_SSH_TIMEOUT_SECONDS=8
 # resolve_ssh_timeout は CLI 全体の deadline 内に収める SSH 待機上限を検証する。
 resolve_ssh_timeout() {
   ssh_timeout_seconds="${RELAYGATE_SSH_TIMEOUT_SECONDS:-$MAX_SSH_TIMEOUT_SECONDS}"
-  [[ "$ssh_timeout_seconds" =~ ^[1-9]$ && "$ssh_timeout_seconds" -le "$MAX_SSH_TIMEOUT_SECONDS" ]] || validation_error "RELAYGATE_SSH_TIMEOUT_SECONDS must be between 1 and $MAX_SSH_TIMEOUT_SECONDS"
+  [[ $ssh_timeout_seconds =~ ^[1-9]$ && $ssh_timeout_seconds -le $MAX_SSH_TIMEOUT_SECONDS ]] || validation_error "RELAYGATE_SSH_TIMEOUT_SECONDS must be between 1 and $MAX_SSH_TIMEOUT_SECONDS"
   command -v timeout >/dev/null 2>&1 || business_error "SSH timeout utility is unavailable (boundary=ssh). Next action: install coreutils timeout, then rerun the job."
 }
 
@@ -21,8 +21,8 @@ resolve_ssh_timeout() {
 build_remote_command() {
   local slot="$1" remote_command
   printf -v remote_command 'cd %q && RELAYGATE_RUN_ID=%q RELAYGATE_ATTEMPT_ID=%q RELAYGATE_SLOT=%q RELAYGATE_ROLE=%q RELAYGATE_RAPID_CROSSCHECK_MODE=%q %q' "${slot_work_dir[$slot]}" "$run_id" "${slot_attempt_id[$slot]}" "$slot" "${slot_role[$slot]}" "$rapid_crosscheck_mode" "${slot_script_path[$slot]}"
-  [[ -z "${slot_fixed_args_shell[$slot]}" ]] || remote_command+=" ${slot_fixed_args_shell[$slot]}"
-  [[ -z "$additional_args_shell" ]] || remote_command+=" $additional_args_shell"
+  [[ -z ${slot_fixed_args_shell[$slot]} ]] || remote_command+=" ${slot_fixed_args_shell[$slot]}"
+  [[ -z $additional_args_shell ]] || remote_command+=" $additional_args_shell"
   printf '%s' "$remote_command"
 }
 
@@ -44,7 +44,7 @@ launch_slot() {
   local slot="$1" remaining_milliseconds remote_command ssh_exit_code ssh_timeout_duration
   remote_command="$(build_remote_command "$slot")"
   remaining_milliseconds="$(remaining_deadline_milliseconds || true)"
-  [[ -n "$remaining_milliseconds" ]] || launch_failure "$slot" timeout "$RUNNER_STATUS_UNKNOWN" "$RUNNER_EVENT_ATTEMPT_UNKNOWN" "" || return 1
+  [[ -n $remaining_milliseconds ]] || launch_failure "$slot" timeout "$RUNNER_STATUS_UNKNOWN" "$RUNNER_EVENT_ATTEMPT_UNKNOWN" "" || return 1
   remaining_milliseconds=$((remaining_milliseconds - COMPENSATION_RESERVE_MILLISECONDS))
   ((remaining_milliseconds > 0)) || launch_failure "$slot" timeout "$RUNNER_STATUS_UNKNOWN" "$RUNNER_EVENT_ATTEMPT_UNKNOWN" "" || return 1
   if ((ssh_timeout_seconds * 1000 < remaining_milliseconds)); then remaining_milliseconds=$((ssh_timeout_seconds * 1000)); fi
@@ -54,7 +54,7 @@ launch_slot() {
   else
     ssh_exit_code=$?
   fi
-  if [[ "$ssh_exit_code" -eq 124 ]]; then
+  if [[ $ssh_exit_code -eq 124 ]]; then
     launch_failure "$slot" timeout "$RUNNER_STATUS_UNKNOWN" "$RUNNER_EVENT_ATTEMPT_UNKNOWN" ""
   else
     launch_failure "$slot" ssh_failure "$RUNNER_STATUS_FAILED" "$RUNNER_EVENT_ATTEMPT_FAILED" "$ssh_exit_code"

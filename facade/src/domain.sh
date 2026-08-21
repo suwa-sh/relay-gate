@@ -38,8 +38,8 @@ select_slot_roles() {
   selected_slots=()
   for role in background foreground; do
     for slot in blue green; do
-      if [[ "$slot" == blue ]]; then mode="$blue_mode"; else mode="$green_mode"; fi
-      if [[ "$mode" == "$role" ]]; then
+      if [[ $slot == blue ]]; then mode="$blue_mode"; else mode="$green_mode"; fi
+      if [[ $mode == "$role" ]]; then
         selected_slots+=("$slot")
         slot_role[$slot]="$role"
         slot_status[$slot]="$RUNNER_STATUS_STARTING"

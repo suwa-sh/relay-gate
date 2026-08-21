@@ -19,7 +19,7 @@ sql_literal() {
 
 # sql_nullable は空文字を NULL、それ以外を文字列リテラルにする。
 sql_nullable() {
-  if [[ -z "$1" ]]; then printf 'NULL'; else sql_literal "$1"; fi
+  if [[ -z $1 ]]; then printf 'NULL'; else sql_literal "$1"; fi
 }
 
 # sql_columns は契約の列配列をカンマ区切りの列リストにする。
@@ -95,7 +95,7 @@ build_launch_transaction_sql() {
 
 # sql_credential_ref は認証情報参照名(JSON 文字列 or null)を SQL リテラルへ変換する。実値は扱わない。
 sql_credential_ref() {
-  if [[ "$1" == null ]]; then printf 'NULL'; else sql_literal "$(jq -r '.' <<<"$1")"; fi
+  if [[ $1 == null ]]; then printf 'NULL'; else sql_literal "$(jq -r '.' <<<"$1")"; fi
 }
 
 # rdb_execute は SQL を接続先で実行する。主処理(起動トランザクション)は失敗後の補償時間を残して打ち切る。
@@ -120,9 +120,9 @@ persist_launch_transaction() {
   local sql exit_code=0
   sql="$(build_launch_transaction_sql "$rdb_kind")" || business_error "Pre-launch persistence failed (run_id=$run_id, boundary=rdb, reason=sql_build). Next action: check RELAYGATE_RDB_DSN, then rerun the job."
   rdb_execute "$sql" || exit_code=$?
-  if [[ "$exit_code" -eq 124 ]]; then
+  if [[ $exit_code -eq 124 ]]; then
     timeout_error "RDB connection timed out before the pre-launch audit was committed (run_id=$run_id, boundary=rdb, reason=timeout). Next action: check RDB availability, then rerun the job; no slot was launched."
-  elif [[ "$exit_code" -ne 0 ]]; then
+  elif [[ $exit_code -ne 0 ]]; then
     business_error "Pre-launch audit append failed and the slot launch was aborted (run_id=$run_id, boundary=rdb). Next action: check RDB connectivity and audit_logs write permission, then rerun the job; no slot was launched."
   fi
 }
@@ -143,5 +143,5 @@ record_attempt_outcome() {
 
 # sql_nullable_integer は空文字を NULL、数値を整数リテラルにする。
 sql_nullable_integer() {
-  if [[ "$1" =~ ^[0-9]+$ ]]; then printf '%s' "$1"; else printf 'NULL'; fi
+  if [[ $1 =~ ^[0-9]+$ ]]; then printf '%s' "$1"; else printf 'NULL'; fi
 }

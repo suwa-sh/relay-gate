@@ -10,14 +10,14 @@
 # generate_id は kind(run_id / attempt_id / event_id)と qualifier(slot 等)を渡して識別子を 1 件発番する。
 generate_id() {
   local kind="$1" qualifier="${2:-}" value
-  if [[ -n "${RELAYGATE_ID_GENERATOR:-}" ]]; then
+  if [[ -n ${RELAYGATE_ID_GENERATOR:-} ]]; then
     value="$(deadline_run "$RELAYGATE_ID_GENERATOR" "$kind" "$qualifier")" || return 1
   else
     value="$(deadline_run uuidgen)" || return 1
     value="${value,,}"
   fi
   # SQL・SSH 環境変数へそのまま渡すため、識別子は英数字と . _ : - に限定する
-  [[ "$value" =~ ^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$ ]] || return 1
+  [[ $value =~ ^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$ ]] || return 1
   printf '%s' "$value"
 }
 

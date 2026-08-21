@@ -26,12 +26,12 @@ timeout_error() {
 
 # parse_select_slot_request は select-slot の CLI 引数を request DTO(job_id, additional_args)に変換する。
 parse_select_slot_request() {
-  [[ $# -ge 2 && "$1" == "--job-id" && -n "$2" ]] || validation_error "JOB_ID is required. Next action: pass --job-id <JOB_ID>."
+  [[ $# -ge 2 && $1 == "--job-id" && -n $2 ]] || validation_error "JOB_ID is required. Next action: pass --job-id <JOB_ID>."
   job_id="$2"
   shift 2
   additional_args=()
   if [[ $# -gt 0 ]]; then
-    [[ "$1" == "--" ]] || validation_error "unexpected argument: $1. Next action: put additional arguments after '--'."
+    [[ $1 == "--" ]] || validation_error "unexpected argument: $1. Next action: put additional arguments after '--'."
     shift
     additional_args=("$@")
   fi
@@ -49,7 +49,7 @@ validate_select_slot_environment() {
     esac
   done
   # SR-001 排他的 foreground 制約
-  if [[ "$blue_mode" == foreground && "$green_mode" == foreground ]]; then
+  if [[ $blue_mode == foreground && $green_mode == foreground ]]; then
     violations+=("BLUE_MODEとGREEN_MODEを同時にforegroundにすることはできません")
   fi
   case "$rapid_crosscheck_mode" in
@@ -57,7 +57,7 @@ validate_select_slot_environment() {
     *) violations+=("RAPID_CROSSCHECK_MODE must be on or off") ;;
   esac
   # 起動前監査イベントの actor。省略時に facade を既定値としない(tier-facade.md 環境変数表)
-  [[ -n "$operator" ]] || violations+=("RELAYGATE_OPERATOR is required (audit actor is not defaulted)")
+  [[ -n $operator ]] || violations+=("RELAYGATE_OPERATOR is required (audit actor is not defaulted)")
   if [[ ${#violations[@]} -gt 0 ]]; then
     printf '%s\n' "${violations[@]}" >&2
     validation_error "Next action: fix the environment variables above and rerun the job."
