@@ -1,0 +1,47 @@
+schema_version: "1.0"
+stage: "S6"
+uc_id: "6078c4ed"
+result: pass
+integration_command: "npx cucumber-js --config cucumber.cjs --profile uc"
+exit_code: 0
+runs: "2 consecutive runs, both 9 scenarios / 9 passed, 86 steps / 86 passed"
+scenarios: 9
+scenarios_passed: 9
+steps: 86
+steps_passed: 86
+feature: "features/uc/select-and-launch-slots-by-feature-flags.feature"
+steps_file: "features/uc/steps/select-and-launch-slots-by-feature-flags.steps.cjs"
+tiers_integrated:
+  - "tier-facade"
+harness:
+  rdb: "SQLite (limited verification boundary per issues/20260817T230000Z and issues/20260821T220045Z section 1; schema = contract columns + rdb-schema.yaml PK/UNIQUE)"
+  launch: "ssh stub on PATH appends the launch argv to a log file"
+  id_generation: "RELAYGATE_ID_GENERATOR seam (facade/src/id_gateway.sh) with fixed run_id / per-slot attempt_id"
+  job_map: "JSON slot-entry format from facade/src/job_map_gateway.sh header comment"
+harness_injections:
+  - scenario: "background roleを先に起動しforeground待機中もbackgroundが並走する"
+    location: "features/uc/steps/select-and-launch-slots-by-feature-flags.steps.cjs SSH_STUB_CONCURRENT (Given 'blue実装のforeground実行が完了まで60秒かかる状態である')"
+    issue: "docs/impl/latest/6078c4ed/issues/20260821T220045Z_select-slot-spec-reflow-test-boundary.md (sections 2 and 7, S6 addendum)"
+    simulates: "remote runner of UC c3c7ab31 (tier-worker): transitions green runner_results to RUNNING on background launch and keeps a detached 60s execution"
+    partial_verification: "Then 'blue foreground実行の完了を待ってから終了コード 0 で終了し、green background実行の完了は待たない' verifies exit 0 and that green completion is not awaited; waiting for blue foreground completion is not verified (owned by the foreground response UC per issue section 7)"
+    removal_condition: "delete once UC c3c7ab31 (RUNNING transition) and the foreground response UC are implemented and the scenario is re-verified across UCs"
+files_updated:
+  - "features/uc/steps/select-and-launch-slots-by-feature-flags.steps.cjs"
+  - "docs/impl/latest/6078c4ed/issues/20260821T220045Z_select-slot-spec-reflow-test-boundary.md"
+files_created:
+  - "docs/impl/latest/6078c4ed/stages/S6_uc-bdd.done.yaml"
+tier_code_changed: false
+quality_checks:
+  qlty: "qlty check --fail-level medium features/uc/steps/select-and-launch-slots-by-feature-flags.steps.cjs (No issues, exit 0)"
+  leftover_processes: "no detached 'sleep 60' processes remain after the run (After hook kills recorded pids)"
+issues_appended:
+  - path: "docs/impl/latest/6078c4ed/issues/20260821T220045Z_select-slot-spec-reflow-test-boundary.md"
+    sections: "S6 uc-bdd addendum: injection location, per-Then verification scope for the concurrent scenario, spec questions for sections 2 and 7 restated, notes on the facade-unchanged and slot_execution_specs-only launch assertions"
+notes:
+  - "8 of 9 scenarios pass on the real tier-facade behaviour without injection"
+  - "UC c3c7ab31 (background role launch) has atdd_confirmed false and no implementation; the concurrent scenario should be re-run without injection once it exists"
+  - "cucumber-js 13.2.1, profile uc, strict mode"
+manifest_sha256: "836dfd9cbb6af8c8a7f63043c45bc2beffc5469d632e523cf27748859f89b1c2"
+manifest_projection: v2
+completed_at: "2026-08-21T23:43:29Z"
+completed_by: "dist-impl-implement@0.11.1"

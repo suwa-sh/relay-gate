@@ -180,3 +180,32 @@ S4 で実装側に吸収した点と、仕様側の判断が要る点を追記�
 
 - 秒精度の `date -u` では同一秒内のイベント順序が定まらない(F-002)。契約型 `datetime` が保持できるマイクロ秒精度の UTC ISO 8601(`YYYY-MM-DDTHH:MM:SS.ffffffZ`)を `facade/src/id_gateway.sh` の `clock_now_utc`(perl Time::HiRes)で生成し、accepted_at / occurred_at / updated_at / 監査 occurred_at に同一値を記録する。PostgreSQL の timestamptz はこの形式をそのまま受け付ける(実体テストで確認)
 - F-003 の対応で本 UC が記録する履歴は slot ごとに attempt_started の 1 件だけになり、順序依存の assertion は無くなった。テストは時系列順を前提にせず内容で検証する
+
+---
+
+## S6 uc-bdd での対応状況(§2 / §7 のハーネス注入)
+
+UC BDD(`features/uc/select-and-launch-slots-by-feature-flags.feature`、9 Scenario)を tier-facade attempt 6 の実装に結線した。tier 実装は変更していない。8 Scenario は実装そのものの振る舞いで成立し、Scenario「background roleを先に起動しforeground待機中もbackgroundが並走する」だけは本 UC 単独で成立しないため ssh スタブへハーネス注入した。
+
+### 注入箇所
+
+- `features/uc/steps/select-and-launch-slots-by-feature-flags.steps.cjs` の `SSH_STUB_CONCURRENT`(Given「blue実装のforeground実行が完了まで60秒かかる状態である」で PATH 先頭の ssh スタブを差し替える)。注入箇所には本 issue への参照と「暫定注入・契約確定後に削除」のコメントを付けた
+- スタブは SSH 先の remote runner(UC c3c7ab31 / tier-worker)を模擬する: green(background)の起動イベント受領時に runner_results を RUNNING へ遷移(runner_result_events に attempt_running を追記)し、60 秒の background 実行を detached プロセスで模擬する。blue(foreground)の起動イベント受領時に green の status を記録する
+
+### Then ごとの検証範囲
+
+| Then | 検証 | 根拠 |
+|---|---|---|
+| green background 起動イベントが blue foreground より先に送出される | 実装の振る舞いで成立(起動ログの順序) | 注入なし。`facade/src/domain.sh` select_slot_roles の起動順 |
+| blue foreground 待機中に green が RUNNING で並走 | 注入スタブが遷移させた RUNNING を、blue 起動時点のスナップショットで検証 | §2(RUNNING 遷移は UC c3c7ab31 の責務) |
+| blue foreground 完了を待ってから exit 0、green 完了は待たない | **部分検証**: exit 0 と「green の完了を待たない(CLI 終了後も green の detached 実行が継続)」のみ。「blue foreground の完了を待つ」は検証していない | §7(facade の SSH は起動受付の handshake で上限 8 秒。60 秒の完了待ちは応答 UC「foreground roleの標準出力・標準エラー・終了コードを応答する」の責務) |
+
+### 仕様側に委ねる論点(§2 / §7 の再掲)
+
+- 本 Scenario の Then 2 行目・3 行目は本 UC(tier-facade の起動受付)の範囲を超える。UC c3c7ab31(RUNNING 遷移)と応答 UC(foreground 完了待ち)が実装された時点で注入を外し、UC 横断の統合(または ATDD)で再検証する運用を推奨する
+- もしくは feedback request で本 Scenario の Then を「green への background 起動イベント送出が blue foreground の起動イベント送出より先に完了し、green の runner_results が STARTING で存在する。CLI は green の完了を待たずに終了コード 0 で終了する」へ改める
+
+### その他(注入なしで成立した点の補足)
+
+- 「facade本体のコード・設定はジョブマップ以外に一切変更されていない」は、同一の `facade/bin/relaygate` をハーネス基準以外の RELAYGATE_* 設定を足さずに実行することの確認として結線した(ソースツリーのハッシュ比較は同一 Scenario 内では自明なため行わない)
+- 「green実装への起動イベントは slot_execution_specs の値のみから構成され…」は、起動ログの remote_command が `cd <work_dir> && <run 実行コンテキスト env> <script_path> [<fixed_args>]` の形で DB 行の値と一致し、impl_version・実装名を含まないことで検証した。run 実行コンテキスト(RELAYGATE_RUN_ID / ATTEMPT_ID / SLOT / ROLE / RAPID_CROSSCHECK_MODE)は slot_execution_specs 外の値だが、実装固有の分岐ではなく run 共通の伝播項目として許容した。credential_ref は起動コマンドに現れない(§8: 鍵解決方式が未契約)

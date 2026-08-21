@@ -42,11 +42,13 @@ stages:
       result: pass
       open_blockers: 0
   S6_uc_bdd:
-    status: pending
+    status: done
+    scenarios: 9
+    steps: 86
   S7_atdd:
     status: pending
   S8_feedback:
     status: pending
   S9_review:
     status: pending
-updated_at: '2026-08-22T08:36:47+09:00'
+updated_at: '2026-08-22T08:44:30+09:00'
