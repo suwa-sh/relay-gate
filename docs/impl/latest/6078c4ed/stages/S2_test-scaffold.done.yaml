@@ -1,0 +1,80 @@
+stage: "S2"
+uc_id: "6078c4ed"
+manifest_sha256: "4843209f87057158fd0eec11ca9f9284bc5732254234ffc45dfb73f92ee2d109"
+manifest_projection: v2
+result: pass
+rerun_mode: "scoped"
+rerun_reason: "stale (spec feedback reflow 20260819_114307). previous done invalidated at 20260822_065300_stale_done_invalidated"
+scaffold_scope:
+  tiers:
+    - "tier-facade"
+  uc_feature: regenerated
+  atdd: untouched
+scaffold:
+  tiers:
+    - "tier-facade"
+  uc_feature: "features/uc/select-and-launch-slots-by-feature-flags.feature"
+  uc_steps: "features/uc/steps/select-and-launch-slots-by-feature-flags.steps.cjs"
+  tier_feature: "facade/features/select-and-launch-slots-by-feature-flags.feature"
+  tier_steps: "facade/features/steps/select-and-launch-slots-by-feature-flags.steps.cjs"
+  tdd_test: "facade/test/select-and-launch-slots-by-feature-flags.bats"
+  tdd_test_legacy: "facade/test/6078c4ed_select_slot.bats"
+  atdd_scenarios:
+    - "SPEC-001-01-1"
+    - "SPEC-001-02-1"
+    - "SPEC-001-03-1"
+    - "SPEC-009-01-1"
+    - "SPEC-009-02-1"
+    - "SPEC-009-03-1"
+transcription_check:
+  method: "python3 diff of spec gherkin blocks vs feature body (comments stripped)"
+  uc_feature: "identical to spec.md E2E gherkin (9 scenarios)"
+  tier_feature: "identical to tier-facade.md gherkin (3 scenarios)"
+scaffold_checks:
+  tier_bdd:
+    result: pass
+    command: "npx cucumber-js --config cucumber.cjs --profile tier-facade"
+    exit_code: 1
+    parse: ok
+    undefined_steps: 0
+    scenarios: "3 failed / 3"
+    reason: "未実装 (not implemented: S2 scaffold steps for new spec). 文言不変の When / 終了コード step は旧実装を継承"
+  uc_bdd:
+    result: pass
+    command: "npx cucumber-js --config cucumber.cjs --profile uc"
+    exit_code: 1
+    parse: ok
+    undefined_steps: 0
+    scenarios: "9 failed / 9"
+    reason: "未実装 (not implemented: S2 scaffold steps for new spec)"
+  tdd:
+    result: pass
+    command: "bats facade/test/select-and-launch-slots-by-feature-flags.bats"
+    exit_code: 1
+    tests: "6 failed / 7"
+    reason: "未実装 (existing impl writes legacy column shape; new spec tables/columns/stdout/RELAYGATE_OPERATOR not implemented). test 5 (audit rollback) is vacuously green because the legacy INSERT fails before launch"
+  tdd_legacy:
+    result: "stale"
+    command: "bats facade/test/6078c4ed_select_slot.bats"
+    exit_code: 1
+    tests: "9 failed / 22"
+    reason: "contract regeneration (schema-constants.sh COLS_EXECUTION_SPECS / COLS_RUNNER_RESULTS) changed column lists used by legacy impl. Not caused by S2. Header comment lists stale assertions for S4"
+  atdd:
+    result: "untouched"
+    command: "npx cucumber-js --config cucumber.cjs --profile atdd --tags (6 atdd tags)"
+    exit_code: 1
+    parse: ok
+    scenarios: "5 failed / 6 (SPEC-001-03-1 passed)"
+    reason: "feature files and steps untouched. failures are legacy impl vs regenerated contract (RDB connection failed, boundary=rdb); S7 rewires steps after S4"
+  format_lint:
+    shfmt: "shfmt -d facade (exit 0)"
+    shellcheck: "find facade -name '*.sh' | shellcheck -x (exit 0); shellcheck -s bash on new bats (exit 0)"
+dom_snapshot: "not applicable (tier-facade kind=cli)"
+issues:
+  - "docs/impl/latest/6078c4ed/issues/20260821T220045Z_select-slot-spec-reflow-test-boundary.md"
+notes:
+  - "bats ファイル名は既存 6078c4ed_select_slot.bats を維持し、新仕様の red テストは slug 名 select-and-launch-slots-by-feature-flags.bats に分離した"
+  - "検証境界は既存 issue(20260817T230000Z)に従い SQLite。スキーマは契約定数の列 + rdb-schema.yaml の PK/UNIQUE"
+  - "ジョブマップのファイル形式は未契約のため fixture は仮形式(JSON・slot 別エントリ)。S4 が実装形式に合わせて調整可"
+completed_at: "2026-08-22T07:00:45+09:00"
+completed_by: "dist-impl-implement@0.11.1"

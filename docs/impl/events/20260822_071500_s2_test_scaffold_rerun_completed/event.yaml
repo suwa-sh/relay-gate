@@ -1,0 +1,19 @@
+event_id: "20260822_071500_s2_test_scaffold_rerun_completed"
+type: stage_completed
+uc_id: "6078c4ed"
+stage: "S2"
+payload:
+  result: pass
+  mode: scoped
+  scaffold_scope: {tiers: [tier-facade], uc_feature: regenerated, atdd: untouched}
+  manifest_sha256: "4843209f87057158fd0eec11ca9f9284bc5732254234ffc45dfb73f92ee2d109"
+  manifest_projection: v2
+  transcription_check: "spec.md / tier-facade.md gherkin と feature 本文の diff 完全一致"
+  red_state:
+    tier_bdd: "3/3 fail (not implemented)"
+    uc_bdd: "9/9 fail (not implemented)"
+    tdd_new: "6/7 fail (not implemented; 1 vacuous green)"
+    tdd_legacy: "9/22 fail (stale: 契約定数再生成起因。S4 で追従)"
+    atdd_selected: "5/6 fail (同上)"
+  issues_filed: ["20260821T220045Z_select-slot-spec-reflow-test-boundary.md"]
+created_at: "2026-08-22T07:15:00+09:00"

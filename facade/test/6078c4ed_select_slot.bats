@@ -1,4 +1,14 @@
 #!/usr/bin/env bats
+# 旧仕様(spec 20260819_114307 還流前)の単体テスト。S2 scoped 再実行では本文を変更していない。
+# 新仕様の red テストは select-and-launch-slots-by-feature-flags.bats に分離した。
+# S4 tier-impl 再実行時に次の点を新仕様へ整理すること(契約定数の再生成により現状でも一部 fail する):
+#   - setup() のスキーマが旧形式(execution_specs に host 等の slot 別列、runner_results PK=(run_id, role_type))。
+#     新契約は execution_specs / slot_execution_specs の分離、runner_results PK=(run_id, slot_type, role_type, attempt_id)
+#   - 標準出力 "blue: foreground" 形式 → run_id・slot_type・role・attempt_id・status=STARTING の slot ごと 1 行
+#   - runner_results の起動時 status RUNNING → STARTING(+ runner_result_events attempt_started を同一 transaction)
+#   - execution-spec.json ファイルへの保存・RELAYGATE_EXECUTION_SPEC_DIR → 新仕様の正本は execution_specs / slot_execution_specs テーブル
+#   - 環境変数 RELAYGATE_OPERATOR(必須)と audit_logs / audit_chain_heads の起動前監査ゲートが未考慮
+#   deadline / プロセスグループ掃除 / 入力検証のテスト意図(CTP-009 10 秒以内)は新仕様でも有効なので、fixture を更新して引き継ぐ
 
 setup() {
 	bats_require_minimum_version 1.5.0

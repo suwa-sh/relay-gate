@@ -21,8 +21,9 @@ stages:
     status: done
     rerun: stale
   S2_test_scaffold:
-    status: pending
-    rerun: stale
+    status: done
+    red_baseline: pass
+    mode: scoped
   S3_contracts:
     status: pending
     rerun: stale
@@ -44,4 +45,4 @@ stages:
     status: pending
   S9_review:
     status: pending
-updated_at: '2026-08-22T06:51:09+09:00'
+updated_at: '2026-08-22T07:02:46+09:00'
