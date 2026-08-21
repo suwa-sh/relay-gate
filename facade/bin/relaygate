@@ -7,7 +7,6 @@
 # shellcheck disable=SC2034
 set -o errexit -o nounset -o pipefail
 readonly CLI_DEADLINE_SECONDS=8
-readonly COMPENSATION_RESERVE_MILLISECONDS=750
 
 # monotonic_milliseconds は単一 CLI 実行の単調時刻をミリ秒で返す。
 monotonic_milliseconds() {
@@ -49,16 +48,6 @@ deadline_run_for() {
 deadline_run() {
 	local remaining_milliseconds timeout_duration
 	remaining_milliseconds="$(remaining_deadline_milliseconds)" || return 124
-	printf -v timeout_duration '%d.%03ds' "$((remaining_milliseconds / 1000))" "$((remaining_milliseconds % 1000))"
-	deadline_run_for "$timeout_duration" "$@"
-}
-
-# deadline_run_with_compensation_reserve は失敗後の補償時間を残して I/O を実行する。
-deadline_run_with_compensation_reserve() {
-	local remaining_milliseconds timeout_duration
-	remaining_milliseconds="$(remaining_deadline_milliseconds)" || return 124
-	remaining_milliseconds=$((remaining_milliseconds - COMPENSATION_RESERVE_MILLISECONDS))
-	((remaining_milliseconds > 0)) || return 124
 	printf -v timeout_duration '%d.%03ds' "$((remaining_milliseconds / 1000))" "$((remaining_milliseconds % 1000))"
 	deadline_run_for "$timeout_duration" "$@"
 }

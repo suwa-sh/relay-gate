@@ -131,3 +131,52 @@ S4 で実装側に吸収した点と、仕様側の判断が要る点を追記�
 ### §9 旧テストの整理
 
 - `facade/test/6078c4ed_select_slot.bats` の stale assertion(標準出力形式 / RUNNING / execution-spec.json / 旧スキーマ / FAILED 補償)は新仕様に合わせて更新した。RDB 書込み timeout は tier-facade.md の終了コード表に従い exit 124 へ改めた
+
+---
+
+## S4 tier-impl(attempt 6)での対応状況(S5 attempt 5 findings F-001 / F-002 / F-003)
+
+### §1 の更新: PostgreSQL 経路を実装した(F-001。「psql 未配線」の記述は本節で置き換える)
+
+- `facade/src/rdb_gateway.sh` の `resolve_rdb_target` が `postgresql://` / `postgres://` DSN を受け付け、`psql -X -q -w -v ON_ERROR_STOP=1 -d <DSN> -c <SQL>` で起動トランザクションを**単一リクエスト**として送る(psql の `-c` 文字列は単一リクエストとして送られ、途中のエラーで残りは実行されず未 commit 分は rollback される。PostgreSQL 17 app-psql 参照)。psql が PATH に無い場合は `reason=postgresql_client_unavailable`(exit 1)、接続不能(psql exit 2)は `reason=connection`(exit 1)、CLI deadline 超過は exit 124
+- transaction の内容は契約どおり: `BEGIN;` → execution_specs / slot_execution_specs INSERT → slot ごとの runner_result_events + runner_results INSERT → `SELECT head_hash FROM audit_chain_heads WHERE run_id = ... FOR UPDATE;` → audit_logs INSERT ごとに audit_chain_heads の INSERT(run 内 1 件目)/ UPDATE(2 件目以降)→ `COMMIT;`
+- 実 PostgreSQL での実体テストを `facade/test/6078c4ed_select_slot_postgresql.bats` に追加した(テストファイルごとに `initdb` + `pg_ctl` の一時インスタンス、または `RELAYGATE_TEST_PG_BACKEND=docker` で postgres:16-alpine。`log_statement=all` の statement ログで FOR UPDATE と単一リクエストを検証)。起動不能な環境では skip せず fail にする(`RELAYGATE_TEST_SKIP_PG=1` の明示 skip のみ許可)
+- **CI への影響(write-set 外のため未対応)**: `.github/workflows/ci.yml` の tdd ジョブで PostgreSQL バイナリ(`initdb` / `pg_ctl` / `psql`)を PATH に載せる必要がある(ubuntu runner は `/usr/lib/postgresql/<ver>/bin` にプリインストール済みだが PATH 外)。オーケストレータ側で CI 設定の追従を要する
+
+### §10 テスト用 DDL の所有と共有(仕様側 / datastore_owner の判断が要る)
+
+#### 仕様の記載
+
+- impl-config.yaml `datastore_owner: tier-worker`。migration の正本は `worker/migrations/`(現時点は空)
+- rdb-schema.yaml は論理型(uuid / string / text / integer / datetime)のみを定義し、PostgreSQL の物理型は未定義
+
+#### 実装で判明した事実
+
+- tier-facade の PostgreSQL 実体テストには DDL が必要だが、正本の migration が未着手で、`worker/` は tier-facade の write-set 外
+- S4 では `facade/test/fixtures/generate-postgresql-schema.py` が rdb-schema.yaml の transaction_rules「slot起動トランザクション」の tables(6 テーブル)から `facade/test/fixtures/relay-gate-db.postgresql.sql` を生成した(型対応: uuid → uuid / string → text / text → text / integer → integer / datetime → timestamptz。PK / UNIQUE / FK / index を含む)。fixture 先頭に「テスト fixture。正本は rdb-schema.yaml / worker/migrations」を明記している
+- run_id / event_id が `uuid` 型のため、`RELAYGATE_ID_GENERATOR` で固定する run_id は UUID 形式でなければならない(attempt_id は string 型のため任意文字列でよい)
+
+#### 提案
+
+- tier-worker が `worker/migrations/` を整備した時点で、tier-facade の fixture を migration からの生成(または migration そのものの適用)へ切り替え、物理型の対応表(特に datetime → timestamptz、string → text)を rdb-schema.yaml か migration 側に正本として明記する
+- それまでは rdb-schema.yaml の変更(S3 再生成)時に本生成器で fixture を再生成する運用とする
+
+### §8 の更新: 起動後の SSH 失敗 / timeout の補償記録を撤回し仕様どおり STARTING 固定に戻した(F-003。仕様側の判断が要る)
+
+#### 仕様の記載
+
+- tier-facade.md 標準出力契約「status=STARTING を選択 slot ごとに 1 行」、データモデル変更「status 固定値 STARTING(本 UC 時点。RUNNING 以降への遷移は後続 UC が担う)」
+
+#### 実装で判明した事実(attempt 6 の実装)
+
+- attempt 5 で実装していた「SSH 失敗 = FAILED / attempt_failed、timeout = UNKNOWN / attempt_unknown の補償記録」と stdout の status 可変出力を削除した。`facade/src/launch_gateway.sh` は送出失敗を stderr の診断情報(`boundary=ssh, reason=ssh_failure, ssh_exit=<code>` または `reason=timeout`)と終了コード 1 で応答するだけで、runner_results / runner_result_events の STARTING 記録は変更しない。補償用の deadline 予約(`COMPENSATION_RESERVE_MILLISECONDS`)も不要になり削除した
+- 終了コードは tier-facade.md の表に従う: 起動先接続失敗 = 1(業務エラー)。124 は RDB 接続タイムアウトのみ
+
+#### 仕様側に委ねる論点
+
+- 起動イベントの送出に失敗した slot が `STARTING` のまま残る。後続 UC「background roleを起動する」/ hang-detector が「started_at が無いまま一定時間経過した STARTING」をどう扱うか(UNKNOWN 遷移や `slot_launch_failed` 監査イベントの emitted_by)が未定義のため、いずれかが必要: (a) 本 UC に起動失敗時の補償記録(runner_result_events + runner_results の FAILED / UNKNOWN、audit_logs の slot_launch_failed / slot_launch_timeout)を仕様として追加する、(b) hang-detector の検知条件として「STARTING の滞留」を仕様化する。実装は仕様の決定まで STARTING 固定を維持する
+
+### §11 runner_result_events.occurred_at のサブ秒精度(F-002。実装で吸収)
+
+- 秒精度の `date -u` では同一秒内のイベント順序が定まらない(F-002)。契約型 `datetime` が保持できるマイクロ秒精度の UTC ISO 8601(`YYYY-MM-DDTHH:MM:SS.ffffffZ`)を `facade/src/id_gateway.sh` の `clock_now_utc`(perl Time::HiRes)で生成し、accepted_at / occurred_at / updated_at / 監査 occurred_at に同一値を記録する。PostgreSQL の timestamptz はこの形式をそのまま受け付ける(実体テストで確認)
+- F-003 の対応で本 UC が記録する履歴は slot ごとに attempt_started の 1 件だけになり、順序依存の assertion は無くなった。テストは時系列順を前提にせず内容で検証する

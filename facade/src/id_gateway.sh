@@ -21,11 +21,19 @@ generate_id() {
   printf '%s' "$value"
 }
 
+# clock_now_utc は現在時刻を UTC の ISO 8601(マイクロ秒精度)で返す。
+# 秒精度では同一秒内のイベントの時系列(runner_result_events.occurred_at「履歴の時系列順序の基準」)が定まらないため、
+# 契約型 datetime が保持できるサブ秒精度で記録する(perl Time::HiRes はコアモジュール)。
+clock_now_utc() {
+  # shellcheck disable=SC2016
+  deadline_run perl -MTime::HiRes=time -MPOSIX=strftime -e 'my $t = time(); my $s = int($t); printf "%s.%06dZ", strftime("%Y-%m-%dT%H:%M:%S", gmtime($s)), int(($t - $s) * 1_000_000)'
+}
+
 # issue_run_identity は run_id・選択 slot ごとの attempt_id・履歴/監査イベント id・起動受付時刻を一度だけ確定する。
 issue_run_identity() {
   local slot index selected_count
   run_id="$(generate_id run_id)" || business_error "Identifier generation failed (boundary=id). Next action: check uuidgen or RELAYGATE_ID_GENERATOR, then rerun the job."
-  accepted_at="$(deadline_run date -u '+%Y-%m-%dT%H:%M:%SZ')" || business_error "Clock read failed (boundary=clock). Next action: check the system clock, then rerun the job."
+  accepted_at="$(clock_now_utc)" || business_error "Clock read failed (boundary=clock). Next action: check the system clock, then rerun the job."
   runner_event_ids=()
   for slot in "${selected_slots[@]}"; do
     slot_attempt_id["$slot"]="$(generate_id attempt_id "$slot")" || business_error "Identifier generation failed (run_id=$run_id, slot=$slot, boundary=id). Next action: check uuidgen or RELAYGATE_ID_GENERATOR, then rerun the job."

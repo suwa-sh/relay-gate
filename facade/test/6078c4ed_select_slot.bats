@@ -5,6 +5,8 @@
 # deadline / プロセスグループ掃除 / 入力検証のテスト意図(CTP-009 10 秒以内)は旧テストから引き継ぐ。
 # スキーマは契約定数(packages/contracts/relay-gate-db/schema-constants.sh)の列と rdb-schema.yaml の PK / UNIQUE に
 # 合わせた SQLite(限定検証境界: issues/20260817T230000Z・issues/20260821T220045Z §1)。
+# 正本の PostgreSQL 経路(SELECT ... FOR UPDATE を含む実 DB 検証)は 6078c4ed_select_slot_postgresql.bats が担う。
+# S4 attempt 6: 起動後の SSH 失敗 / timeout を FAILED / UNKNOWN へ補償する挙動を仕様(status 固定値 STARTING)に戻した。
 
 setup() {
 	bats_require_minimum_version 1.5.0
@@ -436,7 +438,7 @@ EOF
 	[ "$(count_rows execution_specs)" = "0" ]
 }
 
-@test "relaygate_concurrent_run_select_slot_RDB_DSNがsqlite以外の場合_業務エラーで起動しないこと" {
+@test "relaygate_concurrent_run_select_slot_RDB_DSNが未対応の種別の場合_業務エラーで起動しないこと" {
 	# Act & Assert
 	run --separate-stderr env PATH="$test_dir/bin:$PATH" RELAYGATE_TEST_LAUNCH_LOG="$launch_log" RELAYGATE_RDB_DSN="mysql://db.example.test/relaygate" RELAYGATE_JOB_MAP_PATH="$job_map_path" RELAYGATE_OPERATOR=ops-tanaka BLUE_MODE=foreground GREEN_MODE=off RAPID_CROSSCHECK_MODE=on "$project_root/facade/bin/relaygate" concurrent-run select-slot --job-id JOB-2026-0817-001
 	[ "$status" -eq 1 ]
@@ -444,7 +446,7 @@ EOF
 	[ ! -e "$launch_log" ]
 }
 
-@test "relaygate_concurrent_run_select_slot_SSH起動失敗の場合_foreground結果をFAILEDへ補償しattempt_failed履歴を追記して診断情報を返すこと" {
+@test "relaygate_concurrent_run_select_slot_SSH起動失敗の場合_STARTING記録を変更せず診断情報と終了コード1を返すこと" {
 	# Arrange
 	export RELAYGATE_TEST_SSH_MODE=fail
 
@@ -453,13 +455,16 @@ EOF
 	[ "$status" -eq 1 ]
 	[[ "$stderr" == *"Failed to start blue slot"* ]]
 	[[ "$stderr" == *"boundary=ssh"* ]]
+	[[ "$stderr" == *"reason=ssh_failure"* ]]
 	[[ "$stderr" == *"run_id="* ]]
-	[ "$(sqlite3 "$db_path" 'SELECT status || ":" || exit_code || ":" || (updated_at IS NOT NULL) FROM runner_results;')" = "FAILED:255:1" ]
-	[ "$(sqlite3 "$db_path" 'SELECT event_name || ":" || status || ":" || IFNULL(exit_code, "null") FROM runner_result_events ORDER BY occurred_at, event_name;')" = $'attempt_started:STARTING:null\nattempt_failed:FAILED:255' ]
-	[[ "$output" == *"slot_type=blue role=foreground"*"status=FAILED"* ]]
+	[[ "$stderr" == *"Next action"* ]]
+	# 起動後の状態遷移は後続 UC の責務。本 UC は STARTING の履歴 1 件 + snapshot を保ったまま終える(tier-facade.md status 固定値 STARTING)
+	[ "$(sqlite3 "$db_path" 'SELECT status || ":" || (exit_code IS NULL) FROM runner_results;')" = "STARTING:1" ]
+	[ "$(sqlite3 "$db_path" 'SELECT event_name || ":" || status FROM runner_result_events;')" = "attempt_started:STARTING" ]
+	[[ "$output" == *"slot_type=blue role=foreground"*"status=STARTING"* ]]
 }
 
-@test "relaygate_concurrent_run_select_slot_SSHが応答しない場合_10秒以内に推測でFAILEDにせずUNKNOWNへ補償すること" {
+@test "relaygate_concurrent_run_select_slot_SSHが応答しない場合_10秒以内に打ち切りSTARTING記録を推測で変更しないこと" {
 	# Arrange
 	export RELAYGATE_TEST_SSH_MODE=hang
 	export RELAYGATE_SSH_TIMEOUT_SECONDS=8
@@ -473,11 +478,11 @@ EOF
 	[ "$status" -eq 1 ]
 	[[ "$stderr" == *"reason=timeout"* ]]
 	awk -v started="$started_seconds" -v ended="$elapsed_seconds" 'BEGIN { exit !(ended - started < 10) }'
-	[ "$(sqlite3 "$db_path" 'SELECT status || ":" || (exit_code IS NULL) FROM runner_results;')" = "UNKNOWN:1" ]
-	[ "$(sqlite3 "$db_path" 'SELECT COUNT(*) FROM runner_result_events WHERE event_name = "attempt_unknown" AND status = "UNKNOWN";')" = "1" ]
+	[ "$(sqlite3 "$db_path" 'SELECT status || ":" || (exit_code IS NULL) FROM runner_results;')" = "STARTING:1" ]
+	[ "$(count_rows runner_result_events)" = "1" ]
 }
 
-@test "relaygate_concurrent_run_select_slot_先行するbackground_slotのSSH起動が失敗した場合_失敗slotを記録したうえで残りのslotも起動すること" {
+@test "relaygate_concurrent_run_select_slot_先行するbackground_slotのSSH起動が失敗した場合_残りのslotも起動して終了コード1を返すこと" {
 	# Arrange
 	export RELAYGATE_TEST_SSH_MODE=fail-green
 
@@ -485,8 +490,10 @@ EOF
 	run --separate-stderr run_select_slot foreground background on JOB-2026-0817-001
 	[ "$status" -eq 1 ]
 	[[ "$stderr" == *"Failed to start green slot"* ]]
-	[ "$(sqlite3 "$db_path" "SELECT slot_type || ':' || role_type || ':' || status FROM runner_results ORDER BY slot_type;")" = $'blue:foreground:STARTING\ngreen:background:FAILED' ]
+	[[ "$stderr" != *"Failed to start blue slot"* ]]
+	[ "$(sqlite3 "$db_path" "SELECT slot_type || ':' || role_type || ':' || status FROM runner_results ORDER BY slot_type;")" = $'blue:foreground:STARTING\ngreen:background:STARTING' ]
 	[ "$(wc -l <"$launch_log" | tr -d ' ')" = "2" ]
+	[ "$(printf '%s\n' "$output" | grep -c 'status=STARTING$')" = "2" ]
 }
 
 @test "relaygate_concurrent_run_select_slot_不正なハング検知しきい値の場合_業務エラーで永続化しないこと" {
@@ -625,4 +632,51 @@ EOF
 	# Act & Assert
 	! transaction_begin_sql oracle
 	! audit_chain_lock_sql oracle "'run-1'"
+}
+
+@test "audit_chain_head_sql_run内の最初の監査イベントの場合_audit_chain_headsへINSERTする文を返すこと" {
+	# Arrange
+	source_facade_libraries
+
+	# Act
+	result="$(audit_chain_head_sql "'run-1'" "'ev-1'" "'hash-1'" 1 "'2026-08-22T00:00:00.000001Z'")"
+
+	# Assert
+	[ "$result" = "INSERT INTO audit_chain_heads (run_id,head_event_id,head_hash,chain_length,updated_at) VALUES ('run-1','ev-1','hash-1',1,'2026-08-22T00:00:00.000001Z');" ]
+}
+
+@test "audit_chain_head_sql_2件目以降の監査イベントの場合_同じrun_id行をUPDATEする文を返すこと" {
+	# Arrange
+	source_facade_libraries
+
+	# Act
+	result="$(audit_chain_head_sql "'run-1'" "'ev-2'" "'hash-2'" 2 "'2026-08-22T00:00:00.000001Z'")"
+
+	# Assert
+	[ "$result" = "UPDATE audit_chain_heads SET head_event_id = 'ev-2', head_hash = 'hash-2', chain_length = 2, updated_at = '2026-08-22T00:00:00.000001Z' WHERE run_id = 'run-1';" ]
+}
+
+@test "clock_now_utc_呼び出した場合_UTCのISO8601マイクロ秒精度で返すこと" {
+	# Arrange
+	source_facade_libraries
+	source "$project_root/facade/src/id_gateway.sh"
+	deadline_run() { "$@"; }
+
+	# Act
+	result="$(clock_now_utc)"
+
+	# Assert
+	[[ "$result" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{6}Z$ ]]
+}
+
+@test "relaygate_concurrent_run_select_slot_起動を受け付けた場合_accepted_atと履歴occurred_atと監査occurred_atをマイクロ秒精度の同一時刻で記録すること" {
+	# Act
+	run --separate-stderr run_select_slot foreground background on JOB-2026-0817-001
+
+	# Assert
+	[ "$status" -eq 0 ]
+	[ "$(sqlite3 "$db_path" 'SELECT COUNT(DISTINCT accepted_at) FROM runner_results;')" = "1" ]
+	[[ "$(sqlite3 "$db_path" 'SELECT accepted_at FROM runner_results LIMIT 1;')" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{6}Z$ ]]
+	[ "$(sqlite3 "$db_path" 'SELECT COUNT(*) FROM runner_result_events e JOIN runner_results r ON r.run_id = e.run_id AND r.slot_type = e.slot_type AND r.attempt_id = e.attempt_id AND e.occurred_at = r.accepted_at AND r.updated_at = r.accepted_at;')" = "2" ]
+	[ "$(sqlite3 "$db_path" 'SELECT COUNT(*) FROM audit_logs a JOIN audit_chain_heads h ON h.run_id = a.run_id AND h.updated_at = a.occurred_at;')" = "3" ]
 }

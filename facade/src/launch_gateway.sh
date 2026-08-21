@@ -3,6 +3,9 @@
 # 起動イベントは slot_execution_specs の host / exec_user / script_path / work_dir / fixed_args と
 # run 共通の additional_args だけから構成し、実装名・バージョンによる分岐を持たない(spec.md E2E「runner設定の差し替えのみで...」)。
 # 引数列は固定引数 → 追加引数の順で順序・値を改変せず連結する。
+# 起動後の実行状態遷移(RUNNING / FAILED / UNKNOWN 等)は後続 UC「background roleを起動する」の責務であり、
+# 本 UC は送出失敗を標準エラーの診断情報と終了コード 1 で応答するだけで RDB の STARTING 記録は変更しない
+# (tier-facade.md データモデル変更「status 固定値 STARTING」。issues/20260821T220045Z §8)。
 # shellcheck shell=bash
 # 層間で共有する CLI 実行コンテキスト(run_id 等のグローバル)は bin/relaygate と他層のファイルで定義・参照するため、
 # 単一ファイル検査での未定義・未使用警告は対象外
@@ -26,27 +29,20 @@ build_remote_command() {
   printf '%s' "$remote_command"
 }
 
-# launch_failure は起動失敗を runner 実行状態へ補償記録し、診断情報を標準エラーへ出して失敗を返す。
+# launch_failure は起動イベント送出の失敗を診断情報(原因と次アクション)として標準エラーへ出し、失敗を返す。
 launch_failure() {
-  local slot="$1" reason="$2" status="$3" event_name="$4" exit_code="$5"
-  slot_status["$slot"]="$status"
-  if ! record_attempt_outcome "$slot" "$status" "$event_name" "$exit_code"; then
-    printf '%s\n' "Failed to record the launch outcome for $slot slot (run_id=$run_id, attempt_id=${slot_attempt_id[$slot]}, boundary=rdb). Next action: reconcile runner_results for this attempt manually." >&2
-  fi
+  local slot="$1" reason="$2"
   printf '%s\n' "Failed to start $slot slot (run_id=$run_id, attempt_id=${slot_attempt_id[$slot]}, boundary=ssh, reason=$reason). Next action: check SSH reachability of ${slot_exec_user[$slot]}@${slot_host[$slot]}, then rerun the job." >&2
   return 1
 }
 
 # launch_slot は SSH を介して slot を確定済みの役割で起動する。
-# foreground は同期実行、background は非同期起動トリガーのみ(いずれも CLI deadline 内で打ち切る)。
-# timeout は結果取得不能として UNKNOWN に記録し、推測で FAILED を確定しない(rdb-schema runner_results.status)。
+# foreground / background いずれも起動イベントの送出として扱い、CLI deadline 内で打ち切る(CTP-009)。
 launch_slot() {
   local slot="$1" remaining_milliseconds remote_command ssh_exit_code ssh_timeout_duration
   remote_command="$(build_remote_command "$slot")"
   remaining_milliseconds="$(remaining_deadline_milliseconds || true)"
-  [[ -n $remaining_milliseconds ]] || launch_failure "$slot" timeout "$RUNNER_STATUS_UNKNOWN" "$RUNNER_EVENT_ATTEMPT_UNKNOWN" "" || return 1
-  remaining_milliseconds=$((remaining_milliseconds - COMPENSATION_RESERVE_MILLISECONDS))
-  ((remaining_milliseconds > 0)) || launch_failure "$slot" timeout "$RUNNER_STATUS_UNKNOWN" "$RUNNER_EVENT_ATTEMPT_UNKNOWN" "" || return 1
+  [[ -n $remaining_milliseconds ]] || launch_failure "$slot" timeout || return 1
   if ((ssh_timeout_seconds * 1000 < remaining_milliseconds)); then remaining_milliseconds=$((ssh_timeout_seconds * 1000)); fi
   printf -v ssh_timeout_duration '%d.%03ds' "$((remaining_milliseconds / 1000))" "$((remaining_milliseconds % 1000))"
   if deadline_run_for "$ssh_timeout_duration" ssh -n -o BatchMode=yes -- "${slot_exec_user[$slot]}@${slot_host[$slot]}" "$remote_command" >/dev/null; then
@@ -55,8 +51,8 @@ launch_slot() {
     ssh_exit_code=$?
   fi
   if [[ $ssh_exit_code -eq 124 ]]; then
-    launch_failure "$slot" timeout "$RUNNER_STATUS_UNKNOWN" "$RUNNER_EVENT_ATTEMPT_UNKNOWN" ""
+    launch_failure "$slot" timeout
   else
-    launch_failure "$slot" ssh_failure "$RUNNER_STATUS_FAILED" "$RUNNER_EVENT_ATTEMPT_FAILED" "$ssh_exit_code"
+    launch_failure "$slot" "ssh_failure, ssh_exit=$ssh_exit_code"
   fi
 }

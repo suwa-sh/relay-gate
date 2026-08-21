@@ -65,9 +65,10 @@ validate_select_slot_environment() {
 }
 
 # print_launch_results は選択 slot ごとに run_id・slot_type・role・attempt_id・status を 1 行で標準出力する。
+# status は本 UC 時点の固定値 STARTING(tier-facade.md 標準出力契約。起動後の遷移は後続 UC が担う)。
 print_launch_results() {
   local slot
   for slot in "${selected_slots[@]}"; do
-    printf 'run_id=%s slot_type=%s role=%s attempt_id=%s status=%s\n' "$run_id" "$slot" "${slot_role[$slot]}" "${slot_attempt_id[$slot]}" "${slot_status[$slot]}"
+    printf 'run_id=%s slot_type=%s role=%s attempt_id=%s status=%s\n' "$run_id" "$slot" "${slot_role[$slot]}" "${slot_attempt_id[$slot]}" "$RUNNER_STATUS_STARTING"
   done
 }

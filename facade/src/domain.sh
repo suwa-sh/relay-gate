@@ -6,13 +6,10 @@
 # 単一ファイル検査での未定義・未使用警告は対象外
 # shellcheck disable=SC2034,SC2154
 
-# Runner 実行状態(6 値のうち本 UC が扱うもの)と遷移イベント名(rdb-schema runner_result_events.event_name)
+# Runner 実行状態と遷移イベント名(rdb-schema runner_result_events.event_name)。
+# 本 UC が記録するのは起動受付(STARTING / attempt_started)のみ。以降の遷移は後続 UC の責務(tier-facade.md データモデル変更)
 readonly RUNNER_STATUS_STARTING="STARTING"
-readonly RUNNER_STATUS_FAILED="FAILED"
-readonly RUNNER_STATUS_UNKNOWN="UNKNOWN"
 readonly RUNNER_EVENT_ATTEMPT_STARTED="attempt_started"
-readonly RUNNER_EVENT_ATTEMPT_FAILED="attempt_failed"
-readonly RUNNER_EVENT_ATTEMPT_UNKNOWN="attempt_unknown"
 # 初回起動の attempt_no(tier-facade.md データモデル変更表)
 readonly INITIAL_ATTEMPT_NO=1
 
@@ -27,7 +24,6 @@ readonly AUDIT_NOT_APPLICABLE="-"
 
 declare -A slot_role=()
 declare -A slot_attempt_id=()
-declare -A slot_status=()
 selected_slots=()
 
 # select_slot_roles は BLUE_MODE/GREEN_MODE から起動対象 slot と役割を起動順で確定する。
@@ -42,7 +38,6 @@ select_slot_roles() {
       if [[ $mode == "$role" ]]; then
         selected_slots+=("$slot")
         slot_role[$slot]="$role"
-        slot_status[$slot]="$RUNNER_STATUS_STARTING"
       fi
     done
   done
