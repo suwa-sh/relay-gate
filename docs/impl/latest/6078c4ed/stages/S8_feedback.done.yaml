@@ -5,7 +5,8 @@ mode: "initial"
 result: pass
 feedback_request:
   feedback_id: "20260822_085257_impl_feedback_6078c4ed"
-  draft_path: "docs/impl/latest/6078c4ed/feedback/draft.md"
+  draft_path: null
+  published_path: "docs/impl/latest/6078c4ed/feedback-requests/20260822_085257_impl_feedback_6078c4ed.md"
   supersedes: null
   request_count: 8
   blocker_count: 2
@@ -75,5 +76,22 @@ refresh:
   validation: "parseFeedbackRequest (dist-pipeline feedbackRequest.js 1.4.4) ok; UTF-8 no BOM, LF, NFC"
   as_built_summary_updated: true
   learnings_added: 0
+  manifest_sha256: "836dfd9cbb6af8c8a7f63043c45bc2beffc5469d632e523cf27748859f89b1c2"
+  manifest_projection: v2
+publish:
+  mode: "publish"
+  published_path: "docs/impl/latest/6078c4ed/feedback-requests/20260822_085257_impl_feedback_6078c4ed.md"
+  feedback_id: "20260822_085257_impl_feedback_6078c4ed"
+  input_sha256: "8129956bff632d9c271356ef56e3256319c7613b030adfd5477fe9f60d748bf5"
+  input_byte_length: 28452
+  request_count: 8
+  blocker_count: 2
+  supersedes: null
+  review_approved_event_id: "20260822_143100_feedback_publication_approved"
+  review_evidence_event_id: "20260822_143000_s9_review_regenerated"
+  publish_started_event_id: "20260822_143200_feedback_request_publish_started"
+  published_event_id: "20260822_143300_feedback_request_published"
+  published_at: "2026-08-22T14:33:00+09:00"
+  validation: "lineage (approval -> S9 evidence) exact; draft sha256 / feedback_id / request 8 / blocker 2 exact; UTF-8 no BOM, LF, NFC; path containment, non-symlink, same-filesystem; atomic rename with device/inode check"
   manifest_sha256: "836dfd9cbb6af8c8a7f63043c45bc2beffc5469d632e523cf27748859f89b1c2"
   manifest_projection: v2

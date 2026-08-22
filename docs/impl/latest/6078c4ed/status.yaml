@@ -3,7 +3,7 @@ uc_id: 6078c4ed
 business: 並行稼働実行業務
 buc: 並行稼働実行フロー
 uc: feature flag設定に基づきslotを選択して起動する
-state: publishing_feedback
+state: blocked_on_spec
 current_attempt: 6
 resolved_models:
   implementer: claude-fable-5
@@ -51,12 +51,14 @@ stages:
     steps: 30
   S8_feedback:
     status: done
-    mode: refresh
+    mode: publish
     feedback_id: 20260822_085257_impl_feedback_6078c4ed
+    supersedes: null
     request_count: 8
     blocker_count: 2
+    published_event_id: 20260822_143300_feedback_request_published
   S9_review:
     status: done
     event_id: 20260822_143000_s9_review_regenerated
     review_approved_event_id: 20260822_143100_feedback_publication_approved
-updated_at: '2026-08-22T09:55:50+09:00'
+updated_at: '2026-08-22T10:01:13+09:00'
