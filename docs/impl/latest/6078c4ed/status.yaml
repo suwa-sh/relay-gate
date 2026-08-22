@@ -50,7 +50,11 @@ stages:
     scenarios: 6
     steps: 30
   S8_feedback:
-    status: pending
+    status: done
+    mode: initial
+    feedback_id: 20260822_085257_impl_feedback_6078c4ed
+    request_count: 8
+    blocker_count: 2
   S9_review:
     status: pending
-updated_at: '2026-08-22T08:51:23+09:00'
+updated_at: '2026-08-22T09:00:11+09:00'

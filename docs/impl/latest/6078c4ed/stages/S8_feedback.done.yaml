@@ -1,0 +1,51 @@
+schema_version: "1.0"
+stage: "S8"
+uc_id: "6078c4ed"
+mode: "initial"
+result: pass
+feedback_request:
+  feedback_id: "20260822_085257_impl_feedback_6078c4ed"
+  draft_path: "docs/impl/latest/6078c4ed/feedback/draft.md"
+  supersedes: null
+  request_count: 8
+  blocker_count: 2
+  severity_breakdown:
+    blocker: 2
+    spec-gap: 6
+    improvement: 0
+  request_ids:
+    - "CR-6078c4ed-011"
+    - "CR-6078c4ed-012"
+    - "CR-6078c4ed-013"
+    - "CR-6078c4ed-014"
+    - "CR-6078c4ed-015"
+    - "CR-6078c4ed-016"
+    - "CR-6078c4ed-017"
+    - "CR-6078c4ed-018"
+  validation: "parseFeedbackRequest (dist-pipeline feedbackRequest.js) ok; UTF-8 no BOM, LF, NFC"
+as_built_summary_path: "docs/impl/latest/6078c4ed/feedback/as-built-summary.md"
+classification:
+  spec_origin:
+    - "issues/20260821T220045Z sections 2, 3, 5, 6, 7, 8, 10, 11, 12"
+    - "issues/20260817T000000Z (job map format only)"
+  impl_origin:
+    - "attempt-5 findings F-001 / F-002 / F-003 (resolved in attempt 6)"
+    - "issues/20260821T220045Z sections 1 (PostgreSQL path), 4, 9"
+  env_origin:
+    - "invalidated/20260822_103000_s5_attempt_6_verify_env_invalidated (sandbox socket / shm)"
+    - "issues/20260821T220045Z section 1 (CI PostgreSQL PATH), section 14"
+    - "issues/20260817T132241Z (lint entrypoint)"
+learnings: 4
+learning_files:
+  - "docs/impl/latest/6078c4ed/learnings/20260822_085257_postgresql-temp-instance-for-bats.md"
+  - "docs/impl/latest/6078c4ed/learnings/20260822_085257_sandbox-blocks-postgresql-verification.md"
+  - "docs/impl/latest/6078c4ed/learnings/20260822_085257_microsecond-timestamps-fix-order-flaky.md"
+  - "docs/impl/latest/6078c4ed/learnings/20260822_085257_cross-uc-scenario-harness-injection.md"
+proposals: {skill: true, context: true}
+proposal_files:
+  - "docs/impl/latest/6078c4ed/learnings/20260822_085257_proposal-skill.md"
+  - "docs/impl/latest/6078c4ed/learnings/20260822_085257_proposal-context.md"
+manifest_sha256: "836dfd9cbb6af8c8a7f63043c45bc2beffc5469d632e523cf27748859f89b1c2"
+manifest_projection: v2
+completed_at: "2026-08-22T08:52:57+09:00"
+completed_by: "dist-impl-feedback@0.11.1"
