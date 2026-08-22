@@ -55,3 +55,9 @@ publish 後は blocked_on_spec で停止し、dist-pipeline 反映後に再開�
 扱い: CR-018 は draft の推奨案と異なるため、S8 refresh で draft を更新し S9 を再生成したうえで
 公開許可(review_approved)を記録する。この承認は PR 許可ではない。publish 後は blocked_on_spec で停止し、
 dist-pipeline 反映後に再開する。
+
+## 2026-08-22 反映後の認識合わせ(S9 evidence 20260822_143000_s9_review_regenerated)
+
+回答: `公開=A / 補足=なし`(ユーザー「それでOKです。進めて下さい」。refresh 後 draft は回答と exact 一致、
+新しい選択肢なしのため再質問なし)。承認 event: 20260822_143100_feedback_publication_approved。
+この承認は feedback 公開許可であり PR 許可ではない。

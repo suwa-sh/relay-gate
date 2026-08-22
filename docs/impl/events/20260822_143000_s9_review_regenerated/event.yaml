@@ -1,0 +1,20 @@
+event_id: "20260822_143000_s9_review_regenerated"
+type: stage_completed
+uc_id: "6078c4ed"
+stage: "S9"
+payload:
+  result: pass
+  reason: "S8 refresh(review answers: CR-018 → C-1, others recommended) 後の再生成。最終認識合わせ(公開許可)"
+  review_html: "docs/impl/latest/6078c4ed/review/index.html"
+  feedback_review_evidence:
+    feedback_id: "20260822_085257_impl_feedback_6078c4ed"
+    draft_sha256: "8129956bff632d9c271356ef56e3256319c7613b030adfd5477fe9f60d748bf5"
+    request_count: 8
+  implementation_review_evidence:
+    gate_result: pass
+    open_blocker_count: 0
+    open_major_count: 0
+  decision_summary: {approval_questions: 1, selection_questions: 0, recommended_choices: 1, response_template: "公開=A / 補足=なし"}
+  manifest_sha256: "836dfd9cbb6af8c8a7f63043c45bc2beffc5469d632e523cf27748859f89b1c2"
+  manifest_projection: v2
+created_at: "2026-08-22T14:30:00+09:00"
