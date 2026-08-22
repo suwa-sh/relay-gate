@@ -43,8 +43,8 @@ jobs:
           sudo apt-get install -y shellcheck
       - name: shellcheck
         run: |
-          find facade -name '*.sh' -print0 | xargs -0 -r shellcheck -x
-          find worker -name '*.sh' -print0 | xargs -0 -r shellcheck -x
+          find facade \( -name '*.sh' -o -path 'facade/bin/*' -type f \) -print0 | xargs -0 -r shellcheck -x
+          find worker \( -name '*.sh' -o -path 'worker/bin/*' -type f \) -print0 | xargs -0 -r shellcheck -x
           find packages/contracts -name '*.sh' -print0 | xargs -0 -r shellcheck -x
 
   tdd:
@@ -63,6 +63,14 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y bats
+      # 実体テスト(docs/dev-rules/test-strategy.md「実体テストの環境前提」): facade の bats は
+      # initdb / pg_ctl / psql で一時 PostgreSQL を起動する。ubuntu runner のバイナリは PATH 外のため載せる
+      - name: expose PostgreSQL binaries
+        run: |
+          sudo apt-get install -y postgresql
+          pg_bin="$(ls -d /usr/lib/postgresql/*/bin | sort -V | tail -n 1)"
+          echo "$pg_bin" >> "$GITHUB_PATH"
+          "$pg_bin/initdb" --version
       - name: bats (${{ matrix.tier }})
         run: bats ${{ matrix.tier }}/test
 

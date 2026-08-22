@@ -19,3 +19,11 @@ dev-rules の test-strategy は 4 段テストの階層を定めるが、I/O 境
 ## 次回の対応
 
 設定所有者が impl-config と dev-rules を更新し、次の UC(tier-worker を含む c3c7ab31)の着手前に適用する。
+
+## 反映記録(2026-08-22)
+
+- `docs/dev-rules/test-strategy.md` に「実体テストの環境前提(I/O 境界)」節を追加
+- `docs/dev-rules/coding-rules.md` 推奨に「複数 tier が共有する算出規則」を追加
+- `docs/impl/latest/impl-config.yaml` と `.github/workflows/ci.yml` の lint を `bin/*` 対象に拡張
+- `.github/workflows/ci.yml` tdd ジョブに PostgreSQL バイナリの PATH 配線を追加
+- `CLAUDE.md` テスト規約・検証コマンドに同内容を反映

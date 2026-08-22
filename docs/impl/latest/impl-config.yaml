@@ -8,7 +8,7 @@ tiers:
     lang: bash
     commands:
       format_check: "shfmt -d facade"
-      lint: "find facade -name '*.sh' -print0 | xargs -0 -r shellcheck -x"
+      lint: "find facade \\( -name '*.sh' -o -path 'facade/bin/*' -type f \\) -print0 | xargs -0 -r shellcheck -x"
       test: "bats facade/test"
       bdd: "npx cucumber-js --config cucumber.cjs --profile tier-facade"
   - id: tier-worker
@@ -17,7 +17,7 @@ tiers:
     lang: bash
     commands:
       format_check: "shfmt -d worker"
-      lint: "find worker -name '*.sh' -print0 | xargs -0 -r shellcheck -x"
+      lint: "find worker \\( -name '*.sh' -o -path 'worker/bin/*' -type f \\) -print0 | xargs -0 -r shellcheck -x"
       test: "bats worker/test"
       bdd: "npx cucumber-js --config cucumber.cjs --profile tier-worker"
 datastore_owner: tier-worker

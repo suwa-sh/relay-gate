@@ -62,6 +62,24 @@ uc_id ハッシュはファイル名に使わない(外側から UC の意味が
 - Act は原則 1 呼び出し。複数の Act が必要になったらテストを分割する
 - ①〜③ の gherkin は Given=Arrange / When=Act / Then=Assert に自然対応するため、step definition も同じ規律で書く
 
+## 実体テストの環境前提(I/O 境界)
+
+I/O 境界(RDB / SSH / ファイル)はモックでなく実体で検証する。環境前提は次のとおり固定する:
+
+- **実 PostgreSQL はテストが自前で起動・破棄する一時インスタンス**を使う(既定 `initdb` + `pg_ctl`、
+  `RELAYGATE_TEST_PG_BACKEND=docker` で `postgres:16-alpine`)。開発機や CI の常設 DB に接続しない
+- **環境不足は fail にする(暗黙 skip 禁止)**。PostgreSQL を意図的に外すときだけ
+  `RELAYGATE_TEST_SKIP_PG=1` を明示する(skip 理由がテスト出力に残る)
+- CI(`.github/workflows/ci.yml` の tdd ジョブ)は PostgreSQL バイナリを `PATH` に載せる
+  (ubuntu runner は `/usr/lib/postgresql/<ver>/bin` が PATH 外)
+- 独立検証(S5)をサンドボックス付きで動かすと TCP loopback / shared memory が禁止され実体テストが
+  開始できない。検証環境の制限は実装の blocker ではなく環境失敗として分離する
+- **テスト用 DDL は正本ではない**: migration は `datastore_owner`(tier-worker)の `worker/migrations/` が正本。
+  それが未整備の間に他 tier が置く DDL fixture(例 `facade/test/fixtures/`)は rdb-schema.yaml から生成し、
+  先頭に「テスト fixture。正本は rdb-schema.yaml / worker/migrations」と明記する
+- E2E Scenario の Then に後続 UC の責務が含まれる場合、S2 の時点で「UC 横断 Scenario」として issues/ に
+  一覧化し、ハーネス注入の要否を着手前に決める(注入箇所には issue 参照と「暫定注入・契約確定後に削除」を残す)
+
 ## DOM 一致テストの転写規約(dom_snapshot が true な frontend tier のみ)
 
 `tiers[].capabilities.ui_review.dom_snapshot: true`(state-schema.md)の frontend tier では、

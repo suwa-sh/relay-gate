@@ -113,6 +113,9 @@ qlty fmt --all                                                        # formatte
 - **テスト名**: `{テスト対象}_{XXXの場合}_{YYYであること}` 形式(テスト対象 = 実際に呼ぶ関数・スクリプト名を英語のまま、条件と期待は日本語)
 - CLI を実プロセス起動するテストは `<cli名>_<subcommand>` を対象名にする
 - テスト規約は conformance test / lint で機械検査し CI から実行する(規約を CLAUDE.md に書いただけで完了としない)
+- **I/O 境界の実体テスト**(正本: `docs/dev-rules/test-strategy.md`「実体テストの環境前提」): 実 PostgreSQL はテストが自前で起動・破棄する一時インスタンス(`initdb`+`pg_ctl`、または `RELAYGATE_TEST_PG_BACKEND=docker`)。環境不足は fail(暗黙 skip 禁止。明示 skip は `RELAYGATE_TEST_SKIP_PG=1` のみ)。CI の tdd ジョブは PostgreSQL バイナリを PATH に載せる。独立検証(S5)をサンドボックス付きで動かすと loopback/shm が禁止され実体テストが開始できないため、Codex verifier はサンドボックス無効で起動し、write-set 逸脱を事後検査する
+- **テスト用 DDL は正本ではない**: migration の正本は `worker/migrations/`(datastore_owner=tier-worker)。未整備の間に他 tier が置く fixture(`facade/test/fixtures/relay-gate-db.postgresql.sql`)は rdb-schema.yaml から生成し、先頭に暫定である旨を明記する
+- **複数 tier が共有する算出規則**(監査 hash の正規化・引数のシリアライズ・時刻精度・ID 形式)は契約に定義されるまで実装で確定しない(正本: `docs/dev-rules/coding-rules.md`)
 
 ## README とドキュメントの構成
 
@@ -136,7 +139,7 @@ qlty fmt --all                                                        # formatte
 ```bash
 # format / lint(コマンドの正は docs/impl/latest/impl-config.yaml の commands)
 shfmt -d facade worker packages/contracts
-find facade worker packages/contracts -name '*.sh' -print0 | xargs -0 -r shellcheck -x
+find facade worker packages/contracts \( -name '*.sh' -o -path '*/bin/*' -type f \) -print0 | xargs -0 -r shellcheck -x   # 拡張子なしの bin/ エントリポイントも対象
 
 # テスト 4 段(CI の 6 段ゲートと同一コマンド)
 bats facade/test && bats worker/test                  # ④ TDD
