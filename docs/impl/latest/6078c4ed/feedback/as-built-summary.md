@@ -30,7 +30,7 @@
 | 物理型・datetime 精度・uuid 形式 | 不足 | fixture 生成器の対応表を仮採用(CR-015) |
 | USDM SPEC-009-03「execution-spec.json」「role ごと」 | 矛盾 | spec.md / rdb-schema と食い違う(CR-016) |
 | credential_ref の解決・Given 値 | 不足 | facade 側の SSH 認証契約無し、Given に値無し(CR-017) |
-| ジョブマップ形式 | 不足 | JSON slot-entry 形式を限定境界として採用(CR-018) |
+| ジョブマップ形式 | 不足 | blue/green を 1 ファイルに持つ JSON slot-entry 形式を限定境界として採用。2026-08-22 のレビュー回答で slot ごとの独立ファイル(job_map_version を slot_execution_specs へ移動)が採用されたため、仕様反映後に再実装する(CR-018) |
 | バリデーション順序(tier Scenario 2 で RAPID_CROSSCHECK_MODE 未設定) | 仕様どおり(吸収) | 全パラメータ一括検証(LP-001)で成立。CR 化しない |
 
 ## issues の分類

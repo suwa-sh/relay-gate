@@ -29,3 +29,29 @@
 回答は draft の推奨内容と exact 一致(新規の意味変更なし)のため、この承認を
 「feedback 公開許可」として記録し、S8 publish へ進む。この承認は PR 許可ではない。
 publish 後は blocked_on_spec で停止し、dist-pipeline 反映後に再開する。
+
+## 2026-08-22 ユーザー回答(仕様還流後の再実装レビュー。S9 evidence 20260822_130000_s9_review_generated)
+
+回答: `実装=A / CR-012=A / CR-011=A / CR-014=A / CR-015=A / CR-013=A / CR-016=A / CR-017=A / CR-018=C-1 / 補足=なし`
+
+- 実装: 承認(還流後仕様に追随した slot 選択起動。PostgreSQL 経路・監査 hash chain・STARTING 固定)
+- CR-012: A = 本 UC で起動イベント送出失敗時の補償記録を仕様化
+- CR-011: A = 実装の仮置き形式(契約 fields 順 `|` 連結 + SHA-256 hex)を event_hash 正規化として契約化
+- CR-014: A = additional_args / fixed_args は JSON 配列で保存
+- CR-015: A = uuid→uuid / string,text→text / integer→integer / datetime→timestamptz(μs, UTC)
+- CR-013: A = 並走 Scenario の Then を本 UC 責務内へ改め、元 Then は UC 横断の受け入れへ
+- CR-016: A = USDM SPEC-009-03 文言を spec / rdb-schema に合わせる
+- CR-017: A = credential_ref は認証情報ディレクトリ方式で解決
+- CR-018: **C-1(draft の推奨案 A から変更)** = ジョブマップを slot ごとに独立ファイルで持つ
+  (`RELAYGATE_JOB_MAP_PATH_BLUE` / `_GREEN` 相当。各ファイルが自分の version と job 別の
+  host / exec_user / script_path / work_dir / fixed_args / impl_version / credential_ref /
+  hang_detect_limit_minutes を持つ)。`job_map_version` は execution_specs(run 共通)から
+  slot_execution_specs(slot 別)へ移動する(rdb-schema 変更、CR-005 と同型)。
+  `hang_detect_limit_minutes` は background に選ばれた slot のジョブマップ値を採用する
+  (RDRA 条件「background role ごと」と整合)。
+  理由: blue / green は別ライフサイクルでメンテナンスされるため、1 ファイル共有はリリース競合を生む。
+  UC 前提「runner 設定の差し替えだけで新世代を起動できる」とも整合。
+
+扱い: CR-018 は draft の推奨案と異なるため、S8 refresh で draft を更新し S9 を再生成したうえで
+公開許可(review_approved)を記録する。この承認は PR 許可ではない。publish 後は blocked_on_spec で停止し、
+dist-pipeline 反映後に再開する。

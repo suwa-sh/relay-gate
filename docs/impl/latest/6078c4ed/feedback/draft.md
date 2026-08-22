@@ -42,7 +42,7 @@ uc_id: 6078c4ed
 - ハッシュ関数と出力表現(例: SHA-256、16 進小文字 64 桁)
 - 検証ジョブが `audit_logs` の行から同じ値を再計算できることを保証する旨
 
-実装で採用した仮置きの形式を推奨案として提示する。別の形式を採用する場合も、全 emitter と検証ジョブが同じ定義を参照できれば足りる。
+採用案: 実装で採用した仮置きの形式(契約 `fields` 順の 13 項目を `|` で連結、null は空文字、末尾に `|previous_hash`(最初のイベントは空)、SHA-256 を 16 進小文字 64 桁で表現)をそのまま正規化形式として契約化する。値に `|` が含まれる場合のエスケープ規則は契約側で補う。全 emitter と検証ジョブはこの定義だけを参照する。
 
 ### 完了条件
 
@@ -74,12 +74,14 @@ uc_id: 6078c4ed
 
 ### 変更してほしいこと
 
-次のいずれかを仕様として確定する(推奨は (a))。
+採用案: 本 UC が起動イベントの送出失敗 / timeout を補償記録する。
 
-- (a) 本 UC が起動イベントの送出失敗 / timeout を補償記録する: runner_result_events + runner_results を同一 transaction で FAILED(送出失敗、attempt_failed)/ UNKNOWN(timeout、attempt_unknown。推測で FAILED にしない)へ遷移させ、`slot_launch_failed` / `slot_launch_timeout` の `emitted_by` に本 UC を追加する。起動後の監査追記失敗はローカル永続 outbox へ退避する既存の `post_launch` 契約に従う
-- (b) 本 UC は STARTING 固定を維持し、STARTING 滞留の検知・確定を後続 UC の責務として明記する: 検知 UC の走査条件に foreground role の STARTING 滞留を含める(または専用の確定手段を定義する)、accepted_at からの猶予時間の正本、確定後の status(UNKNOWN)と監査イベントの emitter を定義する
+- runner_result_events + runner_results を同一 transaction で FAILED(送出失敗、attempt_failed)/ UNKNOWN(timeout、attempt_unknown。推測で FAILED にしない)へ遷移させる
+- `slot_launch_failed` / `slot_launch_timeout` の `emitted_by` に本 UC を追加する
+- 起動後の監査追記失敗はローカル永続 outbox へ退避する既存の `post_launch` 契約に従う
+- 標準出力契約(status=STARTING 行)と終了コード表(起動先接続失敗 = 1)を維持するか変更するかを明記する
 
-いずれの場合も、標準出力契約(status=STARTING 行)と終了コード表(起動先接続失敗 = 1)を維持するか変更するかを明記する。
+「本 UC は STARTING 固定を維持し、STARTING 滞留の検知・確定を後続 UC の責務とする」案は採用しない。
 
 ### 完了条件
 
@@ -107,10 +109,10 @@ Then の 2 行目(green が RUNNING)は「background roleを起動する」UC �
 
 ### 変更してほしいこと
 
-次を確定する。
+採用案として次を確定する。
 
 - 「CLI 応答は 10 秒以内」の対象を、本 UC では「起動受付(transaction commit と起動イベント送出)までの応答」に限定する旨を明記する。foreground 完了までの待機時間の上限は、foreground 応答 UC 側の契約(hang_detect_limit_minutes との関係を含む)として定義する
-- 当該 Scenario の Then を本 UC の責務内に改める(推奨): 「green への background 起動イベント送出が blue への foreground 起動イベント送出より先に完了する」「green の runner_results が STARTING で存在する」「CLI は green の完了を待たずに終了コード 0 で終了する」
+- 当該 Scenario の Then を本 UC の責務内に改める: 「green への background 起動イベント送出が blue への foreground 起動イベント送出より先に完了する」「green の runner_results が STARTING で存在する」「CLI は green の完了を待たずに終了コード 0 で終了する」
 - 元の Then(green の RUNNING 並走、blue 完了待ち)を検証する場所を、UC 横断の統合シナリオ(依存先: background 起動 UC、foreground 応答 UC)として `uc-dependencies.md` または該当 BUC の仕様に移す
 
 ### 完了条件
@@ -135,7 +137,7 @@ spec.md の Scenario「job map の固定引数の後ろに追加引数を順序�
 
 ### 変更してほしいこと
 
-`rdb-schema.yaml` の `execution_specs.additional_args` と `slot_execution_specs.fixed_args` に保存形式を定義する。推奨案は JSON 配列(例: `["--target-date","2026-08-18","--retry","3"]`)で、復元は要素順をそのまま argv にする。代替案は実装の `%q` 連結(bash 専用)。いずれの場合も、空白・引用符・改行を含む引数の往復が同一であることを要件に含め、E2E Scenario の期待値を採用形式に合わせて更新する。
+採用案: `rdb-schema.yaml` の `execution_specs.additional_args` と `slot_execution_specs.fixed_args` の保存形式を JSON 配列(例: `["--target-date","2026-08-18","--retry","3"]`)と定義し、復元は要素順をそのまま argv にする。空白・引用符・改行を含む引数の往復が同一であることを要件に含め、E2E Scenario の期待値を JSON 配列に合わせて更新する。実装の `%q` 連結(bash 専用)は採用しない。
 
 ### 完了条件
 
@@ -161,14 +163,14 @@ spec.md の Scenario「job map の固定引数の後ろに追加引数を順序�
 
 ### 変更してほしいこと
 
-`rdb-schema.yaml`(または `datastore-schema.md`)に次を定義する。
+採用案として `rdb-schema.yaml`(または `datastore-schema.md`)に次を定義する。
 
-- 論理型 → PostgreSQL 物理型の対応表(推奨: uuid → uuid、string → text、text → text、integer → integer、datetime → timestamptz)
-- datetime の精度(推奨: マイクロ秒)と保存時刻の基準(UTC)、ISO 8601 表現
+- 論理型 → PostgreSQL 物理型の対応表: uuid → uuid、string → text、text → text、integer → integer、datetime → timestamptz
+- datetime の精度はマイクロ秒、保存時刻の基準は UTC、表現は ISO 8601
 - 同一 transaction で記録する複数の時刻カラム(accepted_at / occurred_at / updated_at)を同一値にする規則
 - uuid 型カラムに保存する識別子が RFC 4122 形式の UUID 文字列であること
 
-あわせて、migration(datastore 所有 tier)とテスト fixture の双方がこの対応表から生成される旨を明記する。
+あわせて、migration(datastore 所有 tier)とテスト fixture の双方がこの対応表から生成される旨を明記する。CR-6078c4ed-018 で `job_map_version` を slot_execution_specs へ移す列変更も、同じ対応表(string → text)に従う。
 
 ### 完了条件
 
@@ -194,7 +196,9 @@ spec.md の関連 RDRA モデルは「情報 execution-spec.json — run 共通�
 
 ### 変更してほしいこと
 
-SPEC-009-03 の文言を仕様に合わせる(推奨): 「execution spec(run 共通の execution_specs と slot 別の slot_execution_specs)として RDB に保存する」「hang_detect_limit_minutes は run 共通の値とする」。受け入れ基準の「execution-spec.json に…保存され」も同様に改める。role 別のしきい値が業務要件として必要な場合は、代替案としてジョブマップ形式と rdb-schema(slot_execution_specs または runner 側)へ role 別の列を追加する要求に切り替える。
+採用案: SPEC-009-03 の文言を仕様に合わせる。「execution spec(run 共通の execution_specs と slot 別の slot_execution_specs)として RDB に保存する」「hang_detect_limit_minutes は run 共通の 1 値として保存する」と改め、受け入れ基準の「execution-spec.json に…保存され」も同様に改める。rdb-schema に role 別のしきい値列を追加する案は採用しない。
+
+run 共通の 1 値の出所は CR-6078c4ed-018 で確定する(background に選ばれた slot のジョブマップの `hang_detect_limit_minutes` を採用する)。SPEC-009-03 の文言もこの出所と矛盾しない表現にする。
 
 ### 完了条件
 
@@ -218,9 +222,9 @@ credential_ref が「参照名」として何を参照するのか(鍵ファイ�
 
 ### 変更してほしいこと
 
-次を cross-cutting の契約(CLI コマンド契約または実行境界の契約)として定義する。
+採用案として次を cross-cutting の契約(CLI コマンド契約または実行境界の契約)として定義する。
 
-- credential_ref の解決規則(推奨: ジョブマップ外の認証情報ディレクトリまたは ssh_config の Host エイリアスを参照名で引く。実値はジョブマップ・RDB・監査・標準出力・起動イベントに現れない)
+- credential_ref の解決規則: ジョブマップ外の認証情報ディレクトリを参照名で引く(認証情報ディレクトリ方式)。実値はジョブマップ・RDB・監査・標準出力・起動イベントに現れない。ssh_config の Host エイリアス方式は採用しない
 - facade と worker で共通の環境変数名(`RELAYGATE_SSH_KEY_PATH` の扱いを含む)と、credential_ref が null の場合の既定動作
 - E2E Scenario の Given のジョブマップ記述に `credential_ref` の値(cred-blue-batch / cred-green-batch)を追記する
 
@@ -228,26 +232,34 @@ credential_ref が「参照名」として何を参照するのか(鍵ファイ�
 
 facade と worker が同じ契約から credential_ref の解決を実装でき、認証情報の実値が保存・出力されないことを同じ検証方法で確認でき、E2E Scenario の Given だけから Then の credential_ref 期待値が導ける。
 
-## CR-6078c4ed-018: ジョブマップのファイル形式と必須フィールドを契約に定義する
+## CR-6078c4ed-018: ジョブマップを slot ごとの独立ファイルとして契約化し、job_map_version を slot 別に保存する
 
 - severity: spec-gap
 - related_ids: [SPEC-009-01, REQ-009]
-- related_files: [docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml, docs/specs/latest/並行稼働実行業務/並行稼働実行フロー/feature flag設定に基づきslotを選択して起動する/tier-facade.md]
+- related_files: [docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml, docs/specs/latest/_cross-cutting/datastore/rdb-schema.yaml, docs/specs/latest/並行稼働実行業務/並行稼働実行フロー/feature flag設定に基づきslotを選択して起動する/tier-facade.md]
 
 ### 観測した事実
 
-`cli-command-contract.yaml` と tier-facade.md は `RELAYGATE_JOB_MAP_PATH`(ジョブマップファイルパス)を定義し、spec.md の Given は「ジョブマップ v1.4.0 で job_id が blue(host=…, impl_version=…)と green(…)に解決できる」と記述する。ジョブマップのファイル形式(JSON / YAML)、トップレベル構造、job ごとの必須フィールド、`job_map_version` の位置、slot ごとの項目(host / exec_user / script_path / work_dir / fixed_args / impl_version / credential_ref)と job 共通の項目(hang_detect_limit_minutes)の区別は、どの正本にも無い。
+`cli-command-contract.yaml` と tier-facade.md は `RELAYGATE_JOB_MAP_PATH`(ジョブマップファイルパス)を 1 つだけ定義し、spec.md の Given は「ジョブマップ v1.4.0 で job_id が blue(host=…, impl_version=…)と green(…)に解決できる」と記述する。`rdb-schema.yaml` は `job_map_version` を `execution_specs`(run 共通)の列として定義し、「実行先解決に使用したジョブマップのバージョン」と説明している。ジョブマップのファイル形式(JSON / YAML)、トップレベル構造、job ごとの必須フィールド、slot ごとの項目(host / exec_user / script_path / work_dir / fixed_args / impl_version / credential_ref)と hang_detect_limit_minutes の位置は、どの正本にも無い。
 
-実装は限定検証境界として JSON の slot-entry 形式(`facade/src/job_map_gateway.sh` のヘッダコメントに記載)を採用し、jq でフィールド名を指定して読む。未知のフィールドは無視され、形式の厳格検証は行っていない。受け入れテストでは、facade が読まない余剰フィールドに秘密鍵風の値を混入させ、RDB・起動イベント・標準出力に現れないことを確認した。
+実装は限定検証境界として、blue / green を 1 ファイルに持つ JSON の slot-entry 形式(`facade/src/job_map_gateway.sh` のヘッダコメントに記載)を採用し、jq でフィールド名を指定して読む。`job_map_version` は 1 ファイルの 1 値を run 共通として保存し、`hang_detect_limit_minutes` は job 直下の 1 値として解決している。未知のフィールドは無視され、形式の厳格検証は行っていない。受け入れテストでは、facade が読まない余剰フィールドに秘密鍵風の値を混入させ、RDB・起動イベント・標準出力に現れないことを確認した。
 
 ### 現在の仕様と問題
 
-ジョブマップは運用者が編集する外部入力であり、UC「runner 設定の差し替えのみで新世代実装を起動できる」の前提でもある。形式が未契約のため、運用手順書・サンプル・検証(必須フィールド欠落時の終了コードとメッセージ)を仕様から導けず、background 起動 UC やリラン UC が別形式を仮定する余地がある。
+ジョブマップは運用者が編集する外部入力であり、UC「runner 設定の差し替えのみで新世代実装を起動できる」の前提でもある。現行の仕様と実装は、ジョブマップが 1 ファイルであり、`job_map_version` が run 共通の 1 値であることを前提としている。
+
+blue と green は別ライフサイクルでメンテナンスされる。1 ファイルを両 slot で共有すると、片方の slot の変更が他方の slot のリリースと競合し、版の記録も「どちらの slot の変更か」を表せない。形式が未契約のため、運用手順書・サンプル・検証(必須フィールド欠落時の終了コードとメッセージ)を仕様から導けず、background 起動 UC やリラン UC が別形式を仮定する余地もある。
 
 ### 変更してほしいこと
 
-ジョブマップの形式を cross-cutting の契約として定義する。推奨案は実装の JSON slot-entry 形式を正本化する(`job_map_version`、`jobs[].job_id`、`jobs[].hang_detect_limit_minutes`、`jobs[].slots.{blue,green}.{host,exec_user,script_path,work_dir,fixed_args,impl_version,credential_ref}`)。必須 / 任意の区別、未知フィールドの扱い(無視 / エラー)、必須欠落時の終了コード(バリデーション 2 または業務エラー 1)と stderr 文言も定める。
+採用案: ジョブマップを slot ごとの独立ファイルとして cross-cutting の契約に定義する。1 ファイルで blue / green を併記する形式(実装の現行形式)は採用しない。
+
+- 環境変数: `RELAYGATE_JOB_MAP_PATH` を廃止し、slot ごとのファイルパス(`RELAYGATE_JOB_MAP_PATH_BLUE` / `RELAYGATE_JOB_MAP_PATH_GREEN` 相当)を `cli-command-contract.yaml` と tier-facade.md の環境変数表に定義する
+- ファイル構造: 各ファイルは自分の `job_map_version` と、job_id ごとの `host / exec_user / script_path / work_dir / fixed_args / impl_version / credential_ref / hang_detect_limit_minutes` を持つ。ファイル形式(JSON を想定)、必須 / 任意の区別、未知フィールドの扱い(無視 / エラー)、必須欠落時の終了コード(バリデーション 2 または業務エラー 1)と stderr 文言も定める
+- rdb-schema: `job_map_version` を `execution_specs`(run 共通)から `slot_execution_specs`(slot 別)へ移動し、「その slot の実行先解決に使用したジョブマップの版」とする。列の物理型は CR-6078c4ed-015 の対応表に従う
+- hang_detect_limit_minutes: 各 slot のジョブマップが値を持つ。run 共通の `execution_specs.hang_detect_limit_minutes` には、background role に選ばれた slot のジョブマップの値を採用する(両 slot が background の場合の選び方も定める)。USDM 側の文言は CR-6078c4ed-016 で合わせる
+- E2E Scenario の Given を slot ごとのジョブマップ(それぞれの版)に改める
 
 ### 完了条件
 
-運用者が契約だけからジョブマップを作成でき、facade・worker・リランの各 UC が同じ形式を読み、必須フィールド欠落時の挙動が E2E Scenario として書ける。
+運用者が契約だけから slot ごとのジョブマップを作成でき、片方の slot のジョブマップだけを差し替えて新世代を起動できる。facade・worker・リランの各 UC が同じ形式を読み、`slot_execution_specs.job_map_version` に各 slot の版が保存され、`execution_specs.hang_detect_limit_minutes` の出所が background slot のジョブマップであることと、必須フィールド欠落時の挙動が E2E Scenario として書ける。

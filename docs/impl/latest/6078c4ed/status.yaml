@@ -51,11 +51,11 @@ stages:
     steps: 30
   S8_feedback:
     status: done
-    mode: initial
+    mode: refresh
     feedback_id: 20260822_085257_impl_feedback_6078c4ed
     request_count: 8
     blocker_count: 2
   S9_review:
     status: done
     event_id: 20260822_130000_s9_review_generated
-updated_at: '2026-08-22T09:18:04+09:00'
+updated_at: '2026-08-22T09:39:24+09:00'
