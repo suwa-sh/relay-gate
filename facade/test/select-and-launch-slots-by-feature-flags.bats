@@ -368,8 +368,10 @@ strip_test_dir() {
 	[ "$(sqlite3 "$db_path" 'SELECT event_name || ":" || status FROM runner_result_events WHERE slot_type = "green" ORDER BY occurred_at;')" = $'attempt_started:STARTING\nattempt_failed:FAILED' ]
 	[ "$(sqlite3 "$db_path" 'SELECT COUNT(*) FROM runner_results r JOIN runner_result_events e ON e.run_id = r.run_id AND e.slot_type = r.slot_type AND e.attempt_id = r.attempt_id AND e.event_name = "attempt_failed" AND e.occurred_at = r.updated_at;')" = "1" ]
 	[ "$(sqlite3 "$db_path" 'SELECT slot || ":" || outcome || ":" || error_code || ":" || actor FROM audit_logs WHERE event_name = "slot_launch_failed";')" = "green:failed:launch_event_send_failed:ops-tanaka" ]
-	# slot_launch_failed は同 slot の slot_launch_attempted の後ろにチェーンされる
-	[ "$(sqlite3 "$db_path" 'SELECT COUNT(*) FROM audit_logs f JOIN audit_logs a ON a.event_hash = f.previous_hash WHERE f.event_name = "slot_launch_failed" AND a.event_name = "slot_launch_attempted" AND a.slot = "green";')" = "1" ]
+	# slot_launch_failed は slot_launch_attempted の後ろにチェーンされ、チェーン先頭になる(run_id 単位の線形チェーンのため
+	# 直前は起動前 transaction で最後に追記した slot_launch_attempted。同 slot のものとは限らない)
+	[ "$(sqlite3 "$db_path" 'SELECT COUNT(*) FROM audit_logs f JOIN audit_logs a ON a.event_hash = f.previous_hash WHERE f.event_name = "slot_launch_failed" AND a.event_name = "slot_launch_attempted";')" = "1" ]
+	[ "$(sqlite3 "$db_path" 'SELECT COUNT(*) FROM audit_chain_heads h JOIN audit_logs f ON f.event_id = h.head_event_id AND f.event_hash = h.head_hash WHERE f.event_name = "slot_launch_failed" AND h.chain_length = 4;')" = "1" ]
 	# 起動受付の記録(標準出力)は維持され、blue の起動イベントは送出される
 	[ "$(printf '%s\n' "$output" | grep -c 'status=STARTING')" = "2" ]
 	grep -q 'blue-host-01' "$launch_log"

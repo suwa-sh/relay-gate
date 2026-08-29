@@ -45,9 +45,16 @@ deadline_run_for() {
 }
 
 # deadline_run は全ての外部 I/O を単一 CLI deadline までに打ち切る。
+# deadline を使い切った後は、送出失敗 / timeout の補償記録(deadline_grace=1 の間)に限り固定の猶予(GRACE_SECONDS)で
+# 必ず実行を試みる(補償記録を落とさないため)。それ以外は 124 を返す。
+readonly GRACE_SECONDS=2
 deadline_run() {
 	local remaining_milliseconds timeout_duration
-	remaining_milliseconds="$(remaining_deadline_milliseconds)" || return 124
+	remaining_milliseconds="$(remaining_deadline_milliseconds || printf '0')"
+	if [[ ${deadline_grace:-0} == 1 ]] && ((remaining_milliseconds < GRACE_SECONDS * 1000)); then
+		remaining_milliseconds=$((GRACE_SECONDS * 1000))
+	fi
+	((remaining_milliseconds > 0)) || return 124
 	printf -v timeout_duration '%d.%03ds' "$((remaining_milliseconds / 1000))" "$((remaining_milliseconds % 1000))"
 	deadline_run_for "$timeout_duration" "$@"
 }
@@ -60,7 +67,7 @@ readonly SCRIPT_DIR="$script_dir"
 # shellcheck source=../../packages/contracts/relay-gate-db/schema-constants.sh
 source "$SCRIPT_DIR/../../packages/contracts/relay-gate-db/schema-constants.sh" || initialization_error
 # 層別ライブラリ(依存方向: presentation → usecase → domain → gateway)
-for library in presentation domain id_gateway job_map_gateway rdb_gateway launch_gateway usecase; do
+for library in presentation domain id_gateway job_map_gateway credential_gateway rdb_gateway launch_gateway usecase; do
 	# shellcheck source=/dev/null
 	source "$SCRIPT_DIR/../src/$library.sh" || initialization_error
 done
@@ -73,6 +80,8 @@ main() {
 	green_mode="${GREEN_MODE:-}"
 	rapid_crosscheck_mode="${RAPID_CROSSCHECK_MODE:-}"
 	operator="${RELAYGATE_OPERATOR:-}"
+	credential_dir="${RELAYGATE_CREDENTIAL_DIR:-}"
+	default_ssh_key_path="${RELAYGATE_SSH_KEY_PATH:-}"
 	validate_select_slot_environment
 	select_and_start_slot
 }

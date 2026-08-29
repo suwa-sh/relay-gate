@@ -13,7 +13,7 @@
 //   - 起動イベントは PATH 先頭の ssh スタブが受け取り、引数列(`$*`)を起動ログへ 1 行ずつ追記する。
 //     送出失敗・timeout は接続先ホスト名で振る舞いを切り替えるスタブで再現する
 const { After, Before, Given, Then, When, setDefaultTimeout } = require("@cucumber/cucumber");
-const { existsSync, mkdtempSync, mkdirSync, rmSync, writeFileSync } = require("node:fs");
+const { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } = require("node:fs");
 const { tmpdir } = require("node:os");
 const { join, resolve } = require("node:path");
 const { spawnSync } = require("node:child_process");
@@ -233,31 +233,67 @@ Then('audit_logs に event_name={string} と event_name={string} の起動前監
   assertEqual(query(this.dbPath, "SELECT COUNT(*) FROM audit_chain_heads h JOIN audit_logs a ON a.event_id = h.head_event_id AND a.event_hash = h.head_hash AND a.run_id = h.run_id;")[0][0], "1", "audit_chain_heads head");
 });
 
-// ---- Then(新仕様で追加・変更: S2 skeleton。S4 が結線する) ----
+// ---- Then(新仕様で追加・変更: S4 tier-impl で結線) ----
 Then(literal('execution_specs に run_id="3f8c9d2e-5b41-4a7e-9c13-6d2a8b0f1e57", hang_detect_limit_minutes=45 の1行がINSERTされる'), function () {
-  notImplemented("execution_specs hang_detect_limit_minutes=45 (background slot の値を採用)");
+  const rows = query(this.dbPath, "SELECT run_id, hang_detect_limit_minutes, job_id, additional_args, (parent_run_id IS NULL) FROM execution_specs;");
+  assertEqual(rows.length, 1, "execution_specs rows");
+  assertEqual(rows[0].join("|"), "3f8c9d2e-5b41-4a7e-9c13-6d2a8b0f1e57|45|daily-settlement|[]|1", "execution_specs row");
 });
 Then(literal('slot_execution_specs に slot_type="blue" と slot_type="green" の2行が job_map_version="v1.4.0" でINSERTされる'), function () {
-  notImplemented("slot_execution_specs 2 rows with slot 別 job_map_version");
+  const rows = query(this.dbPath, "SELECT slot_type, job_map_version, host, impl_version, credential_ref FROM slot_execution_specs ORDER BY slot_type;");
+  assertEqual(rows.map((row) => row.join("|")).join("\n"), "blue|v1.4.0|blue-host-01|blue-2.3.1|cred-blue-batch\ngreen|v1.4.0|green-host-01|green-0.9.0|cred-green-batch", "slot_execution_specs rows");
+  assertEqual(query(this.dbPath, "SELECT COUNT(DISTINCT run_id) FROM slot_execution_specs;")[0][0], "1", "slot_execution_specs run_id");
 });
+
+// assertCompensation は補償記録(履歴 INSERT + snapshot UPDATE が同一時刻で対応する)を検証する
+function assertCompensation(world, slot, role, attemptId, status, eventName) {
+  assertEqual(query(world.dbPath, `SELECT status, (exit_code IS NULL) FROM runner_results WHERE slot_type = '${slot}' AND role_type = '${role}' AND attempt_id = '${attemptId}';`)[0].join("|"), `${status}|1`, `runner_results ${slot}`);
+  assertEqual(query(world.dbPath, `SELECT event_name || ':' || status FROM runner_result_events WHERE slot_type = '${slot}' ORDER BY occurred_at;`).map((row) => row[0]).join("\n"), `attempt_started:STARTING\n${eventName}:${status}`, `runner_result_events ${slot}`);
+  assertEqual(query(world.dbPath, `SELECT COUNT(*) FROM runner_results r JOIN runner_result_events e ON e.run_id = r.run_id AND e.slot_type = r.slot_type AND e.role_type = r.role_type AND e.attempt_id = r.attempt_id AND e.event_name = '${eventName}' AND e.occurred_at = r.updated_at WHERE r.slot_type = '${slot}';`)[0][0], "1", `history/snapshot pairing ${slot}`);
+}
+
+// assertPostLaunchAudit は起動後監査イベントがチェーン先頭へ追記されていることを検証する
+function assertPostLaunchAudit(world, slot, attemptId, eventName, outcome, errorCode) {
+  const rows = query(world.dbPath, `SELECT slot, attempt_id, outcome, error_code, actor, operation FROM audit_logs WHERE event_name = '${eventName}';`);
+  assertEqual(rows.length, 1, `${eventName} rows`);
+  assertEqual(rows[0].join("|"), `${slot}|${attemptId}|${outcome}|${errorCode}|ops-tanaka|slot_launch`, eventName);
+  assertEqual(query(world.dbPath, `SELECT COUNT(*) FROM audit_logs f JOIN audit_logs p ON p.event_hash = f.previous_hash AND p.run_id = f.run_id WHERE f.event_name = '${eventName}';`)[0][0], "1", `${eventName} chained`);
+  assertEqual(query(world.dbPath, `SELECT COUNT(*) FROM audit_chain_heads h JOIN audit_logs f ON f.event_id = h.head_event_id AND f.event_hash = h.head_hash AND f.run_id = h.run_id WHERE f.event_name = '${eventName}' AND h.chain_length = (SELECT COUNT(*) FROM audit_logs);`)[0][0], "1", `${eventName} is chain head`);
+}
+
 Then(literal('runner_results の green/background/att-green-0001 行が status="FAILED" へ更新され、runner_result_events に event_name="attempt_failed" の履歴が同一transactionでINSERTされる'), function () {
-  notImplemented("送出失敗の FAILED 補償記録 (attempt_failed)");
+  assertCompensation(this, "green", "background", "att-green-0001", "FAILED", "attempt_failed");
 });
 Then(literal('audit_logs に (slot="green", attempt_id="att-green-0001", event_name="slot_launch_failed", outcome="failed", error_code="launch_event_send_failed") がINSERTされる'), function () {
-  notImplemented("slot_launch_failed 監査イベントの追記");
+  assertPostLaunchAudit(this, "green", "att-green-0001", "slot_launch_failed", "failed", "launch_event_send_failed");
 });
 Then(literal("標準出力には選択slotごとの status=STARTING 行が出力される"), function () {
-  notImplemented("送出失敗時も起動受付の STARTING 行を標準出力する契約");
+  const lines = this.result.stdout.split("\n").filter((line) => line.length > 0);
+  assertEqual(lines.length, 2, "stdout lines");
+  for (const slot of ["blue", "green"]) {
+    if (!lines.some((line) => line.includes(`slot_type=${slot} `) && line.endsWith("status=STARTING"))) throw new Error(`stdout has no STARTING line for ${slot}: ${this.result.stdout}`);
+  }
 });
 Then(literal('runner_results の blue/foreground/att-blue-0001 行が status="UNKNOWN" へ更新され、runner_result_events に event_name="attempt_unknown" の履歴が同一transactionでINSERTされる'), function () {
-  notImplemented("送出 timeout の UNKNOWN 補償記録 (attempt_unknown)");
+  assertCompensation(this, "blue", "foreground", "att-blue-0001", "UNKNOWN", "attempt_unknown");
+  assertEqual(query(this.dbPath, "SELECT COUNT(*) FROM audit_logs WHERE event_name = 'slot_launch_failed';")[0][0], "0", "no FAILED guess");
 });
 Then(literal('audit_logs に (slot="blue", attempt_id="att-blue-0001", event_name="slot_launch_timeout", outcome="timeout", error_code="launch_event_send_timeout") がINSERTされる'), function () {
-  notImplemented("slot_launch_timeout 監査イベントの追記");
+  assertPostLaunchAudit(this, "blue", "att-blue-0001", "slot_launch_timeout", "timeout", "launch_event_send_timeout");
 });
 Then(literal('execution_specs の additional_args にJSON配列 ["--note","a b \\"c\\""] が保存される'), function () {
-  notImplemented("additional_args の JSON 配列保存 (argument_serialization)");
+  const saved = query(this.dbPath, "SELECT additional_args FROM execution_specs;")[0][0];
+  assertEqual(JSON.stringify(JSON.parse(saved)), JSON.stringify(["--note", 'a b "c"']), "additional_args");
 });
 Then(literal('blue実装への起動イベントのargvは fixed_args の要素に additional_args の要素を後置連結した ["--mode","batch","--note","a b \\"c\\""] である'), function () {
-  notImplemented("fixed_args + additional_args の要素順 argv 復元");
+  // 起動ログの行(ssh 引数列)からリモートコマンド(user@host の次の要素)を取り出し、スクリプトパス以降の argv を
+  // リモート側と同じ bash の単語分割で復元して比較する
+  const line = readFileSync(this.launchLogPath, "utf8").split("\n").find((entry) => entry.includes("batchuser@blue-host-01 "));
+  if (!line) throw new Error("no launch event for blue-host-01");
+  const remoteCommand = line.slice(line.indexOf("batchuser@blue-host-01 ") + "batchuser@blue-host-01 ".length);
+  const argvPart = remoteCommand.slice(remoteCommand.indexOf(" /opt/blue/run.sh") + " /opt/blue/run.sh".length);
+  const restored = execute("bash", ["-c", `eval "set -- $1"; printf '%s\\0' "$@"`, "bash", argvPart]);
+  if (restored.status !== 0) throw new Error(`argv restore failed: ${restored.stderr}`);
+  const argv = restored.stdout.split("\0").slice(0, -1);
+  assertEqual(JSON.stringify(argv), JSON.stringify(["--mode", "batch", "--note", 'a b "c"']), "argv");
 });

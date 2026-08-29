@@ -1,0 +1,65 @@
+schema_version: "1.0"
+stage: "S4"
+uc_id: "6078c4ed"
+tier: "tier-facade"
+attempt: 6
+result: pass
+rerun_mode: "stale"
+rerun_reason: "stale (feedback reflow 20260822_085257 CR-011..018 -> spec 20260829_210828_spec_generation). previous attempt-6 done invalidated at 20260830_023002_stale_done_invalidated_after_reflow"
+gates:
+  format: pass
+  lint: pass
+  tdd: pass
+  bdd_tier: pass
+gate_commands:
+  format: "shfmt -d facade"
+  lint: "find facade \\( -name '*.sh' -o -path 'facade/bin/*' -type f \\) -print0 | xargs -0 -r shellcheck -x"
+  tdd: "bats facade/test"
+  bdd_tier: "npx cucumber-js --config cucumber.cjs --profile tier-facade"
+gate_exit_codes:
+  format: 0
+  lint: 0
+  tdd: 0
+  bdd_tier: 0
+test_counts:
+  tdd: "70 tests / 70 passed / 0 failed (select-and-launch-slots-by-feature-flags.bats 17, 6078c4ed_select_slot.bats 48, 6078c4ed_select_slot_postgresql.bats 5 on pg_ctl temp instance, no skip)"
+  bdd_tier: "7 scenarios / 7 passed, 78 steps / 78 passed"
+  qlty: "qlty check --all --no-progress --no-formatters --fail-level medium exit 0 (No issues)"
+spec_alignment:
+  - "job map: slot 別ファイル RELAYGATE_JOB_MAP_PATH_BLUE/_GREEN。起動対象 slot のみ読み、job_map_contract の validation 順・文言で exit 2 / 1 (facade/src/job_map_gateway.sh)"
+  - "credential_resolution: RELAYGATE_CREDENTIAL_DIR/{credential_ref} (null は RELAYGATE_SSH_KEY_PATH)、0600 検査、transaction 前に解決、鍵の実値を出力しない (facade/src/credential_gateway.sh)"
+  - "argument_serialization: additional_args / fixed_args を JSON 配列で保存、argv は fixed_args + additional_args の要素順 (%q 連結は保存に使わない)"
+  - "rdb-schema: job_map_version を slot_execution_specs へ、hang_detect_limit_minutes は background slot の値 (両 background は大きい方、無ければ唯一の slot)"
+  - "compensation: 送出失敗 FAILED/attempt_failed、timeout UNKNOWN/attempt_unknown を transaction 1 で記録し、slot_launch_failed/slot_launch_timeout を lock_contract の別 transaction で追記。失敗時は outbox 退避。exit 1 / 124"
+  - "audit canonical_form: 13 項目、'\\' と '|' のエスケープ、末尾 |previous_hash、SHA-256 小文字 64 桁 (facade/src/domain.sh)"
+  - "datetime_rules: イベントごとに時刻取得・記録順に単調増加、派生カラムは同一値 (facade/src/id_gateway.sh)"
+files_created:
+  - "facade/src/credential_gateway.sh"
+  - "docs/impl/latest/6078c4ed/issues/20260830T033000Z_select-slot-s4-attempt6-reflow-asbuilt-assumptions.md"
+  - "docs/impl/latest/6078c4ed/stages/attempt-6/S4_tier-impl.tier-facade.done.yaml"
+files_updated:
+  - "facade/bin/relaygate"
+  - "facade/src/domain.sh"
+  - "facade/src/id_gateway.sh"
+  - "facade/src/job_map_gateway.sh"
+  - "facade/src/launch_gateway.sh"
+  - "facade/src/presentation.sh"
+  - "facade/src/rdb_gateway.sh"
+  - "facade/src/usecase.sh"
+  - "facade/features/steps/select-and-launch-slots-by-feature-flags.steps.cjs (S2 skeleton 9 step を結線)"
+  - "facade/test/select-and-launch-slots-by-feature-flags.bats (slot_launch_failed のチェーン位置 assertion を仕様文言に合わせて修正。issue 2.1)"
+  - "facade/test/6078c4ed_select_slot.bats (旧契約 39 件を新契約 48 件へ移行)"
+issues_created:
+  - path: "docs/impl/latest/6078c4ed/issues/20260830T033000Z_select-slot-s4-attempt6-reflow-asbuilt-assumptions.md"
+    summary: "仮置き 4 件 (outbox の置き場所/形式、ssh への鍵の渡し方、RELAYGATE_CREDENTIAL_DIR 未設定の exit、鍵パーミッション 0400 許容) と実装判断 8 件 (チェーン位置、CAS 方式の監査追記、deadline 予約と猶予、deadline_exhausted は FAILED、他)"
+shared_rules_placeholder:
+  - "audit outbox: dir/file format undefined in contract -> facade/src/rdb_gateway.sh audit_outbox_dir / write_audit_outbox (RELAYGATE_AUDIT_OUTBOX_DIR)"
+notes:
+  - "features/uc・features/atdd の ssh スタブが接続先を $5 で判定するため、ssh 引数列は -i <key> -oBatchMode=yes -oIdentitiesOnly=yes <user@host> <cmd> にして $5 を接続先に保った"
+  - "通常実行は約 1.2 秒。SSH 待機は seam 上限と (deadline 残余 - 予約 2 秒) の小さい方。deadline 超過後の補償記録は 2 秒の猶予で実行"
+  - "PostgreSQL テストは pg_ctl 一時インスタンス (PATH 上の initdb/pg_ctl/psql) で 5/5 pass。暗黙 skip なし"
+  - "write-set 外への書き込みなし (git status: facade/ 配下 + issues/ + 本 done のみ)"
+manifest_sha256: "5792865a9a21fc2ed8ea798dda44ab6c2f262d2ae219e5fcee665004ac3f0c01"
+manifest_projection: "v2"
+completed_at: "2026-08-30T03:15:00+09:00"
+completed_by: "dist-impl-implement@0.12.0"
