@@ -40,9 +40,12 @@ stages:
       event_id: 20260830_023009_s4_tier_facade_attempt_7_completed
   S5_verify:
     tier-facade:
-      status: pending
+      status: done
       attempt: 7
-      open_blockers: 0
+      result: fail
+      open_blockers: 2
+      open_minors: 2
+      event_id: 20260830_023010_s5_verify_tier_facade_attempt_7_completed
   S6_uc_bdd:
     status: pending
   S7_atdd:
@@ -59,4 +62,4 @@ stages:
       published_event_id: 20260822_143300_feedback_request_published
   S9_review:
     status: pending
-updated_at: '2026-08-30T04:01:36+09:00'
+updated_at: '2026-08-30T04:13:31+09:00'

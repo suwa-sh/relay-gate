@@ -1,0 +1,10 @@
+stage: "S5"
+tier: "tier-facade"
+attempt: 7
+uc_id: "6078c4ed"
+manifest_sha256: "5792865a9a21fc2ed8ea798dda44ab6c2f262d2ae219e5fcee665004ac3f0c01"
+manifest_projection: v2
+result: "fail"
+open_blockers: 2
+completed_at: "2026-08-29T19:10:28Z"
+completed_by: "dist-impl-verify@0.12.0"
