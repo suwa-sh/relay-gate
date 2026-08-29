@@ -1,0 +1,14 @@
+event_id: 20260830_023005_s2_test_scaffold_rerun_completed
+type: stage_completed
+uc_id: 6078c4ed
+stage: S2
+payload:
+  manifest_sha256: da29ceadf1d36fd97c2bfff45da5978a55d9cb9039d0fbe296a6e69117f48b69
+  manifest_projection: v2
+  mode: scoped
+  tiers:
+  - tier-facade
+  red_baseline: tier BDD 5/7 fail, UC BDD 15/17 fail, TDD 14/17 fail, ATDD 6/7 fail
+    (undefined 0)
+  issue: issues/20260829T172256Z_select-slot-reflow-e2e-boundary.md
+created_at: '2026-08-30T02:29:24+09:00'

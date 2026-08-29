@@ -1,5 +1,11 @@
-// ATDD step definitions(①)。uc-map 6078c4ed の atdd_scenarios(SPEC-001-01/02/03, SPEC-009-01/02/03 の各 -1)を
-// tier-facade attempt 6 の実装(facade/bin/relaygate)へ結線する。S7 atdd で旧仕様・旧契約前提の steps を全面更新した。
+// ATDD step definitions(①)。uc-map 6078c4ed の atdd_scenarios(SPEC-001-01/02/03, SPEC-009-01/02 の各 -1、SPEC-009-03 の -1 / -2)。
+// S7 atdd(attempt 6)で結線した steps を、S2 scoped 再実行(spec 20260829_210828_spec_generation 還流: CR-6078c4ed-011〜018)で
+// 新契約のハーネス(slot 別ジョブマップ / 認証情報ディレクトリ / 新スキーマ)へ差し替えた。
+// 新仕様で文言が変わった SPEC-009-03-1 の Then と追加された SPEC-009-03-2 は「未実装」を明示する skeleton(S7 が結線する)。
+// 結線済み step の assertion のうち次は旧契約前提で stale であり、S7 が新仕様へ改める:
+//   - additional_args / fixed_args の期待値が空白連結文字列(新仕様は JSON 配列。rdb-schema.yaml argument_serialization)
+//   - hang_detect_limit_minutes の期待値 30(新仕様は background role の slot の値 = green 45)
+//   - 起動イベントに credential_ref 由来の秘密鍵指定が無い前提(新仕様は credential_resolution で解決した鍵を使う)
 // 方針:
 //   - 受け入れ基準(USDM acceptance_criteria)は 1 行の Given/When/Then で具体値を持たない。具体値は spec.md の
 //     E2E 完了条件(BDD)の Given 値(ジョブマップ v1.4.0 / daily-settlement / blue-host-01 等)をそのまま使う
@@ -29,8 +35,8 @@ const CREDENTIAL_SECRET = "-----BEGIN OPENSSH PRIVATE KEY----- atdd-secret-mater
 
 // 新仕様の検証用 SQLite スキーマ(列は契約定数 schema-constants.sh と同一。PK / UNIQUE は rdb-schema.yaml に従う)
 const CONTRACT_SCHEMA = [
-  "CREATE TABLE execution_specs (run_id TEXT PRIMARY KEY, parent_run_id TEXT REFERENCES execution_specs(run_id), job_id TEXT NOT NULL, additional_args TEXT, job_map_version TEXT NOT NULL, hang_detect_limit_minutes INTEGER NOT NULL);",
-  "CREATE TABLE slot_execution_specs (run_id TEXT NOT NULL REFERENCES execution_specs(run_id), slot_type TEXT NOT NULL, host TEXT NOT NULL, exec_user TEXT NOT NULL, script_path TEXT NOT NULL, work_dir TEXT NOT NULL, fixed_args TEXT, impl_version TEXT NOT NULL, credential_ref TEXT, PRIMARY KEY (run_id, slot_type));",
+  "CREATE TABLE execution_specs (run_id TEXT PRIMARY KEY, parent_run_id TEXT REFERENCES execution_specs(run_id), job_id TEXT NOT NULL, additional_args TEXT, hang_detect_limit_minutes INTEGER NOT NULL);",
+  "CREATE TABLE slot_execution_specs (run_id TEXT NOT NULL REFERENCES execution_specs(run_id), slot_type TEXT NOT NULL, host TEXT NOT NULL, exec_user TEXT NOT NULL, script_path TEXT NOT NULL, work_dir TEXT NOT NULL, fixed_args TEXT, impl_version TEXT NOT NULL, credential_ref TEXT, job_map_version TEXT NOT NULL, PRIMARY KEY (run_id, slot_type));",
   "CREATE TABLE runner_result_events (event_id TEXT PRIMARY KEY, run_id TEXT NOT NULL, slot_type TEXT NOT NULL, role_type TEXT NOT NULL, attempt_id TEXT NOT NULL, attempt_no INTEGER NOT NULL, event_name TEXT NOT NULL, status TEXT NOT NULL, occurred_at TEXT NOT NULL, started_at TEXT, stdout_path TEXT, stderr_path TEXT, exit_code INTEGER, UNIQUE (run_id, slot_type, role_type, attempt_id, event_name));",
   "CREATE TABLE runner_results (run_id TEXT NOT NULL, slot_type TEXT NOT NULL, role_type TEXT NOT NULL, attempt_id TEXT NOT NULL, attempt_no INTEGER NOT NULL, accepted_at TEXT NOT NULL, started_at TEXT, stdout_path TEXT, stderr_path TEXT, exit_code INTEGER, status TEXT NOT NULL, updated_at TEXT, PRIMARY KEY (run_id, slot_type, role_type, attempt_id), UNIQUE (run_id, slot_type, role_type, attempt_no));",
   "CREATE TABLE audit_logs (event_id TEXT PRIMARY KEY, event_name TEXT NOT NULL, schema_version TEXT NOT NULL, run_id TEXT NOT NULL, parent_run_id TEXT, slot TEXT NOT NULL, attempt_id TEXT NOT NULL, occurred_at TEXT NOT NULL, actor TEXT NOT NULL, operation TEXT NOT NULL, outcome TEXT NOT NULL, final_status TEXT, error_code TEXT, previous_hash TEXT, event_hash TEXT NOT NULL, UNIQUE (run_id, slot, attempt_id, event_name));",
@@ -68,30 +74,36 @@ function sqlString(value) {
   return `'${String(value).replace(/'/g, "''")}'`;
 }
 
-// ジョブマップ fixture(spec.md の Given 値 + credential_ref。issues/20260821T220045Z §3)
-function slotEntry(overrides) {
-  return { host: "", exec_user: "batchuser", script_path: "", work_dir: "/opt/relaygate/work", fixed_args: [], impl_version: "", credential_ref: "", ...overrides };
+// ジョブマップ fixture(cli-command-contract.yaml job_map_contract の slot 別ファイル形式。値は spec.md の Background)
+function jobEntry(slot, overrides = {}) {
+  const base = slot === "blue"
+    ? { host: "blue-host-01", exec_user: "batchuser", script_path: "/opt/blue/run.sh", work_dir: "/opt/relaygate/work", fixed_args: [], impl_version: "blue-2.3.1", credential_ref: "cred-blue-batch", hang_detect_limit_minutes: 30 }
+    : { host: "green-host-01", exec_user: "batchuser", script_path: "/opt/green/run.sh", work_dir: "/opt/relaygate/work", fixed_args: [], impl_version: "green-0.9.0", credential_ref: "cred-green-batch", hang_detect_limit_minutes: 45 };
+  return { ...base, ...overrides };
 }
 
-function jobMapDocument(slotOverrides = {}) {
+// jobMapDocuments は slot ごとのジョブマップ 2 文書を返す(slotOverrides.blue / .green で job entry を上書き)
+function jobMapDocuments(slotOverrides = {}) {
   return {
-    version: JOB_MAP_VERSION,
-    jobs: {
-      [JOB_ID]: {
-        hang_detect_limit_minutes: HANG_DETECT_LIMIT_MINUTES,
-        slots: {
-          blue: slotEntry({ host: "blue-host-01", script_path: "/opt/blue/run.sh", impl_version: "blue-2.3.1", credential_ref: "cred-blue-batch", ...(slotOverrides.blue || {}) }),
-          green: slotEntry({ host: "green-host-01", script_path: "/opt/green/run.sh", impl_version: "green-0.9.0", credential_ref: "cred-green-batch", ...(slotOverrides.green || {}) }),
-        },
-      },
-    },
+    blue: { job_map_version: JOB_MAP_VERSION, slot_type: "blue", jobs: { [JOB_ID]: jobEntry("blue", slotOverrides.blue || {}) } },
+    green: { job_map_version: JOB_MAP_VERSION, slot_type: "green", jobs: { [JOB_ID]: jobEntry("green", slotOverrides.green || {}) } },
   };
 }
 
-function writeJobMap(world, document) {
-  world.jobMap = document;
-  writeFileSync(world.jobMapPath, JSON.stringify(document));
-  world.jobMapSnapshot = readFileSync(world.jobMapPath, "utf8");
+// writeJobMap は slot 別の 2 ファイルへ書き、両ファイルの内容をスナップショットとして保持する(「ジョブ定義を変更しない」検証用)
+function writeJobMap(world, documents) {
+  world.jobMap = documents;
+  for (const slot of ["blue", "green"]) writeFileSync(world.jobMapPaths[slot], JSON.stringify(documents[slot]));
+  world.jobMapSnapshot = readJobMaps(world);
+}
+
+function readJobMaps(world) {
+  return ["blue", "green"].map((slot) => readFileSync(world.jobMapPaths[slot], "utf8")).join("\n");
+}
+
+// notImplemented は S2 skeleton の明示的な未実装 fail(S7 が結線する)
+function notImplemented(step) {
+  throw new Error(`not implemented: S2 scaffold (spec 20260829_210828_spec_generation) — step "${step}" is wired in S7 atdd`);
 }
 
 function setModes(world, blue, green, rapid) {
@@ -169,23 +181,32 @@ function runnerRows(dbPath, runId) {
 Before(function () {
   this.testDir = mkdtempSync(join(tmpdir(), "relaygate-atdd-select-slot-"));
   this.dbPath = join(this.testDir, "relaygate.db");
-  this.jobMapPath = join(this.testDir, "job-map.json");
+  this.etcDir = join(this.testDir, "etc", "relaygate");
+  this.credentialDir = join(this.etcDir, "credentials");
+  mkdirSync(this.credentialDir, { recursive: true });
+  this.jobMapPaths = { blue: join(this.etcDir, "job-map.blue.json"), green: join(this.etcDir, "job-map.green.json") };
   this.launchLogPath = join(this.testDir, "ssh-launch.log");
   this.binDir = join(this.testDir, "bin");
   mkdirSync(this.binDir);
   writeFileSync(join(this.binDir, "ssh"), SSH_STUB, { mode: 0o755 });
+  // credential_resolution: {RELAYGATE_CREDENTIAL_DIR}/{credential_ref} を 0600 で配置する
+  for (const ref of ["cred-blue-batch", "cred-green-batch"]) {
+    writeFileSync(join(this.credentialDir, ref), `-----BEGIN OPENSSH PRIVATE KEY-----\natdd-test-key ${ref}\n-----END OPENSSH PRIVATE KEY-----\n`, { mode: 0o600 });
+  }
   const schema = execute("sqlite3", [this.dbPath, CONTRACT_SCHEMA]);
   assert(schema.status === 0, `failed to create SQLite contract schema: ${schema.stderr}`);
   this.env = {
     ...process.env,
     PATH: `${this.binDir}:${process.env.PATH}`,
     RELAYGATE_RDB_DSN: `sqlite://${this.dbPath}`,
-    RELAYGATE_JOB_MAP_PATH: this.jobMapPath,
+    RELAYGATE_JOB_MAP_PATH_BLUE: this.jobMapPaths.blue,
+    RELAYGATE_JOB_MAP_PATH_GREEN: this.jobMapPaths.green,
+    RELAYGATE_CREDENTIAL_DIR: this.credentialDir,
     RELAYGATE_TEST_LAUNCH_LOG: this.launchLogPath,
     RELAYGATE_OPERATOR: "ops-tanaka",
   };
   // 既定: 並行稼働(blue foreground / green background)。Scenario の Given が上書きする
-  writeJobMap(this, jobMapDocument());
+  writeJobMap(this, jobMapDocuments());
   setModes(this, "foreground", "background", "on");
   installIdGenerator(this, RUN_ID_FIRST);
   this.additionalArgs = [];
@@ -233,7 +254,7 @@ Given(/^BLUE_MODE\/GREEN_MODE\/RAPID_CROSSCHECK_MODEの組み合わせを変更�
 });
 
 When(/^同じジョブ定義でジョブを起動する$/, function () {
-  assertEqual(readFileSync(this.jobMapPath, "utf8"), this.jobMapSnapshot, "job map before the second launch");
+  assertEqual(readJobMaps(this), this.jobMapSnapshot, "job map before the second launch");
   this.secondResult = runSelectSlot(this);
 });
 
@@ -241,7 +262,7 @@ Then(/^ジョブ定義を変更せず運用モードが切り替わる$/, functi
   assertExitZero(this.firstResult, "first launch (parallel operation)");
   assertExitZero(this.secondResult, "second launch (green-only production)");
   // ジョブ定義(ジョブマップ)は両起動を通じて変更されていない
-  assertEqual(readFileSync(this.jobMapPath, "utf8"), this.jobMapSnapshot, "job map after both launches");
+  assertEqual(readJobMaps(this), this.jobMapSnapshot, "job map after both launches");
   // 1 回目は並行稼働: blue foreground + green background
   assertEqual(runnerRows(this.dbPath, RUN_ID_FIRST).join(","), "blue/foreground/STARTING,green/background/STARTING", "first run runner_results");
   assertEqual(this.firstResult.launches.length, 2, "first run launch events");
@@ -253,7 +274,7 @@ Then(/^ジョブ定義を変更せず運用モードが切り替わる$/, functi
   assertEqual(this.secondResult.launches.length, 1, "second run launch events");
   assert(remoteCommandOf(launchLineFor(this.secondResult.launches, "green")).remoteCommand.includes("RELAYGATE_ROLE=foreground RELAYGATE_RAPID_CROSSCHECK_MODE=off "), "second run: green is not foreground with rapid crosscheck off");
   // 両 run とも同じジョブマップ版から解決されている
-  assertEqual(query(this.dbPath, "SELECT DISTINCT job_map_version FROM execution_specs;").map((row) => row[0]).join(","), JOB_MAP_VERSION, "job_map_version across runs");
+  assertEqual(query(this.dbPath, "SELECT DISTINCT job_map_version FROM slot_execution_specs;").map((row) => row[0]).join(","), JOB_MAP_VERSION, "job_map_version across runs");
 });
 
 // ======== SPEC-001-03-1: 同時 foreground は起動を許可しない ========
@@ -291,9 +312,10 @@ When(/^slot runnerがジョブマップを参照する$/, function () {
 Then(/^実行先の詳細が解決される$/, function () {
   assertExitZero(this.result, "job map resolution");
   // run 共通項目(ジョブマップ版・hang_detect_limit_minutes・追加引数)が解決される
-  const run = query(this.dbPath, `SELECT job_id, job_map_version, hang_detect_limit_minutes, additional_args FROM execution_specs WHERE run_id = ${sqlString(RUN_ID_FIRST)};`);
+  const run = query(this.dbPath, `SELECT job_id, hang_detect_limit_minutes, additional_args FROM execution_specs WHERE run_id = ${sqlString(RUN_ID_FIRST)};`);
   assertEqual(run.length, 1, "execution_specs rows");
-  assertEqual(run[0].join("|"), [JOB_ID, JOB_MAP_VERSION, String(HANG_DETECT_LIMIT_MINUTES), "--target-date 2026-08-18"].join("|"), "execution_specs row");
+  assertEqual(run[0].join("|"), [JOB_ID, String(HANG_DETECT_LIMIT_MINUTES), "--target-date 2026-08-18"].join("|"), "execution_specs row");
+  assertEqual(query(this.dbPath, `SELECT DISTINCT job_map_version FROM slot_execution_specs WHERE run_id = ${sqlString(RUN_ID_FIRST)};`).map((row) => row[0]).join(","), JOB_MAP_VERSION, "slot_execution_specs.job_map_version");
   // slot 別項目(ホスト・実行ユーザー・スクリプト・作業ディレクトリ)がジョブマップの値に解決される
   const rows = query(this.dbPath, `SELECT slot_type, host, exec_user, script_path, work_dir FROM slot_execution_specs WHERE run_id = ${sqlString(RUN_ID_FIRST)} ORDER BY slot_type;`);
   assertEqual(rows.map((row) => row.join("|")).join(","), ["blue|blue-host-01|batchuser|/opt/blue/run.sh|/opt/relaygate/work", "green|green-host-01|batchuser|/opt/green/run.sh|/opt/relaygate/work"].join(","), "slot_execution_specs rows");
@@ -308,7 +330,7 @@ Then(/^実行先の詳細が解決される$/, function () {
 
 // ======== SPEC-009-02-1: 固定引数の後ろに追加引数が順序どおり連結される ========
 Given(/^job mapに固定引数が定義されている$/, function () {
-  writeJobMap(this, jobMapDocument({ blue: { fixed_args: ["--mode", "batch"] }, green: { fixed_args: ["--mode", "batch", "--profile", "green"] } }));
+  writeJobMap(this, jobMapDocuments({ blue: { fixed_args: ["--mode", "batch"] }, green: { fixed_args: ["--mode", "batch", "--profile", "green"] } }));
 });
 
 When(/^ジョブスケジューラから追加引数が渡される$/, function () {
@@ -331,7 +353,7 @@ Then(/^固定引数の後ろに追加引数が順序どおり連結される$/, 
 // ======== SPEC-009-03-1: 解決済み設定が一度だけ確定して保存され、認証情報そのものは含まれない ========
 Given(/^slot runnerが実行先を解決する$/, function () {
   // 認証情報の実値をジョブマップに混入させる(facade が読まない余剰フィールド)。参照名だけが保存されることを検証する
-  writeJobMap(this, jobMapDocument({
+  writeJobMap(this, jobMapDocuments({
     blue: { fixed_args: ["--mode", "batch"], credential_secret: CREDENTIAL_SECRET },
     green: { credential_secret: CREDENTIAL_SECRET },
   }));
@@ -342,28 +364,22 @@ When(/^起動する$/, function () {
   runSelectSlot(this, this.additionalArgs);
 });
 
-Then(/^execution-spec\.jsonに解決済み設定が一度だけ確定して保存され、認証情報そのものは含まれない$/, function () {
-  assertExitZero(this.result, "launch");
-  // 一度だけ確定: run 共通設定は run_id で 1 行、slot 別設定は (run_id, slot_type) で slot ごとに 1 行
-  assertEqual(countRows(this.dbPath, "execution_specs"), 1, "execution_specs rows");
-  assertEqual(countRows(this.dbPath, "slot_execution_specs"), 2, "slot_execution_specs rows");
-  assertEqual(query(this.dbPath, "SELECT COUNT(DISTINCT run_id || '/' || slot_type) FROM slot_execution_specs;")[0][0], "2", "(run_id, slot_type) uniqueness");
-  // 解決済み設定: 追加引数・マップ版・hang_detect_limit_minutes(run 共通)
-  const run = query(this.dbPath, "SELECT run_id, COALESCE(parent_run_id, 'NULL'), job_id, additional_args, job_map_version, hang_detect_limit_minutes FROM execution_specs;")[0];
-  assertEqual(run.join("|"), [RUN_ID_FIRST, "NULL", JOB_ID, "--target-date 2026-08-18", JOB_MAP_VERSION, String(HANG_DETECT_LIMIT_MINUTES)].join("|"), "execution_specs row");
-  // 解決済み設定: ホスト・スクリプト・作業ディレクトリ・固定引数・実装版・認証情報の参照名(slot 別)
-  const slots = query(this.dbPath, "SELECT run_id, slot_type, host, exec_user, script_path, work_dir, COALESCE(fixed_args, ''), impl_version, credential_ref FROM slot_execution_specs ORDER BY slot_type;");
-  assertEqual(slots[0].join("|"), [RUN_ID_FIRST, "blue", "blue-host-01", "batchuser", "/opt/blue/run.sh", "/opt/relaygate/work", "--mode batch", "blue-2.3.1", "cred-blue-batch"].join("|"), "slot_execution_specs blue row");
-  assertEqual(slots[1].join("|"), [RUN_ID_FIRST, "green", "green-host-01", "batchuser", "/opt/green/run.sh", "/opt/relaygate/work", "", "green-0.9.0", "cred-green-batch"].join("|"), "slot_execution_specs green row");
-  // 認証情報そのものは含まれない: 実値を持つ列が無く、保存内容のどこにも実値が現れない
-  const columns = query(this.dbPath, "PRAGMA table_info(slot_execution_specs);").map((row) => row[1]);
-  assertEqual(columns.filter((name) => /password|secret|private_key|passphrase|token/i.test(name)).join(","), "", "secret-bearing columns in slot_execution_specs");
-  const dump = execute("sqlite3", [this.dbPath, ".dump"]);
-  assert(dump.status === 0, `sqlite3 .dump failed: ${dump.stderr}`);
-  assert(!dump.stdout.includes(CREDENTIAL_SECRET) && !dump.stdout.includes("PRIVATE KEY"), "credential secret was persisted into the RDB");
-  // 起動イベントにも認証情報の実値は含まれない(参照名は鍵解決方式が未契約のため起動コマンドにも現れない)
-  for (const line of this.result.launches) {
-    assert(!line.includes(CREDENTIAL_SECRET) && !line.includes("PRIVATE KEY"), `credential secret leaked into the launch event: ${line}`);
-  }
-  assert(!this.result.stdout.includes(CREDENTIAL_SECRET), "credential secret leaked into stdout");
+// 新仕様(CR-6078c4ed-018 還流)で文言が変わった Then。S7 が結線する
+Then(/^run共通の実行設定（execution_specs）とslot別実行設定（slot_execution_specs）に解決済み設定が一度だけ確定してRDBへ保存され、認証情報そのものは含まれない$/, function () {
+  notImplemented("execution_specs(run 共通)+ slot_execution_specs(slot 別、job_map_version を含む)への一度だけの確定保存と認証情報の非含有");
+});
+
+// ======== SPEC-009-03-2: hang_detect_limit_minutes は run 共通の 1 値として保存される ========
+Given(/^background roleに選ばれたslotのジョブマップにhang_detect_limit_minutesが定義されている$/, function () {
+  // 既定の並行稼働(blue foreground / green background)。background に選ばれる green のジョブマップは hang_detect_limit_minutes=45
+  setModes(this, "foreground", "background", "on");
+  assertEqual(this.jobMap.green.jobs[JOB_ID].hang_detect_limit_minutes, 45, "green job map hang_detect_limit_minutes");
+});
+
+When(/^起動時の実行設定を保存する$/, function () {
+  runSelectSlot(this);
+});
+
+Then(/^hang_detect_limit_minutesはrun共通の実行設定（execution_specs）に1値として保存され、role別・slot別の値は保存されない$/, function () {
+  notImplemented("hang_detect_limit_minutes の run 共通 1 値保存(background slot の値)と role 別・slot 別列の不在");
 });

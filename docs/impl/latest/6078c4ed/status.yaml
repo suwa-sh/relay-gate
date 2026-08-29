@@ -21,7 +21,10 @@ stages:
     status: done
     event_id: 20260830_023003_s1_uc_init_rerun_completed
   S2_test_scaffold:
-    status: pending
+    status: done
+    red_baseline: pass
+    mode: scoped
+    event_id: 20260830_023005_s2_test_scaffold_rerun_completed
   S3_contracts:
     status: done
     event_id: 20260830_023004_s3_contracts_rerun_completed
@@ -50,4 +53,4 @@ stages:
       published_event_id: 20260822_143300_feedback_request_published
   S9_review:
     status: pending
-updated_at: '2026-08-30T02:09:22+09:00'
+updated_at: '2026-08-30T02:29:24+09:00'

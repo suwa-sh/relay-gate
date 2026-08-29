@@ -1,0 +1,136 @@
+stage: "S2"
+uc_id: "6078c4ed"
+manifest_sha256: "da29ceadf1d36fd97c2bfff45da5978a55d9cb9039d0fbe296a6e69117f48b69"
+manifest_projection: v2
+result: pass
+rerun_mode: "scoped"
+rerun_reason: "stale (feedback reflow 20260822_085257 CR-011..018 -> spec 20260829_210828_spec_generation). previous done invalidated at 20260830_023002_stale_done_invalidated_after_reflow"
+scaffold_scope:
+  tiers:
+    - "tier-facade"
+  uc_feature: regenerated
+  atdd: untouched
+scaffold:
+  tiers:
+    - "tier-facade"
+  uc_feature: "features/uc/select-and-launch-slots-by-feature-flags.feature"
+  uc_steps: "features/uc/steps/select-and-launch-slots-by-feature-flags.steps.cjs"
+  tier_feature: "facade/features/select-and-launch-slots-by-feature-flags.feature"
+  tier_steps: "facade/features/steps/select-and-launch-slots-by-feature-flags.steps.cjs"
+  tdd_test: "facade/test/select-and-launch-slots-by-feature-flags.bats"
+  tdd_test_postgresql: "facade/test/6078c4ed_select_slot_postgresql.bats"
+  tdd_fixture: "facade/test/fixtures/relay-gate-db.postgresql.sql (regenerated from rdb-schema.yaml by generate-postgresql-schema.py)"
+  tdd_test_legacy: "facade/test/6078c4ed_select_slot.bats (untouched, stale)"
+  atdd_feature_tag: "features/atdd/SPEC-009-03.feature (@uc_6078c4ed added to SPEC-009-03-2 only; scenario text untouched)"
+  atdd_steps: "features/atdd/steps/select-and-launch-slots-by-feature-flags.steps.cjs"
+  atdd_scenarios:
+    - "SPEC-001-01-1"
+    - "SPEC-001-02-1"
+    - "SPEC-001-03-1"
+    - "SPEC-009-01-1"
+    - "SPEC-009-02-1"
+    - "SPEC-009-03-1"
+    - "SPEC-009-03-2"
+transcription_check:
+  method: "python3 diff of spec gherkin blocks vs feature body (comment lines stripped)"
+  uc_feature: "identical to spec.md E2E gherkin (2 blocks joined as one Feature: 9 normal + 8 abnormal = 17 scenarios; was 9)"
+  tier_feature: "identical to tier-facade.md gherkin (7 scenarios; was 3)"
+spec_diff_summary:
+  uc_feature:
+    added_scenarios:
+      - "BLUE_MODE=background, GREEN_MODE=backgroundの場合は両ジョブマップのhang_detect_limit_minutesの大きい方を採用する"
+      - "空白・引用符・改行を含む引数が保存と復元の往復で同一になる"
+      - "credential_refから認証情報を解決し実値を露出させない"
+      - "ジョブマップの必須フィールドが欠落している"
+      - "ジョブマップのslot_typeが環境変数の指すslotと一致しない"
+      - "起動イベントの送出に失敗した試行をFAILEDへ補償記録する"
+      - "起動イベントの送出がtimeoutした試行をUNKNOWNへ補償記録する"
+      - "credential_refに対応する認証情報が解決できない"
+    changed_scenarios:
+      - "Background (slot 別ジョブマップ RELAYGATE_JOB_MAP_PATH_BLUE/_GREEN + RELAYGATE_CREDENTIAL_DIR + 0600 鍵)"
+      - "両slot起動 (job_map_version を slot_execution_specs へ、additional_args=[] JSON、hang_detect=45、occurred_at/accepted_at/updated_at 一致、event_hash 再計算)"
+      - "新実装単独本番 (RELAYGATE_JOB_MAP_PATH_BLUE 未設定でもエラーにならない)"
+      - "background 先行 (旧: RUNNING 並走 -> 新: 送出順 + STARTING 存在 + 10 秒以内に exit 0)"
+      - "追加引数連結 (空白連結文字列 -> JSON 配列)"
+      - "runner 設定差し替え (job_map_version v1.5.0 を slot_execution_specs で検証)"
+      - "JOB_ID 未解決 (blue・green 両ジョブマップ)"
+  tier_feature:
+    added_scenarios:
+      - "ジョブマップの必須フィールド欠落でバリデーションエラーになる"
+      - "起動イベント送出失敗をFAILEDへ補償記録し監査イベントを追記する"
+      - "起動イベント送出timeoutをUNKNOWNへ補償記録し推測でFAILEDにしない"
+      - "追加引数をJSON配列で保存し要素順のままargvへ復元する"
+    changed_scenarios:
+      - "Background (slot 別ジョブマップ + 認証情報ディレクトリ)"
+      - "排他制約 (hang_detect_limit_minutes=45、slot_execution_specs の job_map_version)"
+  atdd:
+    added_scenarios:
+      - "SPEC-009-03-2 (uc-map atdd_scenarios へ追加。feature 本文は bootstrap P7 生成のまま。@uc_6078c4ed タグのみ付与)"
+    changed_step_wording:
+      - "SPEC-009-03-1 Then: execution-spec.json -> run共通の実行設定（execution_specs）とslot別実行設定（slot_execution_specs）"
+step_skeleton_policy:
+  unchanged_wording: "attempt 6 / S6 / S7 で結線済みの実装を継承 (Given fixture・When・終了コード・標準エラー・未発生/rollback 検証を含む)"
+  new_or_changed_then: "not implemented を明示して throw する skeleton (S4: tier steps / S6: uc steps / S7: atdd steps が結線)"
+  harness: "新契約に差し替え (slot 別ジョブマップ JSON・認証情報ディレクトリ・rdb-schema 新スキーマ・ssh スタブの失敗/timeout 切替・/etc 絶対パスの testDir 接頭辞除去)"
+scaffold_checks:
+  tier_bdd:
+    result: pass
+    command: "npx cucumber-js --config cucumber.cjs --profile tier-facade"
+    exit_code: 1
+    parse: ok
+    undefined_steps: 0
+    ambiguous_steps: 0
+    scenarios: "5 failed / 7 (2 passed: 同時foreground バリデーション, 起動前監査の追記失敗)"
+    reason: "未実装: 既存実装は廃止済み RELAYGATE_JOB_MAP_PATH を読むため新契約の slot 別ジョブマップを解決できず exit 1 (JOB_IDに対応するジョブマップが見つかりません)。到達した新 Then は not implemented skeleton で fail。passed 2 件のうち監査追記失敗は exit 1 の一致による vacuous pass"
+  uc_bdd:
+    result: pass
+    command: "npx cucumber-js --config cucumber.cjs --profile uc"
+    exit_code: 1
+    parse: ok
+    undefined_steps: 0
+    ambiguous_steps: 0
+    scenarios: "15 failed / 17 (2 passed: 同時foreground, JOB_ID 未解決 (exit 1 一致による vacuous pass))"
+    reason: "未実装: 同上 (旧 env 前提の実装が新契約のジョブマップを解決できない) + 新 Then の not implemented skeleton"
+  tdd:
+    result: pass
+    command: "bats facade/test/select-and-launch-slots-by-feature-flags.bats"
+    exit_code: 1
+    tests: "14 failed / 17 (passed 3: audit INSERT 失敗の rollback, RELAYGATE_OPERATOR 未設定, JOB_ID 未解決。いずれも exit code 一致による vacuous/継続 pass)"
+    reason: "未実装: 全 fail が終了コード不一致 (exit 1: JOB_IDに対応するジョブマップが見つかりません)。新契約の env・JSON 配列・slot 別 job_map_version・hang_detect 規則・slot_type 検証・credential_resolution・FAILED/UNKNOWN 補償記録は未実装"
+  tdd_postgresql:
+    result: "stale (harness/fixture updated)"
+    command: "bats facade/test/6078c4ed_select_slot_postgresql.bats"
+    exit_code: 1
+    tests: "5 failed / 5"
+    reason: "ハーネスを新契約 env (_BLUE/_GREEN/CREDENTIAL_DIR) と slot 別ジョブマップへ差し替え、fixture DDL を rdb-schema.yaml から再生成、期待値を新仕様へ更新。既存実装が新 env を読まないため S4 完了まで fail"
+  tdd_legacy:
+    result: "stale"
+    command: "bats facade/test/6078c4ed_select_slot.bats"
+    exit_code: 1
+    tests: "18 failed / 38"
+    reason: "旧契約 (execution_specs.job_map_version・RELAYGATE_JOB_MAP_PATH・空白連結引数) 前提。S0 の契約再生成で S2 着手前から fail していた (baseline: tier BDD 1/3 fail)。S4 が整理する"
+  atdd:
+    result: pass
+    command: "npx cucumber-js --config cucumber.cjs --profile atdd --tags '@atdd_SPEC-001-01-1 or @atdd_SPEC-001-02-1 or @atdd_SPEC-001-03-1 or @atdd_SPEC-009-01-1 or @atdd_SPEC-009-02-1 or @atdd_SPEC-009-03-1 or @atdd_SPEC-009-03-2'"
+    exit_code: 1
+    parse: ok
+    undefined_steps: 0
+    executed_scenarios: 7
+    scenarios: "6 failed / 7 (SPEC-001-03-1 passed: 同時foreground の拒否は既存実装で成立)"
+    reason: "未実装: 4 件は旧 env 前提の実装が新契約のジョブマップを解決できず exit 1、SPEC-009-03-1/-2 は not implemented skeleton"
+  format_lint:
+    shfmt: "shfmt -d facade (exit 0)"
+    shellcheck: "find facade -name '*.sh' -o -path 'facade/bin/*' | shellcheck -x (exit 0); shellcheck -s bash on select-and-launch-slots-by-feature-flags.bats (exit 0)"
+    note: "6078c4ed_select_slot_postgresql.bats の SC2034 (attempt unused) は既存 (S4 attempt 6 由来)"
+dom_snapshot: "not applicable (tier-facade kind=cli)"
+issues:
+  - "docs/impl/latest/6078c4ed/issues/20260829T172256Z_select-slot-reflow-e2e-boundary.md"
+cross_uc_scenarios: "none (17 E2E Scenario の Then はすべて本 UC の責務。issue §1。前回のハーネス注入 SSH_STUB_CONCURRENT の RUNNING 遷移は削除)"
+notes:
+  - "spec.md の E2E gherkin は正常系・異常系の 2 ブロックに分かれているが Feature 見出しは 1 つのため、features/uc の feature は 2 ブロックを 1 Feature として連結した"
+  - "検証境界は既存 issue (20260817T230000Z) に従い SQLite。スキーマは契約定数の列 + rdb-schema.yaml の PK/UNIQUE (job_map_version は slot_execution_specs)"
+  - "仕様の /etc/relaygate 絶対パスはハーネスの一時ディレクトリ配下に同構造で作り、標準エラー照合時に接頭辞を除去する (issue §2.1)"
+  - "SSH timeout の bats は実装 seam RELAYGATE_SSH_TIMEOUT_SECONDS=2 で短縮 (issue §2.2)。cucumber は setDefaultTimeout 60s"
+  - "packages/contracts は S0 で再生成済み (job_map_version -> slot_execution_specs)。S3 は差分なしの見込み"
+completed_at: "2026-08-30T02:35:00+09:00"
+completed_by: "dist-impl-implement@0.12.0"

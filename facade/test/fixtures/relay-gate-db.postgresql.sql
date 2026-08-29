@@ -7,7 +7,6 @@ CREATE TABLE execution_specs (
   parent_run_id uuid,
   job_id text NOT NULL,
   additional_args text,
-  job_map_version text NOT NULL,
   hang_detect_limit_minutes integer NOT NULL,
   PRIMARY KEY (run_id),
   FOREIGN KEY (parent_run_id) REFERENCES execution_specs (run_id) ON DELETE SET NULL
@@ -27,6 +26,7 @@ CREATE TABLE slot_execution_specs (
   fixed_args text,
   impl_version text NOT NULL,
   credential_ref text,
+  job_map_version text NOT NULL,
   PRIMARY KEY (run_id, slot_type),
   FOREIGN KEY (run_id) REFERENCES execution_specs (run_id) ON DELETE CASCADE
 );

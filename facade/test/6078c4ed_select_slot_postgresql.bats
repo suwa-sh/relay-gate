@@ -101,11 +101,13 @@ setup() {
 	[[ -z ${PG_TEST_SKIPPED:-} ]] || skip "RELAYGATE_TEST_SKIP_PG=1"
 	project_root="$PG_TEST_PROJECT_ROOT"
 	test_dir="$(mktemp -d)"
-	job_map_path="$test_dir/job-map.json"
+	credential_dir="$test_dir/etc/relaygate/credentials"
+	job_map_blue="$test_dir/etc/relaygate/job-map.blue.json"
+	job_map_green="$test_dir/etc/relaygate/job-map.green.json"
 	launch_log="$test_dir/launch.log"
 	db_name="relaygate_test_$BATS_TEST_NUMBER"
 	db_dsn="postgresql://$PG_TEST_USER@127.0.0.1:$PG_TEST_PORT/$db_name"
-	mkdir -p "$test_dir/bin"
+	mkdir -p "$test_dir/bin" "$credential_dir"
 
 	cat >"$test_dir/bin/ssh" <<'EOF'
 #!/usr/bin/env bash
@@ -118,28 +120,37 @@ EOF
 	psql -X -w -q -v ON_ERROR_STOP=1 "$PG_TEST_ADMIN_DSN" -c "DROP DATABASE IF EXISTS $db_name;" -c "CREATE DATABASE $db_name;"
 	psql -X -w -q -v ON_ERROR_STOP=1 "$db_dsn" -f "$project_root/facade/test/fixtures/relay-gate-db.postgresql.sql"
 
-	cat >"$job_map_path" <<'JSON'
+	# ジョブマップ fixture(cli-command-contract.yaml job_map_contract の slot 別ファイル形式。S2 scoped 再実行で新契約へ差し替え)
+	cat >"$job_map_blue" <<'JSON'
 {
-  "version": "v1.4.0",
+  "job_map_version": "v1.4.0",
+  "slot_type": "blue",
   "jobs": {
     "daily-settlement": {
-      "hang_detect_limit_minutes": 30,
-      "slots": {
-        "blue": {
-          "host": "blue-host-01", "exec_user": "batchuser", "script_path": "/opt/blue/run.sh",
-          "work_dir": "/opt/relaygate/work", "fixed_args": ["--mode", "batch"],
-          "impl_version": "blue-2.3.1", "credential_ref": "cred-blue-batch"
-        },
-        "green": {
-          "host": "green-host-01", "exec_user": "batchuser", "script_path": "/opt/green/run.sh",
-          "work_dir": "/opt/relaygate/work", "fixed_args": [],
-          "impl_version": "green-0.9.0", "credential_ref": "cred-green-batch"
-        }
-      }
+      "host": "blue-host-01", "exec_user": "batchuser", "script_path": "/opt/blue/run.sh",
+      "work_dir": "/opt/relaygate/work", "fixed_args": ["--mode", "batch"],
+      "impl_version": "blue-2.3.1", "credential_ref": "cred-blue-batch", "hang_detect_limit_minutes": 30
     }
   }
 }
 JSON
+	cat >"$job_map_green" <<'JSON'
+{
+  "job_map_version": "v1.4.0",
+  "slot_type": "green",
+  "jobs": {
+    "daily-settlement": {
+      "host": "green-host-01", "exec_user": "batchuser", "script_path": "/opt/green/run.sh",
+      "work_dir": "/opt/relaygate/work", "fixed_args": [],
+      "impl_version": "green-0.9.0", "credential_ref": "cred-green-batch", "hang_detect_limit_minutes": 45
+    }
+  }
+}
+JSON
+	# 認証情報ディレクトリ(credential_resolution: {RELAYGATE_CREDENTIAL_DIR}/{credential_ref}、0600)
+	printf -- '-----BEGIN OPENSSH PRIVATE KEY-----\npg-test-key cred-blue-batch\n-----END OPENSSH PRIVATE KEY-----\n' >"$credential_dir/cred-blue-batch"
+	printf -- '-----BEGIN OPENSSH PRIVATE KEY-----\npg-test-key cred-green-batch\n-----END OPENSSH PRIVATE KEY-----\n' >"$credential_dir/cred-green-batch"
+	chmod 0600 "$credential_dir/cred-blue-batch" "$credential_dir/cred-green-batch"
 }
 
 teardown() {
@@ -154,7 +165,9 @@ run_select_slot() {
 		PATH="$test_dir/bin:$PATH" \
 		RELAYGATE_TEST_LAUNCH_LOG="$launch_log" \
 		RELAYGATE_RDB_DSN="$db_dsn" \
-		RELAYGATE_JOB_MAP_PATH="$job_map_path" \
+		RELAYGATE_JOB_MAP_PATH_BLUE="$job_map_blue" \
+		RELAYGATE_JOB_MAP_PATH_GREEN="$job_map_green" \
+		RELAYGATE_CREDENTIAL_DIR="$credential_dir" \
 		RELAYGATE_OPERATOR="ops-tanaka" \
 		BLUE_MODE="$blue_mode" GREEN_MODE="$green_mode" RAPID_CROSSCHECK_MODE="$rapid_mode" \
 		"$project_root/facade/bin/relaygate" concurrent-run select-slot --job-id "$job_id" "$@"
@@ -177,8 +190,9 @@ count_rows() {
 	[ "$status" -eq 0 ]
 	run_id="$(pg_query 'SELECT run_id FROM execution_specs;')"
 	[[ "$run_id" =~ ^[0-9a-f-]{36}$ ]]
-	[ "$(pg_query "SELECT job_id || '|' || job_map_version || '|' || hang_detect_limit_minutes || '|' || additional_args || '|' || (parent_run_id IS NULL) FROM execution_specs;")" = "daily-settlement|v1.4.0|30|--target-date 2026-08-18|true" ]
-	[ "$(pg_query "SELECT slot_type || ':' || host || ':' || COALESCE(fixed_args, '<null>') || ':' || impl_version || ':' || credential_ref FROM slot_execution_specs ORDER BY slot_type;")" = $'blue:blue-host-01:--mode batch:blue-2.3.1:cred-blue-batch\ngreen:green-host-01:<null>:green-0.9.0:cred-green-batch' ]
+	# 新仕様: hang_detect_limit_minutes は background role の slot(green=45)の値、追加引数・固定引数は JSON 配列、job_map_version は slot 別
+	[ "$(pg_query "SELECT job_id || '|' || hang_detect_limit_minutes || '|' || additional_args || '|' || (parent_run_id IS NULL) FROM execution_specs;")" = 'daily-settlement|45|["--target-date","2026-08-18"]|true' ]
+	[ "$(pg_query "SELECT slot_type || ':' || host || ':' || COALESCE(fixed_args, '<null>') || ':' || impl_version || ':' || credential_ref || ':' || job_map_version FROM slot_execution_specs ORDER BY slot_type;")" = $'blue:blue-host-01:["--mode","batch"]:blue-2.3.1:cred-blue-batch:v1.4.0\ngreen:green-host-01:[]:green-0.9.0:cred-green-batch:v1.4.0' ]
 	[ "$(pg_query "SELECT slot_type || ':' || role_type || ':' || attempt_no || ':' || status || ':' || (accepted_at = updated_at) FROM runner_results ORDER BY slot_type;")" = $'blue:foreground:1:STARTING:true\ngreen:background:1:STARTING:true' ]
 	[ "$(pg_query "SELECT COUNT(*) FROM runner_result_events e JOIN runner_results r ON r.run_id = e.run_id AND r.slot_type = e.slot_type AND r.role_type = e.role_type AND r.attempt_id = e.attempt_id AND e.occurred_at = r.accepted_at WHERE e.event_name = 'attempt_started' AND e.status = 'STARTING';")" = "2" ]
 	[ "$(pg_query "SELECT event_name || ':' || slot || ':' || attempt_id || ':' || actor || ':' || operation || ':' || outcome || ':' || (previous_hash IS NULL) FROM audit_logs WHERE event_name = 'slot_launch_accepted';")" = "slot_launch_accepted:-:-:ops-tanaka:slot_launch:accepted:true" ]
@@ -253,7 +267,7 @@ EOF
 	done
 
 	# Act & Assert
-	run --separate-stderr env -i PATH="$test_dir/bin:$test_dir/tools" RELAYGATE_TEST_LAUNCH_LOG="$launch_log" RELAYGATE_RDB_DSN="$db_dsn" RELAYGATE_JOB_MAP_PATH="$job_map_path" RELAYGATE_OPERATOR=ops-tanaka BLUE_MODE=foreground GREEN_MODE=background RAPID_CROSSCHECK_MODE=on "$project_root/facade/bin/relaygate" concurrent-run select-slot --job-id daily-settlement
+	run --separate-stderr env -i PATH="$test_dir/bin:$test_dir/tools" RELAYGATE_TEST_LAUNCH_LOG="$launch_log" RELAYGATE_RDB_DSN="$db_dsn" RELAYGATE_JOB_MAP_PATH_BLUE="$job_map_blue" RELAYGATE_JOB_MAP_PATH_GREEN="$job_map_green" RELAYGATE_CREDENTIAL_DIR="$credential_dir" RELAYGATE_OPERATOR=ops-tanaka BLUE_MODE=foreground GREEN_MODE=background RAPID_CROSSCHECK_MODE=on "$project_root/facade/bin/relaygate" concurrent-run select-slot --job-id daily-settlement
 	[ "$status" -eq 1 ]
 	[[ "$stderr" == *"reason=postgresql_client_unavailable"* ]]
 	[ "$(count_rows execution_specs)" = "0" ]

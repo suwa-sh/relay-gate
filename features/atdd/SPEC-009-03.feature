@@ -8,7 +8,7 @@ Feature: SPEC-009-03 起動時に解決済みのホスト・スクリプト・�
     When 起動する
     Then run共通の実行設定（execution_specs）とslot別実行設定（slot_execution_specs）に解決済み設定が一度だけ確定してRDBへ保存され、認証情報そのものは含まれない
 
-  @atdd_SPEC-009-03-2
+  @atdd_SPEC-009-03-2 @uc_6078c4ed
   Scenario: SPEC-009-03-2
     Given background roleに選ばれたslotのジョブマップにhang_detect_limit_minutesが定義されている
     When 起動時の実行設定を保存する
