@@ -1,5 +1,6 @@
 // run共通execution specとslot別実行設定を分離して表示する。再実行では系譜(parent_run_id)を明示する。
 // 認証情報は参照名のみ表示し実値は表示しない
+// map版(job_map_version)はslotごとの独立ファイルから解決するためslot別実行設定側に表示する(CR-6078c4ed-018)
 export interface ExecutionSpecCardProps {
   runId: string
   parentRunId?: string
@@ -67,7 +68,6 @@ export const ExecutionSpecCard = ({
     <Row label="run_id" value={runId} />
     {parentRunId !== undefined && <Row label="parent_run_id（再実行元）" value={parentRunId} />}
     <Row label="JOB_ID" value={jobId} />
-    <Row label="map版" value={mapVersion} />
     <Row label="hang_detect_limit_minutes" value={hangDetectLimitMinutes} />
     <Row label="認証情報（参照名のみ）" value={credentialRef} />
     <SectionLabel>slot別実行設定</SectionLabel>
@@ -77,5 +77,6 @@ export const ExecutionSpecCard = ({
     <Row label="script" value={script} />
     {workDir !== undefined && <Row label="作業ディレクトリ" value={workDir} />}
     <Row label="実装版" value={implVersion} />
+    <Row label="map版（ジョブマップ版・slotごとの独立ファイル）" value={mapVersion} />
   </div>
 )

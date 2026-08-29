@@ -1,0 +1,26 @@
+uc: "確報クロスチェック結果を確認する"
+business: "クロスチェック業務"
+buc: "確報クロスチェックフロー"
+commands:
+  - name: "relaygate final-crosscheck result"
+    tier: "tier-worker"
+    summary: "対象日の確報比較依頼の状態（SUCCEEDED/FAILED等）を照会する"
+    args:
+      - name: "--target-date"
+        required: true
+        description: "照会対象日（YYYY-MM-DD形式）"
+    env_vars: []
+    stdin: "なし"
+    stdout_contract: "run_id/target_date/status/lease_expires_at/worker_idを整形出力する"
+    stderr_contract: "対象日の確報比較依頼が存在しない場合、またはtarget-date形式不正の場合にエラーメッセージを出力する"
+    exit_codes:
+      - code: 0
+        meaning: "正常終了（照会成功）"
+      - code: 1
+        meaning: "業務エラー（対象日の確報比較依頼が存在しない）"
+      - code: 2
+        meaning: "バリデーションエラー（target-date形式不正）"
+screens:
+  - name: "確報クロスチェック結果確認画面"
+    route: "/cli/final-crosscheck/result"
+    components: ["CrossCheckRequestRow", "StatusBadge"]

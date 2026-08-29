@@ -1,0 +1,5 @@
+feedback_request_id: 20260822_085257_impl_feedback_6078c4ed
+stage_packet: docs/pipeline/feedback-runs/20260822_085257_impl_feedback_6078c4ed/stage-packets/spec_stories.md
+causal_work_unit_ids: CR-6078c4ed-011#1, CR-6078c4ed-012#1, CR-6078c4ed-013#1, CR-6078c4ed-014#1, CR-6078c4ed-015#1, CR-6078c4ed-016#1, CR-6078c4ed-017#1, CR-6078c4ed-018#1
+direct_work_unit_ids: (none)
+trigger_event: spec:20260829_210828_spec_generation, design:20260829_210210_design_system_feedback_disposition

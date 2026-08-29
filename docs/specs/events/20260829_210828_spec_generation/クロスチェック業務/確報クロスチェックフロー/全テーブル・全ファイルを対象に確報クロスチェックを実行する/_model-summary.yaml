@@ -1,0 +1,86 @@
+uc: "全テーブル・全ファイルを対象に確報クロスチェックを実行する"
+business: "クロスチェック業務"
+buc: "確報クロスチェックフロー"
+
+bounded_context_id: "BC-003"
+aggregate_id: "AG-004"
+
+models:
+  - name: "FinalCrossCheckClaimTrigger"
+    tier: "tier-worker"
+    layer: "presentation"
+    type: "request"
+    rdra_info: "確報比較依頼"
+  - name: "RunFinalCrossCheckCommand"
+    tier: "tier-worker"
+    layer: "usecase"
+    type: "command"
+    rdra_info: "確報比較依頼"
+  - name: "確報比較依頼"
+    tier: "tier-worker"
+    layer: "domain"
+    type: "entity"
+    rdra_info: "確報比較依頼"
+  - name: "FinalCrossCheckRequestRecord"
+    tier: "tier-worker"
+    layer: "gateway"
+    type: "record"
+    rdra_info: "確報比較依頼"
+  - name: "ExecutionSpecRecord"
+    tier: "tier-worker"
+    layer: "gateway"
+    type: "record"
+    rdra_info: "execution-spec.json"
+
+tables:
+  - name: "execution_specs"
+    rdra_info: "execution-spec.json"
+    operations:
+      - type: "SELECT"
+        columns:
+          - name: "run_id"
+            value: "対象runの存在確認（final_crosscheck_requests.run_idのFK参照元）"
+        where: "run_id = ?"
+  - name: "comparison_definitions"
+    rdra_info: "比較定義"
+    operations:
+      - type: "SELECT"
+        columns:
+          - name: "comparator_id"
+            value: "全量比較に適用する比較実装識別子（依頼が保持する世代キーで1件解決）"
+        where: "job_id = ? AND valid_from = ?"
+  - name: "final_crosscheck_requests"
+    rdra_info: "確報比較依頼"
+    operations:
+      - type: "SELECT"
+        columns:
+          - name: "job_id"
+            value: "確報専用ジョブ定義のJOB_ID（comparison_definitions解決キー）"
+          - name: "comparison_definition_valid_from"
+            value: "依頼時点で解決した比較定義世代のvalid_from（comparison_definitions解決キー）"
+          - name: "target_tables"
+            value: "確報比較対象テーブル一覧（該当世代から複写した解決済みの値）"
+          - name: "target_files"
+            value: "確報比較対象ファイル一覧（該当世代から複写した解決済みの値）"
+        where: "run_id = ? AND status = 'CLAIMED'"
+      - type: "UPDATE"
+        columns:
+          - name: "status"
+            value: "CLAIMED / RUNNING / SUCCEEDED / FAILED / REQUESTED（lease失効時差し戻し）"
+          - name: "worker_id"
+            value: "claim実行workerの識別子（差し戻し時はNULL）"
+          - name: "lease_expires_at"
+            value: "claim時刻+10分（差し戻し時はNULL）"
+          - name: "completed_at"
+            value: "SUCCEEDED/FAILED確定時刻"
+        where: "run_id = ? AND status = ?"
+    indexes_needed:
+      - columns: ["status", "target_date"]
+        reason: "workerがREQUESTED状態の依頼を対象日順にポーリングするため"
+        access_pattern: "status='REQUESTED'での定期ポーリングSELECT/UPDATE"
+      - columns: ["status", "lease_expires_at"]
+        reason: "lease失効かつ未着手の依頼を検出しREQUESTEDへ差し戻すため"
+        access_pattern: "status='CLAIMED' AND lease_expires_at < NOW()での定期スキャン"
+
+kvs: []
+object_storage: []

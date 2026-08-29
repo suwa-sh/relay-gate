@@ -1,0 +1,118 @@
+uc: "対話確認のうえ速報比較依頼をABORTEDへ遷移させる"
+business: "実行制御業務"
+buc: "速報比較中止フロー"
+
+bounded_context_id: "BC-002"
+aggregate_id: "AG-003"
+
+models:
+  - name: "AbortRapidCrosscheckConfirm CLI"
+    tier: "tier-worker"
+    layer: "presentation"
+    type: "request"
+    rdra_info: "速報比較依頼"
+  - name: "ConfirmAbortRapidCrosscheckCommand"
+    tier: "tier-worker"
+    layer: "usecase"
+    type: "command"
+    rdra_info: "速報比較依頼"
+  - name: "速報比較依頼"
+    tier: "tier-worker"
+    layer: "domain"
+    type: "entity"
+    rdra_info: "速報比較依頼"
+  - name: "RapidCrosscheckRequestRecord"
+    tier: "tier-worker"
+    layer: "gateway"
+    type: "record"
+    rdra_info: "速報比較依頼"
+  - name: "AuditLogRecord"
+    tier: "tier-worker"
+    layer: "gateway"
+    type: "record"
+    rdra_info: "該当なし（CTP-005監査ログ要件から導出）"
+
+tables:
+  - name: "rapid_crosscheck_requests"
+    rdra_info: "速報比較依頼"
+    operations:
+      - type: "SELECT"
+        columns: []
+        where: "run_id = ?"
+      - type: "UPDATE"
+        columns:
+          - name: "status"
+            value: "'ABORTED'"
+        where: "run_id = ? AND status = 'RUNNING'"
+    indexes_needed:
+      - columns: ["run_id", "status"]
+        reason: "楽観的競合検知のための条件付きUPDATE（WHERE run_id=? AND status='RUNNING'）を高速化する"
+        access_pattern: "run_id指定+status条件によるUPDATE"
+  - name: "audit_logs"
+    rdra_info: "該当なし（RDRAに明示定義なし。CTP-005監査ログ要件から導出。列定義とイベント契約は_cross-cutting/datastore/rdb-schema.yamlと_cross-cutting/api/audit-event-contract.yamlを正本とする）"
+    operations:
+      - type: "INSERT"
+        columns:
+          - name: "event_id"
+            value: "新規発行するUUID"
+          - name: "event_name"
+            value: "'abort_confirmed'固定"
+          - name: "schema_version"
+            value: "'1.0'固定"
+          - name: "run_id"
+            value: "対象の速報比較依頼のrun_id"
+          - name: "slot"
+            value: "'-'（slotに紐づかないrun単位イベント）"
+          - name: "attempt_id"
+            value: "'-'（起動試行に紐づかないイベント）"
+          - name: "occurred_at"
+            value: "イベント発生時刻"
+          - name: "actor"
+            value: "RELAYGATE_OPERATOR環境変数の値"
+          - name: "operation"
+            value: "'abort'固定"
+          - name: "outcome"
+            value: "'succeeded'（遷移完了）/'rejected'（y以外の回答による中断）"
+          - name: "previous_hash"
+            value: "audit_chain_heads.head_hash（run_id内の最初のイベントはNULL）"
+          - name: "event_hash"
+            value: "正規化済みイベント本体とprevious_hashから算出"
+        where: ""
+    indexes_needed:
+      - columns: ["run_id", "slot", "attempt_id", "event_name"]
+        reason: "冪等キーのユニーク制約（rdb-schema.yaml uq_audit_logs_run_slot_attempt_event_name）"
+        access_pattern: "冪等キーによる重複追記防止"
+  - name: "audit_chain_heads"
+    rdra_info: "該当なし（CTP-005ハッシュチェーン要件から導出）"
+    operations:
+      - type: "SELECT"
+        columns: []
+        where: "run_id = ?（SELECT ... FOR UPDATEで排他ロックしprevious_hashを確定する）"
+      - type: "INSERT"
+        columns:
+          - name: "run_id"
+            value: "対象run_id（当該run_idの最初のイベント時のみ）"
+          - name: "head_event_id"
+            value: "追記した監査イベントのevent_id"
+          - name: "head_hash"
+            value: "追記した監査イベントのevent_hash"
+          - name: "chain_length"
+            value: "1"
+          - name: "updated_at"
+            value: "audit_logs.occurred_atと一致させる"
+        where: ""
+      - type: "UPDATE"
+        columns:
+          - name: "head_event_id"
+            value: "追記した監査イベントのevent_id"
+          - name: "head_hash"
+            value: "追記した監査イベントのevent_hash"
+          - name: "chain_length"
+            value: "chain_length + 1"
+          - name: "updated_at"
+            value: "audit_logs.occurred_atと一致させる"
+        where: "run_id = ?（audit_logs INSERTと同一transaction）"
+    indexes_needed: []
+
+kvs: []
+object_storage: []

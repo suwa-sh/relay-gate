@@ -1,0 +1,154 @@
+{
+  "event_id": "20260829_115807_feedback_stage_quality_attributes",
+  "type": "feedback_stage_completed",
+  "run_id": "feedback-20260822_085257_impl_feedback_6078c4ed-20260829_204932-754",
+  "attempt": 1,
+  "created_at": "2026-08-29T11:57:40Z",
+  "stage": "quality_attributes",
+  "direct_work_unit_ids": [],
+  "causal_work_unit_ids": [
+    "CR-6078c4ed-016#1"
+  ],
+  "work_unit_results": [],
+  "reconciliation_results": [
+    {
+      "work_unit_id": "CR-6078c4ed-016#1",
+      "status": "not_impacted",
+      "reason": "nfr-grade.yaml は hang_detect_limit_minutes を C.5系ハング検知の仕組みの根拠(条件)として、execution-spec.json を C.1系バックアップ対象データおよび E系の認証情報参照名保存の前提として参照するのみ。保存先の粒度(run共通 execution_specs / slot別 slot_execution_specs)と hang_detect_limit_minutes の所在(run共通1値)の文言整合は、検知間隔・保持データ範囲・機密取扱いの水準を変えない。",
+      "artifact_refs": []
+    }
+  ],
+  "work_unit_evidence_refs": [],
+  "domain_event_refs": [
+    {
+      "path": "nfr/events/20260829_205740_feedback_disposition/feedback-disposition.json",
+      "sha256": "0fdc8a49265bb8adb4aa94d8fbbe17d196bf0363e709412cb205300fda87fc82"
+    }
+  ],
+  "feedback_request": {
+    "feedback_request_id": "20260822_085257_impl_feedback_6078c4ed",
+    "input_sha256": "8129956bff632d9c271356ef56e3256319c7613b030adfd5477fe9f60d748bf5",
+    "request_ids": [
+      "CR-6078c4ed-016"
+    ],
+    "work_unit_ids": [
+      "CR-6078c4ed-016#1"
+    ]
+  },
+  "post_execution_basis": {
+    "repository_head": "21599e76eba1e179ea90e7ff4c0e29877ecb5bc5",
+    "latest_domain_event_ids": {
+      "requirements": {
+        "rdra/events": "20260829_205305_spec_009_03_execution_spec_split_wording",
+        "usdm/events": "20260829_205305_spec_009_03_execution_spec_split_wording"
+      },
+      "quality_attributes": {
+        "nfr/events": "20260829_205740_feedback_disposition"
+      },
+      "architecture": {
+        "arch/events": "20260819_110531_arch_comparison_definition_exitcode"
+      },
+      "infrastructure": {
+        "infra/events": "20260819_111931_infra_product_design"
+      },
+      "design_system": {
+        "design/events": "20260819_125615_spec_stories"
+      },
+      "spec": {
+        "specs/events": "20260819_114307_spec_generation"
+      },
+      "spec_stories": {
+        "design/events": "20260819_125615_spec_stories"
+      }
+    },
+    "domain_event_root_snapshots": {
+      "rdra/events": {
+        "head_event_id": "20260829_205305_spec_009_03_execution_spec_split_wording",
+        "head_event_sha256": "0ca58727cf2150ecbf507964dd123ec3a35827aef2c69855b5af895f5aa1bf53",
+        "event_ids": [
+          "20260817_142258_initial_build",
+          "20260818_133855_rerun_identity_new_run_id",
+          "20260819_104301_slot_config_comparison_def_exitcode",
+          "20260829_205305_spec_009_03_execution_spec_split_wording"
+        ],
+        "event_set_sha256": "63521111d1ecf4264521696239389da705dd2c3ef457eac66d060f553461906d",
+        "latest_tree_sha256": "f832b64495e9cbf7c72ef2a729672d9c8c500c4886dbb0ccf91ac6b9d3808eab"
+      },
+      "usdm/events": {
+        "head_event_id": "20260829_205305_spec_009_03_execution_spec_split_wording",
+        "head_event_sha256": "14e51e7d7b4c4a47278a421836e160c84edaf75931348feb0ca51febdf09555f",
+        "event_ids": [
+          "20260817_142258_initial_build",
+          "20260818_133855_rerun_identity_new_run_id",
+          "20260819_104301_slot_config_comparison_def_exitcode",
+          "20260829_205305_spec_009_03_execution_spec_split_wording"
+        ],
+        "event_set_sha256": "63521111d1ecf4264521696239389da705dd2c3ef457eac66d060f553461906d",
+        "latest_tree_sha256": "84ee917a1432048b76ddba9c59ae572bc15de986d255f9b563ebdb8b383bf0bb"
+      },
+      "nfr/events": {
+        "head_event_id": "20260829_205740_feedback_disposition",
+        "head_event_sha256": "850f1f09d5acf64ae4637e86776a595cf0df74bba4877b90b909d5f428d59cf7",
+        "event_ids": [
+          "20260817_144844_initial_nfr",
+          "20260818_134843_feedback_disposition",
+          "20260819_105915_feedback_disposition",
+          "20260829_205740_feedback_disposition"
+        ],
+        "event_set_sha256": "074b59de73a3ae47e65443cab92a069bcd365fc45ee90479d2b5c181feea398b",
+        "latest_tree_sha256": "c139e3cc95fa46dd43625f9a04ce03e715b87f1d21e024da92008576b6c2a878"
+      },
+      "arch/events": {
+        "head_event_id": "20260819_110531_arch_comparison_definition_exitcode",
+        "head_event_sha256": "951463223d7b12d3da6cefe2677b1652187c42ecb442d388b736a7d31381f22a",
+        "event_ids": [
+          "20260817_150512_initial_arch",
+          "20260817_152155_arch_infra_feedback",
+          "20260818_090120_arch_audit_contract_feedback",
+          "20260818_135504_arch_slot_config_attempt_identity",
+          "20260819_110531_arch_comparison_definition_exitcode"
+        ],
+        "event_set_sha256": "deee436fb8131243998365c170302eb39a71f44580f7312fd78375352422213e",
+        "latest_tree_sha256": "7aab99982dbab09540fe30dcfe86162611281aee585746fc0eb4a62adb90fd0c"
+      },
+      "infra/events": {
+        "head_event_id": "20260819_111931_infra_product_design",
+        "head_event_sha256": "8e874b29a9d0ab26814b4ace1c5c708133e037d2d87738207427ae4d818359d6",
+        "event_ids": [
+          "20260817_151023_infra_product_design",
+          "20260818_093020_infra_product_design",
+          "20260818_141149_infra_product_design",
+          "20260819_111931_infra_product_design"
+        ],
+        "event_set_sha256": "d9d83a98a20424d2ecfc2049d6cdb17c2a61a3ad01d36913e315a42a80d4bb97",
+        "latest_tree_sha256": "f230866558c09a8f08dbbed664f295078056b91bbf84983984f6511727ff4bbc"
+      },
+      "design/events": {
+        "head_event_id": "20260819_125615_spec_stories",
+        "head_event_sha256": "3158e094b363e53ace1e689a29740f061a617653b90d2cd7d9b921efd85d32b0",
+        "event_ids": [
+          "20260817_153235_design_system",
+          "20260817_180235_spec_stories",
+          "20260818_094841_design_system_feedback_disposition",
+          "20260818_143057_design_system",
+          "20260818_162251_spec_stories",
+          "20260819_113049_design_system",
+          "20260819_125615_spec_stories"
+        ],
+        "event_set_sha256": "1e8c9565b6781fcf6fb542f63f12bb7087e1093b78b9f32f7791d681724a8860",
+        "latest_tree_sha256": "8f0f8a97682c2a71b5b8859c85921d4d5f100e39770e653e9163f2d3f2c57e96"
+      },
+      "specs/events": {
+        "head_event_id": "20260819_114307_spec_generation",
+        "head_event_sha256": "1c78b516a3339062e4dd374f15882197d5386c18dbecb97513e782d7946e8cda",
+        "event_ids": [
+          "20260817_155817_spec_generation",
+          "20260818_144847_spec_generation",
+          "20260819_114307_spec_generation"
+        ],
+        "event_set_sha256": "f16d1aa74b8fbc6a1c6182aea54e6212dded6a18f2d57cf7743233df6f9e0c31",
+        "latest_tree_sha256": "f2a7d7b0d32b6b25f34d4bee92d72f3f5b231422db415707961398edb2c75116"
+      }
+    }
+  }
+}

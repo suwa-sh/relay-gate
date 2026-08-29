@@ -1,0 +1,26 @@
+uc: "ハング疑い・異常の通知を確認する"
+business: "実行監視業務"
+buc: "ハング監視フロー"
+commands:
+  - name: "relaygate hang-watch notice"
+    tier: "tier-worker"
+    summary: "通知済み（notified_at設定済み）のハング検知記録を検知日時降順で一覧表示する"
+    args:
+      - name: "--run-id"
+        required: false
+        description: "指定した場合、当該run_idのハング検知記録のみに絞り込む"
+    env_vars: []
+    stdin: "なし"
+    stdout_contract: "HangDetectionNotice形式（run_id/異常検知種別/検知日時/しきい値/対象slot/通知先）の一覧を検知日時降順で出力する。該当なしの場合は「該当するハング検知記録はありません」を出力する"
+    stderr_contract: "RDB接続断時のエラーメッセージを出力する"
+    exit_codes:
+      - code: 0
+        meaning: "正常終了（該当なしも含む）"
+      - code: 1
+        meaning: "業務エラー（RDB接続断等）"
+      - code: 2
+        meaning: "バリデーションエラー（--run-id形式不正）"
+screens:
+  - name: "ハング異常通知確認画面"
+    route: "/cli/hang-watch/notice"
+    components: ["HangDetectionNotice"]

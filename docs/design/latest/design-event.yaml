@@ -1,7 +1,7 @@
 version: '1.0'
-event_id: 20260817_153235_design_system + 20260817_180235_spec_stories + 20260818_143057_design_system + 20260818_162251_spec_stories + 20260819_113049_design_system + 20260819_125615_spec_stories
-created_at: '2026-08-19T12:56:15+09:00'
-source: 'dist-design-system: RDRA/NFR/Arch フィードバックからの初期デザインシステム構築 + dist-spec-stories: 全23 UC のページ Story生成 + 共通レイアウトシェル(OpsPortalShell)/Logo コンポーネント実装 + dist-design-system: feedback差分反映(CR-6078c4ed-003/005: Runner実行結果6値状態・attempt表示・run共通/slot別実行設定分離・parent_run_id系譜表示) + dist-spec-stories: feedback差分反映(CR-6078c4ed-003/005拡張コンポーネントへのページStory追随。リラン実行画面/リラン対象選定画面/background role起動画面の3画面を更新) + dist-design-system: feedback差分反映(CR-6078c4ed-008/010: RDRA状態モデル由来statesセクションの6値整合・foreground exitcode全値透過とrelay-gate退避終了コード125/124・stderr併記の表示契約) + dist-spec-stories: feedback差分反映(CR-6078c4ed-010: 実行結果応答管理画面のexitcode透過契約への整合。UnknownDashboard/AbortedDashboard/ValidationErrorDashboard追加)'
+event_id: 20260817_153235_design_system + 20260817_180235_spec_stories + 20260818_143057_design_system + 20260818_162251_spec_stories + 20260819_113049_design_system + 20260819_125615_spec_stories + 20260829_220117_spec_stories
+created_at: '2026-08-29T22:01:17+09:00'
+source: 'dist-design-system: RDRA/NFR/Arch フィードバックからの初期デザインシステム構築 + dist-spec-stories: 全23 UC のページ Story生成 + 共通レイアウトシェル(OpsPortalShell)/Logo コンポーネント実装 + dist-design-system: feedback差分反映(CR-6078c4ed-003/005: Runner実行結果6値状態・attempt表示・run共通/slot別実行設定分離・parent_run_id系譜表示) + dist-spec-stories: feedback差分反映(CR-6078c4ed-003/005拡張コンポーネントへのページStory追随。リラン実行画面/リラン対象選定画面/background role起動画面の3画面を更新) + dist-design-system: feedback差分反映(CR-6078c4ed-008/010: RDRA状態モデル由来statesセクションの6値整合・foreground exitcode全値透過とrelay-gate退避終了コード125/124・stderr併記の表示契約) + dist-spec-stories: feedback差分反映(CR-6078c4ed-010: 実行結果応答管理画面のexitcode透過契約への整合。UnknownDashboard/AbortedDashboard/ValidationErrorDashboard追加) + dist-spec-stories: feedback差分反映(CR-6078c4ed-012/018: 起動イベント送出失敗/timeoutのFAILED/UNKNOWN補償記録とjob_map_versionのslot別実行設定への移動をExecutionSpecCard・起動slot選択画面・実行結果応答管理画面へ反映)'
 trigger_event:
   - rdra:20260817_142258_initial_build
   - arch:20260817_152155_arch_infra_feedback
@@ -247,7 +247,7 @@ components:
       path: src/components/ui/Logo.tsx
   domain:
     - name: ExecutionSpecCard
-      description: run共通execution spec(run_id/parent_run_id/JOB_ID/固定引数・追加引数/マップ版/hang_detect_limit_minutes)とslot別実行設定(slot/host/実行ユーザー/スクリプト/作業ディレクトリ/実装版)を分離して表示するカード。再実行では系譜(parent_run_id)を明示する。認証情報は参照名のみ表示し実値は表示しない
+      description: run共通execution spec(run_id/parent_run_id/JOB_ID/固定引数・追加引数/hang_detect_limit_minutes)とslot別実行設定(slot/host/実行ユーザー/スクリプト/作業ディレクトリ/実装版/マップ版)を分離して表示するカード。マップ版(job_map_version)はslotごとの独立ファイルから解決するためslot別実行設定側に表示する(CR-6078c4ed-018)。再実行では系譜(parent_run_id)を明示する。認証情報は参照名のみ表示し実値は表示しない
       screens:
         - 起動slot選択画面
         - リラン実行画面
@@ -268,11 +268,12 @@ components:
         - default
       states: []
     - name: RunnerResultPanel
-      description: Runner実行結果(started-at/stdout/stderr/exitcode)を表示するターミナル調パネル。実行結果identityは(run_id, slot, role, attempt)でattempt_no/attempt_idを併記する。実行状態はarch正本の6値(STARTING/RUNNING/SUCCEEDED/FAILED/UNKNOWN/ABORTED)を表示し、timeout後は推測でFAILEDを表示せずUNKNOWNを明示する。foreground役割の応答はstdout/stderr/exitcodeのみに限定表示し、exitCodeは0を含む全値をそのまま表示して退避終了コードへ丸めない。relay-gate自身のエラーは退避終了コード(実行結果未確定・取得不能・中止済み=125、バリデーションエラー=124)として表示し、stderr欄にはforeground stderr.logの内容とrelay-gateのエラー内容(原因と次アクション)を併記する
+      description: Runner実行結果(started-at/stdout/stderr/exitcode)を表示するターミナル調パネル。実行結果identityは(run_id, slot, role, attempt)でattempt_no/attempt_idを併記する。実行状態はarch正本の6値(STARTING/RUNNING/SUCCEEDED/FAILED/UNKNOWN/ABORTED)を表示し、timeout後は推測でFAILEDを表示せずUNKNOWNを明示する。foreground役割の応答はstdout/stderr/exitcodeのみに限定表示し、exitCodeは0を含む全値をそのまま表示して退避終了コードへ丸めない。relay-gate自身のエラーは退避終了コード(実行結果未確定・取得不能・中止済み・起動イベント送出失敗の補償記録であるFAILEDかつexit_code=NULL=125、バリデーションエラー=124)として表示し、stderr欄にはforeground stderr.logの内容とrelay-gateのエラー内容(原因と次アクション)を併記する
       screens:
         - 並行稼働実行結果確認画面
         - 実行結果応答管理画面
         - 確報結果応答画面
+        - 起動slot選択画面
       props:
         - runId
         - slot
@@ -374,6 +375,7 @@ screens:
     route: /cli/concurrent-run/select-slot
     components:
       - ExecutionSpecCard
+      - RunnerResultPanel
       - Banner
     uc: feature flag設定に基づきslotを選択して起動する
     story: src/stories/Pages/運用ポータル/起動slot選択画面.stories.tsx
@@ -382,6 +384,9 @@ screens:
       - GreenSoloModeDashboard
       - BothForegroundRejectedDashboard
       - JobMapUnresolvedDashboard
+      - JobMapFieldMissingDashboard
+      - LaunchEventFailedDashboard
+      - LaunchEventTimeoutDashboard
       - ConcurrentModeHeadless
   - name: background role起動画面
     portal: ops
@@ -406,6 +411,7 @@ screens:
     variants:
       - SucceededDashboard
       - FailedDashboard
+      - LaunchFailedDashboard
       - UnresolvedDashboard
       - UnknownDashboard
       - AbortedDashboard

@@ -267,3 +267,25 @@ RDRA に存在しない要素を追加する前に、ここで合意を得てか
 - **推奨対応**: [x] requirements スキル再実行で反映 / [ ] 却下 / [ ] 保留
 - **ステータス**: closed (2026-08-19 CR-6078c4ed-008 で RDRA 状態.tsv が6値になり、design の states セクションを6値へ整合済み: 20260819_113049_design_system)
 
+## 2026-08-29 dist-spec からの追加提案
+
+### DIST-025: 情報 execution-spec.json の属性「マップ版」を slot別実行設定へ移す（CR-6078c4ed-018 の追随）
+- **発生元**: dist-spec (spec:20260829_210828_spec_generation)
+- **種別**: RDRA変更
+- **提案内容**: feedback request 20260822_085257_impl_feedback_6078c4ed の CR-6078c4ed-018（採用済み）により、spec 側では job_map_version を execution_specs（run共通）から slot_execution_specs（slot別）へ移動した。RDRA 情報.tsv では execution-spec.json の属性に「マップ版」が残り、slot別実行設定には無い。dist-requirements の差分更新で属性配置を整合させる必要がある（spec 側は RDRA 整合性ルールに従い属性を自動追加せず、rdra-feedback.md #2 として記録）。
+- **根拠**: docs/specs/latest/_cross-cutting/datastore/rdb-schema.yaml の slot_execution_specs.job_map_version（CR-6078c4ed-018 採用案）と docs/rdra/latest/情報.tsv の execution-spec.json 属性「マップ版」が食い違う。
+- **影響範囲**: RDRA 情報.tsv（execution-spec.json / slot別実行設定の属性）、USDM SPEC-009-03 の文言、specs traceability-matrix.md の「マップ版」行。
+- **推奨対応**: [ ] requirements スキル再実行で反映 / [ ] 却下 / [ ] 保留
+- **ステータス**: open
+
+## 2026-08-29 dist-spec からの追加提案
+
+### DIST-026: foreground 試行の実行状態確定（STARTING→RUNNING→SUCCEEDED/FAILED）の担い手が未定義
+- **発生元**: dist-spec (spec:20260829_210828_spec_generation)
+- **種別**: Spec確認
+- **提案内容**: CR-6078c4ed-013 により起動 UC は起動受付までで応答し、foreground 完了の待機は「foreground roleの標準出力・標準エラー・終了コードを応答する」の wait_contract（上限 execution_specs.hang_detect_limit_minutes）で行う。ところが foreground role の runner_results を STARTING→RUNNING→SUCCEEDED/FAILED へ遷移させる UC は現行仕様に存在しない（background は「background roleを起動する」と hang-detector が担う。hang-detector は foreground を走査対象外）。候補: (A) hang-detector の走査対象に foreground を含め結果ファイル回収で確定する（推奨。既存の回収ロジックを流用でき、UNKNOWN 規則も共通化できる）、(B) foreground 起動を worker 経由にして background と同じ経路で確定する、(C) respond-foreground が待機中に Runner Result Contract のファイルを直接回収して確定する。RDRA/USDM の見直しを伴うため requirements 側で判断する。
+- **根拠**: docs/specs/latest の UC「background roleを起動する」「background実行の未完了・非0終了・速報比較異常を定期検知する」は role_type=background のみを遷移・走査対象とし、foreground 試行の RUNNING/SUCCEEDED/FAILED 確定を担う UC が無い。CR-6078c4ed-012 の観測事実「foreground の STARTING 滞留を検知・確定する UC は無く」とも一致する。
+- **影響範囲**: RDRA BUC（並行稼働実行フロー / ハング監視フロー）と状態モデル、USDM SPEC-002-01 / SPEC-006 系、specs の UC02 / UC03 / UC11 と uc-dependencies.md。
+- **推奨対応**: [ ] requirements スキル再実行で反映 / [ ] 却下 / [ ] 保留
+- **ステータス**: open
+

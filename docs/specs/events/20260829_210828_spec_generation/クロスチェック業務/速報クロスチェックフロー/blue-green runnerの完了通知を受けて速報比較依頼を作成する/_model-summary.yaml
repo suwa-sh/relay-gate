@@ -1,0 +1,108 @@
+uc: "blue/green runnerの完了通知を受けて速報比較依頼を作成する"
+business: "クロスチェック業務"
+buc: "速報クロスチェックフロー"
+
+bounded_context_id: "BC-002"
+aggregate_id: "AG-003"
+
+models:
+  - name: "CronJobエントリポイント（完了検知ポーリング）"
+    tier: "tier-worker"
+    layer: "presentation"
+    type: "state"
+    rdra_info: "速報比較依頼"
+  - name: "CreateRapidCrosscheckRequestCommand"
+    tier: "tier-worker"
+    layer: "usecase"
+    type: "command"
+    rdra_info: "速報比較依頼"
+  - name: "速報比較依頼"
+    tier: "tier-worker"
+    layer: "domain"
+    type: "entity"
+    rdra_info: "速報比較依頼"
+  - name: "RapidCrosscheckRequestRecord"
+    tier: "tier-worker"
+    layer: "gateway"
+    type: "record"
+    rdra_info: "速報比較依頼"
+  - name: "RunnerResultRecord"
+    tier: "tier-worker"
+    layer: "gateway"
+    type: "record"
+    rdra_info: "Runner実行結果（started-at.txt/stdout.log/stderr.log/exitcode.txt）"
+  - name: "ExecutionSpecRecord"
+    tier: "tier-worker"
+    layer: "gateway"
+    type: "record"
+    rdra_info: "execution-spec.json"
+  - name: "ComparisonDefinitionRecord"
+    tier: "tier-worker"
+    layer: "gateway"
+    type: "record"
+    rdra_info: "比較定義"
+
+tables:
+  - name: "runner_results"
+    rdra_info: "Runner実行結果（started-at.txt/stdout.log/stderr.log/exitcode.txt）"
+    operations:
+      - type: "SELECT"
+        columns: ["run_id", "slot_type", "attempt_id", "attempt_no", "status"]
+        where: "role_type = 'background' AND status IN ('SUCCEEDED','FAILED')"
+    indexes_needed:
+      - columns: ["role_type", "status"]
+        reason: "未依頼の完了済みbackground起動試行を効率的に抽出するため"
+        access_pattern: "role_type+status複合条件検索（CronJob毎回実行）"
+  - name: "execution_specs"
+    rdra_info: "execution-spec.json"
+    operations:
+      - type: "SELECT"
+        columns: ["run_id", "job_id"]
+        where: "run_id IN (SELECT run_id FROM runner_results WHERE role_type = 'background' AND status IN ('SUCCEEDED','FAILED'))"
+    indexes_needed:
+      - columns: ["job_id"]
+        reason: "run_idをキーにjob_idを引き当て、job_id単位でblue/green双方の完了をペアリング判定するため（runner_resultsにはjob_id属性が存在しないためJOINが必須）"
+        access_pattern: "run_id→job_id引当およびjob_id単位グルーピング"
+  - name: "comparison_definitions"
+    rdra_info: "比較定義"
+    operations:
+      - type: "SELECT"
+        columns: ["valid_from"]
+        where: "job_id = :job_id AND valid_from <= :依頼作成時点 AND (valid_to IS NULL OR :依頼作成時点 < valid_to)"
+    indexes_needed:
+      - columns: ["job_id", "valid_from"]
+        reason: "複合主キー。依頼作成時点でjob_idと有効期間から有効な世代を1件に解決するため（現行世代の部分一意索引と有効期間の排他制約により常に1件以下）"
+        access_pattern: "job_id+有効期間条件による世代解決（依頼作成ごと）"
+  - name: "rapid_crosscheck_requests"
+    rdra_info: "速報比較依頼"
+    operations:
+      - type: "INSERT"
+        columns:
+          - name: "run_id"
+            value: "作成時に新規発番するUUID（依頼の一意識別子）"
+          - name: "parent_run_id"
+            value: "通常作成時はNULL（リラン時のみ元依頼run_id）"
+          - name: "job_id"
+            value: "execution_specs.job_id（runner_results.run_idをexecution_specsとJOINして取得）"
+          - name: "blue_run_id"
+            value: "比較対象のblue slot側background実行のrun_id（同一runの2 slot起動時はgreen_run_idと同値）"
+          - name: "green_run_id"
+            value: "比較対象のgreen slot側background実行のrun_id"
+          - name: "blue_attempt_id"
+            value: "比較対象としたblue slot側background起動試行のattempt_id"
+          - name: "green_attempt_id"
+            value: "比較対象としたgreen slot側background起動試行のattempt_id"
+          - name: "comparison_definition_valid_from"
+            value: "依頼作成時点で解決した比較定義世代のvalid_from（comparison_definitions(job_id, valid_from)へのFK。比較内容の世代固定）"
+          - name: "requested_at"
+            value: "CronJob実行時刻"
+          - name: "status"
+            value: "REQUESTED固定"
+        where: "blue/green双方の起動試行がrunner_results.status IN ('SUCCEEDED','FAILED')で確定していること（ペアリング完了時のみINSERT）"
+    indexes_needed:
+      - columns: ["job_id", "blue_run_id", "blue_attempt_id", "green_run_id", "green_attempt_id"]
+        reason: "ユニーク制約: 同一job_id・同一の比較対象起動試行ペアに対する重複依頼作成を防止するため（CTP-006冪等性方針）。blue/greenの完了順に依存せず1件だけ作成されることを保証する"
+        access_pattern: "比較対象試行ペアのユニーク制約チェック"
+
+kvs: []
+object_storage: []

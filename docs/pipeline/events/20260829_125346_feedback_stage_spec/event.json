@@ -1,0 +1,472 @@
+{
+  "event_id": "20260829_125346_feedback_stage_spec",
+  "type": "feedback_stage_completed",
+  "run_id": "feedback-20260822_085257_impl_feedback_6078c4ed-20260829_204932-754",
+  "attempt": 1,
+  "created_at": "2026-08-29T12:53:46Z",
+  "stage": "spec",
+  "direct_work_unit_ids": [
+    "CR-6078c4ed-011#1",
+    "CR-6078c4ed-012#1",
+    "CR-6078c4ed-013#1",
+    "CR-6078c4ed-014#1",
+    "CR-6078c4ed-015#1",
+    "CR-6078c4ed-017#1",
+    "CR-6078c4ed-018#1"
+  ],
+  "causal_work_unit_ids": [
+    "CR-6078c4ed-011#1",
+    "CR-6078c4ed-012#1",
+    "CR-6078c4ed-013#1",
+    "CR-6078c4ed-014#1",
+    "CR-6078c4ed-015#1",
+    "CR-6078c4ed-016#1",
+    "CR-6078c4ed-017#1",
+    "CR-6078c4ed-018#1"
+  ],
+  "work_unit_results": [
+    {
+      "work_unit_id": "CR-6078c4ed-011#1",
+      "disposition": "applied",
+      "reason": "audit-event-contract.yaml hash_chain.canonical_form に13項目の順序・'|'区切り・null空文字・エスケープ・末尾previous_hash・SHA-256 hex・検証ジョブ保証を定義",
+      "artifact_refs": [
+        "specs/events/20260829_210828_spec_generation/_cross-cutting/api/audit-event-contract.yaml",
+        "specs/events/20260829_210828_spec_generation/_cross-cutting/datastore/rdb-schema.yaml"
+      ]
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-012#1",
+      "disposition": "applied",
+      "reason": "起動UCが送出失敗をFAILED/timeoutをUNKNOWNへ補償記録しslot_launch_failed/timeoutを追記する契約・処理フロー・Scenarioを定義。foreground後続(125)とbackground後続(STARTING走査)の挙動を確定",
+      "artifact_refs": [
+        "specs/events/20260829_210828_spec_generation/並行稼働実行業務/並行稼働実行フロー/feature flag設定に基づきslotを選択して起動する/tier-facade.md",
+        "specs/events/20260829_210828_spec_generation/並行稼働実行業務/並行稼働実行フロー/feature flag設定に基づきslotを選択して起動する/spec.md",
+        "specs/events/20260829_210828_spec_generation/_cross-cutting/api/audit-event-contract.yaml",
+        "specs/events/20260829_210828_spec_generation/並行稼働実行業務/並行稼働実行フロー/foreground roleの標準出力・標準エラー・終了コードを応答する/spec.md",
+        "specs/events/20260829_210828_spec_generation/実行監視業務/ハング監視フロー/background実行の未完了・非0終了・速報比較異常を定期検知する/spec.md"
+      ]
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-013#1",
+      "disposition": "applied",
+      "reason": "起動UCのCLI10秒を起動受付までに限定しScenarioを責務内Thenへ改訂。統合Thenをuc-dependencies.mdの統合シナリオへ移動、respond-foregroundにwait_contractを定義",
+      "artifact_refs": [
+        "specs/events/20260829_210828_spec_generation/並行稼働実行業務/並行稼働実行フロー/feature flag設定に基づきslotを選択して起動する/spec.md",
+        "specs/events/20260829_210828_spec_generation/_cross-cutting/uc-dependencies.md",
+        "specs/events/20260829_210828_spec_generation/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20260829_210828_spec_generation/並行稼働実行業務/並行稼働実行フロー/foreground roleの標準出力・標準エラー・終了コードを応答する/tier-facade.md"
+      ]
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-014#1",
+      "disposition": "applied",
+      "reason": "rdb-schema.yaml argument_serializationでJSON配列保存と要素順復元・往復同一を定義しE2E期待値を更新",
+      "artifact_refs": [
+        "specs/events/20260829_210828_spec_generation/_cross-cutting/datastore/rdb-schema.yaml",
+        "specs/events/20260829_210828_spec_generation/並行稼働実行業務/並行稼働実行フロー/feature flag設定に基づきslotを選択して起動する/spec.md"
+      ]
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-015#1",
+      "disposition": "applied",
+      "reason": "rdb-schema.yaml physical_type_mapping / datetime_rules / uuid_rules を定義しmigration・fixtureの生成元とした",
+      "artifact_refs": [
+        "specs/events/20260829_210828_spec_generation/_cross-cutting/datastore/rdb-schema.yaml",
+        "specs/events/20260829_210828_spec_generation/_cross-cutting/datastore/datastore-schema.md"
+      ]
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-017#1",
+      "disposition": "applied",
+      "reason": "cli-command-contract.yaml credential_resolution(認証情報ディレクトリ方式、null時の既定、非露出)を定義しfacade/worker/abort/rerunの環境変数を統一、E2E Givenにcredential_ref値を追記",
+      "artifact_refs": [
+        "specs/events/20260829_210828_spec_generation/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20260829_210828_spec_generation/並行稼働実行業務/並行稼働実行フロー/background roleを起動する/tier-worker.md",
+        "specs/events/20260829_210828_spec_generation/並行稼働実行業務/並行稼働実行フロー/feature flag設定に基づきslotを選択して起動する/spec.md"
+      ]
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-018#1",
+      "disposition": "applied",
+      "reason": "cli-command-contract.yaml job_map_contract(slot別ファイル、構造、必須/任意、未知無視、欠落時exit 2とstderr)を定義、job_map_versionをslot_execution_specsへ移動、hang_detect_limit_minutesの出所を定義。RDRA属性配置の見直しをrdra-feedback.md #2に記録",
+      "artifact_refs": [
+        "specs/events/20260829_210828_spec_generation/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20260829_210828_spec_generation/_cross-cutting/datastore/rdb-schema.yaml",
+        "specs/events/20260829_210828_spec_generation/並行稼働実行業務/並行稼働実行フロー/feature flag設定に基づきslotを選択して起動する/tier-facade.md",
+        "specs/events/20260829_210828_spec_generation/_cross-cutting/rdra-feedback.md"
+      ]
+    }
+  ],
+  "reconciliation_results": [
+    {
+      "work_unit_id": "CR-6078c4ed-011#1",
+      "status": "changed",
+      "reason": "audit-event-contract.yaml hash_chain.canonical_form に13項目の順序・'|'区切り・null空文字・エスケープ・末尾previous_hash・SHA-256 hex・検証ジョブ保証を定義",
+      "artifact_refs": [
+        "specs/events/20260829_210828_spec_generation/_cross-cutting/api/audit-event-contract.yaml",
+        "specs/events/20260829_210828_spec_generation/_cross-cutting/datastore/rdb-schema.yaml"
+      ]
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-012#1",
+      "status": "changed",
+      "reason": "起動UCが送出失敗をFAILED/timeoutをUNKNOWNへ補償記録しslot_launch_failed/timeoutを追記する契約・処理フロー・Scenarioを定義。foreground後続(125)とbackground後続(STARTING走査)の挙動を確定",
+      "artifact_refs": [
+        "specs/events/20260829_210828_spec_generation/並行稼働実行業務/並行稼働実行フロー/feature flag設定に基づきslotを選択して起動する/tier-facade.md",
+        "specs/events/20260829_210828_spec_generation/並行稼働実行業務/並行稼働実行フロー/feature flag設定に基づきslotを選択して起動する/spec.md",
+        "specs/events/20260829_210828_spec_generation/_cross-cutting/api/audit-event-contract.yaml",
+        "specs/events/20260829_210828_spec_generation/並行稼働実行業務/並行稼働実行フロー/foreground roleの標準出力・標準エラー・終了コードを応答する/spec.md",
+        "specs/events/20260829_210828_spec_generation/実行監視業務/ハング監視フロー/background実行の未完了・非0終了・速報比較異常を定期検知する/spec.md"
+      ]
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-013#1",
+      "status": "changed",
+      "reason": "起動UCのCLI10秒を起動受付までに限定しScenarioを責務内Thenへ改訂。統合Thenをuc-dependencies.mdの統合シナリオへ移動、respond-foregroundにwait_contractを定義",
+      "artifact_refs": [
+        "specs/events/20260829_210828_spec_generation/並行稼働実行業務/並行稼働実行フロー/feature flag設定に基づきslotを選択して起動する/spec.md",
+        "specs/events/20260829_210828_spec_generation/_cross-cutting/uc-dependencies.md",
+        "specs/events/20260829_210828_spec_generation/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20260829_210828_spec_generation/並行稼働実行業務/並行稼働実行フロー/foreground roleの標準出力・標準エラー・終了コードを応答する/tier-facade.md"
+      ]
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-014#1",
+      "status": "changed",
+      "reason": "rdb-schema.yaml argument_serializationでJSON配列保存と要素順復元・往復同一を定義しE2E期待値を更新",
+      "artifact_refs": [
+        "specs/events/20260829_210828_spec_generation/_cross-cutting/datastore/rdb-schema.yaml",
+        "specs/events/20260829_210828_spec_generation/並行稼働実行業務/並行稼働実行フロー/feature flag設定に基づきslotを選択して起動する/spec.md"
+      ]
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-015#1",
+      "status": "changed",
+      "reason": "rdb-schema.yaml physical_type_mapping / datetime_rules / uuid_rules を定義しmigration・fixtureの生成元とした",
+      "artifact_refs": [
+        "specs/events/20260829_210828_spec_generation/_cross-cutting/datastore/rdb-schema.yaml",
+        "specs/events/20260829_210828_spec_generation/_cross-cutting/datastore/datastore-schema.md"
+      ]
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-016#1",
+      "status": "changed",
+      "reason": "USDM SPEC-009-03の文言(RDB 2テーブル・run共通1値)とrdb-schema.yaml・spec.md・ハング検知UCの文言を整合(reconciliation)",
+      "artifact_refs": [
+        "specs/events/20260829_210828_spec_generation/_cross-cutting/datastore/rdb-schema.yaml",
+        "specs/events/20260829_210828_spec_generation/実行監視業務/ハング監視フロー/background実行の未完了・非0終了・速報比較異常を定期検知する/spec.md",
+        "specs/events/20260829_210828_spec_generation/_cross-cutting/usdm-acceptance-matrix.md"
+      ]
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-017#1",
+      "status": "changed",
+      "reason": "cli-command-contract.yaml credential_resolution(認証情報ディレクトリ方式、null時の既定、非露出)を定義しfacade/worker/abort/rerunの環境変数を統一、E2E Givenにcredential_ref値を追記",
+      "artifact_refs": [
+        "specs/events/20260829_210828_spec_generation/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20260829_210828_spec_generation/並行稼働実行業務/並行稼働実行フロー/background roleを起動する/tier-worker.md",
+        "specs/events/20260829_210828_spec_generation/並行稼働実行業務/並行稼働実行フロー/feature flag設定に基づきslotを選択して起動する/spec.md"
+      ]
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-018#1",
+      "status": "changed",
+      "reason": "cli-command-contract.yaml job_map_contract(slot別ファイル、構造、必須/任意、未知無視、欠落時exit 2とstderr)を定義、job_map_versionをslot_execution_specsへ移動、hang_detect_limit_minutesの出所を定義。RDRA属性配置の見直しをrdra-feedback.md #2に記録",
+      "artifact_refs": [
+        "specs/events/20260829_210828_spec_generation/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20260829_210828_spec_generation/_cross-cutting/datastore/rdb-schema.yaml",
+        "specs/events/20260829_210828_spec_generation/並行稼働実行業務/並行稼働実行フロー/feature flag設定に基づきslotを選択して起動する/tier-facade.md",
+        "specs/events/20260829_210828_spec_generation/_cross-cutting/rdra-feedback.md"
+      ]
+    }
+  ],
+  "work_unit_evidence_refs": [
+    {
+      "work_unit_id": "CR-6078c4ed-011#1",
+      "path": "specs/events/20260829_210828_spec_generation/_cross-cutting/api/audit-event-contract.yaml",
+      "sha256": "08d683a92e0c83306d7c8034f0bcafb456bd5f01fa312b142c2b6763146855db"
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-011#1",
+      "path": "specs/events/20260829_210828_spec_generation/_cross-cutting/datastore/rdb-schema.yaml",
+      "sha256": "2263ab3ba4d6f3fb6c522e4c13d8754674c95a93d4b06b71de07361ec3f4d009"
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-012#1",
+      "path": "specs/events/20260829_210828_spec_generation/並行稼働実行業務/並行稼働実行フロー/feature flag設定に基づきslotを選択して起動する/tier-facade.md",
+      "sha256": "138a19276fe326c909db3b57f2f44612cb9bcb6a4992b3eb6a0728b94fdea78f"
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-012#1",
+      "path": "specs/events/20260829_210828_spec_generation/並行稼働実行業務/並行稼働実行フロー/feature flag設定に基づきslotを選択して起動する/spec.md",
+      "sha256": "93b3d053631d0bc4620a2f448dce1f810bc283592857517e2bd87d9319fb2bd4"
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-012#1",
+      "path": "specs/events/20260829_210828_spec_generation/_cross-cutting/api/audit-event-contract.yaml",
+      "sha256": "08d683a92e0c83306d7c8034f0bcafb456bd5f01fa312b142c2b6763146855db"
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-012#1",
+      "path": "specs/events/20260829_210828_spec_generation/並行稼働実行業務/並行稼働実行フロー/foreground roleの標準出力・標準エラー・終了コードを応答する/spec.md",
+      "sha256": "183c10a1dd967c023bd5044f9be615a716d63178d7ce7d49a45a0491b5c2b7f7"
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-012#1",
+      "path": "specs/events/20260829_210828_spec_generation/実行監視業務/ハング監視フロー/background実行の未完了・非0終了・速報比較異常を定期検知する/spec.md",
+      "sha256": "094e7947a914c8e427bd1ff93c493ffbea0e5a06017586893f2c35d8073a0455"
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-013#1",
+      "path": "specs/events/20260829_210828_spec_generation/並行稼働実行業務/並行稼働実行フロー/feature flag設定に基づきslotを選択して起動する/spec.md",
+      "sha256": "93b3d053631d0bc4620a2f448dce1f810bc283592857517e2bd87d9319fb2bd4"
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-013#1",
+      "path": "specs/events/20260829_210828_spec_generation/_cross-cutting/uc-dependencies.md",
+      "sha256": "11f88712c7638cdd02aa0d76eb2f067c9ea7276513ad4c479b6367b5ce220080"
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-013#1",
+      "path": "specs/events/20260829_210828_spec_generation/_cross-cutting/api/cli-command-contract.yaml",
+      "sha256": "0423e4e82b8de4e312a6e2c23d271f242599eac4c43b551308b03daaed076fe5"
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-013#1",
+      "path": "specs/events/20260829_210828_spec_generation/並行稼働実行業務/並行稼働実行フロー/foreground roleの標準出力・標準エラー・終了コードを応答する/tier-facade.md",
+      "sha256": "18558eb9ffd079a939349da128f54a289f97bc659a3a4dbe621ac30073fa033d"
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-014#1",
+      "path": "specs/events/20260829_210828_spec_generation/_cross-cutting/datastore/rdb-schema.yaml",
+      "sha256": "2263ab3ba4d6f3fb6c522e4c13d8754674c95a93d4b06b71de07361ec3f4d009"
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-014#1",
+      "path": "specs/events/20260829_210828_spec_generation/並行稼働実行業務/並行稼働実行フロー/feature flag設定に基づきslotを選択して起動する/spec.md",
+      "sha256": "93b3d053631d0bc4620a2f448dce1f810bc283592857517e2bd87d9319fb2bd4"
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-015#1",
+      "path": "specs/events/20260829_210828_spec_generation/_cross-cutting/datastore/rdb-schema.yaml",
+      "sha256": "2263ab3ba4d6f3fb6c522e4c13d8754674c95a93d4b06b71de07361ec3f4d009"
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-015#1",
+      "path": "specs/events/20260829_210828_spec_generation/_cross-cutting/datastore/datastore-schema.md",
+      "sha256": "8ec7cb36e302947e45c3c1ab80233f7f92cdc15845587492aad5f10e405aeaa8"
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-016#1",
+      "path": "specs/events/20260829_210828_spec_generation/_cross-cutting/datastore/rdb-schema.yaml",
+      "sha256": "2263ab3ba4d6f3fb6c522e4c13d8754674c95a93d4b06b71de07361ec3f4d009"
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-016#1",
+      "path": "specs/events/20260829_210828_spec_generation/実行監視業務/ハング監視フロー/background実行の未完了・非0終了・速報比較異常を定期検知する/spec.md",
+      "sha256": "094e7947a914c8e427bd1ff93c493ffbea0e5a06017586893f2c35d8073a0455"
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-016#1",
+      "path": "specs/events/20260829_210828_spec_generation/_cross-cutting/usdm-acceptance-matrix.md",
+      "sha256": "123ac047086ba3586796518e300f34855cd6c5915c90c6fd567fa30c6c1a3dc9"
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-017#1",
+      "path": "specs/events/20260829_210828_spec_generation/_cross-cutting/api/cli-command-contract.yaml",
+      "sha256": "0423e4e82b8de4e312a6e2c23d271f242599eac4c43b551308b03daaed076fe5"
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-017#1",
+      "path": "specs/events/20260829_210828_spec_generation/並行稼働実行業務/並行稼働実行フロー/background roleを起動する/tier-worker.md",
+      "sha256": "9bb828a882496f2fa736ea74bb6265c4a9db5157a967f710f1ac675926c145d0"
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-017#1",
+      "path": "specs/events/20260829_210828_spec_generation/並行稼働実行業務/並行稼働実行フロー/feature flag設定に基づきslotを選択して起動する/spec.md",
+      "sha256": "93b3d053631d0bc4620a2f448dce1f810bc283592857517e2bd87d9319fb2bd4"
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-018#1",
+      "path": "specs/events/20260829_210828_spec_generation/_cross-cutting/api/cli-command-contract.yaml",
+      "sha256": "0423e4e82b8de4e312a6e2c23d271f242599eac4c43b551308b03daaed076fe5"
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-018#1",
+      "path": "specs/events/20260829_210828_spec_generation/_cross-cutting/datastore/rdb-schema.yaml",
+      "sha256": "2263ab3ba4d6f3fb6c522e4c13d8754674c95a93d4b06b71de07361ec3f4d009"
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-018#1",
+      "path": "specs/events/20260829_210828_spec_generation/並行稼働実行業務/並行稼働実行フロー/feature flag設定に基づきslotを選択して起動する/tier-facade.md",
+      "sha256": "138a19276fe326c909db3b57f2f44612cb9bcb6a4992b3eb6a0728b94fdea78f"
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-018#1",
+      "path": "specs/events/20260829_210828_spec_generation/_cross-cutting/rdra-feedback.md",
+      "sha256": "b147303971a312baea4f7fdf48645c2257f9fc8db2b7cbe16b1e86d557cd0213"
+    }
+  ],
+  "domain_event_refs": [
+    {
+      "path": "specs/events/20260829_210828_spec_generation/spec-event.yaml",
+      "sha256": "f19707f0d2856626f5e0e73e5067b0eca93f9f351c331d86d80f8837c7dcb807"
+    },
+    {
+      "path": "specs/events/20260829_210828_spec_generation/decisions/spec-decision-008.yaml",
+      "sha256": "1bbe9ba23b02979ee60fb5b6d1098a27f964e50cffe3218f5fca0159a5a8577d"
+    },
+    {
+      "path": "specs/events/20260829_210828_spec_generation/decisions/spec-decision-009.yaml",
+      "sha256": "13e8be9e07fe9d4f2586d790c3f085525287c52b0536f6ad97687aebaaa192fe"
+    },
+    {
+      "path": "specs/events/20260829_210828_spec_generation/decisions/spec-decision-010.yaml",
+      "sha256": "d5436d21c23295a2eb35fefa977e528aebc943c7160622b80dabdf64b2fa3793"
+    }
+  ],
+  "feedback_request": {
+    "feedback_request_id": "20260822_085257_impl_feedback_6078c4ed",
+    "input_sha256": "8129956bff632d9c271356ef56e3256319c7613b030adfd5477fe9f60d748bf5",
+    "request_ids": [
+      "CR-6078c4ed-011",
+      "CR-6078c4ed-012",
+      "CR-6078c4ed-013",
+      "CR-6078c4ed-014",
+      "CR-6078c4ed-015",
+      "CR-6078c4ed-016",
+      "CR-6078c4ed-017",
+      "CR-6078c4ed-018"
+    ],
+    "work_unit_ids": [
+      "CR-6078c4ed-011#1",
+      "CR-6078c4ed-012#1",
+      "CR-6078c4ed-013#1",
+      "CR-6078c4ed-014#1",
+      "CR-6078c4ed-015#1",
+      "CR-6078c4ed-016#1",
+      "CR-6078c4ed-017#1",
+      "CR-6078c4ed-018#1"
+    ]
+  },
+  "post_execution_basis": {
+    "repository_head": "21599e76eba1e179ea90e7ff4c0e29877ecb5bc5",
+    "latest_domain_event_ids": {
+      "requirements": {
+        "rdra/events": "20260829_205305_spec_009_03_execution_spec_split_wording",
+        "usdm/events": "20260829_205305_spec_009_03_execution_spec_split_wording"
+      },
+      "quality_attributes": {
+        "nfr/events": "20260829_205740_feedback_disposition"
+      },
+      "architecture": {
+        "arch/events": "20260829_205903_feedback_disposition"
+      },
+      "infrastructure": {
+        "infra/events": "20260829_210031_feedback_disposition"
+      },
+      "design_system": {
+        "design/events": "20260829_210210_design_system_feedback_disposition"
+      },
+      "spec": {
+        "specs/events": "20260829_210828_spec_generation"
+      },
+      "spec_stories": {
+        "design/events": "20260829_210210_design_system_feedback_disposition"
+      }
+    },
+    "domain_event_root_snapshots": {
+      "rdra/events": {
+        "head_event_id": "20260829_205305_spec_009_03_execution_spec_split_wording",
+        "head_event_sha256": "0ca58727cf2150ecbf507964dd123ec3a35827aef2c69855b5af895f5aa1bf53",
+        "event_ids": [
+          "20260817_142258_initial_build",
+          "20260818_133855_rerun_identity_new_run_id",
+          "20260819_104301_slot_config_comparison_def_exitcode",
+          "20260829_205305_spec_009_03_execution_spec_split_wording"
+        ],
+        "event_set_sha256": "63521111d1ecf4264521696239389da705dd2c3ef457eac66d060f553461906d",
+        "latest_tree_sha256": "f832b64495e9cbf7c72ef2a729672d9c8c500c4886dbb0ccf91ac6b9d3808eab"
+      },
+      "usdm/events": {
+        "head_event_id": "20260829_205305_spec_009_03_execution_spec_split_wording",
+        "head_event_sha256": "14e51e7d7b4c4a47278a421836e160c84edaf75931348feb0ca51febdf09555f",
+        "event_ids": [
+          "20260817_142258_initial_build",
+          "20260818_133855_rerun_identity_new_run_id",
+          "20260819_104301_slot_config_comparison_def_exitcode",
+          "20260829_205305_spec_009_03_execution_spec_split_wording"
+        ],
+        "event_set_sha256": "63521111d1ecf4264521696239389da705dd2c3ef457eac66d060f553461906d",
+        "latest_tree_sha256": "84ee917a1432048b76ddba9c59ae572bc15de986d255f9b563ebdb8b383bf0bb"
+      },
+      "nfr/events": {
+        "head_event_id": "20260829_205740_feedback_disposition",
+        "head_event_sha256": "850f1f09d5acf64ae4637e86776a595cf0df74bba4877b90b909d5f428d59cf7",
+        "event_ids": [
+          "20260817_144844_initial_nfr",
+          "20260818_134843_feedback_disposition",
+          "20260819_105915_feedback_disposition",
+          "20260829_205740_feedback_disposition"
+        ],
+        "event_set_sha256": "074b59de73a3ae47e65443cab92a069bcd365fc45ee90479d2b5c181feea398b",
+        "latest_tree_sha256": "c139e3cc95fa46dd43625f9a04ce03e715b87f1d21e024da92008576b6c2a878"
+      },
+      "arch/events": {
+        "head_event_id": "20260829_205903_feedback_disposition",
+        "head_event_sha256": "789784d79920bade0b2b46c2853ad4374ccc9d6026031a3fc73518b11ebe62d6",
+        "event_ids": [
+          "20260817_150512_initial_arch",
+          "20260817_152155_arch_infra_feedback",
+          "20260818_090120_arch_audit_contract_feedback",
+          "20260818_135504_arch_slot_config_attempt_identity",
+          "20260819_110531_arch_comparison_definition_exitcode",
+          "20260829_205903_feedback_disposition"
+        ],
+        "event_set_sha256": "d38e9b6dea2bf936f110c0c60ace1ecb6ffbb4b7d1c9aa7e9c3a3dcba1ebbd93",
+        "latest_tree_sha256": "7aab99982dbab09540fe30dcfe86162611281aee585746fc0eb4a62adb90fd0c"
+      },
+      "infra/events": {
+        "head_event_id": "20260829_210031_feedback_disposition",
+        "head_event_sha256": "ac450c038403cb3dd842730242b47c8c816371e75d8e5585bcafce06394487a3",
+        "event_ids": [
+          "20260817_151023_infra_product_design",
+          "20260818_093020_infra_product_design",
+          "20260818_141149_infra_product_design",
+          "20260819_111931_infra_product_design",
+          "20260829_210031_feedback_disposition"
+        ],
+        "event_set_sha256": "e09524bb725aaafae5fc2fd0781e965cffd51303b92b196cb662be109456460a",
+        "latest_tree_sha256": "f230866558c09a8f08dbbed664f295078056b91bbf84983984f6511727ff4bbc"
+      },
+      "design/events": {
+        "head_event_id": "20260829_210210_design_system_feedback_disposition",
+        "head_event_sha256": "a3e0a3fbc15a0b711b41f796c8bf1d261337056be5f5ef7d34f62a561efab856",
+        "event_ids": [
+          "20260817_153235_design_system",
+          "20260817_180235_spec_stories",
+          "20260818_094841_design_system_feedback_disposition",
+          "20260818_143057_design_system",
+          "20260818_162251_spec_stories",
+          "20260819_113049_design_system",
+          "20260819_125615_spec_stories",
+          "20260829_210210_design_system_feedback_disposition"
+        ],
+        "event_set_sha256": "69fd28e566b6051b1325cec876e293fcd02141599c003ec4e5e346feef37d069",
+        "latest_tree_sha256": "8f0f8a97682c2a71b5b8859c85921d4d5f100e39770e653e9163f2d3f2c57e96"
+      },
+      "specs/events": {
+        "head_event_id": "20260829_210828_spec_generation",
+        "head_event_sha256": "7565e334f468c59ac1b9f3f9d566420266b9b207290a80a0813f9040b436797f",
+        "event_ids": [
+          "20260817_155817_spec_generation",
+          "20260818_144847_spec_generation",
+          "20260819_114307_spec_generation",
+          "20260829_210828_spec_generation"
+        ],
+        "event_set_sha256": "c7fe123e698ab30fd20db175ecb04bf951a6455834ed6b939aa5fe7aa9cd203f",
+        "latest_tree_sha256": "8ad03aad6fcb3ae57de13f953a337b3740cf8c605f7df3763d2e450d31e79e06"
+      }
+    }
+  }
+}

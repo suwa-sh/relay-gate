@@ -1,0 +1,24 @@
+uc: "ハング疑い・異常を運用者へ通知する"
+business: "実行監視業務"
+buc: "ハング監視フロー"
+commands:
+  - name: "relaygate hang-watch notify"
+    tier: "tier-worker"
+    summary: "notified_at未設定のハング検知記録を対象に、HangDetectionNotice形式（banner）で運用者へ通知しnotified_atを更新する"
+    args: []
+    env_vars:
+      - name: "HANG_NOTIFY_INTERVAL_SECONDS"
+        required: false
+        description: "通知バッチの実行間隔（秒）。未設定時はジョブマップのデフォルト値を使用する"
+    stdin: "なし"
+    stdout_contract: "通知件数と通知内容（run_id/異常検知種別/検知日時/しきい値/対象slot/通知先）をHangDetectionNotice形式で出力する"
+    stderr_contract: "通知送信失敗・RDB更新失敗時のエラーメッセージを出力する"
+    exit_codes:
+      - code: 0
+        meaning: "正常終了（通知対象0件の場合も含む）"
+      - code: 1
+        meaning: "業務エラー（通知送信失敗・notified_at更新失敗）"
+screens:
+  - name: "異常通知発信画面"
+    route: "/cli/hang-watch/notify"
+    components: ["HangDetectionNotice"]

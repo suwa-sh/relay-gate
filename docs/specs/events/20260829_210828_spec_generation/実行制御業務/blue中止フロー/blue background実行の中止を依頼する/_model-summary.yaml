@@ -1,0 +1,71 @@
+uc: "blue background実行の中止を依頼する"
+business: "実行制御業務"
+buc: "blue中止フロー"
+
+bounded_context_id: "BC-001"
+aggregate_id: "AG-002"
+
+models:
+  - name: "RequestAbortBlueRequest"
+    tier: "tier-facade"
+    layer: "presentation"
+    type: "request-dto"
+    rdra_info: "Runner実行結果（started-at.txt/stdout.log/stderr.log/exitcode.txt）"
+  - name: "RequestAbortBlueCommand"
+    tier: "tier-facade"
+    layer: "usecase"
+    type: "command"
+    rdra_info: "Runner実行結果（started-at.txt/stdout.log/stderr.log/exitcode.txt）"
+  - name: "RunnerExecutionResult"
+    tier: "tier-facade"
+    layer: "domain"
+    type: "entity"
+    rdra_info: "Runner実行結果（started-at.txt/stdout.log/stderr.log/exitcode.txt）"
+  - name: "RunnerResultRecord"
+    tier: "tier-facade"
+    layer: "gateway"
+    type: "record"
+    rdra_info: "Runner実行結果（started-at.txt/stdout.log/stderr.log/exitcode.txt）"
+
+tables:
+  - name: "runner_results"
+    rdra_info: "Runner実行結果（started-at.txt/stdout.log/stderr.log/exitcode.txt）"
+    operations:
+      - type: "SELECT"
+        columns: []
+        where: "run_id = :run_id AND slot_type = 'blue' AND role_type = 'background'"
+    indexes_needed:
+      - columns: ["slot_type", "status"]
+        reason: "--slotフィルタによるblue絞り込みと状態確認（中止依頼対象の特定）"
+        access_pattern: "relaygate abort blue request --run-id"
+  - name: "audit_logs"
+    rdra_info: "該当なし（CTP-005監査ログ要件から導出。audit-event-contract.yamlが正本）"
+    operations:
+      - type: "INSERT"
+        columns:
+          - name: "event_name"
+            value: "abort_requested"
+          - name: "operation"
+            value: "abort"
+          - name: "outcome"
+            value: "accepted / rejected"
+          - name: "slot"
+            value: "blue"
+          - name: "attempt_id"
+            value: "対象起動試行のattempt_id"
+        where: "冪等キー (run_id, slot, attempt_id, event_name) で重複追記を防止する"
+  - name: "audit_chain_heads"
+    rdra_info: "該当なし（CTP-005ハッシュチェーン要件から導出）"
+    operations:
+      - type: "SELECT"
+        columns: ["head_hash"]
+        where: "run_id = :run_id（SELECT ... FOR UPDATEで排他ロックしprevious_hashを確定）"
+      - type: "INSERT"
+        columns: []
+        where: "対象run_idの行が存在しない場合の初期作成"
+      - type: "UPDATE"
+        columns: ["head_event_id", "head_hash", "chain_length", "updated_at"]
+        where: "run_id = :run_id（audit_logsのINSERTと同一transaction）"
+
+kvs: []
+object_storage: []

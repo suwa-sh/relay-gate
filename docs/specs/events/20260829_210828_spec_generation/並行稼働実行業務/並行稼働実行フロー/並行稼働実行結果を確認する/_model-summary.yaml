@@ -1,0 +1,124 @@
+uc: "並行稼働実行結果を確認する"
+business: "並行稼働実行業務"
+buc: "並行稼働実行フロー"
+
+bounded_context_id: "BC-001"
+
+models:
+  - name: "ConcurrentRunResultRequest"
+    tier: "tier-facade"
+    layer: "presentation"
+    type: "request-dto"
+    rdra_info: "Runner実行結果（started-at.txt/stdout.log/stderr.log/exitcode.txt）"
+  - name: "GetConcurrentRunResultQuery"
+    tier: "tier-facade"
+    layer: "usecase"
+    type: "query"
+    rdra_info: "Runner実行結果（started-at.txt/stdout.log/stderr.log/exitcode.txt）"
+  - name: "RunnerExecutionResult"
+    tier: "tier-facade"
+    layer: "domain"
+    type: "entity"
+    rdra_info: "Runner実行結果（started-at.txt/stdout.log/stderr.log/exitcode.txt）"
+  - name: "RunnerResultRecord"
+    tier: "tier-facade"
+    layer: "gateway"
+    type: "record"
+    rdra_info: "Runner実行結果（started-at.txt/stdout.log/stderr.log/exitcode.txt）"
+
+tables:
+  - name: "execution_specs"
+    rdra_info: "execution-spec.json"
+    operations:
+      - type: "SELECT"
+        columns:
+          - name: "run_id"
+            value: "job_id指定時のrun_id解決"
+          - name: "parent_run_id"
+            value: "リラン系譜の表示"
+        where: "job_id = :job_id または run_id = :run_id"
+    indexes_needed:
+      - columns: ["job_id"]
+        reason: "job_id指定でのrun_id解決"
+        access_pattern: "relaygate concurrent-run result --job-id"
+  - name: "slot_execution_specs"
+    rdra_info: "execution-spec.json（slot別実行設定の分離）"
+    operations:
+      - type: "SELECT"
+        columns:
+          - name: "slot_type"
+            value: "slot別セクション表示"
+          - name: "impl_version"
+            value: "slot別実装バージョン表示"
+        where: "run_id = :run_id"
+    indexes_needed:
+      - columns: ["slot_type"]
+        reason: "slot種別単位での並行稼働結果参照"
+        access_pattern: "slot別セクション整形"
+  - name: "runner_results"
+    rdra_info: "Runner実行結果（started-at.txt/stdout.log/stderr.log/exitcode.txt）"
+    operations:
+      - type: "SELECT"
+        columns:
+          - name: "run_id"
+            value: "対象実行のrun_id"
+          - name: "slot_type"
+            value: "blue/green"
+          - name: "role_type"
+            value: "foreground/background/rapid-crosscheck"
+          - name: "attempt_id"
+            value: "起動試行の一意識別子"
+          - name: "attempt_no"
+            value: "起動試行連番"
+          - name: "accepted_at"
+            value: "起動受付時刻"
+          - name: "started_at"
+            value: "実行開始時刻（nullable）"
+          - name: "exit_code"
+            value: "終了コード（未完了・UNKNOWN時はNULL）"
+          - name: "status"
+            value: "STARTING/RUNNING/SUCCEEDED/FAILED/UNKNOWN/ABORTED"
+        where: "run_id IN (execution_specsで解決したrun_id)"
+    indexes_needed:
+      - columns: ["run_id", "slot_type", "role_type", "attempt_id"]
+        reason: "複合主キー。run_id単位の起動試行snapshot取得"
+        access_pattern: "relaygate concurrent-run result --run-id / --job-id"
+  - name: "runner_result_events"
+    rdra_info: "Runner実行結果（started-at.txt/stdout.log/stderr.log/exitcode.txt）"
+    operations:
+      - type: "SELECT"
+        columns:
+          - name: "event_name"
+            value: "状態遷移イベント名"
+          - name: "status"
+            value: "遷移後状態"
+          - name: "occurred_at"
+            value: "時系列表示の基準"
+        where: "run_id = :run_id ORDER BY occurred_at"
+    indexes_needed:
+      - columns: ["run_id", "occurred_at"]
+        reason: "run_id単位で起動試行の経過を時系列に追跡する（障害調査・実行系譜照会）"
+        access_pattern: "run_id指定の履歴照会"
+  - name: "audit_logs"
+    rdra_info: "該当なし（CTP-005監査ログ要件から導出）"
+    operations:
+      - type: "SELECT"
+        columns:
+          - name: "event_name"
+            value: "監査イベント名"
+          - name: "actor"
+            value: "操作主体"
+          - name: "operation"
+            value: "実施した操作"
+          - name: "outcome"
+            value: "操作の結果"
+          - name: "occurred_at"
+            value: "時系列表示の基準"
+        where: "run_id = :run_id ORDER BY occurred_at"
+    indexes_needed:
+      - columns: ["run_id", "occurred_at"]
+        reason: "run_id単位で監査イベントを時系列に照会する（CTP-004実行系譜トレーサビリティ）"
+        access_pattern: "run_id指定の監査イベント照会"
+
+kvs: []
+object_storage: []

@@ -2,19 +2,19 @@
 
 > undefined
 
-**最終更新**: 2026-08-19 12:56:15 spec stories (design)
+**最終更新**: 2026-08-29 22:01:17 spec stories (design)
 
 ## 成果物一覧
 
 | ドメイン | 最新 | イベント数 |
 |---------|------|-----------:|
-| [USDM（要求分解）](#usdm要求分解) | [usdm/latest/](usdm/latest/) | 3 |
-| [RDRA（要件定義）](#rdra要件定義) | [rdra/latest/](rdra/latest/) | 3 |
-| [NFR（非機能要求）](#nfr非機能要求) | [nfr/latest/](nfr/latest/) | 3 |
-| [Arch（アーキテクチャ）](#archアーキテクチャ) | [arch/latest/](arch/latest/) | 5 |
-| [Infra（インフラ設計）](#infraインフラ設計) | [infra/latest/](infra/latest/) | 4 |
-| [Design（デザイン）](#designデザイン) | [design/latest/](design/latest/) | 7 |
-| [Specs（詳細仕様）](#specs詳細仕様) | [specs/latest/](specs/latest/) | 3 |
+| [USDM（要求分解）](#usdm要求分解) | [usdm/latest/](usdm/latest/) | 4 |
+| [RDRA（要件定義）](#rdra要件定義) | [rdra/latest/](rdra/latest/) | 4 |
+| [NFR（非機能要求）](#nfr非機能要求) | [nfr/latest/](nfr/latest/) | 4 |
+| [Arch（アーキテクチャ）](#archアーキテクチャ) | [arch/latest/](arch/latest/) | 6 |
+| [Infra（インフラ設計）](#infraインフラ設計) | [infra/latest/](infra/latest/) | 5 |
+| [Design（デザイン）](#designデザイン) | [design/latest/](design/latest/) | 9 |
+| [Specs（詳細仕様）](#specs詳細仕様) | [specs/latest/](specs/latest/) | 4 |
 
 ## USDM（要求分解）
 
@@ -312,6 +312,9 @@ Stories: 24 ファイル
 | 20 | Specs | [監査イベントの永続化・冪等化・ハッシュチェーン直列化の仕様確定](specs/events/20260818_144847_spec_generation/decisions/spec-decision-005.yaml) | approved |
 | 21 | Specs | [respond-foregroundの終了コード透過契約とrelay-gate退避コードの分離](specs/events/20260819_114307_spec_generation/decisions/spec-decision-006.yaml) | approved |
 | 22 | Specs | [比較定義のSCD2世代管理と依頼側での適用世代固定](specs/events/20260819_114307_spec_generation/decisions/spec-decision-007.yaml) | approved |
+| 23 | Specs | [slot別ジョブマップ契約とjob_map_versionのslot別保持、認証情報ディレクトリ方式によるcredential_ref解決](specs/events/20260829_210828_spec_generation/decisions/spec-decision-008.yaml) | approved |
+| 24 | Specs | [論理型→PostgreSQL物理型対応表、datetimeのマイクロ秒精度・UTC、引数カラムのJSON配列保存](specs/events/20260829_210828_spec_generation/decisions/spec-decision-009.yaml) | approved |
+| 25 | Specs | [監査event_hashの正規化形式、起動イベント送出失敗の補償記録、起動UCとforeground応答UCの応答時間責務分割](specs/events/20260829_210828_spec_generation/decisions/spec-decision-010.yaml) | approved |
 
 ## イベント履歴
 
@@ -345,6 +348,14 @@ Stories: 24 ファイル
 | 2026-08-19 11:30:49 | Design（デザイン） | [20260819_113049_design_system](design/events/20260819_113049_design_system) |
 | 2026-08-19 11:43:07 | Specs（詳細仕様） | [20260819_114307_spec_generation](specs/events/20260819_114307_spec_generation) |
 | 2026-08-19 12:56:15 | Design（デザイン） | [20260819_125615_spec_stories](design/events/20260819_125615_spec_stories) |
+| 2026-08-29 20:53:05 | USDM（要求分解） | [20260829_205305_spec_009_03_execution_spec_split_wording](usdm/events/20260829_205305_spec_009_03_execution_spec_split_wording) |
+| 2026-08-29 20:53:05 | RDRA（要件定義） | [20260829_205305_spec_009_03_execution_spec_split_wording](rdra/events/20260829_205305_spec_009_03_execution_spec_split_wording) |
+| 2026-08-29 20:57:40 | NFR（非機能要求） | [20260829_205740_feedback_disposition](nfr/events/20260829_205740_feedback_disposition) |
+| 2026-08-29 20:59:03 | Arch（アーキテクチャ） | [20260829_205903_feedback_disposition](arch/events/20260829_205903_feedback_disposition) |
+| 2026-08-29 21:00:31 | Infra（インフラ設計） | [20260829_210031_feedback_disposition](infra/events/20260829_210031_feedback_disposition) |
+| 2026-08-29 21:02:10 | Design（デザイン） | [20260829_210210_design_system_feedback_disposition](design/events/20260829_210210_design_system_feedback_disposition) |
+| 2026-08-29 21:08:28 | Specs（詳細仕様） | [20260829_210828_spec_generation](specs/events/20260829_210828_spec_generation) |
+| 2026-08-29 22:01:17 | Design（デザイン） | [20260829_220117_spec_stories](design/events/20260829_220117_spec_stories) |
 
 ---
 

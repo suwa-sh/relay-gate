@@ -1,0 +1,24 @@
+uc: "background実行の未完了・非0終了・速報比較異常を定期検知する"
+business: "実行監視業務"
+buc: "ハング監視フロー"
+commands:
+  - name: "relaygate hang-watch detect"
+    tier: "tier-worker"
+    summary: "STARTINGまたはRUNNING状態かつrole_type='background'のRunner実行結果（起動試行）と速報比較結果NGを走査し、ハング疑い・background実行エラー・速報クロスチェック異常を検知してハング検知記録を作成する（未解消の同一run_id・同一detection_typeの検知記録が既にある場合は重複作成しない）。実行状態はSUCCEEDED/FAILED/UNKNOWNへ確定し、推測でFAILEDを確定せず、ABORTEDへは自動遷移させない"
+    args: []
+    env_vars:
+      - name: "HANG_DETECT_INTERVAL_SECONDS"
+        required: false
+        description: "CronJobの実行間隔（秒）。未設定時はジョブマップのデフォルト値（例: 60秒）を使用する"
+    stdin: "なし"
+    stdout_contract: "検知件数・検知種別ごとのサマリ（detection_type別件数）を1行1件のプレーンテキストで出力する"
+    stderr_contract: "RDB接続断・永続化失敗時のエラーメッセージを出力する"
+    exit_codes:
+      - code: 0
+        meaning: "正常終了（検知処理を完走。検知件数0件も含む）"
+      - code: 1
+        meaning: "業務エラー（RDB接続断・永続化失敗）"
+screens:
+  - name: "background実行異常検知画面"
+    route: "/cli/hang-watch/detect"
+    components: ["HangDetectionNotice", "RunnerResultPanel"]
