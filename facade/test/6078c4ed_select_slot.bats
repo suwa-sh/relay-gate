@@ -35,6 +35,7 @@ hang) sleep 20 ;;
 spawn-child-hang) sleep 20 & child_pid=$!; printf '%s' "$child_pid" >"$RELAYGATE_TEST_CHILD_PID_PATH"; wait "$child_pid" ;;
 spawn-term-ignoring-child) bash -c 'trap "" TERM; sleep 20' & child_pid=$!; printf '%s' "$child_pid" >"$RELAYGATE_TEST_CHILD_PID_PATH"; wait "$child_pid" ;;
 delayed-success) sleep "${RELAYGATE_TEST_SSH_DELAY_SECONDS:-4}" ;;
+exit-124) exit 124 ;;
 *) exit 64 ;;
 esac
 EOF
@@ -302,15 +303,65 @@ EOF
 	started_seconds="$(now_seconds)"
 
 	# Act
-	run --separate-stderr run_select_slot background background on daily-settlement
+	# 起動順は background(green)→ foreground(blue)。1 回目(green)は 4 秒で成功し、2 回目(blue)が deadline で打ち切られる
+	run --separate-stderr run_select_slot foreground background on daily-settlement
 
 	# Assert
 	[ "$status" -eq 124 ]
-	[[ "$stderr" == *"green実装への起動イベント送出がtimeoutしました"* ]]
-	[[ "$stderr" != *"blue実装への起動イベント送出"* ]]
+	[[ "$stderr" == *"blue実装への起動イベント送出がtimeoutしました"* ]]
+	[[ "$stderr" != *"green実装への起動イベント送出"* ]]
 	elapsed_under "$started_seconds" 10
 	[ "$(wc -l <"$launch_log" | tr -d ' ')" = "2" ]
-	[ "$(sqlite3 "$db_path" 'SELECT slot_type || ":" || status FROM runner_results ORDER BY slot_type;')" = $'blue:STARTING\ngreen:UNKNOWN' ]
+	[ "$(sqlite3 "$db_path" 'SELECT slot_type || ":" || status FROM runner_results ORDER BY slot_type;')" = $'blue:UNKNOWN\ngreen:STARTING' ]
+}
+
+@test "relaygate_concurrent_run_select_slot_リモートコマンドが終了コード124を返した場合_timeoutと誤判定せずFAILEDへ補償記録し1で終了すること" {
+	# Arrange
+	# ssh(リモートコマンド)自身が 124 を返す。ローカル deadline は発火していないので送出失敗(FAILED / slot_launch_failed)
+	export RELAYGATE_TEST_SSH_MODE=exit-124
+
+	# Act
+	run --separate-stderr run_select_slot foreground off on daily-settlement
+
+	# Assert
+	[ "$status" -eq 1 ]
+	[[ "$stderr" == *"blue実装への起動イベント送出に失敗しました"*"ssh_exit=124"* ]]
+	[[ "$stderr" != *"timeoutしました"* ]]
+	[ "$(sqlite3 "$db_path" 'SELECT status FROM runner_results;')" = "FAILED" ]
+	[ "$(sqlite3 "$db_path" 'SELECT event_name FROM runner_result_events ORDER BY occurred_at;')" = $'attempt_started\nattempt_failed' ]
+	[ "$(sqlite3 "$db_path" 'SELECT COUNT(*) FROM audit_logs WHERE event_name = "slot_launch_failed";')" = "1" ]
+	[ "$(sqlite3 "$db_path" 'SELECT COUNT(*) FROM audit_logs WHERE event_name = "slot_launch_timeout";')" = "0" ]
+}
+
+# ---- host / exec_user は契約どおり任意の非空文字列(verify F-002) ----
+
+@test "relaygate_concurrent_run_select_slot_hostとexec_userに契約外の文字種正規表現で拒否していた値を含む場合_拒否せず値のまま起動イベントへ渡すこと" {
+	# Arrange
+	# SSH 設定 alias(underscore)・組織ディレクトリ由来のユーザー名(大文字・ドット)は job_map_contract 上は有効な string
+	set_job_field blue host '"blue_batch.alias"'
+	set_job_field blue exec_user '"Batch.User@corp"'
+
+	# Act
+	run --separate-stderr run_select_slot foreground off on daily-settlement
+
+	# Assert
+	[ "$status" -eq 0 ]
+	[ "$(sqlite3 "$db_path" 'SELECT host || ":" || exec_user FROM slot_execution_specs;')" = "blue_batch.alias:Batch.User@corp" ]
+	[[ "$(<"$launch_log")" == *"-oIdentitiesOnly=yes -- Batch.User@corp@blue_batch.alias cd "* ]]
+}
+
+@test "relaygate_concurrent_run_select_slot_hostが先頭ハイフンの場合_sshのオプションとして解釈されない位置の配列要素として渡すこと" {
+	# Arrange
+	set_job_field blue host '"-oProxyCommand=touch pwned"'
+
+	# Act
+	run --separate-stderr run_select_slot foreground off on daily-settlement
+
+	# Assert
+	# 接続先は '--' の後ろの 5 番目の引数として渡される(オプション解析の対象外)
+	[ "$status" -eq 0 ]
+	[[ "$(<"$launch_log")" == *"-oIdentitiesOnly=yes -- batchuser@-oProxyCommand=touch pwned cd "* ]]
+	[ ! -e pwned ]
 }
 
 @test "relaygate_concurrent_run_select_slot_SSHが応答しない場合_seam未設定でも10秒以内に124で終了しUNKNOWNを記録すること" {
@@ -342,8 +393,8 @@ EOF
 	[[ "$(<"$launch_log")" == *"RELAYGATE_RUN_ID=$run_id"* ]]
 	[[ "$(<"$launch_log")" == *"RELAYGATE_ATTEMPT_ID="* ]]
 	[[ "$(<"$launch_log")" == *"RELAYGATE_RAPID_CROSSCHECK_MODE=on"* ]]
-	[[ "$(<"$launch_log")" == *"-i $credential_dir/cred-blue-batch -oBatchMode=yes -oIdentitiesOnly=yes batchuser@blue-host-01 cd /opt/relaygate/work && "*"/opt/blue/run.sh --mode batch"* ]]
-	[[ "$(<"$launch_log")" == *"-i $credential_dir/cred-green-batch -oBatchMode=yes -oIdentitiesOnly=yes batchuser@green-host-01 "* ]]
+	[[ "$(<"$launch_log")" == *"-i$credential_dir/cred-blue-batch -oBatchMode=yes -oIdentitiesOnly=yes -- batchuser@blue-host-01 cd /opt/relaygate/work && "*"/opt/blue/run.sh --mode batch"* ]]
+	[[ "$(<"$launch_log")" == *"-i$credential_dir/cred-green-batch -oBatchMode=yes -oIdentitiesOnly=yes -- batchuser@green-host-01 "* ]]
 	# 鍵の内容・実装版・ジョブマップ版は起動イベントに現れない
 	[[ "$(<"$launch_log")" != *"bats-test-key"* ]]
 	[[ "$(<"$launch_log")" != *"blue-2.3.1"* ]]
@@ -508,7 +559,7 @@ EOF
 	set_job_field green host '{"unexpected":"object"}'
 
 	# Act & Assert
-	run --separate-stderr run_select_slot off background off daily-settlement
+	run --separate-stderr run_select_slot off foreground off daily-settlement
 	[ "$status" -eq 2 ]
 	[[ "$(strip_test_dir "$stderr")" == *"ジョブマップの必須フィールドが欠落しています: slot_type=green path=/etc/relaygate/job-map.green.json field=jobs.daily-settlement.host"* ]]
 	[ "$(count_rows execution_specs)" = "0" ]
@@ -519,7 +570,7 @@ EOF
 	set_job_field green hang_detect_limit_minutes '"15; DROP TABLE execution_specs;"'
 
 	# Act & Assert
-	run --separate-stderr run_select_slot off background off daily-settlement
+	run --separate-stderr run_select_slot off foreground off daily-settlement
 	[ "$status" -eq 2 ]
 	[[ "$stderr" == *"field=jobs.daily-settlement.hang_detect_limit_minutes"* ]]
 	[ "$(count_rows execution_specs)" = "0" ]
@@ -530,7 +581,7 @@ EOF
 	set_job_field green hang_detect_limit_minutes 0
 
 	# Act & Assert
-	run --separate-stderr run_select_slot off background off daily-settlement
+	run --separate-stderr run_select_slot off foreground off daily-settlement
 	[ "$status" -eq 2 ]
 	[[ "$stderr" == *"field=jobs.daily-settlement.hang_detect_limit_minutes"* ]]
 }
@@ -540,7 +591,7 @@ EOF
 	set_job_field green fixed_args '["--fixed", 42]'
 
 	# Act & Assert
-	run --separate-stderr run_select_slot off background off daily-settlement
+	run --separate-stderr run_select_slot off foreground off daily-settlement
 	[ "$status" -eq 2 ]
 	[[ "$stderr" == *"field=jobs.daily-settlement.fixed_args"* ]]
 	[ "$(count_rows execution_specs)" = "0" ]
@@ -564,7 +615,7 @@ EOF
 	set_job_field green credential_ref 42
 
 	# Act & Assert
-	run --separate-stderr run_select_slot off background off daily-settlement
+	run --separate-stderr run_select_slot off foreground off daily-settlement
 	[ "$status" -eq 2 ]
 	[[ "$stderr" == *"field=jobs.daily-settlement.credential_ref"* ]]
 	[ "$(count_rows execution_specs)" = "0" ]
@@ -575,7 +626,7 @@ EOF
 	set_job_field green credential_ref '"../etc/passwd"'
 
 	# Act & Assert
-	run --separate-stderr run_select_slot off background off daily-settlement
+	run --separate-stderr run_select_slot off foreground off daily-settlement
 	[ "$status" -eq 2 ]
 	[[ "$stderr" == *"credential_ref の書式が不正です: slot_type=green"* ]]
 	[ "$(count_rows execution_specs)" = "0" ]
@@ -589,12 +640,12 @@ EOF
 	export RELAYGATE_SSH_KEY_PATH="$test_dir/default-key"
 
 	# Act
-	run --separate-stderr run_select_slot off background off daily-settlement
+	run --separate-stderr run_select_slot off foreground off daily-settlement
 
 	# Assert
 	[ "$status" -eq 0 ]
 	[ "$(sqlite3 "$db_path" 'SELECT credential_ref IS NULL FROM slot_execution_specs;')" = "1" ]
-	[[ "$(<"$launch_log")" == *"-i $test_dir/default-key "* ]]
+	[[ "$(<"$launch_log")" == *"-i$test_dir/default-key "* ]]
 }
 
 @test "relaygate_concurrent_run_select_slot_credential_refがnullでRELAYGATE_SSH_KEY_PATHも未設定の場合_業務エラーで永続化しないこと" {
@@ -602,7 +653,7 @@ EOF
 	set_job_field green credential_ref null
 
 	# Act & Assert
-	run --separate-stderr run_select_slot off background off daily-settlement
+	run --separate-stderr run_select_slot off foreground off daily-settlement
 	[ "$status" -eq 1 ]
 	[[ "$stderr" == *"SSH認証情報を解決できません: credential_ref=null かつ RELAYGATE_SSH_KEY_PATH 未設定"* ]]
 	[ "$(count_rows execution_specs)" = "0" ]

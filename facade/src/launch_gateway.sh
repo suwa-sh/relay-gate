@@ -54,14 +54,18 @@ launch_slot() {
   fi
   if ((ssh_timeout_seconds * 1000 < remaining_milliseconds)); then remaining_milliseconds=$((ssh_timeout_seconds * 1000)); fi
   printf -v ssh_timeout_duration '%d.%03ds' "$((remaining_milliseconds / 1000))" "$((remaining_milliseconds % 1000))"
-  # 引数の位置: -i <鍵パス> -oBatchMode=yes -oIdentitiesOnly=yes <user@host> <remote_command>(標準入力は使わない)
-  if deadline_run_for "$ssh_timeout_duration" ssh -i "${slot_ssh_key_path[$slot]}" -oBatchMode=yes -oIdentitiesOnly=yes "${slot_exec_user[$slot]}@${slot_host[$slot]}" "$remote_command" >/dev/null </dev/null; then
+  # 引数の位置: -i<鍵パス> -oBatchMode=yes -oIdentitiesOnly=yes -- <user@host> <remote_command>(標準入力は使わない)。
+  # host / exec_user は契約上任意の文字列のため配列要素のまま '--' の後ろに置き、先頭が '-' でも ssh オプションとして解釈させない
+  # (verify F-002。文字種の検証は行わない)。接続先は引数 5 番目に固定する(テストの ssh スタブが位置で判定する)
+  if deadline_run_for "$ssh_timeout_duration" ssh "-i${slot_ssh_key_path[$slot]}" -oBatchMode=yes -oIdentitiesOnly=yes -- "${slot_exec_user[$slot]}@${slot_host[$slot]}" "$remote_command" >/dev/null </dev/null; then
     launch_result=ok
     return 0
   else
     ssh_exit_code=$?
   fi
-  if [[ $ssh_exit_code -eq 124 ]]; then
+  # timeout の判定は終了コードではなくローカル deadline の発火フラグで行う(verify F-003)。
+  # リモートコマンドや ssh 自身が 124 を返した場合は送出失敗(FAILED)として扱う
+  if [[ $deadline_fired -eq 1 ]]; then
     launch_result=timeout
     launch_reason="ssh_timeout"
   else

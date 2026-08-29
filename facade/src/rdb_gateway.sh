@@ -147,7 +147,7 @@ persist_launch_transaction() {
   local sql exit_code=0
   sql="$(build_launch_transaction_sql "$rdb_kind")" || business_error "Pre-launch persistence failed (run_id=$run_id, boundary=rdb, reason=sql_build). Next action: check RELAYGATE_RDB_DSN, then rerun the job."
   rdb_execute "$sql" || exit_code=$?
-  if [[ $exit_code -eq 124 ]]; then
+  if [[ $deadline_fired -eq 1 ]]; then
     timeout_error "RDB connection timed out before the pre-launch audit was committed (run_id=$run_id, boundary=rdb, reason=timeout). Next action: check RDB availability, then rerun the job; no slot was launched."
   elif [[ $rdb_kind == postgresql && $exit_code -eq 2 ]]; then
     # psql 終了コード 2 = サーバーへ接続できない(認証失敗・到達不能)

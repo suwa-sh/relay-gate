@@ -268,14 +268,37 @@ strip_test_dir() {
 	[ "$(wc -l <"$launch_log" | tr -d ' ')" = "1" ]
 }
 
-@test "relaygate_concurrent_run_select_slot_両slotがbackgroundの場合_hang_detect_limit_minutesに両ジョブマップの大きい方を採用すること" {
-	# Act
+# foreground はちょうど 1 件(ユーザー決定 2026-08-30、issues/20260830T034746Z_exactly-one-foreground-rule.md)。
+# 両 background は現行 spec の「大きい方を採用する」Scenario から意図的に逸脱して検証エラーにする(S8 で仕様変更要求化)
+@test "relaygate_concurrent_run_select_slot_両slotがbackgroundの場合_foreground不在のバリデーションエラーで永続化も起動もしないこと" {
+	# Act & Assert
 	run --separate-stderr run_select_slot background background on daily-settlement
+	[ "$status" -eq 2 ]
+	[[ "$stderr" == *"BLUE_MODEとGREEN_MODEのどちらか1つをforegroundにする必要があります"* ]]
+	[[ "$stderr" == *"Next action:"* ]]
+	[ "$(count_rows execution_specs)" = "0" ]
+	[ "$(count_rows audit_logs)" = "0" ]
+	[ ! -e "$launch_log" ]
+}
 
-	# Assert
-	[ "$status" -eq 0 ]
-	[ "$(sqlite3 "$db_path" 'SELECT hang_detect_limit_minutes FROM execution_specs;')" = "45" ]
-	[ "$(sqlite3 "$db_path" 'SELECT slot_type || ":" || job_map_version FROM slot_execution_specs ORDER BY slot_type;')" = $'blue:v1.4.0\ngreen:v1.4.0' ]
+@test "relaygate_concurrent_run_select_slot_両slotがoffの場合_foreground不在のバリデーションエラーで永続化も起動もしないこと" {
+	# Act & Assert
+	run --separate-stderr run_select_slot off off off daily-settlement
+	[ "$status" -eq 2 ]
+	[[ "$stderr" == *"BLUE_MODEとGREEN_MODEのどちらか1つをforegroundにする必要があります"* ]]
+	[[ "$stderr" != *"unbound variable"* ]]
+	[ "$(count_rows execution_specs)" = "0" ]
+	[ "$(count_rows audit_logs)" = "0" ]
+	[ ! -e "$launch_log" ]
+}
+
+@test "relaygate_concurrent_run_select_slot_両slotがforegroundの場合_排他制約のバリデーションエラーで永続化も起動もしないこと" {
+	# Act & Assert
+	run --separate-stderr run_select_slot foreground foreground on daily-settlement
+	[ "$status" -eq 2 ]
+	[[ "$stderr" == *"BLUE_MODEとGREEN_MODEを同時にforegroundにすることはできません"* ]]
+	[ "$(count_rows execution_specs)" = "0" ]
+	[ ! -e "$launch_log" ]
 }
 
 @test "relaygate_concurrent_run_select_slot_ジョブマップのslot_typeが環境変数の指すslotと一致しない場合_バリデーションエラーで永続化も起動もしないこと" {

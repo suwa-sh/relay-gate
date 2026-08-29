@@ -64,7 +64,7 @@ resolve_job_map_for_slot() {
   slot_job_map_path[$slot]="$path"
   exit_code=0
   deadline_run test -r "$path" || exit_code=$?
-  if [[ $exit_code -eq 124 ]]; then
+  if [[ $deadline_fired -eq 1 ]]; then
     timeout_error "ジョブマップを読み込めません: slot_type=$slot path=$path reason=timeout (boundary=job_map). Next action: check the filesystem holding the job map, then rerun the job."
   elif [[ $exit_code -ne 0 ]]; then
     reason="unreadable"
@@ -92,9 +92,8 @@ resolve_job_map_for_slot() {
   [[ -n ${slot_work_dir[$slot]} ]] || job_map_field_error "$slot" "jobs.$job_id.work_dir"
   slot_impl_version[$slot]="${fields[8]}"
   [[ -n ${slot_impl_version[$slot]} ]] || job_map_field_error "$slot" "jobs.$job_id.impl_version"
-  # SSH 接続先として安全な値に限定する(ホスト名・ユーザー名以外を型不正として扱う)
-  [[ ${slot_host[$slot]} =~ ^[A-Za-z0-9][A-Za-z0-9.-]*$ ]] || job_map_field_error "$slot" "jobs.$job_id.host"
-  [[ ${slot_exec_user[$slot]} =~ ^[a-z_][a-z0-9_-]*\$?$ ]] || job_map_field_error "$slot" "jobs.$job_id.exec_user"
+  # host / exec_user は契約どおり非空文字列のみを要求し、文字種は制限しない(verify F-002)。
+  # ssh へは配列要素として '--' の後ろに渡し、オプションとして解釈させない(launch_gateway.sh)
   # fixed_args: 省略時は空配列 []。要素はすべて文字列(argument_serialization)
   slot_fixed_args_json[$slot]="${fields[9]}"
   [[ -n ${slot_fixed_args_json[$slot]} ]] || job_map_field_error "$slot" "jobs.$job_id.fixed_args"

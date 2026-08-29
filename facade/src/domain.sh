@@ -57,7 +57,9 @@ select_slot_roles() {
 
 # resolve_hang_detect_limit_minutes は run 共通の hang_detect_limit_minutes を確定する
 # (cli-command-contract.yaml job_map_contract.hang_detect_limit_minutes_rule)。
-# background role の slot の値を採用し、両 slot が background なら大きい方、background が無ければ起動対象の唯一の slot の値。
+# background role の slot の値を採用し、background が無ければ起動対象の唯一の slot の値。
+# 入力検証で foreground がちょうど 1 件に限定されるため(presentation.sh)、起動対象は 1〜2 件で background は高々 1 件になり、
+# 契約の「両 slot が background なら大きい方」は到達しない(issues/20260830T034746Z_exactly-one-foreground-rule.md)。
 resolve_hang_detect_limit_minutes() {
   local slot candidate=""
   for slot in "${selected_slots[@]}"; do

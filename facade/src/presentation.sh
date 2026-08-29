@@ -50,9 +50,13 @@ validate_select_slot_environment() {
       *) violations+=("${pair%%:*} must be off, background, or foreground") ;;
     esac
   done
-  # SR-001 排他的 foreground 制約
+  # foreground はちょうど 1 件(ユーザー決定 2026-08-30、issues/20260830T034746Z_exactly-one-foreground-rule.md)。
+  # 同時 foreground は SR-001 排他的 foreground 制約。両 background / 両 off は foreground 不在として拒否する
+  # (現行 spec の「両 background なら大きい方」からの意図的逸脱。S8 で仕様変更要求化)
   if [[ $blue_mode == foreground && $green_mode == foreground ]]; then
     violations+=("BLUE_MODEとGREEN_MODEを同時にforegroundにすることはできません")
+  elif [[ $blue_mode != foreground && $green_mode != foreground ]]; then
+    violations+=("BLUE_MODEとGREEN_MODEのどちらか1つをforegroundにする必要があります (BLUE_MODE=$blue_mode, GREEN_MODE=$green_mode)")
   fi
   case "$rapid_crosscheck_mode" in
     on | off) ;;
