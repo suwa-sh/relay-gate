@@ -23,7 +23,8 @@ stages:
   S2_test_scaffold:
     status: pending
   S3_contracts:
-    status: pending
+    status: done
+    event_id: 20260830_023004_s3_contracts_rerun_completed
   S4_tier_impl:
     tier-facade:
       status: pending
@@ -49,4 +50,4 @@ stages:
       published_event_id: 20260822_143300_feedback_request_published
   S9_review:
     status: pending
-updated_at: '2026-08-30T02:07:44+09:00'
+updated_at: '2026-08-30T02:09:22+09:00'
