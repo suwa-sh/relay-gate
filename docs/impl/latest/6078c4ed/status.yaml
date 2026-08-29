@@ -3,7 +3,7 @@ uc_id: 6078c4ed
 business: 並行稼働実行業務
 buc: 並行稼働実行フロー
 uc: feature flag設定に基づきslotを選択して起動する
-state: blocked_on_spec
+state: running
 current_attempt: 6
 resolved_models:
   implementer: claude-fable-5
@@ -19,46 +19,34 @@ git_delivery:
 stages:
   S1_uc_init:
     status: done
-    rerun: stale
+    event_id: 20260830_023003_s1_uc_init_rerun_completed
   S2_test_scaffold:
-    status: done
-    red_baseline: pass
-    mode: scoped
+    status: pending
   S3_contracts:
-    status: done
+    status: pending
   S4_tier_impl:
     tier-facade:
-      status: done
+      status: pending
       attempt: 6
-      gates:
-        format: pass
-        lint: pass
-        tdd: pass
-        bdd_tier: pass
   S5_verify:
     tier-facade:
-      status: done
+      status: pending
       attempt: 6
-      result: pass
       open_blockers: 0
   S6_uc_bdd:
-    status: done
-    scenarios: 9
-    steps: 86
+    status: pending
   S7_atdd:
-    status: done
-    scenarios: 6
-    steps: 30
+    status: pending
   S8_feedback:
-    status: done
-    mode: publish
-    feedback_id: 20260822_085257_impl_feedback_6078c4ed
-    supersedes: null
-    request_count: 8
-    blocker_count: 2
-    published_event_id: 20260822_143300_feedback_request_published
+    status: pending
+    previous_published:
+      status: done
+      mode: publish
+      feedback_id: 20260822_085257_impl_feedback_6078c4ed
+      supersedes: null
+      request_count: 8
+      blocker_count: 2
+      published_event_id: 20260822_143300_feedback_request_published
   S9_review:
-    status: done
-    event_id: 20260822_143000_s9_review_regenerated
-    review_approved_event_id: 20260822_143100_feedback_publication_approved
-updated_at: '2026-08-22T10:01:13+09:00'
+    status: pending
+updated_at: '2026-08-30T02:07:44+09:00'

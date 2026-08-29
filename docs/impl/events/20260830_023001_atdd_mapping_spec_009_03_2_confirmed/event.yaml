@@ -1,0 +1,28 @@
+event_id: 20260830_023001_atdd_mapping_spec_009_03_2_confirmed
+type: config_confirmed
+uc_id: 6078c4ed
+stage: S1
+payload:
+  confirmed_by: orchestrator
+  items:
+  - field: use_cases[6078c4ed].atdd_scenarios
+    before:
+    - SPEC-001-01-1
+    - SPEC-001-02-1
+    - SPEC-001-03-1
+    - SPEC-009-01-1
+    - SPEC-009-02-1
+    - SPEC-009-03-1
+    after:
+    - SPEC-001-01-1
+    - SPEC-001-02-1
+    - SPEC-001-03-1
+    - SPEC-009-01-1
+    - SPEC-009-02-1
+    - SPEC-009-03-1
+    - SPEC-009-03-2
+  note: '還流(feedback 20260822_085257 CR-6078c4ed-016)で USDM SPEC-009-03 に第 2 criterion
+    が追加され、bootstrap P7 が features/atdd/SPEC-009-03.feature に Scenario SPEC-009-03-2
+    を生成した。本 UC 起票の CR 由来で hang_detect_limit_minutes の保存規則(execution_specs 1 値)は spec.md
+    の責務範囲のため本 UC の受け入れ基準に追加する(既存 atdd_confirmed: true の再確認は行わない)。'
+created_at: '2026-08-30T02:07:44+09:00'

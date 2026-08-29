@@ -1,47 +1,50 @@
 schema_version: '1.0'
 uc_id: 6078c4ed
-fixed_at: '2026-08-22T06:50:15+09:00'
+fixed_at: '2026-08-30T02:07:44+09:00'
 inputs:
   spec_event:
-    event_id: spec:20260819_114307_spec_generation
-    sha256: 4b8a85b842fec4767ba46041bc2560facabc4445998c0d0630e68bdae04568e1
+    event_id: spec:20260829_210828_spec_generation
+    sha256: f19707f0d2856626f5e0e73e5067b0eca93f9f351c331d86d80f8837c7dcb807
   spec_md:
     path: docs/specs/latest/並行稼働実行業務/並行稼働実行フロー/feature flag設定に基づきslotを選択して起動する/spec.md
-    sha256: 2fe6c382fd68f120229b318ab1eb41a9067ec752ac66be1b723a430f7853d875
+    sha256: 93b3d053631d0bc4620a2f448dce1f810bc283592857517e2bd87d9319fb2bd4
   tier_mds:
   - tier: tier-facade
     path: docs/specs/latest/並行稼働実行業務/並行稼働実行フロー/feature flag設定に基づきslotを選択して起動する/tier-facade.md
-    sha256: e6246f256500d05cd41ccb2586751a7d202dc7058e819739a4d6e4114f8b1627
+    sha256: 138a19276fe326c909db3b57f2f44612cb9bcb6a4992b3eb6a0728b94fdea78f
   api_summary:
     path: docs/specs/latest/並行稼働実行業務/並行稼働実行フロー/feature flag設定に基づきslotを選択して起動する/_api-summary.yaml
     sha256: f4f20727d217eec705b651caa7ce050886e6d4d88179b4c443600c7253699f0a
   model_summary:
     path: docs/specs/latest/並行稼働実行業務/並行稼働実行フロー/feature flag設定に基づきslotを選択して起動する/_model-summary.yaml
-    sha256: 7a7934daa1fa07ad5a793cc40d2118d82bf07ae0767bee517dea517dc17fd2fa
+    sha256: 2c30e197246f3d8dc3342b82f16bbffb76959dc2323e019ed30e4ad3810cc716
   datastore_schema:
     path: docs/specs/latest/_cross-cutting/datastore/rdb-schema.yaml
-    sha256: d6068bdd9e89906bab7216b7e0bf545c9c8e438f89c6a6ef0dd0a575c10b40f5
+    sha256: 2263ab3ba4d6f3fb6c522e4c13d8754674c95a93d4b06b71de07361ec3f4d009
   nfr:
     path: docs/nfr/latest/nfr-grade.yaml
     sha256: 23ffdd2a2b9970c1855a07592af0b14416f81411efcc96c3046c2ff3c030d923
   usdm:
     event_id: 20260817_142258_initial_build
-    sha256: 61621837f4b5fe2f6e2ecb73693a8ddc0f2d7311c43873d7b9d2e936cab92cce
+    sha256: b7c8f517fd6786c1296e26e3798a85009d3ee4137ba3ecf0aeebdf14f0783a09
   arch:
     event_id: 20260819_110531_arch_comparison_definition_exitcode
     sha256: a9c9baff90655813ce9c64673bacecb5ee87206a0dc02e5e60882858b86b9792
   design:
-    event_id: 20260817_153235_design_system + 20260817_180235_spec_stories + 20260818_143057_design_system + 20260818_162251_spec_stories + 20260819_113049_design_system + 20260819_125615_spec_stories
-    sha256: 4765757df1079cf568177b5f16057d3e7a457f46daef9f79dbabeb8c21b09764
+    event_id: 20260817_153235_design_system + 20260817_180235_spec_stories + 20260818_143057_design_system
+      + 20260818_162251_spec_stories + 20260819_113049_design_system + 20260819_125615_spec_stories
+      + 20260829_220117_spec_stories
+    sha256: b38c7311af453f656cdb49307e544878474e6619c20c92df12ca2f707527ffb9
   contracts_decl:
     sha256: 7f283f308e881019d323b24a39f18ccf0b06671069ccb4265802a7d5ea814591
   contracts_lock:
     path: docs/impl/latest/contracts.lock.yaml
-    sha256: f9f639f9f49299e6db1a90589cc0be191a5c41599cbdef7d8d3c1f25269509d9
+    sha256: 28cc54b47632c3953d9572637094f26ba26cd717794a771fa584e63e28327982
   ui_review_config:
     sha256: 4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945
   ui_imported:
-    tree_hash: 0d7c96fd1ef6640f30e243e57bf1f69f0ab001d7a3f7218590b8c8781d8bfb2e
-  dev_rules_sha256: 9327500a72f991f01b039f183fe8a3c10efde1a16339eb618ed43a5b896a9595
+    tree_hash: 8ea1c40a2aa66086bcbc716b415dcad4951f4281575ca1d392c821f92bf1a211
+  dev_rules_sha256: d00b018c68f8510067ed097f33df5e961c769bfe731904ecbe3b6204282a81d2
 lineage_ok: true
-lineage_resolution: old_design_premise_confirmed
+lineage_resolution: spec trigger arch:20260829_205903_feedback_disposition / design:20260829_210210_design_system_feedback_disposition
+  と整合。design latest 末尾の 20260829_220117_spec_stories は spec 後段の正常系

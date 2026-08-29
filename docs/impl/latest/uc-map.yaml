@@ -24,6 +24,7 @@ use_cases:
   - SPEC-009-01-1
   - SPEC-009-02-1
   - SPEC-009-03-1
+  - SPEC-009-03-2
   atdd_confirmed: true
 - uc_id: c3c7ab31
   business: 並行稼働実行業務
