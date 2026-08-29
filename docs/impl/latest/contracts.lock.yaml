@@ -15,7 +15,7 @@ contracts:
       - audit_logs
       - audit_chain_heads
     source_read: scope
-    input: {path: "docs/specs/latest/_cross-cutting/datastore/rdb-schema.yaml", sha256: "d6068bdd9e89906bab7216b7e0bf545c9c8e438f89c6a6ef0dd0a575c10b40f5"}
+    input: {path: "docs/specs/latest/_cross-cutting/datastore/rdb-schema.yaml", sha256: "2263ab3ba4d6f3fb6c522e4c13d8754674c95a93d4b06b71de07361ec3f4d009"}
     generated:
-      - {dir: "packages/contracts/relay-gate-db", generator: "direct-from-yaml", audience: both, at: "2026-08-22T06:48:12+09:00"}
-generated_at: "2026-08-22T06:48:12+09:00"
+      - {dir: "packages/contracts/relay-gate-db", generator: "direct-from-yaml", audience: both, at: "2026-08-30T02:30:00+09:00"}
+generated_at: "2026-08-30T02:30:00+09:00"

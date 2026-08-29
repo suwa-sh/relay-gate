@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import { OpsPortalShell } from '../../../components/common/OpsPortalShell'
 import { ExecutionSpecCard } from '../../../components/domain/ExecutionSpecCard'
+import { RunnerResultPanel } from '../../../components/domain/RunnerResultPanel'
 import { Banner } from '../../../components/ui/Banner'
 
 /**
@@ -11,6 +12,10 @@ import { Banner } from '../../../components/ui/Banner'
  * - BLUE_MODE/GREEN_MODE（off/background/foreground）とRAPID_CROSSCHECK_MODE（on/off）の組み合わせから
  *   execution-spec.jsonを確定・保存し起動する
  * - BLUE_MODE/GREEN_MODEを同時にforegroundにする組み合わせは業務ルール（SR-001）で拒否する（終了コード2）
+ * - ジョブマップはslotごとの独立ファイル（RELAYGATE_JOB_MAP_PATH_BLUE/_GREEN）であり、job_map_versionは
+ *   slot_execution_specsへslot別に保存する（CR-6078c4ed-018）
+ * - 起動イベント送出に失敗した試行はFAILED、timeoutした試行はUNKNOWNへ本コマンドが補償記録する
+ *   （標準出力のstatus=STARTING行は維持したまま、標準エラーで補償記録した旨を通知する。CR-6078c4ed-012）
  */
 const meta: Meta<typeof OpsPortalShell> = {
   title: 'Pages/運用ポータル/起動slot選択画面',
@@ -118,8 +123,93 @@ export const JobMapUnresolvedDashboard: Story = {
           relaygate concurrent-run select-slot --job-id JOB-UNKNOWN-999
         </div>
         <Banner variant="error" title="JOB_IDに対応するジョブマップが見つかりません">
-          JOB_ID=JOB-UNKNOWN-999 はジョブマップに存在しません（終了コード1）
+          slot_type=green のジョブマップ（/etc/relaygate/job-map.green.json）に JOB_ID=JOB-UNKNOWN-999 は存在しません（終了コード1）
         </Banner>
+      </div>
+    </OpsPortalShell>
+  ),
+}
+
+/** slotごとの独立ジョブマップに必須フィールドが欠落している（バリデーションエラー、終了コード2） */
+export const JobMapFieldMissingDashboard: Story = {
+  args: {
+    activeNavKey: 'concurrent-run',
+    operationMode: '並行稼働',
+  },
+  render: (args) => (
+    <OpsPortalShell {...args}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+        <div style={{ fontFamily: 'var(--font-family-sans)', fontSize: 'var(--font-size-sm)', color: 'var(--foreground-secondary)' }}>
+          relaygate concurrent-run select-slot --job-id daily-settlement
+        </div>
+        <Banner variant="error" title="ジョブマップの必須フィールドが欠落しています">
+          slot_type=green path=/etc/relaygate/job-map.green.json field=jobs.daily-settlement.host（終了コード2 /
+          execution-spec.jsonは作成されません）
+        </Banner>
+      </div>
+    </OpsPortalShell>
+  ),
+}
+
+/** 起動イベント送出失敗をFAILEDへ補償記録する（標準出力のstatus=STARTINGは維持、終了コード1） */
+export const LaunchEventFailedDashboard: Story = {
+  args: {
+    activeNavKey: 'concurrent-run',
+    operationMode: '並行稼働',
+  },
+  render: (args) => (
+    <OpsPortalShell {...args}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+        <div style={{ fontFamily: 'var(--font-family-sans)', fontSize: 'var(--font-size-sm)', color: 'var(--foreground-secondary)' }}>
+          relaygate concurrent-run select-slot --job-id daily-settlement
+        </div>
+        <Banner variant="error" title="起動イベントの送出に失敗しました">
+          slot_type=green attempt_id=att-green-0001 を FAILED として記録しました（終了コード1）
+        </Banner>
+        <RunnerResultPanel
+          runId="3f8c9d2e-5b41-4a7e-9c13-6d2a8b0f1e57"
+          slot="green"
+          role="background"
+          attemptId="att-green-0001"
+          attemptNo={1}
+          state="starting"
+          startedAt="2026-08-17T09:00:12+09:00"
+          stdout="run_id=3f8c9d2e-5b41-4a7e-9c13-6d2a8b0f1e57 slot_type=green role=background attempt_id=att-green-0001 status=STARTING"
+          stderr="Error: green実装ホストへのSSH起動イベント送出に失敗しました（slot_type=green attempt_id=att-green-0001 を FAILED として記録しました）"
+          exitCode={null}
+        />
+      </div>
+    </OpsPortalShell>
+  ),
+}
+
+/** 起動イベント送出timeoutをUNKNOWNへ補償記録する（推測でFAILEDにしない、終了コード124） */
+export const LaunchEventTimeoutDashboard: Story = {
+  args: {
+    activeNavKey: 'concurrent-run',
+    operationMode: '並行稼働',
+  },
+  render: (args) => (
+    <OpsPortalShell {...args}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+        <div style={{ fontFamily: 'var(--font-family-sans)', fontSize: 'var(--font-size-sm)', color: 'var(--foreground-secondary)' }}>
+          relaygate concurrent-run select-slot --job-id daily-settlement
+        </div>
+        <Banner variant="warning" title="起動イベントの送出がtimeoutしました">
+          slot_type=blue attempt_id=att-blue-0001 を UNKNOWN として記録しました（推測でFAILEDにはしません / 終了コード124）
+        </Banner>
+        <RunnerResultPanel
+          runId="3f8c9d2e-5b41-4a7e-9c13-6d2a8b0f1e57"
+          slot="blue"
+          role="foreground"
+          attemptId="att-blue-0001"
+          attemptNo={1}
+          state="starting"
+          startedAt="2026-08-17T09:00:12+09:00"
+          stdout="run_id=3f8c9d2e-5b41-4a7e-9c13-6d2a8b0f1e57 slot_type=blue role=foreground attempt_id=att-blue-0001 status=STARTING"
+          stderr="Warning: blue実装ホストへのSSH起動イベント送出がtimeoutしました（slot_type=blue attempt_id=att-blue-0001 を UNKNOWN として記録しました）"
+          exitCode={null}
+        />
       </div>
     </OpsPortalShell>
   ),

@@ -10,7 +10,9 @@ import { Banner } from '../../../components/ui/Banner'
  * - `relaygate concurrent-run respond-foreground --run-id <run_id>` の実行結果表示に対応する
  * - foreground役割のRunner実行結果から stdout/stderr/exitCode のみをジョブスケジューラへ応答する
  * - 運用性NFR「応答はstdout/stderr/exitcodeのみに限定」に対応し、比較結果・差分件数等の詳細は一切表示しない（RunnerResultPanel foreground variant）
- * - 本コマンドはexit_code_convention_exception対象。exitcode.txtの値を0を含む全値そのまま透過し、relay-gate自身のエラーだけを退避コード125（実行結果未確定・取得不能・中止済み）/124（バリデーションエラー）へ分離する
+ * - 本コマンドはexit_code_convention_exception対象。exitcode.txtの値を0を含む全値そのまま透過し、relay-gate自身のエラーだけを退避コード125（実行結果未確定・取得不能・中止済み・起動イベント送出失敗の補償記録であるFAILEDかつexit_code=NULL）/124（バリデーションエラー）へ分離する
+ * - 起動UC（feature flag設定に基づきslotを選択して起動する）が送出失敗をFAILEDへ補償記録した試行はexit_code=NULLのため、
+ *   非0のexit_codeを持つ通常のFAILED（業務エラー、そのまま透過）とは区別して退避コード125で応答する（CR-6078c4ed-012）
  */
 const meta: Meta<typeof OpsPortalShell> = {
   title: 'Pages/運用ポータル/実行結果応答管理画面',
@@ -71,6 +73,38 @@ export const FailedDashboard: Story = {
           stdout="processing...\nfailed at step 3"
           stderr="Error: connection timeout after 30000ms"
           exitCode={3}
+        />
+      </div>
+    </OpsPortalShell>
+  ),
+}
+
+/** 起動イベント送出失敗の補償記録（status=FAILEDかつexit_code=NULL）。非0exit_codeの通常FAILEDとは異なり退避コード125で応答する */
+export const LaunchFailedDashboard: Story = {
+  args: {
+    activeNavKey: 'concurrent-run',
+    operationMode: '並行稼働',
+  },
+  render: (args) => (
+    <OpsPortalShell {...args}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+        <div style={{ fontFamily: 'var(--font-family-sans)', fontSize: 'var(--font-size-sm)', color: 'var(--foreground-secondary)' }}>
+          relaygate concurrent-run respond-foreground --run-id 3f8c9d2e-5b41-4a7e-9c13-6d2a8b0f1e57
+        </div>
+        <RunnerResultPanel
+          runId="3f8c9d2e-5b41-4a7e-9c13-6d2a8b0f1e57"
+          slot="blue"
+          role="foreground"
+          attemptId="att-blue-0001"
+          attemptNo={1}
+          state="failed"
+          startedAt="2026-08-17T09:10:00+09:00"
+          stdout=""
+          stderr={
+            '起動イベントの送出に失敗したため status=FAILED（exit_code=NULL）で補償記録されています\n' +
+            '次アクション: リランするか実行環境の接続状態を確認してください'
+          }
+          exitCode={125}
         />
       </div>
     </OpsPortalShell>

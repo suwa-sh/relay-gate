@@ -7,17 +7,16 @@
 
 # execution_specs: run共通のexecution spec（アーキテクチャE-001）。run_id・parent_run_id・job_
 readonly TBL_EXECUTION_SPECS="execution_specs"
-readonly COLS_EXECUTION_SPECS=(run_id parent_run_id job_id additional_args job_map_version hang_detect_limit_minutes)
+readonly COLS_EXECUTION_SPECS=(run_id parent_run_id job_id additional_args hang_detect_limit_minutes)
 readonly COL_EXECUTION_SPECS__RUN_ID="run_id"
 readonly COL_EXECUTION_SPECS__PARENT_RUN_ID="parent_run_id"
 readonly COL_EXECUTION_SPECS__JOB_ID="job_id"
 readonly COL_EXECUTION_SPECS__ADDITIONAL_ARGS="additional_args"
-readonly COL_EXECUTION_SPECS__JOB_MAP_VERSION="job_map_version"
 readonly COL_EXECUTION_SPECS__HANG_DETECT_LIMIT_MINUTES="hang_detect_limit_minutes"
 
 # slot_execution_specs: slotごとに解決したexecution spec（アーキテクチャE-007）。同一runでもblue/greenでho
 readonly TBL_SLOT_EXECUTION_SPECS="slot_execution_specs"
-readonly COLS_SLOT_EXECUTION_SPECS=(run_id slot_type host exec_user script_path work_dir fixed_args impl_version credential_ref)
+readonly COLS_SLOT_EXECUTION_SPECS=(run_id slot_type host exec_user script_path work_dir fixed_args impl_version credential_ref job_map_version)
 readonly COL_SLOT_EXECUTION_SPECS__RUN_ID="run_id"
 readonly COL_SLOT_EXECUTION_SPECS__SLOT_TYPE="slot_type"
 readonly COL_SLOT_EXECUTION_SPECS__HOST="host"
@@ -27,6 +26,7 @@ readonly COL_SLOT_EXECUTION_SPECS__WORK_DIR="work_dir"
 readonly COL_SLOT_EXECUTION_SPECS__FIXED_ARGS="fixed_args"
 readonly COL_SLOT_EXECUTION_SPECS__IMPL_VERSION="impl_version"
 readonly COL_SLOT_EXECUTION_SPECS__CREDENTIAL_REF="credential_ref"
+readonly COL_SLOT_EXECUTION_SPECS__JOB_MAP_VERSION="job_map_version"
 
 # runner_result_events: Runner実行結果の状態遷移をappend-onlyで記録する履歴テーブル（アーキテクチャLR-002 Event/S
 readonly TBL_RUNNER_RESULT_EVENTS="runner_result_events"

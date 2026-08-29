@@ -1,6 +1,6 @@
-design_event_id: 20260819_125615_spec_stories
+design_event_id: 20260829_220117_spec_stories
 imported_from: docs/design/latest/storybook-app/src
-imported_at: '2026-08-22T06:48:12+09:00'
+imported_at: '2026-08-30T02:30:00+09:00'
 files:
 - path: app/favicon.ico
   sha256: 2b8ad2d33455a8f736fc3a8ebf8f0bdea8848ad4c0db48a2833bd0f9cd775932
@@ -23,7 +23,7 @@ files:
 - path: components/domain/ExecutionSpecCard.stories.tsx
   sha256: f641723474ce4634154133609f0eb07ee6f224c21118aabc9182c6f77ef54067
 - path: components/domain/ExecutionSpecCard.tsx
-  sha256: 2e37b18ab4b4c5ece16e24992f8ab584dfd2b5400976eb8d338180f0468e6caa
+  sha256: 659d139ba1df2482cf83d86a19b0d4ec6c381fb66e844705b35492bc63fc92e2
 - path: components/domain/HangDetectionNotice.stories.tsx
   sha256: fe3030d72ee0fa29c621eb2e3cd1059ddb341d54c8427c09a71fccc7011c7469
 - path: components/domain/HangDetectionNotice.tsx
@@ -91,7 +91,7 @@ files:
 - path: stories/Pages/運用ポータル/並行稼働実行結果確認画面.stories.tsx
   sha256: 8718c15eeb4ebf964ec217449fa20dbe11722ddbb9f07b73185608717b1209ec
 - path: stories/Pages/運用ポータル/実行結果応答管理画面.stories.tsx
-  sha256: 35a4d14b4ec020d30e6af3bc2825594f3b67c1d6eaf90d0d1e271c40396c1cfc
+  sha256: e9b63e918069b7f6ffd4d092a99af532f110c9ed6e38b8e816cd4c40f88a94ed
 - path: stories/Pages/運用ポータル/異常通知発信画面.stories.tsx
   sha256: 32f8f47d8adb657ab08c84cfbf699c493b09e7f6f187dadfe4d45fbde8b0330a
 - path: stories/Pages/運用ポータル/確報クロスチェック実行画面.stories.tsx
@@ -105,7 +105,7 @@ files:
 - path: stories/Pages/運用ポータル/確報結果応答画面.stories.tsx
   sha256: d036f9fe779fd0998af233876a86d450c56c0fb861167cd7dc22d44f9516115d
 - path: stories/Pages/運用ポータル/起動slot選択画面.stories.tsx
-  sha256: e8329c8e52aa4b5478dfa4a5a0035580e3fdcb18eeef1a90292169b2c6877f75
+  sha256: 9b37a148089b4c7075530720e51e71af5693765c5acb128acd8922c0359702ff
 - path: stories/Pages/運用ポータル/速報クロスチェック実行画面.stories.tsx
   sha256: 5ffd2be3619baf7edaebeb1bb7daf461968f18183ab4ea47ff9a778c34f35a61
 - path: stories/Pages/運用ポータル/速報クロスチェック結果確認画面.stories.tsx
