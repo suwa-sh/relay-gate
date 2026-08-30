@@ -1,8 +1,0 @@
-feedback差分反映 (spec stage)
-feedback_request_id: 20260818_113601_impl_feedback_6078c4ed
-input_sha256: 57396b15a51da62949a111f13ef986398ac2e22674e9f47751100f6b24960746
-request_ids: CR-6078c4ed-003, CR-6078c4ed-004, CR-6078c4ed-005, CR-6078c4ed-006, CR-6078c4ed-007
-direct_work_unit_ids: CR-6078c4ed-007#1
-causal_work_unit_ids: CR-6078c4ed-003#1, CR-6078c4ed-004#1, CR-6078c4ed-005#1, CR-6078c4ed-006#1, CR-6078c4ed-007#1
-packet_path: docs/pipeline/feedback-runs/20260818_113601_impl_feedback_6078c4ed/stage-packets/spec.md
-trigger_event: rdra:20260818_133855_rerun_identity_new_run_id, arch:20260818_135504_arch_slot_config_attempt_identity, design:20260818_143057_design_system

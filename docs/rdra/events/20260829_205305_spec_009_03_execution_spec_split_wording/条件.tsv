@@ -1,2 +1,0 @@
-コンテキスト	条件	条件の説明	バリエーション	状態モデル
-異常監視管理	hang_detect_limit_minutes	未完了状態を許容する経過時間のしきい値（分）。run共通の1値であり、background roleに選ばれたslotのジョブマップで解決され、run共通の実行設定（execution-spec.jsonのexecution_specs）にRDBで保存される。role別・slot別の値は持たない。定期起動のhang-detectorが、exitcode.txtを出力していないbackground roleについてstarted-at.txtからの経過時間を判定し、しきい値を超過した場合にハング疑いとして運用者へ通知するために用いる。	role区分	background slot実行状態

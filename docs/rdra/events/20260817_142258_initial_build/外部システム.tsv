@@ -1,4 +1,0 @@
-外部システム群	外部システム	役割
-ジョブ起動系	ジョブスケジューラ	共通のジョブ定義からJOB_IDと追加引数を渡してfacadeを起動し、foreground実行結果（標準出力・標準エラー・終了コード）だけを受け取る
-対象実装系	blue実装	既存実装（strangler対象）として、facadeから起動されるslotの一方を担い、Runner Result Contractに従った実行結果を出力する
-対象実装系	green実装	新実装（strangler移行先）として、facadeから起動されるslotの一方を担い、Runner Result Contractに従った実行結果を出力する

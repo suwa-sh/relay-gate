@@ -1,8 +1,0 @@
-コンテキスト	バリエーション	値	説明
-システム運用管理	運用モード	並行稼働、新実装単独本番、次世代実装との並行稼働	ジョブ定義を変更せず設定だけで切り替えるシステム運用フェーズの区分
-実行管理	slotモード（BLUE_MODE/GREEN_MODE）	off、background、foreground	blue/green各slotの起動方式を指定する区分。blueとgreenの両方をforegroundにする組合せは許可しない
-実行管理	RAPID_CROSSCHECK_MODE	on、off	速報クロスチェックの有効・無効を切り替える区分。offの場合はblue/green runnerが完了通知や速報管理DBへの接続・書込みを行わない
-実行管理	role区分	foreground、background、rapid-crosscheck	slot runnerが担う実行役割の種別。foregroundはジョブスケジューラへの応答対象、backgroundは非同期実行、rapid-crosscheckは速報比較専用
-速報クロスチェック管理	クロスチェック種別	速報クロスチェック、確報クロスチェック	実行結果の整合性確認の粒度・タイミングによる区分。速報はジョブ単位で非同期に比較し、確報は全テーブル・全ファイルを日次で正式確認する
-実行管理	slot種別	blue、green	並行稼働する実装（既存実装／新実装）の系統を表す区分
-異常監視管理	異常検知種別	ハング疑い、background実行エラー、速報クロスチェック異常	hang-detectorが定期監視で検知し運用者へ通知する異常の種類
