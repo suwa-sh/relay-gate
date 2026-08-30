@@ -1,0 +1,42 @@
+uc: "確報クロスチェック結果を確認する"
+business: "クロスチェック業務"
+buc: "確報クロスチェックフロー"
+
+bounded_context_id: "BC-003"
+
+models:
+  - name: "FinalCrossCheckResultQueryRequest"
+    tier: "tier-worker"
+    layer: "presentation"
+    type: "request"
+    rdra_info: "確報比較依頼"
+  - name: "GetFinalCrossCheckResultQuery"
+    tier: "tier-worker"
+    layer: "usecase"
+    type: "query"
+    rdra_info: "確報比較依頼"
+  - name: "確報比較依頼"
+    tier: "tier-worker"
+    layer: "domain"
+    type: "entity"
+    rdra_info: "確報比較依頼"
+  - name: "FinalCrossCheckRequestRecord"
+    tier: "tier-worker"
+    layer: "gateway"
+    type: "record"
+    rdra_info: "確報比較依頼"
+
+tables:
+  - name: "final_crosscheck_requests"
+    rdra_info: "確報比較依頼"
+    operations:
+      - type: "SELECT"
+        columns: []
+        where: "target_date = ?"
+    indexes_needed:
+      - columns: ["target_date"]
+        reason: "リリース判断者が対象日単位で確報比較依頼を照会するため"
+        access_pattern: "target_dateによる単一日照会"
+
+kvs: []
+object_storage: []

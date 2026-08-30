@@ -1,0 +1,40 @@
+uc: "ハング疑い・異常の通知を確認する"
+business: "実行監視業務"
+buc: "ハング監視フロー"
+
+bounded_context_id: "BC-004"
+
+models:
+  - name: "ListHangDetectionsQuery"
+    tier: "tier-worker"
+    layer: "usecase"
+    type: "query"
+    rdra_info: "ハング検知記録"
+  - name: "ハング検知記録"
+    tier: "tier-worker"
+    layer: "domain"
+    type: "entity"
+    rdra_info: "ハング検知記録"
+  - name: "ハング検知記録Record"
+    tier: "tier-worker"
+    layer: "gateway"
+    type: "record"
+    rdra_info: "ハング検知記録"
+
+tables:
+  - name: "hang_detections"
+    rdra_info: "ハング検知記録"
+    operations:
+      - type: "SELECT"
+        columns: []
+        where: "notified_at IS NOT NULL [AND run_id = :run_id] ORDER BY detected_at DESC"
+    indexes_needed:
+      - columns: ["notified_at", "detected_at"]
+        reason: "通知済みレコードを検知日時降順で取得する照会UCの主要アクセスパターンのため"
+        access_pattern: "notified_at IS NOT NULLでの絞り込み＋detected_at降順ソート"
+      - columns: ["run_id"]
+        reason: "--run-id指定時の絞り込み検索のため"
+        access_pattern: "run_id完全一致検索"
+
+kvs: []
+object_storage: []

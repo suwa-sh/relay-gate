@@ -1,0 +1,194 @@
+{
+  "event_id": "20260818_090630_feedback_stage_architecture",
+  "type": "feedback_stage_completed",
+  "run_id": "feedback-20260817_234841_impl_feedback_6078c4ed-20260818_085441-61265",
+  "attempt": 1,
+  "created_at": "2026-08-18T00:06:30Z",
+  "stage": "architecture",
+  "direct_work_unit_ids": [
+    "CR-6078c4ed-002#1"
+  ],
+  "causal_work_unit_ids": [
+    "CR-6078c4ed-002#1"
+  ],
+  "work_unit_results": [
+    {
+      "work_unit_id": "CR-6078c4ed-002#1",
+      "disposition": "applied",
+      "reason": "Option Aを採用し、slot起動監査をRDB append-only、ハッシュチェーン、6ヶ月保持、run_id/parent_run_id照会、秘密・引数値・stdout/stderr本文除外、外部作用前後の失敗時契約として具体化した",
+      "artifact_refs": [
+        "arch/events/20260818_090120_arch_audit_contract_feedback/arch-design-diff.yaml",
+        "arch/events/20260818_090120_arch_audit_contract_feedback/_changes.md",
+        "arch/events/20260818_090120_arch_audit_contract_feedback/_inference.md",
+        "arch/events/20260818_090120_arch_audit_contract_feedback/source.txt",
+        "arch/events/20260818_090120_arch_audit_contract_feedback/decisions/arch-decision-003.yaml",
+        "arch/events/20260818_090120_arch_audit_contract_feedback/arch-design.md",
+        "arch/events/20260818_090120_arch_audit_contract_feedback/coverage-report.md"
+      ]
+    }
+  ],
+  "reconciliation_results": [
+    {
+      "work_unit_id": "CR-6078c4ed-002#1",
+      "status": "changed",
+      "reason": "Option Aを採用し、slot起動監査をRDB append-only、ハッシュチェーン、6ヶ月保持、run_id/parent_run_id照会、秘密・引数値・stdout/stderr本文除外、外部作用前後の失敗時契約として具体化した",
+      "artifact_refs": [
+        "arch/events/20260818_090120_arch_audit_contract_feedback/arch-design-diff.yaml",
+        "arch/events/20260818_090120_arch_audit_contract_feedback/_changes.md",
+        "arch/events/20260818_090120_arch_audit_contract_feedback/_inference.md",
+        "arch/events/20260818_090120_arch_audit_contract_feedback/source.txt",
+        "arch/events/20260818_090120_arch_audit_contract_feedback/decisions/arch-decision-003.yaml",
+        "arch/events/20260818_090120_arch_audit_contract_feedback/arch-design.md",
+        "arch/events/20260818_090120_arch_audit_contract_feedback/coverage-report.md"
+      ]
+    }
+  ],
+  "work_unit_evidence_refs": [
+    {
+      "work_unit_id": "CR-6078c4ed-002#1",
+      "path": "arch/events/20260818_090120_arch_audit_contract_feedback/arch-design-diff.yaml",
+      "sha256": "53c59df7363ef0708bc67baac82105e2bb6ab00cbc86427f83699e0507d152d3"
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-002#1",
+      "path": "arch/events/20260818_090120_arch_audit_contract_feedback/_changes.md",
+      "sha256": "3dbf034ffa0ac32c577c091d6d922d9beea58e7afc1f8eecd29f0e19d4a3ead5"
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-002#1",
+      "path": "arch/events/20260818_090120_arch_audit_contract_feedback/_inference.md",
+      "sha256": "d9ce6eb33d9f525fe1db781e243b642b734488089be12dd34b4399aa50e30cf9"
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-002#1",
+      "path": "arch/events/20260818_090120_arch_audit_contract_feedback/source.txt",
+      "sha256": "384419623735546f1ae7fec27f3b7497ff3c06795dfae01cf0b337e25114ed0c"
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-002#1",
+      "path": "arch/events/20260818_090120_arch_audit_contract_feedback/decisions/arch-decision-003.yaml",
+      "sha256": "dcdf73a31185aaa1c24f73582268d7cac1a532ab818d84ef433cd69fea10f1f4"
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-002#1",
+      "path": "arch/events/20260818_090120_arch_audit_contract_feedback/arch-design.md",
+      "sha256": "85d4e6ce05a4bc5e162bd1a1b6f37d9835b40b7329d543effea30b0893fcf9ce"
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-002#1",
+      "path": "arch/events/20260818_090120_arch_audit_contract_feedback/coverage-report.md",
+      "sha256": "b8da9e1f92c8ab493804b55fa96acf80ae6fdf28f35a7f1d03dfe0de06d51883"
+    }
+  ],
+  "domain_event_refs": [
+    {
+      "path": "arch/events/20260818_090120_arch_audit_contract_feedback/arch-design-diff.yaml",
+      "sha256": "53c59df7363ef0708bc67baac82105e2bb6ab00cbc86427f83699e0507d152d3"
+    }
+  ],
+  "feedback_request": {
+    "feedback_request_id": "20260817_234841_impl_feedback_6078c4ed",
+    "input_sha256": "bc64202288e80a7c6a299affcff26d45d91238a851ec5483b2d9eecb1bdabb54",
+    "request_ids": [
+      "CR-6078c4ed-002"
+    ],
+    "work_unit_ids": [
+      "CR-6078c4ed-002#1"
+    ]
+  },
+  "post_execution_basis": {
+    "repository_head": "a1dfc90cc4052435ec436f2d36f0b96962685ffe",
+    "latest_domain_event_ids": {
+      "requirements": {
+        "rdra/events": "20260817_142258_initial_build",
+        "usdm/events": "20260817_142258_initial_build"
+      },
+      "quality_attributes": {
+        "nfr/events": "20260817_144844_initial_nfr"
+      },
+      "architecture": {
+        "arch/events": "20260818_090120_arch_audit_contract_feedback"
+      },
+      "infrastructure": {
+        "infra/events": "20260817_151023_infra_product_design"
+      },
+      "design_system": {
+        "design/events": "20260817_180235_spec_stories"
+      },
+      "spec": {
+        "specs/events": "20260817_155817_spec_generation"
+      },
+      "spec_stories": {
+        "design/events": "20260817_180235_spec_stories"
+      }
+    },
+    "domain_event_root_snapshots": {
+      "rdra/events": {
+        "head_event_id": "20260817_142258_initial_build",
+        "head_event_sha256": "8b603eac296b2d2b63a2ab8382050d56e623cd76c3d2c55a471a73bab7610bf2",
+        "event_ids": [
+          "20260817_142258_initial_build"
+        ],
+        "event_set_sha256": "2f1f32750b225677cbd503282a735992da9c2677063459ca91951ac09f86b138",
+        "latest_tree_sha256": "9351ec5f08cde7249778482b82d730b4925461a57c49f3c5e82c34c157d6ebee"
+      },
+      "usdm/events": {
+        "head_event_id": "20260817_142258_initial_build",
+        "head_event_sha256": "850c7bb8cafe1e57ba3d0d4fd4f7023cd22d24d21c7696a34f6a59727a97c65d",
+        "event_ids": [
+          "20260817_142258_initial_build"
+        ],
+        "event_set_sha256": "2f1f32750b225677cbd503282a735992da9c2677063459ca91951ac09f86b138",
+        "latest_tree_sha256": "77d8476465bb3e3e17097a26053ebf1b13caf5ca32edf9b4d29047a8837be222"
+      },
+      "nfr/events": {
+        "head_event_id": "20260817_144844_initial_nfr",
+        "head_event_sha256": "ab8585ec751c5418788413ac4b94f124cc513e4bc8738223f94f20e7e5915712",
+        "event_ids": [
+          "20260817_144844_initial_nfr"
+        ],
+        "event_set_sha256": "7a8f3ab08eee2963dfae8d8e69b43ce4b6f906ace3e04b6d21cdbceb35d56056",
+        "latest_tree_sha256": "c139e3cc95fa46dd43625f9a04ce03e715b87f1d21e024da92008576b6c2a878"
+      },
+      "arch/events": {
+        "head_event_id": "20260818_090120_arch_audit_contract_feedback",
+        "head_event_sha256": "2eeaf89882aef646fb47d8686895273dec66cd54e491df7e8283bebea80e95de",
+        "event_ids": [
+          "20260817_150512_initial_arch",
+          "20260817_152155_arch_infra_feedback",
+          "20260818_090120_arch_audit_contract_feedback"
+        ],
+        "event_set_sha256": "10cb4fd916dd043b90e47d9c8c90aac02b544d4769153ccbb5666a298638aaca",
+        "latest_tree_sha256": "f419ce2ed4c8322e8657ce7e3ef48aef7030d6dd5fbd078a8a89d3ebc8dc299a"
+      },
+      "infra/events": {
+        "head_event_id": "20260817_151023_infra_product_design",
+        "head_event_sha256": "21111a13da20e97291183c4f66e77bdeee1ef978bdd0d371d16e6bc2e4213f6d",
+        "event_ids": [
+          "20260817_151023_infra_product_design"
+        ],
+        "event_set_sha256": "58d1d029eb7aa1d2ad99275e450ccfad08c34bbea58ef97b5852d00d2858fa0f",
+        "latest_tree_sha256": "21111a13da20e97291183c4f66e77bdeee1ef978bdd0d371d16e6bc2e4213f6d"
+      },
+      "design/events": {
+        "head_event_id": "20260817_180235_spec_stories",
+        "head_event_sha256": "13998dee936ad945d96660bbd475bda501221c549302651c159173e5967addc3",
+        "event_ids": [
+          "20260817_153235_design_system",
+          "20260817_180235_spec_stories"
+        ],
+        "event_set_sha256": "10f6d93b7fc7ef199793d496dfaba081738652c286dce5cb2a87c1e0811ba02e",
+        "latest_tree_sha256": "49b48e0d21aa8fff5d791fc5efd01bbd199ecaf410f60927a9fbdc0799e7945a"
+      },
+      "specs/events": {
+        "head_event_id": "20260817_155817_spec_generation",
+        "head_event_sha256": "61ff0d8389dcab0f6c8c6ea49d77e68a5ee99e0eb335a7ee2d7e70d979c56e08",
+        "event_ids": [
+          "20260817_155817_spec_generation"
+        ],
+        "event_set_sha256": "54be776e84545c4c1db8caac9787ca106cc76de6742ed74bfc801a002b6851f4",
+        "latest_tree_sha256": "2d2523b9c21d6ced1d78ca3318d9ac644d6a958f6c0277a44eb1058e59fca954"
+      }
+    }
+  }
+}

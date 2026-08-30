@@ -1,0 +1,148 @@
+schema_version: "1.0"
+artifact_type: "implementation_spec"
+skill_type: "product"
+artifact_id: "product-impl-onprem"
+title: "ジョブ実行中継基盤 オンプレミス実装仕様"
+status: "draft"
+generated_at: "2026-08-18T09:30:20"
+source_refs:
+  - "product-mapping-onprem"
+decision_refs:
+  - "product-decision-onprem-only"
+  - "product-decision-storage-approach"
+  - "product-decision-audit-persistence"
+inputs_ref:
+  - "product-workload-model"
+  - "product-mapping-onprem"
+
+vendor: "onprem"
+canonical_ref: "product-job-relay-canonical"
+mapping_ref: "product-mapping-onprem"
+
+components:
+  - id: "comp-facade"
+    name: "facade実行コンポーネント"
+    canonical_element_id: "product.workload_type"
+    vendor_service: "systemd管理下のシェルスクリプト実行"
+    configuration:
+      entrypoint: "CLI（JOB_ID・追加引数を標準入力/引数で受け取る）"
+      response_channel: "標準出力・標準エラー・終了コードのみ"
+      exclusion_rule: "BLUE_MODEとGREEN_MODEの同時foreground起動を起動前検証で拒否"
+      pre_launch_audit_gate: "操作受付・slot別起動試行を監査テーブルへ追記できない場合は外部slotを起動しない"
+      post_launch_audit_fallback: "起動後の監査追記失敗時は起動結果と未記録イベントをローカル永続outboxへアトミックに保存する"
+    dependencies:
+      - "comp-datastore"
+    iac_module: "infra/product/onprem/facade"
+    validation_rules:
+      - rule: "起動前にfeature flag組合せを検証する"
+        type: "static"
+        description: "同時foreground禁止制約の静的検証"
+      - rule: "外部slot起動前の監査追記成功を検証する"
+        type: "runtime"
+        description: "未記録の外部起動を防止する監査ゲート"
+
+  - id: "comp-worker"
+    name: "バックエンドワーカーコンポーネント"
+    canonical_element_id: "product.scheduled_execution"
+    vendor_service: "cron / systemdタイマー + シェルスクリプト（RDB lease/claim利用）"
+    configuration:
+      hang_detector_interval: "分オーダー（hang_detect_limit_minutesに応じ設定）"
+      daily_batch_schedule: "日次1回、8時間以内完了目標"
+      lease_mechanism: "PostgreSQLの行ロック（SELECT ... FOR UPDATE SKIP LOCKED相当）によるclaim"
+    dependencies:
+      - "comp-datastore"
+    iac_module: "infra/product/onprem/worker"
+    validation_rules:
+      - rule: "lease失効かつ未着手の場合はREQUESTEDへ差し戻す"
+        type: "runtime"
+        description: "重複実行防止ロジックの実行時検証"
+
+  - id: "comp-datastore-rdb"
+    name: "RDB（ジョブキュー兼管理DB）"
+    canonical_element_id: "product.persistence"
+    vendor_service: "PostgreSQL（プライマリ + ウォームスタンバイ、ストリーミングレプリケーション）"
+    configuration:
+      ha_mode: "ストリーミングレプリケーション（ウォームスタンバイ、手動昇格）"
+      backup: "pg_basebackup + WALアーカイブ、フル+差分（日次）、7世代保持"
+      tables: "execution-spec / runner実行結果 / 速報比較依頼 / 速報比較結果 / 確報比較依頼 / ハング検知記録 / slot起動監査イベント"
+    dependencies: []
+    iac_module: "infra/product/onprem/datastore"
+    validation_rules:
+      - rule: "run_id/parent_run_idを主キー・相関キーとして一貫利用する"
+        type: "static"
+        description: "実行系譜追跡の整合性検証"
+
+  - id: "comp-audit-store"
+    name: "slot起動監査イベントストア"
+    canonical_element_id: "product.audit_event_persistence"
+    vendor_service: "PostgreSQL（追記専用監査テーブル）"
+    configuration:
+      write_model: "INSERTのみ。UPDATE/DELETE権限はアプリケーションロールへ付与しない。訂正は新しいイベントとして追記する"
+      schema: "event_id / event_name / schema_version / run_id / parent_run_id / slot / attempt_id / occurred_at / actor / operation / outcome / final_status / error_code / previous_hash / event_hash"
+      uniqueness: "event_idを主キーとし、run_id・slot・attempt_id・event_nameにも一意制約を設けて再試行を冪等化する"
+      query_indexes: "run_id・occurred_at、およびparent_run_id・occurred_atの複合索引"
+      integrity: "event_hashは正規化済みイベント本体とprevious_hashから算出し、定期検証ジョブでチェーンを照合する"
+      retention: "月次パーティションで6ヶ月保持。削除前にハッシュチェーン検証結果を記録する"
+      excluded_payloads: "認証情報、起動引数の実値、stdout/stderr本文は保存しない"
+    dependencies:
+      - "comp-datastore-rdb"
+    iac_module: "infra/product/onprem/datastore"
+    validation_rules:
+      - rule: "アプリケーションロールに監査テーブルのUPDATE/DELETE権限がない"
+        type: "static"
+        description: "append-only制約を権限境界でも保証する"
+      - rule: "ハッシュチェーンとイベント順序を定期照合する"
+        type: "runtime"
+        description: "欠損・改ざんの検知"
+
+  - id: "comp-audit-reconciler"
+    name: "監査追記再試行・照合ワーカー"
+    canonical_element_id: "product.audit_event_persistence"
+    vendor_service: "systemdタイマー + シェルスクリプト + ローカル永続outbox"
+    configuration:
+      trigger: "定期実行および次回起動時のbest-effort照合"
+      outbox_commit: "既存の永続ファイル領域で一時ファイルへ書込み・同期後に同一ファイルシステム内でrenameし、未記録イベントを確定する"
+      retry_policy: "永続outboxから未記録イベントを取得し、指数バックオフ上限付きでPostgreSQLへの追記を再試行する"
+      idempotency_key: "run_id・slot・attempt_id・event_name"
+      completion: "監査テーブルへの追記確認後にoutbox項目を完了ディレクトリへrenameし、保持方針に従って削除する"
+    dependencies:
+      - "comp-audit-store"
+      - "comp-worker"
+    iac_module: "infra/product/onprem/worker"
+    validation_rules:
+      - rule: "同一冪等キーの監査イベントを重複作成しない"
+        type: "runtime"
+        description: "外部作用後の再試行・照合の冪等性保証"
+
+  - id: "comp-datastore-fs"
+    name: "実行ログファイルストレージ"
+    canonical_element_id: "product.persistence"
+    vendor_service: "ローカルファイルシステム（RAID5構成）"
+    configuration:
+      layout: "run_id単位のディレクトリに started-at.txt/stdout.log/stderr.log/exitcode.txt を配置"
+      backup: "フル+差分バックアップ（日次）、7世代保持"
+      redundancy: "RAID5（パリティ）"
+    dependencies:
+      - "comp-datastore-rdb"
+    iac_module: "infra/product/onprem/datastore"
+    validation_rules:
+      - rule: "RDBに記録されたパス参照とファイル実体の整合性を定期検証する"
+        type: "runtime"
+        description: "参照切れ検知"
+
+  - id: "comp-observability"
+    name: "オブザーバビリティ基盤"
+    canonical_element_id: "product.observability_needs"
+    vendor_service: "JSON構造化ログ（stdout/stderr）+ logrotate + 閉域内ログ集約（既存の共有プラットフォームがあれば連携）"
+    configuration:
+      log_format: "JSON構造化。run_id/timestamp/serviceを必須フィールドとする"
+      retention: "6ヶ月"
+      rotation: "サイズ+時間ベース併用"
+    dependencies:
+      - "comp-facade"
+      - "comp-worker"
+    iac_module: ""
+    validation_rules:
+      - rule: "全ティアのログにrun_idを含める"
+        type: "static"
+        description: "横断検索・障害調査の実効性確保"

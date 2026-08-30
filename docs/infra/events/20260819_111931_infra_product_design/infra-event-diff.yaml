@@ -1,0 +1,35 @@
+version: "1.0"
+event_id: "20260819_111931_infra_product_design"
+created_at: "2026-08-19T11:19:31"
+source: "比較定義エンティティの永続化とforeground終了コード透過・退避コード分離をインフラ設計へ反映"
+trigger_event: "arch:20260819_110531_arch_comparison_definition_exitcode, nfr:20260817_144844_initial_nfr"
+
+feedback_request:
+  feedback_request_id: "20260818_164000_rdra_followup_6078c4ed"
+  input_sha256: "b4b730a7e786c58c6d949948b78ce20988e293d795ae752239a546e36557bf72"
+  request_ids: ["CR-6078c4ed-008","CR-6078c4ed-009","CR-6078c4ed-010"]
+  work_unit_ids: ["CR-6078c4ed-008#1","CR-6078c4ed-009#1","CR-6078c4ed-010#1"]
+direct_work_unit_ids: []
+feedback_packet: "docs/pipeline/feedback-runs/20260818_164000_rdra_followup_6078c4ed/stage-packets/infrastructure.md"
+
+changed_fields:
+  arch_event_ref: "20260819_110531_arch_comparison_definition_exitcode"
+  mcl_execution:
+    status: "completed"
+    completed_at: "2026-08-19T11:19:31"
+    changed_outputs:
+      - path: "docs/mcl/product/input/product-input.yaml"
+        status: "updated"
+      - path: "docs/mcl/product/output/product-workload-model.yaml"
+        status: "updated"
+      - path: "docs/mcl/product/output/product-mapping-onprem.yaml"
+        status: "updated"
+      - path: "docs/mcl/product/output/product-impl-onprem.yaml"
+        status: "updated"
+      - path: "docs/mcl/product/output/product-observability.yaml"
+        status: "updated"
+      - path: "docs/cloud-context/conformance/product/product-conformance-onprem.yaml"
+        status: "updated"
+  arch_feedback:
+    arch_feedback_event_id: ""
+    feedback_items: []

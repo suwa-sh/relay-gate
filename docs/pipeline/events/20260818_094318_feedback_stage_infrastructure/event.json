@@ -1,0 +1,208 @@
+{
+  "event_id": "20260818_094318_feedback_stage_infrastructure",
+  "type": "feedback_stage_completed",
+  "run_id": "feedback-20260817_234841_impl_feedback_6078c4ed-20260818_092759-21457",
+  "attempt": 2,
+  "created_at": "2026-08-18T00:43:18Z",
+  "stage": "infrastructure",
+  "direct_work_unit_ids": [],
+  "causal_work_unit_ids": [
+    "CR-6078c4ed-002#1"
+  ],
+  "work_unit_results": [],
+  "reconciliation_results": [
+    {
+      "work_unit_id": "CR-6078c4ed-002#1",
+      "status": "changed",
+      "reason": "PostgreSQLの追記専用監査テーブル、ハッシュチェーン、6ヶ月保持、実行系譜照会、機密情報除外、外部作用前の起動中止、外部作用後のローカル永続outboxによる再試行・照合をインフラ設計へ具体化した",
+      "artifact_refs": [
+        "infra/events/20260818_093020_infra_product_design/infra-event.yaml",
+        "infra/events/20260818_093020_infra_product_design/_changes.md",
+        "infra/events/20260818_093020_infra_product_design/_inference.md",
+        "infra/events/20260818_093020_infra_product_design/source.txt",
+        "infra/events/20260818_093020_infra_product_design/product-input.yaml",
+        "infra/events/20260818_093020_infra_product_design/docs/mcl/product/output/product-workload-model.yaml",
+        "infra/events/20260818_093020_infra_product_design/docs/mcl/product/output/product-mapping-onprem.yaml",
+        "infra/events/20260818_093020_infra_product_design/docs/mcl/product/output/product-impl-onprem.yaml",
+        "infra/events/20260818_093020_infra_product_design/docs/mcl/product/output/product-observability.yaml",
+        "infra/events/20260818_093020_infra_product_design/docs/mcl/product/output/product-cost-hints.yaml",
+        "infra/events/20260818_093020_infra_product_design/docs/cloud-context/decisions/product/product-decision-audit-persistence.yaml",
+        "infra/events/20260818_093020_infra_product_design/docs/cloud-context/conformance/product/product-conformance-onprem.yaml"
+      ]
+    }
+  ],
+  "work_unit_evidence_refs": [
+    {
+      "work_unit_id": "CR-6078c4ed-002#1",
+      "path": "infra/events/20260818_093020_infra_product_design/infra-event.yaml",
+      "sha256": "2f1e83b7650fd74f29894b71e7f35bbd43c9a37daa1322a1bbf00722fb5e7ca6"
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-002#1",
+      "path": "infra/events/20260818_093020_infra_product_design/_changes.md",
+      "sha256": "883486d3359468e5fb9fbb7e78ac96b51ef0ca581c45d02c3e56a881367d9541"
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-002#1",
+      "path": "infra/events/20260818_093020_infra_product_design/_inference.md",
+      "sha256": "1ba4b9a7058305533090168067b49154f9c9b1536cca2c135dbd0231ac69a2f5"
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-002#1",
+      "path": "infra/events/20260818_093020_infra_product_design/source.txt",
+      "sha256": "8532a011aa69e4238f354f14ca5cfbcac824a5cb1dfe50a6d400a8c82b8c607a"
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-002#1",
+      "path": "infra/events/20260818_093020_infra_product_design/product-input.yaml",
+      "sha256": "9d138d3279ef0fff519c92a3e253993c5715d2e9945958c16ee1581d3fec1c4f"
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-002#1",
+      "path": "infra/events/20260818_093020_infra_product_design/docs/mcl/product/output/product-workload-model.yaml",
+      "sha256": "7e85c9b1d59d2daaa653869e5eaf22e7b8f38b43eac5dd1402445c7077c82bd7"
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-002#1",
+      "path": "infra/events/20260818_093020_infra_product_design/docs/mcl/product/output/product-mapping-onprem.yaml",
+      "sha256": "53ae892ee0314ee530a92ba8645990979d406f737e9d13f79200c3af3d3e4aee"
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-002#1",
+      "path": "infra/events/20260818_093020_infra_product_design/docs/mcl/product/output/product-impl-onprem.yaml",
+      "sha256": "1039a0291bdbeb9c5d7a7ffabecc3dcb8b18c381cc8cbfb7dc90554e8493ccec"
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-002#1",
+      "path": "infra/events/20260818_093020_infra_product_design/docs/mcl/product/output/product-observability.yaml",
+      "sha256": "b0d876874dc6372a4618d4bfcfca72251cf181d90bdfa27088c776d7ae7fa977"
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-002#1",
+      "path": "infra/events/20260818_093020_infra_product_design/docs/mcl/product/output/product-cost-hints.yaml",
+      "sha256": "c3f9f33c56f5bc98f55ed1f86fde08756629d8155f9606d2e18a83356145efc4"
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-002#1",
+      "path": "infra/events/20260818_093020_infra_product_design/docs/cloud-context/decisions/product/product-decision-audit-persistence.yaml",
+      "sha256": "1f17f2ddf6e2ab851a224c14f8523cdf828f896d010b16aef651eff7742986e4"
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-002#1",
+      "path": "infra/events/20260818_093020_infra_product_design/docs/cloud-context/conformance/product/product-conformance-onprem.yaml",
+      "sha256": "3963675ad4798749021ece072d3538605faff014c872bb9b995a6682b8efddb8"
+    }
+  ],
+  "domain_event_refs": [
+    {
+      "path": "infra/events/20260818_093020_infra_product_design/infra-event.yaml",
+      "sha256": "2f1e83b7650fd74f29894b71e7f35bbd43c9a37daa1322a1bbf00722fb5e7ca6"
+    }
+  ],
+  "feedback_request": {
+    "feedback_request_id": "20260817_234841_impl_feedback_6078c4ed",
+    "input_sha256": "bc64202288e80a7c6a299affcff26d45d91238a851ec5483b2d9eecb1bdabb54",
+    "request_ids": [
+      "CR-6078c4ed-002"
+    ],
+    "work_unit_ids": [
+      "CR-6078c4ed-002#1"
+    ]
+  },
+  "post_execution_basis": {
+    "repository_head": "a1dfc90cc4052435ec436f2d36f0b96962685ffe",
+    "latest_domain_event_ids": {
+      "requirements": {
+        "rdra/events": "20260817_142258_initial_build",
+        "usdm/events": "20260817_142258_initial_build"
+      },
+      "quality_attributes": {
+        "nfr/events": "20260817_144844_initial_nfr"
+      },
+      "architecture": {
+        "arch/events": "20260818_090120_arch_audit_contract_feedback"
+      },
+      "infrastructure": {
+        "infra/events": "20260818_093020_infra_product_design"
+      },
+      "design_system": {
+        "design/events": "20260817_180235_spec_stories"
+      },
+      "spec": {
+        "specs/events": "20260817_155817_spec_generation"
+      },
+      "spec_stories": {
+        "design/events": "20260817_180235_spec_stories"
+      }
+    },
+    "domain_event_root_snapshots": {
+      "rdra/events": {
+        "head_event_id": "20260817_142258_initial_build",
+        "head_event_sha256": "8b603eac296b2d2b63a2ab8382050d56e623cd76c3d2c55a471a73bab7610bf2",
+        "event_ids": [
+          "20260817_142258_initial_build"
+        ],
+        "event_set_sha256": "2f1f32750b225677cbd503282a735992da9c2677063459ca91951ac09f86b138",
+        "latest_tree_sha256": "9351ec5f08cde7249778482b82d730b4925461a57c49f3c5e82c34c157d6ebee"
+      },
+      "usdm/events": {
+        "head_event_id": "20260817_142258_initial_build",
+        "head_event_sha256": "850c7bb8cafe1e57ba3d0d4fd4f7023cd22d24d21c7696a34f6a59727a97c65d",
+        "event_ids": [
+          "20260817_142258_initial_build"
+        ],
+        "event_set_sha256": "2f1f32750b225677cbd503282a735992da9c2677063459ca91951ac09f86b138",
+        "latest_tree_sha256": "77d8476465bb3e3e17097a26053ebf1b13caf5ca32edf9b4d29047a8837be222"
+      },
+      "nfr/events": {
+        "head_event_id": "20260817_144844_initial_nfr",
+        "head_event_sha256": "ab8585ec751c5418788413ac4b94f124cc513e4bc8738223f94f20e7e5915712",
+        "event_ids": [
+          "20260817_144844_initial_nfr"
+        ],
+        "event_set_sha256": "7a8f3ab08eee2963dfae8d8e69b43ce4b6f906ace3e04b6d21cdbceb35d56056",
+        "latest_tree_sha256": "c139e3cc95fa46dd43625f9a04ce03e715b87f1d21e024da92008576b6c2a878"
+      },
+      "arch/events": {
+        "head_event_id": "20260818_090120_arch_audit_contract_feedback",
+        "head_event_sha256": "2eeaf89882aef646fb47d8686895273dec66cd54e491df7e8283bebea80e95de",
+        "event_ids": [
+          "20260817_150512_initial_arch",
+          "20260817_152155_arch_infra_feedback",
+          "20260818_090120_arch_audit_contract_feedback"
+        ],
+        "event_set_sha256": "10cb4fd916dd043b90e47d9c8c90aac02b544d4769153ccbb5666a298638aaca",
+        "latest_tree_sha256": "f419ce2ed4c8322e8657ce7e3ef48aef7030d6dd5fbd078a8a89d3ebc8dc299a"
+      },
+      "infra/events": {
+        "head_event_id": "20260818_093020_infra_product_design",
+        "head_event_sha256": "1b661757adf6823257c3b0ea1ed5bd556636580f2edb12f3162bf27bee4b7e5a",
+        "event_ids": [
+          "20260817_151023_infra_product_design",
+          "20260818_093020_infra_product_design"
+        ],
+        "event_set_sha256": "2dc78523276a7309a6324e04ca4503824db445f45c31cbfc4778a78e1ce76b4d",
+        "latest_tree_sha256": "1b661757adf6823257c3b0ea1ed5bd556636580f2edb12f3162bf27bee4b7e5a"
+      },
+      "design/events": {
+        "head_event_id": "20260817_180235_spec_stories",
+        "head_event_sha256": "13998dee936ad945d96660bbd475bda501221c549302651c159173e5967addc3",
+        "event_ids": [
+          "20260817_153235_design_system",
+          "20260817_180235_spec_stories"
+        ],
+        "event_set_sha256": "10f6d93b7fc7ef199793d496dfaba081738652c286dce5cb2a87c1e0811ba02e",
+        "latest_tree_sha256": "49b48e0d21aa8fff5d791fc5efd01bbd199ecaf410f60927a9fbdc0799e7945a"
+      },
+      "specs/events": {
+        "head_event_id": "20260817_155817_spec_generation",
+        "head_event_sha256": "61ff0d8389dcab0f6c8c6ea49d77e68a5ee99e0eb335a7ee2d7e70d979c56e08",
+        "event_ids": [
+          "20260817_155817_spec_generation"
+        ],
+        "event_set_sha256": "54be776e84545c4c1db8caac9787ca106cc76de6742ed74bfc801a002b6851f4",
+        "latest_tree_sha256": "2d2523b9c21d6ced1d78ca3318d9ac644d6a958f6c0277a44eb1058e59fca954"
+      }
+    }
+  }
+}

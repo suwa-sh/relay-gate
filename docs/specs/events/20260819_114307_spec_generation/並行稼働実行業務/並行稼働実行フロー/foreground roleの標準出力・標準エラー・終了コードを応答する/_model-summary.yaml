@@ -1,0 +1,57 @@
+uc: "foreground roleの標準出力・標準エラー・終了コードを応答する"
+business: "並行稼働実行業務"
+buc: "並行稼働実行フロー"
+
+bounded_context_id: "BC-001"
+aggregate_id: "AG-002"
+
+models:
+  - name: "RespondForegroundRequest"
+    tier: "tier-facade"
+    layer: "presentation"
+    type: "request-dto"
+    rdra_info: "Runner実行結果（started-at.txt/stdout.log/stderr.log/exitcode.txt）"
+  - name: "RespondForegroundResultCommand"
+    tier: "tier-facade"
+    layer: "usecase"
+    type: "command"
+    rdra_info: "Runner実行結果（started-at.txt/stdout.log/stderr.log/exitcode.txt）"
+  - name: "RunnerExecutionResult"
+    tier: "tier-facade"
+    layer: "domain"
+    type: "entity"
+    rdra_info: "Runner実行結果（started-at.txt/stdout.log/stderr.log/exitcode.txt）"
+  - name: "RunnerResultRecord"
+    tier: "tier-facade"
+    layer: "gateway"
+    type: "record"
+    rdra_info: "Runner実行結果（started-at.txt/stdout.log/stderr.log/exitcode.txt）"
+
+tables:
+  - name: "runner_results"
+    rdra_info: "Runner実行結果（started-at.txt/stdout.log/stderr.log/exitcode.txt）"
+    operations:
+      - type: "SELECT"
+        columns:
+          - name: "slot_type"
+            value: "foreground役割が割り当てられたslot"
+          - name: "attempt_id"
+            value: "起動試行の一意識別子"
+          - name: "attempt_no"
+            value: "最新試行の特定に使用（最大値の行を採用）"
+          - name: "stdout_path"
+            value: "stdout.logのパス参照"
+          - name: "stderr_path"
+            value: "stderr.logのパス参照"
+          - name: "exit_code"
+            value: "exitcode.txtの値（未完了・UNKNOWN時はNULL）"
+          - name: "status"
+            value: "STARTING/RUNNING/SUCCEEDED/FAILED/UNKNOWN/ABORTED"
+        where: "run_id = :run_id AND role_type = 'foreground' ORDER BY attempt_no DESC LIMIT 1"
+    indexes_needed:
+      - columns: ["run_id", "slot_type", "role_type", "attempt_id"]
+        reason: "複合主キー。foreground役割の起動試行snapshotの特定（最新attempt_noの選択）"
+        access_pattern: "relaygate concurrent-run respond-foreground --run-id"
+
+kvs: []
+object_storage: []

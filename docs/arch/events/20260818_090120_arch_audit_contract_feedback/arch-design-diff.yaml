@@ -1,0 +1,26 @@
+meta:
+  event_id: "20260818_090120_arch_audit_contract_feedback"
+  trigger_event: "feedback:20260817_234841_impl_feedback_6078c4ed"
+  created_at: "2026-08-18T09:01:20"
+feedback_request:
+  feedback_request_id: "20260817_234841_impl_feedback_6078c4ed"
+  input_sha256: "bc64202288e80a7c6a299affcff26d45d91238a851ec5483b2d9eecb1bdabb54"
+  request_ids: ["CR-6078c4ed-002"]
+  work_unit_ids: ["CR-6078c4ed-002#1"]
+direct_work_unit_ids: ["CR-6078c4ed-002#1"]
+feedback_packet: "docs/pipeline/feedback-runs/20260817_234841_impl_feedback_6078c4ed/stage-packets/architecture.md"
+system_architecture:
+  cross_tier_policies:
+    - id: "CTP-005"
+      name: "監査ログ・操作ログ"
+      description: "slot起動の操作受付、slotごとの起動試行、成功、失敗、timeout、最終状態、および対話確認を経た中止・リラン操作を、RDBのappend-only監査ログへ同一schemaで追記する。event_id、event_name、schema_version、run_id、parent_run_id、slot、attempt_id、occurred_at、actor、operation、outcome、final_status、error_code、previous_hash、event_hashを必須または事象に応じた条件付きフィールドとし、run_id/parent_run_idで実行系譜を一元照会できるようにする。認証情報、起動引数の実値、stdout/stderr本文は記録しない。保持期間は6ヶ月とし、ハッシュチェーンを定期検証して欠損・改ざんを検知する"
+      reason: "slot起動を監査対象へ追加するユーザー指定と、操作ログ・改ざん検知、6ヶ月保持、run_id/parent_run_idによる実行系譜追跡を一つの永続化契約で満たすため"
+      source_model: "BUC: feature flag設定に基づきslotを選択して起動する, blue中止フロー, green中止フロー, 速報比較中止フロー, 確報比較中止フロー, システム概要: run_id/parent_run_idによる実行系譜の追跡, NFR E.7.1.1, NFR C.6.1.1"
+      confidence: "user"
+  cross_tier_rules:
+    - id: "CTR-008"
+      name: "slot起動監査ログの失敗時契約"
+      description: "外部slot起動前に操作受付・起動試行の監査イベントをRDBへ追記できない場合は起動を中止する。外部slot起動後に成功・失敗・timeout・最終状態の監査イベント追記が失敗した場合は、元の起動結果と未記録状態を失わず再試行対象として永続化し、run_id・slot・attempt_idによる照合で重複なく追記する。監査ログはUPDATE/DELETEせず、訂正も新しいイベントとして追記する。CLIのstdout/stderr/exitcode契約は変更しない"
+      reason: "監査証跡の欠落を理由に未記録の外部起動を許さず、外部作用発生後の一時的なRDB障害でも起動結果を失わず整合を回復するため"
+      source_model: "BUC: feature flag設定に基づきslotを選択して起動する, 情報: Runner実行結果, NFR E.7.1.1, NFR C.6.1.1"
+      confidence: "user"

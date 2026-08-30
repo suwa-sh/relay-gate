@@ -1,0 +1,9 @@
+実装フィードバックに基づくslot起動監査イベント契約の具体化
+feedback_request_id: 20260817_234841_impl_feedback_6078c4ed
+input_sha256: bc64202288e80a7c6a299affcff26d45d91238a851ec5483b2d9eecb1bdabb54
+request_ids: CR-6078c4ed-002
+direct_work_unit_ids: CR-6078c4ed-002#1
+causal_work_unit_ids: CR-6078c4ed-002#1
+allowed_work_unit_ids: CR-6078c4ed-002#1
+feedback_packet: docs/pipeline/feedback-runs/20260817_234841_impl_feedback_6078c4ed/stage-packets/architecture.md
+user_selection: Option A（RDB append-only監査テーブル + ハッシュチェーン）

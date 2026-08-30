@@ -1,0 +1,36 @@
+uc: "foreground roleの標準出力・標準エラー・終了コードを応答する"
+business: "並行稼働実行業務"
+buc: "並行稼働実行フロー"
+commands:
+  - name: "relaygate concurrent-run respond-foreground"
+    tier: "tier-facade"
+    summary: "foreground役割のRunner実行結果から標準出力・標準エラー・終了コードのみをジョブスケジューラへ応答する"
+    args:
+      - name: "--run-id"
+        required: true
+        description: "foreground役割のRunner実行結果を特定するrun_id"
+    env_vars:
+      - name: "RELAYGATE_RDB_DSN"
+        required: true
+        description: "RDB接続文字列"
+      - name: "RELAYGATE_LOG_ROOT"
+        required: true
+        description: "stdout.log/stderr.logの格納ルートディレクトリ"
+    stdin: "なし"
+    stdout_contract: "stdout.logの内容をそのまま出力（整形は行末改行以外加えない）"
+    stderr_contract: "stderr.logの内容をそのまま出力する。relay-gateエラー（退避コード125/124）で応答する場合は、取得可能ならstderr.logの内容を先に出力し、続けてrelay-gate自身のエラー内容（原因と次アクション）を併記する"
+    exit_code_policy: "passthrough"
+    exit_code_passthrough:
+      source: "foreground exitcode.txt"
+      range: "0-255"
+      description: "status=SUCCEEDED/FAILEDのとき、exitcode.txtの値を0を含む全値そのままプロセス終了コードへ透過する。丸め・再割り当てをしない"
+    exit_codes:
+      - code: 125
+        meaning: "relay-gate退避コード: 実行結果未確定（STARTING/RUNNING）・取得不能（UNKNOWN）・中止済み（ABORTED）。UNKNOWNを推測でFAILED相当の業務終了コードへ変換しない"
+      - code: 124
+        meaning: "relay-gate退避コード: relay-gateのバリデーションエラー（run_id未指定）"
+    exit_code_notes: "退避コードは業務ジョブが通常使用しない値を予約したものであり、bashが自動生成する126（実行不可）・127（コマンド未検出）とは衝突させない（SR-006）"
+screens:
+  - name: "実行結果応答管理画面"
+    route: "/cli/concurrent-run/respond-foreground"
+    components: ["RunnerResultPanel"]

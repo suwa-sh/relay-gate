@@ -1,0 +1,27 @@
+uc: "全テーブル・全ファイルを対象に確報クロスチェックを実行する"
+business: "クロスチェック業務"
+buc: "確報クロスチェックフロー"
+commands:
+  - name: "relaygate final-crosscheck run"
+    tier: "tier-worker"
+    summary: "CronJobから起動され、REQUESTED状態の確報比較依頼をlease/claim取得し全テーブル・全ファイルの整合性比較を実行する"
+    args: []
+    env_vars:
+      - name: "RELAYGATE_WORKER_ID"
+        required: true
+        description: "lease/claim取得時に記録するworker識別子"
+      - name: "RELAYGATE_LEASE_TTL_SECONDS"
+        required: false
+        description: "lease有効期間（秒）。未指定時は600秒"
+    stdin: "なし"
+    stdout_contract: "処理したrun_id/statusをログとして出力する（実行のたびに1行）"
+    stderr_contract: "lease取得失敗・比較対象データ取得失敗時にエラー内容を出力する"
+    exit_codes:
+      - code: 0
+        meaning: "正常終了（対象依頼なし、または比較処理完了）"
+      - code: 1
+        meaning: "業務エラー（比較対象データ取得失敗等）"
+screens:
+  - name: "確報クロスチェック実行画面"
+    route: "/cli/final-crosscheck/run"
+    components: ["CrossCheckRequestRow", "RunnerResultPanel"]

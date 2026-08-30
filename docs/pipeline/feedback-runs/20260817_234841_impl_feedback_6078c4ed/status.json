@@ -1,0 +1,70 @@
+{
+  "schema_version": "distillery.feedback-run-status/v1",
+  "feedback_request_id": "20260817_234841_impl_feedback_6078c4ed",
+  "input_sha256": "bc64202288e80a7c6a299affcff26d45d91238a851ec5483b2d9eecb1bdabb54",
+  "ambiguity_policy": "recommended_auto",
+  "state": "blocked",
+  "run_id": "feedback-20260817_234841_impl_feedback_6078c4ed-20260818_092759-21457",
+  "attempt": 2,
+  "stages": [
+    {
+      "id": "architecture",
+      "state": "completed",
+      "event_ids": [
+        "20260818_090630_feedback_stage_architecture"
+      ],
+      "direct_work_unit_ids": [
+        "CR-6078c4ed-002#1"
+      ],
+      "causal_work_unit_ids": [
+        "CR-6078c4ed-002#1"
+      ]
+    },
+    {
+      "id": "infrastructure",
+      "state": "completed",
+      "event_ids": [
+        "20260818_094318_feedback_stage_infrastructure"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-6078c4ed-002#1"
+      ]
+    },
+    {
+      "id": "design_system",
+      "state": "completed",
+      "event_ids": [
+        "20260818_094841_feedback_stage_design_system"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-6078c4ed-002#1"
+      ]
+    },
+    {
+      "id": "spec",
+      "state": "failed",
+      "event_ids": [
+        "20260818_103940_feedback_stage_spec"
+      ],
+      "direct_work_unit_ids": [
+        "CR-6078c4ed-001#1"
+      ],
+      "causal_work_unit_ids": [
+        "CR-6078c4ed-001#1",
+        "CR-6078c4ed-002#1"
+      ]
+    },
+    {
+      "id": "spec_stories",
+      "state": "not_attempted",
+      "event_ids": [],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-6078c4ed-001#1",
+        "CR-6078c4ed-002#1"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "specification"
+artifact_id: "spec-decision-007"
+title: "比較定義のSCD2世代管理と依頼側での適用世代固定"
+status: "approved"
+generated_at: "2026-08-19T11:43:07+09:00"
+feedback_request:
+  feedback_request_id: "20260818_164000_rdra_followup_6078c4ed"
+  input_sha256: "b4b730a7e786c58c6d949948b78ce20988e293d795ae752239a546e36557bf72"
+  request_ids: ["CR-6078c4ed-008","CR-6078c4ed-009","CR-6078c4ed-010"]
+  work_unit_ids: ["CR-6078c4ed-008#1","CR-6078c4ed-009#1","CR-6078c4ed-010#1"]
+context: |
+  USDM SPEC-012-03 は「比較定義は job_id ごとに差し替えられる」と規定するが、比較定義に相当する情報が
+  RDRA 情報モデルに存在せず、検証可能な Scenario を書けなかった。この欠落は前イベントの
+  `_cross-cutting/rdra-feedback.md` に変更要望 #1 として記録され、USDM acceptance criteria 単位の
+  逆引き網羅率が 100% に届かない唯一の要因になっていた。
+
+  feedback request 20260818_164000_rdra_followup_6078c4ed の CR-6078c4ed-009 により、RDRA 情報モデルへ
+  情報「比較定義」（JOB_ID / 比較対象テーブル / 比較対象ファイル / 比較実装識別子 / 有効期間）が追加され、
+  USDM SPEC-012-03 に「有効期間に該当する比較定義が 1 件適用される」acceptance criterion が追加された。
+  infra 側では comp-datastore-rdb に comparison_definitions（(job_id, valid_from) 複合主キー、
+  現行世代の部分一意索引、有効期間の排他制約、世代追記のみ）が確定している。
+
+  同一 job_id に複数世代が存在しうるため、「実行時点で解決する」と「依頼作成後に定義が差し替わっても
+  比較内容が変わらない」を両立させる必要がある。
+decision: |
+  データストア契約へ `comparison_definitions` を SCD2 型で追加する。複合主キーは (job_id, valid_from)、
+  有効期間は valid_from（含む）/ valid_to（含まない、現行世代は NULL）で表す。世代は追記のみで管理し、
+  既存世代の target_tables / target_files / comparator_id は更新しない。同一 job_id の現行世代を 1 件に
+  限定する部分一意索引（valid_to IS NULL）と、有効期間の重複を禁止する排他制約で世代の多重一致を防ぐ。
+
+  適用世代の固定は依頼側で行う。`rapid_crosscheck_requests` と `final_crosscheck_requests` は
+  依頼作成時点で解決した世代の valid_from を `comparison_definition_valid_from` として保持し、
+  (job_id, comparison_definition_valid_from) → comparison_definitions(job_id, valid_from) の外部キーで
+  参照する。比較実行 UC は「実行時点で有効期間から探索し直す」のではなく、依頼が保持する世代キーの
+  完全一致で 1 件を解決して適用する。確報比較依頼は加えて target_tables / target_files を
+  該当世代から複写した解決済みの値として保持する。
+consequences:
+  positive:
+    - "SPEC-012-03 の 2 つの acceptance criterion（job_id 別適用 / 有効期間で 1 件解決）を検証可能な Scenario として書ける"
+    - "依頼作成後に比較定義が差し替わっても、実行中・再実行の比較内容が変わらない"
+    - "世代の多重一致を DB の部分一意索引と排他制約で防げるため、アプリ側の解決ロジックが単純化する"
+    - "USDM acceptance criteria 単位の逆引き網羅率が 100% になり、rdra-feedback.md の未解消要望が 0 件になる"
+  negative:
+    - "依頼テーブルに世代キーのカラムと外部キーが増え、依頼作成時に世代解決が必須の前提条件になる"
+    - "該当世代が存在しない job_id では依頼作成・比較実行が失敗するため、比較定義の初期登録が運用上の前提になる"
+    - "排他制約は RDBMS の対応機能に依存する（PostgreSQL の EXCLUDE 制約等）"
+alternatives_considered:
+  - name: "比較実行時に毎回 valid_from <= 実行時点 < valid_to で世代を探索する"
+    reason_rejected: "依頼作成から実行までの間に定義が差し替わると比較内容が変わり、再実行時に元の比較を再現できない。実行系譜のトレーサビリティを損なう"
+  - name: "比較定義を世代管理せず job_id 単位で 1 行にして上書き更新する"
+    reason_rejected: "過去の比較がどの定義で行われたか追跡できず、イミュータブルデータモデル方針と矛盾する。USDM の有効期間に関する acceptance criterion も満たせない"
+  - name: "target_tables / target_files / comparator_id を依頼テーブルへ全複写する"
+    reason_rejected: "速報比較依頼は高頻度に作成されるため定義本体の複写は冗長になる。世代が追記のみで不変であれば、世代キーの参照で同じ不変性が得られる（確報側は既存カラムとの整合のため複写を維持する）"

@@ -1,0 +1,236 @@
+version: "1.0"
+contract_type: "audit-event-contract"
+description: "RelayGate の監査イベント契約。slot起動の操作受付から最終状態まで、および対話確認を経た中止・リラン操作を、同一のフィールド定義でaudit_logsへ追記する。フィールド名は actor / operation / outcome へ統一し、イベント種別ごとに別名を用いない。永続化先の定義は _cross-cutting/datastore/rdb-schema.yaml の audit_logs / audit_chain_heads を正本とする"
+system_name: "RelayGate"
+source_refs:
+  - "arch-design: CTP-005（監査ログ・操作ログ）"
+  - "arch-design: CTR-008（slot起動監査ログの失敗時契約）"
+  - "arch-design: CTP-004（実行系譜トレーサビリティ）"
+  - "infra: product-decision-audit-persistence（PostgreSQL追記専用テーブルへの統合）"
+
+schema_version: "1.0"
+
+fields:
+  - name: "event_id"
+    type: "uuid"
+    required: true
+    description: "監査イベントを一意に識別するUUID"
+  - name: "event_name"
+    type: "string"
+    required: true
+    description: "監査イベント名。events[] に列挙した値のみを使用する"
+  - name: "schema_version"
+    type: "string"
+    required: true
+    description: "本契約のバージョン。追記時に固定値 '1.0' を格納する"
+  - name: "run_id"
+    type: "uuid"
+    required: true
+    description: "操作対象のrun_id。リランでは新規発行したrun_idを記録する"
+  - name: "parent_run_id"
+    type: "uuid"
+    required: false
+    description: "リラン元のrun_id。通常起動時はnull"
+  - name: "slot"
+    type: "string"
+    required: true
+    description: "対象slot種別。値: blue / green / '-'（slotに紐づかないrun単位イベント）。一意制約をnullで無効化しないため非該当時も '-' を格納する"
+  - name: "attempt_id"
+    type: "string"
+    required: true
+    description: "対象の起動試行のattempt_id。起動試行に紐づかないイベントでは '-' を格納する"
+  - name: "occurred_at"
+    type: "datetime"
+    required: true
+    description: "イベント発生時刻。UTC・マイクロ秒精度のISO 8601（YYYY-MM-DDTHH:MM:SS.ffffffZ。_cross-cutting/datastore/rdb-schema.yaml の datetime_rules に従う）。同一transactionで更新するaudit_chain_heads.updated_atと同一値にする"
+  - name: "actor"
+    type: "string"
+    required: true
+    description: "操作主体。運用者操作では環境変数 RELAYGATE_OPERATOR の値、システム自動処理では 'facade' / 'worker' / 'hang-detector' を格納する。誰が実施したかを表すフィールドはこれ1つに統一する"
+  - name: "operation"
+    type: "string"
+    required: true
+    description: "実施した操作。値: slot_launch / abort / rerun / status_finalize。何をしたかを表すフィールドはこれ1つに統一する"
+  - name: "outcome"
+    type: "string"
+    required: true
+    description: "操作の結果。値: accepted / succeeded / failed / timeout / rejected / unknown。成否を表すフィールドはこれ1つに統一し、イベント種別ごとの独自フィールドを設けない"
+  - name: "final_status"
+    type: "string"
+    required: false
+    description: "最終状態イベント（event_name=slot_final_status）でのみ設定する確定状態。値: SUCCEEDED / FAILED / UNKNOWN / ABORTED"
+  - name: "error_code"
+    type: "string"
+    required: false
+    description: "失敗・timeout時のエラー種別コード。正常イベントではnull"
+  - name: "previous_hash"
+    type: "string"
+    required: false
+    description: "同一run_idのハッシュチェーンにおける直前イベントのevent_hash。run_id内の最初のイベントではnull"
+  - name: "event_hash"
+    type: "string"
+    required: true
+    description: "正規化済みイベント本体とprevious_hashから算出するハッシュ値。算出規則は hash_chain.canonical_form が唯一の正本（SHA-256、16進小文字64桁）"
+
+events:
+  - name: "slot_launch_accepted"
+    operation: "slot_launch"
+    outcome: "accepted"
+    timing: "外部slot起動前"
+    description: "feature flag設定を検証し起動を受け付けたことを記録する。slotに紐づかないrun単位イベントのため slot='-' / attempt_id='-' とする"
+    emitted_by: ["feature flag設定に基づきslotを選択して起動する"]
+  - name: "slot_launch_attempted"
+    operation: "slot_launch"
+    outcome: "accepted"
+    timing: "外部slot起動前"
+    description: "対象slotの起動試行を受け付けたことを記録する。runner_resultsのSTARTING記録と同一transactionで追記する"
+    emitted_by:
+      - "feature flag設定に基づきslotを選択して起動する"
+      - "background roleを起動する"
+      - "execution-spec.jsonの実行設定を保ったまま再実行する"
+  - name: "slot_launch_succeeded"
+    operation: "slot_launch"
+    outcome: "succeeded"
+    timing: "外部slot起動後"
+    description: "起動試行が成功し実行が開始したことを記録する"
+    emitted_by: ["background roleを起動する"]
+  - name: "slot_launch_failed"
+    operation: "slot_launch"
+    outcome: "failed"
+    timing: "外部slot起動後"
+    description: "起動試行が失敗したことを記録する。error_codeに失敗種別を格納する。「feature flag設定に基づきslotを選択して起動する」は起動イベント送出失敗の補償記録（runner_resultsをFAILEDへ遷移させた後）として error_code='launch_event_send_failed' で追記する"
+    emitted_by:
+      - "feature flag設定に基づきslotを選択して起動する"
+      - "background roleを起動する"
+  - name: "slot_launch_timeout"
+    operation: "slot_launch"
+    outcome: "timeout"
+    timing: "外部slot起動後"
+    description: "起動試行がtimeoutし結果を取得できなかったことを記録する。推測でfailedとして記録しない。「feature flag設定に基づきslotを選択して起動する」は起動イベント送出timeoutの補償記録（runner_resultsをUNKNOWNへ遷移させた後）として error_code='launch_event_send_timeout' で追記する"
+    emitted_by:
+      - "feature flag設定に基づきslotを選択して起動する"
+      - "background roleを起動する"
+  - name: "slot_final_status"
+    operation: "status_finalize"
+    outcome: "succeeded|failed|unknown"
+    timing: "実行結果確定時"
+    description: "起動試行の最終状態を確定したことを記録する。final_statusに確定値を格納する"
+    emitted_by: ["background実行の未完了・非0終了・速報比較異常を定期検知する"]
+  - name: "abort_requested"
+    operation: "abort"
+    outcome: "accepted|rejected"
+    timing: "中止依頼受理時"
+    description: "中止依頼を受理または拒否したことを記録する。状態遷移は伴わない"
+    emitted_by:
+      - "blue background実行の中止を依頼する"
+      - "green background実行の中止を依頼する"
+      - "RUNNING中の速報比較依頼の中止を依頼する"
+      - "RUNNING中の確報比較依頼の中止を依頼する"
+  - name: "abort_confirmed"
+    operation: "abort"
+    outcome: "succeeded|rejected"
+    timing: "対話確認後の状態遷移時"
+    description: "対話確認を経てABORTEDへ遷移させたことを記録する。y以外の回答による中断はoutcome=rejectedで記録する"
+    emitted_by:
+      - "対話確認のうえblue background実行をABORTEDへ遷移させる"
+      - "対話確認のうえgreen background実行をABORTEDへ遷移させる"
+      - "対話確認のうえ速報比較依頼をABORTEDへ遷移させる"
+      - "対話確認のうえ確報比較依頼をABORTEDへ遷移させる"
+  - name: "rerun_requested"
+    operation: "rerun"
+    outcome: "accepted|rejected"
+    timing: "リラン受付時"
+    description: "リラン操作を受け付けたことを記録する。run_idには新規発行したrun_id、parent_run_idにはリラン元run_idを格納する"
+    emitted_by: ["execution-spec.jsonの実行設定を保ったまま再実行する"]
+  - name: "rerun_accepted"
+    operation: "rerun"
+    outcome: "succeeded|failed"
+    timing: "リラン起動後"
+    description: "リランによる新規runの起動結果を記録する"
+    emitted_by: ["execution-spec.jsonの実行設定を保ったまま再実行する"]
+
+excluded_payloads:
+  - "認証情報（認証情報の参照名のみ許可し、実値は記録しない）"
+  - "起動引数の実値（固定引数・追加引数の内容）"
+  - "stdout / stderr の本文"
+
+write_model:
+  operations: ["INSERT"]
+  description: "audit_logsはINSERTのみを許可する。アプリケーションロールにUPDATE/DELETE権限を付与しない。訂正は新しいイベントとして追記する"
+  retention: "6ヶ月。保持境界を超えたイベントは、アプリケーションロールとは分離した専用保守権限ロールが、ハッシュチェーン検証結果を記録したうえで削除する"
+  partitioning: "非partition。partitioned tableは主キー・一意制約にpartition keyの包含を要求し、(run_id, slot, attempt_id, event_name)の冪等一意性と両立しないため採用しない"
+
+idempotency:
+  key: ["run_id", "slot", "attempt_id", "event_name"]
+  description: "同一の冪等キーを持つ監査イベントは重複作成しない。外部slot起動後の追記失敗は、元の起動結果と未記録状態を失わずローカル永続outboxへ退避し、再試行時に本キーで照合して重複なく追記する（CTR-008）"
+
+hash_chain:
+  scope: "run_id"
+  description: "監査イベントのハッシュチェーンはrun_id単位で構成する。event_hashは canonical_form で定義する正規化文字列から算出し、定期検証ジョブがrun_idごとにチェーンを照合して欠損・改ざんを検知する。全emitter（監査イベントを追記する全UC）と検証ジョブは canonical_form だけを参照し、UCごとに別の正規化を行わない"
+  canonical_form:
+    description: "event_hashの算出元となる正規化文字列の定義。audit_logsの1行から推測なしに同一の文字列・同一のevent_hashを再計算できることを保証する（CR-6078c4ed-011）"
+    hash_function: "SHA-256"
+    hash_input_encoding: "UTF-8（正規化文字列のバイト列）"
+    hash_output: "16進小文字64桁（例: 9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08）"
+    field_order:
+      - "event_id"
+      - "event_name"
+      - "schema_version"
+      - "run_id"
+      - "parent_run_id"
+      - "slot"
+      - "attempt_id"
+      - "occurred_at"
+      - "actor"
+      - "operation"
+      - "outcome"
+      - "final_status"
+      - "error_code"
+    field_order_rule: "fields[] の宣言順から event_hash 自身と previous_hash を除いた13項目。この順序を変更する場合は schema_version を上げる"
+    separator: "|"
+    null_representation: "空文字列（nullの項目は区切り文字だけを残す）。非該当を表す '-'（slot / attempt_id）は文字列 '-' として扱い、nullに変換しない"
+    value_serialization:
+      - "uuid（event_id / run_id / parent_run_id）: ハイフン区切り・16進小文字36文字（RFC 4122 の文字列表現）"
+      - "datetime（occurred_at）: UTC・マイクロ秒6桁固定のISO 8601（YYYY-MM-DDTHH:MM:SS.ffffffZ）。audit_logs.occurred_at に保存した値をこの表現へ整形して用いる"
+      - "string（その他）: 保存値をそのまま用いる（前後の空白を除去しない、大文字小文字を変換しない）"
+    escaping:
+      description: "各項目の値を区切り文字で連結する前に、値の中の '\\' を '\\\\' へ、'|' を '\\|' へ置換する（この順序で適用する）。区切り文字と値の中の '|' を区別できるようにするため。previous_hash と event_hash は16進文字列のためエスケープ対象の文字を含まない"
+      rules:
+        - from: "\\"
+          to: "\\\\"
+        - from: "|"
+          to: "\\|"
+    previous_hash_position: "末尾。13項目を '|' で連結した文字列の後ろに '|' と previous_hash を付加する"
+    first_event_representation: "run_id内の最初のイベント（previous_hash=null）では previous_hash を空文字列として連結する（正規化文字列は '|' で終わる）"
+    canonical_string: "escape(event_id)|escape(event_name)|escape(schema_version)|escape(run_id)|escape(parent_run_id)|escape(slot)|escape(attempt_id)|escape(occurred_at)|escape(actor)|escape(operation)|escape(outcome)|escape(final_status)|escape(error_code)|previous_hash"
+    event_hash: "lowercase_hex(SHA-256(UTF-8(canonical_string)))"
+    example:
+      description: "run_id内の最初のイベント（previous_hash=null、parent_run_id=null、final_status=null、error_code=null）の正規化文字列"
+      canonical_string: "0d3a6c1e-8b2f-4c7a-9e51-2f6b8d4a1c30|slot_launch_accepted|1.0|3f8c9d2e-5b41-4a7e-9c13-6d2a8b0f1e57||-|-|2026-08-18T00:00:00.000000Z|ops-tanaka|slot_launch|accepted|||"
+    verification_guarantee: "定期検証ジョブは audit_logs の各行から canonical_string を再構成し event_hash と一致することを照合する。チェーンの順序は previous_hash → event_hash の連鎖（audit_chain_heads.head_hash から previous_hash を辿って previous_hash=null の先頭行に至る）を正とし、連鎖の行数が chain_length と一致すること、同一run_idの全行が連鎖に含まれること、連鎖順に occurred_at が単調増加（rdb-schema.yaml datetime_rules.ordering_guarantee）であることを照合する。不一致は欠損・改ざんとして検知する"
+  lock_contract:
+    lock_target: "audit_chain_heads の run_id 行"
+    lock_mode: "排他ロック（SELECT ... FOR UPDATE）"
+    steps:
+      - "対象run_idのaudit_chain_heads行を排他ロックで取得する。行が存在しない場合は当該run_idの最初のイベントとして行を新規作成し、previous_hashをnullとする"
+      - "取得したhead_hashをprevious_hashとしてevent_hashを算出する"
+      - "audit_logsへイベントをINSERTする"
+      - "audit_chain_headsのhead_event_id / head_hash / chain_length / updated_atを更新する"
+      - "以上をすべて同一transactionでcommitする。commitできない場合は外部slot起動前であれば起動を中止する"
+    rationale: "run_id単位でロックを直列化することで、同一runへの並行追記（blue/green同時起動など）でチェーンが分岐・欠損することを防ぐ。ロック単位をrun_idに限定するため、異なるrun間の監査追記は並行実行できる"
+
+failure_contract:
+  pre_launch: "外部slot起動前に操作受付・起動試行の監査イベントを追記できない場合は、slot起動を中止する（起動前監査ゲート）"
+  post_launch: "外部slot起動後に成功・失敗・timeout・最終状態の監査イベント追記が失敗した場合は、元の起動結果と未記録状態を失わずローカル永続outboxへ退避し、再試行対象として永続化する。再試行はidempotency.keyによる照合で重複なく追記する。「feature flag設定に基づきslotを選択して起動する」が起動イベント送出失敗・timeoutを補償記録する際の slot_launch_failed / slot_launch_timeout の追記失敗も本契約に従う（runner_resultsの状態遷移はoutbox退避に関係なくcommit済みとする）"
+  cli_contract: "監査イベントの追記失敗はCLIのstdout / stderr / exitcode契約を変更しない（起動前監査ゲートによる起動中止時のexit codeは各コマンドのexit_codes定義に従う）"
+
+transaction_rules:
+  - name: "起動前監査を含むslot起動トランザクション"
+    description: "execution_specs / slot_execution_specs のINSERT、runner_result_events / runner_results のSTARTING記録、監査イベント（slot_launch_accepted / slot_launch_attempted）のINSERTとaudit_chain_headsの更新を、すべて同一transactionで実行する"
+    tables: ["execution_specs", "slot_execution_specs", "runner_result_events", "runner_results", "audit_logs", "audit_chain_heads"]
+  - name: "起動イベント送出失敗の補償記録（状態遷移）"
+    description: "「feature flag設定に基づきslotを選択して起動する」が外部slotへの起動イベント送出に失敗（FAILED / attempt_failed）またはtimeout（UNKNOWN / attempt_unknown。推測でFAILEDにしない）した場合、対象slotの runner_result_events INSERT と runner_results UPDATE を同一transactionでcommitする（transaction 1）"
+    tables: ["runner_result_events", "runner_results"]
+  - name: "起動イベント送出失敗の補償記録（監査追記）"
+    description: "transaction 1 のcommit後、slot_launch_failed / slot_launch_timeout を hash_chain.lock_contract に従って別transactionで追記する（transaction 2）。この追記の失敗は failure_contract.post_launch（outbox退避）に従い、transaction 1 のcommitを取り消さない"
+    tables: ["audit_logs", "audit_chain_heads"]

@@ -1,8 +1,8 @@
 version: "1.0"
-event_id: "20260817_152155_arch_infra_feedback"
-created_at: "2026-08-17T15:21:55"
-source: "インフラ設計 20260817_151023_infra_product_design に基づくアーキテクチャフィードバック"
-trigger_event: "infra:20260817_151023_infra_product_design"
+event_id: "20260819_110531_arch_comparison_definition_exitcode"
+created_at: "2026-08-19T11:05:31"
+source: "RDRA 差分 20260819_104301_slot_config_comparison_def_exitcode に基づく比較定義コンテキストの追加とrelay-gateエラーの退避終了コード・終了コード透過の反映"
+trigger_event: "rdra:20260819_104301_slot_config_comparison_def_exitcode, nfr:20260817_144844_initial_nfr"
 
 technology_context:
   languages:
@@ -64,21 +64,26 @@ domain_architecture:
       name: "実行管理コンテキスト"
       ubiquitous_language:
         - term: "run"
-          definition: "facadeが起動する1回のslot実行の単位。run_idで一意に識別され、parent_run_idでリラン系譜を追跡する"
+          definition: "facadeが起動する1回のslot実行の単位。run_idで一意に識別され、parent_run_idでリラン系譜を追跡する。再実行は新しいrun_idの新規runとして作成しparent_run_idで元runに関連付け、既存runのレコード・履歴は変更しない"
         - term: "slot"
           definition: "blue実装またはgreen実装のうち、facadeが起動する実装系統（slot種別: blue/green）"
         - term: "role"
           definition: "slot runnerが担う実行役割（foreground: ジョブスケジューラへの応答対象、background: 非同期実行、rapid-crosscheck: 速報比較専用）"
         - term: "実行設定"
-          definition: "execution-spec.jsonに起動時解決済みで一度だけ確定・保存される、ホスト・実行ユーザー・スクリプト・作業ディレクトリ・引数等の集合。リラン時の復元基準となる"
+          definition: "execution-spec.jsonに起動時解決済みで一度だけ確定・保存される実行設定。run共通部（JOB_ID・追加引数・マップ版・hang_detect_limit_minutes等）とslot別実行設定に分離して保持し、リラン時の復元基準となる"
+        - term: "slot別実行設定"
+          definition: "blue/green各slotに対して起動時に一度だけ確定される実行設定（ホスト・実行ユーザー・スクリプト・作業ディレクトリ・固定引数・実装版・認証情報参照名）。slotごとにhost・impl_version等が異なる並行稼働を表現する"
+        - term: "attempt（起動試行）"
+          definition: "slotのroleに対する1回の起動試行。attempt_idで一意に識別し、attempt_noを同一（run_id, slot, role）内の連番として管理する。実行状態STARTING/RUNNING/SUCCEEDED/FAILED/UNKNOWN/ABORTEDを遷移し、timeout後は推測でFAILEDを確定せずUNKNOWNとする"
       related_subdomain_id: "SD-001"
       owned_entity_ids:
         - "E-001"
         - "E-002"
+        - "E-007"
       owned_buc_ids:
         - "並行稼働実行フロー"
       team_ownership: null
-      reason: "execution-spec.jsonとRunner実行結果という2エンティティに閉じた独立の状態モデル（background slot実行状態）を持ち、他コンテキストからはrun_idで相関参照されるのみで属性を共有しない言語境界がある"
+      reason: "execution-spec.json（run共通）・slot別実行設定・Runner実行結果（起動試行）の3エンティティに閉じた独立の状態モデル（background slot実行状態）を持ち、他コンテキストからはrun_idで相関参照されるのみで属性を共有しない言語境界がある"
       source_model: "情報: execution-spec.json, Runner実行結果（コンテキスト列=実行管理）, 状態: background slot実行状態"
       confidence: "medium"
     - id: "BC-002"
@@ -130,6 +135,23 @@ domain_architecture:
       reason: "ハング検知記録は独自の異常検知種別バリエーションを持ち、実行管理・速報/確報クロスチェックの結果を横断的に参照して異常を判定・通知する独立した関心事であるため分離"
       source_model: "情報: ハング検知記録（コンテキスト列=異常監視管理）, 条件: hang_detect_limit_minutes"
       confidence: "medium"
+    - id: "BC-005"
+      name: "クロスチェック定義管理コンテキスト"
+      ubiquitous_language:
+        - term: "比較定義"
+          definition: "JOB_IDごとに、速報クロスチェックと確報クロスチェックの双方が実行時に参照する比較対象（テーブル・ファイル）と比較実装識別子を保持する定義。同一JOB_IDに複数世代を持てるよう有効期間を保持し、実行時点に該当する定義を1件だけ適用する"
+        - term: "比較実装識別子"
+          definition: "比較を実行する比較ツール実装を特定する識別子。比較定義の世代ごとに固定し、実行時に比較対象と組で解決する"
+        - term: "有効期間"
+          definition: "比較定義の世代が適用される期間。実行時点が有効期間に含まれる定義を1件選択し、過去世代の定義は変更せず保持する"
+      related_subdomain_id: "SD-002"
+      owned_entity_ids:
+        - "E-008"
+      owned_buc_ids: []
+      team_ownership: null
+      reason: "RDRA 情報.tsv がコンテキスト「クロスチェック定義管理」として比較定義を独立配置しており、速報比較依頼・確報比較依頼という実行トランザクションとはライフサイクル（世代管理・有効期間）も変更契機も異なるマスタ定義であるため、両クロスチェックコンテキストの上流として分離する。BUC を持たない参照専用コンテキストであるため owned_buc_ids は空とする"
+      source_model: "情報: 比較定義（コンテキスト列=クロスチェック定義管理）, BUC: 速報クロスチェックフロー「速報クロスチェックを実行し差分を検知する」, 確報クロスチェックフロー「全テーブル・全ファイルを対象に確報クロスチェックを実行する」"
+      confidence: "medium"
   context_map:
     - id: "CM-001"
       from_bc_id: "BC-001"
@@ -171,23 +193,48 @@ domain_architecture:
       reason: "情報.tsvでハング検知記録の関連情報に速報比較結果が明記されている。速報クロスチェックが上流の供給者、異常監視が下流の顧客"
       source_model: "情報: ハング検知記録の関連情報=速報比較結果"
       confidence: "medium"
+    - id: "CM-005"
+      from_bc_id: "BC-005"
+      to_bc_id: "BC-002"
+      pattern: "ohs"
+      direction: "upstream"
+      translator_description: "BC-005（クロスチェック定義管理）はJOB_IDと実行時点で解決した比較定義（比較対象テーブル・比較対象ファイル・比較実装識別子）を公開言語として提供し、BC-002（速報クロスチェック）が比較実行時に参照する"
+      integration_events: []
+      reason: "情報.tsv で比較定義の関連情報に速報比較依頼が明記されており、速報クロスチェックが比較定義を消費する下流となる"
+      source_model: "情報: 比較定義（関連情報=速報比較依頼、確報比較依頼）"
+      confidence: "medium"
+    - id: "CM-006"
+      from_bc_id: "BC-005"
+      to_bc_id: "BC-003"
+      pattern: "ohs"
+      direction: "upstream"
+      translator_description: "BC-005が公開する比較定義（JOB_ID単位の比較対象・比較実装識別子）をBC-003（確報クロスチェック）が日次全量比較の対象決定に参照する"
+      integration_events: []
+      reason: "情報.tsv で比較定義の関連情報に確報比較依頼が明記されており、確報クロスチェックも同じ比較定義を消費する"
+      source_model: "情報: 比較定義（関連情報=速報比較依頼、確報比較依頼）"
+      confidence: "medium"
   aggregate_hypotheses:
     - id: "AG-001"
       bounded_context_id: "BC-001"
       root_entity_id: "E-001"
-      member_entity_ids: []
+      member_entity_ids:
+        - "E-007"
       invariants:
         - "BLUE_MODEとGREEN_MODEを同時にforegroundにする組み合わせは許可しない"
         - "認証情報は参照名のみを保存し実値は保存しない"
+        - "slot別実行設定（host/exec_user/script/work_dir/固定引数/impl_version/認証情報参照名）はrun起動時にslotごとに一度だけ確定し、以後変更しない"
+        - "再実行は新しいrun_idの新規runとして作成しparent_run_idで元runに関連付ける。既存runのレコード・履歴は変更しない"
       note: "仮説。最終確定は dist-spec または ddd-tactical-implementation で行う"
-      source_model: "情報: execution-spec.json, 条件: feature flag設定（BLUE_MODE/GREEN_MODE/RAPID_CROSSCHECK_MODE）"
+      source_model: "情報: execution-spec.json, 条件: feature flag設定（BLUE_MODE/GREEN_MODE/RAPID_CROSSCHECK_MODE）, 状態: background slot実行状態（再実行遷移）"
       confidence: "low"
     - id: "AG-002"
       bounded_context_id: "BC-001"
       root_entity_id: "E-002"
       member_entity_ids: []
       invariants:
-        - "exitcode.txtの有無と終了コードの値から実行状態（RUNNING/SUCCEEDED/FAILED）を判定する"
+        - "起動試行は（run_id, slot種別, role区分, attempt_id）で一意に識別し、attempt_noは同一（run_id, slot種別, role区分）内の連番とする"
+        - "実行状態はSTARTING→RUNNING→SUCCEEDED/FAILEDを基本遷移とし、exitcode.txtの有無と終了コードの値からSUCCEEDED/FAILEDを判定する"
+        - "timeoutや結果取得不能の場合はUNKNOWNとし、推測でFAILEDを確定しない。UNKNOWNからの確定は実結果の回収または対話確認による回復処理でのみ行う"
         - "ABORTEDへの遷移は対話確認による明示的操作でのみ発生する（自動遷移は不可）"
       note: "仮説。最終確定は dist-spec または ddd-tactical-implementation で行う"
       source_model: "情報: Runner実行結果, 状態: background slot実行状態"
@@ -221,16 +268,30 @@ domain_architecture:
       note: "仮説。最終確定は dist-spec または ddd-tactical-implementation で行う"
       source_model: "情報: ハング検知記録, 条件: hang_detect_limit_minutes"
       confidence: "low"
+    - id: "AG-006"
+      bounded_context_id: "BC-005"
+      root_entity_id: "E-008"
+      member_entity_ids: []
+      invariants:
+        - "同一JOB_IDについて、実行時点が有効期間に含まれる比較定義は高々1件とする（有効期間は重複させない）"
+        - "比較定義の世代は追記で管理し、既存世代の比較対象・比較実装識別子は変更しない"
+        - "速報クロスチェックと確報クロスチェックは同一JOB_IDに対して同一世代の比較定義を参照する"
+      note: "仮説。最終確定は dist-spec または ddd-tactical-implementation で行う"
+      source_model: "情報: 比較定義（JOB_ID、比較対象テーブル、比較対象ファイル、比較実装識別子、有効期間）"
+      confidence: "low"
   diagram_mermaid: |
     graph LR
       BC1["実行管理コンテキスト"]
       BC2["速報クロスチェックコンテキスト"]
       BC3["確報クロスチェックコンテキスト"]
       BC4["異常監視コンテキスト"]
+      BC5["クロスチェック定義管理コンテキスト"]
       BC1 -->|OHS+PL| BC2
       BC1 -->|OHS+PL| BC3
       BC1 -->|OHS+PL| BC4
       BC2 -->|Customer-Supplier| BC4
+      BC5 -->|OHS+PL| BC2
+      BC5 -->|OHS+PL| BC3
 system_architecture:
   tiers:
     - id: "tier-facade"
@@ -247,10 +308,10 @@ system_architecture:
           source_model: "システム概要: 「ジョブスケジューラのジョブ定義を変更せず」, NFR D.3.1.1"
           confidence: "high"
         - id: "SP-002"
-          name: "foreground結果限定応答"
-          description: "ジョブスケジューラへはforeground roleの標準出力・標準エラー・終了コードのみを応答し、background/rapid-crosscheckの実行状況は応答に含めない"
-          reason: "既存ジョブスケジューラの契約（stdout/stderr/exitcode）を変えずに済ませるため"
-          source_model: "BUC: 並行稼働実行フロー「foreground実行結果をジョブスケジューラへ応答する」"
+          name: "foreground結果限定応答・終了コード透過"
+          description: "ジョブスケジューラへはforeground roleの標準出力・標準エラー・終了コードのみを応答し、background/rapid-crosscheckの実行状況は応答に含めない。foregroundのexitcode.txtの値は0を含む全値をそのまま透過し、relay-gate側で丸めたり再割り当てしたりしない"
+          reason: "既存ジョブスケジューラの契約（stdout/stderr/exitcode）を変えずに済ませるため。業務ジョブの終了コード分岐が既存ジョブ直接実行時と互換であることを保つ"
+          source_model: "BUC: 並行稼働実行フロー「foreground roleの標準出力・標準エラー・終了コードを応答する」, 条件: relay-gateエラーの退避終了コード"
           confidence: "high"
       rules:
         - id: "SR-001"
@@ -264,6 +325,12 @@ system_architecture:
           description: "facadeは単一OS（Linux）上でのシェルスクリプト実行のみをサポートする。Web UIを持たないためブラウザ対応・WAF・Webアプリケーション対策は対象外とする"
           reason: "デプロイ先がエアギャップ環境のオンプレミスLinuxサーバに限定され、Web UIを持たないCLI/バッチ運用が中心であるため"
           source_model: "NFR F.1.1.1, NFR F.1.1.2, NFR E.10.1.1, プロジェクト背景: エアギャップ環境のオンプレミスLinuxサーバ, Web UIを持たないCLI/バッチ運用"
+          confidence: "high"
+        - id: "SR-006"
+          name: "relay-gateエラーの退避終了コード分離"
+          description: "relay-gate自身のエラーは業務ジョブの終了コードと区別するため退避終了コードで応答する。実行結果未確定・取得不能・中止済み（UNKNOWN/ABORTEDを含む）は125、relay-gateのバリデーションエラーは124とし、bashが自動生成する126（実行不可）・127（コマンド未検出）とは衝突させない。UNKNOWNを推測でFAILED相当の業務終了コードへ変換しない。relay-gateエラー時の標準エラーには、取得可能な場合のforeground stderr.logの内容とrelay-gate自身のエラー内容（原因と次アクション）を併記して応答する"
+          reason: "終了コードを透過する前提では、relay-gate自身の異常と業務ジョブの非0終了が同じ値で区別できなくなるため、業務ジョブが通常使用しない値を予約して分離する必要がある。UNKNOWNの推測確定を禁じる実行状態方針（AG-002）とも整合させる"
+          source_model: "条件: relay-gateエラーの退避終了コード, BUC: 並行稼働実行フロー「foreground roleの標準出力・標準エラー・終了コードを応答する」, 情報: Runner実行結果（実行状態 UNKNOWN/ABORTED）"
           confidence: "high"
     - id: "tier-worker"
       name: "バックエンドワーカーティア"
@@ -393,16 +460,16 @@ system_architecture:
       confidence: "medium"
     - id: "CTP-005"
       name: "監査ログ・操作ログ"
-      description: "対話確認を経た中止操作（ABORTEDへの遷移）・リラン操作は、操作者・操作日時・対象run_idを含む監査ログとして記録し改ざん検知を行う"
-      reason: "run_id/parent_run_idによる実行系譜の追跡、および対話確認を経たABORTED遷移などの操作記録の明確な要求がある"
-      source_model: "BUC: blue中止フロー, green中止フロー, 速報比較中止フロー, 確報比較中止フロー「対話確認のうえ...ABORTEDへ遷移させる」, NFR E.7.1.1"
-      confidence: "high"
+      description: "slot起動の操作受付、slotごとの起動試行、成功、失敗、timeout、最終状態、および対話確認を経た中止・リラン操作を、RDBのappend-only監査ログへ同一schemaで追記する。event_id、event_name、schema_version、run_id、parent_run_id、slot、attempt_id、occurred_at、actor、operation、outcome、final_status、error_code、previous_hash、event_hashを必須または事象に応じた条件付きフィールドとし、run_id/parent_run_idで実行系譜を一元照会できるようにする。認証情報、起動引数の実値、stdout/stderr本文は記録しない。保持期間は6ヶ月とし、ハッシュチェーンを定期検証して欠損・改ざんを検知する"
+      reason: "slot起動を監査対象へ追加するユーザー指定と、操作ログ・改ざん検知、6ヶ月保持、run_id/parent_run_idによる実行系譜追跡を一つの永続化契約で満たすため"
+      source_model: "BUC: feature flag設定に基づきslotを選択して起動する, blue中止フロー, green中止フロー, 速報比較中止フロー, 確報比較中止フロー, システム概要: run_id/parent_run_idによる実行系譜の追跡, NFR E.7.1.1, NFR C.6.1.1"
+      confidence: "user"
     - id: "CTP-006"
       name: "冪等性方針"
-      description: "background側リランは元のexecution-spec.jsonの実行設定を保ったまま再実行する。RDBのlease/claim機構とrun_id/parent_run_idの相関により、同一対象への重複起動を検知・防止する"
-      reason: "background実行・速報/確報比較依頼のリランが選択的に行われるため、重複実行防止の方針が必要"
-      source_model: "BUC: background側リランフロー「元のexecution-spec.jsonの実行設定を保ったまま再実行する」"
-      confidence: "medium"
+      description: "background側リランおよび比較依頼の再実行は、元のexecution-spec.json（run共通実行設定+slot別実行設定）を保ったまま、新しいrun_idを発行しparent_run_idで元runに関連付けた新規runとして実行する。既存runのレコード・状態・履歴は変更しない。RDBのlease/claim機構とrun_id/parent_run_idの相関により、同一対象への重複起動を検知・防止する"
+      reason: "ユーザー指定: 再実行は新run_id発行+parent_run_id関連付け・既存履歴不変とする再実行identity（CR-6078c4ed-003）に、RDRA状態遷移（新規作成遷移）と整合してアーキテクチャ方針を一意化するため"
+      source_model: "BUC: background側リランフロー「元のexecution-spec.jsonの実行設定を保ったまま再実行する」, 状態: background slot実行状態, 速報比較依頼状態（再実行の新規作成遷移）"
+      confidence: "user"
     - id: "CTP-007"
       name: "i18n方針"
       description: "日本語のみ対応とする。i18n対応（テキスト外部化・多言語リソース）は行わない"
@@ -488,6 +555,12 @@ system_architecture:
       reason: "MCL product-observability のアラート定義に基づき、全ティア共通のアラート重大度・エスカレーション方針を横断ルールとして明示する"
       source_model: "infra: docs/infra/latest/docs/mcl/product/output/product-observability.yaml (alerting.rules)"
       confidence: "medium"
+    - id: "CTR-008"
+      name: "slot起動監査ログの失敗時契約"
+      description: "外部slot起動前に操作受付・起動試行の監査イベントをRDBへ追記できない場合は起動を中止する。外部slot起動後に成功・失敗・timeout・最終状態の監査イベント追記が失敗した場合は、元の起動結果と未記録状態を失わず再試行対象として永続化し、run_id・slot・attempt_idによる照合で重複なく追記する。監査ログはUPDATE/DELETEせず、訂正も新しいイベントとして追記する。CLIのstdout/stderr/exitcode契約は変更しない"
+      reason: "監査証跡の欠落を理由に未記録の外部起動を許さず、外部作用発生後の一時的なRDB障害でも起動結果を失わず整合を回復するため"
+      source_model: "BUC: feature flag設定に基づきslotを選択して起動する, 情報: Runner実行結果, NFR E.7.1.1, NFR C.6.1.1"
+      confidence: "user"
   diagram_mermaid: |
     graph TD
       SCHED[外部システム: ジョブスケジューラ] -->|JOB_ID/追加引数| FACADE[facade実行ティア]
@@ -532,15 +605,15 @@ app_architecture:
           rules: []
         - id: "L-facade-domain"
           name: "ドメイン層"
-          responsibility: "実行設定（execution-spec.json）・実行状態（Runner実行結果）に関するビジネスルール。BLUE_MODE/GREEN_MODE排他制約、exitcode.txtの有無・値からの実行状態判定、ABORTEDへの明示的遷移制御"
+          responsibility: "実行設定（execution-spec.json・slot別実行設定）・起動試行状態（Runner実行結果）に関するビジネスルール。BLUE_MODE/GREEN_MODE排他制約、exitcode.txtの有無・値からの実行状態判定、timeout後のUNKNOWN扱い、ABORTEDへの明示的遷移制御"
           allowed_dependencies: []
           policies:
             - id: "LP-003"
               name: "状態遷移の整合性保証"
-              description: "background slot実行状態（RUNNING/SUCCEEDED/FAILED/ABORTED）の遷移をドメインモデル内で一貫して検証・保証する"
-              reason: "状態.tsvに複数の遷移パス（RUNNING→SUCCEEDED/FAILED/ABORTED、SUCCEEDED/FAILED/ABORTED→RUNNING）が存在するため"
-              source_model: "状態: background slot実行状態"
-              confidence: "high"
+              description: "起動試行の実行状態（STARTING/RUNNING/SUCCEEDED/FAILED/UNKNOWN/ABORTED）の遷移をドメインモデル内で一貫して検証・保証する。timeoutや結果取得不能時はUNKNOWNとし、推測でFAILEDを確定しない。UNKNOWNからの確定は回復処理（実結果の回収または対話確認）でのみ行う"
+              reason: "ユーザー指定: 起動試行identityと結果不明状態の正式定義（CR-6078c4ed-005）により、runner_resultsの識別規則と状態遷移を実装者が推測なしに一意に実装できるようにするため"
+              source_model: "状態: background slot実行状態, 情報: Runner実行結果"
+              confidence: "user"
             - id: "LP-004"
               name: "ログ出力禁止"
               description: "domain層は直接ログ出力を行わない。ドメインイベントの発行または例外のスローで状態変化を通知する"
@@ -550,7 +623,7 @@ app_architecture:
           rules: []
         - id: "L-facade-repository"
           name: "リポジトリ層"
-          responsibility: "domainのデータアクセス方法。execution-spec.json（AG-002）・Runner実行結果（AG-001）のaggregate rootと1:1で定義し、gateway/adapterを利用して永続化・取得する"
+          responsibility: "domainのデータアクセス方法。execution-spec.json（AG-001: slot別実行設定を含む）・Runner実行結果（AG-002）のaggregate rootと1:1で定義し、gateway/adapterを利用して永続化・取得する"
           allowed_dependencies:
             - "L-facade-domain"
             - "L-facade-gateway"
@@ -570,13 +643,13 @@ app_architecture:
               confidence: "default"
         - id: "L-facade-gateway"
           name: "ゲートウェイ層"
-          responsibility: "Driven Sideの入出力。RDBへのadapter（execution-spec.json/Runner実行結果テーブルと1:1）と、blue/green実装をSSH経由で起動するclient（Runner Result Contractへの変換を担う）"
+          responsibility: "Driven Sideの入出力。RDBへのadapter（execution-spec.json/slot別実行設定/Runner実行結果テーブルと1:1）と、blue/green実装をSSH経由で起動するclient（Runner Result Contractへの変換を担う）"
           allowed_dependencies: []
           policies: []
           rules:
             - id: "LR-003"
               name: "冪等性の保証"
-              description: "blue/green実装へのslot起動呼び出しは冪等性を保証する。run_idの一意性により重複起動を防止する"
+              description: "blue/green実装へのslot起動呼び出しは冪等性を保証する。run_id・slot・attempt_idの一意性により重複起動を防止する"
               reason: "外部システム（blue実装・green実装）への連携があるため"
               source_model: "外部システム: blue実装, green実装"
               confidence: "high"
@@ -751,7 +824,7 @@ data_architecture:
           primary_key: true
         - name: "parent_run_id"
           type: "string"
-          description: "リラン元のrun_id（新規実行時はnull）"
+          description: "リラン元のrun_id（新規実行時はnull）。再実行は新しいrun_idの新規runとして作成され、元runのレコード・履歴は変更しない"
           nullable: true
           primary_key: false
         - name: "job_id"
@@ -759,34 +832,9 @@ data_architecture:
           description: "ジョブスケジューラから渡されるジョブ識別子"
           nullable: false
           primary_key: false
-        - name: "host"
-          type: "string"
-          description: "起動時に解決済みの実行ホスト"
-          nullable: false
-          primary_key: false
-        - name: "exec_user"
-          type: "string"
-          description: "起動時に解決済みの実行ユーザー"
-          nullable: false
-          primary_key: false
-        - name: "script_path"
-          type: "string"
-          description: "起動時に解決済みのスクリプトパス"
-          nullable: false
-          primary_key: false
-        - name: "work_dir"
-          type: "string"
-          description: "起動時に解決済みの作業ディレクトリ"
-          nullable: false
-          primary_key: false
-        - name: "fixed_args"
-          type: "text"
-          description: "起動時に解決済みの固定引数"
-          nullable: true
-          primary_key: false
         - name: "additional_args"
           type: "text"
-          description: "起動時に解決済みの追加引数"
+          description: "起動時に解決済みの追加引数（ジョブスケジューラから渡されるrun共通の引数）"
           nullable: true
           primary_key: false
         - name: "job_map_version"
@@ -794,25 +842,18 @@ data_architecture:
           description: "実行先解決に用いたジョブマップのバージョン"
           nullable: false
           primary_key: false
-        - name: "impl_version"
-          type: "string"
-          description: "起動対象の実装版（blue/green）"
-          nullable: false
-          primary_key: false
         - name: "hang_detect_limit_minutes"
           type: "integer"
           description: "background roleごとの未完了許容時間しきい値（分）"
           nullable: false
           primary_key: false
-        - name: "credential_ref"
-          type: "string"
-          description: "認証情報の参照名（実値は保存しない）"
-          nullable: true
-          primary_key: false
       relationships:
+        - target_entity: "E-007"
+          type: "1:N"
+          description: "1つのrun共通実行設定に対し、blue/green各slotのslot別実行設定が対応する"
         - target_entity: "E-002"
           type: "1:N"
-          description: "1つの実行設定に対し、foreground/background/rapid-crosscheck複数roleのRunner実行結果が対応する"
+          description: "1つの実行設定に対し、slot・role・起動試行ごとのRunner実行結果が対応する"
         - target_entity: "E-003"
           type: "1:N"
           description: "1つの実行設定に対し速報比較依頼が対応する（run_id相関）"
@@ -822,6 +863,63 @@ data_architecture:
         - target_entity: "E-006"
           type: "1:N"
           description: "1つの実行設定に対し複数のハング検知記録が対応しうる（run_id相関）"
+    - id: "E-007"
+      name: "slot実行設定"
+      source_info: "情報: slot別実行設定"
+      model_type: "event"
+      attributes:
+        - name: "run_id"
+          type: "string"
+          description: "対応するrun共通実行設定のrun_id"
+          nullable: false
+          primary_key: true
+        - name: "slot_type"
+          type: "string"
+          description: "slot種別（blue/green）"
+          nullable: false
+          primary_key: true
+        - name: "host"
+          type: "string"
+          description: "起動時に解決済みの実行ホスト（slotごとに異なりうる）"
+          nullable: false
+          primary_key: false
+        - name: "exec_user"
+          type: "string"
+          description: "起動時に解決済みの実行ユーザー（slotごとに異なりうる）"
+          nullable: false
+          primary_key: false
+        - name: "script_path"
+          type: "string"
+          description: "起動時に解決済みのスクリプトパス（slotごとに異なりうる）"
+          nullable: false
+          primary_key: false
+        - name: "work_dir"
+          type: "string"
+          description: "起動時に解決済みの作業ディレクトリ（slotごとに異なりうる）"
+          nullable: false
+          primary_key: false
+        - name: "fixed_args"
+          type: "text"
+          description: "起動時に解決済みの固定引数（slotごとに異なりうる）"
+          nullable: true
+          primary_key: false
+        - name: "impl_version"
+          type: "string"
+          description: "当該slotの起動対象実装版"
+          nullable: false
+          primary_key: false
+        - name: "credential_ref"
+          type: "string"
+          description: "認証情報の参照名（実値は保存しない）"
+          nullable: true
+          primary_key: false
+      relationships:
+        - target_entity: "E-001"
+          type: "N:1"
+          description: "run共通実行設定に紐づくslot別実行設定"
+        - target_entity: "E-002"
+          type: "1:N"
+          description: "1つのslot別実行設定に対し、role・起動試行ごとのRunner実行結果が対応する"
     - id: "E-002"
       name: "Runner実行結果"
       source_info: "情報: Runner実行結果（started-at.txt/stdout.log/stderr.log/exitcode.txt）"
@@ -836,16 +934,31 @@ data_architecture:
           type: "string"
           description: "slot種別（blue/green）"
           nullable: false
-          primary_key: false
+          primary_key: true
         - name: "role_type"
           type: "string"
           description: "role区分（foreground/background/rapid-crosscheck）"
           nullable: false
           primary_key: true
+        - name: "attempt_id"
+          type: "string"
+          description: "起動試行の一意識別子。同一runで同一slot・roleを複数回起動しても試行を識別できる"
+          nullable: false
+          primary_key: true
+        - name: "attempt_no"
+          type: "integer"
+          description: "同一（run_id, slot_type, role_type）内の起動試行連番"
+          nullable: false
+          primary_key: false
+        - name: "accepted_at"
+          type: "datetime"
+          description: "起動受付時刻（STARTING遷移時点のイベント発生時刻）"
+          nullable: false
+          primary_key: false
         - name: "started_at"
           type: "datetime"
-          description: "開始時刻（started-at.txt由来のイベント発生時刻）"
-          nullable: false
+          description: "開始時刻（started-at.txt由来。プロセス起動確認前はnull）"
+          nullable: true
           primary_key: false
         - name: "stdout_path"
           type: "string"
@@ -864,13 +977,16 @@ data_architecture:
           primary_key: false
         - name: "status"
           type: "string"
-          description: "実行状態（RUNNING/SUCCEEDED/FAILED/ABORTED）。スナップショットとして保持するキャッシュ的ステータス"
+          description: "実行状態（STARTING/RUNNING/SUCCEEDED/FAILED/UNKNOWN/ABORTED）。timeoutや結果取得不能時はUNKNOWNとし推測でFAILEDを確定しない。スナップショットとして保持するキャッシュ的ステータス"
           nullable: false
           primary_key: false
       relationships:
         - target_entity: "E-001"
           type: "N:1"
-          description: "実行設定に紐づく実行結果"
+          description: "run共通実行設定に紐づく起動試行の実行結果"
+        - target_entity: "E-007"
+          type: "N:1"
+          description: "slot別実行設定に紐づく起動試行の実行結果"
     - id: "E-003"
       name: "速報比較依頼"
       source_info: "情報: 速報比較依頼"
@@ -883,7 +999,7 @@ data_architecture:
           primary_key: true
         - name: "job_id"
           type: "string"
-          description: "ジョブ識別子"
+          description: "ジョブ識別子。実行時点に有効な比較定義（E-008）の解決キーとして用いる"
           nullable: false
           primary_key: false
         - name: "requested_at"
@@ -916,6 +1032,9 @@ data_architecture:
         - target_entity: "E-004"
           type: "1:1"
           description: "1件の速報比較依頼に対し1件の速報比較結果が対応する"
+        - target_entity: "E-008"
+          type: "N:1"
+          description: "JOB_IDと実行時点から解決した比較定義（1世代）を参照して比較対象・比較実装を決定する"
     - id: "E-004"
       name: "速報比較結果"
       source_info: "情報: 速報比較結果"
@@ -982,18 +1101,21 @@ data_architecture:
           primary_key: false
         - name: "target_tables"
           type: "text"
-          description: "対象テーブル一覧"
+          description: "対象テーブル一覧（比較定義 E-008 から解決した比較対象テーブルを依頼時点で確定して保持する）"
           nullable: false
           primary_key: false
         - name: "target_files"
           type: "text"
-          description: "対象ファイル一覧"
+          description: "対象ファイル一覧（比較定義 E-008 から解決した比較対象ファイルを依頼時点で確定して保持する）"
           nullable: false
           primary_key: false
       relationships:
         - target_entity: "E-001"
           type: "N:1"
           description: "実行設定に紐づく確報比較依頼"
+        - target_entity: "E-008"
+          type: "N:1"
+          description: "JOB_IDと実行時点から解決した比較定義（1世代）を参照して全量比較の対象・比較実装を決定する"
     - id: "E-006"
       name: "ハング検知記録"
       source_info: "情報: ハング検知記録"
@@ -1044,6 +1166,48 @@ data_architecture:
         - target_entity: "E-004"
           type: "N:1"
           description: "速報比較結果（速報クロスチェック異常）を根拠とする検知記録"
+    - id: "E-008"
+      name: "比較定義"
+      source_info: "情報: 比較定義"
+      model_type: "resource_scd2"
+      attributes:
+        - name: "job_id"
+          type: "string"
+          description: "ジョブ識別子。比較定義の適用単位"
+          nullable: false
+          primary_key: true
+        - name: "valid_from"
+          type: "datetime"
+          description: "有効期間の開始時点。同一job_idの世代を識別する"
+          nullable: false
+          primary_key: true
+        - name: "valid_to"
+          type: "datetime"
+          description: "有効期間の終了時点（現行世代はnull）"
+          nullable: true
+          primary_key: false
+        - name: "target_tables"
+          type: "text"
+          description: "比較対象テーブル一覧"
+          nullable: false
+          primary_key: false
+        - name: "target_files"
+          type: "text"
+          description: "比較対象ファイル一覧"
+          nullable: false
+          primary_key: false
+        - name: "comparator_id"
+          type: "string"
+          description: "比較実装識別子（比較を実行する比較ツール実装の特定に用いる）"
+          nullable: false
+          primary_key: false
+      relationships:
+        - target_entity: "E-003"
+          type: "1:N"
+          description: "1件の比較定義（世代）を、JOB_IDが一致する複数の速報比較依頼が実行時に参照する"
+        - target_entity: "E-005"
+          type: "1:N"
+          description: "1件の比較定義（世代）を、対象JOB_IDの確報比較依頼が実行時に参照する"
   storage_mapping:
     - entity_id: "E-001"
       storage_type: "rdb"
@@ -1069,9 +1233,19 @@ data_architecture:
       storage_type: "rdb"
       reason: "run_idを起点に実行結果・速報比較結果を横断参照して異常を判定・通知するためRDBに保持する"
       confidence: "high"
+    - entity_id: "E-007"
+      storage_type: "rdb"
+      reason: "run共通実行設定と1:Nで整合参照され、リラン時のslot別設定復元とRunner実行結果のslot識別の基準となるため、トランザクション整合性のあるRDBに保持する"
+      confidence: "high"
+    - entity_id: "E-008"
+      storage_type: "rdb"
+      reason: "速報・確報の両クロスチェックが実行時にJOB_IDと実行時点で一意の世代を解決して参照するマスタ定義であり、有効期間の重複禁止をトランザクション整合性で担保する必要があるためRDBに保持する。project背景でRDBを管理DBとして利用する方針にも合致する"
+      confidence: "high"
   diagram_mermaid: |
     erDiagram
+      EXECUTION_SPEC ||--o{ SLOT_CONFIG : "runにslot別実行設定(blue/green)が対応"
       EXECUTION_SPEC ||--o{ RUNNER_RESULT : "1回のrunに対応"
+      SLOT_CONFIG ||--o{ RUNNER_RESULT : "slot別設定にrole/attempt別の起動試行が対応"
       EXECUTION_SPEC ||--o{ RAPID_CROSSCHECK_REQUEST : "run_idで相関"
       EXECUTION_SPEC ||--o{ FINAL_CROSSCHECK_REQUEST : "run_idで相関"
       EXECUTION_SPEC ||--o{ HANG_DETECTION : "hang_detect_limit_minutesを参照"
@@ -1079,3 +1253,5 @@ data_architecture:
       RAPID_CROSSCHECK_REQUEST ||--|| RAPID_CROSSCHECK_RESULT : "1件の依頼に1件の結果"
       RUNNER_RESULT ||--o{ HANG_DETECTION : "未完了・非0終了を検知"
       RAPID_CROSSCHECK_RESULT ||--o{ HANG_DETECTION : "速報比較異常を検知"
+      COMPARISON_DEFINITION ||--o{ RAPID_CROSSCHECK_REQUEST : "JOB_ID・実行時点で解決した比較定義を適用"
+      COMPARISON_DEFINITION ||--o{ FINAL_CROSSCHECK_REQUEST : "JOB_ID・実行時点で解決した比較定義を適用"

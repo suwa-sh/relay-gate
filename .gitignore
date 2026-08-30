@@ -1,7 +1,2 @@
 tmp/
 node_modules/
-
-# Storybook (docs/design)
-docs/design/**/storybook-app/node_modules/
-docs/design/**/storybook-app/.next/
-docs/design/**/storybook-app/storybook-static/

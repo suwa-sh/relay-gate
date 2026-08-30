@@ -1,0 +1,43 @@
+uc: "ハング疑い・異常を運用者へ通知する"
+business: "実行監視業務"
+buc: "ハング監視フロー"
+
+bounded_context_id: "BC-004"
+aggregate_id: "AG-005"
+
+models:
+  - name: "NotifyAnomaliesCommand"
+    tier: "tier-worker"
+    layer: "usecase"
+    type: "command"
+    rdra_info: "ハング検知記録"
+  - name: "ハング検知記録"
+    tier: "tier-worker"
+    layer: "domain"
+    type: "entity"
+    rdra_info: "ハング検知記録"
+  - name: "ハング検知記録Record"
+    tier: "tier-worker"
+    layer: "gateway"
+    type: "record"
+    rdra_info: "ハング検知記録"
+
+tables:
+  - name: "hang_detections"
+    rdra_info: "ハング検知記録"
+    operations:
+      - type: "SELECT"
+        columns: []
+        where: "notified_at IS NULL"
+      - type: "UPDATE"
+        columns:
+          - name: "notified_at"
+            value: "通知送信処理実行時刻"
+        where: "detection_id = :detection_id"
+    indexes_needed:
+      - columns: ["notified_at"]
+        reason: "通知バッチが未通知レコード（notified_at IS NULL）を高頻度でポーリングするため"
+        access_pattern: "notified_at IS NULLによるフィルタ検索"
+
+kvs: []
+object_storage: []

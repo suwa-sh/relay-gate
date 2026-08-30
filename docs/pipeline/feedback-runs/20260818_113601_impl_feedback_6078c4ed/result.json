@@ -1,0 +1,246 @@
+{
+  "schema_version": "distillery.feedback-result/v1",
+  "feedback_request_id": "20260818_113601_impl_feedback_6078c4ed",
+  "input_sha256": "57396b15a51da62949a111f13ef986398ac2e22674e9f47751100f6b24960746",
+  "status": "completed",
+  "run_id": "feedback-20260818_113601_impl_feedback_6078c4ed-20260818_133343-50906",
+  "attempt": 1,
+  "stages": [
+    {
+      "stage_id": "requirements",
+      "state": "succeeded",
+      "event_ids": [
+        "20260818_134644_feedback_stage_requirements"
+      ],
+      "direct_work_unit_ids": [
+        "CR-6078c4ed-003#1"
+      ],
+      "causal_work_unit_ids": [
+        "CR-6078c4ed-003#1"
+      ]
+    },
+    {
+      "stage_id": "quality_attributes",
+      "state": "succeeded",
+      "event_ids": [
+        "20260818_134940_feedback_stage_quality_attributes"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-6078c4ed-003#1"
+      ]
+    },
+    {
+      "stage_id": "architecture",
+      "state": "succeeded",
+      "event_ids": [
+        "20260818_140623_feedback_stage_architecture"
+      ],
+      "direct_work_unit_ids": [
+        "CR-6078c4ed-005#1"
+      ],
+      "causal_work_unit_ids": [
+        "CR-6078c4ed-003#1",
+        "CR-6078c4ed-005#1"
+      ]
+    },
+    {
+      "stage_id": "infrastructure",
+      "state": "succeeded",
+      "event_ids": [
+        "20260818_142359_feedback_stage_infrastructure"
+      ],
+      "direct_work_unit_ids": [
+        "CR-6078c4ed-004#1",
+        "CR-6078c4ed-006#1"
+      ],
+      "causal_work_unit_ids": [
+        "CR-6078c4ed-003#1",
+        "CR-6078c4ed-004#1",
+        "CR-6078c4ed-005#1",
+        "CR-6078c4ed-006#1"
+      ]
+    },
+    {
+      "stage_id": "design_system",
+      "state": "succeeded",
+      "event_ids": [
+        "20260818_143907_feedback_stage_design_system"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-6078c4ed-003#1",
+        "CR-6078c4ed-004#1",
+        "CR-6078c4ed-005#1",
+        "CR-6078c4ed-006#1"
+      ]
+    },
+    {
+      "stage_id": "spec",
+      "state": "succeeded",
+      "event_ids": [
+        "20260818_161436_feedback_stage_spec"
+      ],
+      "direct_work_unit_ids": [
+        "CR-6078c4ed-007#1"
+      ],
+      "causal_work_unit_ids": [
+        "CR-6078c4ed-003#1",
+        "CR-6078c4ed-004#1",
+        "CR-6078c4ed-005#1",
+        "CR-6078c4ed-006#1",
+        "CR-6078c4ed-007#1"
+      ]
+    },
+    {
+      "stage_id": "spec_stories",
+      "state": "succeeded",
+      "event_ids": [
+        "20260818_162743_feedback_stage_spec_stories"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-6078c4ed-003#1",
+        "CR-6078c4ed-004#1",
+        "CR-6078c4ed-005#1",
+        "CR-6078c4ed-006#1",
+        "CR-6078c4ed-007#1"
+      ]
+    }
+  ],
+  "work_units": [
+    {
+      "work_unit_id": "CR-6078c4ed-003#1",
+      "disposition": "applied",
+      "reason": "At least one required closure stage changed its domain artifacts.",
+      "artifact_refs": [
+        "usdm/events/20260818_133855_rerun_identity_new_run_id/requirements.yaml",
+        "rdra/events/20260818_133855_rerun_identity_new_run_id/event.json",
+        "rdra/events/20260818_133855_rerun_identity_new_run_id/_changes.md",
+        "rdra/events/20260818_133855_rerun_identity_new_run_id/状態.tsv",
+        "arch/events/20260818_135504_arch_slot_config_attempt_identity/arch-design-diff.yaml",
+        "arch/events/20260818_135504_arch_slot_config_attempt_identity/_changes.md",
+        "arch/events/20260818_135504_arch_slot_config_attempt_identity/decisions/arch-decision-005.yaml",
+        "infra/events/20260818_141149_infra_product_design/docs/mcl/product/input/product-input.yaml",
+        "infra/events/20260818_141149_infra_product_design/product-input.yaml",
+        "infra/events/20260818_141149_infra_product_design/docs/mcl/product/output/product-impl-onprem.yaml",
+        "design/events/20260818_143057_design_system/design-event-diff.yaml",
+        "design/events/20260818_143057_design_system/decisions/design-decision-003.yaml",
+        "design/events/20260818_143057_design_system/_changes.md",
+        "design/events/20260818_143057_design_system/_inference.md",
+        "specs/events/20260818_144847_spec_generation/_cross-cutting/datastore/rdb-schema.yaml",
+        "specs/events/20260818_144847_spec_generation/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20260818_144847_spec_generation/実行制御業務/background側リランフロー/execution-spec.jsonの実行設定を保ったまま再実行する/spec.md",
+        "design/events/20260818_162251_spec_stories/design-event-diff.yaml"
+      ]
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-004#1",
+      "disposition": "applied",
+      "reason": "At least one required closure stage changed its domain artifacts.",
+      "artifact_refs": [
+        "infra/events/20260818_141149_infra_product_design/docs/mcl/product/output/product-impl-onprem.yaml",
+        "infra/events/20260818_141149_infra_product_design/docs/mcl/product/output/product-mapping-onprem.yaml",
+        "infra/events/20260818_141149_infra_product_design/docs/cloud-context/decisions/product/product-decision-audit-persistence.yaml",
+        "infra/events/20260818_141149_infra_product_design/docs/cloud-context/conformance/product/product-conformance-onprem.yaml",
+        "specs/events/20260818_144847_spec_generation/_cross-cutting/datastore/rdb-schema.yaml",
+        "specs/events/20260818_144847_spec_generation/_cross-cutting/api/audit-event-contract.yaml",
+        "specs/events/20260818_144847_spec_generation/decisions/spec-decision-005.yaml"
+      ]
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-005#1",
+      "disposition": "applied",
+      "reason": "At least one required closure stage changed its domain artifacts.",
+      "artifact_refs": [
+        "arch/events/20260818_135504_arch_slot_config_attempt_identity/arch-design-diff.yaml",
+        "arch/events/20260818_135504_arch_slot_config_attempt_identity/_changes.md",
+        "arch/events/20260818_135504_arch_slot_config_attempt_identity/decisions/arch-decision-004.yaml",
+        "infra/events/20260818_141149_infra_product_design/docs/mcl/product/output/product-impl-onprem.yaml",
+        "infra/events/20260818_141149_infra_product_design/docs/mcl/product/output/product-workload-model.yaml",
+        "infra/events/20260818_141149_infra_product_design/docs/mcl/product/input/product-input.yaml",
+        "infra/events/20260818_141149_infra_product_design/docs/cloud-context/conformance/product/product-conformance-onprem.yaml",
+        "design/events/20260818_143057_design_system/design-event-diff.yaml",
+        "design/events/20260818_143057_design_system/decisions/design-decision-003.yaml",
+        "design/events/20260818_143057_design_system/_changes.md",
+        "design/events/20260818_143057_design_system/_inference.md",
+        "specs/events/20260818_144847_spec_generation/_cross-cutting/datastore/rdb-schema.yaml",
+        "specs/events/20260818_144847_spec_generation/並行稼働実行業務/並行稼働実行フロー/feature flag設定に基づきslotを選択して起動する/spec.md",
+        "specs/events/20260818_144847_spec_generation/並行稼働実行業務/並行稼働実行フロー/background roleを起動する/spec.md",
+        "design/events/20260818_162251_spec_stories/design-event-diff.yaml"
+      ]
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-006#1",
+      "disposition": "applied",
+      "reason": "At least one required closure stage changed its domain artifacts.",
+      "artifact_refs": [
+        "infra/events/20260818_141149_infra_product_design/docs/cloud-context/decisions/product/product-decision-event-snapshot-persistence.yaml",
+        "infra/events/20260818_141149_infra_product_design/docs/cloud-context/decisions/product/product-decision-storage-approach.yaml",
+        "infra/events/20260818_141149_infra_product_design/docs/mcl/product/output/product-impl-onprem.yaml",
+        "infra/events/20260818_141149_infra_product_design/docs/mcl/product/output/product-mapping-onprem.yaml",
+        "infra/events/20260818_141149_infra_product_design/docs/mcl/product/output/product-workload-model.yaml",
+        "specs/events/20260818_144847_spec_generation/_cross-cutting/datastore/rdb-schema.yaml",
+        "specs/events/20260818_144847_spec_generation/decisions/spec-decision-005.yaml",
+        "specs/events/20260818_144847_spec_generation/並行稼働実行業務/並行稼働実行フロー/background roleを起動する/spec.md"
+      ]
+    },
+    {
+      "work_unit_id": "CR-6078c4ed-007#1",
+      "disposition": "applied",
+      "reason": "At least one required closure stage changed its domain artifacts.",
+      "artifact_refs": [
+        "specs/events/20260818_144847_spec_generation/_cross-cutting/usdm-acceptance-matrix.md",
+        "specs/events/20260818_144847_spec_generation/_cross-cutting/uc-dependencies.md",
+        "specs/events/20260818_144847_spec_generation/_cross-cutting/api/audit-event-contract.yaml",
+        "specs/events/20260818_144847_spec_generation/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20260818_144847_spec_generation/_cross-cutting/datastore/rdb-schema.yaml",
+        "specs/events/20260818_144847_spec_generation/_cross-cutting/rdra-feedback.md",
+        "specs/events/20260818_144847_spec_generation/decisions/spec-decision-005.yaml"
+      ]
+    }
+  ],
+  "requests": [
+    {
+      "request_id": "CR-6078c4ed-003",
+      "disposition": "applied",
+      "reason": "At least one work unit was applied and all work units completed successfully.",
+      "work_unit_ids": [
+        "CR-6078c4ed-003#1"
+      ]
+    },
+    {
+      "request_id": "CR-6078c4ed-004",
+      "disposition": "applied",
+      "reason": "At least one work unit was applied and all work units completed successfully.",
+      "work_unit_ids": [
+        "CR-6078c4ed-004#1"
+      ]
+    },
+    {
+      "request_id": "CR-6078c4ed-005",
+      "disposition": "applied",
+      "reason": "At least one work unit was applied and all work units completed successfully.",
+      "work_unit_ids": [
+        "CR-6078c4ed-005#1"
+      ]
+    },
+    {
+      "request_id": "CR-6078c4ed-006",
+      "disposition": "applied",
+      "reason": "At least one work unit was applied and all work units completed successfully.",
+      "work_unit_ids": [
+        "CR-6078c4ed-006#1"
+      ]
+    },
+    {
+      "request_id": "CR-6078c4ed-007",
+      "disposition": "applied",
+      "reason": "At least one work unit was applied and all work units completed successfully.",
+      "work_unit_ids": [
+        "CR-6078c4ed-007#1"
+      ]
+    }
+  ],
+  "terminal_event_id": "20260818_162905_feedback_run_completed"
+}

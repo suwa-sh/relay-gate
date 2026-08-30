@@ -1,0 +1,29 @@
+{
+  "schema_version": "distillery.feedback-no-domain-change/v1",
+  "type": "feedback_no_domain_change",
+  "event_id": "20260829_205740_feedback_disposition",
+  "created_at": "2026-08-29T11:57:40Z",
+  "stage": "quality_attributes",
+  "domain_event_root": "nfr/events",
+  "reason": "CR-6078c4ed-016#1はUSDM SPEC-009-03の文言をspec.md/rdb-schema.yamlの実装(execution spec の run共通/slot別分離保存、hang_detect_limit_minutes は run共通の1値)に合わせる整合であり、IPA非機能要求グレードのメトリクス値・水準を変更しないため、nfr/latest を更新しない。",
+  "feedback_request": {
+    "feedback_request_id": "20260822_085257_impl_feedback_6078c4ed",
+    "input_sha256": "8129956bff632d9c271356ef56e3256319c7613b030adfd5477fe9f60d748bf5",
+    "request_ids": [
+      "CR-6078c4ed-016"
+    ],
+    "work_unit_ids": [
+      "CR-6078c4ed-016#1"
+    ]
+  },
+  "work_unit_results": [],
+  "reconciliation_results": [
+    {
+      "work_unit_id": "CR-6078c4ed-016#1",
+      "status": "not_impacted",
+      "reason": "nfr-grade.yaml は hang_detect_limit_minutes を C.5系ハング検知の仕組みの根拠(条件)として、execution-spec.json を C.1系バックアップ対象データおよび E系の認証情報参照名保存の前提として参照するのみ。保存先の粒度(run共通 execution_specs / slot別 slot_execution_specs)と hang_detect_limit_minutes の所在(run共通1値)の文言整合は、検知間隔・保持データ範囲・機密取扱いの水準を変えない。",
+      "artifact_refs": []
+    }
+  ],
+  "evidence_refs": []
+}

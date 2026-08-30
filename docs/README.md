@@ -2,19 +2,19 @@
 
 > undefined
 
-**最終更新**: 2026-08-17 18:02:35 spec stories (design)
+**最終更新**: 2026-08-29 21:08:28 spec generation (specs)
 
 ## 成果物一覧
 
 | ドメイン | 最新 | イベント数 |
 |---------|------|-----------:|
-| [USDM（要求分解）](#usdm要求分解) | [usdm/latest/](usdm/latest/) | 1 |
-| [RDRA（要件定義）](#rdra要件定義) | [rdra/latest/](rdra/latest/) | 1 |
-| [NFR（非機能要求）](#nfr非機能要求) | [nfr/latest/](nfr/latest/) | 1 |
-| [Arch（アーキテクチャ）](#archアーキテクチャ) | [arch/latest/](arch/latest/) | 2 |
-| [Infra（インフラ設計）](#infraインフラ設計) | [infra/latest/](infra/latest/) | 1 |
-| [Design（デザイン）](#designデザイン) | [design/latest/](design/latest/) | 2 |
-| [Specs（詳細仕様）](#specs詳細仕様) | [specs/latest/](specs/latest/) | 1 |
+| [USDM（要求分解）](#usdm要求分解) | [usdm/latest/](usdm/latest/) | 4 |
+| [RDRA（要件定義）](#rdra要件定義) | [rdra/latest/](rdra/latest/) | 4 |
+| [NFR（非機能要求）](#nfr非機能要求) | [nfr/latest/](nfr/latest/) | 4 |
+| [Arch（アーキテクチャ）](#archアーキテクチャ) | [arch/latest/](arch/latest/) | 6 |
+| [Infra（インフラ設計）](#infraインフラ設計) | [infra/latest/](infra/latest/) | 5 |
+| [Design（デザイン）](#designデザイン) | - | 0 |
+| [Specs（詳細仕様）](#specs詳細仕様) | [specs/latest/](specs/latest/) | 4 |
 
 ## USDM（要求分解）
 
@@ -26,7 +26,7 @@
 | 項目 | 値 |
 |------|-----|
 | 要求数 | 12 |
-| 仕様数 | 38 |
+| 仕様数 | 42 |
 
 ## RDRA（要件定義）
 
@@ -48,9 +48,9 @@
 |------|-----|
 | アクター | 4 |
 | 外部システム | 3 |
-| 情報 | 6 |
+| 情報 | 8 |
 | 状態モデル | 3 |
-| 条件 | 2 |
+| 条件 | 3 |
 | バリエーション | 7 |
 | 業務 | 4 |
 | BUC | 9 |
@@ -104,12 +104,12 @@ graph TB
 |------|-----|
 | 言語 | Shell Script (POSIX/bash), SQL |
 | サブドメイン | 4 |
-| Bounded Context | 4 |
-| コンテキストマップ関係 | 4 |
+| Bounded Context | 5 |
+| コンテキストマップ関係 | 6 |
 | ティア | 4 |
 | ポリシー | 12 |
-| ルール | 5 |
-| エンティティ | 6 |
+| ルール | 6 |
+| エンティティ | 8 |
 
 ### ドメインアーキテクチャ（コンテキストマップ）
 
@@ -119,10 +119,13 @@ BC1["実行管理コンテキスト"]
 BC2["速報クロスチェックコンテキスト"]
 BC3["確報クロスチェックコンテキスト"]
 BC4["異常監視コンテキスト"]
+BC5["クロスチェック定義管理コンテキスト"]
 BC1 -->|OHS+PL| BC2
 BC1 -->|OHS+PL| BC3
 BC1 -->|OHS+PL| BC4
 BC2 -->|Customer-Supplier| BC4
+BC5 -->|OHS+PL| BC2
+BC5 -->|OHS+PL| BC3
 ```
 
 ### コンテナ図（システム構成）
@@ -178,26 +181,6 @@ R --> G[gateway]
 
 ### 主要な成果物
 
-- [design-event.md](design/latest/design-event.md)
-- [design-event.yaml](design/latest/design-event.yaml)
-- [assets/](design/latest/assets) (SVG 11 ファイル)
-
-### ブランド
-
-| 項目 | 値 |
-|------|-----|
-| 名称 | RelayGate Ops |
-| プライマリカラー | `'#475569'` |
-| セカンダリカラー | `'#D97706'` |
-| トーン | 簡潔・断定的・運用者向け。装飾語を排し、状態と次のアクションを明示する |
-
-### Storybook
-
-```bash
-cd docs/design/latest/storybook-app && npm run storybook
-```
-
-Stories: 24 ファイル
 
 ## Specs（詳細仕様）
 
@@ -289,14 +272,25 @@ Stories: 24 ファイル
 |---|---------|------|----------|
 | 1 | Arch | [サブドメイン分類とBC分割: 並行稼働実行とクロスチェック検証をCoreとする](arch/events/20260817_150512_initial_arch/decisions/arch-decision-001.yaml) | approved |
 | 2 | Arch | [ティア構成: Web UI/IdP/API Gatewayを持たないシェルスクリプト中心の4ティア構成](arch/events/20260817_150512_initial_arch/decisions/arch-decision-002.yaml) | approved |
-| 3 | Infra | [デプロイ先をオンプレミス単一ベンダーに限定](infra/events/20260817_151023_infra_product_design/docs/cloud-context/decisions/product/product-decision-onprem-only.yaml) | accepted |
-| 4 | Infra | [永続化はRDB（PostgreSQL）+ ローカルファイルシステムの組合せとする](infra/events/20260817_151023_infra_product_design/docs/cloud-context/decisions/product/product-decision-storage-approach.yaml) | accepted |
-| 5 | Design | [デザインシステムの適用範囲をCLI出力規約 + 最小トークンに限定する](design/events/20260817_153235_design_system/decisions/design-decision-001.yaml) | approved |
-| 6 | Design | [ブランド・トークン・コンポーネントスタイルの採用（auto_adopt方針）](design/events/20260817_153235_design_system/decisions/design-decision-002.yaml) | approved |
-| 7 | Specs | [API契約表現方式: CLIコマンド契約を正本としopenapi.yaml/asyncapi.yamlを生成しない](specs/events/20260817_155817_spec_generation/decisions/spec-decision-001.yaml) | approved |
-| 8 | Specs | [同期/非同期境界: RDBのlease/claimポーリング+CronJobを非同期実行の唯一の機構とする](specs/events/20260817_155817_spec_generation/decisions/spec-decision-002.yaml) | approved |
-| 9 | Specs | [RDB正規化レベル: 第3正規形を基本とし、event_snapshot型エンティティはhistory+snapshotの非正規化を許容](specs/events/20260817_155817_spec_generation/decisions/spec-decision-003.yaml) | approved |
-| 10 | Specs | [横断関心事の解決方針: 終了コード規約によるエラーハンドリング、監査ログのスコープ限定、対話確認の二段階パターン統一](specs/events/20260817_155817_spec_generation/decisions/spec-decision-004.yaml) | approved |
+| 3 | Arch | [slot起動監査イベントをRDBへappend-onlyで記録する](arch/events/20260818_090120_arch_audit_contract_feedback/decisions/arch-decision-003.yaml) | approved |
+| 4 | Arch | [run共通execution specとslot別実行設定の分離・起動試行identityの導入](arch/events/20260818_135504_arch_slot_config_attempt_identity/decisions/arch-decision-004.yaml) | approved |
+| 5 | Arch | [再実行identity（新run_id + parent_run_id関連付け・既存履歴不変）へのアーキテクチャ整合](arch/events/20260818_135504_arch_slot_config_attempt_identity/decisions/arch-decision-005.yaml) | approved |
+| 6 | Arch | [比較定義を独立したクロスチェック定義管理コンテキストへ配置する](arch/events/20260819_110531_arch_comparison_definition_exitcode/decisions/arch-decision-006.yaml) | approved |
+| 7 | Arch | [foreground 終了コードの透過と relay-gate エラーの退避終了コード分離](arch/events/20260819_110531_arch_comparison_definition_exitcode/decisions/arch-decision-007.yaml) | approved |
+| 8 | Infra | [デプロイ先をオンプレミス単一ベンダーに限定](infra/events/20260817_151023_infra_product_design/docs/cloud-context/decisions/product/product-decision-onprem-only.yaml) | accepted |
+| 9 | Infra | [永続化はRDB（PostgreSQL）+ ローカルファイルシステムの組合せとする](infra/events/20260817_151023_infra_product_design/docs/cloud-context/decisions/product/product-decision-storage-approach.yaml) | accepted |
+| 10 | Infra | [slot起動監査をPostgreSQLの追記専用テーブルへ統合](infra/events/20260818_093020_infra_product_design/docs/cloud-context/decisions/product/product-decision-audit-persistence.yaml) | accepted |
+| 11 | Infra | [Runner実行結果等の状態遷移エンティティはEvent/Snapshot併用方式で永続化する](infra/events/20260818_141149_infra_product_design/docs/cloud-context/decisions/product/product-decision-event-snapshot-persistence.yaml) | accepted |
+| 12 | Specs | [API契約表現方式: CLIコマンド契約を正本としopenapi.yaml/asyncapi.yamlを生成しない](specs/events/20260817_155817_spec_generation/decisions/spec-decision-001.yaml) | approved |
+| 13 | Specs | [同期/非同期境界: RDBのlease/claimポーリング+CronJobを非同期実行の唯一の機構とする](specs/events/20260817_155817_spec_generation/decisions/spec-decision-002.yaml) | approved |
+| 14 | Specs | [RDB正規化レベル: 第3正規形を基本とし、event_snapshot型エンティティはhistory+snapshotの非正規化を許容](specs/events/20260817_155817_spec_generation/decisions/spec-decision-003.yaml) | approved |
+| 15 | Specs | [横断関心事の解決方針: 終了コード規約によるエラーハンドリング、監査ログのスコープ限定、対話確認の二段階パターン統一](specs/events/20260817_155817_spec_generation/decisions/spec-decision-004.yaml) | approved |
+| 16 | Specs | [監査イベントの永続化・冪等化・ハッシュチェーン直列化の仕様確定](specs/events/20260818_144847_spec_generation/decisions/spec-decision-005.yaml) | approved |
+| 17 | Specs | [respond-foregroundの終了コード透過契約とrelay-gate退避コードの分離](specs/events/20260819_114307_spec_generation/decisions/spec-decision-006.yaml) | approved |
+| 18 | Specs | [比較定義のSCD2世代管理と依頼側での適用世代固定](specs/events/20260819_114307_spec_generation/decisions/spec-decision-007.yaml) | approved |
+| 19 | Specs | [slot別ジョブマップ契約とjob_map_versionのslot別保持、認証情報ディレクトリ方式によるcredential_ref解決](specs/events/20260829_210828_spec_generation/decisions/spec-decision-008.yaml) | approved |
+| 20 | Specs | [論理型→PostgreSQL物理型対応表、datetimeのマイクロ秒精度・UTC、引数カラムのJSON配列保存](specs/events/20260829_210828_spec_generation/decisions/spec-decision-009.yaml) | approved |
+| 21 | Specs | [監査event_hashの正規化形式、起動イベント送出失敗の補償記録、起動UCとforeground応答UCの応答時間責務分割](specs/events/20260829_210828_spec_generation/decisions/spec-decision-010.yaml) | approved |
 
 ## イベント履歴
 
@@ -308,9 +302,27 @@ Stories: 24 ファイル
 | 2026-08-17 15:05:12 | Arch（アーキテクチャ） | [20260817_150512_initial_arch](arch/events/20260817_150512_initial_arch) |
 | 2026-08-17 15:10:23 | Infra（インフラ設計） | [20260817_151023_infra_product_design](infra/events/20260817_151023_infra_product_design) |
 | 2026-08-17 15:21:55 | Arch（アーキテクチャ） | [20260817_152155_arch_infra_feedback](arch/events/20260817_152155_arch_infra_feedback) |
-| 2026-08-17 15:32:35 | Design（デザイン） | [20260817_153235_design_system](design/events/20260817_153235_design_system) |
 | 2026-08-17 15:58:17 | Specs（詳細仕様） | [20260817_155817_spec_generation](specs/events/20260817_155817_spec_generation) |
-| 2026-08-17 18:02:35 | Design（デザイン） | [20260817_180235_spec_stories](design/events/20260817_180235_spec_stories) |
+| 2026-08-18 09:01:20 | Arch（アーキテクチャ） | [20260818_090120_arch_audit_contract_feedback](arch/events/20260818_090120_arch_audit_contract_feedback) |
+| 2026-08-18 09:30:20 | Infra（インフラ設計） | [20260818_093020_infra_product_design](infra/events/20260818_093020_infra_product_design) |
+| 2026-08-18 13:38:55 | USDM（要求分解） | [20260818_133855_rerun_identity_new_run_id](usdm/events/20260818_133855_rerun_identity_new_run_id) |
+| 2026-08-18 13:38:55 | RDRA（要件定義） | [20260818_133855_rerun_identity_new_run_id](rdra/events/20260818_133855_rerun_identity_new_run_id) |
+| 2026-08-18 13:48:43 | NFR（非機能要求） | [20260818_134843_feedback_disposition](nfr/events/20260818_134843_feedback_disposition) |
+| 2026-08-18 13:55:04 | Arch（アーキテクチャ） | [20260818_135504_arch_slot_config_attempt_identity](arch/events/20260818_135504_arch_slot_config_attempt_identity) |
+| 2026-08-18 14:11:49 | Infra（インフラ設計） | [20260818_141149_infra_product_design](infra/events/20260818_141149_infra_product_design) |
+| 2026-08-18 14:48:47 | Specs（詳細仕様） | [20260818_144847_spec_generation](specs/events/20260818_144847_spec_generation) |
+| 2026-08-19 10:43:01 | USDM（要求分解） | [20260819_104301_slot_config_comparison_def_exitcode](usdm/events/20260819_104301_slot_config_comparison_def_exitcode) |
+| 2026-08-19 10:43:01 | RDRA（要件定義） | [20260819_104301_slot_config_comparison_def_exitcode](rdra/events/20260819_104301_slot_config_comparison_def_exitcode) |
+| 2026-08-19 10:59:15 | NFR（非機能要求） | [20260819_105915_feedback_disposition](nfr/events/20260819_105915_feedback_disposition) |
+| 2026-08-19 11:05:31 | Arch（アーキテクチャ） | [20260819_110531_arch_comparison_definition_exitcode](arch/events/20260819_110531_arch_comparison_definition_exitcode) |
+| 2026-08-19 11:19:31 | Infra（インフラ設計） | [20260819_111931_infra_product_design](infra/events/20260819_111931_infra_product_design) |
+| 2026-08-19 11:43:07 | Specs（詳細仕様） | [20260819_114307_spec_generation](specs/events/20260819_114307_spec_generation) |
+| 2026-08-29 20:53:05 | USDM（要求分解） | [20260829_205305_spec_009_03_execution_spec_split_wording](usdm/events/20260829_205305_spec_009_03_execution_spec_split_wording) |
+| 2026-08-29 20:53:05 | RDRA（要件定義） | [20260829_205305_spec_009_03_execution_spec_split_wording](rdra/events/20260829_205305_spec_009_03_execution_spec_split_wording) |
+| 2026-08-29 20:57:40 | NFR（非機能要求） | [20260829_205740_feedback_disposition](nfr/events/20260829_205740_feedback_disposition) |
+| 2026-08-29 20:59:03 | Arch（アーキテクチャ） | [20260829_205903_feedback_disposition](arch/events/20260829_205903_feedback_disposition) |
+| 2026-08-29 21:00:31 | Infra（インフラ設計） | [20260829_210031_feedback_disposition](infra/events/20260829_210031_feedback_disposition) |
+| 2026-08-29 21:08:28 | Specs（詳細仕様） | [20260829_210828_spec_generation](specs/events/20260829_210828_spec_generation) |
 
 ---
 

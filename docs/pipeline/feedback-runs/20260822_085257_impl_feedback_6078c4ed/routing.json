@@ -1,0 +1,775 @@
+{
+  "schema_version": "distillery.feedback-routing/v1",
+  "feedback_request_id": "20260822_085257_impl_feedback_6078c4ed",
+  "input_sha256": "8129956bff632d9c271356ef56e3256319c7613b030adfd5477fe9f60d748bf5",
+  "policy": "recommended_auto",
+  "routing_basis": {
+    "ownership_catalog_version": "1.0.0",
+    "ownership_catalog_sha256": "801750c2abe99945a3de9387b82339b2bc96ccb2da564f9923cc0e9b76a2bd39",
+    "routing_policy_version": "1.1.0",
+    "routing_policy_sha256": "3873275bf4adb3d9d7b7c41c22c9463d054a3614df7bbcab7514f0c1e23e166e",
+    "prompt_schema_sha256": "bf7c7f34d7a2fc5976ccd2589a454172a4630e1448c509966b620f88029732c4",
+    "stage_packet_renderer_version": "1",
+    "repository_head": "21599e76eba1e179ea90e7ff4c0e29877ecb5bc5",
+    "latest_domain_event_ids": {
+      "requirements": {
+        "rdra/events": "20260819_104301_slot_config_comparison_def_exitcode",
+        "usdm/events": "20260819_104301_slot_config_comparison_def_exitcode"
+      },
+      "quality_attributes": {
+        "nfr/events": "20260819_105915_feedback_disposition"
+      },
+      "architecture": {
+        "arch/events": "20260819_110531_arch_comparison_definition_exitcode"
+      },
+      "infrastructure": {
+        "infra/events": "20260819_111931_infra_product_design"
+      },
+      "design_system": {
+        "design/events": "20260819_125615_spec_stories"
+      },
+      "spec": {
+        "specs/events": "20260819_114307_spec_generation"
+      },
+      "spec_stories": {
+        "design/events": "20260819_125615_spec_stories"
+      }
+    },
+    "domain_event_root_snapshots": {
+      "rdra/events": {
+        "head_event_id": "20260819_104301_slot_config_comparison_def_exitcode",
+        "head_event_sha256": "324fbb0b9480ab4fc902ccefc06d2cce17f887c58f0128def16622a3840f5181",
+        "event_ids": [
+          "20260817_142258_initial_build",
+          "20260818_133855_rerun_identity_new_run_id",
+          "20260819_104301_slot_config_comparison_def_exitcode"
+        ],
+        "event_set_sha256": "9f505dd49f7cf1bae447a22cf1c946165e76a5fa12b57b4bbe7717935b7c8e37",
+        "latest_tree_sha256": "01a2025221dcb7fbe00e071da2ebf5edabd916c7c1582000d4a000a5aee865de"
+      },
+      "usdm/events": {
+        "head_event_id": "20260819_104301_slot_config_comparison_def_exitcode",
+        "head_event_sha256": "4c4ffbf06155cb43a37a9ce00938dfd63ec1fbf76e8fc5ef6f4b94842c92cb80",
+        "event_ids": [
+          "20260817_142258_initial_build",
+          "20260818_133855_rerun_identity_new_run_id",
+          "20260819_104301_slot_config_comparison_def_exitcode"
+        ],
+        "event_set_sha256": "9f505dd49f7cf1bae447a22cf1c946165e76a5fa12b57b4bbe7717935b7c8e37",
+        "latest_tree_sha256": "a3c294bfeedbfb7549ca2eb512377360f25976a98a21695a7f0af093b0e839e2"
+      },
+      "nfr/events": {
+        "head_event_id": "20260819_105915_feedback_disposition",
+        "head_event_sha256": "781d1f802043ecf93e10a9495e0486abf35fff3d67f6923568b2d4ec3a22ec80",
+        "event_ids": [
+          "20260817_144844_initial_nfr",
+          "20260818_134843_feedback_disposition",
+          "20260819_105915_feedback_disposition"
+        ],
+        "event_set_sha256": "00e3c78110a89e14b45916d124193754a16623f25fefe17b9b4f6de4f940c589",
+        "latest_tree_sha256": "c139e3cc95fa46dd43625f9a04ce03e715b87f1d21e024da92008576b6c2a878"
+      },
+      "arch/events": {
+        "head_event_id": "20260819_110531_arch_comparison_definition_exitcode",
+        "head_event_sha256": "951463223d7b12d3da6cefe2677b1652187c42ecb442d388b736a7d31381f22a",
+        "event_ids": [
+          "20260817_150512_initial_arch",
+          "20260817_152155_arch_infra_feedback",
+          "20260818_090120_arch_audit_contract_feedback",
+          "20260818_135504_arch_slot_config_attempt_identity",
+          "20260819_110531_arch_comparison_definition_exitcode"
+        ],
+        "event_set_sha256": "deee436fb8131243998365c170302eb39a71f44580f7312fd78375352422213e",
+        "latest_tree_sha256": "7aab99982dbab09540fe30dcfe86162611281aee585746fc0eb4a62adb90fd0c"
+      },
+      "infra/events": {
+        "head_event_id": "20260819_111931_infra_product_design",
+        "head_event_sha256": "8e874b29a9d0ab26814b4ace1c5c708133e037d2d87738207427ae4d818359d6",
+        "event_ids": [
+          "20260817_151023_infra_product_design",
+          "20260818_093020_infra_product_design",
+          "20260818_141149_infra_product_design",
+          "20260819_111931_infra_product_design"
+        ],
+        "event_set_sha256": "d9d83a98a20424d2ecfc2049d6cdb17c2a61a3ad01d36913e315a42a80d4bb97",
+        "latest_tree_sha256": "f230866558c09a8f08dbbed664f295078056b91bbf84983984f6511727ff4bbc"
+      },
+      "design/events": {
+        "head_event_id": "20260819_125615_spec_stories",
+        "head_event_sha256": "3158e094b363e53ace1e689a29740f061a617653b90d2cd7d9b921efd85d32b0",
+        "event_ids": [
+          "20260817_153235_design_system",
+          "20260817_180235_spec_stories",
+          "20260818_094841_design_system_feedback_disposition",
+          "20260818_143057_design_system",
+          "20260818_162251_spec_stories",
+          "20260819_113049_design_system",
+          "20260819_125615_spec_stories"
+        ],
+        "event_set_sha256": "1e8c9565b6781fcf6fb542f63f12bb7087e1093b78b9f32f7791d681724a8860",
+        "latest_tree_sha256": "8f0f8a97682c2a71b5b8859c85921d4d5f100e39770e653e9163f2d3f2c57e96"
+      },
+      "specs/events": {
+        "head_event_id": "20260819_114307_spec_generation",
+        "head_event_sha256": "1c78b516a3339062e4dd374f15882197d5386c18dbecb97513e782d7946e8cda",
+        "event_ids": [
+          "20260817_155817_spec_generation",
+          "20260818_144847_spec_generation",
+          "20260819_114307_spec_generation"
+        ],
+        "event_set_sha256": "f16d1aa74b8fbc6a1c6182aea54e6212dded6a18f2d57cf7743233df6f9e0c31",
+        "latest_tree_sha256": "f2a7d7b0d32b6b25f34d4bee92d72f3f5b231422db415707961398edb2c75116"
+      }
+    }
+  },
+  "state": "resolved",
+  "requests": [
+    {
+      "request_id": "CR-6078c4ed-011",
+      "source": {
+        "byte_span": [
+          1301,
+          4467
+        ],
+        "slice_sha256": "6c7ca7dd571a02b49c2c1961be736d109f2d8b734a38326aeceaebcc81d80573"
+      },
+      "decision_state": "resolved",
+      "reason": "変更対象は仕様横断契約 audit-event-contract.yaml の hash_chain 正規化形式であり、request 本文が採用案(契約 fields 順 13 項目を | 連結、null は空文字、末尾に previous_hash、SHA-256 16 進小文字 64 桁、エスケープ規則を契約側で補う)を確定済み。CTP-004 / CTR-008 は上位設計の文脈参照であり変更しない。正本を変更する最上流 stage は spec。",
+      "evidence": [
+        {
+          "kind": "related_file",
+          "value": "docs/specs/latest/_cross-cutting/api/audit-event-contract.yaml"
+        },
+        {
+          "kind": "related_file",
+          "value": "docs/specs/latest/_cross-cutting/datastore/rdb-schema.yaml"
+        },
+        {
+          "kind": "related_id",
+          "value": "CTR-008"
+        }
+      ],
+      "deterministic_ownership_evidence": [
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/_cross-cutting/api/audit-event-contract.yaml",
+          "rule": "(^|/)specs?(/|$)",
+          "stage": "spec"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/_cross-cutting/datastore/rdb-schema.yaml",
+          "rule": "(^|/)specs?(/|$)",
+          "stage": "spec"
+        }
+      ],
+      "confidence": "high",
+      "ambiguity_kind": null,
+      "stop_flags": [],
+      "candidates": [],
+      "resolution": {
+        "status": "not_required"
+      },
+      "work_units": [
+        {
+          "request_id": "CR-6078c4ed-011",
+          "constraint_key": "audit-event-hash-canonical-form",
+          "direct_stage": "spec",
+          "reason": "audit-event-contract.yaml の hash_chain に、対象フィールド集合と順序・null 表現・区切りとエスケープ・previous_hash の連結位置と初回表現・ハッシュ関数と出力表現・検証ジョブによる再計算保証を定義する。",
+          "evidence": [
+            {
+              "kind": "related_file",
+              "value": "docs/specs/latest/_cross-cutting/api/audit-event-contract.yaml"
+            }
+          ],
+          "id": "CR-6078c4ed-011#1",
+          "required_closure_stages": [
+            "spec",
+            "spec_stories"
+          ]
+        }
+      ]
+    },
+    {
+      "request_id": "CR-6078c4ed-012",
+      "source": {
+        "byte_span": [
+          4467,
+          8703
+        ],
+        "slice_sha256": "2f3313f48ac0e72673007d9f23b5e7e81bd71aaf8238d0338ade93113c134a04"
+      },
+      "decision_state": "resolved",
+      "reason": "変更対象は本 UC の tier 仕様(tier-facade.md)と audit-event-contract.yaml の emitted_by であり、request 本文が採用案(本 UC が送出失敗/timeout を FAILED/UNKNOWN へ補償記録し、slot_launch_failed / slot_launch_timeout の emitted_by に本 UC を追加、post_launch outbox 契約に従う)を確定済み。SPEC-001-01 / LR-002 は文脈参照。正本を変更する最上流 stage は spec。",
+      "evidence": [
+        {
+          "kind": "related_file",
+          "value": "docs/specs/latest/並行稼働実行業務/並行稼働実行フロー/feature flag設定に基づきslotを選択して起動する/tier-facade.md"
+        },
+        {
+          "kind": "related_file",
+          "value": "docs/specs/latest/_cross-cutting/api/audit-event-contract.yaml"
+        },
+        {
+          "kind": "related_id",
+          "value": "SPEC-001-01"
+        }
+      ],
+      "deterministic_ownership_evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "SPEC-001-01",
+          "rule": "SPEC-",
+          "stage": "spec"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/_cross-cutting/api/audit-event-contract.yaml",
+          "rule": "(^|/)specs?(/|$)",
+          "stage": "spec"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/並行稼働実行業務/並行稼働実行フロー/feature flag設定に基づきslotを選択して起動する/tier-facade.md",
+          "rule": "(^|/)specs?(/|$)",
+          "stage": "spec"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/並行稼働実行業務/並行稼働実行フロー/foreground roleの標準出力・標準エラー・終了コードを応答する/spec.md",
+          "rule": "(^|/)specs?(/|$)",
+          "stage": "spec"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/実行監視業務/ハング監視フロー/background実行の未完了・非0終了・速報比較異常を定期検知する/spec.md",
+          "rule": "(^|/)specs?(/|$)",
+          "stage": "spec"
+        }
+      ],
+      "confidence": "high",
+      "ambiguity_kind": null,
+      "stop_flags": [],
+      "candidates": [],
+      "resolution": {
+        "status": "not_required"
+      },
+      "work_units": [
+        {
+          "request_id": "CR-6078c4ed-012",
+          "constraint_key": "launch-event-failure-compensation",
+          "direct_stage": "spec",
+          "reason": "起動イベント送出失敗/timeout 時に本 UC が runner_result_events + runner_results を同一 transaction で FAILED(attempt_failed)/UNKNOWN(attempt_unknown)へ遷移させる責務を tier-facade.md に定義し、audit-event-contract.yaml の emitted_by と標準出力・終了コード表の扱いを明記する。",
+          "evidence": [
+            {
+              "kind": "related_file",
+              "value": "docs/specs/latest/並行稼働実行業務/並行稼働実行フロー/feature flag設定に基づきslotを選択して起動する/tier-facade.md"
+            },
+            {
+              "kind": "related_file",
+              "value": "docs/specs/latest/_cross-cutting/api/audit-event-contract.yaml"
+            }
+          ],
+          "id": "CR-6078c4ed-012#1",
+          "required_closure_stages": [
+            "spec",
+            "spec_stories"
+          ]
+        }
+      ]
+    },
+    {
+      "request_id": "CR-6078c4ed-013",
+      "source": {
+        "byte_span": [
+          8703,
+          12347
+        ],
+        "slice_sha256": "8e109b61468628179ab30e3b9d0f36e3b78329281b5455415bfbafbdb9c39de7"
+      },
+      "decision_state": "resolved",
+      "reason": "変更対象は本 UC の spec.md / tier-facade.md の E2E Scenario の Then と uc-dependencies.md であり、request 本文が採用案(10 秒以内の対象を起動受付までに限定、Then を本 UC 責務内に改め、元の Then を UC 横断統合シナリオへ移す)を確定済み。B.2.1.1 / CTP-009 は文脈参照であり非機能グレード値そのものは変更しない。正本を変更する最上流 stage は spec。",
+      "evidence": [
+        {
+          "kind": "related_file",
+          "value": "docs/specs/latest/並行稼働実行業務/並行稼働実行フロー/feature flag設定に基づきslotを選択して起動する/spec.md"
+        },
+        {
+          "kind": "related_file",
+          "value": "docs/specs/latest/_cross-cutting/uc-dependencies.md"
+        },
+        {
+          "kind": "related_id",
+          "value": "SPEC-001-01"
+        }
+      ],
+      "deterministic_ownership_evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "SPEC-001-01",
+          "rule": "SPEC-",
+          "stage": "spec"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/_cross-cutting/uc-dependencies.md",
+          "rule": "(^|/)specs?(/|$)",
+          "stage": "spec"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/並行稼働実行業務/並行稼働実行フロー/feature flag設定に基づきslotを選択して起動する/spec.md",
+          "rule": "(^|/)specs?(/|$)",
+          "stage": "spec"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/並行稼働実行業務/並行稼働実行フロー/feature flag設定に基づきslotを選択して起動する/tier-facade.md",
+          "rule": "(^|/)specs?(/|$)",
+          "stage": "spec"
+        }
+      ],
+      "confidence": "medium",
+      "ambiguity_kind": null,
+      "stop_flags": [],
+      "candidates": [],
+      "resolution": {
+        "status": "not_required"
+      },
+      "work_units": [
+        {
+          "request_id": "CR-6078c4ed-013",
+          "constraint_key": "background-first-scenario-responsibility-boundary",
+          "direct_stage": "spec",
+          "reason": "E2E Scenario「background roleを先に起動しforeground待機中もbackgroundが並走する」の Then を本 UC 責務(起動イベント送出順・green の STARTING 存在・CLI が待たずに終了コード 0)に改め、応答時間 10 秒の対象を起動受付までと明記し、元の Then を uc-dependencies.md の UC 横断統合シナリオへ移す。",
+          "evidence": [
+            {
+              "kind": "related_file",
+              "value": "docs/specs/latest/並行稼働実行業務/並行稼働実行フロー/feature flag設定に基づきslotを選択して起動する/spec.md"
+            },
+            {
+              "kind": "related_file",
+              "value": "docs/specs/latest/_cross-cutting/uc-dependencies.md"
+            }
+          ],
+          "id": "CR-6078c4ed-013#1",
+          "required_closure_stages": [
+            "spec",
+            "spec_stories"
+          ]
+        }
+      ]
+    },
+    {
+      "request_id": "CR-6078c4ed-014",
+      "source": {
+        "byte_span": [
+          12347,
+          14707
+        ],
+        "slice_sha256": "eec8a374b322d0937d29e8e98d9f0c824ee7a5a2e10eea318dfb2108eef598db"
+      },
+      "decision_state": "resolved",
+      "reason": "変更対象は rdb-schema.yaml の additional_args / fixed_args の保存形式と tier-facade.md の復元規則であり、request 本文が採用案(JSON 配列、要素順をそのまま argv、往復同一性、E2E 期待値の更新)を確定済み。正本を変更する最上流 stage は spec。",
+      "evidence": [
+        {
+          "kind": "related_file",
+          "value": "docs/specs/latest/_cross-cutting/datastore/rdb-schema.yaml"
+        },
+        {
+          "kind": "related_file",
+          "value": "docs/specs/latest/並行稼働実行業務/並行稼働実行フロー/feature flag設定に基づきslotを選択して起動する/tier-facade.md"
+        },
+        {
+          "kind": "related_id",
+          "value": "SPEC-009-01"
+        }
+      ],
+      "deterministic_ownership_evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "SPEC-009-01",
+          "rule": "SPEC-",
+          "stage": "spec"
+        },
+        {
+          "kind": "related_id_prefix",
+          "value": "SPEC-009-02",
+          "rule": "SPEC-",
+          "stage": "spec"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/_cross-cutting/datastore/rdb-schema.yaml",
+          "rule": "(^|/)specs?(/|$)",
+          "stage": "spec"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/並行稼働実行業務/並行稼働実行フロー/feature flag設定に基づきslotを選択して起動する/tier-facade.md",
+          "rule": "(^|/)specs?(/|$)",
+          "stage": "spec"
+        }
+      ],
+      "confidence": "high",
+      "ambiguity_kind": null,
+      "stop_flags": [],
+      "candidates": [],
+      "resolution": {
+        "status": "not_required"
+      },
+      "work_units": [
+        {
+          "request_id": "CR-6078c4ed-014",
+          "constraint_key": "args-json-array-storage-format",
+          "direct_stage": "spec",
+          "reason": "execution_specs.additional_args と slot_execution_specs.fixed_args の保存形式を JSON 配列に定義し、復元は要素順をそのまま argv とする規則と往復同一性要件を定め、E2E Scenario の期待値を更新する。",
+          "evidence": [
+            {
+              "kind": "related_file",
+              "value": "docs/specs/latest/_cross-cutting/datastore/rdb-schema.yaml"
+            }
+          ],
+          "id": "CR-6078c4ed-014#1",
+          "required_closure_stages": [
+            "spec",
+            "spec_stories"
+          ]
+        }
+      ]
+    },
+    {
+      "request_id": "CR-6078c4ed-015",
+      "source": {
+        "byte_span": [
+          14707,
+          17947
+        ],
+        "slice_sha256": "1b336ea7f6eec18f613454110166ab8885363969055ee8151033872a714e6424"
+      },
+      "decision_state": "resolved",
+      "reason": "変更対象は rdb-schema.yaml / datastore-schema.md の論理型→PostgreSQL 物理型対応表と datetime 精度・UTC・同一時刻規則であり、request 本文が採用案を確定済み。product-impl-onprem.yaml は PostgreSQL 選定の文脈参照であり変更しない(製品選定は確定済み)。正本を変更する最上流 stage は spec。",
+      "evidence": [
+        {
+          "kind": "related_file",
+          "value": "docs/specs/latest/_cross-cutting/datastore/rdb-schema.yaml"
+        },
+        {
+          "kind": "related_file",
+          "value": "docs/specs/latest/_cross-cutting/datastore/datastore-schema.md"
+        },
+        {
+          "kind": "related_id",
+          "value": "LR-002"
+        }
+      ],
+      "deterministic_ownership_evidence": [
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/infra/latest/docs/mcl/product/output/product-impl-onprem.yaml",
+          "rule": "(^|/)infra(/|$)",
+          "stage": "infrastructure"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/_cross-cutting/datastore/datastore-schema.md",
+          "rule": "(^|/)specs?(/|$)",
+          "stage": "spec"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/_cross-cutting/datastore/rdb-schema.yaml",
+          "rule": "(^|/)specs?(/|$)",
+          "stage": "spec"
+        }
+      ],
+      "confidence": "medium",
+      "ambiguity_kind": null,
+      "stop_flags": [],
+      "candidates": [],
+      "resolution": {
+        "status": "not_required"
+      },
+      "work_units": [
+        {
+          "request_id": "CR-6078c4ed-015",
+          "constraint_key": "rdb-physical-type-mapping-and-datetime-precision",
+          "direct_stage": "spec",
+          "reason": "論理型→PostgreSQL 物理型対応表(uuid/text/integer/timestamptz)、datetime のマイクロ秒精度・UTC・ISO 8601、同一 transaction 内の複数時刻カラム同一値規則、uuid 列の RFC 4122 形式、migration と fixture が対応表から生成される旨を定義する。",
+          "evidence": [
+            {
+              "kind": "related_file",
+              "value": "docs/specs/latest/_cross-cutting/datastore/rdb-schema.yaml"
+            },
+            {
+              "kind": "related_file",
+              "value": "docs/specs/latest/_cross-cutting/datastore/datastore-schema.md"
+            }
+          ],
+          "id": "CR-6078c4ed-015#1",
+          "required_closure_stages": [
+            "spec",
+            "spec_stories"
+          ]
+        }
+      ]
+    },
+    {
+      "request_id": "CR-6078c4ed-016",
+      "source": {
+        "byte_span": [
+          17947,
+          20450
+        ],
+        "slice_sha256": "9032e411b8d0c3ee26c42d078a754778effc601b0eabb1bee3ffd0bbe0e55d0b"
+      },
+      "decision_state": "resolved",
+      "reason": "変更対象は要求正本 USDM requirements.yaml の SPEC-009-03 文言であり、request 本文が採用案(execution spec の分離保存、hang_detect_limit_minutes は run 共通 1 値、role 別しきい値列は追加しない)を確定済み。rdb-schema.yaml は下流の整合対象。正本を変更する最上流 stage は requirements。",
+      "evidence": [
+        {
+          "kind": "related_file",
+          "value": "docs/usdm/latest/requirements.yaml"
+        },
+        {
+          "kind": "related_id",
+          "value": "SPEC-009-03"
+        },
+        {
+          "kind": "related_id",
+          "value": "REQ-009"
+        }
+      ],
+      "deterministic_ownership_evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-009",
+          "rule": "REQ-",
+          "stage": "requirements"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/usdm/latest/requirements.yaml",
+          "rule": "(^|/)usdm(/|$)",
+          "stage": "requirements"
+        },
+        {
+          "kind": "related_id_prefix",
+          "value": "SPEC-009-03",
+          "rule": "SPEC-",
+          "stage": "spec"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/_cross-cutting/datastore/rdb-schema.yaml",
+          "rule": "(^|/)specs?(/|$)",
+          "stage": "spec"
+        }
+      ],
+      "confidence": "high",
+      "ambiguity_kind": null,
+      "stop_flags": [],
+      "candidates": [],
+      "resolution": {
+        "status": "not_required"
+      },
+      "work_units": [
+        {
+          "request_id": "CR-6078c4ed-016",
+          "constraint_key": "spec-009-03-wording-execution-spec-split",
+          "direct_stage": "requirements",
+          "reason": "SPEC-009-03 の文言と受け入れ基準を「execution spec(run 共通の execution_specs と slot 別の slot_execution_specs)として RDB に保存」「hang_detect_limit_minutes は run 共通の 1 値(background slot のジョブマップ値)」に改める。",
+          "evidence": [
+            {
+              "kind": "related_file",
+              "value": "docs/usdm/latest/requirements.yaml"
+            }
+          ],
+          "id": "CR-6078c4ed-016#1",
+          "required_closure_stages": [
+            "requirements",
+            "quality_attributes",
+            "architecture",
+            "infrastructure",
+            "design_system",
+            "spec",
+            "spec_stories"
+          ]
+        }
+      ]
+    },
+    {
+      "request_id": "CR-6078c4ed-017",
+      "source": {
+        "byte_span": [
+          20450,
+          23436
+        ],
+        "slice_sha256": "eff6e5fc79b25e029953204de85eb92420c542a561b781aee92ebfc86696ab55"
+      },
+      "decision_state": "resolved",
+      "reason": "変更対象は cross-cutting の CLI コマンド契約と tier-facade.md / tier-worker.md の credential_ref 解決規則であり、request 本文が採用案(認証情報ディレクトリ方式、共通環境変数名、null 時の既定動作、E2E Given への値追記)を確定済み。CTP-001 は文脈参照。正本を変更する最上流 stage は spec。",
+      "evidence": [
+        {
+          "kind": "related_file",
+          "value": "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml"
+        },
+        {
+          "kind": "related_file",
+          "value": "docs/specs/latest/並行稼働実行業務/並行稼働実行フロー/feature flag設定に基づきslotを選択して起動する/tier-facade.md"
+        },
+        {
+          "kind": "related_id",
+          "value": "SPEC-009-03"
+        }
+      ],
+      "deterministic_ownership_evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "SPEC-009-03",
+          "rule": "SPEC-",
+          "stage": "spec"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml",
+          "rule": "(^|/)specs?(/|$)",
+          "stage": "spec"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/並行稼働実行業務/並行稼働実行フロー/background roleを起動する/tier-worker.md",
+          "rule": "(^|/)specs?(/|$)",
+          "stage": "spec"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/並行稼働実行業務/並行稼働実行フロー/feature flag設定に基づきslotを選択して起動する/tier-facade.md",
+          "rule": "(^|/)specs?(/|$)",
+          "stage": "spec"
+        }
+      ],
+      "confidence": "high",
+      "ambiguity_kind": null,
+      "stop_flags": [],
+      "candidates": [],
+      "resolution": {
+        "status": "not_required"
+      },
+      "work_units": [
+        {
+          "request_id": "CR-6078c4ed-017",
+          "constraint_key": "credential-ref-resolution-contract",
+          "direct_stage": "spec",
+          "reason": "credential_ref の解決規則(認証情報ディレクトリ方式、実値を非露出)、facade/worker 共通の環境変数名と null 時の既定動作を cross-cutting 契約に定義し、E2E Given のジョブマップに credential_ref 値(cred-blue-batch / cred-green-batch)を追記する。",
+          "evidence": [
+            {
+              "kind": "related_file",
+              "value": "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml"
+            },
+            {
+              "kind": "related_file",
+              "value": "docs/specs/latest/並行稼働実行業務/並行稼働実行フロー/background roleを起動する/tier-worker.md"
+            }
+          ],
+          "id": "CR-6078c4ed-017#1",
+          "required_closure_stages": [
+            "spec",
+            "spec_stories"
+          ]
+        }
+      ]
+    },
+    {
+      "request_id": "CR-6078c4ed-018",
+      "source": {
+        "byte_span": [
+          23436,
+          28452
+        ],
+        "slice_sha256": "b8a44c0dfea05299a41a7922d03b015bcabf8e824e69dbbb290ca40c71977cab"
+      },
+      "decision_state": "resolved",
+      "reason": "変更対象は cli-command-contract.yaml(slot 別ジョブマップ環境変数・ファイル構造)、rdb-schema.yaml(job_map_version を slot_execution_specs へ移動)、tier-facade.md であり、request 本文が採用案を確定済み。REQ-009 は文脈参照で、USDM 側の文言変更は CR-6078c4ed-016 が担う。正本を変更する最上流 stage は spec。",
+      "evidence": [
+        {
+          "kind": "related_file",
+          "value": "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml"
+        },
+        {
+          "kind": "related_file",
+          "value": "docs/specs/latest/_cross-cutting/datastore/rdb-schema.yaml"
+        },
+        {
+          "kind": "related_id",
+          "value": "SPEC-009-01"
+        }
+      ],
+      "deterministic_ownership_evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-009",
+          "rule": "REQ-",
+          "stage": "requirements"
+        },
+        {
+          "kind": "related_id_prefix",
+          "value": "SPEC-009-01",
+          "rule": "SPEC-",
+          "stage": "spec"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml",
+          "rule": "(^|/)specs?(/|$)",
+          "stage": "spec"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/_cross-cutting/datastore/rdb-schema.yaml",
+          "rule": "(^|/)specs?(/|$)",
+          "stage": "spec"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/並行稼働実行業務/並行稼働実行フロー/feature flag設定に基づきslotを選択して起動する/tier-facade.md",
+          "rule": "(^|/)specs?(/|$)",
+          "stage": "spec"
+        }
+      ],
+      "confidence": "medium",
+      "ambiguity_kind": null,
+      "stop_flags": [],
+      "candidates": [],
+      "resolution": {
+        "status": "not_required"
+      },
+      "work_units": [
+        {
+          "request_id": "CR-6078c4ed-018",
+          "constraint_key": "per-slot-job-map-contract",
+          "direct_stage": "spec",
+          "reason": "ジョブマップを slot ごとの独立ファイルとして契約化(環境変数 RELAYGATE_JOB_MAP_PATH_BLUE/_GREEN 相当、ファイル構造・必須/任意・未知フィールド・欠落時終了コードと stderr)、job_map_version を slot_execution_specs へ移動、run 共通 hang_detect_limit_minutes の出所(background slot、両 slot background 時の選び方)を定め、E2E Given を slot 別ジョブマップに改める。",
+          "evidence": [
+            {
+              "kind": "related_file",
+              "value": "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml"
+            },
+            {
+              "kind": "related_file",
+              "value": "docs/specs/latest/_cross-cutting/datastore/rdb-schema.yaml"
+            },
+            {
+              "kind": "related_file",
+              "value": "docs/specs/latest/並行稼働実行業務/並行稼働実行フロー/feature flag設定に基づきslotを選択して起動する/tier-facade.md"
+            }
+          ],
+          "id": "CR-6078c4ed-018#1",
+          "required_closure_stages": [
+            "spec",
+            "spec_stories"
+          ]
+        }
+      ]
+    }
+  ]
+}

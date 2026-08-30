@@ -1,0 +1,38 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "architecture"
+artifact_id: "arch-decision-004"
+title: "run共通execution specとslot別実行設定の分離・起動試行identityの導入"
+status: "approved"
+generated_at: "2026-08-18T13:55:04"
+context: |
+  実装フィードバック CR-6078c4ed-005（blocker）で、arch-design.yaml の execution spec エンティティが
+  単一の host / impl_version を前提としており、blue / green の slot ごとに host・実装版が異なる並行稼働を
+  表現できないことが確認された。また Runner 実行結果の主キーが (run_id, role_type) のため、同一 run で
+  同一 role の起動試行を別試行として識別できず、timeout 後に結果不明の試行を FAILED と区別して扱えなかった。
+  attempt_id / attempt_no / 起動受付 / 結果不明状態は上位モデルに存在しなかった。
+decision: |
+  feedback request 本文で確定された推奨案を採用する。
+  (1) execution spec を run 共通部（E-001: run_id / parent_run_id / job_id / additional_args /
+  job_map_version / hang_detect_limit_minutes）と slot 別実行設定（E-007: host / exec_user / script_path /
+  work_dir / fixed_args / impl_version / credential_ref。PK は run_id + slot_type）に分離する。
+  (2) Runner 実行結果（E-002）の identity を（run_id, slot_type, role_type, attempt_id）の複合キーに改め、
+  attempt_no（連番）と accepted_at（起動受付時刻）を追加する。
+  (3) 実行状態として STARTING / RUNNING / SUCCEEDED / FAILED / UNKNOWN / ABORTED を正式定義し、
+  timeout や結果取得不能時は UNKNOWN とし、推測で FAILED を確定しない。UNKNOWN からの確定は
+  実結果の回収または対話確認による回復処理でのみ行う（AG-002 不変条件・LP-003 に反映）。
+consequences:
+  positive:
+    - "同一 run の blue / green 各 slot の実装版と起動試行を run_id から一意に識別できる"
+    - "timeout 後の結果不明状態を FAILED と区別でき、回復処理（実結果回収・対話確認）を選択できる"
+    - "runner_results の識別規則と状態遷移を実装者が推測なしに一意に実装できる"
+  negative:
+    - "E-007 slot実行設定・attempt_id / attempt_no / STARTING / UNKNOWN は RDRA の情報.tsv / 状態.tsv に未反映であり、RDRA への追随判断が必要（docs/todo.md に登録済み）"
+    - "下流（infrastructure / design_system / spec / spec_stories）の rdb-schema・仕様の追随更新が必要（required_closure_stages で管理）"
+alternatives_considered:
+  - name: "単一 execution spec のまま slot 別の列を追加（host_blue / host_green 等）"
+    reason_rejected: "slot 追加・属性追加のたびに列が増殖し、slot 単位の一度だけ確定・復元の不変条件を表現できないため"
+  - name: "既存の (run_id, role_type) キーを維持し最新試行のみ上書き保持"
+    reason_rejected: "起動試行の識別ができず履歴が失われる。監査ログ契約（CTP-005 / CTR-008 の attempt_id 照合）とも整合しないため"
+  - name: "timeout 時に FAILED を即時確定"
+    reason_rejected: "実際には成功していた実行を誤って FAILED と確定し、回復処理の選択肢を奪うため（CR が明示的に否定）"

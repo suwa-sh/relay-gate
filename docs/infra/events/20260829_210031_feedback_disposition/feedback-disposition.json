@@ -1,0 +1,29 @@
+{
+  "schema_version": "distillery.feedback-no-domain-change/v1",
+  "type": "feedback_no_domain_change",
+  "event_id": "20260829_210031_feedback_disposition",
+  "created_at": "2026-08-29T12:00:31Z",
+  "stage": "infrastructure",
+  "domain_event_root": "infra/events",
+  "reason": "CR-6078c4ed-016#1はUSDM SPEC-009-03の文言をspec.md/rdb-schema.yamlの実装(execution specのrun共通/slot別分離保存、hang_detect_limit_minutesはrun共通の1値)に合わせる整合であり、archはnot_impacted(latest正本は20260819_110531_arch_comparison_definition_exitcode)。infra/latestのproduct-input.yaml(E-001 run共通実行設定・slot別実行設定)とproduct-impl-onprem.yaml(execution_spec_split、hang_detector_intervalはhang_detect_limit_minutesに応じた設定)は既に同じ分離定義を持つため、MCL再実行・infra/latest更新・archフィードバックは不要。",
+  "feedback_request": {
+    "feedback_request_id": "20260822_085257_impl_feedback_6078c4ed",
+    "input_sha256": "8129956bff632d9c271356ef56e3256319c7613b030adfd5477fe9f60d748bf5",
+    "request_ids": [
+      "CR-6078c4ed-016"
+    ],
+    "work_unit_ids": [
+      "CR-6078c4ed-016#1"
+    ]
+  },
+  "work_unit_results": [],
+  "reconciliation_results": [
+    {
+      "work_unit_id": "CR-6078c4ed-016#1",
+      "status": "not_impacted",
+      "reason": "infra/latestのMCL入出力は既にrun共通execution specとslot別実行設定の分離保存(product-input.yaml E-001、product-impl-onprem.yaml execution_spec_split)およびrun共通hang_detect_limit_minutesに基づくhang_detector_intervalを記述済み。USDM文言整合はワークロードモデル・ベンダーマッピング・オブザーバビリティ・コストヒント・IaCスケルトンのいずれにも影響しない。",
+      "artifact_refs": []
+    }
+  ],
+  "evidence_refs": []
+}

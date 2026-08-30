@@ -1,0 +1,37 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "architecture"
+artifact_id: "arch-decision-007"
+title: "foreground 終了コードの透過と relay-gate エラーの退避終了コード分離"
+status: "approved"
+generated_at: "2026-08-19T11:05:31"
+context: |
+  RDRA 差分 20260819_104301_slot_config_comparison_def_exitcode で、条件モデルに
+  「relay-gateエラーの退避終了コード」が追加された。アーキテクチャ側の facade 応答方針（SP-002）は
+  「foreground の標準出力・標準エラー・終了コードのみを応答する」とだけ定めており、
+  終了コードを丸めずに透過する範囲も、relay-gate 自身のエラー（実行結果未確定・取得不能・中止済み、
+  バリデーションエラー）を業務ジョブの終了コードとどう区別するかも未定義だった。
+  この状態では業務ジョブの非 0 終了と relay-gate の異常がジョブスケジューラ側で識別できない。
+decision: |
+  SP-002 を「foreground結果限定応答・終了コード透過」へ更新し、foreground の exitcode.txt 値は
+  0 を含む全値をそのまま透過して丸めや再割り当てを行わないことを明記する。
+  あわせて tier-facade に規則 SR-006 を追加し、relay-gate 自身のエラーを退避終了コードで応答する:
+  実行結果未確定・取得不能・中止済み（UNKNOWN / ABORTED を含む）= 125、
+  relay-gate のバリデーションエラー = 124 とし、bash が自動生成する 126（実行不可）・
+  127（コマンド未検出）とは衝突させない。UNKNOWN を推測で FAILED 相当の業務終了コードへ変換しない。
+  relay-gate エラー時の標準エラーには、取得可能な場合の foreground stderr.log の内容と
+  relay-gate 自身のエラー内容（原因と次アクション）を併記する。
+consequences:
+  positive:
+    - "既存ジョブを直接実行した場合と終了コード分岐の互換性が保たれ、ストラングラーファサードとして透過的に振る舞える"
+    - "relay-gate の異常と業務ジョブの失敗をジョブスケジューラ側で区別でき、一次切り分けが応答だけで可能になる"
+    - "timeout 後は UNKNOWN とし推測で FAILED を確定しない実行状態方針（AG-002）と応答契約が同一方針になる"
+  negative:
+    - "業務ジョブが 124 / 125 を意味のある終了コードとして使っている場合は衝突しうるため、導入時に確認が必要になる"
+alternatives_considered:
+  - name: "relay-gate の異常も一律 1 で応答する"
+    reason_rejected: "業務ジョブの一般的な失敗（1）と区別できず、スケジューラ側のリトライ・通知判断を誤らせるため"
+  - name: "UNKNOWN を FAILED 相当の業務終了コードへ変換して応答する"
+    reason_rejected: "結果未確定を失敗と断定することになり、推測で FAILED を確定しない実行状態方針と矛盾するため"
+  - name: "bash 予約値 126 / 127 を relay-gate の退避コードとして流用する"
+    reason_rejected: "シェルが自動生成する値と衝突し、relay-gate 起因か起動失敗かを区別できなくなるため"
