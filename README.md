@@ -45,13 +45,12 @@ The facade selects slots via feature flags and relays only the foreground result
 
 ## Getting Started
 
-The runtime is not implemented yet. What you can do today is explore the full specification set and the operator-facing UI catalog:
+The runtime is not implemented yet. What you can do today is explore the full specification set:
 
 ```bash
 git clone https://github.com/suwa-sh/relay-gate.git
-cd relay-gate/docs/design/latest/storybook-app
-npm install
-npm run storybook   # opens the CLI-output design catalog (23 use-case pages)
+cd relay-gate
+less docs/README.md
 ```
 
 Start reading the specs at [`docs/README.md`](docs/README.md).
@@ -60,7 +59,7 @@ Start reading the specs at [`docs/README.md`](docs/README.md).
 
 | Document | Summary |
 |---|---|
-| [`docs/README.md`](docs/README.md) | Auto-generated navigation over all specification artifacts (USDM / RDRA / NFR / architecture / infra / design / specs) |
+| [`docs/README.md`](docs/README.md) | Auto-generated navigation over all specification artifacts (USDM / RDRA / NFR / architecture / infra / specs) |
 | [`docs/specs/latest/`](docs/specs/latest/) | The implementation source of truth: 23 use-case specs, CLI command contract (24 commands), RDB schema |
 | [`docs/development/README.md`](docs/development/README.md) | Developer manual: environment setup, test layers, and the spec-driven workflow |
 | [`docs/todo.md`](docs/todo.md) | Deferred decisions (adopted conservative defaults; revisit when real operational values are known) |

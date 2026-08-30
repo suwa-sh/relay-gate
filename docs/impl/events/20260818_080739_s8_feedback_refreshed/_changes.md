@@ -1,4 +1,0 @@
-# レビュー選択をfeedback draftへ反映
-
-RDB製品をPostgreSQLとし、slot起動の監査ログを追記するユーザー選択を既存2件の変更要求へ反映した。
-未回答の接続・timeout・監査event詳細は仕様化対象として維持した。

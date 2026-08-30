@@ -45,13 +45,12 @@ facade は feature flag で slot を選択し、foreground の結果だけを中
 
 ## Getting Started
 
-ランタイムは未実装です。現時点では、仕様一式と運用者向け UI カタログを確認できます:
+ランタイムは未実装です。現時点では、仕様一式を確認できます:
 
 ```bash
 git clone https://github.com/suwa-sh/relay-gate.git
-cd relay-gate/docs/design/latest/storybook-app
-npm install
-npm run storybook   # CLI 出力デザインカタログ(23 ユースケース画面)を表示
+cd relay-gate
+less docs/README.md
 ```
 
 仕様は [`docs/README.md`](docs/README.md) から読み始めてください。

@@ -1,7 +1,0 @@
-dist-spec-stories スキル実行: RelayGate（Web UI を持たない CLI/バッチ運用基盤）の全23 UC について、
-運用ポータル（ops）の「画面」= CLI 対話・結果確認・通知確認のタッチポイントを Storybook ページ Story として
-実装した。既存の design-event.yaml（event_id: 20260817_153235_design_system）が定義した23 screens・
-UI/Domain コンポーネントを入力とし、共通レイアウトシェル（OpsPortalShell）と Logo コンポーネントを新規実装した
-うえで、全画面のページ Story（dashboard variant + headless variant を中心に正常系・異常系を複数収録）を
-3グループ（クロスチェック業務+実行監視業務 / 実行制御業務中止フロー群 / 実行制御業務リランフロー+並行稼働実行業務）
-の並列サブエージェントで生成した。
