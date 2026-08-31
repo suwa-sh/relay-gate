@@ -3,289 +3,234 @@
 本ファイルは後続スキルからの追加提案を集約する。
 RDRA に存在しない要素を追加する前に、ここで合意を得てから requirements スキルで反映する。
 
-## 2026-08-17 dist-quality-attributes からの追加提案
+## 2026-08-30 dist-requirements からの追加提案
 
-### DIST-001: [B.1.1.1] 同時アクセス数の実態確認
-- **発生元**: dist-quality-attributes (nfr:20260817_144844_initial_nfr)
-- **種別**: NFR確認
-- **提案内容**: CLI/バッチ運用のため一般的な同時アクセス概念が当てはまりにくく、保守的にLv1（〜100）を仮採用した。ジョブスケジューラの実際の同時ジョブ起動数を確認し再判定が必要。
-- **根拠**: (サブエージェントが記入)
-- **影響範囲**: (サブエージェントが記入)
-- **推奨対応**: [ ] requirements スキル再実行で反映 / [ ] 却下 / [ ] 保留
-- **ステータス**: closed (2026-08-17 ユーザー承認: OSS利用側で決まる値のため仮置きで確定。実運用値の判明時に feedback request で見直し)
-
-## 2026-08-17 dist-quality-attributes からの追加提案
-
-### DIST-002: [B.1.1.3] オンラインリクエスト件数（ジョブ起動件数）の実態確認
-- **発生元**: dist-quality-attributes (nfr:20260817_144844_initial_nfr)
-- **種別**: NFR確認
-- **提案内容**: ジョブスケジューラからのジョブ起動頻度がRDRAから具体化できず、保守的にLv2（〜10,000件/日）を仮採用した。実際の日次ジョブ起動件数を確認し再判定が必要。
-- **根拠**: (サブエージェントが記入)
-- **影響範囲**: (サブエージェントが記入)
-- **推奨対応**: [ ] requirements スキル再実行で反映 / [ ] 却下 / [ ] 保留
-- **ステータス**: closed (2026-08-17 ユーザー承認: OSS利用側で決まる値のため仮置きで確定。実運用値の判明時に feedback request で見直し)
-
-## 2026-08-17 dist-quality-attributes からの追加提案
-
-### DIST-003: [B.1.1.4] バッチ処理件数の実態確認
-- **発生元**: dist-quality-attributes (nfr:20260817_144844_initial_nfr)
-- **種別**: NFR確認
-- **提案内容**: 確報クロスチェック対象の全テーブル・全ファイル件数が不明なため、保守的にLv2を仮採用した。実際の対象データ件数を確認し再判定が必要。
-- **根拠**: (サブエージェントが記入)
-- **影響範囲**: (サブエージェントが記入)
-- **推奨対応**: [ ] requirements スキル再実行で反映 / [ ] 却下 / [ ] 保留
-- **ステータス**: closed (2026-08-17 ユーザー承認: OSS利用側で決まる値のため仮置きで確定。実運用値の判明時に feedback request で見直し)
-
-## 2026-08-17 dist-quality-attributes からの追加提案
-
-### DIST-004: [B.2.1.1] レスポンスタイム基準の要否確認
-- **発生元**: dist-quality-attributes (nfr:20260817_144844_initial_nfr)
-- **種別**: NFR確認
-- **提案内容**: Web UIを持たないCLI起動のため一般的なオンラインレスポンス基準が直接適用できず、保守的にLv2（10秒以内）を仮採用した。slot起動時間の実測要否を確認し再判定が必要。
-- **根拠**: (サブエージェントが記入)
-- **影響範囲**: (サブエージェントが記入)
-- **推奨対応**: [ ] requirements スキル再実行で反映 / [ ] 却下 / [ ] 保留
-- **ステータス**: closed (2026-08-17 ユーザー承認: OSS利用側で決まる値のため仮置きで確定。実運用値の判明時に feedback request で見直し)
-
-## 2026-08-17 dist-quality-attributes からの追加提案
-
-### DIST-005: [B.2.1.2] スループット基準の要否確認
-- **発生元**: dist-quality-attributes (nfr:20260817_144844_initial_nfr)
-- **種別**: NFR確認
-- **提案内容**: CLI/バッチ中心のため一般的なオンラインTPS概念が該当しにくく、保守的にLv1（〜10TPS）を仮採用した。実際の並行ジョブ処理能力要件を確認し再判定が必要。
-- **根拠**: (サブエージェントが記入)
-- **影響範囲**: (サブエージェントが記入)
-- **推奨対応**: [ ] requirements スキル再実行で反映 / [ ] 却下 / [ ] 保留
-- **ステータス**: closed (2026-08-17 ユーザー承認: OSS利用側で決まる値のため仮置きで確定。実運用値の判明時に feedback request で見直し)
-
-## 2026-08-17 dist-quality-attributes からの追加提案
-
-### DIST-006: [C.1.3.3] 監視間隔の具体値確認
-- **発生元**: dist-quality-attributes (nfr:20260817_144844_initial_nfr)
-- **種別**: NFR確認
-- **提案内容**: hang_detect_limit_minutesを用いた定期検知の具体的な監視間隔がRDRAに記載がなく、保守的にLv2を仮採用した。実際の監視ポーリング間隔を確認し再判定が必要。
-- **根拠**: (サブエージェントが記入)
-- **影響範囲**: (サブエージェントが記入)
-- **推奨対応**: [ ] requirements スキル再実行で反映 / [ ] 却下 / [ ] 保留
-- **ステータス**: closed (2026-08-17 ユーザー承認: OSS利用側で決まる値のため仮置きで確定。実運用値の判明時に feedback request で見直し)
-
-## 2026-08-17 dist-quality-attributes からの追加提案
-
-### DIST-007: [D.3.1.2] 既存実装（blue）の廃棄方針確認
-- **発生元**: dist-quality-attributes (nfr:20260817_144844_initial_nfr)
-- **種別**: NFR確認
-- **提案内容**: blue実装の切替完了後の廃棄方針がRDRAに記載がなく、Lv0（詳細未定）を仮採用した。廃棄時期・手順・データ消去方法を確認し反映が必要。
-- **根拠**: (サブエージェントが記入)
-- **影響範囲**: (サブエージェントが記入)
-- **推奨対応**: [ ] requirements スキル再実行で反映 / [ ] 却下 / [ ] 保留
-- **ステータス**: closed (2026-08-17 ユーザー承認: OSS利用側で決まる値のため仮置きで確定。実運用値の判明時に feedback request で見直し)
-
-## 2026-08-17 dist-quality-attributes からの追加提案
-
-### DIST-008: [D.4.1.1] データ移行量の実態確認
-- **発生元**: dist-quality-attributes (nfr:20260817_144844_initial_nfr)
-- **種別**: NFR確認
-- **提案内容**: facade自体は新規導入のためデータ移行の記載がなく、保守的にLv1（〜100GB）を仮採用した。移行対象データの有無・量を確認し再判定が必要。
-- **根拠**: (サブエージェントが記入)
-- **影響範囲**: (サブエージェントが記入)
-- **推奨対応**: [ ] requirements スキル再実行で反映 / [ ] 却下 / [ ] 保留
-- **ステータス**: closed (2026-08-17 ユーザー承認: OSS利用側で決まる値のため仮置きで確定。実運用値の判明時に feedback request で見直し)
-
-## 2026-08-17 dist-quality-attributes からの追加提案
-
-### DIST-009: [D.4.1.3] データクレンジング要否の確認
-- **発生元**: dist-quality-attributes (nfr:20260817_144844_initial_nfr)
-- **種別**: NFR確認
-- **提案内容**: RDRAにデータクレンジングの記載がなく、Lv0（実施なし）を仮採用した。移行データの品質チェック要否を確認し再判定が必要。
-- **根拠**: (サブエージェントが記入)
-- **影響範囲**: (サブエージェントが記入)
-- **推奨対応**: [ ] requirements スキル再実行で反映 / [ ] 却下 / [ ] 保留
-- **ステータス**: closed (2026-08-17 ユーザー承認: OSS利用側で決まる値のため仮置きで確定。実運用値の判明時に feedback request で見直し)
-
-## 2026-08-17 dist-quality-attributes からの追加提案
-
-### DIST-010: [E.1.2.1] 準拠すべき法規・基準の確認
-- **発生元**: dist-quality-attributes (nfr:20260817_144844_initial_nfr)
-- **種別**: NFR確認
-- **提案内容**: RDRAに準拠すべき法規制の記載がなく、Lv1（特定なし）を仮採用した。社内規程・業界固有の規制要件を確認し再判定が必要。
-- **根拠**: (サブエージェントが記入)
-- **影響範囲**: (サブエージェントが記入)
-- **推奨対応**: [ ] requirements スキル再実行で反映 / [ ] 却下 / [ ] 保留
-- **ステータス**: closed (2026-08-17 ユーザー承認: OSS利用側で決まる値のため仮置きで確定。実運用値の判明時に feedback request で見直し)
-
-## 2026-08-17 dist-quality-attributes からの追加提案
-
-### DIST-011: [E.5.1.1] 認証方式（SSH鍵等）の実態確認
-- **発生元**: dist-quality-attributes (nfr:20260817_144844_initial_nfr)
-- **種別**: NFR確認
-- **提案内容**: CLI/シェル実行環境における具体的な認証方式（SSH鍵、踏み台サーバ等）の詳細がRDRAから判断できず、モデルシステム2デフォルトのLv3（多要素認証）を保守的に仮採用した。実際の認証基盤を確認し再判定が必要。
-- **根拠**: (サブエージェントが記入)
-- **影響範囲**: (サブエージェントが記入)
-- **推奨対応**: [ ] requirements スキル再実行で反映 / [ ] 却下 / [ ] 保留
-- **ステータス**: closed (2026-08-17 ユーザー承認: OSS利用側で決まる値のため仮置きで確定。実運用値の判明時に feedback request で見直し)
-
-## 2026-08-17 dist-quality-attributes からの追加提案
-
-### DIST-012: [E.5.2.1] アクセス制御方式の実態確認
-- **発生元**: dist-quality-attributes (nfr:20260817_144844_initial_nfr)
-- **種別**: NFR確認
-- **提案内容**: アクター種別ごとの役割分担はあるが権限制御方式自体がRDRAに明記がなく、Lv2（RBAC）を保守的に仮採用した。実際のOS/ファイル権限制御方式を確認し再判定が必要。
-- **根拠**: (サブエージェントが記入)
-- **影響範囲**: (サブエージェントが記入)
-- **推奨対応**: [ ] requirements スキル再実行で反映 / [ ] 却下 / [ ] 保留
-- **ステータス**: closed (2026-08-17 ユーザー承認: OSS利用側で決まる値のため仮置きで確定。実運用値の判明時に feedback request で見直し)
-
-## 2026-08-17 dist-quality-attributes からの追加提案
-
-### DIST-013: [E.5.3.1] 利用制限（接続元）の実態確認
-- **発生元**: dist-quality-attributes (nfr:20260817_144844_initial_nfr)
-- **種別**: NFR確認
-- **提案内容**: エアギャップ環境のため接続元は限定されると推定されるが詳細がRDRAに記載がなく、Lv1を保守的に仮採用した。運用端末・踏み台サーバの構成を確認し再判定が必要。
-- **根拠**: (サブエージェントが記入)
-- **影響範囲**: (サブエージェントが記入)
-- **推奨対応**: [ ] requirements スキル再実行で反映 / [ ] 却下 / [ ] 保留
-- **ステータス**: closed (2026-08-17 ユーザー承認: OSS利用側で決まる値のため仮置きで確定。実運用値の判明時に feedback request で見直し)
-
-## 2026-08-17 dist-quality-attributes からの追加提案
-
-### DIST-014: [E.6.2.1] データマスキング方針の確認
-- **発生元**: dist-quality-attributes (nfr:20260817_144844_initial_nfr)
-- **種別**: NFR確認
-- **提案内容**: RDRAにマスキング方針の記載がなく、Lv1を保守的に仮採用した。テスト環境での機密データマスキング要否を確認し再判定が必要。
-- **根拠**: (サブエージェントが記入)
-- **影響範囲**: (サブエージェントが記入)
-- **推奨対応**: [ ] requirements スキル再実行で反映 / [ ] 却下 / [ ] 保留
-- **ステータス**: closed (2026-08-17 ユーザー承認: OSS利用側で決まる値のため仮置きで確定。実運用値の判明時に feedback request で見直し)
-
-## 2026-08-17 dist-quality-attributes からの追加提案
-
-### DIST-015: [F.3.1.1] 準拠すべき業界標準・規格の確認
-- **発生元**: dist-quality-attributes (nfr:20260817_144844_initial_nfr)
-- **種別**: NFR確認
-- **提案内容**: RDRAに準拠すべき業界標準・規格の記載がなく、Lv1（特定なし）を仮採用した。エンタープライズ運用上の準拠規格要件を確認し再判定が必要。
-- **根拠**: (サブエージェントが記入)
-- **影響範囲**: (サブエージェントが記入)
-- **推奨対応**: [ ] requirements スキル再実行で反映 / [ ] 却下 / [ ] 保留
-- **ステータス**: closed (2026-08-17 ユーザー承認: OSS利用側で決まる値のため仮置きで確定。実運用値の判明時に feedback request で見直し)
-
-## 2026-08-17 dist-architecture からの追加提案
-
-### DIST-016: 認証方式(CTP-001)の妥当性確認: SSH鍵+MFAの運用要否
-- **発生元**: dist-architecture (arch:20260817_150512_initial_arch)
-- **種別**: Arch確認
-- **提案内容**: RDRAに具体的な認証方式の記載がなく、社内アクターのみ・CLI/バッチ運用という前提からSSH鍵認証+MFAをconfidence:lowで仮置きした。実際の運用端末・踏み台サーバ構成やMFA導入可否を確認し、必要なら軽量な方式（SSH鍵認証のみ等）へ見直すことを推奨する。
-- **根拠**: (サブエージェントが記入)
-- **影響範囲**: (サブエージェントが記入)
-- **推奨対応**: [ ] requirements スキル再実行で反映 / [ ] 却下 / [ ] 保留
-- **ステータス**: closed (2026-08-17 ユーザー承認: OSS利用側で決まる値のため仮置きで確定。実運用値の判明時に feedback request で見直し)
-
-## 2026-08-17 dist-architecture からの追加提案
-
-### DIST-017: 性能・拡張性設計方針(CTP-009)の目標値確認
-- **発生元**: dist-architecture (arch:20260817_150512_initial_arch)
-- **種別**: Arch確認
-- **提案内容**: CLI応答時間10秒以内・スループット10TPS程度をconfidence:lowで保守的に仮置きした。実際のジョブ起動頻度・並行実行数の実測値やSLA要件があれば、それに基づき目標値を再設定することを推奨する。
-- **根拠**: (サブエージェントが記入)
-- **影響範囲**: (サブエージェントが記入)
-- **推奨対応**: [ ] requirements スキル再実行で反映 / [ ] 却下 / [ ] 保留
-- **ステータス**: closed (2026-08-17 ユーザー承認: OSS利用側で決まる値のため仮置きで確定。実運用値の判明時に feedback request で見直し)
-
-## 2026-08-17 dist-architecture からの追加提案
-
-### DIST-018: データ移行量の前提(SR-004)確認: blueからのデータ移行要否
-- **発生元**: dist-architecture (arch:20260817_150512_initial_arch)
-- **種別**: Arch確認
-- **提案内容**: facade新規導入のためblue実装からのデータ移行は不要と推定(confidence:low)した。既存blue実装が保持する実行履歴・比較結果等の過去データを新システムへ引き継ぐ必要があるか、業務側に確認することを推奨する。
-- **根拠**: (サブエージェントが記入)
-- **影響範囲**: (サブエージェントが記入)
-- **推奨対応**: [ ] requirements スキル再実行で反映 / [ ] 却下 / [ ] 保留
-- **ステータス**: closed (2026-08-17 ユーザー承認: OSS利用側で決まる値のため仮置きで確定。実運用値の判明時に feedback request で見直し)
-
-## 2026-08-17 dist-architecture からの追加提案
-
-### DIST-019: 集約境界仮説(AG-001〜AG-005)の最終確定
-- **発生元**: dist-architecture (arch:20260817_150512_initial_arch)
-- **種別**: Arch確認
-- **提案内容**: 情報.tsvのrelationships・状態.tsvの遷移波及から5件の集約境界仮説(AG-001実行設定/AG-002Runner実行結果/AG-003速報比較依頼+結果/AG-004確報比較依頼/AG-005ハング検知記録)をconfidence:lowで抽出した。戦略段階の仮説であり、後続のdist-specまたはddd-tactical-implementationでroot/member・invariantsの最終確定を行うことを推奨する。
-- **根拠**: (サブエージェントが記入)
-- **影響範囲**: (サブエージェントが記入)
-- **推奨対応**: [ ] requirements スキル再実行で反映 / [ ] 却下 / [ ] 保留
-- **ステータス**: closed (2026-08-17 ユーザー承認: OSS利用側で決まる値のため仮置きで確定。実運用値の判明時に feedback request で見直し)
-
-## 2026-08-17 dist-infrastructure からの追加提案
-
-### DIST-020: recovery_target.backupの変換表とarch記述の不一致
-- **発生元**: dist-infrastructure (20260817_151023_infra_product_design)
-- **種別**: 確認推奨
-- **提案内容**: NFR C.1.2.1(grade2)の変換表機械適用ではbackup=weeklyとなるが、arch-design.yaml SP-009では「フル+差分バックアップ（日次）」と明記されており、product-input.yamlではdailyを採用した。次回arch/nfr更新時に整合性を再確認すること。
-- **根拠**: (サブエージェントが記入)
-- **影響範囲**: (サブエージェントが記入)
-- **推奨対応**: [ ] requirements スキル再実行で反映 / [ ] 却下 / [ ] 保留
-- **ステータス**: closed (2026-08-17 ユーザー承認: OSS利用側で決まる値のため仮置きで確定。実運用値の判明時に feedback request で見直し)
-
-## 2026-08-17 dist-infrastructure からの追加提案
-
-### DIST-021: cost_posture.strategyのボーダーケース判定
-- **発生元**: dist-infrastructure (20260817_151023_infra_product_design)
-- **種別**: 確認推奨
-- **提案内容**: NFR A重要指標平均約2.27・B重要指標平均約1.75で変換表の閾値（両方4以上/両方3以上/両方2以下）のいずれにも厳密には合致しない境界ケース。オンプレ物理資産（スケールアップ前提）の背景からcost_optimizedを仮採用した。ユーザーの実際のコスト方針（性能優先/バランス/コスト優先）を次回確認すること。
-- **根拠**: (サブエージェントが記入)
-- **影響範囲**: (サブエージェントが記入)
-- **推奨対応**: [ ] requirements スキル再実行で反映 / [ ] 却下 / [ ] 保留
-- **ステータス**: closed (2026-08-17 ユーザー承認: OSS利用側で決まる値のため仮置きで確定。実運用値の判明時に feedback request で見直し)
-
-## 2026-08-17 dist-design-system からの追加提案
-
-### DIST-022: 将来運用ダッシュボードのレイアウト/画面構成が未確定
-- **発生元**: dist-design-system (20260817_153235_design_system)
-- **種別**: confidence-low
-- **提案内容**: 本イベントではCLI出力規約と最小トークンのみを整備した。RDRAに画面定義が無いため、将来的に運用ダッシュボード（一覧/詳細画面構成、グリッド/カラムレイアウト）を追加する場合は、まずRDRAのBUC.tsvに画面を追加してからdist-design-systemを再実行すること。仮採用: レイアウト方針は将来再検討（confidence: low）。
-- **根拠**: (サブエージェントが記入)
-- **影響範囲**: (サブエージェントが記入)
-- **推奨対応**: [ ] requirements スキル再実行で反映 / [ ] 却下 / [ ] 保留
-- **ステータス**: closed (2026-08-17 ユーザー承認: OSS利用側で決まる値のため仮置きで確定。実運用値の判明時に feedback request で見直し)
-
-## 2026-08-18 dist-architecture からの追加提案
-
-### DIST-023: slot別実行設定と起動試行identity・実行状態6値のRDRAへの追随
-- **発生元**: dist-architecture (20260818_135504_arch_slot_config_attempt_identity)
+### DIST-001: 外部システム「管理 DB(RDB)」「リモート実行ホスト(SSH)」の扱い(内部構成要素か外部システムか)
+- **発生元**: dist-requirements (20260830_181841_initial_build)
 - **種別**: RDRA追加
-- **提案内容**: arch差分イベント20260818_135504でE-007 slot実行設定(host/exec_user/script_path/work_dir/fixed_args/impl_version/credential_refをrun共通execution specから分離)、Runner実行結果のattempt_id/attempt_no/accepted_at、実行状態STARTING/UNKNOWNを上位モデルに定義した(CR-6078c4ed-005確定採用)。RDRAの情報.tsvはexecution-spec.jsonを単一情報のまま保持し、状態.tsvのbackground slot実行状態はRUNNING/SUCCEEDED/FAILED/ABORTEDの4状態のみ。RDRA(情報.tsv/状態.tsv)へslot別実行設定の分離・attempt identity・STARTING/UNKNOWN遷移を追随反映するかをユーザー確認のうえdist-requirementsで更新する。
+- **提案内容**: 方針資料は管理 DB をジョブキュー兼管理 DB として relay-gate の構成要素に含めており、SSH 接続先は適用側で定義する事項。RDRA では BUC の関連先として参照させるため外部システムとして仮登録した。dist-architecture で BC 境界を決める際に、管理 DB を内部データストアへ、SSH ホストを適用側(runner 実装)の関心事へ寄せるか確認する。他の選択肢: 管理 DB のみ内部扱いにして外部システムから除外 / 両方とも外部システムのまま維持
 - **根拠**: (サブエージェントが記入)
 - **影響範囲**: (サブエージェントが記入)
-- **推奨対応**: [x] requirements スキル再実行で反映 / [ ] 却下 / [ ] 保留
-- **ステータス**: closed (2026-08-19 CR-6078c4ed-008 で RDRA 情報.tsv/状態.tsv へ slot別実行設定・attempt identity・STARTING/UNKNOWN 遷移を反映済み。design の states セクションも6値へ整合済み: 20260819_113049_design_system)
-
-## 2026-08-18 dist-design-system からの追加提案
-
-### DIST-024: RDRA 状態モデルへ STARTING/UNKNOWN(起動試行の実行状態)を追加するか
-- **発生元**: dist-design-system (20260818_143057_design_system)
-- **種別**: RDRA追加
-- **提案内容**: arch 正本は Runner 実行結果の実行状態を6値(STARTING/RUNNING/SUCCEEDED/FAILED/UNKNOWN/ABORTED)で定義したが、RDRA 状態.tsv の background slot実行状態は4値のまま。デザインシステムはコンポーネント層(StatusBadge/RunnerResultPanel)でのみ6値を反映し、RDRA 状態モデルへの自動追加は整合性ルールにより行っていない。RDRA へ追加する場合は dist-requirements の差分更新で反映すること。
-- **根拠**: (サブエージェントが記入)
-- **影響範囲**: (サブエージェントが記入)
-- **推奨対応**: [x] requirements スキル再実行で反映 / [ ] 却下 / [ ] 保留
-- **ステータス**: closed (2026-08-19 CR-6078c4ed-008 で RDRA 状態.tsv が6値になり、design の states セクションを6値へ整合済み: 20260819_113049_design_system)
-
-## 2026-08-29 dist-spec からの追加提案
-
-### DIST-025: 情報 execution-spec.json の属性「マップ版」を slot別実行設定へ移す（CR-6078c4ed-018 の追随）
-- **発生元**: dist-spec (spec:20260829_210828_spec_generation)
-- **種別**: RDRA変更
-- **提案内容**: feedback request 20260822_085257_impl_feedback_6078c4ed の CR-6078c4ed-018（採用済み）により、spec 側では job_map_version を execution_specs（run共通）から slot_execution_specs（slot別）へ移動した。RDRA 情報.tsv では execution-spec.json の属性に「マップ版」が残り、slot別実行設定には無い。dist-requirements の差分更新で属性配置を整合させる必要がある（spec 側は RDRA 整合性ルールに従い属性を自動追加せず、rdra-feedback.md #2 として記録）。
-- **根拠**: docs/specs/latest/_cross-cutting/datastore/rdb-schema.yaml の slot_execution_specs.job_map_version（CR-6078c4ed-018 採用案）と docs/rdra/latest/情報.tsv の execution-spec.json 属性「マップ版」が食い違う。
-- **影響範囲**: RDRA 情報.tsv（execution-spec.json / slot別実行設定の属性）、USDM SPEC-009-03 の文言、specs traceability-matrix.md の「マップ版」行。
 - **推奨対応**: [ ] requirements スキル再実行で反映 / [ ] 却下 / [ ] 保留
 - **ステータス**: open
 
-## 2026-08-29 dist-spec からの追加提案
+## 2026-08-30 dist-requirements からの追加提案
 
-### DIST-026: foreground 試行の実行状態確定（STARTING→RUNNING→SUCCEEDED/FAILED）の担い手が未定義
-- **発生元**: dist-spec (spec:20260829_210828_spec_generation)
-- **種別**: Spec確認
-- **提案内容**: CR-6078c4ed-013 により起動 UC は起動受付までで応答し、foreground 完了の待機は「foreground roleの標準出力・標準エラー・終了コードを応答する」の wait_contract（上限 execution_specs.hang_detect_limit_minutes）で行う。ところが foreground role の runner_results を STARTING→RUNNING→SUCCEEDED/FAILED へ遷移させる UC は現行仕様に存在しない（background は「background roleを起動する」と hang-detector が担う。hang-detector は foreground を走査対象外）。候補: (A) hang-detector の走査対象に foreground を含め結果ファイル回収で確定する（推奨。既存の回収ロジックを流用でき、UNKNOWN 規則も共通化できる）、(B) foreground 起動を worker 経由にして background と同じ経路で確定する、(C) respond-foreground が待機中に Runner Result Contract のファイルを直接回収して確定する。RDRA/USDM の見直しを伴うため requirements 側で判断する。
-- **根拠**: docs/specs/latest の UC「background roleを起動する」「background実行の未完了・非0終了・速報比較異常を定期検知する」は role_type=background のみを遷移・走査対象とし、foreground 試行の RUNNING/SUCCEEDED/FAILED 確定を担う UC が無い。CR-6078c4ed-012 の観測事実「foreground の STARTING 滞留を検知・確定する UC は無く」とも一致する。
-- **影響範囲**: RDRA BUC（並行稼働実行フロー / ハング監視フロー）と状態モデル、USDM SPEC-002-01 / SPEC-006 系、specs の UC02 / UC03 / UC11 と uc-dependencies.md。
+### DIST-002: 状態モデル「並行稼働実行」「slot 実行」の状態値(方針資料で未定義)
+- **発生元**: dist-requirements (20260830_181841_initial_build)
+- **種別**: RDRA追加
+- **提案内容**: 方針資料は parallel_run.status と rapid_run.blue_status / green_status の値を定義していない。RDRA では保守的に、並行稼働実行 = STARTED / RUNNING / COMPLETED / ABORTED、slot 実行 = RUNNING / SUCCEEDED / FAILED / ABORTED を仮採用した(クロスチェック依頼と同じ終端状態名に揃え、リラン・中止の判定条件を表現するため)。dist-spec の rdb-schema で列挙値を確定する前に、方針資料側へ状態値を追記するか確認する。他の選択肢: slot 実行をクロスチェック依頼と同じ 6 状態(REQUESTED/CLAIMED を含む)にする / parallel_run.status を slot 実行状態の集約(いずれか RUNNING なら RUNNING)として導出値にする
+- **根拠**: (サブエージェントが記入)
+- **影響範囲**: (サブエージェントが記入)
+- **推奨対応**: [ ] requirements スキル再実行で反映 / [ ] 却下 / [ ] 保留
+- **ステータス**: open
+
+## 2026-08-30 dist-quality-attributes からの追加提案
+
+### DIST-003: A.2.1.1 サーバ内の冗長化(仮採用 Lv2)
+- **発生元**: dist-quality-attributes (nfr:20260830_183726_initial_nfr)
+- **種別**: NFR確認
+- **提案内容**: 仮採用: Lv2(電源・ディスク冗長化)。他の選択肢: Lv1(冗長化なし、再起動で復旧) / Lv3(N+1 手動切替)。理由: facade・runner はジョブスケジューラ実行ホスト上、管理 DB は単一 RDB。オンプレ機器構成が RDRA に無いため低確信。foreground 経路の停止が本番業務ジョブの失敗になる点を踏まえ機器構成を確認する
+- **根拠**: (サブエージェントが記入)
+- **影響範囲**: (サブエージェントが記入)
+- **推奨対応**: [ ] requirements スキル再実行で反映 / [ ] 却下 / [ ] 保留
+- **ステータス**: open
+
+## 2026-08-30 dist-quality-attributes からの追加提案
+
+### DIST-004: A.3.1.1/A.3.1.2 災害対策の範囲・業務継続の要否(仮採用 Lv0/Lv0)
+- **発生元**: dist-quality-attributes (nfr:20260830_183726_initial_nfr)
+- **種別**: NFR確認
+- **提案内容**: 仮採用: A.3.1.1 Lv0(対策なし)、A.3.1.2 Lv0(業務継続不要)。他の選択肢: Lv1(バックアップ遠隔地保管)+Lv1(24 時間以内復旧) / Lv2(コールドスタンバイ拠点)+Lv1。理由: 実行履歴・監査はジョブスケジューラの責務で、成果物と execution-spec.json からリラン可能なため基盤単体の DR を要求しないと推定したが、ビジネス判断のため要確認(Step0 プリインタビュー Q3 の仮置き)
+- **根拠**: (サブエージェントが記入)
+- **影響範囲**: (サブエージェントが記入)
+- **推奨対応**: [ ] requirements スキル再実行で反映 / [ ] 却下 / [ ] 保留
+- **ステータス**: open
+
+## 2026-08-30 dist-quality-attributes からの追加提案
+
+### DIST-005: C.2.1.2 パッチ適用方針(仮採用 Lv1)
+- **発生元**: dist-quality-attributes (nfr:20260830_183726_initial_nfr)
+- **種別**: NFR確認
+- **提案内容**: 仮採用: Lv1(セキュリティパッチのみ随時)。他の選択肢: Lv2(四半期定期適用) / Lv3(月次定期+緊急時即時)。理由: エアーギャップ環境のためパッチはオフラインで持ち込む必要があり、適用頻度は組織の運用ルール次第で RDRA から推論できない
+- **根拠**: (サブエージェントが記入)
+- **影響範囲**: (サブエージェントが記入)
+- **推奨対応**: [ ] requirements スキル再実行で反映 / [ ] 却下 / [ ] 保留
+- **ステータス**: open
+
+## 2026-08-30 dist-quality-attributes からの追加提案
+
+### DIST-006: C.4.1.1 テスト環境(仮採用 Lv2)
+- **発生元**: dist-quality-attributes (nfr:20260830_183726_initial_nfr)
+- **種別**: NFR確認
+- **提案内容**: 仮採用: Lv2(簡易テスト環境・本番縮小構成)。他の選択肢: Lv1(テスト環境なし。並行稼働のクロスチェック自体が本番検証) / Lv3(本番同等テスト環境)。理由: feature flag・ジョブマップ・比較定義の切替を本番前に検証する縮小環境が妥当と推定したが、本番同等環境の要否は適用側の判断のため低確信
+- **根拠**: (サブエージェントが記入)
+- **影響範囲**: (サブエージェントが記入)
+- **推奨対応**: [ ] requirements スキル再実行で反映 / [ ] 却下 / [ ] 保留
+- **ステータス**: open
+
+## 2026-08-30 dist-quality-attributes からの追加提案
+
+### DIST-007: C.5.1.1 サポート時間(仮採用 Lv1)
+- **発生元**: dist-quality-attributes (nfr:20260830_183726_initial_nfr)
+- **種別**: NFR確認
+- **提案内容**: 仮採用: Lv1(営業時間内 9-17 時)。他の選択肢: Lv2(延長 9-21 時) / Lv3(平日 24 時間対応)。理由: 夜間バッチの background 異常メール(warning/error)を誰がいつ受けて対処するかは運用体制次第で RDRA に無い。運用時間 A.1.1.1=Lv3 とのギャップを確認する
+- **根拠**: (サブエージェントが記入)
+- **影響範囲**: (サブエージェントが記入)
+- **推奨対応**: [ ] requirements スキル再実行で反映 / [ ] 却下 / [ ] 保留
+- **ステータス**: open
+
+## 2026-08-30 dist-quality-attributes からの追加提案
+
+### DIST-008: C.6.1.1 ログ保管期間(仮採用 Lv2)
+- **発生元**: dist-quality-attributes (nfr:20260830_183726_initial_nfr)
+- **種別**: NFR確認
+- **提案内容**: 仮採用: Lv2(3ヶ月)。他の選択肢: Lv1(1ヶ月) / Lv3(6ヶ月)。理由: 監査の正本はジョブスケジューラにあり、relay-gate の成果物・実行ログ・監視記録は障害調査と警告傾向確認用。並行稼働期間の長さ(hang_detect_limit_minutes 調整に警告傾向を使う期間)に依存するため要確認
+- **根拠**: (サブエージェントが記入)
+- **影響範囲**: (サブエージェントが記入)
+- **推奨対応**: [ ] requirements スキル再実行で反映 / [ ] 却下 / [ ] 保留
+- **ステータス**: open
+
+## 2026-08-30 dist-architecture からの追加提案
+
+### DIST-009: slot 実行の永続化方式(file 正本 + 速報有効時 rdb の二重マッピング)
+- **発生元**: dist-architecture (arch:20260830_184457_initial_arch)
+- **種別**: Arch追加
+- **提案内容**: 仮採用: E-014 slot 実行は Runner Result(exitcode.txt)をファイル正本とし、RAPID_CROSSCHECK_MODE=on のときだけ管理 DB にも mode / PID / 状態を保持する二重マッピング(storage_mapping の rdb 側 confidence: low)。他の選択肢: rdb のみ(off モードで DB 接続しない要件に反する) / file のみ(abort-* と background-rerun の対象特定を成果物走査だけで行う)。dist-spec の rdb-schema で正本と DB の同期規則を確定すること。
+- **根拠**: (サブエージェントが記入)
+- **影響範囲**: (サブエージェントが記入)
+- **推奨対応**: [ ] requirements スキル再実行で反映 / [ ] 却下 / [ ] 保留
+- **ステータス**: open
+
+## 2026-08-30 dist-architecture からの追加提案
+
+### DIST-010: ジョブ起動要求・通知メールのストレージマッピング(永続レコードなし)
+- **発生元**: dist-architecture (arch:20260830_184457_initial_arch)
+- **種別**: Arch追加
+- **提案内容**: 仮採用: E-009 ジョブ起動要求は永続レコードを持たず execution-spec.json(追加引数)と実行ログに取り込む(file, low)。E-022 通知メールはメール送信後に送信内容を実行ログへ残し alerted_at を監視記録に記録する(file, low)。他の選択肢: 管理 DB に起動要求テーブル / 通知履歴テーブルを持つ(履歴・監査はジョブスケジューラの責務とする方針に反する可能性) / まったく残さない。
+- **根拠**: (サブエージェントが記入)
+- **影響範囲**: (サブエージェントが記入)
+- **推奨対応**: [ ] requirements スキル再実行で反映 / [ ] 却下 / [ ] 保留
+- **ステータス**: open
+
+## 2026-08-30 dist-architecture からの追加提案
+
+### DIST-011: 集約境界仮説 5 件(AG-001〜AG-005)の確定
+- **発生元**: dist-architecture (arch:20260830_184457_initial_arch)
+- **種別**: Arch追加
+- **提案内容**: 仮採用(全件 low): AG-001 並行稼働実行 root(member: slot 実行 / execution-spec / Runner Result / 応答)、AG-002 速報実行 root(member: 完了通知 / 速報比較依頼 / 比較結果)、AG-003 確報比較依頼 root、AG-004 監視記録 root、AG-005 ジョブマップ root。他の選択肢: slot 実行を独立集約 / 速報比較依頼を独立集約(claim 競合の分離)。最終確定は dist-spec の _model-summary または ddd-tactical-implementation で行う。
+- **根拠**: (サブエージェントが記入)
+- **影響範囲**: (サブエージェントが記入)
+- **推奨対応**: [ ] requirements スキル再実行で反映 / [ ] 却下 / [ ] 保留
+- **ステータス**: open
+
+## 2026-08-30 dist-architecture からの追加提案
+
+### DIST-012: 運用体制(サポート時間・夜間バッチ異常メールの受け手)
+- **発生元**: dist-architecture (arch:20260830_184457_initial_arch)
+- **種別**: Arch追加
+- **提案内容**: 仮採用(CTP-009, low): サポートは営業時間内(9-17 時)、夜間バッチの異常メールの受け手は運用体制で定める。NFR C.5.1.1 の仮採用値を踏襲。他の選択肢: 夜間も当番制で対応 / 翌営業日対応で確定。運用者の対処(中止・リラン)のタイミングが確報の夜間ウィンドウに影響するため要確認。
+- **根拠**: (サブエージェントが記入)
+- **影響範囲**: (サブエージェントが記入)
+- **推奨対応**: [ ] requirements スキル再実行で反映 / [ ] 却下 / [ ] 保留
+- **ステータス**: open
+
+## 2026-08-30 dist-infrastructure からの追加提案
+
+### DIST-013: 組織既存のホスト監視エージェントの有無を確認(REQ-OPS-002)
+- **発生元**: dist-infrastructure (infra:20260830_190412_infra_product_design)
+- **種別**: Infra確認事項
+- **提案内容**: confidence: low で保守的な⭐推奨(組織既存の監視エージェントへの統合)を仮採用した。運用開始前に組織側の既存ホスト監視(CPU/メモリ/ディスク/ネットワーク)の有無を確認し、無い場合はsar/df + cronメールによるfallback監視(product-impl-onprem.yaml#impl.operations.backup_and_monitoring, ansible/roles/relay-gate-backup)で代替する運用を正式化すること。参照: product-decision-005, product-conformance-onprem.yaml(REQ-OPS-002: partial)。
+- **根拠**: (サブエージェントが記入)
+- **影響範囲**: (サブエージェントが記入)
+- **推奨対応**: [ ] requirements スキル再実行で反映 / [ ] 却下 / [ ] 保留
+- **ステータス**: open
+
+## 2026-08-30 dist-infrastructure からの追加提案
+
+### DIST-014: 管理DBのRPO4h/RTO12h具体値をtechnology_context.constraintsへ明文化するか検討
+- **発生元**: dist-infrastructure (arch:20260830_202427_arch_infra_feedback_20260830_190412_infra_product_design)
+- **種別**: Arch確認事項
+- **提案内容**: infraフィードバックでCTP-006(可用性と計画停止)を補強するRPO/RTOの具体値追加を検討したが、auto_adopt方針により既存ポリシーとの重複可能性がある詳細値の追加は保守的に見送った。次回arch再設計時に、product-decision-002(PostgreSQL選定、RPO 4h/RTO 12h)の値をCTP-006またはtechnology_context.constraintsへ統合するかを検討すること。
+- **根拠**: (サブエージェントが記入)
+- **影響範囲**: (サブエージェントが記入)
+- **推奨対応**: [ ] requirements スキル再実行で反映 / [ ] 却下 / [ ] 保留
+- **ステータス**: open
+
+## 2026-08-30 dist-spec からの追加提案
+
+### DIST-015: 設定ファイルの形式(feature flag = env、ジョブマップ / クロスチェックジョブマップ / 対象カタログ = TSV)
+- **発生元**: dist-spec (spec:20260830_202851_spec_generation)
+- **種別**: Spec仮採用
+- **提案内容**: 仮採用: feature flag は env 形式(BLUE_MODE / GREEN_MODE / BLUE_RUNNER / GREEN_RUNNER / RAPID_CROSSCHECK_MODE / CONFIG_VERSION)、slot ジョブマップ・クロスチェックジョブマップ・対象カタログは TSV(1 行 1 job_id、固定引数列は JSON 配列文字列)。他の選択肢: すべて YAML(bash に YAML パーサが無く実行時依存が増える) / すべて JSON(jq 前提)。理由: arch storage_mapping E-001 は env 形式(high)だがジョブマップの形式は「JOB_ID の行」以上の記述が無い。エアーギャップで bash 標準コマンドだけで読める TSV を保守的に仮採用。confidence: low
+- **根拠**: (サブエージェントが記入)
+- **影響範囲**: (サブエージェントが記入)
+- **推奨対応**: [ ] requirements スキル再実行で反映 / [ ] 却下 / [ ] 保留
+- **ステータス**: open
+
+## 2026-08-30 dist-spec からの追加提案
+
+### DIST-016: lease 期間・poll 間隔・polling 上限の既定値
+- **発生元**: dist-spec (spec:20260830_202851_spec_generation)
+- **種別**: Spec仮採用
+- **提案内容**: 仮採用: lease 10 分 / worker poll 30 秒 / final-crosscheck runner polling 60 秒 / polling 上限 8 時間(超過時は非 0 で終了し依頼状態は変更しない)。すべて設定で上書き可。他の選択肢: lease 5 分 / poll 10 秒 / polling 30 秒(検知は速いが DB 負荷と lease 失効の誤判定リスク増) / lease 30 分 / poll 5 分 / polling 5 分(負荷最小だが worker 障害時の再取得が遅い)。理由: RDRA / arch に具体値が無い(arch LP-013「polling の間隔と上限は設定で指定」)。NFR B.2.2.1(8 時間)・B.2.1.2(〜10 TPS)に収まる保守値を仮採用。実運用値で見直す。confidence: low
+- **根拠**: (サブエージェントが記入)
+- **影響範囲**: (サブエージェントが記入)
+- **推奨対応**: [ ] requirements スキル再実行で反映 / [ ] 却下 / [ ] 保留
+- **ステータス**: open
+
+## 2026-08-30 dist-spec からの追加提案
+
+### DIST-017: slot 実行の永続化(RAPID_CROSSCHECK_MODE=off 時の abort-blue / abort-green の対象特定)
+- **発生元**: dist-spec (spec:20260830_202851_spec_generation)
+- **種別**: Spec仮採用
+- **提案内容**: 仮採用: RAPID_CROSSCHECK_MODE=on のとき slot_executions テーブルに mode / PID / status / artifact_dir を保持し abort-* と background-rerun の対象特定に使う。off のときは成果物ファイル(started-at.txt / exitcode.txt)だけで状態を導出し、abort-blue / abort-green は管理 DB が無い旨を stderr に出して終了する(状態更新先が無い)。他の選択肢: 常にファイルのみ(ABORTED を成果物ディレクトリの aborted.txt マーカーで表す。RDRA に無いファイルの発明) / 常に RDB(off 時に管理 DB 接続を要求し条件「速報クロスチェック有効判定」に反する)。理由: arch storage_mapping E-014 の rdb 側 confidence が low。off 時の中止対象特定は RDRA に定義が無い。confidence: low
+- **根拠**: (サブエージェントが記入)
+- **影響範囲**: (サブエージェントが記入)
+- **推奨対応**: [ ] requirements スキル再実行で反映 / [ ] 却下 / [ ] 保留
+- **ステータス**: open
+
+## 2026-08-30 dist-spec からの追加提案
+
+### DIST-018: run_id の形式
+- **発生元**: dist-spec (spec:20260830_202851_spec_generation)
+- **種別**: Spec仮採用
+- **提案内容**: 仮採用: {UTC yyyymmddThhmmssZ}-{job_id}-{8 桁 hex 乱数}(例: 20260830T113000Z-JOB001-3f9a1c2e)。成果物ディレクトリ名として時系列ソートでき、管理 DB なし(off)でも facade 単独で発行できる。他の選択肢: UUIDv4(衝突耐性は高いがディレクトリ一覧で時系列が読めない) / 管理 DB のシーケンス(off 時に発行できない)。理由: RDRA / arch に形式の定義が無い。ID 形式は複数 tier が共有する算出規則のため契約(cli-command-contract.yaml)に定義して仮採用。confidence: low
+- **根拠**: (サブエージェントが記入)
+- **影響範囲**: (サブエージェントが記入)
+- **推奨対応**: [ ] requirements スキル再実行で反映 / [ ] 却下 / [ ] 保留
+- **ステータス**: open
+
+## 2026-08-30 dist-spec からの追加提案
+
+### DIST-019: 通知メールの送信手段と宛先設定(hang-detector.env)の設定所有区分
+- **発生元**: dist-spec (spec:20260830_202851_spec_generation)
+- **種別**: RDRA追加
+- **提案内容**: 仮採用: OS 標準の mail / sendmail コマンドを tier-ops の gateway で呼び、宛先・件名プレフィックス・送信コマンドは hang-detector 用 env 設定ファイル(hang-detector.env: ALERT_MAIL_TO / ALERT_MAIL_CMD / ALERT_SUBJECT_PREFIX)で指定する。RDRA の情報「通知メール」に宛先(運用者)はあるが設定の所有区分(バリエーション「設定所有区分」)に該当項目が無いため、Spec では設定ファイル契約として仮置きし RDRA には追加しない。他の選択肢: feature flag 設定ファイルに宛先を追加(feature flag の設定所有区分に反する) / 適用構成文書に宛先を書きスクリプト引数で渡す(定期ジョブ定義に宛先が漏れる)。理由: arch L-ops-gateway「メール送信アダプタ(OS 標準コマンド)」。confidence: low
+- **根拠**: (サブエージェントが記入)
+- **影響範囲**: (サブエージェントが記入)
+- **推奨対応**: [ ] requirements スキル再実行で反映 / [ ] 却下 / [ ] 保留
+- **ステータス**: open
+
+## 2026-08-31 dist-spec からの追加提案
+
+### DIST-020: 速報完了通知の送信失敗を自動検知する要件の要否
+- **発生元**: dist-spec (spec:20260830_202851_spec_generation)
+- **種別**: RDRA追加
+- **提案内容**: 仮採用: 速報クロスチェック runner への完了通知(blue-completed / green-completed)が失敗した場合、slot runner は stderr.log に warn を残し終了コードは実装スクリプトの exitcode のままとし、復旧は運用者が同一引数で rapid-crosscheck-runner.sh を再実行する(冪等・先勝ち)。自動検知(hang-detector が rapid_runs の片系未通知を warning 通知する等)は RDRA に要件が無いためスコープ外とした。他の選択肢: hang-detector に通知種別 notify-missing を追加して warning 通知 / slot runner が通知失敗時に非 0 で終了してジョブスケジューラで検知。速報結果が揃わない事象を運用者がどう検知するか確認する。
+- **根拠**: (サブエージェントが記入)
+- **影響範囲**: (サブエージェントが記入)
+- **推奨対応**: [ ] requirements スキル再実行で反映 / [ ] 却下 / [ ] 保留
+- **ステータス**: open
+
+## 2026-08-31 dist-pipeline からの追加提案
+
+### DIST-021: spec 網羅率 99.4%: rdra-feedback の変更要望 12 件(requirements 差分更新で解消予定)
+- **発生元**: dist-pipeline (20260830_202851_spec_generation)
+- **種別**: rdra-feedback
+- **提案内容**: docs/specs/latest/_cross-cutting/rdra-feedback.md 参照。未カバー 2 件(情報の属性)を含む 12 件。対応する場合は feedback request を作成して /distillery:dist-pipeline で差分実行する
+- **根拠**: (サブエージェントが記入)
+- **影響範囲**: (サブエージェントが記入)
 - **推奨対応**: [ ] requirements スキル再実行で反映 / [ ] 却下 / [ ] 保留
 - **ステータス**: open
 

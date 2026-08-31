@@ -1,0 +1,81 @@
+uc: "元の execution-spec.json から復元して新しい run_id で起動する"
+business: "実行復旧業務"
+buc: "background 側リランフロー"
+paths: []
+x_cli_commands:
+  - name: "background-rerun.sh"
+    tier: "tier-ops"
+    role: "uses"
+    synopsis: "background-rerun.sh --source-run-id <RUN_ID> --role blue|green"
+    invoked_by: "ジョブスケジューラ(background リラン専用ジョブ)/ 運用者"
+    args: []
+    options:
+      - name: "--source-run-id"
+        type: "string"
+        required: true
+        default: ""
+        description: "リラン元の run_id(新 run の parent_run_id になる)"
+      - name: "--role"
+        type: "enum"
+        required: true
+        default: ""
+        description: "blue / green(本 UC の経路)"
+    stdin: "なし"
+    stdout: "固定順: role, mode=background, pid, artifact_dir: ..., execution_spec: ..., run_id={新 run_id}, parent_run_id={元 run_id}"
+    stderr: "error: runner failed to start run_id=... role=... runner=... / error: artifact dir is not writable path: ... / error: management db insert failed ..."
+    exit_codes:
+      - code: 0
+        meaning: "新 run_id で runner を起動し管理レコードを RUNNING にした(runner の完了は待たない)"
+      - code: 3
+        meaning: "事前検証 NG(UC「リラン対象を検証する」)"
+      - code: 6
+        meaning: "成果物ディレクトリ作成・spec 保存失敗、runner 起動失敗(gateway が exitcode.txt=6 と stderr.log を書く)、管理 DB INSERT / UPDATE 失敗"
+  - name: "$BLUE_RUNNER / $GREEN_RUNNER (runner IF, --execution-spec 入力モード)"
+    tier: "tier-facade"
+    role: "uses"
+    synopsis: "<runner> --run-id <RUN_ID> --job-id <JOB_ID> --role blue|green --mode background --execution-spec <path>"
+    invoked_by: "内部呼び出し(background-rerun.sh)。runner IF の定義元は UC「slot runner の実体スクリプトを割り当てる」(適用構成業務/適用構成定義フロー)。本 UC は --execution-spec 入力モードの使用側"
+    args: []
+    options:
+      - name: "--run-id"
+        type: "string"
+        required: true
+        default: ""
+        description: "新 run_id(spec の run_id と一致必須)"
+      - name: "--job-id"
+        type: "string"
+        required: true
+        default: ""
+        description: "JOB_ID(spec の job_id と一致必須)"
+      - name: "--role"
+        type: "enum"
+        required: true
+        default: ""
+        description: "blue / green"
+      - name: "--mode"
+        type: "enum"
+        required: true
+        default: ""
+        description: "foreground / background(リランでは background)"
+      - name: "--execution-spec"
+        type: "string"
+        required: false
+        default: ""
+        description: "指定時はジョブマップを読まず spec の実行先で実行する。-- 以降の PARAM は受け付けない"
+    stdin: "なし"
+    stdout: "なし(実装の出力は facade/<run_id>/<role>/stdout.log へ)"
+    stderr: "なし(runner 自身のエラーは facade/<run_id>/<role>/stderr.log 末尾に error: 1 行: error: execution-spec run_id mismatch arg=... spec=... / error: params are not accepted with --execution-spec / error: execution-spec not found path: ...。exitcode.txt に 2 / 6)"
+    exit_codes:
+      - code: 0
+        meaning: "実装スクリプトが 0 で終了(exitcode.txt=0)"
+      - code: 2
+        meaning: "spec なし・不一致・欠落、PARAM 併用、started-at.txt 既存(二重起動)"
+      - code: 6
+        meaning: "SSH 失敗・成果物書き込み失敗"
+async_events:
+  - name: "slot-completed"
+    channel: "slot-completed"
+    direction: "publish"
+    message: "SlotCompletedNotice"
+    summary: "リランで起動した runner が完了時に blue-completed / green-completed を送る(RAPID_CROSSCHECK_MODE=on のみ。契約は UC「速報クロスチェック runner へ完了通知を送信する」)"
+schemas: []

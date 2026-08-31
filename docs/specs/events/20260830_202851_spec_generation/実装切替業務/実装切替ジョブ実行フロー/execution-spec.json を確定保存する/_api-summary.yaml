@@ -1,0 +1,86 @@
+uc: "execution-spec.json を確定保存する"
+business: "実装切替業務"
+buc: "実装切替ジョブ実行フロー"
+paths: []
+x_cli_commands:
+  - name: "$BLUE_RUNNER / $GREEN_RUNNER"
+    tier: "tier-facade"
+    role: "uses"
+    synopsis: "<runner> --run-id <run_id> --job-id <JOB_ID> --role blue|green --mode foreground|background [--execution-spec <path>] -- [PARAM...]"
+    invoked_by: "facade.sh / background-rerun.sh(内部呼び出し)"
+    args: []
+    options:
+      - name: "--execution-spec"
+        type: "string"
+        required: false
+        description: "指定時は保存フェーズをスキップし、既存ファイルを正本として読む"
+    stdin: "なし"
+    stdout: "なし"
+    stderr: "なし(実行ログと stderr.log)"
+    exit_codes:
+      - code: 0
+        meaning: "自 slot 節の保存完了 / 自 slot 節が既存(何もしない) / 復元起動でスキップ"
+      - code: 2
+        meaning: "復元起動(--execution-spec)で spec なし・run_id / job_id 不一致・必須フィールド欠落(exitcode.txt=2。検証は UC「実装スクリプトを実行して Runner Result を出力する」)"
+      - code: 6
+        meaning: "lock 取得タイムアウト・一時ファイル書き込み・mv 失敗・既存 JSON 解析失敗(exitcode.txt=6 と stderr.log を揃える)"
+async_events: []
+schemas:
+  - name: "ExecutionSpec"
+    properties:
+      - name: "schema_version"
+        type: "string"
+        required: true
+      - name: "run_id"
+        type: "string"
+        required: true
+      - name: "parent_run_id"
+        type: "string|null"
+        required: true
+      - name: "job_id"
+        type: "string"
+        required: true
+      - name: "params"
+        type: "string[]"
+        required: true
+      - name: "rapid_crosscheck_mode"
+        type: "enum(on|off)"
+        required: true
+      - name: "slots"
+        type: "object(role -> SlotSpec)"
+        required: true
+  - name: "SlotSpec"
+    properties:
+      - name: "mode"
+        type: "enum(foreground|background)"
+        required: true
+      - name: "host"
+        type: "string"
+        required: true
+      - name: "exec_user"
+        type: "string"
+        required: true
+      - name: "script_path"
+        type: "string"
+        required: true
+      - name: "work_dir"
+        type: "string"
+        required: true
+      - name: "fixed_args"
+        type: "string[]"
+        required: true
+      - name: "hang_detect_limit_minutes"
+        type: "integer"
+        required: true
+      - name: "credential_ref"
+        type: "string|null"
+        required: false
+      - name: "map_version"
+        type: "string"
+        required: true
+      - name: "impl_version"
+        type: "string"
+        required: true
+      - name: "finalized_at"
+        type: "string(UTC ISO 8601)"
+        required: true

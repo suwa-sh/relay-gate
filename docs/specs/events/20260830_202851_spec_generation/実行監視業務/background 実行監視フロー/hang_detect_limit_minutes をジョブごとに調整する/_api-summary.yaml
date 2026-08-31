@@ -1,0 +1,92 @@
+uc: "hang_detect_limit_minutes をジョブごとに調整する"
+business: "実行監視業務"
+buc: "background 実行監視フロー"
+paths: []
+x_cli_commands:
+  - name: "hang-detect-trend.sh"
+    tier: "tier-ops"
+    role: "defines"
+    synopsis: "hang-detect-trend.sh [--job-id JOB_ID] [--role blue|green|rapid-crosscheck] [--since UTC_DATETIME] [--limit N] [--all] [--verbose]"
+    invoked_by: "運用者(直接起動)"
+    args: []
+    options:
+      - name: "--job-id"
+        type: "string"
+        required: false
+        default: ""
+        description: "絞り込む job_id(英数字・_・- のみ)"
+      - name: "--role"
+        type: "enum"
+        required: false
+        default: ""
+        description: "絞り込む監視対象 role: blue / green / rapid-crosscheck"
+      - name: "--since"
+        type: "string"
+        required: false
+        default: "実行時刻の 3 ヶ月前"
+        description: "集計期間の開始(UTC ISO 8601、Z 付き)"
+      - name: "--limit"
+        type: "integer"
+        required: false
+        default: "100"
+        description: "出力行数の上限"
+      - name: "--all"
+        type: "boolean"
+        required: false
+        default: "false"
+        description: "hang_suspected_count=0 の行も出す"
+    stdin: "なし"
+    stdout: "TSV(ヘッダー行あり): job_id, role, run_count, hang_suspected_count, completed_after_alert_count, max_elapsed_minutes_at_alert, last_elapsed_minutes_at_alert, current_limit_minutes"
+    stderr: "error: / warn: / info: 行"
+    exit_codes:
+      - code: 0
+        meaning: "集計して出力した(0 行でも 0)"
+      - code: 2
+        meaning: "引数不正(未知オプション / role 列挙外 / since 形式不正 / limit 1 未満)・設定ファイル不在・RAPID_DB_CONN_REF 欠落(config file not found / option required)"
+      - code: 3
+        meaning: "RAPID_CROSSCHECK_MODE=off(management db is not configured)"
+      - code: 6
+        meaning: "管理 DB 接続・SQL 失敗"
+  - name: "validate-config.sh"
+    tier: "tier-facade"
+    role: "uses"
+    synopsis: "validate-config.sh --job-map <path>"
+    invoked_by: "運用者 / 基盤適用設計者(直接起動)"
+    args: []
+    options:
+      - name: "--job-map"
+        type: "string"
+        required: true
+        default: ""
+        description: "検証する slot ジョブマップ TSV のパス(hang_detect_limit_minutes は 0 以上の整数)"
+    stdin: "なし"
+    stdout: "検証 OK 時 map_path: {path} / rows={N} / map_version= / impl_version= の 4 行(他 UC「slot ごとのジョブマップを定義する」の契約に従う)"
+    stderr: "error: hang_detect_limit_minutes is not a non-negative integer line=N job_id=... value=..."
+    exit_codes:
+      - code: 0
+        meaning: "検証 OK"
+      - code: 2
+        meaning: "検証 NG(ファイル不在・読み取り不可を含む)"
+  - name: "facade.sh"
+    tier: "tier-facade"
+    role: "uses"
+    synopsis: "facade.sh JOB_ID [PARAM...]"
+    invoked_by: "ジョブスケジューラ(業務ジョブ定義)。本 UC では調整後の次回 run で execution-spec.json への反映を確認する E2E 用の参照(契約は UC「slot 実行モードを選択して runner を起動する」)"
+    args:
+      - name: "JOB_ID"
+        type: "string"
+        required: true
+        description: "業務ジョブ識別子"
+      - name: "PARAM..."
+        type: "string[]"
+        required: false
+        description: "追加引数"
+    options: []
+    stdin: "なし"
+    stdout: "foreground 実装の標準出力そのまま(本 UC は読まない。反映確認は facade/<run_id>/execution-spec.json の hang_detect_limit_minutes で行う)"
+    stderr: "foreground 実装の標準エラーそのまま"
+    exit_codes:
+      - code: "実装の終了コード(0-255)"
+        meaning: "foreground 実装の結果"
+async_events: []
+schemas: []

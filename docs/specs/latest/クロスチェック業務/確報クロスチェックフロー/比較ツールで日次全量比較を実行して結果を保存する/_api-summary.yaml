@@ -1,0 +1,27 @@
+uc: "比較ツールで日次全量比較を実行して結果を保存する"
+business: "クロスチェック業務"
+buc: "確報クロスチェックフロー"
+paths: []
+x_cli_commands:
+  - name: "final-crosscheck-worker.sh"
+    tier: "tier-final-crosscheck"
+    role: "uses"
+    synopsis: "final-crosscheck-worker.sh [--once] [--worker-id <id>](比較実行部分。コマンド契約の正本は UC「確報比較依頼を claim する」)"
+    invoked_by: "ジョブスケジューラ(定期ジョブ)または DB セグメント上の常駐プロセス"
+    args: []
+    options: []
+    stdin: "なし"
+    stdout: "出力しない(比較ツールの stdout は依頼レコードと stdout.log に保存)"
+    stderr: "error: compare tool launch failed final_crosscheck_id=... command=...(6。依頼は FAILED exit_code=6 error_summary=launch failed)/ error: no catalog rows catalog_version=... path: ...(6)/ error: artifact dir is not writable path: ...(6)/ error: management db update failed final_crosscheck_id=...(6)。比較ツールの stderr は流さない"
+    exit_codes:
+      - code: 0
+        meaning: "依頼を 1 件終端(SUCCEEDED / FAILED)まで保存できた。比較ツールの非 0 は worker の終了コードに反映しない。RUNNING 遷移 UPDATE 0 件(lease 失効で回収済み)・終端 UPDATE 0 件(比較中に ABORTED)も 0"
+      - code: 6
+        meaning: "比較ツール起動失敗・カタログ 0 行(依頼は FAILED exit_code=6 を保存)、成果物書き込み失敗、管理 DB UPDATE 失敗(SQL エラー)"
+async_events:
+  - name: "final-crosscheck-requests"
+    channel: "final-crosscheck-requests"
+    direction: "subscribe"
+    message: "FinalCrosscheckRequestMessage"
+    summary: "claim 済み依頼を RUNNING にして全量比較を実行し、stdout / stderr / exit_code を依頼レコードへ保存して SUCCEEDED / FAILED にする(runner の polling が読む)"
+schemas: []

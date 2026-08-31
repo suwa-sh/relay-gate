@@ -1,0 +1,48 @@
+version: "1.0"
+event_id: "20260830_202427_arch_infra_feedback_20260830_190412_infra_product_design"
+created_at: "2026-08-30T20:24:27"
+source: "インフラ設計 20260830_190412_infra_product_design に基づくアーキテクチャフィードバック"
+trigger_event: "infra:20260830_190412_infra_product_design"
+
+# 本ファイルは差分のみを表す(events/ に保持する記録用)。
+# 実体マージ先は docs/arch/latest/arch-design.yaml(全量。本フィードバックにより既に更新済み)。
+
+changes:
+  system_architecture:
+    cross_tier_policies:
+      add:
+        - id: "CTP-010"
+          name: "SLI/SLOベースのオブザーバビリティ方針"
+          description: "可用性・レイテンシ・エラー率・スループットの4指標をSLIとして定義し、月次エラーバジェットで運用する。facade起動・中継オーバーヘッドのp99レイテンシ、日次確報クロスチェックの夜間バッチウィンドウ8時間以内完了、月次エラー率5%未満をSLOとして持つ。ダッシュボードは新規構築せず組織既存監視への統合と運用者向け日次メールサマリーで代替する"
+          reason: "インフラ設計(MCL product-design)の結果に基づく: product-observability.yamlのSLI/SLO定義をアーキテクチャレベルの方針として明示化する。CTP-007(性能方針)を補強するオブザーバビリティ観点"
+          source_model: "infra: product-observability.yaml → sli, slo, alerting"
+          confidence: "medium"
+        - id: "CTP-011"
+          name: "コスト最適化方針(既存ホスト相乗り)"
+          description: "既存のジョブスケジューラ実行ホストと管理DBホストへ相乗りし、新規ホスト・商用ライセンス・監視基盤の追加投資を最小化する。オートスケール基盤は導入せず、水平スケールが必要な場合はホスト追加による手動対応とする"
+          reason: "インフラ設計(MCL product-design)の結果に基づく: product-cost-hints.yamlのcost_posture: cost_optimizedとrightsizing/autoscaling方針をアーキテクチャレベルの方針として明示化する"
+          source_model: "infra: product-cost-hints.yaml → recommendations"
+          confidence: "medium"
+    cross_tier_rules:
+      add:
+        - id: "CTR-006"
+          name: "オンプレミス代替構成における手動運用への配慮"
+          description: "自動スケール・自動フェイルオーバー・オブジェクトストレージのライフサイクル管理はオンプレミス構成では持たない(OS標準機能による手動水平スケール、単一インスタンスDBの手動復旧、ファイル領域での手動ローテーション)。運用手順書にホスト追加・障害復旧・保持期間超過分削除の手動手順を明記し、自動化が無いことを前提にした運用体制を組む"
+          reason: "インフラ設計(MCL product-design)の結果に基づく: product-mapping-onprem.yamlでfidelity=\"partial\"と評価された箇所(実行基盤・管理DB・成果物ストレージ・バックアップ監視)に共通する制約をクロスティアルールとして明示化する"
+          source_model: "infra: product-mapping-onprem.yaml → mappings[].fidelity=partial"
+          confidence: "medium"
+  data_architecture:
+    storage_mapping:
+      upgrade:
+        - entity_id: "E-008"
+          before: "medium"
+          after: "high"
+          reason: "infra: product-mapping-onprem.yaml → config_storeのfidelity=exactで適合確認"
+        - entity_id: "E-012"
+          before: "medium"
+          after: "high"
+          reason: "infra: product-mapping-onprem.yaml → execution_log_storeのfidelity=exactで適合確認"
+
+not_applied:
+  - description: "管理DBのRPO 4h/RTO 12h具体値の明文化(technology_context.constraintsへの追加候補)"
+    reason: "auto_adoptの保守的方針により、既存のCTP-006(可用性と計画停止)と重複しうる詳細値の追加は見送り、todo.mdに確認事項として記録した(次回arch見直し時に統合を検討)"

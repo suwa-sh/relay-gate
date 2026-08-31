@@ -1,0 +1,25 @@
+---
+# relay-gate-backup: 管理DBの日次バックアップとホスト監視統合を構成する
+# 対応: product-impl-onprem.yaml#impl.operations.backup_and_monitoring
+
+- name: 日次pg_basebackup用cronジョブを配置する
+  ansible.builtin.cron:
+    name: "relay-gate pg_basebackup"
+    minute: "0"
+    hour: "2"
+    job: >-
+      pg_basebackup -D /var/lib/relay-gate/backup/$(date +\%Y\%m\%d) -Fp -X stream
+      >> /var/log/relay-gate/backup.log 2>&1
+    user: postgres
+
+- name: 組織既存の監視エージェント連携設定を確認する(存在すれば統合、無ければfallback)
+  ansible.builtin.stat:
+    path: /etc/relay-gate/monitoring-agent-present
+  register: monitoring_agent_marker
+
+- name: fallback監視(sar/df + cronメール)を有効化する(組織既存監視が無い場合のみ)
+  ansible.builtin.cron:
+    name: "relay-gate fallback host monitoring"
+    minute: "*/15"
+    job: "/usr/bin/relay-gate-host-monitor.sh | mail -s 'relay-gate host monitor' ops@example.invalid"
+  when: not monitoring_agent_marker.stat.exists

@@ -1,0 +1,115 @@
+uc: "実行を ABORTED へ遷移させる"
+business: "実行復旧業務"
+buc: "実行中止フロー"
+paths: []
+x_cli_commands:
+  - name: "abort-blue.sh"
+    tier: "tier-ops"
+    role: "uses"
+    synopsis: "abort-blue.sh --run-id <RUN_ID> [--yes]"
+    invoked_by: "運用者(直接起動)/ ジョブスケジューラ(--yes)"
+    args: []
+    options:
+      - name: "--run-id"
+        type: "string"
+        required: true
+        default: ""
+        description: "対象 run_id。slot_executions(run_id, slot='blue') を background かつ RUNNING のとき ABORTED へ"
+      - name: "--yes"
+        type: "boolean"
+        required: false
+        default: "false"
+        description: "停止確認省略"
+    stdin: "前半 UC と同一"
+    stdout: "(現在状態の後に)status=ABORTED / aborted_at={UTC}"
+    stderr: "error: run is not abortable run_id=... role=blue mode=... status=... / error: run is not abortable (state changed concurrently) ..."
+    exit_codes:
+      - code: 0
+        meaning: "ABORTED へ更新し COMMIT した(parallel_runs が STARTED / RUNNING なら併せて ABORTED。COMPLETED は変更しない)"
+      - code: 3
+        meaning: "中止不可(background かつ RUNNING でない)/ 条件付き UPDATE の更新件数 0"
+      - code: 6
+        meaning: "管理 DB 接続・SQL 失敗"
+  - name: "abort-green.sh"
+    tier: "tier-ops"
+    role: "uses"
+    synopsis: "abort-green.sh --run-id <RUN_ID> [--yes]"
+    invoked_by: "運用者(直接起動)/ ジョブスケジューラ(--yes)"
+    args: []
+    options:
+      - name: "--run-id"
+        type: "string"
+        required: true
+        default: ""
+        description: "対象 run_id。slot_executions(run_id, slot='green') を background かつ RUNNING のとき ABORTED へ"
+      - name: "--yes"
+        type: "boolean"
+        required: false
+        default: "false"
+        description: "停止確認省略"
+    stdin: "前半 UC と同一"
+    stdout: "status=ABORTED / aborted_at={UTC}"
+    stderr: "abort-blue.sh と同じ(role=green)"
+    exit_codes:
+      - code: 0
+        meaning: "ABORTED へ更新した"
+      - code: 3
+        meaning: "中止不可 / 更新件数 0"
+      - code: 6
+        meaning: "管理 DB 失敗"
+  - name: "abort-rapid-crosscheck.sh"
+    tier: "tier-ops"
+    role: "uses"
+    synopsis: "abort-rapid-crosscheck.sh --run-id <RUN_ID> [--yes]"
+    invoked_by: "運用者(直接起動)/ ジョブスケジューラ(--yes)"
+    args: []
+    options:
+      - name: "--run-id"
+        type: "string"
+        required: true
+        default: ""
+        description: "対象 run_id。rapid_crosscheck_requests を RUNNING のとき ABORTED へ"
+      - name: "--yes"
+        type: "boolean"
+        required: false
+        default: "false"
+        description: "停止確認省略"
+    stdin: "前半 UC と同一"
+    stdout: "status=ABORTED / aborted_at={UTC}"
+    stderr: "error: request is not abortable run_id=... role=rapid-crosscheck status=..."
+    exit_codes:
+      - code: 0
+        meaning: "ABORTED へ更新した(parallel_runs が STARTED / RUNNING なら併せて ABORTED。COMPLETED は変更しない。更新 0 件で可)"
+      - code: 3
+        meaning: "中止不可(RUNNING でない)/ 更新件数 0"
+      - code: 6
+        meaning: "管理 DB 失敗"
+  - name: "abort-final-crosscheck.sh"
+    tier: "tier-ops"
+    role: "uses"
+    synopsis: "abort-final-crosscheck.sh --run-id <FINAL_CROSSCHECK_ID> [--yes]"
+    invoked_by: "運用者(直接起動)/ ジョブスケジューラ(--yes)"
+    args: []
+    options:
+      - name: "--run-id"
+        type: "string"
+        required: true
+        default: ""
+        description: "対象 final_crosscheck_id。final_crosscheck_requests を RUNNING のとき ABORTED へ"
+      - name: "--yes"
+        type: "boolean"
+        required: false
+        default: "false"
+        description: "停止確認省略"
+    stdin: "前半 UC と同一"
+    stdout: "status=ABORTED / aborted_at={UTC}"
+    stderr: "error: request is not abortable run_id=... role=final-crosscheck status=..."
+    exit_codes:
+      - code: 0
+        meaning: "ABORTED へ更新した(parallel_runs は持たないため併更新なし)"
+      - code: 3
+        meaning: "中止不可(RUNNING でない)/ 更新件数 0"
+      - code: 6
+        meaning: "管理 DB 失敗"
+async_events: []
+schemas: []

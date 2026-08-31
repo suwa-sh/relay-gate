@@ -1,0 +1,11 @@
+---
+- name: reload systemd and restart relay-gate worker
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: reload systemd and enable hang-detector timer
+  ansible.builtin.systemd:
+    name: relay-gate-hang-detector.timer
+    daemon_reload: true
+    enabled: true
+    state: started

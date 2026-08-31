@@ -1,0 +1,50 @@
+---
+# relay-gate-runtime: 実行ホストの systemd service/timer と成果物ディレクトリを構成する
+# 対応: product-impl-onprem.yaml#impl.compute.execution_hosts, impl.storage.artifact_store
+
+- name: 成果物ディレクトリ(RAID1ボリューム上)を作成する
+  ansible.builtin.file:
+    path: /var/lib/relay-gate/facade
+    state: directory
+    owner: relay-gate
+    group: relay-gate
+    mode: "0750"
+
+- name: 実行ログディレクトリを作成する
+  ansible.builtin.file:
+    path: /var/log/relay-gate
+    state: directory
+    owner: relay-gate
+    group: relay-gate
+    mode: "0750"
+
+- name: 常駐worker用systemd unitを配置する(segment判定に応じて)
+  ansible.builtin.template:
+    src: "relay-gate-{{ item }}-worker.service.j2"
+    dest: "/etc/systemd/system/relay-gate-{{ item }}-worker.service"
+    mode: "0644"
+  loop:
+    - rapid
+    - final-crosscheck
+  when: (item == 'rapid' and segment == 'execution') or (item == 'final-crosscheck' and segment == 'db')
+  notify: reload systemd and restart relay-gate worker
+
+- name: ハング検知timer(5分ごと、実行ホストセグメントのみ)を配置する
+  ansible.builtin.template:
+    src: relay-gate-hang-detector.timer.j2
+    dest: /etc/systemd/system/relay-gate-hang-detector.timer
+    mode: "0644"
+  when: segment == 'execution'
+  notify: reload systemd and enable hang-detector timer
+
+- name: SSH known_hosts を事前配布する
+  ansible.builtin.copy:
+    src: files/known_hosts
+    dest: /etc/ssh/ssh_known_hosts
+    mode: "0644"
+
+- name: logrotate設定を配置する(3ヶ月保管)
+  ansible.builtin.template:
+    src: relay-gate-logrotate.j2
+    dest: /etc/logrotate.d/relay-gate
+    mode: "0644"

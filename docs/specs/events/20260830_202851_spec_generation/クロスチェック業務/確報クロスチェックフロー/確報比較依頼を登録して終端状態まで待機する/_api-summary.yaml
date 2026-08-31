@@ -1,0 +1,60 @@
+uc: "確報比較依頼を登録して終端状態まで待機する"
+business: "クロスチェック業務"
+buc: "確報クロスチェックフロー"
+paths: []
+x_cli_commands:
+  - name: "final-crosscheck-runner.sh"
+    tier: "tier-final-crosscheck"
+    role: "defines"
+    synopsis: "final-crosscheck-runner.sh --business-date <YYYY-MM-DD> --catalog-version <ver> [--verbose] [--help]"
+    invoked_by: "ジョブスケジューラ(確報クロスチェックジョブ定義)"
+    args: []
+    options:
+      - name: "--business-date"
+        type: "string"
+        required: true
+        description: "比較対象の業務日付(YYYY-MM-DD)"
+      - name: "--catalog-version"
+        type: "string"
+        required: true
+        description: "対象カタログの版。対象カタログ TSV に存在する値"
+      - name: "--verbose"
+        type: "boolean"
+        required: false
+        description: "info を実行ログに出す(stderr には出さない)"
+      - name: "--help"
+        type: "boolean"
+        required: false
+        description: "usage を stdout に出して終了コード 0"
+    stdin: "なし"
+    stdout: "待機中は出力しない。終端到達後は依頼に保存された stdout を無加工で出す(UC「保存済みの確報結果をジョブスケジューラへ返す」)"
+    stderr: "待機中は relay-gate 自身のエラーのみ(error: / hint:)。終端到達後は依頼に保存された stderr をバイト列のまま無加工で出す(UC「保存済みの確報結果をジョブスケジューラへ返す」)。待機中の進捗は実行ログにのみ残す"
+    exit_codes:
+      - code: 2
+        meaning: "引数・設定検証エラー(必須オプション欠落 error: option required option=--xxx、business_date 形式不正、catalog_version が対象カタログに無い、final-crosscheck.env 不在または FINAL_DB_CONN_REF 欠落、# target_catalog_path= 宣言なし)"
+      - code: 6
+        meaning: "実行エラー(管理 DB 接続・INSERT・SELECT 失敗、polling 上限 FINAL_POLL_LIMIT_SEC 超過。依頼は変更しない)。終端到達後は上記 4 分類を適用せず、依頼に保存された exit_code をそのまま返す(無加工中継)"
+async_events:
+  - name: "final-crosscheck-requests"
+    channel: "final-crosscheck-requests"
+    direction: "publish"
+    message: "FinalCrosscheckRequestMessage"
+    summary: "final_crosscheck_requests に REQUESTED 行を INSERT し、worker の claim を待つ(RDB ジョブキュー)"
+schemas:
+  - name: "FinalCrosscheckRequestMessage"
+    properties:
+      - name: "final_crosscheck_id"
+        type: "string"
+        required: true
+      - name: "business_date"
+        type: "string"
+        required: true
+      - name: "catalog_version"
+        type: "string"
+        required: true
+      - name: "status"
+        type: "string"
+        required: true
+      - name: "requested_at"
+        type: "string"
+        required: true

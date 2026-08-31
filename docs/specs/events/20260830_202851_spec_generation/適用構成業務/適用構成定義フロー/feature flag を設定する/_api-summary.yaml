@@ -1,0 +1,56 @@
+uc: "feature flag を設定する"
+business: "適用構成業務"
+buc: "適用構成定義フロー"
+paths: []
+x_cli_commands:
+  - name: "validate-config.sh"
+    tier: "tier-facade"
+    role: "defines"
+    synopsis: "validate-config.sh --feature-flag <path> [--verbose] [--help]"
+    invoked_by: "基盤適用設計者(直接起動)"
+    args: []
+    options:
+      - name: "--feature-flag"
+        type: "string"
+        required: false
+        description: "検証する feature flag env ファイルのパス。検証種別オプション(--feature-flag / --job-map / --crosscheck-job-map / --target-catalog)のうちちょうど 1 つを指定する(排他。0 個または 2 個以上は終了コード 2)"
+      - name: "--verbose"
+        type: "boolean"
+        required: false
+        default: "false"
+        description: "info を stderr に出す"
+      - name: "--help"
+        type: "boolean"
+        required: false
+        default: "false"
+        description: "使い方を stdout に出して終了コード 0"
+    stdin: "なし"
+    stdout: "検証 OK 時に固定順 12 キー: config_path, blue_mode, green_mode, blue_runner, green_runner, rapid_crosscheck_mode, config_version, operation_mode, blue_job_map, green_job_map, blue_runner_if_version, green_runner_if_version(末尾 4 キーは UC「slot runner の実体スクリプトを割り当てる」が定義。未設定・off・--help 未応答は -)"
+    stderr: "違反ごとに error: 1 行(全件。ファイル不在は error: config file not found path: ... など契約 validate-config.sh の共通形式)。未知キーは warn:。対処が明確なら hint:"
+    exit_codes:
+      - code: 0
+        meaning: "検証 OK"
+      - code: 2
+        meaning: "引数不正(検証種別オプションの 0 個・複数指定を含む)/ ファイルなし / 両 slot foreground / mode 列挙外 / runner 実行不可・相対パス / 対応ジョブマップなし / RAPID_CROSSCHECK_MODE 列挙外 / foreground 無し / 確報制御キーあり"
+async_events: []
+schemas:
+  - name: "FeatureFlagEnv"
+    properties:
+      - name: "BLUE_MODE"
+        type: "enum(foreground|background|off)"
+        required: true
+      - name: "GREEN_MODE"
+        type: "enum(foreground|background|off)"
+        required: true
+      - name: "BLUE_RUNNER"
+        type: "string(absolute path)"
+        required: false
+      - name: "GREEN_RUNNER"
+        type: "string(absolute path)"
+        required: false
+      - name: "RAPID_CROSSCHECK_MODE"
+        type: "enum(on|off)"
+        required: true
+      - name: "CONFIG_VERSION"
+        type: "string"
+        required: false

@@ -1,0 +1,50 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "product"
+artifact_id: "product-decision-002"
+title: "管理DB(ジョブキュー兼管理DB)のRDBMS選定"
+status: "accepted"
+generated_at: "2026-08-30T20:17:49"
+source_refs:
+  - "docs/mcl/product/output/product-workload-model.yaml#product.database.management_db"
+  - "docs/cloud-context/sources/onprem/postgresql-high-availability.md"
+inputs_ref:
+  - "product-relay-gate-workload-model"
+
+decision:
+  context: |
+    worker の poll / claim / lease をトランザクション内の行ロックで排他制御し、run_id の一意作成を
+    主キー制約で保証できる、単一インスタンスのリレーショナル DB を選定する必要がある。
+  conflict_type: "capability"
+  options:
+    - id: "postgresql"
+      description: "PostgreSQL 16 セルフホスト(単一インスタンス)"
+      pros:
+        - "SELECT ... FOR UPDATE SKIP LOCKED によるジョブキュー実装の実績が豊富"
+        - "psql CLI・pg_basebackup + WAL アーカイブによる PITR がOSSのみで完結する"
+        - "将来ストリーミングレプリケーションでHA拡張する経路がある"
+      cons:
+        - "マネージド RDB のような自動パッチ・自動フェイルオーバーは無い"
+    - id: "mysql_mariadb"
+      description: "MySQL / MariaDB(8.0 以降で SKIP LOCKED 利用可)"
+      pros:
+        - "組織に MySQL 標準運用がある場合は学習コストが低い"
+      cons:
+        - "PITR やロールベース権限分離の運用実績で PostgreSQL に劣後する"
+    - id: "sqlite"
+      description: "SQLite(単一ホスト運用限定)"
+      pros:
+        - "追加ミドルウェア不要で最小構成"
+      cons:
+        - "複数 worker の同時 claim には不向き(ファイルロック粒度が粗い)"
+        - "確報 worker を DB セグメント上の別ホストに分離する要件(REQ-COMP-004)を満たせない"
+  chosen_option: "postgresql"
+  rationale: >-
+    REQ-DB-001(行ロック付きトランザクションでの排他)・REQ-DB-004(日次バックアップ、RPO 4h/RTO 12h)を
+    OSSのみで満たし、DB セグメント分離要件とも整合するため。
+  risk_assessment: >-
+    単一インスタンスのため自動フェイルオーバーは持たない(dr_model: none)。RTO 12h は手動復旧手順で
+    許容範囲内と評価。将来 DR 要件が強まる場合はストリーミングレプリケーション導入を再検討する。
+  affected_elements:
+    - "product.database.management_db"
+  review_date: "2027-08-30"

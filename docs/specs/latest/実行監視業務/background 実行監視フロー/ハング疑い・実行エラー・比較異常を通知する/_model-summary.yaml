@@ -1,0 +1,57 @@
+uc: "ハング疑い・実行エラー・比較異常を通知する"
+business: "実行監視業務"
+buc: "background 実行監視フロー"
+
+bounded_context_id: "BC-004"
+aggregate_id: "AG-004"
+
+models:
+  - name: "NotifyCommand"
+    tier: "tier-ops"
+    layer: "usecase"
+    type: "command"
+    rdra_info: "通知メール"
+  - name: "AlertDecision"
+    tier: "tier-ops"
+    layer: "domain"
+    type: "value-object"
+    rdra_info: "監視記録"
+  - name: "HangAlertMail"
+    tier: "tier-ops"
+    layer: "domain"
+    type: "value-object"
+    rdra_info: "通知メール"
+  - name: "MonitorRecordRepository"
+    tier: "tier-ops"
+    layer: "repository"
+    type: "record"
+    rdra_info: "監視記録"
+  - name: "AlertLogRepository"
+    tier: "tier-ops"
+    layer: "repository"
+    type: "record"
+    rdra_info: "実行ログ"
+  - name: "hang-detector.env"
+    tier: "tier-ops"
+    layer: "repository"
+    type: "record"
+    rdra_info: "通知メール"
+
+tables:
+  - name: "monitor_records"
+    rdra_info: "監視記録"
+    operations:
+      - type: "SELECT"
+        columns:
+          - name: "monitor_status"
+            value: ""
+          - name: "alerted_at"
+            value: ""
+        where: "run_id = ? AND role = ?(送信要否の冪等判定。on のみ)"
+    indexes_needed:
+      - columns: ["run_id", "role"]
+        reason: "主キーによる 1 件取得"
+        access_pattern: "通知対象ごとに 1 回"
+
+kvs: []
+object_storage: []

@@ -1,0 +1,82 @@
+uc: "slot runner の実体スクリプトを割り当てる"
+business: "適用構成業務"
+buc: "適用構成定義フロー"
+paths: []
+x_cli_commands:
+  - name: "$BLUE_RUNNER / $GREEN_RUNNER"
+    tier: "tier-facade"
+    role: "defines"
+    synopsis: "<runner> --run-id <run_id> --job-id <JOB_ID> --role blue|green --mode foreground|background [--execution-spec <path>] [--help] -- [PARAM...]"
+    invoked_by: "facade.sh / background-rerun.sh(内部呼び出し)"
+    args: []
+    options:
+      - name: "--run-id"
+        type: "string"
+        required: true
+        description: "run_id"
+      - name: "--job-id"
+        type: "string"
+        required: true
+        description: "JOB_ID"
+      - name: "--role"
+        type: "enum(blue|green)"
+        required: true
+        description: "自 slot"
+      - name: "--mode"
+        type: "enum(foreground|background)"
+        required: true
+        description: "実行モード"
+      - name: "--execution-spec"
+        type: "string"
+        required: false
+        description: "復元起動。ジョブマップを再解決しない"
+      - name: "--help"
+        type: "boolean"
+        required: false
+        default: "false"
+        description: "使い方と runner-if-version=1 を stdout に出す"
+      - name: "-- PARAM..."
+        type: "string[]"
+        required: false
+        description: "追加引数"
+    stdin: "なし"
+    stdout: "なし(--help を除く)。実装の stdout は facade/<run_id>/<role>/stdout.log へ"
+    stderr: "なし。実装の stderr は stderr.log へ"
+    exit_codes:
+      - code: "exitcode.txt の値"
+        meaning: "実装の終了コード(SSH 接続失敗は 6。仮採用)。exitcode.txt と一致させる"
+      - code: 2
+        meaning: "runner IF 引数不正 / ジョブマップ未定義 / --execution-spec 指定時の PARAM 併用・spec 不一致・二重起動 / on のとき rapid-crosscheck.env 不在(exitcode.txt=2)"
+      - code: 6
+        meaning: "Runner Result を揃えられない書き込み失敗"
+  - name: "validate-config.sh"
+    tier: "tier-facade"
+    role: "uses"
+    synopsis: "validate-config.sh --feature-flag <path> [--verbose]"
+    invoked_by: "基盤適用設計者"
+    args: []
+    options:
+      - name: "--feature-flag"
+        type: "string"
+        required: false
+        description: "feature-flag.env のパス。runner 実体と対応ジョブマップの検証を含む。検証種別オプション 4 つのうちちょうど 1 つを指定する(排他)"
+      - name: "--verbose"
+        type: "boolean"
+        required: false
+        default: "false"
+        description: "検証の詳細を stderr の info: に出す"
+    stdin: "なし"
+    stdout: "feature flag の出力に blue_job_map / green_job_map / blue_runner_if_version / green_runner_if_version を追記(off の slot と --help 未応答の slot は -)"
+    stderr: "runner path must be absolute / runner not executable / job map not found / warn: runner does not respond to --help slot=... runner=..."
+    exit_codes:
+      - code: 0
+        meaning: "検証 OK"
+      - code: 2
+        meaning: "runner 実体または対応ジョブマップの検証違反"
+async_events:
+  - name: "slot-completed"
+    channel: "slot-completed"
+    direction: "publish"
+    message: "SlotCompletedNotice"
+    summary: "runner 実体が RAPID_CROSSCHECK_MODE=on のとき自系統の公開 function へ送る(lib/runner-notify.sh)。契約は UC「速報クロスチェック runner へ完了通知を送信する」"
+schemas: []

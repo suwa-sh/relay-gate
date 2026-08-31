@@ -1,0 +1,627 @@
+round: 2
+reviewer: "spec 反証レビュー(生成とは別コンテキスト。第 2 ラウンド)"
+scope: "E/ 全体(_review 除く)。round-1 の blocker / major F-001〜F-026 を該当ファイルの実体で検証し、修正が波及した横断整合(契約 ⇔ tier md ⇔ spec.md BDD ⇔ _api-summary / _model-summary ⇔ rdb-schema)を BUC 別 5 系統で再精読。前回未精読 UC(業務ジョブの実行結果を確認する / execution-spec.json を確定保存する / 切り替えた運用モードで業務ジョブを実行する / 速報比較結果を参照する / 両系成功時に速報比較依頼を作成する / 確報クロスチェック結果を確認する / hang_detect_limit_minutes をジョブごとに調整する / 監視記録を保存する / リラン結果を parent_run_id で追跡する / 現在状態を確認して停止確認に応答する)を優先精読。再生成済みの uc-dependencies.md / usdm-acceptance-matrix.md / traceability-matrix.md はシナリオ名・定義元の追従を確認済み"
+summary:
+  resolved_blocker_major: 25   # F-001〜F-026 のうち F-019 を除く
+  resolved_minor_extra: 12     # F-028, F-029, F-030, F-033, F-035, F-036, F-038, F-039, F-040, F-042, F-043, F-044
+  reopened: 4                  # F-019(minor), F-031(minor), F-032(major), F-041(minor)
+  new_blocker: 0
+  new_major: 9                 # F-101〜F-109
+  new_minor: 33                # F-110〜F-142
+
+resolved:
+  - {id: F-001, resolution: fixed, note: "確報 比較実行 UC spec.md L189-247 / tier-final-crosscheck.md L120-148 が Given=REQUESTED + When --once に統一。claim UC tier L58 poll サイクル (3)/(4) と契約 --once 説明 L64 で「claim 後に同一プロセスで比較実行まで進む」が宣言済み"}
+  - {id: F-002, resolution: fixed, note: "検証 UC spec.md L63-92 / tier-ops.md L36・L62・L121-124 / _api-summary L30・L37、契約 background-rerun.sh stderr(execution-spec not found は --role blue|green のみ)・exit 3 role 分岐、artifact_layout readers、依頼再作成 UC / buc-spec の数珠つなぎ記述が一致"}
+  - {id: F-003, resolution: fixed, note: "完了通知 UC tier-facade.md L28・L44 / spec.md L114・L194 / _api-summary L63 / 契約 rapid-crosscheck-runner.sh notes[0] L344 / runner IF stderr L277 がすべて「実行ログ WARN のみ・stderr.log 追記なし」。E 配下(_review 除く)に「stderr.log に warn:」は 0 件"}
+  - {id: F-004, resolution: fixed, note: "S/spec.md L93-112・L168 / S/tier-facade.md L87-92 / S/_model-summary L100-122(INSERT pid=NULL + pid UPDATE + FAILED UPDATE)/ R/tier-facade.md L55 / 契約 facade.sh idempotency L220・runner IF idempotency L288 / rdb slot_executions.pid が一致(復元起動 UC の未追従は F-101、ログ文言差は F-105)"}
+  - {id: F-005, resolution: fixed, note: "S/tier-facade.md L62 / S/_api-summary L40 / M/tier-facade.md L33 / M/_api-summary L38 / 契約 facade.sh exit 6 condition L219 で「foreground 待機前の DB 書き込み失敗のみ 6、中継後 COMPLETED UPDATE 失敗は反映しない」に一致(文言差は F-104)"}
+  - {id: F-006, resolution: fixed, note: "S/tier-facade.md L36-42・L49 / R/tier-facade.md L24-30 / SR/tier-facade.md L27 / 完了通知 tier-rapid-crosscheck.md L26-30・L41 / 契約 facade.sh notes L227-228・runner IF environment L289 で引き継ぎ env 4 つと rapid-crosscheck.env 読み込み・不在 2 を宣言済み(速報側の文言差は F-103)"}
+  - {id: F-007, resolution: fixed, note: "監視 3 UC(判定 spec L162 / tier-ops L36、通知 spec L131、記録 spec L112)、確報 claim(spec L159・L168・L185、tier L33、_model-summary L47・L55 `:now`)、復元起動(spec L135・L194・L220・L227 正規表現照合)、abort(spec L121・L185、tier-ops L33・L115)が契約 environment_variables.RELAY_GATE_NOW L87-92 / shared_rules.run_id.test_verification L103 と一致。対象外だった依頼再作成 UC・調整 UC の固定 run_id は F-102"}
+  - {id: F-008, resolution: fixed, note: "契約 L169-170(6 値 + hang_judgement_to_monitor_status)/ 判定 tier-ops L68-77・L87 / 判定 _api-summary L23 / 記録 tier-ops L39-47 / 記録 _model-summary L45 / 通知 spec L107 / buc-spec L86・L145 / ui-design L154 / rdb monitor_status description で一致"}
+  - {id: F-009, resolution: fixed, note: "判定 spec L153・L165・L263-267 / tier-ops L34・L63・L154-158 / _api-summary L23 / 記録 tier-ops L48 / 契約 hang-detector.sh stderr L532・exit 0 L535・artifact_layout L1261 で「warn で対象外・監視記録なし・0」(path: の有無は F-135)"}
+  - {id: F-010, resolution: fixed, note: "判定 _model-summary L109 where に `status='ABORTED' AND run_id IN (未終端 monitor_records)` 追加、tier-ops L87 ABORTED → COMPLETED、spec L286-290 E2E 追加、契約 L535 一致"}
+  - {id: F-011, resolution: fixed, note: "判定 tier-ops L35・L65・L71 / _model-summary L76-91(slot_executions SELECT)/ spec L56・L151・L256-261 / 受信 spec L160-164(Given on、Then は監視記録 COMPLETED 終端)/ buc-spec L66・L80 / rdb slot_executions.used_by に判定 UC SELECT"}
+  - {id: F-012, resolution: fixed, note: "通知 tier-ops L39 / spec L130・L189 / 受信 tier-ops L32・L49・L101-102 / ui-design L169・L186 / asyncapi channel description L89-91 で「80 桁は 1〜13 行目、14 行目は折り返さず 1 行」(asyncapi schema description の残りは F-136)"}
+  - {id: F-013, resolution: fixed, note: "FF/spec.md L139-141・L146-148・L152-153 / FF/tier-facade.md L110-111・L123-124 の Given に --help 応答・ジョブマップ存在・mode≠off の RUNNER 指定を追加"}
+  - {id: F-014, resolution: fixed, note: "FF/_api-summary L15・L28、JM/_api-summary L15・L28、SR/_api-summary L61・L69 が契約 L897-900 の 12 キー・required false と一致(OM/_api-summary の残件は F-122)"}
+  - {id: F-015, resolution: fixed, note: "S/tier-facade.md L97 / S/spec.md L160 / OM/tier-facade.md L5・L37 / 契約 feature-flag.env.derived L1011・facade.sh execution_log L222 で operation_mode を実行ログに出す(キー順の差は F-120)"}
+  - {id: F-016, resolution: fixed, note: "SR/spec.md L143-145 Given に BLUE_MODE=foreground BLUE_RUNNER=<スタブ> GREEN_MODE=background RAPID_CROSSCHECK_MODE=off・--help 応答・ジョブマップ行"}
+  - {id: F-017, resolution: fixed, note: "速報 比較実行 UC spec L93-98・L140・L165・L246-251 / tier L51・L60・L71・L154-157 / _model-summary L75・L82・L91 / 契約 worker idempotency L388 で「起動失敗は INSERT しない」"}
+  - {id: F-018, resolution: fixed, note: "claim UC tier L24・L44・L141-144 / spec L53-57・L102・L189-194 / _api-summary L36-37 / 契約 worker exit 3 L382-384・feature-flag.env readers / ui-design L122 で off=3(mode=off)・on で env 欠落=2"}
+  - {id: F-020, resolution: fixed, note: "確報 claim UC tier L111-117・L124-130 / spec L165-171 が停止シグナル待ちスタブ + 実行中の worker_id / lease_until / status∈{CLAIMED,RUNNING} 検証に統一"}
+  - {id: F-021, resolution: fixed, note: "中継 UC spec L137・L142-172 / 確認 UC tier L74-79 が「別プロセスが 3 秒後に runner が登録した最新行を終端更新」形式。契約 L473 と整合"}
+  - {id: F-022, resolution: fixed, note: "比較定義 UC tier-rapid-crosscheck.md L65 / tier-final-crosscheck.md L68 / 契約 external_interfaces L958 で「抜き出した input/target-catalog.tsv の絶対パス」"}
+  - {id: F-023, resolution: fixed, note: "J/tier-facade.md L55・L123 / J/_api-summary L49 と 登録 UC tier L50・L139-140 / _api-summary が `error: option required option=--job-id|--catalog-version`。E 配下に `error: --xxx required` 0 件"}
+  - {id: F-024, resolution: fixed, note: "確報 比較実行 UC spec L232-236(lease 失効で別 worker に回収 → RUNNING UPDATE 0 件)、ABORTED 競合は spec L238-245 / tier L143-148 で終端 UPDATE 0 件として定義"}
+  - {id: F-025, resolution: fixed, note: "現在状態 UC spec L68-71・L120・L213-216 / tier-ops L58・L71・L108-116 / ABORTED spec L115 / buc-spec L122 / 契約 abort-final-crosscheck.sh stderr・exit 3・feature-flag.env readers / ui-design L122 で「final-crosscheck.env / FINAL_DB_CONN_REF の有無だけで判定、off 付記なし」"}
+  - {id: F-026, resolution: fixed, note: "検証 UC spec L72・L116・L138 / tier-ops L32・L58・L68・L72・L117 / _api-summary L37 / 契約 execution_spec_rules「slots.{role} 節が無い slot は mode=off とみなす」で一致"}
+  - {id: F-028, resolution: fixed, note: "所有各 UC の _api-summary(型 integer、options / exit_codes / synopsis [--help])を契約に転記済み"}
+  - {id: F-029, resolution: fixed, note: "J/spec L147・L152 に --run-id、R/spec L185 に --job-id、X/tier L110 / X/spec L170 にジョブマップ行、C/tier L95・L101 でスタブが 3 ファイルを書く"}
+  - {id: F-030, resolution: fixed, note: "契約 facade.sh option_placement L206 と S/tier-facade.md L19 が一致"}
+  - {id: F-033, resolution: fixed, note: "比較定義 UC spec L215-218 に header mismatch シナリオ追加、L119 の参照解消"}
+  - {id: F-035, resolution: fixed, note: "結果参照 UC spec L114・L179 / tier L38-39 / _model-summary L52 / data-visualization L46-47 / ui-design L79-82(request_status=FAILED)"}
+  - {id: F-036, resolution: fixed, note: "確報 比較実行 UC tier L37-38・L46・L70・L80-81 / spec L101-106・L148 / 契約 L501・L511-512。polling は status のみ(登録 tier L63、_model-summary L67-71)、4 列 SELECT は中継 UC 1 回"}
+  - {id: F-038, resolution: fixed, note: "登録 UC tier L52-53 に共通形式 3 文言。`management db unavailable` / `request_id=` は E 配下 0 件、ui-design L236 は final_crosscheck_id="}
+  - {id: F-039, resolution: fixed, note: "登録 UC spec L181・L186、中継 UC spec L170・L174 / tier L42、判定 / 受信 / 通知 UC の Given 具体化を確認"}
+  - {id: F-040, resolution: fixed, note: "契約 --exit-code 0〜255 L316、--job-id 照合先 parallel_runs.job_id L312。asyncapi に elapsed_minutes=75 の例なし"}
+  - {id: F-042, resolution: fixed, note: "検証 UC spec L121・L140・L248-251 / tier-ops L33・L56・L74・L92 / _model-summary L43-47 / 契約 background-rerun.sh hint + exit 3「元 slot が未起動」+ started-at.txt readers。追跡 tier-ops L39 に lineage cycle detected(6)"}
+  - {id: F-043, resolution: fixed, note: "実行中止フロー buc-spec L76-78・L99 に `P_STARTED --> P_ABORTED`(仮採用)追加。同ファイル内の表の未追従は F-141"}
+  - {id: F-044, resolution: fixed, note: "速報 比較実行 tier L31・L72 根拠文修正、依頼作成 UC の E2E / tier Given に parallel_runs 行(tier 1 本の欠落は F-115)"}
+
+findings:
+  # ------------------------------------------------------------------
+  # 再掲(round-1 finding が完全には閉じていない)
+  # ------------------------------------------------------------------
+  - id: F-032
+    viewpoint: 4
+    severity: major
+    target: "適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/tier-rapid-crosscheck.md L5 vs L18・L78-85 / tier-final-crosscheck.md L5 vs L18・L54・L57 / spec.md L45・L213・L218・L223 / slot runner の実体スクリプトを割り当てる/tier-facade.md L51・spec.md L162・_api-summary.yaml L70 / slot ごとのジョブマップを定義する/tier-facade.md L32-41"
+    claim: |-
+      契約は `--crosscheck-job-map` / `--target-catalog` を値必須に確定し _api-summary も追従したが、比較定義 UC の tier 2 ファイルの引数表と spec.md のレイヤー表は「必須 No / 既定値あり / 値省略時は既定パス」のまま(tier-rapid-crosscheck.md は L5 と L18 で自己矛盾)。行の値不正メッセージも契約の共通形式(`error: <column> is <reason> line=N job_id=... value=...`)に揃っておらず、runner-if-version 未応答の warn 文言は SR の 3 ファイルとも契約と別文言。
+    evidence: |-
+      - tier-rapid-crosscheck.md:5「`--crosscheck-job-map <path>`(値必須)」/ :18「| `--crosscheck-job-map` | string(path) | No | `$RELAY_GATE_CONFIG_DIR/crosscheck-job-map.tsv` | …(値省略時は既定パス) |」
+      - tier-final-crosscheck.md:18「| `--target-catalog` | string(path) | No | `$RELAY_GATE_CONFIG_DIR/target-catalog.tsv` |」/ spec.md:45「パス解決(未指定なら `RELAY_GATE_CONFIG_DIR` の既定名)」
+      - cli-command-contract.yaml:908「値必須(既定パス … を使う場合も明示的に渡す)」/ :936「行の値不正: `error: <column> is <reason> line=N job_id=... value=...`」/ :933「`error: header mismatch expected=… actual=… path: ...`」
+      - tier-rapid-crosscheck.md:79「`error: compare_command is not executable job_id=... path=...`」(line= 無し・value= でなく path=)/ tier-final:54「`error: invalid target_type value=... line=N allowed=table,file`」/ spec.md:218 Then に `path:` 無し
+      - 契約 L915「`warn: runner does not respond to --help slot=... runner=...`」vs SR/tier-facade.md:51・spec.md:162・_api-summary.yaml:70「`warn: runner does not report runner-if-version slot=<s> path=<p>`」
+      - JM/tier-facade.md:32「`error: invalid job_id line=N value=<v>`」、:33「`error: host required line=N job_id=<v>`」(契約の `<column> is <reason>` 形でない)
+    suggested_fix: |-
+      比較定義 UC の引数表を「必須 Yes(値)/ 既定値 —」、spec.md:45 を「引数のパスを使う」に直す。行の値不正を `error: compare_command is not executable line=N job_id=... value=...` / `error: target_type is not in table,file line=N value=...` 形に、header mismatch の BDD に `path:` を追加。SR 3 ファイルと JM の文言を契約 L914-915 に揃える。
+
+  - id: F-019
+    viewpoint: 4
+    severity: minor
+    target: "クロスチェック業務/速報クロスチェックフロー/比較ツールでジョブ単位比較を実行して結果を登録する/tier-rapid-crosscheck.md L24 / spec.md L257 / tier BDD L162 vs cli-command-contract.yaml rapid-crosscheck-worker.sh stdout L373"
+    claim: |-
+      ABORTED 検出時の `exit_code=` が tier md は「比較ツールの終了コード」、契約は `-` で食い違う。BDD の Then は exit_code を検証しないため実装が割れても検出されない。
+    evidence: |-
+      - tier-rapid-crosscheck.md:24「終端 UPDATE 0 行(ABORTED 検出)→ `request_status=ABORTED` `result_status=-` `exit_code=<比較ツールの終了コード>` `comparison_result_id=-`」
+      - cli-command-contract.yaml:373「終端 UPDATE が 0 件(…ABORTED)のときは request_status=ABORTED / result_status=- / exit_code=- / comparison_result_id=-」
+    suggested_fix: |-
+      tier L24 を `exit_code=-` に直し、spec.md:257 / tier BDD:162 の Then に `exit_code=-` を追加する。
+
+  - id: F-031
+    viewpoint: 2
+    severity: minor
+    target: "実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/tier-facade.md L97・L182 / ジョブマップで JOB_ID から実行先を解決する/tier-facade.md / 実装スクリプトを実行して Runner Result を出力する/spec.md L38・L138 / foreground slot の結果をジョブスケジューラへ中継する/spec.md L80"
+    claim: |-
+      gherkin が期待する実行ログ文言の tier 宣言と SSH コマンド形式の統一が未対応。S tier の実行ログ一覧に `parallel_run status changed` が無く(契約 execution_log には有る)、J tier に `job map resolved` の宣言が無い。SSH は契約 `ssh -n {exec_user}@{host} '...'` に対し R spec 図・計算ルールが別形式(`-n` 無し)。
+    evidence: |-
+      - S/tier-facade.md:97 実行ログ一覧に `parallel_run status changed` 無し / :182 Then「実行ログに "parallel_run status changed from=STARTED to=RUNNING run_id=<run_id>" が出る」/ 契約 L223
+      - J/spec.md:143「実行ログに "job map resolved job_id=JOB001 slot=green host=host-green-01 map_version=map-v3" が出る」— J/tier-facade.md に宣言行なし
+      - R/spec.md:38「ssh -l exec_user host cd work_dir && …」/ R/spec.md:138「`ssh -o BatchMode=yes -l <exec_user> <host> -- "cd …"`」/ 契約 L967「`ssh -n {exec_user}@{host} 'cd {work_dir} && …'`」/ R/tier-facade.md:23「SSH は `-n` で stdin を閉じる」
+      - M/spec.md:80 error 行に `artifact_dir: ...` を同一行で含む vs M/tier-facade.md:31 は別行
+    suggested_fix: |-
+      S tier L97 と J tier に該当ログ行を追加し、R spec の SSH 形式を契約に、M spec の error 行を tier と同じ 2 行に揃える。
+
+  - id: F-041
+    viewpoint: 4
+    severity: minor
+    target: "実行監視業務/background 実行監視フロー/hang_detect_limit_minutes をジョブごとに調整する/tier-ops.md L85-88 / 監視記録を保存する/tier-ops.md L69・_model-summary.yaml L50-51"
+    claim: |-
+      契約側(rdb-schema / 契約 idempotency / data-visualization)は直ったが、調整 UC の tier-ops.md は hang_suspected_at を「判定日時」のまま、hang_detect_limit_minutes / started_at の列説明が rapid-crosscheck(RAPID_HANG_DETECT_LIMIT_MINUTES / 依頼の started_at)を覆っていない。記録 UC の tier / _model-summary も同じ欠落。
+    evidence: |-
+      - 調整 tier-ops.md:88「| hang_suspected_at | datetime | ハング疑い判定日時(NULL 可) |」/ :87「execution-spec.json 由来の上限」
+      - 記録 tier-ops.md:69「execution-spec.json の role ごとの値」/ 記録 _model-summary.yaml:51 同文
+      - rdb-schema.yaml monitor_records.hang_suspected_at「ハング疑い通知(hang-suspected)の送信成功日時」、hang_detect_limit_minutes「速報比較依頼(role=rapid-crosscheck)は hang-detector.env の RAPID_HANG_DETECT_LIMIT_MINUTES(既定 60)を転記」
+    suggested_fix: |-
+      調整 tier-ops.md:85-88 と記録 tier-ops.md:69 / _model-summary.yaml:51 を rdb-schema の列説明に揃える。
+
+  # ------------------------------------------------------------------
+  # 新規 major
+  # ------------------------------------------------------------------
+  - id: F-101
+    viewpoint: 4
+    severity: major
+    target: "実行復旧業務/background 側リランフロー/元の execution-spec.json から復元して新しい run_id で起動する/spec.md 処理フロー L90-101・データフロー L28/L53・状態遷移 L145-146・E2E L222 / tier-ops.md 処理順序 L55-56・クラッシュ耐性 L67 / _model-summary.yaml slot_executions L100-101 vs rdb-schema.yaml L29・L136 / cli-command-contract.yaml runner IF idempotency L288"
+    claim: |-
+      F-004 の修正(runner 起動前に pid=NULL で INSERT → 起動後 pid UPDATE)は facade UC にしか入っておらず、復元起動 UC は spec / tier-ops / _model-summary のすべてで「runner 起動 → PID 取得 → INSERT(pid 入り)」の順のまま。rdb-schema と契約は facade / background-rerun の両方に起動前 INSERT を要求しており、即時終了 runner の終端 UPDATE 0 件競合(round-1 F-004)がリラン経路で再現する。起動失敗時の行の扱い(spec「slot_executions に行は無い」)も rdb-schema「起動失敗時は NULL のまま」と矛盾する。
+    evidence: |-
+      - rdb-schema.yaml:29「facade / background-rerun は runner 起動前に status=RUNNING / pid=NULL で INSERT し、起動直後に pid を UPDATE する」/ :136 同旨(起動失敗時は NULL のまま)
+      - cli-command-contract.yaml:288「on 時の終端 UPDATE(…)は facade / background-rerun が起動前に INSERT した行を更新する」
+      - 復元 tier-ops.md:55「4. runner を非同期起動し PID を取得(…)」/ :56「5. on: `slot_executions` INSERT(run_id, slot=role, mode=background, pid, artifact_dir, status=RUNNING, started_at=now)」/ :67「手順 4 の後 | … | 管理レコードは STARTED、slot_executions なし」
+      - 復元 spec.md:94-96「GW-->>UC: pid」→「UC->>Repo: slot_executions INSERT(…, pid, …)」/ :222「parallel_runs の run_id={新 run_id} は STARTED のまま、slot_executions に行は無い」
+      - 復元 _model-summary.yaml:100-101「name: "pid" / value: "runner の PID"」(UPDATE 操作なし)/ rdb-schema slot_executions.used_by の復元 UC は ["INSERT"] のみ
+    suggested_fix: |-
+      復元 UC の処理順序を「parallel_runs INSERT → spec 保存 → slot_executions INSERT(pid=NULL) → runner 起動 → pid UPDATE → parallel_runs RUNNING」に改め、spec(sequence / データフロー / 状態遷移 / E2E L222 を FAILED ベストエフォート更新に)・tier-ops(手順・クラッシュ表)・_model-summary(pid=NULL INSERT + pid UPDATE)・rdb used_by(UPDATE 追加)・契約 background-rerun.sh exit 6(起動失敗時の FAILED 更新)を同時に更新する。
+
+  - id: F-102
+    viewpoint: 5
+    severity: major
+    target: "実行復旧業務/background 側リランフロー/速報比較依頼だけを新規作成する/spec.md E2E L181-187・L190・L200-203 / 実行監視業務/background 実行監視フロー/hang_detect_limit_minutes をジョブごとに調整する/spec.md L181-183・tier-facade.md L94-95 vs cli-command-contract.yaml shared_rules.run_id.test_verification L103"
+    claim: |-
+      F-007 の書き換え(run_id は形式パターン + 時刻部で照合、絶対時刻は RELAY_GATE_NOW を Given に置く)が 2 UC に波及していない。依頼再作成 UC は新 run_id を固定値 `20260830T130000Z-JOB001-a1b2c3d4` で Then / 後続 Given に要求し、調整 UC は facade.sh が発行する run_id を固定値で Then に書く。どちらも Given に RELAY_GATE_NOW が無く、契約上は乱数部を注入しないため到達不能。
+    evidence: |-
+      - 依頼再作成 spec.md:183「Then 終了コード 0 で stdout の最終 2 行が `run_id=20260830T130000Z-JOB001-a1b2c3d4` と …」/ :184-187 同固定値で DB 行を照合 / :181 Given に RELAY_GATE_NOW なし / :190・:200・:202 後続シナリオも同固定値を前提
+      - 調整 spec.md:181-182「When 次回の業務ジョブとして `facade.sh JOB001` を実行し run_id=20260830T020000Z-JOB001-3f9a1c2e が発行される / Then facade/20260830T020000Z-JOB001-3f9a1c2e/execution-spec.json の green の hang_detect_limit_minutes は 90 である」
+      - cli-command-contract.yaml:103「乱数部は注入しない。テスト(BDD の Then)では run_id を固定値で照合せず、形式パターン … と時刻部(RELAY_GATE_NOW 設定時はその値)で検証する」
+      - 復元 spec.md:194(修正済みの対比)「`run_id={新 run_id}` … 正規表現 `^[0-9]{8}T[0-9]{6}Z-JOB001-[0-9a-f]{8}$` に一致し」
+    suggested_fix: |-
+      復元 UC と同じく Then を `{新 run_id}`(正規表現照合)に書き換え、後続の Given / And は {新 run_id} 参照にする。調整 UC は Given に RELAY_GATE_NOW=2026-08-30T02:00:00Z を置き、Then を「発行された run_id(`^20260830T020000Z-JOB001-[0-9a-f]{8}$`)の execution-spec.json」にする。
+
+  - id: F-103
+    viewpoint: 4
+    severity: major
+    target: "クロスチェック業務/速報クロスチェックフロー/速報比較依頼を claim する/tier-rapid-crosscheck.md L31・L37・L139、_api-summary.yaml L30・L35 / 速報クロスチェック runner へ完了通知を送信する/tier-rapid-crosscheck.md L30・L36・L98、_api-summary.yaml L44・L49 / cli-command-contract.yaml rapid-crosscheck-runner.sh stderr L328・exit 2 L335"
+    claim: |-
+      F-006 / F-018 で入れた「on で rapid-crosscheck.env 不在・RAPID_DB_CONN_REF 欠落 → `error: management db is not configured`(2)」が、ui-design の全コマンド共通定型文・契約 on_missing・契約 worker stderr・facade 側 2 UC の `error: config file not found path: ...` / `error: option required option=RAPID_DB_CONN_REF path: ...` と食い違う。同じ欠落を worker / runner / facade で別文言にする実装になる。契約 rapid-crosscheck-runner.sh 側は stderr・exit 2 condition にこのケース自体が無い。
+    evidence: |-
+      - claim tier-rapid-crosscheck.md:31「on でファイル不在または `RAPID_DB_CONN_REF` 欠落は `error: management db is not configured` で終了コード 2」/ :139 Then 同文 / _api-summary.yaml:30
+      - 完了通知 tier-rapid-crosscheck.md:30・:36・:98 同文 / _api-summary.yaml:44「error: management db is not configured(rapid-crosscheck.env 不在・RAPID_DB_CONN_REF 欠落)」
+      - ui-design.md:123「設定ファイル不在・必須キー欠落の定型文(全コマンド共通): `error: config file not found path: ...` / `error: option required option=<KEY> path: ...`」
+      - cli-command-contract.yaml:374(worker stderr)「error: config file not found path: ...(2。on で rapid-crosscheck.env 不在)/ error: option required option=RAPID_DB_CONN_REF path: ...(2)」/ :1206 on_missing 同文 / :328・:335(runner)に env 欠落の文言・条件なし
+      - S/tier-facade.md:40「ファイル不在は `error: config file not found path: <path>`、キー欠落は `error: option required option=RAPID_DB_CONN_REF path: <path>`」
+    suggested_fix: |-
+      claim UC・完了通知 UC の exit 2 文言(tier 設定節・stderr 一覧・BDD・_api-summary)を定型文 2 種に置換し、`management db is not configured` は worker の `mode=off`(3)だけに残す。契約 rapid-crosscheck-runner.sh の stderr と exit 2 condition にも同 2 文言を追記する。
+
+  - id: F-104
+    viewpoint: 4
+    severity: major
+    target: "実装切替業務/実装切替ジョブ実行フロー/foreground slot の結果をジョブスケジューラへ中継する/tier-facade.md L33・L45・L109 vs cli-command-contract.yaml facade.sh execution_log L225"
+    claim: |-
+      中継後の parallel_runs COMPLETED UPDATE 失敗時の実行ログ文言が契約 execution_log と異なる。tier BDD が Then で文字列照合するため、契約どおりに実装すると RED になる。
+    evidence: |-
+      - M/tier-facade.md:33「実行ログに `ERROR parallel_run update failed run_id=...`」/ :109「Then 終了コード 0 で終了し、実行ログに "ERROR parallel_run update failed" が出る」
+      - cli-command-contract.yaml:225「`ERROR management db update failed table=parallel_runs run_id=...`(中継後の COMPLETED UPDATE 失敗。終了コードは変えない)」/ ui-design.md:122 同形
+    suggested_fix: |-
+      M tier L33・L45・L109 を `ERROR management db update failed table=parallel_runs run_id=...` に置換する(L45 の `parallel_run status changed from=RUNNING to=COMPLETED` は契約 execution_log にも追加する)。
+
+  - id: F-105
+    viewpoint: 4
+    severity: major
+    target: "実装切替業務/実装切替ジョブ実行フロー/実装スクリプトを実行して Runner Result を出力する/tier-facade.md L55・L135 / _model-summary.yaml L62 vs cli-command-contract.yaml runner IF idempotency L288"
+    claim: |-
+      slot_executions 終端 UPDATE 0 件時の実行ログ文言が契約と異なる(テーブル名の単複・語句)。tier BDD が Then で文字列照合するため契約準拠の実装が RED になる。
+    evidence: |-
+      - R/tier-facade.md:55「実行ログに `ERROR slot_execution update matched no row run_id=... role=...` を残し」/ :135 Then 同文
+      - cli-command-contract.yaml:288「更新件数 0(行なし・既に ABORTED)は実行ログに `ERROR slot_executions update affected 0 rows run_id=... role=...` を残して終了コードは変えない」
+    suggested_fix: |-
+      R tier L55・L135 と _model-summary の note を契約文言に揃える。
+
+  - id: F-106
+    viewpoint: 4
+    severity: major
+    target: "クロスチェック業務/確報クロスチェックフロー/比較ツールで日次全量比較を実行して結果を保存する/spec.md L228-229 / tier-final-crosscheck.md L134-135 vs cli-command-contract.yaml final-crosscheck-worker.sh stderr L501"
+    claim: |-
+      比較ツール起動失敗時の stderr と error_summary が契約と異なる。契約は `error: compare tool launch failed final_crosscheck_id=... command=...`、UC 側は `error: compare tool not executable path=...` を stderr と error_summary の両方に要求しており、契約準拠の実装で BDD が RED になる。速報 worker は契約どおり `launch failed` を使うため確報だけ別文言になる。
+    evidence: |-
+      - cli-command-contract.yaml:501「error: compare tool launch failed final_crosscheck_id=... command=...(6)」
+      - tier-final-crosscheck.md:134「Then 終了コード 6 で stderr に "error: compare tool not executable path=/opt/compare/missing.sh" が出る」/ :135「error_summary="compare tool not executable path=/opt/compare/missing.sh"」/ spec.md:228-229 同文
+      - 速報 比較実行 tier-rapid-crosscheck.md:51「stderr に `error: compare tool launch failed run_id=... command=...` を出して」
+    suggested_fix: |-
+      UC3 spec / tier の stderr を `error: compare tool launch failed final_crosscheck_id=<id> command=/opt/compare/missing.sh` に揃え、error_summary の値(速報 tier と同じ `launch failed`)を契約 final-crosscheck-worker.sh に明記する。
+
+  - id: F-107
+    viewpoint: 4
+    severity: major
+    target: "クロスチェック業務/確報クロスチェックフロー/確報比較依頼を登録して終端状態まで待機する/spec.md L225 / tier-final-crosscheck.md L51 vs cli-command-contract.yaml final-crosscheck-runner.sh stderr L462"
+    claim: |-
+      `--business-date` 形式不正の stderr が契約の共通形式 `error: invalid value option=--business-date value=...` と異なり、UC 側は `error: invalid business_date format value=... expected=YYYY-MM-DD` を完全一致で要求している。
+    evidence: |-
+      - cli-command-contract.yaml:462「error: invalid value option=--business-date value=...」
+      - spec.md:225「And stderr に "error: invalid business_date format value=20260830 expected=YYYY-MM-DD" が出る」/ tier-final-crosscheck.md:51 同文
+    suggested_fix: |-
+      spec / tier / _api-summary を `error: invalid value option=--business-date value=20260830`(必要なら `hint: expected YYYY-MM-DD`)に修正する。
+
+  - id: F-108
+    viewpoint: 4
+    severity: major
+    target: "実行監視業務/background 実行監視フロー/hang_detect_limit_minutes をジョブごとに調整する/spec.md L123 / tier-ops.md L61 vs _cross-cutting/ux-ui/data-visualization.md L64"
+    claim: |-
+      hang-detect-trend.sh の current_limit_minutes の選択行が UC 側は「started_at が最新の行」、列定義の正本 data-visualization.md は「judged_at 最大の行」で食い違う(tier-ops.md 自身が data-visualization を正本と宣言)。復元起動で古い run が再判定される場合や長期 RUNNING の run があると結果が変わる。
+    evidence: |-
+      - 調整 spec.md:123「job_id × role で `started_at` が最新の監視記録行の `hang_detect_limit_minutes`」/ tier-ops.md:61「`monitor_records.started_at` が最新の行」
+      - data-visualization.md:64「集計期間内で最新(`judged_at` 最大)の監視記録の `hang_detect_limit_minutes`」/ 調整 tier-ops.md:5「列定義の正本は … data-visualization.md 2. である」
+    suggested_fix: |-
+      正本宣言どおり data-visualization(judged_at 最大)に揃え、spec / tier の計算ルールを書き換える。
+
+  - id: F-109
+    viewpoint: 4
+    severity: major
+    target: "実行監視業務/background 実行監視フロー/hang_detect_limit_minutes をジョブごとに調整する/tier-facade.md L27・L61 / _api-summary.yaml L65-71 vs cli-command-contract.yaml validate-config.sh exit_codes L940-946 / slot ごとのジョブマップを定義する/_api-summary.yaml"
+    claim: |-
+      調整 UC は validate-config.sh に終了コード 6(ファイル読み取り失敗)を宣言するが、契約と定義元 UC(JM)には 0 / 2 しかなく、読み取り不可は 2(`error: config file is not readable path: ...`)と定義済み。uses 側の UC が契約に無い終了コードを生成元へ持ち込む。
+    evidence: |-
+      - 調整 tier-facade.md:27「**終了コード**: 0(検証 OK)/ 2(検証 NG)/ 6(ファイル読み取り失敗)」/ :61「ジョブマップの読み取り失敗は 6」/ _api-summary.yaml:70-71「code: 6 / meaning: "ファイル読み取り失敗"」
+      - 契約 validate-config.sh stderr「`error: config file is not readable path: ...`(2)」、exit_codes は 0 と 2 のみ / JM _api-summary に code 6 なし
+    suggested_fix: |-
+      調整 UC の tier-facade.md / _api-summary.yaml から終了コード 6 を削除し、読み取り不可は 2 に揃える。
+
+  # ------------------------------------------------------------------
+  # 新規 minor
+  # ------------------------------------------------------------------
+  - id: F-110
+    viewpoint: 4
+    severity: minor
+    target: "_cross-cutting/api/cli-command-contract.yaml rapid-crosscheck-worker.sh exit_codes[0].meaning L377 / final-crosscheck-worker.sh exit_codes[0].meaning L504 vs 同 stderr L374 / L501"
+    claim: |-
+      契約内で、終端 UPDATE 0 件(ABORTED 済み)のとき stderr に `warn:` を出すか出さないかが矛盾する(stderr 欄は「出さず実行ログ WARN のみ」、exit_codes 欄は「warn: を出して 0」)。UC 側は速報・確報とも実行ログ WARN のみで統一されている。
+    evidence: |-
+      - cli-command-contract.yaml:377「終端 UPDATE が 0 件(ABORTED 済み)の場合は成果物 3 ファイルを残し warn: を出して 0」/ :504 同文
+      - cli-command-contract.yaml:374「終端 UPDATE 0 件(比較中に ABORTED)は stderr に出さず実行ログ `WARN request already terminal …` のみ」/ :501 同旨
+      - 速報 比較実行 tier-rapid-crosscheck.md:53 / 確報 比較実行 tier-final-crosscheck.md:48「`WARN request already terminal …` を残して終了コード 0」
+    suggested_fix: |-
+      L377 / L504 の「warn: を出して 0」を「実行ログに WARN を残して 0(stderr には出さない)」に修正する。
+
+  - id: F-111
+    viewpoint: 4
+    severity: minor
+    target: "クロスチェック業務/速報クロスチェックフロー/速報比較依頼を claim する/spec.md L187 / tier-rapid-crosscheck.md L37-38 / _api-summary.yaml L30"
+    claim: |-
+      管理 DB 接続失敗の文言が UC 側は `error: management db connection failed worker_id=...` で、契約・ui-design 定型文の `conn_ref=...` を欠く(BDD は完全一致)。
+    evidence: |-
+      - spec.md:187「stderr に `error: management db connection failed worker_id=worker-01` が出る」/ tier:37 同形
+      - cli-command-contract.yaml:374「error: management db connection failed worker_id=... conn_ref=...(6)」/ ui-design.md:122
+    suggested_fix: |-
+      UC 側 4 箇所に `conn_ref=<参照名>` を加え、BDD の Given に conn_ref の値を置く。
+
+  - id: F-112
+    viewpoint: 4
+    severity: minor
+    target: "クロスチェック業務/速報クロスチェックフロー/速報比較結果を参照する/tier-rapid-crosscheck.md L119 vs cli-command-contract.yaml rapid-crosscheck-result.sh stderr L421 / run-lineage.sh stderr"
+    claim: |-
+      run_id 形式不正の文言 `error: invalid run_id format run_id=abc` が契約の stderr 一覧に無く、他コマンドの同種エラーは `error: invalid value option=--run-id value=...` 形式。
+    evidence: |-
+      - tier-rapid-crosscheck.md:119「Then 終了コード 2 で stderr に `error: invalid run_id format run_id=abc` が出る」
+      - cli-command-contract.yaml:421 stderr 一覧に形式不正の文言なし / run-lineage.sh「error: invalid value option=--run-id|--limit value=...」
+    suggested_fix: |-
+      tier BDD を `error: invalid value option=--run-id value=abc` に変え、契約 rapid-crosscheck-result.sh stderr に同文と `error: option required option=--run-id` を追記する。
+
+  - id: F-113
+    viewpoint: 4
+    severity: minor
+    target: "クロスチェック業務/速報クロスチェックフロー/速報クロスチェック runner へ完了通知を送信する/tier-rapid-crosscheck.md L21 / _api-summary.yaml L31 vs cli-command-contract.yaml L316"
+    claim: |-
+      `--exit-code` の値域が UC は「0 以上の整数」、契約は「0〜255。範囲外は 2」で、256 以上を受理するかが割れる。
+    evidence: |-
+      - tier-rapid-crosscheck.md:21「0 以上の整数(exitcode.txt の値)」/ _api-summary.yaml:31 同文
+      - cli-command-contract.yaml:316「0〜255 の整数。範囲外・非整数は終了コード 2」
+    suggested_fix: |-
+      UC 側を「0〜255 の整数(範囲外は 2)」に揃える。
+
+  - id: F-114
+    viewpoint: 5
+    severity: minor
+    target: "クロスチェック業務/速報クロスチェックフロー/両系成功時に速報比較依頼を作成する/tier-rapid-crosscheck.md L58・L103-106"
+    claim: |-
+      F-044 で全 Given に parallel_runs 行を足したとされるが、tier シナリオ「既に依頼がある run への再通知は重複しない」だけ parallel_runs 行が無く rapid_runs の blue/green_status も未指定で、FK 上 Given を作れない。L58 の FK 記述も rdb-schema と異なる。
+    evidence: |-
+      - tier-rapid-crosscheck.md:104「Given rapid_runs に completion_status=REQUEST_CREATED の行があり、rapid_crosscheck_requests に同 run_id の行が 1 件ある」
+      - tier-rapid-crosscheck.md:58「主キー(rapid_runs.run_id / parallel_runs.run_id への FK)」vs rdb-schema.yaml rapid_crosscheck_requests.foreign_keys は parallel_runs のみ
+    suggested_fix: |-
+      Given に parallel_runs(run_id, job_id=JOB001)と rapid_runs の blue/green_status=SUCCEEDED を明記し、L58 の FK を parallel_runs のみに直す。
+
+  - id: F-115
+    viewpoint: 4
+    severity: minor
+    target: "クロスチェック業務/速報クロスチェックフロー/比較ツールでジョブ単位比較を実行して結果を登録する/tier-rapid-crosscheck.md L23・L47・L139-142 vs cli-command-contract.yaml rapid-crosscheck-worker.sh stdout L373"
+    claim: |-
+      RUNNING 遷移の条件付き UPDATE が 0 行(他 worker に奪われた / 中止済み)のときの stdout が未定義。claim の 4 行を出した後に request_status 以降を出すのか 4 行で終わるのか決められず、契約 stdout もこのケースを列挙していない。
+    evidence: |-
+      - tier-rapid-crosscheck.md:47「(0 行なら他 worker に奪われた / 中止済み。処理せず終了コード 0)」/ :142 Then は stdout 未検証
+      - cli-command-contract.yaml:373 の列挙は「claim できたとき固定順 …」「claim 0 件なら 0 行」のみ
+    suggested_fix: |-
+      契約 stdout と tier 出力契約に RUNNING 遷移 0 行のときの出力(request_status=ABORTED か claim 4 行のみ)を明記し、tier BDD:142 の Then で検証する。
+
+  - id: F-116
+    viewpoint: 1
+    severity: minor
+    target: "クロスチェック業務/速報クロスチェックフロー/比較ツールでジョブ単位比較を実行して結果を登録する/spec.md 分岐条件一覧 L140"
+    claim: |-
+      分岐条件一覧の「comparison_results の登録条件」は F-017 修正で新設した条件名で、RDRA 条件.tsv に存在せず関連 RDRA 表にも無いため、トレーサビリティ集計で孤立する。
+    evidence: |-
+      - spec.md:140「| comparison_results の登録条件 | comparison_results は比較ツールを起動して終了コードを得たときだけ INSERT する。… |」
+      - docs/rdra/latest/条件.tsv に「comparison_results の登録条件」0 件(「比較ツール終了コードの対応」「比較定義の選択」は各 1 件)
+    suggested_fix: |-
+      「比較ツール終了コードの対応」行に統合するか、条件名に「(spec 追加)」を付けて rdra-feedback.md に条件追加候補として起票する。
+
+  - id: F-117
+    viewpoint: 4
+    severity: minor
+    target: "クロスチェック業務/速報クロスチェックフロー/速報クロスチェック runner へ完了通知を送信する/spec.md L91(sequenceDiagram)"
+    claim: |-
+      受信側 stdout を「run_id= / role= / slot_status=」の 3 行と描いており、tier md・契約の 4 行(job_id= を含む)と食い違う。
+    evidence: |-
+      - spec.md:91「RPres-->>FGW: stdout run_id= / role= / slot_status= / 終了コード 0」
+      - tier-rapid-crosscheck.md:34「`run_id=` / `job_id=` / `role=` / `slot_status=` の 4 行」/ cli-command-contract.yaml:327
+    suggested_fix: |-
+      sequenceDiagram に `job_id=` を追加する。
+
+  - id: F-118
+    viewpoint: 4
+    severity: minor
+    target: "実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/tier-facade.md L73 / spec.md L297-300"
+    claim: |-
+      facade の管理 DB 失敗 stderr が独自文言 `error: parallel_run insert failed ...` で、ui-design の定型文(`management db connection failed ... conn_ref=` / `management db insert failed table=...`)と揃っていない。BDD の「管理 DB が停止している」は接続失敗であり定型文は connection failed になる。
+    evidence: |-
+      - S/tier-facade.md:73「DB 失敗 | `error: parallel_run insert failed run_id=... job_id=...`」/ spec.md:300「stderr に "error: parallel_run insert failed" で始まる行が出る」
+      - ui-design.md:122「接続失敗は `error: management db connection failed ... conn_ref=...`、INSERT / UPDATE 失敗は `error: management db insert failed table=... ...`」
+    suggested_fix: |-
+      エラーメッセージ表を接続失敗 / INSERT 失敗の 2 行(定型文)に分け、spec L300 の Then を接続失敗の定型文に合わせる。
+
+  - id: F-119
+    viewpoint: 4
+    severity: minor
+    target: "実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/tier-facade.md L97 vs cli-command-contract.yaml facade.sh execution_log L222"
+    claim: |-
+      `feature flag loaded` 行の key 順が tier(config_version 先頭)と契約(blue_mode 先頭・config_version 4 番目)で異なる。
+    evidence: |-
+      - S/tier-facade.md:97「`feature flag loaded config_version=... blue_mode=... green_mode=... rapid_crosscheck_mode=... operation_mode=...`」
+      - cli-command-contract.yaml:222「`INFO feature flag loaded blue_mode=... green_mode=... rapid_crosscheck_mode=... config_version=... operation_mode=...`」
+    suggested_fix: |-
+      S tier L97 を契約の順に揃える。
+
+  - id: F-120
+    viewpoint: 3
+    severity: minor
+    target: "_cross-cutting/datastore/rdb-schema.yaml slot_executions.used_by L166-167 / 実装切替業務/実装切替ジョブ実行フロー/buc-spec.md 情報 CRUD L70"
+    claim: |-
+      F-004 で facade(S)は slot_executions に pid UPDATE と FAILED UPDATE を行うようになったが、rdb-schema の used_by と buc-spec CRUD は S を INSERT / C のみとしており _model-summary(UPDATE 2 種)と食い違う。
+    evidence: |-
+      - rdb-schema.yaml:166-167「uc: "slot 実行モードを選択して runner を起動する" / operations: ["INSERT"]」/ buc-spec.md:70「| slot 実行 | C | - | - | U | R | - |」
+      - S/_model-summary.yaml:111-122 に UPDATE(pid)/ UPDATE(status FAILED)
+    suggested_fix: |-
+      used_by を ["INSERT", "UPDATE"]、CRUD の S 列を `C / U` にする。
+
+  - id: F-121
+    viewpoint: 3
+    severity: minor
+    target: "適用構成業務/適用構成定義フロー/切り替えた運用モードで業務ジョブを実行する/_api-summary.yaml L38-41"
+    claim: |-
+      F-014 で FF/JM/SR は required: false + 排他注記に揃えたが、OM の _api-summary は `--feature-flag` が required: true のまま。
+    evidence: |-
+      - OM/_api-summary.yaml:38-40「- name: "--feature-flag" / type: "string" / required: true」
+      - cli-command-contract.yaml:899-900 required: false / :919 option_exclusivity
+    suggested_fix: |-
+      required: false にし排他注記を加える(synopsis に [--help] も追加)。
+
+  - id: F-122
+    viewpoint: 4
+    severity: minor
+    target: "実装切替業務/実装切替ジョブ実行フロー/execution-spec.json を確定保存する/tier-facade.md L44・L147 / spec.md L214"
+    claim: |-
+      残留 lock 回収の実行ログ行を `warn: ...`(stderr の規約)で書いており、同 UC の他行(`INFO …` / `ERROR …`)と行形式が揺れている。
+    evidence: |-
+      - X/tier-facade.md:44「実行ログに `warn: stale execution-spec lock reclaimed`」/ :147・spec.md:214 同文 / X/tier-facade.md:46「`INFO execution-spec slot already exists`」
+      - cli-command-contract.yaml:49-50 line_format `{LEVEL} {message}`、levels [DEBUG, INFO, WARN, ERROR]
+    suggested_fix: |-
+      3 箇所を `WARN stale execution-spec lock reclaimed run_id=... age_seconds=...` にする。
+
+  - id: F-123
+    viewpoint: 3
+    severity: minor
+    target: "実装切替業務/実装切替ジョブ実行フロー/execution-spec.json を確定保存する/tier-facade.md L39 / _api-summary.yaml L26 vs cli-command-contract.yaml runner IF exit 6 L287"
+    claim: |-
+      X は「既存 execution-spec.json の解析失敗(通常起動)」を 6 としているが、契約 runner IF の exit 6 条件は lock タイムアウト・書き込み失敗のみで解析失敗を含まない(round-1 G1 #11 deferred の未決)。
+    evidence: |-
+      - X/tier-facade.md:39「| 6 | 実行エラー | lock 取得のタイムアウト…、`mv` 失敗、既存 JSON の解析失敗。」/ _api-summary.yaml:26 同旨
+      - cli-command-contract.yaml:287「execution-spec.json の lock タイムアウト・書き込み失敗」
+    suggested_fix: |-
+      契約 runner IF exit 6 condition に「既存 execution-spec.json の解析失敗(通常起動)」を追記する(または X 側を 2 に寄せる)。
+
+  - id: F-124
+    viewpoint: 3
+    severity: minor
+    target: "クロスチェック業務/確報クロスチェックフロー/比較ツールで日次全量比較を実行して結果を保存する/tier-final-crosscheck.md L65・L70 / _model-summary.yaml L69・L84 / 確報比較依頼を登録して終端状態まで待機する/_model-summary.yaml L65"
+    claim: |-
+      契約は RELAY_GATE_NOW 設定時に started_at / completed_at / requested_at も注入値にすると定めるが、比較実行 UC と登録 UC は `now()` のまま(claim UC だけ `:now`)。claim Scenario 1(RELAY_GATE_NOW=21:00:30Z)は同一プロセスで RUNNING 遷移まで進むため started_at が食い違う。
+    evidence: |-
+      - cli-command-contract.yaml:88「DB の now() を使う UPDATE / INSERT も、この値を渡して同じ時刻にする」
+      - tier-final-crosscheck.md:65「SET status='RUNNING', started_at=now()」/ :70「completed_at=now()」/ _model-summary.yaml:69・:84「now()(UTC)」/ 登録 _model-summary.yaml:65 requested_at「now()(UTC)」
+    suggested_fix: |-
+      claim UC と同じ `:now(RELAY_GATE_NOW 設定時はその値)` 表記に揃える。
+
+  - id: F-125
+    viewpoint: 4
+    severity: minor
+    target: "クロスチェック業務/確報クロスチェックフロー/確報比較依頼を登録して終端状態まで待機する/spec.md L212 / tier-final-crosscheck.md L56 / 確報クロスチェック結果を確認する/tier-final-crosscheck.md L84 vs cli-command-contract.yaml L462"
+    claim: |-
+      polling 上限超過の stderr が UC 側は `status=` キーを含むが契約は含まない。完全一致で照合する spec L212 は契約準拠実装で RED になる。
+    evidence: |-
+      - spec.md:212「"error: polling limit exceeded final_crosscheck_id=<id> status=REQUESTED limit_sec=3"」/ tier:56「… status=RUNNING limit_sec=28800」
+      - cli-command-contract.yaml:462「error: polling limit exceeded final_crosscheck_id=... limit_sec=...」
+    suggested_fix: |-
+      契約に `status=` を加えるか UC 側から落とす(どちらかに統一)。
+
+  - id: F-126
+    viewpoint: 4
+    severity: minor
+    target: "クロスチェック業務/確報クロスチェックフロー/確報クロスチェック結果を確認する/tier-final-crosscheck.md L37"
+    claim: |-
+      「relay-gate 由来の 6 は stderr が `error: ` で始まり `final_crosscheck_id=` を含む」という判別規則は、契約の `error: management db connection failed conn_ref=...`(INSERT 前の接続失敗、6)に当てはまらず、比較ツール由来と誤読する。
+    evidence: |-
+      - tier-final-crosscheck.md:37「`error: ` で始まり `final_crosscheck_id=` を含むかどうかで区別できる(relay-gate 由来のみこの形式)」
+      - cli-command-contract.yaml:462「error: management db connection failed conn_ref=...」/ 登録 UC tier:146 同文
+    suggested_fix: |-
+      判別規則を「`final_crosscheck_id=` または `conn_ref=` を含む」に改めるか、実行ログ `request registered` の有無で判別する手順に書き換える。
+
+  - id: F-127
+    viewpoint: 3
+    severity: minor
+    target: "クロスチェック業務/確報クロスチェックフロー/保存済みの確報結果をジョブスケジューラへ返す/_model-summary.yaml L44 vs tier-final-crosscheck.md L32 / spec.md L32"
+    claim: |-
+      中継 SELECT の WHERE が _model-summary では status 条件付き、tier / spec では `final_crosscheck_id = ?` のみで、生成 SQL の分岐が決まらない。
+    evidence: |-
+      - _model-summary.yaml:44「where: "final_crosscheck_id = ? AND status IN ('SUCCEEDED', 'FAILED', 'ABORTED')"」
+      - tier-final-crosscheck.md:32 / spec.md:32「SELECT status, exit_code, stdout, stderr FROM final_crosscheck_requests WHERE final_crosscheck_id = ?」
+    suggested_fix: |-
+      _model-summary の where を tier / spec と同じにする(終端判定は domain が担う)。
+
+  - id: F-128
+    viewpoint: 5
+    severity: minor
+    target: "クロスチェック業務/確報クロスチェックフロー/確報クロスチェック結果を確認する/tier-final-crosscheck.md L81-84"
+    claim: |-
+      Given が FINAL_POLL_LIMIT_SEC=2 のみで FINAL_POLL_INTERVAL_SEC を指定しないため、既定 60 秒の poll 間隔で上限判定まで 60 秒待つテストになる(登録 UC は FINAL_POLL_INTERVAL_SEC=1 を併記)。
+    evidence: |-
+      - tier-final-crosscheck.md:82「Given final-crosscheck-worker.sh が停止しており FINAL_POLL_LIMIT_SEC=2 である」
+      - 登録 UC tier-final-crosscheck.md:132「FINAL_POLL_INTERVAL_SEC=1 FINAL_POLL_LIMIT_SEC=2」/ :29 既定値 60
+    suggested_fix: |-
+      Given に FINAL_POLL_INTERVAL_SEC=1 を追加する。
+
+  - id: F-129
+    viewpoint: 5
+    severity: minor
+    target: "クロスチェック業務/確報クロスチェックフロー/比較ツールで日次全量比較を実行して結果を保存する/tier-final-crosscheck.md L121・L123"
+    claim: |-
+      Given のスタブ stdout は改行なし、Then は末尾 `\n` 付きを要求しており、Given に無い値を Then で要求している(spec.md L191 は両方 `\n` 付きで整合)。
+    evidence: |-
+      - tier-final-crosscheck.md:121「stdout "all 42 targets matched"」/ :123「stdout="all 42 targets matched\n" になり」/ spec.md:191「stdout "all 42 targets matched\n" を返す」
+    suggested_fix: |-
+      tier L121 の Given を `\n` 付きに揃える。
+
+  - id: F-130
+    viewpoint: 4
+    severity: minor
+    target: "実行監視業務/background 実行監視フロー/監視記録を保存する/spec.md L36・L172 vs tier-ops.md L28"
+    claim: |-
+      off 時の実行ログ行(監視記録の唯一の永続化先)のキー列が spec と tier で異なり、spec の Then の文字列一致が tier 形式では成立しない。
+    evidence: |-
+      - spec.md:172「"INFO monitor record run_id=… role=green monitor_status=MONITORING elapsed_minutes=29 limit_minutes=60 alerted_at=- elapsed_minutes_at_alert=-"」
+      - tier-ops.md:28「`INFO monitor record run_id=... role=... job_id=... target_type=... monitor_status=... started_at=... elapsed_minutes=... limit_minutes=... hang_suspected_at=... alerted_at=... elapsed_minutes_at_alert=... judged_at=...`」
+    suggested_fix: |-
+      spec.md:36・172 を tier の全キー形式に書き換える。
+
+  - id: F-131
+    viewpoint: 4
+    severity: minor
+    target: "実行監視業務/background 実行監視フロー/ハング疑い・実行エラー・比較異常を通知する/tier-ops.md L112-115 / background 実行の経過時間と終了状態を判定する/tier-ops.md L46 vs cli-command-contract.yaml hang-detector.sh stderr L532"
+    claim: |-
+      設定キー欠落の stderr が通知 UC 独自形式(`ALERT_MAIL_TO required path=...`)で、契約 hang-detector.sh stderr に無く、共通定型文(`error: option required option=<KEY> path: ...`)とも異なる。HANG_DB_CONN_REF 欠落(判定 tier 終了コード 2)の文言はどこにも無い。
+    evidence: |-
+      - 通知 tier-ops.md:115「stderr に "error: ALERT_MAIL_TO required path=/etc/relay-gate/hang-detector.env" が出て」
+      - cli-command-contract.yaml:532 に ALERT_MAIL_TO / HANG_DB_CONN_REF の文言なし / :1206 定型文 / 判定 tier-ops.md:46 文言未定義
+    suggested_fix: |-
+      `error: option required option=ALERT_MAIL_TO|HANG_DB_CONN_REF path: ...` / `error: config file not found path: ...` を契約 hang-detector.sh stderr に追加し、通知 tier BDD と判定 tier 出力契約を揃える。
+
+  - id: F-132
+    viewpoint: 2
+    severity: minor
+    target: "実行監視業務/background 実行監視フロー/hang_detect_limit_minutes をジョブごとに調整する/tier-ops.md L12・L58 / _model-summary.yaml models"
+    claim: |-
+      hang-detect-trend.sh の管理 DB 接続情報の出所(契約: rapid-crosscheck.env の RAPID_DB_CONN_REF)が tier md に宣言されておらず、_model-summary にも設定ファイルの record が無い。
+    evidence: |-
+      - cli-command-contract.yaml:1203 rapid-crosscheck.env readers「run-lineage.sh / hang-detect-trend.sh(RAPID_DB_CONN_REF。on 時のみ)」
+      - 調整 tier-ops.md:12「管理 DB への読み取り接続が必要」/ :58「feature flag を読み `RAPID_CROSSCHECK_MODE=off` なら終了コード 3」(rapid-crosscheck.env 言及なし)
+    suggested_fix: |-
+      tier-ops.md に設定契約節(feature-flag.env / rapid-crosscheck.env)を追記し、_model-summary に repository record を追加する。
+
+  - id: F-133
+    viewpoint: 4
+    severity: minor
+    target: "cli-command-contract.yaml hang-detector.sh exit_codes code 0 L535 vs 実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/tier-ops.md L71・L148-152"
+    claim: |-
+      契約は「ABORTED 済みで監視記録が無い対象は走査しない」と限定するが、判定 UC は slot_executions.status=ABORTED を無条件に COMPLETED とし、tier BDD は監視記録なしの ABORTED slot を judgement=COMPLETED で出力させる(記録 UC が COMPLETED 行を新規作成)。
+    evidence: |-
+      - cli-command-contract.yaml:535「(運用者が中止済み。ABORTED 済みで監視記録が無い対象は走査しない)」
+      - 判定 tier-ops.md:71「| ABORTED | 任意 | — | COMPLETED(中止済み → COMPLETED) |」/ :149-152 Given に monitor_records なし、Then「judgement=COMPLETED」
+    suggested_fix: |-
+      契約の「走査しない」を速報比較依頼に限定するか、判定表に「監視記録なしの ABORTED slot は NOT_TARGET 扱いで記録しない」を追加して BDD を合わせる。
+
+  - id: F-134
+    viewpoint: 4
+    severity: minor
+    target: "cli-command-contract.yaml hang-detector.sh stderr L532 vs 判定 UC spec.md L266・L307 / tier-ops.md L41・L54・L157 / _api-summary.yaml L23"
+    claim: |-
+      warn 文言が契約と UC で異なる。execution-spec 欠落は契約が `path: ...` 付き、UC は run_id のみ。started-at 不正は契約が stderr `warn: started-at is invalid ...` を定義するが UC は実行ログ `WARN invalid started-at ...` のみ。
+    evidence: |-
+      - cli-command-contract.yaml:532「warn: execution-spec missing run_id=... path: ...」「warn: started-at is invalid run_id=... role=... value=...」
+      - 判定 spec.md:266「stderr に "warn: execution-spec missing run_id=20260830T113000Z-JOB002-9a8b7c6d" が出て」/ :307「実行ログに "WARN invalid started-at run_id=... role=green value=yesterday" を残し」
+    suggested_fix: |-
+      UC 側(spec / tier / _api-summary)を契約文言に揃える。
+
+  - id: F-135
+    viewpoint: 4
+    severity: minor
+    target: "_cross-cutting/api/asyncapi.yaml HangAlertMail.recommended_action description L564 / _cross-cutting/ux-ui/ui-design.md L169 / 通知 UC tier-ops.md L104"
+    claim: |-
+      asyncapi の schema 説明が「14 行目以降」のまま(channel description L91 は 14 行目 1 行)。ui-design は 1〜13 行目に 80 桁制限を課しつつ 11 行目 artifact_dir を折り返さないとするため、長い ARTIFACT_ROOT では「1〜13 行目に 80 桁超なし」の Then が成立しない。
+    evidence: |-
+      - asyncapi.yaml:564「本文 14 行目以降。…」vs :91「14 行目は recommended_action(…折り返さず 1 行、80 桁超可)。15 行目以降なし」
+      - ui-design.md:169「80 桁制限は 1〜13 行目(事実部と空行)のみに適用する。…`artifact_dir` の `key: value` 行が 80 桁を超える場合も折り返さない」/ 通知 tier-ops.md:104「And 1〜13 行目に 80 桁を超える行は無い」
+    suggested_fix: |-
+      asyncapi L564 を「本文 14 行目(1 行)」に直し、artifact_dir 行を 80 桁制限の例外として ui-design と BDD に明記する。
+
+  - id: F-136
+    viewpoint: 4
+    severity: minor
+    target: "_cross-cutting/datastore/rdb-schema.yaml monitor_records.monitor_status description vs ui-design.md L154 / rdra-feedback.md #11"
+    claim: |-
+      monitor_status の COMPLETED 説明と遷移注記が「正常終了」「通知後に対象が終端(rdra-feedback #7)」のみで、6 値化で追加した中止済み(ABORTED)→COMPLETED(rdra-feedback #11)を反映していない。
+    evidence: |-
+      - rdb-schema.yaml monitor_records.monitor_status「COMPLETED(正常終了)。遷移: … COMPLETED(通知後に対象が終端した場合。rdra-feedback.md #7)」
+      - ui-design.md:154「正常終了(中止済み対象の終端を含む)」/ rdra-feedback.md:20 #11
+    suggested_fix: |-
+      説明を「COMPLETED(正常終了・中止済み対象の終端)」とし #11 を併記する。
+
+  - id: F-137
+    viewpoint: 3
+    severity: minor
+    target: "実行復旧業務/background 側リランフロー/元の execution-spec.json から復元して新しい run_id で起動する/_model-summary.yaml L85-88・L110-112 / 速報比較依頼だけを新規作成する/_model-summary.yaml L84-87・L136-139 vs rdb-schema.yaml L35・L94"
+    claim: |-
+      INSERT しかしない 2 UC の _model-summary が他 UC のアクセスパターンを根拠に indexes_needed を宣言しており、rdb-schema が不採用とした (status, mode) や「リラン UC は利用者ではない」parent_run_id の要求が再生成される(F-027 と同型)。
+    evidence: |-
+      - 復元 _model-summary.yaml:110-112「columns: ["status", "mode"] / reason: "hang-detector が…走査する / abort の可否判定"」/ rdb-schema.yaml:35「slot_executions の (status, mode) インデックスは利用者不在のため置かない」
+      - rdb-schema.yaml:94「(リラン UC は INSERT のみで利用者ではない)」vs 復元 _model-summary.yaml:85-88 / 依頼再作成 _model-summary.yaml:84-87「columns: ["parent_run_id"]」/ :136-139「columns: ["status", "requested_at"] / reason: "worker の poll"」
+    suggested_fix: |-
+      両 UC の _model-summary から自 UC が使わない indexes_needed を削除する。
+
+  - id: F-138
+    viewpoint: 2
+    severity: minor
+    target: "実行復旧業務/background 側リランフロー/元の execution-spec.json から復元して新しい run_id で起動する/tier-ops.md・tier-facade.md L48-51・spec.md L135 / 速報比較依頼だけを新規作成する/tier-ops.md vs cli-command-contract.yaml environment_variables.RELAY_GATE_NOW L88・L92 / facade.sh notes L227"
+    claim: |-
+      契約は background-rerun.sh が RELAY_GATE_NOW を restored_at・新 run_id 時刻部・requested_at に使い、runner へ env 4 つ(+ RELAY_GATE_NOW)を引き継ぐと定めるが、復元起動 UC・依頼再作成 UC の tier md はどちらも宣言していない。
+    evidence: |-
+      - cli-command-contract.yaml:88「… background-rerun.sh の restored_at と新 run_id の時刻部 …」/ :92 runner_inheritance / :227「background-rerun.sh の復元起動も同じ 4 つを引き継ぐ」
+      - 復元 tier-ops.md に RELAY_GATE_NOW / 引き継ぎ env の記述なし(L22・L35 のパス表記のみ)/ spec.md:135 新 run_id「now(UTC)、job_id(元 spec)、乱数」
+    suggested_fix: |-
+      復元 tier-ops.md に設定契約節(引き継ぐ 4 変数 + RELAY_GATE_NOW、restored_at / run_id 時刻部 / requested_at の出所)を追加し、依頼再作成 tier-ops.md にも同記述を置く。
+
+  - id: F-139
+    viewpoint: 5
+    severity: minor
+    target: "実行復旧業務/background 側リランフロー/元の execution-spec.json から復元して新しい run_id で起動する/spec.md L207-208 / リラン対象を検証する/spec.md L224-225"
+    claim: |-
+      F-042 で「off 時に started-at.txt が無い元 slot は未起動として 3」を追加した結果、復元 UC の off Scenario は Given に exitcode.txt しか置いておらず事前検証で exit 3 になり Then(0)に到達しない。検証 UC の RUNNING Scenario も blue / green の必須前提(execution-spec.json の存在)が Given に無い。
+    evidence: |-
+      - 復元 spec.md:208「Given RAPID_CROSSCHECK_MODE=off で R1 の execution-spec.json の green.mode が background、facade/R1/green/exitcode.txt が 6 である」(started-at.txt なし)/ 検証 spec.md:140「started-at.txt 無し → 未起動(status=`-`。不可 `source_not_started`)」
+      - 検証 spec.md:225「Given slot_executions に run_id=... slot=green mode=background status=RUNNING がある」(execution-spec.json の存在なし)vs 契約 notes「事前検証順: facade/<source_run_id>/execution-spec.json の存在・可読 → …」
+    suggested_fix: |-
+      復元 spec L208 の Given に started-at.txt の存在を、検証 spec L225 の Given に execution-spec.json(green.mode=background)を追加する。
+
+  - id: F-140
+    viewpoint: 4
+    severity: minor
+    target: "実行復旧業務/実行中止フロー/buc-spec.md L106-111 / 実行を ABORTED へ遷移させる/spec.md L24・L132・L154"
+    claim: |-
+      F-043 の consolidation #9 は buc-spec の図と本文だけを直し、同ファイルのマッピング表と UC spec の遷移元列・関連 RDRA 表は「RUNNING → ABORTED」のままで、1 ファイル内で図と表が食い違う。
+    evidence: |-
+      - buc-spec.md:99「P_STARTED --> P_ABORTED: STARTED → ABORTED(仮採用。…)」vs :111「| 並行稼働実行 | RUNNING | ABORTED |」(STARTED 行なし)
+      - ABORTED spec.md:24「status RUNNING -> ABORTED」/ :132「| 並行稼働実行 | RUNNING | ABORTED | … | parallel_runs.status が STARTED または RUNNING」/ :154「RUNNING → ABORTED」
+    suggested_fix: |-
+      マッピング表に STARTED 行(仮採用)を追加し、UC spec の遷移元列を「STARTED / RUNNING」に揃える。
+
+  - id: F-141
+    viewpoint: 3
+    severity: minor
+    target: "cli-command-contract.yaml background-rerun.sh stderr / リラン対象を検証する/_api-summary.yaml L30 / リラン結果を parent_run_id で追跡する/_api-summary.yaml L30 vs 検証 tier-ops.md L40 / 追跡 tier-ops.md L32"
+    claim: |-
+      tier-ops は管理 DB 障害の定型文(`error: management db query failed run_id=...`、6)を宣言するが、契約 background-rerun.sh stderr(「tier-ops 出力契約表の転記」と自称)と両 UC の _api-summary.stderr に無い。
+    evidence: |-
+      - 検証 tier-ops.md:40 / 追跡 tier-ops.md:32「`error: management db query failed run_id=...`(6)」
+      - 契約 background-rerun.sh stderr 冒頭「各 UC の tier-ops.md 出力契約表を転記(機械可読な正本)」— `management db query failed` / `connection failed` の行なし / 検証・追跡 _api-summary.yaml:30 同様
+    suggested_fix: |-
+      契約 background-rerun.sh stderr と両 _api-summary に `error: management db connection failed ... conn_ref=...` / `error: management db query failed run_id=...`(6)を転記する。
+
+  - id: F-142
+    viewpoint: 3
+    severity: minor
+    target: "適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/tier-facade.md L32-41(値不正メッセージ)"
+    claim: |-
+      F-032 の共通形式のうち「行の値不正」だけ JM tier が `<column> is <reason> line=N job_id=... value=...` 形から外れている(job_id= 欠落・`required` 形)。F-032 に含めたが JM 側は別ファイルのため独立して追跡する。
+    evidence: |-
+      - JM/tier-facade.md:32「`error: invalid job_id line=N value=<v>`」/ :33「`error: host required line=N job_id=<v>`」/ :40「`error: map_version required line=N job_id=<v>`」
+      - cli-command-contract.yaml:914「行の値不正: `error: <column> is <reason> line=N job_id=... value=...`」
+    suggested_fix: |-
+      `error: job_id is invalid line=N job_id=... value=...` / `error: host is empty line=N job_id=...` 形に寄せる。

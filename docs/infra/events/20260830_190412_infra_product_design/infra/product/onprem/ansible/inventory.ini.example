@@ -1,0 +1,13 @@
+; relay-gate インベントリ例(適用側の実ホスト名/IPに置き換えて使用する)
+
+[relay_gate_execution_hosts]
+; exec-host-01 ansible_host=10.0.1.11
+
+[relay_gate_db_hosts]
+; db-host-01 ansible_host=10.0.2.11
+
+[relay_gate_execution_hosts:vars]
+segment=execution
+
+[relay_gate_db_hosts:vars]
+segment=db

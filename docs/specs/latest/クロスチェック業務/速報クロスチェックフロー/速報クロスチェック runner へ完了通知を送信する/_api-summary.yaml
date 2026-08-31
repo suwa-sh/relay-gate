@@ -1,0 +1,95 @@
+uc: "速報クロスチェック runner へ完了通知を送信する"
+business: "クロスチェック業務"
+buc: "速報クロスチェックフロー"
+paths: []
+x_cli_commands:
+  - name: "rapid-crosscheck-runner.sh blue-completed|green-completed"
+    tier: "tier-rapid-crosscheck"
+    role: "defines"
+    synopsis: "rapid-crosscheck-runner.sh blue-completed|green-completed --run-id <run_id> --job-id <job_id> --exit-code <n> --artifact-uri <uri> [--verbose] [--help]"
+    invoked_by: "内部呼び出し(slot runner。RAPID_CROSSCHECK_MODE=on のみ)"
+    args:
+      - name: "subcommand"
+        type: "enum"
+        required: true
+        description: "blue-completed / green-completed。通知元の系統"
+    options:
+      - name: "--run-id"
+        type: "string"
+        required: true
+        default: ""
+        description: "run_id"
+      - name: "--job-id"
+        type: "string"
+        required: true
+        default: ""
+        description: "JOB_ID"
+      - name: "--exit-code"
+        type: "integer"
+        required: true
+        default: ""
+        description: "公開済み exitcode.txt の値(0〜255 の整数。範囲外・非整数は終了コード 2)"
+      - name: "--artifact-uri"
+        type: "string"
+        required: true
+        default: ""
+        description: "成果物ディレクトリ URI(file:// 絶対パス)"
+      - name: "--verbose"
+        type: "boolean"
+        required: false
+        default: "false"
+        description: "info を stderr に出す"
+    stdin: "なし"
+    stdout: "run_id= / job_id= / role= / slot_status=(SUCCEEDED|FAILED) の 4 行(続く completion_status= / request_status= / requested_at= の 3 行は UC「両系成功時に速報比較依頼を作成する」が出す。slot runner は stdout に中継しない)"
+    stderr: "error: option required option=... / error: invalid exit_code value=... / error: unknown subcommand subcommand=... / error: config file not found path: ...(2。rapid-crosscheck.env 不在)/ error: option required option=RAPID_DB_CONN_REF path: ...(2)/ error: rapid run not found run_id=... / error: management db update failed run_id=... role=..."
+    exit_codes:
+      - code: 0
+        meaning: "自系統の完了結果を rapid_runs に登録した(再通知は先勝ちで既存値を保持して 0)"
+      - code: 2
+        meaning: "サブコマンド・オプションの検証エラー、rapid-crosscheck.env 不在・RAPID_DB_CONN_REF 欠落"
+      - code: 3
+        meaning: "rapid_runs に run_id の行が無い"
+      - code: 6
+        meaning: "管理 DB 接続・SQL 失敗"
+  - name: "$BLUE_RUNNER / $GREEN_RUNNER"
+    tier: "tier-facade"
+    role: "uses"
+    synopsis: "<runner> --run-id <id> --job-id <JOB_ID> --role blue|green --mode foreground|background [--execution-spec <path>] -- [PARAM...]"
+    invoked_by: "facade.sh / background-rerun.sh"
+    args: []
+    options: []
+    stdin: "なし"
+    stdout: "なし(実装の出力は facade/<run_id>/<role>/stdout.log へ。完了通知の出力も含めない)"
+    stderr: "なし(実装の出力は facade/<run_id>/<role>/stderr.log へ。通知失敗時も stderr.log には追記せず、実行ログの WARN completion notice failed run_id=... role=... exit_code=N にのみ残す)"
+    exit_codes:
+      - code: 0
+        meaning: "exitcode.txt の値をそのまま返す(0 / 非 0 とも保存済み exitcode と一致。通知の成否は反映しない)"
+async_events:
+  - name: "slot-completed"
+    channel: "slot-completed"
+    direction: "publish"
+    message: "SlotCompletedNotice"
+    summary: "slot runner(tier-facade)が exitcode.txt 公開後に rapid-crosscheck-runner.sh <role>-completed を同期起動して完了結果(run_id, job_id, exit_code, artifact_uri)を送る。RAPID_CROSSCHECK_MODE=off では publish しない"
+  - name: "slot-completed"
+    channel: "slot-completed"
+    direction: "subscribe"
+    message: "SlotCompletedNotice"
+    summary: "rapid-crosscheck-runner(tier-rapid-crosscheck)が受信し rapid_runs の自系統列を更新する"
+schemas:
+  - name: "SlotCompletedNotice"
+    properties:
+      - name: "role"
+        type: "string"
+        required: true
+      - name: "run_id"
+        type: "string"
+        required: true
+      - name: "job_id"
+        type: "string"
+        required: true
+      - name: "exit_code"
+        type: "integer"
+        required: true
+      - name: "artifact_uri"
+        type: "string"
+        required: true

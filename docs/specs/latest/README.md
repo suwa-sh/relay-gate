@@ -4,52 +4,57 @@
 
 | 業務 | BUC | UC名 | API数 | 非同期 | 最終更新イベント |
 |------|-----|------|:-----:|:-----:|----------------|
-| クロスチェック業務 | 確報クロスチェックフロー | [全テーブル・全ファイルを対象に確報クロスチェックを実行する](クロスチェック業務/確報クロスチェックフロー/全テーブル・全ファイルを対象に確報クロスチェックを実行する/spec.md) | 1 | 無 | 20260829_210828_spec_generation |
-| クロスチェック業務 | 確報クロスチェックフロー | [確報クロスチェック結果をstdout/stderr/exitcodeで応答する](クロスチェック業務/確報クロスチェックフロー/確報クロスチェック結果をstdout/stderr/exitcodeで応答する/spec.md) | 1 | 無 | 20260829_210828_spec_generation |
-| クロスチェック業務 | 確報クロスチェックフロー | [確報クロスチェック結果を確認する](クロスチェック業務/確報クロスチェックフロー/確報クロスチェック結果を確認する/spec.md) | 1 | 無 | 20260829_210828_spec_generation |
-| クロスチェック業務 | 速報クロスチェックフロー | [blue/green runnerの完了通知を受けて速報比較依頼を作成する](クロスチェック業務/速報クロスチェックフロー/blue/green runnerの完了通知を受けて速報比較依頼を作成する/spec.md) | 1 | 無 | 20260819_114307_spec_generation |
-| クロスチェック業務 | 速報クロスチェックフロー | [速報クロスチェックを実行し差分を検知する](クロスチェック業務/速報クロスチェックフロー/速報クロスチェックを実行し差分を検知する/spec.md) | 1 | 無 | 20260819_114307_spec_generation |
-| クロスチェック業務 | 速報クロスチェックフロー | [速報クロスチェック結果を確認する](クロスチェック業務/速報クロスチェックフロー/速報クロスチェック結果を確認する/spec.md) | 1 | 無 | 20260818_144847_spec_generation |
-| 並行稼働実行業務 | 並行稼働実行フロー | [background roleを起動する](並行稼働実行業務/並行稼働実行フロー/background roleを起動する/spec.md) | 2 | 無 | 20260829_210828_spec_generation |
-| 並行稼働実行業務 | 並行稼働実行フロー | [feature flag設定に基づきslotを選択して起動する](並行稼働実行業務/並行稼働実行フロー/feature flag設定に基づきslotを選択して起動する/spec.md) | 1 | 無 | 20260829_210828_spec_generation |
-| 並行稼働実行業務 | 並行稼働実行フロー | [foreground roleの標準出力・標準エラー・終了コードを応答する](並行稼働実行業務/並行稼働実行フロー/foreground roleの標準出力・標準エラー・終了コードを応答する/spec.md) | 1 | 無 | 20260829_210828_spec_generation |
-| 並行稼働実行業務 | 並行稼働実行フロー | [並行稼働実行結果を確認する](並行稼働実行業務/並行稼働実行フロー/並行稼働実行結果を確認する/spec.md) | 1 | 無 | 20260829_210828_spec_generation |
-| 実行制御業務 | background側リランフロー | [execution-spec.jsonの実行設定を保ったまま再実行する](実行制御業務/background側リランフロー/execution-spec.jsonの実行設定を保ったまま再実行する/spec.md) | 1 | 無 | 20260829_210828_spec_generation |
-| 実行制御業務 | background側リランフロー | [再実行対象のbackground実行・速報比較依頼を選択する](実行制御業務/background側リランフロー/再実行対象のbackground実行・速報比較依頼を選択する/spec.md) | 1 | 無 | 20260829_210828_spec_generation |
-| 実行制御業務 | blue中止フロー | [blue background実行の中止を依頼する](実行制御業務/blue中止フロー/blue background実行の中止を依頼する/spec.md) | 1 | 無 | 20260829_210828_spec_generation |
-| 実行制御業務 | blue中止フロー | [対話確認のうえblue background実行をABORTEDへ遷移させる](実行制御業務/blue中止フロー/対話確認のうえblue background実行をABORTEDへ遷移させる/spec.md) | 1 | 無 | 20260829_210828_spec_generation |
-| 実行制御業務 | green中止フロー | [green background実行の中止を依頼する](実行制御業務/green中止フロー/green background実行の中止を依頼する/spec.md) | 1 | 無 | 20260829_210828_spec_generation |
-| 実行制御業務 | green中止フロー | [対話確認のうえgreen background実行をABORTEDへ遷移させる](実行制御業務/green中止フロー/対話確認のうえgreen background実行をABORTEDへ遷移させる/spec.md) | 1 | 無 | 20260829_210828_spec_generation |
-| 実行制御業務 | 確報比較中止フロー | [RUNNING中の確報比較依頼の中止を依頼する](実行制御業務/確報比較中止フロー/RUNNING中の確報比較依頼の中止を依頼する/spec.md) | 1 | 無 | 20260829_210828_spec_generation |
-| 実行制御業務 | 確報比較中止フロー | [対話確認のうえ確報比較依頼をABORTEDへ遷移させる](実行制御業務/確報比較中止フロー/対話確認のうえ確報比較依頼をABORTEDへ遷移させる/spec.md) | 1 | 無 | 20260818_144847_spec_generation |
-| 実行制御業務 | 速報比較中止フロー | [RUNNING中の速報比較依頼の中止を依頼する](実行制御業務/速報比較中止フロー/RUNNING中の速報比較依頼の中止を依頼する/spec.md) | 1 | 無 | 20260818_144847_spec_generation |
-| 実行制御業務 | 速報比較中止フロー | [対話確認のうえ速報比較依頼をABORTEDへ遷移させる](実行制御業務/速報比較中止フロー/対話確認のうえ速報比較依頼をABORTEDへ遷移させる/spec.md) | 1 | 無 | 20260818_144847_spec_generation |
-| 実行監視業務 | ハング監視フロー | [background実行の未完了・非0終了・速報比較異常を定期検知する](実行監視業務/ハング監視フロー/background実行の未完了・非0終了・速報比較異常を定期検知する/spec.md) | 1 | 無 | 20260829_210828_spec_generation |
-| 実行監視業務 | ハング監視フロー | [ハング疑い・異常の通知を確認する](実行監視業務/ハング監視フロー/ハング疑い・異常の通知を確認する/spec.md) | 1 | 無 | 20260818_144847_spec_generation |
-| 実行監視業務 | ハング監視フロー | [ハング疑い・異常を運用者へ通知する](実行監視業務/ハング監視フロー/ハング疑い・異常を運用者へ通知する/spec.md) | 1 | 無 | 20260818_144847_spec_generation |
+| クロスチェック業務 | 確報クロスチェックフロー | [確報クロスチェック結果を確認する](クロスチェック業務/確報クロスチェックフロー/確報クロスチェック結果を確認する/spec.md) | 0 | 無 | 20260830_202851_spec_generation |
+| クロスチェック業務 | 確報クロスチェックフロー | [確報比較依頼を claim する](クロスチェック業務/確報クロスチェックフロー/確報比較依頼を claim する/spec.md) | 0 | 有 | 20260830_202851_spec_generation |
+| クロスチェック業務 | 確報クロスチェックフロー | [確報比較依頼を登録して終端状態まで待機する](クロスチェック業務/確報クロスチェックフロー/確報比較依頼を登録して終端状態まで待機する/spec.md) | 0 | 有 | 20260830_202851_spec_generation |
+| クロスチェック業務 | 確報クロスチェックフロー | [比較ツールで日次全量比較を実行して結果を保存する](クロスチェック業務/確報クロスチェックフロー/比較ツールで日次全量比較を実行して結果を保存する/spec.md) | 0 | 有 | 20260830_202851_spec_generation |
+| クロスチェック業務 | 確報クロスチェックフロー | [保存済みの確報結果をジョブスケジューラへ返す](クロスチェック業務/確報クロスチェックフロー/保存済みの確報結果をジョブスケジューラへ返す/spec.md) | 0 | 無 | 20260830_202851_spec_generation |
+| クロスチェック業務 | 速報クロスチェックフロー | [速報クロスチェック runner へ完了通知を送信する](クロスチェック業務/速報クロスチェックフロー/速報クロスチェック runner へ完了通知を送信する/spec.md) | 0 | 有 | 20260830_202851_spec_generation |
+| クロスチェック業務 | 速報クロスチェックフロー | [速報比較依頼を claim する](クロスチェック業務/速報クロスチェックフロー/速報比較依頼を claim する/spec.md) | 0 | 有 | 20260830_202851_spec_generation |
+| クロスチェック業務 | 速報クロスチェックフロー | [速報比較結果を参照する](クロスチェック業務/速報クロスチェックフロー/速報比較結果を参照する/spec.md) | 0 | 無 | 20260830_202851_spec_generation |
+| クロスチェック業務 | 速報クロスチェックフロー | [比較ツールでジョブ単位比較を実行して結果を登録する](クロスチェック業務/速報クロスチェックフロー/比較ツールでジョブ単位比較を実行して結果を登録する/spec.md) | 0 | 有 | 20260830_202851_spec_generation |
+| クロスチェック業務 | 速報クロスチェックフロー | [両系成功時に速報比較依頼を作成する](クロスチェック業務/速報クロスチェックフロー/両系成功時に速報比較依頼を作成する/spec.md) | 0 | 有 | 20260830_202851_spec_generation |
+| 実行監視業務 | background 実行監視フロー | [background 異常の通知メールを受け取る](実行監視業務/background 実行監視フロー/background 異常の通知メールを受け取る/spec.md) | 0 | 有 | 20260830_202851_spec_generation |
+| 実行監視業務 | background 実行監視フロー | [background 実行の経過時間と終了状態を判定する](実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/spec.md) | 0 | 有 | 20260830_202851_spec_generation |
+| 実行監視業務 | background 実行監視フロー | [hang_detect_limit_minutes をジョブごとに調整する](実行監視業務/background 実行監視フロー/hang_detect_limit_minutes をジョブごとに調整する/spec.md) | 0 | 無 | 20260830_202851_spec_generation |
+| 実行監視業務 | background 実行監視フロー | [ハング疑い・実行エラー・比較異常を通知する](実行監視業務/background 実行監視フロー/ハング疑い・実行エラー・比較異常を通知する/spec.md) | 0 | 有 | 20260830_202851_spec_generation |
+| 実行監視業務 | background 実行監視フロー | [監視記録を保存する](実行監視業務/background 実行監視フロー/監視記録を保存する/spec.md) | 0 | 無 | 20260830_202851_spec_generation |
+| 実行復旧業務 | background 側リランフロー | [リラン結果を parent_run_id で追跡する](実行復旧業務/background 側リランフロー/リラン結果を parent_run_id で追跡する/spec.md) | 0 | 無 | 20260830_202851_spec_generation |
+| 実行復旧業務 | background 側リランフロー | [リラン対象を検証する](実行復旧業務/background 側リランフロー/リラン対象を検証する/spec.md) | 0 | 無 | 20260830_202851_spec_generation |
+| 実行復旧業務 | background 側リランフロー | [元の execution-spec.json から復元して新しい run_id で起動する](実行復旧業務/background 側リランフロー/元の execution-spec.json から復元して新しい run_id で起動する/spec.md) | 0 | 有 | 20260830_202851_spec_generation |
+| 実行復旧業務 | background 側リランフロー | [速報比較依頼だけを新規作成する](実行復旧業務/background 側リランフロー/速報比較依頼だけを新規作成する/spec.md) | 0 | 有 | 20260830_202851_spec_generation |
+| 実行復旧業務 | 実行中止フロー | [現在状態を確認して停止確認に応答する](実行復旧業務/実行中止フロー/現在状態を確認して停止確認に応答する/spec.md) | 0 | 無 | 20260830_202851_spec_generation |
+| 実行復旧業務 | 実行中止フロー | [実行を ABORTED へ遷移させる](実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/spec.md) | 0 | 無 | 20260830_202851_spec_generation |
+| 実装切替業務 | 実装切替ジョブ実行フロー | [execution-spec.json を確定保存する](実装切替業務/実装切替ジョブ実行フロー/execution-spec.json を確定保存する/spec.md) | 0 | 無 | 20260830_202851_spec_generation |
+| 実装切替業務 | 実装切替ジョブ実行フロー | [foreground slot の結果をジョブスケジューラへ中継する](実装切替業務/実装切替ジョブ実行フロー/foreground slot の結果をジョブスケジューラへ中継する/spec.md) | 0 | 無 | 20260830_202851_spec_generation |
+| 実装切替業務 | 実装切替ジョブ実行フロー | [slot 実行モードを選択して runner を起動する](実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/spec.md) | 0 | 無 | 20260830_202851_spec_generation |
+| 実装切替業務 | 実装切替ジョブ実行フロー | [ジョブマップで JOB_ID から実行先を解決する](実装切替業務/実装切替ジョブ実行フロー/ジョブマップで JOB_ID から実行先を解決する/spec.md) | 0 | 無 | 20260830_202851_spec_generation |
+| 実装切替業務 | 実装切替ジョブ実行フロー | [業務ジョブの実行結果を確認する](実装切替業務/実装切替ジョブ実行フロー/業務ジョブの実行結果を確認する/spec.md) | 0 | 無 | 20260830_202851_spec_generation |
+| 実装切替業務 | 実装切替ジョブ実行フロー | [実装スクリプトを実行して Runner Result を出力する](実装切替業務/実装切替ジョブ実行フロー/実装スクリプトを実行して Runner Result を出力する/spec.md) | 0 | 有 | 20260830_202851_spec_generation |
+| 適用構成業務 | 適用構成定義フロー | [feature flag を設定する](適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md) | 0 | 無 | 20260830_202851_spec_generation |
+| 適用構成業務 | 適用構成定義フロー | [slot runner の実体スクリプトを割り当てる](適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/spec.md) | 0 | 有 | 20260830_202851_spec_generation |
+| 適用構成業務 | 適用構成定義フロー | [slot ごとのジョブマップを定義する](適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/spec.md) | 0 | 無 | 20260830_202851_spec_generation |
+| 適用構成業務 | 適用構成定義フロー | [クロスチェックのジョブマップと比較定義を定義する](適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/spec.md) | 0 | 無 | 20260830_202851_spec_generation |
+| 適用構成業務 | 適用構成定義フロー | [切り替えた運用モードで業務ジョブを実行する](適用構成業務/適用構成定義フロー/切り替えた運用モードで業務ジョブを実行する/spec.md) | 0 | 有 | 20260830_202851_spec_generation |
 
 ## 全体横断仕様
 
 - [UX デザイン仕様](_cross-cutting/ux-ui/ux-design.md)
-- [UI デザイン仕様](_cross-cutting/ux-ui/ui-design.md)
+- [UI デザイン仕様(出力規約)](_cross-cutting/ux-ui/ui-design.md)
 - [データ可視化仕様](_cross-cutting/ux-ui/data-visualization.md)
-- [共通コンポーネント設計](_cross-cutting/ux-ui/common-components.md)
-- [CLI コマンド契約](_cross-cutting/api/cli-command-contract.yaml)（HTTP APIは存在しないため、こちらが正本。`_cross-cutting/api/openapi.yaml` は構造バリデータ互換のためのスタブ）
+- [CLI コマンド契約(正本)](_cross-cutting/api/cli-command-contract.yaml)
+- [OpenAPI(バリデータ互換スタブ。HTTP API 無し)](_cross-cutting/api/openapi.yaml)
+- [AsyncAPI](_cross-cutting/api/asyncapi.yaml)
 - [RDB スキーマ](_cross-cutting/datastore/rdb-schema.yaml)
-- [データストア統合Markdown](_cross-cutting/datastore/datastore-schema.md)
-- [トレーサビリティマトリクス](_cross-cutting/traceability-matrix.md)
-- [監査イベント契約](_cross-cutting/api/audit-event-contract.yaml)（監査イベントの actor / operation / outcome 統一定義と hash-chain 直列化 lock 契約）
-- [USDM acceptance criteria 逆引き行列](_cross-cutting/usdm-acceptance-matrix.md)（受け入れ条件 → UC / Scenario / tier Scenario）
-- [UC 間依存宣言](_cross-cutting/uc-dependencies.md)（UC が前提とする他 UC の状態・レコード・成果物）
-- [RDRA フィードバック](_cross-cutting/rdra-feedback.md)（Spec 側で解消できず RDRA 見直しが必要な項目）
-- [設計判断記録（Decision Records）](decisions/)
+- [データストアスキーマ(統合 Markdown)](_cross-cutting/datastore/datastore-schema.md)
+- [トレーサビリティ](_cross-cutting/traceability-matrix.md)
+- [UC 依存関係](_cross-cutting/uc-dependencies.md)
+- [USDM 受け入れ基準マトリクス](_cross-cutting/usdm-acceptance-matrix.md)
+- [RDRA フィードバック](_cross-cutting/rdra-feedback.md)
 
 ## メタデータ
 
-- Event ID: 20260829_210828_spec_generation
-- 生成日時: 2026-08-29T21:08:28+09:00
-- UC 総数: 23
-- API（CLIコマンド）総数: 24
-- 業務数: 4
-- BUC数: 9
-- トレーサビリティ網羅率: 100%（rdra-feedback.md 生成なし）
+- Event ID: 20260830_202851_spec_generation
+- 生成日時: 2026-08-30T20:28:51
+- UC 総数: 32
+- API 総数: 0(HTTP API 無し。CLI コマンド契約 24 コマンドが正本)

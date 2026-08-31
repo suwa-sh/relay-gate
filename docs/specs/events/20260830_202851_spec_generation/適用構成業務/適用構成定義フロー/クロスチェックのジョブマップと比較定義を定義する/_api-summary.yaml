@@ -1,0 +1,35 @@
+uc: "クロスチェックのジョブマップと比較定義を定義する"
+business: "適用構成業務"
+buc: "適用構成定義フロー"
+paths: []
+x_cli_commands:
+  - name: "validate-config.sh"
+    tier: "tier-facade"
+    role: "uses"
+    synopsis: "validate-config.sh (--crosscheck-job-map <path> | --target-catalog <path>) [--verbose] [--help]"
+    invoked_by: "基盤適用設計者(直接起動)。validate-config.sh の定義元は UC「feature flag を設定する」(契約 defined_in_uc、tier-facade)。本 UC は --crosscheck-job-map(検証ロジック所有 tier-rapid-crosscheck)/ --target-catalog(同 tier-final-crosscheck)の検証ルールを定義し、エントリポイントのオプションを利用する"
+    args: []
+    options:
+      - name: "--crosscheck-job-map"
+        type: "string"
+        required: false
+        description: "検証するクロスチェックジョブマップ TSV のパス。値必須(既定パス $RELAY_GATE_CONFIG_DIR/crosscheck-job-map.tsv を使う場合も明示的に渡す)。検証種別オプション(--feature-flag / --job-map / --crosscheck-job-map / --target-catalog)のうちちょうど 1 つを指定する(排他。0 個または 2 個以上は終了コード 2)"
+      - name: "--target-catalog"
+        type: "string"
+        required: false
+        description: "検証する対象カタログ TSV のパス。値必須(既定パス $RELAY_GATE_CONFIG_DIR/target-catalog.tsv を使う場合も明示的に渡す)。他の検証種別オプションと排他"
+      - name: "--verbose"
+        type: "boolean"
+        required: false
+        default: "false"
+        description: "行ごとの info を stderr に出す"
+    stdin: "なし"
+    stdout: "--crosscheck-job-map: config=crosscheck-job-map / path: ... / rows=N / target_catalog_path: ... / catalog_version= / exit_code_contract=0:OK,3:NG,6:ERROR / status=valid|invalid / violations=N(invalid 時)。--target-catalog: config=target-catalog / path: ... / rows=N / catalog_versions=v1,v2 / tables=N / files=N / status=valid|invalid / violations=N(invalid 時)"
+    stderr: "契約 validate-config.sh の共通形式: error: config file not found path: ... / error: header mismatch expected=... actual=... path: ... / error: column count mismatch line=N expected=<n> actual=<n> / error: duplicate job_id job_id=... lines=<n1,n2,...> / error: duplicate target catalog_version=... target_type=... target_identifier=... lines=<n1,n2,...> / error: <column> is <reason> line=N ...(例: error: target_type is not in table,file line=N value=...、error: compare_command is not executable line=N job_id=... value=...、error: compare_options is missing {blue} or {green} line=N job_id=... value=...)/ error: exit_code_contract declaration not found path: ... / error: target catalog reference unresolved path=... catalog_version=... / hint: fix the rows above and rerun ..."
+    exit_codes:
+      - code: 0
+        meaning: "違反 0 件"
+      - code: 2
+        meaning: "検証種別オプションの指定数不正・値なし・ファイル不在・ヘッダー不一致・列数不一致・行の違反・宣言不正・未知のオプション"
+async_events: []
+schemas: []

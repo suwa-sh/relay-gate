@@ -1,0 +1,48 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "product"
+artifact_id: "product-decision-005"
+title: "バックアップと基盤監視の方式選定"
+status: "accepted"
+generated_at: "2026-08-30T20:17:49"
+source_refs:
+  - "docs/mcl/product/output/product-workload-model.yaml#product.operations.backup_and_monitoring"
+inputs_ref:
+  - "product-relay-gate-workload-model"
+
+decision:
+  context: |
+    管理DBの日次バックアップとホストリソース監視の方式を選定する必要がある。foundation は
+    「監視基盤を新規導入しない」制約(C.1.3.1 監視範囲 Lv3 相当を既存監視で満たす方針)を課している。
+  conflict_type: "capability"
+  options:
+    - id: "cron_plus_existing_monitoring"
+      description: "cron(pg_basebackup + WALアーカイブ、logrotate)+ 組織既存のホスト監視エージェント"
+      pros:
+        - "追加の監視基盤導入が不要でfoundation.billing.capex_shared_hostsと整合する"
+        - "OSSのみでRPO 4h/RTO 12hを満たせる"
+      cons:
+        - "ダッシュボードは持たず、可視化は組織既存監視の機能範囲に限定される"
+    - id: "prometheus_grafana"
+      description: "Prometheus + Grafana + node_exporter"
+      pros:
+        - "メトリクスの可視化・アラートルールを柔軟に構築できる"
+      cons:
+        - "監視基盤の新規導入・運用工数が発生し「監視基盤を新規導入しない」方針に反する"
+    - id: "zabbix"
+      description: "Zabbix(組織標準がある場合)"
+      pros:
+        - "組織に既存導入がある場合は追加コストが小さい"
+      cons:
+        - "本プロジェクトでは組織既存監視の有無が未確定のため前提にできない"
+  chosen_option: "cron_plus_existing_monitoring"
+  rationale: >-
+    REQ-OPS-001(日次バックアップの自動実行と復旧手順の文書化)とREQ-OPS-002(既存監視への統合)を
+    追加ミドルウェア無しで満たし、cost_posture: cost_optimizedおよびfoundationの監視基盤非新規導入方針に
+    最も適合するため。
+  risk_assessment: >-
+    組織に既存のホスト監視が無い場合はsar / df + cronメールで代替する(gap_description記載)。
+    この場合ダッシュボードが持てないため、運用開始前に組織側の監視有無を確認することをtodoとして残す。
+  affected_elements:
+    - "product.operations.backup_and_monitoring"
+  review_date: "2027-08-30"

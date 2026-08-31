@@ -1,0 +1,66 @@
+uc: "確報比較依頼を claim する"
+business: "クロスチェック業務"
+buc: "確報クロスチェックフロー"
+
+bounded_context_id: "BC-003"
+aggregate_id: "AG-003"
+
+models:
+  - name: "FinalWorkerArgs"
+    tier: "tier-final-crosscheck"
+    layer: "presentation"
+    type: "request"
+    rdra_info: "確報比較依頼(final_crosscheck_request)"
+  - name: "PollAndClaimCommand"
+    tier: "tier-final-crosscheck"
+    layer: "usecase"
+    type: "command"
+    rdra_info: "確報比較依頼(final_crosscheck_request)"
+  - name: "FinalCrosscheckRequest"
+    tier: "tier-final-crosscheck"
+    layer: "domain"
+    type: "entity"
+    rdra_info: "確報比較依頼(final_crosscheck_request)"
+  - name: "FinalCrosscheckRequestRepository"
+    tier: "tier-final-crosscheck"
+    layer: "repository"
+    type: "record"
+    rdra_info: "確報比較依頼(final_crosscheck_request)"
+  - name: "final-crosscheck.env"
+    tier: "tier-final-crosscheck"
+    layer: "repository"
+    type: "record"
+    rdra_info: "実行設定(lease・poll 間隔。RDRA 情報に無い)"
+
+tables:
+  - name: "final_crosscheck_requests"
+    rdra_info: "確報比較依頼(final_crosscheck_request)"
+    operations:
+      - type: "UPDATE"
+        columns:
+          - name: "status"
+            value: "REQUESTED"
+          - name: "worker_id"
+            value: "NULL"
+          - name: "lease_until"
+            value: "NULL"
+        where: "status = 'CLAIMED' AND lease_until < :now AND started_at IS NULL(:now は worker が渡す現在時刻。RELAY_GATE_NOW 設定時はその値)"
+      - type: "UPDATE"
+        columns:
+          - name: "status"
+            value: "CLAIMED"
+          - name: "worker_id"
+            value: "--worker-id または {hostname}-{pid}"
+          - name: "lease_until"
+            value: ":now + FINAL_LEASE_MINUTES(既定 10 分。:now は worker が渡す現在時刻。RELAY_GATE_NOW 設定時はその値)"
+        where: "final_crosscheck_id = (SELECT final_crosscheck_id FROM final_crosscheck_requests WHERE status = 'REQUESTED' ORDER BY requested_at LIMIT 1) AND status = 'REQUESTED'(更新件数 1 のみ成功)"
+    indexes_needed:
+      - columns: ["status", "requested_at"]
+        reason: "REQUESTED を requested_at 昇順で 1 件取る poll"
+        access_pattern: "30 秒ごとの poll(〜10 TPS 以下)"
+      - columns: ["status", "lease_until"]
+        reason: "lease 失効した CLAIMED の回収"
+        access_pattern: "poll のたびに範囲検索"
+
+kvs: []
+object_storage: []

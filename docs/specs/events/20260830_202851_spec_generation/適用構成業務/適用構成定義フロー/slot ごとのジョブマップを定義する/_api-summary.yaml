@@ -1,0 +1,68 @@
+uc: "slot ごとのジョブマップを定義する"
+business: "適用構成業務"
+buc: "適用構成定義フロー"
+paths: []
+x_cli_commands:
+  - name: "validate-config.sh"
+    tier: "tier-facade"
+    role: "uses"
+    synopsis: "validate-config.sh --job-map <path> [--verbose] [--help]"
+    invoked_by: "基盤適用設計者(直接起動)。定義元は UC「feature flag を設定する」(契約 defined_in_uc)。本 UC は --job-map の検証ルール(tier-facade)を定義する"
+    args: []
+    options:
+      - name: "--job-map"
+        type: "string"
+        required: false
+        description: "検証する slot ジョブマップ TSV のパス。検証種別オプション(--feature-flag / --job-map / --crosscheck-job-map / --target-catalog)のうちちょうど 1 つを指定する(排他。0 個または 2 個以上は終了コード 2)"
+      - name: "--verbose"
+        type: "boolean"
+        required: false
+        default: "false"
+        description: "行ごとの解決結果を info: で stderr に出す"
+      - name: "--help"
+        type: "boolean"
+        required: false
+        default: "false"
+        description: "使い方"
+    stdin: "なし"
+    stdout: "検証 OK 時に固定順: map_path, rows, map_version, impl_version"
+    stderr: "違反ごとに error: 1 行(行番号・job_id 付き、全件)。共通形式は契約 validate-config.sh の stderr(config file not found path: / header mismatch expected= actual= path: / column count mismatch line= expected= actual= / duplicate job_id job_id= lines=)。warn: は credential_ref のパス形式・版の混在・未知列"
+    exit_codes:
+      - code: 0
+        meaning: "検証 OK"
+      - code: 2
+        meaning: "引数不正 / ファイルなし / ヘッダー不一致 / 列数不一致 / job_id 不正・重複 / 絶対パス違反 / fixed_args_json 不正 / hang_detect_limit_minutes 不正 / 必須列が空"
+async_events: []
+schemas:
+  - name: "SlotJobMapRow"
+    properties:
+      - name: "job_id"
+        type: "string"
+        required: true
+      - name: "host"
+        type: "string"
+        required: true
+      - name: "exec_user"
+        type: "string"
+        required: true
+      - name: "script_path"
+        type: "string(absolute path)"
+        required: true
+      - name: "work_dir"
+        type: "string(absolute path)"
+        required: true
+      - name: "fixed_args_json"
+        type: "string(JSON array of strings)"
+        required: true
+      - name: "hang_detect_limit_minutes"
+        type: "integer(>=0)"
+        required: true
+      - name: "credential_ref"
+        type: "string"
+        required: false
+      - name: "map_version"
+        type: "string"
+        required: true
+      - name: "impl_version"
+        type: "string"
+        required: true

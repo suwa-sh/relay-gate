@@ -1,0 +1,37 @@
+uc: "background 実行の経過時間と終了状態を判定する"
+business: "実行監視業務"
+buc: "background 実行監視フロー"
+paths: []
+x_cli_commands:
+  - name: "hang-detector.sh"
+    tier: "tier-ops"
+    role: "defines"
+    synopsis: "hang-detector.sh [--verbose] [--help]"
+    invoked_by: "ジョブスケジューラ(ハング検知定期ジョブ、5 分ごと)"
+    args: []
+    options:
+      - name: "--verbose"
+        type: "boolean"
+        required: false
+        description: "対象ごとの info: judged ... を stderr にも出す"
+      - name: "--help"
+        type: "boolean"
+        required: false
+        description: "usage を stdout に出して終了コード 0"
+    stdin: "なし"
+    stdout: "出力しない(0 行)。判定結果は実行ログ hang-detector.sh.log にのみ残す"
+    stderr: "error: config file not found path: ... / error: option required option=HANG_DB_CONN_REF|ALERT_MAIL_TO|ALERT_MAIL_CMD path: ...(2)/ error: ALERT_MAIL_CMD is not executable value=... path: ...(2)/ error: management db connection failed conn_ref=...(6)/ hint: / warn: execution-spec missing run_id=... path: ...(当該 run は判定対象外で継続)/ warn: started-at is invalid run_id=... role=... value=...(当該 role は判定せず継続)。--verbose 時は info: judged run_id=... role=... judgement=NOT_TARGET|COMPLETED|EXEC_ERROR|MONITORING|HANG_SUSPECTED|COMPARE_ERROR elapsed_minutes=... limit_minutes=...(hang_judgement 6 値)"
+    exit_codes:
+      - code: 0
+        meaning: "走査と判定が完了した(異常を検出しても 0。異常はメールで伝える)"
+      - code: 2
+        meaning: "未知のオプション、hang-detector.env 不在、on で HANG_DB_CONN_REF 欠落、ALERT_MAIL_TO 空、ALERT_MAIL_CMD が実行不可、feature flag 設定が読めない、RELAY_GATE_ARTIFACT_ROOT が無い"
+      - code: 6
+        meaning: "on で管理 DB 接続・SELECT 失敗、成果物ルート読み取り失敗、メール送信失敗、監視記録の保存失敗"
+async_events:
+  - name: "rapid-crosscheck-requests"
+    channel: "rapid-crosscheck-requests"
+    direction: "subscribe"
+    message: "RapidCrosscheckRequestMessage"
+    summary: "RAPID_CROSSCHECK_MODE=on のとき未終端・未判定の速報比較依頼(未終端の監視記録がある ABORTED を含む)と slot_executions.status を SELECT して異常判定する(状態は変更しない。参照のみ)"
+schemas: []

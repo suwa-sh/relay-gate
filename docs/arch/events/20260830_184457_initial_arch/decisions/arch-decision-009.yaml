@@ -1,0 +1,30 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "architecture"
+artifact_id: "arch-decision-009"
+title: "データモデル戦略: 状態を持つ管理レコードは event_snapshot、記録は event、設定は resource_scd2。成果物ファイルを外部 IF の正本にする"
+status: "approved"
+generated_at: "2026-08-30T18:44:57"
+context: |
+  25 情報のうち状態モデルを持つものが 6(並行稼働実行 / slot 実行 / 速報比較依頼 / 確報比較依頼 / 速報実行 / 監視記録)、記録型が多数、設定は版を持つ。
+  方針資料は Runner Result Contract と execution-spec.json をファイルの正本とし、RAPID_CROSSCHECK_MODE=off では管理 DB なしで動作すると定めている。
+decision: |
+  - event_snapshot: 並行稼働実行 / slot 実行 / 速報実行 / 速報比較依頼 / 確報比較依頼 / 監視記録(状態遷移の履歴 + 最新状態)
+  - event: ジョブ起動要求 / 実行設定 / Runner Result / ジョブスケジューラ応答 / 完了通知 / 比較結果 / 比較ツール実行結果 / 通知メール / リラン指示 / 中止指示 / 実行ログ(INSERT のみ)
+  - resource_scd2: feature flag / runner 割当 / ジョブマップ / ハング検知上限 / 比較定義 / クロスチェックジョブマップ / 対象カタログ(版で世代管理)
+  - resource_mutable: 適用構成文書
+  - ストレージ: 設定・成果物・実行ログは file、管理レコード(parallel_run / rapid_* / final_crosscheck_request / comparison_result / 監視記録)は rdb
+  - slot 実行は file(Runner Result 正本)+ rdb(速報有効時の状態追跡)の二重マッピング(low。todo 登録)
+  - 速報側と確報側のテーブルは分離し、確報は rapid_* を作成・変更しない
+consequences:
+  positive:
+    - "off モードでファイルだけで動作する方針資料の要件と、on モードの管理 DB 追跡を両立する"
+    - "execution-spec.json が不変の event であることでリランの再現性が担保される"
+  negative:
+    - "slot 実行の状態がファイルと DB の 2 箇所に現れるため、正本(exitcode.txt)と DB の同期規則を dist-spec で明確にする必要がある"
+    - "event_snapshot の履歴テーブルを bash + SQL で二重書き込みする実装コストがある。履歴不要なら resource_mutable への簡略化を dist-spec で判断する"
+alternatives_considered:
+  - name: "Option B: 管理レコードをすべて resource_mutable にする"
+    reason_rejected: "リラン系譜・警告傾向の記録・監査補助のために状態遷移履歴が必要"
+  - name: "Option C: slot 実行を rdb のみにする"
+    reason_rejected: "RAPID_CROSSCHECK_MODE=off で管理 DB へ接続しない要件に反する"

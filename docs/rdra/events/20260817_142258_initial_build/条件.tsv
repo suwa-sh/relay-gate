@@ -1,3 +1,0 @@
-コンテキスト	条件	条件の説明	バリエーション	状態モデル
-実行管理	feature flag設定（BLUE_MODE/GREEN_MODE/RAPID_CROSSCHECK_MODE）	BLUE_MODE/GREEN_MODEはforeground・background・offのいずれかを設定する。両方を同時にforegroundにする組み合わせは許可しない。RAPID_CROSSCHECK_MODEはon/offを設定し、offの場合はblue/green runnerからの完了通知送信、速報管理DBへの接続・書込みを行わない。facadeがJOB_IDを受け取ってblue/greenの各slotを起動する際に、どの実装をどの役割（foreground/background/off）で動かすかを判定し、ジョブ定義を変更せずに運用モード（並行稼働／新実装単独本番／次世代実装との並行稼働）や速報クロスチェックの有効・無効を切り替えるために用いる。	slotモード（BLUE_MODE/GREEN_MODE）、RAPID_CROSSCHECK_MODE
-異常監視管理	hang_detect_limit_minutes	background roleごとに設定する、未完了状態を許容する経過時間のしきい値（分）。実行先のジョブマップで解決され、execution-spec.jsonに保存される。定期起動のhang-detectorが、exitcode.txtを出力していないbackground roleについてstarted-at.txtからの経過時間を判定し、しきい値を超過した場合にハング疑いとして運用者へ通知するために用いる。	role区分	background slot実行状態

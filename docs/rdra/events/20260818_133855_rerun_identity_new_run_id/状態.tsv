@@ -1,3 +1,0 @@
-コンテキスト	状態モデル	状態	遷移UC	遷移先状態	説明
-実行管理	background slot実行状態		execution-spec.jsonの実行設定を保ったまま再実行する	RUNNING	再実行では元のexecution-spec.jsonの設定で新しいrun_idの実行を新規作成しparent_run_idで元run_idに関連付ける。元の実行のレコードと履歴は変更しない(background側リランフロー)
-速報クロスチェック管理	速報比較依頼状態		execution-spec.jsonの実行設定を保ったまま再実行する	REQUESTED	再実行では新しいrun_idの速報比較依頼を新規作成しparent_run_idで元依頼に関連付ける。元依頼のレコード・状態・履歴は変更しない(background側リランフロー)

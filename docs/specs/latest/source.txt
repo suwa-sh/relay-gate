@@ -1,0 +1,6 @@
+Spec 生成: 初期構築(design 無しモード。UI 画面なし・CLI と定期ジョブのみ)
+event_id: 20260830_202851_spec_generation
+trigger_event: rdra:20260830_181841_initial_build, arch:20260830_202427_arch_infra_feedback_20260830_190412_infra_product_design
+design_available: false(引数指定。docs/design/latest/ は存在しない)
+dialogue_policy: auto_adopt
+要求入力: docs/pipeline/inputs/20260830_rebuild_from_original_docs.md(方針資料「RelayGate のしくみ」が正本)

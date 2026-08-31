@@ -12,3 +12,6 @@ step_models:
   step5: null
   step6: null
   step6a: "sonnet"
+
+# UI 画面を持たない CLI プロダクトのため、design-system と spec-stories を skip する。
+skip_steps: [step5, step6a]

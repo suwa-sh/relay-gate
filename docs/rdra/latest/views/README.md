@@ -1,8 +1,8 @@
 <!-- generateRdraMd.js による自動生成ファイル。手動編集しないこと。元データ: docs/rdra/latest/*.tsv -->
 
-# RelayGate — RDRA ビュー
+# relay-gate 並行稼働実行基盤 — RDRA ビュー
 
-ジョブスケジューラのジョブ定義を変更せず、既存実装（blue）と新実装（green）を並行稼働・段階的に切替できるストラングラーファサード基盤。feature flag設定によりslotの起動可否とforeground/background roleの実行順序を制御し、foreground実行結果（標準出力・標準エラー・終了コード）のみをジョブスケジューラへ中継する。blue/green runnerの実行結果を共通形式（Runner Result Contract）で標準化し、ジョブ単位の速報クロスチェックと日次全量の確報クロスチェックにより整合性を確認する。background実行の未完了・異常やクロスチェック異常を定期検知して運用者へ通知し、対話確認を伴う中止操作と元の実行設定を保った選択的リランを提供する。実行先の詳細はジョブマップで解決し、run_id/parent_run_idによる実行系譜の追跡と、runnerの差し替えによる段階的な実装世代交代の拡張性を備える。
+既存実装(blue)と新実装(green)をジョブスケジューラの同一ジョブ定義から並行稼働させ、クロスチェックで整合性を検証しながら段階的に切り替えるための feature flag 付きストラングラーファサード型の実行基盤。facade が feature flag で slot ごとの実行モード(foreground / background / off)を選択し、background slot を先に起動してから foreground の Runner Result(stdout.log / stderr.log / exitcode.txt)だけをジョブスケジューラへ中継する。slot runner がジョブマップで JOB_ID から実行先を解決し execution-spec.json として確定保存する。速報クロスチェックはジョブ実行ごとに blue / green の完了結果を非同期に比較し、確報クロスチェックは別ジョブ定義から全テーブル・全ファイルの日次全量比較を行って stdout・stderr・exitcode をジョブスケジューラへ返す。ハング検知の定期ジョブが background 実行の異常を運用者へメール通知し、運用者は中止スクリプトで停止確認済みの実行を ABORTED にしてから background 側リランで元の execution-spec.json から再実行する。シェルスクリプトと RDB(ジョブキュー兼管理 DB)で構成し、UI 画面を持たず CLI と定期ジョブだけで動作する。
 
 `docs/rdra/latest/*.tsv` から自動生成した、ヒトが読むための RDRA ビュー集。
 
@@ -21,13 +21,13 @@
 
 | モデル | 件数 |
 |---|---|
-| アクター | 4 |
-| 外部システム | 3 |
-| 業務 | 4 |
-| BUC | 9 |
-| アクティビティ | 23 |
-| UC | 23 |
-| 情報 | 8 |
-| 状態モデル | 3 |
-| 条件 | 3 |
-| バリエーション | 7 |
+| アクター | 2 |
+| 外部システム | 7 |
+| 業務 | 5 |
+| BUC | 7 |
+| アクティビティ | 32 |
+| UC | 32 |
+| 情報 | 25 |
+| 状態モデル | 5 |
+| 条件 | 44 |
+| バリエーション | 24 |

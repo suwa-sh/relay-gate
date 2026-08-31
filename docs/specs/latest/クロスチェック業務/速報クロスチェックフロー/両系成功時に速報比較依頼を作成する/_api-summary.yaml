@@ -1,0 +1,49 @@
+uc: "両系成功時に速報比較依頼を作成する"
+business: "クロスチェック業務"
+buc: "速報クロスチェックフロー"
+paths: []
+x_cli_commands:
+  - name: "rapid-crosscheck-runner.sh blue-completed|green-completed"
+    tier: "tier-rapid-crosscheck"
+    role: "uses"
+    synopsis: "rapid-crosscheck-runner.sh blue-completed|green-completed --run-id <run_id> --job-id <job_id> --exit-code <n> --artifact-uri <uri> [--verbose] [--help]"
+    invoked_by: "内部呼び出し(slot runner。RAPID_CROSSCHECK_MODE=on のみ)。コマンド定義(オプション・終了コード)は UC「速報クロスチェック runner へ完了通知を送信する」が持つ。本 UC は同一起動内の dispatcher フローで stdout 3 行を追記する"
+    args:
+      - name: "subcommand"
+        type: "enum"
+        required: true
+        description: "blue-completed / green-completed"
+    options: []
+    stdin: "なし"
+    stdout: "受信 UC(速報クロスチェック runner へ完了通知を送信する)の定義に追記: 4 行に続けて completion_status=(PENDING|ONE_COMPLETED|BOTH_SUCCEEDED|ANY_FAILED|REQUEST_CREATED) / request_status=(REQUESTED|-) / requested_at=(UTC|-)"
+    stderr: "warn: job_id mismatch run_id=... notified=... recorded=... / error: management db transaction failed run_id=..."
+    exit_codes:
+      - code: 0
+        meaning: "完了状況を更新した(依頼の作成有無を問わない)"
+      - code: 2
+        meaning: "サブコマンド・オプションの検証エラー(受信 UC と同じ)"
+      - code: 3
+        meaning: "rapid_runs に run_id の行が無い"
+      - code: 6
+        meaning: "トランザクション失敗(ROLLBACK 済み)"
+async_events:
+  - name: "rapid-crosscheck-requests"
+    channel: "rapid-crosscheck-requests"
+    direction: "publish"
+    message: "RapidCrosscheckRequestMessage"
+    summary: "両系成功時に rapid_crosscheck_requests へ status=REQUESTED の行を run_id 主キーで 1 件 INSERT する(RDB ジョブキュー)。worker が subscribe する"
+schemas:
+  - name: "RapidCrosscheckRequestMessage"
+    properties:
+      - name: "run_id"
+        type: "string"
+        required: true
+      - name: "job_id"
+        type: "string"
+        required: true
+      - name: "status"
+        type: "string"
+        required: true
+      - name: "requested_at"
+        type: "string"
+        required: true

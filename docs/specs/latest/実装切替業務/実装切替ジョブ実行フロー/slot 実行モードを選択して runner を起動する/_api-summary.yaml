@@ -1,0 +1,55 @@
+uc: "slot 実行モードを選択して runner を起動する"
+business: "実装切替業務"
+buc: "実装切替ジョブ実行フロー"
+paths: []
+x_cli_commands:
+  - name: "facade.sh"
+    tier: "tier-facade"
+    role: "defines"
+    synopsis: "facade.sh JOB_ID [PARAM...]"
+    invoked_by: "ジョブスケジューラ(業務ジョブ定義)"
+    args:
+      - name: "JOB_ID"
+        type: "string"
+        required: true
+        description: "業務ジョブ識別子。英数字・アンダースコア・ハイフンのみ"
+      - name: "PARAM..."
+        type: "string[]"
+        required: false
+        description: "追加引数。順序を変えずに runner へ -- の後ろに渡す"
+    options:
+      - name: "--help"
+        type: "boolean"
+        required: false
+        default: "false"
+        description: "使い方を stdout に出して終了コード 0"
+      - name: "--verbose"
+        type: "boolean"
+        required: false
+        default: "false"
+        description: "info を実行ログに出す(stderr には出さない)"
+    stdin: "なし"
+    stdout: "facade 自身は出力しない。foreground slot の stdout.log を無加工で中継する(UC: foreground slot の結果をジョブスケジューラへ中継する)"
+    stderr: "検証・実行エラーのみ error: 1 行(+ hint: 1 行)。foreground 起動後は stderr を汚さない"
+    exit_codes:
+      - code: "foreground の exitcode.txt の値"
+        meaning: "foreground slot の終了コードをそのまま中継する"
+      - code: 2
+        meaning: "JOB_ID 欠落 / mode 列挙外 / 両 slot foreground / foreground slot が 1 つも無い / runner 実体なし / feature flag ファイルなし / on のとき rapid-crosscheck.env 不在・RAPID_DB_CONN_REF 欠落"
+      - code: 6
+        meaning: "foreground 待機前の管理 DB 書き込み失敗(parallel_runs INSERT / STARTED→RUNNING UPDATE、rapid_runs INSERT、slot_executions INSERT / pid UPDATE)、runner 起動失敗、成果物ディレクトリ作成失敗。中継後の COMPLETED UPDATE 失敗は終了コードに反映しない"
+  - name: "$BLUE_RUNNER / $GREEN_RUNNER"
+    tier: "tier-facade"
+    role: "uses"
+    synopsis: "<runner> --run-id <run_id> --job-id <JOB_ID> --role blue|green --mode foreground|background [--execution-spec <path>] [--help] -- [PARAM...]"
+    invoked_by: "facade.sh(内部呼び出し)"
+    args: []
+    options: []
+    stdin: "なし"
+    stdout: "runner は stdout に出さない(成果物ファイルへ出力)"
+    stderr: "runner は stderr に出さない(stderr.log へ出力)"
+    exit_codes:
+      - code: "exitcode.txt と一致"
+        meaning: "契約は UC「slot runner の実体スクリプトを割り当てる」が定義する"
+async_events: []
+schemas: []

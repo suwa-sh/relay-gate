@@ -1,0 +1,33 @@
+uc: "実装スクリプトを実行して Runner Result を出力する"
+business: "実装切替業務"
+buc: "実装切替ジョブ実行フロー"
+paths: []
+x_cli_commands:
+  - name: "$BLUE_RUNNER / $GREEN_RUNNER"
+    tier: "tier-facade"
+    role: "uses"
+    synopsis: "<runner> --run-id <run_id> --job-id <JOB_ID> --role blue|green --mode foreground|background [--execution-spec <path>] [--help] -- [PARAM...]"
+    invoked_by: "facade.sh / background-rerun.sh(内部呼び出し)"
+    args: []
+    options:
+      - name: "--execution-spec"
+        type: "string"
+        required: false
+        description: "復元起動。ジョブマップを再解決せず slots.<role> の実行先と run 単位の params で起動する"
+    stdin: "なし(SSH は -n で stdin を閉じる)"
+    stdout: "なし(実装の stdout は facade/<run_id>/<role>/stdout.log へ)"
+    stderr: "なし(実装の stderr は stderr.log へ。SSH 失敗は stderr.log 末尾に error: 1 行)"
+    exit_codes:
+      - code: "exitcode.txt の値"
+        meaning: "実装の終了コードをそのまま返す(SSH 接続失敗は 6。仮採用)。0 → SUCCEEDED / 非 0 → FAILED"
+      - code: 2
+        meaning: "復元起動の spec 欠落・PARAM 併用・二重起動 / on のとき rapid-crosscheck.env 不在・RAPID_DB_CONN_REF 欠落(exitcode.txt=2)"
+      - code: 6
+        meaning: "3 ファイルを揃えられない書き込み失敗"
+async_events:
+  - name: "slot-completed"
+    channel: "slot-completed"
+    direction: "publish"
+    message: "SlotCompletedNotice"
+    summary: "3 ファイル確定後、RAPID_CROSSCHECK_MODE=on のときだけ自系統の公開 function(blue-completed / green-completed)へ run_id / job_id / exit_code / artifact_uri を通知する。契約の定義は UC「速報クロスチェック runner へ完了通知を送信する」"
+schemas: []

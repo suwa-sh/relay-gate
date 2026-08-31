@@ -1,1 +1,1 @@
-arch-design.yaml（20260819_110531_arch_comparison_definition_exitcode）に基づく差分インフラ設計更新: 比較定義エンティティ（SCD2）の RDB 永続化と、foreground 終了コード透過・relay-gate 退避終了コード分離の写像
+arch-design.yaml からのインフラ設計変換

@@ -1,0 +1,30 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "architecture"
+artifact_id: "arch-decision-008"
+title: "レイヤリング戦略: 全スクリプト tier で 5 層(presentation → usecase → domain → repository / gateway)の直接依存"
+status: "approved"
+generated_at: "2026-08-30T18:44:57"
+context: |
+  状態モデル 5 種・条件 44 件と判定表が多く、方針資料は判定表(ハング検知 / リラン事前検証 / 中止可否 / 両系成功)を明示している。
+  bash では抽象 IF を置く手段が限られる。ユーザーは presentation → usecase → domain → repository / gateway の構成を規約として指定している。
+decision: |
+  - tier-facade / tier-rapid-crosscheck / tier-final-crosscheck / tier-ops の 4 tier に 5 層を適用する
+  - presentation = CLI 入口(引数検証・対話プロンプト・終了コード・無加工中継)
+  - usecase = フロー制御と実行ログの集約ポイント
+  - domain = 判定表と状態遷移の純粋関数(ログ出力禁止)
+  - repository = 集約単位の読み書き(管理 DB / 成果物ディレクトリ / 設定ファイル)
+  - gateway = 外部連携アダプタ(SSH / RDB クライアント / 比較ツール / メール / ファイルシステム)
+  - レイヤー間は source による直接依存(IF なし)。製品差異は gateway アダプタの差し替えで吸収する
+  - tier-datastore はレイヤーを持たない(スキーマと配置のみ)
+consequences:
+  positive:
+    - "判定表を domain の純粋関数にすることで bash でも単体テストが可能になる"
+    - "外部連携の差し替え点が gateway に集約される"
+  negative:
+    - "bash のレイヤー分離はディレクトリと命名規約に依存し、静的に強制できない"
+alternatives_considered:
+  - name: "Option B: 2 層(handler → gateway)の単純バッチ構成"
+    reason_rejected: "判定表と状態遷移が多く、ドメインロジックが handler に散らばる"
+  - name: "Option C: 凹型(gateway に IF を導入)"
+    reason_rejected: "bash に IF の仕組みがなく、アダプタスクリプトの差し替えで同じ効果を得られる"

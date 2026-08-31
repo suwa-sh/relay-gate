@@ -2,50 +2,63 @@ schema_version: "1.0"
 artifact_type: "context"
 skill_type: "foundation"
 artifact_id: "foundation-context"
-title: "Foundation Context（最小構成・オンプレミス単一サイト）"
+title: "基盤コンテキスト(オンプレミス限定・最小構成)"
 status: "draft"
-generated_at: "2026-08-17T15:10:23"
-source_refs: []
+generated_at: "2026-08-30T19:04:12"
+source_refs:
+  - "docs/arch/latest/arch-design.yaml (technology_context.constraints, CTP-002, CTP-005, CTP-006)"
+  - "docs/nfr/latest/nfr-grade.yaml (A.2, C.1, E.5, E.6, E.8)"
 decision_refs: []
 inputs_ref: []
 
+# 注記:
+# mcl-foundation-design は未実施。dist-infrastructure がプロジェクト前提
+# (エアーギャップ環境のオンプレミス Linux。クラウドベンダーは選択しない)から
+# 最小構成として生成した。foundation 設計を正式に実施した場合は本ファイルを置き換える。
+
 organization_structure:
-  business_units: [default]
-  environments: [prod, stg, dev]
-  account_pattern: "{env}"
-  core_accounts: []
+  target_clouds:
+    - vendor: "onprem"
+      scope: "full_stack"
+      description: "組織内データセンターのオンプレミス Linux。仮想化基盤 / 物理サーバの区別は適用側の設置環境に従う"
+  environments:
+    - id: "production"
+      description: "ジョブスケジューラの本番実行ホスト群と管理 DB ホスト"
+    - id: "test"
+      description: "本番縮小構成のテスト環境。feature flag / ジョブマップ / 比較定義の切替を事前検証する"
 
 identity_guardrails:
-  federation_required: false
-  local_users_forbidden: false
-  privileged_access: ssh_key_based
-  breakglass_accounts: 1
+  - id: "foundation.identity.os_account_ssh_key"
+    description: "認証は OS アカウントと SSH 鍵認証のみ。IdP / SSO / 認可サービスを導入しない"
+  - id: "foundation.identity.os_permission_authz"
+    description: "認可は実行ユーザーの OS 権限(ファイル・ディレクトリ・DB ロール)で行う"
+  - id: "foundation.identity.no_secret_values_in_config"
+    description: "認証情報は値ではなく参照名で扱い、設定ファイル・ログ・成果物に平文で残さない"
 
 network_guardrails:
-  topology: single_site_onprem
-  prod_nonprod_isolation: true
-  central_egress: false
-  inter_cloud_encryption: not_applicable
+  - id: "foundation.network.air_gapped"
+    description: "実行時にインターネット接続・外部 SaaS・クラウドサービスを要求しない"
+  - id: "foundation.network.closed_segments"
+    description: "実行ホストセグメントと DB セグメントに分かれた閉域ネットワーク。セグメント間はパケットフィルタリングで SSH / DB ポート / SMTP のみ許可する"
+  - id: "foundation.network.ssh_only_remote_exec"
+    description: "ホスト間のリモート実行経路は SSH のみ。SSH 以外の経路は暗号化要件を課さない"
 
 policy_guardrails:
-  allowed_regions:
-    onprem: [onprem-dc]
-  public_storage_forbidden: true
-  required_tags: [environment]
+  - id: "foundation.policy.offline_patching"
+    description: "セキュリティパッチとウイルス定義はオフラインで持ち込み随時適用する"
+  - id: "foundation.policy.neutral_naming"
+    description: "成果物に案件固有の製品名・サーバ名・業務名を記載しない(中立表現)"
+  - id: "foundation.policy.no_ui_no_http_api"
+    description: "UI 画面・HTTP API・WAF は導入しない。CLI と定期ジョブとメール通知だけで動作する"
 
 logging_guardrails:
-  central_aggregation: false
-  retention_days: 365
-  tamper_protection: not_required
+  - id: "foundation.logging.scheduler_is_audit_source"
+    description: "実行履歴・監査の正本はジョブスケジューラ。基盤側は実行ログファイルと管理レコードを残すだけ"
+  - id: "foundation.logging.retention_3_months"
+    description: "基盤の実行ログは障害調査用として 3 ヶ月保管する"
 
 billing_boundaries:
-  budget_owner: business_unit
-  cost_allocation_model: fixed_capital
-  fixed_split: not_applicable
-  variable_split: not_applicable
-  required_tags: [environment]
+  - id: "foundation.billing.capex_shared_hosts"
+    description: "従量課金は無い。既存のジョブスケジューラ実行ホストと DB ホストに相乗りし、追加コストはホスト・ストレージ・運用工数で評価する"
 
-approved_deviations:
-  - id: "deviation-cloud-managed-services"
-    description: "エアギャップ環境のオンプレミスLinuxサーバへのデプロイのため、クラウドマネージドサービス・IaC（クラウド向け）・コスト最適化ヒントは対象外とする"
-    reason: "プロジェクト背景: エアギャップ環境のオンプレミスLinuxサーバ（インターネット接続なし）"
+approved_deviations: []
