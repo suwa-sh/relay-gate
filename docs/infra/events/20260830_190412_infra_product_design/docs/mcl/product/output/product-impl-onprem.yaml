@@ -1,0 +1,213 @@
+schema_version: "1.0"
+artifact_type: "implementation_spec"
+skill_type: "product"
+artifact_id: "product-impl-onprem"
+title: "relay-gate 並行稼働実行基盤 オンプレミス実装仕様"
+status: "draft"
+generated_at: "2026-08-30T20:17:49"
+source_refs:
+  - "docs/mcl/product/output/product-workload-model.yaml"
+  - "docs/mcl/product/output/product-mapping-onprem.yaml"
+decision_refs:
+  - "product-decision-001"
+  - "product-decision-002"
+  - "product-decision-003"
+  - "product-decision-004"
+  - "product-decision-005"
+inputs_ref:
+  - "product-relay-gate-workload-model"
+  - "product-relay-gate-mapping-onprem"
+
+vendor: "onprem"
+canonical_ref: "product-relay-gate-workload-model"
+mapping_ref: "product-relay-gate-mapping-onprem"
+
+components:
+  - id: "impl.compute.execution_hosts"
+    name: "実行ホスト群(systemd/cron)"
+    canonical_element_id: "product.compute.script_runtime_hosts"
+    vendor_service: "Linux VM/物理サーバ + systemd + OpenSSH"
+    configuration:
+      os: "RHEL 系または Debian 系 LTS(最新の LTS を利用)"
+      shell: "bash 5"
+      services:
+        - name: "relay-gate-rapid-worker.service"
+          type: "systemd service(常駐)"
+          restart_policy: "Restart=on-failure, RestartSec=5"
+          host_group: "job-scheduler実行ホストセグメント"
+        - name: "relay-gate-final-crosscheck-worker.service"
+          type: "systemd service(常駐)"
+          restart_policy: "Restart=on-failure, RestartSec=5"
+          host_group: "DBセグメント専用ホスト"
+        - name: "relay-gate-hang-detector.timer"
+          type: "systemd timer(定期起動、5分ごと)"
+          host_group: "job-scheduler実行ホストセグメント"
+      ssh:
+        auth: "公開鍵認証のみ(パスワード認証無効)"
+        known_hosts: "配布物として事前配布(TOFU無効化)"
+      scaling: "worker ホスト追加 + 同一 unit ファイル配置(手動水平スケール)"
+    dependencies:
+      - "impl.database.management_db"
+      - "impl.storage.artifact_store"
+      - "impl.storage.config_store"
+      - "impl.messaging.mail_relay"
+    iac_module: "infra/product/onprem/ansible/roles/relay-gate-runtime"
+    validation_rules:
+      - rule: "systemctl is-enabled relay-gate-*-worker.service で enabled であること"
+        type: "runtime"
+        description: "常駐 worker の自動起動設定を確認する"
+      - rule: "systemctl is-active relay-gate-*-worker.service で active(running) であること"
+        type: "runtime"
+        description: "常駐 worker の稼働状態を確認する"
+      - rule: "ssh -o BatchMode=yes による疎通確認(パスワードプロンプトが出ないこと)"
+        type: "runtime"
+        description: "公開鍵認証のみで完結することを検証する"
+
+  - id: "impl.database.management_db"
+    name: "管理DB(PostgreSQL)"
+    canonical_element_id: "product.database.management_db"
+    vendor_service: "PostgreSQL 16 セルフホスト(単一インスタンス)"
+    configuration:
+      schemas: ["rapid(速報)", "final(確報)"]
+      roles:
+        - name: "app_rw"
+          privileges: "rapid/final スキーマへの SELECT/INSERT/UPDATE(DELETE は監査要件により制限)"
+        - name: "ops_ro"
+          privileges: "全スキーマへの SELECT のみ(参照専用)"
+      claim_pattern: "SELECT ... FOR UPDATE SKIP LOCKED + lease_until 列の UPDATE"
+      pg_hba: "実行ホストセグメント/DBセグメントのIP範囲のみ許可、他は拒否"
+      backup:
+        full: "pg_basebackup 日次(cronで自動実行)"
+        incremental: "archive_command による WAL 連続アーカイブ"
+        rpo_target: "4h"
+        rto_target: "12h"
+      future_extension: "ストリーミングレプリケーション(HA拡張時のみ、現行は単一インスタンス)"
+    dependencies: []
+    iac_module: "infra/product/onprem/ansible/roles/relay-gate-postgresql"
+    validation_rules:
+      - rule: "pg_hba.conf に実行ホストセグメント/DBセグメント以外からの接続許可行が無いこと"
+        type: "static"
+        description: "ネットワークセグメント分離の設定検証"
+      - rule: "app_rw ロールに DELETE 権限が管理レコード以外に付与されていないこと"
+        type: "static"
+        description: "権限分離(REQ-DB-005)の検証"
+      - rule: "WAL アーカイブ先ディレクトリへの書き込みが継続していること(タイムスタンプ差分監視)"
+        type: "runtime"
+        description: "RPO 4h を満たす WAL アーカイブ稼働確認"
+
+  - id: "impl.storage.artifact_store"
+    name: "成果物ディレクトリ"
+    canonical_element_id: "product.storage.artifact_store"
+    vendor_service: "実行ホストのローカルディスク(RAID1)"
+    configuration:
+      mount_point: "/var/lib/relay-gate/facade/"
+      filesystem: "ext4 または xfs(RAID1構成のボリューム上)"
+      write_pattern: "一時ファイル(.tmp サフィックス)へ書き込み後 rename(2) で確定"
+      raid: "RAID1(部品冗長化)"
+    dependencies: []
+    iac_module: "infra/product/onprem/ansible/roles/relay-gate-runtime"
+    validation_rules:
+      - rule: "確定済みファイルに .tmp サフィックスの残留が無いこと"
+        type: "runtime"
+        description: "原子的確定(REQ-ART-001)の検証"
+      - rule: "RAID アレイの状態が healthy であること(mdadm --detail 等)"
+        type: "runtime"
+        description: "ストレージ冗長化(REQ-ART-003)の検証"
+
+  - id: "impl.storage.config_store"
+    name: "設定ファイル配置"
+    canonical_element_id: "product.storage.config_store"
+    vendor_service: "実行ホストのローカルディレクトリ(読み取り専用配置)"
+    configuration:
+      path: "/etc/relay-gate/"
+      contents: "feature flag(env形式)、ジョブマップ、クロスチェックジョブマップ、対象カタログ、適用文書"
+      ownership: "所有者=配布用サービスアカウント、実行ユーザーは読み取り専用(0644, グループ read)"
+      distribution: "適用側の構成管理ツール(Ansible等)で配布"
+      secret_handling: "認証情報は参照名のみを記載し実体は置かない"
+    dependencies: []
+    iac_module: "infra/product/onprem/ansible/roles/relay-gate-config"
+    validation_rules:
+      - rule: "/etc/relay-gate/ 配下のファイルパーミッションが実行ユーザーに対し write 不可であること"
+        type: "static"
+        description: "読み取り専用配置(REQ-CFG-002)の検証"
+      - rule: "設定ファイル中に認証情報の平文値が含まれないこと(grepベースの静的検査)"
+        type: "static"
+        description: "foundation.identity.no_secret_values_in_config の検証"
+
+  - id: "impl.storage.execution_log_store"
+    name: "実行ログ領域"
+    canonical_element_id: "product.storage.execution_log_store"
+    vendor_service: "実行ホストのローカルディスク + logrotate"
+    configuration:
+      path: "/var/log/relay-gate/<script>.log"
+      format: "日時 スクリプト名 run_id レベル メッセージ"
+      rotation: "logrotate: daily, rotate 90, compress"
+      retention: "3ヶ月(90世代)"
+    dependencies: []
+    iac_module: "infra/product/onprem/ansible/roles/relay-gate-runtime"
+    validation_rules:
+      - rule: "logrotate -d /etc/logrotate.d/relay-gate がエラー無く完了すること"
+        type: "static"
+        description: "ローテーション設定の構文検証"
+      - rule: "90日超のログファイルが残存していないこと"
+        type: "runtime"
+        description: "ログ保管期間(REQ-LOG-001)の検証"
+
+  - id: "impl.messaging.mail_relay"
+    name: "メール通知(Postfix)"
+    canonical_element_id: "product.messaging.mail_notification"
+    vendor_service: "Postfix(satellite構成)"
+    configuration:
+      relayhost: "組織内SMTP中継先(適用側で指定)"
+      queue: "有効(中継先一時停止時に自動リトライ)"
+      send_command: "mail コマンド経由でスクリプトから送信"
+      logging: "送信内容(件名・宛先・本文要約)を実行ログに記録"
+    dependencies:
+      - "impl.storage.execution_log_store"
+    iac_module: "infra/product/onprem/ansible/roles/relay-gate-mail"
+    validation_rules:
+      - rule: "postfix check がエラー無く完了すること"
+        type: "static"
+        description: "Postfix構文検証"
+      - rule: "テストメール送信後に実行ログへ送信記録が残ること"
+        type: "runtime"
+        description: "REQ-MAIL-002 の検証"
+
+  - id: "impl.integration.job_scheduler"
+    name: "ジョブスケジューラ連携"
+    canonical_element_id: "product.integration.job_scheduler"
+    vendor_service: "組織既存のジョブスケジューラ(製品固定なし)"
+    configuration:
+      job_definitions:
+        - "業務ジョブ: facade.sh JOB_ID [PARAM...] への置き換え"
+        - "確報クロスチェックジョブ: 日次スケジュール"
+        - "ハング検知定期ジョブ: 5分間隔"
+        - "backgroundリラン専用ジョブ: 手動トリガー起動用"
+      exit_code_policy: "終了コードで成否判定(0=成功、非0=失敗)。stdout/stderrは無加工中継"
+    dependencies:
+      - "impl.compute.execution_hosts"
+    iac_module: "(ジョブスケジューラ側の定義。IaCスケルトン対象外)"
+    validation_rules:
+      - rule: "ジョブ定義のコマンドライン引数がfacade.shのCLIコマンド契約と一致すること"
+        type: "static"
+        description: "cli-command-contract.yaml とのトレーサビリティ検証"
+
+  - id: "impl.operations.backup_and_monitoring"
+    name: "バックアップと基盤監視"
+    canonical_element_id: "product.operations.backup_and_monitoring"
+    vendor_service: "cron + 組織既存のホスト監視エージェント"
+    configuration:
+      backup_jobs:
+        - "pg_basebackup(日次フル、cron)"
+        - "WALアーカイブ(archive_command による継続実行)"
+      monitoring: "組織既存の監視エージェントにCPU/メモリ/ディスク/ネットワークを統合"
+      fallback: "組織既存監視が無い場合はsar/df + cronメールで代替(ダッシュボード無し)"
+      dr_drill: "PITR復旧手順を年1回テスト環境で演習"
+    dependencies:
+      - "impl.database.management_db"
+      - "impl.storage.execution_log_store"
+    iac_module: "infra/product/onprem/ansible/roles/relay-gate-backup"
+    validation_rules:
+      - rule: "直近24時間以内にpg_basebackupの成功ログが存在すること"
+        type: "runtime"
+        description: "日次バックアップ(REQ-OPS-001)の稼働検証"

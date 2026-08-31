@@ -1,0 +1,19 @@
+schema_version: "1.0"
+artifact_type: "context"
+skill_type: "shared_platform"
+artifact_id: "shared-platform-context"
+title: "共有プラットフォーム コンテキスト(最小構成)"
+status: "draft"
+generated_at: "2026-08-30T19:04:12"
+source_refs: []
+decision_refs: []
+inputs_ref:
+  - "foundation-context"
+
+# 注記: mcl-shared-platform-design は未実施。dist-infrastructure が最小構成を自動生成した。
+# 組織内の既存共有サービス(ジョブスケジューラ / SMTP / ファイル共有)は
+# product 層で「既存の組織内サービスを利用する」前提として扱う。
+
+available_shared_services: []
+mandatory_services: []
+optional_services: []

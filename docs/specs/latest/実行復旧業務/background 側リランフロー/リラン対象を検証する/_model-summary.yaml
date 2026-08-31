@@ -1,0 +1,88 @@
+uc: "リラン対象を検証する"
+business: "実行復旧業務"
+buc: "background 側リランフロー"
+bounded_context_id: "BC-004"
+aggregate_id: "AG-001"
+
+models:
+  - name: "RerunPrecheck"
+    tier: "tier-ops"
+    layer: "usecase"
+    type: "command"
+    rdra_info: "リラン指示"
+  - name: "RerunEligibility"
+    tier: "tier-ops"
+    layer: "domain"
+    type: "value-object"
+    rdra_info: "リラン指示"
+  - name: "ExecutionSpecRepository"
+    tier: "tier-ops"
+    layer: "repository"
+    type: "record"
+    rdra_info: "実行設定(execution-spec)"
+  - name: "SlotExecutionRepository"
+    tier: "tier-ops"
+    layer: "repository"
+    type: "record"
+    rdra_info: "slot 実行"
+  - name: "CrosscheckRequestRepository"
+    tier: "tier-ops"
+    layer: "repository"
+    type: "record"
+    rdra_info: "速報比較依頼(rapid_crosscheck_request)"
+  - name: "ParallelRunRepository"
+    tier: "tier-ops"
+    layer: "repository"
+    type: "record"
+    rdra_info: "並行稼働実行(parallel_run)"
+  - name: "facade/<source_run_id>/execution-spec.json"
+    tier: "tier-ops"
+    layer: "repository"
+    type: "record"
+    rdra_info: "実行設定(execution-spec)"
+  - name: "facade/<source_run_id>/<role>/started-at.txt"
+    tier: "tier-ops"
+    layer: "repository"
+    type: "record"
+    rdra_info: "Runner Result"
+  - name: "facade/<source_run_id>/<role>/exitcode.txt"
+    tier: "tier-ops"
+    layer: "repository"
+    type: "record"
+    rdra_info: "Runner Result"
+
+tables:
+  - name: "slot_executions"
+    rdra_info: "slot 実行"
+    operations:
+      - type: "SELECT"
+        columns:
+          - name: "mode"
+            value: ""
+          - name: "status"
+            value: ""
+        where: "run_id = ? AND slot = ?"
+    indexes_needed: []
+  - name: "rapid_crosscheck_requests"
+    rdra_info: "速報比較依頼(rapid_crosscheck_request)"
+    operations:
+      - type: "SELECT"
+        columns:
+          - name: "status"
+            value: ""
+        where: "run_id = ?"
+    indexes_needed: []
+  - name: "parallel_runs"
+    rdra_info: "並行稼働実行(parallel_run)"
+    operations:
+      - type: "SELECT"
+        columns:
+          - name: "job_id"
+            value: ""
+          - name: "status"
+            value: ""
+        where: "run_id = ?"
+    indexes_needed: []
+
+kvs: []
+object_storage: []

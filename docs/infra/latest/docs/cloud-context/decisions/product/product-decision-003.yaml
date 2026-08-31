@@ -1,0 +1,44 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "product"
+artifact_id: "product-decision-003"
+title: "成果物ディレクトリ(Runner Result)の配置方式選定"
+status: "accepted"
+generated_at: "2026-08-30T20:17:49"
+source_refs:
+  - "docs/mcl/product/output/product-workload-model.yaml#product.storage.artifact_store"
+inputs_ref:
+  - "product-relay-gate-workload-model"
+
+decision:
+  context: |
+    facade / runner / ハング検知 / リラン / 中止 CLI が同一パスで Runner Result(stdout.log / stderr.log /
+    exitcode.txt / execution-spec.json)を参照でき、一時ファイル→リネームの原子的確定ができるストレージを
+    選定する必要がある。
+  conflict_type: "capability"
+  options:
+    - id: "local_disk_or_nfs"
+      description: "実行ホストのローカルディスク(RAID1)、または複数ホスト参照時は NFS v4 共有"
+      pros:
+        - "POSIX rename(2) による原子的確定をそのまま利用できる"
+        - "外部 IF 契約(3ファイル契約)がファイルシステムのセマンティクスと一致する"
+      cons:
+        - "NFS 利用時は同一 export 内に一時ファイルと確定先を置く運用ルールが必要(クロスデバイス rename回避)"
+    - id: "object_storage_minio"
+      description: "MinIO 等のオブジェクトストレージ API"
+      pros:
+        - "S3 互換 API によるバージョニング・ライフサイクル管理が使える"
+      cons:
+        - "現行の Runner Result Contract は POSIX パス参照を前提としており契約変更が必要"
+        - "追加ミドルウェアの導入・運用負担が増える"
+  chosen_option: "local_disk_or_nfs"
+  rationale: >-
+    Runner Result Contract(3ファイル契約 + execution-spec.json)がPOSIXパス参照を正本としており、
+    REQ-ART-001(一時ファイル→リネームの原子的確定)をそのまま満たせるため。単一サイト・実行ホストセグメント
+    構成(latency_sensitivity.placement)であればローカルディスクで完結する。
+  risk_assessment: >-
+    ハング検知・リラン CLI を別ホストから実行する構成に拡張する場合は NFS v4 への切替が必要になる。
+    その際は同一 export 内での rename を運用ルールとして明記する。
+  affected_elements:
+    - "product.storage.artifact_store"
+  review_date: "2027-08-30"

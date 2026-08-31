@@ -1,0 +1,145 @@
+schema_version: "1.0"
+artifact_type: "vendor_mapping"
+skill_type: "product"
+artifact_id: "product-relay-gate-mapping-onprem"
+title: "relay-gate 並行稼働実行基盤 オンプレミス サービスマッピング"
+status: "draft"
+generated_at: "2026-08-30T19:04:12"
+source_refs:
+  - "docs/cloud-context/sources/onprem/postgresql-high-availability.md"
+  - "docs/mcl/product/output/product-workload-model.yaml"
+decision_refs:
+  - "product-decision-001"
+  - "product-decision-002"
+  - "product-decision-003"
+  - "product-decision-004"
+  - "product-decision-005"
+inputs_ref:
+  - "product-relay-gate-workload-model"
+  - "foundation-context"
+  - "shared-platform-context"
+
+vendor: "onprem"
+canonical_ref: "product-relay-gate-workload-model"
+
+# オンプレ特則: スタック未指定のため capability ごとに OSS / OS 標準機能を具体選定する。
+# 仮想化基盤(vSphere / OpenStack / 物理)は適用側の設置環境に従い、ここでは固定しない。
+
+mappings:
+  - canonical_element_id: "product.compute.script_runtime_hosts"
+    vendor_service: "Linux VM / 物理サーバ(RHEL 系または Debian 系)+ bash 5 + OpenSSH クライアント + cron/systemd timer"
+    vendor_feature: "systemd service(常駐 worker)/ systemd timer または cron(定期起動 worker)/ OpenSSH 公開鍵認証"
+    fidelity: "partial"
+    configuration_notes: >-
+      ジョブスケジューラ実行ホストに facade / slot runner / rapid-crosscheck-runner・worker / ops CLI を配置し、
+      DB セグメントの専用ホストに final-crosscheck-worker を配置する。worker は systemd service として常駐させ、
+      Restart=on-failure で復帰させる。SSH は実行ユーザーごとの鍵ペアを使い、known_hosts を事前配布する。
+      水平スケールは worker ホストを追加して同じ unit を配置する(手動)。
+    gap_description: "自動スケール・自動復旧(ホスト障害時のフェイルオーバー)はマネージド相当が無く、ホスト追加と再起動は運用手順で行う"
+    alternatives:
+      - "Kubernetes CronJob / Deployment(コンテナ基盤が既にある場合。今回は前提にしない)"
+    source_refs:
+      - "docs/mcl/product/output/product-workload-model.yaml#product.compute.script_runtime_hosts"
+
+  - canonical_element_id: "product.database.management_db"
+    vendor_service: "PostgreSQL 16 セルフホスト(単一インスタンス)"
+    vendor_feature: "SELECT ... FOR UPDATE SKIP LOCKED(claim / lease 排他)/ 主キー制約 / psql CLI / pg_basebackup + WAL アーカイブ(PITR)"
+    fidelity: "partial"
+    configuration_notes: >-
+      DB セグメントの単一ホストに配置する。速報側テーブルと確報側テーブルはスキーマを分けて配置する
+      (例: rapid / final)。claim は FOR UPDATE SKIP LOCKED で行い、lease_until を UPDATE する。
+      接続は pg_hba.conf で実行ホストセグメントと DB セグメントの IP 範囲に限定し、
+      ロールは app_rw(runner / worker)と ops_ro(参照)に分ける。バックアップは日次 pg_basebackup +
+      WAL アーカイブで RPO 4h を満たす。ストリーミングレプリケーション(公式 HA ガイド)は任意の将来拡張とする。
+    gap_description: "マネージド RDB の自動パッチ・自動バックアップ・自動フェイルオーバーは無い。パッチはオフライン持ち込み、バックアップは cron ジョブ、復旧は手順書に従う手動作業"
+    alternatives:
+      - "MySQL / MariaDB(SKIP LOCKED は 8.0 以降で利用可。組織標準がある場合)"
+      - "SQLite(RAPID_CROSSCHECK_MODE=off かつ単一ホスト運用の場合のみ。複数 worker の排他に不向き)"
+    source_refs:
+      - "docs/cloud-context/sources/onprem/postgresql-high-availability.md"
+
+  - canonical_element_id: "product.storage.artifact_store"
+    vendor_service: "NFS v4 共有(ファイルサーバ)または実行ホストのローカルディスク(RAID1)"
+    vendor_feature: "POSIX rename(2) による原子的確定 / NFS v4 の close-to-open 整合性"
+    fidelity: "partial"
+    configuration_notes: >-
+      facade / runner / ops CLI が同一ホスト群で動く場合はローカルディスク(RAID1)で足りる。
+      ハング検知・リラン CLI を別ホストから実行する構成では NFS v4 で同一パスをマウントする。
+      一時ファイルは確定先と同じファイルシステム上に作り rename で確定する(クロスデバイス rename を避ける)。
+      NFS の場合は同一 export 内で完結させる。
+    gap_description: "オブジェクトストレージのバージョニング・ライフサイクル管理は無い。保持期間超過分の削除はログローテーション同様に cron で行う"
+    alternatives:
+      - "MinIO(オブジェクトストレージ API 前提に切り替える場合。現行契約は POSIX パス参照のため不採用)"
+    source_refs:
+      - "docs/mcl/product/output/product-workload-model.yaml#product.storage.artifact_store"
+
+  - canonical_element_id: "product.storage.config_store"
+    vendor_service: "実行ホストのローカルディレクトリ(読み取り専用配置)+ 適用側の配布手順(Ansible 等)"
+    vendor_feature: "OS ファイル権限(所有者 = 配布ユーザー、実行ユーザーは読み取りのみ)"
+    fidelity: "exact"
+    configuration_notes: >-
+      /etc/relay-gate/ 相当に feature flag(env 形式)、ジョブマップ、クロスチェックジョブマップ、
+      対象カタログを版番号付きで配置する。配布は適用側の構成管理ツールで行い、配布後に facade が
+      次回起動から読み込む。認証情報は参照名のみ置き、実体は実行ユーザーのホームまたは OS のシークレット領域に置く。
+    gap_description: ""
+    alternatives:
+      - "NFS 共有上の設定ディレクトリ(全ホストで一括反映したい場合)"
+    source_refs:
+      - "docs/mcl/product/output/product-workload-model.yaml#product.storage.config_store"
+
+  - canonical_element_id: "product.storage.execution_log_store"
+    vendor_service: "実行ホストのローカルディスク + logrotate"
+    vendor_feature: "logrotate(daily, rotate 90, compress)/ grep による run_id 検索"
+    fidelity: "exact"
+    configuration_notes: >-
+      /var/log/relay-gate/<script>.log に追記し、logrotate で日次ローテーション・90 世代保持・圧縮する。
+      行形式は「日時 スクリプト名 run_id レベル メッセージ」で固定し、run_id の横断検索を grep で行う。
+    gap_description: ""
+    alternatives:
+      - "rsyslog による集約ホストへの転送(組織にログ集約基盤がある場合)"
+    source_refs:
+      - "docs/mcl/product/output/product-workload-model.yaml#product.storage.execution_log_store"
+
+  - canonical_element_id: "product.messaging.mail_notification"
+    vendor_service: "Postfix(ローカル MTA、組織内 SMTP へ relayhost 設定)+ mail / sendmail コマンド"
+    vendor_feature: "relayhost / 送信キュー(中継先一時停止時のリトライ)"
+    fidelity: "exact"
+    configuration_notes: >-
+      各実行ホストの Postfix を satellite 構成にし relayhost に組織内 SMTP を指定する。
+      スクリプトは mail コマンドで送信し、送信内容(件名・宛先・本文要約)を実行ログに残す。
+      宛先は運用体制で定めた配布リストとし、設定ファイルで所有する。
+    gap_description: ""
+    alternatives:
+      - "msmtp(軽量 MTA。キューを持たないためリトライは呼び出し側で行う)"
+    source_refs:
+      - "docs/mcl/product/output/product-workload-model.yaml#product.messaging.mail_notification"
+
+  - canonical_element_id: "product.integration.job_scheduler"
+    vendor_service: "組織既存のジョブスケジューラ(製品固定なし)"
+    vendor_feature: "ジョブ定義(コマンド + 引数)/ 定期・日次スケジュール / 終了コード判定"
+    fidelity: "exact"
+    configuration_notes: >-
+      業務ジョブのコマンドを facade.sh JOB_ID [PARAM...] に置き換える。確報クロスチェックジョブ、
+      5 分ごとのハング検知ジョブ、background リラン専用ジョブを追加定義する。
+      実行履歴・監査はスケジューラ側の機能で参照し、relay-gate 側に複製しない。
+    gap_description: ""
+    alternatives:
+      - "cron(スケジューラを持たないテスト環境での代替)"
+    source_refs:
+      - "docs/mcl/product/output/product-workload-model.yaml#product.integration.job_scheduler"
+
+  - canonical_element_id: "product.operations.backup_and_monitoring"
+    vendor_service: "cron(pg_basebackup + WAL アーカイブ、logrotate)+ 組織既存のホスト監視エージェント"
+    vendor_feature: "日次バックアップジョブ / WAL 継続アーカイブ / OS メトリクス収集"
+    fidelity: "partial"
+    configuration_notes: >-
+      DB ホストで日次 pg_basebackup(フル)と archive_command による WAL アーカイブ(差分)を cron で回し、
+      バックアップ先はミラーリングされた別ボリュームに置く。復旧手順(PITR)を文書化しテスト環境で年 1 回演習する。
+      ホストの CPU / メモリ / ディスク / ネットワークは組織既存の監視エージェントに載せ、
+      relay-gate 固有のハング検知・異常通知はワークロード自身の hang-detector が担う。
+    gap_description: "組織既存の監視が無い場合、OS 標準(sar / df + cron メール)で代替し、ダッシュボードは持たない"
+    alternatives:
+      - "Prometheus + Grafana + node_exporter(監視基盤を新規導入する場合。今回は導入しない方針)"
+      - "Zabbix(組織標準がある場合)"
+    source_refs:
+      - "docs/cloud-context/sources/onprem/postgresql-high-availability.md"

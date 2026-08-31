@@ -1,0 +1,43 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "specification"
+artifact_id: "spec-decision-002"
+title: "イベント駆動パターン: RDB ジョブキュー(poll / claim / lease)と同期プロセス起動の完了通知を AsyncAPI で契約化する"
+status: "approved"
+generated_at: "2026-08-31T00:37:34"
+context: |
+  同期境界と非同期境界は方針資料「RelayGate のしくみ」で決まっている。facade は foreground slot の完了を 1 コマンドで待ち
+  3 ファイル(stdout.log / stderr.log / exitcode.txt)を無加工で中継する(同期)。background slot は facade から切り離され、
+  slot runner が完了時に速報クロスチェック runner の公開 function(blue-completed / green-completed)を呼び、両系成功で速報比較依頼を
+  作成する。速報・確報の比較依頼は管理 DB(RDB)のテーブルをジョブキューとして worker が poll / claim / lease で処理する。
+  hang-detector は定期ジョブとして走査し、異常をメールで通知する。メッセージブローカー(MQ)はエアーギャップ環境の制約と
+  arch BC-002 / BC-003「管理 DB 上のジョブキュー」により導入しない。
+decision: |
+  - 非同期の統合点を `_cross-cutting/api/asyncapi.yaml` に 4 チャネルで契約化する:
+    slot-completed(slot runner → rapid-crosscheck-runner。同期プロセス起動、protocol: process)、
+    rapid-crosscheck-requests / final-crosscheck-requests(RDB ジョブキュー。protocol: rdb-queue。poll / claim / lease の payload と
+    状態 enum を定義)、hang-alert-mail(hang-detector → 運用者。protocol: mail。件名・本文 14 行の契約)。
+  - 標準 protocol に RDB キューは無いためカスタム protocol 名(rdb-queue / process / mail)を使う。
+  - claim の排他は `UPDATE ... WHERE status='REQUESTED' OR lease_until < now` の条件付き UPDATE(lease 既定 600 秒、poll 既定 30 秒。
+    `rapid-crosscheck.env` / `final-crosscheck.env` で上書き可)。
+  - 速報比較依頼の作成は「両系成功」時に 1 run_id 1 件(一意制約で冪等)。background-rerun からの再作成も同じ一意条件に従う。
+  - 完了通知の再送は先勝ち(同一 run_id + role の 2 回目以降は既存値を変えず終了コード 0)。通知失敗時は slot runner が stderr.log に
+    warn を残し、終了コードは実装スクリプトの exitcode(Runner Result が正本)のまま。復旧は運用者が同一引数で再実行する。
+    自動検知は RDRA に要件が無いためスコープ外(docs/todo.md DIST-020)。
+  - 分析根拠: `_inference.md` 確認推奨項目 4・6(auto_adopt。6 は confidence: low のため仮採用 + DIST-016)。
+consequences:
+  positive:
+    - "poll / claim / lease と payload が機械可読になり、UC 間の暗黙依存(Step6.5 観点②)を契約で宣言できる"
+    - "MQ を持ち込まず RDB 1 種で完結する(エアーギャップ・運用負荷)。worker は --once で定期ジョブ運転もできる"
+    - "同期経路(foreground)は非 0 終了で確実にジョブスケジューラへ異常を伝えられる"
+  negative:
+    - "RDB polling のため検知遅延は poll 間隔に依存する(既定 30 秒)。lease 失効までは worker 障害時の再取得ができない"
+    - "カスタム protocol のため AsyncAPI の標準 codegen / バインディング検証が使えない(validate は 0 error)"
+    - "完了通知失敗の自動検知が無く、速報結果が揃わない事象は運用者の参照(rapid-crosscheck-result.sh)で気付く"
+alternatives_considered:
+  - name: "asyncapi.yaml を生成せず tier md の記述のみ"
+    reason_rejected: "cross-UC 依存が暗黙になり、実装時に参照先不在で統合が落ちるリスクが高い"
+  - name: "完了通知(slot-completed)のみを契約化"
+    reason_rejected: "ジョブキューの claim 契約が抜け、worker 実装が UC ごとに揺れる"
+  - name: "メッセージブローカー(MQ)でキューを構成"
+    reason_rejected: "エアーギャップ環境に追加ミドルウェアを持ち込む。arch BC-002 / BC-003 の『管理 DB 上のジョブキュー』に反する"

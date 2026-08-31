@@ -1,0 +1,89 @@
+uc: "リラン対象を検証する"
+business: "実行復旧業務"
+buc: "background 側リランフロー"
+paths: []
+x_cli_commands:
+  - name: "background-rerun.sh"
+    tier: "tier-ops"
+    role: "defines"
+    synopsis: "background-rerun.sh --source-run-id <RUN_ID> --role blue|green|rapid-crosscheck [--verbose]"
+    invoked_by: "ジョブスケジューラ(background リラン専用ジョブ)/ 運用者(直接起動)"
+    args: []
+    options:
+      - name: "--source-run-id"
+        type: "string"
+        required: true
+        default: ""
+        description: "リラン元の run_id"
+      - name: "--role"
+        type: "enum"
+        required: true
+        default: ""
+        description: "リラン対象 role: blue / green / rapid-crosscheck。final-crosscheck を含む enum 外の値は 2(error: invalid value option=--role value=...)"
+      - name: "--verbose"
+        type: "boolean"
+        required: false
+        default: "false"
+        description: "info: を stderr に出す"
+    stdin: "なし"
+    stdout: "検証段階では出さない。通過後は後続 UC が run_id={新 run_id} / parent_run_id={元 run_id} を出す"
+    stderr: "error: source run is not rerunnable run_id=... role=... mode=... status=... / error: source request is not rerunnable run_id=... role=rapid-crosscheck status=... / error: source request not found run_id=... role=rapid-crosscheck(rapid-crosscheck の元実行なし。execution-spec.json は要求しない)/ error: run not found run_id=... role=... / error: execution-spec not found run_id=... path: ...(blue / green の元実行なし)/ error: management db is not configured (RAPID_CROSSCHECK_MODE=off) run_id=... role=rapid-crosscheck / error: execution-spec is not readable run_id=... path: ... / error: management db connection failed run_id=... role=... conn_ref=...(6)/ error: management db query failed run_id=...(6)/ warn: mode mismatch spec=... db=... と hint: 行(hint: abort the run with abort-{role}.sh --run-id ... before rerun / hint: abort the request with abort-rapid-crosscheck.sh --run-id ... before rerun / hint: request is still queued; wait for the worker / hint: rerun the scheduler job instead ... / hint: source run has not started; rerun the scheduler job instead)"
+    exit_codes:
+      - code: 0
+        meaning: "検証を通過し後続処理(復元起動 / 依頼作成)が完了した"
+      - code: 2
+        meaning: "--source-run-id / --role 欠落、role が enum 外(final-crosscheck を含む)、run_id 形式不正、未知オプション"
+      - code: 3
+        meaning: "事前検証 NG(元 mode が foreground / off(slots.{role} 節なし)、元 slot が RUNNING または未起動(off 時 started-at.txt なし)、依頼が REQUESTED / CLAIMED / RUNNING、元実行なし(blue / green: execution-spec.json なし、rapid-crosscheck: 依頼なし)、RAPID_CROSSCHECK_MODE=off かつ rapid-crosscheck)"
+      - code: 6
+        meaning: "execution-spec.json 読み取り失敗、管理 DB 接続・SQL 失敗"
+  - name: "abort-blue.sh"
+    tier: "tier-ops"
+    role: "uses"
+    synopsis: "abort-blue.sh --run-id <RUN_ID>"
+    invoked_by: "運用者(本 UC は拒否時の hint 行にコマンド行を埋め込むだけで起動しない)"
+    args: []
+    options:
+      - name: "--run-id"
+        type: "string"
+        required: true
+        default: ""
+        description: "hint に埋め込む元 run_id"
+    stdin: "参照のみ(本 UC は起動しない)"
+    stdout: "参照のみ(契約は UC「現在状態を確認して停止確認に応答する」)"
+    stderr: "参照のみ"
+    exit_codes: []
+  - name: "abort-green.sh"
+    tier: "tier-ops"
+    role: "uses"
+    synopsis: "abort-green.sh --run-id <RUN_ID>"
+    invoked_by: "運用者(本 UC は拒否時の hint 行 `hint: abort the run with abort-green.sh --run-id ... before rerun` にコマンド行を埋め込むだけで起動しない)"
+    args: []
+    options:
+      - name: "--run-id"
+        type: "string"
+        required: true
+        default: ""
+        description: "hint に埋め込む元 run_id"
+    stdin: "参照のみ(本 UC は起動しない)"
+    stdout: "参照のみ(契約は UC「現在状態を確認して停止確認に応答する」)"
+    stderr: "参照のみ"
+    exit_codes: []
+  - name: "abort-rapid-crosscheck.sh"
+    tier: "tier-ops"
+    role: "uses"
+    synopsis: "abort-rapid-crosscheck.sh --run-id <RUN_ID>"
+    invoked_by: "運用者(本 UC は拒否時の hint 行 `hint: abort the request with abort-rapid-crosscheck.sh --run-id ... before rerun` にコマンド行を埋め込むだけで起動しない)"
+    args: []
+    options:
+      - name: "--run-id"
+        type: "string"
+        required: true
+        default: ""
+        description: "hint に埋め込む元 run_id"
+    stdin: "参照のみ(本 UC は起動しない)"
+    stdout: "参照のみ(契約は UC「現在状態を確認して停止確認に応答する」)"
+    stderr: "参照のみ"
+    exit_codes: []
+async_events: []
+schemas: []

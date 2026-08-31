@@ -1,0 +1,27 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "architecture"
+artifact_id: "arch-decision-003"
+title: "コンテキストマップ: 設定契約への Conformist、完了通知の OHS、依頼ライフサイクルの Shared Kernel"
+status: "approved"
+generated_at: "2026-08-30T18:44:57"
+context: |
+  5 BC 間の依存方向と統合パターンを決める必要がある。実行系 BC は設定契約を読むだけで変更しない。
+  runner から速報への完了通知は系統ごとの一方向 function。速報と確報は同じ依頼ライフサイクルを別モデルで持つ。
+decision: |
+  - CM-001/007/008: 並行稼働実行・速報・確報 → 適用構成 は Conformist(downstream)。設定契約に翻訳層を挟まず従い、execution-spec.json の確定保存で以後の変更から隔離する
+  - CM-002: 並行稼働実行 → 速報 は OHS + Published Language(upstream)。公開言語は Runner Result Contract と blue-completed / green-completed
+  - CM-003: 速報 ↔ 確報 は Shared Kernel(symmetric)。共有するのは状態遷移規則・claim / lease 規則・終了コード契約だけで、レコードは共有しない
+  - CM-004/005/006: 監視・復旧 → 各実行系 BC は Conformist(downstream)。監視は通知のみ、中止は状態更新のみ、リランは execution-spec.json 復元
+  外部システム(比較ツール / メール / SSH / RDB)への連携は BC 間関係ではなく各 tier の gateway 層アダプタ(CTR-003)で隔離する。
+consequences:
+  positive:
+    - "runner を差し替えても facade・比較規約・監視・復旧のスクリプトを変更不要に保つ拡張点が構造として表現される"
+    - "速報 off 時に速報 BC へ一切触れない依存方向が明確になる"
+  negative:
+    - "Shared Kernel は規則の二重実装(速報 / 確報)を招きやすい。共通関数化の単位は dist-spec で決める必要がある"
+alternatives_considered:
+  - name: "Option B: 速報 → 確報を Customer-Supplier にする"
+    reason_rejected: "確報は速報の成果を消費せず、業務上の上下関係がないため"
+  - name: "Option C: 監視・復旧 → 実行系を ACL で隔離する"
+    reason_rejected: "監視は Runner Result Contract をそのまま走査する設計で、翻訳層を置くと契約の二重定義になる"

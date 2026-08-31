@@ -1,0 +1,26 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "architecture"
+artifact_id: "arch-decision-007"
+title: "認証・認可方式: SSH 鍵と OS 権限のみ(IdP / API Gateway / 認可サービス非導入)"
+status: "approved"
+generated_at: "2026-08-30T18:44:57"
+context: |
+  アクターは社内の運用者・基盤適用設計者の 2 種のみ。UI 画面・HTTP API は無く、外部アクターもロール概念も無い。
+  NFR E.5.1.1 は OS アカウントと SSH 鍵、E.5.2.1 はユーザ単位の OS 権限、E.6.1.2 は SSH 経路のみ暗号化。
+decision: |
+  - IdP / API Gateway / 認可サービスは導入しない
+  - 実行先ホストへはジョブマップで解決した実行ユーザーで SSH 鍵認証により接続する
+  - 認可はジョブマップの実行ユーザーと、スクリプト・成果物ディレクトリ・設定ファイルの OS 権限で行う
+  - 認証情報は値を保存せず参照名だけを execution-spec.json に保持する
+  - 管理 DB 接続は閉域セグメント内とし、保管時暗号化は要求しない
+consequences:
+  positive:
+    - "エアーギャップ環境に認証基盤を追加せず、既存の OS 運用に乗る"
+  negative:
+    - "運用者ごとの操作権限(中止・リラン)は OS 権限の粒度でしか制御できない"
+alternatives_considered:
+  - name: "Option B: セルフホスト IdP + RBAC"
+    reason_rejected: "外部アクターが無く HTTP 面が無いためトークン検証の対象がない"
+  - name: "Option C: 管理 DB のロール制御で運用操作を認可"
+    reason_rejected: "ロール概念が RDRA に無く、方針資料の CLI 直接起動と整合しない"

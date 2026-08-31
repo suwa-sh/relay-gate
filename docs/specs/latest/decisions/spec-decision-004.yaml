@@ -1,0 +1,41 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "specification"
+artifact_id: "spec-decision-004"
+title: "横断関心事: 終了コード体系(0/2/3/6)・出力規約(key=value / TSV)・設定ファイル形式(env + TSV)・run_id 形式・通知メール手段"
+status: "approved"
+generated_at: "2026-08-31T00:37:34"
+context: |
+  UI 画面が無いため、エラーハンドリング戦略は「終了コードと stderr 文言」、ページネーションやレスポンス形式は「stdout の行形式」に置き換わる。
+  arch CTR-002 は「入力検証エラー・事前検証エラー・中止不可は非 0 で終了し原因を stderr に出す」と定めるが値は定めていない。
+  比較ツールの終了コード契約(0 / 3 / 6)が条件に存在する。設定ファイル(feature flag / ジョブマップ / クロスチェックジョブマップ / 対象カタログ)の形式、
+  run_id の形式、通知メールの送信手段と宛先の設定所有は RDRA / arch に具体値が無い。エアーギャップ環境で bash 標準コマンドだけで扱える必要がある。
+decision: |
+  - 終了コード: 0 成功 / 2 入力・引数・設定検証エラー / 3 業務エラー(事前検証 NG・中止不可・比較 NG・管理 DB 未設定)/ 6 実行エラー(SSH・DB・比較ツール実行失敗・内部エラー)。
+    facade の foreground 中継と確報 runner の応答中継は保存済み exitcode をそのまま返す(4 分類を適用しない)。1 は使わない。
+  - 出力規約(`_cross-cutting/ux-ui/ui-design.md`): stdout は `key=value` 1 行 1 事実の固定順、一覧は TSV(ヘッダー行必須・8 列以内)。stderr は `error:` / `warn:` / `info:` 接頭辞 + key=value。
+    必須オプション欠落は `error: option required option=--xxx`。色・ANSI・進捗表示なし。日時は UTC ISO 8601。JSON 出力は採用しない(jq 非依存)。
+    実行ログは `{script} {run_id} {UTC 出力日時} {LEVEL} {message}`。対話プロンプト(abort-*)は非 TTY で `--yes` 必須。
+  - 設定ファイル: feature flag = env 形式(BLUE_MODE / GREEN_MODE / BLUE_RUNNER / GREEN_RUNNER / RAPID_CROSSCHECK_MODE / CONFIG_VERSION)、
+    ジョブマップ・クロスチェックジョブマップ・対象カタログ = TSV。管理 DB 接続・lease・poll は `rapid-crosscheck.env` / `final-crosscheck.env` / `hang-detector.env`(参照名のみ。認証情報の値は置かない)。
+  - run_id: `{UTC yyyymmddThhmmssZ}-{job_id}-{8 桁 hex}`。管理 DB 無しでも facade 単独で発行でき、成果物ディレクトリ名として時系列ソートできる。
+  - 通知メール: OS 標準の mail / sendmail を gateway で呼び、宛先・件名プレフィックス・送信コマンドは `hang-detector.env`(ALERT_MAIL_TO / ALERT_MAIL_CMD)で指定。
+  - 分析根拠: `_inference.md` 確認推奨項目 2(medium)・5(low、DIST-015)・9(low、DIST-018)・10(low、DIST-019。RDRA 追加提案)。
+consequences:
+  positive:
+    - "比較ツール終了コード契約(0 / 3 / 6)と揃い、運用者・ジョブスケジューラが一貫して読める(再実行判断ができる)"
+    - "stdout / stderr / ログが grep / cut / awk で処理でき、外部パーサを要求しない"
+    - "設定所有区分(実装スロットと runner / 適用側)を維持したまま bash 標準コマンドだけで設定を読める"
+  negative:
+    - "sysexits 等の標準規格とは異なる独自体系(学習は 4 値のみ)"
+    - "TSV は階層構造を表現しにくい(固定引数列は JSON 配列文字列で妥協)"
+    - "設定形式・既定値・run_id 形式・メール設定は low confidence の仮採用であり、実運用値の判明時に見直しが必要(DIST-015 / 016 / 018 / 019)"
+alternatives_considered:
+  - name: "終了コード 0 / 1 の 2 値"
+    reason_rejected: "入力誤りと実行障害を区別できず、ジョブスケジューラ側で再実行判断ができない"
+  - name: "sysexits(64 / 65 / 70 / 75)"
+    reason_rejected: "標準規格だが比較ツール契約(3 / 6)と混在して読みにくい"
+  - name: "設定ファイルをすべて YAML または JSON(jq 前提)"
+    reason_rejected: "bash に YAML パーサが無い / jq の配備が前提になり、エアーギャップの実行時依存が増える"
+  - name: "run_id を UUIDv4 または管理 DB シーケンス"
+    reason_rejected: "UUID は一覧で時系列が読めない。シーケンスは off 時に発行できない"

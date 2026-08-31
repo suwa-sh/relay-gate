@@ -1,0 +1,30 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "architecture"
+artifact_id: "arch-decision-002"
+title: "BC 設計: 並行稼働実行 / 速報 / 確報 / 監視・復旧 / 適用構成の 5 コンテキスト"
+status: "approved"
+generated_at: "2026-08-30T18:44:57"
+context: |
+  情報.tsv のコンテキスト列は 8 区分(適用構成 / クロスチェック定義 / 並行稼働実行 / 速報 / 確報 / 実行監視 / 実行復旧 / 実行記録)を持つ。
+  方針資料は「速報と確報の比較規約はそれぞれ別ドメインが所有」「監視とリランは facade から分離」と明示している。
+  言語境界の機械判定は誤判定が多いため BC 分割は medium 上限の仮説とし、team_ownership は null(対話で確認)。
+decision: |
+  - BC-001 並行稼働実行(run / slot / Runner Result / execution-spec。実行ログもここに所属)
+  - BC-002 速報クロスチェック(完了通知 / rapid_run / rapid_crosscheck_request / comparison_result)
+  - BC-003 確報クロスチェック(final_crosscheck_request / 比較ツール実行結果)
+  - BC-004 実行監視・復旧(監視記録 / 通知メール / リラン指示 / 中止指示。監視・中止・リランの 3 BUC を統合)
+  - BC-005 適用構成(feature flag / runner 割当 / ジョブマップ / ハング検知上限 / 適用文書 / 比較定義 / クロスチェックジョブマップ / 対象カタログ。クロスチェック定義管理を統合)
+  全 25 entity を BC.owned_entity_ids に割当済み。
+consequences:
+  positive:
+    - "方針資料の C2 コンテナ境界(facade+runner / rapid / final / hang-detector+rerun+abort / 設定)と 1:1 に対応し、tier 設計へ素直に伝播する"
+    - "速報側と確報側のデータモデル分離が BC レベルで担保される"
+  negative:
+    - "実行監視と実行復旧を 1 BC に統合したため、将来リランを別チームが担当する場合は分割が必要"
+    - "比較ツール実行結果を確報 BC に置いたが速報側も同形で保存するため、所属は dist-spec で再確認が必要"
+alternatives_considered:
+  - name: "Option B: 情報.tsv のコンテキスト 8 区分をそのまま 8 BC にする"
+    reason_rejected: "実行監視と実行復旧、クロスチェック定義と適用構成は同一アクター・同一語彙で分ける根拠が弱く、粒度が細かすぎる"
+  - name: "Option C: 速報と確報を 1 つのクロスチェック BC にまとめる"
+    reason_rejected: "方針資料が別ドメイン所有・別モデルと明示しており、条件「速報と確報のモデル分離」に反する"

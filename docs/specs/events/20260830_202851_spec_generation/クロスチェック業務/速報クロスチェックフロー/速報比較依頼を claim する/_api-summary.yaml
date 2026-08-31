@@ -1,0 +1,46 @@
+uc: "速報比較依頼を claim する"
+business: "クロスチェック業務"
+buc: "速報クロスチェックフロー"
+paths: []
+x_cli_commands:
+  - name: "rapid-crosscheck-worker.sh"
+    tier: "tier-rapid-crosscheck"
+    role: "defines"
+    synopsis: "rapid-crosscheck-worker.sh [--once] [--worker-id <id>] [--verbose] [--help]"
+    invoked_by: "ジョブスケジューラ(定期起動 --once)または常駐プロセス"
+    args: []
+    options:
+      - name: "--once"
+        type: "boolean"
+        required: false
+        default: "false"
+        description: "1 回だけ poll / claim / 実行して終了する"
+      - name: "--worker-id"
+        type: "string"
+        required: false
+        default: "{hostname}-{pid}"
+        description: "claim 時に記録する worker_id"
+      - name: "--verbose"
+        type: "boolean"
+        required: false
+        default: "false"
+        description: "info を stderr に出す"
+    stdin: "なし"
+    stdout: "--once で claim できたとき run_id= / job_id= / worker_id= / lease_until= の 4 行(続けて比較実行の行)。claim 0 件なら 0 行。常駐時は実行ログのみ"
+    stderr: "error: management db connection failed worker_id=... conn_ref=...(6)/ error: config file not found path: ...(2。on で rapid-crosscheck.env 不在)/ error: option required option=RAPID_DB_CONN_REF path: ...(2)/ error: management db is not configured mode=off(RAPID_CROSSCHECK_MODE=off。3)/ error: unknown option option=... / error: invalid worker_id value=..."
+    exit_codes:
+      - code: 0
+        meaning: "--once で 1 件処理した、または依頼が無かった"
+      - code: 2
+        meaning: "オプション・env の検証エラー(feature-flag.env 不在、on で rapid-crosscheck.env 不在・RAPID_DB_CONN_REF 欠落)"
+      - code: 3
+        meaning: "RAPID_CROSSCHECK_MODE=off(管理 DB に接続せず終了)"
+      - code: 6
+        meaning: "claim / DB 接続失敗(--once)。常駐時は次 poll で再試行"
+async_events:
+  - name: "rapid-crosscheck-requests"
+    channel: "rapid-crosscheck-requests"
+    direction: "subscribe"
+    message: "RapidCrosscheckRequestMessage"
+    summary: "rapid_crosscheck_requests を 30 秒間隔で poll し、REQUESTED を条件付き UPDATE で CLAIMED(worker_id, lease_until=now+10min)にする。lease 失効かつ未開始は REQUESTED に戻す"
+schemas: []

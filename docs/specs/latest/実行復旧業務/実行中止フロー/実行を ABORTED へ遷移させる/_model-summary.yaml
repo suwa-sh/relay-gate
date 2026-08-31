@@ -1,0 +1,89 @@
+uc: "実行を ABORTED へ遷移させる"
+business: "実行復旧業務"
+buc: "実行中止フロー"
+bounded_context_id: "BC-004"
+aggregate_id: "AG-001"
+
+models:
+  - name: "AbortExecutionCommand"
+    tier: "tier-ops"
+    layer: "usecase"
+    type: "command"
+    rdra_info: "中止指示"
+  - name: "AbortEligibility"
+    tier: "tier-ops"
+    layer: "domain"
+    type: "value-object"
+    rdra_info: "slot 実行"
+  - name: "SlotExecutionRepository"
+    tier: "tier-ops"
+    layer: "repository"
+    type: "record"
+    rdra_info: "slot 実行"
+  - name: "CrosscheckRequestRepository"
+    tier: "tier-ops"
+    layer: "repository"
+    type: "record"
+    rdra_info: "速報比較依頼(rapid_crosscheck_request)"
+  - name: "ParallelRunRepository"
+    tier: "tier-ops"
+    layer: "repository"
+    type: "record"
+    rdra_info: "並行稼働実行(parallel_run)"
+  - name: "RELAY_GATE_LOG_DIR/abort-<role>.sh.log"
+    tier: "tier-ops"
+    layer: "usecase"
+    type: "record"
+    rdra_info: "実行ログ"
+
+tables:
+  - name: "slot_executions"
+    rdra_info: "slot 実行"
+    operations:
+      - type: "UPDATE"
+        columns:
+          - name: "status"
+            value: "ABORTED"
+          - name: "completed_at"
+            value: "中止日時(UTC)"
+        where: "run_id = ? AND slot = ? AND status = 'RUNNING' AND mode = 'background'"
+    indexes_needed:
+      - columns: ["run_id", "slot"]
+        reason: "主キー。条件付き UPDATE の対象特定"
+        access_pattern: "abort-blue.sh / abort-green.sh の UPDATE"
+  - name: "rapid_crosscheck_requests"
+    rdra_info: "速報比較依頼(rapid_crosscheck_request)"
+    operations:
+      - type: "UPDATE"
+        columns:
+          - name: "status"
+            value: "ABORTED"
+          - name: "completed_at"
+            value: "中止日時(UTC)"
+        where: "run_id = ? AND status = 'RUNNING'"
+    indexes_needed: []
+  - name: "final_crosscheck_requests"
+    rdra_info: "確報比較依頼(final_crosscheck_request)"
+    operations:
+      - type: "UPDATE"
+        columns:
+          - name: "status"
+            value: "ABORTED"
+          - name: "completed_at"
+            value: "中止日時(UTC)"
+        where: "final_crosscheck_id = ? AND status = 'RUNNING'"
+    indexes_needed: []
+  - name: "parallel_runs"
+    rdra_info: "並行稼働実行(parallel_run)"
+    operations:
+      - type: "UPDATE"
+        columns:
+          - name: "status"
+            value: "ABORTED"
+          - name: "completed_at"
+            value: "中止日時(UTC)"
+        where: "run_id = ? AND status IN ('STARTED', 'RUNNING')"
+    indexes_needed: []
+
+kvs: []
+object_storage: []

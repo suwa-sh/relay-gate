@@ -1,0 +1,25 @@
+---
+# relay-gate-config: feature flag / ジョブマップ等を読み取り専用配置する
+# 対応: product-impl-onprem.yaml#impl.storage.config_store
+
+- name: 設定配置ディレクトリを作成する
+  ansible.builtin.file:
+    path: /etc/relay-gate
+    state: directory
+    owner: relay-gate-deploy
+    group: relay-gate
+    mode: "0750"
+
+- name: feature flag / ジョブマップ等を配置する(読み取り専用)
+  ansible.builtin.copy:
+    src: "files/{{ item }}"
+    dest: "/etc/relay-gate/{{ item }}"
+    owner: relay-gate-deploy
+    group: relay-gate
+    mode: "0644"
+  loop:
+    - feature-flags.env
+    - job-map.yaml
+    - crosscheck-job-map.yaml
+    - target-catalog.yaml
+  notify: notify config change (no restart required)

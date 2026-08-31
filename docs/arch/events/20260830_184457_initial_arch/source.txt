@@ -1,0 +1,4 @@
+RDRA モデルと NFR グレードからの初期アーキテクチャ設計
+trigger_event: rdra:20260830_181841_initial_build, nfr:20260830_183726_initial_nfr
+方針資料: docs/pipeline/inputs/20260830_rebuild_from_original_docs.md(C2/C3/C4 構成・Runner Result Contract・設定契約・データモデルを正本として尊重)
+dialogue_policy: auto_adopt(⭐推奨を採用。low は仮採用し docs/todo.md に登録)

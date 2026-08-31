@@ -1,0 +1,67 @@
+uc: "background 異常の通知メールを受け取る"
+business: "実行監視業務"
+buc: "background 実行監視フロー"
+paths: []
+x_cli_commands:
+  - name: "abort-blue.sh"
+    tier: "tier-ops"
+    role: "uses"
+    synopsis: "abort-blue.sh --run-id <RUN_ID> [--yes] [--verbose] [--help]"
+    invoked_by: "運用者(hang-suspected メールの推奨対処)"
+    args: []
+    options: []
+    stdin: "停止確認応答(yes / no)"
+    stdout: "現在状態と更新後状態(契約は実行中止フローの UC)"
+    stderr: "停止確認プロンプト"
+    exit_codes: []
+  - name: "abort-green.sh"
+    tier: "tier-ops"
+    role: "uses"
+    synopsis: "abort-green.sh --run-id <RUN_ID> [--yes] [--verbose] [--help]"
+    invoked_by: "運用者(hang-suspected メールの推奨対処)"
+    args: []
+    options: []
+    stdin: "停止確認応答(yes / no)"
+    stdout: "現在状態と更新後状態(契約は実行中止フローの UC)"
+    stderr: "停止確認プロンプト"
+    exit_codes: []
+  - name: "abort-rapid-crosscheck.sh"
+    tier: "tier-ops"
+    role: "uses"
+    synopsis: "abort-rapid-crosscheck.sh --run-id <RUN_ID> [--yes] [--verbose] [--help]"
+    invoked_by: "運用者(role=rapid-crosscheck の hang-suspected メールの推奨対処)"
+    args: []
+    options: []
+    stdin: "停止確認応答(yes / no)"
+    stdout: "現在状態と更新後状態(契約は実行中止フローの UC)"
+    stderr: "停止確認プロンプト"
+    exit_codes: []
+  - name: "background-rerun.sh"
+    tier: "tier-ops"
+    role: "uses"
+    synopsis: "background-rerun.sh --source-run-id <RUN_ID> --role blue|green|rapid-crosscheck [--verbose] [--help]"
+    invoked_by: "ジョブスケジューラ(background リラン専用ジョブ。background-exec-error メールの推奨対処)"
+    args: []
+    options: []
+    stdin: "なし"
+    stdout: "run_id / parent_run_id(契約は background 側リランフローの UC)"
+    stderr: "事前検証 NG の理由"
+    exit_codes: []
+  - name: "rapid-crosscheck-result.sh"
+    tier: "tier-rapid-crosscheck"
+    role: "uses"
+    synopsis: "rapid-crosscheck-result.sh --run-id <run_id> [--limit N] [--show-output] [--verbose] [--help]"
+    invoked_by: "運用者(rapid-crosscheck-error メールの推奨対処)"
+    args: []
+    options: []
+    stdin: "なし"
+    stdout: "依頼状態と comparison_result(契約は UC「速報比較結果を参照する」)"
+    stderr: "info: rapid result is for investigation only"
+    exit_codes: []
+async_events:
+  - name: "hang-alert-mail"
+    channel: "hang-alert-mail"
+    direction: "subscribe"
+    message: "HangAlertMail"
+    summary: "運用者が warning / error メールを受け取り、件名の level / kind / run_id と本文の recommended_action で静観 / 中止 / リラン / 原因調査を判断する"
+schemas: []

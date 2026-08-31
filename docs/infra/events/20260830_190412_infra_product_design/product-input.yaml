@@ -1,0 +1,126 @@
+schema_version: "1.0"
+artifact_type: "product_input"
+skill_type: "product"
+artifact_id: "product-relay-gate-input"
+title: "relay-gate 並行稼働実行基盤 ワークロード入力"
+status: "draft"
+generated_at: "2026-08-30T19:04:12"
+source_refs:
+  - "arch-design:20260830_184457_initial_arch"
+  - "nfr-grade:20260830_183726_initial_nfr"
+decision_refs: []
+inputs_ref:
+  - "foundation-context"
+  - "shared-platform-context"
+
+workload:
+  name: "relay-gate 並行稼働実行基盤"
+  description: >-
+    既存実装(blue)と新実装(green)をジョブスケジューラの同一ジョブ定義から並行稼働させ、
+    クロスチェックで整合性を検証しながら段階的に切り替えるための feature flag 付き
+    ストラングラーファサード型の実行基盤。facade / slot runner / 速報・確報クロスチェック
+    (runner + worker)/ ハング検知 / リラン・中止 CLI のシェルスクリプト群と、
+    ジョブキュー兼管理 DB(RDB)、成果物・設定・実行ログのファイル共有、
+    組織内 SMTP によるメール通知で構成する。UI 画面・HTTP API は持たない。
+  target_clouds:
+    - "onprem"
+  deployment_constraints:
+    - "エアーギャップ環境のオンプレミス Linux。実行時にインターネット接続・外部 SaaS を要求しない"
+    - "構成要素はシェルスクリプト実行ホスト(複数、SSH 到達)+ RDB + ファイル共有 + 組織内 SMTP のみ"
+    - "facade / runner はジョブスケジューラの実行ホスト上で動作する。確報 worker は DB セグメント上で動作する"
+    - "管理 DB は RDB 1 種・単一インスタンス。速報側と確報側のテーブルを分離する。MQ は導入しない"
+    - "成果物に案件固有名を記載しない(中立表現)"
+
+# ワークロード特性(arch-design.yaml + nfr-grade.yaml からの変換。根拠は _inference.md)
+workload_type: "batch"
+
+availability_target:
+  sla: "99%"
+  failover: "manual"
+  notes: "ほぼ終日稼働・1 時間程度の計画停止のみ許容(A.1.1.1 Lv3 / A.1.1.3 Lv2)。管理 DB は単一構成で部品冗長化(A.2.1.1 Lv2)に留める(CTP-006)"
+
+latency_sensitivity:
+  category: "batch"
+  target_p99: "none"
+  notes: "API の p99 要件は無い。facade の起動・中継と中止 / リラン CLI の応答は 10 秒以内、日次確報は夜間バッチウィンドウ 8 時間以内を目標にする(CTP-007 / B.2.1.1 Lv2 / B.2.2.1 Lv2)"
+
+data_sensitivity:
+  classification: "internal"
+  pii: false
+  encryption: "in_transit_only"
+  compliance: []
+  data_residency: "on_premises_air_gapped"
+  notes: "扱うデータは設定・実行管理レコード・Runner Result・実行ログ。個人情報属性は無い。暗号化は SSH 経路のみ(E.6.1.1 Lv0 / E.6.1.2 Lv1)"
+
+traffic_pattern:
+  type: "scheduled"
+  baseline_rps: 1
+  spike_multiplier: 3
+  notes: "ジョブスケジューラの夜間バッチ・日次確報・5 分ごとのハング検知定期ジョブが起動源。管理 DB 書き込みは 〜10 TPS(CTP-007)"
+
+consistency_needs:
+  type: "strong"
+  notes: "run_id 主キーの一意作成と worker の claim / lease 排他を RDB のトランザクションで保証する(CTP-004)"
+
+recovery_target:
+  rpo: "4h"
+  rto: "12h"
+  backup: "daily"
+  notes: "NFR A.4.1.1 / A.4.1.2 Lv2 の範囲内で、tier-datastore ポリシー「日次フル+差分バックアップ、数時間以内の RPO、半日以内の RTO」を採用。遠隔地 DR は持たない(A.3.1.1 Lv0)"
+
+observability_needs:
+  metrics:
+    - "cpu"
+    - "memory"
+    - "disk"
+    - "network"
+    - "latency"
+    - "error_rate"
+    - "throughput"
+  logs:
+    - "diagnostic"
+    - "audit"
+  sli:
+    - "availability"
+    - "latency"
+    - "error_rate"
+    - "throughput"
+  alerting:
+    - "health_check"
+    - "error_rate"
+  notes: "監視は hang-detector(定期ジョブ)による通知のみ。ハング疑い = warning、background 実行エラー / 速報クロスチェック異常 = error をメールで送る。監査の正本はジョブスケジューラ、基盤ログは 3 ヶ月保管"
+
+cost_posture:
+  strategy: "cost_optimized"
+  notes: "既存のジョブスケジューラ実行ホスト・DB ホストへ相乗りし、追加ホスト・ライセンスを最小化する"
+
+# データストア / 外部依存要素(arch data_architecture.storage_mapping から抽出)
+elements:
+  - id: "management_db"
+    category: "database"
+    description: "ジョブキュー兼管理 DB。リレーショナル・強整合性・単一インスタンス。速報側と確報側のテーブルを分離"
+    entity_refs: ["E-013", "E-014", "E-015", "E-016", "E-017", "E-018", "E-019", "E-020", "E-021", "E-023", "E-024"]
+  - id: "artifact_store"
+    category: "storage"
+    description: "成果物ディレクトリ(facade/<run_id>/ の Runner Result と execution-spec.json)。POSIX ファイルシステム。一時ファイル → リネームの原子的確定が必要"
+    entity_refs: ["E-009", "E-010", "E-011", "E-014"]
+  - id: "config_store"
+    category: "storage"
+    description: "設定ファイル(feature flag / ジョブマップ / クロスチェックジョブマップ / 対象カタログ / 適用文書)。適用側が版管理して配置"
+    entity_refs: ["E-001", "E-002", "E-003", "E-004", "E-005", "E-006", "E-007", "E-008"]
+  - id: "execution_log_store"
+    category: "storage"
+    description: "各スクリプトの実行ログファイル。3 ヶ月保管"
+    entity_refs: ["E-012", "E-022", "E-025"]
+  - id: "script_runtime_hosts"
+    category: "compute"
+    description: "ジョブスケジューラ実行ホスト(facade / runner / rapid worker / ops CLI)、DB セグメントの確報 worker ホスト、SSH 到達可能な実装スクリプト実行ホスト"
+    entity_refs: []
+  - id: "mail_notification"
+    category: "messaging"
+    description: "運用者への warning / error メール通知。OS 標準のメール送信コマンドから組織内 SMTP へ送る"
+    entity_refs: ["E-022"]
+  - id: "job_scheduler_integration"
+    category: "external_integration"
+    description: "ジョブ定義から facade / final-crosscheck-runner / hang-detector / background-rerun を起動する既存のジョブスケジューラ。実行履歴・監査の正本"
+    entity_refs: ["E-009", "E-012"]

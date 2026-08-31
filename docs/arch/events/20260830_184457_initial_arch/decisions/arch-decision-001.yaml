@@ -1,0 +1,27 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "architecture"
+artifact_id: "arch-decision-001"
+title: "サブドメイン分類: 実装切替とクロスチェックを Core、監視・復旧と適用構成を Supporting"
+status: "approved"
+generated_at: "2026-08-30T18:44:57"
+context: |
+  5 業務(実装切替 / クロスチェック / 実行監視 / 実行復旧 / 適用構成)を Core / Supporting / Generic に仕分ける必要がある。
+  何が競争優位(投資集中先)かは経営判断を含み RDRA から自動確定できないため、システム概要の目的記述を根拠に仮説として分類した(Core は medium 上限)。
+decision: |
+  - SD-001 実装切替(ストラングラーファサード): core。同一ジョブ定義から blue / green を並行稼働させ foreground だけを中継する仕組みが基盤の目的そのもの
+  - SD-002 クロスチェック(整合性検証): core。速報(原因調査)と確報(リリース判断の正本)の二段構えが並行稼働の価値を決める。比較ツール自体は外部委譲
+  - SD-003 background 実行の監視と復旧: supporting。通知のみ・運用者判断という限定責務
+  - SD-004 適用構成の定義: supporting。設定所有区分の分離が主関心で差別化要因ではない
+  外部システム(ジョブスケジューラ / 比較ツール / メール通知)は Generic 相当だが、relay-gate 側に BUC を持たないためサブドメインとして立てない。
+consequences:
+  positive:
+    - "投資を facade / slot runner と比較規約(dispatcher / worker)に集中できる"
+    - "監視・復旧・設定は good enough で安定運用を優先でき、方針資料の限定責務と整合する"
+  negative:
+    - "Core が 2 つあり投資集中度が 50% と高め。クロスチェックを supporting に落とす判断は残る"
+alternatives_considered:
+  - name: "Option B: 実装切替のみ Core、クロスチェックは Supporting"
+    reason_rejected: "確報が「リリース判断の正本」と方針資料で明示されており、比較規約の品質が基盤の価値を左右するため"
+  - name: "Option C: 監視・復旧も Core に含める"
+    reason_rejected: "監視は通知のみ、復旧は運用者判断という限定責務で、深いモデリング投資の対象ではないため"

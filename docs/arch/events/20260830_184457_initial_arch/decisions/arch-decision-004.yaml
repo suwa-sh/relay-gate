@@ -1,0 +1,29 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "architecture"
+artifact_id: "arch-decision-004"
+title: "集約境界仮説: parallel_run / rapid_run / final_crosscheck_request / 監視記録 / ジョブマップ を root とする 5 仮説"
+status: "approved"
+generated_at: "2026-08-30T18:44:57"
+context: |
+  戦略段階では集約境界を確定できない(low 上限)。情報.tsv の関連と状態.tsv の遷移波及、条件.tsv の不変条件から仮説を提示するに留める。
+decision: |
+  - AG-001 BC-001: root=並行稼働実行(parallel_run)、member=slot 実行 / execution-spec / Runner Result / ジョブスケジューラ応答
+  - AG-002 BC-002: root=速報実行(rapid_run)、member=完了通知 / 速報比較依頼 / 比較結果
+  - AG-003 BC-003: root=確報比較依頼、member=比較ツール実行結果
+  - AG-004 BC-004: root=監視記録、member=通知メール
+  - AG-005 BC-005: root=ジョブマップ、member=ハング検知上限設定
+  invariants は条件.tsv(foreground slot 排他 / slot 起動順序 / 実行設定の確定条件 / 両系成功判定 / 比較依頼の一意性 / claim 排他 / 監視は通知のみ / 引数連結規則 等)から抽出した。
+  confidence はすべて low。
+consequences:
+  positive:
+    - "dist-spec の _model-summary と ddd-tactical-implementation の集約設計に出発点を与える"
+  negative:
+    - "これは戦略段階の仮説であり、最終確定は dist-spec または ddd-tactical-implementation で行う"
+    - "RAPID_CROSSCHECK_MODE=off では parallel_run が存在しないため AG-001 の root がファイルのみになる。集約の永続化がモードに依存する点を実装時に再判断する必要がある"
+    - "rapid_run と rapid_crosscheck_request を同一集約にすると worker の claim 競合と dispatcher の依頼作成が同じロック単位になる。分離の可能性を残す"
+alternatives_considered:
+  - name: "Option B: slot 実行を独立集約にする(root=slot 実行)"
+    reason_rejected: "abort-* が slot 実行と並行稼働実行を同時に ABORTED へ更新するため、同一トランザクション境界に置く方が不変条件を守りやすい"
+  - name: "Option C: 速報比較依頼を独立集約にする"
+    reason_rejected: "仮説段階では両系成功 → 依頼作成の原子性を優先した。claim 競合の観点で dist-spec で再評価する"

@@ -1,0 +1,27 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "architecture"
+artifact_id: "arch-decision-005"
+title: "テクノロジースタック: bash シェルスクリプト + RDB、フレームワーク非採用"
+status: "approved"
+generated_at: "2026-08-30T18:44:57"
+context: |
+  エアーギャップ環境のオンプレミス Linux で、UI 画面も HTTP API も持たず CLI と定期ジョブだけで動作する。
+  方針資料は全コンポーネントを *.sh として定義している。ユーザーが実装言語をシェルスクリプト(bash)+ RDB と事前指定している。
+decision: |
+  - 実装言語は bash。RDB 操作は SQL(RDB クライアント CLI 経由)。BDD の step 定義のみ JavaScript(CommonJS)
+  - フレームワークは採用しない。bash 標準コマンド + ssh + RDB クライアント CLI + OS 標準のメール送信コマンドで構成する
+  - MQ / KVS / Object Storage / CaaS / FaaS は導入しない。管理 DB(RDB)とファイルシステムだけを使う
+  - コメントは日本語、識別子・エラーメッセージ・ログは英語
+consequences:
+  positive:
+    - "エアーギャップ環境に追加ミドルウェアを持ち込まずに導入できる"
+    - "方針資料の C2/C3/C4 のスクリプト構成をそのまま実装単位にできる"
+  negative:
+    - "bash では抽象 IF・型・テストの手段が限られるため、レイヤー分離は source と関数命名規約で担保する"
+    - "RDB 製品固有の SQL 方言・クライアント CLI の差異を gateway アダプタで吸収する必要がある"
+alternatives_considered:
+  - name: "Option B: Go / Python の単一バイナリ・スクリプトで実装"
+    reason_rejected: "ユーザーの事前指定(bash)に反し、方針資料の *.sh 構成から乖離する"
+  - name: "Option C: ジョブキューに MQ を導入"
+    reason_rejected: "管理 DB がジョブキュー兼管理 DB と定義され、〜10 TPS の低頻度で十分。エアーギャップで追加ミドルウェアを避ける"

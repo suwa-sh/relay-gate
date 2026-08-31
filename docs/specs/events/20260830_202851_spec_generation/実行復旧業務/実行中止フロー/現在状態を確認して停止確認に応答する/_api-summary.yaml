@@ -1,0 +1,123 @@
+uc: "現在状態を確認して停止確認に応答する"
+business: "実行復旧業務"
+buc: "実行中止フロー"
+paths: []
+x_cli_commands:
+  - name: "abort-blue.sh"
+    tier: "tier-ops"
+    role: "defines"
+    synopsis: "abort-blue.sh --run-id <RUN_ID> [--yes] [--verbose]"
+    invoked_by: "運用者(直接起動)。非対話起動は --yes 付きに限る"
+    args: []
+    options:
+      - name: "--run-id"
+        type: "string"
+        required: true
+        default: ""
+        description: "対象 run_id"
+      - name: "--yes"
+        type: "boolean"
+        required: false
+        default: "false"
+        description: "停止確認プロンプトを省略して yes とみなす"
+    stdin: "停止確認の応答 1 行(yes 完全一致のみ肯定。--yes 指定時は読まない)"
+    stdout: "現在状態(固定順): run_id, job_id, role, mode, status, pid, started_at, artifact_dir。否定応答時は末尾に status={現在状態}"
+    stderr: "プロンプト『対象ジョブのプロセスは強制終了してありますか？ [yes/no]: 』/ error: / info: aborted by operator; status not changed"
+    exit_codes:
+      - code: 0
+        meaning: "yes 応答後に状態更新が完了した(後半 UC)"
+      - code: 2
+        meaning: "--run-id 欠落・形式不正 / 未知オプション / 非 TTY で --yes なし"
+      - code: 3
+        meaning: "対象 run が無い / 応答が yes 以外 / RAPID_CROSSCHECK_MODE=off で管理 DB なし / 中止不可(後半 UC)"
+      - code: 6
+        meaning: "管理 DB 接続・SQL 失敗"
+  - name: "abort-green.sh"
+    tier: "tier-ops"
+    role: "defines"
+    synopsis: "abort-green.sh --run-id <RUN_ID> [--yes] [--verbose]"
+    invoked_by: "運用者(直接起動)。非対話起動は --yes 付きに限る"
+    args: []
+    options:
+      - name: "--run-id"
+        type: "string"
+        required: true
+        default: ""
+        description: "対象 run_id"
+      - name: "--yes"
+        type: "boolean"
+        required: false
+        default: "false"
+        description: "停止確認プロンプトを省略して yes とみなす"
+    stdin: "停止確認の応答 1 行(--yes 指定時は読まない)"
+    stdout: "abort-blue.sh と同じ(role=green)"
+    stderr: "abort-blue.sh と同じ"
+    exit_codes:
+      - code: 0
+        meaning: "yes 応答後に状態更新が完了した"
+      - code: 2
+        meaning: "引数不正 / 非 TTY で --yes なし"
+      - code: 3
+        meaning: "対象 run が無い / 応答が yes 以外 / 管理 DB なし / 中止不可"
+      - code: 6
+        meaning: "管理 DB 接続・SQL 失敗"
+  - name: "abort-rapid-crosscheck.sh"
+    tier: "tier-ops"
+    role: "defines"
+    synopsis: "abort-rapid-crosscheck.sh --run-id <RUN_ID> [--yes] [--verbose]"
+    invoked_by: "運用者(直接起動)。非対話起動は --yes 付きに限る"
+    args: []
+    options:
+      - name: "--run-id"
+        type: "string"
+        required: true
+        default: ""
+        description: "対象 run_id(rapid_crosscheck_requests の主キー)"
+      - name: "--yes"
+        type: "boolean"
+        required: false
+        default: "false"
+        description: "停止確認プロンプトを省略して yes とみなす"
+    stdin: "停止確認の応答 1 行(--yes 指定時は読まない)"
+    stdout: "現在状態(固定順): run_id, job_id, role, status, worker_id, lease_until, started_at。否定応答時は末尾に status={現在状態}"
+    stderr: "abort-blue.sh と同じ"
+    exit_codes:
+      - code: 0
+        meaning: "yes 応答後に状態更新が完了した"
+      - code: 2
+        meaning: "引数不正 / 非 TTY で --yes なし"
+      - code: 3
+        meaning: "対象依頼が無い / 応答が yes 以外 / 管理 DB なし / 中止不可"
+      - code: 6
+        meaning: "管理 DB 接続・SQL 失敗"
+  - name: "abort-final-crosscheck.sh"
+    tier: "tier-ops"
+    role: "defines"
+    synopsis: "abort-final-crosscheck.sh --run-id <FINAL_CROSSCHECK_ID> [--yes] [--verbose]"
+    invoked_by: "運用者(直接起動)。非対話起動は --yes 付きに限る"
+    args: []
+    options:
+      - name: "--run-id"
+        type: "string"
+        required: true
+        default: ""
+        description: "対象 final_crosscheck_id(引数名は 4 スクリプトで --run-id に揃える。仮採用)"
+      - name: "--yes"
+        type: "boolean"
+        required: false
+        default: "false"
+        description: "停止確認プロンプトを省略して yes とみなす"
+    stdin: "停止確認の応答 1 行(--yes 指定時は読まない)"
+    stdout: "現在状態(固定順): run_id, job_id(常に -), role, status, worker_id, lease_until, started_at"
+    stderr: "abort-blue.sh と同じ"
+    exit_codes:
+      - code: 0
+        meaning: "yes 応答後に状態更新が完了した"
+      - code: 2
+        meaning: "引数不正 / 非 TTY で --yes なし"
+      - code: 3
+        meaning: "対象依頼が無い / 応答が yes 以外 / 管理 DB なし / 中止不可"
+      - code: 6
+        meaning: "管理 DB 接続・SQL 失敗"
+async_events: []
+schemas: []

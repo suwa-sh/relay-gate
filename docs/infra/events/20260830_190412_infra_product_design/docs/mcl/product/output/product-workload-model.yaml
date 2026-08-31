@@ -1,0 +1,268 @@
+schema_version: "1.0"
+artifact_type: "workload_model"
+skill_type: "product"
+artifact_id: "product-relay-gate-workload-model"
+title: "relay-gate 並行稼働実行基盤 ワークロードモデル"
+status: "draft"
+generated_at: "2026-08-30T19:04:12"
+source_refs:
+  - "docs/mcl/product/input/product-input.yaml"
+  - "docs/mcl/foundation/output/foundation-context.yaml"
+  - "docs/mcl/shared-platform/output/shared-platform-context.yaml"
+  - "docs/cloud-context/sources/onprem/postgresql-high-availability.md"
+decision_refs:
+  - "product-decision-001"
+  - "product-decision-002"
+  - "product-decision-003"
+  - "product-decision-004"
+  - "product-decision-005"
+inputs_ref:
+  - "foundation-context"
+  - "shared-platform-context"
+  - "product-relay-gate-input"
+
+# ワークロード特性(ベンダー中立)
+workload_characteristics:
+  workload_type: "batch"
+  workload_type_detail: "ジョブスケジューラから同期起動される CLI 群と、管理 DB のジョブキューを poll する常駐 / 定期起動 worker で構成するバッチ系基盤。UI 画面・HTTP API は無い"
+  availability_target:
+    sla: "99%"
+    redundancy_model: "単一インスタンス + 部品冗長化(電源・ディスク)"
+    failover: "manual"
+    planned_downtime: "1 時間程度の計画停止をジョブスケジューラの実行計画と調整して事前通知つきで実施"
+  latency_sensitivity:
+    category: "batch"
+    target_p99: "none"
+    operational_targets:
+      - "facade の起動・中継オーバーヘッド: 10 秒以内"
+      - "中止 / リラン CLI の応答: 10 秒以内"
+      - "日次確報クロスチェック: 夜間バッチウィンドウ 8 時間以内"
+    placement: "単一サイト。実行ホストセグメントと DB セグメントの 2 セグメント"
+  data_sensitivity:
+    classification: "internal"
+    pii: false
+    encryption: "in_transit_only"
+    encryption_detail: "リモート実行経路のみ暗号化。保管時暗号化は要求しない"
+    compliance: []
+    data_residency: "on_premises_air_gapped"
+  traffic_pattern:
+    type: "scheduled"
+    baseline_rps: 1
+    spike_multiplier: 3
+    triggers:
+      - "夜間バッチの業務ジョブ(facade 経由)"
+      - "日次確報クロスチェックジョブ"
+      - "5 分ごとのハング検知定期ジョブ"
+      - "運用者の手動起動(中止 / リラン)"
+    db_write_rate: "〜10 TPS(ジョブ起動・完了通知・claim・監視記録)"
+  consistency_needs:
+    type: "strong"
+    detail: "run_id 主キーの一意作成、worker の claim / lease 排他、状態遷移をトランザクションで保証する"
+  recovery_target:
+    rpo: "4h"
+    rto: "12h"
+    backup: "daily"
+    backup_detail: "日次フル + 差分。成果物ディレクトリと管理 DB はミラーリング(RAID1 相当)"
+    dr_model: "none(遠隔地 DR は基盤単体では持たない)"
+  observability_needs:
+    metrics: ["cpu", "memory", "disk", "network", "latency", "error_rate", "throughput"]
+    logs: ["diagnostic", "audit"]
+    tracing: "run_id / parent_run_id による相関(分散トレーシング基盤は導入しない)"
+    sli: ["availability", "latency", "error_rate", "throughput"]
+    alerting: ["health_check", "error_rate"]
+    alerting_channel: "メール通知のみ"
+    log_retention: "3 ヶ月"
+  cost_posture:
+    strategy: "cost_optimized"
+    detail: "既存のジョブスケジューラ実行ホストと DB ホストへ相乗り。追加ホスト・商用ライセンスを最小化"
+
+# Canonical elements(capability 表現。製品名は vendor mapping に記録)
+elements:
+  - id: "product.compute.script_runtime_hosts"
+    name: "スクリプト実行ホスト"
+    category: "compute"
+    description: "シェルスクリプト CLI と常駐 / 定期起動 worker を実行する Linux ホスト群。ジョブスケジューラ実行ホスト(facade / slot runner / 速報 dispatcher・worker / ops CLI)と DB セグメントの確報 worker ホストに分かれる"
+    requirements:
+      - id: "REQ-COMP-001"
+        description: "ジョブスケジューラのジョブ定義から CLI を同期起動でき、標準出力・標準エラー・終了コードをそのまま返せる"
+        priority: "must"
+        rationale: "Runner Result の無加工中継(CTR-001 / CTR-002)"
+      - id: "REQ-COMP-002"
+        description: "実装スクリプト実行ホストへ公開鍵認証でリモート実行できる"
+        priority: "must"
+        rationale: "slot runner がジョブマップで解決した実行先を SSH で起動する(CTP-002)"
+      - id: "REQ-COMP-003"
+        description: "worker を常駐ループまたは定期起動で動かし、ホスト追加で水平に増やせる"
+        priority: "should"
+        rationale: "速報 worker の水平スケール方針"
+      - id: "REQ-COMP-004"
+        description: "確報 worker は DB セグメント上のホストで実行する"
+        priority: "must"
+        rationale: "全量比較のデータ転送を DB セグメント内に閉じる(tier-final-crosscheck)"
+      - id: "REQ-COMP-005"
+        description: "実行時にインターネット接続・外部サービスを要求しない"
+        priority: "must"
+        rationale: "foundation.network.air_gapped"
+    constraints:
+      - "OS は Linux。bash・標準コマンド・SSH クライアント・RDB クライアント CLI・メール送信コマンドが利用可能なこと"
+      - "コンテナ / オーケストレーション基盤は前提にしない"
+    dependencies:
+      - "product.database.management_db"
+      - "product.storage.artifact_store"
+      - "product.storage.config_store"
+      - "product.messaging.mail_notification"
+    source_refs:
+      - "docs/mcl/product/input/product-input.yaml#elements.script_runtime_hosts"
+
+  - id: "product.database.management_db"
+    name: "管理 DB(ジョブキュー兼管理 DB)"
+    category: "database"
+    description: "リレーショナル・強整合性の単一インスタンス DB。速報側(並行稼働実行 / slot 実行 / 速報比較依頼 / 比較結果)と確報側(確報比較依頼)のテーブルを分離し、worker の poll / claim / lease によるジョブキューとして使う"
+    requirements:
+      - id: "REQ-DB-001"
+        description: "行ロック付きトランザクションで claim / lease の排他を実現できる"
+        priority: "must"
+        rationale: "多重実行防止(CTP-004)"
+      - id: "REQ-DB-002"
+        description: "主キー制約で run_id の一意作成を保証できる"
+        priority: "must"
+        rationale: "速報比較依頼を 1 件だけ作成する"
+      - id: "REQ-DB-003"
+        description: "CLI クライアントから SQL を実行できる"
+        priority: "must"
+        rationale: "シェルスクリプトからの操作"
+      - id: "REQ-DB-004"
+        description: "日次フル + 差分バックアップと 4 時間以内の RPO・12 時間以内の RTO を満たせる"
+        priority: "must"
+        rationale: "tier-datastore バックアップと復旧地点"
+      - id: "REQ-DB-005"
+        description: "接続はネットワークセグメントで閉じ、DB ロールで権限分離できる"
+        priority: "should"
+        rationale: "foundation.identity.os_permission_authz / network.closed_segments"
+    constraints:
+      - "RDB 1 種のみ。MQ や KVS は導入しない"
+      - "単一インスタンス。自動フェイルオーバーは要求しない"
+    dependencies: []
+    source_refs:
+      - "docs/mcl/product/input/product-input.yaml#elements.management_db"
+      - "docs/cloud-context/sources/onprem/postgresql-high-availability.md"
+
+  - id: "product.storage.artifact_store"
+    name: "成果物ディレクトリ"
+    category: "storage"
+    description: "facade/<run_id>/ 配下に Runner Result(started-at.txt / stdout.log / stderr.log / exitcode.txt)と execution-spec.json を残す POSIX ファイルシステム。外部 IF の正本"
+    requirements:
+      - id: "REQ-ART-001"
+        description: "一時ファイルへ書いてからリネームする原子的確定ができる"
+        priority: "must"
+        rationale: "書き込み途中の読み取り防止(CTP-004)"
+      - id: "REQ-ART-002"
+        description: "facade / runner / ハング検知 / リラン / 中止 CLI が同じパスで参照できる"
+        priority: "must"
+        rationale: "成果物ファイルを共通参照する(tier-datastore)"
+      - id: "REQ-ART-003"
+        description: "ミラーリング(RAID1 相当)で保護される"
+        priority: "should"
+        rationale: "A.2.5.1 ストレージ冗長化 Lv1 + tier-datastore ポリシー"
+    constraints:
+      - "オブジェクトストレージ API は前提にしない(POSIX パス参照)"
+    dependencies: []
+    source_refs:
+      - "docs/mcl/product/input/product-input.yaml#elements.artifact_store"
+
+  - id: "product.storage.config_store"
+    name: "設定ファイル配置"
+    category: "storage"
+    description: "feature flag / ジョブマップ / クロスチェックジョブマップ / 対象カタログ / 適用文書を版付きファイルとして配置する領域。適用側が版管理して配置する"
+    requirements:
+      - id: "REQ-CFG-001"
+        description: "facade が起動のたびに読み込め、変更が次回起動から反映される"
+        priority: "must"
+        rationale: "feature flag の起動時読み込み"
+      - id: "REQ-CFG-002"
+        description: "実行ユーザーに読み取り専用で配置し、変更は適用側の配布手順に限る"
+        priority: "should"
+        rationale: "設定所有区分(tier-datastore)"
+    constraints:
+      - "認証情報の値を置かない(参照名のみ)"
+    dependencies: []
+    source_refs:
+      - "docs/mcl/product/input/product-input.yaml#elements.config_store"
+
+  - id: "product.storage.execution_log_store"
+    name: "実行ログ領域"
+    category: "storage"
+    description: "各スクリプトの実行ログ(スクリプト名 / run_id / 日時 / レベル / メッセージ)をファイルとして残す領域。3 ヶ月保管"
+    requirements:
+      - id: "REQ-LOG-001"
+        description: "3 ヶ月分のログを保持し、期限超過分をローテーション削除できる"
+        priority: "must"
+        rationale: "C.6.1.1 ログ保管期間 / CTP-003"
+      - id: "REQ-LOG-002"
+        description: "run_id で横断検索できる"
+        priority: "should"
+        rationale: "障害調査とリラン系譜の追跡"
+    constraints: []
+    dependencies: []
+    source_refs:
+      - "docs/mcl/product/input/product-input.yaml#elements.execution_log_store"
+
+  - id: "product.messaging.mail_notification"
+    name: "メール通知"
+    category: "messaging"
+    description: "運用者への warning / error 通知。ホストのメール送信コマンドから組織内メール中継へ送る"
+    requirements:
+      - id: "REQ-MAIL-001"
+        description: "閉域ネットワーク内のメール中継へ送信できる"
+        priority: "must"
+        rationale: "外部 SaaS を使わない"
+      - id: "REQ-MAIL-002"
+        description: "送信内容を実行ログに残し、送信時刻を監視記録に記録できる"
+        priority: "must"
+        rationale: "E-022 の扱い"
+    constraints:
+      - "通知手段はメールのみ。チャット / ページャ連携は導入しない"
+    dependencies:
+      - "product.storage.execution_log_store"
+    source_refs:
+      - "docs/mcl/product/input/product-input.yaml#elements.mail_notification"
+
+  - id: "product.integration.job_scheduler"
+    name: "ジョブスケジューラ連携"
+    category: "external_integration"
+    description: "既存のジョブスケジューラ。業務ジョブ facade / 確報クロスチェックジョブ / ハング検知定期ジョブ / background リラン専用ジョブを起動し、実行履歴・監査の正本となる"
+    requirements:
+      - id: "REQ-SCH-001"
+        description: "ジョブ定義から任意の CLI を引数付きで同期起動し終了コードで成否を判定できる"
+        priority: "must"
+        rationale: "facade 呼び出しへの置き換えによる一括導入(CTP-008)"
+      - id: "REQ-SCH-002"
+        description: "定期ジョブ(5 分ごと)と日次ジョブを定義できる"
+        priority: "must"
+        rationale: "hang-detector / final-crosscheck"
+    constraints:
+      - "relay-gate 側で置き換え・二重管理しない"
+    dependencies: []
+    source_refs:
+      - "docs/mcl/product/input/product-input.yaml#elements.job_scheduler_integration"
+
+  - id: "product.operations.backup_and_monitoring"
+    name: "バックアップと基盤監視"
+    category: "operations"
+    description: "管理 DB の日次バックアップ、ログローテーション、ホストリソース監視。基盤固有の監視(ハング検知・異常通知)はワークロード自身の定期ジョブが担う"
+    requirements:
+      - id: "REQ-OPS-001"
+        description: "管理 DB の日次フル + 差分バックアップを自動実行し、復旧手順を文書化する"
+        priority: "must"
+        rationale: "REQ-DB-004"
+      - id: "REQ-OPS-002"
+        description: "ホストの CPU / メモリ / ディスク / ネットワークは組織既存の監視に載せる"
+        priority: "should"
+        rationale: "C.1.3.1 監視範囲 Lv3"
+    constraints:
+      - "監視基盤を新規導入しない(既存監視または OS 標準機能で代替)"
+    dependencies:
+      - "product.database.management_db"
+      - "product.storage.execution_log_store"
+    source_refs:
+      - "docs/mcl/product/input/product-input.yaml#observability_needs"

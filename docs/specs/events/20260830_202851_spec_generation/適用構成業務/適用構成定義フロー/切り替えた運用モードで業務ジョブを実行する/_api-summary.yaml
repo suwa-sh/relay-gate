@@ -1,0 +1,69 @@
+uc: "切り替えた運用モードで業務ジョブを実行する"
+business: "適用構成業務"
+buc: "適用構成定義フロー"
+paths: []
+x_cli_commands:
+  - name: "facade.sh"
+    tier: "tier-facade"
+    role: "uses"
+    synopsis: "facade.sh JOB_ID [PARAM...]"
+    invoked_by: "ジョブスケジューラ(業務ジョブ定義。運用モードによらず同一)"
+    args:
+      - name: "JOB_ID"
+        type: "string"
+        required: true
+        description: "業務ジョブ識別子"
+      - name: "PARAM..."
+        type: "string[]"
+        required: false
+        description: "追加引数"
+    options: []
+    stdin: "なし"
+    stdout: "foreground slot(運用モードにより blue または green)の stdout.log を無加工中継"
+    stderr: "foreground slot の stderr.log を無加工中継。誤設定時のみ error:"
+    exit_codes:
+      - code: "foreground の exitcode.txt の値"
+        meaning: "業務結果(運用モードによらず同じ形式)"
+      - code: 2
+        meaning: "誤った運用モード設定(両 foreground / foreground 無し等)。runner 未起動"
+      - code: 6
+        meaning: "管理 DB / runner 起動失敗"
+  - name: "validate-config.sh"
+    tier: "tier-facade"
+    role: "uses"
+    synopsis: "validate-config.sh --feature-flag <path> [--verbose] [--help]"
+    invoked_by: "基盤適用設計者(運用モード切替前の事前検証。定義は UC「feature flag を設定する」)"
+    args: []
+    options:
+      - name: "--feature-flag"
+        type: "string"
+        required: false
+        description: "feature-flag.env のパス。検証種別オプション(--feature-flag / --job-map / --crosscheck-job-map / --target-catalog)のうちちょうど 1 つを指定する(契約 option_exclusivity。本 UC は --feature-flag のみ使う)"
+    stdin: "なし"
+    stdout: "12 キー固定順の key=value(operation_mode を含む)"
+    stderr: "違反ごとに error: 1 行"
+    exit_codes:
+      - code: 0
+        meaning: "検証 OK"
+      - code: 2
+        meaning: "運用モード設定の検証違反"
+  - name: "hang-detector.sh"
+    tier: "tier-ops"
+    role: "uses"
+    synopsis: "hang-detector.sh [--verbose]"
+    invoked_by: "ジョブスケジューラの定期ジョブ(並行稼働系の運用モードで background slot / 速報の異常を検知。定義は UC「background 実行の経過時間と終了状態を判定する」)"
+    args: []
+    options: []
+    stdin: "なし"
+    stdout: "判定結果(定義元 UC の契約に従う)"
+    stderr: "error: 1 行(定義元 UC の契約に従う)"
+    exit_codes:
+      - code: 0
+        meaning: "判定完了(通知の有無によらない)"
+async_events:
+  - name: "hang-alert-mail"
+    channel: "hang-alert-mail"
+    direction: "subscribe"
+    message: "HangAlertMail"
+    summary: "運用者が並行稼働系の運用モードで background slot / 速報の異常メールを受け取る(publish 側は tier-ops の hang-detector)"
+schemas: []

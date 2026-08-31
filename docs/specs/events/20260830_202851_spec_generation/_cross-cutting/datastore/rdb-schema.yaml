@@ -1,0 +1,641 @@
+version: "1.0"
+datastore: "rdb"
+
+# relay-gate 管理 DB(ジョブキュー兼管理 DB)のデータストアレイアウト。
+# 全 32 UC の _model-summary.yaml の tables を統合し、情報.tsv の属性と arch E-013〜E-021 で列を補完した。
+# 型は抽象型(string / integer / text / datetime / date / boolean)。DDL には変換しない。
+# 正規化: 第 3 正規形、履歴テーブルなし(_inference.md 採用値 #3)。状態値は _inference.md 採用値 #11 の英字コード。
+
+_review_notes:
+  - "正規化方針: 3NF・履歴テーブルなし(採用値 #3)。event_snapshot 型のエンティティは status 列 + *_at 列で表現し、状態履歴テーブル(*_status_events)は持たない。実行履歴・監査の正本はジョブスケジューラのため"
+  - "速報側(rapid_runs / rapid_crosscheck_requests / comparison_results)と確報側(final_crosscheck_requests)はデータモデルを分離し、テーブル間 FK を張らない(arch 制約「速報側と確報側のデータモデルを分離する」)"
+  - "比較ツール実行結果(E-020)は独立テーブルにせず、依頼レコード(rapid / final)の stdout / stderr / exit_code / error_summary 列で保持する(情報.tsv の依頼定義どおり。採用値 #3)"
+  - "完了通知(E-015)・通知メール(E-022)・リラン指示(E-023)・中止指示(E-024)・実行ログ(E-025)は永続化しない。完了通知は rapid_runs の {slot}_status / {slot}_artifact_uri / {slot}_completed_at に集約され、通知メールは monitor_records の alerted_at 等に結果だけ残る。リラン・中止は対象テーブルの状態更新で表現する"
+  - "設定系(feature flag / slot runner 割当 / ジョブマップ / ハング検知上限設定 / 比較定義 / クロスチェックジョブマップ / 対象カタログ / 適用構成文書)はファイル(env + TSV)で所有し RDB に持たない(採用値 #5)。execution-spec / Runner Result もファイル。RDB は実行管理レコード 7 テーブルのみ"
+  - "FK 検討: monitor_records.run_id は parallel_runs へ FK を張らない。RAPID_CROSSCHECK_MODE=off では parallel_runs が存在しないまま background slot を監視するため(採用値 #7 / #8)。同じ理由で monitor_records は job_id 列を自前で持つ(canonical C2)"
+  - "FK 検討: parallel_runs.parent_run_id は parallel_runs.run_id への自己参照 FK(nullable)。リラン系譜を数珠つなぎに辿るため"
+  - "FK 検討: comparison_results.run_id は rapid_crosscheck_requests.run_id を参照する(依頼 1 件に結果 N 件)。parallel_runs への直接 FK は依頼経由で到達できるため張らない"
+  - "on_delete はすべて RESTRICT。運用中に管理レコードを削除する UC は無く、誤削除で系譜・比較結果が失われるのを防ぐ"
+  - "ユニーク制約: rapid_crosscheck_requests は run_id が主キーのため追加のユニーク制約は不要(1 run_id に 1 依頼)。条件付き INSERT(NOT EXISTS)と主キー違反の両方で重複を防ぐ"
+  - "ユニーク制約: rapid_runs は run_id が主キーのため追加のユニーク制約は不要(parallel_runs と 1:1)"
+  - "ユニーク制約: comparison_results は主キー comparison_result_id(8 桁 hex 乱数)に加えて (run_id, comparison_type) の複合ユニークを採用する。同一依頼で同じ比較種別の結果が二重登録されるのを防ぐ。worker のクラッシュ再実行時は新しい run_id(background-rerun --role rapid-crosscheck)で依頼を作り直す設計のため衝突しない"
+  - "ユニーク制約: slot_executions は (run_id, slot) を主キーにする(1 run に blue / green 各 1 件)。サロゲートキーは持たない"
+  - "ユニーク制約: monitor_records は (run_id, role) を主キーにする(監視対象 ID = run_id + role。UPSERT の衝突判定に使う)"
+  - "ユニーク制約: final_crosscheck_requests は (business_date, catalog_version) のユニーク制約を張らない。確報の再実行はジョブスケジューラの正規ジョブを直接再実行する経路(再実行経路)であり、同一 business_date の依頼が複数存在することを許容するため"
+  - "ユニーク制約: parallel_runs は run_id が主キー(UTC 時刻 + job_id + 8 hex。採用値 #9)。job_id + requested_at の一意性は要求しない(同一ジョブの同時刻起動を禁止しない)"
+  - "UC 間の不一致(列名): slot_executions の終了時刻列を『実装スクリプトを実行して Runner Result を出力する』は finished_at、『実行を ABORTED へ遷移させる』は completed_at と記述していた。parallel_runs / rapid_crosscheck_requests / final_crosscheck_requests と揃えて completed_at を採用する"
+  - "UC 間の不一致(列名): monitor_records の警告時経過時間は arch E-021 では elapsed_at_alert_minutes だが、canonical C2 に従い elapsed_minutes_at_alert を採用する。判定日時は detected_at ではなく judged_at を採用する"
+  - "UC 間の不一致(インデックス): monitor_records の傾向集計インデックスを『監視記録を保存する』は (job_id, role, alerted_at)、『hang_detect_limit_minutes をジョブごとに調整する』は (job_id, role, judged_at) と記述していた。hang-detect-trend.sh の WHERE 句(judged_at >= ?)に合わせて (job_id, role, judged_at) を採用する。alerted_at は集計対象列であり絞り込み列ではない"
+  - "INSERT / UPDATE 順序(slot_executions): facade / background-rerun は runner 起動前に status=RUNNING / pid=NULL で INSERT し、起動直後に pid を UPDATE する。runner の終端 UPDATE(WHERE status='RUNNING')は起動前 INSERT の行を更新するため、即時終了する runner でも行が先に存在する(Step6.5 F-004)。終端 UPDATE の更新件数 0(行なし / 既に ABORTED)は runner が実行ログに ERROR を残し、終了コードは変えない。pid の nullable はこの起動前 INSERT のため"
+  - "終端 UPDATE の 0 件(依頼): rapid_crosscheck_requests / final_crosscheck_requests の worker 終端 UPDATE(WHERE status='RUNNING')が 0 件のときは abort-* により ABORTED 済みとみなし、worker は comparison_results を INSERT せず warn: を出して終了コード 0(cli-command-contract.yaml 各 worker の idempotency)"
+  - "UC 間の不一致(列): slot_executions の exit_code は『slot 実行モードを選択して runner を起動する』(INSERT 時 NULL)と『実装スクリプトを実行して Runner Result を出力する』(UPDATE)にのみ現れ、arch E-014 / 情報.tsv には無い。SUCCEEDED / FAILED の判定根拠として保持する側を採用する(nullable)"
+  - "UC 間の不一致(列): rapid_runs の blue_completed_at / green_completed_at は情報.tsv にあり arch E-016 に無い。情報.tsv を採用して列に含める"
+  - "UC 間の不一致(型): final_crosscheck_requests.business_date は arch E-019 で date。CLI 引数 --business-date(YYYY-MM-DD 文字列。cli-command-contract.yaml / asyncapi.yaml と同じ表記)で受け取るが、比較条件の日付として扱うため date を採用する"
+  - "ユニーク制約(不採用): final_crosscheck_requests の同一 business_date + catalog_version の未終端(status NOT IN ('SUCCEEDED','FAILED','ABORTED'))部分ユニークは採用しない。判断根拠: (1) 確報の再実行はジョブスケジューラの正規ジョブ再実行であり、同一キーの二重起動抑止はジョブスケジューラ側の責務(条件「実行履歴はジョブスケジューラの責務」)、(2) 部分ユニーク(条件付きインデックス)は DDL 方言依存で抽象型スキーマの範囲を超える、(3) 同一キーの二重起動抑止はジョブスケジューラの責務とし、final-crosscheck-runner.sh は INSERT 前に既存依頼を SELECT せず起動のたびに新しい final_crosscheck_id で無条件に登録する(cli-command-contract.yaml final-crosscheck-runner.sh idempotency と同じ。事前 SELECT による再利用・拒否の要否は運用値の判明時に feedback request で見直す。todo)"
+  - "インデックス検討(不採用): slot_executions の (status, mode) インデックスは利用者不在のため置かない。hang-detector の未完了 background slot の走査は成果物ファイル(started-at.txt / exitcode.txt)で行い、on 時の ABORTED 判定だけを主キー (run_id, slot) で 1 行取得する(UC『background 実行の経過時間と終了状態を判定する』。Step6.5 F-011)。abort-blue / abort-green の中止可否判定は主キー (run_id, slot) で 1 行を取得して判定するため二次インデックスを使わない。runner 起動 UC(facade / background-rerun)は INSERT のみ"
+  - "インデックス検討(不採用): parallel_runs の (job_id, requested_at) は UC 由来の検索が無い(32 UC のどれも job_id + requested_at で parallel_runs を検索しない)ため置かない。運用者のアドホック調査は run_id の時刻プレフィックス(採用値 #9)で代替する"
+  - "インデックスの used_by は SELECT / UPDATE の WHERE 句で当該列を使う UC だけを列挙する(INSERT のみの UC は利用者ではないため含めない。datastore-rules『不要なインデックスを防ぐ』)"
+  - "comparison_results.status の値は OK / NG / FAILED(比較ツール終了コード 0 / 3 / 6 に対応)。情報.tsv の『比較 OK / 比較 NG / FAILED』の英字コード"
+  - "インデックス検討(不採用): rapid_runs / rapid_crosscheck_requests / final_crosscheck_requests の run_id / final_crosscheck_id 単独検索は主キーで賄うため追加しない"
+  - "インデックス検討(不採用): comparison_results の run_id 単独インデックスは uq_comparison_results_run_id_comparison_type と idx_comparison_results_run_id_compared_at の先頭列で賄えるため追加しない"
+  - "インデックス検討(不採用): slot_executions の run_id 単独インデックスは主キー (run_id, slot) の先頭列で賄えるため FK インデックスを追加しない"
+
+tables:
+  # ---------------------------------------------------------------
+  # 並行稼働実行管理
+  # ---------------------------------------------------------------
+  - name: "parallel_runs"
+    rdra_info: "並行稼働実行(parallel_run)"
+    description: "1 回の並行稼働を run_id で相関付ける管理レコード(arch E-013)。速報クロスチェック有効時に facade が発行し、background-rerun がリラン時に parent_run_id 付きで新規作成する。成果物ディレクトリ・rapid_runs・比較依頼・比較結果を run_id で紐付ける"
+    columns:
+      - name: "run_id"
+        type: "string"
+        nullable: false
+        description: "run の識別子。形式は {UTC yyyymmddThhmmssZ}-{job_id}-{8 hex}(採用値 #9)。情報.tsv: run_id"
+      - name: "parent_run_id"
+        type: "string"
+        nullable: true
+        description: "リラン元の run_id(直前のリラン元を指す自己参照)。初回実行は NULL。系譜は元の実行まで数珠つなぎに辿る。情報.tsv: parent_run_id"
+      - name: "job_id"
+        type: "string"
+        nullable: false
+        description: "ジョブスケジューラから渡された JOB_ID。情報.tsv: job_id"
+      - name: "parameters"
+        type: "text"
+        nullable: false
+        description: "PARAM... を順序どおりに保持した JSON 配列文字列(引数無しは [])。リラン時は元 run の値を複製する。情報.tsv: parameters"
+      - name: "execution_spec_uri"
+        type: "string"
+        nullable: false
+        description: "確定保存した execution-spec.json のパス(<ARTIFACT_ROOT>/facade/<run_id>/execution-spec.json)。rapid-crosscheck リランでは元 run の値を引き継ぐ。情報.tsv: execution_spec_uri"
+      - name: "status"
+        type: "string"
+        nullable: false
+        description: "並行稼働実行の状態。値: STARTED(レコード作成直後), RUNNING(全 slot 起動後), COMPLETED(foreground 結果の中継完了), ABORTED(運用者の明示中止)"
+      - name: "requested_at"
+        type: "datetime"
+        nullable: false
+        description: "run の作成日時(UTC)。情報.tsv: requested_at"
+      - name: "completed_at"
+        type: "datetime"
+        nullable: true
+        description: "COMPLETED / ABORTED へ遷移した日時(UTC)。未終端は NULL。情報.tsv: completed_at"
+    primary_key: ["run_id"]
+    foreign_keys:
+      - columns: ["parent_run_id"]
+        references:
+          table: "parallel_runs"
+          columns: ["run_id"]
+        on_delete: "RESTRICT"
+    indexes:
+      - name: "idx_parallel_runs_parent_run_id"
+        columns: ["parent_run_id"]
+        unique: false
+        reason: "系譜: run-lineage.sh の子孫探索(WHERE parent_run_id = ?)。自己参照 FK のインデックスを兼ねる(リラン UC は INSERT のみで利用者ではない)"
+        used_by:
+          - "リラン結果を parent_run_id で追跡する"
+    used_by:
+      - uc: "slot 実行モードを選択して runner を起動する"
+        operations: ["INSERT", "UPDATE"]
+      - uc: "foreground slot の結果をジョブスケジューラへ中継する"
+        operations: ["UPDATE"]
+      - uc: "両系成功時に速報比較依頼を作成する"
+        operations: ["SELECT"]
+      - uc: "リラン対象を検証する"
+        operations: ["SELECT"]
+      - uc: "リラン結果を parent_run_id で追跡する"
+        operations: ["SELECT"]
+      - uc: "元の execution-spec.json から復元して新しい run_id で起動する"
+        operations: ["INSERT", "UPDATE", "SELECT"]
+      - uc: "速報比較依頼だけを新規作成する"
+        operations: ["SELECT", "INSERT", "UPDATE"]
+      - uc: "現在状態を確認して停止確認に応答する"
+        operations: ["SELECT"]
+      - uc: "実行を ABORTED へ遷移させる"
+        operations: ["UPDATE"]
+
+  - name: "slot_executions"
+    rdra_info: "slot 実行"
+    description: "run_id ごとの blue / green 各 slot の実行(mode・PID・成果物ディレクトリ・状態)を識別するレコード(arch E-014)。速報有効時のみ RDB に永続化し、off ではファイルのみ(採用値 #7)。ハング検知・中止・background 側リランの対象特定に使う"
+    columns:
+      - name: "run_id"
+        type: "string"
+        nullable: false
+        description: "所属する並行稼働実行の run_id。情報.tsv: run_id"
+      - name: "slot"
+        type: "string"
+        nullable: false
+        description: "実装スロット。値: blue, green"
+      - name: "mode"
+        type: "string"
+        nullable: false
+        description: "slot 実行モード。値: foreground, background(off の slot はレコードを作らない)"
+      - name: "pid"
+        type: "integer"
+        nullable: true
+        description: "起動した runner プロセスの PID。facade / background-rerun は runner 起動前に pid=NULL で INSERT し、起動直後に pid を UPDATE する(runner の終端 UPDATE より先に行が存在することを保証する。起動失敗時は NULL のまま)。foreground の待機対象と background の中止判断に使う。情報.tsv: PID"
+      - name: "artifact_dir"
+        type: "string"
+        nullable: false
+        description: "Runner Result の成果物ディレクトリ(<ARTIFACT_ROOT>/facade/<run_id>/<slot>/)。情報.tsv: 成果物ディレクトリ"
+      - name: "status"
+        type: "string"
+        nullable: false
+        description: "slot 実行の状態。値: RUNNING(起動後), SUCCEEDED(exitcode.txt が 0), FAILED(exitcode.txt が非 0), ABORTED(運用者の明示中止)"
+      - name: "exit_code"
+        type: "integer"
+        nullable: true
+        description: "exitcode.txt の値。起動時は NULL、終了時に更新。SUCCEEDED / FAILED の判定根拠"
+      - name: "started_at"
+        type: "datetime"
+        nullable: false
+        description: "runner 起動日時(UTC)。起動前 INSERT 時の時刻(起動直前)を置き、pid UPDATE では変更しない。情報.tsv: 開始時刻"
+      - name: "completed_at"
+        type: "datetime"
+        nullable: true
+        description: "SUCCEEDED / FAILED / ABORTED へ遷移した日時(UTC)。未終端は NULL。情報.tsv: 終了時刻(UC 間で finished_at / completed_at が混在していたため completed_at に統一)"
+    primary_key: ["run_id", "slot"]
+    foreign_keys:
+      - columns: ["run_id"]
+        references:
+          table: "parallel_runs"
+          columns: ["run_id"]
+        on_delete: "RESTRICT"
+    indexes: []
+    used_by:
+      - uc: "slot 実行モードを選択して runner を起動する"
+        operations: ["INSERT", "UPDATE"]
+      - uc: "実装スクリプトを実行して Runner Result を出力する"
+        operations: ["UPDATE"]
+      - uc: "リラン対象を検証する"
+        operations: ["SELECT"]
+      - uc: "リラン結果を parent_run_id で追跡する"
+        operations: ["SELECT"]
+      - uc: "元の execution-spec.json から復元して新しい run_id で起動する"
+        operations: ["INSERT", "UPDATE"]
+      - uc: "現在状態を確認して停止確認に応答する"
+        operations: ["SELECT"]
+      - uc: "実行を ABORTED へ遷移させる"
+        operations: ["UPDATE"]
+      - uc: "background 実行の経過時間と終了状態を判定する"
+        operations: ["SELECT"]
+
+  # ---------------------------------------------------------------
+  # 速報クロスチェック管理
+  # ---------------------------------------------------------------
+  - name: "rapid_runs"
+    rdra_info: "速報実行(rapid_run)"
+    description: "run_id ごとに blue / green の完了通知を集約して両系成功判定を行うレコード(arch E-016)。facade が parallel_runs と同一トランザクションで completion_status = PENDING で作成し(canonical C3)、速報クロスチェック runner が完了通知を受けて更新する"
+    columns:
+      - name: "run_id"
+        type: "string"
+        nullable: false
+        description: "対応する並行稼働実行の run_id(1:1)。情報.tsv: run_id"
+      - name: "blue_status"
+        type: "string"
+        nullable: true
+        description: "blue の完了結果。値: SUCCEEDED(exit_code=0), FAILED(非 0)。未受信は NULL"
+      - name: "green_status"
+        type: "string"
+        nullable: true
+        description: "green の完了結果。値: SUCCEEDED(exit_code=0), FAILED(非 0)。未受信は NULL"
+      - name: "blue_artifact_uri"
+        type: "string"
+        nullable: true
+        description: "blue 完了通知の --artifact-uri(成果物ディレクトリ)。比較ツールの入力に使う。未受信は NULL"
+      - name: "green_artifact_uri"
+        type: "string"
+        nullable: true
+        description: "green 完了通知の --artifact-uri(成果物ディレクトリ)。比較ツールの入力に使う。未受信は NULL"
+      - name: "blue_completed_at"
+        type: "datetime"
+        nullable: true
+        description: "blue 完了通知の受信日時(UTC)。未受信は NULL。情報.tsv: blue_completed_at"
+      - name: "green_completed_at"
+        type: "datetime"
+        nullable: true
+        description: "green 完了通知の受信日時(UTC)。未受信は NULL。情報.tsv: green_completed_at"
+      - name: "completion_status"
+        type: "string"
+        nullable: false
+        description: "完了状況(状態モデル: 速報実行の完了状況)。値: PENDING(両系未完了), ONE_COMPLETED(片系完了), BOTH_SUCCEEDED(両系成功), ANY_FAILED(いずれか失敗), REQUEST_CREATED(比較依頼作成済み)"
+    primary_key: ["run_id"]
+    foreign_keys:
+      - columns: ["run_id"]
+        references:
+          table: "parallel_runs"
+          columns: ["run_id"]
+        on_delete: "RESTRICT"
+    indexes: []
+    used_by:
+      - uc: "slot 実行モードを選択して runner を起動する"
+        operations: ["INSERT"]
+      - uc: "速報クロスチェック runner へ完了通知を送信する"
+        operations: ["SELECT", "UPDATE"]
+      - uc: "両系成功時に速報比較依頼を作成する"
+        operations: ["SELECT", "UPDATE"]
+      - uc: "比較ツールでジョブ単位比較を実行して結果を登録する"
+        operations: ["SELECT"]
+      - uc: "速報比較結果を参照する"
+        operations: ["SELECT"]
+      - uc: "速報比較依頼だけを新規作成する"
+        operations: ["SELECT", "INSERT"]
+
+  - name: "rapid_crosscheck_requests"
+    rdra_info: "速報比較依頼(rapid_crosscheck_request)"
+    description: "blue と green が両方成功したときに run_id を主キーとして 1 件だけ作成される、管理 DB 上のジョブキューのレコード(arch E-017)。速報クロスチェック worker が poll / claim し、worker_id と lease_until で多重実行を防ぐ。比較ツールの stdout / stderr / exit_code をそのまま保持する(E-020 を内包)"
+    columns:
+      - name: "run_id"
+        type: "string"
+        nullable: false
+        description: "対象の並行稼働実行の run_id(主キー。1 run_id に 1 依頼)。情報.tsv: run_id(主キー)"
+      - name: "job_id"
+        type: "string"
+        nullable: false
+        description: "比較定義の解決に使う JOB_ID(parallel_runs.job_id と照合済み)。情報.tsv: job_id"
+      - name: "status"
+        type: "string"
+        nullable: false
+        description: "クロスチェック依頼の状態。値: REQUESTED(未 claim), CLAIMED(worker が lease 取得), RUNNING(比較ツール起動後), SUCCEEDED(exit_code=0), FAILED(非 0 または起動失敗), ABORTED(運用者の明示中止)"
+      - name: "worker_id"
+        type: "string"
+        nullable: true
+        description: "claim した worker の識別子({hostname}-{pid} 既定。ホスト名の `.` は `-` に置換。canonical C4)。REQUESTED / lease 失効解放後は NULL"
+      - name: "lease_until"
+        type: "datetime"
+        nullable: true
+        description: "lease の失効日時(UTC。claim 時刻 + RAPID_LEASE_SEC 秒、既定 600 秒。rapid-crosscheck.env)。失効かつ started_at IS NULL なら REQUESTED に戻す。REQUESTED は NULL"
+      - name: "requested_at"
+        type: "datetime"
+        nullable: false
+        description: "依頼作成日時(UTC)。poll の取り出し順(昇順)に使う。情報.tsv: requested_at"
+      - name: "started_at"
+        type: "datetime"
+        nullable: true
+        description: "比較ツール起動日時(UTC)。RUNNING 遷移時に設定。未開始は NULL。情報.tsv: started_at"
+      - name: "completed_at"
+        type: "datetime"
+        nullable: true
+        description: "SUCCEEDED / FAILED / ABORTED へ遷移した日時(UTC)。未終端は NULL。情報.tsv: completed_at"
+      - name: "exit_code"
+        type: "integer"
+        nullable: true
+        description: "比較ツールの終了コード(0=比較 OK / 3=比較 NG / 6=実行エラー。起動失敗は 6)。終端前は NULL。情報.tsv: exit_code"
+      - name: "stdout"
+        type: "text"
+        nullable: true
+        description: "比較ツールの標準出力全文。comparison_results の登録元(difference_count= / report_uri= 行を含む)。終端前は NULL"
+      - name: "stderr"
+        type: "text"
+        nullable: true
+        description: "比較ツールの標準エラー全文。終端前は NULL"
+      - name: "error_summary"
+        type: "string"
+        nullable: true
+        description: "FAILED 時の要約(stderr 先頭 1 行、または起動失敗の理由)。SUCCEEDED は NULL。情報.tsv: error_summary"
+    primary_key: ["run_id"]
+    foreign_keys:
+      - columns: ["run_id"]
+        references:
+          table: "parallel_runs"
+          columns: ["run_id"]
+        on_delete: "RESTRICT"
+    indexes:
+      - name: "idx_rapid_crosscheck_requests_status_requested_at"
+        columns: ["status", "requested_at"]
+        unique: false
+        reason: "poll: worker が REQUESTED を requested_at 昇順で 1 件取得する(30 秒間隔)。hang-detector の未終端依頼走査にも使う。ユニーク制約: run_id 主キーで 1 run に 1 依頼を保証するため追加のユニークは不要"
+        used_by:
+          - "速報比較依頼を claim する"
+          - "background 実行の経過時間と終了状態を判定する"
+      - name: "idx_rapid_crosscheck_requests_status_lease_until"
+        columns: ["status", "lease_until"]
+        unique: false
+        reason: "lease: 失効した CLAIMED の回収(WHERE status = 'CLAIMED' AND lease_until < now AND started_at IS NULL)を poll ごとに範囲検索する"
+        used_by:
+          - "速報比較依頼を claim する"
+    used_by:
+      - uc: "両系成功時に速報比較依頼を作成する"
+        operations: ["INSERT"]
+      - uc: "速報比較依頼を claim する"
+        operations: ["UPDATE"]
+      - uc: "比較ツールでジョブ単位比較を実行して結果を登録する"
+        operations: ["UPDATE"]
+      - uc: "速報比較結果を参照する"
+        operations: ["SELECT"]
+      - uc: "background 実行の経過時間と終了状態を判定する"
+        operations: ["SELECT"]
+      - uc: "リラン対象を検証する"
+        operations: ["SELECT"]
+      - uc: "リラン結果を parent_run_id で追跡する"
+        operations: ["SELECT"]
+      - uc: "速報比較依頼だけを新規作成する"
+        operations: ["INSERT"]
+      - uc: "現在状態を確認して停止確認に応答する"
+        operations: ["SELECT"]
+      - uc: "実行を ABORTED へ遷移させる"
+        operations: ["UPDATE"]
+
+  - name: "comparison_results"
+    rdra_info: "比較結果(comparison_result)"
+    description: "速報比較の結果(comparison_type・status・difference_count・report_uri・compared_at)を保持するレコード(arch E-018)。速報クロスチェック worker が比較ツールの終了コードと stdout から登録し、運用者が run_id で参照する。リリース判断の正本には用いない"
+    columns:
+      - name: "comparison_result_id"
+        type: "string"
+        nullable: false
+        description: "比較結果の識別子(8 桁 hex 乱数)。情報.tsv: comparison_result_id"
+      - name: "run_id"
+        type: "string"
+        nullable: false
+        description: "結果の元になった速報比較依頼の run_id。情報.tsv: run_id"
+      - name: "comparison_type"
+        type: "string"
+        nullable: false
+        description: "比較定義の比較種別。値: job(速報。crosscheck-job-map.tsv の該当 job_id 行の comparison_type を転記)/ full(確報。速報側の本テーブルには現れない)。cli-command-contract.yaml の crosscheck-job-map.tsv.comparison_type enum [job, full] と一致させる。比較定義が無い job_id では本テーブルに INSERT せず依頼を FAILED(error_summary=comparison definition not found job_id=...)で終端する。情報.tsv: comparison_type"
+      - name: "status"
+        type: "string"
+        nullable: false
+        description: "比較結果ステータス(比較ツール終了コードから判定)。値: OK(0=比較 OK), NG(3=比較 NG), FAILED(6=実行エラー・その他)"
+      - name: "difference_count"
+        type: "integer"
+        nullable: true
+        description: "比較ツール stdout の difference_count=N から抽出した差分件数。出力が無ければ NULL"
+      - name: "report_uri"
+        type: "string"
+        nullable: true
+        description: "比較ツール stdout の report_uri=... から抽出したレポートの所在。出力が無ければ NULL"
+      - name: "compared_at"
+        type: "datetime"
+        nullable: false
+        description: "比較ツール終了日時(UTC)。run_id 内の並び順に使う。情報.tsv: compared_at(arch E-018 では occurred_at)"
+    primary_key: ["comparison_result_id"]
+    foreign_keys:
+      - columns: ["run_id"]
+        references:
+          table: "rapid_crosscheck_requests"
+          columns: ["run_id"]
+        on_delete: "RESTRICT"
+    indexes:
+      - name: "uq_comparison_results_run_id_comparison_type"
+        columns: ["run_id", "comparison_type"]
+        unique: true
+        reason: "ユニーク制約: 同一依頼(run_id)で同じ比較種別の結果を二重登録しない。worker の再実行は新 run_id で依頼を作り直すため衝突しない。FK インデックス(run_id 先頭)を兼ねる"
+        used_by:
+          - "比較ツールでジョブ単位比較を実行して結果を登録する"
+          - "background 実行の経過時間と終了状態を判定する"
+      - name: "idx_comparison_results_run_id_compared_at"
+        columns: ["run_id", "compared_at"]
+        unique: false
+        reason: "run_id 単位の結果一覧を compared_at 昇順で取得する(rapid-crosscheck-result.sh の ORDER BY compared_at ASC LIMIT ?)。登録 UC は INSERT のみで利用者ではない"
+        used_by:
+          - "速報比較結果を参照する"
+    used_by:
+      - uc: "比較ツールでジョブ単位比較を実行して結果を登録する"
+        operations: ["INSERT"]
+      - uc: "速報比較結果を参照する"
+        operations: ["SELECT"]
+      - uc: "background 実行の経過時間と終了状態を判定する"
+        operations: ["SELECT"]
+
+  # ---------------------------------------------------------------
+  # 確報クロスチェック管理(速報側と分離。FK を張らない)
+  # ---------------------------------------------------------------
+  - name: "final_crosscheck_requests"
+    rdra_info: "確報比較依頼(final_crosscheck_request)"
+    description: "確報クロスチェック runner が business_date と対象カタログの版で登録し、終端状態まで同期 polling する依頼レコード(arch E-019)。確報クロスチェック worker が claim / lease し、日次全量比較の stdout / stderr / exit_code を保存する(E-020 を内包)。速報側と別ドメインとして分離し、他テーブルへの FK を持たない"
+    columns:
+      - name: "final_crosscheck_id"
+        type: "string"
+        nullable: false
+        description: "確報比較依頼の識別子。形式は {UTC yyyymmddThhmmssZ}-final-{8 hex}(runner が発行)。abort-final-crosscheck.sh の --run-id はこの値(canonical C7)"
+      - name: "business_date"
+        type: "date"
+        nullable: false
+        description: "比較対象の業務日付(--business-date)。情報.tsv: business_date"
+      - name: "catalog_version"
+        type: "string"
+        nullable: false
+        description: "比較に使う対象カタログの版(--catalog-version)。リリース判断の対象範囲を確定する。情報.tsv: 対象カタログの版"
+      - name: "status"
+        type: "string"
+        nullable: false
+        description: "クロスチェック依頼の状態。値: REQUESTED(未 claim), CLAIMED(worker が lease 取得), RUNNING(比較ツール起動後), SUCCEEDED(exit_code=0), FAILED(非 0 または起動失敗), ABORTED(運用者の明示中止)"
+      - name: "worker_id"
+        type: "string"
+        nullable: true
+        description: "claim した worker の識別子({hostname}-{pid} 既定。ホスト名の `.` は `-` に置換)。REQUESTED / lease 失効解放後は NULL"
+      - name: "lease_until"
+        type: "datetime"
+        nullable: true
+        description: "lease の失効日時(UTC。claim 時刻 + FINAL_LEASE_MINUTES、既定 10 分)。失効かつ started_at IS NULL なら REQUESTED に戻す。REQUESTED は NULL"
+      - name: "requested_at"
+        type: "datetime"
+        nullable: false
+        description: "依頼登録日時(UTC)。poll の取り出し順(昇順)に使う。情報.tsv: requested_at"
+      - name: "started_at"
+        type: "datetime"
+        nullable: true
+        description: "比較ツール起動日時(UTC)。RUNNING 遷移時に設定。未開始は NULL。情報.tsv: started_at"
+      - name: "completed_at"
+        type: "datetime"
+        nullable: true
+        description: "SUCCEEDED / FAILED / ABORTED へ遷移した日時(UTC)。未終端は NULL。情報.tsv: completed_at"
+      - name: "exit_code"
+        type: "integer"
+        nullable: true
+        description: "比較ツールの終了コード(0=比較 OK / 3=比較 NG / 6=実行エラー。起動失敗は 6)。runner がジョブスケジューラへ無加工で中継する。終端前は NULL"
+      - name: "stdout"
+        type: "text"
+        nullable: true
+        description: "比較ツールの標準出力全文。runner が標準出力へ無加工で中継する。終端前は NULL"
+      - name: "stderr"
+        type: "text"
+        nullable: true
+        description: "比較ツールの標準エラー全文。runner が標準エラーへ無加工で中継する。終端前は NULL"
+      - name: "error_summary"
+        type: "string"
+        nullable: true
+        description: "起動失敗・書き込み失敗の要約。それ以外(正常終了・比較 NG)は NULL。情報.tsv: error_summary"
+    primary_key: ["final_crosscheck_id"]
+    foreign_keys: []
+    indexes:
+      - name: "idx_final_crosscheck_requests_status_requested_at"
+        columns: ["status", "requested_at"]
+        unique: false
+        reason: "poll: worker が REQUESTED を requested_at 昇順で 1 件取得する(30 秒間隔、〜10 TPS 以下)。ユニーク制約: (business_date, catalog_version) は再実行経路で同一日付の依頼が複数存在しうるため張らない。未終端の部分ユニークも不採用(_review_notes 参照)"
+        used_by:
+          - "確報比較依頼を claim する"
+      - name: "idx_final_crosscheck_requests_status_lease_until"
+        columns: ["status", "lease_until"]
+        unique: false
+        reason: "lease: 失効した CLAIMED の回収(WHERE status = 'CLAIMED' AND lease_until < now AND started_at IS NULL)を poll ごとに範囲検索する"
+        used_by:
+          - "確報比較依頼を claim する"
+    used_by:
+      - uc: "確報比較依頼を登録して終端状態まで待機する"
+        operations: ["INSERT", "SELECT"]
+      - uc: "確報比較依頼を claim する"
+        operations: ["UPDATE"]
+      - uc: "比較ツールで日次全量比較を実行して結果を保存する"
+        operations: ["UPDATE"]
+      - uc: "保存済みの確報結果をジョブスケジューラへ返す"
+        operations: ["SELECT"]
+      - uc: "現在状態を確認して停止確認に応答する"
+        operations: ["SELECT"]
+      - uc: "実行を ABORTED へ遷移させる"
+        operations: ["UPDATE"]
+
+  # ---------------------------------------------------------------
+  # 実行監視管理(parallel_runs への FK を張らない。off モードでも記録できるようにするため)
+  # ---------------------------------------------------------------
+  - name: "monitor_records"
+    rdra_info: "監視記録"
+    description: "定期起動されたハング検知スクリプトが、未完了の background slot 実行と速報比較依頼について残す監視レコード(arch E-021)。監視対象 ID は run_id + role。5 分ごとに UPSERT され、通知の冪等判定と hang_detect_limit_minutes 調整の根拠(警告時経過時間)に使う。RAPID_CROSSCHECK_MODE=on のときだけ書き込む(採用値 #8)。列名は canonical C2 に従う"
+    columns:
+      - name: "run_id"
+        type: "string"
+        nullable: false
+        description: "監視対象の run_id。off モードでは parallel_runs が無いため FK にしない。情報.tsv: 監視対象 ID(run_id + role)"
+      - name: "role"
+        type: "string"
+        nullable: false
+        description: "監視対象の run role。値: blue, green, rapid-crosscheck"
+      - name: "target_type"
+        type: "string"
+        nullable: false
+        description: "監視対象種別。値: background_slot(background slot 実行), rapid_request(速報比較依頼)。role から一意に導出できる(blue / green → background_slot、rapid-crosscheck → rapid_request)ため 3NF 上は role への推移従属だが、情報.tsv の属性「監視対象種別」を写し、傾向集計・通知メールでの可読性のため非正規化して保持する(hang-detector が role と同時に書き込み、以後変更しない)"
+      - name: "job_id"
+        type: "string"
+        nullable: false
+        description: "監視対象の JOB_ID(execution-spec.json または依頼レコードから転記)。parallel_runs と JOIN せずに傾向集計するために保持する(canonical C2)"
+      - name: "monitor_status"
+        type: "string"
+        nullable: false
+        description: "監視状態(状態モデル: 監視状態)。値: NOT_MONITORED(監視対象外), MONITORING(監視中), HANG_SUSPECTED_NOTIFIED(ハング疑い通知済み), EXEC_ERROR_NOTIFIED(実行エラー通知済み), COMPARE_ERROR_NOTIFIED(比較異常通知済み), COMPLETED(正常終了・中止済み対象の終端)。遷移: MONITORING → HANG_SUSPECTED_NOTIFIED / EXEC_ERROR_NOTIFIED / COMPARE_ERROR_NOTIFIED / COMPLETED、HANG_SUSPECTED_NOTIFIED → EXEC_ERROR_NOTIFIED / COMPARE_ERROR_NOTIFIED / COMPLETED(通知後に対象が終端した場合。rdra-feedback.md #7)、MONITORING / HANG_SUSPECTED_NOTIFIED → COMPLETED(監視対象が ABORTED になった場合。hang_judgement COMPLETED。rdra-feedback.md #11)"
+      - name: "started_at"
+        type: "datetime"
+        nullable: false
+        description: "監視対象の開始時刻(UTC)。background slot は started-at.txt、速報比較依頼は started_at(未開始は requested_at)。情報.tsv: 開始時刻(started-at.txt)"
+      - name: "elapsed_minutes"
+        type: "integer"
+        nullable: false
+        description: "最新の判定時点での started_at からの経過時間(分)。情報.tsv: 経過時間"
+      - name: "hang_detect_limit_minutes"
+        type: "integer"
+        nullable: false
+        description: "判定に使ったハング検知上限(分)。background slot は execution-spec.json の slots.<role>.hang_detect_limit_minutes を転記(0 は対象外)、速報比較依頼(role=rapid-crosscheck)は hang-detector.env の RAPID_HANG_DETECT_LIMIT_MINUTES(既定 60)を転記。情報.tsv: hang_detect_limit_minutes"
+      - name: "hang_suspected_at"
+        type: "datetime"
+        nullable: true
+        description: "ハング疑い通知(hang-suspected)の送信成功日時(UTC。MONITORING → HANG_SUSPECTED_NOTIFIED へ遷移した時刻。UC『監視記録を保存する』の計算ルールと同じ)。UPSERT では NULL で上書きしない。未通知は NULL。情報.tsv: hang_suspected_at"
+      - name: "alerted_at"
+        type: "datetime"
+        nullable: true
+        description: "最新の通知メールの送信成功日時(UTC)。送信成功時のみ更新(送信失敗では更新せず次回再送)。送信要否の冪等判定は monitor_status の遷移有無で行い、本列は記録用。未通知は NULL。情報.tsv: alerted_at"
+      - name: "elapsed_minutes_at_alert"
+        type: "integer"
+        nullable: true
+        description: "最初の警告時の経過時間(分)。hang_detect_limit_minutes の調整根拠。以後の判定で上書きしない。未通知は NULL。情報.tsv: 警告時の経過時間(arch E-021 の elapsed_at_alert_minutes を canonical C2 で改名)"
+      - name: "judged_at"
+        type: "datetime"
+        nullable: false
+        description: "最新の判定日時(UTC)。UPSERT のたびに更新。傾向集計の期間絞り込みに使う。情報.tsv: 判定日時"
+    primary_key: ["run_id", "role"]
+    foreign_keys: []
+    indexes:
+      - name: "idx_monitor_records_job_id_role_judged_at"
+        columns: ["job_id", "role", "judged_at"]
+        unique: false
+        reason: "傾向: hang-detect-trend.sh の job_id / role 絞り込みと judged_at >= ? の期間絞り込み(GROUP BY job_id, role)。ユニーク制約: 主キー (run_id, role) で監視対象 ID の一意性を保証するため追加のユニークは不要。保存 UC は主キーで UPSERT するため利用者ではない"
+        used_by:
+          - "hang_detect_limit_minutes をジョブごとに調整する"
+      - name: "idx_monitor_records_monitor_status"
+        columns: ["monitor_status"]
+        unique: false
+        reason: "5 分ごとの走査で未終端の監視記録(monitor_status NOT IN 終端値)を列挙する"
+        used_by:
+          - "background 実行の経過時間と終了状態を判定する"
+    used_by:
+      - uc: "background 実行の経過時間と終了状態を判定する"
+        operations: ["SELECT"]
+      - uc: "ハング疑い・実行エラー・比較異常を通知する"
+        operations: ["SELECT"]
+      - uc: "監視記録を保存する"
+        operations: ["INSERT", "UPDATE"]
+      - uc: "hang_detect_limit_minutes をジョブごとに調整する"
+        operations: ["SELECT"]
+
+er_diagram: |
+  erDiagram
+    parallel_runs ||--o{ parallel_runs : "parent_run_id(リラン系譜)"
+    parallel_runs ||--o{ slot_executions : "run_id(blue / green)"
+    parallel_runs ||--o| rapid_runs : "run_id(速報有効時 1:1)"
+    parallel_runs ||--o| rapid_crosscheck_requests : "run_id(両系成功時 1 件)"
+    rapid_crosscheck_requests ||--o{ comparison_results : "run_id(比較種別ごと)"
+    final_crosscheck_requests {
+      string final_crosscheck_id PK
+      date business_date
+      string catalog_version
+      string status
+    }
+    monitor_records {
+      string run_id PK
+      string role PK
+      string target_type
+      string job_id
+      string monitor_status
+    }
+    parallel_runs {
+      string run_id PK
+      string parent_run_id FK
+      string job_id
+      text parameters
+      string execution_spec_uri
+      string status
+      datetime requested_at
+      datetime completed_at
+    }
+    slot_executions {
+      string run_id PK
+      string slot PK
+      string mode
+      integer pid
+      string artifact_dir
+      string status
+      integer exit_code
+      datetime started_at
+      datetime completed_at
+    }
+    rapid_runs {
+      string run_id PK
+      string blue_status
+      string green_status
+      string blue_artifact_uri
+      string green_artifact_uri
+      datetime blue_completed_at
+      datetime green_completed_at
+      string completion_status
+    }
+    rapid_crosscheck_requests {
+      string run_id PK
+      string job_id
+      string status
+      string worker_id
+      datetime lease_until
+      datetime requested_at
+      datetime started_at
+      datetime completed_at
+      integer exit_code
+      text stdout
+      text stderr
+      string error_summary
+    }
+    comparison_results {
+      string comparison_result_id PK
+      string run_id FK
+      string comparison_type
+      string status
+      integer difference_count
+      string report_uri
+      datetime compared_at
+    }

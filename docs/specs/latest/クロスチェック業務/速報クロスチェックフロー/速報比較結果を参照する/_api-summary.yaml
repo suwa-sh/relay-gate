@@ -1,0 +1,46 @@
+uc: "速報比較結果を参照する"
+business: "クロスチェック業務"
+buc: "速報クロスチェックフロー"
+paths: []
+x_cli_commands:
+  - name: "rapid-crosscheck-result.sh"
+    tier: "tier-rapid-crosscheck"
+    role: "defines"
+    synopsis: "rapid-crosscheck-result.sh --run-id <run_id> [--limit N] [--show-output] [--verbose] [--help]"
+    invoked_by: "運用者(直接起動)"
+    args: []
+    options:
+      - name: "--run-id"
+        type: "string"
+        required: true
+        default: ""
+        description: "参照する run_id"
+      - name: "--limit"
+        type: "integer"
+        required: false
+        default: "100"
+        description: "comparison_result TSV の出力上限"
+      - name: "--show-output"
+        type: "boolean"
+        required: false
+        default: "false"
+        description: "依頼に保存された比較ツールの stdout / stderr 本文を末尾に出す"
+      - name: "--verbose"
+        type: "boolean"
+        required: false
+        default: "false"
+        description: "info を stderr に出す"
+    stdin: "なし"
+    stdout: "run_id / job_id / request_status / blue_status / green_status / exit_code / worker_id / requested_at / completed_at の key=value 9 行、続けて comparison_result_id / comparison_type / status / difference_count / report_uri / compared_at の TSV(ヘッダー行あり)。TSV は compared_at 昇順・同値は comparison_result_id 昇順。--show-output 時は TSV の後に空行 1 行を置き --- stdout --- / --- stderr --- 区切りで本文"
+    stderr: "info: rapid result is for investigation only; use final crosscheck for release decision(常時)。warn: output truncated limit=N。error: rapid crosscheck request not found run_id=... / error: rapid crosscheck is off; no management db to query mode=off / error: management db query failed run_id=..."
+    exit_codes:
+      - code: 0
+        meaning: "依頼が見つかり出力できた"
+      - code: 2
+        meaning: "引数・設定検証エラー(run_id 欠落・形式不正、limit 不正、未知のオプション)"
+      - code: 3
+        meaning: "依頼が存在しない、または RAPID_CROSSCHECK_MODE=off"
+      - code: 6
+        meaning: "管理 DB 接続・SQL 失敗"
+async_events: []
+schemas: []

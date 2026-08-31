@@ -1,0 +1,30 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "architecture"
+artifact_id: "arch-decision-006"
+title: "BC : tier 対応形態: 方針資料の C2 コンテナに対応する CLI スクリプト群 4 tier + データストア 1 tier"
+status: "approved"
+generated_at: "2026-08-30T18:44:57"
+context: |
+  BC 5 個、NFR A/B は低〜中グレード、運用部門の少人数利用。presentation 系 tier(frontend / web / ui)・API Gateway・IdP・認可サービスは作らないと事前指定されている。
+  方針資料の C2 コンテナ(facade / blue・green runner / rapid runner・worker / final runner・worker / hang-detector / background-rerun / abort-*)を spec 都合で変えない。
+decision: |
+  tier は CLI / バッチ実行系のみで構成する:
+  - tier-facade(BC-001): facade.sh + blue / green slot runner。ジョブスケジューラから同期起動
+  - tier-rapid-crosscheck(BC-002): rapid-crosscheck-runner(dispatcher) + rapid-crosscheck-worker
+  - tier-final-crosscheck(BC-003): final-crosscheck-runner + final-crosscheck-worker(DB セグメント)
+  - tier-ops(BC-004): hang-detector(定期ジョブ) + background-rerun(専用ジョブ) + abort-*(運用者直接起動)
+  - tier-datastore(BC-005 の設定ファイル + 全 BC の管理レコード): 管理 DB(RDB) + 成果物ディレクトリ + 設定ファイル + 実行ログ
+  同一ホスト上に配置される「スクリプト単位のモジュラ構成」であり、マイクロサービス化はしない。
+consequences:
+  positive:
+    - "BC 境界と tier 境界が一致し、dist-spec の tier-*.md が方針資料のコンテナ表と 1:1 で対応する"
+    - "worker は poll / claim 設計によりサーバ追加で水平拡張できる(NFR B.3.1.1)"
+  negative:
+    - "適用構成 BC は実行時コンポーネントを持たず、tier-datastore の設定ファイルとしてのみ現れる"
+    - "外部連携(SSH / 比較ツール / メール)は tier ではなく各 tier の gateway 層に分散する"
+alternatives_considered:
+  - name: "Option B: 単一 tier(モノリシック CLI パッケージ)"
+    reason_rejected: "確報 worker は DB セグメントで別配置され、監視・復旧は facade から分離する方針のため、配置単位が異なる"
+  - name: "Option C: 外部連携を独立 tier(統合アダプタ)にする"
+    reason_rejected: "外部システムは 7 種あるが接続手段は SSH・コマンド実行・メールコマンドの 3 種で、方針資料のコンテナに存在しない構造を追加することになる"

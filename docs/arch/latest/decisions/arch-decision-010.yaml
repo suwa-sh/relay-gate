@@ -1,0 +1,28 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "architecture"
+artifact_id: "arch-decision-010"
+title: "管理 DB をジョブキューとして使い、worker は poll / claim / lease で多重実行を防ぐ(MQ 非導入)"
+status: "approved"
+generated_at: "2026-08-30T18:44:57"
+context: |
+  速報・確報の比較依頼は非同期に worker が処理する。外部システム「管理 DB(RDB)」はジョブキュー兼管理 DB と定義され、方針資料は poll / claim / lease による多重実行防止を明示している。
+  NFR B.2.1.2 は〜10 TPS、B.3.1.1 はサーバ追加によるスケールアウト。
+decision: |
+  - MQ を導入せず、rapid_crosscheck_request / final_crosscheck_request を管理 DB 上のジョブキューとして使う
+  - worker は REQUESTED を条件付き UPDATE で CLAIMED(worker_id / lease_until)にし、lease 失効かつ未開始なら REQUESTED に戻す
+  - 速報比較依頼は run_id 主キーで一意に 1 件、両系成功 → 依頼作成は 1 トランザクション
+  - ABORTED への更新は現在状態を WHERE 条件にした条件付き UPDATE で行い、更新件数 0 をエラーにする
+  - dispatcher(rapid-crosscheck-runner)は都度起動、worker は常駐ループ(または定期起動)で継続的にキューを処理する
+consequences:
+  positive:
+    - "エアーギャップ環境に MQ を追加せず、RDB のトランザクションだけで排他と再取得を実現できる"
+    - "worker を追加するだけで水平拡張できる"
+  negative:
+    - "polling による遅延(数秒〜数十秒)が速報の完了時刻に加わる。速報は原因調査用のため許容する"
+    - "lease 失効の閾値と polling 間隔の既定値は dist-spec で決める必要がある"
+alternatives_considered:
+  - name: "Option B: MQ + Competing Consumers"
+    reason_rejected: "追加ミドルウェアが必要で、方針資料の「管理 DB = ジョブキュー」に反する"
+  - name: "Option C: dispatcher が比較を同期実行(worker なし)"
+    reason_rejected: "runner の完了通知が比較完了まで待たされ、background 実行の非同期性と水平拡張性を失う"

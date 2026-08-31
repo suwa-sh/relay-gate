@@ -1,0 +1,25 @@
+コンテキスト	バリエーション	値	説明
+適用構成管理	実装スロット	blue、green	並行稼働の対象となる実装系統の区分。blue が現行実装、green が新実装を指し、runner・成果物ディレクトリ・完了通知の系統を識別する
+適用構成管理	slot 実行モード	foreground、background、off	feature flag(BLUE_MODE / GREEN_MODE)で slot ごとに指定する実行方式。foreground は結果をジョブスケジューラへ返す系統、background は同時実行のみ、off は起動しない。foreground は同時に 1 slot だけ許可される
+適用構成管理	運用モード	並行稼働、新実装の単独本番、次世代実装との並行稼働	feature flag の組み合わせで表現する段階的切替の運用形態。並行稼働は blue foreground / green background / 速報 on、単独本番は blue off / green foreground / 速報 off、次世代並行稼働は blue background / green foreground / 速報 on
+適用構成管理	速報クロスチェックモード	on、off	feature flag(RAPID_CROSSCHECK_MODE)で速報クロスチェックの有効・無効を切り替える区分。off のとき runner は完了通知を送らず速報管理 DB へ接続・書き込みしない
+クロスチェック定義管理	クロスチェック種別	速報クロスチェック、確報クロスチェック	比較の位置付けの区分。速報はジョブ実行ごとに非同期で行い原因調査に使う。確報は日次全量比較でリリース判断の正本となり、ジョブスケジューラの別ジョブから起動する
+速報クロスチェック管理	クロスチェック依頼状態	REQUESTED、CLAIMED、RUNNING、SUCCEEDED、FAILED、ABORTED	速報・確報の比較依頼に共通するライフサイクルの状態区分。worker の claim / lease による多重実行防止と、中止・リランの前提判断に用いる
+確報クロスチェック管理	比較ツール終了コード	0(比較 OK)、3(比較 NG・警告終了)、6(実行エラー・エラー終了)	比較ツールの終了コードと依頼状態の対応区分。0 は SUCCEEDED、3 と 6 は FAILED に対応し、確報では保存した終了コードをそのままジョブスケジューラへ中継する
+並行稼働実行管理	Runner Result 成果物種別	started-at.txt、stdout.log、stderr.log、exitcode.txt	slot runner が成果物ディレクトリへ出力するファイルの種別。3 ファイル(stdout / stderr / exitcode)はジョブスケジューラへの応答・完了通知・障害調査に共通利用し、started-at.txt はハング検知の経過時間判定に用いる
+並行稼働実行管理	run role(成果物ディレクトリ区分)	blue、green、rapid-crosscheck、final-crosscheck	1 回の run の中で成果物ディレクトリと監視・リラン・中止の対象を識別する役割区分。background-rerun や abort 系スクリプトの対象指定に用いる
+実行復旧管理	リラン対象 role	blue、green、rapid-crosscheck	background-rerun の --role で指定できる対象区分。blue / green は元 slot が background のときのみ業務ジョブを再実行し、rapid-crosscheck は比較依頼のみ新規作成する
+実行復旧管理	再実行経路	background 側リラン、ジョブスケジューラ正規ジョブ再実行	復旧手段の区分。background slot と速報比較依頼は background-rerun で元の execution-spec.json から再実行し、foreground slot と確報クロスチェックはジョブスケジューラの正規ジョブを直接再実行する
+実行復旧管理	中止対象種別	background slot 実行、速報比較依頼、確報比較依頼	abort-blue / abort-green / abort-rapid-crosscheck / abort-final-crosscheck で明示中止できる対象の区分。いずれもプロセス停止を運用者が確認したうえで RUNNING を ABORTED へ更新する
+実行復旧管理	停止確認応答	yes、no	中止スクリプトの対話確認「対象ジョブのプロセスは強制終了してありますか？」への応答区分。yes のときだけ状態を ABORTED に更新し、それ以外は状態を変更せず終了する
+実行監視管理	ハング検知判定結果	対象外(正常終了)、background 実行エラー、継続監視、ハング疑い	ハング検知が background role ごとに exitcode.txt の有無・値と経過時間から下す判定区分。実行エラーとハング疑いのみ運用者へ通知する
+実行監視管理	速報クロスチェック監視判定	速報クロスチェック異常(FAILED / 比較 NG)、ハング疑い(RUNNING 継続)、正常	ハング検知が速報比較依頼の状態と終了コードから下す判定区分。状態は変更せず通知のみ行う
+実行監視管理	監視状態	未検知、ハング疑い、通知済み、通知後正常終了	監視記録(monitor_status / hang_suspected_at / alerted_at)が持つ状態区分。通知後に正常終了した実行は警告時の経過時間を記録し、hang_detect_limit_minutes の調整根拠にする
+実行監視管理	通知レベル	warning、error	ハング検知が運用者へ送るメール通知の重要度区分。ハング疑いは warning、background 実行エラー・速報クロスチェック異常は error として運用者が静観・対処を判断する
+適用構成管理	ハング検知上限設定	60 分(導入時既定)、ジョブごとの調整値、0(検知対象外)	ジョブマップの hang_detect_limit_minutes の設定区分。導入時は全ジョブ 60 分、警告傾向が出そろった後にジョブごとに調整し、foreground role は 0 で検知対象から除外する
+クロスチェック定義管理	比較種別	ジョブ単位比較、全テーブル・全ファイル比較	比較ツールに依頼する比較範囲の区分。速報は job_id ごとの比較定義に従うジョブ単位比較、確報は対象カタログに基づく全量比較を行う
+速報クロスチェック管理	比較結果ステータス	比較 OK、比較 NG、FAILED	comparison_result の status として記録する比較の結果区分。比較 NG と FAILED はハング検知により速報クロスチェック異常として通知される
+クロスチェック定義管理	対象カタログの対象種別	テーブル、ファイル	確報クロスチェックの対象カタログ(target_type / target_identifier)が扱う比較対象の区分。適用側が版管理して定義する
+適用構成管理	設定所有区分	feature flag、slot ジョブマップ、クロスチェックジョブマップ、適用文書	実行設定の正本をどこが所有するかの区分。実装スロットと runner は feature flag、ホスト・実行ユーザー・スクリプト・作業ディレクトリ・固定引数・hang_detect_limit_minutes は slot ジョブマップ、比較対象と対象カタログはクロスチェックジョブマップ、外部 IF 方針・ネットワーク制約・ホスト配置は適用文書が所有する
+並行稼働実行管理	ジョブスケジューラ起動ジョブ種別	業務ジョブ(facade)、確報クロスチェックジョブ、ハング検知定期ジョブ、background リラン専用ジョブ	ジョブスケジューラのジョブ定義として登録する relay-gate の起動口の区分。業務ジョブは facade に JOB_ID と PARAM のみ渡し、確報・監視・リランはそれぞれ別ジョブ定義から起動する
+速報クロスチェック管理	速報クロスチェックのプロセス役割	runner(dispatcher)、worker	速報クロスチェックを構成するプロセスの役割区分。runner は blue-completed / green-completed の完了通知を受け両系成功時に比較依頼を一意に作成し、worker は依頼を poll / claim して比較を実行する

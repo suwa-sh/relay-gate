@@ -1,0 +1,27 @@
+uc: "比較ツールでジョブ単位比較を実行して結果を登録する"
+business: "クロスチェック業務"
+buc: "速報クロスチェックフロー"
+paths: []
+x_cli_commands:
+  - name: "rapid-crosscheck-worker.sh"
+    tier: "tier-rapid-crosscheck"
+    role: "uses"
+    synopsis: "rapid-crosscheck-worker.sh [--once] [--worker-id <id>] [--verbose] [--help]"
+    invoked_by: "ジョブスケジューラ(定期起動 --once)または常駐プロセス"
+    args: []
+    options: []
+    stdin: "なし"
+    stdout: "claim UC の 4 行に続けて request_status=(SUCCEEDED|FAILED|ABORTED) / result_status=(OK|NG|FAILED|-) / exit_code= / comparison_result_id=(8 hex|-) / artifact_dir: <絶対パス>。comparison_results を作らないケース(比較定義なし・起動失敗)は result_status=- / comparison_result_id=-、終端 UPDATE 0 件(ABORTED 検出)は request_status=ABORTED。RUNNING 遷移の UPDATE 0 行(回収済み / 中止済み)は比較せず request_status=<再 SELECT した現在の status> / result_status=- / exit_code=- / comparison_result_id=- / artifact_dir: - を出して 0"
+    stderr: "error: compare tool launch failed run_id=... command=... / error: management db update failed run_id=..."
+    exit_codes:
+      - code: 0
+        meaning: "依頼を終端状態まで処理した(比較 NG / 実行エラーの 3 / 6 も 0)"
+      - code: 6
+        meaning: "比較ツールの起動自体に失敗(依頼は FAILED で終端、comparison_results は INSERT しない)、成果物 dir 作成不可、DB 更新失敗"
+async_events:
+  - name: "rapid-crosscheck-requests"
+    channel: "rapid-crosscheck-requests"
+    direction: "subscribe"
+    message: "RapidCrosscheckRequestMessage"
+    summary: "claim した依頼を RUNNING にし、job_id の比較定義で比較ツールを起動、結果を依頼と comparison_results に保存して SUCCEEDED / FAILED で終端させる"
+schemas: []

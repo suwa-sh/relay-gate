@@ -1,0 +1,34 @@
+uc: "確報クロスチェック結果を確認する"
+business: "クロスチェック業務"
+buc: "確報クロスチェックフロー"
+paths: []
+x_cli_commands:
+  - name: "final-crosscheck-runner.sh"
+    tier: "tier-final-crosscheck"
+    role: "uses"
+    synopsis: "final-crosscheck-runner.sh --business-date <YYYY-MM-DD> --catalog-version <ver>"
+    invoked_by: "ジョブスケジューラ(確報クロスチェックジョブ定義)。結果は運用者がジョブスケジューラの実行履歴で読む"
+    args: []
+    options:
+      - name: "--business-date"
+        type: "string"
+        required: true
+        description: "比較対象の業務日付(YYYY-MM-DD)"
+      - name: "--catalog-version"
+        type: "string"
+        required: true
+        description: "対象カタログの版"
+    stdin: "なし"
+    stdout: "比較ツールの標準出力そのもの(依頼の stdout)。状態名・差分件数・レポート URI・final_crosscheck_id は含まれない"
+    stderr: "比較ツールの標準エラーそのもの(依頼の stderr)。中継に至る前の relay-gate 自身のエラーのみ 'error: ...' 形式"
+    exit_codes:
+      - code: 0
+        meaning: "比較 OK(日次整合性 OK)。リリース判断の正本"
+      - code: 3
+        meaning: "比較 NG(警告終了)。差分の原因調査へ"
+      - code: 6
+        meaning: "実行エラー(比較ツール由来、または relay-gate の DB 接続失敗 / polling 上限超過 / ABORTED で exit_code NULL)。確報ジョブをジョブスケジューラから直接再実行"
+      - code: 2
+        meaning: "入力・設定検証エラー(中継に至る前)"
+async_events: []
+schemas: []

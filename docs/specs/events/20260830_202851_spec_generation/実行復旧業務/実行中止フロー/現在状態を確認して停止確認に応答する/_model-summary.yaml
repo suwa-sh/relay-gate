@@ -1,0 +1,100 @@
+uc: "現在状態を確認して停止確認に応答する"
+business: "実行復旧業務"
+buc: "実行中止フロー"
+bounded_context_id: "BC-004"
+aggregate_id: "AG-001"
+
+models:
+  - name: "AbortConfirmationFlow"
+    tier: "tier-ops"
+    layer: "usecase"
+    type: "command"
+    rdra_info: "中止指示"
+  - name: "AbortTargetState"
+    tier: "tier-ops"
+    layer: "domain"
+    type: "value-object"
+    rdra_info: "slot 実行"
+  - name: "StopConfirmationAnswer"
+    tier: "tier-ops"
+    layer: "domain"
+    type: "value-object"
+    rdra_info: "中止指示"
+  - name: "SlotExecutionRepository"
+    tier: "tier-ops"
+    layer: "repository"
+    type: "record"
+    rdra_info: "slot 実行"
+  - name: "CrosscheckRequestRepository"
+    tier: "tier-ops"
+    layer: "repository"
+    type: "record"
+    rdra_info: "速報比較依頼(rapid_crosscheck_request)"
+
+tables:
+  - name: "slot_executions"
+    rdra_info: "slot 実行"
+    operations:
+      - type: "SELECT"
+        columns:
+          - name: "mode"
+            value: ""
+          - name: "status"
+            value: ""
+          - name: "pid"
+            value: ""
+          - name: "started_at"
+            value: ""
+          - name: "artifact_dir"
+            value: ""
+        where: "run_id = ? AND slot = ? (slot はスクリプト名 blue / green)"
+    indexes_needed:
+      - columns: ["run_id", "slot"]
+        reason: "主キー。run_id × slot の一意特定"
+        access_pattern: "abort-blue.sh / abort-green.sh の現在状態取得"
+  - name: "parallel_runs"
+    rdra_info: "並行稼働実行(parallel_run)"
+    operations:
+      - type: "SELECT"
+        columns:
+          - name: "job_id"
+            value: ""
+          - name: "status"
+            value: ""
+        where: "run_id = ?"
+    indexes_needed: []
+  - name: "rapid_crosscheck_requests"
+    rdra_info: "速報比較依頼(rapid_crosscheck_request)"
+    operations:
+      - type: "SELECT"
+        columns:
+          - name: "job_id"
+            value: ""
+          - name: "status"
+            value: ""
+          - name: "worker_id"
+            value: ""
+          - name: "lease_until"
+            value: ""
+          - name: "started_at"
+            value: ""
+        where: "run_id = ?"
+    indexes_needed: []
+  - name: "final_crosscheck_requests"
+    rdra_info: "確報比較依頼(final_crosscheck_request)"
+    operations:
+      - type: "SELECT"
+        columns:
+          - name: "status"
+            value: ""
+          - name: "worker_id"
+            value: ""
+          - name: "lease_until"
+            value: ""
+          - name: "started_at"
+            value: ""
+        where: "final_crosscheck_id = ?"
+    indexes_needed: []
+
+kvs: []
+object_storage: []

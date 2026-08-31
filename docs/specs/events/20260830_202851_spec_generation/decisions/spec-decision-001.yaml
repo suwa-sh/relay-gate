@@ -1,0 +1,33 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "specification"
+artifact_id: "spec-decision-001"
+title: "インターフェース契約の形式: HTTP API を持たず CLI コマンド契約(cli-command-contract.yaml)を正本にする"
+status: "approved"
+generated_at: "2026-08-31T00:37:34"
+context: |
+  relay-gate は UI 画面と HTTP API を持たない(arch technology_context.constraints、CTP-001、システム概要 interface_kind: cli)。
+  ジョブスケジューラ・運用者・基盤適用設計者との接点はすべてシェルスクリプト CLI(引数 / stdin / stdout / stderr / 終了コード)と
+  設定ファイル、成果物ファイル(Runner Result Contract)である。dist-spec の標準成果物は OpenAPI(openapi.yaml)であり、
+  validateSpecEvent.js が openapi.yaml を必須とするため、CLI の契約をどの形式で機械可読化するかを決める必要があった。
+  design 無しモード(design_available: false)のため画面仕様・コンポーネント設計は生成しない。
+decision: |
+  - CLI コマンド契約の正本を `_cross-cutting/api/cli-command-contract.yaml`(独自 YAML: commands[] / args / options / stdin /
+    stdout / stderr / exit_codes / idempotency / used_by_ucs、config_files[]、artifact_layout、execution_spec_example)とする。
+  - `openapi.yaml` はバリデータ互換のスタブ(`paths: {}`、`x-cli-contract` / `x-async-contract` で正本を指す)とし、HTTP エンドポイントは定義しない。
+  - 命名は kebab-case のスクリプト名 + `--kebab-option`(方針資料の `abort-blue.sh --run-id` に倣う)。
+  - 各 UC の `_api-summary.yaml` は `paths: []` とし、CLI コマンドへの関与(defines / uses)と非同期イベントを記録する。
+  - 分析根拠: `_inference.md` 確認推奨項目 1(confidence: medium、auto_adopt で採用)。
+consequences:
+  positive:
+    - "引数・出力・終了コードを機械可読で契約化でき、後工程(distillery-impl の契約生成・ドリフト検査)が読める"
+    - "実装者を HTTP 前提の構造で誤導しない。CLI の冪等性・stderr 文言まで契約に含められる"
+    - "既存のバリデータ(validateSpecEvent.js / redocly lint)をスタブで通過できる"
+  negative:
+    - "OpenAPI の標準ツール(codegen / lint)の恩恵を CLI 契約には適用できない。契約の構造検査は自前(validateAllYaml.js)に限られる"
+    - "独自 YAML のため、契約の書式変更時は後工程のパーサも追従が必要"
+alternatives_considered:
+  - name: "OpenAPI 3.1 に x-cli-* 拡張で全コマンドを疑似エンドポイント化"
+    reason_rejected: "既存 lint が使えるが HTTP 前提の構造(path / method / status)に無理があり、実装者を誤導する"
+  - name: "Markdown(tier md)のみで契約を記述し YAML を作らない"
+    reason_rejected: "生成コストは最小だが契約型の生成・ドリフト検査ができない"

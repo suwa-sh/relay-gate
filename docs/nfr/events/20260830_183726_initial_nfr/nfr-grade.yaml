@@ -1,0 +1,1149 @@
+version: "1.0"
+event_id: "20260830_183726_initial_nfr"
+created_at: "2026-08-30T18:37:26"
+source: "RDRA モデルからの初期 NFR グレード構築(trigger_event: rdra:20260830_181841_initial_build)"
+
+model_system:
+  type: "model1"
+  reason: "アクターは運用部門の 2 種(運用者・基盤適用設計者)のみで社内利用に限定され、対外公開しないバッチジョブ並行稼働基盤であるため。ただし foreground slot の結果は本番の業務ジョブ結果としてジョブスケジューラへ中継されるため、可用性・回復性の一部は model2 相当へ引き上げる"
+
+categories:
+  - id: "A"
+    name: "可用性"
+    subcategories:
+      - id: "A.1"
+        name: "継続性"
+        items:
+          - id: "A.1.1"
+            name: "運用スケジュール"
+            important: true
+            metrics:
+              - id: "A.1.1.1"
+                name: "運用時間(通常)"
+                important: true
+                grade: 3
+                grade_description: "1時間程度の停止(9時〜翌8時)"
+                reason: "業務ジョブはジョブスケジューラの起動時刻に依存し、確報クロスチェックが日次処理後(夜間)に、ハング検知が 5 分ごとの定期ジョブとして動作するため、ほぼ終日稼働で短時間の停止のみ許容する"
+                source_model: "外部システム: ジョブスケジューラ / BUC: 確報クロスチェックフロー、background 実行監視フロー"
+                confidence: "medium"
+              - id: "A.1.1.2"
+                name: "運用時間(特定日)"
+                important: false
+                grade: 0
+                grade_description: "規定なし"
+                reason: "モデルシステム1のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+              - id: "A.1.1.3"
+                name: "計画停止の有無"
+                important: true
+                grade: 2
+                grade_description: "不定期に計画停止あり(事前通知1週間前)"
+                reason: "計画停止はジョブスケジューラの実行計画(夜間バッチ・日次確報)と調整して行う必要があり、月次固定ではなく事前通知つきの不定期停止が現実的なため"
+                source_model: "外部システム: ジョブスケジューラ / バリエーション: ジョブスケジューラ起動ジョブ種別"
+                confidence: "medium"
+      - id: "A.2"
+        name: "耐障害性"
+        items:
+          - id: "A.2.1"
+            name: "サーバ"
+            important: true
+            metrics:
+              - id: "A.2.1.1"
+                name: "サーバ内の冗長化"
+                important: true
+                grade: 2
+                grade_description: "電源・ディスク冗長化"
+                reason: "facade・runner はジョブスケジューラの実行ホスト上で動作し、管理 DB は単一 RDB 構成のため、部品レベルの冗長化を仮採用する。オンプレミス機器構成は RDRA に無く要確認"
+                source_model: "外部システム: 管理 DB(RDB) / システム概要"
+                confidence: "low"
+          - id: "A.2.2"
+            name: "端末"
+            important: false
+            metrics:
+              - id: "A.2.2.1"
+                name: "端末の冗長化"
+                important: false
+                grade: 1
+                grade_description: "冗長化なし"
+                reason: "モデルシステム1のデフォルト値を適用(運用者端末はターミナルのみ)"
+                source_model: ""
+                confidence: "default"
+          - id: "A.2.3"
+            name: "ネットワーク機器"
+            important: true
+            metrics:
+              - id: "A.2.3.1"
+                name: "ネットワーク機器の冗長化"
+                important: true
+                grade: 1
+                grade_description: "冗長化なし"
+                reason: "モデルシステム1のデフォルト値を適用(ネットワーク構成は適用文書の所有事項)"
+                source_model: "情報: 適用構成文書"
+                confidence: "default"
+          - id: "A.2.4"
+            name: "ネットワーク回線"
+            important: false
+            metrics:
+              - id: "A.2.4.1"
+                name: "回線の冗長化"
+                important: false
+                grade: 1
+                grade_description: "冗長化なし"
+                reason: "モデルシステム1のデフォルト値を適用(閉域網内のみで外部回線を持たない)"
+                source_model: ""
+                confidence: "default"
+          - id: "A.2.5"
+            name: "ストレージ"
+            important: true
+            metrics:
+              - id: "A.2.5.1"
+                name: "ストレージの冗長化"
+                important: true
+                grade: 1
+                grade_description: "RAID1(ミラーリング)"
+                reason: "モデルシステム1のデフォルト値を適用。成果物ディレクトリと管理 DB を保持する最低限のミラーリング"
+                source_model: "情報: Runner Result / 外部システム: 管理 DB(RDB)"
+                confidence: "default"
+          - id: "A.2.6"
+            name: "建物・電源"
+            important: false
+            metrics:
+              - id: "A.2.6.1"
+                name: "建物の耐震・免震"
+                important: false
+                grade: 1
+                grade_description: "一般建築基準"
+                reason: "モデルシステム1のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+              - id: "A.2.6.2"
+                name: "電源の冗長化"
+                important: true
+                grade: 1
+                grade_description: "冗長化なし"
+                reason: "モデルシステム1のデフォルト値を適用(設置環境は適用側の責務)"
+                source_model: ""
+                confidence: "default"
+      - id: "A.3"
+        name: "災害対策"
+        items:
+          - id: "A.3.1"
+            name: "災害対策"
+            important: true
+            metrics:
+              - id: "A.3.1.1"
+                name: "災害対策の範囲"
+                important: true
+                grade: 0
+                grade_description: "対策なし"
+                reason: "実行履歴・監査はジョブスケジューラの責務であり、relay-gate の成果物と execution-spec.json からリラン可能なため、基盤単体の遠隔地対策は仮採用で不要とする。ビジネス判断のため要確認"
+                source_model: "条件: 実行履歴はジョブスケジューラの責務 / 条件: リランの実行設定復元"
+                confidence: "low"
+              - id: "A.3.1.2"
+                name: "業務継続の要否"
+                important: true
+                grade: 0
+                grade_description: "業務継続不要"
+                reason: "被災時は業務ジョブ自体の継続計画(実装側・ジョブスケジューラ側)に従い、relay-gate 単体の継続要件は仮採用で規定しない。A.3.1.1 と合わせて要確認"
+                source_model: "条件: 実行履歴はジョブスケジューラの責務"
+                confidence: "low"
+      - id: "A.4"
+        name: "回復性"
+        items:
+          - id: "A.4.1"
+            name: "目標復旧水準"
+            important: true
+            metrics:
+              - id: "A.4.1.1"
+                name: "RPO(目標復旧地点)"
+                important: true
+                grade: 2
+                grade_description: "数時間前まで"
+                reason: "管理 DB はジョブキュー兼監視記録であり、失われても execution-spec.json と Runner Result からリランできるが、当日分の background 実行の追跡を失わないよう数時間以内の復旧地点とする"
+                source_model: "情報: 実行設定(execution-spec)、Runner Result、並行稼働実行(parallel_run)"
+                confidence: "medium"
+              - id: "A.4.1.2"
+                name: "RTO(目標復旧時間)"
+                important: true
+                grade: 2
+                grade_description: "半日以内"
+                reason: "foreground slot の結果は本番業務ジョブの結果としてジョブスケジューラへ中継されるため、次回のバッチウィンドウまでに復旧する必要がある"
+                source_model: "BUC: 実装切替ジョブ実行フロー(foreground 結果の中継)"
+                confidence: "medium"
+              - id: "A.4.1.3"
+                name: "RLO(目標復旧レベル)"
+                important: false
+                grade: 1
+                grade_description: "縮退運転(主要機能のみ)"
+                reason: "RAPID_CROSSCHECK_MODE=off にすると管理 DB なしで slot 実行・ハング検知・リランが動作する縮退運転が設計上用意されているため"
+                source_model: "条件: 速報クロスチェック有効判定 / バリエーション: 速報クロスチェックモード"
+                confidence: "high"
+  - id: "B"
+    name: "性能・拡張性"
+    subcategories:
+      - id: "B.1"
+        name: "業務処理量"
+        items:
+          - id: "B.1.1"
+            name: "通常時の業務量"
+            important: true
+            metrics:
+              - id: "B.1.1.1"
+                name: "同時アクセス数"
+                important: true
+                grade: 1
+                grade_description: "〜100"
+                reason: "利用者は運用部門の少人数(運用者・基盤適用設計者)で、CLI と定期ジョブのみのため"
+                source_model: "アクター: 運用者、基盤適用設計者 / 条件: CLI とメールによる提示"
+                confidence: "high"
+              - id: "B.1.1.2"
+                name: "データ量"
+                important: false
+                grade: 1
+                grade_description: "〜100万件/年(parallel_run・slot 実行・比較依頼・監視記録の管理レコード)"
+                reason: "管理レコードはジョブ実行 1 回につき数件で、年間 100 万件以内と想定する(規模感プリインタビュー仮置き)"
+                source_model: "情報: 並行稼働実行(parallel_run)、slot 実行、速報比較依頼、監視記録"
+                confidence: "medium"
+              - id: "B.1.1.3"
+                name: "オンラインリクエスト件数"
+                important: true
+                grade: 1
+                grade_description: "〜1,000件/日(facade 起動・定期監視・CLI 操作の合計)"
+                reason: "オンライン画面は無く、リクエストに相当するのはジョブスケジューラからの facade 起動と 5 分ごとの監視ジョブのため"
+                source_model: "バリエーション: ジョブスケジューラ起動ジョブ種別"
+                confidence: "medium"
+              - id: "B.1.1.4"
+                name: "バッチ処理件数"
+                important: false
+                grade: 2
+                grade_description: "確報は全テーブル・全ファイルの日次全量比較(対象件数は適用側の対象カタログで定義)"
+                reason: "確報クロスチェックが business_date 単位で全テーブル・全ファイルを比較する大量バッチのため"
+                source_model: "BUC: 確報クロスチェックフロー / 情報: 対象カタログ"
+                confidence: "medium"
+          - id: "B.1.2"
+            name: "ピーク時の業務量"
+            important: false
+            metrics:
+              - id: "B.1.2.1"
+                name: "ピーク時同時アクセス数"
+                important: true
+                grade: 2
+                grade_description: "通常時の2倍"
+                reason: "並行稼働モードでは blue と green の 2 系統が同時実行され、速報クロスチェックも追加で動くため、単独本番時に対して 2 倍の同時実行を見込む"
+                source_model: "バリエーション: 運用モード / 条件: slot 起動順序"
+                confidence: "medium"
+              - id: "B.1.2.2"
+                name: "ピーク時データ量"
+                important: false
+                grade: 1
+                grade_description: "並行稼働時は成果物(Runner Result)が blue / green の 2 倍"
+                reason: "並行稼働時は slot ごとに成果物ディレクトリを生成するため"
+                source_model: "情報: Runner Result / バリエーション: 実装スロット"
+                confidence: "medium"
+      - id: "B.2"
+        name: "性能目標値"
+        items:
+          - id: "B.2.1"
+            name: "オンライン"
+            important: true
+            metrics:
+              - id: "B.2.1.1"
+                name: "レスポンスタイム"
+                important: true
+                grade: 2
+                grade_description: "10秒以内(facade のオーバーヘッド・中止/リラン CLI の応答)"
+                reason: "運用者向けの CLI 操作と facade の起動・中継のオーバーヘッドが対象で、業務ジョブ本体の処理時間は実装側の責務のため"
+                source_model: "条件: facade の責務限定 / 条件: CLI とメールによる提示"
+                confidence: "medium"
+              - id: "B.2.1.2"
+                name: "スループット"
+                important: true
+                grade: 1
+                grade_description: "〜10 TPS"
+                reason: "管理 DB への書き込みはジョブ起動・完了通知・claim・監視記録が中心で低頻度のため"
+                source_model: "外部システム: 管理 DB(RDB)"
+                confidence: "high"
+              - id: "B.2.1.3"
+                name: "ターンアラウンドタイム"
+                important: false
+                grade: 1
+                grade_description: "foreground 結果は slot 終了後に即時中継。速報クロスチェックは非同期で応答に影響させない"
+                reason: "facade は foreground の PID だけを待機し、background や速報の完了を待たずに応答する設計のため"
+                source_model: "条件: ジョブスケジューラ応答の決定 / 条件: 速報結果の位置付け"
+                confidence: "high"
+          - id: "B.2.2"
+            name: "バッチ"
+            important: true
+            metrics:
+              - id: "B.2.2.1"
+                name: "バッチ処理時間"
+                important: true
+                grade: 2
+                grade_description: "8時間以内(日次確報クロスチェックは夜間ウィンドウ内に完了)"
+                reason: "確報クロスチェックは日次処理が落ち着いた後に起動しリリース判断に用いるため、翌日の業務開始前に完了する必要がある。導入時のハング検知上限 60 分から個々のジョブは 1 時間程度と想定"
+                source_model: "BUC: 確報クロスチェックフロー / バリエーション: ハング検知上限設定"
+                confidence: "medium"
+              - id: "B.2.2.2"
+                name: "バッチ処理量"
+                important: false
+                grade: 1
+                grade_description: "速報はジョブ単位、確報は対象カタログの全テーブル・全ファイル"
+                reason: "比較種別が速報(ジョブ単位比較)と確報(全量比較)に分かれ、対象は適用側が定義するため"
+                source_model: "バリエーション: 比較種別 / 情報: 対象カタログ"
+                confidence: "medium"
+      - id: "B.3"
+        name: "リソース拡張性"
+        items:
+          - id: "B.3.1"
+            name: "CPU"
+            important: true
+            metrics:
+              - id: "B.3.1.1"
+                name: "CPU拡張性"
+                important: true
+                grade: 2
+                grade_description: "スケールアウト(サーバ追加)"
+                reason: "クロスチェック worker は管理 DB を poll / claim し worker_id と lease で多重実行を防ぐ設計のため、worker を追加して水平に拡張できる"
+                source_model: "条件: claim 排他 / 条件: lease 失効判定"
+                confidence: "high"
+          - id: "B.3.2"
+            name: "メモリ"
+            important: false
+            metrics:
+              - id: "B.3.2.1"
+                name: "メモリ拡張性"
+                important: false
+                grade: 1
+                grade_description: "スケールアップ"
+                reason: "モデルシステム1のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+          - id: "B.3.3"
+            name: "ストレージ"
+            important: false
+            metrics:
+              - id: "B.3.3.1"
+                name: "ストレージ拡張性"
+                important: false
+                grade: 1
+                grade_description: "スケールアップ(成果物ディレクトリ・実行ログの増加に応じて拡張)"
+                reason: "run ごとに成果物ディレクトリと実行ログを蓄積するため、保管期間に応じたストレージ増設が必要"
+                source_model: "情報: Runner Result、実行ログ"
+                confidence: "medium"
+          - id: "B.3.4"
+            name: "ネットワーク"
+            important: false
+            metrics:
+              - id: "B.3.4.1"
+                name: "ネットワーク拡張性"
+                important: false
+                grade: 1
+                grade_description: "特別な要件なし"
+                reason: "モデルシステム1のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+      - id: "B.4"
+        name: "性能品質保証"
+        items:
+          - id: "B.4.1"
+            name: "性能テスト"
+            important: true
+            metrics:
+              - id: "B.4.1.1"
+                name: "性能テスト"
+                important: true
+                grade: 1
+                grade_description: "単体での性能テスト"
+                reason: "relay-gate のオーバーヘッド(起動・中継・poll)の確認に限定し、業務ジョブ本体の性能は実装側の責務のため"
+                source_model: "条件: facade の責務限定"
+                confidence: "medium"
+  - id: "C"
+    name: "運用・保守性"
+    subcategories:
+      - id: "C.1"
+        name: "通常運用"
+        items:
+          - id: "C.1.1"
+            name: "運用時間"
+            important: true
+            metrics:
+              - id: "C.1.1.1"
+                name: "運用監視時間"
+                important: true
+                grade: 3
+                grade_description: "1時間程度の停止あり"
+                reason: "運用時間(A.1.1.1)と同等。ハング検知の定期ジョブが稼働中は常時監視する"
+                source_model: "BUC: background 実行監視フロー"
+                confidence: "high"
+              - id: "C.1.1.2"
+                name: "バックアップ時間帯"
+                important: false
+                grade: 1
+                grade_description: "日次処理と確報クロスチェックの完了後の時間帯"
+                reason: "夜間バッチと日次確報が完了した後に管理 DB と成果物をバックアップする"
+                source_model: "BUC: 確報クロスチェックフロー"
+                confidence: "medium"
+              - id: "C.1.1.3"
+                name: "計画停止対応時間"
+                important: false
+                grade: 1
+                grade_description: "1 時間程度(ジョブスケジューラの非実行時間帯)"
+                reason: "運用時間(A.1.1.1)の停止許容と整合させる"
+                source_model: "外部システム: ジョブスケジューラ"
+                confidence: "medium"
+          - id: "C.1.2"
+            name: "バックアップ"
+            important: true
+            metrics:
+              - id: "C.1.2.1"
+                name: "バックアップ方式"
+                important: true
+                grade: 2
+                grade_description: "フル+差分バックアップ(日次)"
+                reason: "情報モデルが 20 エンティティ・属性 50 以上で、管理 DB に依頼状態・lease・監視記録を保持するため日次バックアップとする"
+                source_model: "情報: 全エンティティ(20 件)"
+                confidence: "medium"
+              - id: "C.1.2.2"
+                name: "バックアップ対象"
+                important: false
+                grade: 1
+                grade_description: "管理 DB、設定(feature flag / ジョブマップ / 比較定義 / 対象カタログ)、成果物ディレクトリ、実行ログ"
+                reason: "設定所有区分で正本が分散しているため、設定ファイルと管理 DB と成果物をすべて対象とする"
+                source_model: "条件: 設定所有区分 / 情報: Runner Result、実行ログ"
+                confidence: "high"
+              - id: "C.1.2.3"
+                name: "バックアップ世代管理"
+                important: false
+                grade: 1
+                grade_description: "7 世代(1 週間)"
+                reason: "モデルシステム1のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+          - id: "C.1.3"
+            name: "運用監視"
+            important: true
+            metrics:
+              - id: "C.1.3.1"
+                name: "監視範囲"
+                important: true
+                grade: 3
+                grade_description: "+アプリケーション監視"
+                reason: "ハング検知の定期ジョブが background slot 実行と速報比較依頼の経過時間・終了状態を監視するアプリケーション監視を持つため"
+                source_model: "BUC: background 実行監視フロー / 条件: ハング検知判定"
+                confidence: "high"
+              - id: "C.1.3.2"
+                name: "監視方式"
+                important: false
+                grade: 1
+                grade_description: "定期ジョブによるポーリング(成果物ファイルと管理 DB を走査)とメール通知"
+                reason: "ハング検知は started-at.txt / exitcode.txt と依頼状態を走査し、warning / error メールで通知する設計のため"
+                source_model: "情報: 監視記録、通知メール / 条件: 監視は通知のみ"
+                confidence: "high"
+              - id: "C.1.3.3"
+                name: "監視間隔"
+                important: false
+                grade: 1
+                grade_description: "5 分ごと(導入時)、ハング判定上限は導入時 60 分でジョブごとに調整"
+                reason: "RDRA にハング検知の定期ジョブ(5 分ごとなど)と hang_detect_limit_minutes(導入時 60 分)が明記されているため"
+                source_model: "BUC: background 実行監視フロー / 条件: ハング検知上限の調整基準"
+                confidence: "high"
+      - id: "C.2"
+        name: "保守運用"
+        items:
+          - id: "C.2.1"
+            name: "計画保守"
+            important: false
+            metrics:
+              - id: "C.2.1.1"
+                name: "計画保守の時間帯"
+                important: false
+                grade: 1
+                grade_description: "ジョブスケジューラの非実行時間帯"
+                reason: "業務ジョブ・確報・監視がすべてジョブスケジューラ起動のため、その実行計画の空き時間に保守する"
+                source_model: "外部システム: ジョブスケジューラ"
+                confidence: "medium"
+              - id: "C.2.1.2"
+                name: "パッチ適用方針"
+                important: true
+                grade: 1
+                grade_description: "セキュリティパッチのみ随時"
+                reason: "モデルシステム1のデフォルトを仮採用。エアーギャップ環境のためパッチはオフラインで持ち込む必要があり、適用頻度は運用ルール次第で要確認"
+                source_model: ""
+                confidence: "low"
+          - id: "C.2.2"
+            name: "ソフトウェア保守"
+            important: false
+            metrics:
+              - id: "C.2.2.1"
+                name: "ライフサイクル管理"
+                important: false
+                grade: 1
+                grade_description: "設定版・マップ版・実装版・カタログ版で版管理し、runner の差し替えで実装世代を交代する"
+                reason: "情報モデルに各設定の版があり、runner 差し替えで次世代実装へ適用する設計のため"
+                source_model: "情報: feature flag 設定、ジョブマップ、対象カタログ / 条件: 実装固有事項の runner への閉じ込め"
+                confidence: "high"
+      - id: "C.3"
+        name: "障害時運用"
+        items:
+          - id: "C.3.1"
+            name: "障害検知"
+            important: true
+            metrics:
+              - id: "C.3.1.1"
+                name: "障害検知方式"
+                important: true
+                grade: 3
+                grade_description: "自動検知+自動通知+自動記録"
+                reason: "ハング検知がハング疑い・実行エラー・比較異常を自動判定し、メールで通知し、監視記録(monitor_status / alerted_at)を保存するため"
+                source_model: "BUC: background 実行監視フロー / 情報: 監視記録、通知メール"
+                confidence: "high"
+          - id: "C.3.2"
+            name: "障害通知"
+            important: false
+            metrics:
+              - id: "C.3.2.1"
+                name: "障害通知方式"
+                important: false
+                grade: 1
+                grade_description: "運用者へのメール(warning / error)。foreground の失敗はジョブスケジューラの実行結果で通知"
+                reason: "通知レベルの判定と CLI とメールによる提示の条件に従う"
+                source_model: "条件: 通知レベルの判定 / 条件: CLI とメールによる提示"
+                confidence: "high"
+          - id: "C.3.3"
+            name: "障害復旧"
+            important: false
+            metrics:
+              - id: "C.3.3.1"
+                name: "障害復旧方式"
+                important: false
+                grade: 1
+                grade_description: "運用者の手動復旧(プロセス停止 → 中止スクリプト → background-rerun または正規ジョブ再実行)。自動中止・自動再実行なし"
+                reason: "監視は通知のみで、復旧手段は復旧対象ごとに background 側リランと正規ジョブ再実行に分かれる設計のため"
+                source_model: "条件: 監視は通知のみ / 条件: 復旧手段の選択"
+                confidence: "high"
+      - id: "C.4"
+        name: "運用環境"
+        items:
+          - id: "C.4.1"
+            name: "テスト環境"
+            important: true
+            metrics:
+              - id: "C.4.1.1"
+                name: "テスト環境"
+                important: true
+                grade: 2
+                grade_description: "簡易テスト環境(本番縮小構成)"
+                reason: "feature flag・ジョブマップ・比較定義の切替を本番前に検証する縮小環境を仮採用する。本番同等環境の要否は適用側の判断のため要確認"
+                source_model: "BUC: 適用構成定義フロー"
+                confidence: "low"
+          - id: "C.4.2"
+            name: "開発環境"
+            important: false
+            metrics:
+              - id: "C.4.2.1"
+                name: "開発環境"
+                important: false
+                grade: 1
+                grade_description: "本番と同じシェル+RDB 構成をローカルで再現し、実ファイル・実 DB で境界をテストする"
+                reason: "シェルスクリプトと RDB のみで構成されるため、開発環境も同一構成で再現できる"
+                source_model: "システム概要"
+                confidence: "medium"
+      - id: "C.5"
+        name: "サポート体制"
+        items:
+          - id: "C.5.1"
+            name: "サポート時間"
+            important: true
+            metrics:
+              - id: "C.5.1.1"
+                name: "サポート時間"
+                important: true
+                grade: 1
+                grade_description: "営業時間内(9時〜17時)"
+                reason: "モデルシステム1のデフォルトを仮採用。夜間バッチの異常メールを誰がいつ受けるかは運用体制次第のため要確認"
+                source_model: "アクター: 運用者"
+                confidence: "low"
+          - id: "C.5.2"
+            name: "エスカレーション"
+            important: false
+            metrics:
+              - id: "C.5.2.1"
+                name: "エスカレーション体制"
+                important: false
+                grade: 1
+                grade_description: "運用者 → 基盤適用設計者(設定・runner・比較定義の問題)"
+                reason: "運用者が受益者、基盤適用設計者が適用構成の提供者として役割分担されているため"
+                source_model: "アクター: 運用者、基盤適用設計者"
+                confidence: "medium"
+      - id: "C.6"
+        name: "その他の運用管理方針"
+        items:
+          - id: "C.6.1"
+            name: "ログ管理"
+            important: true
+            metrics:
+              - id: "C.6.1.1"
+                name: "ログ保管期間"
+                important: true
+                grade: 2
+                grade_description: "3ヶ月"
+                reason: "監査の正本はジョブスケジューラにあり、relay-gate のログは障害調査と警告傾向の確認用のため 3 ヶ月を仮採用。並行稼働期間の長さに依存するため要確認"
+                source_model: "条件: 実行履歴はジョブスケジューラの責務 / 条件: 警告傾向の記録"
+                confidence: "low"
+              - id: "C.6.1.2"
+                name: "ログ種別"
+                important: false
+                grade: 1
+                grade_description: "Runner Result 成果物、各スクリプトの実行ログ、監視記録、比較ツールの stdout / stderr / exitcode"
+                reason: "情報モデルの実行ログ・監視記録・比較ツール実行結果と Runner Result Contract に従う"
+                source_model: "情報: 実行ログ、監視記録、比較ツール実行結果、Runner Result"
+                confidence: "high"
+  - id: "D"
+    name: "移行性"
+    subcategories:
+      - id: "D.1"
+        name: "移行時期"
+        items:
+          - id: "D.1.1"
+            name: "移行時期"
+            important: false
+            metrics:
+              - id: "D.1.1.1"
+                name: "移行時期"
+                important: false
+                grade: 0
+                grade_description: "relay-gate 自体の移行なし(新規導入)"
+                reason: "relay-gate は新規導入の基盤であり、既存システムからのデータ移行を伴わない(規模感プリインタビュー仮置き)"
+                source_model: "システム概要"
+                confidence: "medium"
+      - id: "D.2"
+        name: "移行方式"
+        items:
+          - id: "D.2.1"
+            name: "移行方式"
+            important: true
+            metrics:
+              - id: "D.2.1.1"
+                name: "移行方式"
+                important: true
+                grade: 1
+                grade_description: "一括移行(ビッグバン方式)。ただし基盤が実現する現行→新実装の切替は feature flag による並行運用+段階移行"
+                reason: "relay-gate 自体はジョブ定義を facade 呼び出しへ置き換えて導入する。業務実装の切替は本基盤の目的そのものであり、運用モードの段階切替で行う"
+                source_model: "バリエーション: 運用モード / 情報: ジョブ起動要求"
+                confidence: "medium"
+      - id: "D.3"
+        name: "移行対象(機器)"
+        items:
+          - id: "D.3.1"
+            name: "移行対象機器"
+            important: false
+            metrics:
+              - id: "D.3.1.1"
+                name: "移行対象機器"
+                important: false
+                grade: 0
+                grade_description: "なし"
+                reason: "新規導入のため移行対象機器はない"
+                source_model: ""
+                confidence: "medium"
+              - id: "D.3.1.2"
+                name: "移行元環境の廃棄"
+                important: false
+                grade: 0
+                grade_description: "なし(現行実装の廃棄は並行稼働完了後の適用側判断)"
+                reason: "現行実装(blue)の停止は feature flag の off 設定で行い、廃棄は relay-gate の範囲外のため"
+                source_model: "バリエーション: 運用モード"
+                confidence: "medium"
+      - id: "D.4"
+        name: "移行対象(データ)"
+        items:
+          - id: "D.4.1"
+            name: "移行データ"
+            important: true
+            metrics:
+              - id: "D.4.1.1"
+                name: "データ移行量"
+                important: true
+                grade: 1
+                grade_description: "〜100GB(実質なし)"
+                reason: "新規導入のため移行データはない"
+                source_model: ""
+                confidence: "medium"
+              - id: "D.4.1.2"
+                name: "データ変換"
+                important: false
+                grade: 0
+                grade_description: "なし"
+                reason: "移行データがないため"
+                source_model: ""
+                confidence: "medium"
+              - id: "D.4.1.3"
+                name: "データクレンジング"
+                important: false
+                grade: 0
+                grade_description: "なし"
+                reason: "移行データがないため"
+                source_model: ""
+                confidence: "medium"
+      - id: "D.5"
+        name: "移行計画"
+        items:
+          - id: "D.5.1"
+            name: "移行計画"
+            important: true
+            metrics:
+              - id: "D.5.1.1"
+                name: "移行リハーサル"
+                important: true
+                grade: 0
+                grade_description: "リハーサルなし"
+                reason: "導入は blue foreground / green off から始めて feature flag を段階的に切り替えるため、一括切替のリハーサルを要しない"
+                source_model: "バリエーション: 運用モード / 条件: foreground slot 排他"
+                confidence: "medium"
+              - id: "D.5.1.2"
+                name: "移行判定基準"
+                important: false
+                grade: 1
+                grade_description: "確報クロスチェック(日次全量比較)の成功をリリース判断の正本とし、速報は原因調査に用いる"
+                reason: "速報結果の位置付けの条件で確報がリリース判断の正本と定義されているため"
+                source_model: "条件: 速報結果の位置付け / BUC: 確報クロスチェックフロー(リリース判断)"
+                confidence: "high"
+              - id: "D.5.1.3"
+                name: "切り戻し計画"
+                important: false
+                grade: 1
+                grade_description: "feature flag の slot 実行モードを戻す(ジョブスケジューラのジョブ定義は変更しない)"
+                reason: "運用モードは feature flag の組み合わせだけで表現し、ジョブ定義の改修なしで切り替えられるため"
+                source_model: "情報: feature flag 設定 / BUC: 適用構成定義フロー"
+                confidence: "high"
+  - id: "E"
+    name: "セキュリティ"
+    subcategories:
+      - id: "E.1"
+        name: "前提条件・制約条件"
+        items:
+          - id: "E.1.1"
+            name: "セキュリティポリシー"
+            important: true
+            metrics:
+              - id: "E.1.1.1"
+                name: "セキュリティポリシー"
+                important: true
+                grade: 2
+                grade_description: "組織のセキュリティポリシーに準拠"
+                reason: "エアーギャップ環境のオンプレミスで運用する前提から、組織のセキュリティポリシーが存在しそれに準拠すると推定"
+                source_model: "システム概要(エアーギャップ前提)"
+                confidence: "medium"
+          - id: "E.1.2"
+            name: "セキュリティ関連法規"
+            important: false
+            metrics:
+              - id: "E.1.2.1"
+                name: "準拠すべき法規・基準"
+                important: false
+                grade: 0
+                grade_description: "基盤として特定なし(業務データに関する法規は実装側・適用側の責務)"
+                reason: "relay-gate は業務データ本体を保持せず、成果物と管理レコードのみ扱うため"
+                source_model: "条件: 適用側で定義する事項"
+                confidence: "default"
+      - id: "E.2"
+        name: "セキュリティリスク分析"
+        items:
+          - id: "E.2.1"
+            name: "リスク分析"
+            important: true
+            metrics:
+              - id: "E.2.1.1"
+                name: "セキュリティリスク分析"
+                important: true
+                grade: 1
+                grade_description: "簡易チェックリストによる確認"
+                reason: "モデルシステム1のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+      - id: "E.3"
+        name: "セキュリティ診断"
+        items:
+          - id: "E.3.1"
+            name: "セキュリティ診断"
+            important: true
+            metrics:
+              - id: "E.3.1.1"
+                name: "セキュリティ診断"
+                important: true
+                grade: 0
+                grade_description: "診断なし"
+                reason: "モデルシステム1のデフォルト値を適用(閉域網内の CLI のみで外部公開面がない)"
+                source_model: ""
+                confidence: "default"
+      - id: "E.4"
+        name: "セキュリティリスク管理"
+        items:
+          - id: "E.4.1"
+            name: "リスク管理"
+            important: false
+            metrics:
+              - id: "E.4.1.1"
+                name: "リスク管理プロセス"
+                important: false
+                grade: 1
+                grade_description: "組織の運用ルールに従う"
+                reason: "モデルシステム1のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+      - id: "E.5"
+        name: "アクセス・利用制限"
+        items:
+          - id: "E.5.1"
+            name: "認証"
+            important: true
+            metrics:
+              - id: "E.5.1.1"
+                name: "認証方式"
+                important: true
+                grade: 1
+                grade_description: "OS アカウントと SSH 鍵による認証。認証情報は値を保存せず参照名で管理"
+                reason: "実行先ホストへは実行ユーザーで SSH 接続し、execution-spec.json には認証情報の参照名のみを保存する設計のため"
+                source_model: "外部システム: リモート実行ホスト(SSH) / 条件: 認証情報の非保存"
+                confidence: "high"
+          - id: "E.5.2"
+            name: "アクセス制御"
+            important: true
+            metrics:
+              - id: "E.5.2.1"
+                name: "アクセス制御"
+                important: true
+                grade: 1
+                grade_description: "ユーザ単位の制御(ジョブマップの実行ユーザーと OS 権限)"
+                reason: "ジョブマップが job_id ごとに実行ユーザーを解決し、OS 権限で制御するため。ロール概念は RDRA に無い"
+                source_model: "情報: ジョブマップ(実行ユーザー)"
+                confidence: "high"
+          - id: "E.5.3"
+            name: "利用制限"
+            important: false
+            metrics:
+              - id: "E.5.3.1"
+                name: "利用制限"
+                important: false
+                grade: 1
+                grade_description: "閉域網内のジョブスケジューラ実行ホストと運用者端末に限定。インターネット接続なし"
+                reason: "エアーギャップ環境で、起動口はジョブスケジューラのジョブ定義と運用者の CLI のみのため"
+                source_model: "バリエーション: ジョブスケジューラ起動ジョブ種別 / システム概要(エアーギャップ前提)"
+                confidence: "high"
+      - id: "E.6"
+        name: "データ秘匿"
+        items:
+          - id: "E.6.1"
+            name: "暗号化"
+            important: true
+            metrics:
+              - id: "E.6.1.1"
+                name: "データ暗号化(保管時)"
+                important: true
+                grade: 0
+                grade_description: "暗号化なし"
+                reason: "認証情報の値を保存しない設計であり、管理 DB と成果物に機密データを持たないため保管時暗号化を要求しない。成果物の stdout / stderr に業務データが含まれるかは適用側で確認する"
+                source_model: "条件: 認証情報の非保存 / 情報: Runner Result"
+                confidence: "medium"
+              - id: "E.6.1.2"
+                name: "データ暗号化(通信時)"
+                important: true
+                grade: 1
+                grade_description: "外部通信のみ暗号化(SSH 経路)。管理 DB 接続は閉域セグメント内"
+                reason: "実行先ホストへの通信は SSH で暗号化され、管理 DB への接続は閉域網内のため"
+                source_model: "外部システム: リモート実行ホスト(SSH)、管理 DB(RDB)"
+                confidence: "medium"
+          - id: "E.6.2"
+            name: "データマスキング"
+            important: false
+            metrics:
+              - id: "E.6.2.1"
+                name: "データマスキング"
+                important: false
+                grade: 0
+                grade_description: "なし"
+                reason: "モデルシステム1のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+      - id: "E.7"
+        name: "不正追跡・監視"
+        items:
+          - id: "E.7.1"
+            name: "監査ログ"
+            important: true
+            metrics:
+              - id: "E.7.1.1"
+                name: "監査ログ"
+                important: true
+                grade: 2
+                grade_description: "運用操作(中止・リラン)と状態遷移を run_id 付きの実行ログ・管理レコードで記録。監査の正本はジョブスケジューラ"
+                reason: "中止指示に指示者と応答を記録し、実行ログに run_id を残す設計だが、監査はジョブスケジューラの責務と定義されているため"
+                source_model: "情報: 中止指示、実行ログ / 条件: 実行履歴はジョブスケジューラの責務"
+                confidence: "medium"
+          - id: "E.7.2"
+            name: "不正監視"
+            important: false
+            metrics:
+              - id: "E.7.2.1"
+                name: "不正監視"
+                important: false
+                grade: 0
+                grade_description: "なし(閉域網・OS 側の責務)"
+                reason: "モデルシステム1のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+      - id: "E.8"
+        name: "ネットワーク対策"
+        items:
+          - id: "E.8.1"
+            name: "ファイアウォール"
+            important: true
+            metrics:
+              - id: "E.8.1.1"
+                name: "ファイアウォール"
+                important: true
+                grade: 1
+                grade_description: "パケットフィルタリング"
+                reason: "モデルシステム1のデフォルト値を適用(ネットワーク制約は適用文書の所有事項)"
+                source_model: "情報: 適用構成文書"
+                confidence: "default"
+          - id: "E.8.2"
+            name: "IDS/IPS"
+            important: false
+            metrics:
+              - id: "E.8.2.1"
+                name: "IDS/IPS"
+                important: false
+                grade: 0
+                grade_description: "なし"
+                reason: "モデルシステム1のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+          - id: "E.8.3"
+            name: "ネットワーク分離"
+            important: false
+            metrics:
+              - id: "E.8.3.1"
+                name: "ネットワーク分離"
+                important: false
+                grade: 1
+                grade_description: "適用文書で定義するセグメント分離(DB セグメント経由の実行など)を前提"
+                reason: "適用構成文書がネットワーク制約・ホスト配置・DB セグメント構成を所有し、リモート実行ホストが案件固有の配置を吸収する設計のため"
+                source_model: "情報: 適用構成文書 / 外部システム: リモート実行ホスト(SSH)"
+                confidence: "medium"
+      - id: "E.9"
+        name: "マルウェア対策"
+        items:
+          - id: "E.9.1"
+            name: "マルウェア対策"
+            important: true
+            metrics:
+              - id: "E.9.1.1"
+                name: "マルウェア対策"
+                important: true
+                grade: 1
+                grade_description: "ウイルス対策ソフト導入"
+                reason: "モデルシステム1のデフォルト値を適用(定義ファイルの更新はエアーギャップのためオフライン持ち込み)"
+                source_model: ""
+                confidence: "default"
+      - id: "E.10"
+        name: "Web対策"
+        items:
+          - id: "E.10.1"
+            name: "WAF"
+            important: true
+            metrics:
+              - id: "E.10.1.1"
+                name: "WAF"
+                important: true
+                grade: 0
+                grade_description: "WAFなし"
+                reason: "UI 画面や HTTP API を持たず CLI と定期ジョブのみのため対象外"
+                source_model: "条件: CLI とメールによる提示 / システム概要(interface_kind: cli)"
+                confidence: "high"
+          - id: "E.10.2"
+            name: "Webアプリケーション対策"
+            important: false
+            metrics:
+              - id: "E.10.2.1"
+                name: "Webアプリケーション対策"
+                important: false
+                grade: 0
+                grade_description: "対象外(Web なし)。代わりにシェル引数は JSON 配列で数・空白・カンマを維持して安全に連結する"
+                reason: "Web アプリケーションが存在しないため。引数連結規則がコマンドインジェクション対策に相当する"
+                source_model: "条件: 引数連結規則"
+                confidence: "high"
+      - id: "E.11"
+        name: "セキュリティインシデント対応"
+        items:
+          - id: "E.11.1"
+            name: "インシデント対応"
+            important: true
+            metrics:
+              - id: "E.11.1.1"
+                name: "インシデント対応計画"
+                important: true
+                grade: 1
+                grade_description: "基本的な連絡体制のみ"
+                reason: "モデルシステム1のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+  - id: "F"
+    name: "システム環境・エコロジー"
+    subcategories:
+      - id: "F.1"
+        name: "システム制約・前提条件"
+        items:
+          - id: "F.1.1"
+            name: "システム制約"
+            important: true
+            metrics:
+              - id: "F.1.1.1"
+                name: "対応OS"
+                important: true
+                grade: 1
+                grade_description: "単一OS(オンプレミス Linux)。実装側の OS 差異は runner に閉じ込める"
+                reason: "relay-gate はシェルスクリプトとして Linux で動作し、実装固有の OS・プロトコルは slot の runner に閉じ込める設計のため"
+                source_model: "条件: 実装固有事項の runner への閉じ込め / システム概要"
+                confidence: "high"
+              - id: "F.1.1.2"
+                name: "対応ブラウザ"
+                important: true
+                grade: 0
+                grade_description: "対象外(UI 画面なし)"
+                reason: "UI 画面を持たず CLI と定期ジョブだけで動作するため"
+                source_model: "システム概要(interface_kind: cli)"
+                confidence: "high"
+              - id: "F.1.1.3"
+                name: "対応デバイス"
+                important: false
+                grade: 1
+                grade_description: "運用者端末(ターミナル)のみ"
+                reason: "すべてのスクリプトは CLI として起動され、通知はメールで行うため"
+                source_model: "条件: CLI とメールによる提示"
+                confidence: "high"
+          - id: "F.1.2"
+            name: "ネットワーク制約"
+            important: false
+            metrics:
+              - id: "F.1.2.1"
+                name: "通信プロトコル"
+                important: false
+                grade: 1
+                grade_description: "SSH(リモート実行)、RDB 接続(管理 DB)、メール送信。インターネット接続・外部 SaaS は不可"
+                reason: "外部システムがリモート実行ホスト(SSH)・管理 DB(RDB)・メール通知で構成され、エアーギャップ前提のため"
+                source_model: "外部システム: リモート実行ホスト(SSH)、管理 DB(RDB)、メール通知"
+                confidence: "high"
+              - id: "F.1.2.2"
+                name: "帯域要件"
+                important: false
+                grade: 1
+                grade_description: "成果物ファイルの回収と DB 接続程度で特別な要件なし"
+                reason: "Runner Result は 3 ファイル+開始時刻の小さなファイルのため"
+                source_model: "情報: Runner Result"
+                confidence: "medium"
+      - id: "F.2"
+        name: "システム特性"
+        items:
+          - id: "F.2.1"
+            name: "可搬性"
+            important: false
+            metrics:
+              - id: "F.2.1.1"
+                name: "可搬性"
+                important: false
+                grade: 1
+                grade_description: "特定環境固定(オンプレミス Linux + RDB)"
+                reason: "エアーギャップのオンプレミス Linux を前提とし、クラウドへの可搬性は要求しない"
+                source_model: "システム概要"
+                confidence: "medium"
+          - id: "F.2.2"
+            name: "拡張性"
+            important: false
+            metrics:
+              - id: "F.2.2.1"
+                name: "アーキテクチャ拡張性"
+                important: false
+                grade: 2
+                grade_description: "runner・ジョブマップ・比較定義・対象カタログの差し替えだけで新案件・次世代実装へ適用(facade 等のスクリプトは変更不要)"
+                reason: "設定所有区分の分離と runner への実装固有事項の閉じ込めにより、スクリプト無変更で適用範囲を拡張できる設計のため"
+                source_model: "条件: 設定所有区分 / 条件: 実装固有事項の runner への閉じ込め / BUC: 適用構成定義フロー"
+                confidence: "high"
+      - id: "F.3"
+        name: "適合規格"
+        items:
+          - id: "F.3.1"
+            name: "適合規格"
+            important: false
+            metrics:
+              - id: "F.3.1.1"
+                name: "業界標準・規格"
+                important: false
+                grade: 0
+                grade_description: "特定なし"
+                reason: "モデルシステム1のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+              - id: "F.3.1.2"
+                name: "アクセシビリティ"
+                important: false
+                grade: 0
+                grade_description: "対象外(UI 画面なし)"
+                reason: "UI 画面を持たないため"
+                source_model: "システム概要(interface_kind: cli)"
+                confidence: "high"
+      - id: "F.4"
+        name: "機材設置環境条件"
+        items:
+          - id: "F.4.1"
+            name: "設置環境"
+            important: false
+            metrics:
+              - id: "F.4.1.1"
+                name: "耐震クラス"
+                important: false
+                grade: 1
+                grade_description: "一般オフィス"
+                reason: "モデルシステム1のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+              - id: "F.4.1.2"
+                name: "空調・温度管理"
+                important: false
+                grade: 1
+                grade_description: "既存サーバルームの環境に従う"
+                reason: "モデルシステム1のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+              - id: "F.4.1.3"
+                name: "物理セキュリティ"
+                important: false
+                grade: 1
+                grade_description: "既存サーバルームの入退室管理に従う"
+                reason: "モデルシステム1のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+      - id: "F.5"
+        name: "環境マネージメント"
+        items:
+          - id: "F.5.1"
+            name: "環境対策"
+            important: false
+            metrics:
+              - id: "F.5.1.1"
+                name: "CO2排出量"
+                important: false
+                grade: 0
+                grade_description: "考慮なし"
+                reason: "モデルシステム1のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+              - id: "F.5.1.2"
+                name: "廃棄物・リサイクル"
+                important: false
+                grade: 0
+                grade_description: "特定なし"
+                reason: "モデルシステム1のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"

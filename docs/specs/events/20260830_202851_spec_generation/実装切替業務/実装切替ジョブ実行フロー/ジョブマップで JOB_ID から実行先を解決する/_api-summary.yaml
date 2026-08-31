@@ -1,0 +1,53 @@
+uc: "ジョブマップで JOB_ID から実行先を解決する"
+business: "実装切替業務"
+buc: "実装切替ジョブ実行フロー"
+paths: []
+x_cli_commands:
+  - name: "$BLUE_RUNNER / $GREEN_RUNNER"
+    tier: "tier-facade"
+    role: "uses"
+    synopsis: "<runner> --run-id <run_id> --job-id <JOB_ID> --role blue|green --mode foreground|background [--execution-spec <path>] [--help] -- [PARAM...]"
+    invoked_by: "facade.sh / background-rerun.sh(内部呼び出し)"
+    args: []
+    options:
+      - name: "--run-id"
+        type: "string"
+        required: true
+        description: "run_id。成果物ディレクトリ名"
+      - name: "--job-id"
+        type: "string"
+        required: true
+        description: "ジョブマップの検索キー"
+      - name: "--role"
+        type: "enum(blue|green)"
+        required: true
+        description: "自 slot。<role>-job-map.tsv を選ぶ"
+      - name: "--mode"
+        type: "enum(foreground|background)"
+        required: true
+        description: "実行モード(解決では未使用)"
+      - name: "--execution-spec"
+        type: "string"
+        required: false
+        description: "指定時はジョブマップを再解決せず、このファイルから復元する"
+      - name: "-- PARAM..."
+        type: "string[]"
+        required: false
+        description: "追加引数。固定引数の後ろに順序保持で連結"
+      - name: "--help"
+        type: "boolean"
+        required: false
+        default: "false"
+        description: "使い方と runner-if-version=1 を stdout に出して終了コード 0(解決は行わない)"
+    stdin: "なし"
+    stdout: "なし(成果物ファイルへ出力)"
+    stderr: "なし(stderr.log へ出力)"
+    exit_codes:
+      - code: "exitcode.txt の値"
+        meaning: "解決成功時は後続フェーズ(実装実行)の終了コードと一致する"
+      - code: 2
+        meaning: "job_id 未定義 / ジョブマップなし / fixed_args_json 不正 / hang_detect_limit_minutes 不正 / runner IF 必須オプション欠落(error: option required option=--xxx)。exitcode.txt=2"
+      - code: 6
+        meaning: "成果物ディレクトリへの書き込み失敗"
+async_events: []
+schemas: []
