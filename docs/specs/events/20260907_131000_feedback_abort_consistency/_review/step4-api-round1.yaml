@@ -1,0 +1,77 @@
+round: 1
+group: api
+scope_note: "差分レビュー(本 feedback CR-016 / 017 / 018)。対象: cli-command-contract.yaml の rapid-crosscheck-runner.sh / rapid-crosscheck-worker.sh / abort-rapid-crosscheck.sh / abort-final-crosscheck.sh / abort-blue.sh / abort-green.sh / shared_rules.state_codes と asyncapi.yaml。change-brief D1〜D3 / RDRA 条件.tsv・状態.tsv / USDM SPEC-005-02・010-01・010-02 / arch _changes.md と照合。「仮採用: rdra-feedback #13」「rdra-feedback #14 / #15」の残存は api 配下で 0 件(残る「仮採用」は本 CR と無関係な既存注記のみ)。request_status_transitions は change-brief D2-4 と一致"
+findings:
+  - id: S4-api-1
+    artifact: "cli-command-contract.yaml"
+    file: "docs/specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/api/cli-command-contract.yaml"
+    line: 444
+    severity: major
+    viewpoint: 1
+    claim: "rapid-crosscheck-worker.sh の stdout 冒頭で request_status の取りうる値を (SUCCEEDED|FAILED|ABORTED) と限定しているが、同じ stdout 説明の後段(CLAIMED → RUNNING 条件付き UPDATE 0 件時)は「request_status=<再 SELECT した現在の status>」とし、lease 失効で回収済みの場合は REQUESTED / CLAIMED / RUNNING が出力されるため、契約内で自己矛盾している"
+    fix: "stdout 冒頭の列挙を「request_status=(SUCCEEDED|FAILED|ABORTED。RUNNING 遷移 0 件で回収済みのときは再 SELECT した REQUESTED|CLAIMED|RUNNING)」のように広げるか、0 件時の出力を ABORTED 以外は request_status=- に統一して notes 2 番目(「request_status=ABORTED」)と整合させる(change-brief D2-3 は「再 SELECT した現在の status」を採用)"
+    source_refs:
+      - "docs/specs/events/20260907_131000_feedback_abort_consistency/_review/change-brief.md#D2-3"
+      - "docs/specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/api/cli-command-contract.yaml#rapid-crosscheck-worker.sh idempotency / notes"
+  - id: S4-api-2
+    artifact: "cli-command-contract.yaml"
+    file: "docs/specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/api/cli-command-contract.yaml"
+    line: 892
+    severity: minor
+    viewpoint: 1
+    claim: "abort-rapid-crosscheck.sh の exit 3 に「更新件数 0(表示後に終端した競合)」を追加したが、stderr 節にはこのケースの文言が無く(`error: request is not abortable ... status=...` は終端状態のときだけと明記)、abort-blue.sh の `error: run is not abortable (state changed concurrently)` に相当する定型文が未定義"
+    fix: "stderr に `error: request is not abortable (state changed concurrently) run_id=... role=rapid-crosscheck status=<再 SELECT した status>`(3)を追加し、exit 3 の condition から参照する"
+    source_refs:
+      - "docs/specs/events/20260907_131000_feedback_abort_consistency/_review/change-brief.md#D2-1"
+      - "docs/specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/api/cli-command-contract.yaml#abort-blue.sh stderr"
+  - id: S4-api-3
+    artifact: "cli-command-contract.yaml"
+    file: "docs/specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/api/cli-command-contract.yaml"
+    line: 882
+    severity: minor
+    viewpoint: 1
+    claim: "abort-rapid-crosscheck.sh が REQUESTED の依頼を対象に含むようになったが、stdout の現在状態 7 行(worker_id / lease_until / started_at)が NULL のときの表示値(`-` か空か)が書かれていない(従来は RUNNING 限定で常に値があった)"
+    fix: "stdout に「未 claim(REQUESTED)では worker_id / lease_until / started_at は `-`」を追記する(rapid-crosscheck-worker.sh の `-` 規約と揃える)"
+    source_refs:
+      - "docs/specs/events/20260907_131000_feedback_abort_consistency/_review/change-brief.md#D2-1"
+      - "docs/usdm/latest/requirements.yaml#SPEC-010-02 AC2"
+  - id: S4-api-4
+    artifact: "cli-command-contract.yaml"
+    file: "docs/specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/api/cli-command-contract.yaml"
+    line: 185
+    severity: minor
+    viewpoint: 1
+    claim: "shared_rules.state_codes.request_status_transitions の「RUNNING → SUCCEEDED / FAILED(worker の終端 UPDATE status='RUNNING')」は worker_id 条件を書いていないが、rapid-crosscheck-worker.sh の idempotency は「CLAIMED → RUNNING と RUNNING → 終端はいずれも status と worker_id を条件にした条件付き UPDATE」としており、正本(shared_rules)側の記述が弱い"
+    fix: "行 185 を「RUNNING → SUCCEEDED / FAILED(worker の終端 UPDATE。条件付き UPDATE status='RUNNING' AND worker_id=自 worker(速報)。0 件は ABORTED 済み)」に揃える(確報 worker の終端 UPDATE は `WHERE final_crosscheck_id=? AND status='RUNNING'` のままなので速報限定と明記)"
+    source_refs:
+      - "docs/specs/events/20260907_131000_feedback_abort_consistency/_review/change-brief.md#D2-3"
+      - "docs/specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/api/cli-command-contract.yaml#final-crosscheck-worker.sh idempotency"
+  - id: S4-api-5
+    artifact: "cli-command-contract.yaml"
+    file: "docs/specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/api/cli-command-contract.yaml"
+    line: 718
+    severity: minor
+    viewpoint: 1
+    claim: "background-rerun.sh --role rapid-crosscheck の `status=REQUESTED|CLAIMED` の hint が「wait for the worker」のみで、CR-017 で abort-rapid-crosscheck.sh が REQUESTED / CLAIMED も中止できるようになった事実(中止して再作成する経路)を案内していない"
+    fix: "hint を `request is still queued; wait for the worker or abort it with abort-rapid-crosscheck.sh --run-id {run_id} before rerun` に改める(RUNNING 行の hint と対称にする)"
+    source_refs:
+      - "docs/rdra/latest/条件.tsv#依頼中止可否判定"
+      - "docs/specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/api/cli-command-contract.yaml#abort-rapid-crosscheck.sh notes"
+  - id: S4-api-6
+    artifact: "cli-command-contract.yaml"
+    file: "docs/specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/api/cli-command-contract.yaml"
+    line: 401
+    severity: minor
+    viewpoint: 1
+    claim: "request_creation_matrix.rows の縦軸キー名が 3 行とも `parallel_run_status` だが、3 行目の判定材料は slot_executions.status であり、キー名が RDRA 判定表の縦軸「中止済み判定」と一致していない(値の記述は正しい)"
+    fix: "キー名を `abort_state`(または `aborted_judgement`)に改め、description の「縦軸 3 値」と対応づける。値の文言は変えない"
+    source_refs:
+      - "docs/rdra/latest/条件.tsv#中止済み run の比較依頼作成除外"
+      - "docs/specs/events/20260907_131000_feedback_abort_consistency/_review/change-brief.md#D1-1"
+resolved:
+  - {id: S4-api-1, resolution: fixed}
+  - {id: S4-api-2, resolution: fixed}
+  - {id: S4-api-3, resolution: fixed}
+  - {id: S4-api-4, resolution: fixed}
+  - {id: S4-api-5, resolution: fixed}
+  - {id: S4-api-6, resolution: fixed}

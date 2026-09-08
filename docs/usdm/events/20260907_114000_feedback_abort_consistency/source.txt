@@ -1,0 +1,20 @@
+feedback request lineage (requirements stage)
+
+feedback_request_id: 20260907_abort_consistency
+input_sha256: 70cda63f92e887e459a3817580e45a840e3ff201065a534085ad113fb8910b81
+stage_packet: docs/pipeline/feedback-runs/20260907_abort_consistency/stage-packets/requirements.md
+request_ids: CR-c770d8f0-016, CR-c770d8f0-017, CR-c770d8f0-018
+direct_work_unit_ids: CR-c770d8f0-016#1, CR-c770d8f0-017#1, CR-c770d8f0-018#1
+causal_work_unit_ids: CR-c770d8f0-016#1, CR-c770d8f0-017#1, CR-c770d8f0-018#1
+
+feedback_request:
+  feedback_request_id: "20260907_abort_consistency"
+  input_sha256: "70cda63f92e887e459a3817580e45a840e3ff201065a534085ad113fb8910b81"
+  request_ids: ["CR-c770d8f0-016","CR-c770d8f0-017","CR-c770d8f0-018"]
+  work_unit_ids: ["CR-c770d8f0-016#1","CR-c770d8f0-017#1","CR-c770d8f0-018#1"]
+
+work unit → USDM 反映先(CR 本文は packet を正本とし、ここには複製しない)
+
+- CR-c770d8f0-016#1 (aborted-run-judgement-key): SPEC-005-02 の中止済み run 判定を「並行稼働実行が ABORTED、または完了通知の対象 slot の slot 実行が ABORTED(aborted.txt 公開済み)」に拡張し、並行稼働実行 COMPLETED かつ slot 実行 ABORTED の受け入れ条件を追加(RDRA 条件「中止済み run の比較依頼作成除外」「両系成功判定」、情報「速報実行(rapid_run)」、UC「両系成功時に速報比較依頼を作成する」に反映)
+- CR-c770d8f0-017#1 (rapid-request-abort-scope): SPEC-010-02 を abort-rapid-crosscheck が REQUESTED / CLAIMED / RUNNING の速報比較依頼を中止できる仕様に改め、CLAIMED 中止時の競合規則(条件付き UPDATE、worker は RUNNING への更新 0 件なら比較を開始しない)と確報側の RUNNING 限定を受け入れ条件化。SPEC-010-01 の abort-rapid-crosscheck との役割分担を更新(RDRA 条件「依頼中止可否判定」、状態 クロスチェック依頼 CLAIMED → ABORTED 追加・REQUESTED → ABORTED / CLAIMED → RUNNING / RUNNING → ABORTED / ABORTED 終端の説明更新、バリエーション「中止対象種別」、情報「中止指示」「速報比較依頼」、UC「実行を ABORTED へ遷移させる」「比較ツールでジョブ単位比較を実行して結果を登録する」に反映)
+- CR-c770d8f0-018#1 (requested-to-aborted-wording): SPEC-010-01 の abort-blue / abort-green による REQUESTED 依頼の中止を「両系の完了通知で依頼が作成された後に slot を中止した場合の競合窓を塞ぐ保険。dispatcher 側の中止済み run 判定と併用」と位置づけ直し、受け入れ条件を追加(RDRA 状態 クロスチェック依頼 REQUESTED → ABORTED の説明、条件「slot 中止可否判定」に反映)

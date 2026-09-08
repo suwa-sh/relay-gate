@@ -1,0 +1,5 @@
+コンテキスト	状態モデル	状態	遷移UC	遷移先状態	説明
+速報クロスチェック管理	クロスチェック依頼	REQUESTED	速報比較依頼を claim する	CLAIMED	速報クロスチェック worker が管理 DB を poll し、REQUESTED の速報比較依頼を worker_id と lease_until 付きで CLAIMED にする。claim と lease で多重実行を防ぐために必要
+速報クロスチェック管理	クロスチェック依頼	REQUESTED	確報比較依頼を claim する	CLAIMED	確報クロスチェック worker が DB セグメントで管理 DB を poll し、REQUESTED の確報比較依頼を worker_id と lease_until 付きで CLAIMED にする
+速報クロスチェック管理	クロスチェック依頼	REQUESTED	実行を ABORTED へ遷移させる	ABORTED	運用者が abort-blue / abort-green を --run-id 付きで実行して yes と答えたとき、対象 run に REQUESTED で未着手(worker が claim していない)の速報比較依頼があればそれも ABORTED にする。速報比較依頼のみの遷移で確報比較依頼には適用しない。両 slot 完了直後に中止した場合に依頼だけが残って比較が走る抜けを防ぐ。CLAIMED / RUNNING の依頼は abort-rapid-crosscheck の対象
+速報クロスチェック管理	クロスチェック依頼	ABORTED			明示中止で終端する。速報比較依頼は中止確認済みとして background-rerun の対象になれる。未着手(REQUESTED)の速報比較依頼が abort-blue / abort-green で中止された場合もこの終端に至る

@@ -1,0 +1,9 @@
+round: 2
+group: G3
+findings: []
+verified:
+  - {id: S3-G3-1, status: resolved, evidence: "_api-summary.yaml#23 の stderr に `error: unknown option option=...(2)` と `warn: execution-spec invalid run_id=... key=...(当該 role は判定せず継続)` が追加され、tier-ops.md#42 の出力契約と同じ集合になった"}
+  - {id: S3-G3-2, status: resolved, evidence: "tier-ops.md#42 の stderr 列挙に `error: unknown option option=...`(2)が入り、#60 のバリデーションに未知オプション / 想定外引数の両方(終了コード 2)が書かれた"}
+  - {id: S3-G3-3, status: resolved, evidence: "cli-command-contract.yaml commands[hang-detector.sh].stderr に `warn: execution-spec invalid run_id=... key=...(execution-spec.json にキーが無い role は判定対象外。継続、終了コード 0)` が追加された"}
+  - {id: S3-G3-4, status: resolved, evidence: "hang-detect-trend.sh の _api-summary.yaml#9 synopsis が `[--all] [--verbose] [--help]` を含み、options に --verbose / --help(boolean, default false)が追加された"}
+  - {id: S3-G3-5, status: resolved, evidence: "hang_detect_limit_minutes をジョブごとに調整する/tier-ops.md#86 の started_at 説明が「started-at.txt の UTC 値をローカル時刻へ変換した値」「速報比較依頼は依頼の started_at(未開始は requested_at)」に揃い、UC「監視記録を保存する」tier-ops.md#67 と一致した"}

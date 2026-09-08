@@ -1,0 +1,19 @@
+round: 2
+group: traceability
+findings: []
+resolved:
+  - id: S4-traceability-1
+    resolution: verified
+    note: "usdm-acceptance-matrix.md L53 SPEC-005-02 行の 8 シナリオ名が UC-09 spec.md の Scenario 行(L198 / L214 / L235 / L248 / L266 / L276 / L256 / L207)と「関連 USDM」表(L187)に一致"
+  - id: S4-traceability-2
+    resolution: verified
+    note: "L76 SPEC-010-02 行: UC-11「CLAIMED の依頼が ABORTED になった後の RUNNING 条件付き UPDATE は 0 件で比較を開始しない」(UC-11 spec.md L295 / 関連 USDM L232)、UC-23 の AC1 / AC2 / AC4 / AC5 が UC-23 spec.md L321 / L296 / L360 / L372 と関連 USDM 表 L236 に一致。「SUCCEEDED の確報比較依頼は中止できない」への参照は削除済み。AC5 Outline の Examples(REQUESTED / CLAIMED / SUCCEEDED)の注記も実体と一致"
+  - id: S4-traceability-3
+    resolution: verified
+    note: "L75 SPEC-010-01 行の UC-23 AC8 が「依頼作成直後に slot を中止すると依頼も ABORTED になり完了通知で再作成されない」(UC-23 spec.md L272 / 関連 USDM L235)に一致"
+  - id: S4-traceability-4
+    resolution: verified
+    note: "rdra-feedback.md から #16 が削除され残存は「なし」、後工程要求は SR-001 / SR-002 のみ。#9 / #13 / #14 / #15 は解消済み表に存在。冒頭注記と対応方針が change-brief D4 訂正(対象 slot 限定で抜け無し)と整合。$E 配下(_review 除く)に「rdra-feedback #1[3456]」「仮採用: rdra-feedback」「CLAIMED からの遷移は無い」の残存なし"
+verification:
+  - "usdm-acceptance-matrix.md 集計値(REQ 13 / SPEC 50 / 受け入れ条件 121)= requirements.yaml の grep -c(REQ 13 / SPEC 50 / Given 121)"
+  - "traceability-matrix.md 状態遷移パス 47 = 状態.tsv の遷移 UC 非空行数 47。状態遷移マトリクス本体の行数 47。クロスチェック依頼 CLAIMED → ABORTED(L383)の適用 UC = 実行を ABORTED へ遷移させる(状態.tsv の遷移 UC と一致。UC-23 spec.md 状態遷移一覧 L188 に対応行あり)"

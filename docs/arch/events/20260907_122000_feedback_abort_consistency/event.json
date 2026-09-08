@@ -1,0 +1,51 @@
+{
+  "schema_version": "distillery.arch-feedback-event/v1",
+  "event_id": "20260907_122000_feedback_abort_consistency",
+  "created_at": "2026-09-07T12:20:00Z",
+  "stage": "architecture",
+  "trigger_event": "rdra:20260907_114000_feedback_abort_consistency, nfr:20260907_120000_feedback_abort_consistency",
+  "feedback_request": {
+    "feedback_request_id": "20260907_abort_consistency",
+    "input_sha256": "70cda63f92e887e459a3817580e45a840e3ff201065a534085ad113fb8910b81",
+    "request_ids": [
+      "CR-c770d8f0-016",
+      "CR-c770d8f0-017",
+      "CR-c770d8f0-018"
+    ],
+    "work_unit_ids": [
+      "CR-c770d8f0-016#1",
+      "CR-c770d8f0-017#1",
+      "CR-c770d8f0-018#1"
+    ]
+  },
+  "members": [
+    {
+      "path": "arch/events/20260907_122000_feedback_abort_consistency/_changes.md",
+      "sha256": "02f2fbbe689d79933667705f47c3f3d255e130666d7965044be8d828394dc7fc"
+    },
+    {
+      "path": "arch/events/20260907_122000_feedback_abort_consistency/_inference.md",
+      "sha256": "3e7dd6f995213e43c5a39f9f7e5376d700311c176a4fbe2d0a6e921b959b58a1"
+    },
+    {
+      "path": "arch/events/20260907_122000_feedback_abort_consistency/arch-design-diff.yaml",
+      "sha256": "8ffe61bc530db9cc8e9431d1a71d39894b3f3f35ada7a4d86b5487ab37f1453e"
+    },
+    {
+      "path": "arch/events/20260907_122000_feedback_abort_consistency/arch-design.md",
+      "sha256": "a45173c603f2a6feae27e51dcac6953005e133081d215a5e975ef43d54a03933"
+    },
+    {
+      "path": "arch/events/20260907_122000_feedback_abort_consistency/coverage-report.md",
+      "sha256": "93ad686cae2185c98532923d5ea77f290ce28327b4451f3693610b943250105e"
+    },
+    {
+      "path": "arch/events/20260907_122000_feedback_abort_consistency/decisions/arch-decision-017.yaml",
+      "sha256": "f51f4a410d0171f82b1aca08d15d6fb40b3085c4247947b3c6ee250fb086d36c"
+    },
+    {
+      "path": "arch/events/20260907_122000_feedback_abort_consistency/source.txt",
+      "sha256": "bb2b11dd3b617385cbd334c7609e929535d4f3c42c9fb9d74a3bb3216d3ea76e"
+    }
+  ]
+}

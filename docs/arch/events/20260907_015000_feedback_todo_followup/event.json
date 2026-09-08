@@ -1,0 +1,59 @@
+{
+  "schema_version": "distillery.arch-feedback-event/v1",
+  "event_id": "20260907_015000_feedback_todo_followup",
+  "created_at": "2026-09-07T01:50:00Z",
+  "stage": "architecture",
+  "trigger_event": "rdra:20260907_011000_feedback_todo_followup, nfr:20260907_013000_feedback_todo_followup",
+  "feedback_request": {
+    "feedback_request_id": "20260907_todo_followup",
+    "input_sha256": "193823ac1e6f02400269d6bdca461150a1fc8951393f332ef28580e045261389",
+    "request_ids": [
+      "CR-c770d8f0-013",
+      "CR-c770d8f0-014",
+      "CR-c770d8f0-015"
+    ],
+    "work_unit_ids": [
+      "CR-c770d8f0-013#1",
+      "CR-c770d8f0-014#1",
+      "CR-c770d8f0-015#1"
+    ]
+  },
+  "members": [
+    {
+      "path": "arch/events/20260907_015000_feedback_todo_followup/_changes.md",
+      "sha256": "e9cb8426ee88c91e72e28071a266b0961fd50b59d6d0e678ded4d340c09b9e3a"
+    },
+    {
+      "path": "arch/events/20260907_015000_feedback_todo_followup/_inference.md",
+      "sha256": "828e628167119d32985902e2472e266925c5223d5af3b09be9d912f0255cb806"
+    },
+    {
+      "path": "arch/events/20260907_015000_feedback_todo_followup/arch-design-diff.yaml",
+      "sha256": "e2acb573689378ea0316751f510254a5ec5fb9ae04a69d6b655d1b7b3d3a3039"
+    },
+    {
+      "path": "arch/events/20260907_015000_feedback_todo_followup/arch-design.md",
+      "sha256": "2cd991a9fe4e065c8d32615a49f07c98f9b65ccde0eb58c735de325f1b20b20e"
+    },
+    {
+      "path": "arch/events/20260907_015000_feedback_todo_followup/coverage-report.md",
+      "sha256": "4a640b78df940d6a332364b5b0c3d6461c8ee3c461aadba0199a4efdf96ee798"
+    },
+    {
+      "path": "arch/events/20260907_015000_feedback_todo_followup/decisions/arch-decision-014.yaml",
+      "sha256": "b6a96701d1fc23cf41a859223cce81e67a6496a7acf47255f4ea76c47180e122"
+    },
+    {
+      "path": "arch/events/20260907_015000_feedback_todo_followup/decisions/arch-decision-015.yaml",
+      "sha256": "50db0150ee6025549be9ec883a1a8c0955fde3606795ff1c81d2a04128cc3b58"
+    },
+    {
+      "path": "arch/events/20260907_015000_feedback_todo_followup/decisions/arch-decision-016.yaml",
+      "sha256": "38f61a58413aaf6f9dac28a72831977ba30b0356f44bbd8d8d8bd43ca2fa833d"
+    },
+    {
+      "path": "arch/events/20260907_015000_feedback_todo_followup/source.txt",
+      "sha256": "acad8b339b733fda8da725195f00383478af082834598c82589352816d9ebac2"
+    }
+  ]
+}

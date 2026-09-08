@@ -1,0 +1,9 @@
+round: 2
+group: G4
+findings: []
+verified:
+  - {id: S3-G4-1, status: resolved, evidence: "execution-spec.json を確定保存する/_api-summary.yaml L90 finalized_at type が UTC ISO 8601 Z 付き(例 2026-08-30T11:30:01Z)になり、tier-facade.md L94 / spec.md L118-119 / D3-8 と一致"}
+  - {id: S3-G4-2, status: resolved, evidence: "slot 実行モードを選択して runner を起動する/_api-summary.yaml L40 exit 6 meaning が tier-facade.md L69 / 契約 facade.sh exit 6 と同文(STARTED→RUNNING / pid / COMPLETED UPDATE 失敗は終了コードに反映しない)"}
+  - {id: S3-G4-3, status: resolved, evidence: "実装スクリプトを実行して Runner Result を出力する/spec.md L157 started_at 計算式に RELAY_GATE_NOW 設定時は UTC 値(Z 付き)をそのまま書く旨が補われ、契約 environment_variables.RELAY_GATE_NOW.run_id_relation と一致"}
+  - {id: S3-G4-4, status: resolved, evidence: "確報比較依頼を claim する/_model-summary.yaml L47 / L55 が「UTC 値を内部でホストのローカルタイムゾーンへ変換した値」に揃い、spec.md L113 / tier-final-crosscheck.md L33 と一致"}
+  - {id: S3-G4-5, status: resolved, evidence: "cli-command-contract.yaml L1367(tree)/ L1380(files.started-at.txt.content)が「UTC ISO 8601 秒精度 Z 付き 1 行(例 2026-08-30T11:30:05Z ...)」に揃い、aborted.txt(L1371)・UC 側 tier-facade.md L39 と一致"}

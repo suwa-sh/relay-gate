@@ -1,0 +1,94 @@
+round: 1
+# Step6.5 反証レビュー(差分更新イベント 20260905_100000_feedback_todo_resolution)。
+# 対象: 今回追加された USDM 受け入れ条件(SPEC-001-01 / 004-04 / 005-01 / 005-03 / 005-04 / 008-05 / 008-06 / 010-01 / 011-04 / 011-05 / 011-06)の遡及、
+#       変更された UC 間依存(aborted.txt / RAPID_CROSSCHECK_RUNNER / リラン由来 run の COMPLETED / hang-detector.env)、asyncapi.yaml、
+#       状態遷移と rdb-schema / state_codes の整合、run_id・日時表記、追加 BDD の Then。
+# target は docs/specs/events/20260905_100000_feedback_todo_resolution/ からの相対パス。
+# step3-*-round* / step4-cc-round* で fixed 済みの指摘は再掲しない。
+findings:
+  - id: R-1
+    viewpoint: 4
+    severity: major
+    target: "_cross-cutting/api/cli-command-contract.yaml"
+    claim: "parallel_run の STARTED → RUNNING を行うタイミングが契約と UC spec / rdb-schema で食い違う。契約は「runner 起動前」、UC-02 / UC-26 / rdb-schema は「全 slot 起動後」であり、facade.sh の終了コード 6 の条件(runner 未起動での UPDATE 失敗)がそのままでは成立しない"
+    evidence: |-
+      - cli-command-contract.yaml shared_rules.state_codes.parallel_run_transitions(168 行): 「STARTED → RUNNING(facade.sh / background-rerun.sh。runner 起動前)」
+      - cli-command-contract.yaml commands[facade.sh].exit_codes code 6 condition(242 行): 「runner 起動前の parallel_runs STARTED→RUNNING UPDATE 失敗」(meaning は「実行エラー(runner 起動前、または中継不能)」)
+      - UC-02 slot 実行モードを選択して runner を起動する/spec.md 処理フロー(96〜118 行): background / foreground の runner をすべて起動し pid UPDATE を終えた後に「UPDATE parallel_runs SET status='RUNNING' WHERE run_id=? AND status='STARTED'」。状態遷移一覧 168 行「トリガー: すべての slot を起動し foreground の PID 待機を開始」
+      - UC-26 元の execution-spec.json から復元して新しい run_id で起動する/spec.md 処理フロー 105 行(runner 起動・pid UPDATE 後に RUNNING)、状態遷移一覧 151 行「事前条件: runner 起動成功(pid 取得・slot_executions pid UPDATE 済み)」
+      - rdb-schema.yaml parallel_runs.status(74 行): 「RUNNING(全 slot 起動後)」「STARTED → RUNNING(全 slot 起動)」
+      - UC-23 実行を ABORTED へ遷移させる/spec.md 正常系「STARTED のまま残った parallel_runs も slot の中止に伴い ABORTED になる」(263〜266 行)は、runner 起動済み(started-at.txt あり)で parallel_runs が STARTED のままという UC 側の順序を前提にしている
+      UC 側の順序だと STARTED → RUNNING の UPDATE 失敗は runner 起動後に起きるため、契約の「runner 未起動で 6」は矛盾する(契約の同じ節で pid UPDATE 失敗は「起動後のため終了コードに反映しない」としており、扱いが割れる)
+    suggested_fix: |-
+      どちらかに統一する(UC-02 / UC-26 / rdb-schema / UC-23 シナリオの 4 か所が同じ順序を採るため、契約側を UC に合わせるのが最小変更):
+      - shared_rules.state_codes.parallel_run_transitions の「runner 起動前」を「全 slot 起動後(foreground の PID 待機開始前)。UPDATE 失敗は runner 起動済みのため終了コードに反映せず実行ログ ERROR のみ」に改める
+      - commands[facade.sh].exit_codes code 6 の condition から「runner 起動前の parallel_runs STARTED→RUNNING UPDATE 失敗」を外し、「中継後の COMPLETED UPDATE 失敗と slot_executions.pid UPDATE 失敗」と同じ扱い(実行ログ ERROR のみ)に移す。execution_log に `ERROR management db update failed table=parallel_runs run_id=...`(STARTED→RUNNING 失敗)を追記する
+      - background-rerun.sh の該当条件(復元起動の STARTED→RUNNING)も同様に揃える
+      契約を正とする場合は UC-02 / UC-26 の処理フロー・状態遷移一覧・rdb-schema の説明・UC-23 の Given(STARTED のまま残る状況の説明)を「runner 起動前」に書き換える
+
+  - id: R-2
+    viewpoint: 5
+    severity: minor
+    target: "実行監視業務/background 実行監視フロー/ハング疑い・実行エラー・比較異常を通知する/spec.md"
+    claim: "速報比較依頼が「status=SUCCEEDED かつ exit_code=3 / comparison_results.status=NG」という、状態モデル上あり得ない組合せを BDD の Given と状態遷移一覧の事前条件に置いている(SUCCEEDED は exit_code=0 のときだけ。exit_code=3 は FAILED / NG)"
+    evidence: |-
+      - 通知する/spec.md 225 行(Scenario「ハング疑い通知後の速報比較依頼の比較異常は別種別として 1 回送る(SPEC-008-03)」Given): 「rapid_crosscheck_requests の該当行が status=SUCCEEDED exit_code=3 になり comparison_results に status=NG の行があり」
+      - 通知する/spec.md 146 行(状態遷移一覧 HANG_SUSPECTED_NOTIFIED → COMPARE_ERROR_NOTIFIED 事前条件): 「通知後に速報比較依頼が FAILED、または SUCCEEDED かつ比較 NG / FAILED になった」
+      - 判定する/spec.md 306 行(Scenario「ハング疑い通知後の速報比較依頼も再判定する(SPEC-008-02)」Given): 「該当行が status=SUCCEEDED になり comparison_results に status=NG の行がある」
+      - 対して UC-11 比較ツールでジョブ単位比較を実行して結果を登録する/spec.md 計算ルール(162〜163 行)と分岐条件「比較ツール終了コードの対応」(153 行): 0 → SUCCEEDED / OK、3 → FAILED / NG、6 → FAILED / FAILED。rdb-schema.yaml rapid_crosscheck_requests.status(261 行)「SUCCEEDED(exit_code=0)」、asyncapi.yaml RapidCrosscheckRequest.exit_code
+      判定表(判定する/spec.md 154 行)の「FAILED または comparison_results.status ∈ {NG, FAILED}」は防御的判定として残してよいが、Given に不整合状態を直接書くと ATDD のフィクスチャが状態モデルに反したデータを正とすることになる
+    suggested_fix: |-
+      - 通知する/spec.md 225 行の Given を「該当行が status=FAILED exit_code=3 になり comparison_results に status=NG の行があり」に改める
+      - 通知する/spec.md 146 行の事前条件を「通知後に速報比較依頼が FAILED(比較 NG(3)/ 実行エラー(6))で終端した」に改める
+      - 判定する/spec.md 306 行の Given を「該当行が status=FAILED exit_code=3 になり comparison_results に status=NG の行がある」に改める(シナリオの意図「通知後の依頼も走査対象に含める」は変わらない)
+
+  - id: R-3
+    viewpoint: 1
+    severity: minor
+    target: "_cross-cutting/usdm-acceptance-matrix.md"
+    claim: "SPEC-011-06 の受け入れ条件 3 件のうち 2 件(STARTED → ABORTED、rapid-crosscheck リランの COMPLETED)を検証する BDD を持つ UC-23 / UC-11 の spec.md「関連 USDM」表に SPEC-011-06 の行が無く、機械集計では UC-05 の 1 行だけで covered になっている。また対応表の「記載誤り」節は UC-04 / UC-05 / UC-08 / UC-18 / UC-27 について既に修正済みの内容を未修正として載せており、集計結果と spec.md の実体がずれている"
+    evidence: |-
+      - UC-11 比較ツールでジョブ単位比較を実行して結果を登録する/spec.md 関連 USDM(208〜213 行): SPEC-005-03 / 007-01 / 007-03 / 011-02 のみ。BDD 241 行「速報比較依頼だけのリラン由来 run は依頼終端で parallel_run を COMPLETED にする」は SPEC-011-06 の受け入れ条件 2 件目に対応するが表に無い
+      - UC-23 実行を ABORTED へ遷移させる/spec.md 関連 USDM(215〜219 行): SPEC-010-01 / 010-02 / 010-03 のみ。BDD 263 行「STARTED のまま残った parallel_runs も slot の中止に伴い ABORTED になる」は SPEC-011-06 の受け入れ条件 1 件目に対応するが表に無い
+      - usdm-acceptance-matrix.md 78 行(SPEC-011-06 行)は「UC-27: …(関連 USDM 表に SPEC-011-06 行なし)」と書くが、UC-27 速報比較依頼だけを新規作成する/spec.md 172 行に「REQ-011 | SPEC-011-06 | 再作成した依頼が終端すると parallel_runs は COMPLETED になる」がある
+      - usdm-acceptance-matrix.md 104〜106 行(記載誤り節): UC-04 / UC-08 の SPEC-001-01 行、UC-05 / UC-18 の SPEC-010-01 追加シナリオ、UC-11 / UC-23 / UC-27 の SPEC-011-06 行を「記載漏れ」としているが、UC-04 spec.md 152 行・UC-08 spec.md 160 行(SPEC-001-01)、UC-05 spec.md 198 行・UC-18 spec.md 228 行(SPEC-010-01 の追加シナリオ)、UC-27 spec.md 172 行は既に反映済み。未反映は UC-11 / UC-23 の SPEC-011-06 行だけ
+    suggested_fix: |-
+      - UC-11 spec.md 関連 USDM に「REQ-011 | SPEC-011-06 | 速報比較依頼だけのリラン由来 run は依頼終端で parallel_run を COMPLETED にする」を追加し、シナリオ名末尾に (SPEC-011-06) を付ける
+      - UC-23 spec.md 関連 USDM に「REQ-011 | SPEC-011-06 | STARTED のまま残った parallel_runs も slot の中止に伴い ABORTED になる」を追加し、シナリオ名末尾に (SPEC-011-06) を付ける
+      - usdm-acceptance-matrix.md を spec.md の「関連 USDM」表から再集計し、78 行の SPEC-011-06 行の注記と 104〜106 行の記載誤り節を現状(UC-04 / 05 / 08 / 18 / 27 は反映済み)に合わせる
+
+  - id: R-4
+    viewpoint: 5
+    severity: minor
+    target: "実行監視業務/background 実行監視フロー/hang_detect_limit_minutes をジョブごとに調整する/spec.md"
+    claim: "SPEC-008-05 向けに追加された Scenario「調整の記録を適用構成文書に残す」の Then は relay-gate の外にある文書(適用構成文書またはそのコミット履歴)の内容を検証対象にしており、E2E / ATDD として実行できない"
+    evidence: |-
+      - 調整する/spec.md 187〜191 行: When「調整の記録を確認する」/ Then「調整日時と調整根拠(警告時経過時間 82)は適用構成文書(またはそのコミット履歴)の「運用者の調整記録」に残る」。適用構成文書は契約(cli-command-contract.yaml config_files)にも artifact_layout にも無く、relay-gate が読み書きするファイルではないため、テストが参照する対象(パス・形式)が定義されていない
+      - 同シナリオの And(ジョブマップに調整日時・調整根拠の列が無く、ヘッダーが job_id,host,user,work_dir,script,fixed_params,hang_detect_limit_minutes[,credential_ref][,map_version])だけが機械検証できる
+      - change-brief U11 は「SPEC-008-05 の追加受け入れ条件に対応する BDD は掲載対象」としているが、Then の検証可能性までは決めていない
+    suggested_fix: |-
+      Given / When / Then を relay-gate が検証できる範囲に絞り、文書側は注記にする。例:
+      - Given「運用者が green slot ジョブマップの JOB001 行の hang_detect_limit_minutes を 60 から 90 へ調整した」
+      - When「`validate-config.sh --job-map /etc/relay-gate/green-job-map.csv` を実行する」
+      - Then「終了コード 0 で、ヘッダーは job_id,host,user,work_dir,script,fixed_params,hang_detect_limit_minutes[,credential_ref][,map_version] のままで調整日時・調整根拠の列は無く、stdout に `rows=` と `map_version=`(任意列が無ければ `-`)が出る(調整日時・調整根拠となる警告時経過時間 82 は適用構成文書またはそのコミット履歴に運用者が残す。relay-gate は保持しない)」
+      または、シナリオを「運用手順(自動テスト対象外)」と明記して E2E 完了条件から外し、関連 USDM 表の SPEC-008-05 行では「調整は実行済み run に影響しない」とジョブマップ列の検証だけを対応シナリオにする
+
+  - id: R-5
+    viewpoint: 4
+    severity: minor
+    target: "実装切替業務/実装切替ジョブ実行フロー/実装スクリプトを実行して Runner Result を出力する/spec.md"
+    claim: "中止(aborted.txt 公開)後に実装が終了して exitcode.txt が公開されたケースで、slot runner が完了通知を送るかどうかが UC-05 / UC-08 / 契約のどこにも書かれていない。現状の記述どおりに読むと通知は送られ、parallel_runs が ABORTED の run に速報比較依頼が作られうるが、それが意図かどうか判別できない"
+    evidence: |-
+      - UC-05 spec.md 異常系 287〜292 行(Scenario「中止後に実装が終了した場合は exitcode.txt を優先して状態を導出する(SPEC-010-01)」): Then は「状態導出規則は exitcode.txt を優先して SUCCEEDED」「slot_executions の条件付き UPDATE は 0 件で WARN」までで、完了通知の有無に触れない
+      - UC-05 spec.md 処理フロー 100〜111 行: off 以外なら終端 UPDATE の後に無条件で「完了通知(UC「速報クロスチェック runner へ完了通知を送信する」)」へ進む
+      - UC-08 spec.md 分岐条件「速報クロスチェック有効判定」(115 行)と「Runner Result 完備条件」(117 行): 通知の有無は RAPID_CROSSCHECK_MODE と 3 ファイル公開だけで決まり、aborted.txt には言及しない。cli-command-contract.yaml slot runner IF idempotency(315 行)も aborted.txt は「起動時の二重起動判定のみ」
+      - UC-09 両系成功判定は rapid_runs の両系 SUCCEEDED だけを見るため、UC-23 で parallel_runs / slot_executions が ABORTED になった run でも依頼が REQUESTED で作成され、hang-detector が監視対象にする
+    suggested_fix: |-
+      UC-05 の当該シナリオの Then に完了通知の扱いを 1 行足し、契約 slot runner IF の idempotency / notes にも同じ規則を書く。例(現行の記述と整合する最小の明文化): 「aborted.txt があっても exitcode.txt を公開した slot は RAPID_CROSSCHECK_MODE が off 以外なら完了通知を送る(通知の要否は aborted.txt に依存しない)。両系成功なら速報比較依頼が作成される」。
+      送らない設計にする場合は、UC-08 の「速報クロスチェック有効判定」に「自 slot の aborted.txt があるときは送らない(WARN completion notice skipped ...)」を追加し、asyncapi.yaml slot-completed の description と契約を合わせる
+resolved:
+  - {id: R-1, resolution: fixed}
+  - {id: R-2, resolution: fixed}
+  - {id: R-3, resolution: fixed}
+  - {id: R-4, resolution: fixed}
+  - {id: R-5, resolution: deferred, reason: "minor。中止後に実装が終了した場合の完了通知の要否は RDRA / USDM に定義が無く Spec で決めない。確認推奨項目として返却", by: orchestrator}

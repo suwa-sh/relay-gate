@@ -1,0 +1,38 @@
+round: 2
+findings:
+  - id: R-003
+    viewpoint: 4
+    severity: major
+    target: "docs/specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/api/cli-command-contract.yaml"
+    claim: "D4-2 の「dispatcher が parallel_runs を FOR UPDATE で読めば abort-blue / abort-green と直列化される」は、abort 側の parallel_runs UPDATE が行にマッチする(STARTED / RUNNING)場合にしか成り立たない。D4-1 で「典型経路」と定義した parallel_runs=COMPLETED(foreground 中継済み)の run では、abort の `UPDATE parallel_runs ... WHERE status IN ('STARTED','RUNNING')` はスナップショット上で 0 件のため行ロック待ちが発生せず(PostgreSQL 系の READ COMMITTED では非マッチ行はロックしない)、続く `UPDATE rapid_crosscheck_requests ... WHERE status='REQUESTED'` が dispatcher の未 COMMIT INSERT を見ずに 0 件で終わる。同時に dispatcher は slot_executions をロック無し SELECT で読むため abort の未 COMMIT の ABORTED も見えず、依頼を INSERT して COMMIT する。結果、round-1 R-003 と同じ「中止済み run に REQUESTED の依頼が残る」が、今回の修正で主経路と位置づけた COMPLETED ケースでそのまま残る。契約 / UC-09 / UC-23 / rdb-schema _review_notes / buc-spec は「dispatcher が先なら abort の parallel_runs UPDATE が dispatcher の COMMIT を待つ」を無条件の事実として 5 箇所以上に記述しており、実装がそれを前提にすると競合窓が閉じない"
+    evidence: "cli-command-contract.yaml rapid-crosscheck-runner.sh idempotency / abort-blue.sh notes(競合窓の保険): 「本コマンドが先なら abort の parallel_runs UPDATE が待った後に … REQUESTED を 1 件 ABORTED にする」。abort-blue.sh exit_codes[0] / UC-23 tier-ops.md 表「共通(併更新)」: parallel_runs の UPDATE は `WHERE run_id = ? AND status IN ('STARTED','RUNNING')` で「COMPLETED は更新しない。0 件で可」。abort 側に無条件の行ロック(SELECT ... FOR UPDATE)は無い。UC-09 spec.md 108 行 / tier-rapid-crosscheck.md「abort との直列化」/ rdb-schema.yaml _review_notes 45 / UC-23 spec.md 条件表 155 行 / 速報クロスチェックフロー buc-spec.md 136 行: いずれも parallel_runs の状態を問わず直列化されると記述。UC-09 tier-rapid-crosscheck.md の BDD「parallel_runs の行ロックで abort-green.sh と直列化される」は Given が parallel_runs=RUNNING のみで、COMPLETED ケース(D4-1 の典型経路)を検証しない。dispatcher の slot_executions 参照は「ロックしない」(_model-summary.yaml / tier)と明記されており、abort の slot_executions UPDATE(先頭)が未 COMMIT の間は RUNNING に見える"
+    suggested_fix: "abort-blue / abort-green のトランザクション先頭(slot_executions UPDATE の前でも後でも可。ロック順は slot_executions → parallel_runs のまま)に `SELECT 1 FROM parallel_runs WHERE run_id = ? FOR UPDATE`(無条件の行ロック)を追加し、その後に条件付き UPDATE(parallel_runs / rapid_crosscheck_requests)を行う旨を契約 abort-blue.sh idempotency / notes(競合窓の保険)、UC-23 spec.md 処理フロー・条件表・tier-ops.md 表「共通(併更新)」、rdb-schema.yaml _review_notes 45 に反映する。これで parallel_runs が COMPLETED でも dispatcher の FOR UPDATE と待ち合わせ、dispatcher が先なら abort は COMMIT 済みの REQUESTED を 1 件 ABORTED にし、abort が先なら dispatcher は COMMIT 済みの slot_executions=ABORTED を読んで INSERT しない(dispatcher の slot_executions 読み取りは parallel_runs ロック取得後なので追加ロック不要)。UC-09 tier-rapid-crosscheck.md の直列化 BDD に Given parallel_runs=COMPLETED(slot_executions green=RUNNING)の派生シナリオを 1 件追加する。UC-09 / buc-spec / UC-23 の「dispatcher が先なら abort の parallel_runs UPDATE が待つ」の文言を「abort の parallel_runs 行ロック(FOR UPDATE)が待つ」に改める"
+
+  - id: R-008
+    viewpoint: 4
+    severity: minor
+    target: "docs/specs/events/20260907_024000_feedback_todo_followup/クロスチェック業務/速報クロスチェックフロー/両系成功時に速報比較依頼を作成する/_api-summary.yaml"
+    claim: "D4-1 の判定キー拡張(parallel_runs ABORTED または slot_executions に ABORTED あり)が UC-09 の _api-summary.yaml と速報クロスチェックフロー buc-spec の一部に反映されておらず、同じ UC 内で「並行稼働実行が ABORTED の run では」(旧判定キー)と「run が中止済み(… または slot_executions に ABORTED あり)」が混在する。_api-summary は契約生成の入力なので、契約 rapid-crosscheck-runner.sh(stdout / exit_codes[0] は拡張後)と食い違う"
+    evidence: "_api-summary.yaml x_cli_commands[0].stdout: 「並行稼働実行が ABORTED の run では両系成功でも request_status=- / requested_at=-」、exit_codes[0].meaning: 「並行稼働実行が ABORTED の run では両系成功でも依頼を作成せず 0」。速報クロスチェックフロー buc-spec.md 5 行(概要「並行稼働実行が ABORTED の run では両系成功でも作成せず」)、43 行(データフロー図「parallel_run.status(ABORTED なら依頼を作らない)」)、76 行、86 行(状態遷移図「parallel_run が ABORTED の run は遷移せず」)、119 行(遷移表)。同 buc-spec の 12 / 62 / 67 / 136 行と UC-09 spec.md / tier / _model-summary / 契約 request_creation_matrix は拡張後の判定キー"
+    suggested_fix: "_api-summary.yaml の stdout / exit_codes[0].meaning と buc-spec.md 5 / 43 / 76 / 86 / 119 行を「run が中止済み(parallel_runs ABORTED または slot_executions に ABORTED あり。後者は仮採用: rdra-feedback #13)」に統一する"
+
+  - id: R-009
+    viewpoint: 4
+    severity: minor
+    target: "docs/specs/events/20260907_024000_feedback_todo_followup/実行復旧業務/background 側リランフロー/元の execution-spec.json から復元して新しい run_id で起動する/tier-ops.md"
+    claim: "D4-5 で契約に `conventions.datetime_generation`(SQL 内の now() は使わない。日時はホスト生成のバインド値)を追加し RELAY_GATE_NOW.purpose から「DB の now() を使う UPDATE / INSERT」の文言を除いたが、background 側リランフローの 2 つの tier-ops.md は旧文言「DB の now() を使う INSERT / UPDATE にもこの値を渡す」のまま残り、規約と矛盾する(DB の now() を使う INSERT が存在する前提の記述)"
+    evidence: "元の execution-spec.json から復元して新しい run_id で起動する/tier-ops.md 114 行: 「`parallel_runs.requested_at`、`slot_executions.started_at`(DB の now() を使う INSERT / UPDATE にもこの値を渡す)」。速報比較依頼だけを新規作成する/tier-ops.md 96 行: 「`rapid_crosscheck_requests.requested_at`(DB の now() を使う INSERT にもこの値を渡す)」。cli-command-contract.yaml conventions.datetime_generation: 「SQL 内の now() / CURRENT_TIMESTAMP / DEFAULT now() は使わない」。rdb-schema.yaml _review_notes 44 も同趣旨。確報比較依頼を claim する側(spec.md 113 行 / tier-final-crosscheck.md 33 行)は「バインド値として渡す(DB の now() に依存しない)」に揃っている"
+    suggested_fix: "両 tier-ops.md の括弧内を「日時はホストで生成して SQL にバインド値で渡す(RELAY_GATE_NOW 設定時はその変換値。conventions.datetime_generation)」に差し替える"
+resolved:
+  - id: R-003
+    resolution: fixed
+    note: "change-brief D4-8。abort-blue / abort-green は slot_executions UPDATE 直後に parallel_runs を無条件 FOR UPDATE でロックしてから条件付き UPDATE を行う。契約 abort-blue.sh idempotency / notes、rapid-crosscheck-runner.sh idempotency、rdb-schema _review_notes、UC-23 spec・tier-ops、UC-09 tier に反映"
+    by: orchestrator
+  - id: R-008
+    resolution: fixed
+    note: "UC-09 _api-summary.yaml と速報クロスチェックフロー buc-spec.md の旧判定キー表現を D4-1 の表現に統一"
+    by: orchestrator
+  - id: R-009
+    resolution: fixed
+    note: "background 側リランフローの 2 つの tier-ops.md の RELAY_GATE_NOW 適用先を conventions.datetime_generation に整合"
+    by: orchestrator

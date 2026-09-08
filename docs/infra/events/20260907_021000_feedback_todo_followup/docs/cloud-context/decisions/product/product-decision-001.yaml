@@ -1,0 +1,45 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "product"
+artifact_id: "product-decision-001"
+title: "スクリプト実行ホストの常駐/定期起動基盤の選定"
+status: "accepted"
+generated_at: "2026-08-30T20:17:49"
+source_refs:
+  - "docs/mcl/product/output/product-workload-model.yaml#product.compute.script_runtime_hosts"
+inputs_ref:
+  - "product-relay-gate-workload-model"
+  - "foundation-context"
+
+decision:
+  context: |
+    facade / slot runner / rapid-crosscheck-runner・worker / ops CLI / final-crosscheck-worker を
+    どの実行基盤上で常駐 / 定期起動させるかを決める必要がある。foundation はコンテナ / オーケストレーション
+    基盤を前提にしないエアーギャップ・オンプレミス限定を要求する。
+  conflict_type: "capability"
+  options:
+    - id: "systemd_cron"
+      description: "Linux VM / 物理サーバ + systemd service(常駐 worker)+ systemd timer または cron(定期起動 worker)"
+      pros:
+        - "OS 標準機能のみで実現でき追加ミドルウェアが不要"
+        - "エアーギャップ制約に完全準拠する"
+        - "既存のジョブスケジューラ実行ホストにそのまま相乗りできる"
+      cons:
+        - "自動スケール・自動フェイルオーバーが無く、ホスト追加や復旧は手動作業になる"
+    - id: "kubernetes"
+      description: "Kubernetes CronJob / Deployment(コンテナ基盤)"
+      pros:
+        - "宣言的スケーリングと自己修復が得られる"
+      cons:
+        - "コンテナ / オーケストレーション基盤の新規導入が必要でfoundation制約に反する"
+        - "エアーギャップ環境でのコンテナレジストリ運用が追加の運用負担になる"
+  chosen_option: "systemd_cron"
+  rationale: >-
+    foundation.network.air_gapped と「コンテナ / オーケストレーション基盤は前提にしない」制約(REQ-COMP)に
+    直接適合し、既存実行ホストへの相乗りでコスト最適化(cost_posture: cost_optimized)も満たすため。
+  risk_assessment: >-
+    ホスト障害時のフェイルオーバーが手動になる点は availability_target(99%, manual failover)と整合しており、
+    許容範囲。将来 SLA を引き上げる場合は systemd の Restart=on-failure に加えてホスト冗長化の検討が必要。
+  affected_elements:
+    - "product.compute.script_runtime_hosts"
+  review_date: "2027-08-30"

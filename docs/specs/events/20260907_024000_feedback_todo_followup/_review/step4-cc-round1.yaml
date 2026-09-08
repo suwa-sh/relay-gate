@@ -1,0 +1,76 @@
+round: 1
+group: cc
+scope: "api + datastore + ux-ui + usdm-acceptance-matrix + uc-dependencies + rdra-feedback(差分更新レビュー。change-brief D1〜D3 への追従確認。traceability-matrix.md は対象外。design 無しモード)"
+verified_ok:
+  - "cli-command-contract.yaml: D1-1(owner / defined_in_uc 4 UC / keys の RDRA 属性名 / 仮採用注記除去)、D1-2(lease_and_poll.rapid.source / confidence)、D2-1(処理順・WARN・stderr warn・stdout request_status=- / requested_at=-・exit 0 meaning・notes・request_creation_matrix)、D2-2(abort-blue / abort-green の exit 0 / idempotency / execution_log / --run-id description / notes)、D2-3(request_status_transitions 7 行。状態.tsv「クロスチェック依頼」の 7 遷移((新規)→REQUESTED ×3 UC を 1 行に集約 / REQUESTED→CLAIMED / REQUESTED→ABORTED / CLAIMED→REQUESTED / CLAIMED→RUNNING / RUNNING→SUCCEEDED・FAILED / RUNNING→ABORTED)と 1:1。parallel_run_transitions / monitor_status_transitions と同じ list-of-strings 形式)、D3-1 / D3-6 / D3-7。validateAllYaml.js PASS"
+  - "rdb-schema.yaml: D2-4(status 遷移注記 = 状態.tsv と 1:1、completion_status 注記、parallel_runs.used_by に UC-09 SELECT あり、_review_notes 追加)、D3-3(_review_notes 日時列項目、slot_executions.completed_at)。rapid_crosscheck_requests.used_by に UC-23 UPDATE あり。validateRdbSchema.js PASS"
+  - "残存 UTC: 契約 90-91 / 106 / 150 / 792 / 1367 / 1371 / 1380 / 1395 / 1412-1413 / 1421、ui-design 65-66 / 109 / 230 / 276、rdb-schema 43 / 56 / 162、asyncapi 546、ux-design 208、uc-dependencies 12 / 227 はすべて D3-8(started-at.txt / aborted.txt / execution-spec.json の中身)・D3-9(RELAY_GATE_NOW 入力・TZ=UTC 前提)の例外か「UTC を使わない」旨の説明文。契約 1299 の『運用者(仮採用: _inference.md #6)』は final-crosscheck.env 側で今回の対象外(D1-1 のとおり触らない)"
+  - "usdm-acceptance-matrix.md: 集計値 SPEC 50 / 受け入れ条件 115 は requirements.yaml の grep -c と一致。UC-10 の 2 シナリオ名は spec.md と一致"
+  - "ui-design.md D3-2 / D3-4、data-visualization.md D3-5 / D3-6、ux-design.md / uc-dependencies.md / asyncapi.yaml D3-10、rdra-feedback.md(DIST-022 / 023 / 024 行、#9 / SR-001 / SR-002 残存)"
+findings:
+  - id: S4-cc-001
+    artifact: "usdm-acceptance-matrix.md"
+    file: "docs/specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/usdm-acceptance-matrix.md"
+    line: 55
+    severity: major
+    viewpoint: 7
+    claim: "SPEC-005-06 行の UC-02 / UC-08 のシナリオ名が各 UC spec.md の BDD シナリオ名・「関連 USDM」表と一致しない。UC-02: 『速報クロスチェック設定には認証情報の値が無く管理 DB 接続の参照名だけがある』『RAPID_CROSSCHECK_MODE=off では速報クロスチェック設定が無くても slot 実行できる』と書かれているが、UC-02 spec.md(284 / 292 行)の実名は『速報クロスチェック設定には管理 DB 接続の参照名だけがあり認証情報の値は含まれない』『RAPID_CROSSCHECK_MODE=off では速報クロスチェック設定が存在しなくても slot 実行できる』。また『既存の RAPID_DB_CONN_REF 検証シナリオに併記』と書かれているが UC-02 では独立した新規シナリオになっている。UC-08: 『設定された管理 DB 接続参照名で接続して完了通知を登録する』と書かれているが、UC-08 spec.md(183 行)の実名は『設定された参照名で管理 DB に接続して完了結果を登録する』"
+    fix: "55 行の対応シナリオ列を次に直す: 『UC-02: 速報クロスチェック設定には管理 DB 接続の参照名だけがあり認証情報の値は含まれない(AC3)/ RAPID_CROSSCHECK_MODE=off では速報クロスチェック設定が存在しなくても slot 実行できる(AC4)<br>UC-08: 設定された参照名で管理 DB に接続して完了結果を登録する(AC1 の接続参照名)<br>UC-10: 設定された lease 期間と poll 間隔で claim と poll が行われる(AC1 の lease / poll)/ 速報クロスチェック設定の所有者は基盤適用設計者である(AC2。設定所有区分)』。『既存の RAPID_DB_CONN_REF 検証シナリオに併記』の注記は削除する"
+    source_refs:
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/spec.md(210 行「関連 USDM」SPEC-005-06 行、284 / 292 行 Scenario)"
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/クロスチェック業務/速報クロスチェックフロー/速報クロスチェック runner へ完了通知を送信する/spec.md(164 行「関連 USDM」SPEC-005-06 行、183 行 Scenario)"
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/クロスチェック業務/速報クロスチェックフロー/速報比較依頼を claim する/spec.md(152 行、169 / 178 行 Scenario)"
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/_review/change-brief.md#D1-5"
+  - id: S4-cc-002
+    artifact: "usdm-acceptance-matrix.md"
+    file: "docs/specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/usdm-acceptance-matrix.md"
+    line: 51
+    severity: major
+    viewpoint: 7
+    claim: "SPEC-005-02 行(51 行)と SPEC-005-01 行(50 行)の追加分シナリオ名が UC spec.md と一致しない。UC-09(51 行): 『並行稼働実行が ABORTED の run では完了通知を受けても依頼を作成せず完了事実だけを記録する』『ABORTED の run で両系成功になっても依頼を作成せず実行ログに警告を残す』『中止した run をリランした新しい run では両系成功で依頼が作成される』と書かれているが、UC-09 spec.md(232 / 240 / 191 行)の実名は『並行稼働実行が ABORTED の run では完了通知を受けても依頼を作成しない』『ABORTED の run で両系成功になっても依頼を作成せず警告を残す』『中止した run のリランでは新しい run_id で依頼が作成される』。UC-08(50 行): 『aborted.txt がある slot で実装が走り切り exitcode.txt を公開しても通常どおり完了通知を送る』と書かれているが、UC-08 spec.md(204 行)の実名は『aborted.txt がある slot でも完了通知は通常どおり送る』"
+    fix: "51 行の UC-09 追加分 3 件を『並行稼働実行が ABORTED の run では完了通知を受けても依頼を作成しない(追加分 AC4)/ ABORTED の run で両系成功になっても依頼を作成せず警告を残す(追加分 AC5)/ 中止した run のリランでは新しい run_id で依頼が作成される(追加分 AC6)』に、50 行の UC-08 追加分を『aborted.txt がある slot でも完了通知は通常どおり送る(追加分。中止状態を判断しない)』に直す"
+    source_refs:
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/クロスチェック業務/速報クロスチェックフロー/両系成功時に速報比較依頼を作成する/spec.md(171 行「関連 USDM」SPEC-005-02 行、191 / 232 / 240 行 Scenario)"
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/クロスチェック業務/速報クロスチェックフロー/速報クロスチェック runner へ完了通知を送信する/spec.md(163 行「関連 USDM」SPEC-005-01 行、204 行 Scenario)"
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/_review/change-brief.md#D2-5"
+  - id: S4-cc-003
+    artifact: "usdm-acceptance-matrix.md"
+    file: "docs/specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/usdm-acceptance-matrix.md"
+    line: 73
+    severity: major
+    viewpoint: 7
+    claim: "SPEC-010-01 行の UC-23 追加分シナリオ名が UC-23 spec.md と一致しない。『REQUESTED の速報比較依頼がある run を中止するとその依頼も ABORTED になる』『CLAIMED または RUNNING の速報比較依頼がある run を中止しても依頼の状態は変わらない』と書かれているが、UC-23 spec.md(251 / 262 行)の実名は『REQUESTED の速報比較依頼がある run を中止すると依頼も ABORTED になる』『CLAIMED または RUNNING の速報比較依頼は slot の中止では変更されない』"
+    fix: "73 行の UC-23 追加分 2 件を『REQUESTED の速報比較依頼がある run を中止すると依頼も ABORTED になる(追加分 AC6)/ CLAIMED または RUNNING の速報比較依頼は slot の中止では変更されない(追加分 AC7)』に直す"
+    source_refs:
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/spec.md(226 行「関連 USDM」SPEC-010-01 行、251 / 262 行 Scenario)"
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/_review/change-brief.md#D2-5"
+  - id: S4-cc-004
+    artifact: "ui-design.md"
+    file: "docs/specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/ux-ui/ui-design.md"
+    line: 249
+    severity: minor
+    viewpoint: 6
+    claim: "通知メール規約の日次メールサマリー項に `hang-detect-trend.sh --since {前日 00:00Z}` が残っており、D3-6(`--since` はローカル ISO 8601 秒精度・指示子なし。Z 付きは形式不正で終了コード 2)と契約 `commands[hang-detect-trend.sh].options[--since]`(636-637 行)/ exit_codes 2(662 行)に反する。`data-visualization.md` 113 行は同じ箇所を `{前日 00:00:00(ローカル)}` に直しており「同文」の関係も崩れている"
+    fix: "249 行の `--since {前日 00:00Z}` を `--since {前日 00:00:00(ローカル)}` に直し、data-visualization.md 113 行と同文にする"
+    source_refs:
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/api/cli-command-contract.yaml#commands[hang-detect-trend.sh].options[--since] / exit_codes[2](636-637・662 行)"
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/ux-ui/data-visualization.md(113 行)"
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/_review/change-brief.md#D3-6"
+  - id: S4-cc-005
+    artifact: "asyncapi.yaml"
+    file: "docs/specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/api/asyncapi.yaml"
+    line: 342
+    severity: minor
+    viewpoint: 2
+    claim: "日時プロパティ(headers.timestamp 342 行、completed_at 393 行、requested_at 415 / 470 行、started_at / detected_at 545 / 568 行など)が `format: date-time`(RFC 3339 = タイムゾーン指示子必須)のまま、description と examples(280 / 298 / 321 / 327 行)はタイムゾーン指示子なしのローカル日時になっており、スキーマの format と値の形式が食い違う"
+    fix: "D3 の値形式に合わせ、指示子なしローカル日時のプロパティは `format: date-time` を外す(または `pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}$'` に置き換える)。全 date-time プロパティに同じ扱いを適用する"
+    source_refs:
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/api/asyncapi.yaml(280 / 298 / 321 / 327 行 examples、342 / 393 / 415 / 470 / 545 / 568 行 format)"
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/api/cli-command-contract.yaml#conventions.datetime(38 行)"
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/_review/change-brief.md#D3-10"
+resolved:
+  - {id: S4-cc-001, resolution: fixed}
+  - {id: S4-cc-002, resolution: fixed}
+  - {id: S4-cc-003, resolution: fixed}
+  - {id: S4-cc-004, resolution: fixed}
+  - {id: S4-cc-005, resolution: fixed}

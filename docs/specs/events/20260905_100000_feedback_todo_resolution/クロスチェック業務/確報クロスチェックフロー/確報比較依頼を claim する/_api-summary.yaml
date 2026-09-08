@@ -1,0 +1,45 @@
+uc: "確報比較依頼を claim する"
+business: "クロスチェック業務"
+buc: "確報クロスチェックフロー"
+paths: []
+x_cli_commands:
+  - name: "final-crosscheck-worker.sh"
+    tier: "tier-final-crosscheck"
+    role: "defines"
+    synopsis: "final-crosscheck-worker.sh [--once] [--worker-id <id>] [--verbose] [--help]"
+    invoked_by: "ジョブスケジューラ(定期ジョブ、--once)または DB セグメント上の常駐プロセス"
+    args: []
+    options:
+      - name: "--once"
+        type: "boolean"
+        required: false
+        description: "1 回だけ poll / claim / 実行して終了する"
+      - name: "--worker-id"
+        type: "string"
+        required: false
+        description: "claim に記録する worker 識別子。既定は {hostname}-{pid}(仮採用)"
+      - name: "--verbose"
+        type: "boolean"
+        required: false
+        description: "info を stderr にも出す"
+      - name: "--help"
+        type: "boolean"
+        required: false
+        description: "usage を stdout に出して終了コード 0"
+    stdin: "なし"
+    stdout: "出力しない(常駐ログは実行ログ final-crosscheck-worker.sh.log へ)"
+    stderr: "error: / hint:。--verbose 時は info: claimed ... / info: no request to claim ..."
+    exit_codes:
+      - code: 0
+        meaning: "1 サイクル完了(claim できた / 依頼が無かった、のどちらも 0)。常駐は SIGTERM で 0"
+      - code: 2
+        meaning: "未知のオプション、--worker-id の文字種不正、final-crosscheck.env 不在または必須キー欠落"
+      - code: 6
+        meaning: "管理 DB 接続・SQL 失敗、比較ツール起動失敗、内部エラー"
+async_events:
+  - name: "final-crosscheck-requests"
+    channel: "final-crosscheck-requests"
+    direction: "subscribe"
+    message: "FinalCrosscheckRequestMessage"
+    summary: "status=REQUESTED の final_crosscheck_requests を poll し、条件付き UPDATE で CLAIMED(worker_id, lease_until=now+10min)にする。lease 失効かつ未開始は REQUESTED に戻す"
+schemas: []

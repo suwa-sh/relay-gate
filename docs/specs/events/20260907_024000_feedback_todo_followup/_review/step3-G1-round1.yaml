@@ -1,0 +1,149 @@
+round: 1
+group: G1
+findings:
+  - id: S3-G1-1
+    uc: "クロスチェック業務/速報クロスチェックフロー/速報クロスチェック runner へ完了通知を送信する"
+    file: "docs/specs/events/20260907_024000_feedback_todo_followup/クロスチェック業務/速報クロスチェックフロー/速報クロスチェック runner へ完了通知を送信する/tier-facade.md"
+    line: 35
+    severity: minor
+    viewpoint: 3
+    claim: "ui-design.md のログ行形式の引用が `{ローカル出力日時}` だが、正本(ui-design.md 182 行目・契約 conventions.execution_log.line_format)は `{script} {run_id} {ローカル日時} {LEVEL} {message}` であり不一致。機械置換の残骸「この ローカル時刻列」(不要な空白)も残っている"
+    fix: "行形式を `{script} {run_id} {ローカル日時} {LEVEL} {message}` に揃え、「この ローカル時刻列」を「このローカル時刻列」に直す"
+    source_refs:
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/ux-ui/ui-design.md#L182"
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/api/cli-command-contract.yaml#conventions.execution_log"
+  - id: S3-G1-2
+    uc: "クロスチェック業務/速報クロスチェックフロー/速報クロスチェック runner へ完了通知を送信する"
+    file: "docs/specs/events/20260907_024000_feedback_todo_followup/クロスチェック業務/速報クロスチェックフロー/速報クロスチェック runner へ完了通知を送信する/tier-rapid-crosscheck.md"
+    line: 35
+    severity: minor
+    viewpoint: 3
+    claim: "ログ行形式の引用 `{ローカル出力日時}` が正本 `{ローカル日時}`(ui-design.md / 契約 line_format)と不一致。「この ローカル時刻列」の不要な空白も残る"
+    fix: "行形式を `{script} {run_id} {ローカル日時} {LEVEL} {message}` に揃え、「この ローカル時刻列」を「このローカル時刻列」に直す"
+    source_refs:
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/ux-ui/ui-design.md#L182"
+  - id: S3-G1-3
+    uc: "クロスチェック業務/速報クロスチェックフロー/両系成功時に速報比較依頼を作成する"
+    file: "docs/specs/events/20260907_024000_feedback_todo_followup/クロスチェック業務/速報クロスチェックフロー/両系成功時に速報比較依頼を作成する/tier-rapid-crosscheck.md"
+    line: 24
+    severity: minor
+    viewpoint: 3
+    claim: "ログ行形式の引用 `{ローカル出力日時}` が正本 `{ローカル日時}`(ui-design.md / 契約 line_format)と不一致。「この ローカル時刻列」の不要な空白も残る"
+    fix: "行形式を `{script} {run_id} {ローカル日時} {LEVEL} {message}` に揃え、「この ローカル時刻列」を「このローカル時刻列」に直す"
+    source_refs:
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/ux-ui/ui-design.md#L182"
+  - id: S3-G1-4
+    uc: "クロスチェック業務/速報クロスチェックフロー/速報比較依頼を claim する"
+    file: "docs/specs/events/20260907_024000_feedback_todo_followup/クロスチェック業務/速報クロスチェックフロー/速報比較依頼を claim する/tier-rapid-crosscheck.md"
+    line: 38
+    severity: minor
+    viewpoint: 3
+    claim: "ログ行形式の引用 `{ローカル出力日時}` が正本 `{ローカル日時}`(ui-design.md / 契約 line_format)と不一致。「この ローカル時刻列」の不要な空白も残る"
+    fix: "行形式を `{script} {run_id} {ローカル日時} {LEVEL} {message}` に揃え、「この ローカル時刻列」を「このローカル時刻列」に直す"
+    source_refs:
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/ux-ui/ui-design.md#L182"
+  - id: S3-G1-5
+    uc: "クロスチェック業務/速報クロスチェックフロー/比較ツールでジョブ単位比較を実行して結果を登録する"
+    file: "docs/specs/events/20260907_024000_feedback_todo_followup/クロスチェック業務/速報クロスチェックフロー/比較ツールでジョブ単位比較を実行して結果を登録する/tier-rapid-crosscheck.md"
+    line: 34
+    severity: minor
+    viewpoint: 3
+    claim: "ログ行形式の引用 `{ローカル出力日時}` が正本 `{ローカル日時}`(ui-design.md / 契約 line_format)と不一致。「この ローカル時刻列」の不要な空白も残る"
+    fix: "行形式を `{script} {run_id} {ローカル日時} {LEVEL} {message}` に揃え、「この ローカル時刻列」を「このローカル時刻列」に直す"
+    source_refs:
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/ux-ui/ui-design.md#L182"
+  - id: S3-G1-6
+    uc: "クロスチェック業務/速報クロスチェックフロー/速報比較結果を参照する"
+    file: "docs/specs/events/20260907_024000_feedback_todo_followup/クロスチェック業務/速報クロスチェックフロー/速報比較結果を参照する/tier-rapid-crosscheck.md"
+    line: 56
+    severity: minor
+    viewpoint: 3
+    claim: "ログ行形式の引用 `{ローカル出力日時}` が正本 `{ローカル日時}`(ui-design.md / 契約 line_format)と不一致。「この ローカル時刻列」の不要な空白も残る"
+    fix: "行形式を `{script} {run_id} {ローカル日時} {LEVEL} {message}` に揃え、「この ローカル時刻列」を「このローカル時刻列」に直す"
+    source_refs:
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/ux-ui/ui-design.md#L182"
+  - id: S3-G1-7
+    uc: "クロスチェック業務/速報クロスチェックフロー/両系成功時に速報比較依頼を作成する"
+    file: "docs/specs/events/20260907_024000_feedback_todo_followup/クロスチェック業務/速報クロスチェックフロー/両系成功時に速報比較依頼を作成する/spec.md"
+    line: 66
+    severity: minor
+    viewpoint: 5
+    claim: "データフロー表(37 行目)は domain CompletionStatus が parallel_runs.status との組で依頼作成可否を決めるとし、arch LP-010 も判定表を domain に置くが、処理フローの sequenceDiagram では `next_completion_status(blue_status, green_status, current)` に parallel_runs.status を渡さず、ABORTED 判定を usecase 内(69〜71 行目)で行っており、判定の所在が domain と usecase で食い違う"
+    fix: "sequenceDiagram の 66 行目を `next_completion_status(blue_status, green_status, current, parallel_run_status)` に変え、69 行目の alt を domain の返値(例: `can_create_request=false`)で分岐させる。分岐条件一覧 117 行目の適用箇所に `next_completion_status(domain)` を加える"
+    source_refs:
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/_inputs-digest.md#LP-010"
+  - id: S3-G1-8
+    uc: "クロスチェック業務/速報クロスチェックフロー/速報比較依頼を claim する"
+    file: "docs/specs/events/20260907_024000_feedback_todo_followup/クロスチェック業務/速報クロスチェックフロー/速報比較依頼を claim する/spec.md"
+    line: 14
+    severity: minor
+    viewpoint: 1
+    claim: "データフロー図の domain `LeasePolicy(lease_until = now + 10min)` と 31 行目の `poll_interval=30` が既定値を固定値として書いており、D1(lease 期間・poll 間隔は情報「速報クロスチェック設定」の RAPID_LEASE_SEC / RAPID_POLL_INTERVAL_SEC から読む)と整合しない"
+    fix: "14 行目を `LeasePolicy(lease_until = now + RAPID_LEASE_SEC。既定 600 秒)`、31 行目を `poll_interval=RAPID_POLL_INTERVAL_SEC(既定 30)` に直す"
+    source_refs:
+      - "docs/rdra/latest/情報.tsv#速報クロスチェック設定"
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/api/cli-command-contract.yaml#shared_rules.lease_and_poll"
+  - id: S3-G1-9
+    uc: "クロスチェック業務/速報クロスチェックフロー/速報比較依頼を claim する"
+    file: "docs/specs/events/20260907_024000_feedback_todo_followup/クロスチェック業務/速報クロスチェックフロー/速報比較依頼を claim する/_api-summary.yaml"
+    line: 45
+    severity: minor
+    viewpoint: 4
+    claim: "async_events の summary が「30 秒間隔で poll」「lease_until=now+10min」と固定値で書かれ、tier-rapid-crosscheck.md の設定ファイル節(RAPID_POLL_INTERVAL_SEC / RAPID_LEASE_SEC を速報クロスチェック設定から読む)と整合しない"
+    fix: "summary を「速報クロスチェック設定(rapid-crosscheck.env)の RAPID_POLL_INTERVAL_SEC(既定 30 秒)間隔で poll し、REQUESTED を条件付き UPDATE で CLAIMED(worker_id, lease_until=now+RAPID_LEASE_SEC。既定 600 秒)にする。lease 失効かつ未開始は REQUESTED に戻す」に直す"
+    source_refs:
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/クロスチェック業務/速報クロスチェックフロー/速報比較依頼を claim する/tier-rapid-crosscheck.md#L26-L30"
+  - id: S3-G1-10
+    uc: "クロスチェック業務/速報クロスチェックフロー/速報比較依頼を claim する"
+    file: "docs/specs/events/20260907_024000_feedback_todo_followup/クロスチェック業務/速報クロスチェックフロー/速報比較依頼を claim する/tier-rapid-crosscheck.md"
+    line: 51
+    severity: minor
+    viewpoint: 3
+    claim: "イベント処理仕様のトリガー「常駐(poll 間隔 30 秒)」と 77 行目「lease 失効(10 分)後」が既定値を固定値として書いており、同ファイル 26〜30 行目の設定ファイル節(RAPID_POLL_INTERVAL_SEC / RAPID_LEASE_SEC)と食い違う"
+    fix: "51 行目を「常駐(poll 間隔は RAPID_POLL_INTERVAL_SEC。既定 30 秒)」、77 行目を「lease 失効(RAPID_LEASE_SEC。既定 600 秒)後」に直す"
+  - id: S3-G1-11
+    uc: "クロスチェック業務/速報クロスチェックフロー/速報比較依頼を claim する"
+    file: "docs/specs/events/20260907_024000_feedback_todo_followup/クロスチェック業務/速報クロスチェックフロー/速報比較依頼を claim する/spec.md"
+    line: 179
+    severity: minor
+    viewpoint: 2
+    claim: "シナリオ「速報クロスチェック設定の所有者は基盤適用設計者である(SPEC-005-06)」の Given「設定所有区分(条件「設定所有区分」・契約 config_files の owner)」に具体値が無く、何を前提に検証するかが曖昧"
+    fix: "Given を「契約 config_files[rapid-crosscheck.env] の owner が `基盤適用設計者(設定所有区分: 速報クロスチェック設定。RDRA 情報「速報クロスチェック設定」)` で、バリエーション「設定所有区分」の値に `速報クロスチェック設定` がある」のように具体値で書く"
+    source_refs:
+      - "docs/rdra/latest/バリエーション.tsv#設定所有区分"
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/api/cli-command-contract.yaml#config_files.rapid-crosscheck.env.owner"
+  - id: S3-G1-12
+    uc: "クロスチェック業務/速報クロスチェックフロー/速報比較結果を参照する"
+    file: "docs/specs/events/20260907_024000_feedback_todo_followup/クロスチェック業務/速報クロスチェックフロー/速報比較結果を参照する/spec.md"
+    line: 135
+    severity: minor
+    viewpoint: 1
+    claim: "tier-rapid-crosscheck.md 57 行目は管理 DB 接続先を情報「速報クロスチェック設定」(rapid-crosscheck.env の RAPID_DB_CONN_REF)から読むと定義し、契約 config_files の readers にも rapid-crosscheck-result.sh があるが、spec.md の関連 RDRA モデルに情報「速報クロスチェック設定」の行が無い(BUC.tsv には紐付けが無いため spec 追加採用として明示が必要)"
+    fix: "関連 RDRA モデルの情報「Runner Result」行の直後に `| 情報 | 速報クロスチェック設定 | 管理 DB 接続参照名(RAPID_DB_CONN_REF)だけを読む(spec 追加採用。BUC.tsv 未紐付け。tier-rapid-crosscheck) |` を追加する"
+    source_refs:
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/クロスチェック業務/速報クロスチェックフロー/速報比較結果を参照する/tier-rapid-crosscheck.md#L57"
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/api/cli-command-contract.yaml#config_files.rapid-crosscheck.env.readers"
+  - id: S3-G1-13
+    uc: "クロスチェック業務/速報クロスチェックフロー/速報比較結果を参照する"
+    file: "docs/specs/events/20260907_024000_feedback_todo_followup/クロスチェック業務/速報クロスチェックフロー/buc-spec.md"
+    line: 64
+    severity: minor
+    viewpoint: 1
+    claim: "情報 CRUD マトリクスの「速報クロスチェック設定」行で「速報比較結果を参照する」列が `-` だが、同 UC の tier-rapid-crosscheck.md 57 行目は rapid-crosscheck.env の RAPID_DB_CONN_REF を読む(契約 readers にも rapid-crosscheck-result.sh がある)"
+    fix: "「速報比較結果を参照する」列を `R(接続参照名。spec 追加採用)` に直す"
+    source_refs:
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/クロスチェック業務/速報クロスチェックフロー/速報比較結果を参照する/tier-rapid-crosscheck.md#L57"
+resolved:
+  - {id: S3-G1-1, resolution: fixed}
+  - {id: S3-G1-2, resolution: fixed}
+  - {id: S3-G1-3, resolution: fixed}
+  - {id: S3-G1-4, resolution: fixed}
+  - {id: S3-G1-5, resolution: fixed}
+  - {id: S3-G1-6, resolution: fixed}
+  - {id: S3-G1-7, resolution: fixed}
+  - {id: S3-G1-8, resolution: fixed}
+  - {id: S3-G1-9, resolution: fixed}
+  - {id: S3-G1-10, resolution: fixed}
+  - {id: S3-G1-11, resolution: fixed}
+  - {id: S3-G1-12, resolution: fixed}
+  - {id: S3-G1-13, resolution: fixed}

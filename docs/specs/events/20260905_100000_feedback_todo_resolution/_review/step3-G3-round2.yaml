@@ -1,0 +1,38 @@
+round: 2
+group: G3
+# 前ラウンド S3-G3-1〜10 は全件再検証し、解消を確認した(同 id の再掲なし)。以下は修正に伴う新規の不整合。
+findings:
+  - id: S3-G3-11
+    uc: "クロスチェック業務/速報クロスチェックフロー/比較ツールでジョブ単位比較を実行して結果を登録する"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/クロスチェック業務/速報クロスチェックフロー/比較ツールでジョブ単位比較を実行して結果を登録する/spec.md"
+    line: 37
+    severity: minor
+    viewpoint: 5
+    claim: "_model-summary.yaml(S3-G3-7 の修正で追加)は parallel_runs.parent_run_id の SELECT と slot_executions の件数 SELECT を独立した操作として持つが、spec.md のデータフロー図は slot_executions を parallel_runs ノードの注記に畳み込み、両 SELECT の辺が無い(UPDATE 辺のみ)"
+    fix: "データフロー図に `T_SE[(\"slot_executions\\nrun_id(件数)\")]` ノードを追加し、`R_GW_DB -->|\"SQL SELECT parent_run_id WHERE run_id=?\"| T_PR` と `R_GW_DB -->|\"SQL SELECT count(*) WHERE run_id=?\"| T_SE` の 2 辺を UPDATE 辺の前に加える(T_PR ノードの注記から `/ slot_executions(件数)` を外す)"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/クロスチェック業務/速報クロスチェックフロー/比較ツールでジョブ単位比較を実行して結果を登録する/_model-summary.yaml#parallel_runs SELECT / slot_executions SELECT"
+  - id: S3-G3-12
+    uc: "クロスチェック業務/速報クロスチェックフロー/速報比較依頼を claim する"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/クロスチェック業務/速報クロスチェックフロー/速報比較依頼を claim する/_api-summary.yaml"
+    line: 30
+    severity: minor
+    viewpoint: 4
+    claim: "tier-rapid-crosscheck.md の stderr 一覧(37 行目。S3-G3-3 の修正で追記)にある `error: invalid value key=RAPID_CROSSCHECK_MODE value=...` + 次行 `hint: use foreground, background or off`(2)と `info: no request to claim worker_id=...`(--verbose)が _api-summary.yaml の stderr に無い"
+    fix: "stderr に `error: invalid value key=RAPID_CROSSCHECK_MODE value=...(2。次行に hint: use foreground, background or off)` と `info: no request to claim worker_id=...(--verbose)` を追加する"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/クロスチェック業務/速報クロスチェックフロー/速報比較依頼を claim する/tier-rapid-crosscheck.md#出力契約 stderr"
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/cli-command-contract.yaml#L1092"
+resolved:
+  - {id: S3-G3-1, resolution: verified}
+  - {id: S3-G3-2, resolution: verified}
+  - {id: S3-G3-3, resolution: verified}
+  - {id: S3-G3-4, resolution: verified}
+  - {id: S3-G3-5, resolution: verified}
+  - {id: S3-G3-6, resolution: verified}
+  - {id: S3-G3-7, resolution: verified}
+  - {id: S3-G3-8, resolution: verified}
+  - {id: S3-G3-9, resolution: verified}
+  - {id: S3-G3-10, resolution: verified}
+  - {id: S3-G3-11, resolution: fixed}
+  - {id: S3-G3-12, resolution: fixed}

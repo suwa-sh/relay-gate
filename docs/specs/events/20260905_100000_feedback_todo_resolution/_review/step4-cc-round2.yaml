@@ -1,0 +1,36 @@
+round: 2
+group: cc
+scope: "api + datastore + ux-ui(1 subagent で 3 担当分。round1 findings の file と修正影響先のみ再検証。traceability-matrix.md は対象外)"
+findings:
+  - id: S4-cc-010
+    artifact: "cli-command-contract.yaml"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/cli-command-contract.yaml"
+    line: 240
+    severity: minor
+    viewpoint: 7
+    claim: "S4-cc-008 の修正で facade.sh の exit 2 条件に加えた括弧書き『facade は WORKER を起動しないが D1 の必須キーとして検証する』の『D1』は change-brief.md 内部の決定ラベルで、成果物(契約)の読者には意味が通らない(契約内の他箇所は RDRA / USDM / config_files への参照で書かれており、change-brief のラベルを引いている箇所は無い)"
+    fix: "240 行の『D1 の必須キーとして検証する』を『feature-flag.env の必須キー(config_files.feature-flag.env.keys / validation_rules)として検証する』に改める"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_review/change-brief.md#D1"
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/cli-command-contract.yaml#config_files.feature-flag.env.validation_rules(1089 行)"
+checked_ok:
+  - "S4-cc-001(rdb-schema.yaml _review_notes 29 行): 終端 UPDATE 0 件のログが `WARN management db not updated run_id=... role=...`(abort-blue / abort-green と同文。ERROR ではない)に修正済み。U5 と一致"
+  - "S4-cc-002(rdb-schema.yaml used_by): parallel_runs.used_by に『実装スクリプトを実行して Runner Result を出力する: [UPDATE]』『比較ツールでジョブ単位比較を実行して結果を登録する: [SELECT, UPDATE]』が追加済み、slot_executions.used_by から『リラン対象を検証する』が削除され『比較ツールでジョブ単位比較を実行して結果を登録する: [SELECT]』が追加済み。parallel_runs.used_by に残る『リラン対象を検証する: [SELECT]』は当該 UC の _model-summary.yaml(`--role rapid-crosscheck` の元実行特定のみ。blue / green の事前検証では読まない)と一致するため妥当。slot_executions / parallel_runs の used_by 全件を該当 UC の _model-summary.yaml(8 UC / 11 UC)の operations と突合し、過不足なし"
+  - "S4-cc-003(rdb-schema.yaml _review_notes 35 行・slot_executions.used_by): 『hang-detector は slot_executions を読まない(成果物ファイルのみ)』に改められ、used_by から『background 実行の経過時間と終了状態を判定する』が削除済み。当該 UC の _model-summary.yaml の先頭コメントと一致"
+  - "S4-cc-004(asyncapi.yaml 114 行): 『通知前』の順序規定を外し『exitcode.txt 公開時(終端 UPDATE に続けて)当該 parallel_run を COMPLETED にする』に修正済み。138 行・契約 idempotency と整合"
+  - "S4-cc-005(ui-design.md 159・161 行): 参照先が `config_files.feature-flag.env.error_messages` に修正され、enum 外エラーに `hint: use foreground, background or off` を 1 行続ける旨が追記済み。契約 992 行と同文"
+  - "S4-cc-006(ui-design.md 187 行): gateway 呼び出しログが `INFO ssh exec started run_id=... role=... host=... user=... work_dir=... script=...` / `INFO ssh exec finished run_id=... role=... exit_code=N` に置き換わり、ローカル実行の `INFO local exec started / finished` が併記済み。U6 と一致"
+  - "S4-cc-007(cli-command-contract.yaml 1187・1223・1227 行): compare_targets に『カンマを含むセルは csv_rules に従い二重引用符で囲む』、target-catalog.csv の compare_condition / business_date_handling に『カンマ・二重引用符を含む場合は二重引用符で囲む』が追記済み"
+  - "S4-cc-008(cli-command-contract.yaml 240 行): facade.sh exit 2 条件に『RAPID_CROSSCHECK_MODE が off 以外で RAPID_CROSSCHECK_WORKER 欠落・空・絶対パスでない・実行不可』が追加され、validation_rules(1089 行)・validate-config.sh の exit 2 条件(1004 行)と一致。ただし追記文中の『D1』ラベルは S4-cc-010 として再掲"
+  - "S4-cc-009(cli-command-contract.yaml owner): 1042 行『設定所有区分: feature flag』、1108 行『slot ジョブマップ』、1158・1167・1203 行『クロスチェックジョブマップ』、1231 行『ハング検知定期ジョブ設定』に統一済み。rapid-crosscheck.env / final-crosscheck.env(1265・1296 行)の『運用者(仮採用: _inference.md #6)』は RDRA 設定所有区分に対応値が無く、change-brief の解消済み一覧にも #6 は含まれないため残置で妥当"
+resolved:
+  - {id: S4-cc-001, resolution: fixed}
+  - {id: S4-cc-002, resolution: fixed}
+  - {id: S4-cc-003, resolution: fixed}
+  - {id: S4-cc-004, resolution: fixed}
+  - {id: S4-cc-005, resolution: fixed}
+  - {id: S4-cc-006, resolution: fixed}
+  - {id: S4-cc-007, resolution: fixed}
+  - {id: S4-cc-008, resolution: fixed}
+  - {id: S4-cc-009, resolution: fixed}
+  - {id: S4-cc-010, resolution: fixed}

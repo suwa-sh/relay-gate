@@ -1,0 +1,51 @@
+round: 1
+group: G2
+findings:
+  - id: S3-G2-001
+    uc: "実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる"
+    file: "docs/specs/events/20260907_024000_feedback_todo_followup/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/_api-summary.yaml"
+    line: 13
+    severity: minor
+    viewpoint: 4
+    claim: "abort-blue.sh / abort-green.sh の options に `--verbose` が無いが、tier-ops.md の実行ログ(`--verbose` 時は stderr に `info: rapid request aborted ...`)と BDD(`abort-green.sh ... --yes --verbose`)および契約 cli-command-contract.yaml(synopsis `[--verbose] [--help]`)は `--verbose` を前提にしており不整合"
+    fix: "abort-blue.sh / abort-green.sh(必要なら abort-rapid-crosscheck.sh / abort-final-crosscheck.sh も)の options に `--verbose`(boolean、required false、default false、description「info を stderr に出す」)を追加し、synopsis を `abort-blue.sh --run-id <RUN_ID> [--yes] [--verbose]` にする。tier-ops.md 11 行目の書式 `abort-{...}.sh --run-id <ID> [--yes]` も `[--verbose]` を含めて前半 UC の tier-ops.md と揃える"
+    source_refs:
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/tier-ops.md#L11,L62,L145"
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/api/cli-command-contract.yaml#abort-blue.sh synopsis / options"
+  - id: S3-G2-002
+    uc: "実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる"
+    file: "docs/specs/events/20260907_024000_feedback_todo_followup/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/tier-ops.md"
+    line: 62
+    severity: minor
+    viewpoint: 3
+    claim: "実行ログ `INFO rapid request aborted ... answer=yes` の answer 値が `--yes` 起動時にどうなるか未定義(同じ行の `INFO status changed ... answer=yes|yes(--yes)` とは表記が異なり、BDD の `--yes --verbose` シナリオは `operator=` までしか検証していない)"
+    fix: "`INFO rapid request aborted run_id=... from=REQUESTED to=ABORTED operator=... answer=yes|yes(--yes)` と明記し(status changed 行と同じ規則)、tier-ops.md 147 行目の Then を `... operator=ops01 answer=yes(--yes)` まで含む具体値にする。spec.md 51 / 170 行目の同文も揃える(契約 execution_log の記述との整合は cc 側で確認)"
+    source_refs:
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/_review/change-brief.md#D2-2 実行ログ"
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/api/cli-command-contract.yaml#abort-blue.sh execution_log"
+  - id: S3-G2-003
+    uc: "実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる"
+    file: "docs/specs/events/20260907_024000_feedback_todo_followup/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/spec.md"
+    line: 265
+    severity: minor
+    viewpoint: 2
+    claim: "SPEC-010-01 AC7 のシナリオ「CLAIMED または RUNNING の速報比較依頼は slot の中止では変更されない」の Given が `status=CLAIMED(または RUNNING)` と 2 値を括弧で併記しており、1 シナリオとして具体値が確定していない(Then の `CLAIMED(または RUNNING)のまま` も同様)"
+    fix: "Scenario Outline に変え Examples で `| status | worker_id | started_at |` を `| CLAIMED | worker-01 | NULL |` と `| RUNNING | worker-01 | 2026-08-30T11:46:00 |` の 2 行にする(Then は `status が <status> のまま、completed_at は NULL のまま`)。tier-ops.md 150〜155 行目のティア BDD は RUNNING 固定なので、CLAIMED の行も同様に追加するか Outline 化する"
+    source_refs:
+      - "docs/usdm/latest/requirements.yaml#SPEC-010-01 acceptance_criteria[6]"
+  - id: S3-G2-004
+    uc: "実行復旧業務/background 側リランフロー/元の execution-spec.json から復元して新しい run_id で起動する"
+    file: "docs/specs/events/20260907_024000_feedback_todo_followup/実行復旧業務/background 側リランフロー/元の execution-spec.json から復元して新しい run_id で起動する/tier-ops.md"
+    line: 108
+    severity: minor
+    viewpoint: 3
+    claim: "データモデル変更の `restored_at | datetime | 復元日時(C1)` に時刻表記の規則が無く、直後の 114 行目(`RELAY_GATE_NOW` の適用先: 新 run_id の時刻部は「ローカルタイムゾーンへ変換した値」と並記)から restored_at もローカル化されたと読めるが、D3-8 と契約 execution_spec_rules では execution-spec.json の `restored_at` は UTC ISO 8601 Z 付きのまま(例 `2026-08-30T12:00:00Z`)"
+    fix: "108 行目の説明を「復元日時(C1)。UTC ISO 8601 秒精度 Z 付き(execution-spec.json の中身は Runner Result Contract と同じく UTC のまま。例 `2026-08-30T12:45:00Z`。`RELAY_GATE_NOW` 設定時はその値をそのまま書く)」にし、114 行目の `restored_at` に「(UTC Z 付きのまま。ローカル変換しない)」を添える。spec.md 142 行目の計算ルール「execution-spec 復元」にも同じ表記を追記する"
+    source_refs:
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/_review/change-brief.md#D3-8"
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/api/cli-command-contract.yaml#execution_spec_rules restored_at(L1421)"
+resolved:
+  - {id: S3-G2-001, resolution: fixed}
+  - {id: S3-G2-002, resolution: fixed}
+  - {id: S3-G2-003, resolution: fixed}
+  - {id: S3-G2-004, resolution: fixed}

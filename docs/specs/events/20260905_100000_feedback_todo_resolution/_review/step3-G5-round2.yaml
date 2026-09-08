@@ -1,0 +1,41 @@
+round: 2
+group: G5
+findings:
+  - id: S3-G5-015
+    uc: "実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/tier-ops.md"
+    line: 78
+    severity: minor
+    viewpoint: 3
+    claim: "データモデル変更表の slot_executions.mode 行が「WHERE 句に使う」のままで、S3-G5-009 の修正で `mode` 条件を外した同ファイル 24 / 25 行目の UPDATE 文(`WHERE run_id = ? AND slot = ? AND status = 'RUNNING'`)および契約 abort-blue.sh exit_codes 0 の WHERE 句と食い違う"
+    fix: "78 行目の説明を「foreground / background。表示のみ(可否判定の正本は execution-spec.json の mode。UPDATE の WHERE 句には使わない)」に直す"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/tier-ops.md#スクリプトごとの対象と更新"
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/cli-command-contract.yaml#abort-blue.sh exit_codes"
+  - id: S3-G5-016
+    uc: "実行復旧業務/background 側リランフロー/リラン対象を検証する"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/実行復旧業務/background 側リランフロー/リラン対象を検証する/spec.md"
+    line: 21
+    severity: minor
+    viewpoint: 5
+    claim: "データフロー図の DB ノード `parallel_runs\\nrun_id / job_id / status` に `status` が残っており、S3-G5-003 の修正で status 列を外した同 UC の `_model-summary.yaml`(parallel_runs SELECT は job_id のみ)と、同 spec 39 / 159 行目の「parallel_runs(job_id)」と整合しない"
+    fix: "21 行目のノードラベルを `parallel_runs\\nrun_id / job_id(rapid-crosscheck のみ)` に直し、status を外す"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/実行復旧業務/background 側リランフロー/リラン対象を検証する/_model-summary.yaml#tables.parallel_runs"
+resolved:
+  - {id: S3-G5-001, resolution: fixed}
+  - {id: S3-G5-002, resolution: fixed}
+  - {id: S3-G5-003, resolution: fixed}
+  - {id: S3-G5-004, resolution: fixed}
+  - {id: S3-G5-005, resolution: fixed}
+  - {id: S3-G5-006, resolution: fixed}
+  - {id: S3-G5-007, resolution: fixed}
+  - {id: S3-G5-008, resolution: fixed}
+  - {id: S3-G5-009, resolution: fixed}
+  - {id: S3-G5-010, resolution: fixed}
+  - {id: S3-G5-011, resolution: fixed}
+  - {id: S3-G5-012, resolution: fixed}
+  - {id: S3-G5-013, resolution: fixed}
+  - {id: S3-G5-014, resolution: fixed}
+  - {id: S3-G5-015, resolution: fixed}
+  - {id: S3-G5-016, resolution: fixed}

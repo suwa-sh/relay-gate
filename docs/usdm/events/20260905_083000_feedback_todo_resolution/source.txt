@@ -1,0 +1,28 @@
+feedback request lineage (requirements stage)
+
+feedback_request_id: 20260905_todo_resolution
+input_sha256: 285429579e9c9d28307d4c779317f01941b915a1203d0e5b5f53a6c014ed7108
+stage_packet: docs/pipeline/feedback-runs/20260905_todo_resolution/stage-packets/requirements.md
+request_ids: CR-c770d8f0-001, CR-c770d8f0-002, CR-c770d8f0-003, CR-c770d8f0-004, CR-c770d8f0-005, CR-c770d8f0-006, CR-c770d8f0-007, CR-c770d8f0-008, CR-c770d8f0-009, CR-c770d8f0-010, CR-c770d8f0-011
+direct_work_unit_ids: CR-c770d8f0-001#1, CR-c770d8f0-002#1, CR-c770d8f0-003#1, CR-c770d8f0-004#1, CR-c770d8f0-005#1, CR-c770d8f0-006#1, CR-c770d8f0-007#1, CR-c770d8f0-008#1, CR-c770d8f0-009#1, CR-c770d8f0-010#1, CR-c770d8f0-011#1
+causal_work_unit_ids: CR-c770d8f0-001#1, CR-c770d8f0-002#1, CR-c770d8f0-003#1, CR-c770d8f0-004#1, CR-c770d8f0-005#1, CR-c770d8f0-006#1, CR-c770d8f0-007#1, CR-c770d8f0-008#1, CR-c770d8f0-009#1, CR-c770d8f0-010#1, CR-c770d8f0-011#1
+
+feedback_request:
+  feedback_request_id: "20260905_todo_resolution"
+  input_sha256: "285429579e9c9d28307d4c779317f01941b915a1203d0e5b5f53a6c014ed7108"
+  request_ids: ["CR-c770d8f0-001","CR-c770d8f0-002","CR-c770d8f0-003","CR-c770d8f0-004","CR-c770d8f0-005","CR-c770d8f0-006","CR-c770d8f0-007","CR-c770d8f0-008","CR-c770d8f0-009","CR-c770d8f0-010","CR-c770d8f0-011"]
+  work_unit_ids: ["CR-c770d8f0-001#1","CR-c770d8f0-002#1","CR-c770d8f0-003#1","CR-c770d8f0-004#1","CR-c770d8f0-005#1","CR-c770d8f0-006#1","CR-c770d8f0-007#1","CR-c770d8f0-008#1","CR-c770d8f0-009#1","CR-c770d8f0-010#1","CR-c770d8f0-011#1"]
+
+work unit → USDM 反映先(CR 本文は packet を正本とし、ここには複製しない)
+
+- CR-c770d8f0-001#1 (feature-flag-keys): SPEC-001-01 受け入れ条件追加 / SPEC-005-04・SPEC-011-01 の RAPID_CROSSCHECK_MODE=on を background に変更
+- CR-c770d8f0-002#1 (job-map-csv-format): SPEC-004-04 新設(CSV 形式・元資料の列名・fixed_params セル規則)
+- CR-c770d8f0-003#1 (run-id-format): SPEC-011-04 新設(ローカルタイムゾーン timestamp + job_id + 8 桁 hex)
+- CR-c770d8f0-004#1 (aborted-marker-off-mode): SPEC-010-01 に aborted.txt と状態導出規則、off モードでの中止→リランの受け入れ条件を追加
+- CR-c770d8f0-005#1 (notice-failure-out-of-scope): SPEC-005-01 に完了通知失敗時の受け入れ条件を追加
+- CR-c770d8f0-006#1 (management-db-internal): SPEC-011-05 新設(管理 DB は内部データストア、SSH ホストは外部システム維持)
+- CR-c770d8f0-007#1 (info-attributes-cleanup): SPEC-008-05(調整記録の置き場)/ SPEC-002-02(応答日時なし)に受け入れ条件を追加
+- CR-c770d8f0-008#1 (monitor-status-unify): SPEC-008-03 に監視状態 6 値の統一と通知後・中止後の終端遷移を追加
+- CR-c770d8f0-009#1 (parallel-run-transitions): SPEC-011-06 新設(STARTED → ABORTED、リラン由来 run の COMPLETED)
+- CR-c770d8f0-010#1 (hang-detector-env-info): SPEC-008-06 新設(ハング検知定期ジョブ設定と設定所有区分)
+- CR-c770d8f0-011#1 (comparison-result-condition): SPEC-005-03 に比較結果の登録条件の受け入れ条件を追加

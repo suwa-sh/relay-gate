@@ -1,0 +1,5 @@
+# digest of nfr/latest/nfr-grade.yaml section model_system (L6-8); source_sha256: 69cca2e1c16f18ab4178b5a0e5af690acc7a82338c64a37176767e860a06693f
+# 派生物。正本は nfr-grade.yaml。編集しない
+model_system:
+  type: "model1"
+  reason: "アクターは運用部門の 2 種(運用者・基盤適用設計者)のみで社内利用に限定され、対外公開しないバッチジョブ並行稼働基盤であるため。ただし foreground slot の結果は本番の業務ジョブ結果としてジョブスケジューラへ中継されるため、可用性・回復性の一部は model2 相当へ引き上げる"

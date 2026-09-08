@@ -1,0 +1,511 @@
+{
+  "event_id": "20260907_131000_feedback_stage_spec",
+  "type": "feedback_stage_completed",
+  "run_id": "feedback-20260907_abort_consistency-20260907_203553-30561",
+  "attempt": 1,
+  "created_at": "2026-09-07T13:10:00Z",
+  "stage": "spec",
+  "direct_work_unit_ids": [],
+  "causal_work_unit_ids": [
+    "CR-c770d8f0-016#1",
+    "CR-c770d8f0-017#1",
+    "CR-c770d8f0-018#1"
+  ],
+  "work_unit_results": [],
+  "reconciliation_results": [
+    {
+      "work_unit_id": "CR-c770d8f0-016#1",
+      "status": "changed",
+      "reason": "中止済み run の判定キーを「parallel_runs.status = ABORTED、または完了通知の対象 slot の slot_executions.status = ABORTED(aborted.txt のミラー。同一トランザクションで rapid_runs FOR UPDATE → parallel_runs FOR UPDATE → 対象 slot の slot_executions SELECT)」に拡張し、rapid-crosscheck-runner.sh の request_creation_matrix を縦軸 3 値 × 横軸 3 値に改めて「仮採用: rdra-feedback #13」注記を外した(実行ログ / stderr の reason は parallel_run_aborted / slot_execution_aborted)。slot_executions.status は条件付き UPDATE で一度だけ終端値を書き、abort 後に実装が走り切って exitcode.txt を公開した経路では ABORTED のまま残す(再同期しない)ことを rdb-schema / 契約 shared_rules.exitcode_to_status / UC-04 / UC-05 / UC-18 / ui-design に明記。UC-09 の spec / tier / _model-summary(slot_executions SELECT)と USDM SPEC-005-02 AC5 / AC6 の BDD、buc-spec(速報)の CRUD を更新。対象 slot 限定で抜けが無いこと(abort-* が parallel_runs を ABORTED にする)を反証レビューで確認。トレーサビリティ 380/380(100%)",
+      "artifact_refs": [
+        "specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/datastore/rdb-schema.yaml",
+        "specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/ux-ui/ui-design.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/両系成功時に速報比較依頼を作成する/spec.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/両系成功時に速報比較依頼を作成する/tier-rapid-crosscheck.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/両系成功時に速報比較依頼を作成する/_model-summary.yaml",
+        "specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/両系成功時に速報比較依頼を作成する/_api-summary.yaml",
+        "specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/速報クロスチェック runner へ完了通知を送信する/tier-facade.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/速報クロスチェック runner へ完了通知を送信する/tier-rapid-crosscheck.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/buc-spec.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/実装切替業務/実装切替ジョブ実行フロー/実装スクリプトを実行して Runner Result を出力する/spec.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/実装切替業務/実装切替ジョブ実行フロー/実装スクリプトを実行して Runner Result を出力する/tier-facade.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/実装切替業務/実装切替ジョブ実行フロー/実装スクリプトを実行して Runner Result を出力する/_model-summary.yaml",
+        "specs/events/20260907_131000_feedback_abort_consistency/実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/spec.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/tier-facade.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/実装切替業務/実装切替ジョブ実行フロー/buc-spec.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/spec.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/tier-ops.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/traceability-matrix.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/usdm-acceptance-matrix.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/rdra-feedback.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/decisions/spec-decision-007.yaml",
+        "specs/events/20260907_131000_feedback_abort_consistency/_inputs-digest.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/_inference.md"
+      ]
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-017#1",
+      "status": "changed",
+      "reason": "abort-rapid-crosscheck.sh の対象を REQUESTED / CLAIMED / RUNNING に拡張(停止確認 yes 後に status IN 条件付き UPDATE。終端状態は状態変更なしで 3、表示後に終端した競合の 0 件も 3)、abort-final-crosscheck.sh は RUNNING のみ維持(確報の未着手依頼は polling 上限で扱う)。rapid-crosscheck-worker.sh の CLAIMED → RUNNING を status=CLAIMED AND worker_id 条件の条件付き UPDATE にし、0 件なら比較ツールを起動せず成果物も comparison_results も作らず 0(再 SELECT が ABORTED なら WARN comparison not started reason=request_aborted、それ以外は WARN request not owned)。shared_rules.state_codes.request_status_transitions に CLAIMED → ABORTED を追加し速報 / 確報の ABORTED 遷移を分離、rdb-schema の遷移注記・比較開始 UPDATE 0 件・ロック順(abort-rapid-crosscheck は worker と同順)を追記。background-rerun.sh の REQUESTED / CLAIMED 時 hint を abort-rapid-crosscheck 案内に。UC-23 の状態遷移一覧に CLAIMED → ABORTED(適用 tier 非空)、UC-11 に条件「依頼中止可否判定」、USDM SPEC-010-02 AC2〜AC5 の BDD(UC-23 / UC-11)、buc-spec(速報 / 実行中止)の状態遷移図、usdm-acceptance-matrix / rdra-feedback(#15 解消)を更新",
+      "artifact_refs": [
+        "specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/datastore/rdb-schema.yaml",
+        "specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/api/asyncapi.yaml",
+        "specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/uc-dependencies.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/比較ツールでジョブ単位比較を実行して結果を登録する/spec.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/比較ツールでジョブ単位比較を実行して結果を登録する/tier-rapid-crosscheck.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/比較ツールでジョブ単位比較を実行して結果を登録する/_model-summary.yaml",
+        "specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/比較ツールでジョブ単位比較を実行して結果を登録する/_api-summary.yaml",
+        "specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/速報比較依頼を claim する/spec.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/確報クロスチェックフロー/確報比較依頼を登録して終端状態まで待機する/tier-final-crosscheck.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/spec.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/tier-ops.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/_model-summary.yaml",
+        "specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/_api-summary.yaml",
+        "specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/実行中止フロー/現在状態を確認して停止確認に応答する/spec.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/実行中止フロー/現在状態を確認して停止確認に応答する/tier-ops.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/実行中止フロー/現在状態を確認して停止確認に応答する/_api-summary.yaml",
+        "specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/background 側リランフロー/リラン対象を検証する/spec.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/background 側リランフロー/リラン対象を検証する/tier-ops.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/buc-spec.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/実行中止フロー/buc-spec.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/traceability-matrix.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/usdm-acceptance-matrix.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/rdra-feedback.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/decisions/spec-decision-007.yaml"
+      ]
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-018#1",
+      "status": "changed",
+      "reason": "abort-blue.sh / abort-green.sh の REQUESTED → ABORTED(条件付き UPDATE status=REQUESTED。0 件正常)の説明を「両系の完了通知で依頼が REQUESTED で作成された直後に運用者が slot を中止した場合の競合窓を塞ぐ保険。dispatcher 側の中止済み run 判定(request_creation_matrix)と併用」に統一し、「両 slot 完了直後の抜けを防ぐ」等の表現と rdra-feedback #14 / #15 への参照を契約 notes / shared_rules.state_codes / rdb-schema 冒頭注記 / UC-23 spec・tier-ops / buc-spec(実行中止)から外した。CLAIMED / RUNNING は変更せず REQUESTED / CLAIMED / RUNNING の明示中止は abort-rapid-crosscheck.sh で行うことを併記。USDM SPEC-010-01 AC8 の BDD を UC-23 に追加し、rdra-feedback #14 を解消済みへ移動",
+      "artifact_refs": [
+        "specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/datastore/rdb-schema.yaml",
+        "specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/spec.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/tier-ops.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/実行中止フロー/buc-spec.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/usdm-acceptance-matrix.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/rdra-feedback.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/decisions/spec-decision-007.yaml"
+      ]
+    }
+  ],
+  "work_unit_evidence_refs": [
+    {
+      "work_unit_id": "CR-c770d8f0-016#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/api/cli-command-contract.yaml",
+      "sha256": "88d43d8ec2af3fc205f927d28fa3ffd813eeb7dc3afa60ef780e6e9e843e17cc"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-016#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/datastore/rdb-schema.yaml",
+      "sha256": "702e7a106d731fd42cac89d438cb2773ffbe824ab233733a9cf0d80398a42fbb"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-016#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/ux-ui/ui-design.md",
+      "sha256": "77905bba54518c83e1249cdca2b2ea844d03c24715e3a8f4bc1bcd01360e2715"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-016#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/両系成功時に速報比較依頼を作成する/spec.md",
+      "sha256": "929406dc3e1260413a2d393623bd1d285c79f7a728da0799de379d3ffe3601fa"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-016#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/両系成功時に速報比較依頼を作成する/tier-rapid-crosscheck.md",
+      "sha256": "f4decf31ae6b126f0fec36856737f23d31b074c90415aee25132c0c40cbece89"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-016#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/両系成功時に速報比較依頼を作成する/_model-summary.yaml",
+      "sha256": "980d2535cc9c0ac357e5770b9b308a0f25c0003087d20a335d599e38951624ac"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-016#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/両系成功時に速報比較依頼を作成する/_api-summary.yaml",
+      "sha256": "0a19b9a8deaa6e56420c677a4d595d22d27a2f18740f1615cdd49a0b6ce09328"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-016#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/速報クロスチェック runner へ完了通知を送信する/tier-facade.md",
+      "sha256": "a3d138dbcddf473c64b9d872022336d122827e9ad1da2d9d10616b45fb526757"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-016#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/速報クロスチェック runner へ完了通知を送信する/tier-rapid-crosscheck.md",
+      "sha256": "36fe82c18cff7b316093198d96d7e2e9e589fd5be68bfb218026011f6f484ec1"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-016#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/buc-spec.md",
+      "sha256": "93dd2fe4573819914506589f995968aa31c15b681ab92ec91139509cb1cbebca"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-016#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/実装切替業務/実装切替ジョブ実行フロー/実装スクリプトを実行して Runner Result を出力する/spec.md",
+      "sha256": "2bd32e67184c3c9113c7f3e8faf39466838d923e240a761395d35091becfb2be"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-016#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/実装切替業務/実装切替ジョブ実行フロー/実装スクリプトを実行して Runner Result を出力する/tier-facade.md",
+      "sha256": "3387a45f3c032e1664d313d2d65e87cd46f312a42250872180a65131f3dd6a5f"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-016#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/実装切替業務/実装切替ジョブ実行フロー/実装スクリプトを実行して Runner Result を出力する/_model-summary.yaml",
+      "sha256": "b8838e8189b6053203c806d0a346325b15d6f3d0895bd5f7cfe2c43c12328265"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-016#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/spec.md",
+      "sha256": "7332d5f325f18c8a3af3e977f3ab18d9bd9caa93c4f08a7224c33db0373276e9"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-016#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/tier-facade.md",
+      "sha256": "d1ba63f7a212160bc5a7c7e79f57f98b18ff3e003fd58bb2efe87ebceab813f3"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-016#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/実装切替業務/実装切替ジョブ実行フロー/buc-spec.md",
+      "sha256": "430f2e9f0fec6fed5902061cc4c06733ef85b83f1272a804b5782f82cf028bf0"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-016#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/spec.md",
+      "sha256": "babbbfba14aa72ca2ac5057f0c375bf3653cb30854af8c1c1a09ad4a802bfaa2"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-016#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/tier-ops.md",
+      "sha256": "ac14eb50a15bd14cd2a730eb38f64cdf7b4a83f1c6747cc4686ac12e3858461f"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-016#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/traceability-matrix.md",
+      "sha256": "1536d958eca14acdbeb354f4b8ebeda9daa140ae6fda4aad8c00ae0f885c9030"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-016#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/usdm-acceptance-matrix.md",
+      "sha256": "727005d1da3ac873f28a74db5ab992527d418d48a88121aa9670becd6f238a1e"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-016#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/rdra-feedback.md",
+      "sha256": "fc08bcb6fe33dde4734e46fedb64d4943052b6f2669836ca2463ec89b42ef31b"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-016#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/decisions/spec-decision-007.yaml",
+      "sha256": "b930da060bb9aecc4a00e93625c8c2dab9d9b4dd5a0f224f1236d2b69e1651cc"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-016#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/_inputs-digest.md",
+      "sha256": "908dc2d9b9c290779752cacc0ae4e8e27318fb37e6e026589c642de17e830e80"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-016#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/_inference.md",
+      "sha256": "41d945239778c6ae19dff67ffd3f4f7c8242cd5d30b63f4f420b9c341ae390ea"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-017#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/api/cli-command-contract.yaml",
+      "sha256": "88d43d8ec2af3fc205f927d28fa3ffd813eeb7dc3afa60ef780e6e9e843e17cc"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-017#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/datastore/rdb-schema.yaml",
+      "sha256": "702e7a106d731fd42cac89d438cb2773ffbe824ab233733a9cf0d80398a42fbb"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-017#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/api/asyncapi.yaml",
+      "sha256": "29053f6331ab76ed5473d2e7c71528b8145bee95672849f4b91929396b01551a"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-017#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/uc-dependencies.md",
+      "sha256": "07f15b56e810a44bd8b9e5e5bb44f4465e9821929f58e14bf3801052d22a3bba"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-017#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/比較ツールでジョブ単位比較を実行して結果を登録する/spec.md",
+      "sha256": "673dcfab31b480bf13f58142e3fed64f600c5651253e98c6e578689b115bed0c"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-017#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/比較ツールでジョブ単位比較を実行して結果を登録する/tier-rapid-crosscheck.md",
+      "sha256": "815716b23c7766835fcfea757f94c8a7d2364bbaa0ded084588e19fe4586a10d"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-017#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/比較ツールでジョブ単位比較を実行して結果を登録する/_model-summary.yaml",
+      "sha256": "d2892b626ef457b56527a6bab006cb972998dd85386ff15f7d48ce2a1a9d9408"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-017#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/比較ツールでジョブ単位比較を実行して結果を登録する/_api-summary.yaml",
+      "sha256": "709b9a8b422e88460a1ab866df70544de0a98697dc0b8db5def0b1e236394eb1"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-017#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/速報比較依頼を claim する/spec.md",
+      "sha256": "889746855416aa81918e4227799970b3afc96d4d83c185894c077424bb67c6ec"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-017#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/確報クロスチェックフロー/確報比較依頼を登録して終端状態まで待機する/tier-final-crosscheck.md",
+      "sha256": "b09e9fc0f5676daaa6aa8ffe968620e8d515c1d1daa540d5cb1cb1186aa01f94"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-017#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/spec.md",
+      "sha256": "24126609a33c3a41fb5460a5599256d98264ab72bc1665340053f0780eb3b98b"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-017#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/tier-ops.md",
+      "sha256": "57313b20003f02a6a21649e9ff7c2c6a762339876ae2bba07bbe0d80a1e29d9b"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-017#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/_model-summary.yaml",
+      "sha256": "07d947c30a24f789944a3128f6ff86ff6c361c1c8cd65b444d3def5e1e87ea71"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-017#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/_api-summary.yaml",
+      "sha256": "e3a186da6591f658d252f84e3860a6971402388287eee8dbabfcba5baee7458e"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-017#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/実行中止フロー/現在状態を確認して停止確認に応答する/spec.md",
+      "sha256": "0e6670d059a57006b8e2594a538ba63fcbefe516b1ef246a3757dad6646d1e2a"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-017#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/実行中止フロー/現在状態を確認して停止確認に応答する/tier-ops.md",
+      "sha256": "7db39634ebf21832ad4b680c2889aaabee3b8619fe03ec62b06a0de2b338f611"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-017#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/実行中止フロー/現在状態を確認して停止確認に応答する/_api-summary.yaml",
+      "sha256": "0809467de140d43984d17cbca425b6ea5a4397ed27c729e1e0a96bc64101b37a"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-017#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/background 側リランフロー/リラン対象を検証する/spec.md",
+      "sha256": "48d653b952efeef3eae204725c36c326521e396934da10798b00b28c7cff027e"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-017#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/background 側リランフロー/リラン対象を検証する/tier-ops.md",
+      "sha256": "5cd1c05f010d015d1e29fa8b1b5bb56e9cd3cb137beb697714523f1d6a279011"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-017#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/buc-spec.md",
+      "sha256": "93dd2fe4573819914506589f995968aa31c15b681ab92ec91139509cb1cbebca"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-017#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/実行中止フロー/buc-spec.md",
+      "sha256": "979daf12602b82c2c744c24889ad045c22443e7e072f57f4e0183eac32bb175d"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-017#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/traceability-matrix.md",
+      "sha256": "1536d958eca14acdbeb354f4b8ebeda9daa140ae6fda4aad8c00ae0f885c9030"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-017#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/usdm-acceptance-matrix.md",
+      "sha256": "727005d1da3ac873f28a74db5ab992527d418d48a88121aa9670becd6f238a1e"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-017#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/rdra-feedback.md",
+      "sha256": "fc08bcb6fe33dde4734e46fedb64d4943052b6f2669836ca2463ec89b42ef31b"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-017#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/decisions/spec-decision-007.yaml",
+      "sha256": "b930da060bb9aecc4a00e93625c8c2dab9d9b4dd5a0f224f1236d2b69e1651cc"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-018#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/api/cli-command-contract.yaml",
+      "sha256": "88d43d8ec2af3fc205f927d28fa3ffd813eeb7dc3afa60ef780e6e9e843e17cc"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-018#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/datastore/rdb-schema.yaml",
+      "sha256": "702e7a106d731fd42cac89d438cb2773ffbe824ab233733a9cf0d80398a42fbb"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-018#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/spec.md",
+      "sha256": "24126609a33c3a41fb5460a5599256d98264ab72bc1665340053f0780eb3b98b"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-018#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/tier-ops.md",
+      "sha256": "57313b20003f02a6a21649e9ff7c2c6a762339876ae2bba07bbe0d80a1e29d9b"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-018#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/実行中止フロー/buc-spec.md",
+      "sha256": "979daf12602b82c2c744c24889ad045c22443e7e072f57f4e0183eac32bb175d"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-018#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/usdm-acceptance-matrix.md",
+      "sha256": "727005d1da3ac873f28a74db5ab992527d418d48a88121aa9670becd6f238a1e"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-018#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/rdra-feedback.md",
+      "sha256": "fc08bcb6fe33dde4734e46fedb64d4943052b6f2669836ca2463ec89b42ef31b"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-018#1",
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/decisions/spec-decision-007.yaml",
+      "sha256": "b930da060bb9aecc4a00e93625c8c2dab9d9b4dd5a0f224f1236d2b69e1651cc"
+    }
+  ],
+  "domain_event_refs": [
+    {
+      "path": "specs/events/20260907_131000_feedback_abort_consistency/spec-event.yaml",
+      "sha256": "1b17660b91a390aa501bcb83574f2e031ae72073db5fba24572eb7b985edc0c6"
+    }
+  ],
+  "feedback_request": {
+    "feedback_request_id": "20260907_abort_consistency",
+    "input_sha256": "70cda63f92e887e459a3817580e45a840e3ff201065a534085ad113fb8910b81",
+    "request_ids": [
+      "CR-c770d8f0-016",
+      "CR-c770d8f0-017",
+      "CR-c770d8f0-018"
+    ],
+    "work_unit_ids": [
+      "CR-c770d8f0-016#1",
+      "CR-c770d8f0-017#1",
+      "CR-c770d8f0-018#1"
+    ]
+  },
+  "post_execution_basis": {
+    "repository_head": "c770d8f3beda010fea1876c00fb47ae9ba014a4c",
+    "latest_domain_event_ids": {
+      "requirements": {
+        "rdra/events": "20260907_114000_feedback_abort_consistency",
+        "usdm/events": "20260907_114000_feedback_abort_consistency"
+      },
+      "quality_attributes": {
+        "nfr/events": "20260907_120000_feedback_abort_consistency"
+      },
+      "architecture": {
+        "arch/events": "20260907_122000_feedback_abort_consistency"
+      },
+      "infrastructure": {
+        "infra/events": "20260907_124000_feedback_abort_consistency"
+      },
+      "design_system": {
+        "design/events": null
+      },
+      "spec": {
+        "specs/events": "20260907_131000_feedback_abort_consistency"
+      },
+      "spec_stories": {
+        "design/events": null
+      }
+    },
+    "domain_event_root_snapshots": {
+      "rdra/events": {
+        "head_event_id": "20260907_114000_feedback_abort_consistency",
+        "head_event_sha256": "8292df9e4819278a4ce1d059469f7a5babc19294916630ba0b67bb4a389a13c3",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency"
+        ],
+        "event_set_sha256": "f0ae72a3eab3ff100c037ab960fb04a8c0ef45497a789ace37143d25fd182eea",
+        "latest_tree_sha256": "2b76c8fc6198a523b3a0ce03731174489bf9e55b0bebd436a5acafc90ffb7485"
+      },
+      "usdm/events": {
+        "head_event_id": "20260907_114000_feedback_abort_consistency",
+        "head_event_sha256": "115da44cba3dca1dee68d0ff27bb771fac2497da0659d6465cd6fa0fb0160167",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency"
+        ],
+        "event_set_sha256": "f0ae72a3eab3ff100c037ab960fb04a8c0ef45497a789ace37143d25fd182eea",
+        "latest_tree_sha256": "799a4fb16f63b918cfe2c0226c9e94b0c828ee49a57228d24859b66273ba7205"
+      },
+      "nfr/events": {
+        "head_event_id": "20260907_120000_feedback_abort_consistency",
+        "head_event_sha256": "c0349f0e05f02afbca18102e8d1ac5a207fa64bab571bbbbd569032216ef9050",
+        "event_ids": [
+          "20260830_183726_initial_nfr",
+          "20260905_085000_feedback_todo_resolution",
+          "20260907_013000_feedback_todo_followup",
+          "20260907_120000_feedback_abort_consistency"
+        ],
+        "event_set_sha256": "a6bbdaf118e9d5be8235a5bb700a864db7890e21782e78bf5a9f6e615391351f",
+        "latest_tree_sha256": "51f9059e35f6f5c65fc18cd1f1457bd5beca3b5b23271d538f4304b0ece9c7ef"
+      },
+      "arch/events": {
+        "head_event_id": "20260907_122000_feedback_abort_consistency",
+        "head_event_sha256": "de293739ccb2c91ebd1ac13a3346e0d0b203b306234bff6d958e791a7f0f3e28",
+        "event_ids": [
+          "20260830_184457_initial_arch",
+          "20260830_202427_arch_infra_feedback_20260830_190412_infra_product_design",
+          "20260905_091000_feedback_todo_resolution",
+          "20260907_015000_feedback_todo_followup",
+          "20260907_122000_feedback_abort_consistency"
+        ],
+        "event_set_sha256": "ac773986b05ba75afbfd9532d329bd512b1dd49c7b5ed40e0377a566ec998771",
+        "latest_tree_sha256": "35c1954874727aafb9082c4b6fe6617470896ea9f53e07d7b1521893b68952ef"
+      },
+      "infra/events": {
+        "head_event_id": "20260907_124000_feedback_abort_consistency",
+        "head_event_sha256": "639f743d85b997e1297610b2a7c2db41fd004e74473f96ec6292b601509a6331",
+        "event_ids": [
+          "20260830_190412_infra_product_design",
+          "20260905_093000_feedback_todo_resolution",
+          "20260907_021000_feedback_todo_followup",
+          "20260907_124000_feedback_abort_consistency"
+        ],
+        "event_set_sha256": "d677cfe53f64d6ade8a594e56e9ed6dfab861741cc961ff3e42f30db5445691f",
+        "latest_tree_sha256": "639f743d85b997e1297610b2a7c2db41fd004e74473f96ec6292b601509a6331"
+      },
+      "design/events": {
+        "head_event_id": null,
+        "head_event_sha256": null,
+        "event_ids": [],
+        "event_set_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "latest_tree_sha256": null
+      },
+      "specs/events": {
+        "head_event_id": "20260907_131000_feedback_abort_consistency",
+        "head_event_sha256": "25fcf5b38da2779afeea9cd1d9805b019ff1b60aa5285004c3193243549d7d74",
+        "event_ids": [
+          "20260830_202851_spec_generation",
+          "20260905_100000_feedback_todo_resolution",
+          "20260907_024000_feedback_todo_followup",
+          "20260907_131000_feedback_abort_consistency"
+        ],
+        "event_set_sha256": "9cda00ed52d82b58afc05e4ed407bffb11e44ae03ef7685759f69a243fc1c753",
+        "latest_tree_sha256": "aa15cf7efe6db9ffd9334698326376f20cc1efe52503e6876fe2b9ef196d0860"
+      }
+    }
+  }
+}

@@ -1,0 +1,39 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "architecture"
+artifact_id: "arch-decision-015"
+title: "中止済み run では速報比較依頼を作成せず(判断主体は dispatcher)、abort-blue / abort-green は未着手の速報比較依頼も ABORTED にする"
+status: "approved"
+generated_at: "2026-09-07T01:50:00Z"
+context: |
+  slot 実行の状態導出規則(exitcode.txt 優先)により、運用者が abort-blue / abort-green で中止した後にプロセス停止が不完全で実装が走り切ると、
+  runner は exitcode.txt を公開して通常どおり完了通知を送る。もう片方が成功済みなら「両系成功判定」により中止した run の速報比較依頼が作成される
+  (todo DIST-024)。また両 slot 完了直後に中止した場合、REQUESTED で作成済みの依頼は abort-blue / abort-green の対象外(abort-rapid-crosscheck は
+  RUNNING のみ)で worker が拾って比較を実行する。元の方針資料は「blue / green runner は相手側の状態や比較依頼を判断しない。比較規約は
+  rapid-crosscheck-runner / worker に閉じ込める」と定めている。利用者は 2026-09-07 に「abort したなら速報クロスチェックは実施しない。
+  判断は責務が自然な場所に持たせる」と決定し、未着手依頼の ABORTED 化も採用した(CR-c770d8f0-014)。RDRA では条件「中止済み run の比較依頼作成除外」と
+  状態「クロスチェック依頼」の REQUESTED → ABORTED が追加された。
+decision: |
+  - 比較の要否判断(中止済み run の除外)は速報クロスチェック runner(dispatcher)に置く。dispatcher は完了通知を登録した後に並行稼働実行の状態を読み、
+    ABORTED なら両系成功でも依頼を作成せず、rapid_run の完了事実(blue_status / green_status / 成果物 URI)だけを記録して実行ログに warning を残す
+    (SP-009 / LP-010 / LP-023 / BC-002 / AG-002 / E-016)
+  - slot runner は自 slot の中止状態(aborted.txt の有無)を判断せず、中止後に実装が走り切った場合も通常どおり完了通知を送る(SP-008 / BC-002 の完了通知 / E-015)
+  - abort-blue / abort-green の責務を「slot の中止」から「run の中止」へ半歩広げ、対象 run に REQUESTED で未着手(worker が claim していない)の
+    速報比較依頼があればそれも ABORTED にする。CLAIMED / RUNNING の依頼は変更せず abort-rapid-crosscheck の対象とする。確報比較依頼には適用しない
+    (SP-022 / LP-019 / LP-021 / BC-004 / CM-005 / E-017 / E-024)
+  - gateway の依頼 ABORTED 更新は WHERE status = REQUESTED(worker_id 未設定)の条件付き UPDATE とし、該当なし(依頼が無い、または claim 済み)は
+    更新件数 0 を正常として扱う(worker の claim との競合を DB のトランザクションで解決する)
+  - RAPID_CROSSCHECK_MODE=off では完了通知も比較依頼も存在しないため、速報有効時だけの規則とする
+consequences:
+  positive:
+    - "中止した run の比較が走らず、方針資料の責務分担(runner は比較依頼を判断しない)を守ったまま比較規約を速報クロスチェック側に閉じ込められる"
+    - "両 slot 完了直後に中止した場合の抜け(未着手依頼だけが残る)が閉じる"
+    - "中止した run を background-rerun でリランすれば新しい run_id で両系成功時に依頼が作成されるため、復旧経路は変わらない"
+  negative:
+    - "dispatcher が parallel_run の状態を読むため、rapid_run と parallel_run を同一トランザクションで扱う必要がある(AG-002 の集約境界仮説の再判断材料)"
+    - "abort-blue / abort-green が速報比較依頼テーブルも更新するため、中止スクリプトの管理 DB 更新対象が 3 テーブル(slot_executions / parallel_run / rapid_crosscheck_request)になる"
+alternatives_considered:
+  - name: "Option B: slot runner が aborted.txt を見て完了通知を送らない"
+    reason_rejected: "方針資料「blue / green runner は比較依頼を判断しない」に反し、比較規約が runner 側へ漏れる。利用者も「判断は責務が自然な場所に」と決定した"
+  - name: "Option C: dispatcher の除外だけを入れ、REQUESTED の依頼は abort-rapid-crosscheck で運用者が個別に中止する"
+    reason_rejected: "両 slot 完了直後の中止で依頼だけが残る抜けが閉じず、運用者が 2 回の中止操作を要する。利用者は未着手依頼の ABORTED 化を採用した"

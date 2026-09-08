@@ -1,0 +1,107 @@
+round: 1
+group: G2
+findings:
+  - id: S3-G2-001
+    uc: "適用構成業務/適用構成定義フロー/feature flag を設定する"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md"
+    line: 72
+    severity: major
+    viewpoint: 7
+    claim: "operation_mode の英字コードが契約(U10 / config_files.feature-flag.env.derived)の parallel | green_only | next_gen_parallel | custom と一致せず、green-only / next-parallel と書かれている(72 / 91 / 92 / 111 / 169 / 175 行)"
+    fix: "処理フロー(72 行)・バリエーション一覧(91 / 92 行)・計算ルール(111 行)・BDD の Then(169 / 175 行)の green-only を green_only、next-parallel を next_gen_parallel に置き換える"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/cli-command-contract.yaml#config_files.feature-flag.env.derived(1098-1103 行)"
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_review/change-brief.md#U10"
+  - id: S3-G2-002
+    uc: "適用構成業務/適用構成定義フロー/feature flag を設定する"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md"
+    line: 52
+    severity: major
+    viewpoint: 7
+    claim: "運用モード表(52 / 53 行)と BDD(133 行)の operation_mode が green-only / next-parallel で、契約の英字コード green_only / next_gen_parallel と食い違う"
+    fix: "52 行を green_only、53 行を next_gen_parallel に直し、133 行の \"operation_mode=green-only\" を \"operation_mode=green_only\" にする"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/cli-command-contract.yaml#config_files.feature-flag.env.derived(1098-1103 行)"
+  - id: S3-G2-003
+    uc: "適用構成業務/適用構成定義フロー/切り替えた運用モードで業務ジョブを実行する"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/適用構成業務/適用構成定義フロー/切り替えた運用モードで業務ジョブを実行する/spec.md"
+    line: 102
+    severity: major
+    viewpoint: 7
+    claim: "計算ルール(102 行)と BDD の実行ログ期待値(157 / 165 行)が green-only / next-parallel で、契約の facade.sh 実行ログ `operation_mode=`(英字コード green_only / next_gen_parallel)と一致しない"
+    fix: "102 行の列挙を parallel / green_only / next_gen_parallel / custom に、157 行を \"operation_mode=green_only\"、165 行を \"operation_mode=next_gen_parallel\" に直す"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/cli-command-contract.yaml#facade.sh execution_log(246 行)"
+  - id: S3-G2-004
+    uc: "適用構成業務/適用構成定義フロー/切り替えた運用モードで業務ジョブを実行する"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/適用構成業務/適用構成定義フロー/切り替えた運用モードで業務ジョブを実行する/tier-facade.md"
+    line: 38
+    severity: major
+    viewpoint: 7
+    claim: "出力契約の実行ログ説明(38 行)と BDD(88 行)の operation_mode 値が green-only / next-parallel で、契約の英字コードと食い違う"
+    fix: "38 行の列挙を parallel / green_only / next_gen_parallel / custom に、88 行の \"operation_mode=next-parallel\" を \"operation_mode=next_gen_parallel\" に直す"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/cli-command-contract.yaml#facade.sh execution_log(246 行)"
+  - id: S3-G2-005
+    uc: "適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/spec.md"
+    line: 201
+    severity: major
+    viewpoint: 7
+    claim: "fixed_params 不正の stderr 文言が \"error: fixed_params is not a json array line=3 job_id=JOB003\" で、契約 validate-config.sh stderr の `error: fixed_params is not a json array of strings line=N job_id=... value=...` と一致しない(value= も欠落)"
+    fix: "201 行を \"error: fixed_params is not a json array of strings line=3 job_id=JOB003 value=p1,p2\" に直す(契約の共通形式 `<column> is <reason> line=N job_id=... value=...`)"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/cli-command-contract.yaml#validate-config.sh stderr 行の値不正(994 行)"
+  - id: S3-G2-006
+    uc: "適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/tier-facade.md"
+    line: 38
+    severity: major
+    viewpoint: 7
+    claim: "列表(38 行)と BDD(138 行)の fixed_params 違反文言が `error: fixed_params is not a json array ...` で、契約の `error: fixed_params is not a json array of strings line=N job_id=... value=...` と一致しない"
+    fix: "38 行の違反時 stderr を `error: fixed_params is not a json array of strings line=N job_id=<v> value=<v>` に、138 行の期待値を \"error: fixed_params is not a json array of strings line=3 job_id=JOB003 value=p1,p2\" に直す"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/cli-command-contract.yaml#validate-config.sh stderr 行の値不正(994 行)"
+  - id: S3-G2-007
+    uc: "適用構成業務/適用構成定義フロー/feature flag を設定する"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md"
+    line: 93
+    severity: minor
+    viewpoint: 7
+    claim: "速報クロスチェックモード foreground の処理内容に「管理 DB 接続設定の存在を警告レベルで確認(warn:。仮採用)」とあるが、契約 validate-config.sh --feature-flag の stderr / config_files.feature-flag.env.validation_rules にこの warn は無く、tier-facade.md の検証表にも無い(UC 内で唯一の記述)"
+    fix: "93 行の「管理 DB 接続設定の存在を警告レベルで確認(`warn:`。検証は失敗にしない。仮採用)」を削除し、background 行(94 行)と同じ「速報有効。RAPID_CROSSCHECK_RUNNER / RAPID_CROSSCHECK_WORKER が必須(存在・実行可能)」だけにする(rapid-crosscheck.env の検証は facade / runner 起動時の責務)"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/cli-command-contract.yaml#config_files.feature-flag.env.validation_rules / error_messages(1082-1097 行)"
+  - id: S3-G2-008
+    uc: "適用構成業務/適用構成定義フロー/buc-spec"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/適用構成業務/適用構成定義フロー/buc-spec.md"
+    line: 111
+    severity: minor
+    viewpoint: 1
+    claim: "BUC 内共有バリエーション一覧の「設定所有区分」の値が 4 値(feature flag、slot ジョブマップ、クロスチェックジョブマップ、適用文書)で、RDRA 今回差分で追加された値「ハング検知定期ジョブ設定」が無い(同ファイル 101 行の条件説明には既に含まれており不整合)"
+    fix: "111 行の値を「feature flag、slot ジョブマップ、クロスチェックジョブマップ、ハング検知定期ジョブ設定、適用文書」にする"
+    source_refs:
+      - "docs/rdra/latest/バリエーション.tsv#設定所有区分"
+      - "docs/rdra/events/20260905_083000_feedback_todo_resolution/_changes.md#バリエーション: 設定所有区分"
+  - id: S3-G2-009
+    uc: "適用構成業務/適用構成定義フロー/feature flag を設定する"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/cli-command-contract.yaml"
+    line: 996
+    severity: minor
+    viewpoint: 7
+    claim: "G2 の UC が定義する validate-config.sh の文言 `error: final crosscheck key is not allowed key=<k>`(feature flag を設定する)、`error: job map not found slot=<s> map=<p>`(slot runner の実体スクリプトを割り当てる)、`warn: credential_ref looks like a secret or path line=N job_id=<v>` / `warn: mixed map_version values=<a>,<b>`(slot ごとのジョブマップを定義する)が契約 validate-config.sh stderr / config_files に文言として無い(U4「契約に無ければ契約へ追加し UC はそれに従う」)"
+    fix: "契約 validate-config.sh の stderr に上記 4 文言を追記する(feature flag 節の確報制御キー違反 `error: final crosscheck key is not allowed key=<KEY>`(2)、`error: job map not found slot=<blue|green> map=<path>`(2)、warn 2 件は 996 行の「credential_ref のパス形式・版の混在」を文言付きに展開)。config_files.feature-flag.env.error_messages にも確報制御キーの行を加える"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md#組合せ検証(44 行)"
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/tier-facade.md#validate-config.sh --feature-flag(54 行)"
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/tier-facade.md#列表(40-41 行)"
+resolved:
+  - {id: S3-G2-001, resolution: fixed}
+  - {id: S3-G2-002, resolution: fixed}
+  - {id: S3-G2-003, resolution: fixed}
+  - {id: S3-G2-004, resolution: fixed}
+  - {id: S3-G2-005, resolution: fixed}
+  - {id: S3-G2-006, resolution: fixed}
+  - {id: S3-G2-007, resolution: fixed}
+  - {id: S3-G2-008, resolution: fixed}
+  - {id: S3-G2-009, resolution: fixed}

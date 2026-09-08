@@ -1,0 +1,79 @@
+{
+  "schema_version": "distillery.feedback-run-status/v1",
+  "feedback_request_id": "20260907_todo_followup",
+  "input_sha256": "193823ac1e6f02400269d6bdca461150a1fc8951393f332ef28580e045261389",
+  "ambiguity_policy": "interactive",
+  "state": "completed",
+  "stages": [
+    {
+      "id": "requirements",
+      "state": "completed",
+      "event_ids": [
+        "20260907_011000_feedback_stage_requirements"
+      ],
+      "direct_work_unit_ids": [
+        "CR-c770d8f0-013#1",
+        "CR-c770d8f0-014#1"
+      ],
+      "causal_work_unit_ids": [
+        "CR-c770d8f0-013#1",
+        "CR-c770d8f0-014#1"
+      ]
+    },
+    {
+      "id": "quality_attributes",
+      "state": "completed",
+      "event_ids": [
+        "20260907_013000_feedback_stage_quality_attributes"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-c770d8f0-013#1",
+        "CR-c770d8f0-014#1"
+      ]
+    },
+    {
+      "id": "architecture",
+      "state": "completed",
+      "event_ids": [
+        "20260907_015000_feedback_stage_architecture"
+      ],
+      "direct_work_unit_ids": [
+        "CR-c770d8f0-015#1"
+      ],
+      "causal_work_unit_ids": [
+        "CR-c770d8f0-013#1",
+        "CR-c770d8f0-014#1",
+        "CR-c770d8f0-015#1"
+      ]
+    },
+    {
+      "id": "infrastructure",
+      "state": "completed",
+      "event_ids": [
+        "20260907_021000_feedback_stage_infrastructure"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-c770d8f0-013#1",
+        "CR-c770d8f0-014#1",
+        "CR-c770d8f0-015#1"
+      ]
+    },
+    {
+      "id": "spec",
+      "state": "completed",
+      "event_ids": [
+        "20260907_024000_feedback_stage_spec"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-c770d8f0-013#1",
+        "CR-c770d8f0-014#1",
+        "CR-c770d8f0-015#1"
+      ]
+    }
+  ],
+  "run_id": "feedback-20260907_todo_followup-20260907_180615-96004",
+  "attempt": 1
+}

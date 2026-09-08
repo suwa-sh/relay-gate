@@ -1,0 +1,9 @@
+RDRA 差分 20260905_083000_feedback_todo_resolution および NFR 差分 20260905_085000_feedback_todo_resolution に基づくアーキテクチャ再評価
+trigger_event: rdra:20260905_083000_feedback_todo_resolution, nfr:20260905_085000_feedback_todo_resolution
+
+feedback_request_id: 20260905_todo_resolution
+input_sha256: 285429579e9c9d28307d4c779317f01941b915a1203d0e5b5f53a6c014ed7108
+request_ids: CR-c770d8f0-001, CR-c770d8f0-002, CR-c770d8f0-003, CR-c770d8f0-004, CR-c770d8f0-005, CR-c770d8f0-006, CR-c770d8f0-007, CR-c770d8f0-008, CR-c770d8f0-009, CR-c770d8f0-010, CR-c770d8f0-011, CR-c770d8f0-012
+direct_work_unit_ids: (none)
+causal_work_unit_ids: CR-c770d8f0-001#1, CR-c770d8f0-002#1, CR-c770d8f0-003#1, CR-c770d8f0-004#1, CR-c770d8f0-005#1, CR-c770d8f0-006#1, CR-c770d8f0-007#1, CR-c770d8f0-008#1, CR-c770d8f0-009#1, CR-c770d8f0-010#1, CR-c770d8f0-011#1, CR-c770d8f0-012#1
+stage_packet: docs/pipeline/feedback-runs/20260905_todo_resolution/stage-packets/architecture.md

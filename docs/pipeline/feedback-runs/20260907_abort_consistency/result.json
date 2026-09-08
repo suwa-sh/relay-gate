@@ -1,0 +1,218 @@
+{
+  "schema_version": "distillery.feedback-result/v1",
+  "run_id": "feedback-20260907_abort_consistency-20260907_203553-30561",
+  "attempt": 1,
+  "feedback_request_id": "20260907_abort_consistency",
+  "input_sha256": "70cda63f92e887e459a3817580e45a840e3ff201065a534085ad113fb8910b81",
+  "status": "completed",
+  "stages": [
+    {
+      "stage_id": "requirements",
+      "state": "succeeded",
+      "event_ids": [
+        "20260907_114000_feedback_stage_requirements"
+      ],
+      "direct_work_unit_ids": [
+        "CR-c770d8f0-016#1",
+        "CR-c770d8f0-017#1",
+        "CR-c770d8f0-018#1"
+      ],
+      "causal_work_unit_ids": [
+        "CR-c770d8f0-016#1",
+        "CR-c770d8f0-017#1",
+        "CR-c770d8f0-018#1"
+      ]
+    },
+    {
+      "stage_id": "quality_attributes",
+      "state": "succeeded",
+      "event_ids": [
+        "20260907_120000_feedback_stage_quality_attributes"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-c770d8f0-016#1",
+        "CR-c770d8f0-017#1",
+        "CR-c770d8f0-018#1"
+      ]
+    },
+    {
+      "stage_id": "architecture",
+      "state": "succeeded",
+      "event_ids": [
+        "20260907_122000_feedback_stage_architecture"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-c770d8f0-016#1",
+        "CR-c770d8f0-017#1",
+        "CR-c770d8f0-018#1"
+      ]
+    },
+    {
+      "stage_id": "infrastructure",
+      "state": "succeeded",
+      "event_ids": [
+        "20260907_124000_feedback_stage_infrastructure"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-c770d8f0-016#1",
+        "CR-c770d8f0-017#1",
+        "CR-c770d8f0-018#1"
+      ]
+    },
+    {
+      "stage_id": "spec",
+      "state": "succeeded",
+      "event_ids": [
+        "20260907_131000_feedback_stage_spec"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-c770d8f0-016#1",
+        "CR-c770d8f0-017#1",
+        "CR-c770d8f0-018#1"
+      ]
+    }
+  ],
+  "work_units": [
+    {
+      "work_unit_id": "CR-c770d8f0-016#1",
+      "disposition": "applied",
+      "reason": "At least one required closure stage changed its domain artifacts.",
+      "artifact_refs": [
+        "usdm/events/20260907_114000_feedback_abort_consistency/requirements.yaml",
+        "rdra/events/20260907_114000_feedback_abort_consistency/条件.tsv",
+        "rdra/events/20260907_114000_feedback_abort_consistency/情報.tsv",
+        "rdra/events/20260907_114000_feedback_abort_consistency/BUC.tsv",
+        "nfr/events/20260907_120000_feedback_abort_consistency/nfr-grade-diff.yaml",
+        "nfr/events/20260907_120000_feedback_abort_consistency/_changes.md",
+        "arch/events/20260907_122000_feedback_abort_consistency/arch-design-diff.yaml",
+        "arch/events/20260907_122000_feedback_abort_consistency/_changes.md",
+        "infra/events/20260907_124000_feedback_abort_consistency/infra-event-diff.yaml",
+        "infra/events/20260907_124000_feedback_abort_consistency/_changes.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/datastore/rdb-schema.yaml",
+        "specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/ux-ui/ui-design.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/両系成功時に速報比較依頼を作成する/spec.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/両系成功時に速報比較依頼を作成する/tier-rapid-crosscheck.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/両系成功時に速報比較依頼を作成する/_model-summary.yaml",
+        "specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/両系成功時に速報比較依頼を作成する/_api-summary.yaml",
+        "specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/速報クロスチェック runner へ完了通知を送信する/tier-facade.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/速報クロスチェック runner へ完了通知を送信する/tier-rapid-crosscheck.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/buc-spec.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/実装切替業務/実装切替ジョブ実行フロー/実装スクリプトを実行して Runner Result を出力する/spec.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/実装切替業務/実装切替ジョブ実行フロー/実装スクリプトを実行して Runner Result を出力する/tier-facade.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/実装切替業務/実装切替ジョブ実行フロー/実装スクリプトを実行して Runner Result を出力する/_model-summary.yaml",
+        "specs/events/20260907_131000_feedback_abort_consistency/実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/spec.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/tier-facade.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/実装切替業務/実装切替ジョブ実行フロー/buc-spec.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/spec.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/tier-ops.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/traceability-matrix.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/usdm-acceptance-matrix.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/rdra-feedback.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/decisions/spec-decision-007.yaml",
+        "specs/events/20260907_131000_feedback_abort_consistency/_inputs-digest.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/_inference.md"
+      ]
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-017#1",
+      "disposition": "applied",
+      "reason": "At least one required closure stage changed its domain artifacts.",
+      "artifact_refs": [
+        "usdm/events/20260907_114000_feedback_abort_consistency/requirements.yaml",
+        "rdra/events/20260907_114000_feedback_abort_consistency/条件.tsv",
+        "rdra/events/20260907_114000_feedback_abort_consistency/状態.tsv",
+        "rdra/events/20260907_114000_feedback_abort_consistency/バリエーション.tsv",
+        "rdra/events/20260907_114000_feedback_abort_consistency/情報.tsv",
+        "rdra/events/20260907_114000_feedback_abort_consistency/BUC.tsv",
+        "nfr/events/20260907_120000_feedback_abort_consistency/nfr-grade-diff.yaml",
+        "nfr/events/20260907_120000_feedback_abort_consistency/_changes.md",
+        "arch/events/20260907_122000_feedback_abort_consistency/arch-design-diff.yaml",
+        "arch/events/20260907_122000_feedback_abort_consistency/_changes.md",
+        "infra/events/20260907_124000_feedback_abort_consistency/infra-event-diff.yaml",
+        "infra/events/20260907_124000_feedback_abort_consistency/_changes.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/datastore/rdb-schema.yaml",
+        "specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/api/asyncapi.yaml",
+        "specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/uc-dependencies.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/比較ツールでジョブ単位比較を実行して結果を登録する/spec.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/比較ツールでジョブ単位比較を実行して結果を登録する/tier-rapid-crosscheck.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/比較ツールでジョブ単位比較を実行して結果を登録する/_model-summary.yaml",
+        "specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/比較ツールでジョブ単位比較を実行して結果を登録する/_api-summary.yaml",
+        "specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/速報比較依頼を claim する/spec.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/確報クロスチェックフロー/確報比較依頼を登録して終端状態まで待機する/tier-final-crosscheck.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/spec.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/tier-ops.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/_model-summary.yaml",
+        "specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/_api-summary.yaml",
+        "specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/実行中止フロー/現在状態を確認して停止確認に応答する/spec.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/実行中止フロー/現在状態を確認して停止確認に応答する/tier-ops.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/実行中止フロー/現在状態を確認して停止確認に応答する/_api-summary.yaml",
+        "specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/background 側リランフロー/リラン対象を検証する/spec.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/background 側リランフロー/リラン対象を検証する/tier-ops.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/buc-spec.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/実行中止フロー/buc-spec.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/traceability-matrix.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/usdm-acceptance-matrix.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/rdra-feedback.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/decisions/spec-decision-007.yaml"
+      ]
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-018#1",
+      "disposition": "applied",
+      "reason": "At least one required closure stage changed its domain artifacts.",
+      "artifact_refs": [
+        "usdm/events/20260907_114000_feedback_abort_consistency/requirements.yaml",
+        "rdra/events/20260907_114000_feedback_abort_consistency/状態.tsv",
+        "rdra/events/20260907_114000_feedback_abort_consistency/条件.tsv",
+        "rdra/events/20260907_114000_feedback_abort_consistency/BUC.tsv",
+        "nfr/events/20260907_120000_feedback_abort_consistency/nfr-grade-diff.yaml",
+        "nfr/events/20260907_120000_feedback_abort_consistency/_changes.md",
+        "arch/events/20260907_122000_feedback_abort_consistency/arch-design-diff.yaml",
+        "arch/events/20260907_122000_feedback_abort_consistency/_changes.md",
+        "infra/events/20260907_124000_feedback_abort_consistency/infra-event-diff.yaml",
+        "infra/events/20260907_124000_feedback_abort_consistency/_changes.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/datastore/rdb-schema.yaml",
+        "specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/spec.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/tier-ops.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/実行中止フロー/buc-spec.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/usdm-acceptance-matrix.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/rdra-feedback.md",
+        "specs/events/20260907_131000_feedback_abort_consistency/decisions/spec-decision-007.yaml"
+      ]
+    }
+  ],
+  "requests": [
+    {
+      "request_id": "CR-c770d8f0-016",
+      "work_unit_ids": [
+        "CR-c770d8f0-016#1"
+      ],
+      "disposition": "applied",
+      "reason": "At least one work unit was applied and all work units completed successfully."
+    },
+    {
+      "request_id": "CR-c770d8f0-017",
+      "work_unit_ids": [
+        "CR-c770d8f0-017#1"
+      ],
+      "disposition": "applied",
+      "reason": "At least one work unit was applied and all work units completed successfully."
+    },
+    {
+      "request_id": "CR-c770d8f0-018",
+      "work_unit_ids": [
+        "CR-c770d8f0-018#1"
+      ],
+      "disposition": "applied",
+      "reason": "At least one work unit was applied and all work units completed successfully."
+    }
+  ],
+  "terminal_event_id": "20260907_131000_feedback_run_completed"
+}

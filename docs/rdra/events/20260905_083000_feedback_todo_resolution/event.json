@@ -1,0 +1,66 @@
+{
+  "schema_version": "distillery.rdra-feedback-event/v1",
+  "event_id": "20260905_083000_feedback_todo_resolution",
+  "created_at": "2026-09-05T08:30:00Z",
+  "stage": "requirements",
+  "feedback_request": {
+    "feedback_request_id": "20260905_todo_resolution",
+    "input_sha256": "285429579e9c9d28307d4c779317f01941b915a1203d0e5b5f53a6c014ed7108",
+    "request_ids": [
+      "CR-c770d8f0-001",
+      "CR-c770d8f0-002",
+      "CR-c770d8f0-003",
+      "CR-c770d8f0-004",
+      "CR-c770d8f0-005",
+      "CR-c770d8f0-006",
+      "CR-c770d8f0-007",
+      "CR-c770d8f0-008",
+      "CR-c770d8f0-009",
+      "CR-c770d8f0-010",
+      "CR-c770d8f0-011"
+    ],
+    "work_unit_ids": [
+      "CR-c770d8f0-001#1",
+      "CR-c770d8f0-002#1",
+      "CR-c770d8f0-003#1",
+      "CR-c770d8f0-004#1",
+      "CR-c770d8f0-005#1",
+      "CR-c770d8f0-006#1",
+      "CR-c770d8f0-007#1",
+      "CR-c770d8f0-008#1",
+      "CR-c770d8f0-009#1",
+      "CR-c770d8f0-010#1",
+      "CR-c770d8f0-011#1"
+    ]
+  },
+  "members": [
+    {
+      "path": "rdra/events/20260905_083000_feedback_todo_resolution/BUC.tsv",
+      "sha256": "e7ad93ee04d16104bed72faad0f16124b5fb62f159e392a1221b6bc9c314ffec"
+    },
+    {
+      "path": "rdra/events/20260905_083000_feedback_todo_resolution/_changes.md",
+      "sha256": "3c52f3b7609439acd0889b4ae914a62473f8174974e938a88257543dcb133caf"
+    },
+    {
+      "path": "rdra/events/20260905_083000_feedback_todo_resolution/システム概要.json",
+      "sha256": "f1ff5b891983371d9101f5f4d8b5cebb95e72bc854836f0c4d176ffb1f75c52e"
+    },
+    {
+      "path": "rdra/events/20260905_083000_feedback_todo_resolution/バリエーション.tsv",
+      "sha256": "b74b15398d37d3b751b6ab2db23d2757333c1b536bcaeda698ab0c2ba9153c08"
+    },
+    {
+      "path": "rdra/events/20260905_083000_feedback_todo_resolution/情報.tsv",
+      "sha256": "7beb170e7f27c5ae4d633b48a9ef65d5f1572e13097bc235c392e41af48e21be"
+    },
+    {
+      "path": "rdra/events/20260905_083000_feedback_todo_resolution/条件.tsv",
+      "sha256": "4c9f9fabfbb92dd23ca56825870e6562ecb5b6a3e6d44972964c0d377afdc33a"
+    },
+    {
+      "path": "rdra/events/20260905_083000_feedback_todo_resolution/状態.tsv",
+      "sha256": "3bdfbe66fff730b548dc70af189b1d982da55754b3b733edb357b302ad712f13"
+    }
+  ]
+}

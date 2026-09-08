@@ -1,0 +1,26 @@
+uc: "業務ジョブの実行結果を確認する"
+business: "実装切替業務"
+buc: "実装切替ジョブ実行フロー"
+bounded_context_id: "BC-001"
+aggregate_id: "AG-001"
+
+models:
+  - name: "SchedulerResponse"
+    tier: "tier-facade"
+    layer: "presentation"
+    type: "record"
+    rdra_info: "ジョブスケジューラ応答"
+  - name: "RunnerResult"
+    tier: "tier-facade"
+    layer: "repository"
+    type: "record"
+    rdra_info: "Runner Result"
+  - name: "ExecutionLog"
+    tier: "tier-facade"
+    layer: "usecase"
+    type: "record"
+    rdra_info: "実行ログ"
+
+tables: []
+kvs: []
+object_storage: []

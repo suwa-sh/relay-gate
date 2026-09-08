@@ -1,0 +1,553 @@
+{
+  "schema_version": "distillery.feedback-plan/v1",
+  "feedback_request_id": "20260905_todo_resolution",
+  "input_sha256": "285429579e9c9d28307d4c779317f01941b915a1203d0e5b5f53a6c014ed7108",
+  "ambiguity_policy": "interactive",
+  "routing_basis": {
+    "ownership_catalog_version": "1.0.0",
+    "ownership_catalog_sha256": "801750c2abe99945a3de9387b82339b2bc96ccb2da564f9923cc0e9b76a2bd39",
+    "routing_policy_version": "1.1.0",
+    "routing_policy_sha256": "3873275bf4adb3d9d7b7c41c22c9463d054a3614df7bbcab7514f0c1e23e166e",
+    "prompt_schema_sha256": "bf7c7f34d7a2fc5976ccd2589a454172a4630e1448c509966b620f88029732c4",
+    "stage_packet_renderer_version": "1",
+    "skipped_stages": [
+      "design_system",
+      "spec_stories"
+    ],
+    "repository_head": "c770d8f3beda010fea1876c00fb47ae9ba014a4c",
+    "latest_domain_event_ids": {
+      "requirements": {
+        "rdra/events": "20260830_181841_initial_build",
+        "usdm/events": "20260830_181841_initial_build"
+      },
+      "quality_attributes": {
+        "nfr/events": "20260830_183726_initial_nfr"
+      },
+      "architecture": {
+        "arch/events": "20260830_202427_arch_infra_feedback_20260830_190412_infra_product_design"
+      },
+      "infrastructure": {
+        "infra/events": "20260830_190412_infra_product_design"
+      },
+      "design_system": {
+        "design/events": null
+      },
+      "spec": {
+        "specs/events": "20260830_202851_spec_generation"
+      },
+      "spec_stories": {
+        "design/events": null
+      }
+    },
+    "domain_event_root_snapshots": {
+      "rdra/events": {
+        "head_event_id": "20260830_181841_initial_build",
+        "head_event_sha256": "b2cd9f0d3cfe09d0efa5936debc4abce531d8442da4077070db82926f40a35ed",
+        "event_ids": [
+          "20260830_181841_initial_build"
+        ],
+        "event_set_sha256": "2b55255f934936f51cb0ea40810b971ab14bbbdbb2115ffa7c9a03c1059203cc",
+        "latest_tree_sha256": "84cb29828df4d39f3ebab66bc11e1bf52d76fbdd961ef7672e73ad477e6b3a6f"
+      },
+      "usdm/events": {
+        "head_event_id": "20260830_181841_initial_build",
+        "head_event_sha256": "25e61e8670ecae798f17728065ff1fcf00193659b8a2922cfa8d1045d2bfe3ca",
+        "event_ids": [
+          "20260830_181841_initial_build"
+        ],
+        "event_set_sha256": "2b55255f934936f51cb0ea40810b971ab14bbbdbb2115ffa7c9a03c1059203cc",
+        "latest_tree_sha256": "c1b4bbb76427900c440d44389bd74fcb318738955dd770add63b589a5de6c8be"
+      },
+      "nfr/events": {
+        "head_event_id": "20260830_183726_initial_nfr",
+        "head_event_sha256": "5cd28326c06dcd7c4da5a3f1f0a14dd434d7d18b4f6fb130697d326d9e6f9631",
+        "event_ids": [
+          "20260830_183726_initial_nfr"
+        ],
+        "event_set_sha256": "c71bc546b43144fc85ceb4068dd88e12e08a48a601694b556fa35b8a48f6fc8d",
+        "latest_tree_sha256": "16af838c9f24202ffda5547b587413aa5e3ad64c86809f71e13408526fba8f9d"
+      },
+      "arch/events": {
+        "head_event_id": "20260830_202427_arch_infra_feedback_20260830_190412_infra_product_design",
+        "head_event_sha256": "d15421ffa6484f09a8a30272216b8cd24aac1e142c74041c68d2718e66de8400",
+        "event_ids": [
+          "20260830_184457_initial_arch",
+          "20260830_202427_arch_infra_feedback_20260830_190412_infra_product_design"
+        ],
+        "event_set_sha256": "37cda644838540cc7ad10df67ac8b787574722664652c98e6462b1eb12583d95",
+        "latest_tree_sha256": "f6d02ee7f376c439f5a441e4d107cbc85d1be499536ea367a32189972d1b1b6d"
+      },
+      "infra/events": {
+        "head_event_id": "20260830_190412_infra_product_design",
+        "head_event_sha256": "ce3059e864648a7322077facde5634b0481f470da9658c24dda34dc84420612b",
+        "event_ids": [
+          "20260830_190412_infra_product_design"
+        ],
+        "event_set_sha256": "c4043036fd57a8bc0cd2aa06d4b5117053b49d108729268f83de26d6faf80f41",
+        "latest_tree_sha256": "ce3059e864648a7322077facde5634b0481f470da9658c24dda34dc84420612b"
+      },
+      "design/events": {
+        "head_event_id": null,
+        "head_event_sha256": null,
+        "event_ids": [],
+        "event_set_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "latest_tree_sha256": null
+      },
+      "specs/events": {
+        "head_event_id": "20260830_202851_spec_generation",
+        "head_event_sha256": "061002704ccbf8f7679b37edf36d411faf9d7ac9dee0e7fa6d04addf9ab20c51",
+        "event_ids": [
+          "20260830_202851_spec_generation"
+        ],
+        "event_set_sha256": "6c0668acba99a14dbb3ab5f9955a4ebfcec89847cbeef8e77058a166328949a4",
+        "latest_tree_sha256": "09c7aa8cb1a6d579081cd2f3f0785bbdbf1691b5429f617980dc7f5b5b713e15"
+      }
+    }
+  },
+  "request_ids": [
+    "CR-c770d8f0-001",
+    "CR-c770d8f0-002",
+    "CR-c770d8f0-003",
+    "CR-c770d8f0-004",
+    "CR-c770d8f0-005",
+    "CR-c770d8f0-006",
+    "CR-c770d8f0-007",
+    "CR-c770d8f0-008",
+    "CR-c770d8f0-009",
+    "CR-c770d8f0-010",
+    "CR-c770d8f0-011",
+    "CR-c770d8f0-012"
+  ],
+  "work_units": [
+    {
+      "request_id": "CR-c770d8f0-001",
+      "constraint_key": "feature-flag-keys",
+      "direct_stage": "requirements",
+      "reason": "feature flag のキーと値の正本は USDM SPEC-001-01 と RDRA バリエーション・情報モデルにあり、元資料の設定契約へ戻す変更は要件正本の更新が最上流になる",
+      "evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-001"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/usdm/latest/requirements.yaml"
+        },
+        {
+          "kind": "source_doc",
+          "value": "tmp/RelayGateのしくみ.md 設定契約"
+        }
+      ],
+      "id": "CR-c770d8f0-001#1",
+      "required_closure_stages": [
+        "requirements",
+        "quality_attributes",
+        "architecture",
+        "infrastructure",
+        "spec"
+      ]
+    },
+    {
+      "request_id": "CR-c770d8f0-002",
+      "constraint_key": "job-map-csv-format",
+      "direct_stage": "requirements",
+      "reason": "ジョブマップの形式と列名は RDRA 情報「ジョブマップ」と USDM REQ-004 配下の受け入れ条件で定めるため要件正本が最上流",
+      "evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-004"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/rdra/latest/情報.tsv"
+        },
+        {
+          "kind": "source_doc",
+          "value": "tmp/RelayGateの利用イメージ.md blue/green runner"
+        }
+      ],
+      "id": "CR-c770d8f0-002#1",
+      "required_closure_stages": [
+        "requirements",
+        "quality_attributes",
+        "architecture",
+        "infrastructure",
+        "spec"
+      ]
+    },
+    {
+      "request_id": "CR-c770d8f0-003",
+      "constraint_key": "run-id-format",
+      "direct_stage": "requirements",
+      "reason": "run_id の形式は複数 tier が共有する算出規則で、利用者が USDM/RDRA に形式を明記する決定をしたため要件正本が最上流(spec の shared_rules は下流で追従)",
+      "evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-011"
+        },
+        {
+          "kind": "user_decision",
+          "value": "2026-09-05 D3: ローカルタイムゾーン timestamp + job_id + hex"
+        }
+      ],
+      "id": "CR-c770d8f0-003#1",
+      "required_closure_stages": [
+        "requirements",
+        "quality_attributes",
+        "architecture",
+        "infrastructure",
+        "spec"
+      ]
+    },
+    {
+      "request_id": "CR-c770d8f0-004",
+      "constraint_key": "aborted-marker-off-mode",
+      "direct_stage": "requirements",
+      "reason": "Runner Result の成果物追加と slot 実行の状態導出規則は RDRA 情報・状態・条件モデルの変更であり要件正本が最上流",
+      "evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-010"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/rdra/latest/状態.tsv"
+        },
+        {
+          "kind": "source_doc",
+          "value": "tmp/RelayGateのしくみ.md データモデル / background-rerun.sh"
+        }
+      ],
+      "id": "CR-c770d8f0-004#1",
+      "required_closure_stages": [
+        "requirements",
+        "quality_attributes",
+        "architecture",
+        "infrastructure",
+        "spec"
+      ]
+    },
+    {
+      "request_id": "CR-c770d8f0-005",
+      "constraint_key": "notice-failure-out-of-scope",
+      "direct_stage": "requirements",
+      "reason": "スコープ外の明記は RDRA 条件モデルと USDM 受け入れ条件の追加であり要件正本が最上流",
+      "evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-005"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/rdra/latest/条件.tsv"
+        }
+      ],
+      "id": "CR-c770d8f0-005#1",
+      "required_closure_stages": [
+        "requirements",
+        "quality_attributes",
+        "architecture",
+        "infrastructure",
+        "spec"
+      ]
+    },
+    {
+      "request_id": "CR-c770d8f0-006",
+      "constraint_key": "management-db-internal",
+      "direct_stage": "requirements",
+      "reason": "外部システム.tsv と BUC 関連先の変更は RDRA モデルの変更であり要件正本が最上流",
+      "evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-011"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/rdra/latest/外部システム.tsv"
+        }
+      ],
+      "id": "CR-c770d8f0-006#1",
+      "required_closure_stages": [
+        "requirements",
+        "quality_attributes",
+        "architecture",
+        "infrastructure",
+        "spec"
+      ]
+    },
+    {
+      "request_id": "CR-c770d8f0-007",
+      "constraint_key": "info-attributes-cleanup",
+      "direct_stage": "requirements",
+      "reason": "情報モデルの属性変更は RDRA の変更であり要件正本が最上流",
+      "evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-008"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/rdra/latest/情報.tsv"
+        }
+      ],
+      "id": "CR-c770d8f0-007#1",
+      "required_closure_stages": [
+        "requirements",
+        "quality_attributes",
+        "architecture",
+        "infrastructure",
+        "spec"
+      ]
+    },
+    {
+      "request_id": "CR-c770d8f0-008",
+      "constraint_key": "monitor-status-unify",
+      "direct_stage": "requirements",
+      "reason": "状態モデルとバリエーションの値集合・遷移の変更は RDRA の変更であり要件正本が最上流",
+      "evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-008"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/rdra/latest/バリエーション.tsv"
+        }
+      ],
+      "id": "CR-c770d8f0-008#1",
+      "required_closure_stages": [
+        "requirements",
+        "quality_attributes",
+        "architecture",
+        "infrastructure",
+        "spec"
+      ]
+    },
+    {
+      "request_id": "CR-c770d8f0-009",
+      "constraint_key": "parallel-run-transitions",
+      "direct_stage": "requirements",
+      "reason": "状態モデル「並行稼働実行」の遷移追加は RDRA の変更であり要件正本が最上流",
+      "evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-011"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/rdra/latest/状態.tsv"
+        }
+      ],
+      "id": "CR-c770d8f0-009#1",
+      "required_closure_stages": [
+        "requirements",
+        "quality_attributes",
+        "architecture",
+        "infrastructure",
+        "spec"
+      ]
+    },
+    {
+      "request_id": "CR-c770d8f0-010",
+      "constraint_key": "hang-detector-env-info",
+      "direct_stage": "requirements",
+      "reason": "情報「ハング検知定期ジョブ設定」と設定所有区分の追加は RDRA の変更であり要件正本が最上流",
+      "evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-008"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/rdra/latest/バリエーション.tsv"
+        }
+      ],
+      "id": "CR-c770d8f0-010#1",
+      "required_closure_stages": [
+        "requirements",
+        "quality_attributes",
+        "architecture",
+        "infrastructure",
+        "spec"
+      ]
+    },
+    {
+      "request_id": "CR-c770d8f0-011",
+      "constraint_key": "comparison-result-condition",
+      "direct_stage": "requirements",
+      "reason": "条件モデルの追加は RDRA の変更であり要件正本が最上流",
+      "evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-005"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/rdra/latest/条件.tsv"
+        }
+      ],
+      "id": "CR-c770d8f0-011#1",
+      "required_closure_stages": [
+        "requirements",
+        "quality_attributes",
+        "architecture",
+        "infrastructure",
+        "spec"
+      ]
+    },
+    {
+      "request_id": "CR-c770d8f0-012",
+      "constraint_key": "nfr-low-confidence-confirm",
+      "direct_stage": "quality_attributes",
+      "reason": "非機能要求グレードの confidence と reason の更新は nfr-grade.yaml の変更であり quality_attributes が正本の所有者。RDRA は変更しない",
+      "evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "NFR-A.2.1.1"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/nfr/latest/nfr-grade.yaml"
+        },
+        {
+          "kind": "user_decision",
+          "value": "2026-09-05 一括確定 DIST-003〜008, 012"
+        }
+      ],
+      "id": "CR-c770d8f0-012#1",
+      "required_closure_stages": [
+        "quality_attributes",
+        "architecture",
+        "infrastructure",
+        "spec"
+      ]
+    }
+  ],
+  "execution_stages": [
+    {
+      "id": "requirements",
+      "steps": [
+        "1"
+      ],
+      "direct_work_unit_ids": [
+        "CR-c770d8f0-001#1",
+        "CR-c770d8f0-002#1",
+        "CR-c770d8f0-003#1",
+        "CR-c770d8f0-004#1",
+        "CR-c770d8f0-005#1",
+        "CR-c770d8f0-006#1",
+        "CR-c770d8f0-007#1",
+        "CR-c770d8f0-008#1",
+        "CR-c770d8f0-009#1",
+        "CR-c770d8f0-010#1",
+        "CR-c770d8f0-011#1"
+      ],
+      "causal_work_unit_ids": [
+        "CR-c770d8f0-001#1",
+        "CR-c770d8f0-002#1",
+        "CR-c770d8f0-003#1",
+        "CR-c770d8f0-004#1",
+        "CR-c770d8f0-005#1",
+        "CR-c770d8f0-006#1",
+        "CR-c770d8f0-007#1",
+        "CR-c770d8f0-008#1",
+        "CR-c770d8f0-009#1",
+        "CR-c770d8f0-010#1",
+        "CR-c770d8f0-011#1"
+      ],
+      "stage_packet": "stage-packets/requirements.md"
+    },
+    {
+      "id": "quality_attributes",
+      "steps": [
+        "2"
+      ],
+      "direct_work_unit_ids": [
+        "CR-c770d8f0-012#1"
+      ],
+      "causal_work_unit_ids": [
+        "CR-c770d8f0-001#1",
+        "CR-c770d8f0-002#1",
+        "CR-c770d8f0-003#1",
+        "CR-c770d8f0-004#1",
+        "CR-c770d8f0-005#1",
+        "CR-c770d8f0-006#1",
+        "CR-c770d8f0-007#1",
+        "CR-c770d8f0-008#1",
+        "CR-c770d8f0-009#1",
+        "CR-c770d8f0-010#1",
+        "CR-c770d8f0-011#1",
+        "CR-c770d8f0-012#1"
+      ],
+      "stage_packet": "stage-packets/quality_attributes.md"
+    },
+    {
+      "id": "architecture",
+      "steps": [
+        "3"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-c770d8f0-001#1",
+        "CR-c770d8f0-002#1",
+        "CR-c770d8f0-003#1",
+        "CR-c770d8f0-004#1",
+        "CR-c770d8f0-005#1",
+        "CR-c770d8f0-006#1",
+        "CR-c770d8f0-007#1",
+        "CR-c770d8f0-008#1",
+        "CR-c770d8f0-009#1",
+        "CR-c770d8f0-010#1",
+        "CR-c770d8f0-011#1",
+        "CR-c770d8f0-012#1"
+      ],
+      "stage_packet": "stage-packets/architecture.md"
+    },
+    {
+      "id": "infrastructure",
+      "steps": [
+        "4a",
+        "4b"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-c770d8f0-001#1",
+        "CR-c770d8f0-002#1",
+        "CR-c770d8f0-003#1",
+        "CR-c770d8f0-004#1",
+        "CR-c770d8f0-005#1",
+        "CR-c770d8f0-006#1",
+        "CR-c770d8f0-007#1",
+        "CR-c770d8f0-008#1",
+        "CR-c770d8f0-009#1",
+        "CR-c770d8f0-010#1",
+        "CR-c770d8f0-011#1",
+        "CR-c770d8f0-012#1"
+      ],
+      "stage_packet": "stage-packets/infrastructure.md"
+    },
+    {
+      "id": "spec",
+      "steps": [
+        "6"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-c770d8f0-001#1",
+        "CR-c770d8f0-002#1",
+        "CR-c770d8f0-003#1",
+        "CR-c770d8f0-004#1",
+        "CR-c770d8f0-005#1",
+        "CR-c770d8f0-006#1",
+        "CR-c770d8f0-007#1",
+        "CR-c770d8f0-008#1",
+        "CR-c770d8f0-009#1",
+        "CR-c770d8f0-010#1",
+        "CR-c770d8f0-011#1",
+        "CR-c770d8f0-012#1"
+      ],
+      "stage_packet": "stage-packets/spec.md"
+    }
+  ],
+  "outside_work_unit_ids": []
+}

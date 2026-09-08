@@ -1,0 +1,134 @@
+{
+  "schema_version": "distillery.feedback-run-status/v1",
+  "feedback_request_id": "20260905_todo_resolution",
+  "input_sha256": "285429579e9c9d28307d4c779317f01941b915a1203d0e5b5f53a6c014ed7108",
+  "ambiguity_policy": "interactive",
+  "state": "completed",
+  "stages": [
+    {
+      "id": "requirements",
+      "state": "completed",
+      "event_ids": [
+        "20260905_083000_feedback_stage_requirements"
+      ],
+      "direct_work_unit_ids": [
+        "CR-c770d8f0-001#1",
+        "CR-c770d8f0-002#1",
+        "CR-c770d8f0-003#1",
+        "CR-c770d8f0-004#1",
+        "CR-c770d8f0-005#1",
+        "CR-c770d8f0-006#1",
+        "CR-c770d8f0-007#1",
+        "CR-c770d8f0-008#1",
+        "CR-c770d8f0-009#1",
+        "CR-c770d8f0-010#1",
+        "CR-c770d8f0-011#1"
+      ],
+      "causal_work_unit_ids": [
+        "CR-c770d8f0-001#1",
+        "CR-c770d8f0-002#1",
+        "CR-c770d8f0-003#1",
+        "CR-c770d8f0-004#1",
+        "CR-c770d8f0-005#1",
+        "CR-c770d8f0-006#1",
+        "CR-c770d8f0-007#1",
+        "CR-c770d8f0-008#1",
+        "CR-c770d8f0-009#1",
+        "CR-c770d8f0-010#1",
+        "CR-c770d8f0-011#1"
+      ]
+    },
+    {
+      "id": "quality_attributes",
+      "state": "completed",
+      "event_ids": [
+        "20260905_085000_feedback_stage_quality_attributes"
+      ],
+      "direct_work_unit_ids": [
+        "CR-c770d8f0-012#1"
+      ],
+      "causal_work_unit_ids": [
+        "CR-c770d8f0-001#1",
+        "CR-c770d8f0-002#1",
+        "CR-c770d8f0-003#1",
+        "CR-c770d8f0-004#1",
+        "CR-c770d8f0-005#1",
+        "CR-c770d8f0-006#1",
+        "CR-c770d8f0-007#1",
+        "CR-c770d8f0-008#1",
+        "CR-c770d8f0-009#1",
+        "CR-c770d8f0-010#1",
+        "CR-c770d8f0-011#1",
+        "CR-c770d8f0-012#1"
+      ]
+    },
+    {
+      "id": "architecture",
+      "state": "completed",
+      "event_ids": [
+        "20260905_091000_feedback_stage_architecture"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-c770d8f0-001#1",
+        "CR-c770d8f0-002#1",
+        "CR-c770d8f0-003#1",
+        "CR-c770d8f0-004#1",
+        "CR-c770d8f0-005#1",
+        "CR-c770d8f0-006#1",
+        "CR-c770d8f0-007#1",
+        "CR-c770d8f0-008#1",
+        "CR-c770d8f0-009#1",
+        "CR-c770d8f0-010#1",
+        "CR-c770d8f0-011#1",
+        "CR-c770d8f0-012#1"
+      ]
+    },
+    {
+      "id": "infrastructure",
+      "state": "completed",
+      "event_ids": [
+        "20260905_093000_feedback_stage_infrastructure"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-c770d8f0-001#1",
+        "CR-c770d8f0-002#1",
+        "CR-c770d8f0-003#1",
+        "CR-c770d8f0-004#1",
+        "CR-c770d8f0-005#1",
+        "CR-c770d8f0-006#1",
+        "CR-c770d8f0-007#1",
+        "CR-c770d8f0-008#1",
+        "CR-c770d8f0-009#1",
+        "CR-c770d8f0-010#1",
+        "CR-c770d8f0-011#1",
+        "CR-c770d8f0-012#1"
+      ]
+    },
+    {
+      "id": "spec",
+      "state": "completed",
+      "event_ids": [
+        "20260905_100000_feedback_stage_spec"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-c770d8f0-001#1",
+        "CR-c770d8f0-002#1",
+        "CR-c770d8f0-003#1",
+        "CR-c770d8f0-004#1",
+        "CR-c770d8f0-005#1",
+        "CR-c770d8f0-006#1",
+        "CR-c770d8f0-007#1",
+        "CR-c770d8f0-008#1",
+        "CR-c770d8f0-009#1",
+        "CR-c770d8f0-010#1",
+        "CR-c770d8f0-011#1",
+        "CR-c770d8f0-012#1"
+      ]
+    }
+  ],
+  "run_id": "feedback-20260905_todo_resolution-20260905_172439-60786",
+  "attempt": 1
+}

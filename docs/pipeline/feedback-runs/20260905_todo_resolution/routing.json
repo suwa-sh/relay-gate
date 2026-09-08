@@ -1,0 +1,1089 @@
+{
+  "schema_version": "distillery.feedback-routing/v1",
+  "feedback_request_id": "20260905_todo_resolution",
+  "input_sha256": "285429579e9c9d28307d4c779317f01941b915a1203d0e5b5f53a6c014ed7108",
+  "policy": "interactive",
+  "routing_basis": {
+    "ownership_catalog_version": "1.0.0",
+    "ownership_catalog_sha256": "801750c2abe99945a3de9387b82339b2bc96ccb2da564f9923cc0e9b76a2bd39",
+    "routing_policy_version": "1.1.0",
+    "routing_policy_sha256": "3873275bf4adb3d9d7b7c41c22c9463d054a3614df7bbcab7514f0c1e23e166e",
+    "prompt_schema_sha256": "bf7c7f34d7a2fc5976ccd2589a454172a4630e1448c509966b620f88029732c4",
+    "stage_packet_renderer_version": "1",
+    "skipped_stages": [
+      "design_system",
+      "spec_stories"
+    ],
+    "repository_head": "c770d8f3beda010fea1876c00fb47ae9ba014a4c",
+    "latest_domain_event_ids": {
+      "requirements": {
+        "rdra/events": "20260830_181841_initial_build",
+        "usdm/events": "20260830_181841_initial_build"
+      },
+      "quality_attributes": {
+        "nfr/events": "20260830_183726_initial_nfr"
+      },
+      "architecture": {
+        "arch/events": "20260830_202427_arch_infra_feedback_20260830_190412_infra_product_design"
+      },
+      "infrastructure": {
+        "infra/events": "20260830_190412_infra_product_design"
+      },
+      "design_system": {
+        "design/events": null
+      },
+      "spec": {
+        "specs/events": "20260830_202851_spec_generation"
+      },
+      "spec_stories": {
+        "design/events": null
+      }
+    },
+    "domain_event_root_snapshots": {
+      "rdra/events": {
+        "head_event_id": "20260830_181841_initial_build",
+        "head_event_sha256": "b2cd9f0d3cfe09d0efa5936debc4abce531d8442da4077070db82926f40a35ed",
+        "event_ids": [
+          "20260830_181841_initial_build"
+        ],
+        "event_set_sha256": "2b55255f934936f51cb0ea40810b971ab14bbbdbb2115ffa7c9a03c1059203cc",
+        "latest_tree_sha256": "84cb29828df4d39f3ebab66bc11e1bf52d76fbdd961ef7672e73ad477e6b3a6f"
+      },
+      "usdm/events": {
+        "head_event_id": "20260830_181841_initial_build",
+        "head_event_sha256": "25e61e8670ecae798f17728065ff1fcf00193659b8a2922cfa8d1045d2bfe3ca",
+        "event_ids": [
+          "20260830_181841_initial_build"
+        ],
+        "event_set_sha256": "2b55255f934936f51cb0ea40810b971ab14bbbdbb2115ffa7c9a03c1059203cc",
+        "latest_tree_sha256": "c1b4bbb76427900c440d44389bd74fcb318738955dd770add63b589a5de6c8be"
+      },
+      "nfr/events": {
+        "head_event_id": "20260830_183726_initial_nfr",
+        "head_event_sha256": "5cd28326c06dcd7c4da5a3f1f0a14dd434d7d18b4f6fb130697d326d9e6f9631",
+        "event_ids": [
+          "20260830_183726_initial_nfr"
+        ],
+        "event_set_sha256": "c71bc546b43144fc85ceb4068dd88e12e08a48a601694b556fa35b8a48f6fc8d",
+        "latest_tree_sha256": "16af838c9f24202ffda5547b587413aa5e3ad64c86809f71e13408526fba8f9d"
+      },
+      "arch/events": {
+        "head_event_id": "20260830_202427_arch_infra_feedback_20260830_190412_infra_product_design",
+        "head_event_sha256": "d15421ffa6484f09a8a30272216b8cd24aac1e142c74041c68d2718e66de8400",
+        "event_ids": [
+          "20260830_184457_initial_arch",
+          "20260830_202427_arch_infra_feedback_20260830_190412_infra_product_design"
+        ],
+        "event_set_sha256": "37cda644838540cc7ad10df67ac8b787574722664652c98e6462b1eb12583d95",
+        "latest_tree_sha256": "f6d02ee7f376c439f5a441e4d107cbc85d1be499536ea367a32189972d1b1b6d"
+      },
+      "infra/events": {
+        "head_event_id": "20260830_190412_infra_product_design",
+        "head_event_sha256": "ce3059e864648a7322077facde5634b0481f470da9658c24dda34dc84420612b",
+        "event_ids": [
+          "20260830_190412_infra_product_design"
+        ],
+        "event_set_sha256": "c4043036fd57a8bc0cd2aa06d4b5117053b49d108729268f83de26d6faf80f41",
+        "latest_tree_sha256": "ce3059e864648a7322077facde5634b0481f470da9658c24dda34dc84420612b"
+      },
+      "design/events": {
+        "head_event_id": null,
+        "head_event_sha256": null,
+        "event_ids": [],
+        "event_set_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "latest_tree_sha256": null
+      },
+      "specs/events": {
+        "head_event_id": "20260830_202851_spec_generation",
+        "head_event_sha256": "061002704ccbf8f7679b37edf36d411faf9d7ac9dee0e7fa6d04addf9ab20c51",
+        "event_ids": [
+          "20260830_202851_spec_generation"
+        ],
+        "event_set_sha256": "6c0668acba99a14dbb3ab5f9955a4ebfcec89847cbeef8e77058a166328949a4",
+        "latest_tree_sha256": "09c7aa8cb1a6d579081cd2f3f0785bbdbf1691b5429f617980dc7f5b5b713e15"
+      }
+    }
+  },
+  "state": "resolved",
+  "requests": [
+    {
+      "request_id": "CR-c770d8f0-001",
+      "source": {
+        "byte_span": [
+          172,
+          5012
+        ],
+        "slice_sha256": "83ad1b652478a34a1f3483960339ce32a7931fd78182f3cbda24ae3ea13e586d"
+      },
+      "decision_state": "resolved",
+      "reason": "feature flag のキーと値の正本は USDM SPEC-001-01 と RDRA バリエーション・情報モデルにあり、元資料の設定契約へ戻す変更は要件正本の更新が最上流になる",
+      "evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-001"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/usdm/latest/requirements.yaml"
+        },
+        {
+          "kind": "source_doc",
+          "value": "tmp/RelayGateのしくみ.md 設定契約"
+        }
+      ],
+      "deterministic_ownership_evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-001",
+          "rule": "REQ-",
+          "stage": "requirements"
+        },
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-005",
+          "rule": "REQ-",
+          "stage": "requirements"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/usdm/latest/requirements.yaml",
+          "rule": "(^|/)usdm(/|$)",
+          "stage": "requirements"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml",
+          "rule": "(^|/)specs?(/|$)",
+          "stage": "spec"
+        }
+      ],
+      "confidence": "high",
+      "ambiguity_kind": null,
+      "stop_flags": [],
+      "candidates": [],
+      "resolution": {
+        "status": "not_required"
+      },
+      "work_units": [
+        {
+          "request_id": "CR-c770d8f0-001",
+          "constraint_key": "feature-flag-keys",
+          "direct_stage": "requirements",
+          "reason": "feature flag のキーと値の正本は USDM SPEC-001-01 と RDRA バリエーション・情報モデルにあり、元資料の設定契約へ戻す変更は要件正本の更新が最上流になる",
+          "evidence": [
+            {
+              "kind": "related_id_prefix",
+              "value": "REQ-001"
+            },
+            {
+              "kind": "related_path_pattern",
+              "value": "docs/usdm/latest/requirements.yaml"
+            },
+            {
+              "kind": "source_doc",
+              "value": "tmp/RelayGateのしくみ.md 設定契約"
+            }
+          ],
+          "id": "CR-c770d8f0-001#1",
+          "required_closure_stages": [
+            "requirements",
+            "quality_attributes",
+            "architecture",
+            "infrastructure",
+            "spec"
+          ]
+        }
+      ]
+    },
+    {
+      "request_id": "CR-c770d8f0-002",
+      "source": {
+        "byte_span": [
+          5012,
+          8521
+        ],
+        "slice_sha256": "f216c966c36d7cfdd1f23a288c062603031660892ad20b35f96adb2b691a088f"
+      },
+      "decision_state": "resolved",
+      "reason": "ジョブマップの形式と列名は RDRA 情報「ジョブマップ」と USDM REQ-004 配下の受け入れ条件で定めるため要件正本が最上流",
+      "evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-004"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/rdra/latest/情報.tsv"
+        },
+        {
+          "kind": "source_doc",
+          "value": "tmp/RelayGateの利用イメージ.md blue/green runner"
+        }
+      ],
+      "deterministic_ownership_evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-004",
+          "rule": "REQ-",
+          "stage": "requirements"
+        },
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-005",
+          "rule": "REQ-",
+          "stage": "requirements"
+        },
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-006",
+          "rule": "REQ-",
+          "stage": "requirements"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/usdm/latest/requirements.yaml",
+          "rule": "(^|/)usdm(/|$)",
+          "stage": "requirements"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml",
+          "rule": "(^|/)specs?(/|$)",
+          "stage": "spec"
+        }
+      ],
+      "confidence": "high",
+      "ambiguity_kind": null,
+      "stop_flags": [],
+      "candidates": [],
+      "resolution": {
+        "status": "not_required"
+      },
+      "work_units": [
+        {
+          "request_id": "CR-c770d8f0-002",
+          "constraint_key": "job-map-csv-format",
+          "direct_stage": "requirements",
+          "reason": "ジョブマップの形式と列名は RDRA 情報「ジョブマップ」と USDM REQ-004 配下の受け入れ条件で定めるため要件正本が最上流",
+          "evidence": [
+            {
+              "kind": "related_id_prefix",
+              "value": "REQ-004"
+            },
+            {
+              "kind": "related_path_pattern",
+              "value": "docs/rdra/latest/情報.tsv"
+            },
+            {
+              "kind": "source_doc",
+              "value": "tmp/RelayGateの利用イメージ.md blue/green runner"
+            }
+          ],
+          "id": "CR-c770d8f0-002#1",
+          "required_closure_stages": [
+            "requirements",
+            "quality_attributes",
+            "architecture",
+            "infrastructure",
+            "spec"
+          ]
+        }
+      ]
+    },
+    {
+      "request_id": "CR-c770d8f0-003",
+      "source": {
+        "byte_span": [
+          8521,
+          11128
+        ],
+        "slice_sha256": "cc00af52e1035e4a6e2a019b90c143f2000bb9ccd5c1e88c99bcb02fc32f8dc7"
+      },
+      "decision_state": "resolved",
+      "reason": "run_id の形式は複数 tier が共有する算出規則で、利用者が USDM/RDRA に形式を明記する決定をしたため要件正本が最上流(spec の shared_rules は下流で追従)",
+      "evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-011"
+        },
+        {
+          "kind": "user_decision",
+          "value": "2026-09-05 D3: ローカルタイムゾーン timestamp + job_id + hex"
+        }
+      ],
+      "deterministic_ownership_evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-009",
+          "rule": "REQ-",
+          "stage": "requirements"
+        },
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-011",
+          "rule": "REQ-",
+          "stage": "requirements"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/usdm/latest/requirements.yaml",
+          "rule": "(^|/)usdm(/|$)",
+          "stage": "requirements"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml",
+          "rule": "(^|/)specs?(/|$)",
+          "stage": "spec"
+        }
+      ],
+      "confidence": "medium",
+      "ambiguity_kind": null,
+      "stop_flags": [],
+      "candidates": [],
+      "resolution": {
+        "status": "not_required"
+      },
+      "work_units": [
+        {
+          "request_id": "CR-c770d8f0-003",
+          "constraint_key": "run-id-format",
+          "direct_stage": "requirements",
+          "reason": "run_id の形式は複数 tier が共有する算出規則で、利用者が USDM/RDRA に形式を明記する決定をしたため要件正本が最上流(spec の shared_rules は下流で追従)",
+          "evidence": [
+            {
+              "kind": "related_id_prefix",
+              "value": "REQ-011"
+            },
+            {
+              "kind": "user_decision",
+              "value": "2026-09-05 D3: ローカルタイムゾーン timestamp + job_id + hex"
+            }
+          ],
+          "id": "CR-c770d8f0-003#1",
+          "required_closure_stages": [
+            "requirements",
+            "quality_attributes",
+            "architecture",
+            "infrastructure",
+            "spec"
+          ]
+        }
+      ]
+    },
+    {
+      "request_id": "CR-c770d8f0-004",
+      "source": {
+        "byte_span": [
+          11128,
+          14810
+        ],
+        "slice_sha256": "4d3fcef4e35dbe32f1a88220ce1d875b235071675a92e24443790d0e3bbe227a"
+      },
+      "decision_state": "resolved",
+      "reason": "Runner Result の成果物追加と slot 実行の状態導出規則は RDRA 情報・状態・条件モデルの変更であり要件正本が最上流",
+      "evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-010"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/rdra/latest/状態.tsv"
+        },
+        {
+          "kind": "source_doc",
+          "value": "tmp/RelayGateのしくみ.md データモデル / background-rerun.sh"
+        }
+      ],
+      "deterministic_ownership_evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-003",
+          "rule": "REQ-",
+          "stage": "requirements"
+        },
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-008",
+          "rule": "REQ-",
+          "stage": "requirements"
+        },
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-009",
+          "rule": "REQ-",
+          "stage": "requirements"
+        },
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-010",
+          "rule": "REQ-",
+          "stage": "requirements"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/usdm/latest/requirements.yaml",
+          "rule": "(^|/)usdm(/|$)",
+          "stage": "requirements"
+        }
+      ],
+      "confidence": "high",
+      "ambiguity_kind": null,
+      "stop_flags": [],
+      "candidates": [],
+      "resolution": {
+        "status": "not_required"
+      },
+      "work_units": [
+        {
+          "request_id": "CR-c770d8f0-004",
+          "constraint_key": "aborted-marker-off-mode",
+          "direct_stage": "requirements",
+          "reason": "Runner Result の成果物追加と slot 実行の状態導出規則は RDRA 情報・状態・条件モデルの変更であり要件正本が最上流",
+          "evidence": [
+            {
+              "kind": "related_id_prefix",
+              "value": "REQ-010"
+            },
+            {
+              "kind": "related_path_pattern",
+              "value": "docs/rdra/latest/状態.tsv"
+            },
+            {
+              "kind": "source_doc",
+              "value": "tmp/RelayGateのしくみ.md データモデル / background-rerun.sh"
+            }
+          ],
+          "id": "CR-c770d8f0-004#1",
+          "required_closure_stages": [
+            "requirements",
+            "quality_attributes",
+            "architecture",
+            "infrastructure",
+            "spec"
+          ]
+        }
+      ]
+    },
+    {
+      "request_id": "CR-c770d8f0-005",
+      "source": {
+        "byte_span": [
+          14810,
+          17105
+        ],
+        "slice_sha256": "66502b4f90a1ba7618f666a2004bc7b917e9ad99813a06e1db044d6ebffa1f01"
+      },
+      "decision_state": "resolved",
+      "reason": "スコープ外の明記は RDRA 条件モデルと USDM 受け入れ条件の追加であり要件正本が最上流",
+      "evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-005"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/rdra/latest/条件.tsv"
+        }
+      ],
+      "deterministic_ownership_evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-005",
+          "rule": "REQ-",
+          "stage": "requirements"
+        },
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-008",
+          "rule": "REQ-",
+          "stage": "requirements"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/usdm/latest/requirements.yaml",
+          "rule": "(^|/)usdm(/|$)",
+          "stage": "requirements"
+        }
+      ],
+      "confidence": "high",
+      "ambiguity_kind": null,
+      "stop_flags": [],
+      "candidates": [],
+      "resolution": {
+        "status": "not_required"
+      },
+      "work_units": [
+        {
+          "request_id": "CR-c770d8f0-005",
+          "constraint_key": "notice-failure-out-of-scope",
+          "direct_stage": "requirements",
+          "reason": "スコープ外の明記は RDRA 条件モデルと USDM 受け入れ条件の追加であり要件正本が最上流",
+          "evidence": [
+            {
+              "kind": "related_id_prefix",
+              "value": "REQ-005"
+            },
+            {
+              "kind": "related_path_pattern",
+              "value": "docs/rdra/latest/条件.tsv"
+            }
+          ],
+          "id": "CR-c770d8f0-005#1",
+          "required_closure_stages": [
+            "requirements",
+            "quality_attributes",
+            "architecture",
+            "infrastructure",
+            "spec"
+          ]
+        }
+      ]
+    },
+    {
+      "request_id": "CR-c770d8f0-006",
+      "source": {
+        "byte_span": [
+          17105,
+          18991
+        ],
+        "slice_sha256": "593ee09b2aa19813cb2b247f597610aaba479dced5aebb5bed0e30f4091d9554"
+      },
+      "decision_state": "resolved",
+      "reason": "外部システム.tsv と BUC 関連先の変更は RDRA モデルの変更であり要件正本が最上流",
+      "evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-011"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/rdra/latest/外部システム.tsv"
+        }
+      ],
+      "deterministic_ownership_evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-011",
+          "rule": "REQ-",
+          "stage": "requirements"
+        },
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-013",
+          "rule": "REQ-",
+          "stage": "requirements"
+        }
+      ],
+      "confidence": "high",
+      "ambiguity_kind": null,
+      "stop_flags": [],
+      "candidates": [],
+      "resolution": {
+        "status": "not_required"
+      },
+      "work_units": [
+        {
+          "request_id": "CR-c770d8f0-006",
+          "constraint_key": "management-db-internal",
+          "direct_stage": "requirements",
+          "reason": "外部システム.tsv と BUC 関連先の変更は RDRA モデルの変更であり要件正本が最上流",
+          "evidence": [
+            {
+              "kind": "related_id_prefix",
+              "value": "REQ-011"
+            },
+            {
+              "kind": "related_path_pattern",
+              "value": "docs/rdra/latest/外部システム.tsv"
+            }
+          ],
+          "id": "CR-c770d8f0-006#1",
+          "required_closure_stages": [
+            "requirements",
+            "quality_attributes",
+            "architecture",
+            "infrastructure",
+            "spec"
+          ]
+        }
+      ]
+    },
+    {
+      "request_id": "CR-c770d8f0-007",
+      "source": {
+        "byte_span": [
+          18991,
+          20951
+        ],
+        "slice_sha256": "2d719c016f552b6153d8f711f80f15a4cba39edea2196355269832f1427865c4"
+      },
+      "decision_state": "resolved",
+      "reason": "情報モデルの属性変更は RDRA の変更であり要件正本が最上流",
+      "evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-008"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/rdra/latest/情報.tsv"
+        }
+      ],
+      "deterministic_ownership_evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-002",
+          "rule": "REQ-",
+          "stage": "requirements"
+        },
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-008",
+          "rule": "REQ-",
+          "stage": "requirements"
+        },
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-012",
+          "rule": "REQ-",
+          "stage": "requirements"
+        }
+      ],
+      "confidence": "high",
+      "ambiguity_kind": null,
+      "stop_flags": [],
+      "candidates": [],
+      "resolution": {
+        "status": "not_required"
+      },
+      "work_units": [
+        {
+          "request_id": "CR-c770d8f0-007",
+          "constraint_key": "info-attributes-cleanup",
+          "direct_stage": "requirements",
+          "reason": "情報モデルの属性変更は RDRA の変更であり要件正本が最上流",
+          "evidence": [
+            {
+              "kind": "related_id_prefix",
+              "value": "REQ-008"
+            },
+            {
+              "kind": "related_path_pattern",
+              "value": "docs/rdra/latest/情報.tsv"
+            }
+          ],
+          "id": "CR-c770d8f0-007#1",
+          "required_closure_stages": [
+            "requirements",
+            "quality_attributes",
+            "architecture",
+            "infrastructure",
+            "spec"
+          ]
+        }
+      ]
+    },
+    {
+      "request_id": "CR-c770d8f0-008",
+      "source": {
+        "byte_span": [
+          20951,
+          24583
+        ],
+        "slice_sha256": "a4c97caeb9bf617cf37d6b6d8a330f213b4acb5b6884b80e0636a296e6b88225"
+      },
+      "decision_state": "resolved",
+      "reason": "状態モデルとバリエーションの値集合・遷移の変更は RDRA の変更であり要件正本が最上流",
+      "evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-008"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/rdra/latest/バリエーション.tsv"
+        }
+      ],
+      "deterministic_ownership_evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-008",
+          "rule": "REQ-",
+          "stage": "requirements"
+        },
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-010",
+          "rule": "REQ-",
+          "stage": "requirements"
+        }
+      ],
+      "confidence": "high",
+      "ambiguity_kind": null,
+      "stop_flags": [],
+      "candidates": [],
+      "resolution": {
+        "status": "not_required"
+      },
+      "work_units": [
+        {
+          "request_id": "CR-c770d8f0-008",
+          "constraint_key": "monitor-status-unify",
+          "direct_stage": "requirements",
+          "reason": "状態モデルとバリエーションの値集合・遷移の変更は RDRA の変更であり要件正本が最上流",
+          "evidence": [
+            {
+              "kind": "related_id_prefix",
+              "value": "REQ-008"
+            },
+            {
+              "kind": "related_path_pattern",
+              "value": "docs/rdra/latest/バリエーション.tsv"
+            }
+          ],
+          "id": "CR-c770d8f0-008#1",
+          "required_closure_stages": [
+            "requirements",
+            "quality_attributes",
+            "architecture",
+            "infrastructure",
+            "spec"
+          ]
+        }
+      ]
+    },
+    {
+      "request_id": "CR-c770d8f0-009",
+      "source": {
+        "byte_span": [
+          24583,
+          26829
+        ],
+        "slice_sha256": "c9b4e297982829ba762f9c94695c32914743eec4d956a7ede99ae2c2b5e0d181"
+      },
+      "decision_state": "resolved",
+      "reason": "状態モデル「並行稼働実行」の遷移追加は RDRA の変更であり要件正本が最上流",
+      "evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-011"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/rdra/latest/状態.tsv"
+        }
+      ],
+      "deterministic_ownership_evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-009",
+          "rule": "REQ-",
+          "stage": "requirements"
+        },
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-010",
+          "rule": "REQ-",
+          "stage": "requirements"
+        },
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-011",
+          "rule": "REQ-",
+          "stage": "requirements"
+        }
+      ],
+      "confidence": "high",
+      "ambiguity_kind": null,
+      "stop_flags": [],
+      "candidates": [],
+      "resolution": {
+        "status": "not_required"
+      },
+      "work_units": [
+        {
+          "request_id": "CR-c770d8f0-009",
+          "constraint_key": "parallel-run-transitions",
+          "direct_stage": "requirements",
+          "reason": "状態モデル「並行稼働実行」の遷移追加は RDRA の変更であり要件正本が最上流",
+          "evidence": [
+            {
+              "kind": "related_id_prefix",
+              "value": "REQ-011"
+            },
+            {
+              "kind": "related_path_pattern",
+              "value": "docs/rdra/latest/状態.tsv"
+            }
+          ],
+          "id": "CR-c770d8f0-009#1",
+          "required_closure_stages": [
+            "requirements",
+            "quality_attributes",
+            "architecture",
+            "infrastructure",
+            "spec"
+          ]
+        }
+      ]
+    },
+    {
+      "request_id": "CR-c770d8f0-010",
+      "source": {
+        "byte_span": [
+          26829,
+          29100
+        ],
+        "slice_sha256": "99f4efa9fd05a8de44f3449462a3edd325773ae2248f0f1819771d0ab79ec7b9"
+      },
+      "decision_state": "resolved",
+      "reason": "情報「ハング検知定期ジョブ設定」と設定所有区分の追加は RDRA の変更であり要件正本が最上流",
+      "evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-008"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/rdra/latest/バリエーション.tsv"
+        }
+      ],
+      "deterministic_ownership_evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-008",
+          "rule": "REQ-",
+          "stage": "requirements"
+        },
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-012",
+          "rule": "REQ-",
+          "stage": "requirements"
+        },
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-013",
+          "rule": "REQ-",
+          "stage": "requirements"
+        }
+      ],
+      "confidence": "high",
+      "ambiguity_kind": null,
+      "stop_flags": [],
+      "candidates": [],
+      "resolution": {
+        "status": "not_required"
+      },
+      "work_units": [
+        {
+          "request_id": "CR-c770d8f0-010",
+          "constraint_key": "hang-detector-env-info",
+          "direct_stage": "requirements",
+          "reason": "情報「ハング検知定期ジョブ設定」と設定所有区分の追加は RDRA の変更であり要件正本が最上流",
+          "evidence": [
+            {
+              "kind": "related_id_prefix",
+              "value": "REQ-008"
+            },
+            {
+              "kind": "related_path_pattern",
+              "value": "docs/rdra/latest/バリエーション.tsv"
+            }
+          ],
+          "id": "CR-c770d8f0-010#1",
+          "required_closure_stages": [
+            "requirements",
+            "quality_attributes",
+            "architecture",
+            "infrastructure",
+            "spec"
+          ]
+        }
+      ]
+    },
+    {
+      "request_id": "CR-c770d8f0-011",
+      "source": {
+        "byte_span": [
+          29100,
+          30627
+        ],
+        "slice_sha256": "4950ea29d221234dc7a20ffd4e44f9d93402dd2b8414e4087fa7ce40da612ec3"
+      },
+      "decision_state": "resolved",
+      "reason": "条件モデルの追加は RDRA の変更であり要件正本が最上流",
+      "evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-005"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/rdra/latest/条件.tsv"
+        }
+      ],
+      "deterministic_ownership_evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-005",
+          "rule": "REQ-",
+          "stage": "requirements"
+        },
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-007",
+          "rule": "REQ-",
+          "stage": "requirements"
+        }
+      ],
+      "confidence": "high",
+      "ambiguity_kind": null,
+      "stop_flags": [],
+      "candidates": [],
+      "resolution": {
+        "status": "not_required"
+      },
+      "work_units": [
+        {
+          "request_id": "CR-c770d8f0-011",
+          "constraint_key": "comparison-result-condition",
+          "direct_stage": "requirements",
+          "reason": "条件モデルの追加は RDRA の変更であり要件正本が最上流",
+          "evidence": [
+            {
+              "kind": "related_id_prefix",
+              "value": "REQ-005"
+            },
+            {
+              "kind": "related_path_pattern",
+              "value": "docs/rdra/latest/条件.tsv"
+            }
+          ],
+          "id": "CR-c770d8f0-011#1",
+          "required_closure_stages": [
+            "requirements",
+            "quality_attributes",
+            "architecture",
+            "infrastructure",
+            "spec"
+          ]
+        }
+      ]
+    },
+    {
+      "request_id": "CR-c770d8f0-012",
+      "source": {
+        "byte_span": [
+          30627,
+          32444
+        ],
+        "slice_sha256": "4145ce201a5579e02e425be4972abd5a5fdbf46fc440e299a36613e281f50d10"
+      },
+      "decision_state": "resolved",
+      "reason": "非機能要求グレードの confidence と reason の更新は nfr-grade.yaml の変更であり quality_attributes が正本の所有者。RDRA は変更しない",
+      "evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "NFR-A.2.1.1"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/nfr/latest/nfr-grade.yaml"
+        },
+        {
+          "kind": "user_decision",
+          "value": "2026-09-05 一括確定 DIST-003〜008, 012"
+        }
+      ],
+      "deterministic_ownership_evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "NFR-A.2.1.1",
+          "rule": "NFR-",
+          "stage": "quality_attributes"
+        },
+        {
+          "kind": "related_id_prefix",
+          "value": "NFR-A.3.1.1",
+          "rule": "NFR-",
+          "stage": "quality_attributes"
+        },
+        {
+          "kind": "related_id_prefix",
+          "value": "NFR-A.3.1.2",
+          "rule": "NFR-",
+          "stage": "quality_attributes"
+        },
+        {
+          "kind": "related_id_prefix",
+          "value": "NFR-C.2.1.2",
+          "rule": "NFR-",
+          "stage": "quality_attributes"
+        },
+        {
+          "kind": "related_id_prefix",
+          "value": "NFR-C.4.1.1",
+          "rule": "NFR-",
+          "stage": "quality_attributes"
+        },
+        {
+          "kind": "related_id_prefix",
+          "value": "NFR-C.5.1.1",
+          "rule": "NFR-",
+          "stage": "quality_attributes"
+        },
+        {
+          "kind": "related_id_prefix",
+          "value": "NFR-C.6.1.1",
+          "rule": "NFR-",
+          "stage": "quality_attributes"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/nfr/latest/nfr-grade.yaml",
+          "rule": "(^|/)nfr(/|$)",
+          "stage": "quality_attributes"
+        }
+      ],
+      "confidence": "high",
+      "ambiguity_kind": null,
+      "stop_flags": [],
+      "candidates": [],
+      "resolution": {
+        "status": "not_required"
+      },
+      "work_units": [
+        {
+          "request_id": "CR-c770d8f0-012",
+          "constraint_key": "nfr-low-confidence-confirm",
+          "direct_stage": "quality_attributes",
+          "reason": "非機能要求グレードの confidence と reason の更新は nfr-grade.yaml の変更であり quality_attributes が正本の所有者。RDRA は変更しない",
+          "evidence": [
+            {
+              "kind": "related_id_prefix",
+              "value": "NFR-A.2.1.1"
+            },
+            {
+              "kind": "related_path_pattern",
+              "value": "docs/nfr/latest/nfr-grade.yaml"
+            },
+            {
+              "kind": "user_decision",
+              "value": "2026-09-05 一括確定 DIST-003〜008, 012"
+            }
+          ],
+          "id": "CR-c770d8f0-012#1",
+          "required_closure_stages": [
+            "quality_attributes",
+            "architecture",
+            "infrastructure",
+            "spec"
+          ]
+        }
+      ]
+    }
+  ]
+}

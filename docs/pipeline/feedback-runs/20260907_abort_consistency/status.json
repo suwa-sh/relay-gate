@@ -1,0 +1,80 @@
+{
+  "schema_version": "distillery.feedback-run-status/v1",
+  "feedback_request_id": "20260907_abort_consistency",
+  "input_sha256": "70cda63f92e887e459a3817580e45a840e3ff201065a534085ad113fb8910b81",
+  "ambiguity_policy": "interactive",
+  "state": "completed",
+  "stages": [
+    {
+      "id": "requirements",
+      "state": "completed",
+      "event_ids": [
+        "20260907_114000_feedback_stage_requirements"
+      ],
+      "direct_work_unit_ids": [
+        "CR-c770d8f0-016#1",
+        "CR-c770d8f0-017#1",
+        "CR-c770d8f0-018#1"
+      ],
+      "causal_work_unit_ids": [
+        "CR-c770d8f0-016#1",
+        "CR-c770d8f0-017#1",
+        "CR-c770d8f0-018#1"
+      ]
+    },
+    {
+      "id": "quality_attributes",
+      "state": "completed",
+      "event_ids": [
+        "20260907_120000_feedback_stage_quality_attributes"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-c770d8f0-016#1",
+        "CR-c770d8f0-017#1",
+        "CR-c770d8f0-018#1"
+      ]
+    },
+    {
+      "id": "architecture",
+      "state": "completed",
+      "event_ids": [
+        "20260907_122000_feedback_stage_architecture"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-c770d8f0-016#1",
+        "CR-c770d8f0-017#1",
+        "CR-c770d8f0-018#1"
+      ]
+    },
+    {
+      "id": "infrastructure",
+      "state": "completed",
+      "event_ids": [
+        "20260907_124000_feedback_stage_infrastructure"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-c770d8f0-016#1",
+        "CR-c770d8f0-017#1",
+        "CR-c770d8f0-018#1"
+      ]
+    },
+    {
+      "id": "spec",
+      "state": "completed",
+      "event_ids": [
+        "20260907_131000_feedback_stage_spec"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-c770d8f0-016#1",
+        "CR-c770d8f0-017#1",
+        "CR-c770d8f0-018#1"
+      ]
+    }
+  ],
+  "run_id": "feedback-20260907_abort_consistency-20260907_203553-30561",
+  "attempt": 1
+}

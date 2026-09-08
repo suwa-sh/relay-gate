@@ -1,0 +1,82 @@
+round: 1
+group: G1
+findings:
+  - id: S3-G1-001
+    uc: "クロスチェック業務/速報クロスチェックフロー/比較ツールでジョブ単位比較を実行して結果を登録する"
+    file: "docs/specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/比較ツールでジョブ単位比較を実行して結果を登録する/tier-rapid-crosscheck.md"
+    line: 30
+    severity: minor
+    viewpoint: 3
+    claim: "終了コード表の 0 の条件が「依頼を終端状態(SUCCEEDED / FAILED)まで処理した」のみで、D2-3 で追加した「CLAIMED → RUNNING の条件付き UPDATE が 0 件で比較を開始せず 0」(契約 rapid-crosscheck-worker.sh exit_codes[0] に記載済み)が表に無い。"
+    fix: "0 の条件に「RUNNING 遷移の条件付き UPDATE(status='CLAIMED' AND worker_id=?)が 0 件(abort-rapid-crosscheck で ABORTED 済み / lease 失効で回収済み)で比較を開始せず終了した場合も 0」を追記し、契約 exit_codes[0].meaning と同文にする。"
+    source_refs:
+      - "docs/specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/api/cli-command-contract.yaml#rapid-crosscheck-worker.sh.exit_codes"
+      - "docs/specs/events/20260907_131000_feedback_abort_consistency/_review/change-brief.md#D2-3"
+  - id: S3-G1-002
+    uc: "クロスチェック業務/速報クロスチェックフロー/比較ツールでジョブ単位比較を実行して結果を登録する"
+    file: "docs/specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/比較ツールでジョブ単位比較を実行して結果を登録する/tier-rapid-crosscheck.md"
+    line: 161
+    severity: minor
+    viewpoint: 2
+    claim: "ティア BDD「他 worker に奪われた依頼は処理しない」の Then が `request_status=<再 SELECT した現在の status>` と `WARN request not owned ... status=...` のプレースホルダのままで、Given(status=CLAIMED, worker_id=worker-02)から確定できる具体値になっていない。"
+    fix: "Then を `request_status=CLAIMED` と `WARN request not owned run_id=20260830T113000-JOB001-3f9a1c2e status=CLAIMED` に具体化する(Given が CLAIMED / worker-02 のため再 SELECT の status は CLAIMED)。"
+    source_refs:
+      - "docs/specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/api/cli-command-contract.yaml#rapid-crosscheck-worker.sh.idempotency"
+  - id: S3-G1-003
+    uc: "クロスチェック業務/速報クロスチェックフロー/比較ツールでジョブ単位比較を実行して結果を登録する"
+    file: "docs/specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/比較ツールでジョブ単位比較を実行して結果を登録する/spec.md"
+    line: 41
+    severity: minor
+    viewpoint: 5
+    claim: "_model-summary.yaml には RUNNING 遷移 0 件時の再 SELECT(rapid_crosscheck_requests: SELECT status, worker_id WHERE run_id=?)が operations として定義されているが、spec.md のデータフロー図には対応する SELECT エッジが無く、UPDATE エッジのラベル文中に「再 SELECT して終了」と書かれているだけで整合しない。"
+    fix: "データフロー図に `R_GW_DB -->|\"SQL SELECT status, worker_id WHERE run_id=?(RUNNING 遷移 0 件時の再 SELECT。ABORTED なら WARN reason=request_aborted)\"| T_REQ` のエッジを 1 本追加する。"
+    source_refs:
+      - "docs/specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/比較ツールでジョブ単位比較を実行して結果を登録する/_model-summary.yaml#tables.rapid_crosscheck_requests"
+  - id: S3-G1-004
+    uc: "クロスチェック業務/速報クロスチェックフロー/比較ツールでジョブ単位比較を実行して結果を登録する"
+    file: "docs/specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/比較ツールでジョブ単位比較を実行して結果を登録する/spec.md"
+    line: 96
+    severity: minor
+    viewpoint: 6
+    claim: "処理フロー(sequenceDiagram)の「更新件数 0」alt ブロックが Note だけで閉じており、その後 `UC->>Repo: crosscheck_job_map_find` へ続くため、0 件でも比較定義解決へ進むように読める(構文は正しいが、tier の「手順 2 以降は行わない」と図の流れが一致しない)。"
+    fix: "alt ブロック内の Note の直後に `UC-->>Pres: 比較を開始せず終了(request_status=<再 SELECT した status>, 終了コード 0)` を追加し、else 側にだけ以降の処理が続くことを示す(または alt を `alt 更新件数 0 ... else 更新件数 1` の 2 分岐にして以降を else 内へ移す)。"
+    source_refs:
+      - "docs/specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/比較ツールでジョブ単位比較を実行して結果を登録する/tier-rapid-crosscheck.md#処理フロー"
+  - id: S3-G1-005
+    uc: "クロスチェック業務/速報クロスチェックフロー/比較ツールでジョブ単位比較を実行して結果を登録する"
+    file: "docs/specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/比較ツールでジョブ単位比較を実行して結果を登録する/spec.md"
+    line: 153
+    severity: minor
+    viewpoint: 1
+    claim: "条件「依頼中止可否判定」(条件.tsv)はバリエーション「クロスチェック依頼状態」「停止確認応答」「中止対象種別」「クロスチェック種別」に関連するが、UC-11 のバリエーション一覧「クロスチェック依頼状態」は RUNNING / SUCCEEDED / FAILED のみで、本 UC が worker 側の競合規則で観測する ABORTED(再 SELECT の結果)が値に無い。"
+    fix: "バリエーション一覧「クロスチェック依頼状態」の値に ABORTED を追加し、処理内容を「RUNNING 遷移 0 件時の再 SELECT で観測する(遷移 UC は「実行を ABORTED へ遷移させる」)」、適用箇所を rapid_request_find とする。"
+    source_refs:
+      - "docs/rdra/latest/条件.tsv#依頼中止可否判定"
+  - id: S3-G1-006
+    uc: "クロスチェック業務/速報クロスチェックフロー/両系成功時に速報比較依頼を作成する"
+    file: "docs/specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/両系成功時に速報比較依頼を作成する/spec.md"
+    line: 122
+    severity: minor
+    viewpoint: 1
+    claim: "条件「中止済み run の比較依頼作成除外」(条件.tsv)はバリエーション「速報クロスチェックモード」に関連する(RAPID_CROSSCHECK_MODE=off では適用しない)が、UC-09 のバリエーション一覧に「速報クロスチェックモード」の行が無い(分岐条件一覧「速報クロスチェック有効判定」にのみ記述)。"
+    fix: "バリエーション一覧に「速報クロスチェックモード | foreground / background | 完了通知を受けて本 UC を実行する(両値で同じ挙動)」と「速報クロスチェックモード | off | 完了通知も依頼も存在しないため本 UC は起動されない(中止済み run の比較依頼作成除外は速報有効時だけに適用)」の 2 行を追加する。"
+    source_refs:
+      - "docs/rdra/latest/条件.tsv#中止済み run の比較依頼作成除外"
+  - id: S3-G1-007
+    uc: "クロスチェック業務/速報クロスチェックフロー/buc-spec"
+    file: "docs/specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/buc-spec.md"
+    line: 76
+    severity: minor
+    viewpoint: 6
+    claim: "状態遷移全体図は「本 BUC の依頼ライフサイクルの終端として」REQUESTED → ABORTED と CLAIMED → ABORTED(いずれも別 BUC の UC-23 が担当)を図に含める一方、同じ UC-23 が担当する RUNNING → ABORTED(abort-rapid-crosscheck。状態.tsv 行 17)だけを「図に含めない」としており、依頼の ABORTED 終端の表現が 3 経路のうち 2 経路だけになって一貫しない。"
+    fix: "stateDiagram の REQ ブロックに `RUNNING --> ABORTED: 実行を ABORTED へ遷移させる(別 BUC 実行中止フロー。abort-rapid-crosscheck。比較中の中止。終端 UPDATE が 0 件になり comparison_results を登録しない)` を追加し、冒頭の説明文から「依頼の RUNNING → ABORTED(abort-rapid-crosscheck)... は図に含めない」を外して 3 経路すべてを本 BUC の依頼ライフサイクルの終端として示す(状態遷移 UC マッピングにも RUNNING → ABORTED 行を追加)。"
+    source_refs:
+      - "docs/rdra/latest/状態.tsv#クロスチェック依頼"
+resolved:
+  - {id: S3-G1-001, resolution: fixed}
+  - {id: S3-G1-002, resolution: fixed}
+  - {id: S3-G1-003, resolution: fixed}
+  - {id: S3-G1-004, resolution: fixed}
+  - {id: S3-G1-005, resolution: fixed}
+  - {id: S3-G1-006, resolution: fixed}
+  - {id: S3-G1-007, resolution: fixed}

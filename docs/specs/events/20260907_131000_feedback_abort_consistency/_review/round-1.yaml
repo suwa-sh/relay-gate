@@ -1,0 +1,57 @@
+round: 1
+# Step6.5 反証レビュー(セマンティック検証)。対象は 本 feedback(CR-016 / 017 / 018)の差分に関わる成果物。
+# 照合先: docs/rdra/latest(条件.tsv / 状態.tsv / バリエーション.tsv)、docs/usdm/latest/requirements.yaml(SPEC-005-02 / 010-01 / 010-02)、
+#         docs/arch/events/20260907_122000_feedback_abort_consistency/_changes.md、_inputs-digest.md(LP-010 / LP-019 / LP-021 / LP-023 / LP-024 / CLP-004 / E-016 / E-017 / E-024)。
+# 検証パス(Step3 / Step4 round 2 で fixed とされた指摘): すべて修正済みを確認した。
+#   S3-G1-008: buc-spec(速報クロスチェックフロー)163 行の「速報クロスチェックモード」適用 UC に UC-09 が入っている
+#   S3-G1-009: UC-11 _api-summary.yaml exit_codes[0].meaning に RUNNING 遷移 0 件の 0 が追記され、stdout の列挙も契約 444 行と同文
+#   S3-G2-006 / S4-api-8: UC-23 tier-ops.md 52 行(出力契約)・245 行(BDD)・_api-summary.yaml 94 行が `(state changed concurrently) ... status=<再 SELECT した status>` / `status=SUCCEEDED` に揃っている
+#   S4-api-7: UC-11 tier-rapid-crosscheck.md 23 行・_api-summary.yaml 14 行の request_status 列挙が契約と同文
+#   S4-api-9: UC-27 tier-ops.md 35 行(エラー表)・139 行(BDD)の hint が契約 718 行と同文
+# 反証点(a)〜(c)の確認結果(finding にしなかったもの):
+#   (a) foreground 実行中に background slot を中止した経路は abort-* の parallel_runs 条件付き UPDATE(status IN ('STARTED','RUNNING'))で ABORTED になり、facade の COMPLETED 遷移は `WHERE status='RUNNING'` の条件付き UPDATE(UC-06 spec.md 74 行)のため ABORTED を上書きしない。後続の完了通知は parallel_run_aborted で除外される(D4 訂正のとおり #16 の経路は成立しない)。
+#       foreground 中継後(COMPLETED)に中止できるのは background slot のみで、その完了通知は対象 slot の slot_execution_aborted で除外される。--role rapid-crosscheck のリラン由来 run は slot_executions 行なし・parallel_runs RUNNING で依頼作成が正しい。
+#   (b) lease 失効解放の SQL は `WHERE status='CLAIMED' AND lease_until < ? AND started_at IS NULL`(UC-10 tier 58 行)で status 条件を含むため、CLAIMED → ABORTED 後の行(lease_until 残存・started_at NULL)が REQUESTED に戻ることはない。
+#       表示後の終端 / claim 直後の中止 / lease 失効直後の中止は、abort 側の status IN 条件付き UPDATE と worker 側の status='CLAIMED' AND worker_id 条件付き UPDATE の組で片方だけが 1 件になり、状態が二重に進む経路は無い。
+findings:
+  - id: R-001
+    viewpoint: 4
+    severity: major
+    target: "docs/specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/datastore/rdb-schema.yaml"
+    claim: "slot_executions.status の説明(153 行)と契約 shared_rules.exitcode_to_status.slot_execution(123 行)は「本列はファイル正本(状態導出規則)から導出した値と同じ値を保持する二重マッピング(ファイル正本が優先)」と定義しているが、CR-016 の判定キー「対象 slot の slot 実行 ABORTED」が成立する典型経路(USDM SPEC-005-02 AC6 = 中止後に実装が走り切って exitcode.txt を公開)では、ファイル正本の導出値は「両方あれば exitcode.txt を優先」で SUCCEEDED / FAILED、管理 DB は runner の終端 UPDATE(`WHERE status='RUNNING'`。契約 329 行)が 0 件のため ABORTED のまま残り、両者は一致しない。dispatcher はこの不一致(DB 側の ABORTED)を判定キーとして使うため、「同じ値を保持する」「ファイル正本が優先」の記述に従って DB を導出値へ同期(再 UPDATE)する実装をすると AC6 が満たせなくなる。UC-05 spec.md 141 行の条件「slot 実行の状態導出規則」行にも同じ「同じ値を保持する(二重マッピング)」がある"
+    evidence: "rdb-schema.yaml 153 行「条件『slot 実行の状態導出規則』: ... 両方あるときは exitcode.txt を優先。本列はその導出値と同じ値を保持する(ファイル正本が優先)」/ cli-command-contract.yaml 123 行「管理 DB の slot_executions.status はファイル正本と同じ値を保持する二重マッピング」/ UC-09 spec.md 5 行・request_creation_matrix「slot_executions.status = 'ABORTED'(aborted.txt 公開済みのミラー)」/ UC-09 spec.md 276〜282 行の AC6 シナリオ(exitcode.txt=0 公開後も slot_executions(run_id, green).status=ABORTED を前提に依頼を作らない)/ USDM SPEC-005-02 本文「判定材料は管理 DB の parallel_run.status と slot_executions.status(ファイル正本 aborted.txt のミラー)」/ RDRA 条件.tsv 19 行"
+    suggested_fix: "rdb-schema.yaml slot_executions.status の説明と契約 shared_rules.exitcode_to_status.slot_execution、UC-05 spec.md 141 行を「本列は runner / abort-* の条件付き UPDATE(WHERE status='RUNNING')で一度だけ終端値を書く。abort-blue / abort-green が ABORTED にした後に実装が走り切って exitcode.txt を公開した場合、ファイル正本の導出値は exitcode.txt 優先で SUCCEEDED / FAILED になるが、本列は runner の終端 UPDATE が 0 件のため ABORTED のまま残す(再同期しない)。この ABORTED は aborted.txt 公開済みのミラーとして dispatcher の条件『中止済み run の比較依頼作成除外』の判定キーに使う(USDM SPEC-005-02 AC6)。ファイル正本と一致しないのはこの経路だけで、slot 実行の状態判定(abort / rerun / hang-detector)は引き続きファイル正本で行う」に改める。UC-09 tier-rapid-crosscheck.md 97 行(slot_executions 参照表)にも同じ注記を 1 文添える"
+  - id: R-002
+    viewpoint: 4
+    severity: minor
+    target: "docs/specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/両系成功時に速報比較依頼を作成する/tier-rapid-crosscheck.md"
+    claim: "50 行「abort が先に COMMIT すれば本コマンドは COMMIT 後の状態(parallel_runs ABORTED または対象 slot の slot_executions ABORTED)を読んで依頼を作らず」は、abort-blue / abort-green の slot_executions 条件付き UPDATE(`WHERE status='RUNNING'`)が 1 件だったときだけ成り立つ。abort 側の成果物再確認の後・slot_executions UPDATE の前に runner が exitcode.txt を公開して終端 UPDATE(SUCCEEDED)を COMMIT した場合、abort は aborted.txt を公開し slot_executions UPDATE 0 件を `WARN management db not updated` として 0(stdout status=ABORTED)で終わり、parallel_runs が COMPLETED(foreground 中継済み)なら requests UPDATE も 0 件(依頼は未作成)で COMMIT する。その後の完了通知は parallel_runs COMPLETED・対象 slot SUCCEEDED を読んで依頼を作成する(abort が先に COMMIT したのに依頼が作られる)。ファイル正本(exitcode.txt 優先)では slot は SUCCEEDED なので依頼作成自体は状態導出規則と整合するが、UC-09 / UC-23 / 契約の直列化の説明はこの窓を「abort が先なら作らない」と断定しており、abort の stdout `status=ABORTED` と aborted.txt が残る点も含めて説明が無い(CR-016 / 018 と無関係な既存の 0 件 WARN 規則に由来するため minor)"
+    evidence: "UC-09 tier-rapid-crosscheck.md 50 行 / UC-09 spec.md 111 行 / cli-command-contract.yaml 394 行(rapid-crosscheck-runner.sh idempotency)/ abort-blue.sh exit_codes[0](783 行「slot_executions の UPDATE が 0 件 ... でも WARN を残して 0」)/ UC-23 spec.md 396〜401 行(競合として拒否するのは再確認時点で exitcode.txt が見えた場合のみ)/ UC-05 spec.md 103 行(runner の終端 UPDATE は `WHERE ... AND status='RUNNING'`)"
+    suggested_fix: "UC-09 tier-rapid-crosscheck.md 50 行・spec.md 111 行・契約 rapid-crosscheck-runner.sh idempotency / abort-blue.sh notes の直列化の説明に「abort の slot_executions UPDATE が 1 件(slot が RUNNING のまま中止できた)ときの保証。0 件(runner の終端 UPDATE が先に COMMIT 済み)のときは slot はファイル正本でも SUCCEEDED / FAILED(exitcode.txt 優先)であり、完了通知で依頼が作成されるのは正しい振る舞い」と限定を 1 文添える。あわせて abort-blue / abort-green の 0 件 WARN の説明(契約 783 行 / UC-23 tier-ops.md 32 行)に「aborted.txt は残るが状態導出は exitcode.txt を優先するため中止は成立していない(再確認: run-lineage.sh / abort-<role>.sh の現在状態表示)」を添えるか、0 件のとき exitcode.txt を再確認して `(state changed concurrently)` で 3 にする規則へ改める(後者は方針変更のため要確認として報告)"
+  - id: R-003
+    viewpoint: 5
+    severity: minor
+    target: "docs/specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/spec.md"
+    claim: "280 行(SPEC-010-01 AC8 シナリオ。本イベントで追加)の完了通知コマンド例が `--artifact-uri /var/relay-gate/facade/.../green` と `file://` 無しの絶対パスになっており、契約 rapid-crosscheck-runner.sh の `--artifact-uri`(「成果物ディレクトリ URI(file:// 絶対パス)」)および同 UC / UC-09 の他シナリオ(`file:///var/relay-gate/...`)と形式が一致しない。step 定義でコマンド文字列をそのまま実行すると URI 形式の検証結果が他シナリオと変わる"
+    evidence: "UC-23 spec.md 280 行 / cli-command-contract.yaml 372 行(--artifact-uri description)/ UC-09 spec.md 202・270・279 行(file:///var/relay-gate/...)"
+    suggested_fix: "280 行の `--artifact-uri /var/relay-gate/facade/20260830T113000-JOB001-3f9a1c2e/green` を `--artifact-uri file:///var/relay-gate/facade/20260830T113000-JOB001-3f9a1c2e/green` に改める"
+  - id: R-004
+    viewpoint: 4
+    severity: minor
+    target: "docs/specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/api/cli-command-contract.yaml"
+    claim: "rapid-crosscheck-worker.sh の stdout(444 行)は RUNNING 遷移 0 件時の `request_status` を「再 SELECT した REQUESTED|CLAIMED|RUNNING」と列挙し、UC-11 tier-rapid-crosscheck.md 23 行 / _api-summary.yaml 14 行も同文だが、同じ節の後段と idempotency は `request_status=<再 SELECT した現在の status>` としている。lease 失効で回収された依頼を別 worker が claim → 比較 → 終端まで進めた後に自 worker の RUNNING 遷移が 0 件になる経路(自 worker が claim 後 RAPID_LEASE_SEC=600 秒以上停止した場合)では再 SELECT の値が SUCCEEDED / FAILED になり、列挙に無い値が出る。実行ログ側は「それ以外は WARN request not owned」で包含されるが、stdout の値集合が閉じていない"
+    evidence: "cli-command-contract.yaml 444 行・459 行(idempotency「それ以外(REQUESTED / 他 worker の CLAIMED / RUNNING)」)/ UC-11 spec.md 94 行(else 分岐の列挙)/ shared_rules.lease_and_poll.claim_rule(lease 失効かつ未開始の CLAIMED を REQUESTED に戻す)"
+    suggested_fix: "444 行の列挙を「再 SELECT した現在の status(REQUESTED|CLAIMED|RUNNING|SUCCEEDED|FAILED)」に広げるか、「RUNNING 遷移 0 件時は再 SELECT した現在の status をそのまま出す(ABORTED 以外は WARN request not owned)」と値集合を閉じない書き方に統一し、UC-11 tier-rapid-crosscheck.md 23 行 / _api-summary.yaml 14 行 / spec.md 94 行を同文にする"
+  - id: R-005
+    viewpoint: 4
+    severity: minor
+    target: "docs/specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/確報クロスチェックフロー/確報比較依頼を登録して終端状態まで待機する/tier-final-crosscheck.md"
+    claim: "65 行「RUNNING 以外は abort 不可のため REQUESTED / CLAIMED の残骸は worker に処理させてから判断する」は、change-brief D2-2 で確報の未着手依頼の扱いを「ジョブスケジューラの正規ジョブが同期 polling 中であり、runner 側の polling 上限(FINAL_POLL_LIMIT_SEC)で扱う(条件「依頼中止可否判定」)」と定めた表現と揃っていない(runner が落ちて polling が無い残骸の扱いを worker 任せとする点は矛盾ではないが、契約 abort-final-crosscheck.sh notes / UC-23 / RDRA 条件「依頼中止可否判定」の文言と異なる)。CR-017 の直接対象外のため minor"
+    evidence: "tier-final-crosscheck.md 65 行 / cli-command-contract.yaml abort-final-crosscheck.sh notes(942 行)/ RDRA 条件.tsv 43 行 / change-brief.md D2-2"
+    suggested_fix: "65 行を「RUNNING 以外は abort-final-crosscheck では中止できない(条件『依頼中止可否判定』)。runner が落ちて polling が無い REQUESTED / CLAIMED の残骸は worker が通常どおり処理して終端させる(polling 中の未着手依頼は runner 側の polling 上限 FINAL_POLL_LIMIT_SEC で扱う)」に改め、条件名を参照する"
+resolved:
+  - {id: R-001, resolution: fixed}
+  - {id: R-002, resolution: fixed}
+  - {id: R-003, resolution: fixed}
+  - {id: R-004, resolution: fixed}
+  - {id: R-005, resolution: fixed}

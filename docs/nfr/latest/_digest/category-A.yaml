@@ -1,0 +1,173 @@
+# digest of nfr/latest/nfr-grade.yaml section categories[id=A] (L11-181); source_sha256: 69cca2e1c16f18ab4178b5a0e5af690acc7a82338c64a37176767e860a06693f
+# 派生物。正本は nfr-grade.yaml。編集しない
+  - id: "A"
+    name: "可用性"
+    subcategories:
+      - id: "A.1"
+        name: "継続性"
+        items:
+          - id: "A.1.1"
+            name: "運用スケジュール"
+            important: true
+            metrics:
+              - id: "A.1.1.1"
+                name: "運用時間(通常)"
+                important: true
+                grade: 3
+                grade_description: "1時間程度の停止(9時〜翌8時)"
+                reason: "業務ジョブはジョブスケジューラの起動時刻に依存し、確報クロスチェックが日次処理後(夜間)に、ハング検知が 5 分ごとの定期ジョブとして動作するため、ほぼ終日稼働で短時間の停止のみ許容する"
+                source_model: "外部システム: ジョブスケジューラ / BUC: 確報クロスチェックフロー、background 実行監視フロー"
+                confidence: "medium"
+              - id: "A.1.1.2"
+                name: "運用時間(特定日)"
+                important: false
+                grade: 0
+                grade_description: "規定なし"
+                reason: "モデルシステム1のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+              - id: "A.1.1.3"
+                name: "計画停止の有無"
+                important: true
+                grade: 2
+                grade_description: "不定期に計画停止あり(事前通知1週間前)"
+                reason: "計画停止はジョブスケジューラの実行計画(夜間バッチ・日次確報)と調整して行う必要があり、月次固定ではなく事前通知つきの不定期停止が現実的なため"
+                source_model: "外部システム: ジョブスケジューラ / バリエーション: ジョブスケジューラ起動ジョブ種別"
+                confidence: "medium"
+      - id: "A.2"
+        name: "耐障害性"
+        items:
+          - id: "A.2.1"
+            name: "サーバ"
+            important: true
+            metrics:
+              - id: "A.2.1.1"
+                name: "サーバ内の冗長化"
+                important: true
+                grade: 2
+                grade_description: "電源・ディスク冗長化"
+                reason: "ユーザー指定: 2026-09-05 に利用者が既定値として確定(適用先ごとに見直す運用パラメータであり、適用側で上書き可能な既定値)。facade・runner はジョブスケジューラの実行ホスト上で動作し、ジョブキュー兼管理 DB は単一 RDB 構成のため、部品レベルの冗長化を既定値とする"
+                source_model: "システム概要: ジョブキュー兼管理 DB(relay-gate 内部のデータストア)"
+                confidence: "user"
+          - id: "A.2.2"
+            name: "端末"
+            important: false
+            metrics:
+              - id: "A.2.2.1"
+                name: "端末の冗長化"
+                important: false
+                grade: 1
+                grade_description: "冗長化なし"
+                reason: "モデルシステム1のデフォルト値を適用(運用者端末はターミナルのみ)"
+                source_model: ""
+                confidence: "default"
+          - id: "A.2.3"
+            name: "ネットワーク機器"
+            important: true
+            metrics:
+              - id: "A.2.3.1"
+                name: "ネットワーク機器の冗長化"
+                important: true
+                grade: 1
+                grade_description: "冗長化なし"
+                reason: "モデルシステム1のデフォルト値を適用(ネットワーク構成は適用文書の所有事項)"
+                source_model: "情報: 適用構成文書"
+                confidence: "default"
+          - id: "A.2.4"
+            name: "ネットワーク回線"
+            important: false
+            metrics:
+              - id: "A.2.4.1"
+                name: "回線の冗長化"
+                important: false
+                grade: 1
+                grade_description: "冗長化なし"
+                reason: "モデルシステム1のデフォルト値を適用(閉域網内のみで外部回線を持たない)"
+                source_model: ""
+                confidence: "default"
+          - id: "A.2.5"
+            name: "ストレージ"
+            important: true
+            metrics:
+              - id: "A.2.5.1"
+                name: "ストレージの冗長化"
+                important: true
+                grade: 1
+                grade_description: "RAID1(ミラーリング)"
+                reason: "モデルシステム1のデフォルト値を適用。成果物ディレクトリと管理 DB を保持する最低限のミラーリング"
+                source_model: "情報: Runner Result / システム概要: ジョブキュー兼管理 DB(relay-gate 内部のデータストア)"
+                confidence: "default"
+          - id: "A.2.6"
+            name: "建物・電源"
+            important: false
+            metrics:
+              - id: "A.2.6.1"
+                name: "建物の耐震・免震"
+                important: false
+                grade: 1
+                grade_description: "一般建築基準"
+                reason: "モデルシステム1のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+              - id: "A.2.6.2"
+                name: "電源の冗長化"
+                important: true
+                grade: 1
+                grade_description: "冗長化なし"
+                reason: "モデルシステム1のデフォルト値を適用(設置環境は適用側の責務)"
+                source_model: ""
+                confidence: "default"
+      - id: "A.3"
+        name: "災害対策"
+        items:
+          - id: "A.3.1"
+            name: "災害対策"
+            important: true
+            metrics:
+              - id: "A.3.1.1"
+                name: "災害対策の範囲"
+                important: true
+                grade: 0
+                grade_description: "対策なし"
+                reason: "ユーザー指定: 2026-09-05 に利用者が既定値として確定(適用先ごとに見直す運用パラメータであり、適用側で上書き可能な既定値)。実行履歴・監査はジョブスケジューラの責務であり、relay-gate の成果物と execution-spec.json からリラン可能なため、基盤単体の遠隔地対策は不要とする"
+                source_model: "条件: 実行履歴はジョブスケジューラの責務 / 条件: リランの実行設定復元"
+                confidence: "user"
+              - id: "A.3.1.2"
+                name: "業務継続の要否"
+                important: true
+                grade: 0
+                grade_description: "業務継続不要"
+                reason: "ユーザー指定: 2026-09-05 に利用者が既定値として確定(適用先ごとに見直す運用パラメータであり、適用側で上書き可能な既定値)。被災時は業務ジョブ自体の継続計画(実装側・ジョブスケジューラ側)に従い、relay-gate 単体の継続要件は規定しない(A.3.1.1 と対)"
+                source_model: "条件: 実行履歴はジョブスケジューラの責務"
+                confidence: "user"
+      - id: "A.4"
+        name: "回復性"
+        items:
+          - id: "A.4.1"
+            name: "目標復旧水準"
+            important: true
+            metrics:
+              - id: "A.4.1.1"
+                name: "RPO(目標復旧地点)"
+                important: true
+                grade: 2
+                grade_description: "数時間前まで"
+                reason: "管理 DB はジョブキュー兼監視記録であり、失われても execution-spec.json と Runner Result からリランできるが、当日分の background 実行の追跡を失わないよう数時間以内の復旧地点とする"
+                source_model: "情報: 実行設定(execution-spec)、Runner Result、並行稼働実行(parallel_run)"
+                confidence: "medium"
+              - id: "A.4.1.2"
+                name: "RTO(目標復旧時間)"
+                important: true
+                grade: 2
+                grade_description: "半日以内"
+                reason: "foreground slot の結果は本番業務ジョブの結果としてジョブスケジューラへ中継されるため、次回のバッチウィンドウまでに復旧する必要がある"
+                source_model: "BUC: 実装切替ジョブ実行フロー(foreground 結果の中継)"
+                confidence: "medium"
+              - id: "A.4.1.3"
+                name: "RLO(目標復旧レベル)"
+                important: false
+                grade: 1
+                grade_description: "縮退運転(主要機能のみ)"
+                reason: "RAPID_CROSSCHECK_MODE=off にすると parallel_run を作らず、管理 DB なしで slot 実行・ハング検知・中止(aborted.txt をファイル正本に書く)・background 側リランが動作する縮退運転が設計上用意されているため(slot 実行の状態は exitcode.txt / aborted.txt の有無から導出する)"
+                source_model: "条件: 速報クロスチェック有効判定 / 条件: slot 実行の状態導出規則 / バリエーション: 速報クロスチェックモード(foreground / background / off)"
+                confidence: "high"

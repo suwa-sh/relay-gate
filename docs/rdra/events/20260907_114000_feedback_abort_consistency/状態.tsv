@@ -1,0 +1,15 @@
+コンテキスト	状態モデル	状態	遷移UC	遷移先状態	説明
+速報クロスチェック管理	クロスチェック依頼	REQUESTED	速報比較依頼を claim する	CLAIMED	速報クロスチェック worker が管理 DB を poll し、REQUESTED の速報比較依頼を worker_id と lease_until 付きで CLAIMED にする。claim と lease で多重実行を防ぐために必要
+速報クロスチェック管理	クロスチェック依頼	REQUESTED	確報比較依頼を claim する	CLAIMED	確報クロスチェック worker が DB セグメントで管理 DB を poll し、REQUESTED の確報比較依頼を worker_id と lease_until 付きで CLAIMED にする
+速報クロスチェック管理	クロスチェック依頼	REQUESTED	実行を ABORTED へ遷移させる	ABORTED	両系の完了通知で速報比較依頼が REQUESTED で作成された後に運用者が abort-blue / abort-green で slot を中止した場合の競合窓を塞ぐ保険。yes と答えたとき、対象 run に REQUESTED で未着手(worker が claim していない)の速報比較依頼があればそれも ABORTED にする。dispatcher 側の中止済み run 判定(条件「中止済み run の比較依頼作成除外」)と併用する。運用者が abort-rapid-crosscheck を --run-id 付きで実行して yes と答えた場合も REQUESTED の速報比較依頼を ABORTED にする(条件「依頼中止可否判定」)。速報比較依頼のみの遷移で確報比較依頼には適用しない
+速報クロスチェック管理	クロスチェック依頼	CLAIMED	速報比較依頼を claim する	REQUESTED	lease が失効しかつ比較が未開始の速報比較依頼を REQUESTED に戻し、別の worker が再取得できるようにする。worker 障害時の再取得を統一するために必要
+速報クロスチェック管理	クロスチェック依頼	CLAIMED	確報比較依頼を claim する	REQUESTED	lease が失効しかつ比較が未開始の確報比較依頼を REQUESTED に戻し、別の worker が再取得できるようにする。速報と同じ規則で多重実行を防ぐ
+速報クロスチェック管理	クロスチェック依頼	CLAIMED	比較ツールでジョブ単位比較を実行して結果を登録する	RUNNING	claim した速報クロスチェック worker が依頼を RUNNING にし、クロスチェックジョブマップの job_id ごとの比較定義に従って比較ツールでジョブ単位の比較を開始する。RUNNING への遷移は status = CLAIMED を条件とする条件付き UPDATE で行い、更新件数が 0 件(abort-rapid-crosscheck で ABORTED 済み)なら比較を開始せず終了する
+速報クロスチェック管理	クロスチェック依頼	CLAIMED	比較ツールで日次全量比較を実行して結果を保存する	RUNNING	claim した確報クロスチェック worker が依頼を RUNNING にし、対象カタログに従って比較ツールで全テーブル・全ファイルの日次全量比較を開始する
+速報クロスチェック管理	クロスチェック依頼	CLAIMED	実行を ABORTED へ遷移させる	ABORTED	運用者が worker のプロセスを停止したことを確認し、abort-rapid-crosscheck を --run-id 付きで実行して yes と答えたとき、CLAIMED の速報比較依頼を status IN (REQUESTED, CLAIMED, RUNNING) の条件付き UPDATE で ABORTED にする。CLAIMED のまま残すと lease 失効で REQUESTED に戻り別の worker が再 claim して比較が実行されるため、中止済み run の依頼を運用者が止める手段として必要。claim 済みの worker は RUNNING への条件付き UPDATE が 0 件になり比較を開始せず終了する(条件「依頼中止可否判定」)。速報比較依頼のみの遷移で確報比較依頼には適用しない
+速報クロスチェック管理	クロスチェック依頼	RUNNING	比較ツールでジョブ単位比較を実行して結果を登録する	SUCCEEDED	比較ツールの exitcode が 0 で終了し、stdout・stderr・exitcode を速報比較依頼に保存して comparison_result を管理 DB に登録する。比較ツールの終了コード契約に従う
+速報クロスチェック管理	クロスチェック依頼	RUNNING	比較ツールでジョブ単位比較を実行して結果を登録する	FAILED	比較ツールの exitcode が非 0(比較 NG=3・実行エラー=6 など)または実行エラーで終了し、結果を速報比較依頼に保存する。FAILED はハング検知が速報クロスチェック異常として通知し、ジョブスケジューラへの応答には影響させない
+速報クロスチェック管理	クロスチェック依頼	RUNNING	比較ツールで日次全量比較を実行して結果を保存する	SUCCEEDED	比較ツールの exitcode が 0 で終了し、stdout・stderr・exitcode を確報比較依頼に保存する。runner は保存済みの結果をそのままジョブスケジューラへ中継する
+速報クロスチェック管理	クロスチェック依頼	RUNNING	比較ツールで日次全量比較を実行して結果を保存する	FAILED	比較ツールの exitcode が非 0 または実行エラーで終了し、結果を確報比較依頼に保存する。runner は保存済みの結果をそのままジョブスケジューラへ返し、再実行はジョブスケジューラの正規ジョブで行う
+速報クロスチェック管理	クロスチェック依頼	RUNNING	実行を ABORTED へ遷移させる	ABORTED	運用者が worker プロセスの停止を確認し、abort-rapid-crosscheck / abort-final-crosscheck を --run-id 付きで実行して yes と答えたときだけ RUNNING の依頼を明示中止する。ハング検知はこの遷移を行わない。abort-rapid-crosscheck は速報比較依頼について REQUESTED / CLAIMED も中止できる(各遷移を参照)。abort-final-crosscheck は確報比較依頼について RUNNING のときだけ中止できる
+速報クロスチェック管理	クロスチェック依頼	ABORTED			明示中止で終端する。速報比較依頼は中止確認済みとして background-rerun の対象になれる。未着手(REQUESTED)の速報比較依頼が abort-blue / abort-green または abort-rapid-crosscheck で中止された場合、claim 済み(CLAIMED)の速報比較依頼が abort-rapid-crosscheck で中止された場合もこの終端に至る

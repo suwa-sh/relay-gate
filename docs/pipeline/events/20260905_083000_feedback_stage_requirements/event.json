@@ -1,0 +1,635 @@
+{
+  "event_id": "20260905_083000_feedback_stage_requirements",
+  "type": "feedback_stage_completed",
+  "run_id": "feedback-20260905_todo_resolution-20260905_172439-60786",
+  "attempt": 1,
+  "created_at": "2026-09-05T08:30:00Z",
+  "stage": "requirements",
+  "direct_work_unit_ids": [
+    "CR-c770d8f0-001#1",
+    "CR-c770d8f0-002#1",
+    "CR-c770d8f0-003#1",
+    "CR-c770d8f0-004#1",
+    "CR-c770d8f0-005#1",
+    "CR-c770d8f0-006#1",
+    "CR-c770d8f0-007#1",
+    "CR-c770d8f0-008#1",
+    "CR-c770d8f0-009#1",
+    "CR-c770d8f0-010#1",
+    "CR-c770d8f0-011#1"
+  ],
+  "causal_work_unit_ids": [
+    "CR-c770d8f0-001#1",
+    "CR-c770d8f0-002#1",
+    "CR-c770d8f0-003#1",
+    "CR-c770d8f0-004#1",
+    "CR-c770d8f0-005#1",
+    "CR-c770d8f0-006#1",
+    "CR-c770d8f0-007#1",
+    "CR-c770d8f0-008#1",
+    "CR-c770d8f0-009#1",
+    "CR-c770d8f0-010#1",
+    "CR-c770d8f0-011#1"
+  ],
+  "work_unit_results": [
+    {
+      "work_unit_id": "CR-c770d8f0-001#1",
+      "disposition": "applied",
+      "reason": "feature flag のキーと値を元資料の設定契約(9 キー、RAPID_CROSSCHECK_MODE=foreground/background/off)に戻し、USDM 受け入れ条件と RDRA 情報・バリエーション・条件を更新した",
+      "artifact_refs": [
+        "usdm/events/20260905_083000_feedback_todo_resolution/requirements.yaml",
+        "rdra/events/20260905_083000_feedback_todo_resolution/情報.tsv",
+        "rdra/events/20260905_083000_feedback_todo_resolution/バリエーション.tsv",
+        "rdra/events/20260905_083000_feedback_todo_resolution/条件.tsv",
+        "rdra/events/20260905_083000_feedback_todo_resolution/BUC.tsv",
+        "rdra/events/20260905_083000_feedback_todo_resolution/システム概要.json"
+      ]
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-002#1",
+      "disposition": "applied",
+      "reason": "ジョブマップ・クロスチェックジョブマップ・対象カタログを CSV と元資料の列名に統一し、fixed_params セル規則を USDM SPEC-004-04 と RDRA 情報・条件に追加した",
+      "artifact_refs": [
+        "usdm/events/20260905_083000_feedback_todo_resolution/requirements.yaml",
+        "rdra/events/20260905_083000_feedback_todo_resolution/情報.tsv",
+        "rdra/events/20260905_083000_feedback_todo_resolution/条件.tsv"
+      ]
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-003#1",
+      "disposition": "applied",
+      "reason": "run_id 形式(ローカルタイムゾーン timestamp + job_id + 8 桁 hex、Z 無し)を USDM SPEC-011-04 と RDRA 情報「並行稼働実行(parallel_run)」に確定した",
+      "artifact_refs": [
+        "usdm/events/20260905_083000_feedback_todo_resolution/requirements.yaml",
+        "rdra/events/20260905_083000_feedback_todo_resolution/情報.tsv"
+      ]
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-004#1",
+      "disposition": "applied",
+      "reason": "Runner Result に aborted.txt を追加し、条件「slot 実行の状態導出規則」と slot 実行の ABORTED 遷移説明、off モードでの中止→リランの受け入れ条件を追加した",
+      "artifact_refs": [
+        "usdm/events/20260905_083000_feedback_todo_resolution/requirements.yaml",
+        "rdra/events/20260905_083000_feedback_todo_resolution/情報.tsv",
+        "rdra/events/20260905_083000_feedback_todo_resolution/状態.tsv",
+        "rdra/events/20260905_083000_feedback_todo_resolution/条件.tsv",
+        "rdra/events/20260905_083000_feedback_todo_resolution/バリエーション.tsv",
+        "rdra/events/20260905_083000_feedback_todo_resolution/BUC.tsv"
+      ]
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-005#1",
+      "disposition": "applied",
+      "reason": "条件「完了通知失敗の扱い」を追加して UC「速報クロスチェック runner へ完了通知を送信する」に関連付け、USDM SPEC-005-01 に通知失敗時の受け入れ条件を追加した",
+      "artifact_refs": [
+        "usdm/events/20260905_083000_feedback_todo_resolution/requirements.yaml",
+        "rdra/events/20260905_083000_feedback_todo_resolution/条件.tsv",
+        "rdra/events/20260905_083000_feedback_todo_resolution/BUC.tsv"
+      ]
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-006#1",
+      "disposition": "applied",
+      "reason": "外部システム「管理 DB(RDB)」を削除して BUC の関連先から外し、システム概要に relay-gate 内部のジョブキュー兼管理 DB として明記した(リモート実行ホスト(SSH)は外部システムのまま)",
+      "artifact_refs": [
+        "usdm/events/20260905_083000_feedback_todo_resolution/requirements.yaml",
+        "rdra/events/20260905_083000_feedback_todo_resolution/BUC.tsv",
+        "rdra/events/20260905_083000_feedback_todo_resolution/システム概要.json",
+        "rdra/events/20260905_083000_feedback_todo_resolution/_changes.md"
+      ]
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-007#1",
+      "disposition": "applied",
+      "reason": "情報「ハング検知上限設定」の調整日時・調整根拠を「適用構成文書」へ移し、「ジョブスケジューラ応答」の応答日時を削除した",
+      "artifact_refs": [
+        "usdm/events/20260905_083000_feedback_todo_resolution/requirements.yaml",
+        "rdra/events/20260905_083000_feedback_todo_resolution/情報.tsv",
+        "rdra/events/20260905_083000_feedback_todo_resolution/BUC.tsv"
+      ]
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-008#1",
+      "disposition": "applied",
+      "reason": "バリエーション「監視状態」を状態モデルの 6 値に統一し、ハング疑い通知後の終端遷移と ABORTED 対象の終端を状態モデルに追加、「ハング検知判定結果」を 6 値にした",
+      "artifact_refs": [
+        "usdm/events/20260905_083000_feedback_todo_resolution/requirements.yaml",
+        "rdra/events/20260905_083000_feedback_todo_resolution/状態.tsv",
+        "rdra/events/20260905_083000_feedback_todo_resolution/バリエーション.tsv",
+        "rdra/events/20260905_083000_feedback_todo_resolution/情報.tsv",
+        "rdra/events/20260905_083000_feedback_todo_resolution/BUC.tsv"
+      ]
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-009#1",
+      "disposition": "applied",
+      "reason": "状態モデル「並行稼働実行」に STARTED → ABORTED とリラン由来 run の RUNNING → COMPLETED(2 経路)を追加し、USDM SPEC-011-06 を新設した",
+      "artifact_refs": [
+        "usdm/events/20260905_083000_feedback_todo_resolution/requirements.yaml",
+        "rdra/events/20260905_083000_feedback_todo_resolution/状態.tsv",
+        "rdra/events/20260905_083000_feedback_todo_resolution/情報.tsv",
+        "rdra/events/20260905_083000_feedback_todo_resolution/BUC.tsv"
+      ]
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-010#1",
+      "disposition": "applied",
+      "reason": "情報「ハング検知定期ジョブ設定」を追加してバリエーション・条件「設定所有区分」と通知 UC の入力情報に反映し、USDM SPEC-008-06 を新設した",
+      "artifact_refs": [
+        "usdm/events/20260905_083000_feedback_todo_resolution/requirements.yaml",
+        "rdra/events/20260905_083000_feedback_todo_resolution/情報.tsv",
+        "rdra/events/20260905_083000_feedback_todo_resolution/バリエーション.tsv",
+        "rdra/events/20260905_083000_feedback_todo_resolution/条件.tsv",
+        "rdra/events/20260905_083000_feedback_todo_resolution/BUC.tsv"
+      ]
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-011#1",
+      "disposition": "applied",
+      "reason": "条件「比較結果の登録条件」を追加して UC「比較ツールでジョブ単位比較を実行して結果を登録する」に関連付け、USDM SPEC-005-03 に受け入れ条件を追加した",
+      "artifact_refs": [
+        "usdm/events/20260905_083000_feedback_todo_resolution/requirements.yaml",
+        "rdra/events/20260905_083000_feedback_todo_resolution/条件.tsv",
+        "rdra/events/20260905_083000_feedback_todo_resolution/BUC.tsv"
+      ]
+    }
+  ],
+  "reconciliation_results": [
+    {
+      "work_unit_id": "CR-c770d8f0-001#1",
+      "status": "changed",
+      "reason": "feature flag のキーと値を元資料の設定契約(9 キー、RAPID_CROSSCHECK_MODE=foreground/background/off)に戻し、USDM 受け入れ条件と RDRA 情報・バリエーション・条件を更新した",
+      "artifact_refs": [
+        "usdm/events/20260905_083000_feedback_todo_resolution/requirements.yaml",
+        "rdra/events/20260905_083000_feedback_todo_resolution/情報.tsv",
+        "rdra/events/20260905_083000_feedback_todo_resolution/バリエーション.tsv",
+        "rdra/events/20260905_083000_feedback_todo_resolution/条件.tsv",
+        "rdra/events/20260905_083000_feedback_todo_resolution/BUC.tsv",
+        "rdra/events/20260905_083000_feedback_todo_resolution/システム概要.json"
+      ]
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-002#1",
+      "status": "changed",
+      "reason": "ジョブマップ・クロスチェックジョブマップ・対象カタログを CSV と元資料の列名に統一し、fixed_params セル規則を USDM SPEC-004-04 と RDRA 情報・条件に追加した",
+      "artifact_refs": [
+        "usdm/events/20260905_083000_feedback_todo_resolution/requirements.yaml",
+        "rdra/events/20260905_083000_feedback_todo_resolution/情報.tsv",
+        "rdra/events/20260905_083000_feedback_todo_resolution/条件.tsv"
+      ]
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-003#1",
+      "status": "changed",
+      "reason": "run_id 形式(ローカルタイムゾーン timestamp + job_id + 8 桁 hex、Z 無し)を USDM SPEC-011-04 と RDRA 情報「並行稼働実行(parallel_run)」に確定した",
+      "artifact_refs": [
+        "usdm/events/20260905_083000_feedback_todo_resolution/requirements.yaml",
+        "rdra/events/20260905_083000_feedback_todo_resolution/情報.tsv"
+      ]
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-004#1",
+      "status": "changed",
+      "reason": "Runner Result に aborted.txt を追加し、条件「slot 実行の状態導出規則」と slot 実行の ABORTED 遷移説明、off モードでの中止→リランの受け入れ条件を追加した",
+      "artifact_refs": [
+        "usdm/events/20260905_083000_feedback_todo_resolution/requirements.yaml",
+        "rdra/events/20260905_083000_feedback_todo_resolution/情報.tsv",
+        "rdra/events/20260905_083000_feedback_todo_resolution/状態.tsv",
+        "rdra/events/20260905_083000_feedback_todo_resolution/条件.tsv",
+        "rdra/events/20260905_083000_feedback_todo_resolution/バリエーション.tsv",
+        "rdra/events/20260905_083000_feedback_todo_resolution/BUC.tsv"
+      ]
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-005#1",
+      "status": "changed",
+      "reason": "条件「完了通知失敗の扱い」を追加して UC「速報クロスチェック runner へ完了通知を送信する」に関連付け、USDM SPEC-005-01 に通知失敗時の受け入れ条件を追加した",
+      "artifact_refs": [
+        "usdm/events/20260905_083000_feedback_todo_resolution/requirements.yaml",
+        "rdra/events/20260905_083000_feedback_todo_resolution/条件.tsv",
+        "rdra/events/20260905_083000_feedback_todo_resolution/BUC.tsv"
+      ]
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-006#1",
+      "status": "changed",
+      "reason": "外部システム「管理 DB(RDB)」を削除して BUC の関連先から外し、システム概要に relay-gate 内部のジョブキュー兼管理 DB として明記した(リモート実行ホスト(SSH)は外部システムのまま)",
+      "artifact_refs": [
+        "usdm/events/20260905_083000_feedback_todo_resolution/requirements.yaml",
+        "rdra/events/20260905_083000_feedback_todo_resolution/BUC.tsv",
+        "rdra/events/20260905_083000_feedback_todo_resolution/システム概要.json",
+        "rdra/events/20260905_083000_feedback_todo_resolution/_changes.md"
+      ]
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-007#1",
+      "status": "changed",
+      "reason": "情報「ハング検知上限設定」の調整日時・調整根拠を「適用構成文書」へ移し、「ジョブスケジューラ応答」の応答日時を削除した",
+      "artifact_refs": [
+        "usdm/events/20260905_083000_feedback_todo_resolution/requirements.yaml",
+        "rdra/events/20260905_083000_feedback_todo_resolution/情報.tsv",
+        "rdra/events/20260905_083000_feedback_todo_resolution/BUC.tsv"
+      ]
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-008#1",
+      "status": "changed",
+      "reason": "バリエーション「監視状態」を状態モデルの 6 値に統一し、ハング疑い通知後の終端遷移と ABORTED 対象の終端を状態モデルに追加、「ハング検知判定結果」を 6 値にした",
+      "artifact_refs": [
+        "usdm/events/20260905_083000_feedback_todo_resolution/requirements.yaml",
+        "rdra/events/20260905_083000_feedback_todo_resolution/状態.tsv",
+        "rdra/events/20260905_083000_feedback_todo_resolution/バリエーション.tsv",
+        "rdra/events/20260905_083000_feedback_todo_resolution/情報.tsv",
+        "rdra/events/20260905_083000_feedback_todo_resolution/BUC.tsv"
+      ]
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-009#1",
+      "status": "changed",
+      "reason": "状態モデル「並行稼働実行」に STARTED → ABORTED とリラン由来 run の RUNNING → COMPLETED(2 経路)を追加し、USDM SPEC-011-06 を新設した",
+      "artifact_refs": [
+        "usdm/events/20260905_083000_feedback_todo_resolution/requirements.yaml",
+        "rdra/events/20260905_083000_feedback_todo_resolution/状態.tsv",
+        "rdra/events/20260905_083000_feedback_todo_resolution/情報.tsv",
+        "rdra/events/20260905_083000_feedback_todo_resolution/BUC.tsv"
+      ]
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-010#1",
+      "status": "changed",
+      "reason": "情報「ハング検知定期ジョブ設定」を追加してバリエーション・条件「設定所有区分」と通知 UC の入力情報に反映し、USDM SPEC-008-06 を新設した",
+      "artifact_refs": [
+        "usdm/events/20260905_083000_feedback_todo_resolution/requirements.yaml",
+        "rdra/events/20260905_083000_feedback_todo_resolution/情報.tsv",
+        "rdra/events/20260905_083000_feedback_todo_resolution/バリエーション.tsv",
+        "rdra/events/20260905_083000_feedback_todo_resolution/条件.tsv",
+        "rdra/events/20260905_083000_feedback_todo_resolution/BUC.tsv"
+      ]
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-011#1",
+      "status": "changed",
+      "reason": "条件「比較結果の登録条件」を追加して UC「比較ツールでジョブ単位比較を実行して結果を登録する」に関連付け、USDM SPEC-005-03 に受け入れ条件を追加した",
+      "artifact_refs": [
+        "usdm/events/20260905_083000_feedback_todo_resolution/requirements.yaml",
+        "rdra/events/20260905_083000_feedback_todo_resolution/条件.tsv",
+        "rdra/events/20260905_083000_feedback_todo_resolution/BUC.tsv"
+      ]
+    }
+  ],
+  "work_unit_evidence_refs": [
+    {
+      "work_unit_id": "CR-c770d8f0-001#1",
+      "path": "usdm/events/20260905_083000_feedback_todo_resolution/requirements.yaml",
+      "sha256": "02b3d307a730c44cd3fb00e42f9306f3815c6881a13a874e30d97f9cf569fef1"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-001#1",
+      "path": "rdra/events/20260905_083000_feedback_todo_resolution/情報.tsv",
+      "sha256": "7beb170e7f27c5ae4d633b48a9ef65d5f1572e13097bc235c392e41af48e21be"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-001#1",
+      "path": "rdra/events/20260905_083000_feedback_todo_resolution/バリエーション.tsv",
+      "sha256": "b74b15398d37d3b751b6ab2db23d2757333c1b536bcaeda698ab0c2ba9153c08"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-001#1",
+      "path": "rdra/events/20260905_083000_feedback_todo_resolution/条件.tsv",
+      "sha256": "4c9f9fabfbb92dd23ca56825870e6562ecb5b6a3e6d44972964c0d377afdc33a"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-001#1",
+      "path": "rdra/events/20260905_083000_feedback_todo_resolution/BUC.tsv",
+      "sha256": "e7ad93ee04d16104bed72faad0f16124b5fb62f159e392a1221b6bc9c314ffec"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-001#1",
+      "path": "rdra/events/20260905_083000_feedback_todo_resolution/システム概要.json",
+      "sha256": "f1ff5b891983371d9101f5f4d8b5cebb95e72bc854836f0c4d176ffb1f75c52e"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-002#1",
+      "path": "usdm/events/20260905_083000_feedback_todo_resolution/requirements.yaml",
+      "sha256": "02b3d307a730c44cd3fb00e42f9306f3815c6881a13a874e30d97f9cf569fef1"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-002#1",
+      "path": "rdra/events/20260905_083000_feedback_todo_resolution/情報.tsv",
+      "sha256": "7beb170e7f27c5ae4d633b48a9ef65d5f1572e13097bc235c392e41af48e21be"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-002#1",
+      "path": "rdra/events/20260905_083000_feedback_todo_resolution/条件.tsv",
+      "sha256": "4c9f9fabfbb92dd23ca56825870e6562ecb5b6a3e6d44972964c0d377afdc33a"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-003#1",
+      "path": "usdm/events/20260905_083000_feedback_todo_resolution/requirements.yaml",
+      "sha256": "02b3d307a730c44cd3fb00e42f9306f3815c6881a13a874e30d97f9cf569fef1"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-003#1",
+      "path": "rdra/events/20260905_083000_feedback_todo_resolution/情報.tsv",
+      "sha256": "7beb170e7f27c5ae4d633b48a9ef65d5f1572e13097bc235c392e41af48e21be"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-004#1",
+      "path": "usdm/events/20260905_083000_feedback_todo_resolution/requirements.yaml",
+      "sha256": "02b3d307a730c44cd3fb00e42f9306f3815c6881a13a874e30d97f9cf569fef1"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-004#1",
+      "path": "rdra/events/20260905_083000_feedback_todo_resolution/情報.tsv",
+      "sha256": "7beb170e7f27c5ae4d633b48a9ef65d5f1572e13097bc235c392e41af48e21be"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-004#1",
+      "path": "rdra/events/20260905_083000_feedback_todo_resolution/状態.tsv",
+      "sha256": "3bdfbe66fff730b548dc70af189b1d982da55754b3b733edb357b302ad712f13"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-004#1",
+      "path": "rdra/events/20260905_083000_feedback_todo_resolution/条件.tsv",
+      "sha256": "4c9f9fabfbb92dd23ca56825870e6562ecb5b6a3e6d44972964c0d377afdc33a"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-004#1",
+      "path": "rdra/events/20260905_083000_feedback_todo_resolution/バリエーション.tsv",
+      "sha256": "b74b15398d37d3b751b6ab2db23d2757333c1b536bcaeda698ab0c2ba9153c08"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-004#1",
+      "path": "rdra/events/20260905_083000_feedback_todo_resolution/BUC.tsv",
+      "sha256": "e7ad93ee04d16104bed72faad0f16124b5fb62f159e392a1221b6bc9c314ffec"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-005#1",
+      "path": "usdm/events/20260905_083000_feedback_todo_resolution/requirements.yaml",
+      "sha256": "02b3d307a730c44cd3fb00e42f9306f3815c6881a13a874e30d97f9cf569fef1"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-005#1",
+      "path": "rdra/events/20260905_083000_feedback_todo_resolution/条件.tsv",
+      "sha256": "4c9f9fabfbb92dd23ca56825870e6562ecb5b6a3e6d44972964c0d377afdc33a"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-005#1",
+      "path": "rdra/events/20260905_083000_feedback_todo_resolution/BUC.tsv",
+      "sha256": "e7ad93ee04d16104bed72faad0f16124b5fb62f159e392a1221b6bc9c314ffec"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-006#1",
+      "path": "usdm/events/20260905_083000_feedback_todo_resolution/requirements.yaml",
+      "sha256": "02b3d307a730c44cd3fb00e42f9306f3815c6881a13a874e30d97f9cf569fef1"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-006#1",
+      "path": "rdra/events/20260905_083000_feedback_todo_resolution/BUC.tsv",
+      "sha256": "e7ad93ee04d16104bed72faad0f16124b5fb62f159e392a1221b6bc9c314ffec"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-006#1",
+      "path": "rdra/events/20260905_083000_feedback_todo_resolution/システム概要.json",
+      "sha256": "f1ff5b891983371d9101f5f4d8b5cebb95e72bc854836f0c4d176ffb1f75c52e"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-006#1",
+      "path": "rdra/events/20260905_083000_feedback_todo_resolution/_changes.md",
+      "sha256": "3c52f3b7609439acd0889b4ae914a62473f8174974e938a88257543dcb133caf"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-007#1",
+      "path": "usdm/events/20260905_083000_feedback_todo_resolution/requirements.yaml",
+      "sha256": "02b3d307a730c44cd3fb00e42f9306f3815c6881a13a874e30d97f9cf569fef1"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-007#1",
+      "path": "rdra/events/20260905_083000_feedback_todo_resolution/情報.tsv",
+      "sha256": "7beb170e7f27c5ae4d633b48a9ef65d5f1572e13097bc235c392e41af48e21be"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-007#1",
+      "path": "rdra/events/20260905_083000_feedback_todo_resolution/BUC.tsv",
+      "sha256": "e7ad93ee04d16104bed72faad0f16124b5fb62f159e392a1221b6bc9c314ffec"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-008#1",
+      "path": "usdm/events/20260905_083000_feedback_todo_resolution/requirements.yaml",
+      "sha256": "02b3d307a730c44cd3fb00e42f9306f3815c6881a13a874e30d97f9cf569fef1"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-008#1",
+      "path": "rdra/events/20260905_083000_feedback_todo_resolution/状態.tsv",
+      "sha256": "3bdfbe66fff730b548dc70af189b1d982da55754b3b733edb357b302ad712f13"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-008#1",
+      "path": "rdra/events/20260905_083000_feedback_todo_resolution/バリエーション.tsv",
+      "sha256": "b74b15398d37d3b751b6ab2db23d2757333c1b536bcaeda698ab0c2ba9153c08"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-008#1",
+      "path": "rdra/events/20260905_083000_feedback_todo_resolution/情報.tsv",
+      "sha256": "7beb170e7f27c5ae4d633b48a9ef65d5f1572e13097bc235c392e41af48e21be"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-008#1",
+      "path": "rdra/events/20260905_083000_feedback_todo_resolution/BUC.tsv",
+      "sha256": "e7ad93ee04d16104bed72faad0f16124b5fb62f159e392a1221b6bc9c314ffec"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-009#1",
+      "path": "usdm/events/20260905_083000_feedback_todo_resolution/requirements.yaml",
+      "sha256": "02b3d307a730c44cd3fb00e42f9306f3815c6881a13a874e30d97f9cf569fef1"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-009#1",
+      "path": "rdra/events/20260905_083000_feedback_todo_resolution/状態.tsv",
+      "sha256": "3bdfbe66fff730b548dc70af189b1d982da55754b3b733edb357b302ad712f13"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-009#1",
+      "path": "rdra/events/20260905_083000_feedback_todo_resolution/情報.tsv",
+      "sha256": "7beb170e7f27c5ae4d633b48a9ef65d5f1572e13097bc235c392e41af48e21be"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-009#1",
+      "path": "rdra/events/20260905_083000_feedback_todo_resolution/BUC.tsv",
+      "sha256": "e7ad93ee04d16104bed72faad0f16124b5fb62f159e392a1221b6bc9c314ffec"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-010#1",
+      "path": "usdm/events/20260905_083000_feedback_todo_resolution/requirements.yaml",
+      "sha256": "02b3d307a730c44cd3fb00e42f9306f3815c6881a13a874e30d97f9cf569fef1"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-010#1",
+      "path": "rdra/events/20260905_083000_feedback_todo_resolution/情報.tsv",
+      "sha256": "7beb170e7f27c5ae4d633b48a9ef65d5f1572e13097bc235c392e41af48e21be"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-010#1",
+      "path": "rdra/events/20260905_083000_feedback_todo_resolution/バリエーション.tsv",
+      "sha256": "b74b15398d37d3b751b6ab2db23d2757333c1b536bcaeda698ab0c2ba9153c08"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-010#1",
+      "path": "rdra/events/20260905_083000_feedback_todo_resolution/条件.tsv",
+      "sha256": "4c9f9fabfbb92dd23ca56825870e6562ecb5b6a3e6d44972964c0d377afdc33a"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-010#1",
+      "path": "rdra/events/20260905_083000_feedback_todo_resolution/BUC.tsv",
+      "sha256": "e7ad93ee04d16104bed72faad0f16124b5fb62f159e392a1221b6bc9c314ffec"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-011#1",
+      "path": "usdm/events/20260905_083000_feedback_todo_resolution/requirements.yaml",
+      "sha256": "02b3d307a730c44cd3fb00e42f9306f3815c6881a13a874e30d97f9cf569fef1"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-011#1",
+      "path": "rdra/events/20260905_083000_feedback_todo_resolution/条件.tsv",
+      "sha256": "4c9f9fabfbb92dd23ca56825870e6562ecb5b6a3e6d44972964c0d377afdc33a"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-011#1",
+      "path": "rdra/events/20260905_083000_feedback_todo_resolution/BUC.tsv",
+      "sha256": "e7ad93ee04d16104bed72faad0f16124b5fb62f159e392a1221b6bc9c314ffec"
+    }
+  ],
+  "domain_event_refs": [
+    {
+      "path": "rdra/events/20260905_083000_feedback_todo_resolution/event.json",
+      "sha256": "d773ef5d5f1395ad10d2e9d10e7599567126da6490a271222e7084bcb1cb356a"
+    },
+    {
+      "path": "usdm/events/20260905_083000_feedback_todo_resolution/requirements.yaml",
+      "sha256": "02b3d307a730c44cd3fb00e42f9306f3815c6881a13a874e30d97f9cf569fef1"
+    }
+  ],
+  "feedback_request": {
+    "feedback_request_id": "20260905_todo_resolution",
+    "input_sha256": "285429579e9c9d28307d4c779317f01941b915a1203d0e5b5f53a6c014ed7108",
+    "request_ids": [
+      "CR-c770d8f0-001",
+      "CR-c770d8f0-002",
+      "CR-c770d8f0-003",
+      "CR-c770d8f0-004",
+      "CR-c770d8f0-005",
+      "CR-c770d8f0-006",
+      "CR-c770d8f0-007",
+      "CR-c770d8f0-008",
+      "CR-c770d8f0-009",
+      "CR-c770d8f0-010",
+      "CR-c770d8f0-011"
+    ],
+    "work_unit_ids": [
+      "CR-c770d8f0-001#1",
+      "CR-c770d8f0-002#1",
+      "CR-c770d8f0-003#1",
+      "CR-c770d8f0-004#1",
+      "CR-c770d8f0-005#1",
+      "CR-c770d8f0-006#1",
+      "CR-c770d8f0-007#1",
+      "CR-c770d8f0-008#1",
+      "CR-c770d8f0-009#1",
+      "CR-c770d8f0-010#1",
+      "CR-c770d8f0-011#1"
+    ]
+  },
+  "post_execution_basis": {
+    "repository_head": "c770d8f3beda010fea1876c00fb47ae9ba014a4c",
+    "latest_domain_event_ids": {
+      "requirements": {
+        "rdra/events": "20260905_083000_feedback_todo_resolution",
+        "usdm/events": "20260905_083000_feedback_todo_resolution"
+      },
+      "quality_attributes": {
+        "nfr/events": "20260830_183726_initial_nfr"
+      },
+      "architecture": {
+        "arch/events": "20260830_202427_arch_infra_feedback_20260830_190412_infra_product_design"
+      },
+      "infrastructure": {
+        "infra/events": "20260830_190412_infra_product_design"
+      },
+      "design_system": {
+        "design/events": null
+      },
+      "spec": {
+        "specs/events": "20260830_202851_spec_generation"
+      },
+      "spec_stories": {
+        "design/events": null
+      }
+    },
+    "domain_event_root_snapshots": {
+      "rdra/events": {
+        "head_event_id": "20260905_083000_feedback_todo_resolution",
+        "head_event_sha256": "4f68dbbb27a782d73971ea0552af133c47a93f9a46a92974c992c80ac1d8b081",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution"
+        ],
+        "event_set_sha256": "138af33bd75ccad8a2b5942c95252c9757a723350d394bd754e3c392b98eb64f",
+        "latest_tree_sha256": "4647215b00110b8e016d639db2d29185088bc14b473992f7beb4b5d500971db4"
+      },
+      "usdm/events": {
+        "head_event_id": "20260905_083000_feedback_todo_resolution",
+        "head_event_sha256": "a79303d513d0c567eb9c7bd602e67124c8d174dfa7a0dcb92b120d2585ece075",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution"
+        ],
+        "event_set_sha256": "138af33bd75ccad8a2b5942c95252c9757a723350d394bd754e3c392b98eb64f",
+        "latest_tree_sha256": "122d9a6d975de6748e9cdabd14d2dc7b6dd71cf16cf421e6a122f051e3f4c1ad"
+      },
+      "nfr/events": {
+        "head_event_id": "20260830_183726_initial_nfr",
+        "head_event_sha256": "5cd28326c06dcd7c4da5a3f1f0a14dd434d7d18b4f6fb130697d326d9e6f9631",
+        "event_ids": [
+          "20260830_183726_initial_nfr"
+        ],
+        "event_set_sha256": "c71bc546b43144fc85ceb4068dd88e12e08a48a601694b556fa35b8a48f6fc8d",
+        "latest_tree_sha256": "16af838c9f24202ffda5547b587413aa5e3ad64c86809f71e13408526fba8f9d"
+      },
+      "arch/events": {
+        "head_event_id": "20260830_202427_arch_infra_feedback_20260830_190412_infra_product_design",
+        "head_event_sha256": "d15421ffa6484f09a8a30272216b8cd24aac1e142c74041c68d2718e66de8400",
+        "event_ids": [
+          "20260830_184457_initial_arch",
+          "20260830_202427_arch_infra_feedback_20260830_190412_infra_product_design"
+        ],
+        "event_set_sha256": "37cda644838540cc7ad10df67ac8b787574722664652c98e6462b1eb12583d95",
+        "latest_tree_sha256": "f6d02ee7f376c439f5a441e4d107cbc85d1be499536ea367a32189972d1b1b6d"
+      },
+      "infra/events": {
+        "head_event_id": "20260830_190412_infra_product_design",
+        "head_event_sha256": "ce3059e864648a7322077facde5634b0481f470da9658c24dda34dc84420612b",
+        "event_ids": [
+          "20260830_190412_infra_product_design"
+        ],
+        "event_set_sha256": "c4043036fd57a8bc0cd2aa06d4b5117053b49d108729268f83de26d6faf80f41",
+        "latest_tree_sha256": "ce3059e864648a7322077facde5634b0481f470da9658c24dda34dc84420612b"
+      },
+      "design/events": {
+        "head_event_id": null,
+        "head_event_sha256": null,
+        "event_ids": [],
+        "event_set_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "latest_tree_sha256": null
+      },
+      "specs/events": {
+        "head_event_id": "20260830_202851_spec_generation",
+        "head_event_sha256": "061002704ccbf8f7679b37edf36d411faf9d7ac9dee0e7fa6d04addf9ab20c51",
+        "event_ids": [
+          "20260830_202851_spec_generation"
+        ],
+        "event_set_sha256": "6c0668acba99a14dbb3ab5f9955a4ebfcec89847cbeef8e77058a166328949a4",
+        "latest_tree_sha256": "09c7aa8cb1a6d579081cd2f3f0785bbdbf1691b5429f617980dc7f5b5b713e15"
+      }
+    }
+  }
+}

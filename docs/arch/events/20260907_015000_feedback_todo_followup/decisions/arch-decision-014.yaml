@@ -1,0 +1,29 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "architecture"
+artifact_id: "arch-decision-014"
+title: "実行ログの日時はホストのローカルタイムゾーン(タイムゾーン指示子なし)に統一し、CLP-002 の UTC 統一を改める"
+status: "approved"
+generated_at: "2026-09-07T01:50:00Z"
+context: |
+  arch-decision-013 で run_id の時刻部をホストのローカルタイムゾーン(指示子なし)に決定した一方、ログ方針 CLP-002 は実行ログの日時を
+  UTC(Z 付き ISO 8601)で統一しており、spec の実行ログ行書式と管理 DB の *_at 列もそれに従っていた。arch stage と spec stage の両方が
+  「run_id の時刻部とログ日時の時刻軸が食い違う」を確認推奨項目として返し(todo DIST-022)、障害調査で運用者が時差を読み替える負担が残っていた。
+  元の方針資料は日時のタイムゾーンを定めていない。利用者は 2026-09-07 に「実行ログの日時をホストのローカルタイムゾーンに統一する」と決定した(CR-c770d8f0-015)。
+decision: |
+  - CLP-002 のログ日時を「ホストのローカルタイムゾーン(プロセスの TZ 環境変数に従う)、ISO 8601 秒精度、タイムゾーン指示子(Z / オフセット)なし。run_id の時刻部と同じ時刻軸」に改め、UTC 統一の記述を削除する。confidence は利用者決定を反映して medium → high
+  - 管理 DB の *_at 列は RDB のタイムスタンプ型に委ね、CLI が stdout に表示する日時もローカル時刻で出す(CLP-002 / E-025 / E-015 の日時属性)
+  - テスト用の時刻注入 RELAY_GATE_NOW は UTC の Z 付きのまま受け付け、内部でローカル時刻へ変換してから使う規則を維持する(spec 既存の記述と整合)
+  - CTP-003 に実行ログの出力日時が run_id の時刻部と同じ時刻軸であることを明記し、CLP-004 / CLP-006(各ティアの実行ログ方針)と CLP-008(運用操作の記録)も同じ日時規則に従う
+consequences:
+  positive:
+    - "run_id・実行ログ・成果物ディレクトリ名・CLI 表示の時刻軸が一致し、障害調査で時差の読み替えが不要になる"
+    - "テストの時刻注入(UTC 入力 → ローカル変換)は変えないため、spec の BDD シナリオの前提(TZ=UTC)を壊さない"
+  negative:
+    - "ホスト間で TZ が異なる構成では、複数ホストの実行ログを突き合わせるときに TZ の確認が必要になる(適用文書のホスト配置で TZ をそろえることを推奨)"
+    - "spec の実行ログ行書式・shared_rules・各 UC spec / tier-*.md の例示・data-visualization の日時列を UTC からローカル時刻へ追従させる必要がある(spec stage の責務)"
+alternatives_considered:
+  - name: "Option B: UTC 統一(CLP-002 の現状)を維持し、run_id の時刻部を UTC に戻す"
+    reason_rejected: "arch-decision-013 で利用者が run_id のローカルタイムゾーンを決定済み。運用者の可読性を優先する同じ理由が実行ログにも当てはまる"
+  - name: "Option C: ログ日時をローカル時刻 + オフセット付き(例 +09:00)で出す"
+    reason_rejected: "run_id の時刻部(指示子なし)と表記がそろわず、利用者の決定(タイムゾーン指示子なし)に反する。TZ の混在は適用文書のホスト配置で防ぐ"

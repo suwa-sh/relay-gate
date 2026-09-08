@@ -4,10 +4,10 @@ skill_type: "product"
 artifact_id: "product-relay-gate-input"
 title: "relay-gate 並行稼働実行基盤 ワークロード入力"
 status: "draft"
-generated_at: "2026-08-30T19:04:12"
+generated_at: "2026-09-07T12:40:00"
 source_refs:
-  - "arch-design:20260830_184457_initial_arch"
-  - "nfr-grade:20260830_183726_initial_nfr"
+  - "arch-design:20260907_122000_feedback_abort_consistency"
+  - "nfr-grade:20260907_120000_feedback_abort_consistency"
 decision_refs: []
 inputs_ref:
   - "foundation-context"
@@ -37,7 +37,7 @@ workload_type: "batch"
 availability_target:
   sla: "99%"
   failover: "manual"
-  notes: "ほぼ終日稼働・1 時間程度の計画停止のみ許容(A.1.1.1 Lv3 / A.1.1.3 Lv2)。管理 DB は単一構成で部品冗長化(A.2.1.1 Lv2)に留める(CTP-006)"
+  notes: "ほぼ終日稼働・1 時間程度の計画停止のみ許容(A.1.1.1 Lv3 / A.1.1.3 Lv2)。管理 DB は単一構成で部品冗長化(A.2.1.1 Lv2。2026-09-05 に利用者が適用側で上書き可能な既定値として確定)に留める(CTP-006)"
 
 latency_sensitivity:
   category: "batch"
@@ -66,7 +66,7 @@ recovery_target:
   rpo: "4h"
   rto: "12h"
   backup: "daily"
-  notes: "NFR A.4.1.1 / A.4.1.2 Lv2 の範囲内で、tier-datastore ポリシー「日次フル+差分バックアップ、数時間以内の RPO、半日以内の RTO」を採用。遠隔地 DR は持たない(A.3.1.1 Lv0)"
+  notes: "NFR A.4.1.1 / A.4.1.2 Lv2 の範囲内で、tier-datastore ポリシー「日次フル+差分バックアップ、数時間以内の RPO、半日以内の RTO」を採用。遠隔地 DR・業務継続の代替手段は持たない(A.3.1.1 / A.3.1.2 Lv0。2026-09-05 に利用者が適用側で上書き可能な既定値として確定)"
 
 observability_needs:
   metrics:
@@ -88,7 +88,7 @@ observability_needs:
   alerting:
     - "health_check"
     - "error_rate"
-  notes: "監視は hang-detector(定期ジョブ)による通知のみ。ハング疑い = warning、background 実行エラー / 速報クロスチェック異常 = error をメールで送る。監査の正本はジョブスケジューラ、基盤ログは 3 ヶ月保管"
+  notes: "監視は hang-detector(定期ジョブ)による通知のみ。ハング疑い = warning、background 実行エラー / 速報クロスチェック異常 = error をメールで送る。通知先・送信コマンド・件名プレフィックスはハング検知定期ジョブ設定(hang-detector.env)から取得する。完了通知の送信失敗は自動検知の対象外。中止済み run(並行稼働実行が ABORTED、または完了通知の対象 slot の slot 実行が ABORTED(aborted.txt 公開済み)のいずれか)で速報クロスチェック runner が比較依頼を作成しなかった事実、および worker が claim 後の RUNNING への条件付き UPDATE が 0 件(abort-rapid-crosscheck で ABORTED 済み)で比較を開始しなかった事実は実行ログにのみ残り、メール通知の対象ではない。運用者は速報比較依頼を REQUESTED / CLAIMED / RUNNING のいずれでも abort-rapid-crosscheck で中止できる(確報比較依頼は RUNNING のみ)。監査の正本はジョブスケジューラ、基盤ログは 3 ヶ月保管(C.6.1.1 Lv2。2026-09-05 に利用者が既定値として確定)"
 
 cost_posture:
   strategy: "cost_optimized"
@@ -102,15 +102,15 @@ elements:
     entity_refs: ["E-013", "E-014", "E-015", "E-016", "E-017", "E-018", "E-019", "E-020", "E-021", "E-023", "E-024"]
   - id: "artifact_store"
     category: "storage"
-    description: "成果物ディレクトリ(facade/<run_id>/ の Runner Result と execution-spec.json)。POSIX ファイルシステム。一時ファイル → リネームの原子的確定が必要"
+    description: "成果物ディレクトリ(facade/<run_id>/ の Runner Result: started-at.txt / stdout.log / stderr.log / exitcode.txt / aborted.txt(中止時のみ)と execution-spec.json)。POSIX ファイルシステム。一時ファイル → リネームの原子的確定が必要。slot 実行の状態は exitcode.txt / aborted.txt の有無と値から導出する(ファイル正本)"
     entity_refs: ["E-009", "E-010", "E-011", "E-014"]
   - id: "config_store"
     category: "storage"
-    description: "設定ファイル(feature flag / ジョブマップ / クロスチェックジョブマップ / 対象カタログ / 適用文書)。適用側が版管理して配置"
-    entity_refs: ["E-001", "E-002", "E-003", "E-004", "E-005", "E-006", "E-007", "E-008"]
+    description: "設定ファイル(feature flag: env 形式 9 キー / ジョブマップ・クロスチェックジョブマップ・対象カタログ: CSV 形式 / ハング検知定期ジョブ設定: env 形式 / 速報クロスチェック設定: env 形式 rapid-crosscheck.env(RAPID_DB_CONN_REF / RAPID_LEASE_SEC / RAPID_POLL_INTERVAL_SEC。速報有効時に facade・slot runner・速報クロスチェック runner・worker が起動のたびに読む。off では不要)/ 適用文書)。適用側が版管理して配置。設定版は持たず、マップ版はジョブマップ側の任意列とする。認証情報は参照名のみで値を置かない"
+    entity_refs: ["E-001", "E-002", "E-003", "E-004", "E-005", "E-006", "E-007", "E-008", "E-026", "E-027"]
   - id: "execution_log_store"
     category: "storage"
-    description: "各スクリプトの実行ログファイル。3 ヶ月保管"
+    description: "各スクリプトの実行ログファイル。3 ヶ月保管。行の日時はホストのローカルタイムゾーン(ISO 8601 秒精度、タイムゾーン指示子なし)で run_id の時刻部と同じ時刻軸。UTC への統一はしない"
     entity_refs: ["E-012", "E-022", "E-025"]
   - id: "script_runtime_hosts"
     category: "compute"
@@ -118,8 +118,8 @@ elements:
     entity_refs: []
   - id: "mail_notification"
     category: "messaging"
-    description: "運用者への warning / error メール通知。OS 標準のメール送信コマンドから組織内 SMTP へ送る"
-    entity_refs: ["E-022"]
+    description: "運用者への warning / error メール通知。ハング検知定期ジョブ設定(hang-detector.env)で指定したメール送信コマンドから組織内 SMTP へ送る"
+    entity_refs: ["E-022", "E-026"]
   - id: "job_scheduler_integration"
     category: "external_integration"
     description: "ジョブ定義から facade / final-crosscheck-runner / hang-detector / background-rerun を起動する既存のジョブスケジューラ。実行履歴・監査の正本"

@@ -1,0 +1,25 @@
+event_id: "20260907_131000_feedback_abort_consistency"
+step: "step4-review"
+owner: "datastore"
+round: 2
+design_available: false
+scope: "round 1 findings(S4-datastore-1 / S4-datastore-2)の修正を再検証。対象は rdb-schema.yaml の冒頭注記(比較開始 UPDATE 0 件 / 未着手依頼の中止 / ロック順)、rapid_crosscheck_requests.status・used_by、rapid_runs.completion_status、slot_executions.used_by。照合先は change-brief D1-1 / D2-4 / D2-5 / D3、契約 shared_rules.state_codes.request_status_transitions(行 180〜189)・abort-rapid-crosscheck.sh exit 0 meaning / idempotency / notes(行 883〜894)、UC-11 _model-summary.yaml。datastore-schema.md は生成物のため対象外"
+
+verified_ok:
+  - "S4-datastore-1(ロック順注記の abort-blue / abort-green vs abort-rapid-crosscheck の順序逆転): 冒頭注記「ロック順(デッドロック検討)」末尾に、取得順が逆であること、依頼が存在する通常 run の parallel_runs は COMPLETED のため abort-rapid-crosscheck の条件付き UPDATE(status IN ('STARTED','RUNNING'))は行ロックを取らず 0 件になること、parallel_runs が RUNNING のまま依頼を持つ background-rerun --role rapid-crosscheck 由来の run には abort-blue / abort-green の対象 slot 実行が無いこと、の 3 点が 1 文で追加されている。契約 abort-rapid-crosscheck.sh exit 0 meaning(通常 run は COMPLETED 済みで 0 件 / rerun 由来 run は RUNNING)と根拠が一致する。修正確認済み"
+  - "S4-datastore-2(UC-11 の used_by に SELECT が無い): tables.rapid_crosscheck_requests.used_by の「比較ツールでジョブ単位比較を実行して結果を登録する」が operations: [\"SELECT\", \"UPDATE\"] になっている。UC-11 _model-summary.yaml の rapid_crosscheck_requests operations(UPDATE CLAIMED → RUNNING 条件付き / SELECT status, worker_id where run_id = ? の再 SELECT / UPDATE 終端)と一致。主キー参照のためインデックス追加なし(indexes_needed: [])も整合。修正確認済み"
+  - "rapid_crosscheck_requests.status の description の遷移(REQUESTED → CLAIMED / CLAIMED → REQUESTED / CLAIMED → RUNNING 条件付き UPDATE 0 件で比較を開始しない / RUNNING → SUCCEEDED・FAILED / REQUESTED・CLAIMED・RUNNING → ABORTED abort-rapid-crosscheck status IN / CLAIMED → ABORTED / REQUESTED → ABORTED abort-blue・abort-green 競合窓の保険)は、契約 shared_rules.state_codes.request_status_transitions 行 181〜189(D2-4 正本)と 1:1 で対応し、round 1 から後退していない"
+  - "冒頭注記「比較開始 UPDATE の 0 件(速報依頼)」「未着手依頼の中止(abort-blue / abort-green)」は round 1 の verified_ok から変更なし(D2-5 / D3 の表現のまま)"
+  - "rapid_runs.completion_status の description(中止済み run = 並行稼働実行 ABORTED または完了通知の対象 slot の slot 実行 ABORTED。同一トランザクションで parallel_runs.status と対象 slot の slot_executions.status を読む)は D1-1 と一致し変更なし"
+  - "slot_executions.used_by に UC-09 / UC-11 の SELECT が残っており、UC-11 _model-summary の slot_executions SELECT(run_id = ? 件数 0 = リラン由来判定)と整合"
+  - "「rdra-feedback #13〜#15」「仮採用: rdra-feedback」は _cross-cutting/datastore/ 配下で 0 件(grep exit 1)"
+
+findings: []
+
+summary:
+  total: 0
+  blocker: 0
+  major: 0
+  minor: 0
+
+resolved: []

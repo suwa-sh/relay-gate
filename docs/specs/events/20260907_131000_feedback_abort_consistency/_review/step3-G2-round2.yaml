@@ -1,0 +1,21 @@
+round: 2
+group: G2
+findings:
+  - id: S3-G2-006
+    uc: "実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる"
+    file: "docs/specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/tier-ops.md"
+    line: 245
+    severity: minor
+    viewpoint: 3
+    claim: "契約(round 1 更新後)の abort-rapid-crosscheck.sh は競合時の stderr を `error: request is not abortable (state changed concurrently) run_id=... role=rapid-crosscheck status=<再 SELECT した status>` と定義しているが、tier-ops.md の出力契約(52 行目)・ティア BDD「表示後に終端した依頼を競合として拒否する」(245 行目)・_api-summary.yaml(94 行目)は `status=` の付かない形で書かれており、完全一致を検証する BDD が契約とずれる。"
+    fix: "tier-ops.md 245 行目の期待 stderr を `error: request is not abortable (state changed concurrently) run_id=20260830T113000-JOB001-3f9a1c2e role=rapid-crosscheck status=SUCCEEDED` に、52 行目の依頼の競合の定型文を `error: request is not abortable (state changed concurrently) run_id=... role=... status=<再 SELECT した status>`(速報。確報は契約どおり)に、_api-summary.yaml 94 行目も同じ形に揃える。"
+    source_refs:
+      - "docs/specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/api/cli-command-contract.yaml#abort-rapid-crosscheck.sh(stderr / exit_codes 3)"
+      - "docs/specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/_api-summary.yaml"
+resolved:
+  - {id: S3-G2-001, resolution: verified_fixed}
+  - {id: S3-G2-002, resolution: verified_fixed}
+  - {id: S3-G2-003, resolution: verified_fixed}
+  - {id: S3-G2-004, resolution: verified_fixed}
+  - {id: S3-G2-005, resolution: verified_fixed}
+  - {id: S3-G2-006, resolution: fixed}

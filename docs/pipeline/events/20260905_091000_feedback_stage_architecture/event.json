@@ -1,0 +1,389 @@
+{
+  "event_id": "20260905_091000_feedback_stage_architecture",
+  "type": "feedback_stage_completed",
+  "run_id": "feedback-20260905_todo_resolution-20260905_172439-60786",
+  "attempt": 1,
+  "created_at": "2026-09-05T09:10:00Z",
+  "stage": "architecture",
+  "direct_work_unit_ids": [],
+  "causal_work_unit_ids": [
+    "CR-c770d8f0-001#1",
+    "CR-c770d8f0-002#1",
+    "CR-c770d8f0-003#1",
+    "CR-c770d8f0-004#1",
+    "CR-c770d8f0-005#1",
+    "CR-c770d8f0-006#1",
+    "CR-c770d8f0-007#1",
+    "CR-c770d8f0-008#1",
+    "CR-c770d8f0-009#1",
+    "CR-c770d8f0-010#1",
+    "CR-c770d8f0-011#1",
+    "CR-c770d8f0-012#1"
+  ],
+  "work_unit_results": [],
+  "reconciliation_results": [
+    {
+      "work_unit_id": "CR-c770d8f0-001#1",
+      "status": "changed",
+      "reason": "feature flag を元資料の 9 キー・3 値・設定版なしに戻し、E-001 / E-010 / SP-001 / SP-007 / SP-008 / SP-025 / BC-005 / storage_mapping E-001 を更新した",
+      "artifact_refs": [
+        "arch/events/20260905_091000_feedback_todo_resolution/arch-design-diff.yaml",
+        "arch/events/20260905_091000_feedback_todo_resolution/_changes.md"
+      ]
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-002#1",
+      "status": "changed",
+      "reason": "ジョブマップ・クロスチェックジョブマップ・対象カタログを CSV と元の列名に統一し、E-003 / E-010 / SP-006 / SP-025 / BC-005 / storage_mapping E-003 / E-007 / E-008 を更新した",
+      "artifact_refs": [
+        "arch/events/20260905_091000_feedback_todo_resolution/arch-design-diff.yaml",
+        "arch/events/20260905_091000_feedback_todo_resolution/_changes.md"
+      ]
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-003#1",
+      "status": "changed",
+      "reason": "run_id 形式(ローカルタイムゾーン yyyymmddThhmmss-{job_id}-{8 桁 hex})を CTP-003 / E-013 / BC-001 / LP-005 に記載し、off でも facade が run_id を発行するよう SP-008 / E-009 / LP-004 を修正した",
+      "artifact_refs": [
+        "arch/events/20260905_091000_feedback_todo_resolution/arch-design-diff.yaml",
+        "arch/events/20260905_091000_feedback_todo_resolution/_changes.md"
+      ]
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-004#1",
+      "status": "changed",
+      "reason": "Runner Result に aborted.txt を追加し、slot 実行の状態導出規則を CTR-001 / SR-001 / LP-005 / LP-019 に置き、storage_mapping E-014 の二重マッピングを high で確定、SP-016 / SP-020 / SP-022 / SP-024 / LP-020 / LP-021 / E-011 / E-014 / E-024 / BC-001 / BC-004 を更新した",
+      "artifact_refs": [
+        "arch/events/20260905_091000_feedback_todo_resolution/arch-design-diff.yaml",
+        "arch/events/20260905_091000_feedback_todo_resolution/_changes.md"
+      ]
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-005#1",
+      "status": "changed",
+      "reason": "完了通知の送信失敗を自動検知しない方針を SP-008 / SP-016 / LP-004 に明記し、tier-facade gateway に LP-022 を追加した",
+      "artifact_refs": [
+        "arch/events/20260905_091000_feedback_todo_resolution/arch-design-diff.yaml",
+        "arch/events/20260905_091000_feedback_todo_resolution/_changes.md"
+      ]
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-006#1",
+      "status": "changed",
+      "reason": "管理 DB を内部データストアとして SR-003 / SP-023 / CTP-002 / CTR-003 / LP-021 / tier-datastore の source_model と説明を置き換えた",
+      "artifact_refs": [
+        "arch/events/20260905_091000_feedback_todo_resolution/arch-design-diff.yaml",
+        "arch/events/20260905_091000_feedback_todo_resolution/_changes.md"
+      ]
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-007#1",
+      "status": "changed",
+      "reason": "E-004 から調整日時・調整根拠を外して E-005 に調整記録を追加し、E-012 の応答日時を削除、SP-019 / CLP-008 を更新した",
+      "artifact_refs": [
+        "arch/events/20260905_091000_feedback_todo_resolution/arch-design-diff.yaml",
+        "arch/events/20260905_091000_feedback_todo_resolution/_changes.md"
+      ]
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-008#1",
+      "status": "changed",
+      "reason": "監視状態 6 値と通知後・中止後の終端遷移を E-021 / SP-016 / SP-018 / LP-019 / storage_mapping E-021 に反映した",
+      "artifact_refs": [
+        "arch/events/20260905_091000_feedback_todo_resolution/arch-design-diff.yaml",
+        "arch/events/20260905_091000_feedback_todo_resolution/_changes.md"
+      ]
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-009#1",
+      "status": "changed",
+      "reason": "並行稼働実行の STARTED → ABORTED とリラン由来 run の COMPLETED 更新者を E-013 / SR-001 / SR-003 / SP-011 / SP-020 / SP-022 / LP-005 / LP-021 に反映した",
+      "artifact_refs": [
+        "arch/events/20260905_091000_feedback_todo_resolution/arch-design-diff.yaml",
+        "arch/events/20260905_091000_feedback_todo_resolution/_changes.md"
+      ]
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-010#1",
+      "status": "changed",
+      "reason": "E-026 ハング検知定期ジョブ設定を BC-005 所有で追加し、SP-018 / SP-025 / tier-ops / LP-020 / LP-021 / E-022 / storage_mapping E-026 に出所を明記した",
+      "artifact_refs": [
+        "arch/events/20260905_091000_feedback_todo_resolution/arch-design-diff.yaml",
+        "arch/events/20260905_091000_feedback_todo_resolution/_changes.md"
+      ]
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-011#1",
+      "status": "changed",
+      "reason": "比較結果の登録条件(比較定義なし・起動失敗では依頼だけ FAILED)を SP-011 に反映した",
+      "artifact_refs": [
+        "arch/events/20260905_091000_feedback_todo_resolution/arch-design-diff.yaml",
+        "arch/events/20260905_091000_feedback_todo_resolution/_changes.md"
+      ]
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-012#1",
+      "status": "changed",
+      "reason": "利用者が確定した NFR C.5.1.1 を踏まえ CTP-009 の confidence を low から medium に上げ、既定値である旨を記載した",
+      "artifact_refs": [
+        "arch/events/20260905_091000_feedback_todo_resolution/arch-design-diff.yaml",
+        "arch/events/20260905_091000_feedback_todo_resolution/_changes.md"
+      ]
+    }
+  ],
+  "work_unit_evidence_refs": [
+    {
+      "work_unit_id": "CR-c770d8f0-001#1",
+      "path": "arch/events/20260905_091000_feedback_todo_resolution/arch-design-diff.yaml",
+      "sha256": "97e6fcf25fd3d908ecbfa7718972d593d6c24b5e3e331571029e9fb03588952e"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-001#1",
+      "path": "arch/events/20260905_091000_feedback_todo_resolution/_changes.md",
+      "sha256": "368a57f1617e50d2f92c0ef1dd6f8e90e7b1c199ff935a9cd16dbd55eb4d8619"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-002#1",
+      "path": "arch/events/20260905_091000_feedback_todo_resolution/arch-design-diff.yaml",
+      "sha256": "97e6fcf25fd3d908ecbfa7718972d593d6c24b5e3e331571029e9fb03588952e"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-002#1",
+      "path": "arch/events/20260905_091000_feedback_todo_resolution/_changes.md",
+      "sha256": "368a57f1617e50d2f92c0ef1dd6f8e90e7b1c199ff935a9cd16dbd55eb4d8619"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-003#1",
+      "path": "arch/events/20260905_091000_feedback_todo_resolution/arch-design-diff.yaml",
+      "sha256": "97e6fcf25fd3d908ecbfa7718972d593d6c24b5e3e331571029e9fb03588952e"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-003#1",
+      "path": "arch/events/20260905_091000_feedback_todo_resolution/_changes.md",
+      "sha256": "368a57f1617e50d2f92c0ef1dd6f8e90e7b1c199ff935a9cd16dbd55eb4d8619"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-004#1",
+      "path": "arch/events/20260905_091000_feedback_todo_resolution/arch-design-diff.yaml",
+      "sha256": "97e6fcf25fd3d908ecbfa7718972d593d6c24b5e3e331571029e9fb03588952e"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-004#1",
+      "path": "arch/events/20260905_091000_feedback_todo_resolution/_changes.md",
+      "sha256": "368a57f1617e50d2f92c0ef1dd6f8e90e7b1c199ff935a9cd16dbd55eb4d8619"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-005#1",
+      "path": "arch/events/20260905_091000_feedback_todo_resolution/arch-design-diff.yaml",
+      "sha256": "97e6fcf25fd3d908ecbfa7718972d593d6c24b5e3e331571029e9fb03588952e"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-005#1",
+      "path": "arch/events/20260905_091000_feedback_todo_resolution/_changes.md",
+      "sha256": "368a57f1617e50d2f92c0ef1dd6f8e90e7b1c199ff935a9cd16dbd55eb4d8619"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-006#1",
+      "path": "arch/events/20260905_091000_feedback_todo_resolution/arch-design-diff.yaml",
+      "sha256": "97e6fcf25fd3d908ecbfa7718972d593d6c24b5e3e331571029e9fb03588952e"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-006#1",
+      "path": "arch/events/20260905_091000_feedback_todo_resolution/_changes.md",
+      "sha256": "368a57f1617e50d2f92c0ef1dd6f8e90e7b1c199ff935a9cd16dbd55eb4d8619"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-007#1",
+      "path": "arch/events/20260905_091000_feedback_todo_resolution/arch-design-diff.yaml",
+      "sha256": "97e6fcf25fd3d908ecbfa7718972d593d6c24b5e3e331571029e9fb03588952e"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-007#1",
+      "path": "arch/events/20260905_091000_feedback_todo_resolution/_changes.md",
+      "sha256": "368a57f1617e50d2f92c0ef1dd6f8e90e7b1c199ff935a9cd16dbd55eb4d8619"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-008#1",
+      "path": "arch/events/20260905_091000_feedback_todo_resolution/arch-design-diff.yaml",
+      "sha256": "97e6fcf25fd3d908ecbfa7718972d593d6c24b5e3e331571029e9fb03588952e"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-008#1",
+      "path": "arch/events/20260905_091000_feedback_todo_resolution/_changes.md",
+      "sha256": "368a57f1617e50d2f92c0ef1dd6f8e90e7b1c199ff935a9cd16dbd55eb4d8619"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-009#1",
+      "path": "arch/events/20260905_091000_feedback_todo_resolution/arch-design-diff.yaml",
+      "sha256": "97e6fcf25fd3d908ecbfa7718972d593d6c24b5e3e331571029e9fb03588952e"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-009#1",
+      "path": "arch/events/20260905_091000_feedback_todo_resolution/_changes.md",
+      "sha256": "368a57f1617e50d2f92c0ef1dd6f8e90e7b1c199ff935a9cd16dbd55eb4d8619"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-010#1",
+      "path": "arch/events/20260905_091000_feedback_todo_resolution/arch-design-diff.yaml",
+      "sha256": "97e6fcf25fd3d908ecbfa7718972d593d6c24b5e3e331571029e9fb03588952e"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-010#1",
+      "path": "arch/events/20260905_091000_feedback_todo_resolution/_changes.md",
+      "sha256": "368a57f1617e50d2f92c0ef1dd6f8e90e7b1c199ff935a9cd16dbd55eb4d8619"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-011#1",
+      "path": "arch/events/20260905_091000_feedback_todo_resolution/arch-design-diff.yaml",
+      "sha256": "97e6fcf25fd3d908ecbfa7718972d593d6c24b5e3e331571029e9fb03588952e"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-011#1",
+      "path": "arch/events/20260905_091000_feedback_todo_resolution/_changes.md",
+      "sha256": "368a57f1617e50d2f92c0ef1dd6f8e90e7b1c199ff935a9cd16dbd55eb4d8619"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-012#1",
+      "path": "arch/events/20260905_091000_feedback_todo_resolution/arch-design-diff.yaml",
+      "sha256": "97e6fcf25fd3d908ecbfa7718972d593d6c24b5e3e331571029e9fb03588952e"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-012#1",
+      "path": "arch/events/20260905_091000_feedback_todo_resolution/_changes.md",
+      "sha256": "368a57f1617e50d2f92c0ef1dd6f8e90e7b1c199ff935a9cd16dbd55eb4d8619"
+    }
+  ],
+  "domain_event_refs": [
+    {
+      "path": "arch/events/20260905_091000_feedback_todo_resolution/arch-design-diff.yaml",
+      "sha256": "97e6fcf25fd3d908ecbfa7718972d593d6c24b5e3e331571029e9fb03588952e"
+    }
+  ],
+  "feedback_request": {
+    "feedback_request_id": "20260905_todo_resolution",
+    "input_sha256": "285429579e9c9d28307d4c779317f01941b915a1203d0e5b5f53a6c014ed7108",
+    "request_ids": [
+      "CR-c770d8f0-001",
+      "CR-c770d8f0-002",
+      "CR-c770d8f0-003",
+      "CR-c770d8f0-004",
+      "CR-c770d8f0-005",
+      "CR-c770d8f0-006",
+      "CR-c770d8f0-007",
+      "CR-c770d8f0-008",
+      "CR-c770d8f0-009",
+      "CR-c770d8f0-010",
+      "CR-c770d8f0-011",
+      "CR-c770d8f0-012"
+    ],
+    "work_unit_ids": [
+      "CR-c770d8f0-001#1",
+      "CR-c770d8f0-002#1",
+      "CR-c770d8f0-003#1",
+      "CR-c770d8f0-004#1",
+      "CR-c770d8f0-005#1",
+      "CR-c770d8f0-006#1",
+      "CR-c770d8f0-007#1",
+      "CR-c770d8f0-008#1",
+      "CR-c770d8f0-009#1",
+      "CR-c770d8f0-010#1",
+      "CR-c770d8f0-011#1",
+      "CR-c770d8f0-012#1"
+    ]
+  },
+  "post_execution_basis": {
+    "repository_head": "c770d8f3beda010fea1876c00fb47ae9ba014a4c",
+    "latest_domain_event_ids": {
+      "requirements": {
+        "rdra/events": "20260905_083000_feedback_todo_resolution",
+        "usdm/events": "20260905_083000_feedback_todo_resolution"
+      },
+      "quality_attributes": {
+        "nfr/events": "20260905_085000_feedback_todo_resolution"
+      },
+      "architecture": {
+        "arch/events": "20260905_091000_feedback_todo_resolution"
+      },
+      "infrastructure": {
+        "infra/events": "20260830_190412_infra_product_design"
+      },
+      "design_system": {
+        "design/events": null
+      },
+      "spec": {
+        "specs/events": "20260830_202851_spec_generation"
+      },
+      "spec_stories": {
+        "design/events": null
+      }
+    },
+    "domain_event_root_snapshots": {
+      "rdra/events": {
+        "head_event_id": "20260905_083000_feedback_todo_resolution",
+        "head_event_sha256": "4f68dbbb27a782d73971ea0552af133c47a93f9a46a92974c992c80ac1d8b081",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution"
+        ],
+        "event_set_sha256": "138af33bd75ccad8a2b5942c95252c9757a723350d394bd754e3c392b98eb64f",
+        "latest_tree_sha256": "4647215b00110b8e016d639db2d29185088bc14b473992f7beb4b5d500971db4"
+      },
+      "usdm/events": {
+        "head_event_id": "20260905_083000_feedback_todo_resolution",
+        "head_event_sha256": "a79303d513d0c567eb9c7bd602e67124c8d174dfa7a0dcb92b120d2585ece075",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution"
+        ],
+        "event_set_sha256": "138af33bd75ccad8a2b5942c95252c9757a723350d394bd754e3c392b98eb64f",
+        "latest_tree_sha256": "122d9a6d975de6748e9cdabd14d2dc7b6dd71cf16cf421e6a122f051e3f4c1ad"
+      },
+      "nfr/events": {
+        "head_event_id": "20260905_085000_feedback_todo_resolution",
+        "head_event_sha256": "a45fc5fb3f96a599e1d472373a7a71a1d130440551b5046bb305acc0ae5e86f2",
+        "event_ids": [
+          "20260830_183726_initial_nfr",
+          "20260905_085000_feedback_todo_resolution"
+        ],
+        "event_set_sha256": "2405eb79c9b769346f2f58a58e5bfaebc661dfd563c37854424554cd59b57188",
+        "latest_tree_sha256": "55b76682bb291016b0900bcac983007320101a0e7d4fc86bf88f895f8acc9637"
+      },
+      "arch/events": {
+        "head_event_id": "20260905_091000_feedback_todo_resolution",
+        "head_event_sha256": "c3d968eb1276799d29ec24a1fb4e57de3f253e824f882cf1ebc99237b82b9673",
+        "event_ids": [
+          "20260830_184457_initial_arch",
+          "20260830_202427_arch_infra_feedback_20260830_190412_infra_product_design",
+          "20260905_091000_feedback_todo_resolution"
+        ],
+        "event_set_sha256": "fb104d3367af3ba535c8f4dd63b57a7dfe3a163b5f3853108af7c492d2525b0b",
+        "latest_tree_sha256": "68ce640fb9135c6303e94c7b25aea8b7d319b4b9c1d0f93f08c76e9c0c725c28"
+      },
+      "infra/events": {
+        "head_event_id": "20260830_190412_infra_product_design",
+        "head_event_sha256": "ce3059e864648a7322077facde5634b0481f470da9658c24dda34dc84420612b",
+        "event_ids": [
+          "20260830_190412_infra_product_design"
+        ],
+        "event_set_sha256": "c4043036fd57a8bc0cd2aa06d4b5117053b49d108729268f83de26d6faf80f41",
+        "latest_tree_sha256": "ce3059e864648a7322077facde5634b0481f470da9658c24dda34dc84420612b"
+      },
+      "design/events": {
+        "head_event_id": null,
+        "head_event_sha256": null,
+        "event_ids": [],
+        "event_set_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "latest_tree_sha256": null
+      },
+      "specs/events": {
+        "head_event_id": "20260830_202851_spec_generation",
+        "head_event_sha256": "061002704ccbf8f7679b37edf36d411faf9d7ac9dee0e7fa6d04addf9ab20c51",
+        "event_ids": [
+          "20260830_202851_spec_generation"
+        ],
+        "event_set_sha256": "6c0668acba99a14dbb3ab5f9955a4ebfcec89847cbeef8e77058a166328949a4",
+        "latest_tree_sha256": "09c7aa8cb1a6d579081cd2f3f0785bbdbf1691b5429f617980dc7f5b5b713e15"
+      }
+    }
+  }
+}

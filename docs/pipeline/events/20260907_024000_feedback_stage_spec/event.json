@@ -1,0 +1,355 @@
+{
+  "event_id": "20260907_024000_feedback_stage_spec",
+  "type": "feedback_stage_completed",
+  "run_id": "feedback-20260907_todo_followup-20260907_180615-96004",
+  "attempt": 1,
+  "created_at": "2026-09-07T02:40:00Z",
+  "stage": "spec",
+  "direct_work_unit_ids": [],
+  "causal_work_unit_ids": [
+    "CR-c770d8f0-013#1",
+    "CR-c770d8f0-014#1",
+    "CR-c770d8f0-015#1"
+  ],
+  "work_unit_results": [],
+  "reconciliation_results": [
+    {
+      "work_unit_id": "CR-c770d8f0-013#1",
+      "status": "changed",
+      "reason": "速報クロスチェック設定(rapid-crosscheck.env)を RDRA 情報「速報クロスチェック設定」に紐づけ、config_files[rapid-crosscheck.env] の owner を基盤適用設計者(設定所有区分: 速報クロスチェック設定)、defined_in_uc を BUC.tsv が入力情報として紐づける 4 UC に確定。keys に RDRA 属性名を併記し、shared_rules.lease_and_poll の出所を同情報に固定(既定値 600 / 30 秒だけ仮採用)。4 UC の spec.md 関連 RDRA モデル・tier・_model-summary(rdra_info)と USDM SPEC-005-06 の BDD 4 件を追加し、hang_detect_limit_minutes 調整 UC の「RDRA 未定義」注記を解消。トレーサビリティ 379/379(100%)",
+      "artifact_refs": [
+        "specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20260907_024000_feedback_todo_followup/実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/spec.md",
+        "specs/events/20260907_024000_feedback_todo_followup/実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/_model-summary.yaml",
+        "specs/events/20260907_024000_feedback_todo_followup/クロスチェック業務/速報クロスチェックフロー/速報クロスチェック runner へ完了通知を送信する/spec.md",
+        "specs/events/20260907_024000_feedback_todo_followup/クロスチェック業務/速報クロスチェックフロー/両系成功時に速報比較依頼を作成する/_model-summary.yaml",
+        "specs/events/20260907_024000_feedback_todo_followup/クロスチェック業務/速報クロスチェックフロー/速報比較依頼を claim する/spec.md",
+        "specs/events/20260907_024000_feedback_todo_followup/クロスチェック業務/速報クロスチェックフロー/速報比較依頼を claim する/_model-summary.yaml",
+        "specs/events/20260907_024000_feedback_todo_followup/実行監視業務/background 実行監視フロー/hang_detect_limit_minutes をジョブごとに調整する/_model-summary.yaml",
+        "specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/traceability-matrix.md"
+      ]
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-014#1",
+      "status": "changed",
+      "reason": "rapid-crosscheck-runner(dispatcher)は完了通知のトランザクション内で parallel_runs を FOR UPDATE で読み、run が中止済み(parallel_runs ABORTED、または slot_executions に ABORTED あり = 仮採用 rdra-feedback #13)なら完了事実だけ記録して依頼を作らず WARN を残す(request_creation_matrix)。abort-blue / abort-green は aborted.txt 公開後に parallel_runs を無条件 FOR UPDATE でロックし、REQUESTED の速報比較依頼を条件付き UPDATE で ABORTED にする(0 件正常。CLAIMED / RUNNING は abort-rapid-crosscheck の対象のまま。競合窓の保険 = rdra-feedback #14、CLAIMED の再 claim = rdra-feedback #15)。shared_rules.state_codes に request_status_transitions、rdb-schema に遷移注記・ロック順・日時生成規則。USDM SPEC-005-02 AC4〜6 / SPEC-010-01 AC6〜7 の BDD と buc-spec 状態遷移図(REQUESTED → ABORTED)を追加",
+      "artifact_refs": [
+        "specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/datastore/rdb-schema.yaml",
+        "specs/events/20260907_024000_feedback_todo_followup/クロスチェック業務/速報クロスチェックフロー/両系成功時に速報比較依頼を作成する/spec.md",
+        "specs/events/20260907_024000_feedback_todo_followup/クロスチェック業務/速報クロスチェックフロー/両系成功時に速報比較依頼を作成する/tier-rapid-crosscheck.md",
+        "specs/events/20260907_024000_feedback_todo_followup/クロスチェック業務/速報クロスチェックフロー/速報クロスチェック runner へ完了通知を送信する/spec.md",
+        "specs/events/20260907_024000_feedback_todo_followup/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/spec.md",
+        "specs/events/20260907_024000_feedback_todo_followup/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/tier-ops.md",
+        "specs/events/20260907_024000_feedback_todo_followup/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/_model-summary.yaml",
+        "specs/events/20260907_024000_feedback_todo_followup/クロスチェック業務/速報クロスチェックフロー/buc-spec.md",
+        "specs/events/20260907_024000_feedback_todo_followup/実行復旧業務/実行中止フロー/buc-spec.md",
+        "specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/rdra-feedback.md",
+        "specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/usdm-acceptance-matrix.md"
+      ]
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-015#1",
+      "status": "changed",
+      "reason": "実行ログ行書式を {script} {run_id} {ローカル日時} {LEVEL} {message}(ホストのローカルタイムゾーン、ISO 8601 秒精度、指示子なし)に改め、CLI stdout / TSV・管理 DB の *_at 列・通知メール本文・hang-detect-trend --since も同じ時刻軸へ統一(conventions.datetime / datetime_generation: 日時はホスト生成のバインド値、判定は epoch 秒)。RELAY_GATE_NOW は UTC Z 付き入力 → ローカル変換を維持。Runner Result ファイル(started-at.txt / aborted.txt / execution-spec.json の finalized_at・restored_at)の中身だけ UTC Z 付きを維持(表示・DB 転記時に変換)。shared_rules.run_id.timezone・ui-design 出力規約・data-visualization 日時列・全 UC の例示(機械置換 57 ファイル + 文脈修正)を追従し、_inputs-digest.md を arch 20260907_015000 / nfr 20260907_013000 から再生成",
+      "artifact_refs": [
+        "specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/datastore/rdb-schema.yaml",
+        "specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/ux-ui/ui-design.md",
+        "specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/ux-ui/data-visualization.md",
+        "specs/events/20260907_024000_feedback_todo_followup/実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/spec.md",
+        "specs/events/20260907_024000_feedback_todo_followup/実行監視業務/background 実行監視フロー/ハング疑い・実行エラー・比較異常を通知する/spec.md",
+        "specs/events/20260907_024000_feedback_todo_followup/実行監視業務/background 実行監視フロー/hang_detect_limit_minutes をジョブごとに調整する/tier-ops.md",
+        "specs/events/20260907_024000_feedback_todo_followup/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/tier-ops.md",
+        "specs/events/20260907_024000_feedback_todo_followup/_inputs-digest.md",
+        "specs/events/20260907_024000_feedback_todo_followup/_inference.md",
+        "specs/events/20260907_024000_feedback_todo_followup/decisions/spec-decision-006.yaml"
+      ]
+    }
+  ],
+  "work_unit_evidence_refs": [
+    {
+      "work_unit_id": "CR-c770d8f0-013#1",
+      "path": "specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/api/cli-command-contract.yaml",
+      "sha256": "a9819bc25abd6e6c8bc6550ac70a92218443ccf4873093f8c86714e94e84fd6d"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-013#1",
+      "path": "specs/events/20260907_024000_feedback_todo_followup/実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/spec.md",
+      "sha256": "b6e4924c4a1ba9492e2b94fc53b4d5cd24e6df2e27e97186c1cd35e7a184d5b8"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-013#1",
+      "path": "specs/events/20260907_024000_feedback_todo_followup/実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/_model-summary.yaml",
+      "sha256": "5a443b06c339c2cf21311a9315fdf350ef454a9134256ad1614baf932a6a1e31"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-013#1",
+      "path": "specs/events/20260907_024000_feedback_todo_followup/クロスチェック業務/速報クロスチェックフロー/速報クロスチェック runner へ完了通知を送信する/spec.md",
+      "sha256": "330131bb6bf4eb6ae16a9121f7524631de8c6b3cedc71bc2f3d0e494d9222821"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-013#1",
+      "path": "specs/events/20260907_024000_feedback_todo_followup/クロスチェック業務/速報クロスチェックフロー/両系成功時に速報比較依頼を作成する/_model-summary.yaml",
+      "sha256": "2849bec931976d1cef72cfa91174996791d191f48ad38349ec2c887e3fc86e09"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-013#1",
+      "path": "specs/events/20260907_024000_feedback_todo_followup/クロスチェック業務/速報クロスチェックフロー/速報比較依頼を claim する/spec.md",
+      "sha256": "8f373e2bddc3e51b432d9933213c7bc6956becb94d7117b2b9c140b0e6f5b9cb"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-013#1",
+      "path": "specs/events/20260907_024000_feedback_todo_followup/クロスチェック業務/速報クロスチェックフロー/速報比較依頼を claim する/_model-summary.yaml",
+      "sha256": "6cfd3e16d2d1a7d47de7bda5f5fd6047c6e6a229152b9c1dd4d928c890108c9f"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-013#1",
+      "path": "specs/events/20260907_024000_feedback_todo_followup/実行監視業務/background 実行監視フロー/hang_detect_limit_minutes をジョブごとに調整する/_model-summary.yaml",
+      "sha256": "e6de7d32c9a9c85f0e31c504892b825e467eb20f19c14b2c69fa47fb33832ea8"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-013#1",
+      "path": "specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/traceability-matrix.md",
+      "sha256": "6bf4697b8f98060049525b2eaa2298368339c022a78443abf62ef760545b521f"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-014#1",
+      "path": "specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/api/cli-command-contract.yaml",
+      "sha256": "a9819bc25abd6e6c8bc6550ac70a92218443ccf4873093f8c86714e94e84fd6d"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-014#1",
+      "path": "specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/datastore/rdb-schema.yaml",
+      "sha256": "7afa5832c1960a1d11f1aa8ec1e8c8aa65acb91803d40aaf36724494211d938a"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-014#1",
+      "path": "specs/events/20260907_024000_feedback_todo_followup/クロスチェック業務/速報クロスチェックフロー/両系成功時に速報比較依頼を作成する/spec.md",
+      "sha256": "abdb673b4aaf3bdea5825486cca8d49d0957149b180696fc7698ae8f7bc9af82"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-014#1",
+      "path": "specs/events/20260907_024000_feedback_todo_followup/クロスチェック業務/速報クロスチェックフロー/両系成功時に速報比較依頼を作成する/tier-rapid-crosscheck.md",
+      "sha256": "a6fdd606f6db0b3af57768ce860651f1b23068707c0f85d5fbfde20e1bd7c005"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-014#1",
+      "path": "specs/events/20260907_024000_feedback_todo_followup/クロスチェック業務/速報クロスチェックフロー/速報クロスチェック runner へ完了通知を送信する/spec.md",
+      "sha256": "330131bb6bf4eb6ae16a9121f7524631de8c6b3cedc71bc2f3d0e494d9222821"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-014#1",
+      "path": "specs/events/20260907_024000_feedback_todo_followup/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/spec.md",
+      "sha256": "69e6c93fb163160d9a91323b88ab57d59938dcca4cd1bdfae6484f37c422628e"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-014#1",
+      "path": "specs/events/20260907_024000_feedback_todo_followup/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/tier-ops.md",
+      "sha256": "3c27b7041453bc78f5588e0c527b6eb1149402c7d27d7d7413f282495c17c0b6"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-014#1",
+      "path": "specs/events/20260907_024000_feedback_todo_followup/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/_model-summary.yaml",
+      "sha256": "b6c3b68195154cca3fef8c9846c9949fdf66c647e950444d521ab1be8f4ba75b"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-014#1",
+      "path": "specs/events/20260907_024000_feedback_todo_followup/クロスチェック業務/速報クロスチェックフロー/buc-spec.md",
+      "sha256": "902c343c740f62cce167a4db6107cdfd7851945b85b48250c43cf4c542331d5f"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-014#1",
+      "path": "specs/events/20260907_024000_feedback_todo_followup/実行復旧業務/実行中止フロー/buc-spec.md",
+      "sha256": "65c4664d80e4c56c6f9ac49b6c914ad77cc9f11125a61cf36f1a2f7283c630c9"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-014#1",
+      "path": "specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/rdra-feedback.md",
+      "sha256": "272443cc228fff7604f0a50c039cb603cf210bb9e9e490c8d27b41da8849fb90"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-014#1",
+      "path": "specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/usdm-acceptance-matrix.md",
+      "sha256": "3efd3b90a5cc90a26ec9ce630f61b881a195434e8489b99372bc8a9e4a1bd7db"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-015#1",
+      "path": "specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/api/cli-command-contract.yaml",
+      "sha256": "a9819bc25abd6e6c8bc6550ac70a92218443ccf4873093f8c86714e94e84fd6d"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-015#1",
+      "path": "specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/datastore/rdb-schema.yaml",
+      "sha256": "7afa5832c1960a1d11f1aa8ec1e8c8aa65acb91803d40aaf36724494211d938a"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-015#1",
+      "path": "specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/ux-ui/ui-design.md",
+      "sha256": "d183653dc1639d210a43f5352533d36de88d370f8a9e2094e609606d82a7fef8"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-015#1",
+      "path": "specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/ux-ui/data-visualization.md",
+      "sha256": "69dab4f18faca57468579bdde4cdfbcd0ccb3aec0ce13914f174741c916b5b38"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-015#1",
+      "path": "specs/events/20260907_024000_feedback_todo_followup/実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/spec.md",
+      "sha256": "99089d64d88965289eb305b2e825ee7dde4917386760c45bb5461420a1cf86f2"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-015#1",
+      "path": "specs/events/20260907_024000_feedback_todo_followup/実行監視業務/background 実行監視フロー/ハング疑い・実行エラー・比較異常を通知する/spec.md",
+      "sha256": "d897d473c0551ab44a4e1cf72b76bca7b83464d3d7499b626c49dae50339ebe9"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-015#1",
+      "path": "specs/events/20260907_024000_feedback_todo_followup/実行監視業務/background 実行監視フロー/hang_detect_limit_minutes をジョブごとに調整する/tier-ops.md",
+      "sha256": "9d123718bcd3a27d51d375690bb50248eb38be7e35b5dfa3df60540671891590"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-015#1",
+      "path": "specs/events/20260907_024000_feedback_todo_followup/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/tier-ops.md",
+      "sha256": "3c27b7041453bc78f5588e0c527b6eb1149402c7d27d7d7413f282495c17c0b6"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-015#1",
+      "path": "specs/events/20260907_024000_feedback_todo_followup/_inputs-digest.md",
+      "sha256": "ca1415ebb7ceef3f6788b8c52969db31f5ffb40d8b6e8f34e06d78cc3e489aff"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-015#1",
+      "path": "specs/events/20260907_024000_feedback_todo_followup/_inference.md",
+      "sha256": "b29dc2e79a0d9705d277795fb0a10daf51833f2229ce789d22bdb70b99d69b59"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-015#1",
+      "path": "specs/events/20260907_024000_feedback_todo_followup/decisions/spec-decision-006.yaml",
+      "sha256": "11f5ec056b303318455ec04adc144b4c9c2769e5f4fc58a9de3793aa1fa5579c"
+    }
+  ],
+  "domain_event_refs": [
+    {
+      "path": "specs/events/20260907_024000_feedback_todo_followup/spec-event.yaml",
+      "sha256": "43e4c5d9e0746e3353cae9a521b78ed445af5113809b0ba5fd4edc37888b89f2"
+    }
+  ],
+  "feedback_request": {
+    "feedback_request_id": "20260907_todo_followup",
+    "input_sha256": "193823ac1e6f02400269d6bdca461150a1fc8951393f332ef28580e045261389",
+    "request_ids": [
+      "CR-c770d8f0-013",
+      "CR-c770d8f0-014",
+      "CR-c770d8f0-015"
+    ],
+    "work_unit_ids": [
+      "CR-c770d8f0-013#1",
+      "CR-c770d8f0-014#1",
+      "CR-c770d8f0-015#1"
+    ]
+  },
+  "post_execution_basis": {
+    "repository_head": "c770d8f3beda010fea1876c00fb47ae9ba014a4c",
+    "latest_domain_event_ids": {
+      "requirements": {
+        "rdra/events": "20260907_011000_feedback_todo_followup",
+        "usdm/events": "20260907_011000_feedback_todo_followup"
+      },
+      "quality_attributes": {
+        "nfr/events": "20260907_013000_feedback_todo_followup"
+      },
+      "architecture": {
+        "arch/events": "20260907_015000_feedback_todo_followup"
+      },
+      "infrastructure": {
+        "infra/events": "20260907_021000_feedback_todo_followup"
+      },
+      "design_system": {
+        "design/events": null
+      },
+      "spec": {
+        "specs/events": "20260907_024000_feedback_todo_followup"
+      },
+      "spec_stories": {
+        "design/events": null
+      }
+    },
+    "domain_event_root_snapshots": {
+      "rdra/events": {
+        "head_event_id": "20260907_011000_feedback_todo_followup",
+        "head_event_sha256": "1c85edb76af1b6e2993e1def49b02e22037d305c6ac026499d103e6e7f797c30",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup"
+        ],
+        "event_set_sha256": "57210ccbc03d6ae227629896ff4d8ff9df8d0800f78dcf0c0a1fbfd5aad15e06",
+        "latest_tree_sha256": "8427014aae4a933b9d51245c17edd66a65e976508980fc854b991cd58c236769"
+      },
+      "usdm/events": {
+        "head_event_id": "20260907_011000_feedback_todo_followup",
+        "head_event_sha256": "efc2fad1a3a533666fa72edce2dbe66447779517ed183c07c518ea6d99d37bd6",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup"
+        ],
+        "event_set_sha256": "57210ccbc03d6ae227629896ff4d8ff9df8d0800f78dcf0c0a1fbfd5aad15e06",
+        "latest_tree_sha256": "a59c1d3701f68a3d22cfa0b6d42069e5ab744cbff1d1254ffd54da1a38d40d46"
+      },
+      "nfr/events": {
+        "head_event_id": "20260907_013000_feedback_todo_followup",
+        "head_event_sha256": "01e6c3f67dfc1159a0220458bef3185be8994ddaa828eb84958aa8e119f66936",
+        "event_ids": [
+          "20260830_183726_initial_nfr",
+          "20260905_085000_feedback_todo_resolution",
+          "20260907_013000_feedback_todo_followup"
+        ],
+        "event_set_sha256": "d3e93973e7fa929f6cd1441ad723baa0548735be94e376f0837fa76c53f0c1fe",
+        "latest_tree_sha256": "1ae1dc047c5e2a4c9f70e819b655bc6dede300d4149620c0020f98ef6e375e7d"
+      },
+      "arch/events": {
+        "head_event_id": "20260907_015000_feedback_todo_followup",
+        "head_event_sha256": "99f8f6f83004c7050b2aeccf299a4e60a8141d20b6cded271509d7c713ef5a08",
+        "event_ids": [
+          "20260830_184457_initial_arch",
+          "20260830_202427_arch_infra_feedback_20260830_190412_infra_product_design",
+          "20260905_091000_feedback_todo_resolution",
+          "20260907_015000_feedback_todo_followup"
+        ],
+        "event_set_sha256": "8000c594ddaa83495e90d0a10424220b096ed16b998095c31c348418017fe47c",
+        "latest_tree_sha256": "e8d4452a19fd7c95bd1b317fe9fc35822a4d6f5348edf341b4e34c982f6f94db"
+      },
+      "infra/events": {
+        "head_event_id": "20260907_021000_feedback_todo_followup",
+        "head_event_sha256": "de03a7298aefc7893ccd8b890f037f1fbf4cae683bfc52454c546dca791ba813",
+        "event_ids": [
+          "20260830_190412_infra_product_design",
+          "20260905_093000_feedback_todo_resolution",
+          "20260907_021000_feedback_todo_followup"
+        ],
+        "event_set_sha256": "03b5e9ab427c01763e812c1cd8011e456eec7783391f0402ba70b5b746d18ce1",
+        "latest_tree_sha256": "de03a7298aefc7893ccd8b890f037f1fbf4cae683bfc52454c546dca791ba813"
+      },
+      "design/events": {
+        "head_event_id": null,
+        "head_event_sha256": null,
+        "event_ids": [],
+        "event_set_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "latest_tree_sha256": null
+      },
+      "specs/events": {
+        "head_event_id": "20260907_024000_feedback_todo_followup",
+        "head_event_sha256": "73f7f0eb16debac16d2cfa81c11db52833f8735a90f84b9c30245f97630918de",
+        "event_ids": [
+          "20260830_202851_spec_generation",
+          "20260905_100000_feedback_todo_resolution",
+          "20260907_024000_feedback_todo_followup"
+        ],
+        "event_set_sha256": "6fe10ab4a3b6432ef4d55a01b09447bb45b0c3005fe88275701a7826a520ebb5",
+        "latest_tree_sha256": "10b8b71398a60063317dd1601fe2da3ce8457d11a6f7af3c29ed58b8466265de"
+      }
+    }
+  }
+}

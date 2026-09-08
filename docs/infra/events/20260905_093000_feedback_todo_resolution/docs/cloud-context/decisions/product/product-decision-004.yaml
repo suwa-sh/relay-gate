@@ -1,0 +1,42 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "product"
+artifact_id: "product-decision-004"
+title: "運用者向けメール通知のMTA選定"
+status: "accepted"
+generated_at: "2026-08-30T20:17:49"
+source_refs:
+  - "docs/mcl/product/output/product-workload-model.yaml#product.messaging.mail_notification"
+inputs_ref:
+  - "product-relay-gate-workload-model"
+
+decision:
+  context: |
+    warning / error 発生時に運用者へメール通知するための、閉域ネットワーク内メール中継への送信経路を
+    選定する必要がある。外部 SaaS(チャット通知等)は使わずメールのみに限定する制約(foundation.policy.no_ui_no_http_api
+    と整合するメール限定方針)がある。
+  conflict_type: "capability"
+  options:
+    - id: "postfix_satellite"
+      description: "Postfix(ローカル MTA、satellite構成でrelayhostに組織内SMTPを指定)"
+      pros:
+        - "送信キューを持ちSMTP中継が一時停止していてもリトライされる(REQ-MAIL-002の送信保証と整合)"
+        - "多くのLinuxディストリビューションで標準採用されており運用実績が豊富"
+      cons:
+        - "デーモンとして常時稼働させる分の設定・監視対象が増える"
+    - id: "msmtp"
+      description: "msmtp(軽量MTA、キュー無し)"
+      pros:
+        - "設定がシンプルで軽量"
+      cons:
+        - "送信キューを持たないため中継先一時停止時のリトライは呼び出し側スクリプトで実装する必要がある"
+  chosen_option: "postfix_satellite"
+  rationale: >-
+    REQ-MAIL-001(閉域ネットワーク内メール中継への送信)とREQ-MAIL-002(送信内容の実行ログ記録)を、
+    送信キューによる再送保証込みで満たせるため。cost_posture: cost_optimizedと矛盾しないOSS標準構成でもある。
+  risk_assessment: >-
+    Postfixデーモンの稼働自体が新たな監視対象になるが、既存のホスト監視(product.operations.backup_and_monitoring)
+    に含めることで追加の監視基盤導入を避けられる。
+  affected_elements:
+    - "product.messaging.mail_notification"
+  review_date: "2027-08-30"

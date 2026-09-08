@@ -1,0 +1,39 @@
+---
+# relay-gate-config: feature flag / ジョブマップ(CSV) / ハング検知定期ジョブ設定を読み取り専用配置する
+# 対応: product-impl-onprem.yaml#impl.storage.config_store
+
+- name: 設定配置ディレクトリを作成する
+  ansible.builtin.file:
+    path: /etc/relay-gate
+    state: directory
+    owner: relay-gate-deploy
+    group: relay-gate
+    mode: "0750"
+
+- name: feature flag / ジョブマップ(CSV)等を配置する(読み取り専用)
+  ansible.builtin.copy:
+    src: "files/{{ item }}"
+    dest: "/etc/relay-gate/{{ item }}"
+    owner: relay-gate-deploy
+    group: relay-gate
+    mode: "0644"
+  loop:
+    - feature-flag.env
+    - blue-job-map.csv
+    - green-job-map.csv
+    - crosscheck-job-map.csv
+    - target-catalog.csv
+  notify: notify config change (no restart required)
+
+- name: ハング検知定期ジョブ設定を配置する(参照名のみ。グループ read)
+  ansible.builtin.copy:
+    src: files/hang-detector.env
+    dest: /etc/relay-gate/hang-detector.env
+    owner: relay-gate-deploy
+    group: relay-gate
+    mode: "0640"
+  notify: notify config change (no restart required)
+
+- name: 設定ファイルに認証情報の平文値が無いことを検査する(参照名のみ許可)
+  ansible.builtin.shell: "! grep -E -i '(password|secret|token)\\s*=' /etc/relay-gate/*.env /etc/relay-gate/*.csv"
+  changed_when: false

@@ -1,0 +1,161 @@
+round: 1
+group: G5
+findings:
+  - id: S3-G5-001
+    uc: "実行復旧業務/background 側リランフロー/リラン対象を検証する"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/実行復旧業務/background 側リランフロー/リラン対象を検証する/spec.md"
+    line: 39
+    severity: major
+    viewpoint: 7
+    claim: "データフロー表(39 行目)・データフロー図(21 / 30 行目)・関連 RDRA 表(159 行目)に「共通(off 以外): parallel_runs(job_id / status)を SELECT して元実行の存在確認」が残っており、blue / green の事前検証で管理 DB を読まない(U9 / 契約 background-rerun.sh notes「slot_executions は事前検証に使わない。管理 DB は新 run の INSERT にだけ使う」、stderr `management db query failed` は --role rapid-crosscheck のみ)と矛盾し、同 spec 121 行目「blue / green: 管理 DB は使わない」とも食い違う"
+    fix: "parallel_runs の SELECT を `--role rapid-crosscheck` の元実行特定(契約 idempotency「元実行は rapid_crosscheck_requests / rapid_runs / parallel_runs から特定」)に限定する。39 行目を「rapid-crosscheck: rapid_crosscheck_requests(存在 / status)+ parallel_runs(job_id)。blue / green は管理 DB を読まない」、30 行目のエッジ注記を「(rapid-crosscheck のみ)」、159 行目を「rapid-crosscheck の元実行特定(job_id)。blue / green では読まない」に直す"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/cli-command-contract.yaml#background-rerun.sh notes / stderr"
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_review/change-brief.md#U9"
+  - id: S3-G5-002
+    uc: "実行復旧業務/background 側リランフロー/リラン対象を検証する"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/実行復旧業務/background 側リランフロー/リラン対象を検証する/tier-ops.md"
+    line: 96
+    severity: minor
+    viewpoint: 7
+    claim: "データモデル変更表の parallel_runs 行が「run_id, job_id(off 以外)」で、blue / green の事前検証でも管理 DB を読むように読める(契約は blue / green で管理 DB を事前検証に使わない)"
+    fix: "96 行目を「parallel_runs | run_id, job_id(--role rapid-crosscheck の元実行特定のみ。blue / green は読まない)」に直す"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/cli-command-contract.yaml#background-rerun.sh notes"
+  - id: S3-G5-003
+    uc: "実行復旧業務/background 側リランフロー/リラン対象を検証する"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/実行復旧業務/background 側リランフロー/リラン対象を検証する/_model-summary.yaml"
+    line: 64
+    severity: minor
+    viewpoint: 5
+    claim: "tables.parallel_runs の SELECT(job_id / status, where run_id = ?)に role の限定が無く、spec.md の「blue / green は管理 DB を使わない」と整合しない"
+    fix: "where を「run_id = ? (--role rapid-crosscheck の元実行特定のみ。blue / green の事前検証では読まない)」に直し、columns から status を外す(status は rapid_crosscheck_requests 側で判定)"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/実行復旧業務/background 側リランフロー/リラン対象を検証する/spec.md#元実行の特定元"
+  - id: S3-G5-004
+    uc: "実行復旧業務/実行中止フロー/現在状態を確認して停止確認に応答する"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/実行復旧業務/実行中止フロー/現在状態を確認して停止確認に応答する/spec.md"
+    line: 92
+    severity: major
+    viewpoint: 7
+    claim: "abort-rapid-crosscheck の依頼 0 行時の stderr が `error: run not found ... role=rapid-crosscheck` になっているが、契約 abort-rapid-crosscheck.sh の stderr は `error: request not found run_id=...`(3)であり文言が一致しない(`run not found` は abort-blue / abort-green の execution-spec.json 不在専用。U9)"
+    fix: "92 行目を「行(または 0 行 → error: request not found run_id=... / 3)」に直す"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/cli-command-contract.yaml#abort-rapid-crosscheck.sh stderr"
+  - id: S3-G5-005
+    uc: "実行復旧業務/実行中止フロー/現在状態を確認して停止確認に応答する"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/実行復旧業務/実行中止フロー/現在状態を確認して停止確認に応答する/tier-ops.md"
+    line: 58
+    severity: minor
+    viewpoint: 7
+    claim: "終了コード 3 の条件で依頼系の対象不在も `error: run not found run_id=... role=...` としているが、契約では依頼系(abort-rapid-crosscheck)は `error: request not found run_id=...`"
+    fix: "58 行目を「slot 系: `error: run not found run_id=... role=...`(execution-spec.json なし)。依頼系: `error: request not found run_id=...`(依頼レコードなし)」に分けて書く"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/cli-command-contract.yaml#abort-rapid-crosscheck.sh stderr"
+  - id: S3-G5-006
+    uc: "実行復旧業務/実行中止フロー/現在状態を確認して停止確認に応答する"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/実行復旧業務/実行中止フロー/現在状態を確認して停止確認に応答する/_api-summary.yaml"
+    line: 83
+    severity: minor
+    viewpoint: 4
+    claim: "abort-rapid-crosscheck.sh の stderr が「abort-blue.sh と同じ」となっており、依頼不在の文言 `error: request not found run_id=...` と中止不可 `error: request is not abortable ...`(契約)が反映されていない"
+    fix: "83 行目を「プロンプト・info・interactive confirmation required は abort-blue.sh と同じ。error: request not found run_id=...(3)/ error: request is not abortable run_id=... role=rapid-crosscheck status=...(3)/ error: management db is not configured (RAPID_CROSSCHECK_MODE=off) run_id=...(3)」に直す"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/cli-command-contract.yaml#abort-rapid-crosscheck.sh stderr"
+  - id: S3-G5-007
+    uc: "実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/spec.md"
+    line: 93
+    severity: minor
+    viewpoint: 7
+    claim: "管理 DB UPDATE 0 件の実行ログが `WARN management db not updated run_id=... role=... table=slot_executions` で、契約(abort-blue.sh exit_codes 0 / slot runner idempotency「同文」)の `WARN management db not updated run_id=... role=blue` に無い `table=` 接尾辞が付いている(U3 / U5 で同文と決定)"
+    fix: "93 行目のログ文言から ` table=slot_executions` を外し `WARN management db not updated run_id=... role=...` にする"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/cli-command-contract.yaml#abort-blue.sh exit_codes"
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_review/change-brief.md#U3 U5"
+  - id: S3-G5-008
+    uc: "実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/tier-ops.md"
+    line: 31
+    severity: minor
+    viewpoint: 7
+    claim: "31 / 61 / 159 行目の `WARN management db not updated run_id=... role=... table=slot_executions` が契約の同文(`table=` 無し)と一致しない"
+    fix: "3 箇所とも ` table=slot_executions` を削除し `WARN management db not updated run_id=... role=...`(159 行目の BDD は `... role=green`)に揃える"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/cli-command-contract.yaml#abort-blue.sh exit_codes"
+  - id: S3-G5-009
+    uc: "実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/tier-ops.md"
+    line: 24
+    severity: minor
+    viewpoint: 7
+    claim: "slot_executions の条件付き UPDATE が `... AND status = 'RUNNING' AND mode = 'background'` で、契約 abort-blue.sh の `WHERE run_id=? AND slot='blue' AND status='RUNNING'` に無い `mode` 条件を含む(mode の可否判定は execution-spec.json で済ませる規則)"
+    fix: "24 / 25 行目の SQL を `UPDATE slot_executions SET status = 'ABORTED', completed_at = ? WHERE run_id = ? AND slot = 'blue' AND status = 'RUNNING'`(green は slot = 'green')に揃える"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/cli-command-contract.yaml#abort-blue.sh exit_codes"
+  - id: S3-G5-010
+    uc: "実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/spec.md"
+    line: 88
+    severity: minor
+    viewpoint: 7
+    claim: "処理フロー(88 行目)・データフロー図(35 行目)・バリエーション表(128 行目)の slot_executions UPDATE WHERE 句に契約に無い `AND mode = 'background'` が付いている"
+    fix: "3 箇所の WHERE 句を契約どおり `run_id=? AND slot=? AND status='RUNNING'` に揃える"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/cli-command-contract.yaml#abort-blue.sh exit_codes"
+  - id: S3-G5-011
+    uc: "実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/_model-summary.yaml"
+    line: 59
+    severity: minor
+    viewpoint: 5
+    claim: "slot_executions UPDATE の where に契約に無い `AND mode = 'background'` が含まれる"
+    fix: "where を「run_id = ? AND slot = ? AND status = 'RUNNING'(RAPID_CROSSCHECK_MODE が off 以外のときだけ。aborted.txt の公開後。0 件は WARN のみで終了コード 0)」に直す"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/cli-command-contract.yaml#abort-blue.sh exit_codes"
+  - id: S3-G5-012
+    uc: "実行復旧業務/background 側リランフロー/buc-spec"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/実行復旧業務/background 側リランフロー/buc-spec.md"
+    line: 11
+    severity: major
+    viewpoint: 7
+    claim: "所属 UC 一覧(11 行目)の検証 UC 説明「off 以外は管理 DB も照合」と、データフロー図(29 / 44 行目)の「元 run の管理レコード(slot 実行 …)→ 検証(blue / green は mode 照合)」が、blue / green の事前検証で slot_executions を読まない決定(U9 / 契約 notes)と一致しない旧契約の残存"
+    fix: "11 行目の「off 以外は管理 DB も照合。」を削除し「元状態は RAPID_CROSSCHECK_MODE によらずファイル正本のみ」にする。29 行目の SRC_STATE を「元 run の管理レコード(off 以外)\\n速報比較依頼 / 並行稼働実行(rapid-crosscheck の特定元)」、44 行目のエッジ注記を「rapid-crosscheck の元実行特定のみ(blue / green は読まない)」に直す"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/cli-command-contract.yaml#background-rerun.sh notes"
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_review/change-brief.md#U9"
+  - id: S3-G5-013
+    uc: "実行復旧業務/background 側リランフロー/元の execution-spec.json から復元して新しい run_id で起動する"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/実行復旧業務/background 側リランフロー/元の execution-spec.json から復元して新しい run_id で起動する/spec.md"
+    line: 56
+    severity: minor
+    viewpoint: 7
+    claim: "データフロー表(56 行目)と処理フロー(110 行目)の stdout 列挙に契約 background-rerun.sh stdout の 5 行目 `execution_spec:` が無く、並び順も契約の固定順(role, mode=background, pid, artifact_dir, execution_spec, run_id, parent_run_id)と異なる(tier-ops.md は契約どおり)"
+    fix: "56 行目を「`role=` / `mode=background` / `pid=` / `artifact_dir:` / `execution_spec:` / `run_id={新}` / `parent_run_id={元}`(契約の固定順)」、110 行目の stdout に `execution_spec: ...` を artifact_dir の後に追加する"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/cli-command-contract.yaml#background-rerun.sh stdout"
+  - id: S3-G5-014
+    uc: "実行復旧業務/background 側リランフロー/速報比較依頼だけを新規作成する"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/実行復旧業務/background 側リランフロー/速報比較依頼だけを新規作成する/spec.md"
+    line: 46
+    severity: minor
+    viewpoint: 7
+    claim: "データフロー表(46 行目)と処理フロー(89 行目)の stdout 列挙に契約 background-rerun.sh stdout(rapid-crosscheck)の 2 行目 `job_id` が無い(tier-ops.md 出力契約は契約どおり 7 行)"
+    fix: "46 行目・89 行目の stdout 列挙を「role=rapid-crosscheck / job_id / request_status=REQUESTED / blue_artifact_uri: / green_artifact_uri: / run_id= / parent_run_id=」の固定順に揃える"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/cli-command-contract.yaml#background-rerun.sh stdout"
+resolved:
+  - {id: S3-G5-001, resolution: fixed}
+  - {id: S3-G5-002, resolution: fixed}
+  - {id: S3-G5-003, resolution: fixed}
+  - {id: S3-G5-004, resolution: fixed}
+  - {id: S3-G5-005, resolution: fixed}
+  - {id: S3-G5-006, resolution: fixed}
+  - {id: S3-G5-007, resolution: fixed}
+  - {id: S3-G5-008, resolution: fixed}
+  - {id: S3-G5-009, resolution: fixed}
+  - {id: S3-G5-010, resolution: fixed}
+  - {id: S3-G5-011, resolution: fixed}
+  - {id: S3-G5-012, resolution: fixed}
+  - {id: S3-G5-013, resolution: fixed}
+  - {id: S3-G5-014, resolution: fixed}

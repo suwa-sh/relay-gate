@@ -1,0 +1,121 @@
+round: 1
+group: cc
+scope: "api + datastore + ux-ui(1 subagent で 3 担当分。traceability-matrix.md は対象外)"
+findings:
+  - id: S4-cc-001
+    artifact: "rdb-schema.yaml"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/datastore/rdb-schema.yaml"
+    line: 29
+    severity: major
+    viewpoint: 7
+    claim: "_review_notes の『終端 UPDATE の更新件数 0 は runner が実行ログに ERROR を残し』が U5(契約 slot runner IF の idempotency / execution_log 315・321 行 `WARN management db not updated run_id=... role=...`。ERROR ではない)と食い違う"
+    fix: "29 行の『runner が実行ログに ERROR を残し』を『runner が実行ログに `WARN management db not updated run_id=... role=...`(abort-blue / abort-green と同文。ERROR ではない)を残し』に直す"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_review/change-brief.md#U5"
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/cli-command-contract.yaml#commands[$BLUE_RUNNER / $GREEN_RUNNER].idempotency / execution_log(315・321 行)"
+  - id: S4-cc-002
+    artifact: "rdb-schema.yaml"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/datastore/rdb-schema.yaml"
+    line: 165
+    severity: major
+    viewpoint: 3
+    claim: "slot_executions / parallel_runs の used_by が今回の UC _model-summary.yaml と一致しない: slot_executions に『リラン対象を検証する SELECT』が残っている(U9 で slot_executions を事前検証に使わない。当該 UC の _model-summary.yaml に slot_executions は無い)、D9 の遷移担当 UC『比較ツールでジョブ単位比較を実行して結果を登録する』(parallel_runs SELECT / UPDATE、slot_executions SELECT 件数判定)と『実装スクリプトを実行して Runner Result を出力する』(parallel_runs UPDATE RUNNING → COMPLETED)が parallel_runs / slot_executions の used_by に載っていない"
+    fix: "slot_executions.used_by(165-181 行)から『リラン対象を検証する』を削除し『比較ツールでジョブ単位比較を実行して結果を登録する: [SELECT]』を追加する。parallel_runs.used_by(97-115 行)に『実装スクリプトを実行して Runner Result を出力する: [UPDATE]』と『比較ツールでジョブ単位比較を実行して結果を登録する: [SELECT, UPDATE]』を追加する"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/実行復旧業務/background 側リランフロー/リラン対象を検証する/_model-summary.yaml"
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/クロスチェック業務/速報クロスチェックフロー/比較ツールでジョブ単位比較を実行して結果を登録する/_model-summary.yaml(108-131 行)"
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/実装切替業務/実装切替ジョブ実行フロー/実装スクリプトを実行して Runner Result を出力する/_model-summary.yaml(67-78 行)"
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_review/change-brief.md#D9 / U9"
+  - id: S4-cc-003
+    artifact: "rdb-schema.yaml"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/datastore/rdb-schema.yaml"
+    line: 35
+    severity: minor
+    viewpoint: 7
+    claim: "_review_notes 35 行『off 以外のときの slot_executions 参照は主キー (run_id, slot) で 1 行取得する(UC『background 実行の経過時間と終了状態を判定する』)』と slot_executions.used_by 180-181 行の同 UC SELECT が、契約 hang-detector.sh idempotency(585 行『slot_executions.status は読まない』)と当該 UC の _model-summary.yaml(『slot_executions は読まない』コメント)に反する"
+    fix: "35 行の hang-detector に関する slot_executions 参照の記述を『hang-detector は slot_executions を読まない(成果物ファイルのみ)』に改め、slot_executions.used_by から『background 実行の経過時間と終了状態を判定する』を削除する"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/cli-command-contract.yaml#commands[hang-detector.sh].idempotency(585 行)"
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/_model-summary.yaml(tables 先頭コメント)"
+  - id: S4-cc-004
+    artifact: "asyncapi.yaml"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/asyncapi.yaml"
+    line: 114
+    severity: minor
+    viewpoint: 7
+    claim: "operation の description『復元起動の background slot は通知前に当該 parallel_run を COMPLETED にする』が、契約(315 行: 終端 UPDATE に続けて parallel_runs を COMPLETED、327 行: 完了通知は exitcode.txt 公開後)に無い『通知前』という順序を新たに規定している(D9 は exitcode.txt 公開時としか定めていない)"
+    fix: "114 行を『復元起動(execution-spec.json の parent_run_id 非 null)の background slot は exitcode.txt 公開時(終端 UPDATE に続けて)当該 parallel_run を COMPLETED にする』に改め、完了通知との前後関係は書かない(138 行と同じ表現に揃える)"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/cli-command-contract.yaml#commands[$BLUE_RUNNER / $GREEN_RUNNER].idempotency / notes(315・327 行)"
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_review/change-brief.md#D9"
+  - id: S4-cc-005
+    artifact: "ui-design.md"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/ux-ui/ui-design.md"
+    line: 159
+    severity: minor
+    viewpoint: 6
+    claim: "feature flag 検証の定型文が参照先を `config_files.feature-flag.env.validation_rules` と書いているが契約では `error_messages` が正本(1090-1096 行)で、U7 で契約に追加した enum 外エラーの `hint: use foreground, background or off`(BLUE_MODE / GREEN_MODE / RAPID_CROSSCHECK_MODE)が 161 行に無い"
+    fix: "159 行の参照先を `config_files.feature-flag.env.error_messages` に直し、161 行に『続けて `hint: use foreground, background or off` を 1 行出す』を追記する"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/cli-command-contract.yaml#config_files.feature-flag.env.error_messages(1090-1096 行)"
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_review/change-brief.md#U7"
+  - id: S4-cc-006
+    artifact: "ui-design.md"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/ux-ui/ui-design.md"
+    line: 187
+    severity: minor
+    viewpoint: 6
+    claim: "実行ログの gateway 呼び出し例 `ssh started host=... user=...` / `ssh finished exit_code=0 duration_ms=1234` が U6 で契約に確定した `INFO ssh exec started run_id=... role=... host=... user=... work_dir=... script=...` / `INFO ssh exec finished run_id=... role=... exit_code=N` と異なり、ローカル実行の対の `INFO local exec started / finished` にも触れていない"
+    fix: "187 行の例を契約 execution_log(318-319 行)の文言に置き換え、『ローカル実行(host / user が null)は `INFO local exec started run_id=... role=... work_dir=... script=...` / `INFO local exec finished run_id=... role=... exit_code=N`』を併記する"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/cli-command-contract.yaml#commands[$BLUE_RUNNER / $GREEN_RUNNER].execution_log(318-319 行)"
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_review/change-brief.md#U6"
+  - id: S4-cc-007
+    artifact: "cli-command-contract.yaml"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/cli-command-contract.yaml"
+    line: 1186
+    severity: minor
+    viewpoint: 7
+    claim: "crosscheck-job-map.csv の compare_targets(1186 行)が『カンマ区切り可』のままで、D2 の CSV 化(囲まないセルにカンマを含められない)後はセルを二重引用符で囲む必要があるのに columns の説明に書かれていない(compare_condition 等の自由文字列列も同様)"
+    fix: "1186 行を『比較対象識別子(複数はカンマ区切り。カンマを含むセルは csv_rules に従い二重引用符で囲む)』に改め、target-catalog.csv の compare_condition / business_date_handling(1222・1226 行)にも『カンマ・二重引用符を含む場合は二重引用符で囲む』を 1 句添える"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/cli-command-contract.yaml#config_files[<slot>-job-map.csv].csv_rules(1110-1114 行)"
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_review/change-brief.md#D2"
+  - id: S4-cc-008
+    artifact: "cli-command-contract.yaml"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/cli-command-contract.yaml"
+    line: 240
+    severity: minor
+    viewpoint: 7
+    claim: "facade.sh の exit 2 条件(240 行)は RAPID_CROSSCHECK_RUNNER の欠落・実行不可を挙げるが RAPID_CROSSCHECK_WORKER を挙げておらず、validation_rules(1089 行)『RAPID_CROSSCHECK_MODE が off 以外なら RAPID_CROSSCHECK_RUNNER / RAPID_CROSSCHECK_WORKER も同じ』と 992 行『facade.sh の起動時検証も同文』から、facade が WORKER を検証するのか(D1: 9 キーは全て必須キー)が読み取れない"
+    fix: "240 行に『RAPID_CROSSCHECK_MODE が off 以外で RAPID_CROSSCHECK_WORKER 欠落・空・絶対パスでない・実行不可』を加える(facade は起動しないが D1 の必須キーとして検証する)か、逆に facade は WORKER を検証しない旨を validation_rules 側に明記して二者を一致させる"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/cli-command-contract.yaml#config_files.feature-flag.env.validation_rules(1085-1089 行)"
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_review/change-brief.md#D1"
+  - id: S4-cc-009
+    artifact: "cli-command-contract.yaml"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/cli-command-contract.yaml"
+    line: 1042
+    severity: minor
+    viewpoint: 7
+    claim: "config_files の owner に書く設定所有区分の値が RDRA バリエーション「設定所有区分」(feature flag / slot ジョブマップ / クロスチェックジョブマップ / ハング検知定期ジョブ設定 / 適用文書)と一致しない(1042 行『実装スロットと runner』、1107 行『slot ごとのジョブマップ』、1157 行『クロスチェックジョブマップ・比較定義』、1202 行『対象カタログ』、1166 行『対象カタログ参照』)。D10 で hang-detector.env だけ RDRA の値『ハング検知定期ジョブ設定』に揃えたため他ファイルとの表記揺れが目立つ"
+    fix: "1042 行を『設定所有区分: feature flag』、1107 行を『設定所有区分: slot ジョブマップ』、1157・1166・1202 行を『設定所有区分: クロスチェックジョブマップ』(対象カタログはクロスチェックジョブマップが所有)に揃える"
+    source_refs:
+      - "docs/rdra/latest/バリエーション.tsv#設定所有区分(23 行)"
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_review/change-brief.md#D10"
+checked_ok:
+  - "cli-command-contract.yaml: D1(9 キー・CONFIG_VERSION なし・3 値・未知キー warn・operation_mode 英字コード)/ D2・U2(CSV クォート規則・ヘッダー名対応・host / user 任意・impl_version 列なし・header mismatch missing= 文言)/ D3(run_id ローカル TZ・Z なし・final_crosscheck_id・RELAY_GATE_NOW との関係 1 行)/ D4・U3・U5(aborted.txt・状態導出規則・abort の順序・再適用・終了コード・『管理 DB が無い旨』の除去)/ D5(条件名『完了通知失敗の扱い』)/ D6(internal_datastores・外部システム 6 種)/ D8・D9(state_codes 6 値と遷移)/ D10(hang-detector.env owner・ALERT_SUBJECT_PREFIX)/ D11(『比較結果の登録条件』)/ U1・U4・U6・U7・U8・U9・U10・U11 を確認。残す仮採用(lease / poll・worker_id_default・rdra-feedback #9)以外の解消済み注記の残存なし"
+  - "asyncapi.yaml: channels 4 種が非同期連携(完了通知・速報 / 確報キュー・通知メール)を網羅、payload の enum(status 6 値・monitor_status 6 値・kind / level)と run_id / final_crosscheck_id の pattern(Z なし)が契約・rdb-schema と一致、ALERT_SUBJECT_PREFIX・RAPID_CROSSCHECK_RUNNER・内部データストア表記を確認"
+  - "openapi.yaml: バリデータ互換スタブ(paths: {})。x-cli-contract / x-async-contract の参照先が正しい"
+  - "rdb-schema.yaml: 7 テーブル全列に description、インデックスに name・reason、ユニーク制約の検討記録あり。FK(parent_run_id 自己参照 / slot_executions・rapid_runs・rapid_crosscheck_requests → parallel_runs / comparison_results → rapid_crosscheck_requests / monitor_records は FK なし)が情報.tsv の関連情報と整合。RDB にジョブマップ由来の user / exec_user 列は無い(U11 どおり)。列挙値(mode 3 値・status・monitor_status / hang_judgement 6 値)と run_id 形式・parallel_runs 遷移(D9)・aborted.txt 二重マッピング(D4)を確認"
+  - "ui-design.md / ux-design.md / data-visualization.md: cli の stdout / stderr / 終了コードが具体値で書かれ、design-event / Storybook / コンポーネント名への参照なし。validate-config.sh の stdout 15 行キー順(U4)・operation_mode 対応表(U10)・abort の off 時出力(D4 / U3)・件名プレフィックス(D10)・run_id 形式(D3)・.csv・外部システム 6 種(D6)・monitor_status 6 値(D8)を確認"
+resolved:
+  - {id: S4-cc-001, resolution: fixed}
+  - {id: S4-cc-002, resolution: fixed}
+  - {id: S4-cc-003, resolution: fixed}
+  - {id: S4-cc-004, resolution: fixed}
+  - {id: S4-cc-005, resolution: fixed}
+  - {id: S4-cc-006, resolution: fixed}
+  - {id: S4-cc-007, resolution: fixed}
+  - {id: S4-cc-008, resolution: fixed}
+  - {id: S4-cc-009, resolution: fixed}

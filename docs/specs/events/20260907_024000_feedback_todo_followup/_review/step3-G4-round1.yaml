@@ -1,0 +1,66 @@
+round: 1
+group: G4
+findings:
+  - id: S3-G4-1
+    uc: "実装切替業務/実装切替ジョブ実行フロー/execution-spec.json を確定保存する"
+    file: "docs/specs/events/20260907_024000_feedback_todo_followup/実装切替業務/実装切替ジョブ実行フロー/execution-spec.json を確定保存する/_api-summary.yaml"
+    line: 90
+    severity: major
+    viewpoint: 4
+    claim: "schemas.SlotSpec.finalized_at の型が「ローカル ISO 8601 秒精度。タイムゾーン指示子なし」になっており、同 UC の tier-facade.md(94 行目: UTC ISO 8601 秒精度 Z 付き。例 2026-08-30T11:30:01Z)・spec.md のスキーマ例(118〜119 行目)・change-brief D3-8(execution-spec.json の finalized_at / restored_at の中身は UTC Z のまま)・契約 execution_spec_example と矛盾している"
+    fix: "type を \"string(UTC ISO 8601 秒精度、Z 付き。例 2026-08-30T11:30:01Z。execution-spec.json は Runner Result Contract のファイル成果物なので中身は UTC のまま。表示・実行ログへ出すときはローカルへ変換する)\" に差し替える"
+    source_refs:
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/_review/change-brief.md#D3-8"
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/実装切替業務/実装切替ジョブ実行フロー/execution-spec.json を確定保存する/tier-facade.md#L94"
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/api/cli-command-contract.yaml#execution_spec_example"
+  - id: S3-G4-2
+    uc: "実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する"
+    file: "docs/specs/events/20260907_024000_feedback_todo_followup/実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/_api-summary.yaml"
+    line: 40
+    severity: minor
+    viewpoint: 4
+    claim: "facade.sh の exit_codes 6 の meaning に「STARTED→RUNNING UPDATE」「pid UPDATE」の失敗が含まれているが、tier-facade.md(69 行目)と契約 facade.sh exit 6 condition では「全 slot 起動後の parallel_runs STARTED→RUNNING UPDATE 失敗・slot_executions.pid UPDATE 失敗は終了コードに反映しない(実行ログ ERROR のみ)」と定めており矛盾する"
+    fix: "meaning を「runner 起動前の管理 DB 書き込み失敗(parallel_runs INSERT、rapid_runs INSERT、slot_executions INSERT)、runner 起動失敗、成果物ディレクトリ作成失敗、run_id 発行失敗。全 slot 起動後の STARTED→RUNNING UPDATE 失敗・pid UPDATE 失敗・中継後の COMPLETED UPDATE 失敗は終了コードに反映しない(実行ログ ERROR のみ)」に修正する"
+    source_refs:
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/tier-facade.md#L69"
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/api/cli-command-contract.yaml#facade.sh exit_codes 6"
+  - id: S3-G4-3
+    uc: "実装切替業務/実装切替ジョブ実行フロー/実装スクリプトを実行して Runner Result を出力する"
+    file: "docs/specs/events/20260907_024000_feedback_todo_followup/実装切替業務/実装切替ジョブ実行フロー/実装スクリプトを実行して Runner Result を出力する/spec.md"
+    line: 157
+    severity: minor
+    viewpoint: 3
+    claim: "計算ルール「started_at」が `date -u +%Y-%m-%dT%H:%M:%SZ` だけを定めており、契約 environment_variables.RELAY_GATE_NOW(purpose: slot runner の started-at.txt を含む時刻取得すべてに適用 / run_id_relation: started-at.txt の中身だけは UTC Z 付きの値そのまま)で定めた RELAY_GATE_NOW 設定時の扱いが欠けている(同 UC の BDD 例示 2026-08-30T11:30:05Z は RELAY_GATE_NOW 前提)"
+    fix: "計算式を「`date -u +%Y-%m-%dT%H:%M:%SZ`。`RELAY_GATE_NOW` 設定時はその UTC 値(Z 付き)をそのまま書く(ローカルへ変換しない。Runner Result Contract。契約 environment_variables.RELAY_GATE_NOW)」に補う"
+    source_refs:
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/api/cli-command-contract.yaml#environment_variables.RELAY_GATE_NOW"
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/_review/change-brief.md#D3-8"
+  - id: S3-G4-4
+    uc: "クロスチェック業務/確報クロスチェックフロー/確報比較依頼を claim する"
+    file: "docs/specs/events/20260907_024000_feedback_todo_followup/クロスチェック業務/確報クロスチェックフロー/確報比較依頼を claim する/_model-summary.yaml"
+    line: 55
+    severity: minor
+    viewpoint: 5
+    claim: "lease_until の value(55 行目)と回収 UPDATE の where(47 行目)が「RELAY_GATE_NOW 設定時はその値」とだけ書いており、D3(RELAY_GATE_NOW は UTC Z 付きで受け取り内部でローカルへ変換してから使う)と spec.md 計算ルール「現在時刻(now)」(113 行目)・tier-final-crosscheck.md(33 行目)の記述と食い違う。同 BUC の他 2 UC の _model-summary.yaml は「いずれもホストのローカルタイムゾーンの値(RELAY_GATE_NOW の UTC 値は内部でローカルへ変換)」と書いており、そのままだと lease_until を UTC 値で格納すると読める"
+    fix: "47 行目と 55 行目の「RELAY_GATE_NOW 設定時はその値」を「RELAY_GATE_NOW 設定時はその UTC 値を内部でホストのローカルタイムゾーンへ変換した値、未設定はシステム時刻(ローカル時刻)。worker がバインド値で渡す。契約 environment_variables.RELAY_GATE_NOW」に揃える(lease_until = 変換後の now + FINAL_LEASE_MINUTES)"
+    source_refs:
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/_review/change-brief.md#D3"
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/クロスチェック業務/確報クロスチェックフロー/確報比較依頼を claim する/spec.md#L113"
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/クロスチェック業務/確報クロスチェックフロー/確報比較依頼を登録して終端状態まで待機する/_model-summary.yaml#L65"
+  - id: S3-G4-5
+    uc: "実装切替業務/実装切替ジョブ実行フロー/実装スクリプトを実行して Runner Result を出力する"
+    file: "docs/specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/api/cli-command-contract.yaml"
+    line: 1380
+    severity: minor
+    viewpoint: 3
+    claim: "artifact_layout.files[started-at.txt].content(1380 行目)と tree(1367 行目)が「UTC ISO 8601 秒精度 1 行」で Z 付きを明記していないのに対し、同 artifact_layout の aborted.txt(1371 行目)と G4 の UC(実装スクリプトを実行して Runner Result を出力する tier-facade.md 39 行目 / ジョブマップで JOB_ID から実行先を解決する tier-facade.md 93 行目 / 比較ツールで日次全量比較を実行して結果を保存する tier-final-crosscheck.md 66・101 行目)および change-brief D3-8 は「UTC ISO 8601 秒精度 Z 付き」と定めており、契約側だけ表記が揃っていない"
+    fix: "1367 行目と 1380 行目を「UTC ISO 8601 秒精度 Z 付き 1 行(例 2026-08-30T11:30:05Z。RELAY_GATE_NOW 設定時はその値。表示・実行ログ・DB 転記時はローカルへ変換する)」に揃える(UC 側は変更不要)"
+    source_refs:
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/_review/change-brief.md#D3-8"
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/実装切替業務/実装切替ジョブ実行フロー/実装スクリプトを実行して Runner Result を出力する/tier-facade.md#L39"
+resolved:
+  - {id: S3-G4-1, resolution: fixed}
+  - {id: S3-G4-2, resolution: fixed}
+  - {id: S3-G4-3, resolution: fixed}
+  - {id: S3-G4-4, resolution: fixed}
+  - {id: S3-G4-5, resolution: fixed}

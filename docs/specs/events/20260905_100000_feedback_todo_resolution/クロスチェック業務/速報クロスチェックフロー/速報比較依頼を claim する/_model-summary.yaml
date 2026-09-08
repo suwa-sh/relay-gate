@@ -1,0 +1,60 @@
+uc: "速報比較依頼を claim する"
+business: "クロスチェック業務"
+buc: "速報クロスチェックフロー"
+bounded_context_id: "BC-002"
+aggregate_id: "AG-002"
+
+models:
+  - name: "WorkerArgs"
+    tier: "tier-rapid-crosscheck"
+    layer: "presentation"
+    type: "request"
+    rdra_info: "速報比較依頼(rapid_crosscheck_request)"
+  - name: "ClaimNextRequest"
+    tier: "tier-rapid-crosscheck"
+    layer: "usecase"
+    type: "command"
+    rdra_info: "速報比較依頼(rapid_crosscheck_request)"
+  - name: "LeasePolicy"
+    tier: "tier-rapid-crosscheck"
+    layer: "domain"
+    type: "value-object"
+    rdra_info: "速報比較依頼(rapid_crosscheck_request)"
+  - name: "RapidCrosscheckRequestRecord"
+    tier: "tier-rapid-crosscheck"
+    layer: "repository"
+    type: "record"
+    rdra_info: "速報比較依頼(rapid_crosscheck_request)"
+
+tables:
+  - name: "rapid_crosscheck_requests"
+    rdra_info: "速報比較依頼(rapid_crosscheck_request)"
+    operations:
+      - type: "UPDATE"
+        columns:
+          - name: "status"
+            value: "REQUESTED(lease 失効の解放)"
+          - name: "worker_id"
+            value: "NULL"
+          - name: "lease_until"
+            value: "NULL"
+        where: "status = 'CLAIMED' AND lease_until < ? AND started_at IS NULL(? は worker の now。RELAY_GATE_NOW 設定時はその値)"
+      - type: "UPDATE"
+        columns:
+          - name: "status"
+            value: "CLAIMED"
+          - name: "worker_id"
+            value: "--worker-id または {hostname}-{pid}"
+          - name: "lease_until"
+            value: "now + RAPID_LEASE_SEC 秒(rapid-crosscheck.env。既定 600 = 10 分。now は worker の現在時刻。RELAY_GATE_NOW 設定時はその値)"
+        where: "run_id = (SELECT run_id FROM rapid_crosscheck_requests WHERE status = 'REQUESTED' ORDER BY requested_at LIMIT 1) AND status = 'REQUESTED'"
+    indexes_needed:
+      - columns: ["status", "requested_at"]
+        reason: "poll で REQUESTED を requested_at 順に 1 件取得する"
+        access_pattern: "worker の 30 秒間隔 poll"
+      - columns: ["status", "lease_until"]
+        reason: "lease 失効した CLAIMED の解放"
+        access_pattern: "worker の poll ごとの解放 UPDATE"
+
+kvs: []
+object_storage: []

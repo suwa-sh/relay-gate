@@ -1,0 +1,51 @@
+round: 2
+group: api
+scope_note: "round 1 findings(S4-api-1〜6)の resolved を再検証。対象: cli-command-contract.yaml の rapid-crosscheck-runner.sh(request_creation_matrix)/ rapid-crosscheck-worker.sh(stdout / exit 0 / idempotency / notes)/ abort-rapid-crosscheck.sh(stdout / stderr / exit_codes / idempotency / notes)/ abort-final-crosscheck.sh / abort-blue.sh / abort-green.sh(notes)/ background-rerun.sh の stderr hint / shared_rules.state_codes.request_status_transitions、asyncapi.yaml(rapid-crosscheck-request channel の status description / request_status enum)。change-brief D1〜D3 と照合。round 1 の 6 件はすべて契約側で修正済みと確認(S4-api-1: stdout 冒頭の列挙に再 SELECT 値を追記 / S4-api-2: `(state changed concurrently)` を stderr と exit 3 に追加 / S4-api-3: `-` 規約を stdout に追記 / S4-api-4: 行 185 に速報 worker_id 条件と確報の WHERE を明記 / S4-api-5: 行 718 の hint に abort 経路を追加 / S4-api-6: rows のキーを abort_state に変更)。asyncapi.yaml は D2-3 / D2-4 / D3 と整合し新規指摘なし。今回の指摘は round 1 修正の影響先(UC 側の同文記述)への追従漏れのみで、いずれも契約(正本)は正しい"
+findings:
+  - id: S4-api-7
+    artifact: "cli-command-contract.yaml(rapid-crosscheck-worker.sh stdout)の影響先"
+    file: "docs/specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/比較ツールでジョブ単位比較を実行して結果を登録する/tier-rapid-crosscheck.md"
+    line: 23
+    severity: minor
+    viewpoint: 1
+    claim: "S4-api-1 の修正で契約 rapid-crosscheck-worker.sh の stdout 冒頭は「request_status=(SUCCEEDED|FAILED|ABORTED。RUNNING 遷移 0 件で lease 失効により回収済みのときは再 SELECT した REQUESTED|CLAIMED|RUNNING)」になったが、UC-11 の tier-rapid-crosscheck.md 行 23 と _api-summary.yaml 行 14 の stdout 冒頭は依然「request_status=(SUCCEEDED|FAILED|ABORTED)」のままで、同ファイル内の後段(「再 SELECT した現在の status」)および BDD(行 161 で `request_status=CLAIMED`)と自己矛盾している(round 1 と同じ矛盾が UC 側に残存)"
+    fix: "tier-rapid-crosscheck.md 行 23 と _api-summary.yaml 行 14 の冒頭列挙を契約 rapid-crosscheck-worker.sh stdout と同文(SUCCEEDED / FAILED / ABORTED。RUNNING 遷移 0 件で回収済みのときは再 SELECT した REQUESTED / CLAIMED / RUNNING)に揃える"
+    source_refs:
+      - "docs/specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/api/cli-command-contract.yaml#rapid-crosscheck-worker.sh stdout(行 444)"
+      - "docs/specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/比較ツールでジョブ単位比較を実行して結果を登録する/_api-summary.yaml#stdout(行 14)"
+      - "docs/specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/比較ツールでジョブ単位比較を実行して結果を登録する/tier-rapid-crosscheck.md#BDD(行 161)"
+      - "docs/specs/events/20260907_131000_feedback_abort_consistency/_review/change-brief.md#D2-3"
+  - id: S4-api-8
+    artifact: "cli-command-contract.yaml(abort-rapid-crosscheck.sh stderr)の影響先"
+    file: "docs/specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/tier-ops.md"
+    line: 245
+    severity: minor
+    viewpoint: 1
+    claim: "S4-api-2 の修正で契約 abort-rapid-crosscheck.sh の競合時 stderr は `error: request is not abortable (state changed concurrently) run_id=... role=rapid-crosscheck status=<再 SELECT した status>` と定義されたが、UC-23 tier-ops.md 行 245 の BDD は `... role=rapid-crosscheck` で終わり `status=SUCCEEDED` が無い(_api-summary.yaml 行 94 は `...` 省略のため矛盾しないが具体値も無い)"
+    fix: "tier-ops.md 行 245 の期待 stderr を `error: request is not abortable (state changed concurrently) run_id=20260830T113000-JOB001-3f9a1c2e role=rapid-crosscheck status=SUCCEEDED` に改め、_api-summary.yaml 行 94 に `status=<再 SELECT した status>` を補う"
+    source_refs:
+      - "docs/specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/api/cli-command-contract.yaml#abort-rapid-crosscheck.sh stderr / exit 3(行 882・892)"
+      - "docs/specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/_api-summary.yaml#abort-rapid-crosscheck.sh stderr(行 94)"
+      - "docs/specs/events/20260907_131000_feedback_abort_consistency/_review/change-brief.md#D2-1"
+  - id: S4-api-9
+    artifact: "cli-command-contract.yaml(background-rerun.sh stderr hint)の影響先"
+    file: "docs/specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/background 側リランフロー/リラン対象を検証する/tier-ops.md"
+    line: 35
+    severity: minor
+    viewpoint: 1
+    claim: "S4-api-5 の修正で契約 background-rerun.sh の REQUESTED|CLAIMED 時 hint は `hint: request is still queued; wait for the worker or abort it with abort-rapid-crosscheck.sh --run-id {run_id} before rerun` になったが、UC-27 tier-ops.md 行 35(エラー表)と行 139(BDD)は旧文 `hint: request is still queued; wait for the worker` のまま"
+    fix: "tier-ops.md 行 35 / 行 139 の hint を契約 background-rerun.sh 行 718 と同文に揃える"
+    source_refs:
+      - "docs/specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/api/cli-command-contract.yaml#background-rerun.sh stderr(行 718)"
+      - "docs/specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/background 側リランフロー/リラン対象を検証する/tier-ops.md#行 35・139"
+      - "docs/rdra/latest/条件.tsv#依頼中止可否判定"
+resolved:
+  - {id: S4-api-1, resolution: fixed, verified: true}
+  - {id: S4-api-2, resolution: fixed, verified: true}
+  - {id: S4-api-3, resolution: fixed, verified: true}
+  - {id: S4-api-4, resolution: fixed, verified: true}
+  - {id: S4-api-5, resolution: fixed, verified: true}
+  - {id: S4-api-6, resolution: fixed, verified: true}
+  - {id: S4-api-7, resolution: fixed}
+  - {id: S4-api-8, resolution: fixed}
+  - {id: S4-api-9, resolution: fixed}

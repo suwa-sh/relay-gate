@@ -1,0 +1,63 @@
+round: 1
+group: G3
+findings:
+  - id: S3-G3-1
+    uc: "実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する"
+    file: "docs/specs/events/20260907_024000_feedback_todo_followup/実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/_api-summary.yaml"
+    line: 23
+    severity: minor
+    viewpoint: 4
+    claim: "hang-detector.sh の stderr 一覧に、tier-ops.md 出力契約・ティア BDD(`error: unknown option option=--all`)と契約 cli-command-contract.yaml が持つ `error: unknown option option=...(2)` と、tier-ops.md が持つ `warn: execution-spec invalid run_id=... key=...` が無い"
+    fix: "stderr の文字列に `error: unknown option option=...(2)` と `warn: execution-spec invalid run_id=... key=...(当該 role は判定せず継続)` を追加し、tier-ops.md「出力契約」の stderr 列挙と同じ集合にする"
+    source_refs:
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/tier-ops.md#出力契約"
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/api/cli-command-contract.yaml#commands[hang-detector.sh].stderr"
+  - id: S3-G3-2
+    uc: "実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する"
+    file: "docs/specs/events/20260907_024000_feedback_todo_followup/実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/tier-ops.md"
+    line: 42
+    severity: minor
+    viewpoint: 3
+    claim: "出力契約の stderr 列挙に、ティア BDD(183 行目 `error: unknown option option=--all`)と契約 hang-detector.sh が定める `error: unknown option option=...(2)` が無く、UC ロジックのバリデーションも `error: unexpected argument value=...` しか挙げていない"
+    fix: "stderr 列挙の先頭に `error: unknown option option=...(2)` を追加し、UC ロジック「バリデーション」に「未知のオプションは `error: unknown option option=...`、オプション以外の引数は `error: unexpected argument value=...`(いずれも終了コード 2)」と両方を書く"
+    source_refs:
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/api/cli-command-contract.yaml#commands[hang-detector.sh].stderr"
+  - id: S3-G3-3
+    uc: "実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する"
+    file: "docs/specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/api/cli-command-contract.yaml"
+    line: 599
+    severity: minor
+    viewpoint: 3
+    claim: "契約 hang-detector.sh の stderr に、UC spec.md「上限の解決(background slot)」と tier-ops.md 出力契約が定める `warn: execution-spec invalid run_id=... key=slots.<role>.hang_detect_limit_minutes`(ファイルはあるがキーが無い run を判定対象外にする)が無い"
+    fix: "stderr の `warn: execution-spec missing ...` の直後に `warn: execution-spec invalid run_id=... key=...(execution-spec.json にキーが無い role は判定対象外。継続、終了コード 0)` を追加する"
+    source_refs:
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/spec.md#計算ルール一覧"
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/tier-ops.md#出力契約"
+  - id: S3-G3-4
+    uc: "実行監視業務/background 実行監視フロー/hang_detect_limit_minutes をジョブごとに調整する"
+    file: "docs/specs/events/20260907_024000_feedback_todo_followup/実行監視業務/background 実行監視フロー/hang_detect_limit_minutes をジョブごとに調整する/_api-summary.yaml"
+    line: 9
+    severity: minor
+    viewpoint: 4
+    claim: "hang-detect-trend.sh の synopsis に `[--help]` が無く options に `--verbose` / `--help` が無い(tier-ops.md 書式と契約 cli-command-contract.yaml は `[--since LOCAL_DATETIME] [--limit N] [--all] [--verbose] [--help]` で両方を持つ)"
+    fix: "synopsis を `hang-detect-trend.sh [--job-id JOB_ID] [--role blue|green|rapid-crosscheck] [--since LOCAL_DATETIME] [--limit N] [--all] [--verbose] [--help]` にし、options に `--verbose`(boolean, default false, info を stderr に出す)と `--help`(boolean, usage を stdout に出して終了コード 0)を追加する"
+    source_refs:
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/実行監視業務/background 実行監視フロー/hang_detect_limit_minutes をジョブごとに調整する/tier-ops.md#コマンド契約"
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/api/cli-command-contract.yaml#commands[hang-detect-trend.sh]"
+  - id: S3-G3-5
+    uc: "実行監視業務/background 実行監視フロー/hang_detect_limit_minutes をジョブごとに調整する"
+    file: "docs/specs/events/20260907_024000_feedback_todo_followup/実行監視業務/background 実行監視フロー/hang_detect_limit_minutes をジョブごとに調整する/tier-ops.md"
+    line: 86
+    severity: minor
+    viewpoint: 3
+    claim: "monitor_records.started_at の説明が「background slot は started-at.txt」とだけ書かれ、D3(started-at.txt の中身は UTC Z 付きのまま、DB 転記時はローカルへ変換)の変換が読み取れない(UC「監視記録を保存する」tier-ops.md は「started-at.txt の UTC 値をローカル時刻へ変換した値」と明記)"
+    fix: "説明を「監視対象の開始時刻(ローカル時刻。指示子なし)。background slot は started-at.txt の UTC 値をローカル時刻へ変換した値、速報比較依頼(role=rapid-crosscheck)は依頼の started_at(未開始は requested_at)」に揃える"
+    source_refs:
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/実行監視業務/background 実行監視フロー/監視記録を保存する/tier-ops.md#データモデル変更"
+      - "docs/specs/events/20260907_024000_feedback_todo_followup/_review/change-brief.md#D3-8"
+resolved:
+  - {id: S3-G3-1, resolution: fixed}
+  - {id: S3-G3-2, resolution: fixed}
+  - {id: S3-G3-3, resolution: fixed}
+  - {id: S3-G3-4, resolution: fixed}
+  - {id: S3-G3-5, resolution: fixed}

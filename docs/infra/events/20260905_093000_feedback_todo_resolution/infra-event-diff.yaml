@@ -1,0 +1,54 @@
+meta:
+  event_id: "20260905_093000_feedback_todo_resolution"
+  trigger_event: "arch:20260905_091000_feedback_todo_resolution, nfr:20260905_085000_feedback_todo_resolution"
+  created_at: "2026-09-05T09:30:00Z"
+  mode: "differential"
+  mcl_rerun: "skipped_targeted_update"
+  mcl_rerun_reason: "translation(workload_type / availability_tier / latency / data_classification / traffic / consistency / cost_posture / target_clouds)は無変更。影響は canonical element の説明・実装仕様の configuration / validation_rules・conformance の notes・IaC スケルトンの配置ファイル名に限られるため、MCL product-design の全量再実行は行わず MCL 出力を対象箇所だけ更新した"
+feedback_request:
+  feedback_request_id: "20260905_todo_resolution"
+  input_sha256: "285429579e9c9d28307d4c779317f01941b915a1203d0e5b5f53a6c014ed7108"
+  request_ids: ["CR-c770d8f0-001","CR-c770d8f0-002","CR-c770d8f0-003","CR-c770d8f0-004","CR-c770d8f0-005","CR-c770d8f0-006","CR-c770d8f0-007","CR-c770d8f0-008","CR-c770d8f0-009","CR-c770d8f0-010","CR-c770d8f0-011","CR-c770d8f0-012"]
+  work_unit_ids: ["CR-c770d8f0-001#1","CR-c770d8f0-002#1","CR-c770d8f0-003#1","CR-c770d8f0-004#1","CR-c770d8f0-005#1","CR-c770d8f0-006#1","CR-c770d8f0-007#1","CR-c770d8f0-008#1","CR-c770d8f0-009#1","CR-c770d8f0-010#1","CR-c770d8f0-011#1","CR-c770d8f0-012#1"]
+changes:
+  event_id: "20260905_093000_feedback_todo_resolution"
+  created_at: "2026-09-05T09:30:00Z"
+  source: "feedback request 20260905_todo_resolution(RDRA / NFR / arch 差分)に基づくインフラ設計の差分更新"
+  arch_event_ref: "20260905_091000_feedback_todo_resolution"
+  nfr_event_ref: "20260905_085000_feedback_todo_resolution"
+  translation:
+    unchanged: true
+  mcl_execution:
+    status: "completed"
+    completed_at: "2026-09-05T09:30:00Z"
+    outputs_updated:
+      - path: "docs/mcl/product/input/product-input.yaml"
+        change: "source_refs を arch / nfr の feedback event に更新。artifact_store(aborted.txt と状態導出)、config_store(9 キー env / CSV / hang-detector.env、設定版なし)、mail_notification(hang-detector.env の送信コマンド)、observability / availability / recovery の notes(NFR 7 項目の利用者確定)を更新。entity_refs に E-026 を追加"
+        work_units: ["CR-c770d8f0-001#1","CR-c770d8f0-002#1","CR-c770d8f0-004#1","CR-c770d8f0-010#1","CR-c770d8f0-012#1"]
+      - path: "docs/mcl/product/output/product-workload-model.yaml"
+        change: "product.storage.artifact_store の説明に aborted.txt と状態導出規則、product.storage.config_store の説明・制約に 9 キー / CSV / hang-detector.env / 版の出所 / バックアップ正本、product.messaging.mail_notification の説明に hang-detector.env を反映"
+        work_units: ["CR-c770d8f0-001#1","CR-c770d8f0-002#1","CR-c770d8f0-004#1","CR-c770d8f0-010#1"]
+      - path: "docs/mcl/product/output/product-mapping-onprem.yaml"
+        change: "artifact_store の configuration_notes に aborted.txt、config_store の configuration_notes に配置ファイル名(feature-flag.env / <role>-job-map.csv / crosscheck-job-map.csv / target-catalog.csv / hang-detector.env)と設定版廃止、mail_notification の configuration_notes に ALERT_MAIL_CMD / ALERT_MAIL_TO / ALERT_SUBJECT_PREFIX の所有を反映"
+        work_units: ["CR-c770d8f0-001#1","CR-c770d8f0-002#1","CR-c770d8f0-004#1","CR-c770d8f0-010#1"]
+      - path: "docs/mcl/product/output/product-impl-onprem.yaml"
+        change: "impl.storage.artifact_store に artifacts / state_derivation、impl.storage.config_store に contents(ファイル名・9 キー・CSV 規則)/ versioning / backup と validation_rules 2 件(9 キー検証、CSV ヘッダー・fixed_params 検証)、impl.messaging.mail_relay に send_command の出所と config_store 依存を追加"
+        work_units: ["CR-c770d8f0-001#1","CR-c770d8f0-002#1","CR-c770d8f0-004#1","CR-c770d8f0-010#1"]
+      - path: "docs/mcl/product/output/product-observability.yaml"
+        change: "alert-health-check の condition に aborted.txt の終端扱い、alert-health-check / alert-error-rate の channel に hang-detector.env の出所を反映"
+        work_units: ["CR-c770d8f0-004#1","CR-c770d8f0-010#1"]
+      - path: "docs/cloud-context/conformance/product/product-conformance-onprem.yaml"
+        change: "REQ-DB-004(A.2.1.1 / A.3.1.1 / A.3.1.2 の利用者確定)、REQ-ART-001(aborted.txt)、REQ-CFG-001 / REQ-CFG-002(配置ファイル名・hang-detector.env)、REQ-LOG-001(C.6.1.1 の利用者確定)、REQ-MAIL-001(hang-detector.env)の notes を追記。status / summary は据え置き"
+        work_units: ["CR-c770d8f0-001#1","CR-c770d8f0-002#1","CR-c770d8f0-004#1","CR-c770d8f0-010#1","CR-c770d8f0-012#1"]
+      - path: "docs/cloud-context/generated-md/product/relay-gate-target-architecture.md"
+        change: "全体構成図の成果物ディレクトリ・設定ファイル配置ノードに aborted.txt / 配置ファイル名を追記し、hang-detector → 成果物 / 設定、ops CLI → 成果物(aborted.txt)の辺を追加"
+        work_units: ["CR-c770d8f0-001#1","CR-c770d8f0-002#1","CR-c770d8f0-004#1","CR-c770d8f0-010#1"]
+      - path: "infra/product/onprem/ansible/roles/relay-gate-config/tasks/main.yml"
+        change: "配置ファイルを feature-flag.env / blue-job-map.csv / green-job-map.csv / crosscheck-job-map.csv / target-catalog.csv に変更(旧: feature-flags.env / *.yaml)。hang-detector.env の配置(0640)と平文認証情報の静的検査タスクを追加"
+        work_units: ["CR-c770d8f0-001#1","CR-c770d8f0-002#1","CR-c770d8f0-010#1"]
+  arch_feedback:
+    status: "no_new_feedback"
+    reason: "本イベントの差分はすべて arch 20260905_091000_feedback_todo_resolution の変更を下流へ追従したもので、infra から arch へ新たに戻す知見は無い。既存の arch_feedback(20260830_202427_arch_infra_feedback_20260830_190412_infra_product_design)は据え置き"
+  writeback_check:
+    result: "not_required"
+    reason: "arch 差分はティア構成・認証認可方式・DR 方針・外部連携・storage_type を変えていない。translation の各フィールドに影響しないため product-input の再生成と Step2 の再実行は不要"
