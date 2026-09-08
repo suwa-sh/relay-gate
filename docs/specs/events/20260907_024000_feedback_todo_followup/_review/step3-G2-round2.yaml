@@ -1,0 +1,8 @@
+round: 2
+group: G2
+findings: []
+verified_resolved:
+  - {id: S3-G2-001, status: resolved, evidence: "_api-summary.yaml L23-27 / L55-59 / L87-91 / L119-123 に --verbose を追加、synopsis L9 / L41 と tier-ops.md L11 の書式に [--verbose] を含む"}
+  - {id: S3-G2-002, status: resolved, evidence: "tier-ops.md L62 と spec.md L51 / L170 が answer=yes|yes(--yes) を明記、tier-ops.md L147 の Then が answer=yes(--yes) を含む"}
+  - {id: S3-G2-003, status: resolved, evidence: "spec.md L262-274 と tier-ops.md L150-160 が Scenario Outline + Examples(CLAIMED / RUNNING の 2 行)に変更済み"}
+  - {id: S3-G2-004, status: resolved, evidence: "tier-ops.md L108 が UTC ISO 8601 Z 付きと例 2026-08-30T12:45:00Z を明記、L114 の restored_at に「UTC Z 付きのまま。ローカル変換しない」、spec.md L142 も同表記"}

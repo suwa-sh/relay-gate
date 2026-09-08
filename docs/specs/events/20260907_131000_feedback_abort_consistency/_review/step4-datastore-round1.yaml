@@ -1,0 +1,56 @@
+event_id: "20260907_131000_feedback_abort_consistency"
+step: "step4-review"
+owner: "datastore"
+round: 1
+design_available: false
+scope: "CR-016 / CR-017 / CR-018 の差分(change-brief D1-1 / D2-4 / D2-5 / D3)に限定。rdb-schema.yaml の冒頭注記(終端 UPDATE 0 件 / 比較開始 UPDATE 0 件 / 未着手依頼の中止 / ロック順)、rapid_crosscheck_requests.status と rapid_runs.completion_status の description、slot_executions / rapid_crosscheck_requests の used_by を、change-brief・RDRA 状態.tsv「クロスチェック依頼」「slot 実行」・情報.tsv・契約 shared_rules.state_codes.request_status_transitions / abort-rapid-crosscheck.sh・UC-09 / UC-11 / UC-23 の _model-summary.yaml と照合した。datastore-schema.md は生成物のため対象外"
+
+verified_ok:
+  - "冒頭注記「比較開始 UPDATE の 0 件(速報依頼)」: D2-5 の文言どおり(WHERE run_id=? AND status='CLAIMED' AND worker_id=? / ABORTED 済みまたは lease 失効回収 / 比較ツール未起動・comparison_results 未 INSERT・終了コード 0)。契約 request_status_transitions の CLAIMED → RUNNING、UC-11 _model-summary の UPDATE where と一致"
+  - "冒頭注記「未着手依頼の中止(abort-blue / abort-green)」: 競合窓の保険 + dispatcher 側判定との併用(D3)、REQUESTED / CLAIMED / RUNNING の明示中止は abort-rapid-crosscheck の status IN 条件付き UPDATE(D2-5)に改まっている。RDRA 状態.tsv 行 7(REQUESTED → ABORTED)・契約 abort-blue.sh notes と一致"
+  - "冒頭注記「ロック順」: dispatcher の slot_executions 参照が「対象 slot の行の SELECT(WHERE run_id = ? AND slot = ?)」に改まり(D1-1)、abort-rapid-crosscheck(requests 条件付き UPDATE status IN → parallel_runs 条件付き UPDATE status IN ('STARTED','RUNNING'))が追加されている。worker(requests → parallel_runs)と同順。dispatcher(rapid_runs → parallel_runs → slot_executions SELECT → requests INSERT)との間は、abort-rapid-crosscheck が既存行にしか行ロックを取らず dispatcher は INSERT のみのため相互待ちにならない"
+  - "rapid_crosscheck_requests.status の description: D2-4 の遷移(CLAIMED → RUNNING 条件付き UPDATE 0 件で比較開始しない / REQUESTED・CLAIMED・RUNNING → ABORTED = abort-rapid-crosscheck status IN / CLAIMED → ABORTED / REQUESTED → ABORTED = abort-blue / abort-green 競合窓の保険)をすべて含む。RDRA 状態.tsv 行 7・10・12・17・20、契約 shared_rules.state_codes.request_status_transitions 行 184〜189、UC-23 _model-summary の 2 つの UPDATE where と一致"
+  - "rapid_runs.completion_status の description: 中止済み run の定義が「並行稼働実行が ABORTED、または完了通知の対象 slot の slot 実行が ABORTED」+ 同一トランザクションで parallel_runs.status と対象 slot の slot_executions.status を読む(D1-1)。情報.tsv 行 19(速報実行)の記述、UC-09 _model-summary の rapid_runs.completion_status value / slot_executions SELECT where と一致"
+  - "slot_executions.used_by: UC-09(両系成功時に速報比較依頼を作成する)SELECT と UC-11 SELECT が列挙されており、UC-09 / UC-11 の _model-summary の tables と一致。情報.tsv 行 19 の関連情報(slot 実行)にも整合"
+  - "「rdra-feedback #13〜#15」「仮採用」の注記は rdb-schema.yaml に残っていない(grep 0 件)"
+  - "同時実行の整合(abort-rapid-crosscheck vs worker): 両者の requests UPDATE は status 条件が排他(worker の CLAIMED → RUNNING は status='CLAIMED' AND worker_id、abort は status IN 3 値)で、どちらが先でも他方が 0 件になる設計が status description / 冒頭注記 / UC-11 _model-summary で一貫している"
+
+findings:
+  - id: "S4-datastore-1"
+    severity: "minor"
+    artifact: "rdb-schema.yaml"
+    file: "docs/specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/datastore/rdb-schema.yaml"
+    viewpoint: 3
+    location: "_review_notes「ロック順(デッドロック検討)」"
+    title: "abort-blue / abort-green(parallel_runs → requests)と abort-rapid-crosscheck(requests → parallel_runs)の順序逆転が検討対象に入っていない"
+    detail: "CR-017 で abort-rapid-crosscheck の requests UPDATE が REQUESTED を含むようになったため、abort-blue / abort-green の requests UPDATE(status='REQUESTED')と同じ行を対象にし得る。両コマンドの取得順は逆(abort-blue: parallel_runs 無条件 FOR UPDATE → requests / abort-rapid-crosscheck: requests → parallel_runs 条件付き UPDATE)だが、注記は「worker と同じ順のためデッドロックしない」と worker との比較しか書いていない。実際には (a) 通常 run は依頼が存在する時点で parallel_runs が COMPLETED(foreground 中継済み)であり abort-rapid-crosscheck の条件付き UPDATE(status IN ('STARTED','RUNNING'))は行ロックを待たず 0 件になる、(b) parallel_runs が RUNNING のまま依頼が存在するのは background-rerun --role rapid-crosscheck 由来の run だけで、その run には abort-blue / abort-green の対象となる slot 実行が無い(契約 abort-rapid-crosscheck.sh exit 0 meaning の記述と同じ根拠)ため、逆順でも相互待ちは起きない。この根拠が注記に無く、順序逆転を見た読者がデッドロック未検討と判断する"
+    suggestion: "ロック順の注記に 1 文追加する: 「abort-blue / abort-green(parallel_runs → requests)と abort-rapid-crosscheck(requests → parallel_runs)は取得順が逆だが、依頼が存在する通常 run の parallel_runs は COMPLETED のため abort-rapid-crosscheck の条件付き UPDATE は行ロックを取らず(0 件)、parallel_runs が RUNNING のまま依頼を持つ rerun --role rapid-crosscheck 由来の run には abort-blue / abort-green の対象 slot 実行が無いため、両者が同時に両テーブルの行ロックを持つ組合せは生じない」。契約 abort-rapid-crosscheck.sh 側は変更不要"
+    source_refs:
+      - "docs/specs/events/20260907_131000_feedback_abort_consistency/_review/change-brief.md D2-1 / D2-5(ロック順)"
+      - "docs/specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/api/cli-command-contract.yaml abort-rapid-crosscheck.sh exit_codes code 0 meaning(行 885)/ abort-blue.sh notes(行 802〜804)"
+      - "docs/specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/_model-summary.yaml tables.parallel_runs / tables.rapid_crosscheck_requests"
+      - "docs/rdra/latest/状態.tsv クロスチェック依頼 行 7 / 12 / 17"
+
+  - id: "S4-datastore-2"
+    severity: "minor"
+    artifact: "rdb-schema.yaml"
+    file: "docs/specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/datastore/rdb-schema.yaml"
+    viewpoint: 3
+    location: "tables.rapid_crosscheck_requests.used_by「比較ツールでジョブ単位比較を実行して結果を登録する」"
+    title: "UC-11 の operations に SELECT が無い(CLAIMED → RUNNING 0 件時の再 SELECT が D2-3 で追加された)"
+    detail: "UC-11 の _model-summary.yaml は rapid_crosscheck_requests に対して UPDATE(CLAIMED → RUNNING)/ SELECT(0 件時の再 SELECT: status・worker_id を run_id = ? で読み、ABORTED なら reason=request_aborted、それ以外は request not owned)/ UPDATE(終端)の 3 操作を定義しているが、rdb-schema.yaml の used_by は operations: [\"UPDATE\"] のまま。今回の CR-017(D2-3)で加わった参照が used_by に反映されていない"
+    suggestion: "used_by の当該行を operations: [\"SELECT\", \"UPDATE\"] にする(主キー参照のためインデックス追加は不要)"
+    source_refs:
+      - "docs/specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/比較ツールでジョブ単位比較を実行して結果を登録する/_model-summary.yaml tables.rapid_crosscheck_requests.operations(SELECT status, worker_id where run_id = ?)"
+      - "docs/specs/events/20260907_131000_feedback_abort_consistency/_review/change-brief.md D2-3"
+      - "docs/specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/api/cli-command-contract.yaml rapid-crosscheck-worker.sh notes(行 462)"
+
+summary:
+  total: 2
+  blocker: 0
+  major: 0
+  minor: 2
+
+resolved:
+  - {id: S4-datastore-1, resolution: fixed}
+  - {id: S4-datastore-2, resolution: fixed}

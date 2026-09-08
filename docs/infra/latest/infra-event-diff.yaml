@@ -1,0 +1,51 @@
+meta:
+  event_id: "20260907_124000_feedback_abort_consistency"
+  trigger_event: "arch:20260907_122000_feedback_abort_consistency, nfr:20260907_120000_feedback_abort_consistency"
+  created_at: "2026-09-07T12:40:00Z"
+  mode: "differential"
+  mcl_rerun: "skipped_targeted_update"
+  mcl_rerun_reason: "translation(workload_type / availability_tier / latency / data_classification / traffic / consistency / cost_posture / target_clouds)は無変更。影響は管理 DB の実装仕様(条件付き UPDATE の対象状態と更新件数の扱い)、観測仕様の診断専用事象とアラート対象外の範囲、適合性検証への REQ-DB-006 追加、構成図の辺の説明に限られるため、MCL product-design の全量再実行は行わず MCL 出力を対象箇所だけ更新した(前回 20260907_021000 と同じ判断)"
+feedback_request:
+  feedback_request_id: "20260907_abort_consistency"
+  input_sha256: "70cda63f92e887e459a3817580e45a840e3ff201065a534085ad113fb8910b81"
+  request_ids: ["CR-c770d8f0-016","CR-c770d8f0-017","CR-c770d8f0-018"]
+  work_unit_ids: ["CR-c770d8f0-016#1","CR-c770d8f0-017#1","CR-c770d8f0-018#1"]
+changes:
+  event_id: "20260907_124000_feedback_abort_consistency"
+  created_at: "2026-09-07T12:40:00Z"
+  source: "feedback request 20260907_abort_consistency(RDRA / NFR / arch 差分)に基づくインフラ設計の差分更新"
+  arch_event_ref: "20260907_122000_feedback_abort_consistency"
+  nfr_event_ref: "20260907_120000_feedback_abort_consistency"
+  translation:
+    unchanged: true
+  mcl_execution:
+    status: "completed"
+    completed_at: "2026-09-07T12:40:00Z"
+    outputs_updated:
+      - path: "docs/mcl/product/input/product-input.yaml"
+        change: "source_refs を arch / nfr の feedback event に更新。observability_needs.notes の中止済み run を「並行稼働実行 ABORTED または対象 slot の slot 実行 ABORTED」に拡張し、worker の条件付き UPDATE 0 件による未開始と abort-rapid-crosscheck の対象(REQUESTED / CLAIMED / RUNNING。確報は RUNNING のみ)を追記"
+        work_units: ["CR-c770d8f0-016#1","CR-c770d8f0-017#1"]
+      - path: "docs/mcl/product/output/product-workload-model.yaml"
+        change: "product.database.management_db の説明に速報比較依頼の状態遷移を条件付き UPDATE で行い更新件数で競合を判定する旨を追加し、REQ-DB-006(WHERE 句で現在状態を条件にした UPDATE の更新件数を CLI クライアントから取得できる。must)を追加"
+        work_units: ["CR-c770d8f0-017#1","CR-c770d8f0-018#1"]
+      - path: "docs/mcl/product/output/product-mapping-onprem.yaml"
+        change: "management_db の vendor_feature に条件付き UPDATE のコマンドタグ(UPDATE n)による更新件数取得を追加。configuration_notes に worker の CLAIMED → RUNNING(0 件は比較を開始しない)、abort-rapid-crosscheck の status IN 条件(0 件はエラー)、abort-blue / abort-green の REQUESTED 条件(競合窓の保険。0 件は正常)と app_rw 権限で足りる旨を追記"
+        work_units: ["CR-c770d8f0-017#1","CR-c770d8f0-018#1"]
+      - path: "docs/mcl/product/output/product-impl-onprem.yaml"
+        change: "impl.database.management_db の abort_updates を abort-rapid-crosscheck(worker 停止確認のうえ status IN ('REQUESTED','CLAIMED','RUNNING') の条件付き UPDATE。0 件はエラー)・abort-final-crosscheck(RUNNING のみ)・abort-blue / abort-green(REQUESTED。競合窓の保険)に書き直し、worker_start_update(CLAIMED かつ自 worker_id 条件の条件付き UPDATE。0 件なら比較を開始せず正常終了しログに残す)と aborted_run_judgement(parallel_run.status と slot_executions.status を同一トランザクションで読む。テーブル・権限追加不要)を追加。validation_rules に psql コマンドタグ UPDATE 0 の取得と分岐(REQ-DB-006)を追加"
+        work_units: ["CR-c770d8f0-016#1","CR-c770d8f0-017#1","CR-c770d8f0-018#1"]
+      - path: "docs/mcl/product/output/product-observability.yaml"
+        change: "logging.diagnostic_only_events の中止済み run を slot 実行 ABORTED を含む定義に拡張し、worker の条件付き UPDATE 0 件による未開始(run_id / worker_id 付き)を診断専用事象に追加。alert-error-rate の condition の対象外事象に abort-rapid-crosscheck による REQUESTED / CLAIMED / RUNNING 依頼の ABORTED 化と worker の 0 件終了を追記し、abort-blue / abort-green の ABORTED 化を競合窓の保険と明記"
+        work_units: ["CR-c770d8f0-016#1","CR-c770d8f0-017#1","CR-c770d8f0-018#1"]
+      - path: "docs/cloud-context/conformance/product/product-conformance-onprem.yaml"
+        change: "REQ-DB-006(conformant。PostgreSQL のコマンドタグ UPDATE n と psql -c による取得)を追加。summary を 25 要件(conformant 20 / partial 5)に更新"
+        work_units: ["CR-c770d8f0-017#1"]
+      - path: "docs/cloud-context/generated-md/product/relay-gate-target-architecture.md"
+        change: "ops CLI → 管理 DB の辺を abort-rapid-crosscheck(REQUESTED・CLAIMED・RUNNING 依頼を ABORTED)と abort-blue / abort-green(未着手依頼を ABORTED。保険)に書き直し、rapid runner → 管理 DB の辺に中止済み run 判定(parallel_run と slot_executions)と CLAIMED → RUNNING の条件付き UPDATE を追記。適合性サマリを 25 要件に更新"
+        work_units: ["CR-c770d8f0-016#1","CR-c770d8f0-017#1","CR-c770d8f0-018#1"]
+  arch_feedback:
+    status: "no_new_feedback"
+    reason: "本イベントの差分はすべて arch 20260907_122000_feedback_abort_consistency の変更(SP-009 / SP-011 / SP-022 / LP-021 / LP-023 / LP-024 / CLP-004 / AG-002 / E-016 / E-017 / E-024)を下流へ追従したもの。REQ-DB-006(条件付き UPDATE の更新件数取得)は LP-021 / LP-024 が既に「更新件数」で判定すると定めており、RDB 製品側の実現手段(psql コマンドタグ)を確認したに過ぎないため arch の記述を変える知見ではなく arch イベントは作成しない。既存の arch_feedback(20260830_202427_arch_infra_feedback_20260830_190412_infra_product_design)は据え置き"
+  writeback_check:
+    result: "not_required"
+    reason: "arch 差分はティア構成・認証認可方式・DR 方針・外部連携・storage_type を変えていない(条件付き UPDATE の対象状態と中止済み run の判定キーの変更はアプリケーション規則と管理 DB の実装仕様に閉じる)。translation の各フィールドに影響しないため product-input の再生成と Step2 の再実行は不要"

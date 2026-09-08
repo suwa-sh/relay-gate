@@ -1,0 +1,86 @@
+round: 1
+findings:
+  - id: R-001
+    viewpoint: 4
+    severity: major
+    target: "docs/specs/events/20260907_024000_feedback_todo_followup/クロスチェック業務/速報クロスチェックフロー/両系成功時に速報比較依頼を作成する/spec.md"
+    claim: "「中止済み run の比較依頼作成除外」の判定キーを parallel_runs.status = 'ABORTED' だけに置いているため、最も典型的な中止経路(foreground slot 完了後に background slot を abort)では除外が一度も効かない。BDD は Given で parallel_runs を ABORTED に seed しているので通るが、実運用では parallel_runs は COMPLETED のままなので依頼が作られる"
+    evidence: "状態.tsv 行 35: 並行稼働実行は「foreground slot の結果をジョブスケジューラへ中継する」で RUNNING → COMPLETED(background slot の完了は待たない)。契約 parallel_run_transitions も同じ。abort-blue.sh の exit 0 meaning / UC-23 spec.md 処理フロー: parallel_runs の条件付き UPDATE は `WHERE status IN ('STARTED','RUNNING')`「COMPLETED は更新しない」。→ blue(foreground)完了 → parallel_runs=COMPLETED → green(background)ハング → abort-green(aborted.txt、parallel_runs は COMPLETED のまま)→ green 実装が走り切って exitcode.txt=0 を公開 → 完了通知 → dispatcher は request_creation_matrix の「ABORTED 以外(STARTED / RUNNING / COMPLETED)× 両系成功 = 依頼を作成」を適用する。UC-09 spec.md の 2 シナリオ(232 行 / 240 行)はいずれも Given で parallel_runs.status=ABORTED を直接置いており、この経路を検証していない。RDRA 条件.tsv 行 19「並行稼働実行(parallel_run)が ABORTED の run では…」の定義そのものに由来するため、spec だけでは閉じない"
+    suggested_fix: "rdra-feedback として条件「中止済み run の比較依頼作成除外」の判定キーを見直す変更要求を出す。案: dispatcher は parallel_runs.status = 'ABORTED' **または** 同 run の slot_executions に status='ABORTED' の行がある(= いずれかの slot に aborted.txt が公開済み)場合に依頼を作らない(判断主体は dispatcher のままで条件「完了通知の系統独立」と矛盾しない。slot_executions は abort-blue / abort-green が同一トランザクションで ABORTED に更新済み)。spec 側は request_creation_matrix の縦軸を「run が中止済み(parallel_runs ABORTED または slot_executions に ABORTED あり)/ それ以外」に改め、UC-09 に「parallel_runs=COMPLETED で green slot だけ ABORTED の run に green-completed が届いても依頼を作らない」シナリオを追加する。RDRA を変えない判断なら、少なくとも判定表と notes に「parallel_runs が COMPLETED(foreground 中継済み)の run で background slot を中止した場合は本条件の対象外となり依頼が作られる」と明記し、要確認として報告する"
+
+  - id: R-002
+    viewpoint: 5
+    severity: major
+    target: "docs/specs/events/20260907_024000_feedback_todo_followup/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/spec.md"
+    claim: "abort-blue / abort-green の「REQUESTED → ABORTED」は実運用で到達不能。REQUESTED の依頼が存在する時点で両 slot の exitcode.txt が公開済みであり、abort-blue / abort-green は「exitcode.txt あり = 終端済み」で 3 を返して UPDATE に到達しない。BDD(spec.md 251 行 / tier-ops.md 141 行)の Given は「green/ に started-at.txt だけがある」と「REQUESTED の依頼がある」を同時に置いており、dispatcher の作成規則(両系 exitcode 0)と両立しない状態を DB seed で作っている"
+    evidence: "UC-09: 依頼は blue / green 両方の完了通知(--exit-code 0 = exitcode.txt 公開後)で作られる。abort-blue.sh notes: 「exitcode.txt あり = 終端済みで 3」、shared_rules.exitcode_to_status: exitcode.txt と aborted.txt 両方あれば exitcode.txt 優先。background-rerun --role rapid-crosscheck 由来 run は slots 節が無く「slots.blue 節が無い = mode=off status=-」で 3。よって UPDATE `WHERE run_id=? AND status='REQUESTED'` が 1 件になるのは、成果物再確認と UPDATE の間に exitcode.txt 公開 + dispatcher の COMMIT が割り込む数ミリ秒の競合窓だけ。状態.tsv 行 7 の意図「両 slot 完了直後に中止した場合に依頼だけが残って比較が走る抜けを防ぐ」は、両 slot 完了直後には abort-blue / abort-green 自体が実行できないため満たされない"
+    suggested_fix: "(a) 到達可能な運用経路を spec に明示する: 「両 slot 完了直後」の抜けを塞ぐ手段は abort-blue / abort-green ではなく、REQUESTED / CLAIMED の依頼を中止できる操作(abort-rapid-crosscheck.sh の対象拡張、または R-001 の dispatcher 側判定)である旨を UC-23 / buc-spec の条件説明に書き、RDRA 状態.tsv 行 7 の説明文の修正を rdra-feedback に載せる。(b) BDD は「競合窓での保険」であることを Scenario 名・Given に明記する(例: 「表示後に両 slot が終端し依頼が作られた競合ケース」)か、Given を dispatcher の作成規則と矛盾しない形(green/exitcode.txt 公開済み + aborted.txt 未公開の再適用経路など)に書き換える。現状のままだと実装は DB seed でしか通らないテストを持つことになる"
+
+  - id: R-003
+    viewpoint: 4
+    severity: major
+    target: "docs/specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/api/cli-command-contract.yaml"
+    claim: "dispatcher の parallel_runs.status 読み取り(ロック無し SELECT)と abort-blue / abort-green の条件付き UPDATE は直列化されないため、abort のトランザクションが dispatcher の SELECT 後・INSERT COMMIT 前に走ると、ABORTED run に REQUESTED の依頼が残る(dispatcher は RUNNING を見て INSERT、abort の `UPDATE ... WHERE status='REQUESTED'` は未 COMMIT の行を見ず 0 件で正常終了)。この依頼は abort-rapid-crosscheck(RUNNING のみ)でも中止できず、worker が claim して中止済み run の比較を実行する"
+    evidence: "rapid-crosscheck-runner.sh idempotency: 「rapid_runs の自系統列を更新 → 同一トランザクションで parallel_runs.status を読む → 判定 → INSERT」。UC-09 spec.md 59 / 63 行: 行ロックは rapid_runs のみ(`SELECT ... FROM rapid_runs ... FOR UPDATE`)、parallel_runs は `SELECT job_id, status FROM parallel_runs WHERE run_id=?`(ロック無し)。abort 側(UC-23 spec.md 90〜94 行)は slot_executions → parallel_runs → rapid_crosscheck_requests を 1 トランザクションで UPDATE するが、dispatcher が parallel_runs 行をロックしていないため abort の parallel_runs UPDATE は待たされない。READ COMMITTED では abort の requests UPDATE は dispatcher の未 COMMIT INSERT を見ない。両 spec の BDD は単独実行のみで、この交錯は検証されない"
+    suggested_fix: "dispatcher の parallel_runs 参照を `SELECT job_id, status FROM parallel_runs WHERE run_id=? FOR UPDATE`(または FOR SHARE)に変え、契約 idempotency / UC-09 spec.md・tier-rapid-crosscheck.md・_model-summary.yaml に明記する。これで abort が先なら dispatcher は COMMIT 後の ABORTED を読み、dispatcher が先なら abort の parallel_runs UPDATE が待ってから requests UPDATE が REQUESTED を 1 件更新する。ロック順(dispatcher: rapid_runs → parallel_runs、abort: slot_executions → parallel_runs → requests、worker: requests → parallel_runs)にデッドロックが無いことを rdb-schema.yaml の _review_notes に 1 項目で残す"
+
+  - id: R-004
+    viewpoint: 4
+    severity: major
+    target: "docs/specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/api/cli-command-contract.yaml"
+    claim: "abort-blue / abort-green が CLAIMED の依頼を変更しない規則と、worker の lease 失効解放(CLAIMED → REQUESTED)を組み合わせると、中止済み run の依頼が REQUESTED に戻って別 worker に claim され比較が走る。REQUESTED → ABORTED は abort 実行時の一回限りで、その後に戻ってきた REQUESTED を中止する経路が無い(abort-rapid-crosscheck は RUNNING 限定、abort-blue / abort-green は slot 終端済みで再実行不可)"
+    evidence: "abort-blue.sh exit 0 meaning: 「CLAIMED / RUNNING の依頼は変更せず abort-rapid-crosscheck.sh の対象のまま」。abort-rapid-crosscheck.sh idempotency: 「条件付き UPDATE(status='RUNNING')。REQUESTED / CLAIMED は worker に処理させてから判断する」。shared_rules.state_codes.request_status_transitions: 「CLAIMED → REQUESTED(worker の lease 失効解放。lease_until < now かつ started_at IS NULL)」。claim UC spec.md 100〜102 行: claim は parallel_runs.status を参照しない。→ abort 時点で CLAIMED(worker 停止中)→ 600 秒後に REQUESTED → 別 worker が claim → 中止済み run の成果物で比較を実行し comparison_results が登録される"
+    suggested_fix: "いずれかを採用し契約と UC(claim / 実行を ABORTED へ遷移させる)に明記する: (1) worker の lease 失効解放で parallel_runs.status='ABORTED' の依頼は REQUESTED に戻さず ABORTED(completed_at=now)にする、(2) claim の SELECT で parallel_runs.status='ABORTED' の run を除外し hang-detector 経由で運用者に委ねる、(3) abort-rapid-crosscheck.sh の対象に REQUESTED / CLAIMED を加える(RDRA 状態.tsv 行 16 / SPEC-010-02 の変更要求)。少なくとも「CLAIMED のまま abort した依頼は lease 失効で再 claim されうる」ことを abort-blue notes と UC-23 の条件説明に書き、要確認として報告する"
+
+  - id: R-005
+    viewpoint: 4
+    severity: major
+    target: "docs/specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/datastore/rdb-schema.yaml"
+    claim: "管理 DB の日時列を「ホストのローカルタイムゾーンの値」と定めながら、契約は本番で「DB の now() を使う UPDATE / INSERT」を前提にしている。RDB の now() / CURRENT_TIMESTAMP はセッションの TimeZone 設定(DB 側)で timestamp に落ちるため、DB セッションの TZ がホストの TZ と異なる(例: DB 既定 UTC、ホスト JST)と同じ列にホスト時刻と DB 時刻が混在する。hang-detector の速報比較依頼の経過時間(DB の started_at と ホストの now の差)や lease 失効判定がオフセット分ずれ、偽のハング疑い通知・lease 未失効が起きる"
+    evidence: "cli-command-contract.yaml environment_variables.RELAY_GATE_NOW.purpose: 「DB の now() を使う UPDATE / INSERT も、この値を渡して同じ時刻にする」/ default: 「未設定(実時刻 now() を使う)」。rdb-schema.yaml _review_notes 43: 「日時列は RDB のタイムスタンプ型(タイムゾーンなし)に委ね、ホストのローカルタイムゾーンの値を入れる…全ホストの TZ 設定は統一する(infra REQ-LOG-003)」— DB サーバー / セッションの TZ には触れていない。UC-23 spec.md 94 行 `SET status='ABORTED', completed_at=now`、UC-18 spec.md 164 行: 速報比較依頼の経過時間 = now(ホスト)- started_at(DB 列)。BDD は TZ=UTC 前提の RELAY_GATE_NOW 注入で検証するため、DB の now() 経路は一度も通らない"
+    suggested_fix: "rdb-schema.yaml _review_notes と契約 conventions.datetime に「日時は必ずホスト側で生成しバインド変数で渡す。SQL 内の now() / CURRENT_TIMESTAMP / DEFAULT now() は使わない(DB セッション TZ に依存させない)」を明記し、RELAY_GATE_NOW.purpose の「DB の now() を使う UPDATE / INSERT も…」を「すべての日時はホストで生成して渡す(RELAY_GATE_NOW 設定時はその変換値)」に差し替える。UC-23 / claim / worker の `completed_at=now` 等の SQL 疑似表記を `completed_at=?`(ホストの now)に揃える。DB の now() を残す判断なら、infra 側に「DB セッション TimeZone をホストと同一にする」要求(REQ-LOG-003 の拡張)を rdra-feedback / arch feedback に載せる"
+
+  - id: R-006
+    viewpoint: 4
+    severity: minor
+    target: "docs/specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/ux-ui/ui-design.md"
+    claim: "指示子なしローカル時刻は DST のあるタイムゾーンでは一意でない(秋の切り戻し時に同じ表記が 2 回現れ、春は存在しない表記がある)。lease_until < now の比較、経過時間、hang-detect-trend --since の比較、run_id 時刻部の時系列ソートが切替時刻の前後 1 時間で ±60 分ずれる。spec は「全ホストの TZ を統一する」とだけ書き、DST の無い TZ を前提にするか、比較は epoch で行うかを決めていない"
+    evidence: "ui-design.md 65 行「ホストのローカルタイムゾーン(プロセスの TZ 環境変数に従う)…指示子なし」。rdb-schema.yaml _review_notes 43「全ホストの TZ 設定は統一する(infra REQ-LOG-003)」。claim UC tier-rapid-crosscheck.md 58 行 `lease_until < ?`、UC-18 spec.md 163 行「両者を同じローカル時刻軸に揃えてから差を取る」(文字列比較か epoch 比較かを定めていない)。data-visualization.md 88 行「run_id 列だけでも時系列が読める」"
+    suggested_fix: "conventions.datetime(契約)と ui-design.md「出力フォーマット」の日時に 1 文追加: 「経過時間・lease 失効・走査窓の判定は epoch 秒で計算し、表記の比較で行わない。DST のあるタイムゾーンでは切替前後の表記が一意でないことを許容する(または運用前提として DST の無い TZ を用いる)」。utc → ローカル変換の関数を 1 箇所(shared_rules)に定め、全スクリプトが同じ変換を使うことを明記する"
+
+  - id: R-007
+    viewpoint: 4
+    severity: minor
+    target: "docs/specs/events/20260907_024000_feedback_todo_followup/_cross-cutting/api/cli-command-contract.yaml"
+    claim: "stderr の `warn: rapid request not created run_id=... reason=parallel run aborted` は key=value の値に空白を含み、同じ事象の実行ログ `reason=parallel_run_aborted` と値が異なる。stderr を機械解析する運用(ジョブスケジューラのログ収集)で reason の値が `parallel` で切れ、ログと突き合わせられない"
+    evidence: "cli-command-contract.yaml rapid-crosscheck-runner.sh stderr / exit_codes[0].meaning / UC-09 spec.md 245〜246 行(stderr は `parallel run aborted`、実行ログは `parallel_run_aborted`)。conventions.output_format.stderr は `error: {原因} key=value...` の書式で、stdout の key=value は「値に空白を含まない」"
+    suggested_fix: "stderr も `reason=parallel_run_aborted` に揃える(契約 stderr / exit_codes / UC-09 spec.md・tier-rapid-crosscheck.md の BDD Then を同時に修正)。change-brief D2-1 の文言に由来するため、要確認として報告してよい"
+resolved:
+  - id: R-001
+    resolution: fixed
+    note: "change-brief D4-1。判定キーを parallel_runs ABORTED または slot_executions に ABORTED あり に拡張(仮採用: rdra-feedback #13)。契約 request_creation_matrix / UC-09 spec・tier・_model-summary / buc-spec に反映し BDD 1 件追加"
+    by: orchestrator
+  - id: R-002
+    resolution: fixed
+    note: "change-brief D4-3。REQUESTED → ABORTED を競合窓の保険と位置づけ(rdra-feedback #14)。abort-blue notes / UC-23 条件説明・状態遷移備考 / buc-spec に明記し、SPEC-010-01 AC6 の Given を競合ケースに書き換え(シナリオ名は不変)"
+    by: orchestrator
+  - id: R-003
+    resolution: fixed
+    note: "change-brief D4-2。dispatcher は parallel_runs を FOR UPDATE で読む。契約 idempotency / UC-09 / _model-summary に反映し、ロック順を rdb-schema _review_notes に記載"
+    by: orchestrator
+  - id: R-004
+    resolution: fixed
+    note: "change-brief D4-4。claim の振る舞いは変えず、abort-blue notes / UC-23 / claim UC の備考に再 claim の注記。abort-rapid-crosscheck の対象拡張は rdra-feedback #15 と確認推奨項目で返却"
+    by: orchestrator
+  - id: R-005
+    resolution: fixed
+    note: "change-brief D4-5。conventions.datetime_generation を追加し、日時はホスト生成・バインド渡し(SQL の now() は使わない)。RELAY_GATE_NOW.purpose と rdb-schema _review_notes を追従"
+    by: orchestrator
+  - id: R-006
+    resolution: fixed
+    note: "change-brief D4-6。判定は epoch 秒、DST の表記非一意を許容、変換関数は 1 箇所。契約 conventions.datetime と ui-design.md に追記"
+    by: orchestrator
+  - id: R-007
+    resolution: fixed
+    note: "change-brief D4-7。stderr を reason=parallel_run_aborted に統一(契約 / UC-09 spec・tier・_api-summary)"
+    by: orchestrator

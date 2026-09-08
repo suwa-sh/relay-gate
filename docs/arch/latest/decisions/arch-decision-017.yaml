@@ -1,0 +1,52 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "architecture"
+artifact_id: "arch-decision-017"
+title: "中止済み run の判定キーに対象 slot の slot 実行 ABORTED を加え、abort-rapid-crosscheck を REQUESTED / CLAIMED / RUNNING の速報比較依頼に拡張し、REQUESTED → ABORTED を競合窓の保険と位置づける"
+status: "approved"
+generated_at: "2026-09-07T12:20:00Z"
+context: |
+  arch-decision-015 は「並行稼働実行(parallel_run)が ABORTED の run では速報比較依頼を作成しない」と定めたが、並行稼働実行は
+  foreground slot の結果を中継した時点で COMPLETED になる。並行稼働の典型構成(blue foreground / green background)で foreground 完了後に
+  運用者が abort-green で background slot を中止すると parallel_run は既に COMPLETED であり、abort-green は slot 実行を ABORTED にする
+  (aborted.txt を書く)だけで parallel_run は ABORTED にならない。このため「abort したなら速報クロスチェックは実施しない」が最も典型的な経路で
+  成立しなかった(spec 反証レビュー rdra-feedback #13、todo DIST-025)。
+  また abort-rapid-crosscheck は RUNNING の依頼しか中止できず、CLAIMED の依頼は運用者が止める手段がなかった。CLAIMED を放置すると lease 失効で
+  REQUESTED に戻り別の worker が再 claim して比較が実行される(rdra-feedback #15、todo DIST-026)。
+  状態モデルの REQUESTED → ABORTED(abort-blue / abort-green)の説明「両 slot 完了直後に中止した場合の抜けを防ぐ」は、dispatcher 側の中止済み run
+  判定が入った後は競合窓の保険という実際の位置づけと一致していなかった(rdra-feedback #14、todo DIST-027)。
+  利用者は 2026-09-07 に DIST-025 A / DIST-026 A / DIST-027 A を決定し、RDRA の条件「中止済み run の比較依頼作成除外」「両系成功判定」
+  「依頼中止可否判定」「slot 中止可否判定」、状態「クロスチェック依頼」(CLAIMED → ABORTED の追加、CLAIMED → RUNNING の条件付き UPDATE)、
+  情報「速報実行」「速報比較依頼」「中止指示」、バリエーション「中止対象種別」が更新された。
+decision: |
+  - 中止済み run の判定キーを「並行稼働実行が ABORTED、または完了通知の対象 slot の slot 実行が ABORTED(aborted.txt 公開済み)」に拡張する。
+    判定材料は管理 DB の parallel_run.status と slot_executions.status(ファイル正本 aborted.txt のミラー)とし、判断主体は引き続き dispatcher
+    (速報クロスチェック runner)に置く。foreground 完了後の background 中止は slot 実行 ABORTED の側で除外する
+    (SP-009 / LP-010 / LP-023 / BC-002 / AG-002 / E-016 の E-014 への関係)
+  - abort-rapid-crosscheck は速報比較依頼が REQUESTED / CLAIMED / RUNNING のいずれでも中止できるようにする。運用者に worker のプロセス停止を
+    確認したうえで status IN (REQUESTED, CLAIMED, RUNNING) を条件とする条件付き UPDATE で ABORTED にし、終端済みは更新件数 0 をエラーとする。
+    確報比較依頼は abort-final-crosscheck で RUNNING のときだけ中止できる(確報の未着手依頼はジョブスケジューラの正規ジョブが同期 polling 中で
+    runner 側の polling 上限で扱う)(SP-022 / LP-019 / LP-021 / BC-004 / CM-005 / E-017 / E-024)
+  - CLAIMED で中止された依頼の比較を worker が開始しない競合規則は速報クロスチェック側(BC-002 の worker)に置く。worker は比較開始前に
+    status = CLAIMED を条件とする条件付き UPDATE で RUNNING にし、更新件数が 0 件なら比較ツールを起動せず comparison_result も登録せずに
+    正常終了する(SP-011 / LP-024 新規 / AG-002 / L-rapid-gateway)
+  - abort-blue / abort-green による REQUESTED 依頼の ABORTED 化(arch-decision-015 で採用)は、両系の完了通知で依頼が REQUESTED で作成された
+    直後に slot を中止した場合の競合窓を塞ぐ保険と位置づけ直し、dispatcher 側の中止済み run 判定と併用する。遷移自体と WHERE status = REQUESTED
+    の条件付き UPDATE(該当なしは正常)は変更しない(SP-022 / LP-021 / BC-004 / CM-005 / E-017 / E-024)
+  - 速報有効時(RAPID_CROSSCHECK_MODE が foreground / background)だけの規則とする点は変わらない
+consequences:
+  positive:
+    - "並行稼働の典型経路(foreground 完了後の background 中止)でも中止した run の速報比較が走らず、利用者決定「abort したなら速報クロスチェックは実施しない」が成立する"
+    - "CLAIMED の依頼を運用者が止められ、lease 失効後の再 claim で中止済み run の比較が実行される抜けが閉じる。競合は DB の条件付き UPDATE で解決し、プロセス停止の確認は運用者に委ねる"
+    - "dispatcher の除外判定(本線)と abort-blue / abort-green の未着手依頼 ABORTED 化(保険)の役割分担が明文化され、spec の仮採用注記を外せる"
+  negative:
+    - "dispatcher が rapid_run に加えて parallel_run と slot_executions を同一トランザクションで読むため、AG-002 の集約境界仮説(rapid_run と rapid_crosscheck_request を同一集約に置くか)の再判断材料が増える"
+    - "worker の CLAIMED → RUNNING が条件付き UPDATE になり、更新件数 0 の正常終了経路(ログのみ)が worker に追加される"
+    - "abort-rapid-crosscheck の対象状態が 3 つに増え、停止確認の対話で表示する現在状態の意味(REQUESTED は未着手、CLAIMED は claim 済み未開始)を運用者が読み分ける必要がある"
+alternatives_considered:
+  - name: "Option B: abort-blue / abort-green が parallel_run も ABORTED にして、判定キーを並行稼働実行 ABORTED のままにする"
+    reason_rejected: "並行稼働実行は foreground 結果の中継完了で COMPLETED になる状態モデルであり、COMPLETED → ABORTED の遷移を追加すると RDRA の状態モデルと元の方針資料(run の完了はジョブスケジューラへの応答で確定する)から乖離する。利用者は DIST-025 で slot 実行 ABORTED を判定キーに加える案を決定した"
+  - name: "Option C: CLAIMED の依頼は abort-rapid-crosscheck の対象外のままとし、lease 失効後の再 claim を worker 側で parallel_run / slot 実行の状態を見て拒否する"
+    reason_rejected: "worker が中止済み run の判定を持つと比較の要否判断が dispatcher と worker に分散する。運用者が明示的に止める手段が無い点も残る。利用者は DIST-026 で REQUESTED / CLAIMED / RUNNING を中止対象にする案を決定した"
+  - name: "Option D: abort-blue / abort-green の REQUESTED 依頼 ABORTED 化を廃止し、dispatcher の除外判定だけにする"
+    reason_rejected: "両系の完了通知で依頼が作成された直後に slot を中止した競合窓では dispatcher の判定を通過済みのため、保険として残す必要がある。利用者は DIST-027 で説明文の位置づけ直しのみを決定した"

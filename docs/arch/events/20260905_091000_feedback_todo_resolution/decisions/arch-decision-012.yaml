@@ -1,0 +1,31 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "architecture"
+artifact_id: "arch-decision-012"
+title: "設定契約を元の方針資料に戻す(feature flag 9 キー・設定版なし、ジョブマップは CSV と元の列名、ハング検知定期ジョブ設定を追加)"
+status: "approved"
+generated_at: "2026-09-05T09:10:00Z"
+context: |
+  元の方針資料「設定契約」は feature flag を 9 キー(BLUE_MODE / GREEN_MODE / RAPID_CROSSCHECK_MODE(foreground / background / off)/ BLUE_IMPL / GREEN_IMPL /
+  BLUE_RUNNER / GREEN_RUNNER / RAPID_CROSSCHECK_RUNNER / RAPID_CROSSCHECK_WORKER)で定め、ジョブマップを CSV(列: job_id / host / user / work_dir / script /
+  fixed_params / hang_detect_limit_minutes)としている。これまでの arch は E-001 に設定版(config_version)と on / off の 2 値、E-003 / E-010 に exec_user / script_path /
+  fixed_args / impl_version を持ち、方針資料から乖離していた(CR-c770d8f0-001 / 002)。
+  また hang-detector の通知先・送信コマンドの設定置き場が設定所有区分に無かった(CR-c770d8f0-010)。本プロジェクトは方針資料との一致を第一の判断基準とする。
+decision: |
+  - E-001 feature flag 設定を 9 キー・設定版なし・RAPID_CROSSCHECK_MODE 3 値に戻す。実装版の出所は BLUE_IMPL / GREEN_IMPL、完了通知先は RAPID_CROSSCHECK_RUNNER、worker 実体は RAPID_CROSSCHECK_WORKER(SP-001 / SP-007 / SP-008 / SP-025)
+  - E-003 ジョブマップと E-010 実行設定の属性名を元資料の列名に統一し、CSV(1 行目ヘッダー、1 行 1 job_id)と fixed_params の JSON 配列セル規則(二重引用符で囲み、内部の二重引用符は二重化)を SP-006 / storage_mapping に明記する。host / user はローカル実行で省略可、credential_ref / map_version は末尾の任意列、実装版列は持たない
+  - クロスチェックジョブマップ・対象カタログも同じ CSV 形式に統一する(storage_mapping E-007 / E-008)
+  - E-026 ハング検知定期ジョブ設定(通知先 / 送信コマンド / 件名プレフィックス / 管理 DB 接続参照名)を BC-005 所有の env 形式設定ファイルとして追加し、設定所有区分(SP-025)に加える
+  - 版の出所: 実装版 = feature flag、マップ版 = ジョブマップ側の任意列、カタログ版・文書版 = 各ファイル。feature flag は版を持たない
+consequences:
+  positive:
+    - "適用側が元資料どおりに書いた feature-flag.env とジョブマップ CSV をそのまま使え、未知キー警告や読み替えが不要になる"
+    - "設定の正本と所有者が方針資料と一致し、spec(CLI 契約 config_files)を方針資料基準で書き直せる"
+  negative:
+    - "bash 単独で CSV のクォート(二重引用符・二重化)を解析する規則を spec と実装で厳密に定める必要がある"
+    - "feature flag の版が無いため、適用側の版管理(コミット履歴など)に依存する"
+alternatives_considered:
+  - name: "Option B: USDM / RDRA を現行 spec の契約(6 キー + CONFIG_VERSION、TSV、impl_version 列)に寄せる"
+    reason_rejected: "CR-001 で明示的に不採用。方針資料を第一の判断基準とするプロジェクトルールに反する"
+  - name: "Option C: 9 キーと 6 キーの両方を受け付ける互換レイヤーを置く"
+    reason_rejected: "設定契約が二重化し、設定所有区分の正本が曖昧になる。エアーギャップ運用で契約は 1 つに絞る"

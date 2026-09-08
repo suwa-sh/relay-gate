@@ -1,0 +1,44 @@
+{
+  "schema_version": "distillery.rdra-feedback-event/v1",
+  "event_id": "20260907_011000_feedback_todo_followup",
+  "created_at": "2026-09-07T01:10:00Z",
+  "stage": "requirements",
+  "feedback_request": {
+    "feedback_request_id": "20260907_todo_followup",
+    "input_sha256": "193823ac1e6f02400269d6bdca461150a1fc8951393f332ef28580e045261389",
+    "request_ids": [
+      "CR-c770d8f0-013",
+      "CR-c770d8f0-014"
+    ],
+    "work_unit_ids": [
+      "CR-c770d8f0-013#1",
+      "CR-c770d8f0-014#1"
+    ]
+  },
+  "members": [
+    {
+      "path": "rdra/events/20260907_011000_feedback_todo_followup/BUC.tsv",
+      "sha256": "c986add3a707cd9177b3d8f77555989e15604923410d99ec228d3f60e272aa50"
+    },
+    {
+      "path": "rdra/events/20260907_011000_feedback_todo_followup/_changes.md",
+      "sha256": "06d6e1874ac1d52d35d242b3d029182744068341d9d55eca5cf8855ee1bb438f"
+    },
+    {
+      "path": "rdra/events/20260907_011000_feedback_todo_followup/バリエーション.tsv",
+      "sha256": "64660d9beb127a84ee0b224df0a762c8921ec304771e846accd46fbacede337c"
+    },
+    {
+      "path": "rdra/events/20260907_011000_feedback_todo_followup/情報.tsv",
+      "sha256": "ce774145f0ccb703629ac25bd289981a0194637147620060fe980f31652c30d9"
+    },
+    {
+      "path": "rdra/events/20260907_011000_feedback_todo_followup/条件.tsv",
+      "sha256": "9f703f2f64d8d7c17ea2e1cbbd46dac428919339fc015f5789b44dcdf0e5f4f7"
+    },
+    {
+      "path": "rdra/events/20260907_011000_feedback_todo_followup/状態.tsv",
+      "sha256": "624fbfc9ddeb7af7744d34775f007420171fb1a74658190eda5db9049ee207c1"
+    }
+  ]
+}

@@ -1,0 +1,160 @@
+# digest of nfr/latest/nfr-grade.yaml section categories[id=F] (L992-1149); source_sha256: 69cca2e1c16f18ab4178b5a0e5af690acc7a82338c64a37176767e860a06693f
+# 派生物。正本は nfr-grade.yaml。編集しない
+  - id: "F"
+    name: "システム環境・エコロジー"
+    subcategories:
+      - id: "F.1"
+        name: "システム制約・前提条件"
+        items:
+          - id: "F.1.1"
+            name: "システム制約"
+            important: true
+            metrics:
+              - id: "F.1.1.1"
+                name: "対応OS"
+                important: true
+                grade: 1
+                grade_description: "単一OS(オンプレミス Linux)。実装側の OS 差異は runner に閉じ込める"
+                reason: "relay-gate はシェルスクリプトとして Linux で動作し、実装固有の OS・プロトコルは slot の runner に閉じ込める設計のため"
+                source_model: "条件: 実装固有事項の runner への閉じ込め / システム概要"
+                confidence: "high"
+              - id: "F.1.1.2"
+                name: "対応ブラウザ"
+                important: true
+                grade: 0
+                grade_description: "対象外(UI 画面なし)"
+                reason: "UI 画面を持たず CLI と定期ジョブだけで動作するため"
+                source_model: "システム概要(interface_kind: cli)"
+                confidence: "high"
+              - id: "F.1.1.3"
+                name: "対応デバイス"
+                important: false
+                grade: 1
+                grade_description: "運用者端末(ターミナル)のみ"
+                reason: "すべてのスクリプトは CLI として起動され、通知はメールで行うため"
+                source_model: "条件: CLI とメールによる提示"
+                confidence: "high"
+          - id: "F.1.2"
+            name: "ネットワーク制約"
+            important: false
+            metrics:
+              - id: "F.1.2.1"
+                name: "通信プロトコル"
+                important: false
+                grade: 1
+                grade_description: "SSH(リモート実行)、RDB 接続(relay-gate 内部のジョブキュー兼管理 DB。接続先は速報クロスチェック設定の接続参照名で解決)、メール送信(ハング検知定期ジョブ設定の送信コマンド)。インターネット接続・外部 SaaS は不可"
+                reason: "外部システムがジョブスケジューラ・リモート実行ホスト(SSH)・メール通知で構成され、管理 DB は relay-gate 内部のデータストアで、その接続参照名は速報クロスチェック設定(RAPID_CROSSCHECK_MODE=off では不要)が持ち、エアーギャップ前提のため"
+                source_model: "外部システム: リモート実行ホスト(SSH)、メール通知 / システム概要: ジョブキュー兼管理 DB(relay-gate 内部のデータストア) / 情報: ハング検知定期ジョブ設定、速報クロスチェック設定"
+                confidence: "high"
+              - id: "F.1.2.2"
+                name: "帯域要件"
+                important: false
+                grade: 1
+                grade_description: "成果物ファイルの回収と DB 接続程度で特別な要件なし"
+                reason: "Runner Result は stdout.log / stderr.log / exitcode.txt の 3 ファイルと started-at.txt、中止時のみの aborted.txt という小さなファイルのため"
+                source_model: "情報: Runner Result / バリエーション: Runner Result 成果物種別"
+                confidence: "medium"
+      - id: "F.2"
+        name: "システム特性"
+        items:
+          - id: "F.2.1"
+            name: "可搬性"
+            important: false
+            metrics:
+              - id: "F.2.1.1"
+                name: "可搬性"
+                important: false
+                grade: 1
+                grade_description: "特定環境固定(オンプレミス Linux + RDB)"
+                reason: "エアーギャップのオンプレミス Linux を前提とし、クラウドへの可搬性は要求しない"
+                source_model: "システム概要"
+                confidence: "medium"
+          - id: "F.2.2"
+            name: "拡張性"
+            important: false
+            metrics:
+              - id: "F.2.2.1"
+                name: "アーキテクチャ拡張性"
+                important: false
+                grade: 2
+                grade_description: "runner・ジョブマップ・比較定義・対象カタログの差し替えだけで新案件・次世代実装へ適用(facade 等のスクリプトは変更不要)"
+                reason: "設定所有区分の分離と runner への実装固有事項の閉じ込めにより、スクリプト無変更で適用範囲を拡張できる設計のため"
+                source_model: "条件: 設定所有区分 / 条件: 実装固有事項の runner への閉じ込め / BUC: 適用構成定義フロー"
+                confidence: "high"
+      - id: "F.3"
+        name: "適合規格"
+        items:
+          - id: "F.3.1"
+            name: "適合規格"
+            important: false
+            metrics:
+              - id: "F.3.1.1"
+                name: "業界標準・規格"
+                important: false
+                grade: 0
+                grade_description: "特定なし"
+                reason: "モデルシステム1のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+              - id: "F.3.1.2"
+                name: "アクセシビリティ"
+                important: false
+                grade: 0
+                grade_description: "対象外(UI 画面なし)"
+                reason: "UI 画面を持たないため"
+                source_model: "システム概要(interface_kind: cli)"
+                confidence: "high"
+      - id: "F.4"
+        name: "機材設置環境条件"
+        items:
+          - id: "F.4.1"
+            name: "設置環境"
+            important: false
+            metrics:
+              - id: "F.4.1.1"
+                name: "耐震クラス"
+                important: false
+                grade: 1
+                grade_description: "一般オフィス"
+                reason: "モデルシステム1のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+              - id: "F.4.1.2"
+                name: "空調・温度管理"
+                important: false
+                grade: 1
+                grade_description: "既存サーバルームの環境に従う"
+                reason: "モデルシステム1のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+              - id: "F.4.1.3"
+                name: "物理セキュリティ"
+                important: false
+                grade: 1
+                grade_description: "既存サーバルームの入退室管理に従う"
+                reason: "モデルシステム1のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+      - id: "F.5"
+        name: "環境マネージメント"
+        items:
+          - id: "F.5.1"
+            name: "環境対策"
+            important: false
+            metrics:
+              - id: "F.5.1.1"
+                name: "CO2排出量"
+                important: false
+                grade: 0
+                grade_description: "考慮なし"
+                reason: "モデルシステム1のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+              - id: "F.5.1.2"
+                name: "廃棄物・リサイクル"
+                important: false
+                grade: 0
+                grade_description: "特定なし"
+                reason: "モデルシステム1のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"

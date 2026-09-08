@@ -1,0 +1,96 @@
+round: 1
+group: G4
+findings:
+  - id: S3-G4-001
+    uc: "実行監視業務/background 実行監視フロー/ハング疑い・実行エラー・比較異常を通知する"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/実行監視業務/background 実行監視フロー/ハング疑い・実行エラー・比較異常を通知する/spec.md"
+    line: 42
+    severity: minor
+    viewpoint: 3
+    claim: "spec.md(42 行・134 行・BDD 200 行)は本文の 80 桁制限を「1〜13 行目のみ」と書くが、正本 ui-design.md「行長」と同 UC の tier-ops.md 40 行は 11 行目 artifact_dir を 80 桁制限の例外としており、spec.md と tier-ops.md で契約が食い違う"
+    fix: "spec.md の 42 行・134 行・BDD 200 行を「80 桁制限は 1〜13 行目のうち 11 行目 artifact_dir を除く行に適用(artifact_dir と 14 行目は折り返さず 80 桁を超えてよい)」に揃える(tier-ops.md 40 行・106 行と同文)"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/ux-ui/ui-design.md#行長"
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/実行監視業務/background 実行監視フロー/ハング疑い・実行エラー・比較異常を通知する/tier-ops.md#出力契約"
+  - id: S3-G4-002
+    uc: "実行監視業務/background 実行監視フロー/background 異常の通知メールを受け取る"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/実行監視業務/background 実行監視フロー/background 異常の通知メールを受け取る/tier-ops.md"
+    line: 32
+    severity: minor
+    viewpoint: 3
+    claim: "tier-ops.md 32 行の本文見出しと BDD 102 行「1〜13 行目に 80 桁を超える行は無い」は 11 行目 artifact_dir を例外にしておらず、ui-design.md「行長」および通知 UC の tier-ops.md(artifact_dir は折り返さず 80 桁を超えてよい)と一致しない"
+    fix: "32 行を「80 桁制限は 1〜13 行目のうち 11 行目 artifact_dir を除く行に適用。artifact_dir と 14 行目は折り返さず 80 桁を超えてよい」に、BDD 102 行を「11 行目 artifact_dir を除く 1〜13 行目に 80 桁を超える行は無い」に直す"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/ux-ui/ui-design.md#行長"
+  - id: S3-G4-003
+    uc: "実行監視業務/background 実行監視フロー/buc-spec"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/実行監視業務/background 実行監視フロー/buc-spec.md"
+    line: 142
+    severity: minor
+    viewpoint: 7
+    claim: "BUC 内共有条件「通知レベルの判定」の説明が件名プレフィックスを固定文字列 `[relay-gate][{level}]` で書いており、D10(件名プレフィックスは hang-detector.env の ALERT_SUBJECT_PREFIX から取る。既定 `[relay-gate]`)と契約 hang-detector.sh notes「固定文字列を埋め込まない」に反する旧契約の残存"
+    fix: "142 行の件名を `{ALERT_SUBJECT_PREFIX}[{level}] {kind} run_id= job_id= role=`(プレフィックスはハング検知定期ジョブ設定の ALERT_SUBJECT_PREFIX。既定 `[relay-gate]`)に書き換える"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/cli-command-contract.yaml#commands.hang-detector.sh.notes"
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_review/change-brief.md#D10"
+  - id: S3-G4-004
+    uc: "実行監視業務/background 実行監視フロー/監視記録を保存する"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/実行監視業務/background 実行監視フロー/監視記録を保存する/spec.md"
+    line: 111
+    severity: minor
+    viewpoint: 5
+    claim: "計算ルール hang_suspected_at の注記「rdb-schema.yaml の列説明「最初に判定した日時」は本 spec に合わせて「送信成功日時」へ揃える。契約側で対応」は、rdb-schema.yaml の monitor_records.hang_suspected_at が既に「送信成功日時」になっているため解消済みの指示が残っている"
+    fix: "111 行の括弧内の指示文を削除し「ハング疑い通知の送信成功時に now(判定時刻ではない。rdb-schema.yaml の列説明と同じ)。既存値があれば保持」だけにする"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/datastore/rdb-schema.yaml#monitor_records.hang_suspected_at"
+  - id: S3-G4-005
+    uc: "実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/spec.md"
+    line: 199
+    severity: minor
+    viewpoint: 1
+    claim: "「バリエーション一覧」で使っているバリエーション(ハング検知上限設定 / slot 実行モード / run role(成果物ディレクトリ区分) / 速報クロスチェック監視判定 / 設定所有区分)が「関連 RDRA モデル」表のバリエーション行に無く、トレーサビリティ表が本文と一致しない"
+    fix: "関連 RDRA モデル表(199〜202 行付近)にバリエーション行を 5 つ追加する: ハング検知上限設定(60 分 / 調整値 / 0)、slot 実行モード(background のみ監視対象)、run role(成果物ディレクトリ区分)(blue / green は成果物走査、rapid-crosscheck は依頼走査、final-crosscheck は対象外)、速報クロスチェック監視判定(3 値)、設定所有区分(ハング検知定期ジョブ設定)"
+    source_refs:
+      - "docs/rdra/latest/バリエーション.tsv#ハング検知上限設定"
+      - "docs/rdra/latest/バリエーション.tsv#速報クロスチェック監視判定"
+  - id: S3-G4-006
+    uc: "実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/spec.md"
+    line: 88
+    severity: minor
+    viewpoint: 7
+    claim: "処理フローの DB 接続失敗分岐に `error: management db query failed ...` があるが、契約 hang-detector.sh の stderr と同 UC の tier-ops.md 出力契約には `error: management db connection failed conn_ref=...`(6)しか無く、文言が契約と一致しない"
+    fix: "88 行を `stderr error: management db connection failed conn_ref=..., 終了コード 6(成果物側の判定は行ったうえで 6)` に揃え、`management db query failed` を削除する(SELECT 失敗も同文で扱う旨は tier-ops.md 47 行の終了コード表どおり)"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/cli-command-contract.yaml#commands.hang-detector.sh.stderr"
+  - id: S3-G4-007
+    uc: "実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/spec.md"
+    line: 174
+    severity: minor
+    viewpoint: 1
+    claim: "tier-ops.md 判定表の注記「走査窓内の ABORTED slot は監視記録の有無によらず COMPLETED と判定し、記録 UC が COMPLETED の監視記録を UPSERT する」と契約 shared_rules.state_codes.monitor_status_transitions「(初回判定)→ NOT_MONITORED / MONITORING / COMPLETED」は監視記録が無い対象を直接 COMPLETED にする遷移を前提とするが、spec.md の状態遷移一覧(174〜177 行)は `[*]` → NOT_MONITORED / MONITORING しか載せておらず、状態.tsv「監視状態」にもこの遷移が無い"
+    fix: "状態遷移一覧に `[*]` → 正常終了(COMPLETED)の行(事前条件: 初回判定時に既に exitcode.txt=0 または exitcode.txt 無し・aborted.txt あり。契約 monitor_status_transitions の「(初回判定)→ COMPLETED」)を追加し、状態.tsv に無い遷移である旨を完了報告の要確認(rdra-feedback 候補)に挙げる"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/cli-command-contract.yaml#shared_rules.state_codes.monitor_status_transitions"
+      - "docs/rdra/latest/状態.tsv#監視状態"
+  - id: S3-G4-008
+    uc: "実行監視業務/background 実行監視フロー/ハング疑い・実行エラー・比較異常を通知する"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/実行監視業務/background 実行監視フロー/ハング疑い・実行エラー・比較異常を通知する/spec.md"
+    line: 181
+    severity: minor
+    viewpoint: 7
+    claim: "関連 USDM の SPEC-008-03 行が対応 BDD として「ハング疑い通知後の速報比較依頼の比較異常は別種別として 1 回送る(SPEC-008-02)」を挙げており、当該シナリオ(223 行)は SPEC-008-03 の受け入れ条件(ハング疑い通知後の FAILED / 比較 NG → 比較異常通知済み)に対応するのに Scenario 名の SPEC ID 表記が SPEC-008-02 のままである"
+    fix: "223 行の Scenario 名の表記を「(SPEC-008-03)」に改め、181 行の対応 BDD 名も同じ表記に揃える"
+    source_refs:
+      - "docs/usdm/latest/requirements.yaml#SPEC-008-03"
+resolved:
+  - {id: S3-G4-001, resolution: fixed}
+  - {id: S3-G4-002, resolution: fixed}
+  - {id: S3-G4-003, resolution: fixed}
+  - {id: S3-G4-004, resolution: fixed}
+  - {id: S3-G4-005, resolution: fixed}
+  - {id: S3-G4-006, resolution: fixed}
+  - {id: S3-G4-007, resolution: fixed, note: "状態遷移一覧に `[*]` → COMPLETED を追加。状態.tsv「監視状態」に無い遷移のため rdra-feedback 候補(要確認)"}
+  - {id: S3-G4-008, resolution: fixed}

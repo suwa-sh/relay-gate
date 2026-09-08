@@ -1,0 +1,181 @@
+# digest of nfr/latest/nfr-grade.yaml section categories[id=B] (L182-360); source_sha256: 69cca2e1c16f18ab4178b5a0e5af690acc7a82338c64a37176767e860a06693f
+# 派生物。正本は nfr-grade.yaml。編集しない
+  - id: "B"
+    name: "性能・拡張性"
+    subcategories:
+      - id: "B.1"
+        name: "業務処理量"
+        items:
+          - id: "B.1.1"
+            name: "通常時の業務量"
+            important: true
+            metrics:
+              - id: "B.1.1.1"
+                name: "同時アクセス数"
+                important: true
+                grade: 1
+                grade_description: "〜100"
+                reason: "利用者は運用部門の少人数(運用者・基盤適用設計者)で、CLI と定期ジョブのみのため"
+                source_model: "アクター: 運用者、基盤適用設計者 / 条件: CLI とメールによる提示"
+                confidence: "high"
+              - id: "B.1.1.2"
+                name: "データ量"
+                important: false
+                grade: 1
+                grade_description: "〜100万件/年(parallel_run・slot 実行・比較依頼・監視記録の管理レコード)"
+                reason: "管理レコードはジョブ実行 1 回につき数件で、年間 100 万件以内と想定する(規模感プリインタビュー仮置き)"
+                source_model: "情報: 並行稼働実行(parallel_run)、slot 実行、速報比較依頼、監視記録"
+                confidence: "medium"
+              - id: "B.1.1.3"
+                name: "オンラインリクエスト件数"
+                important: true
+                grade: 1
+                grade_description: "〜1,000件/日(facade 起動・定期監視・CLI 操作の合計)"
+                reason: "オンライン画面は無く、リクエストに相当するのはジョブスケジューラからの facade 起動と 5 分ごとの監視ジョブのため"
+                source_model: "バリエーション: ジョブスケジューラ起動ジョブ種別"
+                confidence: "medium"
+              - id: "B.1.1.4"
+                name: "バッチ処理件数"
+                important: false
+                grade: 2
+                grade_description: "確報は全テーブル・全ファイルの日次全量比較(対象件数は適用側の対象カタログで定義)"
+                reason: "確報クロスチェックが business_date 単位で全テーブル・全ファイルを比較する大量バッチのため"
+                source_model: "BUC: 確報クロスチェックフロー / 情報: 対象カタログ"
+                confidence: "medium"
+          - id: "B.1.2"
+            name: "ピーク時の業務量"
+            important: false
+            metrics:
+              - id: "B.1.2.1"
+                name: "ピーク時同時アクセス数"
+                important: true
+                grade: 2
+                grade_description: "通常時の2倍"
+                reason: "並行稼働モードでは blue と green の 2 系統が同時実行され、速報クロスチェックも追加で動くため、単独本番時に対して 2 倍の同時実行を見込む"
+                source_model: "バリエーション: 運用モード / 条件: slot 起動順序"
+                confidence: "medium"
+              - id: "B.1.2.2"
+                name: "ピーク時データ量"
+                important: false
+                grade: 1
+                grade_description: "並行稼働時は成果物(Runner Result)が blue / green の 2 倍"
+                reason: "並行稼働時は slot ごとに成果物ディレクトリを生成するため"
+                source_model: "情報: Runner Result / バリエーション: 実装スロット"
+                confidence: "medium"
+      - id: "B.2"
+        name: "性能目標値"
+        items:
+          - id: "B.2.1"
+            name: "オンライン"
+            important: true
+            metrics:
+              - id: "B.2.1.1"
+                name: "レスポンスタイム"
+                important: true
+                grade: 2
+                grade_description: "10秒以内(facade のオーバーヘッド・中止/リラン CLI の応答)"
+                reason: "運用者向けの CLI 操作と facade の起動・中継のオーバーヘッドが対象で、業務ジョブ本体の処理時間は実装側の責務のため"
+                source_model: "条件: facade の責務限定 / 条件: CLI とメールによる提示"
+                confidence: "medium"
+              - id: "B.2.1.2"
+                name: "スループット"
+                important: true
+                grade: 1
+                grade_description: "〜10 TPS"
+                reason: "ジョブキュー兼管理 DB への書き込みはジョブ起動・完了通知・claim・監視記録が中心で低頻度のため"
+                source_model: "システム概要: ジョブキュー兼管理 DB(relay-gate 内部のデータストア)"
+                confidence: "high"
+              - id: "B.2.1.3"
+                name: "ターンアラウンドタイム"
+                important: false
+                grade: 1
+                grade_description: "foreground 結果は slot 終了後に即時中継。速報クロスチェックは非同期で応答に影響させない"
+                reason: "facade は foreground の PID だけを待機し、background や速報の完了を待たずに応答する設計のため"
+                source_model: "条件: ジョブスケジューラ応答の決定 / 条件: 速報結果の位置付け"
+                confidence: "high"
+          - id: "B.2.2"
+            name: "バッチ"
+            important: true
+            metrics:
+              - id: "B.2.2.1"
+                name: "バッチ処理時間"
+                important: true
+                grade: 2
+                grade_description: "8時間以内(日次確報クロスチェックは夜間ウィンドウ内に完了)"
+                reason: "確報クロスチェックは日次処理が落ち着いた後に起動しリリース判断に用いるため、翌日の業務開始前に完了する必要がある。導入時のハング検知上限 60 分から個々のジョブは 1 時間程度と想定"
+                source_model: "BUC: 確報クロスチェックフロー / バリエーション: ハング検知上限設定"
+                confidence: "medium"
+              - id: "B.2.2.2"
+                name: "バッチ処理量"
+                important: false
+                grade: 1
+                grade_description: "速報はジョブ単位、確報は対象カタログの全テーブル・全ファイル"
+                reason: "比較種別が速報(ジョブ単位比較)と確報(全量比較)に分かれ、対象は適用側が定義するため"
+                source_model: "バリエーション: 比較種別 / 情報: 対象カタログ"
+                confidence: "medium"
+      - id: "B.3"
+        name: "リソース拡張性"
+        items:
+          - id: "B.3.1"
+            name: "CPU"
+            important: true
+            metrics:
+              - id: "B.3.1.1"
+                name: "CPU拡張性"
+                important: true
+                grade: 2
+                grade_description: "スケールアウト(サーバ追加)"
+                reason: "クロスチェック worker は管理 DB を poll / claim し worker_id と lease で多重実行を防ぐ設計のため、worker を追加して水平に拡張できる。lease 期間と poll 間隔は速報クロスチェック設定(RAPID_LEASE_SEC / RAPID_POLL_INTERVAL_SEC)で適用側が調整する"
+                source_model: "条件: claim 排他 / 条件: lease 失効判定 / 情報: 速報クロスチェック設定"
+                confidence: "high"
+          - id: "B.3.2"
+            name: "メモリ"
+            important: false
+            metrics:
+              - id: "B.3.2.1"
+                name: "メモリ拡張性"
+                important: false
+                grade: 1
+                grade_description: "スケールアップ"
+                reason: "モデルシステム1のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+          - id: "B.3.3"
+            name: "ストレージ"
+            important: false
+            metrics:
+              - id: "B.3.3.1"
+                name: "ストレージ拡張性"
+                important: false
+                grade: 1
+                grade_description: "スケールアップ(成果物ディレクトリ・実行ログの増加に応じて拡張)"
+                reason: "run ごとに成果物ディレクトリと実行ログを蓄積するため、保管期間に応じたストレージ増設が必要"
+                source_model: "情報: Runner Result、実行ログ"
+                confidence: "medium"
+          - id: "B.3.4"
+            name: "ネットワーク"
+            important: false
+            metrics:
+              - id: "B.3.4.1"
+                name: "ネットワーク拡張性"
+                important: false
+                grade: 1
+                grade_description: "特別な要件なし"
+                reason: "モデルシステム1のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+      - id: "B.4"
+        name: "性能品質保証"
+        items:
+          - id: "B.4.1"
+            name: "性能テスト"
+            important: true
+            metrics:
+              - id: "B.4.1.1"
+                name: "性能テスト"
+                important: true
+                grade: 1
+                grade_description: "単体での性能テスト"
+                reason: "relay-gate のオーバーヘッド(起動・中継・poll)の確認に限定し、業務ジョブ本体の性能は実装側の責務のため"
+                source_model: "条件: facade の責務限定"
+                confidence: "medium"

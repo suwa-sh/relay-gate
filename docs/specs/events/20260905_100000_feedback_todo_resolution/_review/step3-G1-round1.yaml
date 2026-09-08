@@ -1,0 +1,116 @@
+round: 1
+group: G1
+findings:
+  - id: S3-G1-001
+    uc: "実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/spec.md"
+    line: 161
+    severity: major
+    viewpoint: 7
+    claim: "計算ルール「運用モード名」の英字コードが `parallel` / `green-only` / `next-parallel` となっており、契約 config_files.feature-flag.env.derived(U10)の `parallel` / `green_only` / `next_gen_parallel` と不一致(同 UC の tier-facade.md 106 行目は契約どおり)"
+    fix: "`green-only` → `green_only`、`next-parallel` → `next_gen_parallel` に修正し、値の出所を「契約 config_files.feature-flag.env.derived」と明記する"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/cli-command-contract.yaml#config_files.feature-flag.env.derived"
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_review/change-brief.md#U10"
+  - id: S3-G1-002
+    uc: "実装切替業務/実装切替ジョブ実行フロー/実装スクリプトを実行して Runner Result を出力する"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/実装切替業務/実装切替ジョブ実行フロー/実装スクリプトを実行して Runner Result を出力する/tier-facade.md"
+    line: 150
+    severity: major
+    viewpoint: 7
+    claim: "ティア BDD「slot_executions の更新件数が 0 でも exitcode.txt の値で終了する」の Then が実行ログ `ERROR slot_executions update affected 0 rows run_id=... role=...` を期待しており、契約 runner IF idempotency / execution_log と同ファイル 58 行目・spec.md 105 / 292 行目の `WARN management db not updated run_id=... role=...`(U5)と矛盾する"
+    fix: "Then を `実行ログに \"WARN management db not updated run_id=<run_id> role=green\" が出る` に書き換える(ERROR ではなく WARN。文言は契約と同一)"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/cli-command-contract.yaml#commands[$BLUE_RUNNER / $GREEN_RUNNER].execution_log"
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_review/change-brief.md#U5"
+  - id: S3-G1-003
+    uc: "実装切替業務/実装切替ジョブ実行フロー/実装スクリプトを実行して Runner Result を出力する"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/実装切替業務/実装切替ジョブ実行フロー/実装スクリプトを実行して Runner Result を出力する/_model-summary.yaml"
+    line: 62
+    severity: major
+    viewpoint: 5
+    claim: "slot_executions の UPDATE note が「更新件数 0 は実行ログ `ERROR slot_executions update affected 0 rows ...`(中止済みなら WARN)」と旧文言を残しており、spec.md の処理フロー(105 行目)・tier-facade.md 58 行目・契約の `WARN management db not updated run_id=... role=...` と不整合"
+    fix: "note の該当部分を「更新件数 0(行なし・既に ABORTED)は実行ログ `WARN management db not updated run_id=... role=...` のみ(ERROR ではない)」に置き換える"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/cli-command-contract.yaml#commands[$BLUE_RUNNER / $GREEN_RUNNER].idempotency"
+  - id: S3-G1-004
+    uc: "実装切替業務/実装切替ジョブ実行フロー/実装スクリプトを実行して Runner Result を出力する"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/実装切替業務/実装切替ジョブ実行フロー/実装スクリプトを実行して Runner Result を出力する/tier-facade.md"
+    line: 24
+    severity: major
+    viewpoint: 7
+    claim: "環境変数 `RAPID_CROSSCHECK_RUNNER` が「未設定・実行不可なら完了通知は失敗扱い(条件『完了通知失敗の扱い』)」と書かれているが、契約 runner IF exit_codes 2 は「RAPID_CROSSCHECK_MODE が off 以外で RAPID_CROSSCHECK_RUNNER 環境変数が未設定・実行不可」を設定検証エラー(exitcode.txt=2)と定めており、通知失敗(WARN のみ・exit_code=127)に含めるのは「起動できなかった場合」だけ(U8)"
+    fix: "「未設定・実行不可は実装起動前の設定検証で exitcode.txt=2(stderr.log `error: option required option=RAPID_CROSSCHECK_RUNNER` / `error: file not executable key=RAPID_CROSSCHECK_RUNNER path=...`)。起動時に起動できなかった場合だけ完了通知失敗(実行ログ WARN、exit_code=127)」に改め、UC ロジックのバリデーション項目と終了コード表(2 の条件)にも追加する"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/cli-command-contract.yaml#commands[$BLUE_RUNNER / $GREEN_RUNNER].exit_codes"
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_review/change-brief.md#U8"
+  - id: S3-G1-005
+    uc: "実装切替業務/実装切替ジョブ実行フロー/実装スクリプトを実行して Runner Result を出力する"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/実装切替業務/実装切替ジョブ実行フロー/実装スクリプトを実行して Runner Result を出力する/_api-summary.yaml"
+    line: 24
+    severity: minor
+    viewpoint: 4
+    claim: "exit_codes 2 の meaning に「RAPID_CROSSCHECK_MODE が off 以外で RAPID_CROSSCHECK_RUNNER 環境変数が未設定・実行不可」が無く、契約 runner IF exit_codes 2 の条件と一致しない(S3-G1-004 と同根)"
+    fix: "meaning に「/ RAPID_CROSSCHECK_MODE が off 以外で RAPID_CROSSCHECK_RUNNER 未設定・実行不可」を追記する"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/cli-command-contract.yaml#commands[$BLUE_RUNNER / $GREEN_RUNNER].exit_codes"
+  - id: S3-G1-006
+    uc: "実装切替業務/実装切替ジョブ実行フロー/実装スクリプトを実行して Runner Result を出力する"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/実装切替業務/実装切替ジョブ実行フロー/実装スクリプトを実行して Runner Result を出力する/tier-facade.md"
+    line: 115
+    severity: minor
+    viewpoint: 7
+    claim: "ティア BDD の Then が実行ログ `ssh finished exit_code=0` を期待しているが、契約 runner IF execution_log と同ファイル 65 行目の文言は `INFO ssh exec finished run_id=... role=... exit_code=N` であり部分一致しない(U6)"
+    fix: "Then を `実行ログの \"ssh exec finished run_id=20260830T113000-JOB001-3f9a1c2e role=green exit_code=0\" は \"runner result published\" より前に出る` に修正する"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/cli-command-contract.yaml#commands[$BLUE_RUNNER / $GREEN_RUNNER].execution_log"
+  - id: S3-G1-007
+    uc: "実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/tier-facade.md"
+    line: 76
+    severity: minor
+    viewpoint: 7
+    claim: "エラーメッセージ表の「mode 列挙外」が `error: invalid value key=BLUE_MODE value=parallel` の 1 行だけで、契約 config_files.feature-flag.env.error_messages(U7)が定める次行 `hint: use foreground, background or off`(KEY が RAPID_CROSSCHECK_MODE / BLUE_MODE / GREEN_MODE のとき)が欠けている"
+    fix: "表の stderr 欄を `error: invalid value key=BLUE_MODE value=parallel` + `hint: use foreground, background or off` の 2 行にし、spec.md の BDD「未知の実行モードは拒否する」(312 行目)の And にも hint 行を追加する"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/cli-command-contract.yaml#config_files.feature-flag.env.error_messages"
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_review/change-brief.md#U7"
+  - id: S3-G1-008
+    uc: "実装切替業務/実装切替ジョブ実行フロー/execution-spec.json を確定保存する"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/実装切替業務/実装切替ジョブ実行フロー/execution-spec.json を確定保存する/tier-facade.md"
+    line: 49
+    severity: minor
+    viewpoint: 3
+    claim: "UC ロジックのバリデーションが「6 は lock タイムアウト・書き込み失敗のみ」と書く一方、同ファイル 39 行目の終了コード表と _api-summary.yaml(26 行目)・契約 runner IF exit_codes 6 は「既存 JSON の解析失敗(通常起動で他 slot が書いた JSON が不正)」も 6 に含めており、通常起動時の既存 JSON 不正の終了コードがファイル内で矛盾する"
+    fix: "49 行目を「復元起動(--execution-spec)の spec なし・run_id 不一致・欠落は 2、通常起動で既存 JSON が解析できない・slots を持たない・run_id 不一致の場合は契約どおり 6(stderr.log `error: execution-spec write failed ...` ではなく `error: execution-spec invalid path=... run_id=...`)」に整理し、39 行目の表と一致させる"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/cli-command-contract.yaml#commands[$BLUE_RUNNER / $GREEN_RUNNER].exit_codes"
+  - id: S3-G1-009
+    uc: "実装切替業務/実装切替ジョブ実行フロー/execution-spec.json を確定保存する"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/実装切替業務/実装切替ジョブ実行フロー/execution-spec.json を確定保存する/_api-summary.yaml"
+    line: 79
+    severity: minor
+    viewpoint: 4
+    claim: "SlotSpec の `credential_ref` だけ required: false になっているが、tier-facade.md のフィールド表(91 行目)と spec.md の BDD(179 行目)では列が無い・空のとき `null` を書く(キーは常に存在)と定めており、同じ扱いの `map_version`(required: true)と整合しない"
+    fix: "`credential_ref` を required: true(型 string|null。列が無い・空なら null)に揃え、description に「ジョブマップの任意列。列が無い・空なら null」を追記する"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/実装切替業務/実装切替ジョブ実行フロー/execution-spec.json を確定保存する/tier-facade.md#slots.<role>(SlotSpec)"
+  - id: S3-G1-010
+    uc: "実装切替業務/実装切替ジョブ実行フロー/ジョブマップで JOB_ID から実行先を解決する"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/実装切替業務/実装切替ジョブ実行フロー/ジョブマップで JOB_ID から実行先を解決する/tier-facade.md"
+    line: 112
+    severity: minor
+    viewpoint: 2
+    claim: "ティア BDD の Given が `\"JOB001,...,\"\"[\"\"\"\"--mode\"\"\"\",\"\"\"\"full\"\"\"\"]\"\",60,...\" に相当する CSV 行` と二重にエスケープした表記で、実際の CSV 1 行の具体値が一意に読み取れない(括弧内の補足で補っているが入力値が曖昧)"
+    fix: "Given を実ファイルの 1 行そのまま(例: `JOB001,host-green-01,batch,/var/app/work,/opt/app/bin/job001.sh,\"[\"\"--mode\"\",\"\"full\"\"]\",60,ssh-key-green,map-v3`)を単一引用符で囲んで示す形に書き換え、「に相当する」表現を外す"
+resolved:
+  - {id: S3-G1-001, resolution: fixed}
+  - {id: S3-G1-002, resolution: fixed}
+  - {id: S3-G1-003, resolution: fixed}
+  - {id: S3-G1-004, resolution: fixed}
+  - {id: S3-G1-005, resolution: fixed}
+  - {id: S3-G1-006, resolution: fixed}
+  - {id: S3-G1-007, resolution: fixed}
+  - {id: S3-G1-008, resolution: fixed}
+  - {id: S3-G1-009, resolution: fixed}
+  - {id: S3-G1-010, resolution: fixed}

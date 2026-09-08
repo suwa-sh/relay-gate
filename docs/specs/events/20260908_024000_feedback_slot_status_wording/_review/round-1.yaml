@@ -1,0 +1,65 @@
+round: 1
+findings:
+  - id: R-001
+    viewpoint: 4
+    severity: major
+    target: "_cross-cutting/datastore/datastore-schema.md"
+    claim: "rdb-schema.yaml(正本)の slot_executions.status / テーブル description を新文言へ改訂したが、複製である datastore-schema.md は latest と同一のまま(diff 無し)で旧文言が残っている"
+    evidence: "datastore-schema.md 98 行目「status は runner / abort-* の条件付き UPDATE(WHERE status='RUNNING')で一度だけ終端値を書く列(arch storage_mapping E-014 rdb)」/ 165 行目「本列は runner / abort-* の条件付き UPDATE(WHERE status='RUNNING')で一度だけ終端値を書く。…判定キーに使う(USDM SPEC-005-02 AC6)」。rdb-schema.yaml 128 / 153 行目は「同条件の管理 DB 側の規則に従い、runner / abort-* が aborted.txt または exitcode.txt の公開時点の状態を条件付き UPDATE…で一度だけ書く」「判定材料に使う(USDM SPEC-005-02 AC6 / AC9)」に改訂済み。`diff latest/... events/.../datastore-schema.md` は SAME"
+    suggested_fix: "datastore-schema.md の slot_executions テーブル description(98 行目)と status 列説明(165 行目)を rdb-schema.yaml 128 / 153 行目と同文に再生成(または手動追従)する。判定キー → 判定材料、AC6 → AC6 / AC9、「条件「slot 実行の状態導出規則」の管理 DB 側の規則」への参照を揃える"
+  - id: R-002
+    viewpoint: 4
+    severity: minor
+    target: "実装切替業務/実装切替ジョブ実行フロー/実装スクリプトを実行して Runner Result を出力する/spec.md"
+    claim: "UC-05 は概要(5 行目)だけ新文言へ追従し、分岐条件一覧の同条件行(141 行目)と tier-facade.md / _model-summary.yaml、UC-09 tier-rapid-crosscheck.md は旧用語(判定キー / AC6 のみ / 終端値)のままで、差分ファイル間の用語が揃っていない"
+    evidence: "UC-05 spec.md 141 行目「管理 DB の slot_executions.status は runner / abort-* の条件付き UPDATE(WHERE status='RUNNING')で一度だけ終端値を書く。…(再同期しない。dispatcher の条件「中止済み run の比較依頼作成除外」の判定キー。SPEC-005-02 AC6)」。同 UC tier-facade.md 75 / 97 行目、_model-summary.yaml 62 行目も「一度だけ終端値を書く」。UC-09 tier-rapid-crosscheck.md 97 行目「…(SPEC-005-02 AC6)」。一方 cli-command-contract.yaml 123 行目 / rdb-schema.yaml 153 行目 / buc-spec.md 130 行目は「公開時点の状態を…一度だけ書く」「判定材料に使う(AC6 / AC9)」"
+    suggested_fix: "UC-05 spec.md 141 行目を「同条件の管理 DB 側の規則: aborted.txt または exitcode.txt の公開時点の状態を条件付き UPDATE(WHERE status='RUNNING')で一度だけ書く…判定材料(SPEC-005-02 AC6 / AC9)」に揃える。tier-facade.md 75 / 97 行目、_model-summary.yaml 62 行目、UC-09 tier-rapid-crosscheck.md 97 行目の「判定キー」「AC6」も同様に「判定材料」「AC6 / AC9」へ追従する(実装挙動は不変のため文言のみ)"
+  - id: R-003
+    viewpoint: 5
+    severity: minor
+    target: "クロスチェック業務/速報クロスチェックフロー/両系成功時に速報比較依頼を作成する/spec.md"
+    claim: "追加 BDD シナリオ(AC9)の And 節が、When で実行していない操作(その後の blue の完了通知)の結果「依頼を作成しない」を断定しており、単一 Then で検証可能な粒度を外れている"
+    evidence: "spec.md 284〜288 行目: When は「exitcode.txt=`0` を公開し、…終端 UPDATE が 0 件で終わった後に管理 DB を確認する」、Then は「slot_executions(run_id, blue).status は `ABORTED` のままである」で AC9 と一致する。続く And「blue の Runner Result(exitcode.txt=`0`)は変わらず、その後の blue の完了通知は条件「中止済み run の比較依頼作成除外」により依頼を作成しない」は完了通知を When に含めていないため検証不能(同内容は AC6 シナリオ 275〜281 行目で既に検証済み)"
+    suggested_fix: "And 節を「blue/exitcode.txt の中身は `0` のままである」だけに絞り、完了通知に関する記述は削除するか AC6 シナリオへの参照メモ(シナリオ外)に移す"
+  - id: R-004
+    viewpoint: 1
+    severity: minor
+    target: "クロスチェック業務/速報クロスチェックフロー/両系成功時に速報比較依頼を作成する/spec.md"
+    claim: "UC-09 は AC9 シナリオと分岐条件行で条件「slot 実行の状態導出規則」を引用するようになったが、関連 RDRA モデル表に同条件の行が無く、traceability-matrix の同条件行(UC-09 を含まない)と usdm-acceptance-matrix(SPEC-005-02 に同条件を併記)の間で参照が揃っていない"
+    evidence: "UC-09 spec.md 157〜180 行目「関連 RDRA モデル」の条件行は 両系成功判定 / 中止済み run の比較依頼作成除外 / 比較依頼の一意性 / 依頼状態遷移規則 / 速報と確報のモデル分離 のみ。同 spec.md 131 行目・287 行目は条件「slot 実行の状態導出規則」を引用。traceability-matrix.md 238 行目の同条件行は UC-05 / UC-18 / UC-23 / 前半 UC / リラン検証 UC の 5 件で UC-09 を含まない。usdm-acceptance-matrix.md 55 行目は SPEC-005-02 に「条件「中止済み run の比較依頼作成除外」「slot 実行の状態導出規則」」を併記"
+    suggested_fix: "UC-09 関連 RDRA モデル表に「| 条件 | slot 実行の状態導出規則 | 参照のみ(判定材料 slot_executions.status が abort 後も ABORTED のまま残る根拠。遷移・導出は行わない) |」を追加し、traceability-matrix.md 238 行目の対応 UC に UC-09 を追記する(関連 RDRA を「参照のみ」に留めるなら usdm-acceptance-matrix 側の併記を外して整合させる)"
+  - id: R-005
+    viewpoint: 4
+    severity: minor
+    target: "_cross-cutting/rdra-feedback.md"
+    claim: "ヘッダーの引用ブロックで、前イベントの説明と本イベントの説明を同一行に連結したため「。> 本イベント」と引用記号が行中に埋め込まれ、Markdown として `>` が本文に描画される"
+    evidence: "rdra-feedback.md 7 行目末尾付近「…(abort-blue / abort-green が parallel_runs を ABORTED にするため)。> 本イベントでは前イベントの確認推奨項目 #16…」(grep -o '。> 本イベント' で 1 件一致)"
+    suggested_fix: "「> 本イベントでは…」を改行して独立した引用行にする(前イベント段落と本イベント段落を別行に分ける)"
+  - id: R-006
+    viewpoint: 1
+    severity: minor
+    target: "spec-event.yaml"
+    claim: "spec-event.yaml のヘッダー(event_id / created_at / source / feedback_request / trigger_event)と review 履歴が前イベント 20260907_131000_feedback_abort_consistency のままで、本イベント(本 feedback request(CR-c770d8f0-019) / CR-c770d8f0-019 / RDRA event 20260908_011000)に更新されていない。review.final_state には解消済みの「rdra-feedback #16」注記が残る"
+    evidence: "spec-event.yaml 2 行目 event_id: \"20260907_131000_feedback_abort_consistency\"、3 行目 created_at: \"2026-09-07T13:10:00Z\"、feedback_request.feedback_request_id: \"20260907_abort_consistency\"、request_ids CR-016〜018。321 行目 final_state「…R-006 は round-3 でオーケストレータが rdra-feedback #16 として記録」、325 / 333 行目 history も前イベントの記録。_inputs-digest.md 2 行目は本イベント id に更新済みで不一致"
+    suggested_fix: "event_id / created_at / source / previous_event_ref(20260907_131000_feedback_abort_consistency)/ trigger_event(rdra:20260908_011000_feedback_slot_status_wording)/ feedback_request(本 feedback request、CR-c770d8f0-019#1)を本イベントの値に更新し、review.history は前イベント分を previous_event_history へ移して本イベントの Step6.5 結果を記録する(Step8 で更新する運用なら、その旨を本 finding の resolution に記す)"
+resolved:
+  - id: R-002
+    resolution: fixed
+    by: fixer
+  - id: R-003
+    resolution: fixed
+    by: fixer
+  - id: R-004
+    resolution: fixed
+    by: fixer
+  - id: R-005
+    resolution: fixed
+    by: fixer
+  - id: R-001
+    resolution: fixed
+    by: orchestrator
+    note: "generateDatastoreMd.js で datastore-schema.md を rdb-schema.yaml から再生成(Step7)"
+  - id: R-006
+    resolution: fixed
+    by: orchestrator
+    note: "spec-event.yaml のヘッダー / feedback_request / review 履歴を本イベントの値に更新(Step5)"

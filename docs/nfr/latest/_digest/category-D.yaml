@@ -1,0 +1,120 @@
+# digest of nfr/latest/nfr-grade.yaml section categories[id=D] (L602-719); source_sha256: 69cca2e1c16f18ab4178b5a0e5af690acc7a82338c64a37176767e860a06693f
+# 派生物。正本は nfr-grade.yaml。編集しない
+  - id: "D"
+    name: "移行性"
+    subcategories:
+      - id: "D.1"
+        name: "移行時期"
+        items:
+          - id: "D.1.1"
+            name: "移行時期"
+            important: false
+            metrics:
+              - id: "D.1.1.1"
+                name: "移行時期"
+                important: false
+                grade: 0
+                grade_description: "relay-gate 自体の移行なし(新規導入)"
+                reason: "relay-gate は新規導入の基盤であり、既存システムからのデータ移行を伴わない(規模感プリインタビュー仮置き)"
+                source_model: "システム概要"
+                confidence: "medium"
+      - id: "D.2"
+        name: "移行方式"
+        items:
+          - id: "D.2.1"
+            name: "移行方式"
+            important: true
+            metrics:
+              - id: "D.2.1.1"
+                name: "移行方式"
+                important: true
+                grade: 1
+                grade_description: "一括移行(ビッグバン方式)。ただし基盤が実現する現行→新実装の切替は feature flag による並行運用+段階移行"
+                reason: "relay-gate 自体はジョブ定義を facade 呼び出しへ置き換えて導入する。業務実装の切替は本基盤の目的そのものであり、運用モードの段階切替で行う"
+                source_model: "バリエーション: 運用モード / 情報: ジョブ起動要求"
+                confidence: "medium"
+      - id: "D.3"
+        name: "移行対象(機器)"
+        items:
+          - id: "D.3.1"
+            name: "移行対象機器"
+            important: false
+            metrics:
+              - id: "D.3.1.1"
+                name: "移行対象機器"
+                important: false
+                grade: 0
+                grade_description: "なし"
+                reason: "新規導入のため移行対象機器はない"
+                source_model: ""
+                confidence: "medium"
+              - id: "D.3.1.2"
+                name: "移行元環境の廃棄"
+                important: false
+                grade: 0
+                grade_description: "なし(現行実装の廃棄は並行稼働完了後の適用側判断)"
+                reason: "現行実装(blue)の停止は feature flag の off 設定で行い、廃棄は relay-gate の範囲外のため"
+                source_model: "バリエーション: 運用モード"
+                confidence: "medium"
+      - id: "D.4"
+        name: "移行対象(データ)"
+        items:
+          - id: "D.4.1"
+            name: "移行データ"
+            important: true
+            metrics:
+              - id: "D.4.1.1"
+                name: "データ移行量"
+                important: true
+                grade: 1
+                grade_description: "〜100GB(実質なし)"
+                reason: "新規導入のため移行データはない"
+                source_model: ""
+                confidence: "medium"
+              - id: "D.4.1.2"
+                name: "データ変換"
+                important: false
+                grade: 0
+                grade_description: "なし"
+                reason: "移行データがないため"
+                source_model: ""
+                confidence: "medium"
+              - id: "D.4.1.3"
+                name: "データクレンジング"
+                important: false
+                grade: 0
+                grade_description: "なし"
+                reason: "移行データがないため"
+                source_model: ""
+                confidence: "medium"
+      - id: "D.5"
+        name: "移行計画"
+        items:
+          - id: "D.5.1"
+            name: "移行計画"
+            important: true
+            metrics:
+              - id: "D.5.1.1"
+                name: "移行リハーサル"
+                important: true
+                grade: 0
+                grade_description: "リハーサルなし"
+                reason: "導入は blue foreground / green off から始めて feature flag を段階的に切り替えるため、一括切替のリハーサルを要しない"
+                source_model: "バリエーション: 運用モード / 条件: foreground slot 排他"
+                confidence: "medium"
+              - id: "D.5.1.2"
+                name: "移行判定基準"
+                important: false
+                grade: 1
+                grade_description: "確報クロスチェック(日次全量比較)の成功をリリース判断の正本とし、速報は原因調査に用いる"
+                reason: "速報結果の位置付けの条件で確報がリリース判断の正本と定義されているため"
+                source_model: "条件: 速報結果の位置付け / BUC: 確報クロスチェックフロー(リリース判断)"
+                confidence: "high"
+              - id: "D.5.1.3"
+                name: "切り戻し計画"
+                important: false
+                grade: 1
+                grade_description: "feature flag の slot 実行モードを戻す(ジョブスケジューラのジョブ定義は変更しない)"
+                reason: "運用モードは feature flag の組み合わせだけで表現し、ジョブ定義の改修なしで切り替えられるため"
+                source_model: "情報: feature flag 設定 / BUC: 適用構成定義フロー"
+                confidence: "high"

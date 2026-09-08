@@ -1,0 +1,29 @@
+version: "1.0"
+event_id: "20260907_120000_feedback_abort_consistency"
+created_at: "2026-09-07T12:00:00Z"
+trigger_event: "rdra:20260907_114000_feedback_abort_consistency"
+source: "RDRA 差分 20260907_114000_feedback_abort_consistency に基づく NFR 再評価(中止済み run の判定キーへの slot 実行 ABORTED 追加、速報比較依頼の中止対象を REQUESTED / CLAIMED / RUNNING に拡張、REQUESTED → ABORTED の位置づけ修正。trigger_event: rdra:20260907_114000_feedback_abort_consistency)"
+mode: "diff"
+feedback_request:
+  feedback_request_id: "20260907_abort_consistency"
+  input_sha256: "70cda63f92e887e459a3817580e45a840e3ff201065a534085ad113fb8910b81"
+  request_ids: ["CR-c770d8f0-016","CR-c770d8f0-017","CR-c770d8f0-018"]
+  work_unit_ids: ["CR-c770d8f0-016#1","CR-c770d8f0-017#1","CR-c770d8f0-018#1"]
+direct_work_unit_ids: []
+feedback_packet: "pipeline/feedback-runs/20260907_abort_consistency/stage-packets/quality_attributes.md"
+model_system:
+  changed: false
+metrics:
+  - id: "C.3.3.1"
+    name: "障害復旧方式"
+    grade: 1
+    grade_changed: false
+    caused_by: ["CR-c770d8f0-016","CR-c770d8f0-017","CR-c770d8f0-018"]
+    grade_description: "運用者の手動復旧(プロセス停止 → 中止スクリプト → background-rerun または正規ジョブ再実行)。abort-blue / abort-green は slot を ABORTED にするとき対象 run の未着手(REQUESTED)の速報比較依頼も ABORTED にする(完了通知で依頼が作成された直後に slot を中止した場合の競合窓を塞ぐ保険)。REQUESTED / CLAIMED / RUNNING の速報比較依頼の明示中止は worker 停止を確認したうえで abort-rapid-crosscheck で行い、確報比較依頼は RUNNING のみ abort-final-crosscheck で中止する。中止済み run(並行稼働実行が ABORTED、または対象 slot の slot 実行が ABORTED)では完了通知を受けても速報比較依頼を作成しない。完了通知の送信失敗は速報クロスチェック runner の同一引数再実行(冪等・先勝ち)で復旧。自動中止・自動再実行なし"
+    reason: "監視は通知のみで、復旧手段は復旧対象ごとに background 側リランと正規ジョブ再実行に分かれ、完了通知失敗の復旧も運用者の再実行で行う設計のため。中止済み run の判定は管理 DB の parallel_run.status と slot_executions.status(aborted.txt のミラー)で行い、foreground 完了後に background slot を中止した典型経路(並行稼働実行は COMPLETED のまま)も slot 実行 ABORTED の側で依頼作成から除外する。claim 済み(CLAIMED)の依頼は lease 失効で REQUESTED に戻り別の worker が再 claim するため、運用者が abort-rapid-crosscheck の条件付き UPDATE で ABORTED にし、worker は RUNNING への更新件数が 0 件なら比較を開始しない。リラン後は新しい run_id で依頼が作り直されるため、復旧後に古い依頼が残らない"
+    source_model: "条件: 監視は通知のみ / 条件: 復旧手段の選択 / 条件: 完了通知失敗の扱い / 条件: 中止済み run の比較依頼作成除外 / 条件: slot 中止可否判定 / 条件: 依頼中止可否判定 / 状態: クロスチェック依頼(REQUESTED / CLAIMED / RUNNING → ABORTED)"
+    confidence: "high"
+    before:
+      grade_description: "運用者の手動復旧(プロセス停止 → 中止スクリプト → background-rerun または正規ジョブ再実行)。中止スクリプトは対象 run の未着手(REQUESTED)の速報比較依頼も ABORTED にし、中止済み run では完了通知を受けても速報比較依頼を作成しない。完了通知の送信失敗は速報クロスチェック runner の同一引数再実行(冪等・先勝ち)で復旧。自動中止・自動再実行なし"
+      reason: "監視は通知のみで、復旧手段は復旧対象ごとに background 側リランと正規ジョブ再実行に分かれ、完了通知失敗の復旧も運用者の再実行で行う設計のため。中止した run の速報比較依頼は abort-blue / abort-green が ABORTED にし、中止済み run では速報クロスチェック runner が依頼を作らず、リラン後の新しい run_id で作り直されるため、復旧後に古い依頼が残らない"
+      source_model: "条件: 監視は通知のみ / 条件: 復旧手段の選択 / 条件: 完了通知失敗の扱い / 条件: 中止済み run の比較依頼作成除外 / 条件: slot 中止可否判定"

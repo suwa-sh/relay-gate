@@ -1,0 +1,18 @@
+# digest of arch/latest/arch-design.yaml section technology_context (L5-20); source_sha256: 45a30ece498ff31b18cdec055333a172156d453b8d6d4b4f330b716cfc87de04
+# 派生物。正本は arch-design.yaml。編集しない
+technology_context:
+  languages:
+    - "bash(シェルスクリプト。facade / runner / worker / 監視 / 復旧の全スクリプト)"
+    - "SQL(管理 DB のジョブキュー操作。RDB クライアント CLI 経由)"
+    - "JavaScript(CommonJS。BDD の step 定義のみ。実行時には使用しない)"
+  frameworks:
+    - "なし(フレームワーク非採用。bash 標準コマンド + ssh + RDB クライアント CLI + OS のメール送信コマンドで構成)"
+  constraints:
+    - "エアーギャップ環境のオンプレミス Linux。実行時にインターネット接続・外部 SaaS を要求しない"
+    - "UI 画面を持たない。CLI(標準出力・標準エラー・終了コード)と定期ジョブとメール通知だけで動作する。presentation 系 tier(frontend / web / ui)は作らない"
+    - "HTTP API は無い。IdP / API Gateway / 認可サービスは導入しない(SSH 鍵と OS 権限のみ)"
+    - "方針資料の C2/C3/C4 構成(facade / slot runner / rapid-crosscheck runner・worker / final-crosscheck runner・worker / hang-detector / background-rerun / abort-*)と Runner Result Contract(stdout.log / stderr.log / exitcode.txt + execution-spec.json)を spec 都合で変更しない"
+    - "設定契約(feature flag / slot ジョブマップ / クロスチェックジョブマップ / 適用文書)の設定所有区分を維持する"
+    - "管理 DB は RDB 1 種(ジョブキュー兼管理 DB)。速報側と確報側のデータモデルを分離する"
+    - "成果物に特定案件の固有名(製品名・サーバ名・業務名)を記載しない(中立表現)"
+    - "実行履歴・監査の正本はジョブスケジューラ。relay-gate はファイル(成果物・実行ログ)と管理レコードを残すだけ"

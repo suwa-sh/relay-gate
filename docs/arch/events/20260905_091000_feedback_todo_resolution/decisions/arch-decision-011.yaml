@@ -1,0 +1,31 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "architecture"
+artifact_id: "arch-decision-011"
+title: "slot 実行の状態はファイル正本(exitcode.txt / aborted.txt)から導出し、管理 DB は速報有効時の複製とする(二重マッピング確定)"
+status: "approved"
+generated_at: "2026-09-05T09:10:00Z"
+context: |
+  元の方針資料は (1) RAPID_CROSSCHECK_MODE=off では parallel_run を作成せず成果物ファイルだけで slot 実行と background 側リランが動く、
+  (2) RUNNING の background 実行は運用者が明示中止してからリランする、(3) abort-blue / abort-green は background かつ RUNNING のときだけ中止できる、と定めている。
+  これまでの arch storage_mapping E-014 は「ファイル正本 + 速報有効時の管理 DB」を confidence low で仮採用しており(todo DIST-009)、
+  ファイル側に「中止済み」を表す成果物が無いため off モードでは中止もリランも成立しなかった(CR-c770d8f0-004)。
+  RDRA は情報「Runner Result」に aborted.txt を追加し、条件「slot 実行の状態導出規則」を新設した。
+decision: |
+  - Runner Result に aborted.txt(中止日時 1 行。明示中止時のみ abort-blue / abort-green が一時ファイル → リネームで書く)を加える(CTR-001 / SR-001 / E-011)
+  - slot 実行の状態は全ティアが同じ規則で導出する: exitcode.txt があれば SUCCEEDED(0)/ FAILED(非 0)、無く aborted.txt があれば ABORTED、どちらも無ければ RUNNING(LP-005 / LP-019)
+  - storage_mapping E-014 は file(正本。confidence high)+ rdb(RAPID_CROSSCHECK_MODE が foreground / background のときだけ同じ状態を複製。confidence high)の二重マッピングとして確定する
+  - abort-blue / abort-green は off でも aborted.txt の書き込みだけで成立し、off 以外では管理 DB の slot 実行と並行稼働実行(STARTED / RUNNING)も条件付き UPDATE で ABORTED にする(SP-022 / LP-021)
+  - hang-detector は aborted.txt がある対象の監視記録を終端し、background-rerun はファイル正本で RUNNING を判定する(SP-016 / SP-020)
+consequences:
+  positive:
+    - "管理 DB なし(off)でも方針資料の (1)(2)(3) を同時に満たせる"
+    - "状態の正本が 1 箇所(成果物ディレクトリ)に定まり、管理 DB 喪失時も中止・リランの判断が失われない"
+  negative:
+    - "速報有効時はファイルと管理 DB の 2 箇所に状態を書くため、書き込み順序(ファイル → DB)と不一致時の扱いを spec で定める必要がある"
+    - "aborted.txt の存在チェックが hang-detector / background-rerun / abort-* の全経路に加わる"
+alternatives_considered:
+  - name: "Option B: 管理 DB だけを状態の正本にする(off では中止不可のまま)"
+    reason_rejected: "方針資料「off では成果物ファイルだけで動作する」と「RUNNING は明示中止してからリラン」を同時に満たせない"
+  - name: "Option C: exitcode.txt に特別値(例: 130)を書いて中止を表す"
+    reason_rejected: "exitcode.txt は runner の終了コードと一致させる契約(CTR-001)であり、中止の意味を混ぜると Runner Result Contract を壊す"

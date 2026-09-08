@@ -1,0 +1,115 @@
+{
+  "schema_version": "distillery.feedback-run/v1",
+  "feedback_request_id": "20260905_todo_resolution",
+  "input_sha256": "285429579e9c9d28307d4c779317f01941b915a1203d0e5b5f53a6c014ed7108",
+  "ambiguity_policy": "interactive",
+  "routing_basis": {
+    "ownership_catalog_version": "1.0.0",
+    "ownership_catalog_sha256": "801750c2abe99945a3de9387b82339b2bc96ccb2da564f9923cc0e9b76a2bd39",
+    "routing_policy_version": "1.1.0",
+    "routing_policy_sha256": "3873275bf4adb3d9d7b7c41c22c9463d054a3614df7bbcab7514f0c1e23e166e",
+    "prompt_schema_sha256": "bf7c7f34d7a2fc5976ccd2589a454172a4630e1448c509966b620f88029732c4",
+    "stage_packet_renderer_version": "1",
+    "skipped_stages": [
+      "design_system",
+      "spec_stories"
+    ],
+    "repository_head": "c770d8f3beda010fea1876c00fb47ae9ba014a4c",
+    "latest_domain_event_ids": {
+      "requirements": {
+        "rdra/events": "20260830_181841_initial_build",
+        "usdm/events": "20260830_181841_initial_build"
+      },
+      "quality_attributes": {
+        "nfr/events": "20260830_183726_initial_nfr"
+      },
+      "architecture": {
+        "arch/events": "20260830_202427_arch_infra_feedback_20260830_190412_infra_product_design"
+      },
+      "infrastructure": {
+        "infra/events": "20260830_190412_infra_product_design"
+      },
+      "design_system": {
+        "design/events": null
+      },
+      "spec": {
+        "specs/events": "20260830_202851_spec_generation"
+      },
+      "spec_stories": {
+        "design/events": null
+      }
+    },
+    "domain_event_root_snapshots": {
+      "rdra/events": {
+        "head_event_id": "20260830_181841_initial_build",
+        "head_event_sha256": "b2cd9f0d3cfe09d0efa5936debc4abce531d8442da4077070db82926f40a35ed",
+        "event_ids": [
+          "20260830_181841_initial_build"
+        ],
+        "event_set_sha256": "2b55255f934936f51cb0ea40810b971ab14bbbdbb2115ffa7c9a03c1059203cc",
+        "latest_tree_sha256": "84cb29828df4d39f3ebab66bc11e1bf52d76fbdd961ef7672e73ad477e6b3a6f"
+      },
+      "usdm/events": {
+        "head_event_id": "20260830_181841_initial_build",
+        "head_event_sha256": "25e61e8670ecae798f17728065ff1fcf00193659b8a2922cfa8d1045d2bfe3ca",
+        "event_ids": [
+          "20260830_181841_initial_build"
+        ],
+        "event_set_sha256": "2b55255f934936f51cb0ea40810b971ab14bbbdbb2115ffa7c9a03c1059203cc",
+        "latest_tree_sha256": "c1b4bbb76427900c440d44389bd74fcb318738955dd770add63b589a5de6c8be"
+      },
+      "nfr/events": {
+        "head_event_id": "20260830_183726_initial_nfr",
+        "head_event_sha256": "5cd28326c06dcd7c4da5a3f1f0a14dd434d7d18b4f6fb130697d326d9e6f9631",
+        "event_ids": [
+          "20260830_183726_initial_nfr"
+        ],
+        "event_set_sha256": "c71bc546b43144fc85ceb4068dd88e12e08a48a601694b556fa35b8a48f6fc8d",
+        "latest_tree_sha256": "16af838c9f24202ffda5547b587413aa5e3ad64c86809f71e13408526fba8f9d"
+      },
+      "arch/events": {
+        "head_event_id": "20260830_202427_arch_infra_feedback_20260830_190412_infra_product_design",
+        "head_event_sha256": "d15421ffa6484f09a8a30272216b8cd24aac1e142c74041c68d2718e66de8400",
+        "event_ids": [
+          "20260830_184457_initial_arch",
+          "20260830_202427_arch_infra_feedback_20260830_190412_infra_product_design"
+        ],
+        "event_set_sha256": "37cda644838540cc7ad10df67ac8b787574722664652c98e6462b1eb12583d95",
+        "latest_tree_sha256": "f6d02ee7f376c439f5a441e4d107cbc85d1be499536ea367a32189972d1b1b6d"
+      },
+      "infra/events": {
+        "head_event_id": "20260830_190412_infra_product_design",
+        "head_event_sha256": "ce3059e864648a7322077facde5634b0481f470da9658c24dda34dc84420612b",
+        "event_ids": [
+          "20260830_190412_infra_product_design"
+        ],
+        "event_set_sha256": "c4043036fd57a8bc0cd2aa06d4b5117053b49d108729268f83de26d6faf80f41",
+        "latest_tree_sha256": "ce3059e864648a7322077facde5634b0481f470da9658c24dda34dc84420612b"
+      },
+      "design/events": {
+        "head_event_id": null,
+        "head_event_sha256": null,
+        "event_ids": [],
+        "event_set_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "latest_tree_sha256": null
+      },
+      "specs/events": {
+        "head_event_id": "20260830_202851_spec_generation",
+        "head_event_sha256": "061002704ccbf8f7679b37edf36d411faf9d7ac9dee0e7fa6d04addf9ab20c51",
+        "event_ids": [
+          "20260830_202851_spec_generation"
+        ],
+        "event_set_sha256": "6c0668acba99a14dbb3ab5f9955a4ebfcec89847cbeef8e77058a166328949a4",
+        "latest_tree_sha256": "09c7aa8cb1a6d579081cd2f3f0785bbdbf1691b5429f617980dc7f5b5b713e15"
+      }
+    }
+  },
+  "basis_snapshot": {
+    "ownership_catalog": "ownership-catalog.json",
+    "routing_policy": "routing-policy.json",
+    "prompt_data_policy": "prompt-data-policy.txt"
+  },
+  "stage_packet_renderer_version": "1",
+  "initial_routing_state": "resolved",
+  "execution_state_at_creation": "resolved"
+}

@@ -1,0 +1,18 @@
+feedback request lineage (requirements stage)
+
+feedback_request_id: 20260908_slot_status_wording
+input_sha256: 19b24f61aa56ced09d1b35120acf027c40554b785129c5c945f33c55bd8d7fcf
+stage_packet: docs/pipeline/feedback-runs/20260908_slot_status_wording/stage-packets/requirements.md
+request_ids: CR-c770d8f0-019
+direct_work_unit_ids: CR-c770d8f0-019#1
+causal_work_unit_ids: CR-c770d8f0-019#1
+
+feedback_request:
+  feedback_request_id: "20260908_slot_status_wording"
+  input_sha256: "19b24f61aa56ced09d1b35120acf027c40554b785129c5c945f33c55bd8d7fcf"
+  request_ids: ["CR-c770d8f0-019"]
+  work_unit_ids: ["CR-c770d8f0-019#1"]
+
+work unit → USDM 反映先(CR 本文は packet を正本とし、ここには複製しない)
+
+- CR-c770d8f0-019#1 (slot-status-db-wording): SPEC-005-02 に受け入れ条件「Given abort-blue で ABORTED にした slot の実装が走り切って exitcode.txt を公開した When 管理 DB を確認する Then slot_executions.status は ABORTED のままである」を追加(既存の受け入れ条件に同旨のものは無い)。affected_models に条件「slot 実行の状態導出規則」の modify を追加し、RDRA 条件.tsv の同条件の管理 DB 側文言を条件付き更新(RUNNING のときだけ一度だけ書く)と ABORTED 据え置き(exitcode.txt 優先の導出値へ再同期しない)に改めた。判定表の説明、バリエーション列、状態モデル列は変更しない。配置先は CR が挙げた REQ-003 配下 / SPEC-005-02 のうち、管理 DB の slot_executions.status を判定材料として既に定義している SPEC-005-02 を選んだ(利用者決定: 2026-09-08 DIST-029 A)

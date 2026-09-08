@@ -1,0 +1,320 @@
+{
+  "event_id": "20260905_093000_feedback_stage_infrastructure",
+  "type": "feedback_stage_completed",
+  "run_id": "feedback-20260905_todo_resolution-20260905_172439-60786",
+  "attempt": 1,
+  "created_at": "2026-09-05T09:30:00Z",
+  "stage": "infrastructure",
+  "direct_work_unit_ids": [],
+  "causal_work_unit_ids": [
+    "CR-c770d8f0-001#1",
+    "CR-c770d8f0-002#1",
+    "CR-c770d8f0-003#1",
+    "CR-c770d8f0-004#1",
+    "CR-c770d8f0-005#1",
+    "CR-c770d8f0-006#1",
+    "CR-c770d8f0-007#1",
+    "CR-c770d8f0-008#1",
+    "CR-c770d8f0-009#1",
+    "CR-c770d8f0-010#1",
+    "CR-c770d8f0-011#1",
+    "CR-c770d8f0-012#1"
+  ],
+  "work_unit_results": [],
+  "reconciliation_results": [
+    {
+      "work_unit_id": "CR-c770d8f0-001#1",
+      "status": "changed",
+      "reason": "feature flag 9 キー env(設定版なし、実装版は BLUE_IMPL / GREEN_IMPL)を config_store の workload-model / mapping / impl / conformance / product-input と ansible config ロール(feature-flag.env)へ反映した",
+      "artifact_refs": [
+        "infra/events/20260905_093000_feedback_todo_resolution/infra-event-diff.yaml",
+        "infra/events/20260905_093000_feedback_todo_resolution/_changes.md"
+      ]
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-002#1",
+      "status": "changed",
+      "reason": "ジョブマップ・クロスチェックジョブマップ・対象カタログの CSV 形式・元資料の列名・セル規則・map_version 任意列を config_store の各 MCL 出力と ansible config ロール(*.csv)へ反映し、CSV ヘッダー / fixed_params の検証規則を追加した",
+      "artifact_refs": [
+        "infra/events/20260905_093000_feedback_todo_resolution/infra-event-diff.yaml",
+        "infra/events/20260905_093000_feedback_todo_resolution/_changes.md"
+      ]
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-003#1",
+      "status": "not_impacted",
+      "reason": "run_id の形式は infra の要素(主キー一意性・ディレクトリ名・ログ相関キー)に影響せず、infra は形式自体を定めていない",
+      "artifact_refs": []
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-004#1",
+      "status": "changed",
+      "reason": "Runner Result に aborted.txt を加え、slot 実行の状態導出規則(ファイル正本。管理 DB なしでも中止・リラン・ハング検知が成立)を artifact_store の各 MCL 出力・observability(aborted.txt は終端し通知しない)・conformance・構成図へ反映した",
+      "artifact_refs": [
+        "infra/events/20260905_093000_feedback_todo_resolution/infra-event-diff.yaml",
+        "infra/events/20260905_093000_feedback_todo_resolution/_changes.md"
+      ]
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-005#1",
+      "status": "not_impacted",
+      "reason": "完了通知失敗を自動検知しない判断は RDRA 条件と spec の責務であり、infra の観測仕様は NFR observability_needs(無変更)から導出しているため構成変更は無い",
+      "artifact_refs": []
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-006#1",
+      "status": "already_current",
+      "reason": "infra は初期構築時から管理 DB を relay-gate 内部の canonical element(product.database.management_db)および product-decision-002 の「ジョブキュー兼管理 DB」として扱っており、外部システム表記が無い",
+      "artifact_refs": [
+        "infra/events/20260830_190412_infra_product_design/docs/mcl/product/output/product-workload-model.yaml",
+        "infra/events/20260830_190412_infra_product_design/docs/cloud-context/decisions/product/product-decision-002.yaml"
+      ]
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-007#1",
+      "status": "not_impacted",
+      "reason": "調整記録の置き場と応答日時の削除は情報モデルの属性変更であり、infra の要素・実装仕様に現れない",
+      "artifact_refs": []
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-008#1",
+      "status": "not_impacted",
+      "reason": "監視状態の値集合と終端遷移は infra の観測仕様に列挙していないため構成変更は無い",
+      "artifact_refs": []
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-009#1",
+      "status": "not_impacted",
+      "reason": "並行稼働実行の遷移追加は管理 DB 内の状態機械であり infra の構成に影響しない",
+      "artifact_refs": []
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-010#1",
+      "status": "changed",
+      "reason": "ハング検知定期ジョブ設定(hang-detector.env: ALERT_MAIL_TO / ALERT_MAIL_CMD / ALERT_SUBJECT_PREFIX / HANG_DB_CONN_REF)を config_store・mail_notification・observability・conformance と ansible config ロール(0640 配置、平文認証情報検査)へ反映した",
+      "artifact_refs": [
+        "infra/events/20260905_093000_feedback_todo_resolution/infra-event-diff.yaml",
+        "infra/events/20260905_093000_feedback_todo_resolution/_changes.md"
+      ]
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-011#1",
+      "status": "not_impacted",
+      "reason": "比較結果の登録条件は worker のアプリケーション規則であり infra の構成に影響しない",
+      "artifact_refs": []
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-012#1",
+      "status": "changed",
+      "reason": "NFR 7 項目の利用者確定(適用側で上書き可能な既定値。A.2.1.1 / A.3.1.1 / A.3.1.2 / C.6.1.1)を product-input の notes と conformance の notes(REQ-DB-004 / REQ-LOG-001)へ反映した。グレード・適合ステータスは据え置き",
+      "artifact_refs": [
+        "infra/events/20260905_093000_feedback_todo_resolution/infra-event-diff.yaml",
+        "infra/events/20260905_093000_feedback_todo_resolution/_changes.md"
+      ]
+    }
+  ],
+  "work_unit_evidence_refs": [
+    {
+      "work_unit_id": "CR-c770d8f0-001#1",
+      "path": "infra/events/20260905_093000_feedback_todo_resolution/infra-event-diff.yaml",
+      "sha256": "b65cad8ee04d5106ec7db033700aff3e4a56ee5587437c632d415054ba1d4265"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-001#1",
+      "path": "infra/events/20260905_093000_feedback_todo_resolution/_changes.md",
+      "sha256": "23ee2711542f41ed6b56d4298c1d9fa1fc0560a66270f75c83ea99e45566f04b"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-002#1",
+      "path": "infra/events/20260905_093000_feedback_todo_resolution/infra-event-diff.yaml",
+      "sha256": "b65cad8ee04d5106ec7db033700aff3e4a56ee5587437c632d415054ba1d4265"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-002#1",
+      "path": "infra/events/20260905_093000_feedback_todo_resolution/_changes.md",
+      "sha256": "23ee2711542f41ed6b56d4298c1d9fa1fc0560a66270f75c83ea99e45566f04b"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-004#1",
+      "path": "infra/events/20260905_093000_feedback_todo_resolution/infra-event-diff.yaml",
+      "sha256": "b65cad8ee04d5106ec7db033700aff3e4a56ee5587437c632d415054ba1d4265"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-004#1",
+      "path": "infra/events/20260905_093000_feedback_todo_resolution/_changes.md",
+      "sha256": "23ee2711542f41ed6b56d4298c1d9fa1fc0560a66270f75c83ea99e45566f04b"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-006#1",
+      "path": "infra/events/20260830_190412_infra_product_design/docs/mcl/product/output/product-workload-model.yaml",
+      "sha256": "96ecf23cb845ac7f087c4beb5a4bd50869e02ad93131fac2dd0e397ae973228e"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-006#1",
+      "path": "infra/events/20260830_190412_infra_product_design/docs/cloud-context/decisions/product/product-decision-002.yaml",
+      "sha256": "9360d0af500b3bf2d178b5bfa67e086181806eef607be292ad15145b478307d1"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-010#1",
+      "path": "infra/events/20260905_093000_feedback_todo_resolution/infra-event-diff.yaml",
+      "sha256": "b65cad8ee04d5106ec7db033700aff3e4a56ee5587437c632d415054ba1d4265"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-010#1",
+      "path": "infra/events/20260905_093000_feedback_todo_resolution/_changes.md",
+      "sha256": "23ee2711542f41ed6b56d4298c1d9fa1fc0560a66270f75c83ea99e45566f04b"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-012#1",
+      "path": "infra/events/20260905_093000_feedback_todo_resolution/infra-event-diff.yaml",
+      "sha256": "b65cad8ee04d5106ec7db033700aff3e4a56ee5587437c632d415054ba1d4265"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-012#1",
+      "path": "infra/events/20260905_093000_feedback_todo_resolution/_changes.md",
+      "sha256": "23ee2711542f41ed6b56d4298c1d9fa1fc0560a66270f75c83ea99e45566f04b"
+    }
+  ],
+  "domain_event_refs": [
+    {
+      "path": "infra/events/20260905_093000_feedback_todo_resolution/event.json",
+      "sha256": "ae479796fca0f829a933e105d7256f10d4594a560d97c1441c6edbe3d98297eb"
+    },
+    {
+      "path": "infra/events/20260905_093000_feedback_todo_resolution/infra-event-diff.yaml",
+      "sha256": "b65cad8ee04d5106ec7db033700aff3e4a56ee5587437c632d415054ba1d4265"
+    },
+    {
+      "path": "infra/events/20260905_093000_feedback_todo_resolution/infra-event.yaml",
+      "sha256": "6676485bdc6f531a7ed5e2848a43f6ce91a10eb252a41b027d66eaf8678241cd"
+    }
+  ],
+  "feedback_request": {
+    "feedback_request_id": "20260905_todo_resolution",
+    "input_sha256": "285429579e9c9d28307d4c779317f01941b915a1203d0e5b5f53a6c014ed7108",
+    "request_ids": [
+      "CR-c770d8f0-001",
+      "CR-c770d8f0-002",
+      "CR-c770d8f0-003",
+      "CR-c770d8f0-004",
+      "CR-c770d8f0-005",
+      "CR-c770d8f0-006",
+      "CR-c770d8f0-007",
+      "CR-c770d8f0-008",
+      "CR-c770d8f0-009",
+      "CR-c770d8f0-010",
+      "CR-c770d8f0-011",
+      "CR-c770d8f0-012"
+    ],
+    "work_unit_ids": [
+      "CR-c770d8f0-001#1",
+      "CR-c770d8f0-002#1",
+      "CR-c770d8f0-003#1",
+      "CR-c770d8f0-004#1",
+      "CR-c770d8f0-005#1",
+      "CR-c770d8f0-006#1",
+      "CR-c770d8f0-007#1",
+      "CR-c770d8f0-008#1",
+      "CR-c770d8f0-009#1",
+      "CR-c770d8f0-010#1",
+      "CR-c770d8f0-011#1",
+      "CR-c770d8f0-012#1"
+    ]
+  },
+  "post_execution_basis": {
+    "repository_head": "c770d8f3beda010fea1876c00fb47ae9ba014a4c",
+    "latest_domain_event_ids": {
+      "requirements": {
+        "rdra/events": "20260905_083000_feedback_todo_resolution",
+        "usdm/events": "20260905_083000_feedback_todo_resolution"
+      },
+      "quality_attributes": {
+        "nfr/events": "20260905_085000_feedback_todo_resolution"
+      },
+      "architecture": {
+        "arch/events": "20260905_091000_feedback_todo_resolution"
+      },
+      "infrastructure": {
+        "infra/events": "20260905_093000_feedback_todo_resolution"
+      },
+      "design_system": {
+        "design/events": null
+      },
+      "spec": {
+        "specs/events": "20260830_202851_spec_generation"
+      },
+      "spec_stories": {
+        "design/events": null
+      }
+    },
+    "domain_event_root_snapshots": {
+      "rdra/events": {
+        "head_event_id": "20260905_083000_feedback_todo_resolution",
+        "head_event_sha256": "4f68dbbb27a782d73971ea0552af133c47a93f9a46a92974c992c80ac1d8b081",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution"
+        ],
+        "event_set_sha256": "138af33bd75ccad8a2b5942c95252c9757a723350d394bd754e3c392b98eb64f",
+        "latest_tree_sha256": "4647215b00110b8e016d639db2d29185088bc14b473992f7beb4b5d500971db4"
+      },
+      "usdm/events": {
+        "head_event_id": "20260905_083000_feedback_todo_resolution",
+        "head_event_sha256": "a79303d513d0c567eb9c7bd602e67124c8d174dfa7a0dcb92b120d2585ece075",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution"
+        ],
+        "event_set_sha256": "138af33bd75ccad8a2b5942c95252c9757a723350d394bd754e3c392b98eb64f",
+        "latest_tree_sha256": "122d9a6d975de6748e9cdabd14d2dc7b6dd71cf16cf421e6a122f051e3f4c1ad"
+      },
+      "nfr/events": {
+        "head_event_id": "20260905_085000_feedback_todo_resolution",
+        "head_event_sha256": "a45fc5fb3f96a599e1d472373a7a71a1d130440551b5046bb305acc0ae5e86f2",
+        "event_ids": [
+          "20260830_183726_initial_nfr",
+          "20260905_085000_feedback_todo_resolution"
+        ],
+        "event_set_sha256": "2405eb79c9b769346f2f58a58e5bfaebc661dfd563c37854424554cd59b57188",
+        "latest_tree_sha256": "55b76682bb291016b0900bcac983007320101a0e7d4fc86bf88f895f8acc9637"
+      },
+      "arch/events": {
+        "head_event_id": "20260905_091000_feedback_todo_resolution",
+        "head_event_sha256": "c3d968eb1276799d29ec24a1fb4e57de3f253e824f882cf1ebc99237b82b9673",
+        "event_ids": [
+          "20260830_184457_initial_arch",
+          "20260830_202427_arch_infra_feedback_20260830_190412_infra_product_design",
+          "20260905_091000_feedback_todo_resolution"
+        ],
+        "event_set_sha256": "fb104d3367af3ba535c8f4dd63b57a7dfe3a163b5f3853108af7c492d2525b0b",
+        "latest_tree_sha256": "68ce640fb9135c6303e94c7b25aea8b7d319b4b9c1d0f93f08c76e9c0c725c28"
+      },
+      "infra/events": {
+        "head_event_id": "20260905_093000_feedback_todo_resolution",
+        "head_event_sha256": "6159297750bb2a0a26d19b2eb5a8eec730af3ea80f92978880e046290c9da8ea",
+        "event_ids": [
+          "20260830_190412_infra_product_design",
+          "20260905_093000_feedback_todo_resolution"
+        ],
+        "event_set_sha256": "da94ce2e1b2ec9d4a56be5e9422478ec63e54f55c5318e92c7a94d1f55e389b2",
+        "latest_tree_sha256": "6159297750bb2a0a26d19b2eb5a8eec730af3ea80f92978880e046290c9da8ea"
+      },
+      "design/events": {
+        "head_event_id": null,
+        "head_event_sha256": null,
+        "event_ids": [],
+        "event_set_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "latest_tree_sha256": null
+      },
+      "specs/events": {
+        "head_event_id": "20260830_202851_spec_generation",
+        "head_event_sha256": "061002704ccbf8f7679b37edf36d411faf9d7ac9dee0e7fa6d04addf9ab20c51",
+        "event_ids": [
+          "20260830_202851_spec_generation"
+        ],
+        "event_set_sha256": "6c0668acba99a14dbb3ab5f9955a4ebfcec89847cbeef8e77058a166328949a4",
+        "latest_tree_sha256": "09c7aa8cb1a6d579081cd2f3f0785bbdbf1691b5429f617980dc7f5b5b713e15"
+      }
+    }
+  }
+}

@@ -1,0 +1,120 @@
+round: 1
+group: G3
+findings:
+  - id: S3-G3-1
+    uc: "クロスチェック業務/速報クロスチェックフロー/両系成功時に速報比較依頼を作成する"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/クロスチェック業務/速報クロスチェックフロー/両系成功時に速報比較依頼を作成する/_api-summary.yaml"
+    line: 10
+    severity: major
+    viewpoint: 7
+    claim: "invoked_by が「RAPID_CROSSCHECK_MODE=background のみ」となっており、旧契約「on のみ」の機械置換残りで foreground を除外している(D1: 判定は off か off 以外か)"
+    fix: "「内部呼び出し(slot runner。RAPID_CROSSCHECK_MODE が off 以外(foreground / background)のとき)」に改める"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_review/change-brief.md#D1"
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/cli-command-contract.yaml#rapid-crosscheck-runner.sh invoked_by"
+  - id: S3-G3-2
+    uc: "クロスチェック業務/速報クロスチェックフロー/速報比較依頼を claim する"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/クロスチェック業務/速報クロスチェックフロー/速報比較依頼を claim する/_api-summary.yaml"
+    line: 30
+    severity: major
+    viewpoint: 7
+    claim: "stderr(30 行目)と exit_codes code 2(35 行目)に旧 feature flag 値「on で rapid-crosscheck.env 不在」が残っている(RAPID_CROSSCHECK_MODE に on は無い)"
+    fix: "2 箇所とも「RAPID_CROSSCHECK_MODE が off 以外(foreground / background)で rapid-crosscheck.env 不在」に書き換える"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_review/change-brief.md#D1"
+      - "docs/rdra/latest/バリエーション.tsv#速報クロスチェックモード"
+  - id: S3-G3-3
+    uc: "クロスチェック業務/速報クロスチェックフロー/速報比較依頼を claim する"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/クロスチェック業務/速報クロスチェックフロー/速報比較依頼を claim する/tier-rapid-crosscheck.md"
+    line: 24
+    severity: minor
+    viewpoint: 7
+    claim: "RAPID_CROSSCHECK_MODE 列挙外の stderr が `error: invalid value key=RAPID_CROSSCHECK_MODE value=...` のみで、契約(U7 / feature-flag.env error_messages)が定める後続行 `hint: use foreground, background or off` が無い"
+    fix: "24 行目のエラー文言に「次行に `hint: use foreground, background or off` を続ける」を追記し、出力契約の stderr 一覧(37 行目)にも同文を加える"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/cli-command-contract.yaml#L1092"
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_review/change-brief.md#U7"
+  - id: S3-G3-4
+    uc: "クロスチェック業務/速報クロスチェックフロー/速報比較依頼を claim する"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/クロスチェック業務/速報クロスチェックフロー/速報比較依頼を claim する/spec.md"
+    line: 91
+    severity: minor
+    viewpoint: 1
+    claim: "分岐条件「速報クロスチェック有効判定」と関連 RDRA「feature flag 設定」で RAPID_CROSSCHECK_MODE の 3 値を判定しているのに、バリエーション一覧に「速報クロスチェックモード」の行が無い(buc-spec.md の共有バリエーション一覧は本 UC を適用 UC に挙げており不整合)"
+    fix: "バリエーション一覧に「速報クロスチェックモード | foreground / background | 管理 DB に接続して poll する(両値で同じ挙動) | tier-rapid-crosscheck | rapid-crosscheck-worker.sh」と「速報クロスチェックモード | off | 管理 DB に接続せず終了コード 3 | tier-rapid-crosscheck | rapid-crosscheck-worker.sh」の 2 行を追加する"
+    source_refs:
+      - "docs/rdra/latest/バリエーション.tsv#速報クロスチェックモード"
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/クロスチェック業務/速報クロスチェックフロー/buc-spec.md#BUC 内共有バリエーション一覧"
+  - id: S3-G3-5
+    uc: "クロスチェック業務/速報クロスチェックフロー/速報クロスチェック runner へ完了通知を送信する"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/クロスチェック業務/速報クロスチェックフロー/速報クロスチェック runner へ完了通知を送信する/tier-rapid-crosscheck.md"
+    line: 36
+    severity: minor
+    viewpoint: 7
+    claim: "stderr 一覧(36 行目)に契約 rapid-crosscheck-runner.sh の `error: management db connection failed run_id=... conn_ref=...(6)` が無く、`--job-id` の説明(20 行目)にも契約の「parallel_runs.job_id と不一致なら warn を出して継続」が無い(_api-summary.yaml 44 行目の stderr も同様に欠落)"
+    fix: "stderr 一覧と _api-summary.yaml の stderr に `error: management db connection failed run_id=... conn_ref=...(6)` を追加し、`--job-id` の説明に「同じ run_id の parallel_runs.job_id と不一致なら `warn: job_id mismatch run_id=... notified=... recorded=...` を出して処理は継続」を追記する"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/cli-command-contract.yaml#rapid-crosscheck-runner.sh stderr / options.--job-id"
+  - id: S3-G3-6
+    uc: "クロスチェック業務/速報クロスチェックフロー/速報クロスチェック runner へ完了通知を送信する"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/クロスチェック業務/速報クロスチェックフロー/速報クロスチェック runner へ完了通知を送信する/tier-facade.md"
+    line: 34
+    severity: minor
+    viewpoint: 3
+    claim: "実行ログ例 `INFO notify started role=green run_id=... runner=<RAPID_CROSSCHECK_RUNNER> exit_code=0` は起動前のログに終了コードを含めており、`INFO notify finished exit_code=0` と重複して契約の意図(started は起動、finished は結果)と合わない"
+    fix: "`INFO notify started role=green run_id=... runner=<RAPID_CROSSCHECK_RUNNER>`(exit_code なし)/ `INFO notify finished run_id=... role=green exit_code=0 duration_ms=...` に直す"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/cli-command-contract.yaml#slot runner IF execution_log"
+  - id: S3-G3-7
+    uc: "クロスチェック業務/速報クロスチェックフロー/比較ツールでジョブ単位比較を実行して結果を登録する"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/クロスチェック業務/速報クロスチェックフロー/比較ツールでジョブ単位比較を実行して結果を登録する/_model-summary.yaml"
+    line: 123
+    severity: minor
+    viewpoint: 5
+    claim: "parallel_runs UPDATE の where が `run_id = ? AND status = 'RUNNING' AND parent_run_id IS NOT NULL AND NOT EXISTS (...)` で、spec.md 状態遷移一覧・tier md 手順 8・契約 U8 の SQL `UPDATE parallel_runs SET status='COMPLETED', completed_at=? WHERE run_id=? AND status='RUNNING'`(リラン由来判定は事前 SELECT)と一致しない"
+    fix: "where を `run_id = ? AND status = 'RUNNING'` にし、parent_run_id IS NOT NULL かつ slot_executions 0 件の判定は 117 行目のコメント(または直前の SELECT 操作)に寄せる"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_review/change-brief.md#U8"
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/クロスチェック業務/速報クロスチェックフロー/比較ツールでジョブ単位比較を実行して結果を登録する/spec.md#状態遷移一覧"
+  - id: S3-G3-8
+    uc: "クロスチェック業務/速報クロスチェックフロー/比較ツールでジョブ単位比較を実行して結果を登録する"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/クロスチェック業務/速報クロスチェックフロー/比較ツールでジョブ単位比較を実行して結果を登録する/spec.md"
+    line: 266
+    severity: minor
+    viewpoint: 2
+    claim: "Scenario「比較ツールの起動に失敗する(SPEC-005-03)」の Given に依頼の run_id / status が無く、Then の stderr 期待値が `error: compare tool launch failed run_id=... command=...` と省略形で具体値を欠く"
+    fix: "Given に「status=REQUESTED の依頼 run_id=20260830T113000-JOB001-3f9a1c2e, job_id=JOB001 があり」を加え、Then の stderr を `error: compare tool launch failed run_id=20260830T113000-JOB001-3f9a1c2e command=/opt/compare/compare.sh` の完全形にする"
+    source_refs:
+      - "docs/usdm/latest/requirements.yaml#SPEC-005-03"
+  - id: S3-G3-9
+    uc: "クロスチェック業務/速報クロスチェックフロー/速報比較結果を参照する"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/クロスチェック業務/速報クロスチェックフロー/速報比較結果を参照する/_api-summary.yaml"
+    line: 35
+    severity: minor
+    viewpoint: 4
+    claim: "stderr に契約 rapid-crosscheck-result.sh の入力エラー文言 `error: option required option=--run-id(2)` / `error: invalid value option=--run-id|--limit value=...(2)` / `error: unknown option option=...(2)` が無く、tier md の BDD(invalid value / unknown option)と整合しない"
+    fix: "stderr に上記 3 文言(終了コード 2)を追加する"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/cli-command-contract.yaml#rapid-crosscheck-result.sh stderr"
+  - id: S3-G3-10
+    uc: "クロスチェック業務/速報クロスチェックフロー/速報比較結果を参照する"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/cli-command-contract.yaml"
+    line: 102
+    severity: minor
+    viewpoint: 7
+    claim: "shared_rules.run_id.job_id_charset の「解析は先頭 16 文字(時刻)」は Z 付き旧形式(yyyymmddThhmmssZ)の残りで、D3 の新形式(yyyymmddThhmmss = 15 文字)および UC spec.md 116 行目 / tier md 51 行目の「先頭 15 文字」と食い違う"
+    fix: "「解析は先頭 15 文字(時刻)と末尾 8 文字(hex)」に改める(UC 側は 15 文字のままでよい)"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_review/change-brief.md#D3"
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/クロスチェック業務/速報クロスチェックフロー/速報比較結果を参照する/spec.md#計算ルール一覧"
+resolved:
+  - {id: S3-G3-1, resolution: fixed}
+  - {id: S3-G3-2, resolution: fixed}
+  - {id: S3-G3-3, resolution: fixed}
+  - {id: S3-G3-4, resolution: fixed}
+  - {id: S3-G3-5, resolution: fixed}
+  - {id: S3-G3-6, resolution: fixed}
+  - {id: S3-G3-7, resolution: fixed}
+  - {id: S3-G3-8, resolution: fixed}
+  - {id: S3-G3-9, resolution: fixed}
+  - {id: S3-G3-10, resolution: fixed}

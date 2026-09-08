@@ -1,0 +1,32 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "architecture"
+artifact_id: "arch-decision-016"
+title: "速報クロスチェック設定(rapid-crosscheck.env)を BC-005 所有の設定エンティティ E-027 として追加し、env 形式の設定ファイルに配置する"
+status: "approved"
+generated_at: "2026-09-07T01:50:00Z"
+context: |
+  spec の CLI 契約には速報クロスチェック用の設定ファイル rapid-crosscheck.env(RAPID_DB_CONN_REF / RAPID_LEASE_SEC / RAPID_POLL_INTERVAL_SEC)があり、
+  facade / slot runner / 速報クロスチェック runner / worker が読むが、RDRA の情報モデルと設定所有区分に対応する要素が無く、トレーサビリティに乗らなかった
+  (todo DIST-023)。同型の hang-detector.env は arch-decision-011 系列の前回イベントで E-026 として追加済み。元の方針資料は「速報クロスチェック用の
+  DB 接続設定なしで slot 実行できる」と DB 接続設定の存在を前提にしているが、置き場は定めていない。利用者は 2026-09-07 に情報モデルへの追加を決定し
+  (CR-c770d8f0-013)、RDRA に情報「速報クロスチェック設定」と設定所有区分の追加が反映された。
+decision: |
+  - E-027 速報クロスチェック設定(db_conn_ref / lease_sec / poll_interval_sec。resource_mutable)を data_architecture に追加し、BC-005 適用構成コンテキストの
+    owned_entity_ids に含める。storage_mapping は file(env 形式 rapid-crosscheck.env)。認証情報は値を置かず参照名のみ
+  - 設定所有区分(BC-005 のユビキタス言語 / SP-025 / tier-datastore)に速報クロスチェック設定を加え、読み手(facade・slot runner・速報クロスチェック runner・worker)と
+    RAPID_CROSSCHECK_MODE=off では不要であることを明記する
+  - lease 期間と poll 間隔の出所を SP-010 / AG-002 / E-017 に、管理 DB 接続参照名の出所を SP-008 / tier-facade / tier-rapid-crosscheck の
+    technology_candidates と repository / gateway 責務に明記し、コードへの埋め込みを禁じる
+  - ハング検知定期ジョブ設定(E-026)と同型だが、所有項目と読み手が異なるため別ファイルとし、統合しない
+consequences:
+  positive:
+    - "spec の config_files[rapid-crosscheck.env] が RDRA 情報「速報クロスチェック設定」→ arch E-027 で追跡でき、_model-summary.yaml の rdra_info の誤参照を防げる"
+    - "lease 期間・poll 間隔・接続参照名の正本が一意になり、案件ごとの差し替えがスクリプト変更なしで行える"
+  negative:
+    - "設定ファイルが 1 種類増え、バックアップ対象(NFR C.1.2.2)と適用構成定義フローの配布物が増える"
+alternatives_considered:
+  - name: "Option B: hang-detector.env と統合して 1 つの運用設定ファイルにする"
+    reason_rejected: "所有項目と読み手(hang-detector のみ / 速報系 4 スクリプト)が異なり、off 構成では速報設定が不要という違いを 1 ファイルで表現しにくい。RDRA も別情報として定義した"
+  - name: "Option C: feature flag(feature-flag.env)にキーを追加する"
+    reason_rejected: "feature flag は元資料の 9 キー固定(arch-decision 前回イベントで確定)であり、切替以外の運用パラメータを混ぜない"

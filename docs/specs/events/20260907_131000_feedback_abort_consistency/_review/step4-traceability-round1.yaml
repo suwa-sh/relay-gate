@@ -1,0 +1,55 @@
+round: 1
+group: traceability
+findings:
+  - id: S4-traceability-1
+    artifact: "usdm-acceptance-matrix.md"
+    file: "docs/specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/usdm-acceptance-matrix.md"
+    line: 53
+    severity: major
+    viewpoint: 7
+    claim: "SPEC-005-02 行の「対応 BDD シナリオ」に書かれた AC5 / AC6 のシナリオ名が UC-09 spec.md の Scenario 行・「関連 USDM」表に実在しない(受け入れ条件の本文を書き写しており、本ファイル冒頭の「spec.md『関連 USDM』表から機械的に集計、末尾 (SPEC-xxx) を除いて表記」の規則に反する)"
+    fix: "AC5 を「parallel_runs が COMPLETED で対象 slot の slot 実行が ABORTED の run では完了通知を受けても依頼を作成しない」、AC6 を「foreground の blue 完了後に abort-green で中止した green が走り切って完了通知を送っても依頼を作成せず警告を残す」(UC-09 spec.md L264 / L274 の Scenario 名と一致)に差し替える。UC-09 側の名称が変わる場合はそれに追従する"
+    source_refs:
+      - "docs/specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/両系成功時に速報比較依頼を作成する/spec.md#関連 USDM(L185) / Scenario 行(L264, L274)"
+      - "docs/specs/events/20260907_131000_feedback_abort_consistency/_review/change-brief.md#D5"
+  - id: S4-traceability-2
+    artifact: "usdm-acceptance-matrix.md"
+    file: "docs/specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/usdm-acceptance-matrix.md"
+    line: 76
+    severity: major
+    viewpoint: 7
+    claim: "SPEC-010-02 行の AC2 / AC3 / AC4 / AC5 のシナリオ名が UC-11 / UC-23 spec.md の Scenario 行に実在せず、さらに AC5 の注記「既存『SUCCEEDED の確報比較依頼は中止できない』を含む」が参照する Scenario は UC-23 spec.md にもう存在しない(Scenario Outline「RUNNING でない確報比較依頼は状態を変更せずエラー終了する」に統合済み)"
+    fix: "UC-11 を「CLAIMED の依頼が ABORTED になった後の RUNNING 条件付き UPDATE は 0 件で比較を開始しない」(UC-11 spec.md L292)、UC-23 を「REQUESTED または CLAIMED の速報比較依頼を中止すると worker は比較を開始しない」(L296)/「終端状態の速報比較依頼は状態を変更せずエラー終了する」(L360)/「RUNNING でない確報比較依頼は状態を変更せずエラー終了する」(L372)に差し替え、「SUCCEEDED の確報比較依頼は中止できない」への言及を削除する(Outline の Examples に SUCCEEDED / CLAIMED / REQUESTED が含まれる旨は任意の注記)"
+    source_refs:
+      - "docs/specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/比較ツールでジョブ単位比較を実行して結果を登録する/spec.md#関連 USDM(L229) / Scenario 行(L292)"
+      - "docs/specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/spec.md#関連 USDM(L236) / Scenario 行(L296, L321, L360, L372)"
+      - "docs/specs/events/20260907_131000_feedback_abort_consistency/_review/change-brief.md#D5"
+  - id: S4-traceability-3
+    artifact: "usdm-acceptance-matrix.md"
+    file: "docs/specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/usdm-acceptance-matrix.md"
+    line: 75
+    severity: major
+    viewpoint: 7
+    claim: "SPEC-010-01 行の UC-23 AC8 のシナリオ名「依頼が REQUESTED で作成された直後に slot を中止すると slot と依頼の両方が ABORTED になり、その後の完了通知でも依頼は再作成されない」が UC-23 spec.md の Scenario 行に実在しない(実名は「依頼作成直後に slot を中止すると依頼も ABORTED になり完了通知で再作成されない」)"
+    fix: "UC-23 の AC8 を「依頼作成直後に slot を中止すると依頼も ABORTED になり完了通知で再作成されない」(UC-23 spec.md L272 / 関連 USDM 表 L235)に差し替える。同行の他 6 シナリオ名は実在を確認済みで変更不要"
+    source_refs:
+      - "docs/specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/spec.md#関連 USDM(L235) / Scenario 行(L272)"
+      - "docs/specs/events/20260907_131000_feedback_abort_consistency/_review/change-brief.md#D5"
+  - id: S4-traceability-4
+    artifact: "rdra-feedback.md"
+    file: "docs/specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/rdra-feedback.md"
+    line: 13
+    severity: major
+    viewpoint: 7
+    claim: "残存 #16 の経路説明「blue(foreground)実行中に background の green を abort-green で中止 → … 後から blue が成功して完了通知を送る(parallel_runs も ABORTED ではない)→ 依頼が作成される」は Spec と矛盾する: foreground blue が実行中なら parallel_runs は RUNNING であり、abort-green は parallel_runs を `WHERE status IN ('STARTED','RUNNING')` で ABORTED に併更新する(契約 abort-blue.sh/abort-green.sh exit 0 meaning、状態.tsv L39「並行稼働実行 RUNNING → ABORTED」)ため、後続の blue の完了通知は reason=parallel_run_aborted で除外され依頼は作られない。同じ経路説明は L41「対応方針」にも書かれている(change-brief D4 の記述をそのまま写した結果で、経路そのものが成立しない)"
+    fix: "経路を成立する順序に書き直す。例: 「foreground の blue が完了して parallel_runs が COMPLETED になったが blue の完了通知の送信に失敗した(条件「完了通知失敗の扱い」)→ 運用者が abort-green で green を中止(parallel_runs は COMPLETED のまま)→ green の実装が走り切って完了通知(対象 slot green が ABORTED なので依頼は作らず green_status=SUCCEEDED を記録)→ 運用者が blue 側の runner を同一引数で再実行(対象 slot blue は ABORTED でなく parallel_runs も COMPLETED)→ 両系成功で依頼が作成される」。L13 の理由列と L41 の対応方針の両方を同じ経路に揃え、「foreground 実行中に background を中止」の表現を外す。経路が成立しないと判断するなら #16 自体を取り下げる(仮採用は書かない)"
+    source_refs:
+      - "docs/specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/api/cli-command-contract.yaml#abort-blue.sh exit_codes 0 meaning(L783) / abort-green.sh(L837) / rapid-crosscheck-runner.sh idempotency(L394) / notes(L414)"
+      - "docs/rdra/latest/状態.tsv#並行稼働実行 RUNNING → ABORTED(L39) / STARTED → ABORTED(L35)"
+      - "docs/rdra/latest/条件.tsv#中止済み run の比較依頼作成除外(L19) / 完了通知失敗の扱い(L17) / slot 中止可否判定(L42)"
+      - "docs/specs/events/20260907_131000_feedback_abort_consistency/_review/change-brief.md#D4"
+resolved:
+  - {id: S4-traceability-1, resolution: fixed}
+  - {id: S4-traceability-2, resolution: fixed}
+  - {id: S4-traceability-3, resolution: fixed}
+  - {id: S4-traceability-4, resolution: fixed}

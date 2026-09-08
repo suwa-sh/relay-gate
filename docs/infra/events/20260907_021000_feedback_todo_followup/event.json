@@ -1,0 +1,184 @@
+{
+  "schema_version": "distillery.infra-feedback-event/v1",
+  "event_id": "20260907_021000_feedback_todo_followup",
+  "created_at": "2026-09-07T02:10:00Z",
+  "stage": "infrastructure",
+  "trigger_event": "arch:20260907_015000_feedback_todo_followup, nfr:20260907_013000_feedback_todo_followup",
+  "previous_event_ref": "20260905_093000_feedback_todo_resolution",
+  "feedback_request": {
+    "feedback_request_id": "20260907_todo_followup",
+    "input_sha256": "193823ac1e6f02400269d6bdca461150a1fc8951393f332ef28580e045261389",
+    "request_ids": [
+      "CR-c770d8f0-013",
+      "CR-c770d8f0-014",
+      "CR-c770d8f0-015"
+    ],
+    "work_unit_ids": [
+      "CR-c770d8f0-013#1",
+      "CR-c770d8f0-014#1",
+      "CR-c770d8f0-015#1"
+    ]
+  },
+  "members": [
+    {
+      "path": "infra/events/20260907_021000_feedback_todo_followup/_changes.md",
+      "sha256": "bc5a2647db3323f8e38303a986b899ea659f35fae80c88786640df26208304ea"
+    },
+    {
+      "path": "infra/events/20260907_021000_feedback_todo_followup/_inference.md",
+      "sha256": "4b28049094fd19a4f0e524164a353619d1fb358bb962176b8241f58e3594a514"
+    },
+    {
+      "path": "infra/events/20260907_021000_feedback_todo_followup/docs/cloud-context/conformance/product/product-conformance-onprem.yaml",
+      "sha256": "87284f58d8402b4357ce9bd8ed6328768a5664d406e86d896bdbab5899b35b5f"
+    },
+    {
+      "path": "infra/events/20260907_021000_feedback_todo_followup/docs/cloud-context/decisions/product/product-decision-001.yaml",
+      "sha256": "30a995b256775d0d57d6cb9decc66fd2a32da2ec7830d6884eefdf85ad9e1d14"
+    },
+    {
+      "path": "infra/events/20260907_021000_feedback_todo_followup/docs/cloud-context/decisions/product/product-decision-002.yaml",
+      "sha256": "9360d0af500b3bf2d178b5bfa67e086181806eef607be292ad15145b478307d1"
+    },
+    {
+      "path": "infra/events/20260907_021000_feedback_todo_followup/docs/cloud-context/decisions/product/product-decision-003.yaml",
+      "sha256": "351a90a6d7660545916ac35dc8ae0b04d09ae2f4fedc6258f4a97b22d79b9dc4"
+    },
+    {
+      "path": "infra/events/20260907_021000_feedback_todo_followup/docs/cloud-context/decisions/product/product-decision-004.yaml",
+      "sha256": "87b1ad54d055ef84354f035cf4588026c40abb716ad3215860d08371bff2ddcc"
+    },
+    {
+      "path": "infra/events/20260907_021000_feedback_todo_followup/docs/cloud-context/decisions/product/product-decision-005.yaml",
+      "sha256": "ebb88d382657316dc1b0556c869fd41586d7616aa66c30673a04848f09f1798f"
+    },
+    {
+      "path": "infra/events/20260907_021000_feedback_todo_followup/docs/cloud-context/generated-md/product/relay-gate-target-architecture.md",
+      "sha256": "cdcdcf8fc7080c0390f8a7391751226c95db8317f15e1c0ab6a9e7c7be436a08"
+    },
+    {
+      "path": "infra/events/20260907_021000_feedback_todo_followup/docs/cloud-context/sources/onprem/minio-object-storage.md",
+      "sha256": "1e6c970526fba62454a6205cc2382d2f4399eec91bef4e76d14ee20738ccbc9d"
+    },
+    {
+      "path": "infra/events/20260907_021000_feedback_todo_followup/docs/cloud-context/sources/onprem/postgresql-high-availability.md",
+      "sha256": "2badb655972612d4e7b97a81785f72411bec2d52bf015eab01f40a2488dc3756"
+    },
+    {
+      "path": "infra/events/20260907_021000_feedback_todo_followup/docs/cloud-context/sources/onprem/rabbitmq-production-checklist.md",
+      "sha256": "7e050f4db7b74e33b30a535b6f9385128522e9a3e2f5e9624d4b47527a5f265d"
+    },
+    {
+      "path": "infra/events/20260907_021000_feedback_todo_followup/docs/cloud-context/sources/onprem/redis-replication.md",
+      "sha256": "3a7c4a39d66b6c47384c922e4be3d280dc1120627442ea40b9681e2673952ce1"
+    },
+    {
+      "path": "infra/events/20260907_021000_feedback_todo_followup/docs/mcl/foundation/output/foundation-context.yaml",
+      "sha256": "48d45f6aea72f9b3c9c306d7ca54c73bd2ef3bd3cffa453b590a052e7b42f762"
+    },
+    {
+      "path": "infra/events/20260907_021000_feedback_todo_followup/docs/mcl/product/input/product-input.yaml",
+      "sha256": "057d010abd8f83ff960183acf76a036c18c63604b07012525f6689162dbda110"
+    },
+    {
+      "path": "infra/events/20260907_021000_feedback_todo_followup/docs/mcl/product/output/product-cost-hints.yaml",
+      "sha256": "bd7a05fe90d6d9ad654b3ae26b36bbedecfdd580cc44b5a9c3b669d52ab67eaf"
+    },
+    {
+      "path": "infra/events/20260907_021000_feedback_todo_followup/docs/mcl/product/output/product-impl-onprem.yaml",
+      "sha256": "2e876dd445e5574d44b920ccc597d82330ed4e2ef43d5ed6d016900251b4d1ec"
+    },
+    {
+      "path": "infra/events/20260907_021000_feedback_todo_followup/docs/mcl/product/output/product-mapping-onprem.yaml",
+      "sha256": "c65771b5f38c9447f4f2287d65c551abb7c06fb644ec8ec5418bf51aeb1c6124"
+    },
+    {
+      "path": "infra/events/20260907_021000_feedback_todo_followup/docs/mcl/product/output/product-observability.yaml",
+      "sha256": "525341a5f5e29c3de9e4bf02825ff83bb16196878619d22b39af0f3325549fdf"
+    },
+    {
+      "path": "infra/events/20260907_021000_feedback_todo_followup/docs/mcl/product/output/product-workload-model.yaml",
+      "sha256": "e91a1e5625d9b1835b2b4fffb1eee6e7c6f75ec988353d60f5340a605df8910d"
+    },
+    {
+      "path": "infra/events/20260907_021000_feedback_todo_followup/docs/mcl/shared-platform/output/shared-platform-context.yaml",
+      "sha256": "7424b234ab2ca782c337a130a2b415b59c9d5f53f11465d660cc42fe794c91ef"
+    },
+    {
+      "path": "infra/events/20260907_021000_feedback_todo_followup/infra-event-diff.yaml",
+      "sha256": "7c795c58678c8755b9b38e39ce05d464bec9b9827e38065c220347511f877d4f"
+    },
+    {
+      "path": "infra/events/20260907_021000_feedback_todo_followup/infra-event.md",
+      "sha256": "e007b7410bea7f23398103c6f6dc4599703f15c31fecdda5ff912e38e1670411"
+    },
+    {
+      "path": "infra/events/20260907_021000_feedback_todo_followup/infra-event.yaml",
+      "sha256": "7cc09250d18eb4efac55f07e5991d2a7d560a5231a257685a0ebccdce3b68d35"
+    },
+    {
+      "path": "infra/events/20260907_021000_feedback_todo_followup/infra/product/onprem/README.md",
+      "sha256": "bd426e622ea28bfd1227cdd2b82b0eca4445a6b992dddf924f381d5e3fd048c9"
+    },
+    {
+      "path": "infra/events/20260907_021000_feedback_todo_followup/infra/product/onprem/ansible/inventory.ini.example",
+      "sha256": "70dbb45467b5949469b7aa8c63bc8715afc602117a163df61d73008e23a7cb1e"
+    },
+    {
+      "path": "infra/events/20260907_021000_feedback_todo_followup/infra/product/onprem/ansible/roles/relay-gate-backup/tasks/main.yml",
+      "sha256": "07461bec51b275898ebfb94ce5ab7dee0adb601413917b1a4e897807edd77905"
+    },
+    {
+      "path": "infra/events/20260907_021000_feedback_todo_followup/infra/product/onprem/ansible/roles/relay-gate-config/handlers/main.yml",
+      "sha256": "1f10bfe7e8a0b858ff0ff651e6a484ad6daeeb3c9f10aa56ac8d9d053e1268cc"
+    },
+    {
+      "path": "infra/events/20260907_021000_feedback_todo_followup/infra/product/onprem/ansible/roles/relay-gate-config/tasks/main.yml",
+      "sha256": "66dff7ad800e15d55a0bcec5ac4411ed941a312d4857b20ab279021f91cd31fe"
+    },
+    {
+      "path": "infra/events/20260907_021000_feedback_todo_followup/infra/product/onprem/ansible/roles/relay-gate-mail/handlers/main.yml",
+      "sha256": "5f6f2b0909a630401208c5e7be8031cb119c726bc11ec5001d5aa3db8366d57f"
+    },
+    {
+      "path": "infra/events/20260907_021000_feedback_todo_followup/infra/product/onprem/ansible/roles/relay-gate-mail/tasks/main.yml",
+      "sha256": "5a46138067bbe63ea1435f50a41539e071ced26d88c349b2732e692e500b5e31"
+    },
+    {
+      "path": "infra/events/20260907_021000_feedback_todo_followup/infra/product/onprem/ansible/roles/relay-gate-postgresql/handlers/main.yml",
+      "sha256": "f67cdb6e628424d8ba0e4033c11c97133b9eee15cd7eacb211cf59eb089ab0e1"
+    },
+    {
+      "path": "infra/events/20260907_021000_feedback_todo_followup/infra/product/onprem/ansible/roles/relay-gate-postgresql/tasks/main.yml",
+      "sha256": "c8879f7579440f495677327f7a39b0cc40fe3fb83e6de382f3ecc5abaacf5fb2"
+    },
+    {
+      "path": "infra/events/20260907_021000_feedback_todo_followup/infra/product/onprem/ansible/roles/relay-gate-runtime/handlers/main.yml",
+      "sha256": "a813c0d4e24758da9e7d96c3dc9ef7ba92538009904e72320afc42c090e11d99"
+    },
+    {
+      "path": "infra/events/20260907_021000_feedback_todo_followup/infra/product/onprem/ansible/roles/relay-gate-runtime/tasks/main.yml",
+      "sha256": "86d37b46d3216fb78560b3f30b73fb21a9e289f383e030d7b5ab474f4d6f4235"
+    },
+    {
+      "path": "infra/events/20260907_021000_feedback_todo_followup/infra/product/onprem/ansible/site.yml",
+      "sha256": "94db46cb30c5124b432a5268e74dba76e8e8a693aa890184206cf895c5f25a79"
+    },
+    {
+      "path": "infra/events/20260907_021000_feedback_todo_followup/infra/product/onprem/terraform/main.tf",
+      "sha256": "d089fa4b9402d6e31c3e917ba54747b364eedf80ef1449f035f100e8e300afc1"
+    },
+    {
+      "path": "infra/events/20260907_021000_feedback_todo_followup/infra/product/onprem/terraform/variables.tf",
+      "sha256": "b3dfa8535651eb2a614349e02baeb428f0e8d549e1c8a6628ceda212e16c9bd6"
+    },
+    {
+      "path": "infra/events/20260907_021000_feedback_todo_followup/product-input.yaml",
+      "sha256": "057d010abd8f83ff960183acf76a036c18c63604b07012525f6689162dbda110"
+    },
+    {
+      "path": "infra/events/20260907_021000_feedback_todo_followup/source.txt",
+      "sha256": "fdca3d551f25692ef238b84b37d459dce2cde81cd1aec6fdb56aa8c2b3ff1cd5"
+    }
+  ]
+}

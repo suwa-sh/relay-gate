@@ -1,0 +1,26 @@
+round: 2
+group: G2
+findings:
+  - id: S3-G2-010
+    uc: "適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/cli-command-contract.yaml"
+    line: 1096
+    severity: minor
+    viewpoint: 7
+    claim: "round1 の S3-G2-009 修正で validate-config.sh stderr(992 行)に `error: job map not found slot=<blue|green> map=<path>`(2)を追加し「文言は config_files.feature-flag.env.error_messages が正」としているが、その error_messages(1089-1097 行)と validation_rules(1084-1088 行)には job map 実体無しの行が無く、正本側が欠けている"
+    fix: "config_files.feature-flag.env.error_messages の「確報制御キーあり」行の次に「job map 実体無し: `error: job map not found slot=<blue|green> map=<path>`(2)」を追加し、validation_rules に「off でない slot の <slot>-job-map.csv が存在し読める(無ければ違反)」を 1 行加える"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_cross-cutting/api/cli-command-contract.yaml#validate-config.sh stderr feature flag(992 行)"
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/tier-facade.md#validate-config.sh --feature-flag(54 行)"
+verified_resolved:
+  - {id: S3-G2-001, status: resolved}
+  - {id: S3-G2-002, status: resolved}
+  - {id: S3-G2-003, status: resolved}
+  - {id: S3-G2-004, status: resolved}
+  - {id: S3-G2-005, status: resolved}
+  - {id: S3-G2-006, status: resolved}
+  - {id: S3-G2-007, status: resolved}
+  - {id: S3-G2-008, status: resolved}
+  - {id: S3-G2-009, status: resolved}
+resolved:
+  - {id: S3-G2-010, resolution: fixed}

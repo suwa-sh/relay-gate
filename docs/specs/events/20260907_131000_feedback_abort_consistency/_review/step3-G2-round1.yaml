@@ -1,0 +1,60 @@
+round: 1
+group: G2
+findings:
+  - id: S3-G2-001
+    uc: "実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる"
+    file: "docs/specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/spec.md"
+    line: 304
+    severity: major
+    viewpoint: 2
+    claim: "Scenario Outline「REQUESTED または CLAIMED の速報比較依頼を中止すると worker は比較を開始しない(SPEC-010-02)」の Then が `<worker_id> の worker が RUNNING への条件付き UPDATE(worker_id=?)を行っても 0 件` と書かれているが、REQUESTED の Example は worker_id=NULL で claim 済み worker が存在せず、この Then が束縛できない(AC2 の REQUESTED 側の検証が曖昧)。"
+    fix: "Then を状態別に分ける: REQUESTED の例は「その後 worker-02 が claim(`UPDATE ... SET status='CLAIMED', worker_id='worker-02', lease_until=? WHERE run_id=? AND status='REQUESTED'`)を試みても更新件数 0 で比較を開始しない」、CLAIMED の例は現行どおり worker-01 の RUNNING 条件付き UPDATE 0 件とする(Examples に「worker 側の検証 SQL」列を追加するか、Outline を 2 Scenario に分割する)。"
+    source_refs:
+      - "docs/usdm/latest/requirements.yaml#SPEC-010-02"
+      - "docs/specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/api/cli-command-contract.yaml#rapid-crosscheck-worker.sh"
+  - id: S3-G2-002
+    uc: "実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる"
+    file: "docs/specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/tier-ops.md"
+    line: 218
+    severity: major
+    viewpoint: 2
+    claim: "ティア BDD「abort-rapid-crosscheck.sh は REQUESTED / CLAIMED の依頼を status IN 条件付き UPDATE で ABORTED にする(SPEC-010-02)」も S3-G2-001 と同じく、REQUESTED(worker_id=NULL)の Example で `<worker_id> の worker が ... worker_id = ?` の更新件数 0 を検証しており束縛できない。"
+    fix: "S3-G2-001 と同じ分け方にする: REQUESTED の例は別 worker(worker-02)の claim UPDATE(`WHERE run_id = ? AND status = 'REQUESTED'`)が 0 件、CLAIMED の例は worker-01 の RUNNING 条件付き UPDATE が 0 件、と Then を状態別に書く。"
+    source_refs:
+      - "docs/usdm/latest/requirements.yaml#SPEC-010-02"
+  - id: S3-G2-003
+    uc: "実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる"
+    file: "docs/specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/tier-ops.md"
+    line: 42
+    severity: minor
+    viewpoint: 3
+    claim: "更新件数 0 の判定の説明で `request is not abortable ... status=...`(終端状態のときだけ出る)と書かれているが、同じ文の前半で「確報: RUNNING 以外」も不可と定義しており、確報の REQUESTED / CLAIMED でも同メッセージが出る(出力契約 52 行目と契約 abort-final-crosscheck.sh の stderr と矛盾)。"
+    fix: "括弧内を「速報は SUCCEEDED / FAILED / ABORTED の終端状態のとき、確報は RUNNING 以外のときに出る」に改める(出力契約の stderr 行と同じ表現)。"
+    source_refs:
+      - "docs/specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/api/cli-command-contract.yaml#abort-final-crosscheck.sh"
+  - id: S3-G2-004
+    uc: "実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる"
+    file: "docs/specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/_model-summary.yaml"
+    line: 100
+    severity: minor
+    viewpoint: 5
+    claim: "parallel_runs の SELECT ... FOR UPDATE の where 説明末尾に「change-brief D4-8」とあるが、本イベントの change-brief は D1〜D5 のみで D4-8 は存在しない(前イベントの参照が残っている)。"
+    fix: "「change-brief D4-8」を削除し、条件名で置き換える(例: 「条件「slot 中止可否判定」の直列化規則」)。"
+    source_refs:
+      - "docs/specs/events/20260907_131000_feedback_abort_consistency/_review/change-brief.md"
+  - id: S3-G2-005
+    uc: "実行復旧業務/実行中止フロー/現在状態を確認して停止確認に応答する"
+    file: "docs/specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/実行中止フロー/現在状態を確認して停止確認に応答する/_api-summary.yaml"
+    line: 83
+    severity: minor
+    viewpoint: 4
+    claim: "abort-rapid-crosscheck.sh(role: defines)の stderr に `error: request is not abortable ... status=...(3)` とだけあり、契約(D2-1)が明記した「SUCCEEDED / FAILED / ABORTED の終端状態のときだけ出る。REQUESTED / CLAIMED / RUNNING は中止可」の限定が無い。"
+    fix: "stderr の当該項目を `error: request is not abortable run_id=... role=rapid-crosscheck status=...(3。依頼が SUCCEEDED / FAILED / ABORTED の終端状態のときだけ。REQUESTED / CLAIMED / RUNNING は中止可)` に揃える。"
+    source_refs:
+      - "docs/specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/api/cli-command-contract.yaml#abort-rapid-crosscheck.sh"
+resolved:
+  - {id: S3-G2-001, resolution: fixed}
+  - {id: S3-G2-002, resolution: fixed}
+  - {id: S3-G2-003, resolution: fixed}
+  - {id: S3-G2-004, resolution: fixed}
+  - {id: S3-G2-005, resolution: fixed}

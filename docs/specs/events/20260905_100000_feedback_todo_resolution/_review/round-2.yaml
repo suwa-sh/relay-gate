@@ -1,0 +1,41 @@
+round: 2
+# Step6.5 反証レビュー round-2(差分更新イベント 20260905_100000_feedback_todo_resolution)。
+# 対象: round-1 で fixed とされた R-1〜R-4 の target と、その修正で影響を受ける成果物のみ(R-5 は deferred のため対象外。events/ 全体は再読していない)。
+# 再検証結果:
+#   R-1: 契約(cli-command-contract.yaml 168 / 243 / 249〜250 / 712 行)・UC-02 spec.md・UC-26 spec.md・rdb-schema.yaml・UC-23 spec.md は「全 slot 起動後」で揃った。
+#        ただし tier md 3 ファイル(UC-02 tier-facade.md / UC-03 tier-facade.md / UC-26 tier-ops.md)が契約の第 1 版(STARTED→RUNNING UPDATE 失敗 = 終了コード 6)のまま残り、
+#        契約・spec.md と食い違うため同 id で再掲する(下記)。
+#   R-2: 通知する/spec.md 146 / 208 / 225 行、判定する/spec.md 300 / 306 行はすべて status=FAILED exit_code=3 に修正済み。解消。
+#   R-3: UC-11 spec.md 214 / 242 行、UC-23 spec.md 220 / 264 行に SPEC-011-06 行とシナリオ名末尾の付記が追加され、
+#        usdm-acceptance-matrix.md 78 / 105 / 118 / 124 / 136 / 140 行の SPEC-011-06 集計と記載誤り節(95〜103 行)が現状に一致。解消。
+#   R-4: 調整する/spec.md 187〜192 行の Scenario は validate-config.sh の終了コード・stdout 3 行・ヘッダー列・`warn: unknown column column=adjusted_at` に
+#        検証対象が絞られ、適用構成文書は Given の注記(relay-gate は保持しない)に移った。関連 USDM 表 163 行も「BDD では検証しない」と明記。解消。
+# target は docs/specs/events/20260905_100000_feedback_todo_resolution/ からの相対パス。
+findings:
+  - id: R-1
+    viewpoint: 4
+    severity: major
+    target: "実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/tier-facade.md"
+    claim: "round-1 R-1 の修正は契約と spec.md には反映されたが、tier md 3 ファイル(UC-02 tier-facade.md / UC-03 tier-facade.md / UC-26 tier-ops.md)は「STARTED→RUNNING UPDATE 失敗 = 終了コード 6」「slot_executions.pid UPDATE 失敗 = 終了コード 6」の第 1 版のままで、契約 facade.sh / background-rerun.sh の終了コード規則および同じ tier md 内の実行ログ記述と矛盾する。tier md はティア完了条件の正本なので、実装がどちらの終了コードを返すべきか決まらない"
+    evidence: |-
+      契約(修正後):
+      - cli-command-contract.yaml 168 行(shared_rules.state_codes.parallel_run_transitions): 「STARTED → RUNNING(… 全 slot 起動後(foreground の PID 待機開始前)。… UPDATE 失敗は runner 起動済みのため終了コードに反映せず実行ログ ERROR のみ)」
+      - 同 243 行(facade.sh exit 6 condition): 「全 slot 起動後の parallel_runs STARTED→RUNNING UPDATE 失敗、中継後の parallel_runs COMPLETED UPDATE 失敗、slot_executions.pid UPDATE 失敗は終了コードに反映しない」
+      - 同 250 行(facade.sh execution_log): 「`ERROR management db update failed table=parallel_runs run_id=...`(全 slot 起動後の STARTED→RUNNING UPDATE 失敗。runner は起動済みのため終了コードは変えない。background-rerun.sh の復元起動も同文)」
+      - 同 712 行(background-rerun.sh idempotency): 「起動後の pid UPDATE / STARTED→RUNNING UPDATE の失敗は runner 起動済みのため終了コードに反映せず実行ログ ERROR のみ」
+      tier md(未修正):
+      - UC-02 tier-facade.md 67 行(終了コード表 6): 「foreground 待機に入る前の管理 DB 書き込み失敗(parallel_runs INSERT(STARTED)/ STARTED→RUNNING UPDATE、rapid_runs INSERT、slot_executions INSERT / pid UPDATE)」→ STARTED→RUNNING UPDATE 失敗と pid UPDATE 失敗を 6 に含めている
+      - UC-02 tier-facade.md 82 行(エラーメッセージ表): 「管理 DB INSERT / UPDATE 失敗(off 以外、runner 起動前)| … `error: management db update failed table=parallel_runs run_id=...`」→ stderr エラー(= 終了コード 6 経路)として STARTED→RUNNING UPDATE 失敗を「runner 起動前」に置いている
+      - UC-02 tier-facade.md 101 行(エラーハンドリング): 「slot_executions の INSERT / pid UPDATE 失敗は parallel_runs と同じく終了コード 6」。一方、同ファイル 106 行(実行ログ)は「`ERROR management db update failed table=slot_executions run_id=...`(pid UPDATE 失敗。終了コードは変えない)」で、同一ファイル内で pid UPDATE 失敗の終了コードが割れている。また 106 行の実行ログ一覧には契約 250 行の `ERROR management db update failed table=parallel_runs run_id=...`(STARTED→RUNNING 失敗)が無い
+      - UC-03 foreground slot の結果をジョブスケジューラへ中継する/tier-facade.md 33 行: 「runner 起動前〜foreground 待機前の管理 DB 書き込み失敗(parallel_runs INSERT(STARTED)/ STARTED→RUNNING UPDATE …)は終了コード 6」
+      - UC-26 元の execution-spec.json から復元して新しい run_id で起動する/tier-ops.md 46 行(終了コード表 6): 「管理 DB INSERT / UPDATE 失敗」、62 行(エラーハンドリング): 「手順 2 以降の失敗は 6(手順 6 の pid UPDATE 失敗を除く)」→ 手順 7(59 行)の STARTED→RUNNING UPDATE 失敗が 6 に含まれ、契約 712 行と食い違う。72 行の実行ログにも parallel_runs の UPDATE 失敗 ERROR 文言が無い
+      decisions/spec-decision-005.yaml 43 行は「STARTED → RUNNING を runner 起動前に行う(契約側の第 1 版)」を却下と記録しており、採用側は「全 slot 起動後」で確定している
+    suggested_fix: |-
+      契約(168 / 243 / 250 / 712 行)を正として tier md 3 ファイルを揃える:
+      - UC-02 tier-facade.md 67 行: 終了コード 6 の条件から「STARTED→RUNNING UPDATE」と「pid UPDATE」を外し、末尾の注記を「全 slot 起動後の parallel_runs STARTED→RUNNING UPDATE 失敗、slot_executions.pid UPDATE 失敗、中継後の COMPLETED UPDATE 失敗は終了コードに反映しない(実行ログ ERROR のみ)」に改める
+      - UC-02 tier-facade.md 82 行: 「管理 DB INSERT / UPDATE 失敗(off 以外、runner 起動前)」を「管理 DB INSERT 失敗(off 以外、runner 起動前)」にして `error: management db update failed table=parallel_runs` を stderr 定型文から外す(UPDATE 失敗は実行ログのみ)
+      - UC-02 tier-facade.md 101 行: 「slot_executions の INSERT / pid UPDATE 失敗は parallel_runs と同じく終了コード 6」を「slot_executions の INSERT 失敗は終了コード 6(当該 slot を起動しない)。pid UPDATE 失敗と STARTED→RUNNING UPDATE 失敗は runner 起動済みのため実行ログ ERROR のみ」に改め、106 行の実行ログ一覧に `ERROR management db update failed table=parallel_runs run_id=...`(STARTED→RUNNING UPDATE 失敗。終了コードは変えない)を追加する
+      - UC-03 tier-facade.md 33 行: 「runner 起動前〜foreground 待機前の管理 DB 書き込み失敗(parallel_runs INSERT(STARTED)/ STARTED→RUNNING UPDATE …)は終了コード 6」を「runner 起動前の parallel_runs INSERT(STARTED)失敗は終了コード 6。全 slot 起動後の STARTED→RUNNING UPDATE 失敗と中継後の RUNNING→COMPLETED UPDATE 失敗は終了コードに反映しない」に改める
+      - UC-26 tier-ops.md 46 行: 「管理 DB INSERT / UPDATE 失敗」を「管理 DB INSERT 失敗(起動前)」に、62 行を「手順 2 以降の失敗は 6(手順 6 の pid UPDATE 失敗と手順 7 の STARTED→RUNNING UPDATE 失敗を除く。いずれも実行ログ `ERROR management db update failed table=... run_id=...` のみで終了コード 0)」に改め、72 行の実行ログに同文言を追加する
+resolved:
+  - {id: R-1, resolution: fixed}

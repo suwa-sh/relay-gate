@@ -1,0 +1,50 @@
+round: 2
+# Step6.5 反証レビュー round 2。対象は round-1 findings(R-001〜R-005)の target とその修正で影響を受ける成果物のみ。
+# 照合先: docs/rdra/latest/条件.tsv(9 / 18 / 19 / 42 / 43 行)、状態.tsv(slot 実行 21〜28 行)、docs/usdm/latest/requirements.yaml(SPEC-005-02 AC5 / AC6、SPEC-010-01 AC4 / AC8)、change-brief.md(D1〜D3)。
+# 再検証結果(resolved に載った id):
+#   R-001: 主要 target は修正済み(rdb-schema.yaml slot_executions.status 153 行 / 契約 shared_rules.exitcode_to_status.slot_execution 123 行 / UC-05 spec.md 141 行 / UC-09 tier-rapid-crosscheck.md 97 行)。
+#          方針「条件付き UPDATE で一度だけ終端値を書き、abort 後に exitcode.txt が公開されても ABORTED のまま残す(aborted.txt のミラー)」は、RDRA 条件「中止済み run の比較依頼作成除外」(判定材料 = slot_executions.status はファイル正本 aborted.txt のミラー)・
+#          USDM SPEC-005-02 AC6(中止後に走り切った green の完了通知でも依頼を作らない)・SPEC-010-01(中止後に実装が終了した場合は exitcode.txt 優先で導出)のいずれとも矛盾しない。UC-09 spec.md の AC5 / AC6 シナリオ(Given に slot_executions(run_id, green).status=ABORTED と exitcode.txt=0 の両方)も同方針で成立する。
+#          ただし周辺の「ファイル正本と同じ値を保持する二重マッピング(ファイル正本が優先)」の旧表現が残っており、同 id を minor で再掲する。
+#   R-002: 契約 rapid-crosscheck-runner.sh idempotency(394 行)/ abort-blue.sh exit 0 meaning(783 行。abort-green.sh は「abort-blue.sh と同じ」で参照)/ UC-09 spec.md 111 行・tier 50 行 / UC-23 tier-ops.md 32 行に限定文が入った。UC-23 spec.md 側の 0 件説明に限定が無いため minor で再掲する。
+#   R-003: 修正済み(UC-23 spec.md 280 行 `--artifact-uri file:///...`)。再掲しない。
+#   R-004: 契約 444 行・459 行 / UC-11 tier-rapid-crosscheck.md 23 行 / _api-summary.yaml 14 行は列挙が広がった。UC-11 spec.md の分岐条件一覧だけが旧列挙のまま(minor で再掲)。
+#   R-005: 修正済み(tier-final-crosscheck.md 65 行。条件「依頼中止可否判定」と FINAL_POLL_LIMIT_SEC を参照)。再掲しない。
+# 反証点(finding にしなかったもの):
+#   (a) hang-detector / background-rerun --role blue|green / abort-blue・abort-green の現在状態表示は slot_executions.status を読まずファイル正本で判定する(契約 slot_execution_readers 124 行 / hang-detector idempotency 619 行 / UC-22 tier-ops.md 70 行)ため、DB 列が ABORTED のまま残っても中止済み slot のリラン・ハング検知の終端判定は変わらない。
+#   (b) run-lineage.sh の run_status は parallel_runs 由来で slot_executions.status を表示しない(UC「リラン結果を parent_run_id で追跡する」tier-ops.md 60 行は role 導出にのみ slot_executions を使う)ため、DB 列の ABORTED 残存が系譜表示の値を変えることはない。
+#   (c) 契約 329 行(runner の終端 UPDATE)の「ファイル正本 exitcode.txt と同じ値を保持する二重マッピング」は「更新件数 0(既に ABORTED)は WARN のみ」と併記されているため、R-001 方針(再同期しない)と両立する。
+findings:
+  - id: R-001
+    viewpoint: 4
+    severity: minor
+    target: "docs/specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/datastore/rdb-schema.yaml"
+    claim: "主要 target(slot_executions.status 153 行 / 契約 123 行 / UC-05 spec.md 141 行 / UC-09 tier 97 行)は「条件付き UPDATE で一度だけ終端値を書き、abort 後に exitcode.txt が公開されても ABORTED のまま残す(再同期しない)」に改まったが、同じ列を説明する周辺記述に旧表現「ファイル正本から導出した値と同じ値を保持する二重マッピング」「ファイル正本が優先」が残り、153 行の「ファイル正本と一致しないのはこの経路だけ」と読み合わせないと再同期実装を誘導する。残存箇所: rdb-schema.yaml 128 行(テーブル description「…同じ値を保持する二重マッピング…本テーブルは off 以外での参照・整合に使う」)、UC-05 tier-facade.md 75 行(節見出し「ファイル正本と同じ値を保持する二重マッピング」)・97 行、UC-05 _model-summary.yaml 62 行、UC-04(slot 実行モードを選択して runner を起動する)tier-facade.md 133 行・spec.md 174 行、UC-23 tier-ops.md 88 行(slot_executions.status「ファイル正本と同じ値を保持する二重マッピング」)、_cross-cutting/ux-ui/ui-design.md 197 行、実装切替ジョブ実行フロー buc-spec.md 5 行。datastore-schema.md 165 行の「本列はその導出値と同じ値を保持する(ファイル正本が優先)」は rdb-schema.yaml 旧版からの生成物で、再生成すれば 153 行に追従する(change-brief の方針どおり手編集不要)"
+    evidence: "rdb-schema.yaml 128 行 vs 153 行 / UC-05 tier-facade.md 75・97 行 / UC-05 _model-summary.yaml 62 行 / UC-04 tier-facade.md 133 行・spec.md 174 行 / UC-23 tier-ops.md 88 行 / ui-design.md 197 行 / 実装切替ジョブ実行フロー buc-spec.md 5 行 / datastore-schema.md 165 行(生成物)/ RDRA 条件.tsv 19 行「slot_executions.status(ファイル正本 aborted.txt のミラー)」"
+    suggested_fix: "残存箇所の「同じ値を保持する二重マッピング(ファイル正本が優先)」を「runner / abort-* の条件付き UPDATE(WHERE status='RUNNING')で一度だけ終端値を書く列。abort 後に実装が走り切って exitcode.txt を公開した経路だけファイル正本の導出値(exitcode.txt 優先)と一致せず ABORTED のまま残る(再同期しない。正本: rdb-schema.yaml slot_executions.status / 契約 shared_rules.exitcode_to_status.slot_execution)」の 1 文に置き換えるか、少なくとも「(ファイル正本が優先)」「整合に使う」の語を外して 153 行への参照を添える。datastore-schema.md は rdb-schema.yaml から再生成する"
+  - id: R-002
+    viewpoint: 4
+    severity: minor
+    target: "docs/specs/events/20260907_131000_feedback_abort_consistency/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/spec.md"
+    claim: "契約 783 行と tier-ops.md 32 行には「slot_executions の UPDATE が 0 件で runner の終端 UPDATE が先に COMMIT 済みの場合、aborted.txt は残るが状態導出は exitcode.txt を優先するため中止は成立していない」の限定が入ったが、同 UC の spec.md 49 行(tier 責務表「slot_executions の UPDATE 0 件は WARN を残して成功(0)」)と 176 行(分岐条件一覧「0 → 管理 DB 側が既に終端・中止済み(... ファイル正本は成立)」)は限定なしの「ファイル正本は成立」のままで、同じ UC 内で tier-ops.md と spec.md の説明が揃っていない。また tier-ops.md 32 行 / 契約 783 行の「再確認: run-lineage.sh / abort-<role>.sh の現在状態表示」のうち run-lineage.sh は run_status(parallel_runs 由来)を出すだけで slot の状態を表示しない(UC「リラン結果を parent_run_id で追跡する」tier-ops.md 60 行は role 導出にのみ slot_executions を使う)ため、slot 状態の再確認先としては abort-<role>.sh の現在状態表示(ファイル正本導出)だけが正しい"
+    evidence: "UC-23 spec.md 49 行・176 行 / UC-23 tier-ops.md 32 行 / cli-command-contract.yaml 783 行 / cli-command-contract.yaml 944〜970 行(run-lineage.sh stdout: run_status)/ UC「リラン結果を parent_run_id で追跡する」tier-ops.md 60 行"
+    suggested_fix: "UC-23 spec.md 176 行の「ファイル正本は成立」を「aborted.txt は公開済み。ただし runner の終端 UPDATE が先に COMMIT 済みの場合は状態導出が exitcode.txt を優先するため中止は成立しない(tier-ops.md「0 件」の説明と同文)」に改め、49 行にも同じ 1 句を添える。tier-ops.md 32 行 / 契約 783 行の再確認先は「abort-<role>.sh の現在状態表示(ファイル正本から導出)」だけにし、run-lineage.sh は外す(または「run-lineage.sh は run_status のみ」と補う)"
+  - id: R-004
+    viewpoint: 4
+    severity: minor
+    target: "docs/specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/比較ツールでジョブ単位比較を実行して結果を登録する/spec.md"
+    claim: "契約 444 行(stdout)・459 行(idempotency)、UC-11 tier-rapid-crosscheck.md 23 行、_api-summary.yaml 14 行は RUNNING 遷移 0 件時の再 SELECT 値を「REQUESTED / 他 worker の CLAIMED / RUNNING / 別 worker が終端まで進めた SUCCEEDED / FAILED」に広げたが、UC-11 spec.md 166 行(分岐条件一覧「依頼中止可否判定」)の「それ以外(lease 失効で別 worker に回収された = REQUESTED / 他 worker の CLAIMED / RUNNING)」は旧列挙のままで、同 UC の tier md / 契約と値集合が一致しない"
+    evidence: "UC-11 spec.md 166 行 / cli-command-contract.yaml 444 行・459 行 / UC-11 tier-rapid-crosscheck.md 23 行 / UC-11 _api-summary.yaml 14 行"
+    suggested_fix: "UC-11 spec.md 166 行の列挙を契約 459 行と同文「それ以外(lease 失効で回収済み: REQUESTED / 他 worker の CLAIMED / RUNNING / 別 worker が終端まで進めた SUCCEEDED / FAILED)」に揃える"
+  - id: R-006
+    viewpoint: 1
+    severity: minor
+    target: "docs/specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/rdra-feedback.md"
+    claim: "R-001 の方針(abort 後に exitcode.txt が公開されても slot_executions.status は ABORTED のまま残す)は RDRA 条件「中止済み run の比較依頼作成除外」(19 行「slot_executions.status(ファイル正本 aborted.txt のミラー)」)と USDM SPEC-005-02 AC6 に整合する一方、RDRA 条件「slot 実行の状態導出規則」(条件.tsv 9 行)の「速報クロスチェック有効時は管理 DB にも同じ状態を保持する」とは、この 1 経路(導出値 SUCCEEDED / FAILED、DB 列 ABORTED)で文言上一致しない。spec 側は 153 行 / 123 行 / 141 行で「一致しないのはこの経路だけ」と明示して USDM AC6 を優先しており矛盾ではないが、RDRA 条件 9 行の文言を「aborted.txt のミラーとして保持する(中止後に実装が終了した経路では導出値と一致しない)」へ寄せる要否が rdra-feedback.md(残存は SR-001 / SR-002 のみ)に記録されていない"
+    evidence: "docs/rdra/latest/条件.tsv 9 行 vs 19 行 / docs/usdm/latest/requirements.yaml SPEC-005-02 AC6(288 行)/ rdb-schema.yaml 153 行 / cli-command-contract.yaml 123 行 / UC-05 spec.md 141 行 / _cross-cutting/rdra-feedback.md 38 行「残存は SR-001 / SR-002 のみ」"
+    suggested_fix: "rdra-feedback.md の残存表に文言確認項目を 1 行追加する: 対象 = 条件「slot 実行の状態導出規則」の「管理 DB にも同じ状態を保持する」。内容 = 「管理 DB の slot_executions.status は aborted.txt のミラーとして条件付き UPDATE で一度だけ書き、中止後に実装が終了した経路では導出値(exitcode.txt 優先)と一致しない」に寄せる要否の確認(Spec 側は条件「中止済み run の比較依頼作成除外」と SPEC-005-02 AC6 に従い ABORTED を残す)。RDRA 側を変えない判断なら、その旨を同表に記録して閉じる"
+resolved:
+  - {id: R-001, resolution: fixed, reason: "rdb-schema.yaml 128 行 / UC-05 tier-facade.md 75・97 行 / UC-05 _model-summary.yaml / UC-04 tier-facade.md 133 行・spec.md 174 行 / UC-23 tier-ops.md 88 行 / 実装切替ジョブ実行フロー buc-spec.md を 153 行の方針(条件付き UPDATE で一度だけ・再同期しない)に置換。_cross-cutting/ux-ui/ui-design.md 197 行と datastore-schema.md は編集許可外のため未変更(datastore-schema.md は再生成で追従)"}
+  - {id: R-002, resolution: fixed}
+  - {id: R-004, resolution: fixed}
+  - {id: R-006, resolution: fixed, by: orchestrator, reason: "round-3 でオーケストレータが rdra-feedback.md 残存表に #16(文言確認)として記録し、確認推奨項目として返却"}

@@ -1,0 +1,37 @@
+round: 3
+# 検証パス: round-2 の resolved 3 件(R-003 / R-008 / R-009)の反映確認と、修正で生じた新規矛盾の検出のみ
+verification:
+  - id: R-003
+    status: verified
+    note: "契約 abort-blue.sh idempotency(786 行)/ notes(795 行)、rapid-crosscheck-runner.sh idempotency(392 行)、rdb-schema.yaml _review_notes(45 行)、UC「実行を ABORTED へ遷移させる」spec.md(5 / 49 / 91-92 / 157 行)・tier-ops.md(28 / 31 行)、UC「両系成功時に速報比較依頼を作成する」spec.md(108 行)・tier-rapid-crosscheck.md(49 行 + BDD「parallel_runs が COMPLETED でも abort-green.sh の無条件行ロックで直列化される」)、速報クロスチェックフロー buc-spec.md(136 行)に、slot_executions UPDATE → `SELECT 1 FROM parallel_runs WHERE run_id = ? FOR UPDATE`(無条件)→ parallel_runs 条件付き UPDATE → rapid_crosscheck_requests 条件付き UPDATE のロック順が一致して反映されている。abort-green.sh の契約は abort-blue.sh 参照のため追従不要"
+  - id: R-008
+    status: verified
+    note: "_api-summary.yaml stdout / exit_codes[0].meaning と buc-spec.md 5 / 12 / 43 / 62 / 76 / 86 / 119 / 136 行が「run が中止済み(parallel_runs ABORTED または slot_executions に ABORTED あり。後者は仮採用: rdra-feedback #13)」に統一されている"
+  - id: R-009
+    status: verified
+    note: "background 側リランフローの 2 つの tier-ops.md(114 行 / 96 行)が「日時はホストで生成して SQL にバインド値で渡す。RELAY_GATE_NOW 設定時はその変換値。conventions.datetime_generation」に差し替わっている"
+findings:
+  - id: R-010
+    viewpoint: 4
+    severity: minor
+    target: "docs/specs/events/20260907_024000_feedback_todo_followup/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/_model-summary.yaml"
+    claim: "D4-8 で追加した parallel_runs の無条件行ロック(`SELECT 1 FROM parallel_runs WHERE run_id = ? FOR UPDATE`)が、同 UC のデータアクセス定義 _model-summary.yaml の tables.parallel_runs.operations に無い(条件付き UPDATE のみ)。同じ操作を UC「両系成功時に速報比較依頼を作成する」の _model-summary.yaml は SELECT 操作(where に FOR UPDATE)として列挙しており、契約 / spec.md / tier-ops.md と _model-summary.yaml の間でデータアクセス定義が食い違う"
+    evidence: "_model-summary.yaml tables[3](parallel_runs).operations は type UPDATE(where: run_id = ? AND status IN ('STARTED', 'RUNNING'))の 1 件のみ。同 UC spec.md 49 行 / 91 行、tier-ops.md 28 / 31 行、契約 abort-blue.sh idempotency は無条件 FOR UPDATE を処理順の一部として定義。比較対象: 両系成功時に速報比較依頼を作成する/_model-summary.yaml 86-92 行は parallel_runs に type SELECT + where \"run_id = ? FOR UPDATE(...)\" を持つ"
+    suggested_fix: "実行を ABORTED へ遷移させる/_model-summary.yaml の parallel_runs に operations: type SELECT(columns: なし or 定数 1、where: \"run_id = ? FOR UPDATE(無条件の行ロック。slot 系のみ。RAPID_CROSSCHECK_MODE が off 以外。COMPLETED でも取る。条件付き UPDATE の前に実行し dispatcher(rapid-crosscheck-runner.sh)の FOR UPDATE と直列化する)\")を条件付き UPDATE の前に 1 件追加する"
+
+  - id: R-011
+    viewpoint: 4
+    severity: minor
+    target: "docs/specs/events/20260907_024000_feedback_todo_followup/クロスチェック業務/速報クロスチェックフロー/両系成功時に速報比較依頼を作成する/spec.md"
+    claim: "UC「両系成功時に速報比較依頼を作成する」の複数箇所に「abort-blue / abort-green の条件付き UPDATE と直列化」という round-2 以前の文言が残り、同ファイル内の修正済み記述(直列化の相手は abort の無条件行ロック `SELECT 1 ... FOR UPDATE`)と食い違う。R-003 の指摘どおり条件付き UPDATE 単体では COMPLETED の run で行ロックを取らないため、実装者が残存文言を根拠に「abort 側は条件付き UPDATE だけで足りる」と読むと競合窓が再び開く(round-2 R-003 suggested_fix の文言統一が部分適用)"
+    evidence: "spec.md 5 行「abort-blue / abort-green の条件付き UPDATE と直列化する」、65 行「abort-blue / abort-green の UPDATE と直列化」、126 行「abort-blue / abort-green の条件付き UPDATE と直列化し」、162 行「abort-blue / abort-green の UPDATE と直列化」。tier-rapid-crosscheck.md 5 行「abort-blue / abort-green の条件付き UPDATE と直列化」、89 行「abort-blue / abort-green の UPDATE と直列化」。_model-summary.yaml 34 行「abort-blue / abort-green の UPDATE と直列化」、92 行「abort-blue / abort-green の条件付き UPDATE と直列化する」。一方で同 spec.md 108 行 / tier-rapid-crosscheck.md 49 行 / 契約 392 行 / rdb-schema _review_notes 45 行は「abort の parallel_runs 無条件行ロック(FOR UPDATE)と直列化」に修正済み"
+    suggested_fix: "上記 8 箇所の「abort-blue / abort-green の(条件付き)UPDATE と直列化」を「abort-blue / abort-green の parallel_runs 無条件行ロック(`SELECT 1 ... FOR UPDATE`)と直列化」に統一する(意味の変更なし。spec.md 108 行 / tier 49 行の記述に揃える)"
+resolved:
+  - id: R-010
+    resolution: fixed
+    note: "UC「実行を ABORTED へ遷移させる」の _model-summary.yaml parallel_runs に無条件行ロックの SELECT 操作(run_id = ? FOR UPDATE)を条件付き UPDATE の前に追加"
+    by: orchestrator
+  - id: R-011
+    resolution: fixed
+    note: "UC「両系成功時に速報比較依頼を作成する」の spec.md / tier-rapid-crosscheck.md / _model-summary.yaml の「abort-blue / abort-green の(条件付き)UPDATE と直列化」8 箇所を「parallel_runs 無条件行ロック(SELECT 1 ... FOR UPDATE)と直列化」に統一"
+    by: orchestrator

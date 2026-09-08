@@ -1,0 +1,15 @@
+Spec 差分更新: feedback 20260907_todo_followup(design 無しモード。UI 画面なし・CLI と定期ジョブのみ)
+event_id: 20260907_024000_feedback_todo_followup
+previous_event: 20260905_100000_feedback_todo_resolution
+trigger_event: rdra:20260907_011000_feedback_todo_followup, arch:20260907_015000_feedback_todo_followup
+related_event: nfr:20260907_013000_feedback_todo_followup, infra:20260907_021000_feedback_todo_followup
+design_available: false(引数指定。docs/design/latest/ は存在しない)
+dialogue_policy: interactive(CR 本文に利用者の決定が明記された事項は決定を採用。確認推奨項目は完了報告で返却)
+feedback_request_id: 20260907_todo_followup
+input_sha256: 193823ac1e6f02400269d6bdca461150a1fc8951393f332ef28580e045261389
+request_ids: CR-c770d8f0-013, CR-c770d8f0-014, CR-c770d8f0-015
+direct_work_unit_ids: (none)
+causal_work_unit_ids: CR-c770d8f0-013#1, CR-c770d8f0-014#1, CR-c770d8f0-015#1
+stage_packet: docs/pipeline/feedback-runs/20260907_todo_followup/stage-packets/spec.md
+入力の正本: docs/rdra/latest/(20260907_011000)、docs/usdm/latest/、docs/nfr/latest/(20260907_013000)、docs/arch/latest/(20260907_015000)、docs/infra/latest/(20260907_021000)、docs/specs/latest/(20260905_100000 を差分更新の起点)
+変更の正本(作業記録): _review/change-brief.md(D1〜D3 + 反証レビュー由来の D4-1〜D4-8)

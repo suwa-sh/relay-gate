@@ -1,0 +1,111 @@
+uc: "実行を ABORTED へ遷移させる"
+business: "実行復旧業務"
+buc: "実行中止フロー"
+bounded_context_id: "BC-004"
+aggregate_id: "AG-001"
+
+models:
+  - name: "AbortExecutionCommand"
+    tier: "tier-ops"
+    layer: "usecase"
+    type: "command"
+    rdra_info: "中止指示"
+  - name: "AbortEligibility"
+    tier: "tier-ops"
+    layer: "domain"
+    type: "value-object"
+    rdra_info: "slot 実行"
+  - name: "RunnerResultRepository"
+    tier: "tier-ops"
+    layer: "repository"
+    type: "record"
+    rdra_info: "Runner Result"
+  - name: "SlotExecutionRepository"
+    tier: "tier-ops"
+    layer: "repository"
+    type: "record"
+    rdra_info: "slot 実行"
+  - name: "CrosscheckRequestRepository"
+    tier: "tier-ops"
+    layer: "repository"
+    type: "record"
+    rdra_info: "速報比較依頼(rapid_crosscheck_request)"
+  - name: "ParallelRunRepository"
+    tier: "tier-ops"
+    layer: "repository"
+    type: "record"
+    rdra_info: "並行稼働実行(parallel_run)"
+  - name: "facade/<run_id>/<role>/aborted.txt"
+    tier: "tier-ops"
+    layer: "gateway"
+    type: "record"
+    rdra_info: "Runner Result"
+  - name: "RELAY_GATE_LOG_DIR/abort-<role>.sh.log"
+    tier: "tier-ops"
+    layer: "usecase"
+    type: "record"
+    rdra_info: "実行ログ"
+
+tables:
+  - name: "slot_executions"
+    rdra_info: "slot 実行"
+    operations:
+      - type: "UPDATE"
+        columns:
+          - name: "status"
+            value: "ABORTED"
+          - name: "completed_at"
+            value: "中止日時(ローカル時刻。aborted.txt の中止時刻(UTC)をローカルへ変換した同時刻)"
+        where: "run_id = ? AND slot = ? AND status = 'RUNNING'(RAPID_CROSSCHECK_MODE が off 以外のときだけ。aborted.txt の公開後。0 件は WARN のみで終了コード 0)"
+    indexes_needed:
+      - columns: ["run_id", "slot"]
+        reason: "主キー。条件付き UPDATE の対象特定"
+        access_pattern: "abort-blue.sh / abort-green.sh の UPDATE"
+  - name: "rapid_crosscheck_requests"
+    rdra_info: "速報比較依頼(rapid_crosscheck_request)"
+    operations:
+      - type: "UPDATE"
+        columns:
+          - name: "status"
+            value: "ABORTED"
+          - name: "completed_at"
+            value: "中止日時(ローカル時刻)"
+        where: "run_id = ? AND status = 'RUNNING'(abort-rapid-crosscheck.sh)"
+      - type: "UPDATE"
+        columns:
+          - name: "status"
+            value: "ABORTED"
+          - name: "completed_at"
+            value: "中止日時(ローカル時刻)"
+        where: "run_id = ? AND status = 'REQUESTED'(abort-blue.sh / abort-green.sh。RAPID_CROSSCHECK_MODE が off 以外のときだけ。未着手の速報比較依頼のみ。0 件は正常。CLAIMED / RUNNING は変更しない)"
+    indexes_needed: []
+  - name: "final_crosscheck_requests"
+    rdra_info: "確報比較依頼(final_crosscheck_request)"
+    operations:
+      - type: "UPDATE"
+        columns:
+          - name: "status"
+            value: "ABORTED"
+          - name: "completed_at"
+            value: "中止日時(ローカル時刻)"
+        where: "final_crosscheck_id = ? AND status = 'RUNNING'"
+    indexes_needed: []
+  - name: "parallel_runs"
+    rdra_info: "並行稼働実行(parallel_run)"
+    operations:
+      - type: "SELECT"
+        columns:
+          - name: "run_id"
+            value: "定数 1(行ロック目的。値は使わない)"
+        where: "run_id = ? FOR UPDATE(無条件の行ロック。slot 系(abort-blue / abort-green)のみ。RAPID_CROSSCHECK_MODE が off 以外。COMPLETED でも取る。slot_executions UPDATE の直後・条件付き UPDATE の前に実行し、dispatcher(rapid-crosscheck-runner.sh)の FOR UPDATE と直列化する。change-brief D4-8)"
+      - type: "UPDATE"
+        columns:
+          - name: "status"
+            value: "ABORTED"
+          - name: "completed_at"
+            value: "中止日時(ローカル時刻)"
+        where: "run_id = ? AND status IN ('STARTED', 'RUNNING')(slot 系は RAPID_CROSSCHECK_MODE が off 以外のときだけ。COMPLETED は更新しない。直前の無条件行ロックで dispatcher と直列化済み)"
+    indexes_needed: []
+
+kvs: []
+object_storage: []

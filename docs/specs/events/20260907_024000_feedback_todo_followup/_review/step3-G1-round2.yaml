@@ -1,0 +1,17 @@
+round: 2
+group: G1
+findings: []
+verified:
+  - {id: S3-G1-1, status: resolved, note: "tier-facade.md L35 の行形式が `{script} {run_id} {ローカル日時} {LEVEL} {message}` に揃い、「このローカル時刻列」に修正済み"}
+  - {id: S3-G1-2, status: resolved, note: "tier-rapid-crosscheck.md L35 同上"}
+  - {id: S3-G1-3, status: resolved, note: "両系成功時に速報比較依頼を作成する/tier-rapid-crosscheck.md L24 同上"}
+  - {id: S3-G1-4, status: resolved, note: "速報比較依頼を claim する/tier-rapid-crosscheck.md L38 同上"}
+  - {id: S3-G1-5, status: resolved, note: "比較ツールでジョブ単位比較を実行して結果を登録する/tier-rapid-crosscheck.md L34 同上"}
+  - {id: S3-G1-6, status: resolved, note: "速報比較結果を参照する/tier-rapid-crosscheck.md L56 同上"}
+  - {id: S3-G1-7, status: resolved, note: "sequenceDiagram が next_completion_status(blue_status, green_status, current, parallel_run_status) を呼び、can_create_request で分岐。分岐条件一覧に next_completion_status(domain) を明記。mermaid lint 通過"}
+  - {id: S3-G1-8, status: resolved, note: "データフロー図 LeasePolicy(lease_until = now + RAPID_LEASE_SEC。既定 600 秒)、presentation 行 poll_interval=RAPID_POLL_INTERVAL_SEC(既定 30) に修正済み"}
+  - {id: S3-G1-9, status: resolved, note: "_api-summary.yaml async_events.summary が RAPID_POLL_INTERVAL_SEC / RAPID_LEASE_SEC 参照に修正済み"}
+  - {id: S3-G1-10, status: resolved, note: "トリガー「poll 間隔は RAPID_POLL_INTERVAL_SEC。既定 30 秒」、クラッシュ耐性「lease 失効(RAPID_LEASE_SEC。既定 600 秒)後」に修正済み"}
+  - {id: S3-G1-11, status: resolved, note: "SPEC-005-06 所有者シナリオの Given が契約 owner 値とバリエーション「設定所有区分」の具体値を含む"}
+  - {id: S3-G1-12, status: resolved, note: "速報比較結果を参照する/spec.md L136 に情報「速報クロスチェック設定」行(spec 追加採用)を追加済み"}
+  - {id: S3-G1-13, status: resolved, note: "buc-spec.md L64 の「速報比較結果を参照する」列が R(接続参照名。spec 追加採用) に修正済み"}

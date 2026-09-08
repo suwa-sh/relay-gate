@@ -1,0 +1,19 @@
+---
+# relay-gate オンプレミス構成 - Ansible プレイブック(スケルトン)
+# エアーギャップ環境を前提とし、パッケージ取得はローカルミラー/オフラインリポジトリを利用する。
+
+- name: relay-gate 実行ホストセグメントの構成
+  hosts: relay_gate_execution_hosts
+  become: true
+  roles:
+    - relay-gate-runtime
+    - relay-gate-config
+    - relay-gate-mail
+
+- name: relay-gate DBセグメントの構成
+  hosts: relay_gate_db_hosts
+  become: true
+  roles:
+    - relay-gate-postgresql
+    - relay-gate-runtime
+    - relay-gate-backup

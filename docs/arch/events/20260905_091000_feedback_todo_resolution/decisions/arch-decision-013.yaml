@@ -1,0 +1,28 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "architecture"
+artifact_id: "arch-decision-013"
+title: "run_id はローカルタイムゾーンの時刻 + job_id + 8 桁 hex 乱数とし、facade がモードによらず発行する"
+status: "approved"
+generated_at: "2026-09-05T09:10:00Z"
+context: |
+  run_id は成果物ディレクトリ名・管理 DB の主キー・リラン系譜の相関キーとして複数ティアが共有する算出規則だが、要件レベルで形式が確定していなかった
+  (spec は UTC 形式を confidence low で仮採用。todo DIST-018)。元の方針資料の ER 図は uuid と書くが形式要件は無い。
+  利用者は 2026-09-05 に「時刻付き形式は維持し、時刻は運用者が読めるようローカルタイムゾーンにする(UUID には戻さない)」と決定した(CR-c770d8f0-003)。
+  また CR-003 は「管理 DB なし(off)でも facade 単独で発行できる」ことを受け入れ条件に含めている。
+decision: |
+  - run_id の形式は {ローカルタイムゾーンの yyyymmddThhmmss}-{job_id}-{8 桁 hex 乱数}(例 20260830T203000-JOB001-3f9a1c2e。タイムゾーン指示子なし)とし、CTP-003 / E-013 / BC-001 / LP-005 に記載する
+  - facade は RAPID_CROSSCHECK_MODE によらず run_id を発行して成果物ディレクトリ facade/<run_id>/ を作り、parallel_run の作成だけを速報有効時(foreground / background)に限定する(SP-008 / LP-004 / E-009)
+  - 生成規則は tier-facade の domain 層の純粋関数に置き、成果物ディレクトリ名と管理 DB の run_id が同じ値になることをテストで保証する
+consequences:
+  positive:
+    - "運用者が成果物ディレクトリ名から実行時刻を読み取れる"
+    - "off モードでも run_id が発行されるため、成果物・実行ログ・リランの相関キーがモードに依存しない"
+  negative:
+    - "ローカルタイムゾーンのためホスト間で TZ が異なると時刻部の比較が直感と合わない(相関キーとしての一意性は乱数部で担保)"
+    - "実行ログの日時 TZ(CLP-002: UTC)と run_id の時刻部(ローカル)が不一致になる。確認推奨項目として返却し、本イベントでは CLP-002 を変更しない"
+alternatives_considered:
+  - name: "Option B: UTC 形式(yyyymmddThhmmssZ)を維持する"
+    reason_rejected: "利用者が運用者の可読性を優先してローカルタイムゾーンを決定した"
+  - name: "Option C: 方針資料の ER 図どおり UUID にする"
+    reason_rejected: "利用者が時刻付き形式の維持を決定。UUID では成果物ディレクトリ名から実行時刻とジョブが読めない"

@@ -1,0 +1,251 @@
+{
+  "event_id": "20260908_024000_feedback_stage_spec",
+  "type": "feedback_stage_completed",
+  "run_id": "feedback-20260908_slot_status_wording-20260908_135026-61198",
+  "attempt": 1,
+  "created_at": "2026-09-08T02:40:00Z",
+  "stage": "spec",
+  "direct_work_unit_ids": [],
+  "causal_work_unit_ids": [
+    "CR-c770d8f0-019#1"
+  ],
+  "work_unit_results": [],
+  "reconciliation_results": [
+    {
+      "work_unit_id": "CR-c770d8f0-019#1",
+      "status": "changed",
+      "reason": "RDRA 条件「slot 実行の状態導出規則」の管理 DB 側の新文言(slot_executions.status は aborted.txt または exitcode.txt の公開時点の状態を条件付き更新(RUNNING のときだけ)で一度だけ書き、abort 後に実装が走り切って exitcode.txt を公開しても ABORTED のまま残し再同期しない。判定材料は条件「中止済み run の比較依頼作成除外」)への参照を、rdb-schema.yaml の slot_executions.status、CLI 契約 shared_rules.exitcode_to_status.slot_execution、ui-design.md、buc-spec(実装切替ジョブ実行フロー)、UC「実装スクリプトを実行して Runner Result を出力する」「両系成功時に速報比較依頼を作成する」「実行を ABORTED へ遷移させる」で揃え、旧文言「同じ状態を保持する」の引用と「仮採用」「rdra-feedback #16」注記を除去。USDM SPEC-005-02 AC9 の BDD シナリオを UC「両系成功時に速報比較依頼を作成する」に追加。usdm-acceptance-matrix は受け入れ条件 121 → 122(振る舞い SPEC 対応率 49/49 = 100%)、traceability-matrix は 380/380(100%)で不変、rdra-feedback.md の #16 は解消済み(残存は SR-001 / SR-002 のみ)。Step6.5 反証レビュー round-1: major 1 / minor 5 を全件 fixed。実装挙動は不変",
+      "artifact_refs": [
+        "specs/events/20260908_024000_feedback_slot_status_wording/spec-event.yaml",
+        "specs/events/20260908_024000_feedback_slot_status_wording/_review/change-brief.md",
+        "specs/events/20260908_024000_feedback_slot_status_wording/_cross-cutting/datastore/rdb-schema.yaml",
+        "specs/events/20260908_024000_feedback_slot_status_wording/_cross-cutting/datastore/datastore-schema.md",
+        "specs/events/20260908_024000_feedback_slot_status_wording/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20260908_024000_feedback_slot_status_wording/_cross-cutting/ux-ui/ui-design.md",
+        "specs/events/20260908_024000_feedback_slot_status_wording/_cross-cutting/rdra-feedback.md",
+        "specs/events/20260908_024000_feedback_slot_status_wording/_cross-cutting/usdm-acceptance-matrix.md",
+        "specs/events/20260908_024000_feedback_slot_status_wording/_cross-cutting/traceability-matrix.md",
+        "specs/events/20260908_024000_feedback_slot_status_wording/実装切替業務/実装切替ジョブ実行フロー/buc-spec.md",
+        "specs/events/20260908_024000_feedback_slot_status_wording/実装切替業務/実装切替ジョブ実行フロー/実装スクリプトを実行して Runner Result を出力する/spec.md",
+        "specs/events/20260908_024000_feedback_slot_status_wording/実装切替業務/実装切替ジョブ実行フロー/実装スクリプトを実行して Runner Result を出力する/tier-facade.md",
+        "specs/events/20260908_024000_feedback_slot_status_wording/実装切替業務/実装切替ジョブ実行フロー/実装スクリプトを実行して Runner Result を出力する/_model-summary.yaml",
+        "specs/events/20260908_024000_feedback_slot_status_wording/クロスチェック業務/速報クロスチェックフロー/両系成功時に速報比較依頼を作成する/spec.md",
+        "specs/events/20260908_024000_feedback_slot_status_wording/クロスチェック業務/速報クロスチェックフロー/両系成功時に速報比較依頼を作成する/tier-rapid-crosscheck.md",
+        "specs/events/20260908_024000_feedback_slot_status_wording/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/spec.md"
+      ]
+    }
+  ],
+  "work_unit_evidence_refs": [
+    {
+      "work_unit_id": "CR-c770d8f0-019#1",
+      "path": "specs/events/20260908_024000_feedback_slot_status_wording/spec-event.yaml",
+      "sha256": "dd88dadd09c1fe164e081261c70947d2a1bcee820e7d19ce98f29345cabb055c"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-019#1",
+      "path": "specs/events/20260908_024000_feedback_slot_status_wording/_review/change-brief.md",
+      "sha256": "4eb9b12b236b615af6299f0447b183416d0d90e9976099f61d146804f2bb44b9"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-019#1",
+      "path": "specs/events/20260908_024000_feedback_slot_status_wording/_cross-cutting/datastore/rdb-schema.yaml",
+      "sha256": "e5a273d472d396bea2438b44fd47544c89ca1393d1be5d53c3a323a93e2a61a9"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-019#1",
+      "path": "specs/events/20260908_024000_feedback_slot_status_wording/_cross-cutting/datastore/datastore-schema.md",
+      "sha256": "43b3c0fc57dbe0b05a918e63f78d92e1e280939c06cd7f01222100568b7c9787"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-019#1",
+      "path": "specs/events/20260908_024000_feedback_slot_status_wording/_cross-cutting/api/cli-command-contract.yaml",
+      "sha256": "e518344b7becf29161a8307fc14c7b24978f5f68b63c6ed6659745053418a493"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-019#1",
+      "path": "specs/events/20260908_024000_feedback_slot_status_wording/_cross-cutting/ux-ui/ui-design.md",
+      "sha256": "c8338a85c31080f70b694f38c10bde245149233a11ac6c3f8e2ccb82d17297d1"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-019#1",
+      "path": "specs/events/20260908_024000_feedback_slot_status_wording/_cross-cutting/rdra-feedback.md",
+      "sha256": "8f518457c68de903dfaf6dcda7ebecfa9e5331cbc2467215c032f7dbc491e805"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-019#1",
+      "path": "specs/events/20260908_024000_feedback_slot_status_wording/_cross-cutting/usdm-acceptance-matrix.md",
+      "sha256": "aafc752a3b15035b4e338ef744bf75d0b104b2aad00d8ce5873fb7120fb8b794"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-019#1",
+      "path": "specs/events/20260908_024000_feedback_slot_status_wording/_cross-cutting/traceability-matrix.md",
+      "sha256": "6a08ef67b37a5136813f4b61bda5141934b91507037632cb374b0e65ef6eb720"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-019#1",
+      "path": "specs/events/20260908_024000_feedback_slot_status_wording/実装切替業務/実装切替ジョブ実行フロー/buc-spec.md",
+      "sha256": "b39743abd8bf66de28ce0281cd57fdc6d1d56ded42f70e9ef4f2464f7ba174d3"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-019#1",
+      "path": "specs/events/20260908_024000_feedback_slot_status_wording/実装切替業務/実装切替ジョブ実行フロー/実装スクリプトを実行して Runner Result を出力する/spec.md",
+      "sha256": "7420b38771e98ddaf17494c84288838b4d6d59deea0239a1fdfc306203f9113f"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-019#1",
+      "path": "specs/events/20260908_024000_feedback_slot_status_wording/実装切替業務/実装切替ジョブ実行フロー/実装スクリプトを実行して Runner Result を出力する/tier-facade.md",
+      "sha256": "346a88bda9613e56e7c5dd8b7ee4e1eb8f0f05f938de53ed7d50e515f31b8c88"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-019#1",
+      "path": "specs/events/20260908_024000_feedback_slot_status_wording/実装切替業務/実装切替ジョブ実行フロー/実装スクリプトを実行して Runner Result を出力する/_model-summary.yaml",
+      "sha256": "8f2590d12bbea057758740bd0268593b1ac61e37aaf2ebfa15704177a4f8723f"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-019#1",
+      "path": "specs/events/20260908_024000_feedback_slot_status_wording/クロスチェック業務/速報クロスチェックフロー/両系成功時に速報比較依頼を作成する/spec.md",
+      "sha256": "b3b60ee6448b5da5a55f3128475916341efe252b5790475e773fc2448e7c795d"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-019#1",
+      "path": "specs/events/20260908_024000_feedback_slot_status_wording/クロスチェック業務/速報クロスチェックフロー/両系成功時に速報比較依頼を作成する/tier-rapid-crosscheck.md",
+      "sha256": "3c5c1e1e26faf0e70e25cbb8704f1cc15579ae352070e20ab6ddc55b720ecd69"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-019#1",
+      "path": "specs/events/20260908_024000_feedback_slot_status_wording/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/spec.md",
+      "sha256": "8ff76e3fe7d05f4072871a8222e43ff44206529d7dfeb214b72c71b7d494cbd5"
+    }
+  ],
+  "domain_event_refs": [
+    {
+      "path": "specs/events/20260908_024000_feedback_slot_status_wording/spec-event.yaml",
+      "sha256": "dd88dadd09c1fe164e081261c70947d2a1bcee820e7d19ce98f29345cabb055c"
+    }
+  ],
+  "feedback_request": {
+    "feedback_request_id": "20260908_slot_status_wording",
+    "input_sha256": "19b24f61aa56ced09d1b35120acf027c40554b785129c5c945f33c55bd8d7fcf",
+    "request_ids": [
+      "CR-c770d8f0-019"
+    ],
+    "work_unit_ids": [
+      "CR-c770d8f0-019#1"
+    ]
+  },
+  "post_execution_basis": {
+    "repository_head": "916e272d5822a0b3f0df04108dd928ff1f9adc87",
+    "latest_domain_event_ids": {
+      "requirements": {
+        "rdra/events": "20260908_011000_feedback_slot_status_wording",
+        "usdm/events": "20260908_011000_feedback_slot_status_wording"
+      },
+      "quality_attributes": {
+        "nfr/events": "20260908_013000_feedback_slot_status_wording"
+      },
+      "architecture": {
+        "arch/events": "20260908_015000_feedback_slot_status_wording"
+      },
+      "infrastructure": {
+        "infra/events": "20260908_021000_feedback_slot_status_wording"
+      },
+      "design_system": {
+        "design/events": null
+      },
+      "spec": {
+        "specs/events": "20260908_024000_feedback_slot_status_wording"
+      },
+      "spec_stories": {
+        "design/events": null
+      }
+    },
+    "domain_event_root_snapshots": {
+      "rdra/events": {
+        "head_event_id": "20260908_011000_feedback_slot_status_wording",
+        "head_event_sha256": "b090b166d4f0153d029cb6aefec68101eb2c27e70baf9c95adcce67c57d9024e",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency",
+          "20260908_011000_feedback_slot_status_wording"
+        ],
+        "event_set_sha256": "8cb2285c08b0aa19e0b6acb3befd7d7180afd7c1105be106c4a9a4e7f5a164a5",
+        "latest_tree_sha256": "fb37aebe9d1e9fccd46c51cc14f0450b93bf14bc39322450ffbc7fbb018935b1"
+      },
+      "usdm/events": {
+        "head_event_id": "20260908_011000_feedback_slot_status_wording",
+        "head_event_sha256": "2f083a378142c06b74987ec8f2c11b303e2a9369746ec6065d56c2dd60dc4e45",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency",
+          "20260908_011000_feedback_slot_status_wording"
+        ],
+        "event_set_sha256": "8cb2285c08b0aa19e0b6acb3befd7d7180afd7c1105be106c4a9a4e7f5a164a5",
+        "latest_tree_sha256": "e1733eb0ebeff504ee3ab2ef90f47b050e6f3eb05cdb287d649c57d6724f5a31"
+      },
+      "nfr/events": {
+        "head_event_id": "20260908_013000_feedback_slot_status_wording",
+        "head_event_sha256": "9c460abcc88fcbf4b495658c71b4a4bbc49d9d9f309e46ad0c0bae58aa4dda0c",
+        "event_ids": [
+          "20260830_183726_initial_nfr",
+          "20260905_085000_feedback_todo_resolution",
+          "20260907_013000_feedback_todo_followup",
+          "20260907_120000_feedback_abort_consistency",
+          "20260908_013000_feedback_slot_status_wording"
+        ],
+        "event_set_sha256": "99463150965b02f6b7670ee3f4f853722b6c561281e6297a3e58a9afe414b4a4",
+        "latest_tree_sha256": "51f9059e35f6f5c65fc18cd1f1457bd5beca3b5b23271d538f4304b0ece9c7ef"
+      },
+      "arch/events": {
+        "head_event_id": "20260908_015000_feedback_slot_status_wording",
+        "head_event_sha256": "4e467155c8adfbefce4aa18ae2cee40f92c55545711dc66fc9c05b57b6f9a2e8",
+        "event_ids": [
+          "20260830_184457_initial_arch",
+          "20260830_202427_arch_infra_feedback_20260830_190412_infra_product_design",
+          "20260905_091000_feedback_todo_resolution",
+          "20260907_015000_feedback_todo_followup",
+          "20260907_122000_feedback_abort_consistency",
+          "20260908_015000_feedback_slot_status_wording"
+        ],
+        "event_set_sha256": "b710a5cb1a0d295f1b5c15523a2181492f16924414fb77886efd0bdb3f7d0a4b",
+        "latest_tree_sha256": "0a975f848804dd5bc3d5cf328a5e9717f2e22eb489e1e5f4c477538b77c0b91d"
+      },
+      "infra/events": {
+        "head_event_id": "20260908_021000_feedback_slot_status_wording",
+        "head_event_sha256": "2e1292ab231982c609976791deca51a97e82389b34ab645d4432e463fe1c8c46",
+        "event_ids": [
+          "20260830_190412_infra_product_design",
+          "20260905_093000_feedback_todo_resolution",
+          "20260907_021000_feedback_todo_followup",
+          "20260907_124000_feedback_abort_consistency",
+          "20260908_021000_feedback_slot_status_wording"
+        ],
+        "event_set_sha256": "8077de33d5a65f65ebff5e2c1c20d238e003e9dd69d3d500ae30ef08162ab292",
+        "latest_tree_sha256": "639f743d85b997e1297610b2a7c2db41fd004e74473f96ec6292b601509a6331"
+      },
+      "design/events": {
+        "head_event_id": null,
+        "head_event_sha256": null,
+        "event_ids": [],
+        "event_set_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "latest_tree_sha256": null
+      },
+      "specs/events": {
+        "head_event_id": "20260908_024000_feedback_slot_status_wording",
+        "head_event_sha256": "db39de19806e5b972bd2c77b598f5a36910f8d9d5d5db3c7472308923a91cbdd",
+        "event_ids": [
+          "20260830_202851_spec_generation",
+          "20260905_100000_feedback_todo_resolution",
+          "20260907_024000_feedback_todo_followup",
+          "20260907_131000_feedback_abort_consistency",
+          "20260908_024000_feedback_slot_status_wording"
+        ],
+        "event_set_sha256": "5110e0a2d866e6a9b6af2b015e397287883a7c651f6361b55cce6eeb71e634c4",
+        "latest_tree_sha256": "60c7b656550aa3d767c12711027d6696302851a48a02cdc758a2c071b475c547"
+      }
+    }
+  }
+}

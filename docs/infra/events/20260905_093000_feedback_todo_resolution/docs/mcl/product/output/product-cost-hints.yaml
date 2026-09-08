@@ -1,0 +1,53 @@
+schema_version: "1.0"
+artifact_type: "cost_hints"
+skill_type: "product"
+artifact_id: "product-cost-hints-relay-gate"
+title: "relay-gate 並行稼働実行基盤 コスト最適化ヒント"
+status: "draft"
+generated_at: "2026-08-30T20:17:49"
+source_refs:
+  - "docs/mcl/product/output/product-workload-model.yaml#workload_characteristics.cost_posture"
+inputs_ref:
+  - "product-relay-gate-workload-model"
+
+cost_posture: "cost_optimized"
+
+recommendations:
+  - category: "rightsizing"
+    description: >-
+      既存のジョブスケジューラ実行ホストとDBホストへ相乗りする構成のため、新規ホスト調達を最小化する。
+      baseline_rps: 1、db_write_rate: 〜10 TPS という低負荷特性から、専用の高スペックホストは不要。
+      既存ホストの空きCPU/メモリで十分まかなえる想定。
+    impact: "追加ハードウェア調達コストをゼロに近づけられる"
+  - category: "reserved_commitment"
+    description: >-
+      オンプレミスのためクラウドのReserved Instance相当は無いが、既存資産(ハードウェア減価償却済み)を
+      再利用することで実質的な追加投資を抑える。
+    impact: "資本的支出(CapEx)の追加発生を回避"
+  - category: "spot_preemptible"
+    description: >-
+      オンプレミスのためスポット/プリエンプティブルインスタンスの概念は適用外。
+      代替として、確報クロスチェックのような非リアルタイムバッチ処理は夜間バッチウィンドウ(閑散時間帯)に
+      スケジュールすることで既存ホストのリソース競合を避ける。
+    impact: "追加ホスト無しで負荷分散を実現"
+  - category: "storage_tiering"
+    description: >-
+      成果物ディレクトリと実行ログは3ヶ月保管後にローテーション削除するため長期保管コストが発生しない。
+      アーカイブ層(低頻度アクセスストレージ)への階層化は不要と判断。
+    impact: "ストレージ容量の恒常的な増加を防止"
+  - category: "data_transfer"
+    description: >-
+      単一サイト・閉域ネットワーク構成(placement: 単一サイト。実行ホストセグメントとDBセグメントの2セグメント)
+      のため、クラウド間/リージョン間のデータ転送コストは発生しない。DBセグメント内で全量比較を完結させる設計
+      (REQ-COMP-004)も転送コストを抑える。
+    impact: "データ転送コストはゼロ"
+  - category: "autoscaling"
+    description: >-
+      定型トラフィック(traffic_pattern: scheduled、spike_multiplier: 3)であり、オートスケール基盤は
+      導入しない。水平スケールが必要になった場合はworkerホストを手動追加する運用で対応する
+      (product-decision-001参照)。
+    impact: "オートスケール基盤の導入・運用コストを回避"
+
+operational_cost_notes:
+  - "監視基盤・分散トレーシング基盤・メッセージキュー等の追加ミドルウェアを導入しない設計方針(product-decision-005)により、ライセンス費用・運用工数の両方を抑制している"
+  - "コストは主にホスト・ストレージの限界的な追加分と運用工数(手動フェイルオーバー、手動スケール)で評価する。従量課金は発生しない(foundation.billing.capex_shared_hosts)"

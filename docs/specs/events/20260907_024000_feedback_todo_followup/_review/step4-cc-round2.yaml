@@ -1,0 +1,17 @@
+round: 2
+group: cc
+scope: "前ラウンド findings(S4-cc-001〜005)の再検証。対象成果物: usdm-acceptance-matrix.md / ux-ui/ui-design.md / api/asyncapi.yaml(design 無しモード。change-brief D1〜D3 への追従確認。traceability-matrix.md は対象外)"
+verified_ok:
+  - "S4-cc-001(usdm-acceptance-matrix.md 55 行 SPEC-005-06): UC-02『速報クロスチェック設定には管理 DB 接続の参照名だけがあり認証情報の値は含まれない(AC3)/ RAPID_CROSSCHECK_MODE=off では速報クロスチェック設定が存在しなくても slot 実行できる(AC4)』= UC-02 spec.md 284 / 292 行 Scenario と 210 行「関連 USDM」表に一致。UC-08『設定された参照名で管理 DB に接続して完了結果を登録する(AC1 の接続参照名)』= UC-08 spec.md 183 行 Scenario / 164 行表に一致。UC-10『設定された lease 期間と poll 間隔で claim と poll が行われる(AC1 の lease / poll)/ 速報クロスチェック設定の所有者は基盤適用設計者である(AC2。設定所有区分)』= UC-10 spec.md 169 / 178 行 Scenario / 152 行表に一致。『既存の RAPID_DB_CONN_REF 検証シナリオに併記』の注記は除去済み"
+  - "S4-cc-002(usdm-acceptance-matrix.md 50 / 51 行): UC-09 追加分 3 件『並行稼働実行が ABORTED の run では完了通知を受けても依頼を作成しない(追加分 AC4)/ ABORTED の run で両系成功になっても依頼を作成せず警告を残す(追加分 AC5)/ 中止した run のリランでは新しい run_id で依頼が作成される(追加分 AC6)』= UC-09 spec.md 232 / 240 / 191 行 Scenario / 171 行表に一致。UC-08 追加分『aborted.txt がある slot でも完了通知は通常どおり送る(追加分。中止状態を判断しない)』= UC-08 spec.md 204 行 Scenario / 163 行表に一致"
+  - "S4-cc-003(usdm-acceptance-matrix.md 73 行 SPEC-010-01): UC-23 追加分 2 件『REQUESTED の速報比較依頼がある run を中止すると依頼も ABORTED になる(追加分 AC6)/ CLAIMED または RUNNING の速報比較依頼は slot の中止では変更されない(追加分 AC7)』= UC-23 spec.md 251 行 Scenario / 262 行 Scenario Outline / 226 行表に一致"
+  - "S4-cc-004(ui-design.md 249 行): `hang-detect-trend.sh --since {前日 00:00:00(ローカル)}` に修正済み。data-visualization.md 113 行と同文(『同文』の相互参照が成立)。data-visualization.md 51 / 67 行の `--since` 形式(ローカル ISO 8601 秒精度・指示子なし。Z / オフセット付きは終了コード 2)とも整合"
+  - "S4-cc-005(asyncapi.yaml): `format: date-time` は全廃され(grep 0 件)、日時プロパティ 12 箇所(342 / 393 / 415 / 422 / 426 / 430 / 470 / 477 / 481 / 485 / 545 / 568 行)が `pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}$'` に置換済み。description は『ホストのローカルタイムゾーン。ISO 8601 秒精度、タイムゾーン指示子なし』に統一。examples(271 / 289 / 306 / 320 / 326 行)の日時値は指示子なしで pattern と一致。Z 付きの残存なし。YAML パース OK"
+  - "usdm-acceptance-matrix.md 集計(SPEC 50 / 受け入れ条件 115 / covered 49 / uncovered 1 = SPEC-011-05)は round 1 から変化なし。UC 別索引(118 / 124 / 126 / 139 行)の SPEC-005-06 / SPEC-010-01 割当も 55 / 73 行の対応 UC と一致"
+findings: []
+resolved:
+  - {id: S4-cc-001, resolution: fixed}
+  - {id: S4-cc-002, resolution: fixed}
+  - {id: S4-cc-003, resolution: fixed}
+  - {id: S4-cc-004, resolution: fixed}
+  - {id: S4-cc-005, resolution: fixed}

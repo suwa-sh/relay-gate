@@ -1,0 +1,404 @@
+# digest of arch/latest/arch-design.yaml section app_architecture (L710-1111); source_sha256: 45a30ece498ff31b18cdec055333a172156d453b8d6d4b4f330b716cfc87de04
+# 派生物。正本は arch-design.yaml。編集しない
+app_architecture:
+  tier_layers:
+    - tier_id: "tier-facade"
+      layers:
+        - id: "L-facade-presentation"
+          name: "プレゼンテーション層(CLI エントリ)"
+          responsibility: "facade.sh / blue-runner / green-runner の CLI 入口。JOB_ID [PARAM...] と feature flag の入力検証(foreground slot 排他を含む)、終了コードの決定、foreground の Runner Result の標準出力・標準エラー・終了コードへの無加工中継"
+          allowed_dependencies:
+            - "L-facade-usecase"
+          policies:
+            - id: "LP-001"
+              name: "入力検証で拒否する構成"
+              description: "両 slot foreground、未知の実行モード、JOB_ID 欠落は入力検証でエラー終了し、どの slot も起動しない。原因は stderr に英語で出す"
+              reason: "条件「foreground slot 排他」への対応"
+              source_model: "条件: foreground slot 排他, 情報: ジョブ起動要求"
+              confidence: "high"
+            - id: "LP-002"
+              name: "応答の無加工中継"
+              description: "presentation は foreground の stdout.log / stderr.log / exitcode.txt を加工せず中継する。background slot と速報の結果は応答に反映しない"
+              reason: "条件「ジョブスケジューラ応答の決定」への対応"
+              source_model: "条件: ジョブスケジューラ応答の決定, 情報: ジョブスケジューラ応答"
+              confidence: "high"
+          rules: []
+        - id: "L-facade-usecase"
+          name: "ユースケース層"
+          responsibility: "slot 起動フロー(background 起動 → foreground 起動 → foreground 待機 → 中継)、run_id 発行(モードによらず)と parallel_run 作成(速報有効時のみ)、実行先解決 → execution-spec 確定保存 → 実装実行 → Runner Result 公開 → 完了通知(送信失敗は警告ログのみ)→ リラン由来 run の parallel_run COMPLETED 更新のフロー制御"
+          allowed_dependencies:
+            - "L-facade-domain"
+            - "L-facade-repository"
+          policies:
+            - id: "LP-003"
+              name: "起動順序の固定"
+              description: "usecase は background slot をすべて起動して PID と成果物ディレクトリを確定してから foreground slot を起動し、foreground の PID だけを待機する"
+              reason: "条件「slot 起動順序」への対応"
+              source_model: "条件: slot 起動順序, 状態: 並行稼働実行"
+              confidence: "high"
+            - id: "LP-004"
+              name: "速報有効時のみ管理 DB に触れる"
+              description: "RAPID_CROSSCHECK_MODE=off のとき usecase は parallel_run 作成・完了通知を行わず、管理 DB の repository を呼ばない。run_id の発行と成果物ディレクトリの作成はモードによらず行う。foreground / background のときは完了通知の送信失敗を警告ログに残すだけで、Runner Result と終了コードは変更しない"
+              reason: "条件「速報クロスチェック有効判定」「完了通知失敗の扱い」への対応"
+              source_model: "条件: 速報クロスチェック有効判定, 完了通知の系統独立, 完了通知失敗の扱い, 情報: 実行ログ"
+              confidence: "high"
+          rules: []
+        - id: "L-facade-domain"
+          name: "ドメイン層"
+          responsibility: "slot 実行モードの判定表(起動可否・foreground 排他)、feature flag 9 キーの検証、run_id の生成規則、並行稼働実行と slot 実行の状態遷移、CSV セル(fixed_params)の解析と引数連結規則、exitcode.txt / aborted.txt → SUCCEEDED / FAILED / ABORTED / RUNNING の状態導出など、副作用を持たない純粋関数"
+          allowed_dependencies: []
+          policies:
+            - id: "LP-005"
+              name: "状態遷移と判定表をドメインに集約"
+              description: "STARTED → RUNNING → COMPLETED / ABORTED、STARTED → ABORTED、RUNNING → SUCCEEDED / FAILED / ABORTED の遷移と、slot 起動可否・引数連結規則・slot 実行の状態導出規則(exitcode.txt があれば SUCCEEDED / FAILED、無く aborted.txt があれば ABORTED、どちらも無ければ RUNNING)・run_id 生成規則({ローカル yyyymmddThhmmss}-{job_id}-{8 桁 hex})の判定はドメイン層の関数として実装し、テスト可能にする。ドメイン層は直接ログ出力を行わない"
+              reason: "条件「slot 起動可否判定」「引数連結規則」「slot 実行の状態導出規則」と状態モデル「並行稼働実行」「slot 実行」、情報「並行稼働実行(parallel_run)」の run_id 形式への対応"
+              source_model: "条件: slot 起動可否判定, 引数連結規則, slot 実行の状態導出規則, 状態: 並行稼働実行, slot 実行, 情報: 並行稼働実行(parallel_run)"
+              confidence: "high"
+          rules: []
+        - id: "L-facade-repository"
+          name: "リポジトリ層"
+          responsibility: "parallel_run(管理 DB)、execution-spec / Runner Result(成果物ディレクトリ。aborted.txt の有無を含む)、feature flag(env 形式 9 キー)/ ジョブマップ(CSV。credential_ref / map_version は任意列)/ 速報クロスチェック設定(env 形式 rapid-crosscheck.env。速報有効時のみ読み、RAPID_DB_CONN_REF で管理 DB の接続先を解決する)の読み書きを集約単位で提供する"
+          allowed_dependencies:
+            - "L-facade-domain"
+            - "L-facade-gateway"
+          policies:
+            - id: "LP-006"
+              name: "execution-spec の一度きり保存"
+              description: "repository は execution-spec.json を一時ファイル → リネームで一度だけ作成し、既存ファイルがあれば上書きしない。認証情報は参照名のみを書く"
+              reason: "条件「実行設定の確定条件」「認証情報の非保存」「成果物公開判定」への対応"
+              source_model: "条件: 実行設定の確定条件, 認証情報の非保存, 成果物公開判定, 情報: 実行設定(execution-spec)"
+              confidence: "high"
+          rules: []
+        - id: "L-facade-gateway"
+          name: "ゲートウェイ層"
+          responsibility: "SSH アダプタ(リモート実行ホストで実装スクリプトを作業ディレクトリ・引数付きで実行。host / user 省略時はローカル実行)、ファイルシステムアダプタ(一時ファイル書き込みとリネーム、started-at.txt / exitcode.txt 出力)、RDB クライアントアダプタ(速報クロスチェック設定の接続参照名で接続)、速報クロスチェック runner 呼び出しアダプタ(RAPID_CROSSCHECK_RUNNER が指す実体の blue-completed / green-completed。自 slot の中止状態は判断しない)"
+          allowed_dependencies: []
+          policies:
+            - id: "LP-007"
+              name: "異常時も 3 ファイルを揃える"
+              description: "SSH 失敗・起動失敗・ジョブマップ未定義でも gateway は可能な限り stdout.log / stderr.log / exitcode.txt を出力し、失敗理由を stderr.log に残す"
+              reason: "条件「Runner Result 完備条件」「ジョブマップ解決条件」への対応"
+              source_model: "条件: Runner Result 完備条件, ジョブマップ解決条件, 外部システム: リモート実行ホスト(SSH)"
+              confidence: "high"
+            - id: "LP-022"
+              name: "完了通知の送信失敗は警告のみ"
+              description: "完了通知アダプタの失敗(速報クロスチェック runner の起動失敗・非 0 終了)は技術例外として usecase に返し、usecase は実行ログに warning を残すだけで Runner Result と slot runner の終了コードを変更しない。再送は行わず、復旧は運用者が同一引数で速報クロスチェック runner を再実行する"
+              reason: "条件「完了通知失敗の扱い」への対応。通知失敗で業務ジョブの結果を変えないため"
+              source_model: "条件: 完了通知失敗の扱い, 情報: 完了通知, 実行ログ, NFR C.3.3.1"
+              confidence: "high"
+          rules: []
+      cross_layer_policies:
+        - id: "CLP-001"
+          name: "IF なし(直接依存)"
+          description: "レイヤー間は bash の source による関数呼び出しで直接依存し、抽象 IF は置かない。RDB 製品や比較ツールの差し替えは gateway アダプタの差し替えで吸収する"
+          reason: "シェルスクリプトであり抽象化の手段が限られるため。一般的なベストプラクティスとして適用"
+          source_model: "なし"
+          confidence: "default"
+        - id: "CLP-002"
+          name: "実行ログの出力方針"
+          description: "usecase 層が run_id 付きの実行ログ(スクリプト名 / run_id / 日時 / レベル / メッセージ)をファイルへ出力する集約ポイントとする。gateway は外部呼び出し(SSH / RDB / 比較ツール / メール)の開始・終了・所要時間・成否を記録し、失敗は技術例外として非 0 で返す。domain 層はログを出さない。ログ出力先は stdout / stderr を汚さない専用ファイルとする。ログの日時はホストのローカルタイムゾーン(プロセスの TZ 環境変数に従う)で ISO 8601 秒精度、タイムゾーン指示子(Z / オフセット)なしとし、run_id の時刻部と同じ時刻軸にそろえる。UTC への統一は行わない。管理 DB の *_at 列は RDB のタイムスタンプ型に委ね、CLI が stdout に表示する日時もローカル時刻で出す。テスト用の時刻注入(RELAY_GATE_NOW)は UTC の Z 付きで受け付け、内部でローカル時刻へ変換してから使う。この方針は全ティアの実行ログ方針に共通し(CLP-004 / CLP-006 が参照)、tier-ops の運用操作記録(CLP-008)も同じ日時規則に従う"
+          reason: "利用者指定: run_id の時刻部(ローカルタイムゾーン)と実行ログの日時を同じ時刻軸にそろえ、障害調査で運用者が時差を読み替えずに突き合わせられるようにする。NFR C.6.1.1(ログ保管)・C.3.1.1(自動記録)・E.7.1.1(監査)への対応"
+          source_model: "情報: 実行ログ, 並行稼働実行(parallel_run), NFR C.6.1.1, NFR C.3.1.1, NFR E.7.1.1"
+          confidence: "high"
+      cross_layer_rules:
+        - id: "CLR-001"
+          name: "エラーハンドリングと終了コード"
+          description: "set -euo pipefail を基本とし、domain / repository / gateway のエラーは usecase で 1 回だけログ出力して presentation へ返し、presentation が終了コードを決める。catch の握り潰しと多重ログを禁止する"
+          reason: "レイヤー責務の分離。一般的なベストプラクティスとして適用"
+          source_model: "なし"
+          confidence: "default"
+      diagram_mermaid: |
+        graph TD
+          P[presentation: facade.sh / runner CLI] --> U[usecase: slot 起動フロー]
+          U --> D[domain: 判定表・状態遷移]
+          U --> R[repository: parallel_run / execution-spec / Runner Result / 設定]
+          R --> D
+          R --> G[gateway: SSH / filesystem / RDB / completed 通知]
+    - tier_id: "tier-rapid-crosscheck"
+      layers:
+        - id: "L-rapid-presentation"
+          name: "プレゼンテーション層(CLI エントリ)"
+          responsibility: "rapid-crosscheck-runner の公開 function(blue-completed / green-completed)の引数検証と、rapid-crosscheck-worker の起動口(poll ループ / 1 回実行)。終了コードの決定"
+          allowed_dependencies:
+            - "L-rapid-usecase"
+          policies:
+            - id: "LP-008"
+              name: "系統ごとの公開 function"
+              description: "完了通知の受け口は blue-completed / green-completed の 2 つに分け、run_id・job_id・終了コード・成果物ディレクトリ(artifact_uri)を受け取る"
+              reason: "条件「完了通知の系統独立」への対応"
+              source_model: "条件: 完了通知の系統独立, 情報: 完了通知"
+              confidence: "high"
+          rules: []
+        - id: "L-rapid-usecase"
+          name: "ユースケース層"
+          responsibility: "完了通知の登録 → 中止済み run 判定(並行稼働実行と完了通知の対象 slot の slot 実行の状態)→ 両系成功判定 → 比較依頼の一意作成(dispatcher。中止済み run では依頼を作成せず完了事実の記録と警告ログだけ)、poll → claim → RUNNING(条件付き UPDATE。0 件なら比較を開始せず終了)→ 比較実行 → 結果保存 → comparison_result 登録(比較ツールの終了コードを得たときだけ)→ リラン由来 parallel_run の COMPLETED 更新(worker)のフロー制御"
+          allowed_dependencies:
+            - "L-rapid-domain"
+            - "L-rapid-repository"
+          policies:
+            - id: "LP-009"
+              name: "依頼作成と claim の原子性"
+              description: "両系成功 → 比較依頼作成、REQUESTED → CLAIMED の遷移は 1 トランザクション(条件付き UPDATE / INSERT)で行い、重複作成と二重 claim を防ぐ"
+              reason: "条件「比較依頼の一意性」「claim 排他」への対応"
+              source_model: "条件: 比較依頼の一意性, claim 排他, 状態: 速報実行の完了状況"
+              confidence: "high"
+            - id: "LP-023"
+              name: "中止済み run では依頼を作成しない"
+              description: "dispatcher の usecase は完了通知を登録した後、同じトランザクション内で並行稼働実行(parallel_run.status)と完了通知の対象 slot の slot 実行(slot_executions.status。ファイル正本 aborted.txt のミラー)の状態を読み、いずれかが ABORTED なら中止済み run として両系成功でも速報比較依頼を作成せず、rapid_run の完了事実(blue_status / green_status / 成果物 URI)だけを保存して実行ログに warning を残し、正常終了する。並行稼働実行は foreground 中継完了で COMPLETED になるため、foreground 完了後の background 中止は slot 実行 ABORTED の側で除外される。slot runner に中止判定を持たせない。速報有効時だけの規則で、off では完了通知自体が存在しない"
+              reason: "条件「中止済み run の比較依頼作成除外」(判定キー: 並行稼働実行 ABORTED または対象 slot の slot 実行 ABORTED)への対応。判断主体を速報クロスチェック runner に置き、方針資料の責務分担(blue / green runner は比較依頼を判断しない)を守るため"
+              source_model: "条件: 中止済み run の比較依頼作成除外, 両系成功判定, 状態: 並行稼働実行, slot 実行, 速報実行の完了状況, 情報: 速報実行(rapid_run), 完了通知, slot 実行, 実行ログ"
+              confidence: "high"
+            - id: "LP-024"
+              name: "claim 後の比較開始は条件付き UPDATE で判定する"
+              description: "worker の usecase は claim した依頼を比較開始前に status = CLAIMED(かつ自 worker_id)を条件とする条件付き UPDATE で RUNNING にし、更新件数が 0 件(abort-rapid-crosscheck で ABORTED 済み)なら比較ツールを起動せず comparison_result も登録せずに正常終了し、その旨を実行ログに残す。RUNNING にできたときだけ比較を実行する"
+              reason: "条件「依頼中止可否判定」(CLAIMED の速報比較依頼を中止する際の競合規則)と状態モデル「クロスチェック依頼」(CLAIMED → RUNNING の条件付き UPDATE、CLAIMED → ABORTED)への対応。運用者が worker 停止を確認して中止した依頼を、停止漏れの worker が比較してしまう競合を DB の条件付き UPDATE で閉じるため"
+              source_model: "条件: 依頼中止可否判定, 依頼状態遷移規則, claim 排他, 状態: クロスチェック依頼, 情報: 速報比較依頼(rapid_crosscheck_request), 実行ログ"
+              confidence: "high"
+          rules: []
+        - id: "L-rapid-domain"
+          name: "ドメイン層"
+          responsibility: "速報実行の完了状況(両系未完了 / 片系完了 / 両系成功 / いずれか失敗 / 比較依頼作成済み)の遷移、中止済み run の依頼作成除外判定(並行稼働実行の状態 × 対象 slot の slot 実行の状態 × 両系成功判定)、クロスチェック依頼のライフサイクル(REQUESTED / CLAIMED / RUNNING → ABORTED と、CLAIMED → RUNNING の条件付き遷移を含む)、lease 失効判定、比較ツール終了コード → 依頼状態の対応表"
+          allowed_dependencies: []
+          policies:
+            - id: "LP-010"
+              name: "両系成功判定表"
+              description: "blue の結果 × green の結果の表で成功 × 成功のみ両系成功とする。exitcode 0 = SUCCEEDED / 3・6・その他非 0 = FAILED の対応表もドメインに置く。依頼作成可否は中止済み判定(並行稼働実行 ABORTED / 対象 slot の slot 実行 ABORTED / いずれでもない)× 両系成功判定の結果の表で決め、中止済みの行は両系成功でも作成不可とする"
+              reason: "条件「両系成功判定」「中止済み run の比較依頼作成除外」(判定表の縦軸: 並行稼働実行 ABORTED / 対象 slot の slot 実行 ABORTED / いずれでもない)「比較ツール終了コードの対応」「依頼状態遷移規則」「lease 失効判定」への対応"
+              source_model: "条件: 両系成功判定, 中止済み run の比較依頼作成除外, 比較ツール終了コードの対応, 依頼状態遷移規則, lease 失効判定, 状態: 速報実行の完了状況, クロスチェック依頼, 並行稼働実行, slot 実行"
+              confidence: "high"
+          rules: []
+        - id: "L-rapid-repository"
+          name: "リポジトリ層"
+          responsibility: "rapid_run / rapid_crosscheck_request / comparison_result の読み書きと parallel_run・slot 実行(slot_executions)の状態参照(管理 DB)、クロスチェックジョブマップの比較定義の読み取り(設定ファイル)、速報クロスチェック設定(env 形式 rapid-crosscheck.env: RAPID_DB_CONN_REF / RAPID_LEASE_SEC / RAPID_POLL_INTERVAL_SEC)の読み取り"
+          allowed_dependencies:
+            - "L-rapid-domain"
+            - "L-rapid-gateway"
+          policies: []
+          rules: []
+        - id: "L-rapid-gateway"
+          name: "ゲートウェイ層"
+          responsibility: "RDB クライアントアダプタ(poll / claim と CLAIMED → RUNNING の条件付き UPDATE。更新件数を usecase に返す。接続先は速報クロスチェック設定の接続参照名で解決)、比較ツール起動アダプタ(比較定義のコマンドを実行し stdout / stderr / exitcode を取得)"
+          allowed_dependencies: []
+          policies:
+            - id: "LP-011"
+              name: "比較ツール呼び出しの分離"
+              description: "比較ツールの起動コマンド・オプションは job_id ごとの比較定義から受け取り、gateway は実行と結果取得だけを行う。ツール固有の終了コード解釈は domain の対応表に委ねる"
+              reason: "条件「比較定義の選択」への対応。比較ツールを差し替え可能にするため"
+              source_model: "条件: 比較定義の選択, 外部システム: 比較ツール, 情報: 比較定義"
+              confidence: "high"
+          rules: []
+      cross_layer_policies:
+        - id: "CLP-003"
+          name: "IF なし(直接依存)"
+          description: "tier-facade と同じく直接依存とし、gateway アダプタの差し替えで製品差異を吸収する"
+          reason: "一般的なベストプラクティスとして適用"
+          source_model: "なし"
+          confidence: "default"
+        - id: "CLP-004"
+          name: "実行ログの出力方針"
+          description: "tier-facade の CLP-002 と同一(日時はホストのローカルタイムゾーン、タイムゾーン指示子なし)。worker は claim した依頼の run_id と worker_id をログに含め、RUNNING への条件付き UPDATE が 0 件で比較を開始しなかったこともログに残す。dispatcher は中止済み run(並行稼働実行 ABORTED または対象 slot の slot 実行 ABORTED)で依頼を作成しなかったことを warning で残す"
+          reason: "NFR C.6.1.1・C.3.1.1 への対応"
+          source_model: "情報: 実行ログ, NFR C.6.1.1, NFR C.3.1.1"
+          confidence: "medium"
+      cross_layer_rules:
+        - id: "CLR-002"
+          name: "エラーハンドリングと終了コード"
+          description: "tier-facade の CLR-001 と同一。比較ツールの非 0 は例外ではなく結果として扱い FAILED を保存する"
+          reason: "レイヤー責務の分離"
+          source_model: "条件: 比較ツール終了コードの対応"
+          confidence: "default"
+      diagram_mermaid: |
+        graph TD
+          P[presentation: blue-completed / green-completed / worker 起動口] --> U[usecase: dispatcher / worker フロー]
+          U --> D[domain: 両系成功判定・依頼ライフサイクル]
+          U --> R[repository: rapid_run / request / comparison_result / 比較定義]
+          R --> D
+          R --> G[gateway: RDB / 比較ツール]
+    - tier_id: "tier-final-crosscheck"
+      layers:
+        - id: "L-final-presentation"
+          name: "プレゼンテーション層(CLI エントリ)"
+          responsibility: "final-crosscheck-runner の起動口(business_date・対象カタログ版の引数検証)と worker の起動口。保存済み stdout / stderr / exitcode の無加工中継と終了コードの決定"
+          allowed_dependencies:
+            - "L-final-usecase"
+          policies:
+            - id: "LP-012"
+              name: "中継制約"
+              description: "presentation は依頼に保存された stdout / stderr / exitcode だけを返し、状態名・差分件数・レポート URI を出力に追加しない"
+              reason: "条件「確報結果の中継制約」への対応"
+              source_model: "条件: 確報結果の中継制約, 情報: ジョブスケジューラ応答"
+              confidence: "high"
+          rules: []
+        - id: "L-final-usecase"
+          name: "ユースケース層"
+          responsibility: "依頼登録 → 終端状態までの同期 polling → 結果中継(runner)、poll → claim → RUNNING → 全量比較 → 結果保存(worker)のフロー制御"
+          allowed_dependencies:
+            - "L-final-domain"
+            - "L-final-repository"
+          policies:
+            - id: "LP-013"
+              name: "同期 polling の間隔と上限"
+              description: "runner は終端状態まで一定間隔で polling し、夜間ウィンドウ(8 時間)を超える場合の扱いは設定で指定できるようにする。polling 中は状態を変更しない"
+              reason: "条件「確報依頼の登録条件」と NFR B.2.2.1 への対応"
+              source_model: "条件: 確報依頼の登録条件, NFR B.2.2.1"
+              confidence: "medium"
+          rules: []
+        - id: "L-final-domain"
+          name: "ドメイン層"
+          responsibility: "クロスチェック依頼のライフサイクル(速報と共有する規則)、lease 失効判定、比較ツール終了コード → 依頼状態の対応表、終端状態の判定"
+          allowed_dependencies: []
+          policies:
+            - id: "LP-014"
+              name: "依頼ライフサイクル規則の共有"
+              description: "REQUESTED / CLAIMED / RUNNING / SUCCEEDED / FAILED / ABORTED の遷移規則と終了コード対応表は速報側と同一の規則として実装し、レコードは final_crosscheck_request に分離する"
+              reason: "条件「依頼状態遷移規則」「速報と確報のモデル分離」への対応"
+              source_model: "条件: 依頼状態遷移規則, 速報と確報のモデル分離, 状態: クロスチェック依頼"
+              confidence: "high"
+          rules: []
+        - id: "L-final-repository"
+          name: "リポジトリ層"
+          responsibility: "final_crosscheck_request と対象カタログの読み書き(管理 DB)。速報側のテーブルには触れない"
+          allowed_dependencies:
+            - "L-final-domain"
+            - "L-final-gateway"
+          policies: []
+          rules: []
+        - id: "L-final-gateway"
+          name: "ゲートウェイ層"
+          responsibility: "RDB クライアントアダプタ(DB セグメントからの poll / claim)、比較ツール起動アダプタ(対象カタログに基づく全テーブル・全ファイル比較)"
+          allowed_dependencies: []
+          policies:
+            - id: "LP-015"
+              name: "対象カタログに基づく全量比較の起動"
+              description: "gateway は対象カタログ(target_type / target_identifier / 比較条件 / business_date の扱い)を比較ツールの入力に変換して起動し、stdout / stderr / exitcode を取得する"
+              reason: "条件「適用側で定義する事項」への対応"
+              source_model: "条件: 適用側で定義する事項, 情報: 対象カタログ, 外部システム: 比較ツール"
+              confidence: "high"
+          rules: []
+      cross_layer_policies:
+        - id: "CLP-005"
+          name: "IF なし(直接依存)"
+          description: "tier-facade と同じく直接依存とする"
+          reason: "一般的なベストプラクティスとして適用"
+          source_model: "なし"
+          confidence: "default"
+        - id: "CLP-006"
+          name: "実行ログの出力方針"
+          description: "tier-facade の CLP-002 と同一。final_crosscheck_id と business_date をログに含める"
+          reason: "NFR C.6.1.1・C.3.1.1 への対応"
+          source_model: "情報: 実行ログ, NFR C.6.1.1, NFR C.3.1.1"
+          confidence: "medium"
+      cross_layer_rules:
+        - id: "CLR-003"
+          name: "エラーハンドリングと終了コード"
+          description: "tier-facade の CLR-001 と同一。依頼登録失敗・polling 中の DB 障害は非 0 で終了し原因を stderr に出す"
+          reason: "レイヤー責務の分離"
+          source_model: "なし"
+          confidence: "default"
+      diagram_mermaid: |
+        graph TD
+          P[presentation: final runner / worker 起動口] --> U[usecase: 登録・polling・中継 / 比較実行]
+          U --> D[domain: 依頼ライフサイクル・終了コード対応]
+          U --> R[repository: final_crosscheck_request / 対象カタログ]
+          R --> D
+          R --> G[gateway: RDB / 比較ツール]
+    - tier_id: "tier-ops"
+      layers:
+        - id: "L-ops-presentation"
+          name: "プレゼンテーション層(CLI エントリ)"
+          responsibility: "hang-detector / background-rerun(--source-run-id, --role) / abort-*(--run-id)の引数検証、現在状態の表示、停止確認の対話プロンプト、終了コードの決定"
+          allowed_dependencies:
+            - "L-ops-usecase"
+          policies:
+            - id: "LP-016"
+              name: "停止確認の対話"
+              description: "abort-* は現在状態を表示後に「対象ジョブのプロセスは強制終了してありますか？ [yes/no]」と確認し、yes 以外は状態を変更せず終了する"
+              reason: "条件「停止確認応答」への対応"
+              source_model: "条件: 停止確認応答, 情報: 中止指示, バリエーション: 停止確認応答"
+              confidence: "high"
+          rules: []
+        - id: "L-ops-usecase"
+          name: "ユースケース層"
+          responsibility: "監視走査 → 判定 → 監視記録保存 → 通知(hang-detector)、事前検証 → execution-spec 復元 → 新 run 作成 → background slot / 比較依頼の起動(background-rerun)、可否判定 → 停止確認 → 状態更新(abort-*。abort-blue / abort-green は slot・並行稼働実行に加えて対象 run の未着手の速報比較依頼の ABORTED 化(競合窓の保険)を含む。abort-rapid-crosscheck は REQUESTED / CLAIMED / RUNNING の速報比較依頼、abort-final-crosscheck は RUNNING の確報比較依頼を中止する)のフロー制御"
+          allowed_dependencies:
+            - "L-ops-domain"
+            - "L-ops-repository"
+          policies:
+            - id: "LP-017"
+              name: "監視は通知のみ"
+              description: "hang-detector の usecase は状態更新・プロセス停止・依頼作成を呼ばない。監視記録の保存とメール送信だけを行う"
+              reason: "条件「監視は通知のみ」「警告傾向の記録」への対応"
+              source_model: "条件: 監視は通知のみ, 警告傾向の記録, 状態: 監視状態"
+              confidence: "high"
+            - id: "LP-018"
+              name: "リランの復元元の固定"
+              description: "background-rerun の usecase は最新ジョブマップの repository を呼ばず、元 run の execution-spec.json からのみ実行設定を復元し、新 run_id の parallel_run に parent_run_id を設定する"
+              reason: "条件「リランの実行設定復元」「リラン系譜の追跡」「リラン事前検証」への対応"
+              source_model: "条件: リランの実行設定復元, リラン系譜の追跡, リラン事前検証, 情報: リラン指示"
+              confidence: "high"
+          rules: []
+        - id: "L-ops-domain"
+          name: "ドメイン層"
+          responsibility: "slot 実行の状態導出(exitcode.txt / aborted.txt の有無・値)、ハング検知判定表(導出状態 × 経過時間と上限)、速報比較依頼の異常判定表、通知レベル対応表、監視状態の遷移(6 値。通知後・中止後の終端を含む)、リラン事前検証表(role × 元 mode × 導出状態)、中止可否判定表(slot は mode × 導出状態、比較依頼はクロスチェック種別 × 依頼状態(速報は REQUESTED / CLAIMED / RUNNING、確報は RUNNING のみ)。abort-blue / abort-green が併せて中止する速報比較依頼の状態条件(REQUESTED で未着手のみ)を含む)、復旧手段の選択表"
+          allowed_dependencies: []
+          policies:
+            - id: "LP-019"
+              name: "判定表をドメインに集約"
+              description: "slot 実行の状態導出・ハング検知判定・対象除外・異常判定・通知レベル・監視状態の遷移(ハング疑い通知済み → 正常終了 / 実行エラー通知済み / 比較異常通知済み、監視中・ハング疑い通知済み → 正常終了(中止済み))・リラン事前検証・中止可否(slot 実行モード × 導出状態、およびクロスチェック種別 × 依頼状態。速報比較依頼は REQUESTED / CLAIMED / RUNNING、確報比較依頼は RUNNING のみ中止可)・復旧手段の各判定表を純粋関数として実装し、テスト可能にする"
+              reason: "条件「slot 実行の状態導出規則」「ハング検知判定」「ハング検知対象の除外」「速報比較依頼の異常判定」「通知レベルの判定」「リラン事前検証」「slot 中止可否判定」「依頼中止可否判定」(縦軸クロスチェック種別 × 横軸依頼状態の判定表)「復旧手段の選択」と状態モデル「監視状態」「クロスチェック依頼」(REQUESTED / CLAIMED / RUNNING → ABORTED)、バリエーション「中止対象種別」への対応"
+              source_model: "条件: slot 実行の状態導出規則, ハング検知判定, ハング検知対象の除外, 速報比較依頼の異常判定, 通知レベルの判定, リラン事前検証, slot 中止可否判定, 依頼中止可否判定, 復旧手段の選択, 状態: 監視状態, クロスチェック依頼, バリエーション: ハング検知判定結果, 監視状態, 中止対象種別, クロスチェック依頼状態"
+              confidence: "high"
+          rules: []
+        - id: "L-ops-repository"
+          name: "リポジトリ層"
+          responsibility: "監視記録(管理 DB)、slot 実行・parallel_run・比較依頼の状態(管理 DB)、Runner Result / execution-spec.json / aborted.txt(成果物ディレクトリ)、ハング検知上限設定(execution-spec 経由)、ハング検知定期ジョブ設定(env 形式の設定ファイル)の読み書き"
+          allowed_dependencies:
+            - "L-ops-domain"
+            - "L-ops-gateway"
+          policies:
+            - id: "LP-020"
+              name: "管理 DB なしでの監視・中止・リラン"
+              description: "RAPID_CROSSCHECK_MODE=off のとき repository は管理 DB に接続せず、成果物ディレクトリの走査だけで監視対象を列挙し、slot 実行の状態は exitcode.txt / aborted.txt から導出する。abort-blue / abort-green の中止は aborted.txt の書き込みだけで成立し、background-rerun も成果物ファイルだけで事前検証する"
+              reason: "条件「ハング検知判定」「slot 実行の状態導出規則」と方針資料「off の場合も slot 成果物だけで監視・中止・リラン」への対応"
+              source_model: "条件: ハング検知判定, 速報クロスチェック有効判定, slot 実行の状態導出規則, 情報: 監視記録, ハング検知上限設定, Runner Result"
+              confidence: "high"
+          rules: []
+        - id: "L-ops-gateway"
+          name: "ゲートウェイ層"
+          responsibility: "メール送信アダプタ(ハング検知定期ジョブ設定の送信コマンド・宛先・件名プレフィックスを使う OS 標準コマンド呼び出し。warning / error)、RDB クライアントアダプタ(条件付き UPDATE による ABORTED 遷移)、ファイルシステム走査・書き込みアダプタ(aborted.txt の一時ファイル → リネーム出力を含む)、slot runner / 速報クロスチェック runner 起動アダプタ(リラン)"
+          allowed_dependencies: []
+          policies:
+            - id: "LP-021"
+              name: "条件付き状態更新と aborted.txt の原子的書き込み"
+              description: "slot の中止は aborted.txt を一時ファイルへ書いて確定名へリネームすることを正本とし、既に exitcode.txt または aborted.txt があれば書かずにエラーを返す。管理 DB の ABORTED への更新(off 以外)は WHERE 句で現在状態(slot 実行は RUNNING かつ background、並行稼働実行は STARTED または RUNNING)を条件にし、競合時は更新件数 0 をエラーとして返す。abort-blue / abort-green が併せて行う速報比較依頼の ABORTED 更新は WHERE status = REQUESTED(worker_id 未設定)を条件にし、該当なし(依頼が無い、または既に CLAIMED / RUNNING 以降)は更新件数 0 を正常として扱い、その依頼には触れない(競合窓の保険であり、dispatcher 側の中止済み run 判定と併用する)。abort-rapid-crosscheck の ABORTED 更新は WHERE status IN ('REQUESTED', 'CLAIMED', 'RUNNING') を条件にし、更新件数 0(終端済み)はエラーとして返す。abort-final-crosscheck は WHERE status = RUNNING を条件にする"
+              reason: "条件「slot 中止可否判定」「依頼中止可否判定」(CLAIMED 中止時の競合規則: status IN 条件の条件付き UPDATE)「slot 実行の状態導出規則」「成果物公開判定」と状態モデル「クロスチェック依頼」(REQUESTED / CLAIMED / RUNNING → ABORTED)への対応。二重実行と worker の claim との競合を DB のトランザクションで防ぐため"
+              source_model: "条件: slot 中止可否判定, 依頼中止可否判定, slot 実行の状態導出規則, 成果物公開判定, claim 排他, 状態: クロスチェック依頼, システム概要: ジョブキュー兼管理 DB(内部データストア), 外部システム: メール通知, 情報: ハング検知定期ジョブ設定, 速報比較依頼(rapid_crosscheck_request)"
+              confidence: "high"
+          rules: []
+      cross_layer_policies:
+        - id: "CLP-007"
+          name: "IF なし(直接依存)"
+          description: "tier-facade と同じく直接依存とする"
+          reason: "一般的なベストプラクティスとして適用"
+          source_model: "なし"
+          confidence: "default"
+        - id: "CLP-008"
+          name: "運用操作の記録"
+          description: "中止・リランの運用操作は指示者(実行ユーザー)・応答・対象 run_id・role を実行ログに残し、監視記録には monitor_status(6 値)/ hang_suspected_at / alerted_at / 警告時経過時間を残す。hang_detect_limit_minutes の調整記録は監視記録ではなく適用構成文書に残す"
+          reason: "条件「警告傾向の記録」と NFR E.7.1.1(監査ログ)・C.3.1.1(自動記録)への対応"
+          source_model: "条件: 警告傾向の記録, 情報: 実行ログ, 監視記録, NFR E.7.1.1, NFR C.3.1.1, NFR C.6.1.1"
+          confidence: "high"
+      cross_layer_rules:
+        - id: "CLR-004"
+          name: "エラーハンドリングと終了コード"
+          description: "tier-facade の CLR-001 と同一。事前検証エラー・中止不可は状態を変更せず非 0 で終了し、原因を stderr に出す"
+          reason: "レイヤー責務の分離"
+          source_model: "なし"
+          confidence: "default"
+      diagram_mermaid: |
+        graph TD
+          P[presentation: hang-detector / background-rerun / abort-* CLI] --> U[usecase: 監視・リラン・中止フロー]
+          U --> D[domain: 判定表・監視状態遷移]
+          U --> R[repository: 監視記録 / 状態 / 成果物 / execution-spec]
+          R --> D
+          R --> G[gateway: メール / RDB / filesystem / runner 起動]

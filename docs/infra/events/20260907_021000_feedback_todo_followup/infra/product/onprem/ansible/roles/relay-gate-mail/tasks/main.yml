@@ -1,0 +1,19 @@
+---
+# relay-gate-mail: Postfix(satellite構成)で運用者向けメール通知経路を構成する
+# 対応: product-impl-onprem.yaml#impl.messaging.mail_relay
+
+- name: Postfixをインストールする
+  ansible.builtin.package:
+    name: postfix
+    state: present
+
+- name: Postfixをsatellite構成にする(relayhostを組織内SMTPに指定)
+  ansible.builtin.template:
+    src: main.cf.j2
+    dest: /etc/postfix/main.cf
+    mode: "0644"
+  notify: restart postfix
+
+- name: postfix checkで構文検証する
+  ansible.builtin.command: postfix check
+  changed_when: false

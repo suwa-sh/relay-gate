@@ -1,0 +1,13 @@
+round: 2
+group: G4
+findings: []
+verified:
+  - {id: S3-G4-001, status: resolved, evidence: "通知する/spec.md 42・134・200 行が「11 行目 artifact_dir を除く 1〜13 行目に 80 桁制限」に統一され、tier-ops.md 40・106 行 / ui-design.md「行長」と一致"}
+  - {id: S3-G4-002, status: resolved, evidence: "通知メールを受け取る/tier-ops.md 32 行の見出しと BDD 102 行が artifact_dir 例外を含む文言に修正済み"}
+  - {id: S3-G4-003, status: resolved, evidence: "buc-spec.md 142 行の件名が `{ALERT_SUBJECT_PREFIX}[{level}] ...`(既定 `[relay-gate]`)に修正済み。契約 hang-detector.sh notes と一致"}
+  - {id: S3-G4-004, status: resolved, evidence: "監視記録を保存する/spec.md 111 行から「契約側で対応」の指示文が削除され、rdb-schema.yaml の列説明と同じ旨だけが残る"}
+  - {id: S3-G4-005, status: resolved, evidence: "判定する/spec.md 関連 RDRA モデル表 204〜208 行にバリエーション 5 行(ハング検知上限設定 / slot 実行モード / run role / 速報クロスチェック監視判定 / 設定所有区分)が追加済み"}
+  - {id: S3-G4-006, status: resolved, evidence: "判定する/spec.md 88 行が `error: management db connection failed conn_ref=...`(6)に統一され、`management db query failed` は残っていない"}
+  - {id: S3-G4-007, status: resolved, evidence: "判定する/spec.md 176 行に `[*]` → COMPLETED を追加。状態.tsv「監視状態」に無い遷移である旨(rdra-feedback 候補)を明記。契約 monitor_status_transitions「(初回判定)→ COMPLETED」と一致。関連 RDRA モデル表・buc-spec の状態遷移図は状態.tsv の 9 遷移を写すもので、この遷移を載せていないのは RDRA と整合しているため指摘しない"}
+  - {id: S3-G4-008, status: resolved, evidence: "通知する/spec.md 181 行・223 行の Scenario 名の SPEC ID 表記が (SPEC-008-03) に揃い、USDM SPEC-008-03 の受け入れ条件 3 件目に対応"}
+mermaid_lint: "md-mermaid-lint 5 ファイル(通知する / 判定する / 監視記録を保存する / 通知メールを受け取る / buc-spec)すべて構文 OK"

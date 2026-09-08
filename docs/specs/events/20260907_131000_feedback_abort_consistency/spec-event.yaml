@@ -1,0 +1,365 @@
+version: "1.0"
+event_id: "20260907_131000_feedback_abort_consistency"
+created_at: "2026-09-07T13:10:00Z"
+source: "Spec 差分更新: feedback 20260907_abort_consistency(design 無しモード)。前イベント 20260907_024000_feedback_todo_followup を起点に、RDRA / NFR / arch / infra の 20260907 abort_consistency feedback イベントへ追従(中止済み run の判定キーを並行稼働実行 ABORTED または完了通知の対象 slot の slot 実行 ABORTED に拡張、abort-rapid-crosscheck は REQUESTED / CLAIMED / RUNNING を中止でき worker の CLAIMED → RUNNING は条件付き UPDATE、abort-blue / abort-green の REQUESTED → ABORTED は競合窓の保険)。trigger_event: rdra:20260907_114000_feedback_abort_consistency, arch:20260907_122000_feedback_abort_consistency"
+design_available: false
+previous_event_ref: "20260907_024000_feedback_todo_followup"
+trigger_event:
+  - "rdra:20260907_114000_feedback_abort_consistency"
+  - "arch:20260907_122000_feedback_abort_consistency"
+related_event_refs:
+  - "nfr:20260907_120000_feedback_abort_consistency"
+  - "infra:20260907_124000_feedback_abort_consistency"
+feedback_request:
+  feedback_request_id: "20260907_abort_consistency"
+  input_sha256: "70cda63f92e887e459a3817580e45a840e3ff201065a534085ad113fb8910b81"
+  request_ids: ["CR-c770d8f0-016","CR-c770d8f0-017","CR-c770d8f0-018"]
+  work_unit_ids: ["CR-c770d8f0-016#1","CR-c770d8f0-017#1","CR-c770d8f0-018#1"]
+
+use_cases:
+  - business: "クロスチェック業務"
+    buc: "確報クロスチェックフロー"
+    uc: "確報クロスチェック結果を確認する"
+    files:
+      - spec.md
+      - tier-final-crosscheck.md
+    api_count: 0
+    async_event_count: 0
+  - business: "クロスチェック業務"
+    buc: "確報クロスチェックフロー"
+    uc: "確報比較依頼を claim する"
+    files:
+      - spec.md
+      - tier-final-crosscheck.md
+    api_count: 0
+    async_event_count: 1
+  - business: "クロスチェック業務"
+    buc: "確報クロスチェックフロー"
+    uc: "確報比較依頼を登録して終端状態まで待機する"
+    files:
+      - spec.md
+      - tier-final-crosscheck.md
+    api_count: 0
+    async_event_count: 2
+  - business: "クロスチェック業務"
+    buc: "確報クロスチェックフロー"
+    uc: "比較ツールで日次全量比較を実行して結果を保存する"
+    files:
+      - spec.md
+      - tier-final-crosscheck.md
+    api_count: 0
+    async_event_count: 1
+  - business: "クロスチェック業務"
+    buc: "確報クロスチェックフロー"
+    uc: "保存済みの確報結果をジョブスケジューラへ返す"
+    files:
+      - spec.md
+      - tier-final-crosscheck.md
+    api_count: 0
+    async_event_count: 0
+  - business: "クロスチェック業務"
+    buc: "速報クロスチェックフロー"
+    uc: "速報クロスチェック runner へ完了通知を送信する"
+    files:
+      - spec.md
+      - tier-facade.md
+      - tier-rapid-crosscheck.md
+    api_count: 0
+    async_event_count: 3
+  - business: "クロスチェック業務"
+    buc: "速報クロスチェックフロー"
+    uc: "速報比較依頼を claim する"
+    files:
+      - spec.md
+      - tier-rapid-crosscheck.md
+    api_count: 0
+    async_event_count: 1
+  - business: "クロスチェック業務"
+    buc: "速報クロスチェックフロー"
+    uc: "速報比較結果を参照する"
+    files:
+      - spec.md
+      - tier-rapid-crosscheck.md
+    api_count: 0
+    async_event_count: 0
+  - business: "クロスチェック業務"
+    buc: "速報クロスチェックフロー"
+    uc: "比較ツールでジョブ単位比較を実行して結果を登録する"
+    files:
+      - spec.md
+      - tier-rapid-crosscheck.md
+    api_count: 0
+    async_event_count: 1
+  - business: "クロスチェック業務"
+    buc: "速報クロスチェックフロー"
+    uc: "両系成功時に速報比較依頼を作成する"
+    files:
+      - spec.md
+      - tier-rapid-crosscheck.md
+    api_count: 0
+    async_event_count: 2
+  - business: "実行監視業務"
+    buc: "background 実行監視フロー"
+    uc: "background 異常の通知メールを受け取る"
+    files:
+      - spec.md
+      - tier-ops.md
+    api_count: 0
+    async_event_count: 1
+  - business: "実行監視業務"
+    buc: "background 実行監視フロー"
+    uc: "background 実行の経過時間と終了状態を判定する"
+    files:
+      - spec.md
+      - tier-ops.md
+    api_count: 0
+    async_event_count: 1
+  - business: "実行監視業務"
+    buc: "background 実行監視フロー"
+    uc: "hang_detect_limit_minutes をジョブごとに調整する"
+    files:
+      - spec.md
+      - tier-facade.md
+      - tier-ops.md
+    api_count: 0
+    async_event_count: 0
+  - business: "実行監視業務"
+    buc: "background 実行監視フロー"
+    uc: "ハング疑い・実行エラー・比較異常を通知する"
+    files:
+      - spec.md
+      - tier-ops.md
+    api_count: 0
+    async_event_count: 2
+  - business: "実行監視業務"
+    buc: "background 実行監視フロー"
+    uc: "監視記録を保存する"
+    files:
+      - spec.md
+      - tier-ops.md
+    api_count: 0
+    async_event_count: 0
+  - business: "実行復旧業務"
+    buc: "background 側リランフロー"
+    uc: "リラン結果を parent_run_id で追跡する"
+    files:
+      - spec.md
+      - tier-ops.md
+    api_count: 0
+    async_event_count: 0
+  - business: "実行復旧業務"
+    buc: "background 側リランフロー"
+    uc: "リラン対象を検証する"
+    files:
+      - spec.md
+      - tier-ops.md
+    api_count: 0
+    async_event_count: 0
+  - business: "実行復旧業務"
+    buc: "background 側リランフロー"
+    uc: "元の execution-spec.json から復元して新しい run_id で起動する"
+    files:
+      - spec.md
+      - tier-facade.md
+      - tier-ops.md
+    api_count: 0
+    async_event_count: 1
+  - business: "実行復旧業務"
+    buc: "background 側リランフロー"
+    uc: "速報比較依頼だけを新規作成する"
+    files:
+      - spec.md
+      - tier-ops.md
+      - tier-rapid-crosscheck.md
+    api_count: 0
+    async_event_count: 2
+  - business: "実行復旧業務"
+    buc: "実行中止フロー"
+    uc: "現在状態を確認して停止確認に応答する"
+    files:
+      - spec.md
+      - tier-ops.md
+    api_count: 0
+    async_event_count: 0
+  - business: "実行復旧業務"
+    buc: "実行中止フロー"
+    uc: "実行を ABORTED へ遷移させる"
+    files:
+      - spec.md
+      - tier-ops.md
+    api_count: 0
+    async_event_count: 0
+  - business: "実装切替業務"
+    buc: "実装切替ジョブ実行フロー"
+    uc: "execution-spec.json を確定保存する"
+    files:
+      - spec.md
+      - tier-facade.md
+    api_count: 0
+    async_event_count: 2
+  - business: "実装切替業務"
+    buc: "実装切替ジョブ実行フロー"
+    uc: "foreground slot の結果をジョブスケジューラへ中継する"
+    files:
+      - spec.md
+      - tier-facade.md
+    api_count: 0
+    async_event_count: 0
+  - business: "実装切替業務"
+    buc: "実装切替ジョブ実行フロー"
+    uc: "slot 実行モードを選択して runner を起動する"
+    files:
+      - spec.md
+      - tier-facade.md
+    api_count: 0
+    async_event_count: 0
+  - business: "実装切替業務"
+    buc: "実装切替ジョブ実行フロー"
+    uc: "ジョブマップで JOB_ID から実行先を解決する"
+    files:
+      - spec.md
+      - tier-facade.md
+    api_count: 0
+    async_event_count: 0
+  - business: "実装切替業務"
+    buc: "実装切替ジョブ実行フロー"
+    uc: "業務ジョブの実行結果を確認する"
+    files:
+      - spec.md
+      - tier-facade.md
+    api_count: 0
+    async_event_count: 0
+  - business: "実装切替業務"
+    buc: "実装切替ジョブ実行フロー"
+    uc: "実装スクリプトを実行して Runner Result を出力する"
+    files:
+      - spec.md
+      - tier-facade.md
+    api_count: 0
+    async_event_count: 1
+  - business: "適用構成業務"
+    buc: "適用構成定義フロー"
+    uc: "feature flag を設定する"
+    files:
+      - spec.md
+      - tier-facade.md
+    api_count: 0
+    async_event_count: 1
+  - business: "適用構成業務"
+    buc: "適用構成定義フロー"
+    uc: "slot runner の実体スクリプトを割り当てる"
+    files:
+      - spec.md
+      - tier-facade.md
+    api_count: 0
+    async_event_count: 1
+  - business: "適用構成業務"
+    buc: "適用構成定義フロー"
+    uc: "slot ごとのジョブマップを定義する"
+    files:
+      - spec.md
+      - tier-facade.md
+    api_count: 0
+    async_event_count: 1
+  - business: "適用構成業務"
+    buc: "適用構成定義フロー"
+    uc: "クロスチェックのジョブマップと比較定義を定義する"
+    files:
+      - spec.md
+      - tier-final-crosscheck.md
+      - tier-rapid-crosscheck.md
+    api_count: 0
+    async_event_count: 0
+  - business: "適用構成業務"
+    buc: "適用構成定義フロー"
+    uc: "切り替えた運用モードで業務ジョブを実行する"
+    files:
+      - spec.md
+      - tier-facade.md
+    api_count: 0
+    async_event_count: 1
+cross_cutting:
+  ux_design:
+    user_flows: 4
+    ia_pages: 18
+    psychology_principles: 8
+  ui_design:
+    layout_patterns: 0
+    responsive_breakpoints: 0
+    component_guidelines: 0
+    output_conventions: "cli(stdout/stderr の key=value・TSV、終了コード 0/2/3/6、実行ログ行形式、通知メール規約)"
+  data_visualization:
+    target_screens: 3
+    chart_types: 0
+  openapi:
+    api_count: 0
+    note: "HTTP API なし。openapi.yaml はバリデータ互換スタブ。CLI コマンド契約の正本は _cross-cutting/api/cli-command-contract.yaml"
+  asyncapi:
+    async_event_count: 4
+  cli_command_contract:
+    file: "_cross-cutting/api/cli-command-contract.yaml"
+  datastore:
+    rdb_tables: 7
+  traceability:
+    file: "_cross-cutting/traceability-matrix.md"
+  extra_files:
+    - "_cross-cutting/uc-dependencies.md"
+    - "_cross-cutting/usdm-acceptance-matrix.md"
+    - "_cross-cutting/rdra-feedback.md"
+
+stats:
+  total_ucs: 32
+  total_apis: 0
+  total_async_events: 4
+  businesses: 5
+  bucs: 7
+
+review:
+  method: "差分更新の自己改善ループ(Step3-Review 業務別 2 グループ + Step4-Review cross-cutting 3 担当(api / datastore / traceability)を各 2 ラウンド、Step6.5 反証レビュー 2 ラウンド + 検証パス。生成とは別コンテキストのレビュアー。記録は events 側 _review/ のみ、latest へはコピーしない)"
+  rounds: 3
+  converged: true
+  final_state: "blocker 0 / 未解決 major 0(step3/step4 round 1: 24 件 fixed(major 7 / minor 17)、round 2: minor 6 fixed。Step6.5 round-1: major 1(R-001 slot_executions.status は条件付き UPDATE で一度だけ書き abort 後の exitcode.txt 公開で再同期しない)+ minor 4 fixed。round-2: minor 4(3 fixed、R-006 は round-3 でオーケストレータが rdra-feedback #16 として記録)。round-3 検証パス: minor 3(R-001 残存箇所 / R-004 列挙 / R-006 記録。オーケストレータが fixed))"
+  history:
+    - round: 1
+      event: "20260907_131000_feedback_abort_consistency"
+      findings: "step3-G1 / G2、step4-api / datastore / traceability round1: blocker 0 / major 7 / minor 17(全件 fixed。S4-traceability-4 により change-brief D4 の #16(対象 slot 限定の抜け)は成立しない経路と判明し撤回)。Step6.5 round-1: major 1(R-001)/ minor 4(R-002〜R-005)(全件 fixed)"
+      resolution: "_review/step3-{G1,G2}-round1.yaml / step4-{api,datastore,traceability}-round1.yaml / round-1.yaml の resolved"
+    - round: 2
+      event: "20260907_131000_feedback_abort_consistency"
+      findings: "step3-G1 / G2、step4-api round2: minor 6(契約の文言が UC 側へ未伝播。全件 fixed)。step4-datastore / traceability round2: 0 件。Step6.5 round-2: minor 4(R-001 残存箇所 / R-002 / R-004 fixed、R-006 は rdra-feedback.md が編集許可外のため round-3 へ)"
+      resolution: "_review/step3-{G1,G2}-round2.yaml / step4-{api,datastore,traceability}-round2.yaml / round-2.yaml の resolved"
+    - round: 3
+      event: "20260907_131000_feedback_abort_consistency"
+      findings: "Step6.5 round-3 検証パス: minor 3(R-001 ui-design.md / UC-18 の値説明、R-004 UC-11 tier の列挙、R-006 rdra-feedback #16 の記録。オーケストレータが fixed)"
+      resolution: "_review/round-3.yaml"
+  previous_event_history_note: "以下は前イベント 20260907_024000_feedback_todo_followup / 20260905_100000_feedback_todo_resolution / 20260830_202851_spec_generation の反証レビュー履歴(参照用)"
+  previous_event_history:
+    - round: 1
+      findings: "(20260907_024000)step3/step4 round1: major 4 / minor 28 fixed。Step6.5 round-1: major 5 / minor 2 fixed(RDRA 変更要望 #13〜#15)"
+      resolution: "events/20260907_024000_feedback_todo_followup/_review/"
+    - round: 2
+      findings: "(20260907_024000)Step6.5 round-2: major 1(R-003 再掲)/ minor 2 fixed"
+      resolution: "events/20260907_024000_feedback_todo_followup/_review/round-2.yaml"
+    - round: 3
+      findings: "(20260907_024000)Step6.5 round-3 検証パス: minor 2 fixed"
+      resolution: "events/20260907_024000_feedback_todo_followup/_review/round-3.yaml"
+    - round: 1
+      findings: "(20260905_100000)step3/step4 round1: major 17 / minor 43 fixed。Step6.5 round-1: major 1 / minor 4(R-5 deferred)"
+      resolution: "events/20260905_100000_feedback_todo_resolution/_review/"
+    - round: 2
+      findings: "(20260905_100000)step3/step4 round2: minor 7 fixed。Step6.5 round-2: major 1 fixed"
+      resolution: "events/20260905_100000_feedback_todo_resolution/_review/"
+    - round: 3
+      findings: "(20260905_100000)Step6.5 round-3 検証パス: minor 1 fixed"
+      resolution: "events/20260905_100000_feedback_todo_resolution/_review/round-3.yaml"
+    - round: 1
+      findings: "(20260830_202851)blocker 1 / major 25(F-001〜F-026)+ minor(F-027〜F-044)"
+      resolution: "events/20260830_202851_spec_generation/_review/"
+    - round: 2
+      findings: "(20260830_202851)reopened major 1(F-032)+ 新規 major 9(F-101〜F-109)+ minor 33(F-110〜F-142)"
+      resolution: "events/20260830_202851_spec_generation/_review/"
+    - round: 3
+      findings: "(20260830_202851)reopened minor 1(F-141)+ 新規 major 1(F-201)+ 新規 minor 4(F-202〜F-205)"
+      resolution: "events/20260830_202851_spec_generation/_review/round-3-resolution.md(全件 fixed。deferred なし)"
+
+story_generation: not_applicable

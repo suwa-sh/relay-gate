@@ -1,0 +1,36 @@
+round: 2
+group: G1
+# round 1 の resolved(S3-G1-001〜007)を再検証した結果: 全件修正済みを確認(再掲なし)
+#   001: tier-rapid-crosscheck.md 終了コード 0 の条件に RUNNING 遷移 0 件を追記済み(契約 exit_codes[0] と同文)
+#   002: ティア BDD「他 worker に奪われた依頼は処理しない」の Then を request_status=CLAIMED / WARN ... status=CLAIMED に具体化済み
+#   003: spec.md データフロー図に再 SELECT のエッジを追加済み(_model-summary.yaml の SELECT operation と整合)
+#   004: 処理フロー alt 内に UC-->>Pres の終了メッセージを追加済み(md-mermaid-lint 通過)
+#   005: バリエーション一覧「クロスチェック依頼状態 | ABORTED」行を追加済み
+#   006: UC-09 バリエーション一覧に「速報クロスチェックモード」2 行を追加済み
+#   007: buc-spec 状態遷移全体図に RUNNING → ABORTED を追加し、説明文・UC マッピングも 3 経路に統一済み
+findings:
+  - id: S3-G1-008
+    uc: "クロスチェック業務/速報クロスチェックフロー/buc-spec"
+    file: "docs/specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/buc-spec.md"
+    line: 163
+    severity: minor
+    viewpoint: 1
+    claim: "BUC 内共有バリエーション一覧「速報クロスチェックモード」の適用 UC に「両系成功時に速報比較依頼を作成する」が無く、round 1(S3-G1-006)で UC-09 spec.md のバリエーション一覧に追加した「速報クロスチェックモード | foreground / background」「| off」の 2 行が BUC の集約表に反映されていない。"
+    fix: "同行の適用 UC を「速報クロスチェック runner へ完了通知を送信する, 両系成功時に速報比較依頼を作成する, 速報比較依頼を claim する, 速報比較結果を参照する」にする(UC-09 spec.md バリエーション一覧 123〜124 行と一致させる)。"
+    source_refs:
+      - "docs/specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/両系成功時に速報比較依頼を作成する/spec.md#バリエーション一覧"
+      - "docs/rdra/latest/条件.tsv#中止済み run の比較依頼作成除外"
+  - id: S3-G1-009
+    uc: "クロスチェック業務/速報クロスチェックフロー/比較ツールでジョブ単位比較を実行して結果を登録する"
+    file: "docs/specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/比較ツールでジョブ単位比較を実行して結果を登録する/_api-summary.yaml"
+    line: 20
+    severity: minor
+    viewpoint: 4
+    claim: "_api-summary.yaml の exit_codes[0].meaning が「依頼を終端状態まで処理した(比較 NG / 実行エラーの 3 / 6 も 0)」だけで、round 1(S3-G1-001)で tier-rapid-crosscheck.md 終了コード表と契約 rapid-crosscheck-worker.sh exit_codes[0] に追記した「RUNNING 遷移の条件付き UPDATE が 0 件で比較を開始せず終了した場合も 0」が反映されておらず、tier md と不整合。"
+    fix: "exit_codes[0].meaning を「依頼を終端状態まで処理した(比較 NG / 実行エラーの 3 / 6 も 0)。RUNNING 遷移の条件付き UPDATE(status='CLAIMED' AND worker_id=?)が 0 件(abort-rapid-crosscheck で ABORTED 済み / lease 失効で回収済み)で比較を開始せず終了した場合も 0」にし、あわせて stdout の request_status の列挙を契約 444 行と同じく「SUCCEEDED|FAILED|ABORTED(RUNNING 遷移 0 件で回収済みのときは再 SELECT した REQUESTED|CLAIMED|RUNNING)」にする。"
+    source_refs:
+      - "docs/specs/events/20260907_131000_feedback_abort_consistency/_cross-cutting/api/cli-command-contract.yaml#rapid-crosscheck-worker.sh.exit_codes"
+      - "docs/specs/events/20260907_131000_feedback_abort_consistency/クロスチェック業務/速報クロスチェックフロー/比較ツールでジョブ単位比較を実行して結果を登録する/tier-rapid-crosscheck.md#終了コード"
+resolved:
+  - {id: S3-G1-008, resolution: fixed}
+  - {id: S3-G1-009, resolution: fixed}

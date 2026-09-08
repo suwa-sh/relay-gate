@@ -1,0 +1,60 @@
+meta:
+  event_id: "20260907_021000_feedback_todo_followup"
+  trigger_event: "arch:20260907_015000_feedback_todo_followup, nfr:20260907_013000_feedback_todo_followup"
+  created_at: "2026-09-07T02:10:00Z"
+  mode: "differential"
+  mcl_rerun: "skipped_targeted_update"
+  mcl_rerun_reason: "translation(workload_type / availability_tier / latency / data_classification / traffic / consistency / cost_posture / target_clouds)は無変更。影響は config_store の配置ファイル追加(rapid-crosscheck.env)、管理 DB の接続解決・中止時 UPDATE の注記、実行ログの時刻軸(ローカルタイムゾーン)とホストの TZ / 時刻同期、観測仕様の warning 扱いに限られるため、MCL product-design の全量再実行は行わず MCL 出力を対象箇所だけ更新した(前回 20260905_093000 と同じ判断)"
+feedback_request:
+  feedback_request_id: "20260907_todo_followup"
+  input_sha256: "193823ac1e6f02400269d6bdca461150a1fc8951393f332ef28580e045261389"
+  request_ids: ["CR-c770d8f0-013","CR-c770d8f0-014","CR-c770d8f0-015"]
+  work_unit_ids: ["CR-c770d8f0-013#1","CR-c770d8f0-014#1","CR-c770d8f0-015#1"]
+changes:
+  event_id: "20260907_021000_feedback_todo_followup"
+  created_at: "2026-09-07T02:10:00Z"
+  source: "feedback request 20260907_todo_followup(RDRA / NFR / arch 差分)に基づくインフラ設計の差分更新"
+  arch_event_ref: "20260907_015000_feedback_todo_followup"
+  nfr_event_ref: "20260907_013000_feedback_todo_followup"
+  translation:
+    unchanged: true
+  mcl_execution:
+    status: "completed"
+    completed_at: "2026-09-07T02:10:00Z"
+    outputs_updated:
+      - path: "docs/mcl/product/input/product-input.yaml"
+        change: "source_refs を arch / nfr の feedback event に更新。config_store の説明に速報クロスチェック設定(rapid-crosscheck.env: RAPID_DB_CONN_REF / RAPID_LEASE_SEC / RAPID_POLL_INTERVAL_SEC。速報有効時のみ)を追加し entity_refs に E-027 を追加。execution_log_store の説明に日時の時刻軸(ローカルタイムゾーン、指示子なし)を追加。observability_needs.notes に中止済み run の依頼未作成 warning がメール通知対象外である旨を追記"
+        work_units: ["CR-c770d8f0-013#1","CR-c770d8f0-014#1","CR-c770d8f0-015#1"]
+      - path: "docs/mcl/product/output/product-workload-model.yaml"
+        change: "product.storage.config_store の説明・REQ-CFG-001 rationale・制約に速報クロスチェック設定と RAPID_DB_CONN_REF を反映。product.storage.execution_log_store の説明に時刻軸を追加し、REQ-LOG-003(全ホストの TZ 設定と時刻同期の一致)と制約(タイムゾーン指示子なし)を追加"
+        work_units: ["CR-c770d8f0-013#1","CR-c770d8f0-015#1"]
+      - path: "docs/mcl/product/output/product-mapping-onprem.yaml"
+        change: "management_db の configuration_notes に接続参照名の解決(RAPID_DB_CONN_REF / HANG_DB_CONN_REF)、config_store の configuration_notes に rapid-crosscheck.env と常駐 worker の反映契機、execution_log_store の configuration_notes にローカルタイムゾーンと OS の TZ / NTP の統一を反映"
+        work_units: ["CR-c770d8f0-013#1","CR-c770d8f0-015#1"]
+      - path: "docs/mcl/product/output/product-impl-onprem.yaml"
+        change: "impl.compute.execution_hosts に timezone 設定と timedatectl の検証規則、impl.database.management_db に claim_pattern の lease / poll の出所・connection_resolution・abort_updates(REQUESTED 依頼の条件付き UPDATE)、impl.storage.config_store の contents / secret_handling / 平文検査に rapid-crosscheck.env と検証規則 1 件(3 キー存在・正の整数)、impl.storage.execution_log_store に timestamp(ローカルタイムゾーン、指示子なし)を追加"
+        work_units: ["CR-c770d8f0-013#1","CR-c770d8f0-014#1","CR-c770d8f0-015#1"]
+      - path: "docs/mcl/product/output/product-observability.yaml"
+        change: "logging に timestamp(ローカルタイムゾーン)と diagnostic_only_events(中止済み run の依頼未作成 warning はメール通知しない)を追加。alert-error-rate の condition に対象外事象(当該 warning、abort による未着手依頼の ABORTED 化)を明記"
+        work_units: ["CR-c770d8f0-014#1","CR-c770d8f0-015#1"]
+      - path: "docs/cloud-context/conformance/product/product-conformance-onprem.yaml"
+        change: "REQ-CFG-001 / REQ-CFG-002 の notes に rapid-crosscheck.env、REQ-LOG-003(conformant)を追加。summary を 24 要件(conformant 19 / partial 5)に更新"
+        work_units: ["CR-c770d8f0-013#1","CR-c770d8f0-015#1"]
+      - path: "docs/cloud-context/generated-md/product/relay-gate-target-architecture.md"
+        change: "設定ファイル配置ノードに rapid-crosscheck.env、実行ログ領域ノードに時刻軸、ops CLI → 管理 DB の辺に未着手依頼の ABORTED 化を追記。適合性サマリを 24 要件に更新"
+        work_units: ["CR-c770d8f0-013#1","CR-c770d8f0-014#1","CR-c770d8f0-015#1"]
+      - path: "infra/product/onprem/ansible/roles/relay-gate-config/tasks/main.yml"
+        change: "rapid-crosscheck.env の配置(0640。rapid_crosscheck_mode が off 以外のときのみ)とキー構成検査タスクを追加"
+        work_units: ["CR-c770d8f0-013#1"]
+      - path: "infra/product/onprem/ansible/roles/relay-gate-runtime/tasks/main.yml"
+        change: "ホストのローカルタイムゾーン統一(relay_gate_timezone)と時刻同期の確認タスクを追加"
+        work_units: ["CR-c770d8f0-015#1"]
+      - path: "infra/product/onprem/ansible/inventory.ini.example"
+        change: "rapid_crosscheck_mode(実行ホスト)と relay_gate_timezone(全ホスト)の変数例を追加"
+        work_units: ["CR-c770d8f0-013#1","CR-c770d8f0-015#1"]
+  arch_feedback:
+    status: "no_new_feedback"
+    reason: "本イベントの差分はすべて arch 20260907_015000_feedback_todo_followup の変更(E-027 / SP-025 / SP-022 / LP-023 / CLP-002 / CTP-003)を下流へ追従したもの。ホスト間の TZ 統一は CLP-002 の「プロセスの TZ 環境変数に従う」から導かれる配備制約であり、arch の記述を変える知見ではないため arch イベントは作成しない。既存の arch_feedback(20260830_202427_arch_infra_feedback_20260830_190412_infra_product_design)は据え置き"
+  writeback_check:
+    result: "not_required"
+    reason: "arch 差分はティア構成・認証認可方式・DR 方針・外部連携・storage_type を変えていない(E-027 の storage_type は file で既存の config_store に収まる)。translation の各フィールドに影響しないため product-input の再生成と Step2 の再実行は不要"

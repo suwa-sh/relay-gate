@@ -1,0 +1,2 @@
+コンテキスト	バリエーション	値	説明
+実行復旧管理	中止対象種別	background slot 実行、速報比較依頼、確報比較依頼	abort-blue / abort-green / abort-rapid-crosscheck / abort-final-crosscheck で明示中止できる対象の区分。いずれもプロセス停止を運用者が確認したうえで ABORTED へ更新する。中止できる状態は background slot 実行と確報比較依頼が RUNNING のみ、速報比較依頼は REQUESTED / CLAIMED / RUNNING

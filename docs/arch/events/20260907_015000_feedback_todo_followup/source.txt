@@ -1,0 +1,9 @@
+RDRA 差分 20260907_011000_feedback_todo_followup および NFR 差分 20260907_013000_feedback_todo_followup に基づくアーキテクチャ再評価、および実行ログ日時のローカルタイムゾーン化(direct work unit)
+trigger_event: rdra:20260907_011000_feedback_todo_followup, nfr:20260907_013000_feedback_todo_followup
+
+feedback_request_id: 20260907_todo_followup
+input_sha256: 193823ac1e6f02400269d6bdca461150a1fc8951393f332ef28580e045261389
+request_ids: CR-c770d8f0-013, CR-c770d8f0-014, CR-c770d8f0-015
+direct_work_unit_ids: CR-c770d8f0-015#1
+causal_work_unit_ids: CR-c770d8f0-013#1, CR-c770d8f0-014#1, CR-c770d8f0-015#1
+stage_packet: docs/pipeline/feedback-runs/20260907_todo_followup/stage-packets/architecture.md

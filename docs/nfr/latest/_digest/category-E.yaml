@@ -1,0 +1,274 @@
+# digest of nfr/latest/nfr-grade.yaml section categories[id=E] (L720-991); source_sha256: 69cca2e1c16f18ab4178b5a0e5af690acc7a82338c64a37176767e860a06693f
+# 派生物。正本は nfr-grade.yaml。編集しない
+  - id: "E"
+    name: "セキュリティ"
+    subcategories:
+      - id: "E.1"
+        name: "前提条件・制約条件"
+        items:
+          - id: "E.1.1"
+            name: "セキュリティポリシー"
+            important: true
+            metrics:
+              - id: "E.1.1.1"
+                name: "セキュリティポリシー"
+                important: true
+                grade: 2
+                grade_description: "組織のセキュリティポリシーに準拠"
+                reason: "エアーギャップ環境のオンプレミスで運用する前提から、組織のセキュリティポリシーが存在しそれに準拠すると推定"
+                source_model: "システム概要(エアーギャップ前提)"
+                confidence: "medium"
+          - id: "E.1.2"
+            name: "セキュリティ関連法規"
+            important: false
+            metrics:
+              - id: "E.1.2.1"
+                name: "準拠すべき法規・基準"
+                important: false
+                grade: 0
+                grade_description: "基盤として特定なし(業務データに関する法規は実装側・適用側の責務)"
+                reason: "relay-gate は業務データ本体を保持せず、成果物と管理レコードのみ扱うため"
+                source_model: "条件: 適用側で定義する事項"
+                confidence: "default"
+      - id: "E.2"
+        name: "セキュリティリスク分析"
+        items:
+          - id: "E.2.1"
+            name: "リスク分析"
+            important: true
+            metrics:
+              - id: "E.2.1.1"
+                name: "セキュリティリスク分析"
+                important: true
+                grade: 1
+                grade_description: "簡易チェックリストによる確認"
+                reason: "モデルシステム1のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+      - id: "E.3"
+        name: "セキュリティ診断"
+        items:
+          - id: "E.3.1"
+            name: "セキュリティ診断"
+            important: true
+            metrics:
+              - id: "E.3.1.1"
+                name: "セキュリティ診断"
+                important: true
+                grade: 0
+                grade_description: "診断なし"
+                reason: "モデルシステム1のデフォルト値を適用(閉域網内の CLI のみで外部公開面がない)"
+                source_model: ""
+                confidence: "default"
+      - id: "E.4"
+        name: "セキュリティリスク管理"
+        items:
+          - id: "E.4.1"
+            name: "リスク管理"
+            important: false
+            metrics:
+              - id: "E.4.1.1"
+                name: "リスク管理プロセス"
+                important: false
+                grade: 1
+                grade_description: "組織の運用ルールに従う"
+                reason: "モデルシステム1のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+      - id: "E.5"
+        name: "アクセス・利用制限"
+        items:
+          - id: "E.5.1"
+            name: "認証"
+            important: true
+            metrics:
+              - id: "E.5.1.1"
+                name: "認証方式"
+                important: true
+                grade: 1
+                grade_description: "OS アカウントと SSH 鍵による認証。認証情報(SSH・管理 DB 接続)は値を保存せず参照名で管理"
+                reason: "実行先ホストへは実行ユーザーで SSH 接続し、execution-spec.json には認証情報の参照名のみを保存し、管理 DB への接続も速報クロスチェック設定の接続参照名(RAPID_DB_CONN_REF)で解決して値を置かない設計のため"
+                source_model: "外部システム: リモート実行ホスト(SSH) / 条件: 認証情報の非保存 / 情報: 速報クロスチェック設定"
+                confidence: "high"
+          - id: "E.5.2"
+            name: "アクセス制御"
+            important: true
+            metrics:
+              - id: "E.5.2.1"
+                name: "アクセス制御"
+                important: true
+                grade: 1
+                grade_description: "ユーザ単位の制御(ジョブマップの user 列で解決する実行ユーザーと OS 権限。ローカル実行の slot では host / user を省略でき起動ユーザーの権限で実行)"
+                reason: "ジョブマップ(CSV)が job_id ごとに host / user 列で実行先と実行ユーザーを解決し、OS 権限で制御するため。ロール概念は RDRA に無い"
+                source_model: "情報: ジョブマップ(host / user 列) / 条件: ジョブマップ解決条件"
+                confidence: "high"
+          - id: "E.5.3"
+            name: "利用制限"
+            important: false
+            metrics:
+              - id: "E.5.3.1"
+                name: "利用制限"
+                important: false
+                grade: 1
+                grade_description: "閉域網内のジョブスケジューラ実行ホストと運用者端末に限定。インターネット接続なし"
+                reason: "エアーギャップ環境で、起動口はジョブスケジューラのジョブ定義と運用者の CLI のみのため"
+                source_model: "バリエーション: ジョブスケジューラ起動ジョブ種別 / システム概要(エアーギャップ前提)"
+                confidence: "high"
+      - id: "E.6"
+        name: "データ秘匿"
+        items:
+          - id: "E.6.1"
+            name: "暗号化"
+            important: true
+            metrics:
+              - id: "E.6.1.1"
+                name: "データ暗号化(保管時)"
+                important: true
+                grade: 0
+                grade_description: "暗号化なし"
+                reason: "認証情報の値を保存しない設計であり、管理 DB と成果物に機密データを持たないため保管時暗号化を要求しない。成果物の stdout / stderr に業務データが含まれるかは適用側で確認する"
+                source_model: "条件: 認証情報の非保存 / 情報: Runner Result"
+                confidence: "medium"
+              - id: "E.6.1.2"
+                name: "データ暗号化(通信時)"
+                important: true
+                grade: 1
+                grade_description: "外部通信のみ暗号化(SSH 経路)。管理 DB 接続は閉域セグメント内"
+                reason: "実行先ホストへの通信は SSH で暗号化され、relay-gate 内部のジョブキュー兼管理 DB への接続は閉域網内のため"
+                source_model: "外部システム: リモート実行ホスト(SSH) / システム概要: ジョブキュー兼管理 DB(relay-gate 内部のデータストア)"
+                confidence: "medium"
+          - id: "E.6.2"
+            name: "データマスキング"
+            important: false
+            metrics:
+              - id: "E.6.2.1"
+                name: "データマスキング"
+                important: false
+                grade: 0
+                grade_description: "なし"
+                reason: "モデルシステム1のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+      - id: "E.7"
+        name: "不正追跡・監視"
+        items:
+          - id: "E.7.1"
+            name: "監査ログ"
+            important: true
+            metrics:
+              - id: "E.7.1.1"
+                name: "監査ログ"
+                important: true
+                grade: 2
+                grade_description: "運用操作(中止・リラン)と状態遷移を run_id 付きの実行ログ・管理レコードで記録。監査の正本はジョブスケジューラ"
+                reason: "中止指示に指示者と応答を記録し、実行ログに run_id を残す設計だが、監査はジョブスケジューラの責務と定義されているため"
+                source_model: "情報: 中止指示、実行ログ / 条件: 実行履歴はジョブスケジューラの責務"
+                confidence: "medium"
+          - id: "E.7.2"
+            name: "不正監視"
+            important: false
+            metrics:
+              - id: "E.7.2.1"
+                name: "不正監視"
+                important: false
+                grade: 0
+                grade_description: "なし(閉域網・OS 側の責務)"
+                reason: "モデルシステム1のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+      - id: "E.8"
+        name: "ネットワーク対策"
+        items:
+          - id: "E.8.1"
+            name: "ファイアウォール"
+            important: true
+            metrics:
+              - id: "E.8.1.1"
+                name: "ファイアウォール"
+                important: true
+                grade: 1
+                grade_description: "パケットフィルタリング"
+                reason: "モデルシステム1のデフォルト値を適用(ネットワーク制約は適用文書の所有事項)"
+                source_model: "情報: 適用構成文書"
+                confidence: "default"
+          - id: "E.8.2"
+            name: "IDS/IPS"
+            important: false
+            metrics:
+              - id: "E.8.2.1"
+                name: "IDS/IPS"
+                important: false
+                grade: 0
+                grade_description: "なし"
+                reason: "モデルシステム1のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"
+          - id: "E.8.3"
+            name: "ネットワーク分離"
+            important: false
+            metrics:
+              - id: "E.8.3.1"
+                name: "ネットワーク分離"
+                important: false
+                grade: 1
+                grade_description: "適用文書で定義するセグメント分離(DB セグメント経由の実行など)を前提"
+                reason: "適用構成文書がネットワーク制約・ホスト配置・DB セグメント構成を所有し、リモート実行ホストが案件固有の配置を吸収する設計のため"
+                source_model: "情報: 適用構成文書 / 外部システム: リモート実行ホスト(SSH)"
+                confidence: "medium"
+      - id: "E.9"
+        name: "マルウェア対策"
+        items:
+          - id: "E.9.1"
+            name: "マルウェア対策"
+            important: true
+            metrics:
+              - id: "E.9.1.1"
+                name: "マルウェア対策"
+                important: true
+                grade: 1
+                grade_description: "ウイルス対策ソフト導入"
+                reason: "モデルシステム1のデフォルト値を適用(定義ファイルの更新はエアーギャップのためオフライン持ち込み)"
+                source_model: ""
+                confidence: "default"
+      - id: "E.10"
+        name: "Web対策"
+        items:
+          - id: "E.10.1"
+            name: "WAF"
+            important: true
+            metrics:
+              - id: "E.10.1.1"
+                name: "WAF"
+                important: true
+                grade: 0
+                grade_description: "WAFなし"
+                reason: "UI 画面や HTTP API を持たず CLI と定期ジョブのみのため対象外"
+                source_model: "条件: CLI とメールによる提示 / システム概要(interface_kind: cli)"
+                confidence: "high"
+          - id: "E.10.2"
+            name: "Webアプリケーション対策"
+            important: false
+            metrics:
+              - id: "E.10.2.1"
+                name: "Webアプリケーション対策"
+                important: false
+                grade: 0
+                grade_description: "対象外(Web なし)。代わりにシェル引数は JSON 配列で数・空白・カンマを維持して安全に連結する"
+                reason: "Web アプリケーションが存在しないため。引数連結規則がコマンドインジェクション対策に相当する"
+                source_model: "条件: 引数連結規則"
+                confidence: "high"
+      - id: "E.11"
+        name: "セキュリティインシデント対応"
+        items:
+          - id: "E.11.1"
+            name: "インシデント対応"
+            important: true
+            metrics:
+              - id: "E.11.1.1"
+                name: "インシデント対応計画"
+                important: true
+                grade: 1
+                grade_description: "基本的な連絡体制のみ"
+                reason: "モデルシステム1のデフォルト値を適用"
+                source_model: ""
+                confidence: "default"

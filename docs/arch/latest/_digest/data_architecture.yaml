@@ -1,0 +1,1435 @@
+# digest of arch/latest/arch-design.yaml section data_architecture (L1112-2544); source_sha256: 45a30ece498ff31b18cdec055333a172156d453b8d6d4b4f330b716cfc87de04
+# 派生物。正本は arch-design.yaml。編集しない
+data_architecture:
+  entities:
+    - id: "E-001"
+      name: "feature flag 設定"
+      source_info: "情報: feature flag 設定"
+      model_type: "resource_mutable"
+      attributes:
+        - name: "blue_mode"
+          type: "string"
+          description: "BLUE_MODE: blue slot 実行モード(foreground / background / off)"
+          nullable: false
+          primary_key: false
+        - name: "green_mode"
+          type: "string"
+          description: "GREEN_MODE: green slot 実行モード(foreground / background / off)"
+          nullable: false
+          primary_key: false
+        - name: "rapid_crosscheck_mode"
+          type: "string"
+          description: "RAPID_CROSSCHECK_MODE(foreground / background / off)。foreground / background は runner が完了通知を送信し速報管理 DB へ書き込む。off は完了通知を送信せず速報管理 DB へ接続も書込みもしない"
+          nullable: false
+          primary_key: false
+        - name: "blue_impl"
+          type: "string"
+          description: "BLUE_IMPL: blue の実装版(execution-spec.json の実装版の出所)"
+          nullable: false
+          primary_key: false
+        - name: "green_impl"
+          type: "string"
+          description: "GREEN_IMPL: green の実装版(execution-spec.json の実装版の出所)"
+          nullable: false
+          primary_key: false
+        - name: "blue_runner"
+          type: "string"
+          description: "BLUE_RUNNER: blue runner 実体スクリプトパス"
+          nullable: false
+          primary_key: false
+        - name: "green_runner"
+          type: "string"
+          description: "GREEN_RUNNER: green runner 実体スクリプトパス"
+          nullable: false
+          primary_key: false
+        - name: "rapid_crosscheck_runner"
+          type: "string"
+          description: "RAPID_CROSSCHECK_RUNNER: slot runner が完了通知(blue-completed / green-completed)を送る速報クロスチェック runner の実体パス"
+          nullable: false
+          primary_key: false
+        - name: "rapid_crosscheck_worker"
+          type: "string"
+          description: "RAPID_CROSSCHECK_WORKER: 速報クロスチェック worker の実体パス"
+          nullable: false
+          primary_key: false
+      relationships:
+        - target_entity: "E-002"
+          type: "1:N"
+          description: "feature flag が slot ごとの runner 割当(BLUE_RUNNER / GREEN_RUNNER)を所有する"
+        - target_entity: "E-010"
+          type: "1:N"
+          description: "BLUE_IMPL / GREEN_IMPL が execution-spec の実装版として確定保存される"
+    - id: "E-002"
+      name: "slot runner 割当"
+      source_info: "情報: slot runner 割当"
+      model_type: "resource_scd2"
+      attributes:
+        - name: "slot"
+          type: "string"
+          description: "slot(blue / green)"
+          nullable: false
+          primary_key: true
+        - name: "runner_script_path"
+          type: "string"
+          description: "runner 実体スクリプトパス"
+          nullable: false
+          primary_key: false
+        - name: "job_map_location"
+          type: "string"
+          description: "対応するジョブマップの所在"
+          nullable: false
+          primary_key: false
+      relationships:
+        - target_entity: "E-003"
+          type: "1:1"
+          description: "slot の runner が参照するジョブマップ"
+    - id: "E-003"
+      name: "ジョブマップ"
+      source_info: "情報: ジョブマップ"
+      model_type: "resource_scd2"
+      attributes:
+        - name: "slot"
+          type: "string"
+          description: "slot(blue / green)"
+          nullable: false
+          primary_key: true
+        - name: "job_id"
+          type: "string"
+          description: "JOB_ID"
+          nullable: false
+          primary_key: true
+        - name: "host"
+          type: "string"
+          description: "実行先ホスト(CSV 列 host。ローカル実行の slot では省略可)"
+          nullable: true
+          primary_key: false
+        - name: "user"
+          type: "string"
+          description: "実行ユーザー(CSV 列 user。ローカル実行の slot では省略可)"
+          nullable: true
+          primary_key: false
+        - name: "work_dir"
+          type: "string"
+          description: "作業ディレクトリ(CSV 列 work_dir)"
+          nullable: false
+          primary_key: false
+        - name: "script"
+          type: "string"
+          description: "実装スクリプトパス(CSV 列 script)"
+          nullable: false
+          primary_key: false
+        - name: "fixed_params"
+          type: "text"
+          description: "固定引数(CSV 列 fixed_params。JSON 配列文字列を格納するセルで、二重引用符で囲みセル内の二重引用符は二重化する。空は [])"
+          nullable: false
+          primary_key: false
+        - name: "hang_detect_limit_minutes"
+          type: "integer"
+          description: "ハング検知上限(CSV 列 hang_detect_limit_minutes。E-004 として扱う)"
+          nullable: false
+          primary_key: false
+        - name: "credential_ref"
+          type: "string"
+          description: "認証情報参照名(末尾の任意列。値は保持しない)"
+          nullable: true
+          primary_key: false
+        - name: "map_version"
+          type: "string"
+          description: "マップ版(末尾の任意列。execution-spec のマップ版の出所)"
+          nullable: true
+          primary_key: false
+      relationships:
+        - target_entity: "E-004"
+          type: "1:N"
+          description: "role ごとの hang_detect_limit_minutes を所有する"
+        - target_entity: "E-010"
+          type: "1:N"
+          description: "run 開始時に実行設定として確定保存される"
+    - id: "E-004"
+      name: "ハング検知上限設定"
+      source_info: "情報: ハング検知上限設定"
+      model_type: "resource_scd2"
+      attributes:
+        - name: "job_id"
+          type: "string"
+          description: "JOB_ID"
+          nullable: false
+          primary_key: true
+        - name: "role"
+          type: "string"
+          description: "role(blue / green / rapid-crosscheck)"
+          nullable: false
+          primary_key: true
+        - name: "hang_detect_limit_minutes"
+          type: "integer"
+          description: "ハング疑いの判定上限(導入時 60。foreground role は 0 で対象外)。調整日時・調整根拠はここに持たず適用構成文書に記録する"
+          nullable: false
+          primary_key: false
+      relationships:
+        - target_entity: "E-021"
+          type: "1:N"
+          description: "監視記録の警告時経過時間を調整根拠にする"
+        - target_entity: "E-005"
+          type: "N:1"
+          description: "調整記録(調整日時・調整根拠)は適用構成文書が保持する"
+    - id: "E-005"
+      name: "適用構成文書"
+      source_info: "情報: 適用構成文書"
+      model_type: "resource_mutable"
+      attributes:
+        - name: "project_id"
+          type: "string"
+          description: "案件識別"
+          nullable: false
+          primary_key: true
+        - name: "document_version"
+          type: "string"
+          description: "文書版"
+          nullable: false
+          primary_key: true
+        - name: "external_if_policy"
+          type: "text"
+          description: "外部 IF の送受信方針"
+          nullable: true
+          primary_key: false
+        - name: "network_constraints"
+          type: "text"
+          description: "ネットワーク制約"
+          nullable: true
+          primary_key: false
+        - name: "host_placement"
+          type: "text"
+          description: "ホスト配置・実行ユーザー方針・DB セグメント構成"
+          nullable: true
+          primary_key: false
+        - name: "runner_location"
+          type: "text"
+          description: "runner 実体の所在"
+          nullable: true
+          primary_key: false
+        - name: "hang_limit_adjustment_records"
+          type: "text"
+          description: "運用者の hang_detect_limit_minutes 調整記録(job_id / role ごとの調整日時と、調整根拠となる警告時経過時間)"
+          nullable: true
+          primary_key: false
+      relationships:
+        - target_entity: "E-003"
+          type: "1:N"
+          description: "案件固有事項がジョブマップ定義の根拠となる"
+        - target_entity: "E-004"
+          type: "1:N"
+          description: "ハング検知上限の調整記録を保持する"
+    - id: "E-006"
+      name: "比較定義"
+      source_info: "情報: 比較定義"
+      model_type: "resource_scd2"
+      attributes:
+        - name: "job_id"
+          type: "string"
+          description: "JOB_ID"
+          nullable: false
+          primary_key: true
+        - name: "definition_version"
+          type: "string"
+          description: "定義版"
+          nullable: false
+          primary_key: true
+        - name: "comparison_type"
+          type: "string"
+          description: "比較種別"
+          nullable: false
+          primary_key: false
+        - name: "targets"
+          type: "text"
+          description: "比較対象(テーブル・ファイル)"
+          nullable: false
+          primary_key: false
+        - name: "tool_command"
+          type: "string"
+          description: "比較ツール起動コマンド"
+          nullable: false
+          primary_key: false
+        - name: "tool_options"
+          type: "text"
+          description: "比較オプション"
+          nullable: true
+          primary_key: false
+      relationships:
+        - target_entity: "E-007"
+          type: "N:1"
+          description: "クロスチェックジョブマップに属する"
+    - id: "E-007"
+      name: "クロスチェックジョブマップ"
+      source_info: "情報: クロスチェックジョブマップ"
+      model_type: "resource_scd2"
+      attributes:
+        - name: "map_version"
+          type: "string"
+          description: "マップ版"
+          nullable: false
+          primary_key: true
+        - name: "target_list"
+          type: "text"
+          description: "比較対象一覧"
+          nullable: false
+          primary_key: false
+        - name: "catalog_ref"
+          type: "string"
+          description: "対象カタログ参照(版)"
+          nullable: false
+          primary_key: false
+      relationships:
+        - target_entity: "E-006"
+          type: "1:N"
+          description: "job_id ごとの比較定義を保持する"
+        - target_entity: "E-008"
+          type: "1:1"
+          description: "確報用の対象カタログを参照する"
+    - id: "E-008"
+      name: "対象カタログ"
+      source_info: "情報: 対象カタログ"
+      model_type: "resource_scd2"
+      attributes:
+        - name: "catalog_version"
+          type: "string"
+          description: "カタログ版"
+          nullable: false
+          primary_key: true
+        - name: "target_type"
+          type: "string"
+          description: "target_type(テーブル / ファイル)"
+          nullable: false
+          primary_key: true
+        - name: "target_identifier"
+          type: "string"
+          description: "target_identifier"
+          nullable: false
+          primary_key: true
+        - name: "comparison_condition"
+          type: "text"
+          description: "比較条件"
+          nullable: true
+          primary_key: false
+        - name: "business_date_handling"
+          type: "string"
+          description: "business_date の扱い"
+          nullable: true
+          primary_key: false
+      relationships:
+        - target_entity: "E-019"
+          type: "1:N"
+          description: "確報比較依頼がカタログ版を紐付ける"
+    - id: "E-009"
+      name: "ジョブ起動要求"
+      source_info: "情報: ジョブ起動要求"
+      model_type: "event"
+      attributes:
+        - name: "run_id"
+          type: "string"
+          description: "起動により facade が発行した run_id(モードによらず発行。形式は E-013 と同じ)"
+          nullable: false
+          primary_key: true
+        - name: "job_id"
+          type: "string"
+          description: "JOB_ID"
+          nullable: false
+          primary_key: false
+        - name: "params"
+          type: "text"
+          description: "PARAM...(追加引数。順序保持)"
+          nullable: false
+          primary_key: false
+        - name: "source_job_definition"
+          type: "string"
+          description: "起動元ジョブ定義"
+          nullable: true
+          primary_key: false
+        - name: "occurred_at"
+          type: "datetime"
+          description: "起動日時"
+          nullable: false
+          primary_key: false
+      relationships:
+        - target_entity: "E-013"
+          type: "1:1"
+          description: "並行稼働実行を開始する"
+        - target_entity: "E-001"
+          type: "N:1"
+          description: "起動時に読み込む feature flag"
+    - id: "E-010"
+      name: "実行設定(execution-spec)"
+      source_info: "情報: 実行設定(execution-spec)"
+      model_type: "event"
+      attributes:
+        - name: "run_id"
+          type: "string"
+          description: "run_id"
+          nullable: false
+          primary_key: true
+        - name: "job_id"
+          type: "string"
+          description: "JOB_ID"
+          nullable: false
+          primary_key: false
+        - name: "slot"
+          type: "string"
+          description: "slot"
+          nullable: false
+          primary_key: false
+        - name: "role"
+          type: "string"
+          description: "role"
+          nullable: false
+          primary_key: false
+        - name: "host"
+          type: "string"
+          description: "ホスト(ジョブマップ列 host。ローカル実行では null)"
+          nullable: true
+          primary_key: false
+        - name: "user"
+          type: "string"
+          description: "実行ユーザー(ジョブマップ列 user。ローカル実行では null)"
+          nullable: true
+          primary_key: false
+        - name: "work_dir"
+          type: "string"
+          description: "作業ディレクトリ(ジョブマップ列 work_dir)"
+          nullable: false
+          primary_key: false
+        - name: "script"
+          type: "string"
+          description: "スクリプトパス(ジョブマップ列 script)"
+          nullable: false
+          primary_key: false
+        - name: "fixed_params"
+          type: "text"
+          description: "固定引数(ジョブマップ列 fixed_params の JSON 配列)"
+          nullable: false
+          primary_key: false
+        - name: "params"
+          type: "text"
+          description: "追加引数(PARAM)"
+          nullable: false
+          primary_key: false
+        - name: "map_version"
+          type: "string"
+          description: "マップ版(ジョブマップ側の任意列 map_version。無ければ null)"
+          nullable: true
+          primary_key: false
+        - name: "impl_version"
+          type: "string"
+          description: "実装版(feature flag の BLUE_IMPL / GREEN_IMPL)"
+          nullable: false
+          primary_key: false
+        - name: "hang_detect_limits"
+          type: "text"
+          description: "role ごとの hang_detect_limit_minutes"
+          nullable: false
+          primary_key: false
+        - name: "credential_ref"
+          type: "string"
+          description: "認証情報参照名(値は保存しない)"
+          nullable: true
+          primary_key: false
+        - name: "spec_uri"
+          type: "string"
+          description: "保存先 URI(facade/<run_id>/execution-spec.json)"
+          nullable: false
+          primary_key: false
+        - name: "occurred_at"
+          type: "datetime"
+          description: "確定保存日時"
+          nullable: false
+          primary_key: false
+      relationships:
+        - target_entity: "E-013"
+          type: "1:1"
+          description: "parallel_run.execution_spec_uri が参照する"
+        - target_entity: "E-003"
+          type: "N:1"
+          description: "解決元のジョブマップ(任意列 map_version 付き)"
+        - target_entity: "E-001"
+          type: "N:1"
+          description: "実装版の出所(BLUE_IMPL / GREEN_IMPL)"
+    - id: "E-011"
+      name: "Runner Result"
+      source_info: "情報: Runner Result"
+      model_type: "event"
+      attributes:
+        - name: "run_id"
+          type: "string"
+          description: "run_id"
+          nullable: false
+          primary_key: true
+        - name: "role"
+          type: "string"
+          description: "成果物ディレクトリ区分(blue / green / rapid-crosscheck / final-crosscheck)"
+          nullable: false
+          primary_key: true
+        - name: "artifact_dir"
+          type: "string"
+          description: "成果物ディレクトリ"
+          nullable: false
+          primary_key: false
+        - name: "started_at"
+          type: "datetime"
+          description: "started-at.txt(開始時刻)"
+          nullable: false
+          primary_key: false
+        - name: "stdout_path"
+          type: "string"
+          description: "stdout.log のパス"
+          nullable: false
+          primary_key: false
+        - name: "stderr_path"
+          type: "string"
+          description: "stderr.log のパス"
+          nullable: false
+          primary_key: false
+        - name: "exit_code"
+          type: "integer"
+          description: "exitcode.txt(数値 1 行。未終了・中止済みでは無い)"
+          nullable: true
+          primary_key: false
+        - name: "aborted_at"
+          type: "datetime"
+          description: "aborted.txt(中止日時 1 行。abort-blue / abort-green による明示中止時のみ生成)"
+          nullable: true
+          primary_key: false
+        - name: "finalized"
+          type: "boolean"
+          description: "確定リネーム完了フラグ"
+          nullable: false
+          primary_key: false
+      relationships:
+        - target_entity: "E-014"
+          type: "1:1"
+          description: "slot 実行の終了結果。slot 実行の状態は exitcode.txt / aborted.txt の有無と値から導出する"
+    - id: "E-012"
+      name: "ジョブスケジューラ応答"
+      source_info: "情報: ジョブスケジューラ応答"
+      model_type: "event"
+      attributes:
+        - name: "run_id"
+          type: "string"
+          description: "run_id(または final_crosscheck_id)"
+          nullable: false
+          primary_key: true
+        - name: "stdout_source"
+          type: "string"
+          description: "標準出力の中継元(foreground の stdout.log / 依頼の stdout)"
+          nullable: false
+          primary_key: false
+        - name: "stderr_source"
+          type: "string"
+          description: "標準エラーの中継元"
+          nullable: false
+          primary_key: false
+        - name: "exit_code"
+          type: "integer"
+          description: "終了コード(応答日時は持たない。実行履歴はジョブスケジューラの責務)"
+          nullable: false
+          primary_key: false
+      relationships:
+        - target_entity: "E-011"
+          type: "1:1"
+          description: "foreground の Runner Result を無加工で中継する"
+        - target_entity: "E-019"
+          type: "N:1"
+          description: "確報では依頼に保存された結果を中継する"
+    - id: "E-013"
+      name: "並行稼働実行(parallel_run)"
+      source_info: "情報: 並行稼働実行(parallel_run)"
+      model_type: "event_snapshot"
+      attributes:
+        - name: "run_id"
+          type: "string"
+          description: "run_id({ローカルタイムゾーンの yyyymmddThhmmss}-{job_id}-{8 桁 hex 乱数}。例 20260830T203000-JOB001-3f9a1c2e。タイムゾーン指示子なし。成果物ディレクトリ名と同じ値)"
+          nullable: false
+          primary_key: true
+        - name: "parent_run_id"
+          type: "string"
+          description: "リラン元 run_id(数珠つなぎ)"
+          nullable: true
+          primary_key: false
+        - name: "job_id"
+          type: "string"
+          description: "JOB_ID"
+          nullable: false
+          primary_key: false
+        - name: "parameters"
+          type: "text"
+          description: "parameters(JSON)"
+          nullable: false
+          primary_key: false
+        - name: "execution_spec_uri"
+          type: "string"
+          description: "execution-spec.json の URI"
+          nullable: false
+          primary_key: false
+        - name: "status"
+          type: "string"
+          description: "STARTED / RUNNING / COMPLETED / ABORTED(STARTED → RUNNING → COMPLETED、STARTED / RUNNING → ABORTED。COMPLETED は foreground 中継完了、background slot リラン由来 run では runner の終端時、速報比較依頼だけのリラン由来 run では依頼終端時に worker が更新する)"
+          nullable: false
+          primary_key: false
+        - name: "requested_at"
+          type: "datetime"
+          description: "requested_at"
+          nullable: false
+          primary_key: false
+        - name: "completed_at"
+          type: "datetime"
+          description: "completed_at"
+          nullable: true
+          primary_key: false
+      relationships:
+        - target_entity: "E-014"
+          type: "1:N"
+          description: "run に属する blue / green の slot 実行"
+        - target_entity: "E-016"
+          type: "1:1"
+          description: "速報実行(rapid_run)と相関する"
+        - target_entity: "E-013"
+          type: "N:1"
+          description: "parent_run_id でリラン元を追跡する"
+    - id: "E-014"
+      name: "slot 実行"
+      source_info: "情報: slot 実行"
+      model_type: "event_snapshot"
+      attributes:
+        - name: "run_id"
+          type: "string"
+          description: "run_id"
+          nullable: false
+          primary_key: true
+        - name: "slot"
+          type: "string"
+          description: "slot(blue / green)"
+          nullable: false
+          primary_key: true
+        - name: "mode"
+          type: "string"
+          description: "mode(foreground / background / off)"
+          nullable: false
+          primary_key: false
+        - name: "pid"
+          type: "integer"
+          description: "PID"
+          nullable: true
+          primary_key: false
+        - name: "artifact_dir"
+          type: "string"
+          description: "成果物ディレクトリ"
+          nullable: false
+          primary_key: false
+        - name: "status"
+          type: "string"
+          description: "RUNNING / SUCCEEDED / FAILED / ABORTED(ファイル正本から導出: exitcode.txt があれば SUCCEEDED(0)/ FAILED(非 0)、無く aborted.txt があれば ABORTED、どちらも無ければ RUNNING。速報有効時は管理 DB の slot_executions.status に aborted.txt または exitcode.txt の公開時点の状態を条件付き更新(RUNNING のときだけ)で一度だけ書く。abort-blue / abort-green で ABORTED にした後に実装が走り切って exitcode.txt を公開した場合、管理 DB は ABORTED のまま残し、ファイル正本の導出値(exitcode.txt 優先)へ再同期しない。管理 DB の値は条件「中止済み run の比較依頼作成除外」の判定材料として使う)"
+          nullable: false
+          primary_key: false
+      relationships:
+        - target_entity: "E-013"
+          type: "N:1"
+          description: "並行稼働実行に属する"
+        - target_entity: "E-011"
+          type: "1:1"
+          description: "Runner Result を出力する"
+        - target_entity: "E-015"
+          type: "1:1"
+          description: "完了時に完了通知を送る(速報有効時)"
+    - id: "E-015"
+      name: "完了通知"
+      source_info: "情報: 完了通知"
+      model_type: "event"
+      attributes:
+        - name: "run_id"
+          type: "string"
+          description: "run_id"
+          nullable: false
+          primary_key: true
+        - name: "slot"
+          type: "string"
+          description: "slot(blue / green)"
+          nullable: false
+          primary_key: true
+        - name: "job_id"
+          type: "string"
+          description: "JOB_ID"
+          nullable: false
+          primary_key: false
+        - name: "notification_type"
+          type: "string"
+          description: "通知種別(blue-completed / green-completed)"
+          nullable: false
+          primary_key: false
+        - name: "exit_code"
+          type: "integer"
+          description: "終了コード"
+          nullable: false
+          primary_key: false
+        - name: "artifact_uri"
+          type: "string"
+          description: "成果物ディレクトリまたは artifact_uri"
+          nullable: false
+          primary_key: false
+        - name: "occurred_at"
+          type: "datetime"
+          description: "完了日時(ホストのローカルタイムゾーン、タイムゾーン指示子なし)"
+          nullable: false
+          primary_key: false
+      relationships:
+        - target_entity: "E-016"
+          type: "N:1"
+          description: "速報実行に集約される。slot runner は自 slot の中止状態を判断せず、中止後に実装が走り切った場合も通常どおり送る"
+        - target_entity: "E-027"
+          type: "N:1"
+          description: "速報有効時の管理 DB 接続参照名を速報クロスチェック設定から得る"
+    - id: "E-016"
+      name: "速報実行(rapid_run)"
+      source_info: "情報: 速報実行(rapid_run)"
+      model_type: "event_snapshot"
+      attributes:
+        - name: "run_id"
+          type: "string"
+          description: "run_id"
+          nullable: false
+          primary_key: true
+        - name: "blue_status"
+          type: "string"
+          description: "blue_status"
+          nullable: true
+          primary_key: false
+        - name: "green_status"
+          type: "string"
+          description: "green_status"
+          nullable: true
+          primary_key: false
+        - name: "blue_artifact_uri"
+          type: "string"
+          description: "blue_artifact_uri"
+          nullable: true
+          primary_key: false
+        - name: "green_artifact_uri"
+          type: "string"
+          description: "green_artifact_uri"
+          nullable: true
+          primary_key: false
+        - name: "completion_status"
+          type: "string"
+          description: "完了状況(両系未完了 / 片系完了 / 両系成功 / いずれか失敗 / 比較依頼作成済み)。中止済み run(並行稼働実行が ABORTED、または完了通知の対象 slot の slot 実行が ABORTED)では両系成功でも比較依頼作成済みへ進めず、完了事実だけを記録する"
+          nullable: false
+          primary_key: false
+      relationships:
+        - target_entity: "E-013"
+          type: "1:1"
+          description: "並行稼働実行と相関する。parallel_run.status が ABORTED なら中止済み run として速報比較依頼を作成しない(dispatcher が判定)"
+        - target_entity: "E-014"
+          type: "1:N"
+          description: "完了通知の対象 slot の slot 実行(slot_executions.status。aborted.txt のミラー)が ABORTED なら中止済み run として速報比較依頼を作成しない(dispatcher が判定。foreground 完了後の background 中止はこの側で除外される)"
+        - target_entity: "E-017"
+          type: "1:1"
+          description: "両系成功時に速報比較依頼を 1 件作成する(中止済み run(並行稼働実行 ABORTED または対象 slot の slot 実行 ABORTED)を除く)"
+        - target_entity: "E-025"
+          type: "1:N"
+          description: "中止済み run で依頼を作成しなかったことを実行ログに警告として残す"
+    - id: "E-017"
+      name: "速報比較依頼(rapid_crosscheck_request)"
+      source_info: "情報: 速報比較依頼(rapid_crosscheck_request)"
+      model_type: "event_snapshot"
+      attributes:
+        - name: "run_id"
+          type: "string"
+          description: "run_id(主キー)"
+          nullable: false
+          primary_key: true
+        - name: "job_id"
+          type: "string"
+          description: "JOB_ID"
+          nullable: false
+          primary_key: false
+        - name: "status"
+          type: "string"
+          description: "REQUESTED / CLAIMED / RUNNING / SUCCEEDED / FAILED / ABORTED(REQUESTED → ABORTED は対象 run の abort-blue / abort-green による未着手依頼の中止(競合窓の保険)または abort-rapid-crosscheck、CLAIMED → ABORTED と RUNNING → ABORTED は abort-rapid-crosscheck(運用者の worker 停止確認のうえ status IN (REQUESTED, CLAIMED, RUNNING) 条件の条件付き UPDATE)。CLAIMED → RUNNING は status = CLAIMED 条件の条件付き UPDATE で、更新件数 0 なら worker は比較を開始しない。CLAIMED / RUNNING の依頼は abort-blue / abort-green では変更しない)"
+          nullable: false
+          primary_key: false
+        - name: "worker_id"
+          type: "string"
+          description: "worker_id"
+          nullable: true
+          primary_key: false
+        - name: "lease_until"
+          type: "datetime"
+          description: "lease_until(claim 時刻 + 速報クロスチェック設定の lease 期間 RAPID_LEASE_SEC)"
+          nullable: true
+          primary_key: false
+        - name: "exit_code"
+          type: "integer"
+          description: "比較ツールの exit_code"
+          nullable: true
+          primary_key: false
+        - name: "stdout"
+          type: "text"
+          description: "比較ツールの stdout"
+          nullable: true
+          primary_key: false
+        - name: "stderr"
+          type: "text"
+          description: "比較ツールの stderr"
+          nullable: true
+          primary_key: false
+        - name: "error_summary"
+          type: "string"
+          description: "error_summary"
+          nullable: true
+          primary_key: false
+      relationships:
+        - target_entity: "E-016"
+          type: "1:1"
+          description: "速報実行から作成される"
+        - target_entity: "E-018"
+          type: "1:N"
+          description: "比較結果を生む"
+        - target_entity: "E-006"
+          type: "N:1"
+          description: "job_id ごとの比較定義に従う"
+        - target_entity: "E-027"
+          type: "N:1"
+          description: "claim の lease 期間と worker の poll 間隔を速報クロスチェック設定から得る"
+    - id: "E-018"
+      name: "比較結果(comparison_result)"
+      source_info: "情報: 比較結果(comparison_result)"
+      model_type: "event"
+      attributes:
+        - name: "comparison_result_id"
+          type: "string"
+          description: "comparison_result_id"
+          nullable: false
+          primary_key: true
+        - name: "run_id"
+          type: "string"
+          description: "run_id"
+          nullable: false
+          primary_key: false
+        - name: "comparison_type"
+          type: "string"
+          description: "comparison_type"
+          nullable: false
+          primary_key: false
+        - name: "status"
+          type: "string"
+          description: "比較 OK / 比較 NG / FAILED"
+          nullable: false
+          primary_key: false
+        - name: "difference_count"
+          type: "integer"
+          description: "difference_count"
+          nullable: true
+          primary_key: false
+        - name: "report_uri"
+          type: "string"
+          description: "report_uri"
+          nullable: true
+          primary_key: false
+        - name: "occurred_at"
+          type: "datetime"
+          description: "compared_at"
+          nullable: false
+          primary_key: false
+      relationships:
+        - target_entity: "E-017"
+          type: "N:1"
+          description: "速報比較依頼に属する"
+    - id: "E-019"
+      name: "確報比較依頼(final_crosscheck_request)"
+      source_info: "情報: 確報比較依頼(final_crosscheck_request)"
+      model_type: "event_snapshot"
+      attributes:
+        - name: "final_crosscheck_id"
+          type: "string"
+          description: "final_crosscheck_id"
+          nullable: false
+          primary_key: true
+        - name: "business_date"
+          type: "date"
+          description: "business_date"
+          nullable: false
+          primary_key: false
+        - name: "catalog_version"
+          type: "string"
+          description: "対象カタログの版"
+          nullable: false
+          primary_key: false
+        - name: "status"
+          type: "string"
+          description: "REQUESTED / CLAIMED / RUNNING / SUCCEEDED / FAILED / ABORTED"
+          nullable: false
+          primary_key: false
+        - name: "worker_id"
+          type: "string"
+          description: "worker_id"
+          nullable: true
+          primary_key: false
+        - name: "lease_until"
+          type: "datetime"
+          description: "lease_until"
+          nullable: true
+          primary_key: false
+        - name: "exit_code"
+          type: "integer"
+          description: "比較ツールの exit_code"
+          nullable: true
+          primary_key: false
+        - name: "stdout"
+          type: "text"
+          description: "比較ツールの stdout"
+          nullable: true
+          primary_key: false
+        - name: "stderr"
+          type: "text"
+          description: "比較ツールの stderr"
+          nullable: true
+          primary_key: false
+        - name: "error_summary"
+          type: "string"
+          description: "error_summary"
+          nullable: true
+          primary_key: false
+      relationships:
+        - target_entity: "E-008"
+          type: "N:1"
+          description: "対象カタログの版を紐付ける"
+        - target_entity: "E-020"
+          type: "1:1"
+          description: "比較ツール実行結果を保存する"
+    - id: "E-020"
+      name: "比較ツール実行結果"
+      source_info: "情報: 比較ツール実行結果"
+      model_type: "event"
+      attributes:
+        - name: "request_id"
+          type: "string"
+          description: "依頼 ID(run_id または final_crosscheck_id)"
+          nullable: false
+          primary_key: true
+        - name: "crosscheck_type"
+          type: "string"
+          description: "比較種別(速報 / 確報)"
+          nullable: false
+          primary_key: true
+        - name: "stdout"
+          type: "text"
+          description: "stdout"
+          nullable: false
+          primary_key: false
+        - name: "stderr"
+          type: "text"
+          description: "stderr"
+          nullable: false
+          primary_key: false
+        - name: "exit_code"
+          type: "integer"
+          description: "exitcode(0=比較 OK / 3=比較 NG / 6=実行エラー)"
+          nullable: false
+          primary_key: false
+        - name: "started_at"
+          type: "datetime"
+          description: "実行開始日時"
+          nullable: false
+          primary_key: false
+        - name: "occurred_at"
+          type: "datetime"
+          description: "実行終了日時"
+          nullable: false
+          primary_key: false
+      relationships:
+        - target_entity: "E-017"
+          type: "1:1"
+          description: "速報比較依頼に保存される"
+        - target_entity: "E-019"
+          type: "1:1"
+          description: "確報比較依頼に保存される"
+    - id: "E-021"
+      name: "監視記録"
+      source_info: "情報: 監視記録"
+      model_type: "event_snapshot"
+      attributes:
+        - name: "run_id"
+          type: "string"
+          description: "監視対象 run_id"
+          nullable: false
+          primary_key: true
+        - name: "role"
+          type: "string"
+          description: "監視対象 role"
+          nullable: false
+          primary_key: true
+        - name: "target_type"
+          type: "string"
+          description: "監視対象種別(background slot / 速報比較依頼)"
+          nullable: false
+          primary_key: false
+        - name: "monitor_status"
+          type: "string"
+          description: "監視対象外 / 監視中 / ハング疑い通知済み / 実行エラー通知済み / 比較異常通知済み / 正常終了(状態モデル「監視状態」の 6 値。ハング疑い通知済みからは正常終了(通知後正常終了)/ 実行エラー通知済み / 比較異常通知済みへ終端し、監視対象が ABORTED になった場合は監視中・ハング疑い通知済みから正常終了(中止済み)で終端する)"
+          nullable: false
+          primary_key: false
+        - name: "started_at"
+          type: "datetime"
+          description: "開始時刻(started-at.txt)"
+          nullable: false
+          primary_key: false
+        - name: "elapsed_minutes"
+          type: "integer"
+          description: "経過時間"
+          nullable: false
+          primary_key: false
+        - name: "hang_detect_limit_minutes"
+          type: "integer"
+          description: "hang_detect_limit_minutes"
+          nullable: false
+          primary_key: false
+        - name: "hang_suspected_at"
+          type: "datetime"
+          description: "hang_suspected_at"
+          nullable: true
+          primary_key: false
+        - name: "alerted_at"
+          type: "datetime"
+          description: "alerted_at"
+          nullable: true
+          primary_key: false
+        - name: "elapsed_at_alert_minutes"
+          type: "integer"
+          description: "警告時の経過時間"
+          nullable: true
+          primary_key: false
+      relationships:
+        - target_entity: "E-014"
+          type: "N:1"
+          description: "background slot 実行を監視する"
+        - target_entity: "E-017"
+          type: "N:1"
+          description: "速報比較依頼を監視する"
+        - target_entity: "E-022"
+          type: "1:N"
+          description: "通知メールを送る"
+    - id: "E-022"
+      name: "通知メール"
+      source_info: "情報: 通知メール"
+      model_type: "event"
+      attributes:
+        - name: "notification_id"
+          type: "string"
+          description: "通知 ID"
+          nullable: false
+          primary_key: true
+        - name: "severity"
+          type: "string"
+          description: "重要度(warning / error)"
+          nullable: false
+          primary_key: false
+        - name: "notification_type"
+          type: "string"
+          description: "通知種別(ハング疑い / background 実行エラー / 速報クロスチェック異常)"
+          nullable: false
+          primary_key: false
+        - name: "run_id"
+          type: "string"
+          description: "run_id"
+          nullable: false
+          primary_key: false
+        - name: "job_id"
+          type: "string"
+          description: "JOB_ID"
+          nullable: false
+          primary_key: false
+        - name: "role"
+          type: "string"
+          description: "role"
+          nullable: false
+          primary_key: false
+        - name: "elapsed_minutes"
+          type: "integer"
+          description: "経過時間"
+          nullable: true
+          primary_key: false
+        - name: "recipient"
+          type: "string"
+          description: "宛先(運用者。ハング検知定期ジョブ設定の通知先メールアドレス)"
+          nullable: false
+          primary_key: false
+        - name: "subject"
+          type: "string"
+          description: "件名(ハング検知定期ジョブ設定の件名プレフィックス + 通知種別 + run_id)"
+          nullable: false
+          primary_key: false
+        - name: "body"
+          type: "text"
+          description: "本文"
+          nullable: false
+          primary_key: false
+        - name: "occurred_at"
+          type: "datetime"
+          description: "送信日時"
+          nullable: false
+          primary_key: false
+      relationships:
+        - target_entity: "E-021"
+          type: "N:1"
+          description: "監視記録から送られる"
+        - target_entity: "E-026"
+          type: "N:1"
+          description: "宛先・送信コマンド・件名プレフィックスの出所"
+    - id: "E-023"
+      name: "リラン指示"
+      source_info: "情報: リラン指示"
+      model_type: "event"
+      attributes:
+        - name: "new_run_id"
+          type: "string"
+          description: "新 run_id"
+          nullable: false
+          primary_key: true
+        - name: "source_run_id"
+          type: "string"
+          description: "--source-run-id"
+          nullable: false
+          primary_key: false
+        - name: "role"
+          type: "string"
+          description: "--role(blue / green / rapid-crosscheck)"
+          nullable: false
+          primary_key: false
+        - name: "parent_run_id"
+          type: "string"
+          description: "parent_run_id(直前のリラン元)"
+          nullable: false
+          primary_key: false
+        - name: "source_job_definition"
+          type: "string"
+          description: "起動元専用ジョブ"
+          nullable: true
+          primary_key: false
+        - name: "precheck_result"
+          type: "text"
+          description: "事前検証結果(元の mode / 元の状態 / role 妥当性)"
+          nullable: false
+          primary_key: false
+        - name: "occurred_at"
+          type: "datetime"
+          description: "指示日時"
+          nullable: false
+          primary_key: false
+      relationships:
+        - target_entity: "E-013"
+          type: "1:1"
+          description: "新しい並行稼働実行を作成する"
+        - target_entity: "E-010"
+          type: "N:1"
+          description: "元の execution-spec から復元する"
+    - id: "E-024"
+      name: "中止指示"
+      source_info: "情報: 中止指示"
+      model_type: "event"
+      attributes:
+        - name: "run_id"
+          type: "string"
+          description: "--run-id"
+          nullable: false
+          primary_key: true
+        - name: "abort_target"
+          type: "string"
+          description: "中止対象種別(abort-blue / abort-green / abort-rapid-crosscheck / abort-final-crosscheck)"
+          nullable: false
+          primary_key: true
+        - name: "occurred_at"
+          type: "datetime"
+          description: "指示日時"
+          nullable: false
+          primary_key: true
+        - name: "displayed_status"
+          type: "string"
+          description: "表示した現在状態"
+          nullable: false
+          primary_key: false
+        - name: "confirmation"
+          type: "string"
+          description: "停止確認応答(yes / no)"
+          nullable: false
+          primary_key: false
+        - name: "operator"
+          type: "string"
+          description: "指示者(実行ユーザー)"
+          nullable: false
+          primary_key: false
+        - name: "resulting_status"
+          type: "string"
+          description: "更新後状態(ABORTED。yes 以外なら変更なし。abort-blue / abort-green では対象 run に REQUESTED で未着手の速報比較依頼があればそれも ABORTED にする(競合窓の保険)。abort-rapid-crosscheck は REQUESTED / CLAIMED / RUNNING の速報比較依頼を status IN 条件の条件付き UPDATE で ABORTED にする)"
+          nullable: true
+          primary_key: false
+      relationships:
+        - target_entity: "E-014"
+          type: "N:1"
+          description: "background slot 実行を中止する"
+        - target_entity: "E-017"
+          type: "N:1"
+          description: "速報比較依頼を中止する(abort-rapid-crosscheck は REQUESTED / CLAIMED / RUNNING の依頼、abort-blue / abort-green は対象 run の REQUESTED で未着手の依頼。競合窓の保険)"
+        - target_entity: "E-019"
+          type: "N:1"
+          description: "確報比較依頼を中止する(abort-final-crosscheck。RUNNING のときだけ)"
+
+    - id: "E-025"
+      name: "実行ログ"
+      source_info: "情報: 実行ログ"
+      model_type: "event"
+      attributes:
+        - name: "log_file_path"
+          type: "string"
+          description: "ログファイルパス"
+          nullable: false
+          primary_key: true
+        - name: "occurred_at"
+          type: "datetime"
+          description: "出力日時(ホストのローカルタイムゾーン、ISO 8601 秒精度、タイムゾーン指示子なし。run_id の時刻部と同じ時刻軸)"
+          nullable: false
+          primary_key: true
+        - name: "script_name"
+          type: "string"
+          description: "スクリプト名(facade / runner / クロスチェック runner・worker / ハング検知 / background-rerun / 中止スクリプト)"
+          nullable: false
+          primary_key: false
+        - name: "run_id"
+          type: "string"
+          description: "run_id"
+          nullable: true
+          primary_key: false
+        - name: "level"
+          type: "string"
+          description: "ログレベル"
+          nullable: false
+          primary_key: false
+        - name: "message"
+          type: "text"
+          description: "メッセージ"
+          nullable: false
+          primary_key: false
+      relationships:
+        - target_entity: "E-013"
+          type: "N:1"
+          description: "run_id をキーに並行稼働実行を追跡する"
+    - id: "E-026"
+      name: "ハング検知定期ジョブ設定"
+      source_info: "情報: ハング検知定期ジョブ設定"
+      model_type: "resource_mutable"
+      attributes:
+        - name: "alert_mail_to"
+          type: "string"
+          description: "通知先メールアドレス(ALERT_MAIL_TO)"
+          nullable: false
+          primary_key: false
+        - name: "alert_mail_cmd"
+          type: "string"
+          description: "送信コマンド(ALERT_MAIL_CMD。OS 標準のメール送信コマンド)"
+          nullable: false
+          primary_key: false
+        - name: "alert_subject_prefix"
+          type: "string"
+          description: "件名プレフィックス(ALERT_SUBJECT_PREFIX)"
+          nullable: false
+          primary_key: false
+        - name: "db_conn_ref"
+          type: "string"
+          description: "管理 DB 接続参照名(HANG_DB_CONN_REF。認証情報の値は置かず参照名のみ)"
+          nullable: true
+          primary_key: false
+      relationships:
+        - target_entity: "E-022"
+          type: "1:N"
+          description: "通知メールの宛先・送信コマンド・件名プレフィックスを与える"
+        - target_entity: "E-021"
+          type: "1:N"
+          description: "監視記録の保存先(管理 DB 接続参照名)を与える"
+    - id: "E-027"
+      name: "速報クロスチェック設定"
+      source_info: "情報: 速報クロスチェック設定"
+      model_type: "resource_mutable"
+      attributes:
+        - name: "db_conn_ref"
+          type: "string"
+          description: "管理 DB 接続参照名(RAPID_DB_CONN_REF。認証情報の値は置かず参照名のみ)"
+          nullable: false
+          primary_key: false
+        - name: "lease_sec"
+          type: "integer"
+          description: "依頼の claim に付与する lease 期間(秒。RAPID_LEASE_SEC)"
+          nullable: false
+          primary_key: false
+        - name: "poll_interval_sec"
+          type: "integer"
+          description: "worker が依頼を poll する間隔(秒。RAPID_POLL_INTERVAL_SEC)"
+          nullable: false
+          primary_key: false
+      relationships:
+        - target_entity: "E-017"
+          type: "1:N"
+          description: "速報比較依頼の claim の lease 期間と poll 間隔を与える"
+        - target_entity: "E-013"
+          type: "1:N"
+          description: "facade が parallel_run を作成する管理 DB の接続参照名を与える(速報有効時のみ)"
+        - target_entity: "E-015"
+          type: "1:N"
+          description: "完了通知の登録先(管理 DB)の接続参照名を与える"
+        - target_entity: "E-026"
+          type: "1:1"
+          description: "ハング検知定期ジョブ設定と同型(env 形式・接続参照名)だが、所有項目と読み手が異なるため別ファイル"
+  storage_mapping:
+    - entity_id: "E-001"
+      storage_type: "file"
+      reason: "feature flag は元資料の 9 キー(BLUE_MODE / GREEN_MODE / RAPID_CROSSCHECK_MODE / BLUE_IMPL / GREEN_IMPL / BLUE_RUNNER / GREEN_RUNNER / RAPID_CROSSCHECK_RUNNER / RAPID_CROSSCHECK_WORKER)を持つ env 形式の設定ファイルとして基盤適用設計者が版管理し、facade が起動のたびに読み込む。設定版キーは持たない"
+      confidence: "high"
+    - entity_id: "E-002"
+      storage_type: "file"
+      reason: "runner 割当は feature flag 設定ファイル内の BLUE_RUNNER / GREEN_RUNNER として所有される"
+      confidence: "high"
+    - entity_id: "E-003"
+      storage_type: "file"
+      reason: "slot ジョブマップは 1 行目ヘッダーの CSV(列: job_id / host / user / work_dir / script / fixed_params / hang_detect_limit_minutes。credential_ref / map_version は末尾の任意列)として適用側が版管理する設定ファイル。fixed_params は JSON 配列文字列を二重引用符で囲んだセル(内部の二重引用符は二重化)で、bash 単独で解析する。run 開始時に execution-spec.json へ確定保存される"
+      confidence: "high"
+    - entity_id: "E-004"
+      storage_type: "file"
+      reason: "ハング検知上限はジョブマップの一部として所有され、execution-spec.json に反映される"
+      confidence: "high"
+    - entity_id: "E-005"
+      storage_type: "file"
+      reason: "適用文書は relay-gate の仕組みに含めない案件固有事項の文書。適用側が版管理する"
+      confidence: "high"
+    - entity_id: "E-006"
+      storage_type: "file"
+      reason: "比較定義はクロスチェックジョブマップの一部として job_id ごとに差し替える設定ファイル"
+      confidence: "high"
+    - entity_id: "E-007"
+      storage_type: "file"
+      reason: "クロスチェックジョブマップは slot ジョブマップと同じ CSV 形式(1 行目ヘッダー、1 行 1 job_id、JSON 配列セルは二重引用符で囲む)で適用側が定義する設定ファイル"
+      confidence: "high"
+    - entity_id: "E-008"
+      storage_type: "file"
+      reason: "対象カタログは slot ジョブマップと同じ CSV 形式で適用側が版管理する定義ファイル。確報比較依頼は版だけを紐付ける(infra: product-mapping-onprem.yaml → config_storeのfidelity=exactで適合確認)"
+      confidence: "high"
+    - entity_id: "E-009"
+      storage_type: "file"
+      reason: "ジョブ起動要求は永続レコードを持たず、execution-spec.json(追加引数)と実行ログに取り込まれる"
+      confidence: "low"
+    - entity_id: "E-010"
+      storage_type: "file"
+      reason: "facade/<run_id>/execution-spec.json として成果物ディレクトリに一度だけ確定保存する(Runner Result Contract)"
+      confidence: "high"
+    - entity_id: "E-011"
+      storage_type: "file"
+      reason: "started-at.txt / stdout.log / stderr.log / exitcode.txt として成果物ディレクトリに残す外部 IF の正本"
+      confidence: "high"
+    - entity_id: "E-012"
+      storage_type: "file"
+      reason: "応答は標準出力・標準エラー・終了コードとして中継され、履歴はジョブスケジューラの責務。relay-gate 側は実行ログにのみ残す(infra: product-mapping-onprem.yaml → execution_log_storeのfidelity=exactで適合確認)"
+      confidence: "high"
+    - entity_id: "E-013"
+      storage_type: "rdb"
+      reason: "run_id で成果物・rapid_run・比較依頼を相関付ける管理レコード。速報有効時のみ作成し、リラン系譜を parent_run_id で追跡する"
+      confidence: "high"
+    - entity_id: "E-014"
+      storage_type: "file"
+      reason: "slot 実行の状態はファイル正本(exitcode.txt があれば SUCCEEDED / FAILED、無く aborted.txt があれば ABORTED、どちらも無ければ RUNNING)から導出し、RAPID_CROSSCHECK_MODE=off では成果物ファイルだけで実行・監視・中止・リランが成立する。abort-blue / abort-green は aborted.txt(中止日時 1 行)を一時ファイル → リネームで書く"
+      confidence: "high"
+    - entity_id: "E-014"
+      storage_type: "rdb"
+      reason: "RAPID_CROSSCHECK_MODE が foreground / background のときは mode / PID / 状態を管理 DB にも保持し、abort-blue / abort-green と background-rerun の対象特定、dispatcher の中止済み run 判定(条件「中止済み run の比較依頼作成除外」)、運用者の参照に使う。status は aborted.txt または exitcode.txt の公開時点の状態を条件付き更新(RUNNING のときだけ)で一度だけ書く。abort-blue / abort-green で ABORTED にした後に実装が走り切って exitcode.txt を公開した場合も管理 DB は ABORTED のまま残し、ファイル正本の導出値(exitcode.txt 優先)へ再同期しない(ファイル正本の導出値と管理 DB の値はこの経路で一致しない)。二重マッピング(ファイル正本 + 速報有効時の管理 DB への一度書き)として確定する(条件「slot 実行の状態導出規則」)"
+      confidence: "high"
+    - entity_id: "E-015"
+      storage_type: "rdb"
+      reason: "完了通知は rapid_run の blue_status / green_status / artifact_uri / completed_at として管理 DB に反映される"
+      confidence: "high"
+    - entity_id: "E-016"
+      storage_type: "rdb"
+      reason: "両系成功判定と比較依頼の一意作成を行う管理 DB レコード(rapid_run)"
+      confidence: "high"
+    - entity_id: "E-017"
+      storage_type: "rdb"
+      reason: "管理 DB 上のジョブキュー。worker の poll / claim / lease による多重実行防止に RDB のトランザクションを使う"
+      confidence: "high"
+    - entity_id: "E-018"
+      storage_type: "rdb"
+      reason: "速報比較の結果を run_id で参照するための管理 DB レコード(comparison_result)"
+      confidence: "high"
+    - entity_id: "E-019"
+      storage_type: "rdb"
+      reason: "確報側のジョブキュー(final_crosscheck_request)。速報側と別テーブルに分離する"
+      confidence: "high"
+    - entity_id: "E-020"
+      storage_type: "rdb"
+      reason: "比較ツールの stdout / stderr / exitcode は依頼レコード(速報 / 確報)に保存される"
+      confidence: "high"
+    - entity_id: "E-021"
+      storage_type: "rdb"
+      reason: "監視記録は管理 DB(接続先はハング検知定期ジョブ設定の管理 DB 接続参照名)に保持し、monitor_status の 6 値と通知後・中止後の終端を含めて警告傾向の確認と hang_detect_limit_minutes の調整根拠にする。RAPID_CROSSCHECK_MODE=off ではファイルのみで監視し記録は実行ログに残す"
+      confidence: "medium"
+    - entity_id: "E-022"
+      storage_type: "file"
+      reason: "メール本体は外部システム(メール通知)へ送信され、relay-gate 側は送信内容を実行ログに残し、alerted_at を監視記録に記録する"
+      confidence: "low"
+    - entity_id: "E-023"
+      storage_type: "rdb"
+      reason: "リラン指示は新しい parallel_run(parent_run_id 付き)として管理 DB に記録され、事前検証結果は実行ログに残す"
+      confidence: "medium"
+    - entity_id: "E-024"
+      storage_type: "rdb"
+      reason: "slot の中止指示の結果は成果物ディレクトリの aborted.txt(ファイル正本)に反映し、RAPID_CROSSCHECK_MODE が off 以外なら slot 実行 / parallel_run(STARTED / RUNNING)の ABORTED 更新として管理 DB にも反映する。比較依頼の中止は管理 DB の ABORTED 更新で反映する。指示者と応答は実行ログに残す"
+      confidence: "high"
+    - entity_id: "E-025"
+      storage_type: "file"
+      reason: "各スクリプトの実行ログはファイルとして残す。監査の正本はジョブスケジューラであり、3 ヶ月保管の障害調査資料とする"
+      confidence: "high"
+    - entity_id: "E-026"
+      storage_type: "file"
+      reason: "ハング検知定期ジョブ設定は env 形式の設定ファイル(ALERT_MAIL_TO / ALERT_MAIL_CMD / ALERT_SUBJECT_PREFIX / HANG_DB_CONN_REF)として基盤適用設計者が所有し、hang-detector が起動のたびに読み込む。認証情報は参照名のみ"
+      confidence: "high"
+    - entity_id: "E-027"
+      storage_type: "file"
+      reason: "速報クロスチェック設定は env 形式の設定ファイル rapid-crosscheck.env(RAPID_DB_CONN_REF / RAPID_LEASE_SEC / RAPID_POLL_INTERVAL_SEC)として基盤適用設計者が所有し、facade・slot runner・速報クロスチェック runner・worker が速報有効時に起動のたびに読み込む。RAPID_CROSSCHECK_MODE=off では読まない。認証情報は参照名のみ"
+      confidence: "high"
+  diagram_mermaid: |
+    erDiagram
+      FEATURE_FLAG ||--o{ SLOT_RUNNER_ASSIGNMENT : owns
+      SLOT_RUNNER_ASSIGNMENT ||--|| JOB_MAP : refers
+      JOB_MAP ||--o{ HANG_DETECT_LIMIT : owns
+      JOB_MAP ||--o{ EXECUTION_SPEC : resolved_into
+      CROSSCHECK_JOB_MAP ||--o{ COMPARISON_DEFINITION : holds
+      CROSSCHECK_JOB_MAP ||--|| TARGET_CATALOG : refers
+      JOB_LAUNCH_REQUEST ||--|| PARALLEL_RUN : starts
+      PARALLEL_RUN ||--|| EXECUTION_SPEC : refers
+      PARALLEL_RUN ||--o{ SLOT_EXECUTION : has
+      PARALLEL_RUN o|--o| PARALLEL_RUN : parent_run_id
+      SLOT_EXECUTION ||--|| RUNNER_RESULT : outputs
+      RUNNER_RESULT ||--o| SCHEDULER_RESPONSE : relayed_as
+      SLOT_EXECUTION ||--o| COMPLETION_NOTICE : sends
+      COMPLETION_NOTICE }o--|| RAPID_RUN : aggregated_into
+      PARALLEL_RUN ||--o| RAPID_RUN : correlates
+      RAPID_RUN ||--o| RAPID_CROSSCHECK_REQUEST : requests
+      RAPID_CROSSCHECK_REQUEST }o--|| COMPARISON_DEFINITION : follows
+      RAPID_CROSSCHECK_REQUEST ||--o{ COMPARISON_RESULT : produces
+      RAPID_CROSSCHECK_REQUEST ||--o| TOOL_RESULT : stores
+      TARGET_CATALOG ||--o{ FINAL_CROSSCHECK_REQUEST : versioned_for
+      FINAL_CROSSCHECK_REQUEST ||--o| TOOL_RESULT : stores
+      FINAL_CROSSCHECK_REQUEST ||--o| SCHEDULER_RESPONSE : relayed_as
+      SLOT_EXECUTION ||--o{ MONITOR_RECORD : monitored_by
+      RAPID_CROSSCHECK_REQUEST ||--o{ MONITOR_RECORD : monitored_by
+      MONITOR_RECORD ||--o{ NOTIFICATION_MAIL : sends
+      HANG_DETECTOR_CONFIG ||--o{ NOTIFICATION_MAIL : addresses
+      RAPID_CROSSCHECK_CONFIG ||--o{ RAPID_CROSSCHECK_REQUEST : lease_and_poll
+      RAPID_CROSSCHECK_CONFIG ||--o{ PARALLEL_RUN : db_conn_ref
+      FEATURE_FLAG ||--o{ EXECUTION_SPEC : impl_version
+      APPLICATION_DOCUMENT ||--o{ HANG_DETECT_LIMIT : adjustment_records
+      EXECUTION_SPEC ||--o{ RERUN_INSTRUCTION : restored_from
+      RERUN_INSTRUCTION ||--|| PARALLEL_RUN : creates
+      ABORT_INSTRUCTION }o--o| SLOT_EXECUTION : aborts
+      ABORT_INSTRUCTION }o--o| RAPID_CROSSCHECK_REQUEST : aborts
+      ABORT_INSTRUCTION }o--o| FINAL_CROSSCHECK_REQUEST : aborts
+      EXECUTION_LOG }o--o| PARALLEL_RUN : traces

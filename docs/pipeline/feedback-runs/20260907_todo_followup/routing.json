@@ -1,0 +1,381 @@
+{
+  "schema_version": "distillery.feedback-routing/v1",
+  "feedback_request_id": "20260907_todo_followup",
+  "input_sha256": "193823ac1e6f02400269d6bdca461150a1fc8951393f332ef28580e045261389",
+  "policy": "interactive",
+  "routing_basis": {
+    "ownership_catalog_version": "1.0.0",
+    "ownership_catalog_sha256": "801750c2abe99945a3de9387b82339b2bc96ccb2da564f9923cc0e9b76a2bd39",
+    "routing_policy_version": "1.1.0",
+    "routing_policy_sha256": "3873275bf4adb3d9d7b7c41c22c9463d054a3614df7bbcab7514f0c1e23e166e",
+    "prompt_schema_sha256": "bf7c7f34d7a2fc5976ccd2589a454172a4630e1448c509966b620f88029732c4",
+    "stage_packet_renderer_version": "1",
+    "skipped_stages": [
+      "design_system",
+      "spec_stories"
+    ],
+    "repository_head": "c770d8f3beda010fea1876c00fb47ae9ba014a4c",
+    "latest_domain_event_ids": {
+      "requirements": {
+        "rdra/events": "20260905_083000_feedback_todo_resolution",
+        "usdm/events": "20260905_083000_feedback_todo_resolution"
+      },
+      "quality_attributes": {
+        "nfr/events": "20260905_085000_feedback_todo_resolution"
+      },
+      "architecture": {
+        "arch/events": "20260905_091000_feedback_todo_resolution"
+      },
+      "infrastructure": {
+        "infra/events": "20260905_093000_feedback_todo_resolution"
+      },
+      "design_system": {
+        "design/events": null
+      },
+      "spec": {
+        "specs/events": "20260905_100000_feedback_todo_resolution"
+      },
+      "spec_stories": {
+        "design/events": null
+      }
+    },
+    "domain_event_root_snapshots": {
+      "rdra/events": {
+        "head_event_id": "20260905_083000_feedback_todo_resolution",
+        "head_event_sha256": "4f68dbbb27a782d73971ea0552af133c47a93f9a46a92974c992c80ac1d8b081",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution"
+        ],
+        "event_set_sha256": "138af33bd75ccad8a2b5942c95252c9757a723350d394bd754e3c392b98eb64f",
+        "latest_tree_sha256": "4647215b00110b8e016d639db2d29185088bc14b473992f7beb4b5d500971db4"
+      },
+      "usdm/events": {
+        "head_event_id": "20260905_083000_feedback_todo_resolution",
+        "head_event_sha256": "a79303d513d0c567eb9c7bd602e67124c8d174dfa7a0dcb92b120d2585ece075",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution"
+        ],
+        "event_set_sha256": "138af33bd75ccad8a2b5942c95252c9757a723350d394bd754e3c392b98eb64f",
+        "latest_tree_sha256": "122d9a6d975de6748e9cdabd14d2dc7b6dd71cf16cf421e6a122f051e3f4c1ad"
+      },
+      "nfr/events": {
+        "head_event_id": "20260905_085000_feedback_todo_resolution",
+        "head_event_sha256": "a45fc5fb3f96a599e1d472373a7a71a1d130440551b5046bb305acc0ae5e86f2",
+        "event_ids": [
+          "20260830_183726_initial_nfr",
+          "20260905_085000_feedback_todo_resolution"
+        ],
+        "event_set_sha256": "2405eb79c9b769346f2f58a58e5bfaebc661dfd563c37854424554cd59b57188",
+        "latest_tree_sha256": "55b76682bb291016b0900bcac983007320101a0e7d4fc86bf88f895f8acc9637"
+      },
+      "arch/events": {
+        "head_event_id": "20260905_091000_feedback_todo_resolution",
+        "head_event_sha256": "c3d968eb1276799d29ec24a1fb4e57de3f253e824f882cf1ebc99237b82b9673",
+        "event_ids": [
+          "20260830_184457_initial_arch",
+          "20260830_202427_arch_infra_feedback_20260830_190412_infra_product_design",
+          "20260905_091000_feedback_todo_resolution"
+        ],
+        "event_set_sha256": "fb104d3367af3ba535c8f4dd63b57a7dfe3a163b5f3853108af7c492d2525b0b",
+        "latest_tree_sha256": "68ce640fb9135c6303e94c7b25aea8b7d319b4b9c1d0f93f08c76e9c0c725c28"
+      },
+      "infra/events": {
+        "head_event_id": "20260905_093000_feedback_todo_resolution",
+        "head_event_sha256": "6159297750bb2a0a26d19b2eb5a8eec730af3ea80f92978880e046290c9da8ea",
+        "event_ids": [
+          "20260830_190412_infra_product_design",
+          "20260905_093000_feedback_todo_resolution"
+        ],
+        "event_set_sha256": "da94ce2e1b2ec9d4a56be5e9422478ec63e54f55c5318e92c7a94d1f55e389b2",
+        "latest_tree_sha256": "6159297750bb2a0a26d19b2eb5a8eec730af3ea80f92978880e046290c9da8ea"
+      },
+      "design/events": {
+        "head_event_id": null,
+        "head_event_sha256": null,
+        "event_ids": [],
+        "event_set_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "latest_tree_sha256": null
+      },
+      "specs/events": {
+        "head_event_id": "20260905_100000_feedback_todo_resolution",
+        "head_event_sha256": "1929395406e51f2653319cdd591bc6fd6d8448eeb6c3b21a19769d67bc5dddcc",
+        "event_ids": [
+          "20260830_202851_spec_generation",
+          "20260905_100000_feedback_todo_resolution"
+        ],
+        "event_set_sha256": "0a0b88c1344c3d2685105fb58539c09333a278edb5f796471d73d314cdb89d84",
+        "latest_tree_sha256": "7179a757302664b1a24b12dc261df823086805b4039eccb7bb4c37acb9afafff"
+      }
+    }
+  },
+  "state": "resolved",
+  "requests": [
+    {
+      "request_id": "CR-c770d8f0-013",
+      "source": {
+        "byte_span": [
+          170,
+          2920
+        ],
+        "slice_sha256": "5b6a70bada55036fafad94cabe5d1ec4813511c450e437d1832ae1583cf4a4c7"
+      },
+      "decision_state": "resolved",
+      "reason": "情報モデルと設定所有区分の追加は RDRA の変更であり要件正本が最上流",
+      "evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-005"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/rdra/latest/情報.tsv"
+        },
+        {
+          "kind": "user_decision",
+          "value": "2026-09-07 DIST-023 A"
+        }
+      ],
+      "deterministic_ownership_evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-005",
+          "rule": "REQ-",
+          "stage": "requirements"
+        },
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-007",
+          "rule": "REQ-",
+          "stage": "requirements"
+        },
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-013",
+          "rule": "REQ-",
+          "stage": "requirements"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml",
+          "rule": "(^|/)specs?(/|$)",
+          "stage": "spec"
+        }
+      ],
+      "confidence": "high",
+      "ambiguity_kind": null,
+      "stop_flags": [],
+      "candidates": [],
+      "resolution": {
+        "status": "not_required"
+      },
+      "work_units": [
+        {
+          "request_id": "CR-c770d8f0-013",
+          "constraint_key": "rapid-crosscheck-config-info",
+          "direct_stage": "requirements",
+          "reason": "情報モデルと設定所有区分の追加は RDRA の変更であり要件正本が最上流",
+          "evidence": [
+            {
+              "kind": "related_id_prefix",
+              "value": "REQ-005"
+            },
+            {
+              "kind": "related_path_pattern",
+              "value": "docs/rdra/latest/情報.tsv"
+            },
+            {
+              "kind": "user_decision",
+              "value": "2026-09-07 DIST-023 A"
+            }
+          ],
+          "id": "CR-c770d8f0-013#1",
+          "required_closure_stages": [
+            "requirements",
+            "quality_attributes",
+            "architecture",
+            "infrastructure",
+            "spec"
+          ]
+        }
+      ]
+    },
+    {
+      "request_id": "CR-c770d8f0-014",
+      "source": {
+        "byte_span": [
+          2920,
+          7876
+        ],
+        "slice_sha256": "e9e4950e2319df1c2dbfcb109ac0d6fdb3c86259c0fa265a7af111ca00cea007"
+      },
+      "decision_state": "resolved",
+      "reason": "条件・状態モデル・USDM 受け入れ条件の追加は RDRA / USDM の変更であり要件正本が最上流。判断主体は速報クロスチェック runner",
+      "evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-010"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/rdra/latest/条件.tsv"
+        },
+        {
+          "kind": "user_decision",
+          "value": "2026-09-07 DIST-024 C + 未着手依頼の ABORTED 化"
+        }
+      ],
+      "deterministic_ownership_evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-005",
+          "rule": "REQ-",
+          "stage": "requirements"
+        },
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-010",
+          "rule": "REQ-",
+          "stage": "requirements"
+        },
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-011",
+          "rule": "REQ-",
+          "stage": "requirements"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/usdm/latest/requirements.yaml",
+          "rule": "(^|/)usdm(/|$)",
+          "stage": "requirements"
+        }
+      ],
+      "confidence": "high",
+      "ambiguity_kind": null,
+      "stop_flags": [],
+      "candidates": [],
+      "resolution": {
+        "status": "not_required"
+      },
+      "work_units": [
+        {
+          "request_id": "CR-c770d8f0-014",
+          "constraint_key": "aborted-run-no-rapid-crosscheck",
+          "direct_stage": "requirements",
+          "reason": "条件・状態モデル・USDM 受け入れ条件の追加は RDRA / USDM の変更であり要件正本が最上流。判断主体は速報クロスチェック runner",
+          "evidence": [
+            {
+              "kind": "related_id_prefix",
+              "value": "REQ-010"
+            },
+            {
+              "kind": "related_path_pattern",
+              "value": "docs/rdra/latest/条件.tsv"
+            },
+            {
+              "kind": "user_decision",
+              "value": "2026-09-07 DIST-024 C + 未着手依頼の ABORTED 化"
+            }
+          ],
+          "id": "CR-c770d8f0-014#1",
+          "required_closure_stages": [
+            "requirements",
+            "quality_attributes",
+            "architecture",
+            "infrastructure",
+            "spec"
+          ]
+        }
+      ]
+    },
+    {
+      "request_id": "CR-c770d8f0-015",
+      "source": {
+        "byte_span": [
+          7876,
+          10118
+        ],
+        "slice_sha256": "4be966c72051acc2ffe00cc2407d001998cf67ca963d5cb1983a108ccabd4aed"
+      },
+      "decision_state": "resolved",
+      "reason": "ログ日時のタイムゾーンは arch のログ方針 CLP-002 が正本。RDRA / USDM はタイムゾーンを定めていないため要件正本の変更は不要",
+      "evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "ARCH-CLP-002"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/arch/latest/arch-design.yaml"
+        },
+        {
+          "kind": "user_decision",
+          "value": "2026-09-07 DIST-022 A"
+        }
+      ],
+      "deterministic_ownership_evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-012",
+          "rule": "REQ-",
+          "stage": "requirements"
+        },
+        {
+          "kind": "related_id_prefix",
+          "value": "ARCH-CLP-002",
+          "rule": "ARCH-",
+          "stage": "architecture"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/arch/latest/arch-design.yaml",
+          "rule": "(^|/)arch(/|$)",
+          "stage": "architecture"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml",
+          "rule": "(^|/)specs?(/|$)",
+          "stage": "spec"
+        }
+      ],
+      "confidence": "high",
+      "ambiguity_kind": null,
+      "stop_flags": [],
+      "candidates": [],
+      "resolution": {
+        "status": "not_required"
+      },
+      "work_units": [
+        {
+          "request_id": "CR-c770d8f0-015",
+          "constraint_key": "log-timestamp-local-tz",
+          "direct_stage": "architecture",
+          "reason": "ログ日時のタイムゾーンは arch のログ方針 CLP-002 が正本。RDRA / USDM はタイムゾーンを定めていないため要件正本の変更は不要",
+          "evidence": [
+            {
+              "kind": "related_id_prefix",
+              "value": "ARCH-CLP-002"
+            },
+            {
+              "kind": "related_path_pattern",
+              "value": "docs/arch/latest/arch-design.yaml"
+            },
+            {
+              "kind": "user_decision",
+              "value": "2026-09-07 DIST-022 A"
+            }
+          ],
+          "id": "CR-c770d8f0-015#1",
+          "required_closure_stages": [
+            "architecture",
+            "infrastructure",
+            "spec"
+          ]
+        }
+      ]
+    }
+  ]
+}

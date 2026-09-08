@@ -1,0 +1,17 @@
+round: 2
+group: G1
+# 前ラウンド resolved(S3-G1-001〜010)は全件再検証し、いずれも修正済みを確認した(再掲なし)
+findings:
+  - id: S3-G1-011
+    uc: "実装切替業務/実装切替ジョブ実行フロー/execution-spec.json を確定保存する"
+    file: "docs/specs/events/20260905_100000_feedback_todo_resolution/実装切替業務/実装切替ジョブ実行フロー/execution-spec.json を確定保存する/tier-facade.md"
+    line: 39
+    severity: minor
+    viewpoint: 3
+    claim: "S3-G1-008 の修正で 49 行目は「通常起動で既存 JSON が解析できない場合の stderr.log は `error: execution-spec invalid path=... run_id=...`」としたが、39 行目の終了コード表は 6 の全条件(既存 JSON の解析失敗を含む)で stderr.log を `error: execution-spec write failed run_id=... role=... path=...` と書いたままで、同じファイル内で解析失敗時の文言が食い違う"
+    fix: "39 行目の条件欄を「lock タイムアウト・一時ファイル書き込み失敗・mv 失敗は stderr.log `error: execution-spec write failed run_id=... role=... path=...`、既存 JSON の解析失敗(slots なし・run_id 不一致を含む)は `error: execution-spec invalid path=... run_id=...`」と分けて書き、49 行目と一致させる"
+    source_refs:
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/実装切替業務/実装切替ジョブ実行フロー/execution-spec.json を確定保存する/tier-facade.md#UC ロジック(バリデーション)"
+      - "docs/specs/events/20260905_100000_feedback_todo_resolution/_review/step3-G1-round1.yaml#S3-G1-008"
+resolved:
+  - {id: S3-G1-011, resolution: fixed}

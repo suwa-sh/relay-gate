@@ -1,0 +1,9 @@
+RDRA 差分 20260907_114000_feedback_abort_consistency および NFR 差分 20260907_120000_feedback_abort_consistency に基づくアーキテクチャ再評価(中止済み run の判定キーに slot 実行 ABORTED を追加、速報比較依頼の中止対象を REQUESTED / CLAIMED / RUNNING に拡張、REQUESTED → ABORTED を競合窓の保険として位置づけ直し)
+trigger_event: rdra:20260907_114000_feedback_abort_consistency, nfr:20260907_120000_feedback_abort_consistency
+
+feedback_request_id: 20260907_abort_consistency
+input_sha256: 70cda63f92e887e459a3817580e45a840e3ff201065a534085ad113fb8910b81
+request_ids: CR-c770d8f0-016, CR-c770d8f0-017, CR-c770d8f0-018
+direct_work_unit_ids: (none)
+causal_work_unit_ids: CR-c770d8f0-016#1, CR-c770d8f0-017#1, CR-c770d8f0-018#1
+stage_packet: docs/pipeline/feedback-runs/20260907_abort_consistency/stage-packets/architecture.md

@@ -1,0 +1,11 @@
+RDRA 差分 20260907_114000_feedback_abort_consistency に基づく NFR 再評価(中止済み run の判定キーへの slot 実行 ABORTED 追加、速報比較依頼の中止対象を REQUESTED / CLAIMED / RUNNING に拡張、REQUESTED → ABORTED の位置づけ修正)
+trigger_event: rdra:20260907_114000_feedback_abort_consistency
+dialogue_policy: interactive(グレード値の変更なし。confidence: low の残件なし)
+mode: 差分更新(nfr-grade-diff.yaml。grade の変更なし、C.3.3.1 の reason / source_model / grade_description を更新)
+
+feedback_request_id: 20260907_abort_consistency
+input_sha256: 70cda63f92e887e459a3817580e45a840e3ff201065a534085ad113fb8910b81
+request_ids: CR-c770d8f0-016, CR-c770d8f0-017, CR-c770d8f0-018
+direct_work_unit_ids: (none)
+causal_work_unit_ids: CR-c770d8f0-016#1, CR-c770d8f0-017#1, CR-c770d8f0-018#1
+feedback_packet: docs/pipeline/feedback-runs/20260907_abort_consistency/stage-packets/quality_attributes.md

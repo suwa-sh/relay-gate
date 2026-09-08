@@ -1,0 +1,41 @@
+round: 3
+# Step6.5 反証レビュー round-3(差分更新イベント 20260905_100000_feedback_todo_resolution。検証パス)。
+# 対象: round-2 R-1 の修正対象 3 ファイル(UC-02 tier-facade.md / 中継 UC tier-facade.md / UC-26 tier-ops.md)と、
+#        契約 cli-command-contract.yaml の facade.sh / background-rerun.sh 節・shared_rules.state_codes.parallel_run_transitions(grep で部分読み)の
+#        終了コード・実行ログ整合のみ。events/ 全体は再読していない。
+# 再検証結果:
+#   R-1: 解消。
+#     - UC-02 tier-facade.md 67 行(終了コード 6 の条件)は「runner 起動前の管理 DB 書き込み失敗(parallel_runs INSERT(STARTED)、rapid_runs INSERT、slot_executions INSERT)」に絞られ、
+#       「全 slot 起動後の parallel_runs STARTED→RUNNING UPDATE 失敗、slot_executions.pid UPDATE 失敗、中継後の COMPLETED UPDATE 失敗は終了コードに反映しない」と明記。
+#       82 行は「管理 DB INSERT 失敗(off 以外、runner 起動前)」のみを stderr 定型文とし、UPDATE 失敗は実行ログ ERROR のみと注記。
+#       101 行は「slot_executions の INSERT 失敗は終了コード 6 / pid UPDATE 失敗と STARTED→RUNNING UPDATE 失敗は実行ログ ERROR のみ」で同一ファイル内の割れが解消。
+#       106 行の実行ログ一覧に `ERROR management db update failed table=parallel_runs run_id=...`(STARTED→RUNNING UPDATE 失敗)が追加され、契約 250 行と一致。
+#     - 中継 UC(foreground slot の結果をジョブスケジューラへ中継する)tier-facade.md 33 行は「runner 起動前の parallel_runs INSERT(STARTED)失敗は 6。全 slot 起動後の STARTED→RUNNING UPDATE 失敗と
+#       中継後の RUNNING→COMPLETED UPDATE 失敗は終了コードに反映しない」に修正済み(45 行の実行ログ、109 行の Scenario とも整合)。
+#       なお round-2 の target ラベルにあった UC「ジョブマップで JOB_ID から実行先を解決する」tier-facade.md には該当記述が元々無い(72 行の終了コード 6 は 3 ファイル書き込み失敗のみ)。
+#     - UC-26 tier-ops.md 46 行(終了コード 6)は「管理 DB INSERT 失敗(起動前)」に限定し「起動後の pid UPDATE / STARTED→RUNNING UPDATE 失敗は終了コードに反映しない」と注記。
+#       62 行(エラーハンドリング)は「手順 6 の pid UPDATE 失敗と手順 7 の STARTED→RUNNING UPDATE 失敗を除く(実行ログ ERROR のみで終了コード 0)」、
+#       72 行の実行ログに table=slot_executions / table=parallel_runs の両 ERROR 文言を追加済み。契約 168 / 243 / 248 / 250 / 712 行と一致。
+#   新規: 契約 background-rerun.sh の exit 6 condition(711 行)だけが「管理 DB 接続・INSERT・UPDATE・COMMIT 失敗」と UPDATE を無条件に 6 へ含めており、
+#         直後の idempotency(712 行)・shared_rules 168 行・UC-26 tier-ops.md 46 / 62 行と同一契約ファイル内で食い違う(下記 R-6)。
+# target は docs/specs/events/20260905_100000_feedback_todo_resolution/ からの相対パス。
+findings:
+  - id: R-6
+    viewpoint: 4
+    severity: minor
+    target: "_cross-cutting/api/cli-command-contract.yaml"
+    claim: "background-rerun.sh の exit_codes code 6 の condition(711 行)が「管理 DB 接続・INSERT・UPDATE・COMMIT 失敗」と UPDATE 失敗を一律に終了コード 6 に含めており、同じ契約の idempotency(712 行)「起動後の pid UPDATE / STARTED→RUNNING UPDATE の失敗は runner 起動済みのため終了コードに反映せず実行ログ ERROR のみ」、shared_rules.state_codes.parallel_run_transitions(168 行)、および修正済みの UC-26 tier-ops.md 46 / 62 行と食い違う。facade.sh 側の exit 6 condition(243 行)は例外を明記しているのに background-rerun.sh 側だけ第 1 版の文言が残っている"
+    evidence: |-
+      - cli-command-contract.yaml 711 行(background-rerun.sh exit 6 condition): 「…run_id 発行の再試行上限(3 回)超過、管理 DB 接続・INSERT・UPDATE・COMMIT 失敗」
+      - 同 712 行(background-rerun.sh idempotency): 「起動後の pid UPDATE / STARTED→RUNNING UPDATE の失敗は runner 起動済みのため終了コードに反映せず実行ログ ERROR のみ」
+      - 同 168 行(parallel_run_transitions): 「STARTED → RUNNING(facade.sh / background-rerun.sh。…UPDATE 失敗は runner 起動済みのため終了コードに反映せず実行ログ ERROR のみ)」
+      - 同 243 行(facade.sh exit 6 condition)は「全 slot 起動後の parallel_runs STARTED→RUNNING UPDATE 失敗 … slot_executions.pid UPDATE 失敗は終了コードに反映しない」を condition 内に明記しており、background-rerun.sh 側だけ例外が無い
+      - UC-26 tier-ops.md 46 行: 「管理 DB INSERT 失敗(起動前)… 起動後の pid UPDATE / STARTED→RUNNING UPDATE 失敗は終了コードに反映しない(契約 background-rerun.sh idempotency)」、62 行: 「手順 6 の pid UPDATE 失敗と手順 7 の STARTED→RUNNING UPDATE 失敗を除く … 終了コード 0」
+      - 実装者が exit_codes 表だけを読むと「UPDATE 失敗 = 6」と解釈でき、idempotency と tier md の「終了コード 0」と二択になる(rapid-crosscheck role の依頼 INSERT / COMMIT 失敗が 6 なのは両者一致)
+    suggested_fix: |-
+      cli-command-contract.yaml 711 行の condition を facade.sh 243 行と同じ書き方に揃える:
+      「…run_id 発行の再試行上限(3 回)超過、管理 DB 接続失敗、runner 起動前の parallel_runs / slot_executions INSERT 失敗、rapid-crosscheck の依頼 INSERT・COMMIT 失敗。起動後の slot_executions.pid UPDATE 失敗と parallel_runs STARTED→RUNNING UPDATE 失敗は終了コードに反映しない(runner 起動済み。実行ログ `ERROR management db update failed table=... run_id=...` のみ。idempotency / shared_rules.state_codes.parallel_run_transitions)」。
+      UC-26 tier-ops.md 46 行の参照先を「契約 background-rerun.sh exit 6 / idempotency」に更新する
+resolved:
+  - {id: R-1, resolution: fixed}
+  - {id: R-6, resolution: fixed, by: orchestrator}

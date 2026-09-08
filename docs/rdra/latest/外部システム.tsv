@@ -4,5 +4,4 @@
 業務実装系	新実装(green)	green slot の runner から起動される新しい業務処理実装。blue と並行稼働または単独本番で実行され、終了結果を Runner Result として残す。runner の差し替えにより次世代実装へ置き換えられる
 比較検証系	比較ツール	速報クロスチェック worker からジョブ単位の比較、確報クロスチェック worker から全テーブル・全ファイルの日次全量比較を起動される。比較 OK=0 / 比較 NG=3 / 実行エラー=6 などの終了コードと stdout・stderr で比較結果を返す
 通知系	メール通知	ハング検知が検出したハング疑い・background 実行エラー・速報クロスチェック異常を warning / error のメールとして運用者へ送信する
-データ管理系	管理 DB(RDB)	ジョブキュー兼管理 DB。速報側(parallel_run / rapid_run / rapid_crosscheck_request / comparison_result)と確報側(final_crosscheck_request / 対象カタログ)の依頼状態・lease・結果を保持し、worker の poll / claim による多重実行防止と監視記録の保存を担う
 実行基盤系	リモート実行ホスト(SSH)	ジョブマップで解決された実行先ホストに実行ユーザーで SSH 接続し、実装スクリプトを作業ディレクトリ・固定引数・追加引数付きで実行する接続先。DB セグメント経由の実行など案件固有の配置を吸収する

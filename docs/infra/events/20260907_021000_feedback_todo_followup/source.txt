@@ -1,0 +1,11 @@
+arch-design.yaml からのインフラ設計変換(差分更新。arch 差分 20260907_015000_feedback_todo_followup および NFR 差分 20260907_013000_feedback_todo_followup に基づくインフラ設計の再照合)
+trigger_event: arch:20260907_015000_feedback_todo_followup, nfr:20260907_013000_feedback_todo_followup
+dialogue_policy: interactive(CR 本文に利用者の決定が明記された事項は決定を採用。確認推奨項目は完了報告で返却)
+mode: 差分更新(infra-event-diff.yaml。translation 無変更、MCL 全量再実行はスキップし MCL 出力を対象箇所だけ更新)
+
+feedback_request_id: 20260907_todo_followup
+input_sha256: 193823ac1e6f02400269d6bdca461150a1fc8951393f332ef28580e045261389
+request_ids: CR-c770d8f0-013, CR-c770d8f0-014, CR-c770d8f0-015
+direct_work_unit_ids: (none)
+causal_work_unit_ids: CR-c770d8f0-013#1, CR-c770d8f0-014#1, CR-c770d8f0-015#1
+stage_packet: docs/pipeline/feedback-runs/20260907_todo_followup/stage-packets/infrastructure.md

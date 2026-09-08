@@ -1,0 +1,80 @@
+version: "1.0"
+event_id: "20260907_013000_feedback_todo_followup"
+created_at: "2026-09-07T01:30:00Z"
+trigger_event: "rdra:20260907_011000_feedback_todo_followup"
+source: "RDRA 差分 20260907_011000_feedback_todo_followup に基づく NFR 再評価(情報「速報クロスチェック設定」の追加と中止済み run の速報比較依頼の扱い。trigger_event: rdra:20260907_011000_feedback_todo_followup)"
+mode: "diff"
+feedback_request:
+  feedback_request_id: "20260907_todo_followup"
+  input_sha256: "193823ac1e6f02400269d6bdca461150a1fc8951393f332ef28580e045261389"
+  request_ids: ["CR-c770d8f0-013","CR-c770d8f0-014"]
+  work_unit_ids: ["CR-c770d8f0-013#1","CR-c770d8f0-014#1"]
+direct_work_unit_ids: []
+feedback_packet: "pipeline/feedback-runs/20260907_todo_followup/stage-packets/quality_attributes.md"
+model_system:
+  changed: false
+metrics:
+  - id: "B.3.1.1"
+    name: "CPU拡張性"
+    grade: 2
+    grade_changed: false
+    caused_by: ["CR-c770d8f0-013"]
+    grade_description: "スケールアウト(サーバ追加)"
+    reason: "クロスチェック worker は管理 DB を poll / claim し worker_id と lease で多重実行を防ぐ設計のため、worker を追加して水平に拡張できる。lease 期間と poll 間隔は速報クロスチェック設定(RAPID_LEASE_SEC / RAPID_POLL_INTERVAL_SEC)で適用側が調整する"
+    source_model: "条件: claim 排他 / 条件: lease 失効判定 / 情報: 速報クロスチェック設定"
+    confidence: "high"
+    before:
+      reason: "クロスチェック worker は管理 DB を poll / claim し worker_id と lease で多重実行を防ぐ設計のため、worker を追加して水平に拡張できる"
+      source_model: "条件: claim 排他 / 条件: lease 失効判定"
+  - id: "C.1.2.2"
+    name: "バックアップ対象"
+    grade: 1
+    grade_changed: false
+    caused_by: ["CR-c770d8f0-013"]
+    grade_description: "管理 DB、設定(feature flag / ジョブマップ / クロスチェックジョブマップ / 比較定義 / 対象カタログ / ハング検知定期ジョブ設定 / 速報クロスチェック設定)、適用構成文書(調整記録を含む)、成果物ディレクトリ、実行ログ"
+    reason: "設定所有区分で正本が分散しているため、設定ファイル(ハング検知定期ジョブ設定・速報クロスチェック設定を含む)と hang_detect_limit_minutes の調整記録を持つ適用構成文書、管理 DB、成果物をすべて対象とする。速報クロスチェック設定は認証情報の値を持たず接続参照名のみのため、バックアップに秘匿情報は含まれない"
+    source_model: "条件: 設定所有区分 / 情報: ハング検知定期ジョブ設定、速報クロスチェック設定、適用構成文書、Runner Result、実行ログ"
+    confidence: "high"
+    before:
+      grade_description: "管理 DB、設定(feature flag / ジョブマップ / クロスチェックジョブマップ / 比較定義 / 対象カタログ / ハング検知定期ジョブ設定)、適用構成文書(調整記録を含む)、成果物ディレクトリ、実行ログ"
+      reason: "設定所有区分で正本が分散しているため、設定ファイル(ハング検知定期ジョブ設定を含む)と hang_detect_limit_minutes の調整記録を持つ適用構成文書、管理 DB、成果物をすべて対象とする"
+      source_model: "条件: 設定所有区分 / 情報: ハング検知定期ジョブ設定、適用構成文書、Runner Result、実行ログ"
+  - id: "C.3.3.1"
+    name: "障害復旧方式"
+    grade: 1
+    grade_changed: false
+    caused_by: ["CR-c770d8f0-014"]
+    grade_description: "運用者の手動復旧(プロセス停止 → 中止スクリプト → background-rerun または正規ジョブ再実行)。中止スクリプトは対象 run の未着手(REQUESTED)の速報比較依頼も ABORTED にし、中止済み run では完了通知を受けても速報比較依頼を作成しない。完了通知の送信失敗は速報クロスチェック runner の同一引数再実行(冪等・先勝ち)で復旧。自動中止・自動再実行なし"
+    reason: "監視は通知のみで、復旧手段は復旧対象ごとに background 側リランと正規ジョブ再実行に分かれ、完了通知失敗の復旧も運用者の再実行で行う設計のため。中止した run の速報比較依頼は abort-blue / abort-green が ABORTED にし、中止済み run では速報クロスチェック runner が依頼を作らず、リラン後の新しい run_id で作り直されるため、復旧後に古い依頼が残らない"
+    source_model: "条件: 監視は通知のみ / 条件: 復旧手段の選択 / 条件: 完了通知失敗の扱い / 条件: 中止済み run の比較依頼作成除外 / 条件: slot 中止可否判定"
+    confidence: "high"
+    before:
+      grade_description: "運用者の手動復旧(プロセス停止 → 中止スクリプト → background-rerun または正規ジョブ再実行)。完了通知の送信失敗は速報クロスチェック runner の同一引数再実行(冪等・先勝ち)で復旧。自動中止・自動再実行なし"
+      reason: "監視は通知のみで、復旧手段は復旧対象ごとに background 側リランと正規ジョブ再実行に分かれ、完了通知失敗の復旧も運用者の再実行で行う設計のため"
+      source_model: "条件: 監視は通知のみ / 条件: 復旧手段の選択 / 条件: 完了通知失敗の扱い"
+  - id: "E.5.1.1"
+    name: "認証方式"
+    grade: 1
+    grade_changed: false
+    caused_by: ["CR-c770d8f0-013"]
+    grade_description: "OS アカウントと SSH 鍵による認証。認証情報(SSH・管理 DB 接続)は値を保存せず参照名で管理"
+    reason: "実行先ホストへは実行ユーザーで SSH 接続し、execution-spec.json には認証情報の参照名のみを保存し、管理 DB への接続も速報クロスチェック設定の接続参照名(RAPID_DB_CONN_REF)で解決して値を置かない設計のため"
+    source_model: "外部システム: リモート実行ホスト(SSH) / 条件: 認証情報の非保存 / 情報: 速報クロスチェック設定"
+    confidence: "high"
+    before:
+      grade_description: "OS アカウントと SSH 鍵による認証。認証情報は値を保存せず参照名で管理"
+      reason: "実行先ホストへは実行ユーザーで SSH 接続し、execution-spec.json には認証情報の参照名のみを保存する設計のため"
+      source_model: "外部システム: リモート実行ホスト(SSH) / 条件: 認証情報の非保存"
+  - id: "F.1.2.1"
+    name: "通信プロトコル"
+    grade: 1
+    grade_changed: false
+    caused_by: ["CR-c770d8f0-013"]
+    grade_description: "SSH(リモート実行)、RDB 接続(relay-gate 内部のジョブキュー兼管理 DB。接続先は速報クロスチェック設定の接続参照名で解決)、メール送信(ハング検知定期ジョブ設定の送信コマンド)。インターネット接続・外部 SaaS は不可"
+    reason: "外部システムがジョブスケジューラ・リモート実行ホスト(SSH)・メール通知で構成され、管理 DB は relay-gate 内部のデータストアで、その接続参照名は速報クロスチェック設定(RAPID_CROSSCHECK_MODE=off では不要)が持ち、エアーギャップ前提のため"
+    source_model: "外部システム: リモート実行ホスト(SSH)、メール通知 / システム概要: ジョブキュー兼管理 DB(relay-gate 内部のデータストア) / 情報: ハング検知定期ジョブ設定、速報クロスチェック設定"
+    confidence: "high"
+    before:
+      grade_description: "SSH(リモート実行)、RDB 接続(relay-gate 内部のジョブキュー兼管理 DB)、メール送信(ハング検知定期ジョブ設定の送信コマンド)。インターネット接続・外部 SaaS は不可"
+      reason: "外部システムがジョブスケジューラ・リモート実行ホスト(SSH)・メール通知で構成され、管理 DB は relay-gate 内部のデータストアで、エアーギャップ前提のため"
+      source_model: "外部システム: リモート実行ホスト(SSH)、メール通知 / システム概要: ジョブキュー兼管理 DB(relay-gate 内部のデータストア) / 情報: ハング検知定期ジョブ設定"

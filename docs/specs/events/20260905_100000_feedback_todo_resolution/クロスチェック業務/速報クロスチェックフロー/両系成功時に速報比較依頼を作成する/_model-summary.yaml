@@ -1,0 +1,74 @@
+uc: "両系成功時に速報比較依頼を作成する"
+business: "クロスチェック業務"
+buc: "速報クロスチェックフロー"
+bounded_context_id: "BC-002"
+aggregate_id: "AG-002"
+
+models:
+  - name: "SlotCompletedArgs"
+    tier: "tier-rapid-crosscheck"
+    layer: "presentation"
+    type: "request"
+    rdra_info: "完了通知"
+  - name: "DispatchRapidRequest"
+    tier: "tier-rapid-crosscheck"
+    layer: "usecase"
+    type: "command"
+    rdra_info: "速報比較依頼(rapid_crosscheck_request)"
+  - name: "CompletionStatus"
+    tier: "tier-rapid-crosscheck"
+    layer: "domain"
+    type: "value-object"
+    rdra_info: "速報実行(rapid_run)"
+  - name: "RapidRunRecord"
+    tier: "tier-rapid-crosscheck"
+    layer: "repository"
+    type: "record"
+    rdra_info: "速報実行(rapid_run)"
+  - name: "RapidCrosscheckRequestRecord"
+    tier: "tier-rapid-crosscheck"
+    layer: "repository"
+    type: "record"
+    rdra_info: "速報比較依頼(rapid_crosscheck_request)"
+
+tables:
+  - name: "rapid_runs"
+    rdra_info: "速報実行(rapid_run)"
+    operations:
+      - type: "SELECT"
+        columns: []
+        where: "run_id = ? FOR UPDATE(トランザクション内の行ロック)"
+      - type: "UPDATE"
+        columns:
+          - name: "completion_status"
+            value: "PENDING / ONE_COMPLETED / BOTH_SUCCEEDED / ANY_FAILED / REQUEST_CREATED(判定表の結果)"
+        where: "run_id = ?"
+    indexes_needed: []
+  - name: "rapid_crosscheck_requests"
+    rdra_info: "速報比較依頼(rapid_crosscheck_request)"
+    operations:
+      - type: "INSERT"
+        columns:
+          - name: "run_id"
+            value: "通知の run_id(主キー)"
+          - name: "job_id"
+            value: "parallel_runs.job_id(通知の --job-id は照合のみ。不一致は warn: job_id mismatch を出して parallel_runs の値を採用)"
+          - name: "status"
+            value: "REQUESTED"
+          - name: "requested_at"
+            value: "現在時刻 UTC"
+        where: "NOT EXISTS (SELECT 1 FROM rapid_crosscheck_requests WHERE run_id = ?)"
+    indexes_needed:
+      - columns: ["run_id"]
+        reason: "ユニーク制約: 1 run_id に 1 件の依頼(主キー)"
+        access_pattern: "条件付き INSERT の存在確認"
+  - name: "parallel_runs"
+    rdra_info: "並行稼働実行(parallel_run)"
+    operations:
+      - type: "SELECT"
+        columns: []
+        where: "run_id = ?(job_id の照合)"
+    indexes_needed: []
+
+kvs: []
+object_storage: []

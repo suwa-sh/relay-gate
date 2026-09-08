@@ -1,0 +1,19 @@
+コンテキスト	状態モデル	状態	遷移UC	遷移先状態	説明
+並行稼働実行管理	slot 実行	RUNNING	実装スクリプトを実行して Runner Result を出力する	SUCCEEDED	runner が Runner Result Contract に従い exitcode.txt に 0 を一時ファイル経由で原子的に公開し、速報クロスチェック有効時は完了通知(blue-completed / green-completed)を送る
+並行稼働実行管理	slot 実行	RUNNING	実装スクリプトを実行して Runner Result を出力する	FAILED	runner が exitcode.txt に非 0 を公開する。起動失敗や SSH 失敗でも可能な限り 3 ファイルを揃える。ハング検知は background 実行エラーとして運用者へ通知し、完了通知を受けても速報比較依頼は作成されない
+並行稼働実行管理	slot 実行	RUNNING	実行を ABORTED へ遷移させる	ABORTED	運用者がプロセスの強制終了を確認し、abort-blue / abort-green を --run-id 付きで実行して yes と答えたときだけ、background かつ RUNNING の slot 実行を明示中止する。abort-blue / abort-green は成果物ディレクトリに aborted.txt(中止日時 1 行)を書く。RAPID_CROSSCHECK_MODE が off 以外なら管理 DB の状態も ABORTED に更新する。スクリプト自身はプロセスを停止しない
+並行稼働実行管理	並行稼働実行	STARTED	slot 実行モードを選択して runner を起動する	RUNNING	facade が background slot をすべて起動してから foreground slot を起動し、foreground の PID だけを待機する
+並行稼働実行管理	並行稼働実行	STARTED	元の execution-spec.json から復元して新しい run_id で起動する	RUNNING	background-rerun が復元した実行設定で background slot を起動し、リランの parallel_run を RUNNING にする
+並行稼働実行管理	並行稼働実行	STARTED	速報比較依頼だけを新規作成する	RUNNING	background-rerun が速報比較依頼を REQUESTED で作成し、以降の追跡を速報クロスチェック worker の通常の claim と比較実行に委ねる
+並行稼働実行管理	並行稼働実行	STARTED	実行を ABORTED へ遷移させる	ABORTED	facade または background-rerun が parallel_run を STARTED で作成した直後(RUNNING 更新前)に運用者が中止スクリプトで明示中止した場合も ABORTED にし、STARTED のまま残る実行を取りこぼさない
+並行稼働実行管理	並行稼働実行	RUNNING	foreground slot の結果をジョブスケジューラへ中継する	COMPLETED	facade が foreground slot の stdout.log・stderr.log・exitcode.txt を無加工でジョブスケジューラへ中継し終える。background slot の完了や速報クロスチェックの結果は応答に含めず待機もしない
+並行稼働実行管理	並行稼働実行	RUNNING	比較ツールでジョブ単位比較を実行して結果を登録する	COMPLETED	速報比較依頼だけを新規作成したリラン由来(background-rerun --role rapid-crosscheck)の parallel_run は foreground slot を持たないため、依頼が終端状態(SUCCEEDED / FAILED)になった時点で速報クロスチェック worker が COMPLETED にする
+並行稼働実行管理	並行稼働実行	RUNNING	実装スクリプトを実行して Runner Result を出力する	COMPLETED	元の execution-spec.json から復元して新しい run_id で起動したリラン由来(background-rerun --role blue / green)の parallel_run は foreground slot を持たないため、background slot の終端(exitcode.txt の公開)時に runner が COMPLETED にする
+並行稼働実行管理	並行稼働実行	RUNNING	実行を ABORTED へ遷移させる	ABORTED	運用者が中止スクリプトで slot 実行または比較依頼を明示中止したとき、並行稼働実行も ABORTED にする。リラン時は新しい run_id で parallel_run を作成し parent_run_id で元の run を追跡する
+実行監視管理	監視状態	監視中	ハング疑い・実行エラー・比較異常を通知する	ハング疑い通知済み	exitcode.txt が未出力のまま経過時間が上限を超過し、hang_suspected_at と alerted_at を記録して warning メールを運用者へ通知する。実行状態は変更しない
+実行監視管理	監視状態	監視中	ハング疑い・実行エラー・比較異常を通知する	実行エラー通知済み	exitcode.txt が非 0 で出力されており、background 実行エラーとして error メールを運用者へ通知する
+実行監視管理	監視状態	監視中	ハング疑い・実行エラー・比較異常を通知する	比較異常通知済み	速報比較依頼が FAILED または比較 NG であり、速報クロスチェック異常として error メールを運用者へ通知する
+実行監視管理	監視状態	監視中	background 実行の経過時間と終了状態を判定する	正常終了	exitcode.txt が 0 で出力され、上限以内に正常終了したと判定する。監視対象が ABORTED(exitcode.txt が無く aborted.txt がある、または依頼が ABORTED)になった場合も中止済みとして正常終了で終端する
+実行監視管理	監視状態	ハング疑い通知済み	background 実行の経過時間と終了状態を判定する	正常終了	通知後に exitcode.txt が 0 で出力された(通知後正常終了)。警告時の経過時間を監視記録に残し、hang_detect_limit_minutes のジョブごとの調整に使用する。通知後に監視対象が ABORTED になった場合も中止済みとして正常終了で終端する
+実行監視管理	監視状態	ハング疑い通知済み	ハング疑い・実行エラー・比較異常を通知する	実行エラー通知済み	通知後に exitcode.txt が非 0 で出力され、background 実行エラーとして error メールを追加通知する
+実行監視管理	監視状態	ハング疑い通知済み	ハング疑い・実行エラー・比較異常を通知する	比較異常通知済み	通知後に速報比較依頼が FAILED または比較 NG で終端し、速報クロスチェック異常として error メールを追加通知して監視を終端する。通知済み run を再判定せず監視記録が未終端のまま残る欠陥を防ぐ

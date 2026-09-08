@@ -1,0 +1,4 @@
+---
+- name: notify config change (no restart required)
+  ansible.builtin.debug:
+    msg: "設定ファイルを更新しました。facadeは次回起動から新しい設定を読み込みます(再起動不要)"
