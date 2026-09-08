@@ -2,7 +2,7 @@
 
 > 既存実装(blue)と新実装(green)をジョブスケジューラの同一ジョブ定義から並行稼働させ、クロスチェックで整合性を検証しながら段階的に切り替えるための feature flag 付きストラングラーファサード型の実行基盤。facade が feature flag(BLUE_MODE / GREEN_MODE / RAPID_CROSSCHECK_MODE / BLUE_IMPL / GREEN_IMPL / BLUE_RUNNER / GREEN_RUNNER / RAPID_CROSSCHECK_RUNNER / RAPID_CROSSCHECK_WORKER)で slot ごとの実行モード(foreground / background / off)を選択し、background slot を先に起動してから foreground の Runner Result(stdout.log / stderr.log / exitcode.txt)だけをジョブスケジューラへ中継する。slot runner がジョブマップで JOB_ID から実行先を解決し execution-spec.json として確定保存する。速報クロスチェックはジョブ実行ごとに blue / green の完了結果を非同期に比較し、確報クロスチェックは別ジョブ定義から全テーブル・全ファイルの日次全量比較を行って stdout・stderr・exitcode をジョブスケジューラへ返す。ハング検知の定期ジョブが background 実行の異常を運用者へメール通知し、運用者は中止スクリプトで停止確認済みの実行を ABORTED にしてから background 側リランで元の execution-spec.json から再実行する。シェルスクリプトと relay-gate 内部のデータストアである RDB(ジョブキュー兼管理 DB。外部システムではなく relay-gate の構成要素)で構成し、実装固有のホスト配置(リモート実行ホストへの SSH 接続など)は適用側の関心事として slot の runner に閉じ込め、UI 画面を持たず CLI と定期ジョブだけで動作する。
 
-**最終更新**: 2026-09-08 02:40:00 feedback slot status wording (specs)
+**最終更新**: 2026-09-08 06:20:00 feedback spec machine readable (specs)
 
 ## 成果物一覧
 
@@ -14,7 +14,7 @@
 | [Arch（アーキテクチャ）](#archアーキテクチャ) | [arch/latest/](arch/latest/) | 6 |
 | [Infra（インフラ設計）](#infraインフラ設計) | [infra/latest/](infra/latest/) | 5 |
 | [Design（デザイン）](#designデザイン) | - | 0 |
-| [Specs（詳細仕様）](#specs詳細仕様) | [specs/latest/](specs/latest/) | 5 |
+| [Specs（詳細仕様）](#specs詳細仕様) | [specs/latest/](specs/latest/) | 6 |
 
 ## USDM（要求分解）
 
@@ -304,38 +304,13 @@ design ステージは pipeline-config の `skip_steps` で skip されている
 
 ## ADRs（設計判断記録）
 
-| # | ドメイン | 判断 | ステータス |
-|---|---------|------|----------|
-| 1 | Arch | [サブドメイン分類: 実装切替とクロスチェックを Core、監視・復旧と適用構成を Supporting](arch/events/20260830_184457_initial_arch/decisions/arch-decision-001.yaml) | approved |
-| 2 | Arch | [BC 設計: 並行稼働実行 / 速報 / 確報 / 監視・復旧 / 適用構成の 5 コンテキスト](arch/events/20260830_184457_initial_arch/decisions/arch-decision-002.yaml) | approved |
-| 3 | Arch | [コンテキストマップ: 設定契約への Conformist、完了通知の OHS、依頼ライフサイクルの Shared Kernel](arch/events/20260830_184457_initial_arch/decisions/arch-decision-003.yaml) | approved |
-| 4 | Arch | [集約境界仮説: parallel_run / rapid_run / final_crosscheck_request / 監視記録 / ジョブマップ を root とする 5 仮説](arch/events/20260830_184457_initial_arch/decisions/arch-decision-004.yaml) | approved |
-| 5 | Arch | [テクノロジースタック: bash シェルスクリプト + RDB、フレームワーク非採用](arch/events/20260830_184457_initial_arch/decisions/arch-decision-005.yaml) | approved |
-| 6 | Arch | [BC : tier 対応形態: 方針資料の C2 コンテナに対応する CLI スクリプト群 4 tier + データストア 1 tier](arch/events/20260830_184457_initial_arch/decisions/arch-decision-006.yaml) | approved |
-| 7 | Arch | [認証・認可方式: SSH 鍵と OS 権限のみ(IdP / API Gateway / 認可サービス非導入)](arch/events/20260830_184457_initial_arch/decisions/arch-decision-007.yaml) | approved |
-| 8 | Arch | [レイヤリング戦略: 全スクリプト tier で 5 層(presentation → usecase → domain → repository / gateway)の直接依存](arch/events/20260830_184457_initial_arch/decisions/arch-decision-008.yaml) | approved |
-| 9 | Arch | [データモデル戦略: 状態を持つ管理レコードは event_snapshot、記録は event、設定は resource_scd2。成果物ファイルを外部 IF の正本にする](arch/events/20260830_184457_initial_arch/decisions/arch-decision-009.yaml) | approved |
-| 10 | Arch | [管理 DB をジョブキューとして使い、worker は poll / claim / lease で多重実行を防ぐ(MQ 非導入)](arch/events/20260830_184457_initial_arch/decisions/arch-decision-010.yaml) | approved |
-| 11 | Arch | [slot 実行の状態はファイル正本(exitcode.txt / aborted.txt)から導出し、管理 DB は速報有効時の複製とする(二重マッピング確定)](arch/events/20260905_091000_feedback_todo_resolution/decisions/arch-decision-011.yaml) | approved |
-| 12 | Arch | [設定契約を元の方針資料に戻す(feature flag 9 キー・設定版なし、ジョブマップは CSV と元の列名、ハング検知定期ジョブ設定を追加)](arch/events/20260905_091000_feedback_todo_resolution/decisions/arch-decision-012.yaml) | approved |
-| 13 | Arch | [run_id はローカルタイムゾーンの時刻 + job_id + 8 桁 hex 乱数とし、facade がモードによらず発行する](arch/events/20260905_091000_feedback_todo_resolution/decisions/arch-decision-013.yaml) | approved |
-| 14 | Arch | [実行ログの日時はホストのローカルタイムゾーン(タイムゾーン指示子なし)に統一し、CLP-002 の UTC 統一を改める](arch/events/20260907_015000_feedback_todo_followup/decisions/arch-decision-014.yaml) | approved |
-| 15 | Arch | [中止済み run では速報比較依頼を作成せず(判断主体は dispatcher)、abort-blue / abort-green は未着手の速報比較依頼も ABORTED にする](arch/events/20260907_015000_feedback_todo_followup/decisions/arch-decision-015.yaml) | approved |
-| 16 | Arch | [速報クロスチェック設定(rapid-crosscheck.env)を BC-005 所有の設定エンティティ E-027 として追加し、env 形式の設定ファイルに配置する](arch/events/20260907_015000_feedback_todo_followup/decisions/arch-decision-016.yaml) | approved |
-| 17 | Arch | [中止済み run の判定キーに対象 slot の slot 実行 ABORTED を加え、abort-rapid-crosscheck を REQUESTED / CLAIMED / RUNNING の速報比較依頼に拡張し、REQUESTED → ABORTED を競合窓の保険と位置づける](arch/events/20260907_122000_feedback_abort_consistency/decisions/arch-decision-017.yaml) | approved |
-| 18 | Arch | [slot 実行の管理 DB 側状態(slot_executions.status)は公開時点の状態を条件付き更新で一度だけ書き、abort 後は ABORTED のまま残してファイル正本へ再同期しない](arch/events/20260908_015000_feedback_slot_status_wording/decisions/arch-decision-018.yaml) | approved |
-| 19 | Infra | [スクリプト実行ホストの常駐/定期起動基盤の選定](infra/events/20260830_190412_infra_product_design/docs/cloud-context/decisions/product/product-decision-001.yaml) | accepted |
-| 20 | Infra | [管理DB(ジョブキュー兼管理DB)のRDBMS選定](infra/events/20260830_190412_infra_product_design/docs/cloud-context/decisions/product/product-decision-002.yaml) | accepted |
-| 21 | Infra | [成果物ディレクトリ(Runner Result)の配置方式選定](infra/events/20260830_190412_infra_product_design/docs/cloud-context/decisions/product/product-decision-003.yaml) | accepted |
-| 22 | Infra | [運用者向けメール通知のMTA選定](infra/events/20260830_190412_infra_product_design/docs/cloud-context/decisions/product/product-decision-004.yaml) | accepted |
-| 23 | Infra | [バックアップと基盤監視の方式選定](infra/events/20260830_190412_infra_product_design/docs/cloud-context/decisions/product/product-decision-005.yaml) | accepted |
-| 24 | Specs | [インターフェース契約の形式: HTTP API を持たず CLI コマンド契約(cli-command-contract.yaml)を正本にする](specs/events/20260830_202851_spec_generation/decisions/spec-decision-001.yaml) | approved |
-| 25 | Specs | [イベント駆動パターン: RDB ジョブキュー(poll / claim / lease)と同期プロセス起動の完了通知を AsyncAPI で契約化する](specs/events/20260830_202851_spec_generation/decisions/spec-decision-002.yaml) | approved |
-| 26 | Specs | [データ正規化レベル: 第 3 正規形・状態履歴テーブルなし・速報/確報モデル分離(rdb-schema.yaml 7 テーブル)](specs/events/20260830_202851_spec_generation/decisions/spec-decision-003.yaml) | approved |
-| 27 | Specs | [横断関心事: 終了コード体系(0/2/3/6)・出力規約(key=value / TSV)・設定ファイル形式(env + TSV)・run_id 形式・通知メール手段](specs/events/20260830_202851_spec_generation/decisions/spec-decision-004.yaml) | approved |
-| 28 | Specs | [feedback todo-resolution-20260905 の Spec 追従: CSV セル解析規則・ファイル正本の状態導出・operation_mode 英字コード・グループ間統一決定](specs/events/20260905_100000_feedback_todo_resolution/decisions/spec-decision-005.yaml) | approved |
-| 29 | Specs | [速報クロスチェック設定の所有区分・中止済み run の依頼作成除外と未着手依頼の中止・実行ログと出力の日時をローカルタイムゾーンへ統一する Spec 追従](specs/events/20260907_024000_feedback_todo_followup/decisions/spec-decision-006.yaml) | approved |
-| 30 | Specs | [中止済み run の判定キー拡張・速報比較依頼の中止対象拡張と worker の条件付き RUNNING 遷移・未着手依頼の中止を競合窓の保険と位置づける Spec 追従](specs/events/20260907_131000_feedback_abort_consistency/decisions/spec-decision-007.yaml) | approved |
+全31件。ドメイン別の一覧から個別の判断記録を参照できます。
+
+| ドメイン | 件数 | 一覧 |
+|---------|-----:|------|
+| Arch | 18 | [判断記録を開く](_indexes/adrs/arch.md) |
+| Infra | 5 | [判断記録を開く](_indexes/adrs/infra.md) |
+| Specs | 8 | [判断記録を開く](_indexes/adrs/specs.md) |
 
 ## Pipeline feedback runs
 
@@ -348,42 +323,20 @@ distillery-impl が公開した feedback-request Markdown を `dist-pipeline` �
 | 20260907_abort_consistency | completed | 3 | 3 | 0 | 0 | requirements → quality_attributes → architecture → infrastructure → spec | [feedback-runs/](pipeline/feedback-runs/20260907_abort_consistency) |
 | 20260907_todo_followup | completed | 3 | 3 | 0 | 0 | requirements → quality_attributes → architecture → infrastructure → spec | [feedback-runs/](pipeline/feedback-runs/20260907_todo_followup) |
 | 20260908_slot_status_wording | completed | 1 | 1 | 0 | 0 | requirements → quality_attributes → architecture → infrastructure → spec | [feedback-runs/](pipeline/feedback-runs/20260908_slot_status_wording) |
+| 20260908_spec_machine_readable | completed | 3 | 3 | 0 | 0 | spec | [feedback-runs/](pipeline/feedback-runs/20260908_spec_machine_readable) |
 
 ## イベント履歴
 
-| 日時 | ドメイン | イベントID |
-|------|---------|-----------|
-| 2026-08-30 18:18:41 | USDM（要求分解） | [20260830_181841_initial_build](usdm/events/20260830_181841_initial_build) |
-| 2026-08-30 18:18:41 | RDRA（要件定義） | [20260830_181841_initial_build](rdra/events/20260830_181841_initial_build) |
-| 2026-08-30 18:37:26 | NFR（非機能要求） | [20260830_183726_initial_nfr](nfr/events/20260830_183726_initial_nfr) |
-| 2026-08-30 18:44:57 | Arch（アーキテクチャ） | [20260830_184457_initial_arch](arch/events/20260830_184457_initial_arch) |
-| 2026-08-30 19:04:12 | Infra（インフラ設計） | [20260830_190412_infra_product_design](infra/events/20260830_190412_infra_product_design) |
-| 2026-08-30 20:24:27 | Arch（アーキテクチャ） | [20260830_202427_arch_infra_feedback_20260830_190412_infra_product_design](arch/events/20260830_202427_arch_infra_feedback_20260830_190412_infra_product_design) |
-| 2026-08-30 20:28:51 | Specs（詳細仕様） | [20260830_202851_spec_generation](specs/events/20260830_202851_spec_generation) |
-| 2026-09-05 08:30:00 | USDM（要求分解） | [20260905_083000_feedback_todo_resolution](usdm/events/20260905_083000_feedback_todo_resolution) |
-| 2026-09-05 08:30:00 | RDRA（要件定義） | [20260905_083000_feedback_todo_resolution](rdra/events/20260905_083000_feedback_todo_resolution) |
-| 2026-09-05 08:50:00 | NFR（非機能要求） | [20260905_085000_feedback_todo_resolution](nfr/events/20260905_085000_feedback_todo_resolution) |
-| 2026-09-05 09:10:00 | Arch（アーキテクチャ） | [20260905_091000_feedback_todo_resolution](arch/events/20260905_091000_feedback_todo_resolution) |
-| 2026-09-05 09:30:00 | Infra（インフラ設計） | [20260905_093000_feedback_todo_resolution](infra/events/20260905_093000_feedback_todo_resolution) |
-| 2026-09-05 10:00:00 | Specs（詳細仕様） | [20260905_100000_feedback_todo_resolution](specs/events/20260905_100000_feedback_todo_resolution) |
-| 2026-09-07 01:10:00 | USDM（要求分解） | [20260907_011000_feedback_todo_followup](usdm/events/20260907_011000_feedback_todo_followup) |
-| 2026-09-07 01:10:00 | RDRA（要件定義） | [20260907_011000_feedback_todo_followup](rdra/events/20260907_011000_feedback_todo_followup) |
-| 2026-09-07 01:30:00 | NFR（非機能要求） | [20260907_013000_feedback_todo_followup](nfr/events/20260907_013000_feedback_todo_followup) |
-| 2026-09-07 01:50:00 | Arch（アーキテクチャ） | [20260907_015000_feedback_todo_followup](arch/events/20260907_015000_feedback_todo_followup) |
-| 2026-09-07 02:10:00 | Infra（インフラ設計） | [20260907_021000_feedback_todo_followup](infra/events/20260907_021000_feedback_todo_followup) |
-| 2026-09-07 02:40:00 | Specs（詳細仕様） | [20260907_024000_feedback_todo_followup](specs/events/20260907_024000_feedback_todo_followup) |
-| 2026-09-07 11:40:00 | USDM（要求分解） | [20260907_114000_feedback_abort_consistency](usdm/events/20260907_114000_feedback_abort_consistency) |
-| 2026-09-07 11:40:00 | RDRA（要件定義） | [20260907_114000_feedback_abort_consistency](rdra/events/20260907_114000_feedback_abort_consistency) |
-| 2026-09-07 12:00:00 | NFR（非機能要求） | [20260907_120000_feedback_abort_consistency](nfr/events/20260907_120000_feedback_abort_consistency) |
-| 2026-09-07 12:20:00 | Arch（アーキテクチャ） | [20260907_122000_feedback_abort_consistency](arch/events/20260907_122000_feedback_abort_consistency) |
-| 2026-09-07 12:40:00 | Infra（インフラ設計） | [20260907_124000_feedback_abort_consistency](infra/events/20260907_124000_feedback_abort_consistency) |
-| 2026-09-07 13:10:00 | Specs（詳細仕様） | [20260907_131000_feedback_abort_consistency](specs/events/20260907_131000_feedback_abort_consistency) |
-| 2026-09-08 01:10:00 | USDM（要求分解） | [20260908_011000_feedback_slot_status_wording](usdm/events/20260908_011000_feedback_slot_status_wording) |
-| 2026-09-08 01:10:00 | RDRA（要件定義） | [20260908_011000_feedback_slot_status_wording](rdra/events/20260908_011000_feedback_slot_status_wording) |
-| 2026-09-08 01:30:00 | NFR（非機能要求） | [20260908_013000_feedback_slot_status_wording](nfr/events/20260908_013000_feedback_slot_status_wording) |
-| 2026-09-08 01:50:00 | Arch（アーキテクチャ） | [20260908_015000_feedback_slot_status_wording](arch/events/20260908_015000_feedback_slot_status_wording) |
-| 2026-09-08 02:10:00 | Infra（インフラ設計） | [20260908_021000_feedback_slot_status_wording](infra/events/20260908_021000_feedback_slot_status_wording) |
-| 2026-09-08 02:40:00 | Specs（詳細仕様） | [20260908_024000_feedback_slot_status_wording](specs/events/20260908_024000_feedback_slot_status_wording) |
+全32件。ドメイン別の履歴から個別のイベントを参照できます。
+
+| ドメイン | 件数 | 履歴 |
+|---------|-----:|------|
+| USDM（要求分解） | 5 | [履歴を開く](_indexes/events/usdm.md) |
+| RDRA（要件定義） | 5 | [履歴を開く](_indexes/events/rdra.md) |
+| NFR（非機能要求） | 5 | [履歴を開く](_indexes/events/nfr.md) |
+| Arch（アーキテクチャ） | 6 | [履歴を開く](_indexes/events/arch.md) |
+| Infra（インフラ設計） | 5 | [履歴を開く](_indexes/events/infra.md) |
+| Specs（詳細仕様） | 6 | [履歴を開く](_indexes/events/specs.md) |
 
 ---
 

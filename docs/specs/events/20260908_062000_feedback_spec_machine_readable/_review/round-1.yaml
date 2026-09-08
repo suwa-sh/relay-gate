@@ -1,0 +1,74 @@
+round: 1
+# 差分ファイル(diff -rq docs/specs/latest vs 本イベント。_review/ 除外)のみを対象にした反証レビュー。
+# 機械検証: spec-event.yaml usdm[](133 行 / Scenario 参照 206 件)と 32 UC の spec.md「関連 USDM」表・`Scenario:` 名の突合、
+# gherkin フェンス本体の latest との一致(32 UC 全件で不変)、rdb-schema.yaml enum 14 列 × RDRA 状態.tsv / バリエーション.tsv、
+# state_codes derived_from 7 参照(table.column 実在 / values == enum 全件一致)、generateSpecEventMd.js / generateDatastoreMd.js の再生成差分、
+# validateSpecEvent.js / validateRdbSchema.js(エラー 0)。「正本は shared_rules.state_codes」の残存 0 件、rdra-feedback.md の残存 SR-* 0 件を確認。
+findings:
+  - id: R-001
+    viewpoint: 1
+    severity: major
+    target: "spec-event.yaml"
+    claim: "UC「slot runner の実体スクリプトを割り当てる」の usdm[] は SPEC-002-03 を SPEC-001-04 用の Scenario に対応づけ、SPEC-002-03 を接尾辞に持つ実 Scenario を機械可読の正本から落としている。既知の「表の記載誤り」をそのまま YAML 化したため、後工程(ATDD 生成)が SPEC-002-03 の受け入れ条件を誤ったシナリオへ結び付ける"
+    evidence: "spec-event.yaml L817-819: spec_id SPEC-002-03 の scenarios = [\"runner 実体を差し替えても facade は変更不要である(SPEC-001-04)\"]。同 UC の spec.md L157 に `Scenario: facade は設定された runner を runner IF で起動するだけである(SPEC-002-03)` が存在するが、usdm[] のどの行からも参照されていない(機械照合で unreferenced)。_cross-cutting/usdm-acceptance-matrix.md L110 が前イベント以前から「表の記載誤り。修正候補: SPEC-002-03 行を差し替える」と記録済みの項目で、本イベントは「表と同内容」を優先して誤りを YAML へ写した"
+    suggested_fix: "spec-event.yaml L817-819 と spec.md L131 の SPEC-002-03 行の scenarios を「facade は設定された runner を runner IF で起動するだけである(SPEC-002-03)」に差し替える(旧シナリオを併記してもよい)。usdm-acceptance-matrix.md の SPEC-002-03 行(L47)の UC-30 シナリオ列と L110 の注記を解消済みに更新する"
+  - id: R-002
+    viewpoint: 1
+    severity: minor
+    target: "spec-event.yaml"
+    claim: "SPEC ID を接尾辞に持つ Scenario が、同じ UC の usdm[] の当該 spec_id 行から漏れている(3 件)。うち 1 件は USDM の受け入れ条件に直接対応する Scenario で、機械可読の正本だけ見ると当該 AC が未検証に見える"
+    evidence: "(1) UC「feature flag を設定する」spec.md L179 `Scenario: ジョブ定義を変えずに feature flag だけで運用モードを切り替える(SPEC-001-03)` — requirements.yaml SPEC-001-03 の AC3「ジョブ定義を変更しない / feature flag だけを変更する / 切り替えられる」に直接対応するが、spec-event.yaml(uc L774 配下)の SPEC-001-03 行(表 L140)は「単独本番モード…」「次世代並行稼働モード…」の 2 件のみ。(2) UC「background 実行の経過時間と終了状態を判定する」spec.md L306 `…速報比較依頼も再判定する(SPEC-008-02)` は SPEC-008-02 行(表 L226)に無い。(3) 同 UC spec.md L249 `上限内は継続監視と判定する(SPEC-008-01)` は SPEC-008-01 行(表 L225)に無い。(1)(2) は usdm-acceptance-matrix.md L111-112 で「表の記載漏れ。修正候補: 併記する」と記録済み"
+    suggested_fix: "3 件を該当 UC の usdm[].scenarios と spec.md「関連 USDM」表の同じ行へ追加する。usdm-acceptance-matrix.md L111-112 の注記を解消済みへ更新する"
+  - id: R-003
+    viewpoint: 1
+    severity: minor
+    target: "_cross-cutting/usdm-acceptance-matrix.md"
+    claim: "「集計元を usdm[] に切り替えて再集計した」とあるが、「対応する BDD シナリオ」列と再確認結果の注記は前イベントのまま更新されておらず、usdm[] と食い違う行が残る(「対応 UC」列の集合だけが一致)"
+    evidence: "L41(SPEC-001-01)の UC-29 セル: usdm[] にある「off でない slot の実装版が無い feature flag は拒否される」が無く、usdm[] では SPEC-005-04 行に置かれている「速報有効時は速報 runner と worker の実体が必須である」を SPEC-001-01 側に載せている(latest と同一文字列)。L79(SPEC-010-01)の UC-05 セル: usdm[] の 2 件のうち「中止済み slot で runner が再起動されても実装を再実行しない」が無い(L115 では解消済みと記載)。L112 は「off でない slot の実装版が無い…は SPEC-001-01 行に載っていない」と記すが、spec.md L138 と usdm[] には載っている(注記が古い)"
+    suggested_fix: "「対応する BDD シナリオ」列を usdm[].scenarios から機械生成し直す(接尾辞除去のみ)。L110-112 の再確認結果を現状(解消済み / 未解消)に合わせて書き直す"
+  - id: R-004
+    viewpoint: 1
+    severity: minor
+    target: "_inference.md"
+    claim: "差分更新履歴の D1 行の Scenario 参照件数が実数および他文書と一致しない"
+    evidence: "_inference.md L341「Scenario 参照 205 件」。spec-event.yaml usdm[].scenarios の総数は 206(機械集計)。_review/change-brief.md D1 と _cross-cutting/rdra-feedback.md L50 は 206 件"
+    suggested_fix: "_inference.md L341 を 206 件に修正する"
+  - id: R-005
+    viewpoint: 5
+    severity: minor
+    target: "実行復旧業務/background 側リランフロー/リラン対象を検証する/spec.md"
+    claim: "各 spec.md「関連 USDM」表の注記は『Scenario 名を「 / 」で区切って列挙』と定義するが、名前自体に「 / 」を含む Scenario が存在し、表の区切り規則では復元できない(YAML を正本にした判断は正しいが、注記の規則が表の実態と矛盾する)"
+    evidence: "「 / 」を含む Scenario 名: 本 UC spec.md L230 `foreground の blue は拒否する(SPEC-009-03 / SPEC-009-04)`、L249 `元の実行が見つからない(blue / green は execution-spec.json で特定する)`、実行を ABORTED へ遷移させる/spec.md L249 `…中止する(SPEC-010-01 / SPEC-010-03)`、execution-spec.json を確定保存する/spec.md L178 `…host / user / credential_ref / map_version を null で保存する(SPEC-004-04)`。表の注記(各 spec.md の「関連 USDM」表直下)は「 / 」区切りとだけ述べる"
+    suggested_fix: "注記を「区切りは人が読む用。名前に『 / 』を含む Scenario があるため機械分割には使わず spec-event.yaml の scenarios[] を使う」に改めるか、表側の区切りを名前に現れない記号(例: `<br>` や「 ／ 」)に変える"
+  - id: R-006
+    viewpoint: 3
+    severity: minor
+    target: "_cross-cutting/api/cli-command-contract.yaml"
+    claim: "state_codes の derived_from が項目により object と array の 2 形になっており、note / 決定記録が示す形 `{derived_from: {table, column}}` と一致しない。実装フェーズのドリフトテストが 2 形を扱う必要があり、機械可読化の目的に反する。rdb-schema.yaml 冒頭コメントも state_codes 全体が derived_from 参照であるかのように読める"
+    evidence: "cli-command-contract.yaml L190-196: request_status.derived_from は 2 要素の配列、他 5 項目(L170-174, L181-185, L207-224)は object。L169 note は「derived_from で正本の列を指し」とのみ記述。rdb-schema.yaml L9「shared_rules.state_codes は本ファイルの enum を derived_from で参照する複製」— 実際は slot_mode / role / hang_judgement / alert_level / alert_kind の 5 項目が source + values のリテラル"
+    suggested_fix: "derived_from を常に配列(1 要素含む)に統一するか、note に「derived_from は object または array(複数列が同一値集合を共有する場合)」と形を明記する。rdb-schema.yaml L9 を「DB 列に対応する 6 項目は derived_from で参照する複製、DB 列に対応しない 5 項目は source 付きリテラル」に改める"
+resolved:
+  - id: R-001
+    resolution: fixed
+    by: orchestrator
+    note: "UC-30 spec.md「関連 USDM」表と spec-event.yaml usdm[] の SPEC-002-03 行を「facade は設定された runner を runner IF で起動するだけである(SPEC-002-03)」(受け入れ条件に直接対応)+「runner 実体を差し替えても facade は変更不要である(SPEC-001-04)」(補強)の併記に差し替え。usdm-acceptance-matrix.md の SPEC-002-03 行 UC-30 セルと再確認結果を解消済みへ更新。SPEC ID 接尾辞を持つ Scenario で usdm[] から参照されないものは 0 件(機械照合)"
+  - id: R-002
+    resolution: fixed
+    by: orchestrator
+    note: "UC-29 SPEC-001-03 行、UC-18 SPEC-008-01 / SPEC-008-02 行に 3 Scenario を表と usdm[] の両方で併記(Scenario 参照 206 → 210)。usdm-acceptance-matrix.md の該当セルと再確認結果を解消済みへ更新"
+  - id: R-003
+    resolution: fixed
+    by: orchestrator
+    note: "対応表の「対応する BDD シナリオ」列を usdm[].scenarios(接尾辞除去)と機械照合し、欠けていた名前(SPEC-001-01 UC-29 / SPEC-010-01 UC-18 / SPEC-010-01 UC-05)と R-001 / R-002 分を併記して欠落 0 件にした。AC 番号などの注記が付いた既存表記は保持し、列全体の機械再生成はしていない(usdm[] に無い補強シナリオ「速報有効時は…」は SPEC-001-01 行に「usdm[] では SPEC-005-04 行。補強として併記」と明記)。L112 の古い注記は現状(解消済み)に書き直した"
+  - id: R-004
+    resolution: fixed
+    by: orchestrator
+    note: "_inference.md / rdra-feedback.md / change-brief.md / usdm-acceptance-matrix.md の Scenario 参照件数を実数 210(R-002 反映後)に統一"
+  - id: R-005
+    resolution: fixed
+    by: orchestrator
+    note: "32 UC の表直下の注記を「区切りは人が読む用。Scenario 名自体に「 / 」を含むものがあるため機械分割には使わず、機械照合は spec-event.yaml の scenarios[] を使う」に改めた(表側の区切り記号は変えない)"
+  - id: R-006
+    resolution: fixed
+    by: orchestrator
+    note: "cli-command-contract.yaml state_codes.note に「derived_from は {table, column} の object。同一値集合を共有する request_status だけは配列。ドリフトテストは両形を配列として扱う」を明記(CR の指定どおり 2 形を維持)。rdb-schema.yaml 冒頭コメントを「DB 対応 6 項目は derived_from の複製、DB 非対応 5 項目は source 付きリテラル」に改めた"

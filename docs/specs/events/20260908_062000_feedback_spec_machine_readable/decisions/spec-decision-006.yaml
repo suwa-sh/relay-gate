@@ -1,0 +1,51 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "specification"
+artifact_id: "spec-decision-006"
+title: "速報クロスチェック設定の所有区分・中止済み run の依頼作成除外と未着手依頼の中止・実行ログと出力の日時をローカルタイムゾーンへ統一する Spec 追従"
+status: "approved"
+generated_at: "2026-09-07T02:40:00Z"
+context: |
+  利用者は、速報クロスチェック用 env 設定(rapid-crosscheck.env)を RDRA 情報「速報クロスチェック設定」(所有者: 基盤適用設計者)として情報モデルと
+  設定所有区分に追加し、並行稼働実行が ABORTED の run では両系成功でも速報比較依頼を作成しない(判断主体は速報クロスチェック runner = dispatcher)、
+  abort-blue / abort-green は対象 run の REQUESTED で未着手の速報比較依頼も ABORTED にする、実行ログの日時を UTC 統一からホストのローカルタイムゾーン
+  (ISO 8601 秒精度、タイムゾーン指示子なし。run_id の時刻部と同じ時刻軸)へ改める、と決定した。RDRA / USDM / arch / nfr / infra は先行イベントで
+  更新済みで、本イベントは Spec 側(契約・データストア・出力規約・UC spec / tier / BDD)を追従させる。RDRA / USDM / arch は「何を」までしか定めないため、
+  契約(cli-command-contract.yaml)として確定が必要な「どう表すか」を本記録に残す。
+decision: |
+  1. 速報クロスチェック設定(CR-013): config_files[rapid-crosscheck.env] の owner を「基盤適用設計者(設定所有区分: 速報クロスチェック設定)」、
+     defined_in_uc を RDRA BUC.tsv が入力情報として紐づける 4 UC(slot 実行モードの選択と runner 起動 / 完了通知の送信 / 両系成功時の依頼作成 / 依頼の claim)にした。
+     keys の description に RDRA 属性名を併記し、shared_rules.lease_and_poll.rapid の出所を同情報に固定した。既定値 600 / 30 秒は RDRA が定めていないため
+     confidence low を「既定値のみ」に狭めて残した。設定を読むが RDRA が紐づけない UC(速報比較結果の参照 / ジョブ単位比較の実行 / Runner Result の出力)は
+     tier md に情報名を併記するだけにとどめ、spec.md「関連 RDRA モデル」には行を追加しない(RDRA に無い紐づけを Spec で発明しない)。
+  2. 中止済み run の依頼作成除外(CR-014): rapid-crosscheck-runner.sh は完了通知のトランザクション内で parallel_runs.status を読み、ABORTED なら
+     完了事実(blue_status / green_status / 成果物 URI / 受信日時)だけを rapid_runs に記録して依頼を INSERT しない(completion_status は BOTH_SUCCEEDED
+     のまま REQUEST_CREATED へ進めない)。実行ログ WARN と stderr warn を残し終了コードは 0。判定表(parallel_runs.status × 両系成功判定)を契約に
+     request_creation_matrix として構造化した。slot runner は自 slot の中止状態(aborted.txt)を判断せず通常どおり通知する。
+  3. 未着手依頼の中止(CR-014): abort-blue / abort-green は aborted.txt 公開後、off 以外で slot_executions / parallel_runs に加えて
+     rapid_crosscheck_requests を WHERE run_id=? AND status='REQUESTED' の条件付き UPDATE で ABORTED にする。0 件は正常(依頼なし / CLAIMED / RUNNING /
+     終端済み)。CLAIMED / RUNNING は abort-rapid-crosscheck の対象のまま。確報比較依頼には適用しない。stdout の固定 8 行は変えず実行ログ INFO(--verbose で
+     stderr info)だけを追加した。shared_rules.state_codes に request_status_transitions を追加し状態.tsv「クロスチェック依頼」と 1:1 にした。
+  4. ローカルタイムゾーン(CR-015): 実行ログ行 `{script} {run_id} {ローカル日時} {LEVEL} {message}`、CLI の stdout(key=value / TSV)、管理 DB の *_at 列
+     (RDB のタイムスタンプ型に委ねる)、通知メール本文、hang-detect-trend.sh --since の入力を、ホストのローカルタイムゾーン・ISO 8601 秒精度・指示子なしに統一した。
+     例外は Runner Result Contract のファイル成果物(started-at.txt / aborted.txt / execution-spec.json の finalized_at・restored_at)で、機械交換用に
+     UTC Z 付きを維持し、表示・DB 転記時にローカルへ変換する。RELAY_GATE_NOW は UTC Z 付き入力 → ローカル変換の既存規則を維持する。
+     全ホストの TZ 設定は infra(REQ-LOG-003)で統一する前提とし、Spec では指示子を付けない。
+consequences:
+  positive:
+    - "速報クロスチェック設定の所有者と定義元が RDRA 情報と 1:1 になり、Spec 側の仮採用注記(_inference.md #6)が解消された"
+    - "中止後に依頼だけが残って比較が走る抜けを、dispatcher の判定と abort の条件付き UPDATE の二段で塞いだ。既存の app_rw 権限と主キー run_id の 1 依頼制約で足りる"
+    - "実行ログ・stdout・DB・run_id の時刻軸が一致し、運用者が時差を読み替える必要がなくなった"
+  negative:
+    - "ローカル時刻に指示子を付けないため、ホスト間で TZ 設定が異なると時刻軸がずれる。配備側の TZ 統一(infra REQ-LOG-003)が前提になる"
+    - "ファイル成果物(started-at.txt / aborted.txt / execution-spec.json)だけが UTC Z 付きのため、実装は表示・DB 転記時の変換を必ず通す必要がある"
+    - "hang-detect-trend.sh --since の入力形式が UTC Z 付きからローカル指示子なしへ変わる(確認推奨項目として返却)"
+alternatives_considered:
+  - name: "slot runner が aborted.txt を見て完了通知を送らない"
+    reason_rejected: "元の方針資料は runner を相手側の状態や比較の要否を判断しない一方向通知と定めており、判断を runner に持たせると責務が分散する。利用者決定どおり判断主体を dispatcher に置いた"
+  - name: "abort-blue / abort-green が CLAIMED の依頼も ABORTED にする"
+    reason_rejected: "CLAIMED は worker が lease を取得済みで比較開始の直前にあり、abort-rapid-crosscheck の停止確認(worker プロセスの停止)を経ずに中止すると二重実行の防止が崩れる。RDRA 条件「slot 中止可否判定」も REQUESTED だけを対象にしている"
+  - name: "ファイル成果物(started-at.txt / aborted.txt / execution-spec.json)の日時もローカル指示子なしにする"
+    reason_rejected: "Runner Result Contract は外部 IF の正本で、ハング検知の経過時間計算など機械読み取りに使う。ホスト間の TZ 差に依存しない UTC Z 付きを維持し、表示側で変換する方が安全。利用者決定はログ日時のみを対象にしている(確認推奨項目として返却)"
+  - name: "ローカル時刻にオフセット(+09:00 等)を付ける"
+    reason_rejected: "利用者決定が「タイムゾーン指示子なし(run_id の時刻部と同じ時刻軸)」と明記しているため採用しない"

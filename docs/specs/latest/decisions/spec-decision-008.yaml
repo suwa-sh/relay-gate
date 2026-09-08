@@ -1,0 +1,55 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "specification"
+artifact_id: "spec-decision-008"
+title: "列挙値の正本を rdb-schema.yaml の enum に一本化し、CLI 契約の state_codes は derived_from + 値の複製で導出する。USDM 対応は spec-event.yaml の usdm[] を機械照合の正本にする"
+status: "approved"
+generated_at: "2026-09-08T06:20:00Z"
+context: |
+  前々イベント(20260907_024000)の Step6.5 反証レビューで、(1) UC → USDM SPEC ID / 受け入れ条件の対応が各 spec.md の Markdown 表にしか無く
+  後工程(distillery-impl の ATDD 生成、usdm-acceptance-matrix.md の再生成)が表を再パースしている、(2) rdb-schema.yaml の列挙列の値集合が
+  description の日本語文中にしか無く、bash 定数・SQL CHECK 制約・状態コード表の codegen が description を正規表現で拾うか
+  cli-command-contract.yaml の shared_rules.state_codes と手で突き合わせるしかない、の 2 点がスキル側の変更要求(SR-001 / SR-002)として
+  記録されていた。distillery 1.15.1 で dist-spec のスキーマが拡張され(schema-spec-event.json の use_cases[].usdm、schema-rdb-schema.json の
+  columns[].enum)、validateSpecEvent.js / validateRdbSchema.js が未投入を warning にするようになったため、Spec 側の投入が残っていた。
+  同じ値集合が rdb-schema.yaml の列と shared_rules.state_codes の 2 箇所にリテラルで存在し、片方だけを変えたときに検出する仕組みが無い。
+  利用者は 2026-09-08 に、state_codes の具体形として案 A(derived_from + 値の複製)、comparison_type の enum として [job, full] を決定した。
+decision: |
+  1. 列挙値の正本は _cross-cutting/datastore/rdb-schema.yaml の columns[].enum とする。状態列は RDRA 状態.tsv の状態名の英字コード
+     (parallel_runs.status / slot_executions.status / rapid_crosscheck_requests.status / final_crosscheck_requests.status /
+     rapid_runs.completion_status / monitor_records.monitor_status)、区分列はバリエーション.tsv の値(slot_executions.slot / mode、
+     comparison_results.comparison_type / status、monitor_records.role / target_type)、完了結果列(rapid_runs.blue_status / green_status)は
+     SUCCEEDED / FAILED(nullable のまま。未受信は NULL)。description は各値の意味・遷移・条件の説明に使い、値集合の列挙(「値: …」)は持たない。
+  2. slot_executions.mode の enum に off を含めない(off の slot はレコードを作らない)。monitor_records.role はバリエーション「リラン対象 role」の
+     3 値(final-crosscheck は監視対象外)。comparison_results.comparison_type は [job, full](利用者決定 D2 = A。バリエーション「比較種別」2 値。
+     crosscheck-job-map.csv の enum と同じ値集合。速報側の本テーブルに実際に現れるのは job のみである旨を description に残す)。
+  3. cli-command-contract.yaml の shared_rules.state_codes は、DB 列に対応する 6 項目(parallel_run_status / slot_execution_status /
+     request_status / rapid_run_completion / monitor_status / comparison_result_status)を {derived_from: {table, column}, values: [...]} の形に
+     する(利用者決定 D1 = A)。values は enum の複製として残し、不一致は rdb-schema.yaml を正とし実装フェーズのドリフトテストで一致を検証する。
+     request_status は速報と確報の 2 列に対応するため derived_from を配列で両列を指す(値集合は同一)。DB 列に対応しない 5 項目
+     (slot_mode / role / hang_judgement / alert_level / alert_kind)はリテラルのまま {source, values} の形にし、source に RDRA バリエーション名
+     (無いものは出所の規約)を記す。遷移説明(*_transitions / *_labels / *_derivation / hang_judgement_to_monitor_status)は変更しない。
+     state_codes を参照している本文(commands[].notes / idempotency、ui-design.md、各 UC の tier-*.md、usdm-acceptance-matrix.md、
+     uc-dependencies.md)は参照名を変えないため追従しない。
+  4. USDM 対応の機械照合の正本は spec-event.yaml の use_cases[].usdm({req_id, spec_id, scenarios[]})とする。scenarios[] は当該 spec.md の
+     BDD `Scenario:` 名(接尾の SPEC ID を含む完全名)と完全一致させる。各 spec.md「関連 USDM」表はこれと同内容を人が読む形で持ち、
+     「対応 BDD Scenario」列は完全名を「 / 」で区切って列挙し、Scenario 名以外の補足(AC 番号の対応、定義側 / 実行側の分担など)は「※」以降に置く。
+     usdm-acceptance-matrix.md は usdm[] から再集計する(受け入れ条件 122 / 振る舞い SPEC 49 / 49 で既存値と一致)。
+  5. rdra-feedback.md の SR-001 / SR-002 を解消済みへ移し「スキーマ更新までの暫定」注記を削除する。残存する RDRA 変更要望・スキル変更要求は 0 件。
+consequences:
+  positive:
+    - "bash 定数・SQL CHECK 制約・状態コード表の codegen 元が rdb-schema.yaml の enum の 1 箇所に決まり、description の正規表現読み取りが不要になった"
+    - "state_codes の values と enum の一致をドリフトテストで機械検証できる(derived_from が検証対象の列を一意に示す)"
+    - "UC → USDM SPEC / Scenario の対応を YAML から直接読めるため、distillery-impl の ATDD 生成と usdm-acceptance-matrix.md の再集計が Markdown 表の再パースに依存しない"
+    - "validateSpecEvent.js / validateRdbSchema.js の warning が 0 件になり、スキル側の変更要求(SR-*)が残らない"
+  negative:
+    - "state_codes の values は enum の複製のため、rdb-schema.yaml を変えたときは state_codes も更新する必要がある(ドリフトテストで検出する前提)"
+    - "各 spec.md「関連 USDM」表と spec-event.yaml の usdm[] は同内容を二重に持つ(表は人が読む用。差分は validateSpecEvent.js の usdm 検証と再集計で検出する)"
+    - "datastore-schema.md の生成スクリプト(generateDatastoreMd.js 1.15.1)は enum を出力しないため、生成後に type 列へ enum を追記する後処理が必要"
+alternatives_considered:
+  - name: "案 B: state_codes は {derived_from: {table, column}} の参照だけにし、値集合を持たない"
+    reason_rejected: "契約ファイル単体で値集合を読めなくなり、commands[].notes / idempotency の参照先として不便。利用者決定は案 A"
+  - name: "comparison_results.comparison_type の enum を速報側に実際に現れる [job] だけにする"
+    reason_rejected: "crosscheck-job-map.csv の comparison_type enum [job, full] と値集合がずれ、同じ列名で 2 つの値集合を持つことになる。利用者決定 D2 = A は [job, full]"
+  - name: "spec.md「関連 USDM」表の Scenario 名を接尾辞なしのまま残し、YAML 側だけ完全名にする"
+    reason_rejected: "表と YAML の対応が一意に読めず、複数 SPEC を持つ Scenario(例: (SPEC-010-01 / SPEC-010-03))の照合が機械分割で壊れる(19 箇所を事前検出)"

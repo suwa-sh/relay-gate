@@ -1,0 +1,36 @@
+{
+  "event_id": "20260908_063000_feedback_run_completed",
+  "type": "feedback_run_completed",
+  "run_id": "feedback-20260908_spec_machine_readable-20260908_151322-15748",
+  "attempt": 1,
+  "created_at": "2026-09-08T06:44:09.442Z",
+  "result_sha256": "83b99326178f070df2d88008b412ca3e946df4dc51407a9720a45626da1608de",
+  "feedback_request": {
+    "feedback_request_id": "20260908_spec_machine_readable",
+    "input_sha256": "050ee10a913a9aa807a1f970d72f7be6a4186ad05956624b09e1018a872039d8",
+    "request_ids": [
+      "CR-c770d8f0-020",
+      "CR-c770d8f0-021",
+      "CR-c770d8f0-022"
+    ],
+    "work_unit_ids": [
+      "CR-c770d8f0-020#1",
+      "CR-c770d8f0-021#1",
+      "CR-c770d8f0-022#1"
+    ]
+  },
+  "work_unit_dispositions": [
+    {
+      "work_unit_id": "CR-c770d8f0-020#1",
+      "disposition": "applied"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-021#1",
+      "disposition": "applied"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-022#1",
+      "disposition": "applied"
+    }
+  ]
+}

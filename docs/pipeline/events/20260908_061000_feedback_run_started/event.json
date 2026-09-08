@@ -1,0 +1,21 @@
+{
+  "event_id": "20260908_061000_feedback_run_started",
+  "type": "feedback_run_started",
+  "run_id": "feedback-20260908_spec_machine_readable-20260908_151322-15748",
+  "attempt": 1,
+  "created_at": "2026-09-08T06:13:37.054Z",
+  "feedback_request": {
+    "feedback_request_id": "20260908_spec_machine_readable",
+    "input_sha256": "050ee10a913a9aa807a1f970d72f7be6a4186ad05956624b09e1018a872039d8",
+    "request_ids": [
+      "CR-c770d8f0-020",
+      "CR-c770d8f0-021",
+      "CR-c770d8f0-022"
+    ],
+    "work_unit_ids": [
+      "CR-c770d8f0-020#1",
+      "CR-c770d8f0-021#1",
+      "CR-c770d8f0-022#1"
+    ]
+  }
+}
