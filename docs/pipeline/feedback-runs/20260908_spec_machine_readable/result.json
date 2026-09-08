@@ -1,0 +1,86 @@
+{
+  "schema_version": "distillery.feedback-result/v1",
+  "run_id": "feedback-20260908_spec_machine_readable-20260908_151322-15748",
+  "attempt": 1,
+  "feedback_request_id": "20260908_spec_machine_readable",
+  "input_sha256": "050ee10a913a9aa807a1f970d72f7be6a4186ad05956624b09e1018a872039d8",
+  "status": "completed",
+  "stages": [
+    {
+      "stage_id": "spec",
+      "state": "succeeded",
+      "event_ids": [
+        "20260908_062000_feedback_stage_spec"
+      ],
+      "direct_work_unit_ids": [
+        "CR-c770d8f0-020#1",
+        "CR-c770d8f0-021#1",
+        "CR-c770d8f0-022#1"
+      ],
+      "causal_work_unit_ids": [
+        "CR-c770d8f0-020#1",
+        "CR-c770d8f0-021#1",
+        "CR-c770d8f0-022#1"
+      ]
+    }
+  ],
+  "work_units": [
+    {
+      "work_unit_id": "CR-c770d8f0-020#1",
+      "disposition": "applied",
+      "reason": "At least one required closure stage changed its domain artifacts.",
+      "artifact_refs": [
+        "specs/events/20260908_062000_feedback_spec_machine_readable/spec-event.yaml",
+        "specs/events/20260908_062000_feedback_spec_machine_readable/_cross-cutting/usdm-acceptance-matrix.md",
+        "specs/events/20260908_062000_feedback_spec_machine_readable/_cross-cutting/rdra-feedback.md"
+      ]
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-021#1",
+      "disposition": "applied",
+      "reason": "At least one required closure stage changed its domain artifacts.",
+      "artifact_refs": [
+        "specs/events/20260908_062000_feedback_spec_machine_readable/_cross-cutting/datastore/rdb-schema.yaml",
+        "specs/events/20260908_062000_feedback_spec_machine_readable/_cross-cutting/datastore/datastore-schema.md",
+        "specs/events/20260908_062000_feedback_spec_machine_readable/_cross-cutting/rdra-feedback.md"
+      ]
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-022#1",
+      "disposition": "applied",
+      "reason": "At least one required closure stage changed its domain artifacts.",
+      "artifact_refs": [
+        "specs/events/20260908_062000_feedback_spec_machine_readable/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20260908_062000_feedback_spec_machine_readable/_cross-cutting/datastore/rdb-schema.yaml",
+        "specs/events/20260908_062000_feedback_spec_machine_readable/_cross-cutting/rdra-feedback.md"
+      ]
+    }
+  ],
+  "requests": [
+    {
+      "request_id": "CR-c770d8f0-020",
+      "work_unit_ids": [
+        "CR-c770d8f0-020#1"
+      ],
+      "disposition": "applied",
+      "reason": "At least one work unit was applied and all work units completed successfully."
+    },
+    {
+      "request_id": "CR-c770d8f0-021",
+      "work_unit_ids": [
+        "CR-c770d8f0-021#1"
+      ],
+      "disposition": "applied",
+      "reason": "At least one work unit was applied and all work units completed successfully."
+    },
+    {
+      "request_id": "CR-c770d8f0-022",
+      "work_unit_ids": [
+        "CR-c770d8f0-022#1"
+      ],
+      "disposition": "applied",
+      "reason": "At least one work unit was applied and all work units completed successfully."
+    }
+  ],
+  "terminal_event_id": "20260908_063000_feedback_run_completed"
+}
