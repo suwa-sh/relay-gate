@@ -1,4 +1,4 @@
-# digest of arch/latest/arch-design.yaml section domain_architecture (L21-348); source_sha256: 19a2ae1892fa952c345478028efbe49a515641413b20e83bf0c74a1ed55e1725
+# digest of arch/latest/arch-design.yaml section domain_architecture (L21-348); source_sha256: 45a30ece498ff31b18cdec055333a172156d453b8d6d4b4f330b716cfc87de04
 # 派生物。正本は arch-design.yaml。編集しない
 domain_architecture:
   subdomains:

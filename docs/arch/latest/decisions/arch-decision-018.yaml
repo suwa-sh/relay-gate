@@ -1,0 +1,38 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "architecture"
+artifact_id: "arch-decision-018"
+title: "slot 実行の管理 DB 側状態(slot_executions.status)は公開時点の状態を条件付き更新で一度だけ書き、abort 後は ABORTED のまま残してファイル正本へ再同期しない"
+status: "approved"
+generated_at: "2026-09-08T01:50:00Z"
+context: |
+  arch の E-014(slot 実行)の status 属性説明と storage_mapping(rdb 側)は「速報有効時は管理 DB にも同じ状態を保持する」
+  「状態をファイル正本と同じ値で管理 DB にも保持する」と記述していた。一方、arch-decision-017 で確定した条件「中止済み run の
+  比較依頼作成除外」は slot_executions.status を「ファイル正本 aborted.txt のミラー」と定め、USDM SPEC-005-02 の受け入れ条件
+  (abort-blue で ABORTED にした slot の実装が走り切って exitcode.txt を公開しても、管理 DB の slot_executions.status は ABORTED の
+  まま)は、その経路で管理 DB の値がファイル正本の導出値(exitcode.txt 優先 = SUCCEEDED / FAILED)と一致しないことを前提にしている。
+  「同じ状態を保持する」という文言はこの経路で成り立たず、正本間に文言差が残っていた(spec 反証レビュー rdra-feedback #16、todo DIST-029)。
+  利用者は 2026-09-08 に DIST-029 A を決定し、RDRA の条件「slot 実行の状態導出規則」の管理 DB 側文言が
+  「速報クロスチェック有効時は、管理 DB の slot_executions.status に aborted.txt または exitcode.txt の公開時点の状態を条件付き更新
+  (RUNNING のときだけ)で一度だけ書く。abort-blue / abort-green で ABORTED にした後に実装が走り切って exitcode.txt を公開した場合、
+  管理 DB は ABORTED のまま残し、ファイル正本の導出値(exitcode.txt 優先)へ再同期しない。管理 DB の値は条件「中止済み run の
+  比較依頼作成除外」の判定材料として使う」に改められた(rdra:20260908_011000_feedback_slot_status_wording)。
+decision: |
+  - E-014(slot 実行)の status 属性説明と storage_mapping(rdb 側)の理由を RDRA の新文言に揃える。管理 DB の slot_executions.status は
+    aborted.txt または exitcode.txt の公開時点の状態を条件付き更新(RUNNING のときだけ)で一度だけ書き、abort-blue / abort-green で
+    ABORTED にした後に実装が走り切って exitcode.txt を公開してもファイル正本の導出値へ再同期しない
+  - 二重マッピングの位置づけを「ファイル正本 + 速報有効時の管理 DB 複製(同じ値)」から「ファイル正本 + 速報有効時の管理 DB への一度書き」に
+    改め、管理 DB の値が dispatcher の中止済み run 判定(条件「中止済み run の比較依頼作成除外」)の判定材料であることを storage_mapping に明記する
+  - 実装挙動は変更しない。LP-021(管理 DB の ABORTED 更新は WHERE 句で現在状態を条件にする条件付き UPDATE)、SP-009 / LP-023 / BC-002 / E-016
+    (判定材料は slot_executions.status で aborted.txt のミラー)、LP-005(ファイル正本からの状態導出はドメイン層の関数)は新文言と整合しており据え置く
+consequences:
+  positive:
+    - "USDM SPEC-005-02 の受け入れ条件と arch のデータアーキテクチャの文言が一致し、次回以降の反証レビューで同じ差分が再指摘されない"
+    - "管理 DB の slot_executions.status が「ファイル正本の複製」ではなく「公開時点の一度書き」であることが明示され、spec(rdb-schema.yaml / exitcode_to_status.slot_execution)の記述根拠になる"
+  negative:
+    - "ファイル正本の導出値と管理 DB の値が abort 後の走り切り経路で一致しないことを、運用者の参照時に読み分ける必要がある(ファイル正本が実行結果、管理 DB が中止済み判定の材料)"
+alternatives_considered:
+  - name: "Option B: exitcode.txt 公開時に管理 DB を SUCCEEDED / FAILED へ再同期し「同じ状態を保持する」文言を維持する"
+    reason_rejected: "abort 済み run の slot_executions.status が SUCCEEDED に戻ると dispatcher の中止済み run 判定(arch-decision-017)が成立せず、利用者決定「abort したなら速報クロスチェックは実施しない」に反する。利用者は DIST-029 A で管理 DB 側文言の変更のみを決定した"
+  - name: "Option C: 文言差を spec の注記だけで吸収し arch は変更しない"
+    reason_rejected: "arch の storage_mapping が「ファイル正本と同じ値」と断言したままでは spec の記述根拠と矛盾する。文言参照の追従のみで実装挙動は不変のため、arch 側を新文言に揃える"

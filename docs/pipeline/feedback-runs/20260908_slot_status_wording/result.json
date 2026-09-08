@@ -1,0 +1,111 @@
+{
+  "schema_version": "distillery.feedback-result/v1",
+  "run_id": "feedback-20260908_slot_status_wording-20260908_135026-61198",
+  "attempt": 1,
+  "feedback_request_id": "20260908_slot_status_wording",
+  "input_sha256": "19b24f61aa56ced09d1b35120acf027c40554b785129c5c945f33c55bd8d7fcf",
+  "status": "completed",
+  "stages": [
+    {
+      "stage_id": "requirements",
+      "state": "succeeded",
+      "event_ids": [
+        "20260908_011000_feedback_stage_requirements"
+      ],
+      "direct_work_unit_ids": [
+        "CR-c770d8f0-019#1"
+      ],
+      "causal_work_unit_ids": [
+        "CR-c770d8f0-019#1"
+      ]
+    },
+    {
+      "stage_id": "quality_attributes",
+      "state": "succeeded",
+      "event_ids": [
+        "20260908_013000_feedback_stage_quality_attributes"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-c770d8f0-019#1"
+      ]
+    },
+    {
+      "stage_id": "architecture",
+      "state": "succeeded",
+      "event_ids": [
+        "20260908_015000_feedback_stage_architecture"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-c770d8f0-019#1"
+      ]
+    },
+    {
+      "stage_id": "infrastructure",
+      "state": "succeeded",
+      "event_ids": [
+        "20260908_021000_feedback_stage_infrastructure"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-c770d8f0-019#1"
+      ]
+    },
+    {
+      "stage_id": "spec",
+      "state": "succeeded",
+      "event_ids": [
+        "20260908_024000_feedback_stage_spec"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-c770d8f0-019#1"
+      ]
+    }
+  ],
+  "work_units": [
+    {
+      "work_unit_id": "CR-c770d8f0-019#1",
+      "disposition": "applied",
+      "reason": "At least one required closure stage changed its domain artifacts.",
+      "artifact_refs": [
+        "usdm/events/20260908_011000_feedback_slot_status_wording/requirements.yaml",
+        "rdra/events/20260908_011000_feedback_slot_status_wording/条件.tsv",
+        "nfr/events/20260907_120000_feedback_abort_consistency/nfr-grade-diff.yaml",
+        "nfr/events/20260907_120000_feedback_abort_consistency/_changes.md",
+        "arch/events/20260908_015000_feedback_slot_status_wording/arch-design-diff.yaml",
+        "arch/events/20260908_015000_feedback_slot_status_wording/_changes.md",
+        "infra/events/20260907_124000_feedback_abort_consistency/infra-event-diff.yaml",
+        "infra/events/20260907_124000_feedback_abort_consistency/docs/mcl/product/output/product-impl-onprem.yaml",
+        "specs/events/20260908_024000_feedback_slot_status_wording/spec-event.yaml",
+        "specs/events/20260908_024000_feedback_slot_status_wording/_review/change-brief.md",
+        "specs/events/20260908_024000_feedback_slot_status_wording/_cross-cutting/datastore/rdb-schema.yaml",
+        "specs/events/20260908_024000_feedback_slot_status_wording/_cross-cutting/datastore/datastore-schema.md",
+        "specs/events/20260908_024000_feedback_slot_status_wording/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20260908_024000_feedback_slot_status_wording/_cross-cutting/ux-ui/ui-design.md",
+        "specs/events/20260908_024000_feedback_slot_status_wording/_cross-cutting/rdra-feedback.md",
+        "specs/events/20260908_024000_feedback_slot_status_wording/_cross-cutting/usdm-acceptance-matrix.md",
+        "specs/events/20260908_024000_feedback_slot_status_wording/_cross-cutting/traceability-matrix.md",
+        "specs/events/20260908_024000_feedback_slot_status_wording/実装切替業務/実装切替ジョブ実行フロー/buc-spec.md",
+        "specs/events/20260908_024000_feedback_slot_status_wording/実装切替業務/実装切替ジョブ実行フロー/実装スクリプトを実行して Runner Result を出力する/spec.md",
+        "specs/events/20260908_024000_feedback_slot_status_wording/実装切替業務/実装切替ジョブ実行フロー/実装スクリプトを実行して Runner Result を出力する/tier-facade.md",
+        "specs/events/20260908_024000_feedback_slot_status_wording/実装切替業務/実装切替ジョブ実行フロー/実装スクリプトを実行して Runner Result を出力する/_model-summary.yaml",
+        "specs/events/20260908_024000_feedback_slot_status_wording/クロスチェック業務/速報クロスチェックフロー/両系成功時に速報比較依頼を作成する/spec.md",
+        "specs/events/20260908_024000_feedback_slot_status_wording/クロスチェック業務/速報クロスチェックフロー/両系成功時に速報比較依頼を作成する/tier-rapid-crosscheck.md",
+        "specs/events/20260908_024000_feedback_slot_status_wording/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/spec.md"
+      ]
+    }
+  ],
+  "requests": [
+    {
+      "request_id": "CR-c770d8f0-019",
+      "work_unit_ids": [
+        "CR-c770d8f0-019#1"
+      ],
+      "disposition": "applied",
+      "reason": "At least one work unit was applied and all work units completed successfully."
+    }
+  ],
+  "terminal_event_id": "20260908_024000_feedback_run_completed"
+}

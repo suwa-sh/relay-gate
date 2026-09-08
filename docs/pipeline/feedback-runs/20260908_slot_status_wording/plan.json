@@ -1,0 +1,219 @@
+{
+  "schema_version": "distillery.feedback-plan/v1",
+  "feedback_request_id": "20260908_slot_status_wording",
+  "input_sha256": "19b24f61aa56ced09d1b35120acf027c40554b785129c5c945f33c55bd8d7fcf",
+  "ambiguity_policy": "interactive",
+  "routing_basis": {
+    "ownership_catalog_version": "1.0.0",
+    "ownership_catalog_sha256": "801750c2abe99945a3de9387b82339b2bc96ccb2da564f9923cc0e9b76a2bd39",
+    "routing_policy_version": "1.1.0",
+    "routing_policy_sha256": "3873275bf4adb3d9d7b7c41c22c9463d054a3614df7bbcab7514f0c1e23e166e",
+    "prompt_schema_sha256": "bf7c7f34d7a2fc5976ccd2589a454172a4630e1448c509966b620f88029732c4",
+    "stage_packet_renderer_version": "1",
+    "skipped_stages": [
+      "design_system",
+      "spec_stories"
+    ],
+    "repository_head": "916e272d5822a0b3f0df04108dd928ff1f9adc87",
+    "latest_domain_event_ids": {
+      "requirements": {
+        "rdra/events": "20260907_114000_feedback_abort_consistency",
+        "usdm/events": "20260907_114000_feedback_abort_consistency"
+      },
+      "quality_attributes": {
+        "nfr/events": "20260907_120000_feedback_abort_consistency"
+      },
+      "architecture": {
+        "arch/events": "20260907_122000_feedback_abort_consistency"
+      },
+      "infrastructure": {
+        "infra/events": "20260907_124000_feedback_abort_consistency"
+      },
+      "design_system": {
+        "design/events": null
+      },
+      "spec": {
+        "specs/events": "20260907_131000_feedback_abort_consistency"
+      },
+      "spec_stories": {
+        "design/events": null
+      }
+    },
+    "domain_event_root_snapshots": {
+      "rdra/events": {
+        "head_event_id": "20260907_114000_feedback_abort_consistency",
+        "head_event_sha256": "8292df9e4819278a4ce1d059469f7a5babc19294916630ba0b67bb4a389a13c3",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency"
+        ],
+        "event_set_sha256": "f0ae72a3eab3ff100c037ab960fb04a8c0ef45497a789ace37143d25fd182eea",
+        "latest_tree_sha256": "2b76c8fc6198a523b3a0ce03731174489bf9e55b0bebd436a5acafc90ffb7485"
+      },
+      "usdm/events": {
+        "head_event_id": "20260907_114000_feedback_abort_consistency",
+        "head_event_sha256": "115da44cba3dca1dee68d0ff27bb771fac2497da0659d6465cd6fa0fb0160167",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency"
+        ],
+        "event_set_sha256": "f0ae72a3eab3ff100c037ab960fb04a8c0ef45497a789ace37143d25fd182eea",
+        "latest_tree_sha256": "799a4fb16f63b918cfe2c0226c9e94b0c828ee49a57228d24859b66273ba7205"
+      },
+      "nfr/events": {
+        "head_event_id": "20260907_120000_feedback_abort_consistency",
+        "head_event_sha256": "c0349f0e05f02afbca18102e8d1ac5a207fa64bab571bbbbd569032216ef9050",
+        "event_ids": [
+          "20260830_183726_initial_nfr",
+          "20260905_085000_feedback_todo_resolution",
+          "20260907_013000_feedback_todo_followup",
+          "20260907_120000_feedback_abort_consistency"
+        ],
+        "event_set_sha256": "a6bbdaf118e9d5be8235a5bb700a864db7890e21782e78bf5a9f6e615391351f",
+        "latest_tree_sha256": "51f9059e35f6f5c65fc18cd1f1457bd5beca3b5b23271d538f4304b0ece9c7ef"
+      },
+      "arch/events": {
+        "head_event_id": "20260907_122000_feedback_abort_consistency",
+        "head_event_sha256": "de293739ccb2c91ebd1ac13a3346e0d0b203b306234bff6d958e791a7f0f3e28",
+        "event_ids": [
+          "20260830_184457_initial_arch",
+          "20260830_202427_arch_infra_feedback_20260830_190412_infra_product_design",
+          "20260905_091000_feedback_todo_resolution",
+          "20260907_015000_feedback_todo_followup",
+          "20260907_122000_feedback_abort_consistency"
+        ],
+        "event_set_sha256": "ac773986b05ba75afbfd9532d329bd512b1dd49c7b5ed40e0377a566ec998771",
+        "latest_tree_sha256": "35c1954874727aafb9082c4b6fe6617470896ea9f53e07d7b1521893b68952ef"
+      },
+      "infra/events": {
+        "head_event_id": "20260907_124000_feedback_abort_consistency",
+        "head_event_sha256": "639f743d85b997e1297610b2a7c2db41fd004e74473f96ec6292b601509a6331",
+        "event_ids": [
+          "20260830_190412_infra_product_design",
+          "20260905_093000_feedback_todo_resolution",
+          "20260907_021000_feedback_todo_followup",
+          "20260907_124000_feedback_abort_consistency"
+        ],
+        "event_set_sha256": "d677cfe53f64d6ade8a594e56e9ed6dfab861741cc961ff3e42f30db5445691f",
+        "latest_tree_sha256": "639f743d85b997e1297610b2a7c2db41fd004e74473f96ec6292b601509a6331"
+      },
+      "design/events": {
+        "head_event_id": null,
+        "head_event_sha256": null,
+        "event_ids": [],
+        "event_set_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "latest_tree_sha256": null
+      },
+      "specs/events": {
+        "head_event_id": "20260907_131000_feedback_abort_consistency",
+        "head_event_sha256": "25fcf5b38da2779afeea9cd1d9805b019ff1b60aa5285004c3193243549d7d74",
+        "event_ids": [
+          "20260830_202851_spec_generation",
+          "20260905_100000_feedback_todo_resolution",
+          "20260907_024000_feedback_todo_followup",
+          "20260907_131000_feedback_abort_consistency"
+        ],
+        "event_set_sha256": "9cda00ed52d82b58afc05e4ed407bffb11e44ae03ef7685759f69a243fc1c753",
+        "latest_tree_sha256": "aa15cf7efe6db9ffd9334698326376f20cc1efe52503e6876fe2b9ef196d0860"
+      }
+    }
+  },
+  "request_ids": [
+    "CR-c770d8f0-019"
+  ],
+  "work_units": [
+    {
+      "request_id": "CR-c770d8f0-019",
+      "constraint_key": "slot-status-db-wording",
+      "direct_stage": "requirements",
+      "reason": "条件「slot 実行の状態導出規則」と USDM 受け入れ条件の文言変更であり要件正本が最上流",
+      "evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-003"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/rdra/latest/条件.tsv"
+        },
+        {
+          "kind": "user_decision",
+          "value": "2026-09-08 DIST-029 A"
+        }
+      ],
+      "id": "CR-c770d8f0-019#1",
+      "required_closure_stages": [
+        "requirements",
+        "quality_attributes",
+        "architecture",
+        "infrastructure",
+        "spec"
+      ]
+    }
+  ],
+  "execution_stages": [
+    {
+      "id": "requirements",
+      "steps": [
+        "1"
+      ],
+      "direct_work_unit_ids": [
+        "CR-c770d8f0-019#1"
+      ],
+      "causal_work_unit_ids": [
+        "CR-c770d8f0-019#1"
+      ],
+      "stage_packet": "stage-packets/requirements.md"
+    },
+    {
+      "id": "quality_attributes",
+      "steps": [
+        "2"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-c770d8f0-019#1"
+      ],
+      "stage_packet": "stage-packets/quality_attributes.md"
+    },
+    {
+      "id": "architecture",
+      "steps": [
+        "3"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-c770d8f0-019#1"
+      ],
+      "stage_packet": "stage-packets/architecture.md"
+    },
+    {
+      "id": "infrastructure",
+      "steps": [
+        "4a",
+        "4b"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-c770d8f0-019#1"
+      ],
+      "stage_packet": "stage-packets/infrastructure.md"
+    },
+    {
+      "id": "spec",
+      "steps": [
+        "6"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-c770d8f0-019#1"
+      ],
+      "stage_packet": "stage-packets/spec.md"
+    }
+  ],
+  "outside_work_unit_ids": []
+}

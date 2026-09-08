@@ -1,0 +1,135 @@
+uc: "実行を ABORTED へ遷移させる"
+business: "実行復旧業務"
+buc: "実行中止フロー"
+paths: []
+x_cli_commands:
+  - name: "abort-blue.sh"
+    tier: "tier-ops"
+    role: "uses"
+    synopsis: "abort-blue.sh --run-id <RUN_ID> [--yes] [--verbose]"
+    invoked_by: "運用者(直接起動)/ ジョブスケジューラ(--yes)"
+    args: []
+    options:
+      - name: "--run-id"
+        type: "string"
+        required: true
+        default: ""
+        description: "対象 run_id。slots.blue.mode が background かつファイル導出 status が RUNNING のとき facade/<run_id>/blue/aborted.txt を書き、RAPID_CROSSCHECK_MODE が off 以外なら slot_executions(run_id, slot='blue') も ABORTED へ。対象 run に REQUESTED で未着手の速報比較依頼があればそれも ABORTED にする(競合窓の保険。条件「slot 中止可否判定」)"
+      - name: "--yes"
+        type: "boolean"
+        required: false
+        default: "false"
+        description: "停止確認省略"
+      - name: "--verbose"
+        type: "boolean"
+        required: false
+        default: "false"
+        description: "info を stderr に出す"
+    stdin: "前半 UC と同一"
+    stdout: "(現在状態の後に)status=ABORTED / aborted_at={ローカル日時}"
+    stderr: "error: run is not abortable run_id=... role=blue mode=... status=... / error: run is not abortable (state changed concurrently) ... / error: management db update failed ... + hint: rerun abort-blue.sh --run-id ... to reapply / warn: aborted.txt already published; management db updated"
+    exit_codes:
+      - code: 0
+        meaning: "aborted.txt を .tmp → mv で公開した(off 以外は加えて slot_executions を ABORTED に更新し、parallel_runs が STARTED / RUNNING なら併せて ABORTED。COMPLETED は変更しない。管理 DB の UPDATE 0 件は WARN のみ)。RAPID_CROSSCHECK_MODE が off 以外なら加えて rapid_crosscheck_requests を条件付き UPDATE(WHERE run_id=? AND status='REQUESTED')で ABORTED(completed_at=now)にする。0 件は正常(依頼が無い、または CLAIMED / RUNNING / 終端済み)。CLAIMED / RUNNING の依頼は変更しない(明示中止は abort-rapid-crosscheck.sh)。off では aborted.txt だけで完了"
+      - code: 3
+        meaning: "中止不可(background かつ RUNNING でない: 終端済み・中止済み・未起動・foreground / off)/ 再確認で exitcode.txt または aborted.txt を検出(競合)"
+      - code: 6
+        meaning: "aborted.txt 書き込み失敗 / 管理 DB 接続・SQL 失敗(aborted.txt は残す)"
+  - name: "abort-green.sh"
+    tier: "tier-ops"
+    role: "uses"
+    synopsis: "abort-green.sh --run-id <RUN_ID> [--yes] [--verbose]"
+    invoked_by: "運用者(直接起動)/ ジョブスケジューラ(--yes)"
+    args: []
+    options:
+      - name: "--run-id"
+        type: "string"
+        required: true
+        default: ""
+        description: "対象 run_id。slots.green.mode が background かつファイル導出 status が RUNNING のとき facade/<run_id>/green/aborted.txt を書き、RAPID_CROSSCHECK_MODE が off 以外なら slot_executions(run_id, slot='green') も ABORTED へ。対象 run に REQUESTED で未着手の速報比較依頼があればそれも ABORTED にする(abort-blue.sh と同じ)"
+      - name: "--yes"
+        type: "boolean"
+        required: false
+        default: "false"
+        description: "停止確認省略"
+      - name: "--verbose"
+        type: "boolean"
+        required: false
+        default: "false"
+        description: "info を stderr に出す"
+    stdin: "前半 UC と同一"
+    stdout: "status=ABORTED / aborted_at={ローカル日時}"
+    stderr: "abort-blue.sh と同じ(role=green)"
+    exit_codes:
+      - code: 0
+        meaning: "aborted.txt を公開した(off 以外は管理 DB も ABORTED。REQUESTED の速報比較依頼も ABORTED。abort-blue.sh と同じ)"
+      - code: 3
+        meaning: "中止不可 / 競合"
+      - code: 6
+        meaning: "aborted.txt 書き込み失敗 / 管理 DB 失敗"
+  - name: "abort-rapid-crosscheck.sh"
+    tier: "tier-ops"
+    role: "uses"
+    synopsis: "abort-rapid-crosscheck.sh --run-id <RUN_ID> [--yes] [--verbose]"
+    invoked_by: "運用者(直接起動)/ ジョブスケジューラ(--yes)"
+    args: []
+    options:
+      - name: "--run-id"
+        type: "string"
+        required: true
+        default: ""
+        description: "対象 run_id。rapid_crosscheck_requests の依頼が REQUESTED / CLAIMED / RUNNING のとき ABORTED へ(status IN 条件付き UPDATE。条件「依頼中止可否判定」)"
+      - name: "--yes"
+        type: "boolean"
+        required: false
+        default: "false"
+        description: "停止確認省略"
+      - name: "--verbose"
+        type: "boolean"
+        required: false
+        default: "false"
+        description: "info を stderr に出す"
+    stdin: "前半 UC と同一"
+    stdout: "status=ABORTED / aborted_at={ローカル日時}"
+    stderr: "error: request is not abortable run_id=... role=rapid-crosscheck status=...(終端状態のときだけ)/ error: request is not abortable (state changed concurrently) run_id=... role=rapid-crosscheck status=<再 SELECT した status>"
+    exit_codes:
+      - code: 0
+        meaning: "UPDATE rapid_crosscheck_requests SET status='ABORTED', completed_at=? WHERE run_id=? AND status IN ('REQUESTED','CLAIMED','RUNNING') が 1 件(REQUESTED / CLAIMED / RUNNING のいずれからでも ABORTED にする。条件「依頼中止可否判定」)。parallel_runs が STARTED / RUNNING なら併せて ABORTED(COMPLETED は変更しない。更新 0 件で可)"
+      - code: 3
+        meaning: "中止不可(SUCCEEDED / FAILED / ABORTED の終端状態。状態を変更せずエラー終了)/ 更新件数 0(表示後に終端した競合)。対象依頼なし / 応答が yes 以外 / 管理 DB なし(RAPID_CROSSCHECK_MODE=off)は前半 UC"
+      - code: 6
+        meaning: "管理 DB 失敗"
+  - name: "abort-final-crosscheck.sh"
+    tier: "tier-ops"
+    role: "uses"
+    synopsis: "abort-final-crosscheck.sh --run-id <FINAL_CROSSCHECK_ID> [--yes] [--verbose]"
+    invoked_by: "運用者(直接起動)/ ジョブスケジューラ(--yes)"
+    args: []
+    options:
+      - name: "--run-id"
+        type: "string"
+        required: true
+        default: ""
+        description: "対象 final_crosscheck_id。final_crosscheck_requests を RUNNING のときだけ ABORTED へ(REQUESTED / CLAIMED / 終端は状態を変更せずエラー終了)"
+      - name: "--yes"
+        type: "boolean"
+        required: false
+        default: "false"
+        description: "停止確認省略"
+      - name: "--verbose"
+        type: "boolean"
+        required: false
+        default: "false"
+        description: "info を stderr に出す"
+    stdin: "前半 UC と同一"
+    stdout: "status=ABORTED / aborted_at={ローカル日時}"
+    stderr: "error: request is not abortable run_id=... role=final-crosscheck status=..."
+    exit_codes:
+      - code: 0
+        meaning: "ABORTED へ更新した(parallel_runs は持たないため併更新なし)"
+      - code: 3
+        meaning: "中止不可(RUNNING でない: REQUESTED / CLAIMED / 終端。状態を変更せずエラー終了。確報の未着手依頼はジョブスケジューラの正規ジョブが同期 polling 中で runner 側の polling 上限 FINAL_POLL_LIMIT_SEC で扱う)/ 更新件数 0"
+      - code: 6
+        meaning: "管理 DB 失敗"
+async_events: []
+schemas: []

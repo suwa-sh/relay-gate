@@ -1,0 +1,62 @@
+meta:
+  event_id: "20260908_015000_feedback_slot_status_wording"
+  trigger_event: "rdra:20260908_011000_feedback_slot_status_wording"
+  created_at: "2026-09-08T01:50:00Z"
+  source: "RDRA 差分 20260908_011000_feedback_slot_status_wording に基づくアーキテクチャ再評価(条件「slot 実行の状態導出規則」の管理 DB 側文言の追従: slot_executions.status は aborted.txt / exitcode.txt 公開時点の状態を条件付き更新(RUNNING のときだけ)で一度だけ書き、abort 後は ABORTED のまま残してファイル正本へ再同期しない。実装挙動は不変)"
+feedback_request:
+  feedback_request_id: "20260908_slot_status_wording"
+  input_sha256: "19b24f61aa56ced09d1b35120acf027c40554b785129c5c945f33c55bd8d7fcf"
+  request_ids: ["CR-c770d8f0-019"]
+  work_unit_ids: ["CR-c770d8f0-019#1"]
+data_architecture:
+  entities:
+    - id: "E-014"
+      name: "slot 実行"
+      source_info: "情報: slot 実行"
+      model_type: "event_snapshot"
+      attributes:
+        - name: "run_id"
+          type: "string"
+          description: "run_id"
+          nullable: false
+          primary_key: true
+        - name: "slot"
+          type: "string"
+          description: "slot(blue / green)"
+          nullable: false
+          primary_key: true
+        - name: "mode"
+          type: "string"
+          description: "mode(foreground / background / off)"
+          nullable: false
+          primary_key: false
+        - name: "pid"
+          type: "integer"
+          description: "PID"
+          nullable: true
+          primary_key: false
+        - name: "artifact_dir"
+          type: "string"
+          description: "成果物ディレクトリ"
+          nullable: false
+          primary_key: false
+        - name: "status"
+          type: "string"
+          description: "RUNNING / SUCCEEDED / FAILED / ABORTED(ファイル正本から導出: exitcode.txt があれば SUCCEEDED(0)/ FAILED(非 0)、無く aborted.txt があれば ABORTED、どちらも無ければ RUNNING。速報有効時は管理 DB の slot_executions.status に aborted.txt または exitcode.txt の公開時点の状態を条件付き更新(RUNNING のときだけ)で一度だけ書く。abort-blue / abort-green で ABORTED にした後に実装が走り切って exitcode.txt を公開した場合、管理 DB は ABORTED のまま残し、ファイル正本の導出値(exitcode.txt 優先)へ再同期しない。管理 DB の値は条件「中止済み run の比較依頼作成除外」の判定材料として使う)"
+          nullable: false
+          primary_key: false
+      relationships:
+        - target_entity: "E-013"
+          type: "N:1"
+          description: "並行稼働実行に属する"
+        - target_entity: "E-011"
+          type: "1:1"
+          description: "Runner Result を出力する"
+        - target_entity: "E-015"
+          type: "1:1"
+          description: "完了時に完了通知を送る(速報有効時)"
+  storage_mapping:
+    - entity_id: "E-014"
+      storage_type: "rdb"
+      reason: "RAPID_CROSSCHECK_MODE が foreground / background のときは mode / PID / 状態を管理 DB にも保持し、abort-blue / abort-green と background-rerun の対象特定、dispatcher の中止済み run 判定(条件「中止済み run の比較依頼作成除外」)、運用者の参照に使う。status は aborted.txt または exitcode.txt の公開時点の状態を条件付き更新(RUNNING のときだけ)で一度だけ書く。abort-blue / abort-green で ABORTED にした後に実装が走り切って exitcode.txt を公開した場合も管理 DB は ABORTED のまま残し、ファイル正本の導出値(exitcode.txt 優先)へ再同期しない(ファイル正本の導出値と管理 DB の値はこの経路で一致しない)。二重マッピング(ファイル正本 + 速報有効時の管理 DB への一度書き)として確定する(条件「slot 実行の状態導出規則」)"
+      confidence: "high"

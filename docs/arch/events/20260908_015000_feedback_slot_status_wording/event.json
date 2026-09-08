@@ -1,0 +1,47 @@
+{
+  "schema_version": "distillery.arch-feedback-event/v1",
+  "event_id": "20260908_015000_feedback_slot_status_wording",
+  "created_at": "2026-09-08T01:50:00Z",
+  "stage": "architecture",
+  "trigger_event": "rdra:20260908_011000_feedback_slot_status_wording",
+  "feedback_request": {
+    "feedback_request_id": "20260908_slot_status_wording",
+    "input_sha256": "19b24f61aa56ced09d1b35120acf027c40554b785129c5c945f33c55bd8d7fcf",
+    "request_ids": [
+      "CR-c770d8f0-019"
+    ],
+    "work_unit_ids": [
+      "CR-c770d8f0-019#1"
+    ]
+  },
+  "members": [
+    {
+      "path": "arch/events/20260908_015000_feedback_slot_status_wording/_changes.md",
+      "sha256": "329431add30fa13f8977c96fde839b0205131bd57700176eb2976b1cd97b8fd8"
+    },
+    {
+      "path": "arch/events/20260908_015000_feedback_slot_status_wording/_inference.md",
+      "sha256": "bec95bbc4ca0d04b7a6acbcdcc3a6fd86da1df0dff01113277caac534f4faf66"
+    },
+    {
+      "path": "arch/events/20260908_015000_feedback_slot_status_wording/arch-design-diff.yaml",
+      "sha256": "66c3496e29a1353333d646c1eedc988aa7a7febb328934530c8171f94e141602"
+    },
+    {
+      "path": "arch/events/20260908_015000_feedback_slot_status_wording/arch-design.md",
+      "sha256": "f31c906e185470953beda541f49a31cca31e847da6493b8c7948ab56e52f06f0"
+    },
+    {
+      "path": "arch/events/20260908_015000_feedback_slot_status_wording/coverage-report.md",
+      "sha256": "920d03bc1dc57d1905427a0eb42f2dcf6e005ca38de62e9207d02d2d33f72f54"
+    },
+    {
+      "path": "arch/events/20260908_015000_feedback_slot_status_wording/decisions/arch-decision-018.yaml",
+      "sha256": "54f32fe5b01e2888b9af82566a3026c5aaaee77adf924372bbe55cdf31bdfb74"
+    },
+    {
+      "path": "arch/events/20260908_015000_feedback_slot_status_wording/source.txt",
+      "sha256": "0c3783b87cf7c2b8ecd67af7a8222a033d2ff6e650e7dc06c7cd994a30293b3d"
+    }
+  ]
+}

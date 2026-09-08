@@ -1,15 +1,15 @@
 version: "1.0"
-event_id: "20260907_114000_feedback_abort_consistency"
-created_at: "2026-09-07T11:40:00"
-source: "docs/usdm/events/ を順に適用したスナップショット(初期構築 20260830_181841_initial_build に feedback 20260905_todo_resolution の増分 20260905_083000_feedback_todo_resolution、feedback 20260907_todo_followup の増分 20260907_011000_feedback_todo_followup、feedback 20260907_abort_consistency の増分 20260907_114000_feedback_abort_consistency を適用)"
+event_id: "20260908_011000_feedback_slot_status_wording"
+created_at: "2026-09-08T01:10:00"
+source: "docs/usdm/events/ を順に適用したスナップショット(初期構築 20260830_181841_initial_build に feedback 20260905_todo_resolution の増分 20260905_083000_feedback_todo_resolution、feedback 20260907_todo_followup の増分 20260907_011000_feedback_todo_followup、feedback 20260907_abort_consistency の増分 20260907_114000_feedback_abort_consistency、feedback 20260908_slot_status_wording の増分 20260908_011000_feedback_slot_status_wording を適用)"
 system_name: "relay-gate 並行稼働実行基盤"
-last_updated: "2026-09-07T11:40:00"
-last_event_id: "20260907_114000_feedback_abort_consistency"
+last_updated: "2026-09-08T01:10:00"
+last_event_id: "20260908_011000_feedback_slot_status_wording"
 feedback_request:
-  feedback_request_id: "20260907_abort_consistency"
-  input_sha256: "70cda63f92e887e459a3817580e45a840e3ff201065a534085ad113fb8910b81"
-  request_ids: ["CR-c770d8f0-016","CR-c770d8f0-017","CR-c770d8f0-018"]
-  work_unit_ids: ["CR-c770d8f0-016#1","CR-c770d8f0-017#1","CR-c770d8f0-018#1"]
+  feedback_request_id: "20260908_slot_status_wording"
+  input_sha256: "19b24f61aa56ced09d1b35120acf027c40554b785129c5c945f33c55bd8d7fcf"
+  request_ids: ["CR-c770d8f0-019"]
+  work_unit_ids: ["CR-c770d8f0-019#1"]
 
 requirements:
   - id: "REQ-001"
@@ -288,10 +288,11 @@ requirements:
           - "Given foreground の blue が完了して並行稼働実行が COMPLETED になった後に background の green を abort-green で中止した When green の実装が走り切って完了通知を送る Then 速報比較依頼は作成されず、実行ログに警告が残る"
           - "Given 並行稼働実行が ABORTED で片系が成功済み When もう片系の完了通知を受ける Then 両系成功でも速報比較依頼は作成されず、実行ログに警告が残る"
           - "Given 中止した run を background-rerun でリランした When 新しい run の両系が成功する Then 新しい run_id で速報比較依頼が作成される"
+          - "Given abort-blue で ABORTED にした slot の実装が走り切って exitcode.txt を公開した When 管理 DB を確認する Then slot_executions.status は ABORTED のままである"
         feedback_source:
-          feedback_request_id: "20260907_abort_consistency"
+          feedback_request_id: "20260908_slot_status_wording"
           work_unit_ids:
-            - "CR-c770d8f0-016#1"
+            - "CR-c770d8f0-019#1"
         affected_models:
           - type: "information"
             action: "add"
@@ -317,6 +318,9 @@ requirements:
           - type: "condition"
             action: "modify"
             target: "両系成功判定"
+          - type: "condition"
+            action: "modify"
+            target: "slot 実行の状態導出規則"
       - id: "SPEC-005-03"
         specification: "速報クロスチェック worker は比較依頼を取得(poll / claim)し、job_id ごとの比較定義に従って比較ツールでジョブ単位の比較を実行し、stdout・stderr・exitcode と比較結果(comparison_result)を登録する"
         acceptance_criteria:

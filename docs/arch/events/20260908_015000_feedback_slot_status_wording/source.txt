@@ -1,0 +1,10 @@
+RDRA 差分 20260908_011000_feedback_slot_status_wording に基づくアーキテクチャ再評価(条件「slot 実行の状態導出規則」の管理 DB 側文言の追従: slot_executions.status は aborted.txt / exitcode.txt 公開時点の状態を条件付き更新(RUNNING のときだけ)で一度だけ書き、abort 後は ABORTED のまま残してファイル正本へ再同期しない。実装挙動は不変)
+trigger_event: rdra:20260908_011000_feedback_slot_status_wording
+
+feedback_request_id: 20260908_slot_status_wording
+input_sha256: 19b24f61aa56ced09d1b35120acf027c40554b785129c5c945f33c55bd8d7fcf
+request_ids: CR-c770d8f0-019
+direct_work_unit_ids: (none)
+causal_work_unit_ids: CR-c770d8f0-019#1
+stage_packet: docs/pipeline/feedback-runs/20260908_slot_status_wording/stage-packets/architecture.md
+nfr: 20260908_013000_feedback_slot_status_wording は no-change manifest(nfr/latest の head event は 20260907_120000_feedback_abort_consistency のまま)

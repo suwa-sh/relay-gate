@@ -347,6 +347,7 @@ RDRA に存在しない要素を追加する前に、ここで合意を得てか
 - **提案内容**: Spec は slot_executions.status を aborted.txt / exitcode.txt 公開時の条件付き UPDATE で一度だけ書き、abort 後に実装が走り切って exitcode.txt を公開した経路では導出値(exitcode.txt 優先)と一致せず ABORTED のまま残す、と限定している(USDM SPEC-005-02 AC6 の前提)。RDRA 条件.tsv は「速報クロスチェック有効時は管理 DB にも同じ状態を保持する」としか書いていない。⭐推奨 A: RDRA 条件の文言を Spec の限定記述に合わせる(実装には影響しない文言差の解消。rdra-feedback #16)。他の選択肢: B: RDRA は変えず Spec 側の限定記述だけで運用 / C: runner が exitcode.txt 公開時に ABORTED を上書きして再同期(条件「中止済み run の比較依頼作成除外」の判定材料と SPEC-005-02 AC6 に反するため非推奨)
 - **根拠**: (サブエージェントが記入)
 - **影響範囲**: (サブエージェントが記入)
-- **推奨対応**: [ ] requirements スキル再実行で反映 / [ ] 却下 / [ ] 保留
-- **ステータス**: open
+- **推奨対応**: 反映
+- **ステータス**: closed
+- **決定(2026-09-08, feedback:20260908_slot_status_wording)**: A: 条件「slot 実行の状態導出規則」の管理 DB 側を「公開時点の状態を条件付き更新で一度だけ書き、abort 後は ABORTED を残して再同期しない」に改め、USDM SPEC-005-02 に受け入れ条件を追加。arch E-014 / spec の旧文言引用も追従(CR-019、rdra:20260908_011000_feedback_slot_status_wording、arch:20260908_015000_feedback_slot_status_wording、spec:20260908_024000_feedback_slot_status_wording)
 

@@ -1,0 +1,169 @@
+{
+  "event_id": "20260908_015000_feedback_stage_architecture",
+  "type": "feedback_stage_completed",
+  "run_id": "feedback-20260908_slot_status_wording-20260908_135026-61198",
+  "attempt": 1,
+  "created_at": "2026-09-08T01:50:00Z",
+  "stage": "architecture",
+  "direct_work_unit_ids": [],
+  "causal_work_unit_ids": [
+    "CR-c770d8f0-019#1"
+  ],
+  "work_unit_results": [],
+  "reconciliation_results": [
+    {
+      "work_unit_id": "CR-c770d8f0-019#1",
+      "status": "changed",
+      "reason": "条件「slot 実行の状態導出規則」の管理 DB 側文言の変更を受け、arch の E-014(slot 実行)status 属性説明と storage_mapping E-014(rdb)の理由に残っていた旧文言「速報有効時は管理 DB にも同じ状態を保持する」「ファイル正本と同じ値で管理 DB にも保持し」を、「slot_executions.status に aborted.txt または exitcode.txt の公開時点の状態を条件付き更新(RUNNING のときだけ)で一度だけ書く。abort-blue / abort-green で ABORTED にした後に実装が走り切って exitcode.txt を公開しても ABORTED のまま残しファイル正本へ再同期しない。管理 DB の値は中止済み run の比較依頼作成除外の判定材料」に置き換えた。LP-021 / SP-009 / LP-023 / BC-002 / E-016 / LP-005 / CTR-001 / SR-001 / arch-decision-017 は旧文言の引用が無く整合しているため据え置き。実装挙動は不変(arch-decision-018)",
+      "artifact_refs": [
+        "arch/events/20260908_015000_feedback_slot_status_wording/arch-design-diff.yaml",
+        "arch/events/20260908_015000_feedback_slot_status_wording/_changes.md"
+      ]
+    }
+  ],
+  "work_unit_evidence_refs": [
+    {
+      "work_unit_id": "CR-c770d8f0-019#1",
+      "path": "arch/events/20260908_015000_feedback_slot_status_wording/arch-design-diff.yaml",
+      "sha256": "66c3496e29a1353333d646c1eedc988aa7a7febb328934530c8171f94e141602"
+    },
+    {
+      "work_unit_id": "CR-c770d8f0-019#1",
+      "path": "arch/events/20260908_015000_feedback_slot_status_wording/_changes.md",
+      "sha256": "329431add30fa13f8977c96fde839b0205131bd57700176eb2976b1cd97b8fd8"
+    }
+  ],
+  "domain_event_refs": [
+    {
+      "path": "arch/events/20260908_015000_feedback_slot_status_wording/event.json",
+      "sha256": "7ede347fd75be417d535d573f0a3c571dfdb5060ae9a33160a4ee912d9ab8b6d"
+    },
+    {
+      "path": "arch/events/20260908_015000_feedback_slot_status_wording/arch-design-diff.yaml",
+      "sha256": "66c3496e29a1353333d646c1eedc988aa7a7febb328934530c8171f94e141602"
+    }
+  ],
+  "feedback_request": {
+    "feedback_request_id": "20260908_slot_status_wording",
+    "input_sha256": "19b24f61aa56ced09d1b35120acf027c40554b785129c5c945f33c55bd8d7fcf",
+    "request_ids": [
+      "CR-c770d8f0-019"
+    ],
+    "work_unit_ids": [
+      "CR-c770d8f0-019#1"
+    ]
+  },
+  "post_execution_basis": {
+    "repository_head": "916e272d5822a0b3f0df04108dd928ff1f9adc87",
+    "latest_domain_event_ids": {
+      "requirements": {
+        "rdra/events": "20260908_011000_feedback_slot_status_wording",
+        "usdm/events": "20260908_011000_feedback_slot_status_wording"
+      },
+      "quality_attributes": {
+        "nfr/events": "20260908_013000_feedback_slot_status_wording"
+      },
+      "architecture": {
+        "arch/events": "20260908_015000_feedback_slot_status_wording"
+      },
+      "infrastructure": {
+        "infra/events": "20260907_124000_feedback_abort_consistency"
+      },
+      "design_system": {
+        "design/events": null
+      },
+      "spec": {
+        "specs/events": "20260907_131000_feedback_abort_consistency"
+      },
+      "spec_stories": {
+        "design/events": null
+      }
+    },
+    "domain_event_root_snapshots": {
+      "rdra/events": {
+        "head_event_id": "20260908_011000_feedback_slot_status_wording",
+        "head_event_sha256": "b090b166d4f0153d029cb6aefec68101eb2c27e70baf9c95adcce67c57d9024e",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency",
+          "20260908_011000_feedback_slot_status_wording"
+        ],
+        "event_set_sha256": "8cb2285c08b0aa19e0b6acb3befd7d7180afd7c1105be106c4a9a4e7f5a164a5",
+        "latest_tree_sha256": "fb37aebe9d1e9fccd46c51cc14f0450b93bf14bc39322450ffbc7fbb018935b1"
+      },
+      "usdm/events": {
+        "head_event_id": "20260908_011000_feedback_slot_status_wording",
+        "head_event_sha256": "2f083a378142c06b74987ec8f2c11b303e2a9369746ec6065d56c2dd60dc4e45",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency",
+          "20260908_011000_feedback_slot_status_wording"
+        ],
+        "event_set_sha256": "8cb2285c08b0aa19e0b6acb3befd7d7180afd7c1105be106c4a9a4e7f5a164a5",
+        "latest_tree_sha256": "e1733eb0ebeff504ee3ab2ef90f47b050e6f3eb05cdb287d649c57d6724f5a31"
+      },
+      "nfr/events": {
+        "head_event_id": "20260908_013000_feedback_slot_status_wording",
+        "head_event_sha256": "9c460abcc88fcbf4b495658c71b4a4bbc49d9d9f309e46ad0c0bae58aa4dda0c",
+        "event_ids": [
+          "20260830_183726_initial_nfr",
+          "20260905_085000_feedback_todo_resolution",
+          "20260907_013000_feedback_todo_followup",
+          "20260907_120000_feedback_abort_consistency",
+          "20260908_013000_feedback_slot_status_wording"
+        ],
+        "event_set_sha256": "99463150965b02f6b7670ee3f4f853722b6c561281e6297a3e58a9afe414b4a4",
+        "latest_tree_sha256": "51f9059e35f6f5c65fc18cd1f1457bd5beca3b5b23271d538f4304b0ece9c7ef"
+      },
+      "arch/events": {
+        "head_event_id": "20260908_015000_feedback_slot_status_wording",
+        "head_event_sha256": "4e467155c8adfbefce4aa18ae2cee40f92c55545711dc66fc9c05b57b6f9a2e8",
+        "event_ids": [
+          "20260830_184457_initial_arch",
+          "20260830_202427_arch_infra_feedback_20260830_190412_infra_product_design",
+          "20260905_091000_feedback_todo_resolution",
+          "20260907_015000_feedback_todo_followup",
+          "20260907_122000_feedback_abort_consistency",
+          "20260908_015000_feedback_slot_status_wording"
+        ],
+        "event_set_sha256": "b710a5cb1a0d295f1b5c15523a2181492f16924414fb77886efd0bdb3f7d0a4b",
+        "latest_tree_sha256": "0a975f848804dd5bc3d5cf328a5e9717f2e22eb489e1e5f4c477538b77c0b91d"
+      },
+      "infra/events": {
+        "head_event_id": "20260907_124000_feedback_abort_consistency",
+        "head_event_sha256": "639f743d85b997e1297610b2a7c2db41fd004e74473f96ec6292b601509a6331",
+        "event_ids": [
+          "20260830_190412_infra_product_design",
+          "20260905_093000_feedback_todo_resolution",
+          "20260907_021000_feedback_todo_followup",
+          "20260907_124000_feedback_abort_consistency"
+        ],
+        "event_set_sha256": "d677cfe53f64d6ade8a594e56e9ed6dfab861741cc961ff3e42f30db5445691f",
+        "latest_tree_sha256": "639f743d85b997e1297610b2a7c2db41fd004e74473f96ec6292b601509a6331"
+      },
+      "design/events": {
+        "head_event_id": null,
+        "head_event_sha256": null,
+        "event_ids": [],
+        "event_set_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "latest_tree_sha256": null
+      },
+      "specs/events": {
+        "head_event_id": "20260907_131000_feedback_abort_consistency",
+        "head_event_sha256": "25fcf5b38da2779afeea9cd1d9805b019ff1b60aa5285004c3193243549d7d74",
+        "event_ids": [
+          "20260830_202851_spec_generation",
+          "20260905_100000_feedback_todo_resolution",
+          "20260907_024000_feedback_todo_followup",
+          "20260907_131000_feedback_abort_consistency"
+        ],
+        "event_set_sha256": "9cda00ed52d82b58afc05e4ed407bffb11e44ae03ef7685759f69a243fc1c753",
+        "latest_tree_sha256": "aa15cf7efe6db9ffd9334698326376f20cc1efe52503e6876fe2b9ef196d0860"
+      }
+    }
+  }
+}
