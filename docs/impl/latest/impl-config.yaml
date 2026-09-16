@@ -1,0 +1,73 @@
+# distillery-impl 実装設定(正本)。確定値は docs/impl/events/20260916_183122_config_confirmed_bootstrap_p2 の config_confirmed イベント。
+# specs_root / repo_root は同一リポ(distillery 出力 docs/ と実装先が同居)。tier-datastore は実装 tier ではなく共有資産(datastore_owner)。
+# capabilities は P1 の存在プローブ結果の記録であり契約の正ではない(asyncapi.yaml は存在するが契約としては宣言しない。
+# cli-command-contract.yaml は契約外の共有仕様として S1 の shared_spec_refs で扱う)。
+schema_version: '1.0'
+specs_root: docs
+repo_root: .
+tiers:
+- id: tier-facade
+  dir: facade
+  kind: cli
+  lang: bash
+  commands:
+    format_check: shfmt -d .
+    lint: find src test -name '*.sh' -exec shellcheck -x {} +
+    test: bats -r test
+    bdd: npx cucumber-js --config ../cucumber.cjs features
+- id: tier-rapid-crosscheck
+  dir: rapid-crosscheck
+  kind: cli
+  lang: bash
+  commands:
+    format_check: shfmt -d .
+    lint: find src test -name '*.sh' -exec shellcheck -x {} +
+    test: bats -r test
+    bdd: npx cucumber-js --config ../cucumber.cjs features
+- id: tier-final-crosscheck
+  dir: final-crosscheck
+  kind: cli
+  lang: bash
+  commands:
+    format_check: shfmt -d .
+    lint: find src test -name '*.sh' -exec shellcheck -x {} +
+    test: bats -r test
+    bdd: npx cucumber-js --config ../cucumber.cjs features
+- id: tier-ops
+  dir: ops
+  kind: cli
+  lang: bash
+  commands:
+    format_check: shfmt -d .
+    lint: find src test -name '*.sh' -exec shellcheck -x {} +
+    test: bats -r test
+    bdd: npx cucumber-js --config ../cucumber.cjs features
+datastore_owner: tier-ops
+contracts:
+- id: management-db
+  type: rdb-schema
+  source: specs/latest/_cross-cutting/datastore/rdb-schema.yaml
+  scope:
+  - parallel_runs
+  - slot_executions
+  - rapid_runs
+  - rapid_crosscheck_requests
+  - comparison_results
+  - final_crosscheck_requests
+  - monitor_records
+  provider: tier-ops
+  consumers:
+  - tier-facade
+  - tier-rapid-crosscheck
+  - tier-final-crosscheck
+backend_framework: null
+integration_commands:
+  uc_bdd: npx cucumber-js --config cucumber.cjs features/uc
+  atdd: npx cucumber-js --config cucumber.cjs features/atdd
+implementer_model: null
+verifier_model: gpt-6-astra
+capabilities:
+  has_asyncapi: true
+  has_kvs: false
+  has_object_storage: false
+  has_design_system: false

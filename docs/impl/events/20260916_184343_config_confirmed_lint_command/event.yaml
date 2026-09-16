@@ -1,0 +1,12 @@
+event_id: "20260916_184343_config_confirmed_lint_command"
+type: config_confirmed
+uc_id: null
+stage: "S0"
+payload:
+  confirmed_by: "orchestrator(review-refute-loop ラウンド 1 の ACCEPTED 指摘。ユーザー承認済みの R4 の訂正)"
+  items:
+    - key: "commands.lint"
+      before: "find src test -name '*.sh' -print0 | xargs -0 shellcheck -x"
+      after: "find src test -name '*.sh' -exec shellcheck -x {} +"
+      note: "GNU xargs は空入力でも shellcheck を 1 回起動し exit 3 になる(.sh が無い tier で Linux CI の lint が失敗)。-exec … + は該当ファイルが無ければ起動しない。全 4 tier 共通。ci.yml / CLAUDE.md も同期"
+created_at: "2026-09-16T18:43:43+09:00"

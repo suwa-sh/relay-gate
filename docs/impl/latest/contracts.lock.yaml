@@ -1,0 +1,24 @@
+# contracts.lock(正本)。S4 の read-set を兼ねる。P4/S3 の content-stable 規則で更新。
+schema_version: '1.1'
+contracts:
+- id: management-db
+  type: rdb-schema
+  scope:
+  - parallel_runs
+  - slot_executions
+  - rapid_runs
+  - rapid_crosscheck_requests
+  - comparison_results
+  - final_crosscheck_requests
+  - monitor_records
+  source_read: scope
+  input:
+    path: docs/specs/latest/_cross-cutting/datastore/rdb-schema.yaml
+    sha256: 2b3ffec01cb9705e508168a4ff8a9e1b7c67278679714ece60c8040a4c0be292
+  generated:
+  - dir: packages/contracts/management-db
+    generator: direct-from-yaml
+    audience: both
+    lang: bash
+    at: '2026-09-16T18:35:37+09:00'
+generated_at: '2026-09-16T18:35:37+09:00'

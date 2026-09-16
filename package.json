@@ -1,0 +1,14 @@
+{
+  "name": "relay-gate",
+  "version": "0.0.0",
+  "private": true,
+  "description": "relay-gate: BDD step definitions and integration test runner (cucumber-js). Implementation is bash.",
+  "license": "MIT",
+  "scripts": {
+    "bdd:uc": "npx cucumber-js --config cucumber.cjs features/uc",
+    "bdd:atdd": "npx cucumber-js --config cucumber.cjs features/atdd"
+  },
+  "devDependencies": {
+    "@cucumber/cucumber": "^11.0.0"
+  }
+}
