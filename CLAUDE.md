@@ -75,3 +75,31 @@
 3. specs / schema / 設定等の正本を先に更新し、複製は生成またはドリフトテストで追従させる
 4. lint / doc link / mermaid の該当ゲートを実行する
 5. 自動生成物(`docs/README.md`)は手動編集しない
+
+## distillery-impl 実装ハーネス規約(bootstrap 生成)
+
+dev-rules 正本は `docs/dev-rules/`(coding-rules / test-strategy / tier-rules)。必須 5 項の抜粋:
+
+1. **契約型の直接編集禁止**: `packages/contracts/` 配下は contracts[] からの生成物。手で書き換えない(再生成は S0/S3 のみ)。不足は issues/ に変更要求
+2. **UI コンポーネント**: 本リポは has_design_system: false(UI 画面なし)。`packages/ui/` は存在しない
+3. **formatter / linter を通過する**: コマンドは `docs/impl/latest/impl-config.yaml` の `commands` が正。S4 並走中は check-only
+4. **仕様を実装側で曲げない**: spec.md / tier-*.md / 契約と矛盾したら実装を仕様に合わせるか issues/ に書き捨てる
+5. **Conventional Commits**: コミットはオーケストレータのみ。`impl({uc_id}): S4 {tier} gates passed` 形式
+
+### プロジェクト固有(bootstrap が確定)
+
+- specs_root = `docs/`(distillery 出力と実装先が同一リポ)。実装状態は `docs/impl/latest/`(impl-config.yaml / uc-map.yaml / contracts.lock.yaml / bootstrap.done.yaml)
+- 実装 tier(全 kind: cli、lang: bash。tier-datastore は共有資産で datastore_owner = tier-ops):
+
+| tier id | dir | kind | lang |
+|---|---|---|---|
+| tier-facade | `facade/` | cli | bash |
+| tier-rapid-crosscheck | `rapid-crosscheck/` | cli | bash |
+| tier-final-crosscheck | `final-crosscheck/` | cli | bash |
+| tier-ops | `ops/` | cli | bash |
+
+- 契約: `management-db`(rdb-schema、7 テーブル、provider tier-ops)。生成物は `packages/contracts/management-db/`。asyncapi / openapi は契約として宣言しない。`cli-command-contract.yaml` は契約外の共有仕様(S1 の shared_spec_refs)
+- コマンド(tier dir を cwd に実行): format_check `shfmt -d .` / lint `find src test -name '*.sh' -exec shellcheck -x {} +` / test `bats -r test` / bdd `npx cucumber-js --config ../cucumber.cjs features`
+- 統合テスト(リポルート): uc_bdd `npx cucumber-js --config cucumber.cjs features/uc` / atdd `npx cucumber-js --config cucumber.cjs features/atdd`
+- 4 段テスト: ATDD `features/atdd/{spec_id}.feature`(S0 生成、`@atdd_{SPEC-ID}-{連番}` タグで選択実行)/ UC BDD `features/uc/{branch_slug}.feature` / tier BDD `{tier_dir}/features/{branch_slug}.feature` / TDD `{tier_dir}/test/`(bats)。step 定義は JavaScript(CommonJS)
+- I/O 境界は実体で検証する(PostgreSQL は `initdb` + `pg_ctl` の一時インスタンス。常設サービスに接続しない。環境不足は fail)

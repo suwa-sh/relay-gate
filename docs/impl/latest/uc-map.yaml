@@ -1,0 +1,372 @@
+# uc-map(正本)。use_cases[] の並び順 = 実施順(引数なし dist-impl-run の着手順)。
+# 並び順の根拠: docs/specs/latest/_cross-cutting/uc-dependencies.md「実装順序の推奨(トポロジカル順)」段 0〜12 を平坦化した。
+#   段 0: 設定契約(feature flag / ジョブマップ / クロスチェック定義。他 UC に依存しない)
+#   段 1〜4: runner IF 割当 → facade 起動 → ジョブマップ解決 → execution-spec 確定 → 実装実行と Runner Result(生産者の中核)
+#   段 5〜6: foreground 中継・完了通知・確報登録 → 応答契約確認・速報依頼作成・確報 claim
+#   段 7〜8: 速報 claim・全量比較 → ジョブ単位比較・確報中継
+#   段 9: 結果参照 3 件(速報 / 確報 / 停止確認)
+#   段 10: hang-detector 3 段・ABORTED 遷移・リラン事前検証(監視・中止は実行成果物を読む消費者)
+#   段 11: メール受信・上限調整・復元起動・依頼再作成・運用モード実行(復旧系の消費者)
+#   段 12: 系譜追跡(リランが作る parent_run_id を読む最終消費者)
+# 同一段の UC は依存が無いため BUC のフロー順を保った。uc_id は state-schema.md の生成式(NFC + canonical JSON + sha256 先頭 8 桁)。
+# has_design_system: false かつ frontend tier 無しのため、ui_screens / ui_screen_resolution はどの UC にも置かない(dist-impl-run S1 規則)。
+schema_version: '1.0'
+id_length: 8
+use_cases:
+- uc_id: fd678b04
+  business: 適用構成業務
+  buc: 適用構成定義フロー
+  uc: feature flag を設定する
+  uc_english_name: Configure feature flags
+  branch_slug: configure-feature-flags
+  path: docs/specs/latest/適用構成業務/適用構成定義フロー/feature flag を設定する
+  tiers:
+  - tier-facade
+  atdd_scenarios: []
+  atdd_confirmed: false
+- uc_id: eff24f55
+  business: 適用構成業務
+  buc: 適用構成定義フロー
+  uc: slot ごとのジョブマップを定義する
+  uc_english_name: Define slot job maps
+  branch_slug: define-slot-job-maps
+  path: docs/specs/latest/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する
+  tiers:
+  - tier-facade
+  atdd_scenarios: []
+  atdd_confirmed: false
+- uc_id: dcd8234d
+  business: 適用構成業務
+  buc: 適用構成定義フロー
+  uc: クロスチェックのジョブマップと比較定義を定義する
+  uc_english_name: Define crosscheck job map and comparison definitions
+  branch_slug: define-crosscheck-job-map-and-comparison-definitions
+  path: docs/specs/latest/適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する
+  tiers:
+  - tier-final-crosscheck
+  - tier-rapid-crosscheck
+  atdd_scenarios: []
+  atdd_confirmed: false
+- uc_id: 65b09d93
+  business: 適用構成業務
+  buc: 適用構成定義フロー
+  uc: slot runner の実体スクリプトを割り当てる
+  uc_english_name: Assign slot runner scripts
+  branch_slug: assign-slot-runner-scripts
+  path: docs/specs/latest/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる
+  tiers:
+  - tier-facade
+  atdd_scenarios: []
+  atdd_confirmed: false
+- uc_id: 09730858
+  business: 実装切替業務
+  buc: 実装切替ジョブ実行フロー
+  uc: slot 実行モードを選択して runner を起動する
+  uc_english_name: Select slot mode and launch runners
+  branch_slug: select-slot-mode-and-launch-runners
+  path: docs/specs/latest/実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する
+  tiers:
+  - tier-facade
+  atdd_scenarios: []
+  atdd_confirmed: false
+- uc_id: 7c41c7cd
+  business: 実装切替業務
+  buc: 実装切替ジョブ実行フロー
+  uc: ジョブマップで JOB_ID から実行先を解決する
+  uc_english_name: Resolve execution target from job map
+  branch_slug: resolve-execution-target-from-job-map
+  path: docs/specs/latest/実装切替業務/実装切替ジョブ実行フロー/ジョブマップで JOB_ID から実行先を解決する
+  tiers:
+  - tier-facade
+  atdd_scenarios: []
+  atdd_confirmed: false
+- uc_id: 43850d68
+  business: 実装切替業務
+  buc: 実装切替ジョブ実行フロー
+  uc: execution-spec.json を確定保存する
+  uc_english_name: Persist execution spec
+  branch_slug: persist-execution-spec
+  path: docs/specs/latest/実装切替業務/実装切替ジョブ実行フロー/execution-spec.json を確定保存する
+  tiers:
+  - tier-facade
+  atdd_scenarios: []
+  atdd_confirmed: false
+- uc_id: 5ebe8db7
+  business: 実装切替業務
+  buc: 実装切替ジョブ実行フロー
+  uc: 実装スクリプトを実行して Runner Result を出力する
+  uc_english_name: Execute implementation and publish runner result
+  branch_slug: execute-implementation-and-publish-runner-result
+  path: docs/specs/latest/実装切替業務/実装切替ジョブ実行フロー/実装スクリプトを実行して Runner Result を出力する
+  tiers:
+  - tier-facade
+  atdd_scenarios: []
+  atdd_confirmed: false
+- uc_id: f0147a84
+  business: 実装切替業務
+  buc: 実装切替ジョブ実行フロー
+  uc: foreground slot の結果をジョブスケジューラへ中継する
+  uc_english_name: Relay foreground slot result
+  branch_slug: relay-foreground-slot-result
+  path: docs/specs/latest/実装切替業務/実装切替ジョブ実行フロー/foreground slot の結果をジョブスケジューラへ中継する
+  tiers:
+  - tier-facade
+  atdd_scenarios: []
+  atdd_confirmed: false
+- uc_id: 71e88789
+  business: クロスチェック業務
+  buc: 速報クロスチェックフロー
+  uc: 速報クロスチェック runner へ完了通知を送信する
+  uc_english_name: Send completion notice to rapid crosscheck runner
+  branch_slug: send-completion-notice-to-rapid-crosscheck-runner
+  path: docs/specs/latest/クロスチェック業務/速報クロスチェックフロー/速報クロスチェック runner へ完了通知を送信する
+  tiers:
+  - tier-facade
+  - tier-rapid-crosscheck
+  atdd_scenarios: []
+  atdd_confirmed: false
+- uc_id: a9a9b816
+  business: クロスチェック業務
+  buc: 確報クロスチェックフロー
+  uc: 確報比較依頼を登録して終端状態まで待機する
+  uc_english_name: Register final crosscheck request and wait
+  branch_slug: register-final-crosscheck-request-and-wait
+  path: docs/specs/latest/クロスチェック業務/確報クロスチェックフロー/確報比較依頼を登録して終端状態まで待機する
+  tiers:
+  - tier-final-crosscheck
+  atdd_scenarios: []
+  atdd_confirmed: false
+- uc_id: 052abe8b
+  business: 実装切替業務
+  buc: 実装切替ジョブ実行フロー
+  uc: 業務ジョブの実行結果を確認する
+  uc_english_name: Check business job result
+  branch_slug: check-business-job-result
+  path: docs/specs/latest/実装切替業務/実装切替ジョブ実行フロー/業務ジョブの実行結果を確認する
+  tiers:
+  - tier-facade
+  atdd_scenarios: []
+  atdd_confirmed: false
+- uc_id: fe00211d
+  business: クロスチェック業務
+  buc: 速報クロスチェックフロー
+  uc: 両系成功時に速報比較依頼を作成する
+  uc_english_name: Create rapid crosscheck request on both succeeded
+  branch_slug: create-rapid-crosscheck-request-on-both-succeeded
+  path: docs/specs/latest/クロスチェック業務/速報クロスチェックフロー/両系成功時に速報比較依頼を作成する
+  tiers:
+  - tier-rapid-crosscheck
+  atdd_scenarios: []
+  atdd_confirmed: false
+- uc_id: 5d9cc326
+  business: クロスチェック業務
+  buc: 確報クロスチェックフロー
+  uc: 確報比較依頼を claim する
+  uc_english_name: Claim final crosscheck request
+  branch_slug: claim-final-crosscheck-request
+  path: docs/specs/latest/クロスチェック業務/確報クロスチェックフロー/確報比較依頼を claim する
+  tiers:
+  - tier-final-crosscheck
+  atdd_scenarios: []
+  atdd_confirmed: false
+- uc_id: 23e26223
+  business: クロスチェック業務
+  buc: 速報クロスチェックフロー
+  uc: 速報比較依頼を claim する
+  uc_english_name: Claim rapid crosscheck request
+  branch_slug: claim-rapid-crosscheck-request
+  path: docs/specs/latest/クロスチェック業務/速報クロスチェックフロー/速報比較依頼を claim する
+  tiers:
+  - tier-rapid-crosscheck
+  atdd_scenarios: []
+  atdd_confirmed: false
+- uc_id: 256abc3b
+  business: クロスチェック業務
+  buc: 確報クロスチェックフロー
+  uc: 比較ツールで日次全量比較を実行して結果を保存する
+  uc_english_name: Run daily full comparison and store result
+  branch_slug: run-daily-full-comparison-and-store-result
+  path: docs/specs/latest/クロスチェック業務/確報クロスチェックフロー/比較ツールで日次全量比較を実行して結果を保存する
+  tiers:
+  - tier-final-crosscheck
+  atdd_scenarios: []
+  atdd_confirmed: false
+- uc_id: 17f1a809
+  business: クロスチェック業務
+  buc: 速報クロスチェックフロー
+  uc: 比較ツールでジョブ単位比較を実行して結果を登録する
+  uc_english_name: Run per-job comparison and register result
+  branch_slug: run-per-job-comparison-and-register-result
+  path: docs/specs/latest/クロスチェック業務/速報クロスチェックフロー/比較ツールでジョブ単位比較を実行して結果を登録する
+  tiers:
+  - tier-rapid-crosscheck
+  atdd_scenarios: []
+  atdd_confirmed: false
+- uc_id: 3b33d088
+  business: クロスチェック業務
+  buc: 確報クロスチェックフロー
+  uc: 保存済みの確報結果をジョブスケジューラへ返す
+  uc_english_name: Return stored final crosscheck result
+  branch_slug: return-stored-final-crosscheck-result
+  path: docs/specs/latest/クロスチェック業務/確報クロスチェックフロー/保存済みの確報結果をジョブスケジューラへ返す
+  tiers:
+  - tier-final-crosscheck
+  atdd_scenarios: []
+  atdd_confirmed: false
+- uc_id: 27f67672
+  business: クロスチェック業務
+  buc: 速報クロスチェックフロー
+  uc: 速報比較結果を参照する
+  uc_english_name: View rapid crosscheck result
+  branch_slug: view-rapid-crosscheck-result
+  path: docs/specs/latest/クロスチェック業務/速報クロスチェックフロー/速報比較結果を参照する
+  tiers:
+  - tier-rapid-crosscheck
+  atdd_scenarios: []
+  atdd_confirmed: false
+- uc_id: 4145bcb9
+  business: クロスチェック業務
+  buc: 確報クロスチェックフロー
+  uc: 確報クロスチェック結果を確認する
+  uc_english_name: Check final crosscheck result
+  branch_slug: check-final-crosscheck-result
+  path: docs/specs/latest/クロスチェック業務/確報クロスチェックフロー/確報クロスチェック結果を確認する
+  tiers:
+  - tier-final-crosscheck
+  atdd_scenarios: []
+  atdd_confirmed: false
+- uc_id: 5031379f
+  business: 実行復旧業務
+  buc: 実行中止フロー
+  uc: 現在状態を確認して停止確認に応答する
+  uc_english_name: Confirm current status and answer stop prompt
+  branch_slug: confirm-current-status-and-answer-stop-prompt
+  path: docs/specs/latest/実行復旧業務/実行中止フロー/現在状態を確認して停止確認に応答する
+  tiers:
+  - tier-ops
+  atdd_scenarios: []
+  atdd_confirmed: false
+- uc_id: ca5eedc2
+  business: 実行監視業務
+  buc: background 実行監視フロー
+  uc: background 実行の経過時間と終了状態を判定する
+  uc_english_name: Judge background elapsed time and exit state
+  branch_slug: judge-background-elapsed-time-and-exit-state
+  path: docs/specs/latest/実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する
+  tiers:
+  - tier-ops
+  atdd_scenarios: []
+  atdd_confirmed: false
+- uc_id: e4ea8aaa
+  business: 実行監視業務
+  buc: background 実行監視フロー
+  uc: ハング疑い・実行エラー・比較異常を通知する
+  uc_english_name: Notify hang, execution and comparison errors
+  branch_slug: notify-hang-execution-and-comparison-errors
+  path: docs/specs/latest/実行監視業務/background 実行監視フロー/ハング疑い・実行エラー・比較異常を通知する
+  tiers:
+  - tier-ops
+  atdd_scenarios: []
+  atdd_confirmed: false
+- uc_id: 49a194f7
+  business: 実行監視業務
+  buc: background 実行監視フロー
+  uc: 監視記録を保存する
+  uc_english_name: Save monitor records
+  branch_slug: save-monitor-records
+  path: docs/specs/latest/実行監視業務/background 実行監視フロー/監視記録を保存する
+  tiers:
+  - tier-ops
+  atdd_scenarios: []
+  atdd_confirmed: false
+- uc_id: d0977c60
+  business: 実行復旧業務
+  buc: 実行中止フロー
+  uc: 実行を ABORTED へ遷移させる
+  uc_english_name: Transition execution to ABORTED
+  branch_slug: transition-execution-to-aborted
+  path: docs/specs/latest/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる
+  tiers:
+  - tier-ops
+  atdd_scenarios: []
+  atdd_confirmed: false
+- uc_id: e96c1600
+  business: 実行復旧業務
+  buc: background 側リランフロー
+  uc: リラン対象を検証する
+  uc_english_name: Validate rerun target
+  branch_slug: validate-rerun-target
+  path: docs/specs/latest/実行復旧業務/background 側リランフロー/リラン対象を検証する
+  tiers:
+  - tier-ops
+  atdd_scenarios: []
+  atdd_confirmed: false
+- uc_id: bc6f11a5
+  business: 実行監視業務
+  buc: background 実行監視フロー
+  uc: background 異常の通知メールを受け取る
+  uc_english_name: Receive background alert mail
+  branch_slug: receive-background-alert-mail
+  path: docs/specs/latest/実行監視業務/background 実行監視フロー/background 異常の通知メールを受け取る
+  tiers:
+  - tier-ops
+  atdd_scenarios: []
+  atdd_confirmed: false
+- uc_id: 1415f1a7
+  business: 実行監視業務
+  buc: background 実行監視フロー
+  uc: hang_detect_limit_minutes をジョブごとに調整する
+  uc_english_name: Tune hang detect limit per job
+  branch_slug: tune-hang-detect-limit-per-job
+  path: docs/specs/latest/実行監視業務/background 実行監視フロー/hang_detect_limit_minutes をジョブごとに調整する
+  tiers:
+  - tier-facade
+  - tier-ops
+  atdd_scenarios: []
+  atdd_confirmed: false
+- uc_id: 9aedf7cc
+  business: 実行復旧業務
+  buc: background 側リランフロー
+  uc: 元の execution-spec.json から復元して新しい run_id で起動する
+  uc_english_name: Restore execution spec and rerun with new run id
+  branch_slug: restore-execution-spec-and-rerun-with-new-run-id
+  path: docs/specs/latest/実行復旧業務/background 側リランフロー/元の execution-spec.json から復元して新しい run_id で起動する
+  tiers:
+  - tier-facade
+  - tier-ops
+  atdd_scenarios: []
+  atdd_confirmed: false
+- uc_id: 8af695ba
+  business: 実行復旧業務
+  buc: background 側リランフロー
+  uc: 速報比較依頼だけを新規作成する
+  uc_english_name: Recreate rapid crosscheck request only
+  branch_slug: recreate-rapid-crosscheck-request-only
+  path: docs/specs/latest/実行復旧業務/background 側リランフロー/速報比較依頼だけを新規作成する
+  tiers:
+  - tier-ops
+  - tier-rapid-crosscheck
+  atdd_scenarios: []
+  atdd_confirmed: false
+- uc_id: 15a5e2db
+  business: 適用構成業務
+  buc: 適用構成定義フロー
+  uc: 切り替えた運用モードで業務ジョブを実行する
+  uc_english_name: Run business job in switched operation mode
+  branch_slug: run-business-job-in-switched-operation-mode
+  path: docs/specs/latest/適用構成業務/適用構成定義フロー/切り替えた運用モードで業務ジョブを実行する
+  tiers:
+  - tier-facade
+  atdd_scenarios: []
+  atdd_confirmed: false
+- uc_id: 24a0fcc4
+  business: 実行復旧業務
+  buc: background 側リランフロー
+  uc: リラン結果を parent_run_id で追跡する
+  uc_english_name: Trace rerun lineage by parent run id
+  branch_slug: trace-rerun-lineage-by-parent-run-id
+  path: docs/specs/latest/実行復旧業務/background 側リランフロー/リラン結果を parent_run_id で追跡する
+  tiers:
+  - tier-ops
+  atdd_scenarios: []
+  atdd_confirmed: false

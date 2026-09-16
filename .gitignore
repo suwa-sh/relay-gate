@@ -1,2 +1,5 @@
 tmp/
 node_modules/
+# distillery-impl: 再生成可能なレビュー補助資料と実行中 lease(commit しない)
+docs/impl/**/review/*.html
+docs/impl/latest/run-lease.yaml

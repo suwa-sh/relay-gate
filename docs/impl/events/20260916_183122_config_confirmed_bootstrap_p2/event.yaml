@@ -1,0 +1,65 @@
+event_id: "20260916_183122_config_confirmed_bootstrap_p2"
+type: config_confirmed
+uc_id: null
+stage: "S0"
+payload:
+  confirmed_by: "user"
+  confirmed_via: "tmp/reviews/s0-bootstrap-config-review.html(selection mode)+ チャット回答「推奨でok / verifier のモデルだけ gpt-6-astra」"
+  items:
+    - key: "tiers"
+      before: null
+      after:
+        - {id: tier-facade, dir: facade, kind: cli, lang: bash}
+        - {id: tier-rapid-crosscheck, dir: rapid-crosscheck, kind: cli, lang: bash}
+        - {id: tier-final-crosscheck, dir: final-crosscheck, kind: cli, lang: bash}
+        - {id: tier-ops, dir: ops, kind: cli, lang: bash}
+      note: "R1 承認。全 tier が都度起動の bash CLI。tier-datastore は実装 tier にせず共有資産"
+    - key: "backend_framework"
+      before: null
+      after: null
+      note: "R1 承認。bash CLI のため API フレームワークなし(null を確定値とする)"
+    - key: "datastore_owner"
+      before: null
+      after: tier-ops
+      note: "R2 承認。7 テーブルすべてに触れる唯一の tier"
+    - key: "contracts"
+      before: null
+      after:
+        - id: management-db
+          type: rdb-schema
+          source: "specs/latest/_cross-cutting/datastore/rdb-schema.yaml"
+          scope: [parallel_runs, slot_executions, rapid_runs, rapid_crosscheck_requests, comparison_results, final_crosscheck_requests, monitor_records]
+          provider: tier-ops
+          consumers: [tier-facade, tier-rapid-crosscheck, tier-final-crosscheck]
+      note: "R3 案 A(単一契約)承認。Q1=A: cli-command-contract.yaml は契約外の共有仕様(S1 の shared_spec_refs)として扱う。Q2=A: asyncapi 契約は宣言しない。openapi はスタブのため宣言しない"
+    - key: "commands"
+      before: null
+      after:
+        format_check: "shfmt -d ."
+        lint: "find src test -name '*.sh' -print0 | xargs -0 shellcheck -x"
+        test: "bats -r test"
+        bdd: "npx cucumber-js --config ../cucumber.cjs features"
+      note: "R4 承認(全 tier 共通。tier dir を cwd に実行)"
+    - key: "integration_commands"
+      before: null
+      after:
+        uc_bdd: "npx cucumber-js --config cucumber.cjs features/uc"
+        atdd: "npx cucumber-js --config cucumber.cjs features/atdd"
+      note: "R4 承認。Q3=A: @cucumber/cucumber をルート package.json の devDependency として導入(開発時のみネットワーク使用)"
+    - key: "implementer_model"
+      before: null
+      after: null
+      note: "Q4: implementer はセッション既定(null)"
+    - key: "verifier_model"
+      before: null
+      after: "gpt-6-astra"
+      note: "Q4: ユーザー指定(推奨 gpt-5.6-sol から変更)。Codex models_cache.json に存在を確認済み"
+    - key: "uc-map.use_cases"
+      before: null
+      after: "32 UC。実施順は _cross-cutting/uc-dependencies.md のトポロジカル順(段 0〜12)。uc_id 8 桁、uc_english_name / branch_slug は bootstrap 提案どおり(レビュー HTML R5 の表)"
+      note: "R5 承認"
+    - key: "repo_integration"
+      before: null
+      after: "既存 CLAUDE.md は保持して追記。docs/dev-rules/ はプラグイン同梱版を配布。既存 .qlty/qlty.toml / .editorconfig / .shellcheckrc は保持"
+      note: "R6 承認"
+created_at: "2026-09-16T18:31:22+09:00"

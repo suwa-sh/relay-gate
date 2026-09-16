@@ -1,0 +1,147 @@
+# 6 段ゲート(format-check → lint → tdd → tier-bdd → uc-bdd → atdd)。bootstrap P6 生成。
+# コマンドは docs/impl/latest/impl-config.yaml の commands / integration_commands と一致させる(ローカル green = CI green)。
+# テストは PostgreSQL の一時インスタンス(initdb + pg_ctl)を自前で起動する前提のため postgresql の bin を PATH に載せる。
+name: ci
+'on':
+  push:
+    branches:
+    - main
+  pull_request: {}
+env:
+  SHFMT_VERSION: 3.13.1
+jobs:
+  format-check:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install shell toolchain
+      run: |
+        sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck bats postgresql
+        sudo curl -sSL -o /usr/local/bin/shfmt "https://github.com/mvdan/sh/releases/download/v${SHFMT_VERSION}/shfmt_v${SHFMT_VERSION}_linux_amd64"
+        sudo chmod +x /usr/local/bin/shfmt
+        echo "/usr/lib/postgresql/$(ls /usr/lib/postgresql | sort -V | tail -1)/bin" >> "$GITHUB_PATH"
+    - name: format_check (facade)
+      working-directory: facade
+      run: shfmt -d .
+    - name: format_check (rapid-crosscheck)
+      working-directory: rapid-crosscheck
+      run: shfmt -d .
+    - name: format_check (final-crosscheck)
+      working-directory: final-crosscheck
+      run: shfmt -d .
+    - name: format_check (ops)
+      working-directory: ops
+      run: shfmt -d .
+  lint:
+    runs-on: ubuntu-latest
+    needs:
+    - format-check
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install shell toolchain
+      run: |
+        sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck bats postgresql
+        sudo curl -sSL -o /usr/local/bin/shfmt "https://github.com/mvdan/sh/releases/download/v${SHFMT_VERSION}/shfmt_v${SHFMT_VERSION}_linux_amd64"
+        sudo chmod +x /usr/local/bin/shfmt
+        echo "/usr/lib/postgresql/$(ls /usr/lib/postgresql | sort -V | tail -1)/bin" >> "$GITHUB_PATH"
+    - name: lint (facade)
+      working-directory: facade
+      run: find src test -name '*.sh' -exec shellcheck -x {} +
+    - name: lint (rapid-crosscheck)
+      working-directory: rapid-crosscheck
+      run: find src test -name '*.sh' -exec shellcheck -x {} +
+    - name: lint (final-crosscheck)
+      working-directory: final-crosscheck
+      run: find src test -name '*.sh' -exec shellcheck -x {} +
+    - name: lint (ops)
+      working-directory: ops
+      run: find src test -name '*.sh' -exec shellcheck -x {} +
+  tdd:
+    runs-on: ubuntu-latest
+    needs:
+    - lint
+    strategy:
+      fail-fast: false
+      matrix:
+        tier:
+        - facade
+        - rapid-crosscheck
+        - final-crosscheck
+        - ops
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install shell toolchain
+      run: |
+        sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck bats postgresql
+        sudo curl -sSL -o /usr/local/bin/shfmt "https://github.com/mvdan/sh/releases/download/v${SHFMT_VERSION}/shfmt_v${SHFMT_VERSION}_linux_amd64"
+        sudo chmod +x /usr/local/bin/shfmt
+        echo "/usr/lib/postgresql/$(ls /usr/lib/postgresql | sort -V | tail -1)/bin" >> "$GITHUB_PATH"
+    - name: test
+      working-directory: ${{ matrix.tier }}
+      run: bats -r test
+  tier-bdd:
+    runs-on: ubuntu-latest
+    needs:
+    - tdd
+    strategy:
+      fail-fast: false
+      matrix:
+        tier:
+        - facade
+        - rapid-crosscheck
+        - final-crosscheck
+        - ops
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install shell toolchain
+      run: |
+        sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck bats postgresql
+        sudo curl -sSL -o /usr/local/bin/shfmt "https://github.com/mvdan/sh/releases/download/v${SHFMT_VERSION}/shfmt_v${SHFMT_VERSION}_linux_amd64"
+        sudo chmod +x /usr/local/bin/shfmt
+        echo "/usr/lib/postgresql/$(ls /usr/lib/postgresql | sort -V | tail -1)/bin" >> "$GITHUB_PATH"
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+        cache: npm
+    - run: npm ci
+    - name: bdd
+      working-directory: ${{ matrix.tier }}
+      run: npx cucumber-js --config ../cucumber.cjs features
+  uc-bdd:
+    runs-on: ubuntu-latest
+    needs:
+    - tier-bdd
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install shell toolchain
+      run: |
+        sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck bats postgresql
+        sudo curl -sSL -o /usr/local/bin/shfmt "https://github.com/mvdan/sh/releases/download/v${SHFMT_VERSION}/shfmt_v${SHFMT_VERSION}_linux_amd64"
+        sudo chmod +x /usr/local/bin/shfmt
+        echo "/usr/lib/postgresql/$(ls /usr/lib/postgresql | sort -V | tail -1)/bin" >> "$GITHUB_PATH"
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+        cache: npm
+    - run: npm ci
+    - name: uc_bdd
+      run: npx cucumber-js --config cucumber.cjs features/uc
+  atdd:
+    runs-on: ubuntu-latest
+    needs:
+    - uc-bdd
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install shell toolchain
+      run: |
+        sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck bats postgresql
+        sudo curl -sSL -o /usr/local/bin/shfmt "https://github.com/mvdan/sh/releases/download/v${SHFMT_VERSION}/shfmt_v${SHFMT_VERSION}_linux_amd64"
+        sudo chmod +x /usr/local/bin/shfmt
+        echo "/usr/lib/postgresql/$(ls /usr/lib/postgresql | sort -V | tail -1)/bin" >> "$GITHUB_PATH"
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+        cache: npm
+    - run: npm ci
+    - name: atdd
+      run: npx cucumber-js --config cucumber.cjs features/atdd
