@@ -1,0 +1,106 @@
+stage: "S9"
+uc_id: "fd678b04"
+manifest_sha256: "c91154b5d5f732bbef5d59f32e7339a8f47f288ebd8c0a0b4faec5ba1a950ba2"
+manifest_projection: "v2"
+result: "generated"
+attempt: 2
+cycle: 2
+rerun_reason: "stale after spec event 20260917_050000_feedback_impl_feedback_fd678b04 (invalidated by 20260917_074327_stale_invalidated_spec_feedback_applied_fd678b04)"
+previous_done: "docs/impl/latest/fd678b04/invalidated/20260917_074327_stale_invalidated_spec_feedback_applied_fd678b04/stages/S9_review_generated.done.yaml"
+review_html: "docs/impl/latest/fd678b04/review/index.html"
+review_html_tracked: false
+review_notes_input: "docs/impl/latest/fd678b04/review/review-notes.md"
+review_notes_note: "review-notes.md は前サイクルの承認記録。本サイクルの前提 17 件に対する人の判断は未取得のため、既承認 13 件は「前回承認済み(内容不変)」と表示し、判断の焦点を新規 4 件と回答必須 1 件に絞った"
+validator: "node validateReviewHtml.js docs/impl/latest/fd678b04/review/index.html: pass"
+render_check: "1440px で図 2(新規レイアウト)と図 3 を Chrome(ローカル HTTP 配信)で目視。diagonal 0、shared attach point 0、overlapping segment 0、non-endpoint 背面通過 0、label gap 6〜10px。図 1 は前回 evidence から変更なし"
+diagrams:
+  - type: "architecture"
+    subject: "validate-config.sh の構成(5 層 + 設定ファイル 2 種 + runner 実体)。前回から変更なし"
+  - type: "flowchart"
+    subject: "validate-config.sh --feature-flag の処理フロー(判断 3、終了コード 0 / 2 / 6。準備失敗の終了コード 6 分岐を追加)"
+  - type: "data-flow"
+    subject: "設計者 / 検証器 / runner の役割別データフロー(5 段階。終了コードに 6 を追記)"
+feedback_request_count: 1
+open_blocker_count: 0
+decision_summary:
+  approval_questions: 1
+  selection_questions: 1
+  assumption_questions: 1
+  recommended_choices: 2
+  open_questions: 2
+  selection_labels:
+    - "機能"
+    - "禁止キー"
+    - "相互運用"
+    - "監査"
+  fixed_from_previous_cycle:
+    interop: "A (契約 runner_help_probe に反映済み。今回は選び直さない)"
+    audit: "A (spec.md の Scenario 分離に反映済み。今回は選び直さない)"
+  recommended_response: "機能=A / 禁止キー=A / 相互運用=A / 監査=A / 前提=A-010:承認 / A-024:承認 / A-025:承認 / A-026:承認 / A-027:承認 / A-005:承認 / A-006:承認 / A-007:承認 / A-008:承認 / A-015:承認 / A-016:承認 / A-017:承認 / A-018:承認 / A-019:承認 / A-020:承認 / A-021:承認 / A-023:承認"
+  assumption_required_ids:
+    - "A-010"
+  assumption_new_ids:
+    - "A-024"
+    - "A-025"
+    - "A-026"
+    - "A-027"
+  assumption_carried_forward_ids:
+    - "A-005"
+    - "A-006"
+    - "A-007"
+    - "A-008"
+    - "A-010"
+    - "A-015"
+    - "A-016"
+    - "A-017"
+    - "A-018"
+    - "A-019"
+    - "A-020"
+    - "A-021"
+    - "A-023"
+  assumption_excluded_as_explicit_ids:
+    - "A-012"
+    - "A-013"
+    - "A-022"
+  selection_question_detail:
+    label: "禁止キー"
+    question: "feature flag で拒否する確報の制御キーの範囲"
+    options:
+      - "A: FINAL_ 接頭辞 (推奨。現行実装、draft の希望値)"
+      - "B: FINAL_CROSSCHECK_ 接頭辞"
+      - "C: キー名の列挙"
+    linked_request: "CR-fd678b04-001"
+feedback_review_evidence:
+  feedback_id: "20260917_081430_impl_feedback_fd678b04"
+  draft_path: "docs/impl/latest/fd678b04/feedback/draft.md"
+  draft_sha256: "815d1dea50c56ead7173a2ea449d780f6f5e20e3fbb8040abb5598143ab34984"
+  request_count: 1
+  blocker_count: 0
+  request_ids:
+    - "CR-fd678b04-001"
+implementation_review_evidence:
+  gate_result: "6/6 pass"
+  gates:
+    format: "pass"
+    lint: "pass"
+    tdd: "pass (67/67)"
+    bdd_tier: "pass (8/8)"
+    uc_bdd: "pass (11/11, injections 0)"
+    atdd: "pass (1/1)"
+  open_blocker_count: 0
+  open_major_count: 2
+  open_minor_count: 19
+  tiers:
+    - tier: "tier-facade"
+      attempt: 2
+      assumptions_sha256: "ae7aa4fcbe2fe82610be47d83b2f9c50e90fba080647e8fc98f39652d8fdc0e3"
+      assumption_verdicts_sha256: "8c8e9558944c24faf6760a76c2a45f5d66c3e688f27acfc0b287b9dc195a7385"
+  assumption_evidence_sha256: "2c693b2651ea9ac4880fc5a2dd51d4e28c61f376f57e9dfd52eaaa1ec2f8a852"
+captures: []
+issues: []
+notes:
+  - "manifest_sha256 と assumption_evidence_sha256 はオーケストレータ受領値を転記した (validateAssumptions.js evidence の再計算結果とも一致)"
+  - "draft_sha256 は shasum -a 256 で実測し S8 done と一致した"
+  - "git コマンドは実行していない。write-set 外のファイルは変更していない"
+completed_at: "2026-09-17T08:30:00+09:00"
+completed_by: "dist-impl-review@0.14.1"

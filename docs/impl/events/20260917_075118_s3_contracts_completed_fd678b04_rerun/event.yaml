@@ -1,0 +1,14 @@
+event_id: 20260917_075118_s3_contracts_completed_fd678b04_rerun
+type: stage_completed
+uc_id: fd678b04
+stage: S3
+payload:
+  manifest_sha256: c91154b5d5f732bbef5d59f32e7339a8f47f288ebd8c0a0b4faec5ba1a950ba2
+  manifest_projection: v2
+  result: pass
+  contracts_verified:
+  - id: management-db
+    result: pass
+  summary: 'S3 contracts rerun: management-db lock fresh (rdb-schema unchanged), UC
+    references no tables'
+created_at: '2026-09-17T07:51:18+09:00'

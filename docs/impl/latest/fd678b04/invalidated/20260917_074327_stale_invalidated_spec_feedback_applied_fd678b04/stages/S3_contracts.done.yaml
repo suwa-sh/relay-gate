@@ -1,0 +1,12 @@
+stage: S3
+uc_id: fd678b04
+manifest_sha256: a1924f0312adfe5fb3027f8a5779e66f05a24848a5b28d2f1908703404d62f81
+manifest_projection: v2
+result: pass
+contracts_verified:
+- id: management-db
+  result: pass
+  detail: 'lock input sha256 が現物 rdb-schema.yaml と一致(再生成不要)。provider 側: scope 7 テーブルすべて
+    source に定義済み。consumers 側: 本 UC の _model-summary.yaml は tables: [] のため参照テーブル・列の突合対象なし'
+completed_at: '2026-09-17T00:50:31+09:00'
+completed_by: dist-impl-run@0.14.0

@@ -1,0 +1,67 @@
+event_id: 20260917_014745_s8_feedback_draft_completed_fd678b04
+type: stage_completed
+uc_id: fd678b04
+stage: S8
+payload:
+  stage: S8
+  uc_id: fd678b04
+  manifest_sha256: a1924f0312adfe5fb3027f8a5779e66f05a24848a5b28d2f1908703404d62f81
+  manifest_projection: v2
+  result: pass
+  mode: initial
+  attempt: 2
+  feedback_request:
+    feedback_id: 20260917_014138_impl_feedback_fd678b04
+    draft_path: docs/impl/latest/fd678b04/feedback/draft.md
+    draft_sha256: ab574e6665b8dbf79a0184b566fed184204d36be2042cd06d7a9a62a5399c9ac
+    request_count: 2
+    blocker_count: 0
+    severity_counts:
+      blocker: 0
+      spec-gap: 2
+      improvement: 0
+    requests:
+    - id: CR-fd678b04-001
+      severity: spec-gap
+      title: 運用モード切替 Scenario の Then を検証側と実行側の責務に分離する
+      origin: issues/20260917_004843_cross-uc-scenarios.md, S6 injections(provisional_harness 1 件)
+    - id: CR-fd678b04-002
+      severity: spec-gap
+      title: runner --help 問い合わせの待機上限と未応答判定を validate-config.sh の契約に一元化し NFR と整合させる
+      origin: A-022 / F-017 (spec_absent と判定されたが別 UC の tier-facade.md に 5 秒の仮採用あり), A-012, V-001, V-002, F-001
+    verify: 'node feedbackRequest.js verify docs/impl/latest/fd678b04/feedback/draft.md --feedback: PASS (2 requests)'
+  as_built_summary: docs/impl/latest/fd678b04/feedback/as-built-summary.md
+  classification:
+    spec_origin: 2
+    implementation_origin: 4
+    environment_origin: 1
+    implementation_origin_items:
+    - 'F-001 (major, attempt-2): probe 一時ファイル作成失敗を runner 未応答に写像。次 attempt で終了コード 6 に修正'
+    - 'A-022: 待機上限 4 秒が別 UC の仮採用 5 秒と不一致。CR-002 の確定値に合わせて修正'
+    - 'A-020: 未実装の検証種別を終了コード 6 にする段階実装措置'
+    - attempt-1 blocker F-001 / F-002 / F-028 は attempt-2 で修正済み
+    environment_origin_items:
+    - '統合テストの Given が別 UC 成果物(runner スタブ・ジョブマップ)を前提: 一時ディレクトリのハーネスで解決済み'
+  assumption_handling:
+    total: 16
+    spec_absent: 15
+    consistent: 1
+    unlisted: 2
+    human_rejected_spec_change: 0
+    note: review-notes.md 未作成のため人の前提判断は無し。spec_change 却下が出たら refresh で severity spec-gap の CR を追加する
+  learnings: 3
+  learning_files:
+  - docs/impl/latest/fd678b04/learnings/20260917_014138_cross-uc-scenario-provisional-harness.md
+  - docs/impl/latest/fd678b04/learnings/20260917_014138_shared-rule-in-other-uc-tier-spec.md
+  - docs/impl/latest/fd678b04/learnings/20260917_014138_cli-value-output-and-external-probe.md
+  proposals:
+    skill: true
+    context: true
+  proposal_files:
+    skill: docs/impl/latest/fd678b04/learnings/20260917_014138_proposal-skill.md
+    context: docs/impl/latest/fd678b04/learnings/20260917_014138_proposal-context.md
+  policy_docs_checked:
+  - tmp/RelayGateのしくみ.md
+  - tmp/RelayGateの利用イメージ.md
+  issues: []
+created_at: '2026-09-17T01:47:45+09:00'

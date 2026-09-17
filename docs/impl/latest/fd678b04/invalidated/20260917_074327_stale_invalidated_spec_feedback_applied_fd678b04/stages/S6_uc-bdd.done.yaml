@@ -1,0 +1,39 @@
+stage: S6
+uc_id: fd678b04
+manifest_sha256: a1924f0312adfe5fb3027f8a5779e66f05a24848a5b28d2f1908703404d62f81
+manifest_projection: v2
+result: pass
+branch_slug: configure-feature-flags
+tiers:
+  - tier-facade
+feature: features/uc/configure-feature-flags.feature
+steps: features/uc/steps/configure-feature-flags.steps.js
+source: "docs/specs/latest/適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md#E2E完了条件(BDD)"
+tier_impl_changed: false
+run:
+  cwd: "."
+  command: "npx cucumber-js --config cucumber.cjs features/uc"
+  exit_code: 0
+  summary: "11 scenarios (11 passed), 41 steps (41 passed)"
+  scenarios_total: 11
+  scenarios_passed: 11
+  scenarios_failed: 0
+  undefined_steps: 0
+harness:
+  sandbox_root: "Scenario ごとの一時ディレクトリを root とし、feature の絶対パス(/etc/relay-gate, /opt/relay-gate)を root 配下の同じ相対位置に配置。出力照合時に root 接頭辞を除去"
+  config_dir: "RELAY_GATE_CONFIG_DIR=<root>/etc/relay-gate(ジョブマップの配置先)"
+  runner_stubs: "--help で runner-if-version=1 を返す実行可能スタブ(4 実体)"
+  external_connections: none
+injections:
+  - scenario: "ジョブ定義を変えずに feature flag だけで運用モードを切り替える(SPEC-001-03)"
+    steps:
+      - "Given ジョブスケジューラのジョブ定義は facade.sh JOB001 のままである"
+      - "When ジョブスケジューラが facade.sh JOB001 を実行する"
+    kind: provisional_harness
+    description: "facade.sh(他 UC の成果物・未実装)を、検証済み feature-flag.env を読んで off でない slot の runner だけを起動するスタブで代替。管理 DB クライアント(psql)の sentinel を PATH 先頭に置き非接続を検証"
+    basis: docs/impl/latest/fd678b04/issues/20260917_004843_cross-uc-scenarios.md
+    remove_when: "UC「slot 実行モードを選択して runner を起動する」の S6 完了後(契約確定後に削除)"
+    note: "この Scenario の pass はスタブに対するもので、facade.sh 実装の証跡ではない"
+issues: []
+completed_at: '2026-09-17T01:37:00+09:00'
+completed_by: dist-impl-implement@0.14.0

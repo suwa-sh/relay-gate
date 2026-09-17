@@ -10,6 +10,7 @@
 #   段 12: 系譜追跡(リランが作る parent_run_id を読む最終消費者)
 # 同一段の UC は依存が無いため BUC のフロー順を保った。uc_id は state-schema.md の生成式(NFC + canonical JSON + sha256 先頭 8 桁)。
 # has_design_system: false かつ frontend tier 無しのため、ui_screens / ui_screen_resolution はどの UC にも置かない(dist-impl-run S1 規則)。
+# UC→ATDD マッピング(Scenario 単位)は events/20260917_004437_config_confirmed_atdd_mapping_all_ucs の config_confirmed で全 UC 一括確定(atdd_confirmed: true)。
 schema_version: '1.0'
 id_length: 8
 use_cases:
@@ -22,8 +23,9 @@ use_cases:
   path: docs/specs/latest/適用構成業務/適用構成定義フロー/feature flag を設定する
   tiers:
   - tier-facade
-  atdd_scenarios: []
-  atdd_confirmed: false
+  atdd_scenarios:
+  - SPEC-001-01-4
+  atdd_confirmed: true
 - uc_id: eff24f55
   business: 適用構成業務
   buc: 適用構成定義フロー
@@ -33,8 +35,10 @@ use_cases:
   path: docs/specs/latest/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する
   tiers:
   - tier-facade
-  atdd_scenarios: []
-  atdd_confirmed: false
+  atdd_scenarios:
+  - SPEC-004-04-4
+  - SPEC-008-05-2
+  atdd_confirmed: true
 - uc_id: dcd8234d
   business: 適用構成業務
   buc: 適用構成定義フロー
@@ -45,8 +49,9 @@ use_cases:
   tiers:
   - tier-final-crosscheck
   - tier-rapid-crosscheck
-  atdd_scenarios: []
-  atdd_confirmed: false
+  atdd_scenarios:
+  - SPEC-004-04-5
+  atdd_confirmed: true
 - uc_id: 65b09d93
   business: 適用構成業務
   buc: 適用構成定義フロー
@@ -57,7 +62,7 @@ use_cases:
   tiers:
   - tier-facade
   atdd_scenarios: []
-  atdd_confirmed: false
+  atdd_confirmed: true
 - uc_id: 09730858
   business: 実装切替業務
   buc: 実装切替ジョブ実行フロー
@@ -67,8 +72,22 @@ use_cases:
   path: docs/specs/latest/実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する
   tiers:
   - tier-facade
-  atdd_scenarios: []
-  atdd_confirmed: false
+  atdd_scenarios:
+  - SPEC-001-01-1
+  - SPEC-001-01-2
+  - SPEC-001-01-3
+  - SPEC-001-02-1
+  - SPEC-001-04-1
+  - SPEC-001-04-2
+  - SPEC-002-01-1
+  - SPEC-002-01-2
+  - SPEC-005-06-3
+  - SPEC-005-06-4
+  - SPEC-011-01-1
+  - SPEC-011-04-1
+  - SPEC-011-04-2
+  - SPEC-011-04-3
+  atdd_confirmed: true
 - uc_id: 7c41c7cd
   business: 実装切替業務
   buc: 実装切替ジョブ実行フロー
@@ -78,8 +97,15 @@ use_cases:
   path: docs/specs/latest/実装切替業務/実装切替ジョブ実行フロー/ジョブマップで JOB_ID から実行先を解決する
   tiers:
   - tier-facade
-  atdd_scenarios: []
-  atdd_confirmed: false
+  atdd_scenarios:
+  - SPEC-002-03-1
+  - SPEC-003-02-1
+  - SPEC-004-01-1
+  - SPEC-004-02-1
+  - SPEC-004-04-1
+  - SPEC-004-04-2
+  - SPEC-004-04-3
+  atdd_confirmed: true
 - uc_id: 43850d68
   business: 実装切替業務
   buc: 実装切替ジョブ実行フロー
@@ -89,8 +115,12 @@ use_cases:
   path: docs/specs/latest/実装切替業務/実装切替ジョブ実行フロー/execution-spec.json を確定保存する
   tiers:
   - tier-facade
-  atdd_scenarios: []
-  atdd_confirmed: false
+  atdd_scenarios:
+  - SPEC-001-01-5
+  - SPEC-004-03-1
+  - SPEC-004-03-2
+  - SPEC-011-04-1
+  atdd_confirmed: true
 - uc_id: 5ebe8db7
   business: 実装切替業務
   buc: 実装切替ジョブ実行フロー
@@ -100,8 +130,20 @@ use_cases:
   path: docs/specs/latest/実装切替業務/実装切替ジョブ実行フロー/実装スクリプトを実行して Runner Result を出力する
   tiers:
   - tier-facade
-  atdd_scenarios: []
-  atdd_confirmed: false
+  atdd_scenarios:
+  - SPEC-003-01-1
+  - SPEC-003-01-2
+  - SPEC-003-01-3
+  - SPEC-003-02-1
+  - SPEC-003-03-1
+  - SPEC-003-04-1
+  - SPEC-004-02-1
+  - SPEC-004-04-3
+  - SPEC-005-02-9
+  - SPEC-005-04-1
+  - SPEC-005-06-4
+  - SPEC-011-06-3
+  atdd_confirmed: true
 - uc_id: f0147a84
   business: 実装切替業務
   buc: 実装切替ジョブ実行フロー
@@ -111,8 +153,18 @@ use_cases:
   path: docs/specs/latest/実装切替業務/実装切替ジョブ実行フロー/foreground slot の結果をジョブスケジューラへ中継する
   tiers:
   - tier-facade
-  atdd_scenarios: []
-  atdd_confirmed: false
+  atdd_scenarios:
+  - SPEC-001-03-1
+  - SPEC-001-03-2
+  - SPEC-001-03-3
+  - SPEC-002-01-2
+  - SPEC-002-02-1
+  - SPEC-002-02-2
+  - SPEC-002-02-3
+  - SPEC-005-05-1
+  - SPEC-012-01-1
+  - SPEC-012-02-1
+  atdd_confirmed: true
 - uc_id: 71e88789
   business: クロスチェック業務
   buc: 速報クロスチェックフロー
@@ -123,8 +175,15 @@ use_cases:
   tiers:
   - tier-facade
   - tier-rapid-crosscheck
-  atdd_scenarios: []
-  atdd_confirmed: false
+  atdd_scenarios:
+  - SPEC-001-01-6
+  - SPEC-005-01-1
+  - SPEC-005-01-2
+  - SPEC-005-01-3
+  - SPEC-005-01-4
+  - SPEC-005-01-6
+  - SPEC-005-04-1
+  atdd_confirmed: true
 - uc_id: a9a9b816
   business: クロスチェック業務
   buc: 確報クロスチェックフロー
@@ -134,8 +193,10 @@ use_cases:
   path: docs/specs/latest/クロスチェック業務/確報クロスチェックフロー/確報比較依頼を登録して終端状態まで待機する
   tiers:
   - tier-final-crosscheck
-  atdd_scenarios: []
-  atdd_confirmed: false
+  atdd_scenarios:
+  - SPEC-006-01-1
+  - SPEC-006-04-1
+  atdd_confirmed: true
 - uc_id: 052abe8b
   business: 実装切替業務
   buc: 実装切替ジョブ実行フロー
@@ -145,8 +206,14 @@ use_cases:
   path: docs/specs/latest/実装切替業務/実装切替ジョブ実行フロー/業務ジョブの実行結果を確認する
   tiers:
   - tier-facade
-  atdd_scenarios: []
-  atdd_confirmed: false
+  atdd_scenarios:
+  - SPEC-001-03-1
+  - SPEC-001-03-2
+  - SPEC-002-02-2
+  - SPEC-005-05-1
+  - SPEC-012-01-1
+  - SPEC-012-02-1
+  atdd_confirmed: true
 - uc_id: fe00211d
   business: クロスチェック業務
   buc: 速報クロスチェックフロー
@@ -156,8 +223,19 @@ use_cases:
   path: docs/specs/latest/クロスチェック業務/速報クロスチェックフロー/両系成功時に速報比較依頼を作成する
   tiers:
   - tier-rapid-crosscheck
-  atdd_scenarios: []
-  atdd_confirmed: false
+  atdd_scenarios:
+  - SPEC-005-02-1
+  - SPEC-005-02-2
+  - SPEC-005-02-3
+  - SPEC-005-02-4
+  - SPEC-005-02-5
+  - SPEC-005-02-6
+  - SPEC-005-02-7
+  - SPEC-005-02-8
+  - SPEC-005-02-9
+  - SPEC-005-04-2
+  - SPEC-005-04-3
+  atdd_confirmed: true
 - uc_id: 5d9cc326
   business: クロスチェック業務
   buc: 確報クロスチェックフロー
@@ -167,8 +245,10 @@ use_cases:
   path: docs/specs/latest/クロスチェック業務/確報クロスチェックフロー/確報比較依頼を claim する
   tiers:
   - tier-final-crosscheck
-  atdd_scenarios: []
-  atdd_confirmed: false
+  atdd_scenarios:
+  - SPEC-007-01-1
+  - SPEC-007-02-1
+  atdd_confirmed: true
 - uc_id: 23e26223
   business: クロスチェック業務
   buc: 速報クロスチェックフロー
@@ -178,8 +258,12 @@ use_cases:
   path: docs/specs/latest/クロスチェック業務/速報クロスチェックフロー/速報比較依頼を claim する
   tiers:
   - tier-rapid-crosscheck
-  atdd_scenarios: []
-  atdd_confirmed: false
+  atdd_scenarios:
+  - SPEC-005-06-1
+  - SPEC-005-06-2
+  - SPEC-007-01-1
+  - SPEC-007-02-1
+  atdd_confirmed: true
 - uc_id: 256abc3b
   business: クロスチェック業務
   buc: 確報クロスチェックフロー
@@ -189,8 +273,12 @@ use_cases:
   path: docs/specs/latest/クロスチェック業務/確報クロスチェックフロー/比較ツールで日次全量比較を実行して結果を保存する
   tiers:
   - tier-final-crosscheck
-  atdd_scenarios: []
-  atdd_confirmed: false
+  atdd_scenarios:
+  - SPEC-006-02-1
+  - SPEC-006-04-1
+  - SPEC-007-01-2
+  - SPEC-011-03-1
+  atdd_confirmed: true
 - uc_id: 17f1a809
   business: クロスチェック業務
   buc: 速報クロスチェックフロー
@@ -200,8 +288,17 @@ use_cases:
   path: docs/specs/latest/クロスチェック業務/速報クロスチェックフロー/比較ツールでジョブ単位比較を実行して結果を登録する
   tiers:
   - tier-rapid-crosscheck
-  atdd_scenarios: []
-  atdd_confirmed: false
+  atdd_scenarios:
+  - SPEC-005-03-1
+  - SPEC-005-03-2
+  - SPEC-005-03-3
+  - SPEC-005-03-4
+  - SPEC-005-03-5
+  - SPEC-007-01-2
+  - SPEC-010-02-3
+  - SPEC-011-02-1
+  - SPEC-011-06-2
+  atdd_confirmed: true
 - uc_id: 3b33d088
   business: クロスチェック業務
   buc: 確報クロスチェックフロー
@@ -211,8 +308,11 @@ use_cases:
   path: docs/specs/latest/クロスチェック業務/確報クロスチェックフロー/保存済みの確報結果をジョブスケジューラへ返す
   tiers:
   - tier-final-crosscheck
-  atdd_scenarios: []
-  atdd_confirmed: false
+  atdd_scenarios:
+  - SPEC-006-03-1
+  - SPEC-006-03-2
+  - SPEC-007-03-1
+  atdd_confirmed: true
 - uc_id: 27f67672
   business: クロスチェック業務
   buc: 速報クロスチェックフロー
@@ -222,8 +322,9 @@ use_cases:
   path: docs/specs/latest/クロスチェック業務/速報クロスチェックフロー/速報比較結果を参照する
   tiers:
   - tier-rapid-crosscheck
-  atdd_scenarios: []
-  atdd_confirmed: false
+  atdd_scenarios:
+  - SPEC-011-02-1
+  atdd_confirmed: true
 - uc_id: 4145bcb9
   business: クロスチェック業務
   buc: 確報クロスチェックフロー
@@ -234,7 +335,7 @@ use_cases:
   tiers:
   - tier-final-crosscheck
   atdd_scenarios: []
-  atdd_confirmed: false
+  atdd_confirmed: true
 - uc_id: 5031379f
   business: 実行復旧業務
   buc: 実行中止フロー
@@ -244,8 +345,9 @@ use_cases:
   path: docs/specs/latest/実行復旧業務/実行中止フロー/現在状態を確認して停止確認に応答する
   tiers:
   - tier-ops
-  atdd_scenarios: []
-  atdd_confirmed: false
+  atdd_scenarios:
+  - SPEC-010-03-1
+  atdd_confirmed: true
 - uc_id: ca5eedc2
   business: 実行監視業務
   buc: background 実行監視フロー
@@ -255,8 +357,11 @@ use_cases:
   path: docs/specs/latest/実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する
   tiers:
   - tier-ops
-  atdd_scenarios: []
-  atdd_confirmed: false
+  atdd_scenarios:
+  - SPEC-005-01-5
+  - SPEC-008-03-2
+  - SPEC-008-05-1
+  atdd_confirmed: true
 - uc_id: e4ea8aaa
   business: 実行監視業務
   buc: background 実行監視フロー
@@ -266,8 +371,18 @@ use_cases:
   path: docs/specs/latest/実行監視業務/background 実行監視フロー/ハング疑い・実行エラー・比較異常を通知する
   tiers:
   - tier-ops
-  atdd_scenarios: []
-  atdd_confirmed: false
+  atdd_scenarios:
+  - SPEC-005-01-5
+  - SPEC-008-01-1
+  - SPEC-008-01-2
+  - SPEC-008-01-3
+  - SPEC-008-02-1
+  - SPEC-008-04-1
+  - SPEC-008-06-1
+  - SPEC-008-06-2
+  - SPEC-008-06-3
+  - SPEC-012-01-2
+  atdd_confirmed: true
 - uc_id: 49a194f7
   business: 実行監視業務
   buc: background 実行監視フロー
@@ -277,8 +392,14 @@ use_cases:
   path: docs/specs/latest/実行監視業務/background 実行監視フロー/監視記録を保存する
   tiers:
   - tier-ops
-  atdd_scenarios: []
-  atdd_confirmed: false
+  atdd_scenarios:
+  - SPEC-008-03-1
+  - SPEC-008-03-2
+  - SPEC-008-03-3
+  - SPEC-008-03-4
+  - SPEC-008-04-1
+  - SPEC-010-01-4
+  atdd_confirmed: true
 - uc_id: d0977c60
   business: 実行復旧業務
   buc: 実行中止フロー
@@ -288,8 +409,21 @@ use_cases:
   path: docs/specs/latest/実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる
   tiers:
   - tier-ops
-  atdd_scenarios: []
-  atdd_confirmed: false
+  atdd_scenarios:
+  - SPEC-010-01-1
+  - SPEC-010-01-2
+  - SPEC-010-01-5
+  - SPEC-010-01-6
+  - SPEC-010-01-7
+  - SPEC-010-01-8
+  - SPEC-010-02-1
+  - SPEC-010-02-2
+  - SPEC-010-02-3
+  - SPEC-010-02-4
+  - SPEC-010-02-5
+  - SPEC-010-03-2
+  - SPEC-011-06-1
+  atdd_confirmed: true
 - uc_id: e96c1600
   business: 実行復旧業務
   buc: background 側リランフロー
@@ -299,8 +433,11 @@ use_cases:
   path: docs/specs/latest/実行復旧業務/background 側リランフロー/リラン対象を検証する
   tiers:
   - tier-ops
-  atdd_scenarios: []
-  atdd_confirmed: false
+  atdd_scenarios:
+  - SPEC-009-03-1
+  - SPEC-009-03-2
+  - SPEC-009-04-1
+  atdd_confirmed: true
 - uc_id: bc6f11a5
   business: 実行監視業務
   buc: background 実行監視フロー
@@ -310,8 +447,9 @@ use_cases:
   path: docs/specs/latest/実行監視業務/background 実行監視フロー/background 異常の通知メールを受け取る
   tiers:
   - tier-ops
-  atdd_scenarios: []
-  atdd_confirmed: false
+  atdd_scenarios:
+  - SPEC-012-01-2
+  atdd_confirmed: true
 - uc_id: 1415f1a7
   business: 実行監視業務
   buc: background 実行監視フロー
@@ -322,8 +460,10 @@ use_cases:
   tiers:
   - tier-facade
   - tier-ops
-  atdd_scenarios: []
-  atdd_confirmed: false
+  atdd_scenarios:
+  - SPEC-008-05-1
+  - SPEC-008-05-2
+  atdd_confirmed: true
 - uc_id: 9aedf7cc
   business: 実行復旧業務
   buc: background 側リランフロー
@@ -334,8 +474,13 @@ use_cases:
   tiers:
   - tier-facade
   - tier-ops
-  atdd_scenarios: []
-  atdd_confirmed: false
+  atdd_scenarios:
+  - SPEC-005-02-8
+  - SPEC-009-01-1
+  - SPEC-009-02-1
+  - SPEC-010-01-3
+  - SPEC-011-06-3
+  atdd_confirmed: true
 - uc_id: 8af695ba
   business: 実行復旧業務
   buc: background 側リランフロー
@@ -346,8 +491,10 @@ use_cases:
   tiers:
   - tier-ops
   - tier-rapid-crosscheck
-  atdd_scenarios: []
-  atdd_confirmed: false
+  atdd_scenarios:
+  - SPEC-009-03-3
+  - SPEC-011-06-2
+  atdd_confirmed: true
 - uc_id: 15a5e2db
   business: 適用構成業務
   buc: 適用構成定義フロー
@@ -357,8 +504,16 @@ use_cases:
   path: docs/specs/latest/適用構成業務/適用構成定義フロー/切り替えた運用モードで業務ジョブを実行する
   tiers:
   - tier-facade
-  atdd_scenarios: []
-  atdd_confirmed: false
+  atdd_scenarios:
+  - SPEC-001-01-1
+  - SPEC-001-02-1
+  - SPEC-001-03-1
+  - SPEC-001-03-2
+  - SPEC-001-03-3
+  - SPEC-001-04-1
+  - SPEC-001-04-2
+  - SPEC-013-01-1
+  atdd_confirmed: true
 - uc_id: 24a0fcc4
   business: 実行復旧業務
   buc: background 側リランフロー
@@ -368,5 +523,6 @@ use_cases:
   path: docs/specs/latest/実行復旧業務/background 側リランフロー/リラン結果を parent_run_id で追跡する
   tiers:
   - tier-ops
-  atdd_scenarios: []
-  atdd_confirmed: false
+  atdd_scenarios:
+  - SPEC-009-01-2
+  atdd_confirmed: true

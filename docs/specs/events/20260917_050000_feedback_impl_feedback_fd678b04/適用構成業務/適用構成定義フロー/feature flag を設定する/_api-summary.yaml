@@ -1,0 +1,73 @@
+uc: "feature flag を設定する"
+business: "適用構成業務"
+buc: "適用構成定義フロー"
+paths: []
+x_cli_commands:
+  - name: "validate-config.sh"
+    tier: "tier-facade"
+    role: "defines"
+    synopsis: "validate-config.sh --feature-flag <path> [--verbose] [--help]"
+    invoked_by: "基盤適用設計者(直接起動)"
+    args: []
+    options:
+      - name: "--feature-flag"
+        type: "string"
+        required: false
+        description: "検証する feature flag env ファイルのパス。検証種別オプション(--feature-flag / --job-map / --crosscheck-job-map / --target-catalog)のうちちょうど 1 つを指定する(排他。0 個または 2 個以上は終了コード 2)"
+      - name: "--verbose"
+        type: "boolean"
+        required: false
+        default: "false"
+        description: "info を stderr に出す"
+      - name: "--help"
+        type: "boolean"
+        required: false
+        default: "false"
+        description: "使い方を stdout に出して終了コード 0"
+    stdin: "なし"
+    stdout: "検証 OK 時に固定順 15 キー: config_path, blue_mode, green_mode, blue_impl, green_impl, blue_runner, green_runner, rapid_crosscheck_mode, rapid_crosscheck_runner, rapid_crosscheck_worker, operation_mode, blue_job_map, green_job_map, blue_runner_if_version, green_runner_if_version(末尾 4 キーは UC「slot runner の実体スクリプトを割り当てる」が定義。未設定・off・--help 未応答は -)"
+    stderr: "違反ごとに error: 1 行(全件。ファイル不在は error: config file not found path: ...、必須キー欠落・空は error: option required option=<KEY> path: ...、enum 外は error: invalid value key=<KEY> value=...、絶対パスでないは error: path is not absolute key=<KEY> path=...、実体なし・実行不可は error: file not executable key=<KEY> path=...、foreground 重複・無しは error: foreground slot must be exactly one blue_mode=... green_mode=...、確報制御キーは error: final crosscheck key is not allowed key=...)。9 キー以外の未知キーは warn: unknown key key=<KEY> path: ...。対処が明確なら hint:"
+    exit_codes:
+      - code: 0
+        meaning: "検証 OK"
+      - code: 2
+        meaning: "引数不正(検証種別オプションの 0 個・複数指定を含む)/ ファイルなし / foreground が 2 個または 0 個 / mode 列挙外 / 必須キー(off でない slot の <SLOT>_IMPL・<SLOT>_RUNNER、off でない RAPID_CROSSCHECK_MODE の RAPID_CROSSCHECK_RUNNER・RAPID_CROSSCHECK_WORKER)の欠落・空 / 実体パスの相対パス・不在・実行不可 / 対応ジョブマップなし / RAPID_CROSSCHECK_MODE 列挙外 / 確報制御キーあり"
+      - code: 6
+        meaning: "runner --help 問い合わせの準備失敗(error: runner probe failed slot=... reason=...。契約 validate-config.sh の runner_help_probe.preparation_failure。runner の未応答は warn で継続)"
+async_events: []
+schemas:
+  - name: "FeatureFlagEnv"
+    properties:
+      - name: "BLUE_MODE"
+        type: "enum(foreground|background|off)"
+        required: true
+      - name: "GREEN_MODE"
+        type: "enum(foreground|background|off)"
+        required: true
+      - name: "RAPID_CROSSCHECK_MODE"
+        type: "enum(foreground|background|off)"
+        required: true
+      - name: "BLUE_IMPL"
+        type: "string"
+        required: false
+        description: "BLUE_MODE が off でないとき必須。execution-spec.json の slots.blue.impl_version の出所"
+      - name: "GREEN_IMPL"
+        type: "string"
+        required: false
+        description: "GREEN_MODE が off でないとき必須。slots.green.impl_version の出所"
+      - name: "BLUE_RUNNER"
+        type: "string(absolute path)"
+        required: false
+        description: "BLUE_MODE が off でないとき必須"
+      - name: "GREEN_RUNNER"
+        type: "string(absolute path)"
+        required: false
+        description: "GREEN_MODE が off でないとき必須"
+      - name: "RAPID_CROSSCHECK_RUNNER"
+        type: "string(absolute path)"
+        required: false
+        description: "RAPID_CROSSCHECK_MODE が off でないとき必須。slot runner が完了通知を送る速報クロスチェック runner の実体"
+      - name: "RAPID_CROSSCHECK_WORKER"
+        type: "string(absolute path)"
+        required: false
+        description: "RAPID_CROSSCHECK_MODE が off でないとき必須。速報クロスチェック worker の実体"

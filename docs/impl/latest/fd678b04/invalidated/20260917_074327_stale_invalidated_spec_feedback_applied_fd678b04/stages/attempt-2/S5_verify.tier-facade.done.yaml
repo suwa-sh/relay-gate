@@ -1,0 +1,46 @@
+stage: "S5"
+tier: "tier-facade"
+attempt: 2
+uc_id: "fd678b04"
+manifest_sha256: "a1924f0312adfe5fb3027f8a5779e66f05a24848a5b28d2f1908703404d62f81"
+manifest_projection: "v2"
+result: "pass"
+open_blockers: 0
+findings: "attempt-2/S5_verify.tier-facade.findings.yaml"
+summary:
+  blocker: 0
+  major: 3
+  minor: 18
+gate_reexec:
+  format: "pass"
+  lint: "pass"
+  tdd: "pass"
+  bdd_tier: "pass"
+environment_failures: []
+assumptions_sha256: "b43d1e25737b0ece6034a88d230c1ee4095a097747c29d67078dedd2e952ae68"
+assumption_verdicts_sha256: "e7c999e3462cd3f817d2c59277b6f7f17e79d0611d9ccd858689904dd04956bd"
+assumption_verdicts_summary:
+  consistent: 1
+  spec_absent: 15
+  contradicts: 0
+  unlisted: 2
+assumption_questions:
+  - id: "A-010"
+    question: "envの未知キー値をプロセス変数に取り込まない方針の採否"
+    options:
+      - "confirmed"
+      - "rejected"
+  - id: "A-015"
+    question: "verboseログに設定値を出さずキー名とパスだけを出す方針の採否"
+    options:
+      - "confirmed"
+      - "rejected"
+verification_scope:
+  runtime_os: "Darwin"
+  gates: "1-4"
+  viewpoints: "1-8 completed"
+  supplemental: "27モード組合せ、境界入力、シェル非展開、両runner無応答、probe準備失敗の故障注入、版行重複/非0終了"
+  limitations: "Linux本番実行およびS6/S7統合ゲートは本検証では未実施。UC/ATDD足場は後続stage所有。実装者の説明は読まず、前提はblind join、S4 doneはgate機械値だけを照合した。"
+notes: "全ゲートpass・blocker0のためresult=pass。運用上のmajor1件とsecurity前提major2件を残す。人間判断は後続S9で必要。本実行ではユーザーへの質問、gitコマンド、実装・テスト・仕様の修正を行っていない。"
+completed_at: "2026-09-16T16:32:10.060572+00:00"
+completed_by: "dist-impl-verify@0.14.0"

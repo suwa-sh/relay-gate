@@ -1,0 +1,17 @@
+event_id: 20260917_081849_s8_feedback_draft_completed_fd678b04_cycle2
+type: stage_completed
+uc_id: fd678b04
+stage: S8
+payload:
+  manifest_sha256: c91154b5d5f732bbef5d59f32e7339a8f47f288ebd8c0a0b4faec5ba1a950ba2
+  manifest_projection: v2
+  result: pass
+  mode: initial
+  feedback_id: 20260917_081430_impl_feedback_fd678b04
+  draft_path: feedback/draft.md
+  draft_sha256: 815d1dea50c56ead7173a2ea449d780f6f5e20e3fbb8040abb5598143ab34984
+  request_count: 1
+  blocker_count: 0
+  summary: 'S8 feedback draft (cycle 2): 1 spec-gap request (FINAL control-key prohibition
+    range inconsistent across spec.md / tier-facade.md / CLI contract), blocker 0'
+created_at: '2026-09-17T08:18:49+09:00'

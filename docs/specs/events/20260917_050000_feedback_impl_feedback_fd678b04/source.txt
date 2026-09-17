@@ -1,0 +1,15 @@
+Spec 差分更新: feedback 20260917_014138_impl_feedback_fd678b04(design 無しモード。UI 画面なし・CLI と定期ジョブのみ。実装フェーズ UC fd678b04「feature flag を設定する」からの spec-gap 2 件: BDD Scenario の検証側 / 実行側への責務分離と runner --help 問い合わせ規則の契約への一元化)
+event_id: 20260917_050000_feedback_impl_feedback_fd678b04
+previous_event: 20260908_062000_feedback_spec_machine_readable
+trigger_event: rdra:20260908_011000_feedback_slot_status_wording, arch:20260908_015000_feedback_slot_status_wording
+related_event: nfr:20260907_120000_feedback_abort_consistency, infra:20260907_124000_feedback_abort_consistency(本 run では head は変更なし)
+design_available: false(引数指定。docs/design/latest/ は読まない)
+dialogue_policy: interactive(CR 本文に利用者の希望値が明記された事項(待機上限 4 秒 / 逐次 / TERM → 0.2 秒後 KILL / 準備失敗は終了コード 6)は要求どおり採用。確認推奨項目は完了報告で返却)
+feedback_request_id: 20260917_014138_impl_feedback_fd678b04
+input_sha256: c89ce3b8a83c485abfbaae773f716cfb080a559f580581bbc039542bbe1c7d0c
+request_ids: CR-fd678b04-001, CR-fd678b04-002
+direct_work_unit_ids: CR-fd678b04-001#1, CR-fd678b04-002#1
+causal_work_unit_ids: CR-fd678b04-001#1, CR-fd678b04-002#1
+stage_packet: docs/pipeline/feedback-runs/20260917_014138_impl_feedback_fd678b04/stage-packets/spec.md
+入力の正本: docs/rdra/latest/(20260908_011000)、docs/usdm/latest/(20260908_011000)、docs/nfr/latest/(20260907_120000)、docs/arch/latest/(20260908_015000)、docs/infra/latest/(20260907_124000)、docs/specs/latest/(20260908_062000_feedback_spec_machine_readable を差分更新の起点)、方針資料 tmp/RelayGateのしくみ.md / tmp/RelayGateの利用イメージ.md(git 管理外・読み取りのみ)
+変更の正本(作業記録): _review/change-brief.md(D1〜D3)

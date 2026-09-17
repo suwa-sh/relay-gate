@@ -1,0 +1,15 @@
+event_id: 20260917_110800_s7_atdd_completed_fd678b04_cycle3
+type: stage_completed
+uc_id: fd678b04
+stage: S7
+payload:
+  manifest_sha256: 1802e7aaaecea1c74c643022cb6bd64bd90cb653f0c8e55ebf73b9888907116e
+  manifest_projection: v2
+  result: pass
+  atdd_scenarios:
+  - SPEC-001-01-4
+  scenarios_expected: 1
+  scenarios_passed: 1
+  injections: 0
+  summary: 'S7 atdd rerun: @atdd_SPEC-001-01-4 exact tag selection, 1/1 passed, steps unchanged (criterion unaffected by cycle-2 spec change)'
+created_at: '2026-09-17T11:08:00+09:00'

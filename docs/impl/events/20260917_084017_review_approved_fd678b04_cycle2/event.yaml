@@ -1,0 +1,108 @@
+event_id: 20260917_084017_review_approved_fd678b04_cycle2
+type: review_approved
+uc_id: fd678b04
+stage: S9
+attempt: 2
+payload:
+  review_evidence_event_id: 20260917_083021_s9_review_generated_fd678b04_cycle2
+  approval_kind: feedback_publish_permission
+  feedback_review_evidence:
+    feedback_id: 20260917_081430_impl_feedback_fd678b04
+    draft_sha256: 815d1dea50c56ead7173a2ea449d780f6f5e20e3fbb8040abb5598143ab34984
+    request_count: 1
+  implementation_review_evidence:
+    gate_result: 6/6 pass
+    open_blocker_count: 0
+    open_major_count: 2
+    assumption_evidence_sha256: 2c693b2651ea9ac4880fc5a2dd51d4e28c61f376f57e9dfd52eaaa1ec2f8a852
+  user_answer: 実装=承認 / 禁止キー範囲=A / 前提=A-010:承認 / A-024:承認 / A-025:承認 / A-026:承認 / A-027:承認
+  decisions:
+    implementation: approved
+    prohibited_key_range: A (FINAL_ prefix; draft unchanged)
+  assumption_decisions:
+  - tier: tier-facade
+    id: A-010
+    decision: confirmed
+    note: user answer 2026-09-17 cycle 2
+  - tier: tier-facade
+    id: A-024
+    decision: confirmed
+    note: user answer 2026-09-17 cycle 2
+  - tier: tier-facade
+    id: A-025
+    decision: confirmed
+    note: user answer 2026-09-17 cycle 2
+  - tier: tier-facade
+    id: A-026
+    decision: confirmed
+    note: user answer 2026-09-17 cycle 2
+  - tier: tier-facade
+    id: A-027
+    decision: confirmed
+    note: user answer 2026-09-17 cycle 2
+  - tier: tier-facade
+    id: A-005
+    decision: auto_confirmed
+    note: carried forward from cycle 1 approval (20260917_024346_review_approved_fd678b04);
+      unchanged; not answered in cycle 2
+  - tier: tier-facade
+    id: A-006
+    decision: auto_confirmed
+    note: carried forward from cycle 1 approval (20260917_024346_review_approved_fd678b04);
+      unchanged; not answered in cycle 2
+  - tier: tier-facade
+    id: A-007
+    decision: auto_confirmed
+    note: carried forward from cycle 1 approval (20260917_024346_review_approved_fd678b04);
+      unchanged; not answered in cycle 2
+  - tier: tier-facade
+    id: A-008
+    decision: auto_confirmed
+    note: carried forward from cycle 1 approval (20260917_024346_review_approved_fd678b04);
+      unchanged; not answered in cycle 2
+  - tier: tier-facade
+    id: A-015
+    decision: auto_confirmed
+    note: carried forward from cycle 1 approval (20260917_024346_review_approved_fd678b04);
+      unchanged; not answered in cycle 2
+  - tier: tier-facade
+    id: A-016
+    decision: auto_confirmed
+    note: carried forward from cycle 1 approval (20260917_024346_review_approved_fd678b04);
+      unchanged; not answered in cycle 2
+  - tier: tier-facade
+    id: A-017
+    decision: auto_confirmed
+    note: carried forward from cycle 1 approval (20260917_024346_review_approved_fd678b04);
+      unchanged; not answered in cycle 2
+  - tier: tier-facade
+    id: A-018
+    decision: auto_confirmed
+    note: carried forward from cycle 1 approval (20260917_024346_review_approved_fd678b04);
+      unchanged; not answered in cycle 2
+  - tier: tier-facade
+    id: A-019
+    decision: auto_confirmed
+    note: carried forward from cycle 1 approval (20260917_024346_review_approved_fd678b04);
+      unchanged; not answered in cycle 2
+  - tier: tier-facade
+    id: A-020
+    decision: auto_confirmed
+    note: carried forward from cycle 1 approval (20260917_024346_review_approved_fd678b04);
+      unchanged; not answered in cycle 2
+  - tier: tier-facade
+    id: A-021
+    decision: auto_confirmed
+    note: carried forward from cycle 1 approval (20260917_024346_review_approved_fd678b04);
+      unchanged; not answered in cycle 2
+  - tier: tier-facade
+    id: A-023
+    decision: auto_confirmed
+    note: carried forward from cycle 1 approval (20260917_024346_review_approved_fd678b04);
+      unchanged; not answered in cycle 2
+  assumption_evidence_recheck:
+    record_sha256: ae7aa4fcbe2fe82610be47d83b2f9c50e90fba080647e8fc98f39652d8fdc0e3
+    verdicts_sha256: 8c8e9558944c24faf6760a76c2a45f5d66c3e688f27acfc0b287b9dc195a7385
+    ok: true
+  review_notes: docs/impl/latest/fd678b04/review/review-notes.md
+created_at: '2026-09-17T08:40:17+09:00'

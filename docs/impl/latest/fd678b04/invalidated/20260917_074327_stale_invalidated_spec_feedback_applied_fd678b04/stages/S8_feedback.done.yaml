@@ -1,0 +1,112 @@
+stage: S8
+uc_id: fd678b04
+manifest_sha256: a1924f0312adfe5fb3027f8a5779e66f05a24848a5b28d2f1908703404d62f81
+manifest_projection: v2
+result: pass
+mode: initial
+attempt: 2
+feedback_request:
+  feedback_id: 20260917_014138_impl_feedback_fd678b04
+  draft_path: null
+  published_path: "docs/impl/latest/fd678b04/feedback-requests/20260917_014138_impl_feedback_fd678b04.md"
+  input_sha256: c89ce3b8a83c485abfbaae773f716cfb080a559f580581bbc039542bbe1c7d0c
+  review_approved_event_id: 20260917_024346_review_approved_fd678b04
+  review_evidence_event_id: 20260917_024345_s9_review_regenerated_fd678b04
+  published_at: "2026-09-17T02:46:11+09:00"
+  draft_sha256: c89ce3b8a83c485abfbaae773f716cfb080a559f580581bbc039542bbe1c7d0c
+  draft_sha256_before_refresh: ab574e6665b8dbf79a0184b566fed184204d36be2042cd06d7a9a62a5399c9ac
+  request_count: 2
+  blocker_count: 0
+  severity_counts:
+    blocker: 0
+    spec-gap: 2
+    improvement: 0
+  requests:
+    - id: CR-fd678b04-001
+      severity: spec-gap
+      title: "運用モード切替 Scenario の Then を検証側と実行側の責務に分離する"
+      origin: "issues/20260917_004843_cross-uc-scenarios.md, S6 injections(provisional_harness 1 件)"
+    - id: CR-fd678b04-002
+      severity: spec-gap
+      title: "runner --help 問い合わせの待機上限と未応答判定を validate-config.sh の契約に一元化し NFR と整合させる"
+      origin: "A-022 / F-017 (spec_absent と判定されたが別 UC の tier-facade.md に 5 秒の仮採用あり), A-012, V-001, V-002, F-001"
+  verify: "node feedbackRequest.js verify docs/impl/latest/fd678b04/feedback/draft.md --feedback: PASS (2 requests, refresh 後に再実行)"
+as_built_summary: "docs/impl/latest/fd678b04/feedback/as-built-summary.md"
+classification:
+  spec_origin: 2
+  implementation_origin: 4
+  environment_origin: 1
+  implementation_origin_items:
+    - "F-001 (major, attempt-2): probe 一時ファイル作成失敗を runner 未応答に写像。次 attempt で終了コード 6 に修正"
+    - "A-022: 待機上限 4 秒が別 UC の仮採用 5 秒と不一致。CR-002 の確定値に合わせて修正"
+    - "A-020: 未実装の検証種別を終了コード 6 にする段階実装措置"
+    - "attempt-1 blocker F-001 / F-002 / F-028 は attempt-2 で修正済み"
+  environment_origin_items:
+    - "統合テストの Given が別 UC 成果物(runner スタブ・ジョブマップ)を前提: 一時ディレクトリのハーネスで解決済み"
+assumption_handling:
+  total: 16
+  spec_absent: 15
+  consistent: 1
+  unlisted: 2
+  human_rejected_spec_change: 0
+  human_confirmed: 18
+  note: "2026-09-17 S9 承認対話(review-notes.md)で前提 18 件すべて confirmed。spec_change 却下 0 件のため refresh での CR 追加なし"
+learnings: 3
+learning_files:
+  - "docs/impl/latest/fd678b04/learnings/20260917_014138_cross-uc-scenario-provisional-harness.md"
+  - "docs/impl/latest/fd678b04/learnings/20260917_014138_shared-rule-in-other-uc-tier-spec.md"
+  - "docs/impl/latest/fd678b04/learnings/20260917_014138_cli-value-output-and-external-probe.md"
+proposals:
+  skill: true
+  context: true
+proposal_files:
+  skill: "docs/impl/latest/fd678b04/learnings/20260917_014138_proposal-skill.md"
+  context: "docs/impl/latest/fd678b04/learnings/20260917_014138_proposal-context.md"
+policy_docs_checked:
+  - "tmp/RelayGateのしくみ.md"
+  - "tmp/RelayGateの利用イメージ.md"
+issues: []
+completed_at: "2026-09-17T01:41:38+09:00"
+completed_by: dist-impl-feedback@0.14.0
+refresh:
+  refreshed_at: "2026-09-17T02:37:08+09:00"
+  mode: refresh
+  input: "docs/impl/latest/fd678b04/review/review-notes.md"
+  review_evidence_ref: "events/20260917_020150_s9_review_generated_fd678b04"
+  request_count: 2
+  blocker_count: 0
+  updated: 1
+  added: 0
+  removed: 0
+  updated_ids: [CR-fd678b04-002]
+  added_ids: []
+  removed_ids: []
+  changes:
+    - "CR-fd678b04-002 の『変更してほしいこと』に希望値を追記(待機上限 4 秒 / slot、blue / green 逐次、上限到達時は runner のプロセスグループへ TERM → 0.2 秒後 KILL、両 slot 未応答でも約 9.1 秒で NFR B.2.1.1 以内、別 UC の 5 秒(仮採用)は 4 秒に置換)。意図・完了条件は変更なし"
+    - "CR-fd678b04-001 は変更なし"
+    - "feedback/as-built-summary.md の前提一覧に人の判断(全 18 件 confirmed)を反映"
+  learnings_updated: 0
+  proposals_updated: {skill: false, context: false}
+publish:
+  mode: publish
+  published_at: "2026-09-17T02:46:11+09:00"
+  published_path: "docs/impl/latest/fd678b04/feedback-requests/20260917_014138_impl_feedback_fd678b04.md"
+  feedback_id: 20260917_014138_impl_feedback_fd678b04
+  input_sha256: c89ce3b8a83c485abfbaae773f716cfb080a559f580581bbc039542bbe1c7d0c
+  published_sha256: c89ce3b8a83c485abfbaae773f716cfb080a559f580581bbc039542bbe1c7d0c
+  request_count: 2
+  blocker_count: 0
+  supersedes: null
+  review_evidence_event_id: 20260917_024345_s9_review_regenerated_fd678b04
+  review_approved_event_id: 20260917_024346_review_approved_fd678b04
+  publish_started_event_id: 20260917_024610_feedback_request_publish_started_fd678b04
+  published_event_id: 20260917_024611_feedback_request_published_fd678b04
+  preflight:
+    lineage: "approval → evidence 参照一致、feedback_review_evidence exact 一致、implementation_review_evidence canonical 4 field exact 一致(S9 done / S9 event / approval)"
+    approvals_on_current_evidence: 1
+    assumption_completeness: "verdicts 18 / decisions 18 (1:1, 全 confirmed, rejected 0)。必須回答 A-010 / A-015 confirmed"
+    assumption_recompute: "validateAssumptions.js record / verdicts / evidence 再実行: sha256 b43d1e25… / e7c999e3… / 0f065054… が S4 done / S5 done / S9 evidence と一致"
+    draft_bytes: "UTF-8, BOM なし, LF, NFC, front matter byte 0, CR 2 件, blocker 0 件"
+    verify: "node feedbackRequest.js verify draft.md --feedback: PASS (2 requests, sha256 c89ce3b8…)"
+    path: "全親 component が directory / non-symlink, draft は regular / non-symlink, same-filesystem (dev 16777230), 公開先未作成"
+    rename: "lstat 再照合 (dev/inode/size 一致) 後に atomic rename。rename 後に同 dev/inode を確認し no-follow で SHA-256 再照合一致"

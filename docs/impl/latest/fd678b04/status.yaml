@@ -1,0 +1,56 @@
+schema_version: '1.0'
+uc_id: fd678b04
+business: 適用構成業務
+buc: 適用構成定義フロー
+uc: feature flag を設定する
+state: completed
+current_attempt: 3
+resolved_models:
+  implementer: claude-fable-5-1
+  verifier: gpt-6-astra
+git_delivery:
+  required: true
+  uc_english_name: Configure feature flags
+  branch_slug: configure-feature-flags
+  base_branch: main
+  base_head: f695c7b819c1e86668a92519d31abdec3e296caf
+  feature_branch: feature/configure-feature-flags
+  remote: origin
+stages:
+  S1_uc_init:
+    status: done
+  S2_test_scaffold:
+    status: done
+    red_baseline: not_applicable
+  S3_contracts:
+    status: done
+  S4_tier_impl:
+    tier-facade:
+      status: done
+      attempt: 3
+      gates:
+        format: pass
+        lint: pass
+        tdd: pass
+        bdd_tier: pass
+  S5_verify:
+    tier-facade:
+      status: done
+      attempt: 3
+      open_blockers: 0
+      open_major: 2
+  S6_uc_bdd:
+    status: done
+  S7_atdd:
+    status: done
+  S8_feedback:
+    status: done
+    request_count: 0
+    draft_path: null
+  S9_review:
+    status: approved
+    evidence_event: 20260917_113000_s9_review_generated_fd678b04_cycle3
+    approval_event: 20260918_072800_review_approved_fd678b04_cycle3
+updated_at: '2026-09-18T07:29:00+09:00'
+delivery:
+  prepared_event: 20260918_072830_delivery_prepared_fd678b04

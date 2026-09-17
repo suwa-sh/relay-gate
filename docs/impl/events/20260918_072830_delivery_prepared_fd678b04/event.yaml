@@ -1,0 +1,17 @@
+event_id: 20260918_072830_delivery_prepared_fd678b04
+type: delivery_prepared
+uc_id: fd678b04
+payload:
+  review_approved_event_id: 20260918_072800_review_approved_fd678b04_cycle3
+  review_evidence_event_id: 20260917_113000_s9_review_generated_fd678b04_cycle3
+  pending_decision_count: 0
+  decisions_applied: true
+  post_decision_gates: pass
+  post_decision_review_aligned: true
+  feedback_request_count: 0
+  base_branch: main
+  base_head: f695c7b819c1e86668a92519d31abdec3e296caf
+  feature_branch: feature/configure-feature-flags
+  squash_commit_message: 'feat: feature flag を設定する'
+  note: 'user decisions required no spec/config/impl/test change (all confirmed); gates and independent verification of attempt-3 stand as post-decision evidence. bootstrap P2 content-stable reruns on the feature branch (a2387e2, a80d0c3) are included in the squash'
+created_at: '2026-09-18T07:28:30+09:00'

@@ -1,0 +1,20 @@
+uc: "監視記録を保存する"
+business: "実行監視業務"
+buc: "background 実行監視フロー"
+paths: []
+x_cli_commands:
+  - name: "hang-detector.sh"
+    tier: "tier-ops"
+    role: "uses"
+    synopsis: "hang-detector.sh [--verbose](記録部分。コマンド契約の正本は UC「background 実行の経過時間と終了状態を判定する」)"
+    invoked_by: "ジョブスケジューラ(ハング検知定期ジョブ、5 分ごと)"
+    args: []
+    options: []
+    stdin: "なし"
+    stdout: "出力しない"
+    stderr: "error: monitor record save failed run_id=... role=...(UPSERT 失敗時)"
+    exit_codes:
+      - code: 6
+        meaning: "monitor_records の UPSERT 失敗が 1 件以上(他の対象は継続したうえで 6)"
+async_events: []
+schemas: []

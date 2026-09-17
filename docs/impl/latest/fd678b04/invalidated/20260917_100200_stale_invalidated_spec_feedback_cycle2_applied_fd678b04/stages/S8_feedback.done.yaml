@@ -1,0 +1,131 @@
+stage: S8
+uc_id: fd678b04
+manifest_sha256: c91154b5d5f732bbef5d59f32e7339a8f47f288ebd8c0a0b4faec5ba1a950ba2
+manifest_projection: v2
+result: pass
+mode: publish
+attempt: 2
+cycle: 2
+rerun_reason: "stale after spec event 20260917_050000_feedback_impl_feedback_fd678b04 (invalidated by 20260917_074327_stale_invalidated_spec_feedback_applied_fd678b04)"
+previous_done: "docs/impl/latest/fd678b04/invalidated/20260917_074327_stale_invalidated_spec_feedback_applied_fd678b04/stages/S8_feedback.done.yaml"
+previous_feedback:
+  feedback_id: 20260917_014138_impl_feedback_fd678b04
+  published_path: "docs/impl/latest/fd678b04/feedback-requests/20260917_014138_impl_feedback_fd678b04.md"
+  applied_spec_event: "20260917_050000_feedback_impl_feedback_fd678b04"
+  note: "前サイクルの要求 2 件は spec に反映済み。本 draft では再要求せず、supersedes も使わない"
+feedback_request:
+  feedback_id: 20260917_081430_impl_feedback_fd678b04
+  draft_path: null
+  draft_note: "draft は atomic rename で公開先へ移動済み (feedback/draft.md は存在しない)"
+  draft_sha256: 815d1dea50c56ead7173a2ea449d780f6f5e20e3fbb8040abb5598143ab34984
+  published_path: "docs/impl/latest/fd678b04/feedback-requests/20260917_081430_impl_feedback_fd678b04.md"
+  published_sha256: 815d1dea50c56ead7173a2ea449d780f6f5e20e3fbb8040abb5598143ab34984
+  published_at: "2026-09-17T08:42:50+09:00"
+  supersedes: null
+  request_count: 1
+  blocker_count: 0
+  severity_counts:
+    blocker: 0
+    spec-gap: 1
+    improvement: 0
+  requests:
+    - id: CR-fd678b04-001
+      severity: spec-gap
+      title: "feature flag で拒否する「確報の制御キー」の範囲を一意に定める"
+      origin: "S5 attempt-2 F-001 (major, spec_conformance): spec.md 処理フロー FINAL_* / spec.md 分岐条件一覧 FINAL_CROSSCHECK_MODE 等 / tier-facade.md FINAL_CROSSCHECK_* / 契約は範囲未定義"
+      user_decision: "禁止キー範囲=A (FINAL_ 接頭辞)。draft の希望値と同じため本文は変更なし"
+  verify: "node feedbackRequest.js verify docs/impl/latest/fd678b04/feedback/draft.md --feedback (publish 直前): PASS (1 requests, sha256 815d1dea…)"
+  bytes: "UTF-8, BOM なし, LF, NFC, front matter byte 0, 5377 bytes (publish 直前に再確認)"
+publish:
+  review_evidence_event_id: 20260917_083021_s9_review_generated_fd678b04_cycle2
+  review_approved_event_id: 20260917_084017_review_approved_fd678b04_cycle2
+  publish_started_event_id: 20260917_084220_feedback_request_publish_started_fd678b04_cycle2
+  published_event_id: 20260917_084250_feedback_request_published_fd678b04_cycle2
+  event_order_check: "review evidence (083021) < approval (084017) < publish started (084220) < published (084250)"
+  approval_count_for_current_evidence: 1
+  evidence_match:
+    feedback_review_evidence: "S9 done / S9 event / approval で feedback_id・draft_sha256・request_count が exact 一致"
+    implementation_review_evidence: "S9 done / S9 event / approval で gate_result 6/6 pass・open_blocker_count 0・open_major_count 2・assumption_evidence_sha256 2c693b26… が exact 一致"
+  assumption_completeness:
+    record_rerun: "validateAssumptions.js record tier-facade attempt 2: ok, count 17, sha256 ae7aa4fc… (S4 done と一致)"
+    verdicts_rerun: "validateAssumptions.js verdicts tier-facade attempt 2: ok, verdicts_sha256 8c8e9558… (S5 done と一致), requires_answer 1"
+    evidence_rerun: "validateAssumptions.js evidence: 2c693b26… (S9 evidence と一致)"
+    decisions_1to1: "assumption_decisions 17 件 = S5 assumption_verdicts 17 件 (未知 id・重複・欠落なし)"
+    required_answered: "A-010 (security, spec_absent) は confirmed"
+    rejected: "0 件 (implementation_change なし)"
+  path_checks:
+    parents: "docs/impl/latest/fd678b04 から feedback/ と feedback-requests/ を lstat + realpath で確認。symlink なし、UC root 内"
+    draft: "regular file, non-symlink (dev 16777230 / ino 433295142 / size 5377)"
+    destination_before: "未作成"
+    same_filesystem: "draft 親と公開先親は同一 device 16777230"
+  rename:
+    method: "os.rename (atomic, same filesystem)"
+    precheck: "rename 直前に lstat を再実行し device/inode/size が検証時と一致"
+    postcheck: "公開先は regular/non-symlink、同一 device/inode。no-follow open で sha256 815d1dea… を再確認"
+  bytes_unchanged: true
+  published_markdown_untouched:
+    - "docs/impl/latest/fd678b04/feedback-requests/20260917_014138_impl_feedback_fd678b04.md"
+as_built_summary: "docs/impl/latest/fd678b04/feedback/as-built-summary.md"
+classification:
+  spec_origin: 1
+  implementation_origin: 3
+  environment_origin: 1
+  resolved_by_previous_feedback: 2
+  spec_origin_items:
+    - "F-001 (major): 確報の制御キーの範囲が仕様間で不一致 → CR-fd678b04-001"
+  implementation_origin_items:
+    - "F-002 (minor): TDD 1 ケース 3 Act (cli_field.bats:44)。次 attempt でケース分割"
+    - "F-005 / F-019 (category_mismatch): A-006 / A-025 の分類差異。次 attempt で AssumptionRecord の分類を揃える"
+    - "A-020: 未実装の検証種別を終了コード 6 にする段階実装措置。担当 UC の実装で解消"
+  environment_origin_items:
+    - "issues/20260917_074633 残存項目: 正常系 Scenario の Given (runner スタブ・ジョブマップ) が別 UC 成果物を前提。一時ディレクトリのハーネスで解決済み、仕様変更不要"
+  resolved_items:
+    - "運用モード切替 Scenario の When / Then 分離 (前 CR-001): spec 反映済み、S6 injections 0"
+    - "runner --help 問い合わせの契約一元化 (前 CR-002): 契約 runner_help_probe 反映済み、旧 major F-001 (準備失敗→未応答) は終了コード 6 の実装で解消"
+  excluded_from_draft:
+    - "F-008 (major): A-010 security 前提 (spec_absent) は S9 でユーザーが confirmed。要求化しない"
+    - "spec_absent 前提 15 件・restatement 1 件: S9 で confirmed 4 件 / auto_confirmed 12 件。前提の一括仕様化要求は出さない"
+assumption_handling:
+  total: 17
+  spec_absent: 16
+  consistent: 1
+  contradicts: 0
+  unlisted: 0
+  requires_answer: 1
+  human_decisions: "取得済み (approval 20260917_084017: confirmed 5 / auto_confirmed 12 / rejected 0)"
+  human_rejected_spec_change: 0
+learnings: 2
+learning_files:
+  - "docs/impl/latest/fd678b04/learnings/20260917_081430_same-rule-written-differently-across-spec-files.md"
+  - "docs/impl/latest/fd678b04/learnings/20260917_081430_spec-feedback-rerun-with-red-tests-first.md"
+proposals:
+  skill: true
+  context: true
+proposal_files:
+  skill: "docs/impl/latest/fd678b04/learnings/20260917_081430_proposal-skill.md"
+  context: "docs/impl/latest/fd678b04/learnings/20260917_081430_proposal-context.md"
+existing_learnings_untouched:
+  - "docs/impl/latest/fd678b04/learnings/20260917_014138_*.md (前サイクル。編集していない)"
+policy_docs_checked:
+  - "tmp/RelayGateのしくみ.md"
+  - "tmp/RelayGateの利用イメージ.md"
+inputs_read:
+  - "docs/impl/latest/fd678b04/issues/20260917_004843_cross-uc-scenarios.md"
+  - "docs/impl/latest/fd678b04/issues/20260917_074633_cross-uc-scenarios-resolution.md"
+  - "docs/impl/latest/fd678b04/stages/attempt-2/S5_verify.tier-facade.findings.yaml"
+  - "docs/impl/latest/fd678b04/stages/attempt-2/S4_tier-impl.tier-facade.assumptions.yaml"
+  - "docs/impl/latest/fd678b04/stages/S6_uc-bdd.done.yaml"
+  - "docs/impl/latest/fd678b04/stages/S7_atdd.done.yaml"
+  - "docs/impl/latest/fd678b04/review/review-notes.md"
+  - "docs/impl/latest/fd678b04/stages/S9_review_generated.done.yaml"
+  - "docs/impl/events/20260917_083021_s9_review_generated_fd678b04_cycle2/event.yaml"
+  - "docs/impl/events/20260917_084017_review_approved_fd678b04_cycle2/event.yaml"
+next_command: "/distillery:dist-pipeline docs/impl/latest/fd678b04/feedback-requests/20260917_081430_impl_feedback_fd678b04.md"
+issues: []
+notes:
+  - "manifest_sha256 は受領値を再計算せず転記した"
+  - "git コマンドは実行していない。write-set 外のファイルは変更していない (status.yaml の更新はオーケストレータ)"
+  - "公開 Markdown に review 情報 (承認者・承認時刻) は追加していない"
+  - "公開済み Markdown 20260917_014138_impl_feedback_fd678b04.md は編集していない"
+completed_at: "2026-09-17T08:42:50+09:00"
+completed_by: dist-impl-feedback@0.14.1

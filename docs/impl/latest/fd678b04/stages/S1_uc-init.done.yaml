@@ -1,0 +1,24 @@
+stage: S1
+uc_id: fd678b04
+manifest_sha256: 93b891273f0f42d9e35a110f2f0d19803c1a08240b69ee0892aebd6c0b72c457
+manifest_projection: v2
+result: pass
+input_preflight:
+  files_exist: true
+  yaml_parse: true
+  gherkin_blocks: 3
+  gherkin_blocks_note: 'spec.md 2 (E2E 完了条件 + 参考) / tier-facade.md 1'
+  tier_ids_in_arch:
+  - tier-facade
+  conditional_inputs_consistent: true
+lineage_ok: true
+atdd_scenarios:
+- SPEC-001-01-4
+atdd_mapping: confirmed by 20260917_004437_config_confirmed_atdd_mapping_all_ucs (not re-asked)
+rerun_reason: stale after spec event 20260917_100000_feedback_impl_feedback_fd678b04_cycle2 (invalidated by 20260917_100200_stale_invalidated_spec_feedback_cycle2_applied_fd678b04)
+spec_changes_noted:
+- 'cli-command-contract.yaml config_files.feature-flag.env.validation_rules: 拒否範囲 = キー名が FINAL_ で始まる全キー(接頭辞判定、未知キー warn より先に判定)'
+- 'spec.md / tier-facade.md / _api-summary.yaml: FINAL_* / FINAL_CROSSCHECK_* 表記を「FINAL_ で始まるキー」に統一'
+- 'spec.md E2E: Scenario「FINAL_ で始まる確報設定のキーは未知キーではなく拒否される(SPEC-001-01)」追加(FINAL_DB_CONN_REF)。tier-facade.md ティア完了条件にも同旨 Scenario 追加'
+completed_at: '2026-09-17T10:04:00+09:00'
+completed_by: dist-impl-run@0.14.1

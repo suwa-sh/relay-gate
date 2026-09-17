@@ -1,0 +1,113 @@
+stage: S2
+uc_id: fd678b04
+manifest_sha256: cbbd99ae5ab67c3263cf000865ad9cfaf99a9473f6d5b8d2d2f7f66fa87069ba
+manifest_projection: v2
+result: pass
+scaffold_mode: scoped_rerun
+rerun_reason: "stale after spec event 20260917_050000_feedback_impl_feedback_fd678b04 (invalidated by 20260917_074327_stale_invalidated_spec_feedback_applied_fd678b04)"
+previous_done: "docs/impl/latest/fd678b04/invalidated/20260917_074327_stale_invalidated_spec_feedback_applied_fd678b04/stages/S2_test-scaffold.done.yaml"
+branch_slug: configure-feature-flags
+tiers:
+  - tier-facade
+scaffold_scope:
+  tiers:
+    - tier-facade
+  uc_feature: regenerated
+  atdd: untouched
+red_baseline: not_applicable
+red_baseline_note: "scoped 再実行のため red baseline は done 条件にしない。再生成した feature / テストが parse 可能かつ実行可能で、fail は全て未実装(S4 / S6 の再実行で追従予定)を理由とし、パースエラー・設定ミス由来の fail は 0 件"
+spec_changes_applied:
+  - "spec.md E2E 完了条件: Scenario「ジョブ定義を変えずに feature flag だけで運用モードを切り替える(SPEC-001-03)」の And/When/Then を検証側(validate-config.sh の終了コード・stdout・stderr)だけで判定する形に差し替え"
+  - "tier-facade.md ティア完了条件(BDD): 変更なし(既存 feature と完全一致を確認)"
+  - "cli-command-contract.yaml validate-config.sh runner_help_probe: 待機上限 4 秒 / 版の値が 1 でない場合は未応答 / 版行の前後空白除去 / 準備失敗は終了コード 6 → ④ TDD の red テストとして追加"
+generated:
+  atdd:
+    feature: features/atdd/SPEC-001-01.feature
+    feature_body_changed: false
+    steps: features/atdd/steps/configure-feature-flags.steps.js
+    steps_changed: false
+    scenarios:
+      - SPEC-001-01-4
+  uc_bdd:
+    feature: features/uc/configure-feature-flags.feature
+    feature_regenerated: true
+    steps: features/uc/steps/configure-feature-flags.steps.js
+    steps_changed: true
+    steps_change_summary: "旧 Scenario の facade.sh ハーネス注入(FACADE_HARNESS_STUB / PSQL_SENTINEL)と旧 step 3 件を撤去。新 step 4 件を未実装 skeleton として追加。Given「ジョブ定義は facade.sh JOB001 のままである」は前提条件の記録のみに簡素化。他 Scenario の step 定義は変更なし"
+    source: "docs/specs/latest/適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md#E2E完了条件(BDD)"
+    scenarios: 11
+    changed_scenarios:
+      - "ジョブ定義を変えずに feature flag だけで運用モードを切り替える(SPEC-001-03)"
+  tier_bdd:
+    - tier: tier-facade
+      feature: facade/features/configure-feature-flags.feature
+      feature_body_changed: false
+      steps: facade/features/steps/configure-feature-flags.steps.js
+      steps_changed: false
+      source: "docs/specs/latest/適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md#ティア完了条件(BDD)"
+      scenarios: 8
+  tdd:
+    - tier: tier-facade
+      file: facade/test/gateway/runner_probe.bats
+      added_tests: 3
+      target: "facade/src/gateway/runner_probe.sh (runner_probe_if_version: 既定待機上限 4 秒 / 版の値の前後空白除去 / 複数行は最初の 1 行)"
+    - tier: tier-facade
+      file: facade/test/usecase/validate_feature_flag.bats
+      added_tests: 1
+      target: "facade/src/usecase/validate_feature_flag.sh (版が 1 でない runner を未応答として warn + if_version=-)"
+    - tier: tier-facade
+      file: facade/test/presentation/validate_config.bats
+      added_tests: 1
+      target: "facade/bin/validate-config.sh (runner 問い合わせの準備失敗 → error: runner probe failed slot=<s> reason=<r>、終了コード 6、stdout 空)"
+test_runs:
+  - stage: atdd
+    cwd: "."
+    command: "npx cucumber-js --config cucumber.cjs features/atdd --tags @atdd_SPEC-001-01-4"
+    exit_code: 0
+    summary: "1 scenario (1 passed), 3 steps (3 passed)"
+    fail_reason: none
+    undefined_steps: 0
+  - stage: uc_bdd
+    cwd: "."
+    command: "npx cucumber-js --config cucumber.cjs features/uc"
+    exit_code: 1
+    summary: "11 scenarios (1 failed, 10 passed), 43 steps (1 failed, 4 skipped, 38 passed)"
+    fail_reason: not_implemented
+    failed_scenarios:
+      - "ジョブ定義を変えずに feature flag だけで運用モードを切り替える(SPEC-001-03)"
+    undefined_steps: 0
+  - stage: tier_bdd
+    tier: tier-facade
+    cwd: facade
+    command: "npx cucumber-js --config ../cucumber.cjs features"
+    exit_code: 0
+    summary: "8 scenarios (8 passed), 28 steps (28 passed)"
+    fail_reason: none
+    undefined_steps: 0
+  - stage: tdd
+    tier: tier-facade
+    cwd: facade
+    command: "bats -r test"
+    exit_code: 1
+    summary: "66 tests, 63 ok, 3 not ok (added red tests: runner_probe 版の前後空白除去 / validate-config.sh 準備失敗 → 6 / usecase 版が 1 でない場合の warn)"
+    fail_reason: not_implemented
+    failed_tests:
+      - "runner_probe_if_version_版の値の前後に空白がある場合_空白を除いた値を出力すること"
+      - "validate-config_sh_runner問い合わせの準備に失敗した場合_runner probe failedで終了コード6でstdoutは空であること"
+      - "validate_feature_flag_query_runnerの版が1でない場合_応答しないとしてwarnを出しif_versionは-であること"
+format_check:
+  tier: tier-facade
+  command: "shfmt -d ."
+  exit_code: 0
+lint:
+  tier: tier-facade
+  command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+  exit_code: 0
+dom_snapshot_tests: not_applicable
+issues:
+  - path: docs/impl/latest/fd678b04/issues/20260917_074633_cross-uc-scenarios-resolution.md
+    kind: cross_uc_scenarios_resolution
+    blocker: false
+    summary: "既存 issue 20260917_004843 の項目 1(facade.sh 実行の When/Then)は解消、項目 2(runner --help / ジョブマップの Given)は残存(責務分担の記録のみ、仕様変更不要)"
+completed_at: '2026-09-17T07:50:00+09:00'
+completed_by: dist-impl-implement@0.14.1

@@ -351,3 +351,14 @@ RDRA に存在しない要素を追加する前に、ここで合意を得てか
 - **ステータス**: closed
 - **決定(2026-09-08, feedback:20260908_slot_status_wording)**: A: 条件「slot 実行の状態導出規則」の管理 DB 側を「公開時点の状態を条件付き更新で一度だけ書き、abort 後は ABORTED を残して再同期しない」に改め、USDM SPEC-005-02 に受け入れ条件を追加。arch E-014 / spec の旧文言引用も追従(CR-019、rdra:20260908_011000_feedback_slot_status_wording、arch:20260908_015000_feedback_slot_status_wording、spec:20260908_024000_feedback_slot_status_wording)
 
+## 2026-09-17 dist-spec からの追加提案
+
+### DIST-030: runner --help 問い合わせの 1 slot あたり予算 4.6 秒(待機 4 秒 + 停止 0.2 秒 + 回収・起動オーバーヘッド 0.4 秒)
+- **発生元**: dist-spec (20260917_050000_feedback_impl_feedback_fd678b04)
+- **種別**: 仮採用値
+- **提案内容**: 提案内容: cli-command-contract.yaml validate-config.sh runner_help_probe.per_slot_probe_budget_seconds = 4.6(仮採用、confidence: low)。待機上限 4 秒・TERM → 0.2 秒後 KILL・逐次は CR-fd678b04-002 の利用者希望値で確定。プロセスグループの回収と起動のオーバーヘッド 0.4 秒以内だけが実測(両 slot 未応答で約 9.1 秒 = 2 × 4.55 秒)からの導出で、両 slot 未応答の上限 2 × 4.6 = 9.2 秒 ≤ NFR B.2.1.1 の 10 秒(残り 0.8 秒)。他の選択肢: 0.2 秒(2 × 4.4 = 8.8 秒。実測より厳しく、遅いホストで BDD がフレークしうる)/ 0.9 秒(2 × 5.1 = 10.2 秒。NFR を超えるため待機上限を 3.5 秒に下げる必要)。実装フェーズの実測で確定する
+- **根拠**: (サブエージェントが記入)
+- **影響範囲**: (サブエージェントが記入)
+- **推奨対応**: [ ] requirements スキル再実行で反映 / [ ] 却下 / [ ] 保留
+- **ステータス**: open
+

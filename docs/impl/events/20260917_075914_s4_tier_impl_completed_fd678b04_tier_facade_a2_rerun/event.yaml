@@ -1,0 +1,22 @@
+event_id: 20260917_075914_s4_tier_impl_completed_fd678b04_tier_facade_a2_rerun
+type: stage_completed
+uc_id: fd678b04
+stage: S4
+tier: tier-facade
+attempt: 2
+payload:
+  manifest_sha256: c91154b5d5f732bbef5d59f32e7339a8f47f288ebd8c0a0b4faec5ba1a950ba2
+  manifest_projection: v2
+  result: pass
+  gates:
+    format: pass
+    lint: pass
+    tdd: pass
+    bdd_tier: pass
+  assumptions:
+    count: 17
+    sha256: ae7aa4fcbe2fe82610be47d83b2f9c50e90fba080647e8fc98f39652d8fdc0e3
+  rerun: stale (same attempt, no findings passed)
+  summary: 'S4 tier-facade rerun: runner_help_probe contract applied (4s/TERM-KILL,
+    version line rule, preparation failure exit 6), 67 bats ok, 8 tier BDD passed'
+created_at: '2026-09-17T07:59:14+09:00'

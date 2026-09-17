@@ -1,0 +1,55 @@
+stage: "S5"
+tier: "tier-facade"
+attempt: 2
+uc_id: "fd678b04"
+manifest_sha256: "1802e7aaaecea1c74c643022cb6bd64bd90cb653f0c8e55ebf73b9888907116e"
+manifest_projection: "v2"
+result: "fail"
+open_blockers: 1
+summary:
+  blocker: 1
+  major: 1
+  minor: 18
+gate_reexec:
+  format: "pass"
+  lint: "pass"
+  tdd: "pass"
+  bdd_tier: "pass"
+findings_path: "docs/impl/latest/fd678b04/stages/attempt-2/S5_verify.tier-facade.findings.yaml"
+environment_failures: []
+completed_at: "2026-09-17T10:18:50+09:00"
+completed_by: "dist-impl-verify@0.14.1"
+assumptions_sha256: "ae7aa4fcbe2fe82610be47d83b2f9c50e90fba080647e8fc98f39652d8fdc0e3"
+assumption_verdicts_sha256: "4f477010f1ac8bf8b88e373e9d68168ae406b306f06990c231fae7aff9d2d4ba"
+assumption_verdicts_summary:
+  consistent: 1
+  spec_absent: 15
+  contradicts: 1
+  unlisted: 0
+verdicts_sha256: "4f477010f1ac8bf8b88e373e9d68168ae406b306f06990c231fae7aff9d2d4ba"
+counts:
+  consistent: 1
+  spec_absent: 15
+  contradicts: 1
+  unlisted: 0
+requires_answer: 1
+result_note: "4ゲートはすべてpass。A-007の前提記録がFINAL_接頭辞拒否の最新契約と矛盾するため、前提整合の規則でblockerが1件。実装はFINAL_を正しく拒否している。"
+validation:
+  tdd_tests_passed: 72
+  bdd_scenarios_passed: 9
+  bdd_steps_passed: 32
+  mode_combinations_checked: 27
+  final_prefix_cases_checked: 7
+  two_unresponsive_runners_seconds: 9.006
+  assumption_validator: "pass"
+  yaml_parse: "pass"
+write_set:
+  - "docs/impl/latest/fd678b04/stages/attempt-2/S5_verify.tier-facade.done.yaml"
+  - "docs/impl/latest/fd678b04/stages/attempt-2/S5_verify.tier-facade.findings.yaml"
+write_set_compliance: "リポジトリ内の書き込みは指定done/findingsのみ。テスト一時ファイルとnpmキャッシュは許可された/tmp配下のみ。gitコマンド未実行、実装・テスト・仕様・他状態ファイルは未変更。"
+pending_questions:
+  - assumption_id: "A-010"
+    question: "未知キーの値をプロセス変数へ代入せず、9キーだけを取り込む方針を承認するか。"
+    options:
+      - "現行の9キー許可リスト方式を承認する"
+      - "承認せず仕様変更を要求する"

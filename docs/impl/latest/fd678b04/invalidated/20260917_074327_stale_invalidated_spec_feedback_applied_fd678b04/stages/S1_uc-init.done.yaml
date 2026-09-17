@@ -1,0 +1,17 @@
+stage: S1
+uc_id: fd678b04
+manifest_sha256: d80ed463fb7af2fe5e4145340aa08256b4283a9f178cb34866c3c3af8ad4f876
+manifest_projection: v2
+result: pass
+input_preflight:
+  files_exist: true
+  yaml_parse: true
+  gherkin_blocks: 2
+  tier_ids_in_arch:
+  - tier-facade
+  conditional_inputs_consistent: true
+lineage_ok: true
+atdd_scenarios:
+- SPEC-001-01-4
+completed_at: '2026-09-17T00:45:06+09:00'
+completed_by: dist-impl-run@0.14.0

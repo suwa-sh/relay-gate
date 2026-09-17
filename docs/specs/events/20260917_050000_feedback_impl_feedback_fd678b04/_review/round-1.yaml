@@ -1,0 +1,67 @@
+round: 1
+# 第三者レビュー(toolbox:review-refute-loop)。サブエージェント内発動のためテンプレ C(fresh context の Claude general-purpose サブエージェント)。クロスモデルレビューではない。
+# 対象: git diff HEAD -- docs/specs/latest(feedback request(2026-09-17 01:41 発行)の CR-001 / CR-002 適用差分)
+# 観点(閾値 medium): P1 CR 完了条件の充足 / P2 方針資料との整合 / P3 値の二重定義の残存 / P4 Scenario 名と spec-event.yaml の一致 / P5 NFR B.2.1.1 の計算可能性
+# 観点 × ラウンド: P1 PASS/PASS/PASS、P2 PASS/PASS/PASS、P3 PASS/CONCERN/PASS、P4 PASS/PASS(全 32 UC 機械照合)/PASS、P5 CONCERN/PASS/PASS。round 3(検証パス)で指摘 0 件、収束
+findings:
+  - id: R-001
+    viewpoint: 5
+    severity: major
+    target: "_cross-cutting/api/cli-command-contract.yaml"
+    claim: "runner_help_probe.response_time_budget の 2 × (4 + 0.2) = 8.4 秒は停止処理を 0.2 秒ちょうどと置いた理論値で、CR-002 の実測 約 9.1 秒(同じ 4 秒 × 2 逐次)と 0.7 秒ずれる。残り 1.6 秒を他処理に使うと 10 秒超になりうる"
+    evidence: "CR-002 観測事実「両 runner が応答しない場合に 2 回の問い合わせを逐次実行して約 9.1 秒で復帰した」。契約 timeout_action は TERM → 0.2 秒後 KILL までで、KILL 後の回収・起動オーバーヘッドが予算式に無い"
+    suggested_fix: "1 slot あたりの問い合わせ全体(待機 + 停止・回収)の上限を契約値として持ち、両 slot 未応答の上限と残り予算を実測込みで明示する"
+  - id: R-002
+    viewpoint: 3
+    severity: major
+    target: "適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/tier-facade.md"
+    claim: "「応答しない」の判定基準が契約 runner_help_probe.no_response_criteria 以外の 2 箇所(tier-facade.md 検証表 / spec.md シーケンス図)に列挙として再掲され、spec.md 側は「版の値が 1 でない」が欠落して既に食い違っている(round 2 で検出)"
+    evidence: "tier-facade.md 検証表: 4 項目を再掲。spec.md シーケンス図 else 分岐: 3 項目のみ。「blue → green の逐次」も両所に再掲"
+    suggested_fix: "両箇所を runner_help_probe.no_response_criteria への参照に置き換え、実行順の再掲も参照化する"
+  - id: R-003
+    viewpoint: 1
+    severity: minor
+    target: "適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md"
+    claim: "Scenario 末尾の「And ジョブスケジューラのジョブ定義は変更していない」は validate-config.sh の出力から判定できない不変条件で、直後の注記「終了コード・stdout・stderr だけで判定する」と字面がずれる"
+    evidence: "CR-001 の例文どおりの記述。注記は本文外の説明"
+    suggested_fix: "注記を「判定する出力は…だけで、ジョブ定義の不変は前提条件」に改める"
+  - id: R-004
+    viewpoint: 3
+    severity: minor
+    target: "_cross-cutting/api/cli-command-contract.yaml"
+    claim: "validate-config.sh stdout 説明の未応答条件「応答しない・runner-if-version= 行を返さない」が no_response_criteria の部分再掲(非 0 終了・版不一致が抜ける)"
+    evidence: "stdout 説明と runner_help_probe.no_response_criteria の項目数の差"
+    suggested_fix: "「(判定基準は runner_help_probe)」の参照に置き換える"
+  - id: R-005
+    viewpoint: 5
+    severity: minor
+    target: "適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/spec.md"
+    claim: "新規 BDD の「10 秒未満」(< 10)と契約の合計「10 秒以内」(≤ 10)が境界値 10.0 でずれる(round 2 で検出)"
+    evidence: "契約 response_time_budget: 9.2 + 0.8 = 10.0 秒以内。BDD: 10 秒未満"
+    suggested_fix: "BDD を「10 秒以内である(NFR B.2.1.1)」に揃える"
+  - id: R-006
+    viewpoint: 3
+    severity: minor
+    target: "適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md"
+    claim: "UC ロジックの「逐次実行」一語が実行方式の値の再掲(round 3 で検出。below-threshold)"
+    evidence: "同文で契約を正本と明示しているため影響は軽微"
+    suggested_fix: "「実行順」に揃える"
+resolved:
+  - id: R-001
+    resolution: fixed
+    note: "runner_help_probe に per_slot_probe_budget_seconds: 4.6(待機 4 + 停止 0.2 + 回収・起動 0.4 以内)を追加し、両 slot 未応答 2 × 4.6 = 9.2 秒 ≤ 10 秒(残り 0.8 秒)に書き換え。0.4 秒は実測からの導出として docs/todo.md DIST-030 に仮採用登録。spec-decision-009 も同旨。round 2 で再レビューし P5 PASS"
+  - id: R-002
+    resolution: fixed
+    note: "tier-facade.md 検証表と spec.md シーケンス図を runner_help_probe.no_response_criteria への参照に置き換え、「blue → green の逐次」の再掲を「実行順は契約 runner_help_probe」に置き換え。round 3 で再レビューし P3 PASS"
+  - id: R-003
+    resolution: fixed
+    note: "注記を「判定する出力は validate-config.sh --feature-flag の終了コード・stdout・stderr だけで、『ジョブ定義は変更していない』は前提条件」に改めた"
+  - id: R-004
+    resolution: fixed
+    note: "stdout 説明を「『応答しない』と判定した場合(判定基準は runner_help_probe)」に置き換えた"
+  - id: R-005
+    resolution: fixed
+    note: "UC-30 spec.md / tier-facade.md の新 Scenario を「10 秒以内である(NFR B.2.1.1)」に揃えた"
+  - id: R-006
+    resolution: fixed
+    note: "「実行順」に置換。外部再レビュー未実施(round 3 の below-threshold。ローカル検証のみ)"

@@ -1,0 +1,36 @@
+uc: "feature flag を設定する"
+business: "適用構成業務"
+buc: "適用構成定義フロー"
+bounded_context_id: "BC-005"
+aggregate_id: "AG-005"
+
+models:
+  - name: "ValidateConfigRequest"
+    tier: "tier-facade"
+    layer: "presentation"
+    type: "request"
+    rdra_info: "feature flag 設定"
+  - name: "ValidateFeatureFlagQuery"
+    tier: "tier-facade"
+    layer: "usecase"
+    type: "command"
+    rdra_info: "feature flag 設定"
+  - name: "FeatureFlag"
+    tier: "tier-facade"
+    layer: "domain"
+    type: "value-object"
+    rdra_info: "feature flag 設定"
+  - name: "SlotRunnerAssignment"
+    tier: "tier-facade"
+    layer: "domain"
+    type: "value-object"
+    rdra_info: "slot runner 割当"
+  - name: "FeatureFlagConfig"
+    tier: "tier-facade"
+    layer: "repository"
+    type: "record"
+    rdra_info: "feature flag 設定"
+
+tables: []
+kvs: []
+object_storage: []

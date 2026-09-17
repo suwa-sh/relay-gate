@@ -1,0 +1,276 @@
+{
+  "event_id": "20260917_050000_feedback_stage_spec",
+  "type": "feedback_stage_completed",
+  "run_id": "feedback-20260917_014138_impl_feedback_fd678b04-20260917_043610-12137",
+  "attempt": 1,
+  "created_at": "2026-09-16T20:00:00Z",
+  "stage": "spec",
+  "direct_work_unit_ids": [
+    "CR-fd678b04-001#1",
+    "CR-fd678b04-002#1"
+  ],
+  "causal_work_unit_ids": [
+    "CR-fd678b04-001#1",
+    "CR-fd678b04-002#1"
+  ],
+  "work_unit_results": [
+    {
+      "work_unit_id": "CR-fd678b04-001#1",
+      "disposition": "applied",
+      "reason": "UC「feature flag を設定する」の Scenario「ジョブ定義を変えずに feature flag だけで運用モードを切り替える(SPEC-001-03)」の When / Then を validate-config.sh --feature-flag の終了コード・stdout・stderr だけで判定する形に書き換え(Scenario 名は不変)、実行側は UC「slot 実行モードを選択して runner を起動する」の既存 Scenario「新実装の単独本番モードでは green だけを起動し管理 DB に触れない(SPEC-001-03)」で覆い同 Scenario にジョブ定義不変の前提を追記。両 UC の「関連 USDM」SPEC-001-03 行に「※ 検証側 / 実行側」を記載。全 32 UC の spec.md を走査し、同形の UC「slot ごとのジョブマップを定義する」SPEC-008-05 Scenario も同方針で分離(実行側は UC「hang_detect_limit_minutes をジョブごとに調整する」)。契約 facade.sh used_by_ucs と uc-dependencies.md を追従。分離対象外の判断は spec-decision-009。usdm[] は不変で validateSpecEvent PASS",
+      "artifact_refs": [
+        "specs/events/20260917_050000_feedback_impl_feedback_fd678b04/適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md",
+        "specs/events/20260917_050000_feedback_impl_feedback_fd678b04/実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/spec.md",
+        "specs/events/20260917_050000_feedback_impl_feedback_fd678b04/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/spec.md",
+        "specs/events/20260917_050000_feedback_impl_feedback_fd678b04/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20260917_050000_feedback_impl_feedback_fd678b04/_cross-cutting/uc-dependencies.md",
+        "specs/events/20260917_050000_feedback_impl_feedback_fd678b04/decisions/spec-decision-009.yaml"
+      ]
+    },
+    {
+      "work_unit_id": "CR-fd678b04-002#1",
+      "disposition": "applied",
+      "reason": "cli-command-contract.yaml の validate-config.sh に runner_help_probe を追加し、1 slot あたり待機上限 4 秒 / blue → green 逐次 / 上限到達時はプロセスグループへ TERM → 0.2 秒後 KILL / 「応答しない」判定基準(上限到達・非 0 終了・版行なし・版の値が 1 でない)/ 版行が複数なら最初の 1 行 / 未応答は warn + <slot>_runner_if_version=- / 準備失敗は error: runner probe failed で終了コード 6 / per_slot_probe_budget_seconds 4.6 と両 slot 未応答 9.2 秒 ≤ NFR B.2.1.1 の 10 秒、を一元化(CR 本文の希望値を採用)。exit_codes に 6 を追加。UC「slot runner の実体スクリプトを割り当てる」tier-facade.md の「5 秒でタイムアウト(仮採用)」を削除して契約参照に置き換え、UC「feature flag を設定する」tier-facade.md と両 UC の _api-summary.yaml も契約参照 / 終了コード 6 に揃えた。BDD に待機上限打ち切り(10 秒以内)と準備失敗(6)の Scenario を追加。docs/todo.md に 5 秒の登録は無く、回収オーバーヘッド 0.4 秒を DIST-030 として仮採用登録",
+      "artifact_refs": [
+        "specs/events/20260917_050000_feedback_impl_feedback_fd678b04/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20260917_050000_feedback_impl_feedback_fd678b04/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/tier-facade.md",
+        "specs/events/20260917_050000_feedback_impl_feedback_fd678b04/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/spec.md",
+        "specs/events/20260917_050000_feedback_impl_feedback_fd678b04/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/_api-summary.yaml",
+        "specs/events/20260917_050000_feedback_impl_feedback_fd678b04/適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md",
+        "specs/events/20260917_050000_feedback_impl_feedback_fd678b04/適用構成業務/適用構成定義フロー/feature flag を設定する/_api-summary.yaml",
+        "specs/events/20260917_050000_feedback_impl_feedback_fd678b04/decisions/spec-decision-009.yaml"
+      ]
+    }
+  ],
+  "reconciliation_results": [
+    {
+      "work_unit_id": "CR-fd678b04-001#1",
+      "status": "changed",
+      "reason": "UC「feature flag を設定する」の Scenario「ジョブ定義を変えずに feature flag だけで運用モードを切り替える(SPEC-001-03)」の When / Then を validate-config.sh --feature-flag の終了コード・stdout・stderr だけで判定する形に書き換え(Scenario 名は不変)、実行側は UC「slot 実行モードを選択して runner を起動する」の既存 Scenario「新実装の単独本番モードでは green だけを起動し管理 DB に触れない(SPEC-001-03)」で覆い同 Scenario にジョブ定義不変の前提を追記。両 UC の「関連 USDM」SPEC-001-03 行に「※ 検証側 / 実行側」を記載。全 32 UC の spec.md を走査し、同形の UC「slot ごとのジョブマップを定義する」SPEC-008-05 Scenario も同方針で分離(実行側は UC「hang_detect_limit_minutes をジョブごとに調整する」)。契約 facade.sh used_by_ucs と uc-dependencies.md を追従。分離対象外の判断は spec-decision-009。usdm[] は不変で validateSpecEvent PASS",
+      "artifact_refs": [
+        "specs/events/20260917_050000_feedback_impl_feedback_fd678b04/適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md",
+        "specs/events/20260917_050000_feedback_impl_feedback_fd678b04/実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/spec.md",
+        "specs/events/20260917_050000_feedback_impl_feedback_fd678b04/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/spec.md",
+        "specs/events/20260917_050000_feedback_impl_feedback_fd678b04/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20260917_050000_feedback_impl_feedback_fd678b04/_cross-cutting/uc-dependencies.md",
+        "specs/events/20260917_050000_feedback_impl_feedback_fd678b04/decisions/spec-decision-009.yaml"
+      ]
+    },
+    {
+      "work_unit_id": "CR-fd678b04-002#1",
+      "status": "changed",
+      "reason": "cli-command-contract.yaml の validate-config.sh に runner_help_probe を追加し、1 slot あたり待機上限 4 秒 / blue → green 逐次 / 上限到達時はプロセスグループへ TERM → 0.2 秒後 KILL / 「応答しない」判定基準(上限到達・非 0 終了・版行なし・版の値が 1 でない)/ 版行が複数なら最初の 1 行 / 未応答は warn + <slot>_runner_if_version=- / 準備失敗は error: runner probe failed で終了コード 6 / per_slot_probe_budget_seconds 4.6 と両 slot 未応答 9.2 秒 ≤ NFR B.2.1.1 の 10 秒、を一元化(CR 本文の希望値を採用)。exit_codes に 6 を追加。UC「slot runner の実体スクリプトを割り当てる」tier-facade.md の「5 秒でタイムアウト(仮採用)」を削除して契約参照に置き換え、UC「feature flag を設定する」tier-facade.md と両 UC の _api-summary.yaml も契約参照 / 終了コード 6 に揃えた。BDD に待機上限打ち切り(10 秒以内)と準備失敗(6)の Scenario を追加。docs/todo.md に 5 秒の登録は無く、回収オーバーヘッド 0.4 秒を DIST-030 として仮採用登録",
+      "artifact_refs": [
+        "specs/events/20260917_050000_feedback_impl_feedback_fd678b04/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20260917_050000_feedback_impl_feedback_fd678b04/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/tier-facade.md",
+        "specs/events/20260917_050000_feedback_impl_feedback_fd678b04/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/spec.md",
+        "specs/events/20260917_050000_feedback_impl_feedback_fd678b04/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/_api-summary.yaml",
+        "specs/events/20260917_050000_feedback_impl_feedback_fd678b04/適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md",
+        "specs/events/20260917_050000_feedback_impl_feedback_fd678b04/適用構成業務/適用構成定義フロー/feature flag を設定する/_api-summary.yaml",
+        "specs/events/20260917_050000_feedback_impl_feedback_fd678b04/decisions/spec-decision-009.yaml"
+      ]
+    }
+  ],
+  "work_unit_evidence_refs": [
+    {
+      "work_unit_id": "CR-fd678b04-001#1",
+      "path": "specs/events/20260917_050000_feedback_impl_feedback_fd678b04/適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md",
+      "sha256": "b26125e6652dc4534bc080c94b63868b40a722f26f2cb67463b4010a088a672d"
+    },
+    {
+      "work_unit_id": "CR-fd678b04-001#1",
+      "path": "specs/events/20260917_050000_feedback_impl_feedback_fd678b04/実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/spec.md",
+      "sha256": "c3162f6f16a6c0ebd1c900048ad0cea695ced64f19f6540769eeff19d3fba6f4"
+    },
+    {
+      "work_unit_id": "CR-fd678b04-001#1",
+      "path": "specs/events/20260917_050000_feedback_impl_feedback_fd678b04/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/spec.md",
+      "sha256": "96c03c5189242cd2968e540eed40ca1e1ce461630582d69946829e643ae3cccc"
+    },
+    {
+      "work_unit_id": "CR-fd678b04-001#1",
+      "path": "specs/events/20260917_050000_feedback_impl_feedback_fd678b04/_cross-cutting/api/cli-command-contract.yaml",
+      "sha256": "d05815aff95474a40feb361a8b126e028fee31095cc785b7ebe1141b8be92abc"
+    },
+    {
+      "work_unit_id": "CR-fd678b04-001#1",
+      "path": "specs/events/20260917_050000_feedback_impl_feedback_fd678b04/_cross-cutting/uc-dependencies.md",
+      "sha256": "4c77645ebe26b7139a0d53cfbd6d4b4001993d2a1563a8d0c340b93c635b2433"
+    },
+    {
+      "work_unit_id": "CR-fd678b04-001#1",
+      "path": "specs/events/20260917_050000_feedback_impl_feedback_fd678b04/decisions/spec-decision-009.yaml",
+      "sha256": "34c1249d8e3af21a1a9c107bfd56e7c4f47212e6d4588b8edf01a85d5e1fc152"
+    },
+    {
+      "work_unit_id": "CR-fd678b04-002#1",
+      "path": "specs/events/20260917_050000_feedback_impl_feedback_fd678b04/_cross-cutting/api/cli-command-contract.yaml",
+      "sha256": "d05815aff95474a40feb361a8b126e028fee31095cc785b7ebe1141b8be92abc"
+    },
+    {
+      "work_unit_id": "CR-fd678b04-002#1",
+      "path": "specs/events/20260917_050000_feedback_impl_feedback_fd678b04/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/tier-facade.md",
+      "sha256": "97ffc8c82659dc01d7f49840b5afa2605eaf98e2a0d7f48389ca2467a19f4e3c"
+    },
+    {
+      "work_unit_id": "CR-fd678b04-002#1",
+      "path": "specs/events/20260917_050000_feedback_impl_feedback_fd678b04/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/spec.md",
+      "sha256": "8a2c99b2581c9133021ef92c45f6a5df29cfb99d7fad97e7acdf7de4aab2d8d2"
+    },
+    {
+      "work_unit_id": "CR-fd678b04-002#1",
+      "path": "specs/events/20260917_050000_feedback_impl_feedback_fd678b04/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/_api-summary.yaml",
+      "sha256": "d64dc43a75807976c267ce461447ab5c74383184f4d6af5b529cd541a2709d53"
+    },
+    {
+      "work_unit_id": "CR-fd678b04-002#1",
+      "path": "specs/events/20260917_050000_feedback_impl_feedback_fd678b04/適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md",
+      "sha256": "631411ee0d86a79dfaa53f6dc0fd310dc791de059e5c68861394b9a828ccf3f3"
+    },
+    {
+      "work_unit_id": "CR-fd678b04-002#1",
+      "path": "specs/events/20260917_050000_feedback_impl_feedback_fd678b04/適用構成業務/適用構成定義フロー/feature flag を設定する/_api-summary.yaml",
+      "sha256": "034dc597676ac1dbdf8341dc414c3d6a2bdf43b8940f3bf728a7503be96d5b31"
+    },
+    {
+      "work_unit_id": "CR-fd678b04-002#1",
+      "path": "specs/events/20260917_050000_feedback_impl_feedback_fd678b04/decisions/spec-decision-009.yaml",
+      "sha256": "34c1249d8e3af21a1a9c107bfd56e7c4f47212e6d4588b8edf01a85d5e1fc152"
+    }
+  ],
+  "domain_event_refs": [
+    {
+      "path": "specs/events/20260917_050000_feedback_impl_feedback_fd678b04/spec-event.yaml",
+      "sha256": "87c1197877220616c221e2866b8a30b50e7b23b593d4890c32930830fe470d26"
+    }
+  ],
+  "feedback_request": {
+    "feedback_request_id": "20260917_014138_impl_feedback_fd678b04",
+    "input_sha256": "c89ce3b8a83c485abfbaae773f716cfb080a559f580581bbc039542bbe1c7d0c",
+    "request_ids": [
+      "CR-fd678b04-001",
+      "CR-fd678b04-002"
+    ],
+    "work_unit_ids": [
+      "CR-fd678b04-001#1",
+      "CR-fd678b04-002#1"
+    ]
+  },
+  "post_execution_basis": {
+    "repository_head": "c8d38d4c5c684d2bc44bb07b57d4b7bb3ac1efc5",
+    "latest_domain_event_ids": {
+      "requirements": {
+        "rdra/events": "20260908_011000_feedback_slot_status_wording",
+        "usdm/events": "20260908_011000_feedback_slot_status_wording"
+      },
+      "quality_attributes": {
+        "nfr/events": "20260908_013000_feedback_slot_status_wording"
+      },
+      "architecture": {
+        "arch/events": "20260908_015000_feedback_slot_status_wording"
+      },
+      "infrastructure": {
+        "infra/events": "20260908_021000_feedback_slot_status_wording"
+      },
+      "design_system": {
+        "design/events": null
+      },
+      "spec": {
+        "specs/events": "20260917_050000_feedback_impl_feedback_fd678b04"
+      },
+      "spec_stories": {
+        "design/events": null
+      }
+    },
+    "domain_event_root_snapshots": {
+      "rdra/events": {
+        "head_event_id": "20260908_011000_feedback_slot_status_wording",
+        "head_event_sha256": "b090b166d4f0153d029cb6aefec68101eb2c27e70baf9c95adcce67c57d9024e",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency",
+          "20260908_011000_feedback_slot_status_wording"
+        ],
+        "event_set_sha256": "8cb2285c08b0aa19e0b6acb3befd7d7180afd7c1105be106c4a9a4e7f5a164a5",
+        "latest_tree_sha256": "fb37aebe9d1e9fccd46c51cc14f0450b93bf14bc39322450ffbc7fbb018935b1"
+      },
+      "usdm/events": {
+        "head_event_id": "20260908_011000_feedback_slot_status_wording",
+        "head_event_sha256": "2f083a378142c06b74987ec8f2c11b303e2a9369746ec6065d56c2dd60dc4e45",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency",
+          "20260908_011000_feedback_slot_status_wording"
+        ],
+        "event_set_sha256": "8cb2285c08b0aa19e0b6acb3befd7d7180afd7c1105be106c4a9a4e7f5a164a5",
+        "latest_tree_sha256": "e1733eb0ebeff504ee3ab2ef90f47b050e6f3eb05cdb287d649c57d6724f5a31"
+      },
+      "nfr/events": {
+        "head_event_id": "20260908_013000_feedback_slot_status_wording",
+        "head_event_sha256": "9c460abcc88fcbf4b495658c71b4a4bbc49d9d9f309e46ad0c0bae58aa4dda0c",
+        "event_ids": [
+          "20260830_183726_initial_nfr",
+          "20260905_085000_feedback_todo_resolution",
+          "20260907_013000_feedback_todo_followup",
+          "20260907_120000_feedback_abort_consistency",
+          "20260908_013000_feedback_slot_status_wording"
+        ],
+        "event_set_sha256": "99463150965b02f6b7670ee3f4f853722b6c561281e6297a3e58a9afe414b4a4",
+        "latest_tree_sha256": "51f9059e35f6f5c65fc18cd1f1457bd5beca3b5b23271d538f4304b0ece9c7ef"
+      },
+      "arch/events": {
+        "head_event_id": "20260908_015000_feedback_slot_status_wording",
+        "head_event_sha256": "4e467155c8adfbefce4aa18ae2cee40f92c55545711dc66fc9c05b57b6f9a2e8",
+        "event_ids": [
+          "20260830_184457_initial_arch",
+          "20260830_202427_arch_infra_feedback_20260830_190412_infra_product_design",
+          "20260905_091000_feedback_todo_resolution",
+          "20260907_015000_feedback_todo_followup",
+          "20260907_122000_feedback_abort_consistency",
+          "20260908_015000_feedback_slot_status_wording"
+        ],
+        "event_set_sha256": "b710a5cb1a0d295f1b5c15523a2181492f16924414fb77886efd0bdb3f7d0a4b",
+        "latest_tree_sha256": "0a975f848804dd5bc3d5cf328a5e9717f2e22eb489e1e5f4c477538b77c0b91d"
+      },
+      "infra/events": {
+        "head_event_id": "20260908_021000_feedback_slot_status_wording",
+        "head_event_sha256": "2e1292ab231982c609976791deca51a97e82389b34ab645d4432e463fe1c8c46",
+        "event_ids": [
+          "20260830_190412_infra_product_design",
+          "20260905_093000_feedback_todo_resolution",
+          "20260907_021000_feedback_todo_followup",
+          "20260907_124000_feedback_abort_consistency",
+          "20260908_021000_feedback_slot_status_wording"
+        ],
+        "event_set_sha256": "8077de33d5a65f65ebff5e2c1c20d238e003e9dd69d3d500ae30ef08162ab292",
+        "latest_tree_sha256": "639f743d85b997e1297610b2a7c2db41fd004e74473f96ec6292b601509a6331"
+      },
+      "design/events": {
+        "head_event_id": null,
+        "head_event_sha256": null,
+        "event_ids": [],
+        "event_set_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "latest_tree_sha256": null
+      },
+      "specs/events": {
+        "head_event_id": "20260917_050000_feedback_impl_feedback_fd678b04",
+        "head_event_sha256": "db2c49f8026ec5d1d879ef9f5f5aa42d039cfa8881495dbd9135703ce5ad71bd",
+        "event_ids": [
+          "20260830_202851_spec_generation",
+          "20260905_100000_feedback_todo_resolution",
+          "20260907_024000_feedback_todo_followup",
+          "20260907_131000_feedback_abort_consistency",
+          "20260908_024000_feedback_slot_status_wording",
+          "20260908_062000_feedback_spec_machine_readable",
+          "20260917_050000_feedback_impl_feedback_fd678b04"
+        ],
+        "event_set_sha256": "f97393fa8484e2f98ecaae41d0544b0dd7e5ed87f75c4b2061655f41be9448df",
+        "latest_tree_sha256": "31e1f01098d61ae43c6c4795bcf76d8c339d6dff2eb15dc2091c2a7a2c5c0b1a"
+      }
+    }
+  }
+}

@@ -1,0 +1,123 @@
+stage: S4
+tier: tier-facade
+attempt: 2
+uc_id: fd678b04
+manifest_sha256: c91154b5d5f732bbef5d59f32e7339a8f47f288ebd8c0a0b4faec5ba1a950ba2
+manifest_projection: v2
+result: pass
+rerun_mode: stale_rerun
+rerun_reason: "stale after spec event 20260917_050000_feedback_impl_feedback_fd678b04 (previous attempt-2 done invalidated by 20260917_074327_stale_invalidated_spec_feedback_applied_fd678b04)"
+previous_done: "docs/impl/latest/fd678b04/invalidated/20260917_074327_stale_invalidated_spec_feedback_applied_fd678b04/stages/attempt-2/S4_tier-impl.tier-facade.done.yaml"
+findings_provided: false
+gates:
+  format: pass
+  lint: pass
+  tdd: pass
+  bdd_tier: pass
+gate_runs:
+  - gate: format
+    cwd: facade
+    command: "shfmt -d ."
+    exit_code: 0
+  - gate: lint
+    cwd: facade
+    command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+    exit_code: 0
+  - gate: tdd
+    cwd: facade
+    command: "bats -r test"
+    exit_code: 0
+    summary: "67 tests, 67 ok (S2 red tests 3 -> green, gateway preparation-failure test 1 added)"
+  - gate: bdd_tier
+    cwd: facade
+    command: "npx cucumber-js --config ../cucumber.cjs features"
+    exit_code: 0
+    summary: "8 scenarios (8 passed), 28 steps (28 passed)"
+assumptions:
+  path: "attempt-2/S4_tier-impl.tier-facade.assumptions.yaml"
+  count: 17
+  by_category:
+    input_validation: 5
+    data_format: 5
+    error_handling: 5
+    persistence: 0
+    performance: 1
+    security: 1
+  sha256: ae7aa4fcbe2fe82610be47d83b2f9c50e90fba080647e8fc98f39652d8fdc0e3
+  extraction:
+    candidate_count: 24
+    excluded_as_explicit: 7
+    recorded_count: 17
+  changes_from_invalidated_attempt_2:
+    excluded_as_explicit_now:
+      - "A-012 (non-zero exit is no response: runner_help_probe.no_response_criteria)"
+      - "A-013 (slots failing runner path validation are not probed: runner_help_probe.order)"
+      - "A-022 (timeout 4s, TERM then KILL after 0.2s: runner_help_probe.timeout_seconds_per_slot / timeout_action)"
+    added:
+      - "A-024 (poll interval 0.1s for timeout detection)"
+      - "A-025 (reason= value vocabulary for runner probe failed)"
+      - "A-026 (preparation failure returns 6 even if validation errors were already reported)"
+      - "A-027 (process-group start failure is set -m failure or missing pid; runner exec failure is no response)"
+    carried_forward:
+      - A-005
+      - A-006
+      - A-007
+      - A-008
+      - A-010
+      - A-015
+      - A-016
+      - A-017
+      - A-018
+      - A-019
+      - A-020
+      - A-021
+      - A-023
+spec_changes_applied:
+  - "gateway runner_probe.sh: comments and constants now reference cli-command-contract.yaml validate-config.sh runner_help_probe (timeout_seconds_per_slot 4, TERM -> 0.2s KILL); provisional NFR-derived wording removed"
+  - "gateway runner_probe.sh: version_line_selection (first runner-if-version= line, value trimmed of surrounding whitespace)"
+  - "gateway runner_probe.sh: preparation_failure distinguished from no response (return 2 with reason: mktemp failure / process-group start failure); RUNNER_IF_VERSION_CURRENT=1 and runner_probe_version_is_current added"
+  - "usecase validate_feature_flag.sh: version other than 1 treated as no response (warn + <slot>_runner_if_version=-); preparation failure emits error: runner probe failed slot=<s> reason=<r> and returns 6 immediately without stdout"
+  - "presentation validate-config.sh: header comment and usage exit-code 6 wording aligned to execution error (runner probe preparation failure)"
+ddd_guide: "ddd:ddd-tactical-implementation loaded (bootstrap.done.yaml has_ddd_plugin true). Judgment gate: simple configuration-validation domain, lightweight application continued (pure functions named by spec vocabulary)"
+implemented:
+  - path: facade/bin/validate-config.sh
+    layer: entrypoint
+    note: "unchanged"
+  - path: facade/src/presentation/validate-config.sh
+    layer: presentation
+    model: ValidateConfigRequest
+    note: "exit code 6 wording only"
+  - path: facade/src/usecase/validate_feature_flag.sh
+    layer: usecase
+    model: ValidateFeatureFlagQuery
+    note: "runner_help_probe no_response_criteria (version must be 1) and preparation_failure (exit 6)"
+  - path: facade/src/domain/feature_flag.sh
+    layer: domain
+    model: "FeatureFlag / SlotRunnerAssignment"
+    note: "unchanged"
+  - path: facade/src/domain/cli_field.sh
+    layer: domain
+    note: "unchanged"
+  - path: facade/src/repository/feature_flag_config.sh
+    layer: repository
+    model: FeatureFlagConfig
+    note: "unchanged"
+  - path: facade/src/gateway/runner_probe.sh
+    layer: gateway
+    note: "rewritten against contract runner_help_probe"
+tests:
+  tier_bdd_steps: facade/features/steps/configure-feature-flags.steps.js
+  tier_bdd_steps_changed: false
+  tdd:
+    - facade/test/domain/feature_flag.bats
+    - facade/test/domain/cli_field.bats
+    - facade/test/repository/feature_flag_config.bats
+    - facade/test/gateway/runner_probe.bats
+    - facade/test/usecase/validate_feature_flag.bats
+    - facade/test/presentation/validate_config.bats
+  tdd_changed:
+    - path: facade/test/gateway/runner_probe.bats
+      note: "added 1 test: mktemp failure returns 2 with reason temp-file-create-failed tmpdir=<dir>"
+issues: []
+completed_at: '2026-09-17T07:58:30+09:00'
+completed_by: dist-impl-implement@0.14.1

@@ -1,0 +1,121 @@
+stage: S2
+uc_id: fd678b04
+manifest_sha256: 93b891273f0f42d9e35a110f2f0d19803c1a08240b69ee0892aebd6c0b72c457
+manifest_projection: v2
+result: pass
+scaffold_mode: scoped_rerun
+rerun_reason: "stale after spec event 20260917_100000_feedback_impl_feedback_fd678b04_cycle2 (invalidated by 20260917_100200_stale_invalidated_spec_feedback_cycle2_applied_fd678b04)"
+previous_done: "docs/impl/latest/fd678b04/invalidated/20260917_100200_stale_invalidated_spec_feedback_cycle2_applied_fd678b04/stages/S2_test-scaffold.done.yaml"
+spec_commit: 80a402b
+branch_slug: configure-feature-flags
+tiers:
+  - tier-facade
+scaffold_scope:
+  tiers:
+    - tier-facade
+  uc_feature: regenerated
+  atdd: untouched
+red_baseline: not_applicable
+red_baseline_note: "scoped 再実行のため red baseline は done 条件にしない。再生成した feature / step / bats は全て parse 可能かつ実行可能。BDD の fail は新 Scenario の step skeleton が未実装(S4 / S6 の再実行で追従予定)を理由とするもののみで、パースエラー・設定ミス・undefined step 由来の fail は 0 件"
+spec_changes_applied:
+  - "cli-command-contract.yaml config_files.feature-flag.env.validation_rules: 確報制御キーの拒否範囲 = キー名が FINAL_ で始まる全キー(接頭辞判定・大文字小文字を区別)。未知キー warn より先に判定し、該当キーごとに error 1 行、同じキーに warn は出さない"
+  - "spec.md E2E 完了条件: Scenario「FINAL_ で始まる確報設定のキーは未知キーではなく拒否される(SPEC-001-01)」を追加(FINAL_DB_CONN_REF=final-db)→ features/uc の feature に再転写(既存 11 Scenario は本文一致を確認)"
+  - "tier-facade.md ティア完了条件: Scenario「validate-config_sh_feature-flag は FINAL_ で始まるキーを未知キーではなく終了コード 2 で拒否する」を追加 → facade/features の feature に再転写(既存 8 Scenario は本文一致を確認)"
+  - "usdm / rdra は当該 spec event で未変更のため features/atdd/ は触れていない"
+transcription_check:
+  method: "spec.md / tier-facade.md の gherkin ブロックと feature 本文(コメント・空行除外)を行単位で完全一致比較"
+  uc_feature_verbatim: true
+  tier_feature_verbatim: true
+generated:
+  atdd:
+    feature: features/atdd/SPEC-001-01.feature
+    feature_body_changed: false
+    steps: features/atdd/steps/configure-feature-flags.steps.js
+    steps_changed: false
+    scenarios:
+      - SPEC-001-01-4
+  uc_bdd:
+    feature: features/uc/configure-feature-flags.feature
+    feature_regenerated: true
+    steps: features/uc/steps/configure-feature-flags.steps.js
+    steps_changed: true
+    steps_change_summary: "新 Scenario の step 5 件(Given 2 / Then 3)を未実装 skeleton(notImplemented で明示 fail)として追加。既存 step 定義は変更なし"
+    source: "docs/specs/latest/適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md#E2E完了条件(BDD)"
+    scenarios: 12
+    added_scenarios:
+      - "FINAL_ で始まる確報設定のキーは未知キーではなく拒否される(SPEC-001-01)"
+    cross_uc_scenarios_added: 0
+    cross_uc_note: "追加 Scenario の Then は全て validate-config.sh の終了コード・stderr のみを判定し、他 UC の責務を含まない"
+  tier_bdd:
+    - tier: tier-facade
+      feature: facade/features/configure-feature-flags.feature
+      feature_regenerated: true
+      steps: facade/features/steps/configure-feature-flags.steps.js
+      steps_changed: true
+      steps_change_summary: "新 Scenario の step 2 件(Given 1 / Then 1)を未実装 skeleton として追加。And「stderr に warn: unknown key で始まる行は出ない」は既存 step を再利用"
+      source: "docs/specs/latest/適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md#ティア完了条件(BDD)"
+      scenarios: 9
+      added_scenarios:
+        - "validate-config_sh_feature-flag は FINAL_ で始まるキーを未知キーではなく終了コード 2 で拒否する"
+  tdd:
+    - tier: tier-facade
+      file: facade/test/domain/feature_flag.bats
+      added_tests: 3
+      target: "facade/src/domain/feature_flag.sh validate_feature_flag(FINAL_CROSSCHECK_ で始まらない FINAL_ キーの拒否 / 複数 FINAL_ キーは該当キーごとに error 1 行で warn なし / 小文字 final_ は接頭辞判定に該当せず未知キー warn)"
+    - tier: tier-facade
+      file: facade/test/usecase/validate_feature_flag.bats
+      added_tests: 1
+      target: "facade/src/usecase/validate_feature_flag.sh validate_feature_flag_query(有効設定 + FINAL_DB_CONN_REF → error 1 行だけ・warn なし・NG)"
+    - tier: tier-facade
+      file: facade/test/presentation/validate_config.bats
+      added_tests: 1
+      target: "facade/bin/validate-config.sh(FINAL_DB_CONN_REF と FINAL_CROSSCHECK_MODE の 2 キー → 各 error・終了コード 2・warn なし)"
+  tdd_note: "追加した bats 5 件は既存実装(facade/src/domain/feature_flag.sh の FEATURE_FLAG_FORBIDDEN_KEY_PREFIX=FINAL_ 接頭辞 case 判定が未知キー判定より先)が cycle2 契約に既に適合しているため green。実装は変更していない(S4 の責務)。契約の変更点は回帰テストとして固定した"
+test_runs:
+  - stage: atdd
+    cwd: "."
+    command: "npx cucumber-js --config cucumber.cjs features/atdd --tags @atdd_SPEC-001-01-4"
+    exit_code: 0
+    summary: "1 scenario (1 passed), 3 steps (3 passed)"
+    fail_reason: none
+    undefined_steps: 0
+  - stage: uc_bdd
+    cwd: "."
+    command: "npx cucumber-js --config cucumber.cjs features/uc"
+    exit_code: 1
+    summary: "12 scenarios (1 failed, 11 passed), 49 steps (1 failed, 5 skipped, 43 passed)"
+    fail_reason: not_implemented
+    failed_scenarios:
+      - "FINAL_ で始まる確報設定のキーは未知キーではなく拒否される(SPEC-001-01)"
+    undefined_steps: 0
+  - stage: tier_bdd
+    tier: tier-facade
+    cwd: facade
+    command: "npx cucumber-js --config ../cucumber.cjs features"
+    exit_code: 1
+    summary: "9 scenarios (1 failed, 8 passed), 32 steps (1 failed, 3 skipped, 28 passed)"
+    fail_reason: not_implemented
+    failed_scenarios:
+      - "validate-config_sh_feature-flag は FINAL_ で始まるキーを未知キーではなく終了コード 2 で拒否する"
+    undefined_steps: 0
+  - stage: tdd
+    tier: tier-facade
+    cwd: facade
+    command: "bats -r test"
+    exit_code: 0
+    summary: "72 tests, 72 ok, 0 not ok(HEAD 時点 67 + 本 stage 追加 5。追加分は既存実装が契約に適合済みのため green)"
+    fail_reason: none
+    failed_tests: []
+format_check:
+  tier: tier-facade
+  command: "shfmt -d ."
+  exit_code: 0
+lint:
+  tier: tier-facade
+  command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+  exit_code: 0
+dom_snapshot_tests: not_applicable
+issues: []
+issues_note: "新 Scenario に UC 横断の Then は無く、仕様と実装の矛盾も見つからなかったため起票なし。既存 issue(20260917_004843 / 20260917_074633)は変更なし"
+completed_at: '2026-09-17T10:20:00+09:00'
+completed_by: dist-impl-implement@0.14.1

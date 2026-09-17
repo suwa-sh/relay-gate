@@ -1,0 +1,109 @@
+stage: S8
+uc_id: fd678b04
+manifest_sha256: 1802e7aaaecea1c74c643022cb6bd64bd90cb653f0c8e55ebf73b9888907116e
+manifest_projection: v2
+result: pass
+mode: initial
+attempt: 3
+cycle: 3
+rerun_reason: "stale after spec event 20260917_100000_feedback_impl_feedback_fd678b04_cycle2 (invalidated by 20260917_100200_stale_invalidated_spec_feedback_cycle2_applied_fd678b04)"
+previous_done: "docs/impl/latest/fd678b04/invalidated/20260917_100200_stale_invalidated_spec_feedback_cycle2_applied_fd678b04/stages/S8_feedback.done.yaml"
+previous_feedback:
+  - feedback_id: 20260917_014138_impl_feedback_fd678b04
+    published_path: "docs/impl/latest/fd678b04/feedback-requests/20260917_014138_impl_feedback_fd678b04.md"
+    applied_spec_event: "20260917_050000_feedback_impl_feedback_fd678b04"
+    note: "要求 2 件 (Scenario 分離、runner --help 問い合わせの契約一元化) は spec に反映済み。再要求しない"
+  - feedback_id: 20260917_081430_impl_feedback_fd678b04
+    published_path: "docs/impl/latest/fd678b04/feedback-requests/20260917_081430_impl_feedback_fd678b04.md"
+    applied_spec_event: "20260917_100000_feedback_impl_feedback_fd678b04_cycle2"
+    note: "CR-fd678b04-001 (確報の制御キーの範囲 = FINAL_ 接頭辞) は契約 validation_rules / spec.md / tier-facade.md に反映済み。境界 Scenario も追加済み。再要求しない。supersedes も使わない"
+feedback_request:
+  draft_path: null
+  draft_note: "仕様起因の未解決事項が 0 件のため draft を作成していない (feedback/draft.md は存在しない)"
+  request_count: 0
+  blocker_count: 0
+  severity_counts:
+    blocker: 0
+    spec-gap: 0
+    improvement: 0
+  requests: []
+as_built_summary: "docs/impl/latest/fd678b04/feedback/as-built-summary.md"
+as_built_summary_note: "attempt-3 の実装事実 (FINAL_ 接頭辞判定と境界 7 ケース、等号なし FINAL_ 行の扱い、runner probe 契約準拠) で全面更新"
+classification:
+  spec_origin: 0
+  implementation_origin: 4
+  environment_origin: 1
+  resolved_by_previous_feedback: 2
+  spec_origin_items: []
+  implementation_origin_items:
+    - "attempt-2 F-005 (blocker, contradicts): 前提 A-007 の文面が反映前の規則のまま。attempt-3 で文面・コメント・TDD を契約に整合 (ロジック変更なし)。attempt-3 S5 で contradicts 0"
+    - "attempt-2 F-001 (minor): TDD 1 ケース 3 Act。attempt-3 でケース分割済み"
+    - "attempt-2 F-004 / F-018 / F-015: A-006 / A-025 の再分類、A-023 の explicit 除外。attempt-3 で反映済み"
+    - "A-020: 未実装の検証種別を終了コード 6 にする段階実装措置。担当 UC の実装で解消"
+  environment_origin_items:
+    - "issues/20260917_074633 残存項目: 正常系 Scenario の Given (runner スタブ・ジョブマップ) が別 UC 成果物を前提。一時ディレクトリのハーネスで解決済み、仕様変更不要"
+  resolved_items:
+    - "運用モード切替 Scenario の When / Then 分離 (20260917_014138 CR-001): spec 反映済み、S6 injections 0"
+    - "runner --help 問い合わせの契約一元化 (20260917_014138 CR-002): 契約 runner_help_probe 反映済み"
+    - "確報の制御キーの範囲 (20260917_081430 CR-001): FINAL_ 接頭辞で 3 ファイル同表記、S6 12/12 通過"
+  excluded_from_draft:
+    - "attempt-3 F-005 / F-006 (major): A-010 / A-015 の security 前提 (spec_absent、要回答) は S9 で人が回答する。要求化しない"
+    - "attempt-3 spec_absent 前提 14 件 (minor) と category_mismatch F-017: S9 で判断。前提の一括仕様化要求は出さない"
+assumption_handling:
+  source: "docs/impl/latest/fd678b04/stages/attempt-3/S5_verify.tier-facade.findings.yaml"
+  assumptions_sha256: 9a99cef7ee2cb03166d96ceb6bbc3cb58fb44d221fec5813de99545df9dfadbf
+  verdicts_sha256: f4b777fbcd4c0728034dc8d83851696d8f4a9863cb27adfdd17289f22bed4916
+  total: 16
+  spec_absent: 16
+  consistent: 0
+  contradicts: 0
+  unlisted: 0
+  requires_answer: 2
+  requires_answer_ids:
+    - A-010
+    - A-015
+  human_decisions: "未取得 (本サイクルの S9 で回答)。前サイクル (cycle 2) の承認は同文 17 件すべて confirmed だが spec event 後の再走のため改めて判断する"
+  human_rejected_spec_change: 0
+learnings: 1
+learning_files:
+  - "docs/impl/latest/fd678b04/learnings/20260917_111500_assumption-text-stale-after-spec-event.md"
+proposals:
+  skill: true
+  context: false
+proposal_files:
+  skill: "docs/impl/latest/fd678b04/learnings/20260917_111500_proposal-skill.md"
+proposals_note: "context (CLAUDE.md / dev-rules) への新規追記提案は無い。前サイクルの 20260917_081430_proposal-context.md の提案 3 (仕様反映後の再実行手順) が本サイクルの学びを含む"
+existing_learnings_untouched:
+  - "docs/impl/latest/fd678b04/learnings/20260917_014138_*.md"
+  - "docs/impl/latest/fd678b04/learnings/20260917_081430_*.md"
+policy_docs_checked:
+  - "tmp/RelayGateのしくみ.md"
+  - "tmp/RelayGateの利用イメージ.md"
+inputs_read:
+  - "docs/impl/latest/fd678b04/issues/20260917_004843_cross-uc-scenarios.md"
+  - "docs/impl/latest/fd678b04/issues/20260917_074633_cross-uc-scenarios-resolution.md"
+  - "docs/impl/latest/fd678b04/stages/attempt-3/S5_verify.tier-facade.findings.yaml"
+  - "docs/impl/latest/fd678b04/stages/attempt-3/S5_verify.tier-facade.done.yaml"
+  - "docs/impl/latest/fd678b04/stages/attempt-3/S4_tier-impl.tier-facade.assumptions.yaml"
+  - "docs/impl/latest/fd678b04/stages/attempt-3/S4_tier-impl.tier-facade.done.yaml"
+  - "docs/impl/latest/fd678b04/stages/attempt-2/S5_verify.tier-facade.findings.yaml"
+  - "docs/impl/latest/fd678b04/stages/attempt-2/S4_tier-impl.tier-facade.assumptions.yaml"
+  - "docs/impl/latest/fd678b04/stages/S6_uc-bdd.done.yaml"
+  - "docs/impl/latest/fd678b04/stages/S7_atdd.done.yaml"
+  - "docs/impl/latest/fd678b04/review/review-notes.md"
+  - "docs/impl/latest/fd678b04/feedback-requests/20260917_081430_impl_feedback_fd678b04.md"
+  - "docs/impl/latest/fd678b04/invalidated/20260917_100200_stale_invalidated_spec_feedback_cycle2_applied_fd678b04/stages/S8_feedback.done.yaml"
+  - "docs/impl/events/20260917_100200_stale_invalidated_spec_feedback_cycle2_applied_fd678b04/event.yaml"
+  - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml"
+  - "docs/specs/latest/適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md"
+  - "docs/specs/latest/適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md"
+next_command: null
+next_note: "要求 0 件のため dist-pipeline の実行対象は無い。次は S9 review (前提 16 件の回答: A-010 / A-015 は必須)"
+issues: []
+notes:
+  - "manifest_sha256 は受領値を再計算せず転記した"
+  - "git コマンドは実行していない。write-set 外のファイルは変更していない (status.yaml の更新はオーケストレータ)"
+  - "公開済み Markdown 2 件は編集していない"
+  - "completed_at はパイプラインの論理時刻 (S7 done 10:45 / status 11:08 の後) に合わせた"
+completed_at: "2026-09-17T11:15:00+09:00"
+completed_by: dist-impl-feedback@0.14.1

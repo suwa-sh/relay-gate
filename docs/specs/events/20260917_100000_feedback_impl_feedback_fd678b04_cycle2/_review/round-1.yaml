@@ -1,0 +1,17 @@
+round: 1
+# 第三者レビュー(toolbox:review-refute-loop)。サブエージェント内発動のためテンプレ C(fresh context の Claude general-purpose サブエージェント)。クロスモデルレビューではない。
+# 対象: 前イベント 20260917_050000_feedback_impl_feedback_fd678b04 → 本イベントの差分(2026-09-17 の実装フィードバック cycle 2 の CR-001 適用差分)
+# 観点(閾値 medium): P1 CR 完了条件の充足 / P2 方針資料・USDM・RDRA との整合 / P3 二重定義・正本の一意性 / P4 Scenario 名と機械可読の一致 / P5 実装可能性・テスト可能性
+# 観点 × ラウンド: P1 PASS/PASS、P2 PASS/PASS、P3 PASS/PASS、P4 PASS/PASS、P5 CONCERN/PASS。round 2(検証パス)で指摘 0 件、収束
+findings:
+  - id: R-001
+    viewpoint: 5
+    severity: minor
+    target: "適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md"
+    claim: "追加した E2E Scenario の Given が別 Scenario の前提を名前参照で引用しており、runner 実体(実行可能・--help 応答)とジョブマップの存在まで含むかが字面から一意に読めない。含めない場合は file not executable / job map not found の error 行が同時に出るが、Then は通るため判定不能にはならない"
+    evidence: "Given「feature-flag.env は Scenario「並行稼働モードの feature flag を検証する(SPEC-001-01)」と同じ有効な 9 キーの設定である」。参照先 Scenario は 9 キーに加えて runner 実体とジョブマップの存在を前提に持つ。tier-facade.md 側は既存 Scenario と同じ「有効な並行稼働設定に加えて」で揃っている"
+    suggested_fix: "Given で前提の範囲(9 キー / runner 実体 / ジョブマップ)を明示する"
+resolved:
+  - id: R-001
+    resolution: fixed
+    note: "Given を「feature-flag.env の 9 キー・両 runner と速報 runner / worker の実体・blue / green のジョブマップは、Scenario「並行稼働モードの feature flag を検証する(SPEC-001-01)」の Given と同じ有効な状態である(単体なら終了コード 0 になる)」に改め、Then に「And stderr の "error:" で始まる行はその 1 行だけである」を追加して FINAL_ 違反の単独性を固定した。round 2 で再レビューし P5 PASS(新規指摘なし)"

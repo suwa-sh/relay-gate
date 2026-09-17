@@ -1,0 +1,1094 @@
+event_id: 20260917_004437_config_confirmed_atdd_mapping_all_ucs
+type: config_confirmed
+uc_id: null
+stage: S1
+payload:
+  target: uc-map.yaml
+  summary: 全 32 UC の UC→ATDD マッピング(Scenario 単位)を一括確定。tmp/reviews/acceptance-to-steps-review.html でレビュー、ユーザーがチャットで承認
+  confirmed_by: user
+  policy_decisions:
+  - id: A
+    question: ATDD の Given に後続 UC のコマンド(abort-blue / abort-green / abort-rapid-crosscheck / background-rerun)が出る基準を、DB 行・成果物ファイルを直接用意して振る舞い所有 UC で検証するか、実コマンドを呼ぶのでそのコマンドを実装する UC で検証するか
+    chosen: direct
+    chosen_label: DB 行・ファイルを直接用意して振る舞い所有 UC で検証する
+  - id: B
+    question: facade 起動系の基準を、runner をスタブにして facade 起動 UC(slot 実行モードを選択して runner を起動する)で検証するか、実 runner を要求するので runner 実装 UC(実装スクリプトを実行して Runner Result を出力する)以降で検証するか
+    chosen: stub
+    chosen_label: runner をスタブにして facade 起動 UC で検証する
+  - id: C
+    question: 統合的な確認 UC(業務ジョブの実行結果を確認する / 切り替えた運用モードで業務ジョブを実行する)を primary にするか、also(補助)にとどめるか
+    chosen: also
+    chosen_label: also にとどめ、振る舞い所有 UC(中継 UC)を primary にする
+  - id: D
+    question: 速報・確報に共通する依頼ライフサイクルの基準(SPEC-007-01 / 007-02)を、実装順で先に来る確報 worker(claim / 全量比較)で検証するか、速報 worker(claim / ジョブ単位比較)で検証するか
+    chosen: final
+    chosen_label: 確報 worker で検証する(実装順で先)
+  - id: E
+    question: 振る舞いを持たない、または実行時に観測できない基準(設定所有者の契約記載照合 / worker 実体の flag 解決 / 適用構成文書への調整記録 / 全スクリプト不変の統合確認)を、matrix の配置どおり UC に紐づけて low confidence で残すか、SPEC-011-05 と同じく primary null(モデル・契約整合)にするか
+    chosen: assign
+    chosen_label: matrix の配置どおり UC に紐づける(low / medium)
+  assignment_rule: 基準を満たすのに必要な振る舞いをすべて含む、実装順で最後の UC を primary(完了条件)にする。補助的に再実行する UC を also とする。uc-map の atdd_scenarios は primary + also の和集合(名前昇順)
+  unassigned:
+  - SPEC-008-03-5
+  - SPEC-011-05-1
+  - SPEC-011-05-2
+  scenario_assignments:
+  - name: SPEC-001-01-1
+    label: blue 前面・green 背面で起動する
+    primary: 09730858
+    also:
+    - 15a5e2db
+    confidence: high
+  - name: SPEC-001-01-2
+    label: off の slot は起動しない
+    primary: 09730858
+    also: []
+    confidence: high
+  - name: SPEC-001-01-3
+    label: 確報クロスチェックを起動しない
+    primary: 09730858
+    also: []
+    confidence: high
+  - name: SPEC-001-01-4
+    label: 9 キー設定で未知キー警告なし
+    primary: fd678b04
+    also: []
+    confidence: high
+  - name: SPEC-001-01-5
+    label: 実装版は BLUE/GREEN_IMPL 由来
+    primary: 43850d68
+    also: []
+    confidence: high
+  - name: SPEC-001-01-6
+    label: 完了通知先と worker を flag で解決
+    primary: 71e88789
+    also: []
+    confidence: medium
+  - name: SPEC-001-02-1
+    label: 両 slot foreground を拒否する
+    primary: 09730858
+    also:
+    - 15a5e2db
+    confidence: high
+  - name: SPEC-001-03-1
+    label: 並行稼働で blue の結果を返す
+    primary: f0147a84
+    also:
+    - 052abe8b
+    - 15a5e2db
+    confidence: high
+  - name: SPEC-001-03-2
+    label: 単独本番で green の結果を返す
+    primary: f0147a84
+    also:
+    - 052abe8b
+    - 15a5e2db
+    confidence: high
+  - name: SPEC-001-03-3
+    label: flag だけで運用モードを切り替える
+    primary: f0147a84
+    also:
+    - 15a5e2db
+    confidence: medium
+  - name: SPEC-001-04-1
+    label: 設定された runner をそのまま起動する
+    primary: 09730858
+    also:
+    - 15a5e2db
+    confidence: high
+  - name: SPEC-001-04-2
+    label: runner 差し替えで facade 変更不要
+    primary: 09730858
+    also:
+    - 15a5e2db
+    confidence: medium
+  - name: SPEC-002-01-1
+    label: green 先行起動・blue のみ待機
+    primary: 09730858
+    also: []
+    confidence: high
+  - name: SPEC-002-01-2
+    label: 背面 slot は前面と同時に実行される
+    primary: 09730858
+    also:
+    - f0147a84
+    confidence: high
+  - name: SPEC-002-02-1
+    label: 3 ファイルを無加工で中継する
+    primary: f0147a84
+    also: []
+    confidence: high
+  - name: SPEC-002-02-2
+    label: 速報失敗でも応答は不変
+    primary: f0147a84
+    also:
+    - 052abe8b
+    confidence: medium
+  - name: SPEC-002-02-3
+    label: 応答に応答時刻を持たない
+    primary: f0147a84
+    also: []
+    confidence: high
+  - name: SPEC-002-03-1
+    label: JOB_ID を渡し runner が実行先を解決
+    primary: 7c41c7cd
+    also: []
+    confidence: high
+  - name: SPEC-003-01-1
+    label: 終了後に 3 ファイルが揃う
+    primary: 5ebe8db7
+    also: []
+    confidence: high
+  - name: SPEC-003-01-2
+    label: 終了コードは exitcode.txt と一致
+    primary: 5ebe8db7
+    also: []
+    confidence: high
+  - name: SPEC-003-01-3
+    label: 起動時に started-at.txt を記録
+    primary: 5ebe8db7
+    also: []
+    confidence: high
+  - name: SPEC-003-02-1
+    label: ジョブマップ未定義でも 3 ファイル出力
+    primary: 7c41c7cd
+    also:
+    - 5ebe8db7
+    confidence: high
+  - name: SPEC-003-03-1
+    label: 書き込み途中の確定名ファイルなし
+    primary: 5ebe8db7
+    also: []
+    confidence: high
+  - name: SPEC-003-04-1
+    label: background でも 3 ファイルが残る
+    primary: 5ebe8db7
+    also: []
+    confidence: high
+  - name: SPEC-004-01-1
+    label: ジョブマップ行から実行先を解決する
+    primary: 7c41c7cd
+    also: []
+    confidence: high
+  - name: SPEC-004-02-1
+    label: 固定引数の後に PARAM を順序保持連結
+    primary: 7c41c7cd
+    also:
+    - 5ebe8db7
+    confidence: medium
+  - name: SPEC-004-03-1
+    label: 実行設定を run 開始時に確定保存
+    primary: 43850d68
+    also: []
+    confidence: high
+  - name: SPEC-004-03-2
+    label: ジョブマップ変更後も上書きしない
+    primary: 43850d68
+    also: []
+    confidence: high
+  - name: SPEC-004-04-1
+    label: 元資料の列名を読み替えなしで解決
+    primary: 7c41c7cd
+    also: []
+    confidence: high
+  - name: SPEC-004-04-2
+    label: fixed_params セルを 2 引数に解析
+    primary: 7c41c7cd
+    also: []
+    confidence: high
+  - name: SPEC-004-04-3
+    label: host/user 列なしはローカル実行
+    primary: 7c41c7cd
+    also:
+    - 5ebe8db7
+    confidence: high
+  - name: SPEC-004-04-4
+    label: 任意列なしでもエラーにならない
+    primary: eff24f55
+    also: []
+    confidence: high
+  - name: SPEC-004-04-5
+    label: クロスチェック側も同じ CSV 形式
+    primary: dcd8234d
+    also: []
+    confidence: high
+  - name: SPEC-005-01-1
+    label: blue 完了通知で速報実行に登録
+    primary: 71e88789
+    also: []
+    confidence: high
+  - name: SPEC-005-01-2
+    label: runner は相手 slot の状態を見ない
+    primary: 71e88789
+    also: []
+    confidence: high
+  - name: SPEC-005-01-3
+    label: 通知失敗でも Runner Result 不変
+    primary: 71e88789
+    also: []
+    confidence: high
+  - name: SPEC-005-01-4
+    label: 完了通知の再送は先勝ちで冪等
+    primary: 71e88789
+    also: []
+    confidence: high
+  - name: SPEC-005-01-5
+    label: 通知失敗はハング検知で検知しない
+    primary: ca5eedc2
+    also:
+    - e4ea8aaa
+    confidence: medium
+  - name: SPEC-005-01-6
+    label: 中止済みでも完了通知を通常送信
+    primary: 71e88789
+    also: []
+    confidence: medium
+  - name: SPEC-005-02-1
+    label: 両系成功で依頼を 1 件作成する
+    primary: fe00211d
+    also: []
+    confidence: high
+  - name: SPEC-005-02-2
+    label: 完了順が逆でも依頼は 1 件
+    primary: fe00211d
+    also: []
+    confidence: high
+  - name: SPEC-005-02-3
+    label: blue 失敗なら依頼を作らない
+    primary: fe00211d
+    also: []
+    confidence: high
+  - name: SPEC-005-02-4
+    label: run が ABORTED なら依頼を作らない
+    primary: fe00211d
+    also: []
+    confidence: high
+  - name: SPEC-005-02-5
+    label: slot が ABORTED なら依頼を作らない
+    primary: fe00211d
+    also: []
+    confidence: high
+  - name: SPEC-005-02-6
+    label: 前面完了後の abort-green で依頼なし
+    primary: fe00211d
+    also: []
+    confidence: medium
+  - name: SPEC-005-02-7
+    label: ABORTED run は両系成功でも依頼なし
+    primary: fe00211d
+    also: []
+    confidence: high
+  - name: SPEC-005-02-8
+    label: リラン run では新 run_id で依頼作成
+    primary: fe00211d
+    also:
+    - 9aedf7cc
+    confidence: medium
+  - name: SPEC-005-02-9
+    label: 中止 slot は走り切っても ABORTED
+    primary: 5ebe8db7
+    also:
+    - fe00211d
+    confidence: medium
+  - name: SPEC-005-03-1
+    label: worker が claim して比較・結果登録
+    primary: 17f1a809
+    also: []
+    confidence: high
+  - name: SPEC-005-03-2
+    label: job_id ごとの比較定義を使う
+    primary: 17f1a809
+    also: []
+    confidence: high
+  - name: SPEC-005-03-3
+    label: 比較定義なしは依頼だけ FAILED
+    primary: 17f1a809
+    also: []
+    confidence: high
+  - name: SPEC-005-03-4
+    label: 比較ツール起動失敗は依頼だけ FAILED
+    primary: 17f1a809
+    also: []
+    confidence: high
+  - name: SPEC-005-03-5
+    label: 終了コード取得で比較結果を登録
+    primary: 17f1a809
+    also: []
+    confidence: high
+  - name: SPEC-005-04-1
+    label: off では DB 設定なしで実行できる
+    primary: 5ebe8db7
+    also:
+    - 71e88789
+    confidence: high
+  - name: SPEC-005-04-2
+    label: background で通知と依頼が書かれる
+    primary: fe00211d
+    also: []
+    confidence: high
+  - name: SPEC-005-04-3
+    label: 速報 foreground でも同じく通知
+    primary: fe00211d
+    also: []
+    confidence: high
+  - name: SPEC-005-05-1
+    label: 速報 NG/FAILED でも応答に影響なし
+    primary: f0147a84
+    also:
+    - 052abe8b
+    confidence: medium
+  - name: SPEC-005-06-1
+    label: 速報設定の参照名・lease・poll を使う
+    primary: 23e26223
+    also: []
+    confidence: high
+  - name: SPEC-005-06-2
+    label: 速報設定の所有者は基盤適用設計者
+    primary: 23e26223
+    also: []
+    confidence: low
+  - name: SPEC-005-06-3
+    label: 速報設定に認証情報の値を置かない
+    primary: 09730858
+    also: []
+    confidence: medium
+  - name: SPEC-005-06-4
+    label: off なら速報設定なしで slot 実行
+    primary: 09730858
+    also:
+    - 5ebe8db7
+    confidence: high
+  - name: SPEC-006-01-1
+    label: 確報依頼を登録し終端まで待機する
+    primary: a9a9b816
+    also: []
+    confidence: high
+  - name: SPEC-006-02-1
+    label: 確報 worker が比較し結果を保存する
+    primary: 256abc3b
+    also: []
+    confidence: high
+  - name: SPEC-006-03-1
+    label: 確報 FAILED を終了コード 3 で返す
+    primary: 3b33d088
+    also: []
+    confidence: high
+  - name: SPEC-006-03-2
+    label: ABORTED でも 3 値だけ返し状態名なし
+    primary: 3b33d088
+    also: []
+    confidence: high
+  - name: SPEC-006-04-1
+    label: 確報は速報テーブルを変更しない
+    primary: a9a9b816
+    also:
+    - 256abc3b
+    confidence: high
+  - name: SPEC-007-01-1
+    label: lease 失効の依頼を戻して再取得
+    primary: 5d9cc326
+    also:
+    - 23e26223
+    confidence: medium
+  - name: SPEC-007-01-2
+    label: 終了コード 0 で SUCCEEDED になる
+    primary: 256abc3b
+    also:
+    - 17f1a809
+    confidence: medium
+  - name: SPEC-007-02-1
+    label: claim で担当 worker と期限を記録
+    primary: 5d9cc326
+    also:
+    - 23e26223
+    confidence: medium
+  - name: SPEC-007-03-1
+    label: 比較 NG(3)は FAILED・終了コード 3
+    primary: 3b33d088
+    also: []
+    confidence: high
+  - name: SPEC-008-01-1
+    label: 上限超過をハング疑いとして通知
+    primary: e4ea8aaa
+    also: []
+    confidence: high
+  - name: SPEC-008-01-2
+    label: 非 0 終了を実行エラーとして通知
+    primary: e4ea8aaa
+    also: []
+    confidence: high
+  - name: SPEC-008-01-3
+    label: exitcode 0 は通知しない
+    primary: e4ea8aaa
+    also: []
+    confidence: high
+  - name: SPEC-008-02-1
+    label: 速報依頼 FAILED を異常として通知
+    primary: e4ea8aaa
+    also: []
+    confidence: high
+  - name: SPEC-008-03-1
+    label: 通知後正常終了の警告時経過を記録
+    primary: 49a194f7
+    also: []
+    confidence: high
+  - name: SPEC-008-03-2
+    label: off では成果物だけで監視する
+    primary: ca5eedc2
+    also:
+    - 49a194f7
+    confidence: high
+  - name: SPEC-008-03-3
+    label: 通知後の比較異常は再判定して通知
+    primary: 49a194f7
+    also: []
+    confidence: high
+  - name: SPEC-008-03-4
+    label: 通知後の中止は正常終了で終端
+    primary: 49a194f7
+    also: []
+    confidence: high
+  - name: SPEC-008-03-5
+    label: 監視状態の 6 値がモデル間で一致
+    primary: null
+    also: []
+    confidence: high
+  - name: SPEC-008-04-1
+    label: 検知は通知のみで状態・プロセス不変
+    primary: e4ea8aaa
+    also:
+    - 49a194f7
+    confidence: high
+  - name: SPEC-008-05-1
+    label: 上限変更は次回 run から判定に反映
+    primary: ca5eedc2
+    also:
+    - 1415f1a7
+    confidence: high
+  - name: SPEC-008-05-2
+    label: 調整記録はジョブマップ列に持たない
+    primary: eff24f55
+    also:
+    - 1415f1a7
+    confidence: medium
+  - name: SPEC-008-06-1
+    label: 設定の送信コマンドと宛先でメール
+    primary: e4ea8aaa
+    also: []
+    confidence: high
+  - name: SPEC-008-06-2
+    label: 検知設定の所有者は基盤適用設計者
+    primary: e4ea8aaa
+    also: []
+    confidence: low
+  - name: SPEC-008-06-3
+    label: 検知設定に認証情報の値を置かない
+    primary: e4ea8aaa
+    also: []
+    confidence: medium
+  - name: SPEC-009-01-1
+    label: リランで新 run_id と親 run_id
+    primary: 9aedf7cc
+    also: []
+    confidence: high
+  - name: SPEC-009-01-2
+    label: parent_run_id で系譜を辿れる
+    primary: 24a0fcc4
+    also: []
+    confidence: high
+  - name: SPEC-009-02-1
+    label: リランは元の execution-spec で起動
+    primary: 9aedf7cc
+    also: []
+    confidence: high
+  - name: SPEC-009-03-1
+    label: foreground slot のリランを拒否
+    primary: e96c1600
+    also: []
+    confidence: high
+  - name: SPEC-009-03-2
+    label: RUNNING のリランは中止を促し拒否
+    primary: e96c1600
+    also: []
+    confidence: high
+  - name: SPEC-009-03-3
+    label: 速報依頼だけを再作成する
+    primary: 8af695ba
+    also: []
+    confidence: high
+  - name: SPEC-009-04-1
+    label: foreground の復旧は正規ジョブ再実行
+    primary: e96c1600
+    also: []
+    confidence: medium
+  - name: SPEC-010-01-1
+    label: 実行中の背面 slot を中止する
+    primary: d0977c60
+    also: []
+    confidence: high
+  - name: SPEC-010-01-2
+    label: foreground slot の中止を拒否する
+    primary: d0977c60
+    also: []
+    confidence: high
+  - name: SPEC-010-01-3
+    label: off で中止した run をリランできる
+    primary: 9aedf7cc
+    also: []
+    confidence: high
+  - name: SPEC-010-01-4
+    label: aborted.txt で中止済みと導出
+    primary: 49a194f7
+    also: []
+    confidence: high
+  - name: SPEC-010-01-5
+    label: 中止で管理 DB も ABORTED になる
+    primary: d0977c60
+    also: []
+    confidence: high
+  - name: SPEC-010-01-6
+    label: 未着手の速報依頼も一緒に中止
+    primary: d0977c60
+    also: []
+    confidence: high
+  - name: SPEC-010-01-7
+    label: CLAIMED/RUNNING 依頼は変更しない
+    primary: d0977c60
+    also: []
+    confidence: high
+  - name: SPEC-010-01-8
+    label: 依頼作成直後の中止で再作成されない
+    primary: d0977c60
+    also: []
+    confidence: high
+  - name: SPEC-010-02-1
+    label: RUNNING の速報依頼を中止する
+    primary: d0977c60
+    also: []
+    confidence: high
+  - name: SPEC-010-02-2
+    label: REQUESTED/CLAIMED 依頼の中止
+    primary: d0977c60
+    also: []
+    confidence: high
+  - name: SPEC-010-02-3
+    label: 中止後の RUNNING 遷移は 0 件で終了
+    primary: 17f1a809
+    also:
+    - d0977c60
+    confidence: medium
+  - name: SPEC-010-02-4
+    label: 終端済み速報依頼の中止を拒否する
+    primary: d0977c60
+    also: []
+    confidence: high
+  - name: SPEC-010-02-5
+    label: RUNNING 以外の確報依頼中止を拒否
+    primary: d0977c60
+    also: []
+    confidence: high
+  - name: SPEC-010-03-1
+    label: no 応答では状態を変更しない
+    primary: 5031379f
+    also: []
+    confidence: high
+  - name: SPEC-010-03-2
+    label: yes でも状態更新のみでプロセス不停止
+    primary: d0977c60
+    also: []
+    confidence: high
+  - name: SPEC-011-01-1
+    label: 並行稼働実行が実行設定 URI を持つ
+    primary: 09730858
+    also: []
+    confidence: high
+  - name: SPEC-011-02-1
+    label: comparison_result の保持項目
+    primary: 17f1a809
+    also:
+    - 27f67672
+    confidence: high
+  - name: SPEC-011-03-1
+    label: 確報依頼に日付・版・対象一覧を記録
+    primary: 256abc3b
+    also: []
+    confidence: high
+  - name: SPEC-011-04-1
+    label: 成果物 dir 名と run_id が同値
+    primary: 09730858
+    also:
+    - 43850d68
+    confidence: high
+  - name: SPEC-011-04-2
+    label: 管理 DB なしで run_id を発行
+    primary: 09730858
+    also: []
+    confidence: high
+  - name: SPEC-011-04-3
+    label: run_id 形式はローカル時刻・Z なし
+    primary: 09730858
+    also: []
+    confidence: high
+  - name: SPEC-011-05-1
+    label: 管理 DB は外部システムに含めない
+    primary: null
+    also: []
+    confidence: high
+  - name: SPEC-011-05-2
+    label: SSH ホストは外部システムのまま
+    primary: null
+    also: []
+    confidence: high
+  - name: SPEC-011-06-1
+    label: STARTED から直接 ABORTED へ遷移
+    primary: d0977c60
+    also: []
+    confidence: high
+  - name: SPEC-011-06-2
+    label: 依頼リラン run は依頼終端で完了
+    primary: 17f1a809
+    also:
+    - 8af695ba
+    confidence: medium
+  - name: SPEC-011-06-3
+    label: slot リラン run は slot 終端で完了
+    primary: 5ebe8db7
+    also:
+    - 9aedf7cc
+    confidence: medium
+  - name: SPEC-012-01-1
+    label: CLI の 3 チャネルだけで判定できる
+    primary: f0147a84
+    also:
+    - 052abe8b
+    confidence: medium
+  - name: SPEC-012-01-2
+    label: background 異常はメールで届く
+    primary: e4ea8aaa
+    also:
+    - bc6f11a5
+    confidence: high
+  - name: SPEC-012-02-1
+    label: 実行履歴と成果物・ログで追跡できる
+    primary: f0147a84
+    also:
+    - 052abe8b
+    confidence: medium
+  - name: SPEC-013-01-1
+    label: 差し替えだけで基盤スクリプト不変
+    primary: 15a5e2db
+    also: []
+    confidence: low
+  uc_map_updates:
+  - uc_id: fd678b04
+    uc: feature flag を設定する
+    atdd_scenarios:
+      before: []
+      after:
+      - SPEC-001-01-4
+    atdd_confirmed:
+      before: false
+      after: true
+  - uc_id: eff24f55
+    uc: slot ごとのジョブマップを定義する
+    atdd_scenarios:
+      before: []
+      after:
+      - SPEC-004-04-4
+      - SPEC-008-05-2
+    atdd_confirmed:
+      before: false
+      after: true
+  - uc_id: dcd8234d
+    uc: クロスチェックのジョブマップと比較定義を定義する
+    atdd_scenarios:
+      before: []
+      after:
+      - SPEC-004-04-5
+    atdd_confirmed:
+      before: false
+      after: true
+  - uc_id: 65b09d93
+    uc: slot runner の実体スクリプトを割り当てる
+    atdd_scenarios:
+      before: []
+      after: []
+    atdd_confirmed:
+      before: false
+      after: true
+  - uc_id: 09730858
+    uc: slot 実行モードを選択して runner を起動する
+    atdd_scenarios:
+      before: []
+      after:
+      - SPEC-001-01-1
+      - SPEC-001-01-2
+      - SPEC-001-01-3
+      - SPEC-001-02-1
+      - SPEC-001-04-1
+      - SPEC-001-04-2
+      - SPEC-002-01-1
+      - SPEC-002-01-2
+      - SPEC-005-06-3
+      - SPEC-005-06-4
+      - SPEC-011-01-1
+      - SPEC-011-04-1
+      - SPEC-011-04-2
+      - SPEC-011-04-3
+    atdd_confirmed:
+      before: false
+      after: true
+  - uc_id: 7c41c7cd
+    uc: ジョブマップで JOB_ID から実行先を解決する
+    atdd_scenarios:
+      before: []
+      after:
+      - SPEC-002-03-1
+      - SPEC-003-02-1
+      - SPEC-004-01-1
+      - SPEC-004-02-1
+      - SPEC-004-04-1
+      - SPEC-004-04-2
+      - SPEC-004-04-3
+    atdd_confirmed:
+      before: false
+      after: true
+  - uc_id: 43850d68
+    uc: execution-spec.json を確定保存する
+    atdd_scenarios:
+      before: []
+      after:
+      - SPEC-001-01-5
+      - SPEC-004-03-1
+      - SPEC-004-03-2
+      - SPEC-011-04-1
+    atdd_confirmed:
+      before: false
+      after: true
+  - uc_id: 5ebe8db7
+    uc: 実装スクリプトを実行して Runner Result を出力する
+    atdd_scenarios:
+      before: []
+      after:
+      - SPEC-003-01-1
+      - SPEC-003-01-2
+      - SPEC-003-01-3
+      - SPEC-003-02-1
+      - SPEC-003-03-1
+      - SPEC-003-04-1
+      - SPEC-004-02-1
+      - SPEC-004-04-3
+      - SPEC-005-02-9
+      - SPEC-005-04-1
+      - SPEC-005-06-4
+      - SPEC-011-06-3
+    atdd_confirmed:
+      before: false
+      after: true
+  - uc_id: f0147a84
+    uc: foreground slot の結果をジョブスケジューラへ中継する
+    atdd_scenarios:
+      before: []
+      after:
+      - SPEC-001-03-1
+      - SPEC-001-03-2
+      - SPEC-001-03-3
+      - SPEC-002-01-2
+      - SPEC-002-02-1
+      - SPEC-002-02-2
+      - SPEC-002-02-3
+      - SPEC-005-05-1
+      - SPEC-012-01-1
+      - SPEC-012-02-1
+    atdd_confirmed:
+      before: false
+      after: true
+  - uc_id: 71e88789
+    uc: 速報クロスチェック runner へ完了通知を送信する
+    atdd_scenarios:
+      before: []
+      after:
+      - SPEC-001-01-6
+      - SPEC-005-01-1
+      - SPEC-005-01-2
+      - SPEC-005-01-3
+      - SPEC-005-01-4
+      - SPEC-005-01-6
+      - SPEC-005-04-1
+    atdd_confirmed:
+      before: false
+      after: true
+  - uc_id: a9a9b816
+    uc: 確報比較依頼を登録して終端状態まで待機する
+    atdd_scenarios:
+      before: []
+      after:
+      - SPEC-006-01-1
+      - SPEC-006-04-1
+    atdd_confirmed:
+      before: false
+      after: true
+  - uc_id: 052abe8b
+    uc: 業務ジョブの実行結果を確認する
+    atdd_scenarios:
+      before: []
+      after:
+      - SPEC-001-03-1
+      - SPEC-001-03-2
+      - SPEC-002-02-2
+      - SPEC-005-05-1
+      - SPEC-012-01-1
+      - SPEC-012-02-1
+    atdd_confirmed:
+      before: false
+      after: true
+  - uc_id: fe00211d
+    uc: 両系成功時に速報比較依頼を作成する
+    atdd_scenarios:
+      before: []
+      after:
+      - SPEC-005-02-1
+      - SPEC-005-02-2
+      - SPEC-005-02-3
+      - SPEC-005-02-4
+      - SPEC-005-02-5
+      - SPEC-005-02-6
+      - SPEC-005-02-7
+      - SPEC-005-02-8
+      - SPEC-005-02-9
+      - SPEC-005-04-2
+      - SPEC-005-04-3
+    atdd_confirmed:
+      before: false
+      after: true
+  - uc_id: 5d9cc326
+    uc: 確報比較依頼を claim する
+    atdd_scenarios:
+      before: []
+      after:
+      - SPEC-007-01-1
+      - SPEC-007-02-1
+    atdd_confirmed:
+      before: false
+      after: true
+  - uc_id: 23e26223
+    uc: 速報比較依頼を claim する
+    atdd_scenarios:
+      before: []
+      after:
+      - SPEC-005-06-1
+      - SPEC-005-06-2
+      - SPEC-007-01-1
+      - SPEC-007-02-1
+    atdd_confirmed:
+      before: false
+      after: true
+  - uc_id: 256abc3b
+    uc: 比較ツールで日次全量比較を実行して結果を保存する
+    atdd_scenarios:
+      before: []
+      after:
+      - SPEC-006-02-1
+      - SPEC-006-04-1
+      - SPEC-007-01-2
+      - SPEC-011-03-1
+    atdd_confirmed:
+      before: false
+      after: true
+  - uc_id: 17f1a809
+    uc: 比較ツールでジョブ単位比較を実行して結果を登録する
+    atdd_scenarios:
+      before: []
+      after:
+      - SPEC-005-03-1
+      - SPEC-005-03-2
+      - SPEC-005-03-3
+      - SPEC-005-03-4
+      - SPEC-005-03-5
+      - SPEC-007-01-2
+      - SPEC-010-02-3
+      - SPEC-011-02-1
+      - SPEC-011-06-2
+    atdd_confirmed:
+      before: false
+      after: true
+  - uc_id: 3b33d088
+    uc: 保存済みの確報結果をジョブスケジューラへ返す
+    atdd_scenarios:
+      before: []
+      after:
+      - SPEC-006-03-1
+      - SPEC-006-03-2
+      - SPEC-007-03-1
+    atdd_confirmed:
+      before: false
+      after: true
+  - uc_id: 27f67672
+    uc: 速報比較結果を参照する
+    atdd_scenarios:
+      before: []
+      after:
+      - SPEC-011-02-1
+    atdd_confirmed:
+      before: false
+      after: true
+  - uc_id: 4145bcb9
+    uc: 確報クロスチェック結果を確認する
+    atdd_scenarios:
+      before: []
+      after: []
+    atdd_confirmed:
+      before: false
+      after: true
+  - uc_id: 5031379f
+    uc: 現在状態を確認して停止確認に応答する
+    atdd_scenarios:
+      before: []
+      after:
+      - SPEC-010-03-1
+    atdd_confirmed:
+      before: false
+      after: true
+  - uc_id: ca5eedc2
+    uc: background 実行の経過時間と終了状態を判定する
+    atdd_scenarios:
+      before: []
+      after:
+      - SPEC-005-01-5
+      - SPEC-008-03-2
+      - SPEC-008-05-1
+    atdd_confirmed:
+      before: false
+      after: true
+  - uc_id: e4ea8aaa
+    uc: ハング疑い・実行エラー・比較異常を通知する
+    atdd_scenarios:
+      before: []
+      after:
+      - SPEC-005-01-5
+      - SPEC-008-01-1
+      - SPEC-008-01-2
+      - SPEC-008-01-3
+      - SPEC-008-02-1
+      - SPEC-008-04-1
+      - SPEC-008-06-1
+      - SPEC-008-06-2
+      - SPEC-008-06-3
+      - SPEC-012-01-2
+    atdd_confirmed:
+      before: false
+      after: true
+  - uc_id: 49a194f7
+    uc: 監視記録を保存する
+    atdd_scenarios:
+      before: []
+      after:
+      - SPEC-008-03-1
+      - SPEC-008-03-2
+      - SPEC-008-03-3
+      - SPEC-008-03-4
+      - SPEC-008-04-1
+      - SPEC-010-01-4
+    atdd_confirmed:
+      before: false
+      after: true
+  - uc_id: d0977c60
+    uc: 実行を ABORTED へ遷移させる
+    atdd_scenarios:
+      before: []
+      after:
+      - SPEC-010-01-1
+      - SPEC-010-01-2
+      - SPEC-010-01-5
+      - SPEC-010-01-6
+      - SPEC-010-01-7
+      - SPEC-010-01-8
+      - SPEC-010-02-1
+      - SPEC-010-02-2
+      - SPEC-010-02-3
+      - SPEC-010-02-4
+      - SPEC-010-02-5
+      - SPEC-010-03-2
+      - SPEC-011-06-1
+    atdd_confirmed:
+      before: false
+      after: true
+  - uc_id: e96c1600
+    uc: リラン対象を検証する
+    atdd_scenarios:
+      before: []
+      after:
+      - SPEC-009-03-1
+      - SPEC-009-03-2
+      - SPEC-009-04-1
+    atdd_confirmed:
+      before: false
+      after: true
+  - uc_id: bc6f11a5
+    uc: background 異常の通知メールを受け取る
+    atdd_scenarios:
+      before: []
+      after:
+      - SPEC-012-01-2
+    atdd_confirmed:
+      before: false
+      after: true
+  - uc_id: 1415f1a7
+    uc: hang_detect_limit_minutes をジョブごとに調整する
+    atdd_scenarios:
+      before: []
+      after:
+      - SPEC-008-05-1
+      - SPEC-008-05-2
+    atdd_confirmed:
+      before: false
+      after: true
+  - uc_id: 9aedf7cc
+    uc: 元の execution-spec.json から復元して新しい run_id で起動する
+    atdd_scenarios:
+      before: []
+      after:
+      - SPEC-005-02-8
+      - SPEC-009-01-1
+      - SPEC-009-02-1
+      - SPEC-010-01-3
+      - SPEC-011-06-3
+    atdd_confirmed:
+      before: false
+      after: true
+  - uc_id: 8af695ba
+    uc: 速報比較依頼だけを新規作成する
+    atdd_scenarios:
+      before: []
+      after:
+      - SPEC-009-03-3
+      - SPEC-011-06-2
+    atdd_confirmed:
+      before: false
+      after: true
+  - uc_id: 15a5e2db
+    uc: 切り替えた運用モードで業務ジョブを実行する
+    atdd_scenarios:
+      before: []
+      after:
+      - SPEC-001-01-1
+      - SPEC-001-02-1
+      - SPEC-001-03-1
+      - SPEC-001-03-2
+      - SPEC-001-03-3
+      - SPEC-001-04-1
+      - SPEC-001-04-2
+      - SPEC-013-01-1
+    atdd_confirmed:
+      before: false
+      after: true
+  - uc_id: 24a0fcc4
+    uc: リラン結果を parent_run_id で追跡する
+    atdd_scenarios:
+      before: []
+      after:
+      - SPEC-009-01-2
+    atdd_confirmed:
+      before: false
+      after: true
+created_at: '2026-09-17T00:44:37+09:00'

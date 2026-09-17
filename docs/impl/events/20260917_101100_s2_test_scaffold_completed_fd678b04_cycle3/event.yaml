@@ -1,0 +1,14 @@
+event_id: 20260917_101100_s2_test_scaffold_completed_fd678b04_cycle3
+type: stage_completed
+uc_id: fd678b04
+stage: S2
+payload:
+  manifest_sha256: 93b891273f0f42d9e35a110f2f0d19803c1a08240b69ee0892aebd6c0b72c457
+  manifest_projection: v2
+  result: pass
+  scaffold_mode: scoped_rerun
+  tiers:
+  - tier-facade
+  red_baseline: not_applicable
+  summary: 'S2 test-scaffold rerun after spec feedback cycle 2: uc feature +1 scenario (FINAL_ prefix boundary), tier-facade feature +1 scenario, 5 bats added (already green: implementation already uses FINAL_ prefix), atdd untouched'
+created_at: '2026-09-17T10:11:00+09:00'

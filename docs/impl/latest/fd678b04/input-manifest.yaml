@@ -1,0 +1,50 @@
+schema_version: '1.0'
+uc_id: fd678b04
+fixed_at: '2026-09-17T10:03:00+09:00'
+inputs:
+  spec_event:
+    event_id: spec:20260917_100000_feedback_impl_feedback_fd678b04_cycle2
+    sha256: 5387bab95c67b768032cd1aff6dc0db8a8473f286c4324a92c34002659fc9895
+  spec_md:
+    path: docs/specs/latest/適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md
+    sha256: e17fd836b0a99a88b2341981b1a1a92c90e961e7df3829649967991ecec1af54
+  tier_mds:
+  - tier: tier-facade
+    path: docs/specs/latest/適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md
+    sha256: 2222bd0ba92c85054f410d51b2f71235c97f0feaf4e1f66d0c25ce4d33a5e71d
+  api_summary:
+    path: docs/specs/latest/適用構成業務/適用構成定義フロー/feature flag を設定する/_api-summary.yaml
+    sha256: c4cf5ca1a5ce3808e863476462f3a58064b6ab92bfda5d6b96f7d2c5571ebe16
+  shared_spec_refs:
+  - path: docs/specs/latest/_cross-cutting/api/asyncapi.yaml
+    sha256: 29053f6331ab76ed5473d2e7c71528b8145bee95672849f4b91929396b01551a
+  - path: docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml
+    sha256: 0cce7d14462d286f6e41fe01355c3da73a7ef8a5b7b619ba7edd45bcbf525f3b
+  - path: docs/specs/latest/_cross-cutting/datastore/rdb-schema.yaml
+    sha256: 2b3ffec01cb9705e508168a4ff8a9e1b7c67278679714ece60c8040a4c0be292
+  - path: docs/specs/latest/_cross-cutting/ux-ui/data-visualization.md
+    sha256: 69dab4f18faca57468579bdde4cdfbcd0ccb3aec0ce13914f174741c916b5b38
+  - path: docs/specs/latest/_cross-cutting/ux-ui/ui-design.md
+    sha256: c8338a85c31080f70b694f38c10bde245149233a11ac6c3f8e2ccb82d17297d1
+  model_summary:
+    path: docs/specs/latest/適用構成業務/適用構成定義フロー/feature flag を設定する/_model-summary.yaml
+    sha256: 268f5bf094bdf60a35d2d4828503cb7db3d6b967c147c6a9426582fb7f065719
+  datastore_schema:
+    path: docs/specs/latest/_cross-cutting/datastore/rdb-schema.yaml
+    sha256: 2b3ffec01cb9705e508168a4ff8a9e1b7c67278679714ece60c8040a4c0be292
+  nfr:
+    path: docs/nfr/latest/nfr-grade.yaml
+    sha256: 69cca2e1c16f18ab4178b5a0e5af690acc7a82338c64a37176767e860a06693f
+  usdm:
+    event_id: 20260908_011000_feedback_slot_status_wording
+    sha256: 89316e19ac1a54227263e1c50ea13ef0f75cb1032757ae980be1e572ba7cf306
+  arch:
+    event_id: 20260908_015000_feedback_slot_status_wording
+    sha256: 45a30ece498ff31b18cdec055333a172156d453b8d6d4b4f330b716cfc87de04
+  contracts_decl:
+    sha256: a7703a7d906eab15a5efb98e940352b6ba4985cb374bee974d6e0a319ca42402
+  contracts_lock:
+    path: docs/impl/latest/contracts.lock.yaml
+    sha256: 4192970b0fd0a1a448c48c8efc2c30912210f71373cf1366f4fa48603c03fe13
+  dev_rules_sha256: 6ea5fb63bf9ba32e793f87c4514b912050cd95b958660576b545ba5c484991b2
+lineage_ok: true

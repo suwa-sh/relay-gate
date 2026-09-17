@@ -1,0 +1,34 @@
+event_id: 20260917_023744_s8_feedback_refresh_fd678b04
+type: stage_completed
+uc_id: fd678b04
+stage: S8
+payload:
+  mode: refresh
+  refreshed_at: '2026-09-17T02:37:08+09:00'
+  updated: 1
+  added: 0
+  removed: 0
+  feedback_request:
+    feedback_id: 20260917_014138_impl_feedback_fd678b04
+    draft_path: docs/impl/latest/fd678b04/feedback/draft.md
+    draft_sha256: c89ce3b8a83c485abfbaae773f716cfb080a559f580581bbc039542bbe1c7d0c
+    draft_sha256_before_refresh: ab574e6665b8dbf79a0184b566fed184204d36be2042cd06d7a9a62a5399c9ac
+    request_count: 2
+    blocker_count: 0
+    severity_counts:
+      blocker: 0
+      spec-gap: 2
+      improvement: 0
+    requests:
+    - id: CR-fd678b04-001
+      severity: spec-gap
+      title: 運用モード切替 Scenario の Then を検証側と実行側の責務に分離する
+      origin: issues/20260917_004843_cross-uc-scenarios.md, S6 injections(provisional_harness 1 件)
+    - id: CR-fd678b04-002
+      severity: spec-gap
+      title: runner --help 問い合わせの待機上限と未応答判定を validate-config.sh の契約に一元化し NFR と整合させる
+      origin: A-022 / F-017 (spec_absent と判定されたが別 UC の tier-facade.md に 5 秒の仮採用あり), A-012, V-001, V-002, F-001
+    verify: 'node feedbackRequest.js verify docs/impl/latest/fd678b04/feedback/draft.md --feedback: PASS (2 requests, refresh 後に再実行)'
+  draft_sha256: c89ce3b8a83c485abfbaae773f716cfb080a559f580581bbc039542bbe1c7d0c
+  source: 'review/review-notes.md(2026-09-17 承認対話: 相互運用=A の希望値を CR-002 へ)'
+created_at: '2026-09-17T02:37:44+09:00'
