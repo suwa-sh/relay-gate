@@ -144,4 +144,10 @@ jobs:
         cache: npm
     - run: npm ci
     - name: atdd
-      run: npx cucumber-js --config cucumber.cjs features/atdd
+      # features/atdd/ は全 SPEC の Scenario を持つが、step は UC 完了(S7)ごとに実装される。
+      # 完了済み UC に対応づけられた Scenario だけをタグ完全一致で選択実行する(未着手 UC 分を undefined で落とさない)。
+      run: |
+        TAGS="$(node scripts/ci/atdd-tag-expression.js)"
+        if [ -z "$TAGS" ]; then echo "no completed UC with ATDD scenarios; skip"; exit 0; fi
+        echo "tags: $TAGS"
+        npx cucumber-js --config cucumber.cjs features/atdd --tags "$TAGS"
