@@ -1,0 +1,18 @@
+event_id: 20260917_111500_s8_feedback_draft_completed_fd678b04_cycle3
+type: stage_completed
+uc_id: fd678b04
+stage: S8
+payload:
+  manifest_sha256: 1802e7aaaecea1c74c643022cb6bd64bd90cb653f0c8e55ebf73b9888907116e
+  manifest_projection: v2
+  result: pass
+  mode: initial
+  attempt: 3
+  cycle: 3
+  feedback_request:
+    draft_path: null
+    request_count: 0
+    blocker_count: 0
+  learnings: 1
+  summary: 'S8 feedback initial (cycle 3): 0 spec-origin requests (previous CR-001 applied in spec event 20260917_100000), no draft; as-built-summary updated for attempt-3; 1 learning + skill proposal added'
+created_at: '2026-09-17T11:15:00+09:00'

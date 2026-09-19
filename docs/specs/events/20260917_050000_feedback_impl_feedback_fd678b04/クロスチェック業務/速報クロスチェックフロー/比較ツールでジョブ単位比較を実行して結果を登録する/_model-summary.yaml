@@ -1,0 +1,142 @@
+uc: "比較ツールでジョブ単位比較を実行して結果を登録する"
+business: "クロスチェック業務"
+buc: "速報クロスチェックフロー"
+bounded_context_id: "BC-002"
+aggregate_id: "AG-002"
+
+models:
+  - name: "ExecuteComparison"
+    tier: "tier-rapid-crosscheck"
+    layer: "usecase"
+    type: "command"
+    rdra_info: "速報比較依頼(rapid_crosscheck_request)"
+  - name: "ComparisonOutcome"
+    tier: "tier-rapid-crosscheck"
+    layer: "domain"
+    type: "value-object"
+    rdra_info: "比較ツール実行結果"
+  - name: "ComparisonDefinitionRecord"
+    tier: "tier-rapid-crosscheck"
+    layer: "repository"
+    type: "record"
+    rdra_info: "比較定義"
+  - name: "RapidCrosscheckRequestRecord"
+    tier: "tier-rapid-crosscheck"
+    layer: "repository"
+    type: "record"
+    rdra_info: "速報比較依頼(rapid_crosscheck_request)"
+  - name: "ComparisonResultRecord"
+    tier: "tier-rapid-crosscheck"
+    layer: "repository"
+    type: "record"
+    rdra_info: "比較結果(comparison_result)"
+  - name: "RunnerResultRecord"
+    tier: "tier-rapid-crosscheck"
+    layer: "repository"
+    type: "record"
+    rdra_info: "Runner Result"
+  - name: "CrosscheckJobMapRecord"
+    tier: "tier-rapid-crosscheck"
+    layer: "repository"
+    type: "record"
+    rdra_info: "クロスチェックジョブマップ(CSV。1 行目ヘッダー、1 行 1 job_id)"
+  - name: "ParallelRunRecord"
+    tier: "tier-rapid-crosscheck"
+    layer: "repository"
+    type: "record"
+    rdra_info: "並行稼働実行(parallel_run)"
+
+tables:
+  - name: "rapid_crosscheck_requests"
+    rdra_info: "速報比較依頼(rapid_crosscheck_request)"
+    operations:
+      - type: "UPDATE"
+        # 条件付き UPDATE(条件「依頼中止可否判定」の worker 側の競合規則)。更新件数 0(abort-rapid-crosscheck で ABORTED 済み / lease 失効で回収済み)なら比較ツールを起動せず comparison_results も INSERT せず終了コード 0
+        columns:
+          - name: "status"
+            value: "RUNNING"
+          - name: "started_at"
+            value: "現在時刻(ローカル時刻)"
+        where: "run_id = ? AND status = 'CLAIMED' AND worker_id = ?(0 件なら比較を開始しない)"
+      - type: "SELECT"
+        columns:
+          - name: "status"
+            value: ""
+          - name: "worker_id"
+            value: ""
+        where: "run_id = ?(RUNNING 遷移の条件付き UPDATE が 0 件のときの再 SELECT。ABORTED なら実行ログ WARN comparison not started ... reason=request_aborted、それ以外は WARN request not owned)"
+      - type: "UPDATE"
+        columns:
+          - name: "status"
+            value: "SUCCEEDED(exit_code=0) / FAILED(非 0・比較定義なし・起動失敗)"
+          - name: "exit_code"
+            value: "比較ツールの終了コード(比較定義なし・起動失敗は 6)"
+          - name: "stdout"
+            value: "比較ツール stdout 全文"
+          - name: "stderr"
+            value: "比較ツール stderr 全文"
+          - name: "error_summary"
+            value: "stderr 先頭 1 行(SUCCEEDED は NULL)"
+          - name: "completed_at"
+            value: "比較ツール終了時刻(ローカル時刻)"
+        where: "run_id = ? AND status = 'RUNNING' AND worker_id = ?"
+    indexes_needed: []
+  - name: "comparison_results"
+    rdra_info: "比較結果(comparison_result)"
+    operations:
+      - type: "INSERT"
+        # INSERT 条件(RDRA 条件「比較結果の登録条件」): 比較ツールを起動して終了コードを得たときのみ。比較定義なし・比較ツール起動失敗(exec 不可)・終端 UPDATE 0 行(ABORTED 済み等)では INSERT しない
+        columns:
+          - name: "comparison_result_id"
+            value: "8 桁 hex 乱数(主キー。全体で一意。衝突時は取り直す)"
+          - name: "run_id"
+            value: "依頼の run_id"
+          - name: "comparison_type"
+            value: "比較定義の comparison_type(速報は job)。定義行が無い job_id・比較ツール起動失敗は依頼を FAILED にするだけで本テーブルに INSERT しない"
+          - name: "status"
+            value: "OK(0) / NG(3) / FAILED(6・その他)"
+          - name: "difference_count"
+            value: "stdout の difference_count=N(無ければ NULL)"
+          - name: "report_uri"
+            value: "stdout の report_uri=...(無ければ NULL)"
+          - name: "compared_at"
+            value: "比較ツール終了時刻(ローカル時刻)"
+        where: "比較ツールが終了コードを返したときのみ INSERT(比較定義なし・起動失敗・終端 UPDATE 0 行では INSERT しない)"
+    indexes_needed:
+      - columns: ["run_id", "compared_at"]
+        reason: "run_id 単位の結果参照(rapid-crosscheck-result.sh)と hang-detector の異常判定"
+        access_pattern: "run_id での一覧取得"
+  - name: "rapid_runs"
+    rdra_info: "速報実行(rapid_run)"
+    operations:
+      - type: "SELECT"
+        columns: []
+        where: "run_id = ?(blue_artifact_uri / green_artifact_uri の取得)"
+    indexes_needed: []
+  - name: "parallel_runs"
+    rdra_info: "並行稼働実行(parallel_run)"
+    operations:
+      - type: "SELECT"
+        columns:
+          - name: "parent_run_id"
+            value: ""
+        where: "run_id = ?(リラン由来判定)"
+      - type: "UPDATE"
+        # 状態「並行稼働実行」RUNNING → COMPLETED。速報比較依頼だけを新規作成したリラン由来 run(parent_run_id IS NOT NULL かつ slot_executions 0 件)の依頼終端時のみ実行する。リラン由来判定は事前の SELECT(上記 parallel_runs.parent_run_id / 下記 slot_executions 件数)で行い、本 UPDATE の where には含めない(契約 U8 の SQL と同形)
+        columns:
+          - name: "status"
+            value: "COMPLETED"
+          - name: "completed_at"
+            value: "依頼終端時刻(ローカル時刻)"
+        where: "run_id = ? AND status = 'RUNNING'"
+    indexes_needed: []
+  - name: "slot_executions"
+    rdra_info: "slot 実行"
+    operations:
+      - type: "SELECT"
+        columns: []
+        where: "run_id = ?(件数 0 = 業務ジョブを再実行していないリラン由来 run)"
+    indexes_needed: []
+
+kvs: []
+object_storage: []

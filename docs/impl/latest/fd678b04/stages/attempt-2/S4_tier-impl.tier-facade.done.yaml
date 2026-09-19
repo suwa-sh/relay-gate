@@ -1,0 +1,118 @@
+stage: S4
+tier: tier-facade
+attempt: 2
+uc_id: fd678b04
+manifest_sha256: 1802e7aaaecea1c74c643022cb6bd64bd90cb653f0c8e55ebf73b9888907116e
+manifest_projection: v2
+result: pass
+rerun_mode: stale_rerun
+rerun_reason: "stale after spec event 20260917_100000_feedback_impl_feedback_fd678b04_cycle2 (previous attempt-2 done invalidated by 20260917_100200_stale_invalidated_spec_feedback_cycle2_applied_fd678b04)"
+previous_done: "docs/impl/latest/fd678b04/invalidated/20260917_100200_stale_invalidated_spec_feedback_cycle2_applied_fd678b04/stages/attempt-2/S4_tier-impl.tier-facade.done.yaml"
+findings_provided: false
+gates:
+  format: pass
+  lint: pass
+  tdd: pass
+  bdd_tier: pass
+gate_runs:
+  - gate: format
+    cwd: facade
+    command: "shfmt -d ."
+    exit_code: 0
+  - gate: lint
+    cwd: facade
+    command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+    exit_code: 0
+  - gate: tdd
+    cwd: facade
+    command: "bats -r test"
+    exit_code: 0
+    summary: "72 tests, 72 ok (S2 cycle2 added 5 tests were already green against FEATURE_FLAG_FORBIDDEN_KEY_PREFIX=FINAL_ prefix check)"
+  - gate: bdd_tier
+    cwd: facade
+    command: "npx cucumber-js --config ../cucumber.cjs features"
+    exit_code: 0
+    summary: "9 scenarios (9 passed), 32 steps (32 passed); S2 cycle2 skeleton steps 2 (Given 1 / Then 1) implemented"
+assumptions:
+  path: "attempt-2/S4_tier-impl.tier-facade.assumptions.yaml"
+  count: 17
+  by_category:
+    input_validation: 5
+    data_format: 5
+    error_handling: 5
+    persistence: 0
+    performance: 1
+    security: 1
+  sha256: ae7aa4fcbe2fe82610be47d83b2f9c50e90fba080647e8fc98f39652d8fdc0e3
+  extraction:
+    candidate_count: 25
+    excluded_as_explicit: 8
+    recorded_count: 17
+  changes_from_invalidated_attempt_2:
+    excluded_as_explicit_now:
+      - "forbidden key range = every key whose name starts with FINAL_ (prefix match, case-sensitive, checked before unknown-key warn, no warn for the same key): now explicit in cli-command-contract.yaml config_files.feature-flag.env.validation_rules and tier-facade.md; implementation FEATURE_FLAG_FORBIDDEN_KEY_PREFIX unchanged"
+    added: []
+    carried_forward:
+      - A-005
+      - A-006
+      - A-007
+      - A-008
+      - A-010
+      - A-015
+      - A-016
+      - A-017
+      - A-018
+      - A-019
+      - A-020
+      - A-021
+      - A-023
+      - A-024
+      - A-025
+      - A-026
+      - A-027
+spec_changes_applied:
+  - "spec event 20260917_100000 cycle2 (commit 80a402b): validation_rules define the rejected range as keys starting with FINAL_ (prefix). Existing implementation already matched (FEATURE_FLAG_FORBIDDEN_KEY_PREFIX=FINAL_, prefix case evaluated before the unknown-key warn in the same key loop); no logic change"
+  - "domain feature_flag.sh: comments on FEATURE_FLAG_FORBIDDEN_KEY_PREFIX and the key-inspection loop now cite the contract validation_rules wording (prefix match, case-sensitive, precedence over unknown-key warn)"
+  - "tier BDD steps: implemented Given (valid parallel config + FINAL_DB_CONN_REF=final-db + FINAL_CROSSCHECK_MODE=background) and Then (exit 2, both final crosscheck key is not allowed lines)"
+  - "no old FINAL_CROSSCHECK_* wording remained in comments, constants or messages (grep over facade/src, facade/test, facade/bin)"
+ddd_guide: "ddd:ddd-tactical-implementation not re-invoked for this rerun (no domain model change; only comment alignment and BDD step implementation on the existing lightweight pure-function domain)"
+implemented:
+  - path: facade/bin/validate-config.sh
+    layer: entrypoint
+    note: "unchanged"
+  - path: facade/src/presentation/validate-config.sh
+    layer: presentation
+    model: ValidateConfigRequest
+    note: "unchanged"
+  - path: facade/src/usecase/validate_feature_flag.sh
+    layer: usecase
+    model: ValidateFeatureFlagQuery
+    note: "unchanged"
+  - path: facade/src/domain/feature_flag.sh
+    layer: domain
+    model: "FeatureFlag / SlotRunnerAssignment"
+    note: "comments only (FINAL_ prefix rule cites contract validation_rules)"
+  - path: facade/src/domain/cli_field.sh
+    layer: domain
+    note: "unchanged"
+  - path: facade/src/repository/feature_flag_config.sh
+    layer: repository
+    model: FeatureFlagConfig
+    note: "unchanged"
+  - path: facade/src/gateway/runner_probe.sh
+    layer: gateway
+    note: "unchanged"
+tests:
+  tier_bdd_steps: facade/features/steps/configure-feature-flags.steps.js
+  tier_bdd_steps_changed: true
+  tdd:
+    - facade/test/domain/feature_flag.bats
+    - facade/test/domain/cli_field.bats
+    - facade/test/repository/feature_flag_config.bats
+    - facade/test/gateway/runner_probe.bats
+    - facade/test/usecase/validate_feature_flag.bats
+    - facade/test/presentation/validate_config.bats
+  tdd_changed: []
+issues: []
+completed_at: '2026-09-17T10:10:38+09:00'
+completed_by: dist-impl-implement@0.14.1

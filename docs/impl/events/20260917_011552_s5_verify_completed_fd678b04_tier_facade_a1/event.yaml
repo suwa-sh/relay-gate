@@ -1,0 +1,28 @@
+event_id: 20260917_011552_s5_verify_completed_fd678b04_tier_facade_a1
+type: stage_completed
+uc_id: fd678b04
+stage: S5
+tier: tier-facade
+attempt: 1
+lane: verify
+payload:
+  result: fail
+  summary:
+    blocker: 3
+    major: 1
+    minor: 24
+  blockers:
+  - F-001
+  - F-002
+  - F-028
+  manifest_sha256: a1924f0312adfe5fb3027f8a5779e66f05a24848a5b28d2f1908703404d62f81
+  manifest_projection: v2
+  assumptions_sha256: 759121c3b360fd46f73ae4635b8bd1f87073f6b119d9f65e9be13ce5b75a7778
+  assumption_verdicts_sha256: 0c825815a758956c3d4b0294eedc5ab8259b4fa1a405c735aef191120b659d4b
+  assumption_verdicts_summary:
+    consistent: 7
+    spec_absent: 13
+    contradicts: 1
+    unlisted: 1
+  verifier_model: gpt-6-astra
+created_at: '2026-09-17T01:15:52+09:00'

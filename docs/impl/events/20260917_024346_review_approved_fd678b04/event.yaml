@@ -1,0 +1,93 @@
+event_id: 20260917_024346_review_approved_fd678b04
+type: review_approved
+uc_id: fd678b04
+stage: S9
+payload:
+  review_evidence_event_id: 20260917_024345_s9_review_regenerated_fd678b04
+  feedback_review_evidence:
+    feedback_id: 20260917_014138_impl_feedback_fd678b04
+    draft_sha256: c89ce3b8a83c485abfbaae773f716cfb080a559f580581bbc039542bbe1c7d0c
+    request_count: 2
+  implementation_review_evidence:
+    gate_result: 6/6 pass
+    open_blocker_count: 0
+    open_major_count: 3
+    assumption_evidence_sha256: 0f0650548e74f71803c546e35dfc6c4f4b5acccef5b16e3b9415857a298c285f
+  approved_by: user
+  approval_kind: feedback_publish_permission(request_count > 0)
+  user_response: 機能=A / 相互運用=A / 監査=A / 前提=全 18 件 承認
+  review_notes: docs/impl/latest/fd678b04/review/review-notes.md
+  assumption_decisions:
+  - tier: tier-facade
+    id: A-005
+    decision: confirmed
+    note: user confirmed in S9 dialogue (2026-09-17)
+  - tier: tier-facade
+    id: A-006
+    decision: confirmed
+    note: user confirmed in S9 dialogue (2026-09-17)
+  - tier: tier-facade
+    id: A-007
+    decision: confirmed
+    note: user confirmed in S9 dialogue (2026-09-17)
+  - tier: tier-facade
+    id: A-008
+    decision: confirmed
+    note: user confirmed in S9 dialogue (2026-09-17)
+  - tier: tier-facade
+    id: A-010
+    decision: confirmed
+    note: user confirmed in S9 dialogue (2026-09-17)
+  - tier: tier-facade
+    id: A-012
+    decision: confirmed
+    note: user confirmed in S9 dialogue (2026-09-17)
+  - tier: tier-facade
+    id: A-013
+    decision: confirmed
+    note: user confirmed in S9 dialogue (2026-09-17)
+  - tier: tier-facade
+    id: A-015
+    decision: confirmed
+    note: user confirmed in S9 dialogue (2026-09-17)
+  - tier: tier-facade
+    id: A-016
+    decision: confirmed
+    note: user confirmed in S9 dialogue (2026-09-17)
+  - tier: tier-facade
+    id: A-017
+    decision: confirmed
+    note: user confirmed in S9 dialogue (2026-09-17)
+  - tier: tier-facade
+    id: A-018
+    decision: confirmed
+    note: user confirmed in S9 dialogue (2026-09-17)
+  - tier: tier-facade
+    id: A-019
+    decision: confirmed
+    note: user confirmed in S9 dialogue (2026-09-17)
+  - tier: tier-facade
+    id: A-020
+    decision: confirmed
+    note: user confirmed in S9 dialogue (2026-09-17)
+  - tier: tier-facade
+    id: A-021
+    decision: confirmed
+    note: user confirmed in S9 dialogue (2026-09-17)
+  - tier: tier-facade
+    id: A-022
+    decision: confirmed
+    note: user confirmed in S9 dialogue (2026-09-17)
+  - tier: tier-facade
+    id: A-023
+    decision: confirmed
+    note: user confirmed in S9 dialogue (2026-09-17)
+  - tier: tier-facade
+    id: V-001
+    decision: confirmed
+    note: user confirmed in S9 dialogue (2026-09-17)
+  - tier: tier-facade
+    id: V-002
+    decision: confirmed
+    note: user confirmed in S9 dialogue (2026-09-17)
+created_at: '2026-09-17T02:43:46+09:00'

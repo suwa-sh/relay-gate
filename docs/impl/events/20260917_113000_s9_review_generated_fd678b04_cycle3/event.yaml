@@ -1,0 +1,25 @@
+event_id: 20260917_113000_s9_review_generated_fd678b04_cycle3
+type: stage_completed
+uc_id: fd678b04
+stage: S9
+payload:
+  manifest_sha256: 1802e7aaaecea1c74c643022cb6bd64bd90cb653f0c8e55ebf73b9888907116e
+  manifest_projection: v2
+  result: generated
+  attempt: 3
+  cycle: 3
+  feedback_review_evidence:
+    feedback_id: null
+    draft_sha256: null
+    request_count: 0
+  implementation_review_evidence:
+    gate_result: 6/6 pass
+    open_blocker_count: 0
+    open_major_count: 2
+    assumption_evidence_sha256: 395460842caa661d8858251bf81484300c0910a8de134ddd4f713fdb6b03b20a
+  decision_summary:
+    approval_questions: 1
+    selection_questions: 0
+    assumption_questions: 2
+  summary: 'S9 review generated (cycle 3): 0 feedback requests, gates 6/6, blocker 0, major 2 (A-010 / A-015 require human answer), A-007 reworded. state awaiting_review'
+created_at: '2026-09-17T11:30:00+09:00'

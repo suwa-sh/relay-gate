@@ -1,0 +1,16 @@
+stage: S3
+uc_id: fd678b04
+manifest_sha256: c91154b5d5f732bbef5d59f32e7339a8f47f288ebd8c0a0b4faec5ba1a950ba2
+manifest_projection: v2
+result: pass
+contracts_verified:
+- id: management-db
+  result: pass
+  detail: 'lock input sha256 (2b3ffec0...) matches current rdb-schema.yaml (unchanged
+    by spec event 20260917_050000); no regeneration. provider scope: 7 tables present
+    in source. consumer side: this UC _model-summary.yaml has tables: [] so no table/column
+    cross-check target'
+rerun_reason: stale after spec event 20260917_050000_feedback_impl_feedback_fd678b04
+  (contracts_lock unchanged; global projection changed via spec_md/tier_mds/api_summary/shared_spec_refs)
+completed_at: '2026-09-17T07:51:18+09:00'
+completed_by: dist-impl-run@0.14.1

@@ -1,0 +1,43 @@
+event_id: 20260917_100200_stale_invalidated_spec_feedback_cycle2_applied_fd678b04
+type: stage_invalidated
+uc_id: fd678b04
+stage: S1-S9
+attempt: 2
+payload:
+  reason: stale
+  detail: 'input-manifest recomputed after spec event 20260917_100000_feedback_impl_feedback_fd678b04_cycle2
+    (feedback 20260917_081430 applied: FINAL_ prefix key range). changed inputs: spec_md,
+    tier_mds[tier-facade], api_summary, shared_spec_refs[cli-command-contract.yaml].
+    all done projections (S1/S2 global cbbd99ae -> 93b89127, S3+ global and tier-facade
+    S4/S5 attempt-2 c91154b5 -> 1802e7aa) mismatch. assumption evidence (record ae7aa4fc /
+    verdicts 8c8e9558) re-validated ok before archiving (no drift)'
+  targets:
+  - stages/S1_uc-init.done.yaml
+  - stages/S2_test-scaffold.done.yaml
+  - stages/S3_contracts.done.yaml
+  - stages/attempt-2/S4_tier-impl.tier-facade.done.yaml
+  - stages/attempt-2/S4_tier-impl.tier-facade.assumptions.yaml
+  - stages/attempt-2/S5_verify.tier-facade.done.yaml
+  - stages/attempt-2/S5_verify.tier-facade.findings.yaml
+  - stages/S6_uc-bdd.done.yaml
+  - stages/S7_atdd.done.yaml
+  - stages/S8_feedback.done.yaml
+  - stages/S9_review_generated.done.yaml
+  archived_to: invalidated/20260917_100200_stale_invalidated_spec_feedback_cycle2_applied_fd678b04/
+  identities:
+  - stage: S1
+  - stage: S2
+  - stage: S3
+  - stage: S4
+    tier: tier-facade
+    attempt: 2
+  - stage: S5
+    tier: tier-facade
+    attempt: 2
+    lane: verify
+  - stage: S6
+  - stage: S7
+  - stage: S8
+  - stage: S9
+  attempt_policy: same attempt (2); no attempt++ (stale-driven rerun, no findings carried)
+created_at: '2026-09-17T10:02:00+09:00'

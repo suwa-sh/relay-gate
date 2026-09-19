@@ -1,0 +1,11 @@
+event_id: 20260917_081253_s7_atdd_completed_fd678b04_rerun
+type: stage_completed
+uc_id: fd678b04
+stage: S7
+payload:
+  manifest_sha256: c91154b5d5f732bbef5d59f32e7339a8f47f288ebd8c0a0b4faec5ba1a950ba2
+  manifest_projection: v2
+  result: pass
+  run: 1 scenario (1 passed), 3 steps (3 passed); SPEC-001-01-4 tag-exact selection
+  summary: 'S7 atdd rerun: SPEC-001-01-4 passed, steps unchanged'
+created_at: '2026-09-17T08:12:53+09:00'

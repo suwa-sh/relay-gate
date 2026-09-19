@@ -12,3 +12,5 @@
 | 2026-09-07 13:10:00 | [20260907_131000_feedback_abort_consistency](../../specs/events/20260907_131000_feedback_abort_consistency) |
 | 2026-09-08 02:40:00 | [20260908_024000_feedback_slot_status_wording](../../specs/events/20260908_024000_feedback_slot_status_wording) |
 | 2026-09-08 06:20:00 | [20260908_062000_feedback_spec_machine_readable](../../specs/events/20260908_062000_feedback_spec_machine_readable) |
+| 2026-09-17 05:00:00 | [20260917_050000_feedback_impl_feedback_fd678b04](../../specs/events/20260917_050000_feedback_impl_feedback_fd678b04) |
+| 2026-09-17 10:00:00 | [20260917_100000_feedback_impl_feedback_fd678b04_cycle2](../../specs/events/20260917_100000_feedback_impl_feedback_fd678b04_cycle2) |

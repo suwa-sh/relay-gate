@@ -1,0 +1,66 @@
+stage: "S5"
+tier: "tier-facade"
+attempt: 2
+uc_id: "fd678b04"
+manifest_sha256: "c91154b5d5f732bbef5d59f32e7339a8f47f288ebd8c0a0b4faec5ba1a950ba2"
+manifest_projection: "v2"
+result: "pass"
+open_blockers: 0
+findings_path: "docs/impl/latest/fd678b04/stages/attempt-2/S5_verify.tier-facade.findings.yaml"
+summary:
+  blocker: 0
+  major: 2
+  minor: 19
+gate_reexec:
+  format: "pass"
+  lint: "pass"
+  tdd: "pass"
+  bdd_tier: "pass"
+gate_evidence:
+  - check: "format"
+    command: "shfmt -d ."
+    cwd: "facade/"
+    exit_code: 0
+  - check: "lint"
+    command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+    cwd: "facade/"
+    exit_code: 0
+  - check: "tdd"
+    command: "bats -r test"
+    cwd: "facade/"
+    exit_code: 0
+    passed: 67
+    skipped: 0
+  - check: "bdd_tier"
+    command: "npx cucumber-js --config ../cucumber.cjs features"
+    cwd: "facade/"
+    exit_code: 0
+    scenarios_passed: 8
+    steps_passed: 28
+    skipped: 0
+environment_failures: []
+environment_probe:
+  status: "pass"
+  evidence: "bash/shfmt/shellcheck/bats/node/npx とローカル cucumber-js の存在、一時ファイル作成・実行、TCP loopback bind を確認。テストは TMPDIR=/tmp、npx cache は /tmp に限定。対象UCは tables=[] でDB操作・DBテストなし。initdb/pg_ctl/psql は存在を確認したが、本検証ではDBインスタンスを起動せず常設サービスにも接続していない。runner独立プロセスグループとTERM無視子の回収を実測確認。"
+  limitation: "macOSでの実測。Linux上の実行は今回未検証。"
+assumptions_sha256: "ae7aa4fcbe2fe82610be47d83b2f9c50e90fba080647e8fc98f39652d8fdc0e3"
+assumption_verdicts_sha256: "8c8e9558944c24faf6760a76c2a45f5d66c3e688f27acfc0b287b9dc195a7385"
+assumption_verdicts_summary:
+  consistent: 1
+  spec_absent: 16
+  contradicts: 0
+  unlisted: 0
+assumptions_validation:
+  record: "pass"
+  verdicts: "pass"
+  count: 17
+  requires_answer: 1
+notes:
+  - "manifest_sha256は受領値を再計算せず転記した。"
+  - "全8観点を完走。1〜7の完走前にassumptionsは開かず、8観点目でblind joinした。Implementerのdone・説明と過去のfindingsは読んでいない。"
+  - "blockerは0。major2件は仕様間の禁止接頭辞の不整合とセキュリティ前提A-010の確認入口。minor19件を含む全21件をfindingsに記録。"
+  - "ユーザーのGitコマンド禁止を優先しGitコマンドは未実行。cwdとリポジトリ直下CLAUDE.mdを確認した。指定write-set以外のリポジトリファイルは書き換えていない。"
+  - "docs/README.mdの再生成はwrite-set制約により行っていない。"
+  - "同梱YAMLパーサの対応範囲に合わせ、キーはplain、文字列値はdouble quote、配列はインデントありで保存。PyYAMLと指定validateAssumptions.jsの双方で検証した。"
+completed_at: "2026-09-16T23:07:38.377497+00:00"
+completed_by: "dist-impl-verify@0.14.1"

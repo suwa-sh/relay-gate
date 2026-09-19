@@ -1,0 +1,74 @@
+stage: S2
+uc_id: fd678b04
+manifest_sha256: d80ed463fb7af2fe5e4145340aa08256b4283a9f178cb34866c3c3af8ad4f876
+manifest_projection: v2
+result: pass
+red_baseline: pass
+scaffold_mode: initial
+branch_slug: configure-feature-flags
+tiers:
+  - tier-facade
+generated:
+  atdd:
+    feature: features/atdd/SPEC-001-01.feature
+    feature_body_changed: false
+    steps: features/atdd/steps/configure-feature-flags.steps.js
+    scenarios:
+      - SPEC-001-01-4
+  uc_bdd:
+    feature: features/uc/configure-feature-flags.feature
+    steps: features/uc/steps/configure-feature-flags.steps.js
+    source: "docs/specs/latest/適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md#E2E完了条件(BDD)"
+    scenarios: 11
+  tier_bdd:
+    - tier: tier-facade
+      feature: facade/features/configure-feature-flags.feature
+      steps: facade/features/steps/configure-feature-flags.steps.js
+      source: "docs/specs/latest/適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md#ティア完了条件(BDD)"
+      scenarios: 8
+  tdd:
+    - tier: tier-facade
+      file: facade/test/domain/feature_flag.bats
+      tests: 5
+      target: "facade/src/domain/feature_flag.sh (derive_operation_mode / validate_feature_flag)"
+red_baseline_runs:
+  - stage: atdd
+    cwd: "."
+    command: "npx cucumber-js --config cucumber.cjs features/atdd --tags @atdd_SPEC-001-01-4"
+    exit_code: 1
+    summary: "1 scenario (1 failed), 3 steps (1 failed, 2 skipped)"
+    fail_reason: not_implemented
+    undefined_steps: 0
+  - stage: uc_bdd
+    cwd: "."
+    command: "npx cucumber-js --config cucumber.cjs features/uc"
+    exit_code: 1
+    summary: "11 scenarios (11 failed), 41 steps (11 failed, 30 skipped)"
+    fail_reason: not_implemented
+    undefined_steps: 0
+  - stage: tier_bdd
+    tier: tier-facade
+    cwd: facade
+    command: "npx cucumber-js --config ../cucumber.cjs features"
+    exit_code: 1
+    summary: "8 scenarios (8 failed), 28 steps (8 failed, 20 skipped)"
+    fail_reason: not_implemented
+    undefined_steps: 0
+  - stage: tdd
+    tier: tier-facade
+    cwd: facade
+    command: "bats -r test"
+    exit_code: 1
+    summary: "5 tests, 5 not ok (all fail with 'not implemented (S2 test-scaffold)')"
+    fail_reason: not_implemented
+format_check:
+  tier: tier-facade
+  command: "shfmt -d ."
+  exit_code: 0
+dom_snapshot_tests: not_applicable
+issues:
+  - path: docs/impl/latest/fd678b04/issues/20260917_004843_cross-uc-scenarios.md
+    kind: cross_uc_scenarios
+    blocker: false
+completed_at: '2026-09-17T00:48:43+09:00'
+completed_by: dist-impl-implement@0.14.0

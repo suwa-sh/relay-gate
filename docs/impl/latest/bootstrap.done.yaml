@@ -5,7 +5,8 @@ phases:
     at: '2026-09-16T08:29:17+09:00'
   P2_config:
     status: done
-    at: '2026-09-16T18:37:01+09:00'
+    at: '2026-09-17T10:00:00+09:00'
+    note: 'content-stable rerun after spec_event change (20260917_100000_feedback_impl_feedback_fd678b04_cycle2): derived uc-map / impl-config identical to existing (32 UC, 8-digit uc_id, 4 tiers, no collision), files untouched, no config_confirmed event. previous content-stable rerun: 2026-09-17T07:42:12+09:00 (20260917_050000_feedback_impl_feedback_fd678b04)'
   P3_skeleton:
     status: done
     at: '2026-09-16T18:37:01+09:00'
@@ -22,7 +23,7 @@ phases:
     status: done
     at: '2026-09-16T18:37:01+09:00'
 inputs_sha256:
-  spec_event: e2cd855febcb17450998f8822b9d26d81c3fbd5efb53048e42fa74bba2bacf41
+  spec_event: 5387bab95c67b768032cd1aff6dc0db8a8473f286c4324a92c34002659fc9895
   arch: 45a30ece498ff31b18cdec055333a172156d453b8d6d4b4f330b716cfc87de04
   usdm: 89316e19ac1a54227263e1c50ea13ef0f75cb1032757ae980be1e572ba7cf306
   contracts:
@@ -51,7 +52,7 @@ inputs_sha256:
     cli_command_contract:
       path: docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml
       exists: true
-      sha256: c78bf40423ab52c2d2f628863e6cde5bf208102bed22e90ff1b5f2f273caccc9
+      sha256: 0cce7d14462d286f6e41fe01355c3da73a7ef8a5b7b619ba7edd45bcbf525f3b
       note: contract-registry.md に対応する種別が無い
     rdb_schema:
       path: docs/specs/latest/_cross-cutting/datastore/rdb-schema.yaml
@@ -168,8 +169,8 @@ preflight:
   - id: usdm_acceptance_criteria
     result: pass
     detail: SPEC 50 件すべてに acceptance_criteria あり(P7 の criteria 欠落 SPEC 0 件)
-generated_at: '2026-09-16T18:37:01+09:00'
-generated_by: distillery-impl@0.14.0
+generated_at: '2026-09-17T10:00:00+09:00'
+generated_by: distillery-impl@0.14.1
 p3_p7_summary:
   config_confirmed_event: 20260916_183122_config_confirmed_bootstrap_p2
   dev_rules_local_diff: []

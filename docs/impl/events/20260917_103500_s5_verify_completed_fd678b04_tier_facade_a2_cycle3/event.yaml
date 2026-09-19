@@ -1,0 +1,26 @@
+event_id: 20260917_103500_s5_verify_completed_fd678b04_tier_facade_a2_cycle3
+type: stage_completed
+uc_id: fd678b04
+stage: S5
+tier: tier-facade
+attempt: 2
+lane: verify
+payload:
+  manifest_sha256: 1802e7aaaecea1c74c643022cb6bd64bd90cb653f0c8e55ebf73b9888907116e
+  manifest_projection: v2
+  result: fail
+  verifier_model: gpt-6-astra
+  findings:
+    blocker: 1
+    major: 1
+    minor: 18
+  assumptions_sha256: ae7aa4fcbe2fe82610be47d83b2f9c50e90fba080647e8fc98f39652d8fdc0e3
+  assumption_verdicts_sha256: 4f477010f1ac8bf8b88e373e9d68168ae406b306f06990c231fae7aff9d2d4ba
+  assumption_verdicts_summary:
+    consistent: 1
+    spec_absent: 15
+    contradicts: 1
+    unlisted: 0
+  requires_answer: 1
+  summary: 'S5 verify tier-facade rerun (Codex gpt-6-astra, sandbox bypassed, write-set clean): blocker 1 (F-005 A-007 AssumptionRecord wording "non-9-key rows warn" contradicts FINAL_ prefix rejection contract; implementation itself correct), major 1 (F-007 security assumption A-010), minor 18'
+created_at: '2026-09-17T10:35:00+09:00'

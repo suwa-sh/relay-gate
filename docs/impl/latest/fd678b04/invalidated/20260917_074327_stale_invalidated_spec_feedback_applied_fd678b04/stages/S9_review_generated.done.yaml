@@ -1,0 +1,78 @@
+stage: "S9"
+uc_id: "fd678b04"
+manifest_sha256: "a1924f0312adfe5fb3027f8a5779e66f05a24848a5b28d2f1908703404d62f81"
+manifest_projection: "v2"
+result: "generated"
+attempt: 2
+regeneration:
+  reason: "S8 refresh (review decisions) 後の再生成"
+  previous_evidence_ref: "events/20260917_020150_s9_review_generated_fd678b04"
+  input_changes:
+    - "feedback/draft.md の CR-fd678b04-002 に希望値(1 slot 4 秒・逐次・TERM → KILL)が追記された"
+    - "review/review-notes.md に承認対話の決定(機能=A / 相互運用=A / 監査=A / 前提 18 件承認)が記録された"
+  implementation_changed: false
+review_html: "docs/impl/latest/fd678b04/review/index.html"
+review_html_tracked: false
+review_notes_input: "docs/impl/latest/fd678b04/review/review-notes.md"
+validator: "node validateReviewHtml.js docs/impl/latest/fd678b04/review/index.html: pass"
+render_check: "1440px で図 1〜3 を目視(Chrome、ローカル HTTP 配信)。diagonal 0、shared attach point 0、overlapping segment 0、non-endpoint 背面通過 0、label gap 6〜10px。図は前回から変更なし"
+diagrams:
+  - type: "architecture"
+    subject: "validate-config.sh の構成(5 層 + 設定ファイル 2 種 + runner 実体)"
+  - type: "flowchart"
+    subject: "validate-config.sh --feature-flag の処理フロー(判断 3、終了コード 0 / 2)"
+  - type: "data-flow"
+    subject: "設計者 / 検証器 / runner の役割別データフロー(5 段階)"
+feedback_request_count: 2
+open_blocker_count: 0
+decision_summary:
+  approval_questions: 1
+  selection_questions: 2
+  assumption_questions: 2
+  recommended_choices: 3
+  open_questions: 0
+  selection_labels:
+    - "機能"
+    - "相互運用"
+    - "監査"
+  decided_from_review_notes: true
+  decisions:
+    function: "A"
+    interop: "A"
+    audit: "A"
+    assumptions: "18 件すべて承認(A-005〜A-023 の 16 件、V-001 / V-002)"
+  recommended_response: "機能=A / 相互運用=A / 監査=A / 前提=A-005:承認 / A-006:承認 / A-007:承認 / A-008:承認 / A-010:承認 / A-012:承認 / A-013:承認 / A-015:承認 / A-016:承認 / A-017:承認 / A-018:承認 / A-019:承認 / A-020:承認 / A-021:承認 / A-022:承認 / A-023:承認 / V-001:承認 / V-002:承認"
+  assumption_required_ids:
+    - "A-010"
+    - "A-015"
+feedback_review_evidence:
+  feedback_id: "20260917_014138_impl_feedback_fd678b04"
+  draft_path: "docs/impl/latest/fd678b04/feedback/draft.md"
+  draft_sha256: "c89ce3b8a83c485abfbaae773f716cfb080a559f580581bbc039542bbe1c7d0c"
+  request_count: 2
+  blocker_count: 0
+  request_ids:
+    - "CR-fd678b04-001"
+    - "CR-fd678b04-002"
+implementation_review_evidence:
+  gate_result: "6/6 pass"
+  gates:
+    format: "pass"
+    lint: "pass"
+    tdd: "pass (61/61)"
+    bdd_tier: "pass (8/8)"
+    uc_bdd: "pass (11/11, provisional harness injection 1)"
+    atdd: "pass (1/1)"
+  open_blocker_count: 0
+  open_major_count: 3
+  open_minor_count: 18
+  tiers:
+    - tier: "tier-facade"
+      attempt: 2
+      assumptions_sha256: "b43d1e25737b0ece6034a88d230c1ee4095a097747c29d67078dedd2e952ae68"
+      assumption_verdicts_sha256: "e7c999e3462cd3f817d2c59277b6f7f17e79d0611d9ccd858689904dd04956bd"
+  assumption_evidence_sha256: "0f0650548e74f71803c546e35dfc6c4f4b5acccef5b16e3b9415857a298c285f"
+captures: []
+issues: []
+completed_at: "2026-09-17T02:50:00+09:00"
+completed_by: "dist-impl-review@0.14.0"

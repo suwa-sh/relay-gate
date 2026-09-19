@@ -1,0 +1,129 @@
+stage: S4
+tier: tier-facade
+attempt: 2
+uc_id: fd678b04
+manifest_sha256: a1924f0312adfe5fb3027f8a5779e66f05a24848a5b28d2f1908703404d62f81
+manifest_projection: v2
+result: pass
+gates:
+  format: pass
+  lint: pass
+  tdd: pass
+  bdd_tier: pass
+gate_runs:
+  - gate: format
+    cwd: facade
+    command: "shfmt -d ."
+    exit_code: 0
+  - gate: lint
+    cwd: facade
+    command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+    exit_code: 0
+  - gate: tdd
+    cwd: facade
+    command: "bats -r test"
+    exit_code: 0
+    summary: "61 tests, 61 ok"
+  - gate: bdd_tier
+    cwd: facade
+    command: "npx cucumber-js --config ../cucumber.cjs features"
+    exit_code: 0
+    summary: "8 scenarios (8 passed), 28 steps (28 passed)"
+assumptions:
+  path: "attempt-2/S4_tier-impl.tier-facade.assumptions.yaml"
+  count: 16
+  by_category:
+    input_validation: 5
+    data_format: 4
+    error_handling: 6
+    persistence: 0
+    performance: 0
+    security: 1
+  sha256: b43d1e25737b0ece6034a88d230c1ee4095a097747c29d67078dedd2e952ae68
+  extraction:
+    candidate_count: 23
+    excluded_as_explicit: 7
+    recorded_count: 16
+findings_addressed:
+  source: "attempt-1/S5_verify.tier-facade.findings.yaml"
+  blocker:
+    - id: F-001
+      status: fixed
+      note: "値の出力を echo から printf の固定フォーマットに置換(domain / usecase / presentation 全行)。-n / -e / -ne の境界テストを domain・usecase に追加"
+    - id: F-002
+      status: fixed
+      note: "domain/cli_field.sh に共通出力関数(cli_field_line / cli_path_field_line)を新設。空白を含む値は key: value、パス系 7 キーは常に key: value。15 キー順序は維持"
+    - id: F-028
+      status: fixed
+      note: "gateway に待機上限(4 秒)を導入。runner を独自プロセスグループで起動し、上限到達時は TERM → KILL で停止して未応答扱い(warn + 版 -)。終了しない runner の gateway / CLI テストを追加"
+  major:
+    - id: F-012
+      status: kept
+      note: "A-010(security / spec_absent)は仕様未定義の設計判断として attempt-2 でも記録を維持。S9 の人間回答対象"
+  minor:
+    restatement_removed:
+      - A-001
+      - A-002
+      - A-003
+      - A-004
+      - A-009
+      - A-011
+      - A-014
+    category_corrected:
+      - "A-006 input_validation -> data_format"
+      - "A-019 error_handling -> input_validation"
+    unlisted_recorded:
+      - "V-001 -> A-021"
+    contradicts_resolved:
+      - "V-002 -> A-022"
+    spec_absent_kept:
+      - A-005
+      - A-007
+      - A-008
+      - A-012
+      - A-013
+      - A-015
+      - A-016
+      - A-017
+      - A-018
+      - A-020
+ddd_guide: "ddd:ddd-tactical-implementation を読込(bootstrap.done.yaml has_ddd_plugin true)。判断ゲートにより純粋関数と仕様用語の関数名による軽量適用を継続"
+implemented:
+  - path: facade/bin/validate-config.sh
+    layer: entrypoint
+    note: "変更なし"
+  - path: facade/src/presentation/validate-config.sh
+    layer: presentation
+    model: ValidateConfigRequest
+    note: "echo を printf に置換。domain/cli_field.sh を source"
+  - path: facade/src/usecase/validate_feature_flag.sh
+    layer: usecase
+    model: ValidateFeatureFlagQuery
+    note: "stdout 15 キーの描画を validate_feature_flag_render に分離し cli_field_line / cli_path_field_line を使用"
+  - path: facade/src/domain/feature_flag.sh
+    layer: domain
+    model: "FeatureFlag / SlotRunnerAssignment"
+    note: "echo を printf に置換"
+  - path: facade/src/domain/cli_field.sh
+    layer: domain
+    model: "CLI 出力フィールド(ui-design.md 出力フォーマット)"
+    note: "新規"
+  - path: facade/src/repository/feature_flag_config.sh
+    layer: repository
+    model: FeatureFlagConfig
+    note: "変更なし"
+  - path: facade/src/gateway/runner_probe.sh
+    layer: gateway
+    note: "runner --help 問い合わせに待機上限とプロセスグループ停止を追加"
+tests:
+  tier_bdd_steps: facade/features/steps/configure-feature-flags.steps.js
+  tdd:
+    - facade/test/domain/feature_flag.bats
+    - facade/test/domain/cli_field.bats
+    - facade/test/repository/feature_flag_config.bats
+    - facade/test/gateway/runner_probe.bats
+    - facade/test/usecase/validate_feature_flag.bats
+    - facade/test/presentation/validate_config.bats
+issues: []
+completed_at: '2026-09-17T10:40:00+09:00'
+completed_by: dist-impl-implement@0.14.0

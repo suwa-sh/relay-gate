@@ -1,0 +1,73 @@
+{
+  "schema_version": "distillery.feedback-result/v1",
+  "run_id": "feedback-20260917_014138_impl_feedback_fd678b04-20260917_043610-12137",
+  "attempt": 1,
+  "feedback_request_id": "20260917_014138_impl_feedback_fd678b04",
+  "input_sha256": "c89ce3b8a83c485abfbaae773f716cfb080a559f580581bbc039542bbe1c7d0c",
+  "status": "completed",
+  "stages": [
+    {
+      "stage_id": "spec",
+      "state": "succeeded",
+      "event_ids": [
+        "20260917_050000_feedback_stage_spec"
+      ],
+      "direct_work_unit_ids": [
+        "CR-fd678b04-001#1",
+        "CR-fd678b04-002#1"
+      ],
+      "causal_work_unit_ids": [
+        "CR-fd678b04-001#1",
+        "CR-fd678b04-002#1"
+      ]
+    }
+  ],
+  "work_units": [
+    {
+      "work_unit_id": "CR-fd678b04-001#1",
+      "disposition": "applied",
+      "reason": "At least one required closure stage changed its domain artifacts.",
+      "artifact_refs": [
+        "specs/events/20260917_050000_feedback_impl_feedback_fd678b04/適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md",
+        "specs/events/20260917_050000_feedback_impl_feedback_fd678b04/実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/spec.md",
+        "specs/events/20260917_050000_feedback_impl_feedback_fd678b04/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/spec.md",
+        "specs/events/20260917_050000_feedback_impl_feedback_fd678b04/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20260917_050000_feedback_impl_feedback_fd678b04/_cross-cutting/uc-dependencies.md",
+        "specs/events/20260917_050000_feedback_impl_feedback_fd678b04/decisions/spec-decision-009.yaml"
+      ]
+    },
+    {
+      "work_unit_id": "CR-fd678b04-002#1",
+      "disposition": "applied",
+      "reason": "At least one required closure stage changed its domain artifacts.",
+      "artifact_refs": [
+        "specs/events/20260917_050000_feedback_impl_feedback_fd678b04/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20260917_050000_feedback_impl_feedback_fd678b04/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/tier-facade.md",
+        "specs/events/20260917_050000_feedback_impl_feedback_fd678b04/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/spec.md",
+        "specs/events/20260917_050000_feedback_impl_feedback_fd678b04/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/_api-summary.yaml",
+        "specs/events/20260917_050000_feedback_impl_feedback_fd678b04/適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md",
+        "specs/events/20260917_050000_feedback_impl_feedback_fd678b04/適用構成業務/適用構成定義フロー/feature flag を設定する/_api-summary.yaml",
+        "specs/events/20260917_050000_feedback_impl_feedback_fd678b04/decisions/spec-decision-009.yaml"
+      ]
+    }
+  ],
+  "requests": [
+    {
+      "request_id": "CR-fd678b04-001",
+      "work_unit_ids": [
+        "CR-fd678b04-001#1"
+      ],
+      "disposition": "applied",
+      "reason": "At least one work unit was applied and all work units completed successfully."
+    },
+    {
+      "request_id": "CR-fd678b04-002",
+      "work_unit_ids": [
+        "CR-fd678b04-002#1"
+      ],
+      "disposition": "applied",
+      "reason": "At least one work unit was applied and all work units completed successfully."
+    }
+  ],
+  "terminal_event_id": "20260917_053000_feedback_run_completed"
+}

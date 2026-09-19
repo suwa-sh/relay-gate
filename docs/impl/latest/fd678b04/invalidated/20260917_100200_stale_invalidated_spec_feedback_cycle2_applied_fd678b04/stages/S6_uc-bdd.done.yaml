@@ -1,0 +1,42 @@
+stage: S6
+uc_id: fd678b04
+manifest_sha256: c91154b5d5f732bbef5d59f32e7339a8f47f288ebd8c0a0b4faec5ba1a950ba2
+manifest_projection: v2
+result: pass
+rerun_reason: "stale after spec event 20260917_050000_feedback_impl_feedback_fd678b04 (invalidated by 20260917_074327_stale_invalidated_spec_feedback_applied_fd678b04)"
+previous_done: "docs/impl/latest/fd678b04/invalidated/20260917_074327_stale_invalidated_spec_feedback_applied_fd678b04/stages/S6_uc-bdd.done.yaml"
+branch_slug: configure-feature-flags
+tiers:
+  - tier-facade
+feature: features/uc/configure-feature-flags.feature
+feature_changed: false
+steps: features/uc/steps/configure-feature-flags.steps.js
+steps_changed: true
+steps_change_summary: "S2 skeleton の未実装 step 4 件(Given 並行稼働の組合せで終了コード 0 / When 単独本番へ変更して実行 / Then error 行なし / Then ジョブ定義は変更していない)を実装。未実装用ヘルパを撤去。他 10 Scenario の step 定義は変更なし"
+source: "docs/specs/latest/適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md#E2E完了条件(BDD)"
+tier_impl_changed: false
+run:
+  cwd: "."
+  command: "npx cucumber-js --config cucumber.cjs features/uc"
+  exit_code: 0
+  summary: "11 scenarios (11 passed), 43 steps (43 passed)"
+  scenarios_total: 11
+  scenarios_passed: 11
+  scenarios_failed: 0
+  undefined_steps: 0
+changed_scenario_run:
+  scenario: "ジョブ定義を変えずに feature flag だけで運用モードを切り替える(SPEC-001-03)"
+  command: "npx cucumber-js --config cucumber.cjs features/uc --name 'ジョブ定義を変えずに'"
+  exit_code: 0
+  summary: "1 scenario (1 passed), 6 steps (6 passed)"
+harness:
+  sandbox_root: "Scenario ごとの一時ディレクトリを root とし、feature の絶対パス(/etc/relay-gate, /opt/relay-gate)を root 配下の同じ相対位置に配置。出力照合時に root 接頭辞を除去"
+  config_dir: "RELAY_GATE_CONFIG_DIR=<root>/etc/relay-gate(ジョブマップの配置先)"
+  runner_stubs: "--help で runner-if-version=1 を返す実行可能スタブ(4 実体)。--help 以外で呼ばれた場合は起動記録を残す(切替 Scenario で runner 未起動を確認するため)"
+  mode_switch: "同一 sandbox 上で feature-flag.env だけを並行稼働(parallel)から単独本番(green_only)へ書き換え、validate-config.sh を 2 回実行。ジョブ定義は記録のみ保持し facade.sh は配置も起動もしない(spec.md 注記)"
+  external_connections: none
+injections: []
+injections_note: "旧 facade.sh ハーネス注入(FACADE_HARNESS_STUB / PSQL_SENTINEL)は S2 再実行で撤去済み。新 spec では注入不要(根拠: docs/impl/latest/fd678b04/issues/20260917_074633_cross-uc-scenarios-resolution.md)"
+issues: []
+completed_at: '2026-09-17T08:10:00+09:00'
+completed_by: dist-impl-implement@0.14.1

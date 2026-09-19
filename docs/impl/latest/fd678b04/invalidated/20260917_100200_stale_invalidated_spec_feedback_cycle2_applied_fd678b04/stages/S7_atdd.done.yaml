@@ -1,0 +1,43 @@
+stage: S7
+uc_id: fd678b04
+manifest_sha256: c91154b5d5f732bbef5d59f32e7339a8f47f288ebd8c0a0b4faec5ba1a950ba2
+manifest_projection: v2
+result: pass
+rerun_reason: "stale after spec event 20260917_050000_feedback_impl_feedback_fd678b04 (invalidated by 20260917_074327_stale_invalidated_spec_feedback_applied_fd678b04)"
+previous_done: "docs/impl/latest/fd678b04/invalidated/20260917_074327_stale_invalidated_spec_feedback_applied_fd678b04/stages/S7_atdd.done.yaml"
+branch_slug: configure-feature-flags
+tiers:
+  - tier-facade
+atdd_confirmed: true
+atdd_scenarios:
+  - SPEC-001-01-4
+feature: features/atdd/SPEC-001-01.feature
+feature_changed: false
+steps: features/atdd/steps/configure-feature-flags.steps.js
+steps_changed: false
+steps_change_summary: "前回 S7 で実装済みの step 定義を再利用。spec event 後の spec.md(設定所有区分の完了条件 = 未知キー警告なしで検証を通過)と step の検証内容(exit 0 かつ stderr に warn: unknown key 行なし)が一致するため変更なし"
+source: "docs/usdm/latest/requirements.yaml#requirements[REQ-001].specifications[SPEC-001-01].acceptance_criteria"
+tier_impl_changed: false
+run:
+  cwd: "."
+  command: "npx cucumber-js --config cucumber.cjs features/atdd --tags @atdd_SPEC-001-01-4"
+  selection: "tag exact match only (no name filter, feature not run as a whole)"
+  tag_uniqueness: "@atdd_SPEC-001-01-4 は features/atdd/ 内で 1 feature 1 箇所のみ"
+  exit_code: 0
+  summary: "1 scenario (1 passed), 3 steps (3 passed)"
+  scenarios_expected: 1
+  scenarios_total: 1
+  scenarios_passed: 1
+  scenarios_failed: 0
+  undefined_steps: 0
+  count_matches_atdd_scenarios: true
+harness:
+  sandbox_root: "Scenario ごとの一時ディレクトリを root とし、仕様の絶対パス(/etc/relay-gate, /opt/relay-gate)を root 配下の同じ相対位置に配置。出力照合時に root 接頭辞を除去"
+  config_dir: "RELAY_GATE_CONFIG_DIR=<root>/etc/relay-gate(ジョブマップの配置先)"
+  runner_stubs: "--help で runner-if-version=1 を返す実行可能スタブ(4 実体)"
+  reused_from: features/uc/steps/configure-feature-flags.steps.js
+  external_connections: none
+injections: []
+issues: []
+completed_at: '2026-09-17T08:20:00+09:00'
+completed_by: dist-impl-implement@0.14.1

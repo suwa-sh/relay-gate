@@ -1,0 +1,212 @@
+{
+  "schema_version": "distillery.feedback-plan/v1",
+  "feedback_request_id": "20260917_014138_impl_feedback_fd678b04",
+  "input_sha256": "c89ce3b8a83c485abfbaae773f716cfb080a559f580581bbc039542bbe1c7d0c",
+  "ambiguity_policy": "interactive",
+  "routing_basis": {
+    "ownership_catalog_version": "1.0.0",
+    "ownership_catalog_sha256": "801750c2abe99945a3de9387b82339b2bc96ccb2da564f9923cc0e9b76a2bd39",
+    "routing_policy_version": "1.1.0",
+    "routing_policy_sha256": "3873275bf4adb3d9d7b7c41c22c9463d054a3614df7bbcab7514f0c1e23e166e",
+    "prompt_schema_sha256": "bf7c7f34d7a2fc5976ccd2589a454172a4630e1448c509966b620f88029732c4",
+    "stage_packet_renderer_version": "1",
+    "skipped_stages": [
+      "design_system",
+      "spec_stories"
+    ],
+    "repository_head": "c8d38d4c5c684d2bc44bb07b57d4b7bb3ac1efc5",
+    "latest_domain_event_ids": {
+      "requirements": {
+        "rdra/events": "20260908_011000_feedback_slot_status_wording",
+        "usdm/events": "20260908_011000_feedback_slot_status_wording"
+      },
+      "quality_attributes": {
+        "nfr/events": "20260908_013000_feedback_slot_status_wording"
+      },
+      "architecture": {
+        "arch/events": "20260908_015000_feedback_slot_status_wording"
+      },
+      "infrastructure": {
+        "infra/events": "20260908_021000_feedback_slot_status_wording"
+      },
+      "design_system": {
+        "design/events": null
+      },
+      "spec": {
+        "specs/events": "20260908_062000_feedback_spec_machine_readable"
+      },
+      "spec_stories": {
+        "design/events": null
+      }
+    },
+    "domain_event_root_snapshots": {
+      "rdra/events": {
+        "head_event_id": "20260908_011000_feedback_slot_status_wording",
+        "head_event_sha256": "b090b166d4f0153d029cb6aefec68101eb2c27e70baf9c95adcce67c57d9024e",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency",
+          "20260908_011000_feedback_slot_status_wording"
+        ],
+        "event_set_sha256": "8cb2285c08b0aa19e0b6acb3befd7d7180afd7c1105be106c4a9a4e7f5a164a5",
+        "latest_tree_sha256": "fb37aebe9d1e9fccd46c51cc14f0450b93bf14bc39322450ffbc7fbb018935b1"
+      },
+      "usdm/events": {
+        "head_event_id": "20260908_011000_feedback_slot_status_wording",
+        "head_event_sha256": "2f083a378142c06b74987ec8f2c11b303e2a9369746ec6065d56c2dd60dc4e45",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency",
+          "20260908_011000_feedback_slot_status_wording"
+        ],
+        "event_set_sha256": "8cb2285c08b0aa19e0b6acb3befd7d7180afd7c1105be106c4a9a4e7f5a164a5",
+        "latest_tree_sha256": "e1733eb0ebeff504ee3ab2ef90f47b050e6f3eb05cdb287d649c57d6724f5a31"
+      },
+      "nfr/events": {
+        "head_event_id": "20260908_013000_feedback_slot_status_wording",
+        "head_event_sha256": "9c460abcc88fcbf4b495658c71b4a4bbc49d9d9f309e46ad0c0bae58aa4dda0c",
+        "event_ids": [
+          "20260830_183726_initial_nfr",
+          "20260905_085000_feedback_todo_resolution",
+          "20260907_013000_feedback_todo_followup",
+          "20260907_120000_feedback_abort_consistency",
+          "20260908_013000_feedback_slot_status_wording"
+        ],
+        "event_set_sha256": "99463150965b02f6b7670ee3f4f853722b6c561281e6297a3e58a9afe414b4a4",
+        "latest_tree_sha256": "51f9059e35f6f5c65fc18cd1f1457bd5beca3b5b23271d538f4304b0ece9c7ef"
+      },
+      "arch/events": {
+        "head_event_id": "20260908_015000_feedback_slot_status_wording",
+        "head_event_sha256": "4e467155c8adfbefce4aa18ae2cee40f92c55545711dc66fc9c05b57b6f9a2e8",
+        "event_ids": [
+          "20260830_184457_initial_arch",
+          "20260830_202427_arch_infra_feedback_20260830_190412_infra_product_design",
+          "20260905_091000_feedback_todo_resolution",
+          "20260907_015000_feedback_todo_followup",
+          "20260907_122000_feedback_abort_consistency",
+          "20260908_015000_feedback_slot_status_wording"
+        ],
+        "event_set_sha256": "b710a5cb1a0d295f1b5c15523a2181492f16924414fb77886efd0bdb3f7d0a4b",
+        "latest_tree_sha256": "0a975f848804dd5bc3d5cf328a5e9717f2e22eb489e1e5f4c477538b77c0b91d"
+      },
+      "infra/events": {
+        "head_event_id": "20260908_021000_feedback_slot_status_wording",
+        "head_event_sha256": "2e1292ab231982c609976791deca51a97e82389b34ab645d4432e463fe1c8c46",
+        "event_ids": [
+          "20260830_190412_infra_product_design",
+          "20260905_093000_feedback_todo_resolution",
+          "20260907_021000_feedback_todo_followup",
+          "20260907_124000_feedback_abort_consistency",
+          "20260908_021000_feedback_slot_status_wording"
+        ],
+        "event_set_sha256": "8077de33d5a65f65ebff5e2c1c20d238e003e9dd69d3d500ae30ef08162ab292",
+        "latest_tree_sha256": "639f743d85b997e1297610b2a7c2db41fd004e74473f96ec6292b601509a6331"
+      },
+      "design/events": {
+        "head_event_id": null,
+        "head_event_sha256": null,
+        "event_ids": [],
+        "event_set_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "latest_tree_sha256": null
+      },
+      "specs/events": {
+        "head_event_id": "20260908_062000_feedback_spec_machine_readable",
+        "head_event_sha256": "d2c415674ba4bcc091e6f777fca4ca56d008fd3bc7294484876036c36f45fb3f",
+        "event_ids": [
+          "20260830_202851_spec_generation",
+          "20260905_100000_feedback_todo_resolution",
+          "20260907_024000_feedback_todo_followup",
+          "20260907_131000_feedback_abort_consistency",
+          "20260908_024000_feedback_slot_status_wording",
+          "20260908_062000_feedback_spec_machine_readable"
+        ],
+        "event_set_sha256": "10bdd76dc646980bb24bb47130d96deced3d9a4ad7f5d29ec96e013b14002c9e",
+        "latest_tree_sha256": "6c6bd1cc785421c39dcfd3cbb9eac02e1db8df7a07ee9234b4c6bca1ca4ea63f"
+      }
+    }
+  },
+  "request_ids": [
+    "CR-fd678b04-001",
+    "CR-fd678b04-002"
+  ],
+  "work_units": [
+    {
+      "request_id": "CR-fd678b04-001",
+      "constraint_key": "scenario-then-responsibility-split",
+      "direct_stage": "spec",
+      "reason": "UC spec.md の E2E 完了条件 Scenario と「関連 USDM」表の書き換えであり spec 成果物の変更のみ。USDM SPEC-001-03 の受け入れ条件は維持(REQ-001 / requirements.yaml は文脈参照)",
+      "evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "SPEC-001-03"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/spec.md"
+        },
+        {
+          "kind": "request_text",
+          "value": "方針資料の受入条件は維持する。要求は Scenario の意図を弱めることではなく、検証できる UC に Then を置き直すこと"
+        }
+      ],
+      "id": "CR-fd678b04-001#1",
+      "required_closure_stages": [
+        "spec"
+      ]
+    },
+    {
+      "request_id": "CR-fd678b04-002",
+      "constraint_key": "runner-help-probe-contract",
+      "direct_stage": "spec",
+      "reason": "cli-command-contract.yaml の validate-config.sh 契約への runner --help 問い合わせ規則の一元化と tier-facade.md の参照化であり spec 成果物の変更のみ。NFR B.2.1.1(10 秒以内)は満たすべき制約として参照し変更しない",
+      "evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "SPEC-001-04"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/tier-facade.md"
+        },
+        {
+          "kind": "request_text",
+          "value": "NFR B.2.1.1(10 秒以内)を、両 slot が未応答でも満たす値にする"
+        }
+      ],
+      "id": "CR-fd678b04-002#1",
+      "required_closure_stages": [
+        "spec"
+      ]
+    }
+  ],
+  "execution_stages": [
+    {
+      "id": "spec",
+      "steps": [
+        "6"
+      ],
+      "direct_work_unit_ids": [
+        "CR-fd678b04-001#1",
+        "CR-fd678b04-002#1"
+      ],
+      "causal_work_unit_ids": [
+        "CR-fd678b04-001#1",
+        "CR-fd678b04-002#1"
+      ],
+      "stage_packet": "stage-packets/spec.md"
+    }
+  ],
+  "outside_work_unit_ids": []
+}

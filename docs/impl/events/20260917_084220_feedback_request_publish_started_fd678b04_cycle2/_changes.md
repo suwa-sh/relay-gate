@@ -1,0 +1,3 @@
+# 20260917_084220_feedback_request_publish_started_fd678b04_cycle2
+
+S8 publish 開始 (cycle 2): 20260917_081430_impl_feedback_fd678b04 (要求 1 件 / blocker 0 件, sha256 815d1dea50c56ead7173a2ea449d780f6f5e20e3fbb8040abb5598143ab34984) を docs/impl/latest/fd678b04/feedback-requests/20260917_081430_impl_feedback_fd678b04.md へ公開予約。approval 20260917_084017_review_approved_fd678b04_cycle2 / evidence 20260917_083021_s9_review_generated_fd678b04_cycle2

@@ -1,0 +1,22 @@
+event_id: 20260917_104500_s4_tier_impl_completed_fd678b04_tier_facade_a3
+type: stage_completed
+uc_id: fd678b04
+stage: S4
+tier: tier-facade
+attempt: 3
+payload:
+  manifest_sha256: 1802e7aaaecea1c74c643022cb6bd64bd90cb653f0c8e55ebf73b9888907116e
+  manifest_projection: v2
+  result: pass
+  gates:
+    format: pass
+    lint: pass
+    tdd: pass
+    bdd_tier: pass
+  assumptions:
+    count: 16
+    sha256: 9a99cef7ee2cb03166d96ceb6bbc3cb58fb44d221fec5813de99545df9dfadbf
+  findings_provided:
+    verify: docs/impl/latest/fd678b04/stages/attempt-2/S5_verify.tier-facade.findings.yaml
+  summary: 'S4 tier-facade attempt-3 (blocker F-005): A-007 reworded to match FINAL_ prefix contract (no logic change), repository comment aligned, 2 bats added for no-equals FINAL_ line, cli_field 3-Act test split, A-006/A-025 categories fixed, A-023 removed as restatement. 76 bats ok, 9 tier BDD passed, assumptions 16'
+created_at: '2026-09-17T10:45:00+09:00'
