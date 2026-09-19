@@ -9,6 +9,7 @@
     "bdd:atdd": "npx cucumber-js --config cucumber.cjs features/atdd"
   },
   "devDependencies": {
-    "@cucumber/cucumber": "^11.0.0"
+    "@cucumber/cucumber": "^11.0.0",
+    "yaml": "^2.9.1"
   }
 }

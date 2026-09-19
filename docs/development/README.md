@@ -23,6 +23,14 @@
 3. 契約生成物は直接編集しない
 4. 仕様との矛盾はコードで曲げず、distillery の差分更新(feedback request)に戻す。変更要求は元の方針資料(`tmp/RelayGateのしくみ.md` / `tmp/RelayGateの利用イメージ.md`)と照合する
 
+## CI のゲート
+
+`.github/workflows/ci.yml` は format-check → lint → tdd → tier-bdd → uc-bdd → atdd の 6 段です。コマンドは `docs/impl/latest/impl-config.yaml` と同じにし、ローカルで green なら CI も green になるようにします。
+
+- `atdd` だけは全件実行しません。`features/atdd/` には全 SPEC の Scenario が bootstrap で生成済みですが、step は UC の完了ごとに実装されるためです
+- 実行対象は `scripts/ci/atdd-tag-expression.js` が決めます。`docs/impl/latest/uc-map.yaml` の `atdd_scenarios` のうち、`status.yaml` が `state: completed` の UC に対応づけられた Scenario を一意タグ `@atdd_{SPEC-ID}-{連番}` の完全一致で選びます(`docs/dev-rules/test-strategy.md` の選択規則と同じ)
+- 完了済み UC が無いときは実行をスキップします
+
 ## コントリビュート
 
 参加方法(Issue / PR の受け方)と問い合わせ先はリポ直下の [`CONTRIBUTING.md`](../../CONTRIBUTING.md) を参照してください。
