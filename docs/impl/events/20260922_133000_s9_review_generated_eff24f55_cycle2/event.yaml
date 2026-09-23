@@ -1,0 +1,20 @@
+event_id: 20260922_133000_s9_review_generated_eff24f55_cycle2
+type: stage_completed
+uc_id: eff24f55
+stage: S9
+payload:
+  manifest_sha256: f8cf17f93da5c6e63c9b3ce97c7fbc076f64c6174bd02d27757adf7c8b54ecb1
+  manifest_projection: v2
+  feedback_review_evidence:
+    feedback_id: 20260922_130000_impl_feedback_eff24f55
+    draft_sha256: 8adc8bc900ebe6eb57209cee7c4ed2c727b1313c462a6052efd720b2f31cb2fa
+    request_count: 2
+  implementation_review_evidence:
+    gate_result: '6/6 pass'
+    open_blocker_count: 0
+    open_major_count: 2
+    assumption_evidence_sha256: 2201c35792fe76b255963dbcb998c17543ffdd51ae751926a1dd0a2050ebb32c
+  decision_summary: {approval: 1, selection: 2, assumption_required: 1, assumptions_total: 24}
+  review_html: docs/impl/latest/eff24f55/review/index.html
+  previous_review_event: 20260919_231500_s9_review_regenerated_eff24f55
+created_at: '2026-09-22T13:30:00+09:00'

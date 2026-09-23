@@ -1,0 +1,53 @@
+{
+  "event_id": "20260921_103000_feedback_run_completed",
+  "type": "feedback_run_completed",
+  "run_id": "feedback-20260919_213000_impl_feedback_eff24f55-20260921_082612-74150",
+  "attempt": 1,
+  "created_at": "2026-09-22T08:16:44.943Z",
+  "result_sha256": "347f5f2e188a81759251fcb5b88b6d919909b2d96b378a1b51ece4b676b3adf3",
+  "feedback_request": {
+    "feedback_request_id": "20260919_213000_impl_feedback_eff24f55",
+    "input_sha256": "1a7612598a0ed1d3378d7479b1614d6a6aa99ac90eae0fbf55b82e173784a431",
+    "request_ids": [
+      "CR-eff24f55-001",
+      "CR-eff24f55-002",
+      "CR-eff24f55-003",
+      "CR-eff24f55-004",
+      "CR-eff24f55-005"
+    ],
+    "work_unit_ids": [
+      "CR-eff24f55-001#1",
+      "CR-eff24f55-002#1",
+      "CR-eff24f55-003#1",
+      "CR-eff24f55-004#1",
+      "CR-eff24f55-004#2",
+      "CR-eff24f55-005#1"
+    ]
+  },
+  "work_unit_dispositions": [
+    {
+      "work_unit_id": "CR-eff24f55-001#1",
+      "disposition": "applied"
+    },
+    {
+      "work_unit_id": "CR-eff24f55-002#1",
+      "disposition": "applied"
+    },
+    {
+      "work_unit_id": "CR-eff24f55-003#1",
+      "disposition": "applied"
+    },
+    {
+      "work_unit_id": "CR-eff24f55-004#1",
+      "disposition": "applied"
+    },
+    {
+      "work_unit_id": "CR-eff24f55-004#2",
+      "disposition": "applied"
+    },
+    {
+      "work_unit_id": "CR-eff24f55-005#1",
+      "disposition": "applied"
+    }
+  ]
+}

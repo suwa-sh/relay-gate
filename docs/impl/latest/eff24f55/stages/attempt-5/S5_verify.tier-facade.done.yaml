@@ -1,0 +1,43 @@
+schema_version: "1.0"
+stage: "S5"
+tier: "tier-facade"
+attempt: 5
+uc_id: "eff24f55"
+manifest_sha256: "f8cf17f93da5c6e63c9b3ce97c7fbc076f64c6174bd02d27757adf7c8b54ecb1"
+manifest_projection: "v2"
+result: "fail"
+open_blockers: 2
+gate_reexec:
+  format: "pass"
+  lint: "pass"
+  tdd: "pass"
+  bdd_tier: "pass"
+summary:
+  blocker: 2
+  major: 2
+  minor: 23
+assumptions_sha256: "486864f544df207c37474798f0c4ecbf1bafa0590229d7ae92eeb5805bc46f28"
+assumption_verdicts_sha256: "2ea3f58bf917d070da22c4c477116ac71f95b5a7012cdf46272d4243229df13e"
+assumption_verdicts_summary:
+  consistent: 3
+  spec_absent: 21
+  contradicts: 0
+  unlisted: 0
+environment_failures: []
+performance_measurement:
+  rows: 5000
+  bytes: 535659
+  all_columns_nonempty: true
+  job_ids_unique: true
+  map_versions_unique: true
+  normal_seconds: 3.71036
+  verbose_seconds: 4.623275
+  limit_seconds: 10
+  result: "pass"
+  recipe: "csv.writer、LF、9 列。i=0..4999。JOB+i, host-+i, batch, /var/app/work, /opt/app/bin/job.sh, [\"--mode\",\"full\"], 60, ssh-key-+i, map-v+i。subprocess 起動から完了まで perf_counter で計測。"
+  environment: "macOS arm64、bash 5.3.15、通常 PATH。専用一時ディレクトリはテスト終了後に削除。"
+findings_path: "docs/impl/latest/eff24f55/stages/attempt-5/S5_verify.tier-facade.findings.yaml"
+completed_at: "2026-09-22T18:32:13+09:00"
+completed_by: "dist-impl-verify@0.14.1"
+notes:
+  - "Git コマンドは明示禁止に従い未実行。cwd と CLAUDE.md を確認。実装コード・仕様は変更していない。"

@@ -1,0 +1,16 @@
+Spec 差分更新: feedback 20260919_213000_impl_feedback_eff24f55(design 無しモード。UI 画面なし・CLI と定期ジョブのみ。実装フェーズ UC eff24f55「slot ごとのジョブマップを定義する」からの blocker 1 件(CR-001 設定ファイル検証が守る範囲)・spec-gap 3 件(CR-002 専用 error 行 / CR-003 制御文字の表記 / CR-004 bash 最低版と想定最大行数)・improvement 1 件(CR-005 SPEC-008-05 の受け入れ基準分割)。設定ファイル共通の入力の守備範囲を CLI 契約 config_input_rules に 1 か所で定め、12 UC から参照。制御文字の可視表記を ui-design.md に定め全コマンドへ適用。work_dir / script のパス形式検査を撤回し方針資料の CSV 例(督促AP / G:\scripts / ./beam-batches)を受理)
+event_id: 20260921_100000_feedback_impl_feedback_eff24f55
+created_at: 2026-09-21T10:00:00Z
+previous_event: 20260917_100000_feedback_impl_feedback_fd678b04_cycle2
+trigger_event: rdra:20260921_084000_feedback_impl_feedback_eff24f55(no-change), arch:20260921_092000_feedback_impl_feedback_eff24f55(no-change)
+related_event: usdm:20260921_084000_feedback_impl_feedback_eff24f55(normal。SPEC-008-05 の受け入れ基準分割)、nfr:20260921_090000_feedback_impl_feedback_eff24f55(normal。B.1.1.2 / B.2.1.1 の CSV 設定ファイル共通前提)、infra:20260921_094000_feedback_impl_feedback_eff24f55(no-change)
+design_available: false(引数指定。docs/design/latest/ は読まない)
+dialogue_policy: interactive(第 1 段階で方針レベルの質問 4 問を提示し、利用者が 2026-09-22 に A / A / A / A と一覧表への異議なしで確定。問 4 の根拠として「ジョブマップでの定義なら Windows / Linux 両対応のフルパス / 相対パス指定を受け取れる必要がある」を補足)
+feedback_request_id: 20260919_213000_impl_feedback_eff24f55
+input_sha256: 1a7612598a0ed1d3378d7479b1614d6a6aa99ac90eae0fbf55b82e173784a431
+request_ids: CR-eff24f55-001, CR-eff24f55-002, CR-eff24f55-003, CR-eff24f55-004, CR-eff24f55-005
+direct_work_unit_ids: CR-eff24f55-001#1, CR-eff24f55-002#1, CR-eff24f55-003#1, CR-eff24f55-004#2
+causal_work_unit_ids: CR-eff24f55-001#1, CR-eff24f55-002#1, CR-eff24f55-003#1, CR-eff24f55-004#1, CR-eff24f55-004#2, CR-eff24f55-005#1
+stage_packet: docs/pipeline/feedback-runs/20260919_213000_impl_feedback_eff24f55/stage-packets/spec.md
+入力の正本: docs/rdra/latest/(20260908_011000。20260921_084000 は no-change)、docs/usdm/latest/(20260921_084000)、docs/nfr/latest/(20260921_090000)、docs/arch/latest/(20260908_015000。20260921_092000 は no-change)、docs/infra/latest/(20260907_124000。20260921_094000 は no-change。shell: bash 5)、docs/specs/latest/(20260917_100000_feedback_impl_feedback_fd678b04_cycle2 を差分更新の起点)、方針資料 tmp/RelayGateのしくみ.md / tmp/RelayGateの利用イメージ.md(git 管理外・読み取りのみ)
+変更の正本(作業記録): _review/change-brief.md(D1〜D6)

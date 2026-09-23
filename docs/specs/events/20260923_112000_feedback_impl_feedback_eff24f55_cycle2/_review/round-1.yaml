@@ -1,0 +1,36 @@
+round: 1
+findings:
+  - id: R-001
+    viewpoint: 5
+    severity: major
+    target: "_cross-cutting/api/cli-command-contract.yaml"
+    claim: "warn して受理した credential_ref の値(パスや BEGIN を含む鍵の中身らしい値)が、実行時に execution-spec.json へそのまま転記されて保存される。これは方針資料の「認証情報そのものは保存せず、認証情報の参照名だけを保存します」と SPEC-004-03 の受け入れ条件「認証情報の値を含まない」に反し得る。今回の決定は診断行への非出力だけを定め、保存側の扱いに触れていない"
+    evidence: "契約 config_files[<slot>-job-map.csv].columns.credential_ref.on_format_violation は形式違反と BEGIN を含む値を『拒否しない』と定める。同じ契約の runner の execution-spec 記述(slots.<role>: credential_ref = 任意列(無ければ null))と artifact 注記『credential_ref は参照名のみ(認証情報の値を保存しない)』は、形式違反の値を受理したときにどう保存するかを定めていない。UC「execution-spec.json を確定保存する」の Scenario「認証情報の値を保存しない」の前提は正規の参照名 ssh-key-green だけ。decisions/spec-decision-015.yaml の consequences.negative は『実行時に認証で失敗する』『文言が不正確』だけで、execution-spec.json への保存に触れていない。方針資料 tmp/RelayGateのしくみ.md 396 行目は、認証情報そのものは保存しないと定める"
+    suggested_fix: "受理した形式違反の値を実行時にどう扱うかを 1 つに決めて契約に書く。案は 3 つ: (1) execution-spec.json へそのまま転記する。この場合は spec-decision-015 の consequences.negative に『BEGIN を含む値やパスも execution-spec.json に保存される』を明記し、方針資料との関係を利用者に確認する (2) 転記せずに null とし、実行ログに WARN を出す (3) 実行時は拒否する。どの案でも、UC「execution-spec.json を確定保存する」に形式違反の値を前提とする Scenario を足す。今回の範囲外として扱う場合は、docs/todo.md か新しい変更要求に登録して追跡できるようにする"
+  - id: R-002
+    viewpoint: 4
+    severity: minor
+    target: "_cross-cutting/api/cli-command-contract.yaml"
+    claim: "credential_ref の値を出さない規則の適用範囲が、2 か所で食い違う。conventions.credentials は validate-config.sh の診断行に限定している。columns.credential_ref.output_rule は対象コマンドを限定せずに『stdout / stderr / 実行ログ』と書く。また、validate-config.sh の『実行ログ』がどこを指すかは、契約にも UC の tier にも定義が無い"
+    evidence: "conventions.credentials は『validate-config.sh の診断行(stdout、stderr の error: / warn: / info:(--verbose を含む)/ hint:、実行ログ)』と書く。columns.credential_ref.output_rule は『値は診断行(stdout / stderr / 実行ログ)に一切出さない』とだけ書く。同じ列は runner(UC「ジョブマップで JOB_ID から実行先を解決する」。実行ログ INFO job map resolved ...)も読む。一方、UC「slot ごとのジョブマップを定義する」の tier-facade.md は、validate-config.sh の出力先として stdout / stderr だけを定義している"
+    suggested_fix: "output_rule の主語を conventions.credentials と同じ『validate-config.sh の』に揃える。runner の実行ログにも同じ規則を課すなら、そうと明記する。validate-config.sh にログ出力が無いなら、列挙から『実行ログ』を外す。ある場合は出力先を定義する"
+  - id: R-003
+    viewpoint: 2
+    severity: minor
+    target: "実装切替業務/実装切替ジョブ実行フロー/実装スクリプトを実行して Runner Result を出力する/tier-facade.md"
+    claim: "credential_ref に関する『仮採用』が 2 か所に残る(credential_ref を SSH 設定の Host 別名や鍵の参照名として解釈すること)。一方で、今回確定した『拒否しない理由』はこの解釈を前提にしている。確定した理由が、仮採用の前提に依存する状態になっている"
+    evidence: "tier-facade.md 70 行目『credential_ref は SSH 設定の Host 別名または鍵の参照名として runner 実体が解釈する(仮採用)』と、同じ UC の spec.md 52 行目『認証は credential_ref から実行環境の設定(~/.ssh/config の Host 別名。仮採用)に解決』が残る。契約 columns.credential_ref.on_format_violation の理由は『参照名の形式は適用側の認証情報ストア(SSH 設定の Host 別名や鍵の参照名など)の運用に依存するため』(2026-09-22 に利用者が確定)"
+    suggested_fix: "残っている 2 か所の『仮採用』を確定内容に置き換える。置き換えられないなら、契約の理由から具体例(SSH 設定の Host 別名や鍵の参照名)を外し、『適用側の認証情報ストアの運用に依存する』だけにする。あわせて、完了条件(d)の対象は UC「slot ごとのジョブマップを定義する」だけだと change-brief に書き、範囲外の仮採用を docs/todo.md で追跡できるようにする"
+resolved:
+  - id: R-001
+    resolution: "fixed"
+    by: "orchestrator"
+    note: "利用者が選んだ案 A(受理)の帰結を明記する形で解消。契約 columns.credential_ref.on_format_violation、UC の tier-facade.md と spec.md 分岐条件一覧、spec-decision-015 の consequences.negative に『warn して受理した値も execution-spec.json の slots.<role>.credential_ref へそのまま転記される(転記規則は不変)。認証情報の値そのものを置かないのは適用側の責任で、warn はその見落としに気づかせる検査』を追加。転記しない案・実行時に拒否する案は利用者決定(拒否しない)と実装済みの転記規則を変えるため採らず、完了報告の確認推奨項目で利用者に返す"
+  - id: R-002
+    resolution: "fixed"
+    by: "orchestrator"
+    note: "適用範囲を conventions.credentials と columns.credential_ref.output_rule で同じ文にそろえた: validate-config.sh の stdout と stderr(validate-config.sh は実行ログを持たない)と、ジョブマップを読む slot runner の stderr と実行ログ。tier-facade.md、spec.md、spec-decision-015 も同じ範囲にした"
+  - id: R-003
+    resolution: "fixed"
+    by: "orchestrator"
+    note: "契約と spec-decision-015 の拒否しない理由から具体例(SSH 設定の Host 別名や鍵の参照名)を外し『適用側の認証情報ストアの運用に依存する』だけにした。完了条件(d)の対象は UC「slot ごとのジョブマップを定義する」の credential_ref の形式の扱いであることを change-brief に明記。UC「実装スクリプトを実行して Runner Result を出力する」の実行時解釈の仮採用は本 CR の範囲外として残す(完了報告で返却)"

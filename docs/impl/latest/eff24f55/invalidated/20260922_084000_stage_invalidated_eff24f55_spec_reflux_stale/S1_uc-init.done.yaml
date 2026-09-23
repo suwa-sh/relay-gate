@@ -1,0 +1,21 @@
+stage: S1
+uc_id: eff24f55
+manifest_sha256: f5b57cd9f6aae8e961774f42ec256d56a421cec379741b03b478a5e10ffb4e54
+manifest_projection: v2
+result: pass
+input_preflight:
+  files_exist: true
+  yaml_parse: true
+  gherkin_blocks: 3
+  gherkin_blocks_note: 'spec.md 2 / tier-facade.md 1'
+  tier_ids_in_arch:
+  - tier-facade
+  conditional_inputs_consistent: true
+lineage_ok: true
+atdd_scenarios:
+- SPEC-004-04-4
+- SPEC-008-05-2
+atdd_mapping: confirmed by 20260917_004437_config_confirmed_atdd_mapping_all_ucs (not re-asked)
+shared_spec_refs_note: 'openapi.yaml は paths: {} のスタブで共有定義を持たないため shared_spec_refs に含めない(UC1 と同じ扱い)'
+completed_at: '2026-09-19T16:20:00+09:00'
+completed_by: dist-impl-run@0.14.1

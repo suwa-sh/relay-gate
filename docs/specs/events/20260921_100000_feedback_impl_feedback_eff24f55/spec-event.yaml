@@ -1,0 +1,1030 @@
+version: "1.0"
+event_id: "20260921_100000_feedback_impl_feedback_eff24f55"
+created_at: "2026-09-21T10:00:00Z"
+source: "Spec 差分更新: 2026-09-19 の実装フィードバック(design 無しモード。実装フェーズ UC eff24f55「slot ごとのジョブマップを定義する」からの blocker 1 件・spec-gap 3 件・improvement 1 件)。前イベント 20260917_100000_feedback_impl_feedback_fd678b04_cycle2 を起点に、利用者が 2026-09-22 に確定した 4 決定(原則「形式から外れた入力は拒否する」/ 実装済み判断(単一スナップショット・内部障害 6・制御文字の可視表記)の確定 / 原因ごとの専用 error 行 / work_dir・script のパス形式検査の撤回)を反映した。CR-001: 設定ファイル共通の入力の守備範囲を cli-command-contract.yaml の config_input_rules に 1 か所で定義(NUL・不正 UTF-8・BOM・CR・ヘッダー列名の重複は拒否、最終行の改行なし・データ行 0 件は受理、単一スナップショット(TMPDIR / 0600 / 削除時期 / シグナル)、内部障害は終了コード 6 で stdout なし、対象外の明記)。設定ファイルを読む 12 UC の tier md から参照させ、判定する BDD は UC「slot ごとのジョブマップを定義する」に置いた。CR-002: 拒否する異常ごとの専用 error 行(nul byte is not allowed / encoding is not utf-8 / byte order mark is not allowed / carriage return is not allowed + hint / duplicate column / internal command failed / config snapshot failed + hint)と validate-config.sh の終了コード 6 の条件を契約に定めた。CR-003: 制御文字の可視表記(改行 \\n・タブ \\t・その他 \\u00XX、バックスラッシュは置き換えない、key=value の選択は元の値、--verbose の JSON 表記は例外)を ui-design.md「出力フォーマット」に定め、契約 conventions.output_format.control_chars と UC「feature flag を設定する」の stderr から参照。CR-004: bash の最低版 5.0 を契約 conventions.runtime_prerequisites に置き(インフラ設計と同値)、性能は NFR B.1.1.2 / B.2.1.1 の共通前提を参照。CR-005: USDM SPEC-008-05 の受け入れ基準分割に UC「hang_detect_limit_minutes をジョブごとに調整する」の関連 USDM 表と usdm-acceptance-matrix を追従。方針資料のジョブマップ CSV 例(督促AP / G:\\scripts / ./beam-batches / 空白とカンマを含む固定引数)が検証 OK になることを Scenario で固定。判断は decisions/spec-decision-011〜013。trigger_event: rdra:20260921_084000_feedback_impl_feedback_eff24f55, arch:20260921_092000_feedback_impl_feedback_eff24f55"
+design_available: false
+previous_event_ref: "20260917_100000_feedback_impl_feedback_fd678b04_cycle2"
+trigger_event:
+  - "rdra:20260921_084000_feedback_impl_feedback_eff24f55"
+  - "arch:20260921_092000_feedback_impl_feedback_eff24f55"
+related_event_refs:
+  - "usdm:20260921_084000_feedback_impl_feedback_eff24f55"
+  - "nfr:20260921_090000_feedback_impl_feedback_eff24f55"
+  - "infra:20260921_094000_feedback_impl_feedback_eff24f55"
+feedback_request:
+  feedback_request_id: "20260919_213000_impl_feedback_eff24f55"
+  input_sha256: "1a7612598a0ed1d3378d7479b1614d6a6aa99ac90eae0fbf55b82e173784a431"
+  request_ids: ["CR-eff24f55-001","CR-eff24f55-002","CR-eff24f55-003","CR-eff24f55-004","CR-eff24f55-005"]
+  work_unit_ids: ["CR-eff24f55-001#1","CR-eff24f55-002#1","CR-eff24f55-003#1","CR-eff24f55-004#1","CR-eff24f55-004#2","CR-eff24f55-005#1"]
+
+use_cases:
+  - business: "クロスチェック業務"
+    buc: "確報クロスチェックフロー"
+    uc: "確報クロスチェック結果を確認する"
+    files:
+      - spec.md
+      - tier-final-crosscheck.md
+    api_count: 0
+    async_event_count: 0
+    usdm:
+      - req_id: "REQ-006"
+        spec_id: "SPEC-006-03"
+        scenarios:
+          - "終了コード 3 で比較 NG と判断する(SPEC-006-03)"
+      - req_id: "REQ-007"
+        spec_id: "SPEC-007-03"
+        scenarios:
+          - "終了コード 3 で比較 NG と判断する(SPEC-006-03)"
+      - req_id: "REQ-005"
+        spec_id: "SPEC-005-05"
+        scenarios:
+          - "終了コード 0 で日次整合性 OK と判断する(SPEC-005-05)"
+      - req_id: "REQ-009"
+        spec_id: "SPEC-009-04"
+        scenarios:
+          - "終了コード 6 で実行エラーと判断し再実行する(SPEC-009-04)"
+      - req_id: "REQ-012"
+        spec_id: "SPEC-012-02"
+        scenarios:
+          - "終了コード 6 で実行エラーと判断し再実行する(SPEC-009-04)"
+  - business: "クロスチェック業務"
+    buc: "確報クロスチェックフロー"
+    uc: "確報比較依頼を claim する"
+    files:
+      - spec.md
+      - tier-final-crosscheck.md
+    api_count: 0
+    async_event_count: 1
+    usdm:
+      - req_id: "REQ-006"
+        spec_id: "SPEC-006-02"
+        scenarios:
+          - "REQUESTED の依頼を claim する(SPEC-006-02)"
+      - req_id: "REQ-007"
+        spec_id: "SPEC-007-01"
+        scenarios:
+          - "lease 失効かつ未開始の依頼を再取得できる(SPEC-007-01)"
+      - req_id: "REQ-007"
+        spec_id: "SPEC-007-02"
+        scenarios:
+          - "REQUESTED の依頼を claim する(SPEC-006-02)"
+  - business: "クロスチェック業務"
+    buc: "確報クロスチェックフロー"
+    uc: "確報比較依頼を登録して終端状態まで待機する"
+    files:
+      - spec.md
+      - tier-final-crosscheck.md
+    api_count: 0
+    async_event_count: 2
+    usdm:
+      - req_id: "REQ-006"
+        spec_id: "SPEC-006-01"
+        scenarios:
+          - "確報依頼を登録して SUCCEEDED まで待機する(SPEC-006-01)"
+      - req_id: "REQ-006"
+        spec_id: "SPEC-006-04"
+        scenarios:
+          - "速報側テーブルを変更しない(SPEC-006-04)"
+      - req_id: "REQ-011"
+        spec_id: "SPEC-011-03"
+        scenarios:
+          - "確報依頼を登録して SUCCEEDED まで待機する(SPEC-006-01)"
+  - business: "クロスチェック業務"
+    buc: "確報クロスチェックフロー"
+    uc: "比較ツールで日次全量比較を実行して結果を保存する"
+    files:
+      - spec.md
+      - tier-final-crosscheck.md
+    api_count: 0
+    async_event_count: 1
+    usdm:
+      - req_id: "REQ-006"
+        spec_id: "SPEC-006-02"
+        scenarios:
+          - "exit_code=0 で SUCCEEDED になる(SPEC-006-02)"
+          - "exit_code=3 で FAILED になる(SPEC-006-02)"
+      - req_id: "REQ-007"
+        spec_id: "SPEC-007-01"
+        scenarios:
+          - "exit_code=0 で SUCCEEDED になる(SPEC-006-02)"
+      - req_id: "REQ-007"
+        spec_id: "SPEC-007-03"
+        scenarios:
+          - "exit_code=3 で FAILED になる(SPEC-006-02)"
+      - req_id: "REQ-003"
+        spec_id: "SPEC-003-03"
+        scenarios:
+          - "起動失敗でも 3 ファイルと FAILED を残す(SPEC-003-03)"
+      - req_id: "REQ-011"
+        spec_id: "SPEC-011-03"
+        scenarios:
+          - "対象一覧を成果物に記録する(SPEC-011-03)"
+  - business: "クロスチェック業務"
+    buc: "確報クロスチェックフロー"
+    uc: "保存済みの確報結果をジョブスケジューラへ返す"
+    files:
+      - spec.md
+      - tier-final-crosscheck.md
+    api_count: 0
+    async_event_count: 0
+    usdm:
+      - req_id: "REQ-006"
+        spec_id: "SPEC-006-03"
+        scenarios:
+          - "exit_code=3 の FAILED をそのまま返す(SPEC-006-03)"
+          - "ABORTED で exit_code が NULL のとき終了コード 6 を返す"
+      - req_id: "REQ-007"
+        spec_id: "SPEC-007-03"
+        scenarios:
+          - "exit_code=3 の FAILED をそのまま返す(SPEC-006-03)"
+  - business: "クロスチェック業務"
+    buc: "速報クロスチェックフロー"
+    uc: "速報クロスチェック runner へ完了通知を送信する"
+    files:
+      - spec.md
+      - tier-facade.md
+      - tier-rapid-crosscheck.md
+    api_count: 0
+    async_event_count: 3
+    usdm:
+      - req_id: "REQ-001"
+        spec_id: "SPEC-001-01"
+        scenarios:
+          - "blue の完了通知が rapid_runs に登録される(SPEC-005-01)"
+      - req_id: "REQ-005"
+        spec_id: "SPEC-005-01"
+        scenarios:
+          - "blue の完了通知が rapid_runs に登録される(SPEC-005-01)"
+          - "green 未完了でも blue の通知は完結する(SPEC-005-01)"
+          - "aborted.txt がある slot でも完了通知は通常どおり送る(SPEC-005-01)"
+          - "通知先が終了コード 6 でも Runner Result は変わらない(SPEC-005-01)"
+          - "通知失敗を運用者が同じ引数の再実行で復旧する(SPEC-005-01)"
+          - "通知失敗はハング検知で自動検知されない(SPEC-005-01)"
+      - req_id: "REQ-005"
+        spec_id: "SPEC-005-06"
+        scenarios:
+          - "設定された参照名で管理 DB に接続して完了結果を登録する(SPEC-005-06)"
+      - req_id: "REQ-005"
+        spec_id: "SPEC-005-04"
+        scenarios:
+          - "blue の完了通知が rapid_runs に登録される(SPEC-005-01)"
+          - "RAPID_CROSSCHECK_MODE=foreground でも background と同じく通知する(SPEC-005-04)"
+          - "RAPID_CROSSCHECK_MODE=off では通知しない(SPEC-005-04)"
+  - business: "クロスチェック業務"
+    buc: "速報クロスチェックフロー"
+    uc: "速報比較依頼を claim する"
+    files:
+      - spec.md
+      - tier-rapid-crosscheck.md
+    api_count: 0
+    async_event_count: 1
+    usdm:
+      - req_id: "REQ-005"
+        spec_id: "SPEC-005-03"
+        scenarios:
+          - "REQUESTED の依頼を claim する(SPEC-005-03)"
+      - req_id: "REQ-007"
+        spec_id: "SPEC-007-01"
+        scenarios:
+          - "lease 失効かつ未開始の依頼を再取得する(SPEC-007-01)"
+      - req_id: "REQ-007"
+        spec_id: "SPEC-007-02"
+        scenarios:
+          - "REQUESTED の依頼を claim する(SPEC-005-03)"
+      - req_id: "REQ-005"
+        spec_id: "SPEC-005-06"
+        scenarios:
+          - "設定された lease 期間と poll 間隔で claim と poll が行われる(SPEC-005-06)"
+          - "速報クロスチェック設定の所有者は基盤適用設計者である(SPEC-005-06)"
+  - business: "クロスチェック業務"
+    buc: "速報クロスチェックフロー"
+    uc: "速報比較結果を参照する"
+    files:
+      - spec.md
+      - tier-rapid-crosscheck.md
+    api_count: 0
+    async_event_count: 0
+    usdm:
+      - req_id: "REQ-005"
+        spec_id: "SPEC-005-05"
+        scenarios:
+          - "比較 NG の依頼を参照する(SPEC-005-05)"
+      - req_id: "REQ-011"
+        spec_id: "SPEC-011-02"
+        scenarios:
+          - "比較 OK の依頼を参照する(SPEC-011-02)"
+  - business: "クロスチェック業務"
+    buc: "速報クロスチェックフロー"
+    uc: "比較ツールでジョブ単位比較を実行して結果を登録する"
+    files:
+      - spec.md
+      - tier-rapid-crosscheck.md
+    api_count: 0
+    async_event_count: 1
+    usdm:
+      - req_id: "REQ-005"
+        spec_id: "SPEC-005-03"
+        scenarios:
+          - "比較 OK で SUCCEEDED と OK を登録する(SPEC-005-03)"
+          - "job_id の比較定義が使われる(SPEC-005-03)"
+          - "比較定義が無い job_id(SPEC-005-03)"
+          - "比較ツールの起動に失敗する(SPEC-005-03)"
+      - req_id: "REQ-007"
+        spec_id: "SPEC-007-01"
+        scenarios:
+          - "比較 OK で SUCCEEDED と OK を登録する(SPEC-005-03)"
+      - req_id: "REQ-007"
+        spec_id: "SPEC-007-03"
+        scenarios:
+          - "比較 NG(3)で FAILED と NG を登録する(SPEC-007-03)"
+      - req_id: "REQ-011"
+        spec_id: "SPEC-011-02"
+        scenarios:
+          - "比較 OK で SUCCEEDED と OK を登録する(SPEC-005-03)"
+      - req_id: "REQ-011"
+        spec_id: "SPEC-011-06"
+        scenarios:
+          - "速報比較依頼だけのリラン由来 run は依頼終端で parallel_run を COMPLETED にする(SPEC-011-06)"
+      - req_id: "REQ-010"
+        spec_id: "SPEC-010-02"
+        scenarios:
+          - "CLAIMED の依頼が ABORTED になった後の RUNNING 条件付き UPDATE は 0 件で比較を開始しない(SPEC-010-02)"
+  - business: "クロスチェック業務"
+    buc: "速報クロスチェックフロー"
+    uc: "両系成功時に速報比較依頼を作成する"
+    files:
+      - spec.md
+      - tier-rapid-crosscheck.md
+    api_count: 0
+    async_event_count: 2
+    usdm:
+      - req_id: "REQ-005"
+        spec_id: "SPEC-005-02"
+        scenarios:
+          - "後に完了した側の通知で依頼が 1 件作成される(SPEC-005-02)"
+          - "green 先行・blue 後続でも依頼は 1 件(SPEC-005-02)"
+          - "blue が失敗なら依頼を作成しない(SPEC-005-02)"
+          - "並行稼働実行が ABORTED の run では完了通知を受けても依頼を作成しない(SPEC-005-02)"
+          - "parallel_runs が COMPLETED で対象 slot の slot 実行が ABORTED の run では完了通知を受けても依頼を作成しない(SPEC-005-02)"
+          - "foreground の blue 完了後に abort-green で中止した green が走り切って完了通知を送っても依頼を作成せず警告を残す(SPEC-005-02)"
+          - "ABORTED の run で両系成功になっても依頼を作成せず警告を残す(SPEC-005-02)"
+          - "中止した run のリランでは新しい run_id で依頼が作成される(SPEC-005-02)"
+          - "abort-blue で ABORTED にした slot の実装が走り切って exitcode.txt を公開しても slot_executions.status は ABORTED のままである(SPEC-005-02)"
+      - req_id: "REQ-007"
+        spec_id: "SPEC-007-01"
+        scenarios:
+          - "後に完了した側の通知で依頼が 1 件作成される(SPEC-005-02)"
+      - req_id: "REQ-011"
+        spec_id: "SPEC-011-02"
+        scenarios:
+          - "後に完了した側の通知で依頼が 1 件作成される(SPEC-005-02)"
+  - business: "実行監視業務"
+    buc: "background 実行監視フロー"
+    uc: "background 異常の通知メールを受け取る"
+    files:
+      - spec.md
+      - tier-ops.md
+    api_count: 0
+    async_event_count: 1
+    usdm:
+      - req_id: "REQ-012"
+        spec_id: "SPEC-012-01"
+        scenarios:
+          - "warning メールを受け取って静観する(SPEC-012-01)"
+      - req_id: "REQ-008"
+        spec_id: "SPEC-008-04"
+        scenarios:
+          - "warning メールを受け取って静観する(SPEC-012-01)"
+      - req_id: "REQ-008"
+        spec_id: "SPEC-008-01"
+        scenarios:
+          - "error メールを受け取ってリランする(SPEC-008-01)"
+      - req_id: "REQ-008"
+        spec_id: "SPEC-008-02"
+        scenarios:
+          - "速報クロスチェック異常メールを受け取って原因調査する(SPEC-008-02)"
+  - business: "実行監視業務"
+    buc: "background 実行監視フロー"
+    uc: "background 実行の経過時間と終了状態を判定する"
+    files:
+      - spec.md
+      - tier-ops.md
+    api_count: 0
+    async_event_count: 1
+    usdm:
+      - req_id: "REQ-008"
+        spec_id: "SPEC-008-01"
+        scenarios:
+          - "上限超過をハング疑いと判定する(SPEC-008-01)"
+          - "上限内は継続監視と判定する(SPEC-008-01)"
+          - "非 0 終了を実行エラーと判定する(SPEC-008-01)"
+          - "0 終了は通知対象外(SPEC-008-01)"
+      - req_id: "REQ-008"
+        spec_id: "SPEC-008-02"
+        scenarios:
+          - "FAILED の速報比較依頼を比較異常と判定する(SPEC-008-02)"
+          - "ハング疑い通知後の速報比較依頼も再判定する(SPEC-008-02)"
+      - req_id: "REQ-008"
+        spec_id: "SPEC-008-03"
+        scenarios:
+          - "off では管理 DB なしで成果物だけを走査する(SPEC-008-03)"
+          - "ハング疑い通知後に中止された slot 実行を終端する(SPEC-008-03)"
+      - req_id: "REQ-010"
+        spec_id: "SPEC-010-01"
+        scenarios:
+          - "aborted.txt がある slot 実行は中止済みとして終端する(SPEC-010-01)"
+          - "off でも aborted.txt がある slot 実行は中止済みとして終端する(SPEC-010-01)"
+      - req_id: "REQ-003"
+        spec_id: "SPEC-003-04"
+        scenarios:
+          - "上限超過をハング疑いと判定する(SPEC-008-01)"
+  - business: "実行監視業務"
+    buc: "background 実行監視フロー"
+    uc: "hang_detect_limit_minutes をジョブごとに調整する"
+    files:
+      - spec.md
+      - tier-facade.md
+      - tier-ops.md
+    api_count: 0
+    async_event_count: 0
+    usdm:
+      - req_id: "REQ-008"
+        spec_id: "SPEC-008-05"
+        scenarios:
+          - "調整は実行済み run に影響しない(SPEC-008-05)"
+          - "調整の記録はジョブマップの列に持たない(SPEC-008-05)"
+      - req_id: "REQ-008"
+        spec_id: "SPEC-008-03"
+        scenarios:
+          - "警告傾向を参照して上限を調整する(SPEC-008-03)"
+  - business: "実行監視業務"
+    buc: "background 実行監視フロー"
+    uc: "ハング疑い・実行エラー・比較異常を通知する"
+    files:
+      - spec.md
+      - tier-ops.md
+    api_count: 0
+    async_event_count: 2
+    usdm:
+      - req_id: "REQ-008"
+        spec_id: "SPEC-008-01"
+        scenarios:
+          - "ハング疑いを warning メールで通知する(SPEC-008-01)"
+          - "実行エラーを error メールで通知する(SPEC-008-01)"
+      - req_id: "REQ-008"
+        spec_id: "SPEC-008-02"
+        scenarios:
+          - "速報比較依頼の FAILED を error メールで通知する(SPEC-008-02)"
+      - req_id: "REQ-008"
+        spec_id: "SPEC-008-03"
+        scenarios:
+          - "ハング疑い通知後の速報比較依頼の比較異常は別種別として 1 回送る(SPEC-008-03)"
+      - req_id: "REQ-008"
+        spec_id: "SPEC-008-04"
+        scenarios:
+          - "通知後も状態は RUNNING のままである(SPEC-008-04)"
+      - req_id: "REQ-008"
+        spec_id: "SPEC-008-06"
+        scenarios:
+          - "ハング検知定期ジョブ設定の宛先と送信コマンドで送る(SPEC-008-06)"
+      - req_id: "REQ-012"
+        spec_id: "SPEC-012-01"
+        scenarios:
+          - "ハング疑いを warning メールで通知する(SPEC-008-01)"
+  - business: "実行監視業務"
+    buc: "background 実行監視フロー"
+    uc: "監視記録を保存する"
+    files:
+      - spec.md
+      - tier-ops.md
+    api_count: 0
+    async_event_count: 0
+    usdm:
+      - req_id: "REQ-008"
+        spec_id: "SPEC-008-03"
+        scenarios:
+          - "通知後に正常終了した実行の警告時経過時間を残す(SPEC-008-03)"
+          - "off では実行ログにのみ残す(SPEC-008-03)"
+          - "通知後に中止された slot 実行を中止済みで終端する(SPEC-008-03)"
+      - req_id: "REQ-008"
+        spec_id: "SPEC-008-04"
+        scenarios:
+          - "監視記録の保存で他テーブルは変更されない(SPEC-008-04)"
+      - req_id: "REQ-008"
+        spec_id: "SPEC-008-05"
+        scenarios:
+          - "通知後に正常終了した実行の警告時経過時間を残す(SPEC-008-03)"
+  - business: "実行復旧業務"
+    buc: "background 側リランフロー"
+    uc: "リラン結果を parent_run_id で追跡する"
+    files:
+      - spec.md
+      - tier-ops.md
+    api_count: 0
+    async_event_count: 0
+    usdm:
+      - req_id: "REQ-009"
+        spec_id: "SPEC-009-01"
+        scenarios:
+          - "2 回リランした系譜を元の実行まで辿る(SPEC-009-01)"
+  - business: "実行復旧業務"
+    buc: "background 側リランフロー"
+    uc: "リラン対象を検証する"
+    files:
+      - spec.md
+      - tier-ops.md
+    api_count: 0
+    async_event_count: 0
+    usdm:
+      - req_id: "REQ-009"
+        spec_id: "SPEC-009-01"
+        scenarios:
+          - "rapid-crosscheck リランで作られた run を再度リラン元にできる(SPEC-009-01)"
+      - req_id: "REQ-009"
+        spec_id: "SPEC-009-03"
+        scenarios:
+          - "foreground の blue は拒否する(SPEC-009-03 / SPEC-009-04)"
+          - "RUNNING の green は中止を促して拒否する(SPEC-009-03)"
+          - "ABORTED の速報比較依頼は検証を通過する(SPEC-009-03)"
+      - req_id: "REQ-009"
+        spec_id: "SPEC-009-04"
+        scenarios:
+          - "foreground の blue は拒否する(SPEC-009-03 / SPEC-009-04)"
+      - req_id: "REQ-010"
+        spec_id: "SPEC-010-01"
+        scenarios:
+          - "RAPID_CROSSCHECK_MODE=off で aborted.txt がある元 run は ABORTED として通過する(SPEC-010-01)"
+  - business: "実行復旧業務"
+    buc: "background 側リランフロー"
+    uc: "元の execution-spec.json から復元して新しい run_id で起動する"
+    files:
+      - spec.md
+      - tier-facade.md
+      - tier-ops.md
+    api_count: 0
+    async_event_count: 1
+    usdm:
+      - req_id: "REQ-009"
+        spec_id: "SPEC-009-01"
+        scenarios:
+          - "完了済みの green をリランして新 run_id を得る(SPEC-009-01)"
+      - req_id: "REQ-009"
+        spec_id: "SPEC-009-02"
+        scenarios:
+          - "ジョブマップ変更後でも元の設定で起動する(SPEC-009-02)"
+      - req_id: "REQ-010"
+        spec_id: "SPEC-010-01"
+        scenarios:
+          - "off で abort-blue により中止した run を成果物だけでリランできる(SPEC-010-01)"
+  - business: "実行復旧業務"
+    buc: "background 側リランフロー"
+    uc: "速報比較依頼だけを新規作成する"
+    files:
+      - spec.md
+      - tier-ops.md
+      - tier-rapid-crosscheck.md
+    api_count: 0
+    async_event_count: 2
+    usdm:
+      - req_id: "REQ-009"
+        spec_id: "SPEC-009-03"
+        scenarios:
+          - "ABORTED の速報比較依頼を新しい依頼として再作成する(SPEC-009-03)"
+      - req_id: "REQ-009"
+        spec_id: "SPEC-009-01"
+        scenarios:
+          - "ABORTED の速報比較依頼を新しい依頼として再作成する(SPEC-009-03)"
+          - "再作成した run をさらに再作成して系譜を伸ばす(SPEC-009-01)"
+      - req_id: "REQ-011"
+        spec_id: "SPEC-011-06"
+        scenarios:
+          - "再作成した依頼が終端すると parallel_runs は COMPLETED になる"
+  - business: "実行復旧業務"
+    buc: "実行中止フロー"
+    uc: "現在状態を確認して停止確認に応答する"
+    files:
+      - spec.md
+      - tier-ops.md
+    api_count: 0
+    async_event_count: 0
+    usdm:
+      - req_id: "REQ-010"
+        spec_id: "SPEC-010-01"
+        scenarios:
+          - "RAPID_CROSSCHECK_MODE=off でも成果物ファイルから現在状態を表示する(SPEC-010-01)"
+          - "aborted.txt がある slot は ABORTED と表示する(SPEC-010-01)"
+      - req_id: "REQ-010"
+        spec_id: "SPEC-010-03"
+        scenarios:
+          - "現在状態を表示して yes と答える(SPEC-010-03)"
+          - "no と答えると状態は変わらない(SPEC-010-03)"
+  - business: "実行復旧業務"
+    buc: "実行中止フロー"
+    uc: "実行を ABORTED へ遷移させる"
+    files:
+      - spec.md
+      - tier-ops.md
+    api_count: 0
+    async_event_count: 0
+    usdm:
+      - req_id: "REQ-010"
+        spec_id: "SPEC-010-01"
+        scenarios:
+          - "background かつ RUNNING の green を中止する(SPEC-010-01 / SPEC-010-03)"
+          - "foreground の blue は中止できない(SPEC-010-01)"
+          - "RAPID_CROSSCHECK_MODE=off でも aborted.txt を書いて中止が成立する(SPEC-010-01)"
+          - "既に ABORTED の slot への再実行は中止不可として拒否する(SPEC-010-01)"
+          - "REQUESTED の速報比較依頼がある run を中止すると依頼も ABORTED になる(SPEC-010-01)"
+          - "CLAIMED または RUNNING の速報比較依頼は slot の中止では変更されない(SPEC-010-01)"
+          - "依頼作成直後に slot を中止すると依頼も ABORTED になり完了通知で再作成されない(SPEC-010-01)"
+      - req_id: "REQ-010"
+        spec_id: "SPEC-010-02"
+        scenarios:
+          - "RUNNING の速報比較依頼を中止する(SPEC-010-02)"
+          - "REQUESTED または CLAIMED の速報比較依頼を中止すると worker は比較を開始しない(SPEC-010-02)"
+          - "終端状態の速報比較依頼は状態を変更せずエラー終了する(SPEC-010-02)"
+          - "RUNNING でない確報比較依頼は状態を変更せずエラー終了する(SPEC-010-02)"
+      - req_id: "REQ-010"
+        spec_id: "SPEC-010-03"
+        scenarios:
+          - "background かつ RUNNING の green を中止する(SPEC-010-01 / SPEC-010-03)"
+      - req_id: "REQ-011"
+        spec_id: "SPEC-011-06"
+        scenarios:
+          - "STARTED のまま残った parallel_runs も slot の中止に伴い ABORTED になる(SPEC-011-06)"
+  - business: "実装切替業務"
+    buc: "実装切替ジョブ実行フロー"
+    uc: "execution-spec.json を確定保存する"
+    files:
+      - spec.md
+      - tier-facade.md
+    api_count: 0
+    async_event_count: 2
+    usdm:
+      - req_id: "REQ-001"
+        spec_id: "SPEC-001-01"
+        scenarios:
+          - "run 開始時に自 slot の節を保存する(SPEC-004-03)"
+      - req_id: "REQ-004"
+        spec_id: "SPEC-004-03"
+        scenarios:
+          - "run 開始時に自 slot の節を保存する(SPEC-004-03)"
+          - "既存の節は上書きしない(SPEC-004-03)"
+          - "認証情報の値を保存しない(SPEC-004-03)"
+      - req_id: "REQ-004"
+        spec_id: "SPEC-004-04"
+        scenarios:
+          - "ローカル実行と任意列なしのジョブマップでは host / user / credential_ref / map_version を null で保存する(SPEC-004-04)"
+      - req_id: "REQ-003"
+        spec_id: "SPEC-003-03"
+        scenarios:
+          - "一時ファイル経由で確定保存する(SPEC-003-03)"
+      - req_id: "REQ-009"
+        spec_id: "SPEC-009-02"
+        scenarios:
+          - "復元起動では保存しない(SPEC-009-02)"
+      - req_id: "REQ-011"
+        spec_id: "SPEC-011-04"
+        scenarios:
+          - "execution-spec.json の run_id は成果物ディレクトリ名と管理 DB の run_id と同じ値である(SPEC-011-04)"
+  - business: "実装切替業務"
+    buc: "実装切替ジョブ実行フロー"
+    uc: "foreground slot の結果をジョブスケジューラへ中継する"
+    files:
+      - spec.md
+      - tier-facade.md
+    api_count: 0
+    async_event_count: 0
+    usdm:
+      - req_id: "REQ-002"
+        spec_id: "SPEC-002-02"
+        scenarios:
+          - "foreground の 3 ファイルをそのまま中継する(SPEC-002-02)"
+          - "速報クロスチェックが失敗しても応答は変わらない(SPEC-005-05)"
+      - req_id: "REQ-005"
+        spec_id: "SPEC-005-05"
+        scenarios:
+          - "速報クロスチェックが失敗しても応答は変わらない(SPEC-005-05)"
+      - req_id: "REQ-011"
+        spec_id: "SPEC-011-01"
+        scenarios:
+          - "中継完了で parallel_run を COMPLETED にする(SPEC-011-01)"
+      - req_id: "REQ-012"
+        spec_id: "SPEC-012-01"
+        scenarios:
+          - "foreground の 3 ファイルをそのまま中継する(SPEC-002-02)"
+  - business: "実装切替業務"
+    buc: "実装切替ジョブ実行フロー"
+    uc: "slot 実行モードを選択して runner を起動する"
+    files:
+      - spec.md
+      - tier-facade.md
+    api_count: 0
+    async_event_count: 0
+    usdm:
+      - req_id: "REQ-001"
+        spec_id: "SPEC-001-01"
+        scenarios:
+          - "並行稼働モードで blue foreground と green background を起動する(SPEC-001-01)"
+          - "off の slot は起動しない(SPEC-001-01)"
+          - "確報クロスチェックを起動しない(SPEC-001-01)"
+      - req_id: "REQ-001"
+        spec_id: "SPEC-001-02"
+        scenarios:
+          - "両 slot foreground は入力検証で拒否する(SPEC-001-02)"
+      - req_id: "REQ-001"
+        spec_id: "SPEC-001-03"
+        scenarios:
+          - "新実装の単独本番モードでは green だけを起動し管理 DB に触れない(SPEC-001-03)"
+          - "次世代並行稼働モードでは blue background と green foreground を起動する(SPEC-001-03)"
+      - req_id: "REQ-002"
+        spec_id: "SPEC-002-01"
+        scenarios:
+          - "background を先に起動し foreground だけを待機する(SPEC-002-01)"
+      - req_id: "REQ-002"
+        spec_id: "SPEC-002-03"
+        scenarios:
+          - "並行稼働モードで blue foreground と green background を起動する(SPEC-001-01)"
+      - req_id: "REQ-005"
+        spec_id: "SPEC-005-04"
+        scenarios:
+          - "RAPID_CROSSCHECK_MODE=off では管理 DB に触れない(SPEC-005-04)"
+          - "RAPID_CROSSCHECK_MODE=background では parallel_run を STARTED から RUNNING にする(SPEC-011-01)"
+          - "RAPID_CROSSCHECK_MODE=foreground でも background と同じく parallel_run を作成する(SPEC-005-04)"
+      - req_id: "REQ-005"
+        spec_id: "SPEC-005-06"
+        scenarios:
+          - "速報クロスチェック設定には管理 DB 接続の参照名だけがあり認証情報の値は含まれない(SPEC-005-06)"
+          - "RAPID_CROSSCHECK_MODE=off では速報クロスチェック設定が存在しなくても slot 実行できる(SPEC-005-06)"
+      - req_id: "REQ-011"
+        spec_id: "SPEC-011-01"
+        scenarios:
+          - "RAPID_CROSSCHECK_MODE=background では parallel_run を STARTED から RUNNING にする(SPEC-011-01)"
+      - req_id: "REQ-011"
+        spec_id: "SPEC-011-04"
+        scenarios:
+          - "run_id はローカルタイムゾーンの時刻と job_id と 8 桁 hex で発行され成果物と管理 DB で同値である(SPEC-011-04)"
+          - "RAPID_CROSSCHECK_MODE=off では管理 DB に触れない(SPEC-005-04)"
+  - business: "実装切替業務"
+    buc: "実装切替ジョブ実行フロー"
+    uc: "ジョブマップで JOB_ID から実行先を解決する"
+    files:
+      - spec.md
+      - tier-facade.md
+    api_count: 0
+    async_event_count: 0
+    usdm:
+      - req_id: "REQ-004"
+        spec_id: "SPEC-004-01"
+        scenarios:
+          - "ジョブマップの行から実行先を解決する(SPEC-004-01)"
+      - req_id: "REQ-004"
+        spec_id: "SPEC-004-02"
+        scenarios:
+          - "固定引数の後ろに PARAM を順序保持で連結する(SPEC-004-02)"
+      - req_id: "REQ-004"
+        spec_id: "SPEC-004-04"
+        scenarios:
+          - "CSV の列名で読み替えなしに実行先を解決する(SPEC-004-04)"
+          - "二重引用符で囲んだ fixed_params セルを 2 引数として解析する(SPEC-004-04)"
+          - "host と user の列が無いジョブマップはローカル実行として解決する(SPEC-004-04)"
+          - "credential_ref と map_version の列が無くても解決できる(SPEC-004-04)"
+      - req_id: "REQ-003"
+        spec_id: "SPEC-003-02"
+        scenarios:
+          - "ジョブマップ未定義でも 3 ファイルを揃えて非 0 終了する(SPEC-003-02)"
+  - business: "実装切替業務"
+    buc: "実装切替ジョブ実行フロー"
+    uc: "業務ジョブの実行結果を確認する"
+    files:
+      - spec.md
+      - tier-facade.md
+    api_count: 0
+    async_event_count: 0
+    usdm:
+      - req_id: "REQ-001"
+        spec_id: "SPEC-001-03"
+        scenarios:
+          - "並行稼働中の応答は blue の結果だけである(SPEC-001-03)"
+          - "単独本番中の応答は green の結果である(SPEC-001-03)"
+      - req_id: "REQ-002"
+        spec_id: "SPEC-002-02"
+        scenarios:
+          - "並行稼働中の応答は blue の結果だけである(SPEC-001-03)"
+      - req_id: "REQ-005"
+        spec_id: "SPEC-005-05"
+        scenarios:
+          - "速報が失敗しても応答は変わらない(SPEC-005-05)"
+      - req_id: "REQ-012"
+        spec_id: "SPEC-012-01"
+        scenarios:
+          - "終了コードだけで成否を判定できる(SPEC-012-01)"
+      - req_id: "REQ-012"
+        spec_id: "SPEC-012-02"
+        scenarios:
+          - "実行ログと成果物で run を追跡できる(SPEC-012-02)"
+  - business: "実装切替業務"
+    buc: "実装切替ジョブ実行フロー"
+    uc: "実装スクリプトを実行して Runner Result を出力する"
+    files:
+      - spec.md
+      - tier-facade.md
+    api_count: 0
+    async_event_count: 1
+    usdm:
+      - req_id: "REQ-003"
+        spec_id: "SPEC-003-01"
+        scenarios:
+          - "実行終了後に 3 ファイルが揃う(SPEC-003-01)"
+          - "runner の終了コードは exitcode.txt と一致する(SPEC-003-01)"
+          - "起動時に started-at.txt を出力する(SPEC-003-01)"
+      - req_id: "REQ-003"
+        spec_id: "SPEC-003-02"
+        scenarios:
+          - "SSH 失敗でも 3 ファイルを揃える(SPEC-003-02)"
+      - req_id: "REQ-003"
+        spec_id: "SPEC-003-03"
+        scenarios:
+          - "書き込み途中の確定名ファイルは存在しない(SPEC-003-03)"
+      - req_id: "REQ-003"
+        spec_id: "SPEC-003-04"
+        scenarios:
+          - "background でも同じ 3 ファイルを残す(SPEC-003-04)"
+      - req_id: "REQ-004"
+        spec_id: "SPEC-004-04"
+        scenarios:
+          - "ローカル実行の slot は SSH せず runner のプロセスユーザーで実行する(SPEC-004-04)"
+      - req_id: "REQ-005"
+        spec_id: "SPEC-005-04"
+        scenarios:
+          - "RAPID_CROSSCHECK_MODE=off では管理 DB に触れず完了通知も送らない(SPEC-005-04)"
+          - "RAPID_CROSSCHECK_MODE=foreground でも background と同じく slot_executions を更新し完了通知を送る(SPEC-005-04)"
+      - req_id: "REQ-009"
+        spec_id: "SPEC-009-02"
+        scenarios:
+          - "復元起動はジョブマップを再解決しない(SPEC-009-02)"
+      - req_id: "REQ-010"
+        spec_id: "SPEC-010-01"
+        scenarios:
+          - "中止後に実装が終了した場合は exitcode.txt を優先して状態を導出する(SPEC-010-01)"
+          - "中止済み slot で runner が再起動されても実装を再実行しない(SPEC-010-01)"
+      - req_id: "REQ-011"
+        spec_id: "SPEC-011-06"
+        scenarios:
+          - "background slot をリランした run は slot の終端時に parallel_run を COMPLETED にする(SPEC-011-06)"
+  - business: "適用構成業務"
+    buc: "適用構成定義フロー"
+    uc: "feature flag を設定する"
+    files:
+      - spec.md
+      - tier-facade.md
+    api_count: 0
+    async_event_count: 1
+    usdm:
+      - req_id: "REQ-001"
+        spec_id: "SPEC-001-01"
+        scenarios:
+          - "並行稼働モードの feature flag を検証する(SPEC-001-01)"
+          - "元資料の 9 キーの feature flag は未知キー警告なしで検証を通過する(SPEC-001-01)"
+          - "off でない slot の実装版が無い feature flag は拒否される(SPEC-001-01)"
+          - "確報の制御キーは拒否される(SPEC-001-01)"
+          - "FINAL_ で始まる確報設定のキーは未知キーではなく拒否される(SPEC-001-01)"
+      - req_id: "REQ-001"
+        spec_id: "SPEC-001-02"
+        scenarios:
+          - "両 slot foreground の feature flag は検証で拒否される(SPEC-001-02)"
+      - req_id: "REQ-001"
+        spec_id: "SPEC-001-03"
+        scenarios:
+          - "単独本番モードの feature flag を検証する(SPEC-001-03)"
+          - "次世代並行稼働モードの feature flag を検証する(SPEC-001-03)"
+          - "ジョブ定義を変えずに feature flag だけで運用モードを切り替える(SPEC-001-03)"
+      - req_id: "REQ-005"
+        spec_id: "SPEC-005-04"
+        scenarios:
+          - "単独本番モードの feature flag を検証する(SPEC-001-03)"
+          - "速報有効時は速報 runner と worker の実体が必須である(SPEC-005-04)"
+  - business: "適用構成業務"
+    buc: "適用構成定義フロー"
+    uc: "slot runner の実体スクリプトを割り当てる"
+    files:
+      - spec.md
+      - tier-facade.md
+    api_count: 0
+    async_event_count: 1
+    usdm:
+      - req_id: "REQ-001"
+        spec_id: "SPEC-001-04"
+        scenarios:
+          - "runner 割当を検証する(SPEC-001-04)"
+          - "runner 実体を差し替えても facade は変更不要である(SPEC-001-04)"
+      - req_id: "REQ-002"
+        spec_id: "SPEC-002-03"
+        scenarios:
+          - "facade は設定された runner を runner IF で起動するだけである(SPEC-002-03)"
+          - "runner 実体を差し替えても facade は変更不要である(SPEC-001-04)"
+      - req_id: "REQ-013"
+        spec_id: "SPEC-013-01"
+        scenarios:
+          - "runner 実体を差し替えても facade は変更不要である(SPEC-001-04)"
+  - business: "適用構成業務"
+    buc: "適用構成定義フロー"
+    uc: "slot ごとのジョブマップを定義する"
+    files:
+      - spec.md
+      - tier-facade.md
+    api_count: 0
+    async_event_count: 1
+    usdm:
+      - req_id: "REQ-004"
+        spec_id: "SPEC-004-01"
+        scenarios:
+          - "有効なジョブマップを検証する(SPEC-004-01)"
+      - req_id: "REQ-004"
+        spec_id: "SPEC-004-02"
+        scenarios:
+          - "固定引数が JSON 配列でない行は拒否される(SPEC-004-02)"
+      - req_id: "REQ-004"
+        spec_id: "SPEC-004-03"
+        scenarios:
+          - "認証情報らしい値は警告される"
+      - req_id: "REQ-004"
+        spec_id: "SPEC-004-04"
+        scenarios:
+          - "元資料の列名の CSV ジョブマップを検証する(SPEC-004-04)"
+          - "fixed_params セルの JSON 配列を CSV クォート規則で解析する(SPEC-004-04)"
+          - "host と user の列を持たないローカル実行用ジョブマップを検証する(SPEC-004-04)"
+          - "credential_ref と map_version の列が無くてもエラーにならない(SPEC-004-04)"
+          - "方針資料の Windows 形式パスと非 ASCII の値を含むジョブマップを受理する(SPEC-004-04)"
+          - "方針資料の相対パスのジョブマップを受理する(SPEC-004-04)"
+          - "出力する値の制御文字は可視表記になる(SPEC-004-04)"
+      - req_id: "REQ-008"
+        spec_id: "SPEC-008-05"
+        scenarios:
+          - "hang_detect_limit_minutes の変更は次回以降の run に反映される(SPEC-008-05)"
+      - req_id: "REQ-013"
+        spec_id: "SPEC-013-01"
+        scenarios:
+          - "有効なジョブマップを検証する(SPEC-004-01)"
+  - business: "適用構成業務"
+    buc: "適用構成定義フロー"
+    uc: "クロスチェックのジョブマップと比較定義を定義する"
+    files:
+      - spec.md
+      - tier-final-crosscheck.md
+      - tier-rapid-crosscheck.md
+    api_count: 0
+    async_event_count: 0
+    usdm:
+      - req_id: "REQ-004"
+        spec_id: "SPEC-004-01"
+        scenarios:
+          - "比較定義と対象カタログを検証する(SPEC-004-01)"
+      - req_id: "REQ-004"
+        spec_id: "SPEC-004-04"
+        scenarios:
+          - "クロスチェックジョブマップと対象カタログは slot ジョブマップと同じ CSV 形式である(SPEC-004-04)"
+      - req_id: "REQ-013"
+        spec_id: "SPEC-013-01"
+        scenarios:
+          - "比較定義と対象カタログを検証する(SPEC-004-01)"
+      - req_id: "REQ-005"
+        spec_id: "SPEC-005-03"
+        scenarios:
+          - "job_id が重複している"
+  - business: "適用構成業務"
+    buc: "適用構成定義フロー"
+    uc: "切り替えた運用モードで業務ジョブを実行する"
+    files:
+      - spec.md
+      - tier-facade.md
+    api_count: 0
+    async_event_count: 1
+    usdm:
+      - req_id: "REQ-001"
+        spec_id: "SPEC-001-01"
+        scenarios:
+          - "並行稼働モードで業務ジョブを実行する(SPEC-001-03)"
+      - req_id: "REQ-001"
+        spec_id: "SPEC-001-03"
+        scenarios:
+          - "並行稼働モードで業務ジョブを実行する(SPEC-001-03)"
+          - "単独本番モードで業務ジョブを実行する(SPEC-001-03)"
+          - "ジョブ定義を変えずに並行稼働から単独本番へ切り替える(SPEC-001-03)"
+      - req_id: "REQ-001"
+        spec_id: "SPEC-001-04"
+        scenarios:
+          - "次世代並行稼働モードで業務ジョブを実行する(SPEC-001-04)"
+      - req_id: "REQ-005"
+        spec_id: "SPEC-005-04"
+        scenarios:
+          - "単独本番モードで業務ジョブを実行する(SPEC-001-03)"
+          - "並行稼働モードで業務ジョブを実行する(SPEC-001-03)"
+      - req_id: "REQ-013"
+        spec_id: "SPEC-013-01"
+        scenarios:
+          - "ジョブ定義を変えずに並行稼働から単独本番へ切り替える(SPEC-001-03)"
+cross_cutting:
+  ux_design:
+    user_flows: 4
+    ia_pages: 18
+    psychology_principles: 8
+  ui_design:
+    layout_patterns: 0
+    responsive_breakpoints: 0
+    component_guidelines: 0
+    output_conventions: "cli(stdout/stderr の key=value・TSV、終了コード 0/2/3/6、実行ログ行形式、通知メール規約)"
+  data_visualization:
+    target_screens: 3
+    chart_types: 0
+  openapi:
+    api_count: 0
+    note: "HTTP API なし。openapi.yaml はバリデータ互換スタブ。CLI コマンド契約の正本は _cross-cutting/api/cli-command-contract.yaml"
+  asyncapi:
+    async_event_count: 4
+  cli_command_contract:
+    file: "_cross-cutting/api/cli-command-contract.yaml"
+  datastore:
+    rdb_tables: 7
+  traceability:
+    file: "_cross-cutting/traceability-matrix.md"
+  extra_files:
+    - "_cross-cutting/uc-dependencies.md"
+    - "_cross-cutting/usdm-acceptance-matrix.md"
+    - "_cross-cutting/rdra-feedback.md"
+
+stats:
+  total_ucs: 32
+  total_apis: 0
+  total_async_events: 4
+  businesses: 5
+  bucs: 7
+
+review:
+  method: "差分更新(設定ファイル共通の入力の守備範囲・制御文字の表記・実装の前提・パス形式検査の撤回)の第三者レビュー: 観点 5(CR-001〜004 の完了条件 / 方針資料の CSV 例が検証 OK / 契約・UC・出力規約の三者一致 / Scenario 名の一致 / 実装・テスト可能性)、閾値 medium、最大 3 ラウンド。round 1 はオーケストレータの自己反証パス(fresh context のレビュアーが期限内に findings を返さなかったため)、round 2 / 3 は生成とは別コンテキストのサブエージェント + 修正(オーケストレータ)+ 機械検証(validateAllYaml / validateRdbSchema / validateSpecEvent / validateApiSummary / validateModelSummary / validateSpecProse / md-mermaid-lint)。記録は events 側 _review/ のみ、latest へはコピーしない"
+  rounds: 3
+  converged: true
+  final_state: "blocker 0 / 未解決 major 0(3 ラウンド。round 1 major 2 + minor 1(R-001 runner 契約の終了コード条件 / R-002 差し替え Scenario のタイミング制御と一時ファイル名 / R-003 CR の hint の回数。全件 fixed)、round 2 major 3 + minor 3(R-004 補助コマンド失敗 Scenario の実装依存 / R-005 一時ファイル出現と複製完了の窓 / R-006 JSON 配列解析の bash 単独と sed・awk の矛盾 / R-007 fixed_params 文言 / R-008 mktemp 失敗の分類 / R-009 feature flag 終了コード 6 の条件。全件 fixed)、round 3 検証パスで R-004〜R-009 全件 fixed を確認、新規 medium 1(R-010 mktemp が作るのは作業名。fixed)。収束)"
+  history:
+    - round: 1
+      event: "20260921_100000_feedback_impl_feedback_eff24f55"
+      findings: "major 2 / minor 1(R-001〜R-003。全件 fixed)"
+      resolution: "_review/round-1.yaml の resolved"
+    - round: 2
+      event: "20260921_100000_feedback_impl_feedback_eff24f55"
+      findings: "major 3 / minor 3(R-004〜R-009。全件 fixed)"
+      resolution: "_review/round-2.yaml の resolved"
+    - round: 3
+      event: "20260921_100000_feedback_impl_feedback_eff24f55"
+      findings: "R-004〜R-009 fixed を確認。新規 medium 1(R-010。fixed)"
+      resolution: "_review/round-3.yaml の resolved"
+  previous_event_history_note: "以下は前イベント 20260917_100000_feedback_impl_feedback_fd678b04_cycle2(toolbox:review-refute-loop 2 ラウンド: round 1 minor 1(R-001 新 Scenario の Given の前提範囲を明示)fixed、round 2 検証パスで指摘 0 件)/ 20260917_050000_feedback_impl_feedback_fd678b04 / 20260908_062000_feedback_spec_machine_readable / 20260908_024000_feedback_slot_status_wording / 20260907_131000_feedback_abort_consistency / 20260907_024000_feedback_todo_followup / 20260905_100000_feedback_todo_resolution / 20260830_202851_spec_generation の反証レビュー履歴(参照用)"
+  previous_event_history:
+    - round: 1
+      findings: "(20260917_050000)toolbox:review-refute-loop 3 ラウンド(観点 5 / 閾値 medium): round 1 major 1(R-001 応答時間予算の実測不整合)/ round 2 major 1(R-002 未応答判定基準の再掲)/ minor 4(R-003〜R-006)。全件 fixed。round 3 で指摘 0 件、収束"
+      resolution: "events/20260917_050000_feedback_impl_feedback_fd678b04/_review/round-1.yaml の resolved"
+    - round: 1
+      findings: "(20260908_062000)Step6.5 round-1(差分ファイルのみ対象): major 1(R-001 UC-30 の SPEC-002-03 行が SPEC-001-04 用 Scenario を指していた。表と usdm[] を差し替え fixed)+ minor 5(R-002 表の記載漏れ 3 Scenario の併記 / R-003 usdm-acceptance-matrix の対応 Scenario 列の usdm[] 追従 / R-004 Scenario 参照件数の統一 / R-005 表注記の区切り規則 / R-006 derived_from の object・配列 2 形の明記。全件 fixed)"
+      resolution: "events/20260908_062000_feedback_spec_machine_readable/_review/round-1.yaml の resolved"
+    - round: 1
+      findings: "(20260908_024000)Step6.5 round-1(差分ファイル 10 件のみ): blocker 0 / major 1(R-001)/ minor 5(R-002〜R-006)。全件 fixed(R-002〜R-005 は修正 subagent、R-001 / R-006 はオーケストレータ)"
+      resolution: "events/20260908_024000_feedback_slot_status_wording/_review/round-1.yaml の resolved"
+    - round: 1
+      findings: "(20260907_131000)step3/step4 round1: major 7 / minor 17 fixed。Step6.5 round-1: major 1(R-001 slot_executions.status の一度書き)/ minor 4 fixed"
+      resolution: "events/20260907_131000_feedback_abort_consistency/_review/"
+    - round: 2
+      findings: "(20260907_131000)step3/step4 round2: minor 6 fixed。Step6.5 round-2: minor 4(3 fixed、R-006 は round-3 へ)"
+      resolution: "events/20260907_131000_feedback_abort_consistency/_review/round-2.yaml"
+    - round: 3
+      findings: "(20260907_131000)Step6.5 round-3 検証パス: minor 3 fixed(R-006 は rdra-feedback #16 として記録。本イベントで解消)"
+      resolution: "events/20260907_131000_feedback_abort_consistency/_review/round-3.yaml"
+    - round: 1
+      findings: "(20260907_024000)step3/step4 round1: major 4 / minor 28 fixed。Step6.5 round-1: major 5 / minor 2 fixed(RDRA 変更要望 #13〜#15)"
+      resolution: "events/20260907_024000_feedback_todo_followup/_review/"
+    - round: 2
+      findings: "(20260907_024000)Step6.5 round-2: major 1(R-003 再掲)/ minor 2 fixed"
+      resolution: "events/20260907_024000_feedback_todo_followup/_review/round-2.yaml"
+    - round: 3
+      findings: "(20260907_024000)Step6.5 round-3 検証パス: minor 2 fixed"
+      resolution: "events/20260907_024000_feedback_todo_followup/_review/round-3.yaml"
+    - round: 1
+      findings: "(20260905_100000)step3/step4 round1: major 17 / minor 43 fixed。Step6.5 round-1: major 1 / minor 4(R-5 deferred)"
+      resolution: "events/20260905_100000_feedback_todo_resolution/_review/"
+    - round: 2
+      findings: "(20260905_100000)step3/step4 round2: minor 7 fixed。Step6.5 round-2: major 1 fixed"
+      resolution: "events/20260905_100000_feedback_todo_resolution/_review/"
+    - round: 3
+      findings: "(20260905_100000)Step6.5 round-3 検証パス: minor 1 fixed"
+      resolution: "events/20260905_100000_feedback_todo_resolution/_review/round-3.yaml"
+    - round: 1
+      findings: "(20260830_202851)blocker 1 / major 25(F-001〜F-026)+ minor(F-027〜F-044)"
+      resolution: "events/20260830_202851_spec_generation/_review/"
+    - round: 2
+      findings: "(20260830_202851)reopened major 1(F-032)+ 新規 major 9(F-101〜F-109)+ minor 33(F-110〜F-142)"
+      resolution: "events/20260830_202851_spec_generation/_review/"
+    - round: 3
+      findings: "(20260830_202851)reopened minor 1(F-141)+ 新規 major 1(F-201)+ 新規 minor 4(F-202〜F-205)"
+      resolution: "events/20260830_202851_spec_generation/_review/round-3-resolution.md(全件 fixed。deferred なし)"
+
+
+story_generation: not_applicable

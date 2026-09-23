@@ -1,0 +1,64 @@
+stage: "S4"
+tier: "tier-facade"
+attempt: 6
+uc_id: "eff24f55"
+manifest_sha256: "85d1ebda8af9b786c1abbfc4e09198f4716663209279349d7e7ad9c947902002"
+manifest_projection: v2
+result: pass
+rerun_reason: "仕様還流 cycle 2(spec event 20260923_112000_feedback_impl_feedback_eff24f55_cycle2。invalidated event 20260923_115100_stage_invalidated_eff24f55_spec_reflux_cycle2_stale)後の stale 由来の再実行。attempt 6 のまま。findings は渡されていない"
+changes:
+  - path: "facade/features/steps/define-slot-job-maps.steps.js"
+    summary: "S2 が追加した skeleton step 10 件を実装した(重複 job_id の lines=2,5(初出行を含む)/ 1 行だけ / 2・3・4 行重複の Given と Then、credential_ref の値 3 種を stdout と stderr に出さない Then、ssh key green と BEGIN_KEY の Given、warn が 1 行だけの Then)。feature から参照されなくなった旧文言の step(lines=2,5 の末尾に『(初出行 2 を含む)』が無い版)を削除した"
+  - path: "facade/src/domain/job_map.sh"
+    summary: "コメント 3 行の根拠表記だけを更新した(credential_ref の形式違反は契約 columns.credential_ref.on_format_violation、lines= は契約 validate-config.sh stderr の規則を根拠とする)。行数は不変で、処理の変更は無い"
+implementation_note: "新仕様(credential_ref の形式違反は理由を問わず同じ warn 1 行で受理し値を出さない / lines= は初出行を含む出現順)は旧 attempt 6 の実装で既に満たしていた。facade/src の処理は変更していない(git diff f33529d..HEAD -- facade/src facade/bin は空)"
+gates:
+  format: pass
+  lint: pass
+  tdd: pass
+  bdd_tier: pass
+gate_runs:
+  - gate: "format"
+    cwd: "facade"
+    command: "shfmt -d ."
+    exit_code: 0
+  - gate: "lint"
+    cwd: "facade"
+    command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+    exit_code: 0
+  - gate: "tdd"
+    cwd: "facade"
+    command: "bats -r test"
+    exit_code: 0
+    detail: "334 tests passed, 0 failed(S2 で追加された 10 件を含む)"
+  - gate: "bdd_tier"
+    cwd: "facade"
+    command: "npx cucumber-js --config ../cucumber.cjs features"
+    exit_code: 0
+    detail: "41 scenarios passed, 143 steps passed(define-slot-job-maps.feature 32 + configure-feature-flags.feature 9。S2 時点で fail していた追加・変更 5 Scenario が green)"
+assumptions:
+  path: "attempt-6/S4_tier-impl.tier-facade.assumptions.yaml"
+  count: 23
+  by_category:
+    input_validation: 1
+    data_format: 12
+    error_handling: 10
+    persistence: 0
+    performance: 0
+    security: 0
+  sha256: "0d5632b7da2ce5b1fdd39ed9dc7d5625312319ba0e01ee29765873e01def5412"
+  extraction:
+    candidate_count: 48
+    excluded_as_explicit: 25
+    recorded_count: 23
+  validator: "validateAssumptions.js record → ok: true"
+  changes_from_previous_attempt_6:
+    removed_as_now_explicit: ["A-012"]
+    added: []
+    note: "A-012(credential_ref の形式違反の扱い。security)は仕様で確定したため除外へ移した。根拠は cli-command-contract.yaml の config_files <slot>-job-map.csv columns.credential_ref(on_format_violation / output_rule)と tier-facade.md の『credential_ref の形式の扱い』表。lines= が初出行を含むことは契約 validate-config.sh stderr の lines= 規則で確定したが、旧記録に前提として無かったため件数は変わらない。A-025(複数の重複 job_id の error 行どうしの順序)は仕様に定義が無いため残した"
+findings_source: "none (stale 由来の再実行のため findings は渡されていない)"
+issues:
+  new: []
+  note: "仕様と実装の矛盾は無い。既存の issues/20260922_120000_duplicate-job-id-lines-contract-vs-bdd.md と issues/20260922_120100_credential-ref-warning-boundary-undefined.md は cycle 2 の仕様還流で解消済み(ファイルは書き捨てのため変更していない)"
+completed_at: "2026-09-23T13:00:00+09:00"
+completed_by: "dist-impl-implement@0.14.1"

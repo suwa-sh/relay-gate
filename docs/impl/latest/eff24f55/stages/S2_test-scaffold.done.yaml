@@ -1,0 +1,130 @@
+stage: S2
+uc_id: eff24f55
+manifest_sha256: 1c96b5d216dd8e2248eb6ab01d27da88edc475692681d5e5480fd39689bc24cc
+manifest_projection: v2
+result: pass
+scaffold_mode: scoped_rerun
+rerun_reason: "stale after spec reflux cycle 2 (spec event 20260923_112000_feedback_impl_feedback_eff24f55_cycle2; invalidated event 20260923_115100_stage_invalidated_eff24f55_spec_reflux_cycle2_stale). attempt 6 の実装を残したまま、指定 tier の scaffold だけを更新した"
+branch_slug: define-slot-job-maps
+attempt: 6
+scaffold_scope:
+  tiers:
+    - tier-facade
+  uc_feature: regenerated
+  atdd: untouched
+red_baseline: not_applicable
+red_baseline_note: "scoped 再実行のため red baseline は done 条件にしない(既存実装が残る)。再生成した feature / テストは全件 parse 可能で実行可能。BDD の新規・変更分の fail は全件 S2 skeleton の not implemented Error(未実装)。パースエラー・設定ミス・undefined step・ambiguous step は UC BDD / tier BDD / TDD で 0 件。TDD の追加 10 件は既存実装で全件 green"
+spec_changes:
+  - "重複 job_id の error 行の lines= を初出行を含む出現順の全行番号に統一。重複 job_id ごとに 1 行(3 行重複 lines=2,3,4 の tier Scenario を追加)"
+  - "credential_ref が参照名 ^[A-Za-z0-9_.-]*$ に合わない値と BEGIN を含む値は、理由を問わず同じ warn で受理し、値を診断に出さない(E2E Scenario 1 件・tier Scenario 2 件を追加)"
+transcription_check:
+  method: "spec.md / tier-facade.md の gherkin ブロックを抽出し、そのまま feature へ書き出すスクリプトで再生成(手入力なし)。先頭に出典コメント 2 行を付与"
+  uc_feature_verbatim: true
+  tier_feature_verbatim: true
+  diff_vs_previous: "差分は仕様の変更箇所と出典コメントの spec event 名だけ(git diff で確認)"
+generated:
+  uc_bdd:
+    feature: features/uc/define-slot-job-maps.feature
+    steps: features/uc/steps/define-slot-job-maps.steps.js
+    source: "docs/specs/latest/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/spec.md#E2E完了条件(BDD)"
+    scenarios: 24
+    scenarios_before: 23
+    scenarios_added: 1
+    scenarios_added_names:
+      - "参照名の形式に合わない credential_ref は同じ警告で受理され値は出力されない"
+    scenarios_changed_names:
+      - "job_id が重複するジョブマップは拒否される"
+      - "認証情報らしい値は警告される"
+    existing_steps_kept: true
+    skeleton_steps_added: 6
+    skeleton_note: "追加・変更された step 6 件を feature のリテラル完全一致で追加した。全件 'not implemented (S2 skeleton, UC BDD)' を throw する。既存の実装済み step(S6 成果)は変更していない。旧文言の step『終了コード 2 で stderr に \"error: duplicate job_id job_id=JOB001 lines=2,5\" が出る』は feature から参照されなくなったが削除していない(S6 で整理対象)"
+    cross_uc_scenarios: 2
+    cross_uc_note: "前回と同じ 2 件(SPEC-008-05 の execution-spec.json 前提 / 導入時 60 分の並行稼働モード前提)。追加・変更 Scenario の Then は全件本 UC(validate-config.sh --job-map)の責務に閉じ、新たな UC 横断 Scenario は無い。ハーネス注入は不要"
+  tier_bdd:
+    - tier: tier-facade
+      feature: facade/features/define-slot-job-maps.feature
+      steps: facade/features/steps/define-slot-job-maps.steps.js
+      source: "docs/specs/latest/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/tier-facade.md#ティア完了条件(BDD)"
+      scenarios: 32
+      scenarios_before: 29
+      scenarios_added: 3
+      scenarios_added_names:
+        - "validate-config_sh_job-map は 3 行以上の重複を初出行から全部列挙する"
+        - "validate-config_sh_job-map は参照名の形式に合わない credential_ref を同じ warn で受理し値を出さない"
+        - "validate-config_sh_job-map は正規表現に合っていても BEGIN を含む credential_ref を warn で報告する"
+      scenarios_changed_names:
+        - "validate-config_sh_job-map は job_id の重複を拒否する"
+        - "validate-config_sh_job-map は credential_ref のパス形式を warn で報告する"
+      existing_steps_kept: true
+      skeleton_steps_added: 10
+      skeleton_note: "追加・変更された step 10 件を追加した(全件 'not implemented (S2 skeleton, tier BDD)' を throw)。既存の step(S4 成果)は変更していない。旧文言の duplicate job_id の Then step は参照されなくなったが削除していない(S4 で整理対象)"
+  tdd:
+    - tier: tier-facade
+      files:
+        - facade/test/domain/job_map.bats
+        - facade/test/presentation/validate_config_job_map.bats
+      added_tests: 10
+      added_tests_by_file: "domain 5 / presentation 5"
+      updated_tests: 0
+      target: "validate_job_map_row(domain)/ validate-config.sh --job-map(CLI 実プロセス)"
+      added_focus:
+        - "credential_ref が空白・記号・非 ASCII を含む値、参照名形式で BEGIN を含む値は、同じ warn 1 行で受理する(domain)"
+        - "credential_ref が参照名形式(英数字・ドット・ハイフン・アンダースコア)なら warn を出さない(domain)"
+        - "重複 job_id は job_id ごとに 1 行で lines=2,5 / lines=2,3,4(初出行を含む出現順)(CLI)"
+        - "credential_ref の値(ssh key green / パス / BEGIN_KEY)は stdout / stderr のどこにも出さず、受理して rows= を出す(CLI)"
+      existing_tests_note: "既存テストは新仕様と矛盾しないため全件維持した(domain の重複検査は既に初出行を含む lines=2,5 / 2,4,6 を期待していた)"
+test_runs:
+  - stage: uc_bdd
+    cwd: "."
+    command: "npx cucumber-js --config cucumber.cjs features/uc"
+    exit_code: 1
+    summary: "36 scenarios (3 failed, 33 passed), 140 steps (3 failed, 5 skipped, 132 passed)"
+    fail_reason: not_implemented
+    failed_scope: "define-slot-job-maps.feature の追加 1・変更 2 Scenario(S2 skeleton の not implemented Error)。他の define-slot-job-maps 21 Scenario と configure-feature-flags 12 Scenario は全件 pass"
+    new_failed: 3
+    existing_green: 21
+    undefined_steps: 0
+    ambiguous_steps: 0
+  - stage: tier_bdd
+    tier: tier-facade
+    cwd: facade
+    command: "npx cucumber-js --config ../cucumber.cjs features"
+    exit_code: 1
+    summary: "41 scenarios (5 failed, 36 passed), 143 steps (5 failed, 10 skipped, 128 passed)"
+    fail_reason: not_implemented
+    failed_scope: "define-slot-job-maps.feature の追加 3・変更 2 Scenario(S2 skeleton の not implemented Error)。他の define-slot-job-maps 27 Scenario と configure-feature-flags 9 Scenario は全件 pass"
+    new_failed: 5
+    existing_green: 27
+    undefined_steps: 0
+    ambiguous_steps: 0
+  - stage: tdd
+    tier: tier-facade
+    cwd: facade
+    command: "bats -r test"
+    exit_code: 0
+    summary: "334 tests, 334 ok, 0 not ok"
+    fail_reason: none
+    new_green_added: 10
+    existing_green_note: "追加 10 件は既存実装(attempt 6 時点)で全件 green。重複 job_id の初出行を含む lines= と credential_ref の一律 warn・値の非表示は既に実装済みで、TDD 段では S4 の実装追従は不要と見込む。BDD の skeleton step の実装は S4(tier BDD)/ S6(UC BDD)で行う"
+  - stage: atdd
+    cwd: "."
+    command: "npx cucumber-js --config cucumber.cjs features/atdd --tags '@atdd_SPEC-004-04-4 or @atdd_SPEC-008-05-2'"
+    exit_code: 0
+    summary: "2 scenarios (2 passed), 6 steps (6 passed)"
+    fail_reason: none
+    note: "features/atdd は未変更(feature 本文・step とも触っていない)"
+format_check:
+  tier: tier-facade
+  command: "shfmt -d ."
+  exit_code: 0
+lint:
+  tier: tier-facade
+  command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+  exit_code: 0
+dom_snapshot_tests: not_applicable
+dom_snapshot_note: "has_design_system: false。frontend tier が無いため DOM 一致テスト・共通 helper は生成しない。矛盾 3 条件の確認対象も無い"
+issues:
+  - docs/impl/latest/eff24f55/issues/20260919_161456_cross-uc-scenarios.md
+issues_note: "新規起票なし。UC 横断 Scenario は前回起票の 2 件から増減なし。仕様と実装の矛盾・blocker は無い"
+completed_at: '2026-09-23T12:30:00+09:00'
+completed_by: dist-impl-implement@0.14.1

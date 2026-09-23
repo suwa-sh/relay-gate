@@ -1,0 +1,32 @@
+schema_version: "1.0"
+uc_id: "eff24f55"
+tier: "tier-facade"
+attempt: 6
+stage: "S5_verify"
+result: "pass"
+manifest_sha256: "f8cf17f93da5c6e63c9b3ce97c7fbc076f64c6174bd02d27757adf7c8b54ecb1"
+manifest_projection: "v2"
+gate_reexec:
+  format: "pass"
+  lint: "pass"
+  tdd: "pass"
+  bdd_tier: "pass"
+open_blockers: 0
+open_majors: 2
+open_minors: 28
+findings_path: "docs/impl/latest/eff24f55/stages/attempt-6/S5_verify.tier-facade.findings.yaml"
+assumptions_sha256: "af1e2927136c7f7492f683b87da2c641501dd8cb13bc34bb7fcb304ead0d514a"
+assumption_verdicts_sha256: "5e2cbb47dadcc37087c5758482956f2732a18cffcd6565f73932523d4b66c6e6"
+assumption_verdicts_summary:
+  consistent: 1
+  spec_absent: 23
+  contradicts: 0
+  unlisted: 0
+environment_failures: []
+completed_at: "2026-09-22T19:16:48+09:00"
+completed_by: "dist-impl-verify@0.14.1"
+validation:
+  yaml_parse: "pass"
+  raw_assumptions_hash: "pass"
+  verdict_structure: "pass"
+  note: "標準validateVerdictsのrecord hash照合だけをメモリ上でcanonicalに適合させ、保存値はユーザー指定の実バイトSHA-256を独立照合。"

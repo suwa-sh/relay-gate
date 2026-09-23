@@ -1,0 +1,71 @@
+schema_version: '1.0'
+uc_id: eff24f55
+business: 適用構成業務
+buc: 適用構成定義フロー
+uc: slot ごとのジョブマップを定義する
+state: completed
+current_attempt: 6
+resolved_models:
+  implementer: claude-opus-5-5
+  verifier: gpt-6-astra
+git_delivery:
+  required: true
+  uc_english_name: Define slot job maps
+  branch_slug: define-slot-job-maps
+  base_branch: main
+  base_head: 9bb6057dbc222e598bafeb0b38c2cb2b1df7b185
+  feature_branch: feature/define-slot-job-maps
+  remote: origin
+stages:
+  S1_uc_init:
+    status: done
+  S2_test_scaffold:
+    status: done
+    red_baseline: pass
+    mode: scoped_rerun
+    tiers:
+    - tier-facade
+  S3_contracts:
+    status: done
+  S4_tier_impl:
+    tier-facade:
+      status: done
+      attempt: 6
+      gates:
+        format: pass
+        lint: pass
+        tdd: pass
+        bdd_tier: pass
+  S5_verify:
+    tier-facade:
+      status: done
+      attempt: 6
+      result: pass
+      open_blockers: 0
+      open_major: 0
+  S6_uc_bdd:
+    status: done
+  S7_atdd:
+    status: done
+  S8_feedback:
+    status: done
+    mode: initial
+    request_count: 0
+    blocker_count: 0
+    draft_path: null
+    feedback_id: null
+  S9_review:
+    status: done
+    state: approved
+    review_event: 20260923_132000_s9_review_generated_eff24f55_cycle3
+    approved_event: 20260923_134000_review_approved_eff24f55_cycle3
+    delivery_prepared_event: 20260923_134100_delivery_prepared_eff24f55
+attempt_limit:
+  reached: true
+  user_decision: continue_once
+  decision_event: 20260922_110000_attempt_opened_eff24f55_a6
+  previous_decision_event: 20260919_195500_attempt_opened_eff24f55_a4
+updated_at: '2026-09-23T11:51:50+09:00'
+stale_rerun:
+  event: 20260923_115100_stage_invalidated_eff24f55_spec_reflux_cycle2_stale
+  attempt_kept: 6

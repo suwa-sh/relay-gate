@@ -1,0 +1,23 @@
+feedback request lineage (requirements stage)
+
+feedback_request_id: 20260919_213000_impl_feedback_eff24f55
+input_sha256: 1a7612598a0ed1d3378d7479b1614d6a6aa99ac90eae0fbf55b82e173784a431
+stage_packet: docs/pipeline/feedback-runs/20260919_213000_impl_feedback_eff24f55/stage-packets/requirements.md
+request_ids: CR-eff24f55-005
+direct_work_unit_ids: CR-eff24f55-005#1
+causal_work_unit_ids: CR-eff24f55-005#1
+
+feedback_request:
+  feedback_request_id: "20260919_213000_impl_feedback_eff24f55"
+  input_sha256: "1a7612598a0ed1d3378d7479b1614d6a6aa99ac90eae0fbf55b82e173784a431"
+  request_ids: ["CR-eff24f55-005"]
+  work_unit_ids: ["CR-eff24f55-005#1"]
+
+work unit → USDM 反映先(CR 本文は packet を正本とし、ここには複製しない)
+
+- CR-eff24f55-005#1 (hang-limit-adjustment-criteria-split): SPEC-008-05 の受け入れ基準 2(1 つの Then に、ジョブマップの列の事実と適用構成文書の記載が混在していた)を 2 つに分けた。
+  - 自動判定できる基準: 「Given slot ジョブマップが定義されている When ジョブマップの列を確認する Then hang_detect_limit_minutes の調整記録(調整日時・調整根拠)を保持する列は存在しない」
+  - 運用文書の記載: 先頭に「[自動判定の対象外: 運用文書の記載]」を付け、調整日時と調整根拠(警告時経過時間)を適用構成文書に残すこと、適用構成文書は relay-gate が読まない文書のため自動判定の対象にしないことを明記した。
+  - specification 本文、受け入れ基準 1、affected_models は変更していない。
+  - RDRA モデルは変更しない。情報「ハング検知上限設定」「適用構成文書」、条件「設定所有区分」、BUC「ハング検知上限の調整」は、調整記録をジョブマップの列に持たず適用構成文書に残すことを既に記述しており、受け入れ基準の分割で意味は変わらない(rdra/events は no-change manifest)。
+  - 方針資料との照合: しくみ資料は、導入時 60 分と、警告が出そろった後のジョブごとの調整だけを定める。調整記録の置き場の記載は無く、今回の分割は方針資料と矛盾しない。

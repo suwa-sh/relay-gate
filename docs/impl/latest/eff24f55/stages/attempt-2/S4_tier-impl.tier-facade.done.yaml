@@ -1,0 +1,91 @@
+stage: "S4"
+tier: "tier-facade"
+attempt: 2
+uc_id: "eff24f55"
+manifest_sha256: "f4528376203939a69f1860d8fba45c818c647fa63d56a44f2e91c8e6a2618c21"
+manifest_projection: v2
+result: pass
+gates:
+  format: pass
+  lint: pass
+  tdd: pass
+  bdd_tier: pass
+gate_runs:
+  - gate: "format"
+    cwd: "facade"
+    command: "shfmt -d ."
+    exit_code: 0
+  - gate: "lint"
+    cwd: "facade"
+    command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+    exit_code: 0
+  - gate: "tdd"
+    cwd: "facade"
+    command: "bats -r test"
+    exit_code: 0
+    detail: "168 tests passed, 0 failed"
+  - gate: "bdd_tier"
+    cwd: "facade"
+    command: "npx cucumber-js --config ../cucumber.cjs features"
+    exit_code: 0
+    detail: "23 scenarios passed, 74 steps passed"
+assumptions:
+  path: "attempt-2/S4_tier-impl.tier-facade.assumptions.yaml"
+  count: 17
+  by_category:
+    input_validation: 3
+    data_format: 9
+    error_handling: 3
+    persistence: 0
+    performance: 1
+    security: 1
+  sha256: "0c1b64e36b33616ed66a38600962beacea5a8bdc33a84d8023179abf8011be96"
+  extraction:
+    candidate_count: 36
+    excluded_as_explicit: 19
+    recorded_count: 17
+findings_source: "attempt-1/S5_verify.tier-facade.findings.yaml"
+findings_resolution:
+  - ids: ["F-001"]
+    severity: "blocker"
+    status: "fixed"
+    note: "job_map_fixed_params_parse が文字列内の未エスケープ制御文字 U+0001〜U+001F を違反として返す。実体 CSV の生 TAB / CR / ESC は終了コード 2 と fixed_params の error 行になる。bats を domain 5 件、usecase 3 件追加"
+  - ids: ["F-019"]
+    severity: "blocker"
+    status: "fixed"
+    note: "A-014 を書き直した。job_map_fixed_params_to_json は制御文字を必ずエスケープし、1 行の JSON 配列表記だけを出す。F-001 の修正で生の制御文字は検証を通過しないため、verbose に生 CR / ESC は出ない"
+  - ids: ["F-024"]
+    severity: "blocker"
+    status: "fixed"
+    note: "版の集計を全行の distinct 値に変更した。空の行と v1 の行は warn: mixed map_version values=-,v1 と map_version=-,v1 になる。全行空と列なしは map_version=- のまま。A-018 は空の値の表記の前提に書き直した"
+  - ids: ["F-002", "F-031"]
+    severity: "major"
+    status: "fixed"
+    note: "job_id 重複検査を安定ソートと隣接比較に変更した。あわせて repository の行取り出しの配列スライスが行数の 2 乗だったため添字アクセスに変更した。実測は 1000 行 0.56 秒、2000 行 1.09 秒、5000 行 2.64 秒(修正前は 2000 行 13.9 秒)。探索方式は A-024 に記録した"
+  - ids: ["F-017"]
+    severity: "major"
+    status: "not_fixed"
+    note: "A-012 は仕様に照合先が無い前提で、拒否へ変えると契約の stderr に無い error 行を発明することになる。警告のみで受理する実装を維持し、前提として S9 の人間判断に委ねる(Verifier の questions_for_orchestrator と同じ論点)"
+  - ids: ["F-003"]
+    severity: "minor"
+    status: "fixed"
+    note: "不正 JSON の 3 ケースを 1 テスト 1 Act に分割した"
+  - ids: ["F-005", "F-006", "F-010", "F-015", "F-018", "F-020", "F-028", "F-030"]
+    severity: "minor"
+    status: "fixed"
+    note: "仕様の復唱と判定された A-002 / A-003 / A-007 / A-011 / A-013 / A-015 / A-021 / A-023 を前提一覧から外し、excluded_as_explicit に数えた。A-015 のうち仕様に無い部分(複数の重複 job_id の出力順)は A-025 として記録した"
+  - ids: ["F-011", "F-016"]
+    severity: "minor"
+    status: "fixed"
+    note: "対象の A-007 / A-011 は復唱として前提一覧から外したため、分類の不一致も解消した"
+  - ids: ["F-022", "F-026"]
+    severity: "minor"
+    status: "fixed"
+    note: "A-016 / A-019 の category を data_format に変更した"
+  - ids: ["F-004", "F-007", "F-008", "F-009", "F-012", "F-013", "F-014", "F-021", "F-023", "F-025", "F-027", "F-029"]
+    severity: "minor"
+    status: "not_fixed"
+    note: "仕様に照合先が無い真の前提(spec_absent)であり、実装の変更対象ではない。A-001 / A-004 / A-005 / A-006 / A-008 / A-009 / A-010 / A-016 / A-017 / A-019 / A-020 / A-022 として前提一覧に残し、S9 の確認対象にする"
+issues_raised: []
+completed_at: "2026-09-19T07:51:18Z"
+completed_by: "dist-impl-implement@0.14.1"

@@ -1,0 +1,17 @@
+event_id: 20260919_171530_attempt_opened_eff24f55_a2
+type: attempt_opened
+uc_id: eff24f55
+attempt: 2
+payload:
+  reason: s5_blockers
+  from_attempt: 1
+  rerun_tiers:
+  - tier-facade
+  carried_forward_tiers: []
+  blocker_ids:
+  - F-001
+  - F-019
+  - F-024
+  findings:
+    verify: docs/impl/latest/eff24f55/stages/attempt-1/S5_verify.tier-facade.findings.yaml
+created_at: '2026-09-19T17:15:30+09:00'

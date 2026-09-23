@@ -1,0 +1,14 @@
+event_id: 20260922_083500_bootstrap_completed_p2_p7_rerun
+type: bootstrap_completed
+uc_id: null
+stage: S0
+payload:
+  mode: partial_rerun
+  rerun_phases: [P2_config, P7_atdd]
+  reason: 'spec_event (5387bab9 -> f3a1356e) and usdm (89316e19 -> f027bd61) changed by dist-pipeline feedback run 20260919_213000_impl_feedback_eff24f55; arch / contracts unchanged'
+  on_feature_branch: feature/define-slot-job-maps
+  branch_note: 'reflux artifacts exist only on the feature branch (blocked_on_spec resume exception); this bootstrap commit will be squashed into the UC commit'
+  p2_result: 'content-stable: uc-map / impl-config unchanged (32 UC, 4 tiers), no config_confirmed'
+  p7_result: '50 features / 123 scenarios; only features/atdd/SPEC-008-05.feature changed (SPEC-008-05-2 reworded, SPEC-008-05-3 added with @manual)'
+  inputs_sha256_updated: [spec_event, usdm, conditional_inputs.cli_command_contract]
+created_at: '2026-09-22T08:35:00+09:00'

@@ -1,0 +1,83 @@
+{
+  "schema_version": "distillery.feedback-run-status/v1",
+  "feedback_request_id": "20260919_213000_impl_feedback_eff24f55",
+  "input_sha256": "1a7612598a0ed1d3378d7479b1614d6a6aa99ac90eae0fbf55b82e173784a431",
+  "ambiguity_policy": "interactive",
+  "state": "completed",
+  "stages": [
+    {
+      "id": "requirements",
+      "state": "completed",
+      "event_ids": [
+        "20260921_084000_feedback_stage_requirements"
+      ],
+      "direct_work_unit_ids": [
+        "CR-eff24f55-005#1"
+      ],
+      "causal_work_unit_ids": [
+        "CR-eff24f55-005#1"
+      ]
+    },
+    {
+      "id": "quality_attributes",
+      "state": "completed",
+      "event_ids": [
+        "20260921_090000_feedback_stage_quality_attributes"
+      ],
+      "direct_work_unit_ids": [
+        "CR-eff24f55-004#1"
+      ],
+      "causal_work_unit_ids": [
+        "CR-eff24f55-004#1",
+        "CR-eff24f55-005#1"
+      ]
+    },
+    {
+      "id": "architecture",
+      "state": "completed",
+      "event_ids": [
+        "20260921_092000_feedback_stage_architecture"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-eff24f55-004#1",
+        "CR-eff24f55-005#1"
+      ]
+    },
+    {
+      "id": "infrastructure",
+      "state": "completed",
+      "event_ids": [
+        "20260921_094000_feedback_stage_infrastructure"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-eff24f55-004#1",
+        "CR-eff24f55-005#1"
+      ]
+    },
+    {
+      "id": "spec",
+      "state": "completed",
+      "event_ids": [
+        "20260921_100000_feedback_stage_spec"
+      ],
+      "direct_work_unit_ids": [
+        "CR-eff24f55-001#1",
+        "CR-eff24f55-002#1",
+        "CR-eff24f55-003#1",
+        "CR-eff24f55-004#2"
+      ],
+      "causal_work_unit_ids": [
+        "CR-eff24f55-001#1",
+        "CR-eff24f55-002#1",
+        "CR-eff24f55-003#1",
+        "CR-eff24f55-004#1",
+        "CR-eff24f55-004#2",
+        "CR-eff24f55-005#1"
+      ]
+    }
+  ],
+  "run_id": "feedback-20260919_213000_impl_feedback_eff24f55-20260921_082612-74150",
+  "attempt": 1
+}

@@ -1,0 +1,48 @@
+event_id: 20260922_134000_review_approved_eff24f55_cycle2
+type: review_approved
+uc_id: eff24f55
+stage: S9
+payload:
+  review_evidence_event_id: 20260922_133000_s9_review_generated_eff24f55_cycle2
+  approval_kind: feedback_publish_permission
+  user_answer: '機能=A / 変更要求の公開=A / CR-007=A / 前提=一括承認'
+  feedback_review_evidence:
+    feedback_id: 20260922_130000_impl_feedback_eff24f55
+    draft_sha256: 8adc8bc900ebe6eb57209cee7c4ed2c727b1313c462a6052efd720b2f31cb2fa
+    request_count: 2
+  implementation_review_evidence:
+    gate_result: '6/6 pass'
+    open_blocker_count: 0
+    open_major_count: 2
+    assumption_evidence_sha256: 2201c35792fe76b255963dbcb998c17543ffdd51ae751926a1dd0a2050ebb32c
+  selections:
+    CR-eff24f55-007: 'A: 形に合わない credential_ref は現行どおり warn で受理(error にしない)'
+  assumption_decisions:
+  - {tier: tier-facade, id: A-005, decision: confirmed}
+  - {tier: tier-facade, id: A-006, decision: confirmed}
+  - {tier: tier-facade, id: A-008, decision: confirmed}
+  - {tier: tier-facade, id: A-010, decision: confirmed}
+  - {tier: tier-facade, id: A-012, decision: confirmed, note: 'required answer; consistent with CR-eff24f55-007 = A'}
+  - {tier: tier-facade, id: A-014, decision: confirmed}
+  - {tier: tier-facade, id: A-016, decision: confirmed}
+  - {tier: tier-facade, id: A-017, decision: confirmed}
+  - {tier: tier-facade, id: A-018, decision: confirmed}
+  - {tier: tier-facade, id: A-019, decision: confirmed}
+  - {tier: tier-facade, id: A-020, decision: confirmed}
+  - {tier: tier-facade, id: A-022, decision: confirmed}
+  - {tier: tier-facade, id: A-025, decision: confirmed}
+  - {tier: tier-facade, id: A-043, decision: confirmed}
+  - {tier: tier-facade, id: A-044, decision: confirmed}
+  - {tier: tier-facade, id: A-049, decision: confirmed}
+  - {tier: tier-facade, id: A-050, decision: confirmed}
+  - {tier: tier-facade, id: A-051, decision: confirmed}
+  - {tier: tier-facade, id: A-052, decision: confirmed}
+  - {tier: tier-facade, id: A-053, decision: confirmed}
+  - {tier: tier-facade, id: A-054, decision: confirmed}
+  - {tier: tier-facade, id: A-055, decision: confirmed}
+  - {tier: tier-facade, id: A-056, decision: confirmed}
+  - {tier: tier-facade, id: A-057, decision: confirmed}
+  assumption_hash_recheck: {assumptions_sha256: af1e2927136c7f7492f683b87da2c641501dd8cb13bc34bb7fcb304ead0d514a, assumption_verdicts_sha256: 5e2cbb47dadcc37087c5758482956f2732a18cffcd6565f73932523d4b66c6e6, rechecked_at: '2026-09-22T13:40:00+09:00'}
+  review_notes: docs/impl/latest/eff24f55/review/review-notes.md
+  next_state: publishing_feedback
+created_at: '2026-09-22T13:40:00+09:00'

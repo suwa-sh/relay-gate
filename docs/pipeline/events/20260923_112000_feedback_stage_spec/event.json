@@ -1,0 +1,333 @@
+{
+  "event_id": "20260923_112000_feedback_stage_spec",
+  "type": "feedback_stage_completed",
+  "run_id": "feedback-20260922_130000_impl_feedback_eff24f55-20260923_110656-17997",
+  "attempt": 1,
+  "created_at": "2026-09-23T11:20:00Z",
+  "stage": "spec",
+  "direct_work_unit_ids": [
+    "CR-eff24f55-006#1",
+    "CR-eff24f55-007#1"
+  ],
+  "causal_work_unit_ids": [
+    "CR-eff24f55-006#1",
+    "CR-eff24f55-007#1"
+  ],
+  "work_unit_results": [
+    {
+      "work_unit_id": "CR-eff24f55-006#1",
+      "disposition": "applied",
+      "reason": "validate-config.sh の重複報告(duplicate job_id / duplicate target)の lines= を『そのキーが現れた全行の物理行番号を初出行を含めて出現順(昇順)にカンマ区切りで並べる。重複したキーごとに error 1 行』に一本化(要求本文の推奨。利用者の事前指定)。正本を cli-command-contract.yaml の validate-config.sh stderr(検証種別を問わず共通)に置き、UC「slot ごとのジョブマップを定義する」の列検証表・分岐条件・BDD(lines=2,5 を維持、ティアに 3 行重複 lines=2,3,4 を追加)、UC「クロスチェックのジョブマップと比較定義を定義する」の検証ルール #4 / #5 と BDD(lines=5,6 / lines=2,3)、UC「ジョブマップで JOB_ID から実行先を解決する」の実行ログ WARN を同じ規則にそろえた。2 行目と 5 行目に同じ job_id がある入力の期待出力 lines=2,5 が本文だけから一意に決まる。判断は spec-decision-014。反証レビュー 3 ラウンド収束、validateSpecEvent PASS",
+      "artifact_refs": [
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/spec.md",
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/tier-facade.md",
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/_api-summary.yaml",
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/spec.md",
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/tier-rapid-crosscheck.md",
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/tier-final-crosscheck.md",
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/実装切替業務/実装切替ジョブ実行フロー/ジョブマップで JOB_ID から実行先を解決する/tier-facade.md",
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/decisions/spec-decision-014.yaml",
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/spec-event.yaml"
+      ]
+    },
+    {
+      "work_unit_id": "CR-eff24f55-007#1",
+      "disposition": "applied",
+      "reason": "参照名 ^[A-Za-z0-9_.-]*$ に合わない credential_ref は / や BEGIN を含むかどうかにかかわらず同じ warn: credential_ref looks like a secret or path line=N job_id=<v> を 1 行出して受理(利用者が選択した案 A。拒否しない、終了コードに影響しない)。拒否しない理由(参照名の形式は認証情報ストアの運用に依存)と、credential_ref の値を診断行(validate-config.sh の stdout / stderr、slot runner の stderr / 実行ログ)に一切出さない規則を CLI 契約 conventions.credentials と columns.credential_ref に明記。UC「slot ごとのジョブマップを定義する」の『仮採用』注記を確定内容へ置換し、値の種類ごとの扱いの表と BDD(E2E に SPEC-004-03 の Scenario 1 件、ティアに 2 件)を追加。受理した値は execution-spec.json へ加工せず転記されることを UC「execution-spec.json を確定保存する」にも明記(ティアに Scenario 1 件)。判断は spec-decision-015。反証レビュー 3 ラウンド収束、validateSpecEvent PASS",
+      "artifact_refs": [
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/spec.md",
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/tier-facade.md",
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/_api-summary.yaml",
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/実装切替業務/実装切替ジョブ実行フロー/execution-spec.json を確定保存する/spec.md",
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/実装切替業務/実装切替ジョブ実行フロー/execution-spec.json を確定保存する/tier-facade.md",
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/_cross-cutting/usdm-acceptance-matrix.md",
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/_cross-cutting/traceability-matrix.md",
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/decisions/spec-decision-015.yaml",
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/spec-event.yaml"
+      ]
+    }
+  ],
+  "reconciliation_results": [
+    {
+      "work_unit_id": "CR-eff24f55-006#1",
+      "status": "changed",
+      "reason": "validate-config.sh の重複報告(duplicate job_id / duplicate target)の lines= を『そのキーが現れた全行の物理行番号を初出行を含めて出現順(昇順)にカンマ区切りで並べる。重複したキーごとに error 1 行』に一本化(要求本文の推奨。利用者の事前指定)。正本を cli-command-contract.yaml の validate-config.sh stderr(検証種別を問わず共通)に置き、UC「slot ごとのジョブマップを定義する」の列検証表・分岐条件・BDD(lines=2,5 を維持、ティアに 3 行重複 lines=2,3,4 を追加)、UC「クロスチェックのジョブマップと比較定義を定義する」の検証ルール #4 / #5 と BDD(lines=5,6 / lines=2,3)、UC「ジョブマップで JOB_ID から実行先を解決する」の実行ログ WARN を同じ規則にそろえた。2 行目と 5 行目に同じ job_id がある入力の期待出力 lines=2,5 が本文だけから一意に決まる。判断は spec-decision-014。反証レビュー 3 ラウンド収束、validateSpecEvent PASS",
+      "artifact_refs": [
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/spec.md",
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/tier-facade.md",
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/_api-summary.yaml",
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/spec.md",
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/tier-rapid-crosscheck.md",
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/tier-final-crosscheck.md",
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/実装切替業務/実装切替ジョブ実行フロー/ジョブマップで JOB_ID から実行先を解決する/tier-facade.md",
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/decisions/spec-decision-014.yaml",
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/spec-event.yaml"
+      ]
+    },
+    {
+      "work_unit_id": "CR-eff24f55-007#1",
+      "status": "changed",
+      "reason": "参照名 ^[A-Za-z0-9_.-]*$ に合わない credential_ref は / や BEGIN を含むかどうかにかかわらず同じ warn: credential_ref looks like a secret or path line=N job_id=<v> を 1 行出して受理(利用者が選択した案 A。拒否しない、終了コードに影響しない)。拒否しない理由(参照名の形式は認証情報ストアの運用に依存)と、credential_ref の値を診断行(validate-config.sh の stdout / stderr、slot runner の stderr / 実行ログ)に一切出さない規則を CLI 契約 conventions.credentials と columns.credential_ref に明記。UC「slot ごとのジョブマップを定義する」の『仮採用』注記を確定内容へ置換し、値の種類ごとの扱いの表と BDD(E2E に SPEC-004-03 の Scenario 1 件、ティアに 2 件)を追加。受理した値は execution-spec.json へ加工せず転記されることを UC「execution-spec.json を確定保存する」にも明記(ティアに Scenario 1 件)。判断は spec-decision-015。反証レビュー 3 ラウンド収束、validateSpecEvent PASS",
+      "artifact_refs": [
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/spec.md",
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/tier-facade.md",
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/_api-summary.yaml",
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/実装切替業務/実装切替ジョブ実行フロー/execution-spec.json を確定保存する/spec.md",
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/実装切替業務/実装切替ジョブ実行フロー/execution-spec.json を確定保存する/tier-facade.md",
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/_cross-cutting/usdm-acceptance-matrix.md",
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/_cross-cutting/traceability-matrix.md",
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/decisions/spec-decision-015.yaml",
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/spec-event.yaml"
+      ]
+    }
+  ],
+  "work_unit_evidence_refs": [
+    {
+      "work_unit_id": "CR-eff24f55-006#1",
+      "path": "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/spec.md",
+      "sha256": "a5ad57f190f7660bc5999f9860f2d10a0f1ddfa7a91be50a8bee326b9c15d3d8"
+    },
+    {
+      "work_unit_id": "CR-eff24f55-006#1",
+      "path": "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/tier-facade.md",
+      "sha256": "64a77e8bde3904684bf35e0bde9df4fa245bb5f9fabbd7ab943603b473c2f35d"
+    },
+    {
+      "work_unit_id": "CR-eff24f55-006#1",
+      "path": "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/_api-summary.yaml",
+      "sha256": "273e8f036bd58f5be3aef237760de8baf94bd77e6190ec196b51676b6ba0cf13"
+    },
+    {
+      "work_unit_id": "CR-eff24f55-006#1",
+      "path": "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/spec.md",
+      "sha256": "8adfe0f0e02107508cd5b1457cbd1282c0d97a90632f6d1a04ee9988f49e9a87"
+    },
+    {
+      "work_unit_id": "CR-eff24f55-006#1",
+      "path": "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/tier-rapid-crosscheck.md",
+      "sha256": "25bbd5f99ff145733f79075893acd7a1fb93dd05a689bf87e34c00601e920667"
+    },
+    {
+      "work_unit_id": "CR-eff24f55-006#1",
+      "path": "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/tier-final-crosscheck.md",
+      "sha256": "959f53375c5703ef482687dc4bd95a1cb9dc1a36c8aaf0f3f46f8419a448caf3"
+    },
+    {
+      "work_unit_id": "CR-eff24f55-006#1",
+      "path": "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/実装切替業務/実装切替ジョブ実行フロー/ジョブマップで JOB_ID から実行先を解決する/tier-facade.md",
+      "sha256": "680f2ec286b3d589bf297c5438a94d7b82b576e3f719e5a52ac123278b4b5679"
+    },
+    {
+      "work_unit_id": "CR-eff24f55-006#1",
+      "path": "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/_cross-cutting/api/cli-command-contract.yaml",
+      "sha256": "2c7b320a9caed338204b58d80abcb63caf848b96f102f9648c463060b1593ad3"
+    },
+    {
+      "work_unit_id": "CR-eff24f55-006#1",
+      "path": "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/decisions/spec-decision-014.yaml",
+      "sha256": "f0d9b876f8d3d91face7af3ff522ad9f1976a1887516bad821395765f643aafa"
+    },
+    {
+      "work_unit_id": "CR-eff24f55-006#1",
+      "path": "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/spec-event.yaml",
+      "sha256": "2f08c58c5b7fd348d323253f9f0c0fe255b32390e89d0b426d97cb246647505d"
+    },
+    {
+      "work_unit_id": "CR-eff24f55-007#1",
+      "path": "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/spec.md",
+      "sha256": "a5ad57f190f7660bc5999f9860f2d10a0f1ddfa7a91be50a8bee326b9c15d3d8"
+    },
+    {
+      "work_unit_id": "CR-eff24f55-007#1",
+      "path": "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/tier-facade.md",
+      "sha256": "64a77e8bde3904684bf35e0bde9df4fa245bb5f9fabbd7ab943603b473c2f35d"
+    },
+    {
+      "work_unit_id": "CR-eff24f55-007#1",
+      "path": "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/_api-summary.yaml",
+      "sha256": "273e8f036bd58f5be3aef237760de8baf94bd77e6190ec196b51676b6ba0cf13"
+    },
+    {
+      "work_unit_id": "CR-eff24f55-007#1",
+      "path": "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/実装切替業務/実装切替ジョブ実行フロー/execution-spec.json を確定保存する/spec.md",
+      "sha256": "60ed1738c196aa5bda2d74fc40d4b881b69179b8855adf9dfe95fef323ea6d07"
+    },
+    {
+      "work_unit_id": "CR-eff24f55-007#1",
+      "path": "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/実装切替業務/実装切替ジョブ実行フロー/execution-spec.json を確定保存する/tier-facade.md",
+      "sha256": "725bdd9206a84870fa033f9458e46c9dab72a371a2c575100a14e8111c4c0cfc"
+    },
+    {
+      "work_unit_id": "CR-eff24f55-007#1",
+      "path": "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/_cross-cutting/api/cli-command-contract.yaml",
+      "sha256": "2c7b320a9caed338204b58d80abcb63caf848b96f102f9648c463060b1593ad3"
+    },
+    {
+      "work_unit_id": "CR-eff24f55-007#1",
+      "path": "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/_cross-cutting/usdm-acceptance-matrix.md",
+      "sha256": "201b5f53703c04ed1a0f45389da07e01858f1730cd3498897bbb7c7c6f13dc82"
+    },
+    {
+      "work_unit_id": "CR-eff24f55-007#1",
+      "path": "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/_cross-cutting/traceability-matrix.md",
+      "sha256": "6121d586742bfded8d6609a006298ba04ef202eb5c43ca3cfee54351d27e6f70"
+    },
+    {
+      "work_unit_id": "CR-eff24f55-007#1",
+      "path": "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/decisions/spec-decision-015.yaml",
+      "sha256": "16142597e97fd6234e6c95415a6c8324db9bbdf531a3229eaac5076e175c82e3"
+    },
+    {
+      "work_unit_id": "CR-eff24f55-007#1",
+      "path": "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/spec-event.yaml",
+      "sha256": "2f08c58c5b7fd348d323253f9f0c0fe255b32390e89d0b426d97cb246647505d"
+    }
+  ],
+  "domain_event_refs": [
+    {
+      "path": "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/spec-event.yaml",
+      "sha256": "2f08c58c5b7fd348d323253f9f0c0fe255b32390e89d0b426d97cb246647505d"
+    }
+  ],
+  "feedback_request": {
+    "feedback_request_id": "20260922_130000_impl_feedback_eff24f55",
+    "input_sha256": "8adc8bc900ebe6eb57209cee7c4ed2c727b1313c462a6052efd720b2f31cb2fa",
+    "request_ids": [
+      "CR-eff24f55-006",
+      "CR-eff24f55-007"
+    ],
+    "work_unit_ids": [
+      "CR-eff24f55-006#1",
+      "CR-eff24f55-007#1"
+    ]
+  },
+  "post_execution_basis": {
+    "repository_head": "e239ef41611726b3295a73ac6a0b45de395320da",
+    "latest_domain_event_ids": {
+      "requirements": {
+        "rdra/events": "20260921_084000_feedback_impl_feedback_eff24f55",
+        "usdm/events": "20260921_084000_feedback_impl_feedback_eff24f55"
+      },
+      "quality_attributes": {
+        "nfr/events": "20260921_090000_feedback_impl_feedback_eff24f55"
+      },
+      "architecture": {
+        "arch/events": "20260921_092000_feedback_impl_feedback_eff24f55"
+      },
+      "infrastructure": {
+        "infra/events": "20260921_094000_feedback_impl_feedback_eff24f55"
+      },
+      "design_system": {
+        "design/events": null
+      },
+      "spec": {
+        "specs/events": "20260923_112000_feedback_impl_feedback_eff24f55_cycle2"
+      },
+      "spec_stories": {
+        "design/events": null
+      }
+    },
+    "domain_event_root_snapshots": {
+      "rdra/events": {
+        "head_event_id": "20260921_084000_feedback_impl_feedback_eff24f55",
+        "head_event_sha256": "421512202ca356ccc68b143cc3ca7a4cdf4f108ea11c8b207c0def1cd41db8d1",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency",
+          "20260908_011000_feedback_slot_status_wording",
+          "20260921_084000_feedback_impl_feedback_eff24f55"
+        ],
+        "event_set_sha256": "f434696849b1faa85f5bebe6f894bbe73d1772e5cdc65b0aaf99792cd5e21f51",
+        "latest_tree_sha256": "fb37aebe9d1e9fccd46c51cc14f0450b93bf14bc39322450ffbc7fbb018935b1"
+      },
+      "usdm/events": {
+        "head_event_id": "20260921_084000_feedback_impl_feedback_eff24f55",
+        "head_event_sha256": "45d8dcad71f260874c4b70352c44e9a23a45d7abc0ba7d5593b31ab0b5921f0e",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency",
+          "20260908_011000_feedback_slot_status_wording",
+          "20260921_084000_feedback_impl_feedback_eff24f55"
+        ],
+        "event_set_sha256": "f434696849b1faa85f5bebe6f894bbe73d1772e5cdc65b0aaf99792cd5e21f51",
+        "latest_tree_sha256": "ca19848d203557386a9a5b0a5bd53c974d11a5accca4d70a836eb744d2ebba04"
+      },
+      "nfr/events": {
+        "head_event_id": "20260921_090000_feedback_impl_feedback_eff24f55",
+        "head_event_sha256": "3f75dbd8c72aec66c3f224fc67635753f9139b6860f86dc7b8e97dfbb730547d",
+        "event_ids": [
+          "20260830_183726_initial_nfr",
+          "20260905_085000_feedback_todo_resolution",
+          "20260907_013000_feedback_todo_followup",
+          "20260907_120000_feedback_abort_consistency",
+          "20260908_013000_feedback_slot_status_wording",
+          "20260921_090000_feedback_impl_feedback_eff24f55"
+        ],
+        "event_set_sha256": "f9243291281a4f8a2864bcbf31196de5d721e6fb22101bcb6cfb82333a456675",
+        "latest_tree_sha256": "2ddb87e576893f7712d7adaf340a4c4d23060c995060b3529e6a0e41941a6bee"
+      },
+      "arch/events": {
+        "head_event_id": "20260921_092000_feedback_impl_feedback_eff24f55",
+        "head_event_sha256": "e01f88ca0e53b820f8469f60dc5ea6d8c8d66b26fea94791a9a98d9546f78a65",
+        "event_ids": [
+          "20260830_184457_initial_arch",
+          "20260830_202427_arch_infra_feedback_20260830_190412_infra_product_design",
+          "20260905_091000_feedback_todo_resolution",
+          "20260907_015000_feedback_todo_followup",
+          "20260907_122000_feedback_abort_consistency",
+          "20260908_015000_feedback_slot_status_wording",
+          "20260921_092000_feedback_impl_feedback_eff24f55"
+        ],
+        "event_set_sha256": "75ff4bf3bdc1c2e43b532d97801da1c15cb432744d9be94962de98d6627fbe54",
+        "latest_tree_sha256": "0a975f848804dd5bc3d5cf328a5e9717f2e22eb489e1e5f4c477538b77c0b91d"
+      },
+      "infra/events": {
+        "head_event_id": "20260921_094000_feedback_impl_feedback_eff24f55",
+        "head_event_sha256": "4e8aac19d2385f68628db8d2a2e56c897996498309c8d73cb6e18a701a0229ab",
+        "event_ids": [
+          "20260830_190412_infra_product_design",
+          "20260905_093000_feedback_todo_resolution",
+          "20260907_021000_feedback_todo_followup",
+          "20260907_124000_feedback_abort_consistency",
+          "20260908_021000_feedback_slot_status_wording",
+          "20260921_094000_feedback_impl_feedback_eff24f55"
+        ],
+        "event_set_sha256": "83fa5473706346251afed8bdb2d56fdec0a843d1b9b810c1a161faac02d6d9a3",
+        "latest_tree_sha256": "639f743d85b997e1297610b2a7c2db41fd004e74473f96ec6292b601509a6331"
+      },
+      "design/events": {
+        "head_event_id": null,
+        "head_event_sha256": null,
+        "event_ids": [],
+        "event_set_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "latest_tree_sha256": null
+      },
+      "specs/events": {
+        "head_event_id": "20260923_112000_feedback_impl_feedback_eff24f55_cycle2",
+        "head_event_sha256": "733252b1eb4974060d0214f300325fff032e02dc3280d09f4f6b8d3bbb354e7f",
+        "event_ids": [
+          "20260830_202851_spec_generation",
+          "20260905_100000_feedback_todo_resolution",
+          "20260907_024000_feedback_todo_followup",
+          "20260907_131000_feedback_abort_consistency",
+          "20260908_024000_feedback_slot_status_wording",
+          "20260908_062000_feedback_spec_machine_readable",
+          "20260917_050000_feedback_impl_feedback_fd678b04",
+          "20260917_100000_feedback_impl_feedback_fd678b04_cycle2",
+          "20260921_100000_feedback_impl_feedback_eff24f55",
+          "20260923_112000_feedback_impl_feedback_eff24f55_cycle2"
+        ],
+        "event_set_sha256": "911c360cf82cf12de3c8d314c54915af59ec52db248b325427f21adf0422be84",
+        "latest_tree_sha256": "bd19eaf49f9ce40c4d62fee13e8207cca97a117132a86f7e62d8f8cdfa879ae1"
+      }
+    }
+  }
+}

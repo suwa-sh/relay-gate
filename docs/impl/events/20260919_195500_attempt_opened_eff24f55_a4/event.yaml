@@ -1,0 +1,23 @@
+event_id: 20260919_195500_attempt_opened_eff24f55_a4
+type: attempt_opened
+uc_id: eff24f55
+attempt: 4
+payload:
+  reason: s5_blockers_user_approved_beyond_limit
+  from_attempt: 3
+  rerun_tiers:
+  - tier-facade
+  carried_forward_tiers: []
+  blocker_ids:
+  - F-001
+  - F-002
+  - F-025
+  findings:
+    verify: docs/impl/latest/eff24f55/stages/attempt-3/S5_verify.tier-facade.findings.yaml
+  user_decision:
+    decided_at: '2026-09-19T19:55:00+09:00'
+    review_material: tmp/reviews/define-slot-job-maps-attempt-limit-review.html
+    proceed: 'A: 残り 3 件を直して、もう 1 回だけ検証する。同じ種類の新しい穴がまた出たら、直さずに仕様の確認待ちへ切り替える'
+    malformed_input_policy: '拒否: 既存のエラー文言で拒否し、表示は安全な表記へ置き換える。文言の妥当性は仕様への変更要求に含める'
+  stop_rule: 'attempt 4 の S5 で同種(異常入力・異常環境の堅牢性)の新規 blocker が出た場合は S4 へ差し戻さず、issues 起票のうえ S8 で変更要求化して blocked_on_spec の経路へ進む'
+created_at: '2026-09-19T19:55:00+09:00'

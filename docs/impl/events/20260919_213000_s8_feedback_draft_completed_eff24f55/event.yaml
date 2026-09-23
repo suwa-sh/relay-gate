@@ -1,0 +1,22 @@
+event_id: 20260919_213000_s8_feedback_draft_completed_eff24f55
+type: stage_completed
+uc_id: eff24f55
+stage: S8
+payload:
+  manifest_sha256: f4528376203939a69f1860d8fba45c818c647fa63d56a44f2e91c8e6a2618c21
+  manifest_projection: v2
+  result: pass
+  mode: initial
+  feedback_id: 20260919_213000_impl_feedback_eff24f55
+  draft_path: docs/impl/latest/eff24f55/feedback/draft.md
+  draft_sha256: 784e06d7d194f4642f5cf00a46de1abc5704f63c67d287b2528eaf5599b134b6
+  request_count: 5
+  severity_counts:
+    blocker: 1
+    spec-gap: 3
+    improvement: 1
+  open_blocker_handling: 'attempt-4 F-001 は実装へ差し戻さず CR-eff24f55-001 (blocker) として仕様の確定を求める'
+  retry_note: '1 回目の S8 サブエージェントは API 利用上限で途中終了した (書き込みなし)。同じ指示で再実行した'
+  clock_note: 'S2 以降のイベント時刻はオーケストレータが見込みで付与しており実時計より先行している (本イベント記録時の実時計は 2026-09-19T19:38+09:00)。追記専用のため既存イベントは書き換えず、並び順を保つ論理時刻を継続する'
+  summary: 'S8 feedback draft: 5 requests (1 blocker: robustness scope of config file validation). learnings 2, skill / context proposals'
+created_at: '2026-09-19T21:30:00+09:00'

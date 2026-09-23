@@ -1,0 +1,67 @@
+stage: "S4"
+tier: "tier-facade"
+attempt: 5
+uc_id: "eff24f55"
+manifest_sha256: "f8cf17f93da5c6e63c9b3ce97c7fbc076f64c6174bd02d27757adf7c8b54ecb1"
+manifest_projection: v2
+result: pass
+rerun_reason: "stale after spec reflux (spec event 20260921_100000_feedback_impl_feedback_eff24f55; invalidated event 20260922_084000_stage_invalidated_eff24f55_spec_reflux_stale). attempt 5 のまま、S2 が作った新仕様の RED(bats 51 件 / tier BDD 15 Scenario)を GREEN にした。旧 findings は渡されていない"
+gates:
+  format: pass
+  lint: pass
+  tdd: pass
+  bdd_tier: pass
+gate_runs:
+  - gate: "format"
+    cwd: "facade"
+    command: "shfmt -d ."
+    exit_code: 0
+  - gate: "lint"
+    cwd: "facade"
+    command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+    exit_code: 0
+  - gate: "tdd"
+    cwd: "facade"
+    command: "bats -r test"
+    exit_code: 0
+    detail: "317 tests passed, 0 failed (S2 再生成時 311 件 = 260 ok + 51 not ok。repository のテスト 5 件を追加し、1 件を統合した)"
+  - gate: "bdd_tier"
+    cwd: "facade"
+    command: "npx cucumber-js --config ../cucumber.cjs features"
+    exit_code: 0
+    detail: "38 scenarios passed, 129 steps passed (define-slot-job-maps.feature 29 + configure-feature-flags.feature 9)"
+assumptions:
+  path: "attempt-5/S4_tier-impl.tier-facade.assumptions.yaml"
+  count: 24
+  by_category:
+    input_validation: 3
+    data_format: 12
+    error_handling: 8
+    persistence: 0
+    performance: 0
+    security: 1
+  sha256: "486864f544df207c37474798f0c4ecbf1bafa0590229d7ae92eeb5805bc46f28"
+  extraction:
+    candidate_count: 44
+    excluded_as_explicit: 20
+    recorded_count: 24
+findings_source: null
+implementation_summary:
+  - "repository(job_map_repo.sh): 入力の複製を mktemp の作業名 relay-gate-XXXXXX.part へ書いてから .part を外した最終名へ rename する(0600、成功・失敗・HUP/INT/TERM で作業名と最終名の両方を削除)。複製の失敗(mktemp / cat / mv)は JOB_MAP_REPO_STATUS_SNAPSHOT_FAILED、複製完了後の tr / sed の失敗・想定外の出力は JOB_MAP_REPO_STATUS_COMMAND_FAILED と JOB_MAP_REPO_FAILED_COMMANDS で区別する"
+  - "repository: 事前走査の sed を原因ごとの出力(n=NUL / r=CR / b=BOM / u=不正な UTF-8 + 行番号、E=証跡 + 総行数)に変え、JOB_MAP_NUL_LINES / JOB_MAP_CR_LINES / JOB_MAP_BOM_LINE / JOB_MAP_ENCODING_LINES に行番号を載せる。該当行は malformed(旧 quote_invalid の流用を廃止)として解析しない。NUL はコメント行でも記録する"
+  - "usecase(validate_job_map.sh): 複製失敗は error: config snapshot failed + hint: check TMPDIR is writable、補助コマンド失敗は error: internal command failed commands=<失敗したコマンドだけ> path: <path>(いずれも 6、stdout なし)。入力の守備範囲の違反は原因ごとの文言で行番号順に全件報告し hint を最後の CR の次に 1 回(2)。報告行(error / warn / info / hint)は domain の job_map_emit で配列に溜め、検証を終えてから stderr へ出す(内部障害では他の行を出さない)"
+  - "domain(job_map.sh): work_dir / script の絶対パス検査を撤回(非空のみ)。ヘッダー列名の重複を error: duplicate column column=<name> path: で拒否。map_version の集計を連想配列(bash 5.0)で行数に比例する時間に改めた。fixed_params の典型形(エスケープ・空白なし)の早期解析、JSON 組み立ての早期判定、validate_job_map_row の解析結果の再利用、行のセルの直接 bind(job_map_row_bind_at)で 5,000 行の最悪条件を --verbose 有無とも 10 秒以内(実測 4.4 秒 / 5.3 秒。改善前は 36 秒)にした"
+  - "domain(cli_field.sh): cli_field_safe_text に置き換え不要の値の早期判定を追加(結果は同じ)"
+  - "tier BDD step(define-slot-job-maps.steps.js): 追加 15 Scenario の 39 step を実装。実バイト(NUL / Shift_JIS / BOM / CRLF)は Buffer で書き、単一スナップショットの差し替えは Scenario 専用 TMPDIR で最終名(relay-gate-*、.part なし)の出現を監視して mv する。補助コマンドの差し替えは PATH 先頭の sort(実装が重複検査に使うコマンド)"
+test_changes:
+  - "facade/test/repository/job_map_repo.bats: NUL / 不正な UTF-8 / CRLF / BOM の期待を新仕様(malformed + 原因ごとの行番号)へ書き換え、コメント行の NUL を拒否に変更。複製失敗(mktemp / cat / TMPDIR なし)・最終名と 0600・複数原因の混在・失敗コマンド名の 5 件を追加"
+  - "facade/test/usecase/validate_job_map.bats: fixed_params 内の生の CR の期待を旧文言(fixed_params is not a json array of strings)から新仕様の carriage return is not allowed + hint へ書き換えた(S2 の書き換え漏れ。config_input_rules: セル内の CR も拒否)"
+  - "facade/test/presentation/validate_config_job_map.bats: stdout 0 行を確かめる 2 件を `run ... 2>file` から `run --separate-stderr`(bats 1.5 以上。bats_require_minimum_version 1.5.0 を宣言)へ変更。bats の run は内側の 2>&1 で外側のリダイレクトを上書きするため、元の書き方では stdout と stderr を分けられなかった"
+performance:
+  worst_case_5000_rows: "facade/bin/validate-config.sh --job-map (5,000 行・全列に値・job_id 全行一意・map_version 全行相違): 4.4 秒、--verbose 5.3 秒(macOS / bash 5.3 の実測。NFR B.2.1.1 の 10 秒以内)"
+  note: "改善前は版の集計の二重ループで 36 秒。主な残コストは CSV 行の解析(約 0.23 ms/行)と行ごとの検証・解決結果の組み立て"
+environment_notes:
+  - "開発機(macOS)の mktemp はテンプレート末尾以外の X を置き換えないため、テンプレートのままの作業ファイルを relay-gate-<pid>-<乱数>.part へ移してから使うフォールバックを入れた(A-052)。実行環境の Linux(GNU coreutils)では契約どおり relay-gate-XXXXXX.part がそのまま使われる"
+issues_raised: []
+completed_at: "2026-09-22T09:20:00Z"
+completed_by: "dist-impl-implement@0.14.1"

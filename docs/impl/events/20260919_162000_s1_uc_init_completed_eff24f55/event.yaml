@@ -1,0 +1,17 @@
+event_id: 20260919_162000_s1_uc_init_completed_eff24f55
+type: stage_completed
+uc_id: eff24f55
+stage: S1
+payload:
+  manifest_sha256: f5b57cd9f6aae8e961774f42ec256d56a421cec379741b03b478a5e10ffb4e54
+  manifest_projection: v2
+  result: pass
+  git_delivery:
+    base_branch: main
+    base_head: 9bb6057dbc222e598bafeb0b38c2cb2b1df7b185
+    feature_branch: feature/define-slot-job-maps
+  resolved_models:
+    implementer: claude-fable-5-1
+    verifier: gpt-6-astra
+  summary: 'S1 uc-init: input-preflight pass, input-manifest fixed, lineage ok, ATDD mapping already confirmed (SPEC-004-04-4, SPEC-008-05-2)'
+created_at: '2026-09-19T16:20:00+09:00'

@@ -1,0 +1,59 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "specification"
+artifact_id: "spec-decision-012"
+title: "拒否する異常ごとに原因が文言から分かる専用の error 行を定め、任意入力を出力するときの制御文字の可視表記(改行 \\n・タブ \\t・その他 \\u00XX、バックスラッシュは置き換えない)を出力規約に定める"
+status: "approved"
+generated_at: "2026-09-21T10:00:00Z"
+context: |
+  2026-09-19 の実装フィードバックの spec-gap 2 件。
+  - 実装は既存の文言を流用して拒否していた: NUL バイトと不正な UTF-8 は `error: csv quote is invalid line=N path: ...`、補助コマンドと複製の失敗は
+    `error: internal command failed commands=tr,sed path: ...`(CLI 契約に無い文言。複製の失敗でも点検コマンド名が出る)。利用者は error 行だけで
+    文字コード違反と引用符の誤りを区別できず、一時ファイルの問題を点検コマンドの問題と読み違え得る。
+  - 独立検証で、セルの値に含まれる ESC シーケンスが stdout にそのまま出た。改行を含むファイル名を渡すと stdout の行数が増えた(1 行 1 事実が崩れる)。
+    実装は改行 `\n`、タブ `\t`、その他 C0 / DEL / C1 を `\u00XX` にする可視表記を採用し、バックスラッシュは置き換えていない。
+    先行機能「feature flag を設定する」の stderr は値・キー名・パスをそのまま出しており、同じ穴が残っていた。
+  - 出力フォーマット規約は「ANSI エスケープを出さない」「1 行 1 事実」を定めるが、任意入力に制御文字が含まれるときの表記は定めていなかった。
+  - 方針資料のジョブマップ例は Windows 形式のパス `G:\scripts` を使う。バックスラッシュを置き換える表記にすると、この表示が変わる。
+  - 利用者は 2026-09-22 に「原因ごとに専用の文言にする」(問 3 の A)と「実装済みの可視表記をそのまま確定する」(問 2 の A)を選んだ。
+decision: |
+  1. 入力の守備範囲(spec-decision-011)で拒否する異常ごとに、原因が文言から分かる専用の error 行を CLI 契約 config_input_rules と validate-config.sh の
+     stderr に定める。書式は既存の `line=N path: ...` に合わせる(行番号は物理行番号、path は利用者が指定したパス)。
+     - NUL バイト: `error: nul byte is not allowed line=N path: ...`
+     - UTF-8 として不正なバイト列(コメント行を含む): `error: encoding is not utf-8 line=N path: ...`
+     - BOM: `error: byte order mark is not allowed line=1 path: ...`
+     - CR(CRLF を含む): `error: carriage return is not allowed line=N path: ...` + `hint: use LF line endings`(hint は 1 回だけ)
+     - ヘッダー列名の重複: `error: duplicate column column=<name> path: ...`
+     - env の `=` を含まない行: `error: invalid line line=N path: ...`
+     文字コードの検査はコメント行を含む(ファイル全体の形式のため)。
+  2. 検証器の内部障害の error 行: 補助コマンドの失敗は `error: internal command failed commands=<name,...> path: ...`(commands= は実際に失敗した
+     コマンド名だけ)、入力の複製の失敗は `error: config snapshot failed path: ...` + `hint: check TMPDIR is writable`。いずれも終了コード 6、stdout なし。
+  3. ジョブマップの work_dir / script の空セルは `error: work_dir is empty line=N job_id=... value=` / `error: script is empty ...`(既存の
+     `<column> is empty` 形式)。旧 `is not absolute` 形式は使わない(spec-decision-013)。
+  4. 制御文字の表記(全コマンドの stdout / stderr、実行ログ、メール本文に共通。正本は ui-design.md「出力フォーマット」の「制御文字の表記」、
+     CLI 契約 conventions.output_format.control_chars は要約と参照):
+     - 置き換える範囲: C0 制御文字(U+0001〜U+001F)、DEL(U+007F)、UTF-8 で符号化した C1 制御文字(U+0080〜U+009F)
+     - 表記: 改行 `\n`、タブ `\t`、その他 `\u00XX`(16 進小文字 4 桁)
+     - バックスラッシュは置き換えない(制御文字を含まない値の出力を 1 バイトも変えない。`G:\scripts` はそのまま表示される)
+     - 制御文字以外のバイト(UTF-8 として不正なバイトを含む引数のパス)はそのまま出す
+     - `key=value` / `key: value` の選択は置き換え前の元の値で判定する
+     - 例外: `--verbose` の fixed_params の JSON 配列表記は JSON の文字列規則(`"` と `\` もエスケープ)を優先する
+     - TSV の値に含まれるタブ・改行も同じ可視表記にする(旧規則「半角空白へ置換」を改める)
+  5. 先行機能「feature flag を設定する」の stderr(`error: invalid value key=... value=...` / `warn: unknown key key=...`)を含む既存の全コマンドに適用し、
+     同 UC の tier-facade.md に判定する Scenario を追加する。制御文字を含む値を出力する Scenario は UC「slot ごとのジョブマップを定義する」の E2E にも置く。
+consequences:
+  positive:
+    - "利用者は error 行だけで、文字コード違反・NUL・BOM・CR・引用符の誤りを区別できる(CR の完了条件)"
+    - "一時ファイルの問題(TMPDIR)と点検コマンドの問題を読み違えない"
+    - "任意入力に ESC・改行が含まれても、ANSI エスケープを出さず 1 行 1 事実を保つ。方針資料の Windows パスの表示は変わらない"
+    - "現行実装の可視表記は変更不要。文言の追加・差し替えだけ"
+  negative:
+    - "生のタブと 2 文字の `\\t` を表示上区別できない(利用者が受け入れた)"
+    - "error 行の種類が 7 文増え、実装の文言テストが増える"
+alternatives_considered:
+  - name: "1 つの文言と理由キーにまとめる(`error: file is malformed reason=<nul|encoding|bom|cr> line=N path: ...`)"
+    reason_rejected: "異常の種類を後から足しやすい利点はあるが、既存のメッセージ規約『原因を語で書く(not found / is not / failed ...)』と一致しない。既存 error 行と読み方が変わる"
+  - name: "既存の文言(csv quote is invalid)の流用を仕様に明記するだけ"
+    reason_rejected: "CR の完了条件『error 行だけで文字コード違反と引用符の誤りを区別できる』を満たさない"
+  - name: "バックスラッシュも `\\\\` に置き換える(JSON と同じ表記に統一)"
+    reason_rejected: "方針資料のジョブマップ例 `G:\\scripts` の表示が `G:\\\\scripts` に変わり、制御文字を含まない値の出力が変わる。利用者はそのままの表示を求めた"

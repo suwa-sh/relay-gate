@@ -1,0 +1,16 @@
+event_id: 20260919_211000_s6_uc_bdd_completed_eff24f55
+type: stage_completed
+uc_id: eff24f55
+stage: S6
+payload:
+  manifest_sha256: f4528376203939a69f1860d8fba45c818c647fa63d56a44f2e91c8e6a2618c21
+  manifest_projection: v2
+  result: pass
+  tier_impl_attempt: 4
+  scenarios:
+    total: 28
+    passed: 28
+    this_uc: 16
+  injections: []
+  summary: 'S6 uc-bdd: 16 scenarios of this UC and 12 of the prior UC pass with real files and real process. no harness injection'
+created_at: '2026-09-19T21:10:00+09:00'

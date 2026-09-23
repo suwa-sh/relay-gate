@@ -3,9 +3,11 @@
 # 書式: validate-config.sh (--feature-flag <path> | --job-map <path> | --crosscheck-job-map <path> | --target-catalog <path>) [--verbose] [--help]
 # 仕様: _cross-cutting/api/cli-command-contract.yaml commands[validate-config.sh](検証種別オプションはちょうど 1 つ)、
 #       _cross-cutting/ux-ui/ui-design.md 共通オプション(`--key value` 形式 / 未知オプションは終了コード 2 / --help)
-# 終了コード: 0 検証 OK / 2 引数不正・ファイルなし・検証違反 / 6 実行エラー(runner --help 問い合わせの準備失敗。
-#             契約 runner_help_probe.preparation_failure。1 は set -e の予期しない終了として区別する)
-# 検証種別ごとの usecase は `validate_config_<kind>` 関数へ委譲する(--feature-flag は本 UC。他は所有 UC が追加する)
+# 終了コード: 0 検証 OK / 2 引数不正・ファイルなし・検証違反(入力の守備範囲の違反を含む)/ 6 実行エラー
+#             (runner --help 問い合わせの準備失敗。契約 runner_help_probe.preparation_failure。--job-map の入力の複製の失敗と
+#             補助コマンド tr / sed / sort の失敗。契約 config_input_rules.internal_failure。1 は set -e の予期しない終了として区別する)
+# 検証種別ごとの usecase は `validate_config_<kind>` 関数へ委譲する(--feature-flag は UC「feature flag を設定する」、
+# --job-map は UC「slot ごとのジョブマップを定義する」。他は所有 UC が追加する)
 # shellcheck source-path=SCRIPTDIR
 set -euo pipefail
 
@@ -26,6 +28,12 @@ source "$VALIDATE_CONFIG_SRC_DIR/repository/feature_flag_config.sh"
 source "$VALIDATE_CONFIG_SRC_DIR/gateway/runner_probe.sh"
 # shellcheck source=../usecase/validate_feature_flag.sh
 source "$VALIDATE_CONFIG_SRC_DIR/usecase/validate_feature_flag.sh"
+# shellcheck source=../domain/job_map.sh
+source "$VALIDATE_CONFIG_SRC_DIR/domain/job_map.sh"
+# shellcheck source=../repository/job_map_repo.sh
+source "$VALIDATE_CONFIG_SRC_DIR/repository/job_map_repo.sh"
+# shellcheck source=../usecase/validate_job_map.sh
+source "$VALIDATE_CONFIG_SRC_DIR/usecase/validate_job_map.sh"
 
 VALIDATE_CONFIG_KIND_OPTIONS="--feature-flag|--job-map|--crosscheck-job-map|--target-catalog"
 
@@ -44,7 +52,7 @@ options:
 exit codes:
   0  validation ok
   2  invalid arguments / config file not found / validation error
-  6  execution error (runner --help probe could not be prepared)
+  6  execution error (runner --help probe could not be prepared / internal command failed)
 USAGE
 }
 
@@ -52,6 +60,12 @@ USAGE
 validate_config_feature_flag() {
   local path="$1" verbose="$2"
   validate_feature_flag_query "$path" "$RELAY_GATE_CONFIG_DIR" "$verbose"
+}
+
+# --job-map の usecase 委譲(UC「slot ごとのジョブマップを定義する」。slot はファイル名から推定しない)
+validate_config_job_map() {
+  local path="$1" verbose="$2"
+  validate_job_map_query "$path" "$verbose"
 }
 
 validate_config_main() {
@@ -77,11 +91,14 @@ validate_config_main() {
         shift 2
         ;;
       --*)
-        printf '%s\n' "error: unknown option option=$1" >&2
+        # 引数は任意のバイト列(表示用に制御文字を可視表記にする。ANSI を出さず 1 行 1 事実を保つ)
+        cli_field_safe_text "$1"
+        printf '%s\n' "error: unknown option option=$CLI_FIELD_SAFE_TEXT" >&2
         return 2
         ;;
       *)
-        printf '%s\n' "error: unexpected argument value=$1" >&2
+        cli_field_safe_text "$1"
+        printf '%s\n' "error: unexpected argument value=$CLI_FIELD_SAFE_TEXT" >&2
         return 2
         ;;
     esac

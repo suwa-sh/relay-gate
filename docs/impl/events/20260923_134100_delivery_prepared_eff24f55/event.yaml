@@ -1,0 +1,13 @@
+event_id: 20260923_134100_delivery_prepared_eff24f55
+type: delivery_prepared
+uc_id: eff24f55
+payload:
+  review_approved_event_id: 20260923_134000_review_approved_eff24f55_cycle3
+  pending_decision_count: 0
+  decisions_applied: true
+  post_decision_gates: pass
+  post_decision_review_aligned: true
+  base_branch: main
+  base_head: 9bb6057dbc222e598bafeb0b38c2cb2b1df7b185
+  feature_branch: feature/define-slot-job-maps
+created_at: '2026-09-23T13:41:00+09:00'

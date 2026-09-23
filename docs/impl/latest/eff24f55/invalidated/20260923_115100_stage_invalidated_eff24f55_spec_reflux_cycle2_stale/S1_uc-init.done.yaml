@@ -1,0 +1,23 @@
+stage: S1
+uc_id: eff24f55
+manifest_sha256: fad6601f15e085c02569d6bbab0db9959c85319a72bee2dc49b95b77b73a9f41
+manifest_projection: v2
+result: pass
+input_preflight:
+  files_exist: true
+  yaml_parse: true
+  gherkin_blocks: 3
+  gherkin_blocks_note: 'spec.md 2 / tier-facade.md 1'
+  tier_ids_in_arch:
+  - tier-facade
+  conditional_inputs_consistent: true
+lineage_ok: true
+lineage_note: 'spec-event 20260921_100000 trigger_event = rdra:20260921_084000 (no-change manifest; rdra latest unchanged) + arch:20260921_092000 (no-change manifest; arch latest event_id stays 20260908_015000, sha unchanged). heads of rdra/arch events match the trigger.'
+atdd_scenarios:
+- SPEC-004-04-4
+- SPEC-008-05-2
+atdd_mapping: 'confirmed by 20260917_004437_config_confirmed_atdd_mapping_all_ucs (not re-asked). SPEC-008-05-3 (@manual, operational-document criterion) is intentionally not in atdd_scenarios: it is marked non-automatable in USDM.'
+shared_spec_refs_note: 'same 5 refs as previous manifest; cli-command-contract.yaml (config_input_rules / runtime_prerequisites added) and ui-design.md (control char notation) changed. openapi.yaml stays excluded (paths: {} stub).'
+rerun_reason: 'stale after spec reflux 20260919_213000_impl_feedback_eff24f55 (invalidated event 20260922_084000_stage_invalidated_eff24f55_spec_reflux_stale)'
+completed_at: '2026-09-22T08:45:00+09:00'
+completed_by: dist-impl-run@0.14.1

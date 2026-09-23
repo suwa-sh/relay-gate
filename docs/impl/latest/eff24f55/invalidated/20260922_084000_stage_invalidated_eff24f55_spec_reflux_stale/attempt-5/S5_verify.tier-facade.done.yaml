@@ -1,0 +1,54 @@
+stage: "S5"
+tier: "tier-facade"
+attempt: 5
+uc_id: "eff24f55"
+manifest_sha256: "f4528376203939a69f1860d8fba45c818c647fa63d56a44f2e91c8e6a2618c21"
+manifest_projection: "v2"
+result: "pass"
+open_blockers: 0
+summary:
+  blocker: 0
+  major: 2
+  minor: 37
+in_scope_summary:
+  blocker: 0
+  major: 1
+  minor: 5
+carried_forward_answered_summary:
+  blocker: 0
+  major: 1
+  minor: 32
+gate_reexec:
+  format: "pass"
+  lint: "pass"
+  tdd: "pass"
+  bdd_tier: "pass"
+environment_failures: []
+assumptions_sha256: "d3ac508ef77cd2a02e4bfe1aadddd07fce4dd2853703428e576d3db3c9ecab35"
+assumption_verdicts_sha256: "3af7918447494f7a723760fc03858dbfb9c3b44e75e46294402b0c8d60cc30fe"
+assumption_verdicts_summary:
+  consistent: 2
+  spec_absent: 36
+  contradicts: 0
+  unlisted: 0
+f001_resolution:
+  status: "resolved"
+  old_commit: "5d5c27d0f18184d894da0ba54f6c5da0f5333391"
+  evidence: "前回reproductionをそのまま再実行。旧実装は終了0で J2 /new、修正後は終了0で J1 /old。実際の mv 完了も確認。tr前後/sed前後/CSV read中の5タイミングを正逆の10ケースで実行し、正常旧入力は終了0でJ1のみ、不正旧入力は終了2でline=2のcsv quote is invalid。NULの静的入力も終了2。"
+  mechanism: "元パスを cat の入力として一度だけ開き、tr/sed と CSV read は同じ一時コピーを読む。置換で新inodeになってもコピー済み内容に影響しない。"
+findings_path: "docs/impl/latest/eff24f55/stages/attempt-5/S5_verify.tier-facade.findings.yaml"
+completed_at: "2026-09-19T11:24:56.376763+00:00"
+completed_by: "dist-impl-verify@0.14.1"
+notes:
+  - "ユーザー指定により F-001 と attempt 4 からの facade 差分の直接の退行だけを検証。範囲外の異常入力・環境の新規探索は実施していない。"
+  - "attempt 4 の他の finding (major F-010 / minor) は範囲外のため再評価していない。既回答の前提33件は全件verdictと専用findingの参照整合を保つため参照行のみ記録し、新規の指摘には数えない。"
+  - "summary はスキーマ上の全finding参照行の件数。今回の指摘件数は in_scope_summary。carried_forward_answered_summary は既回答の33件。"
+  - "git コマンドは禁止を優先し一切実行していない。cwd / CLAUDE.md / .git/HEAD を確認し、ブランチは feature/define-slot-job-maps。git status は未実行。履歴の読み取りはPythonによるオブジェクトの直接参照のみ。"
+  - "比較元は attempt 4 S4 commit 5d5c27d0f18184d894da0ba54f6c5da0f5333391。変更は repository/job_map_repo.sh、usecase/validate_job_map.sh、test/presentation/validate_config_job_map.bats、test/repository/job_map_repo.bats の4ファイル。"
+  - "一時ファイルと実行証跡は mktemp -d で得たリポジトリ外ディレクトリで作成。実装・テスト・仕様は未変更。"
+  - "macOSで必要バイナリ・一時ファイルの作成読取削除・子プロセス起動をprobe済み。このtierのテストはDB/TCP/shared memory/dockerを要求しない。"
+  - "F-101 は今回導入された後始末の直接の欠陥。空ファイルのみの残留で blocker にはせず minor。result=pass は blockerなしの意味であり、後始末が完全であるという意味ではない。"
+validation:
+  yaml_safe_load: "pass"
+  assumption_validator: "pass"
+  hash_method: "validateAssumptions.js 0.14.1 の解析・canonicalHash 実装に合わせた値。manifest_sha256 は引数をそのまま転記。"

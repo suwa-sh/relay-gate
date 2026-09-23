@@ -1,0 +1,84 @@
+stage: "S9"
+uc_id: "eff24f55"
+manifest_sha256: "85d1ebda8af9b786c1abbfc4e09198f4716663209279349d7e7ad9c947902002"
+manifest_projection: v2
+result: pass
+review_html: "docs/impl/latest/eff24f55/review/index.html"
+review_html_note: "gitignore 済みの再生成可能な派生ビュー。HTML の SHA は証跡に結ばない"
+cycle_note: "仕様還流 cycle 2(spec event 20260923_112000_feedback_impl_feedback_eff24f55_cycle2)後の再レビュー。前回承認(機能=A / 公開=A / CR-007=A / 前提=一括承認)からの差分は仕様の確定 2 点(lines= は初出行を含む / credential_ref の形式違反は warn 受理・値を出さない)と BDD step の実装・前提 A-012 の削除のみで、処理コードの挙動変更なし。差分表を冒頭に置いた"
+source_revision: "feature/define-slot-job-maps @ b3b9aae"
+validator:
+  command: "node validateReviewHtml.js docs/impl/latest/eff24f55/review/index.html"
+  result: "pass"
+  visual_check: "headless Chrome で 1440px と 500px(headless の最小幅)で render を目視。SVG 3 図の幾何は前回の目視済み版から不変(caption・legend・text alternative の文言のみ更新)。connector の重なり・attach point 共有・非 endpoint node 背面通過なし"
+figures:
+  - type: architecture
+    title: "検証コマンドの構成"
+  - type: flowchart
+    title: "検証の処理フロー"
+  - type: data-flow
+    title: "ジョブマップのデータの流れ"
+feedback_request_count: 0
+open_blocker_count: 0
+decision_summary:
+  approval_questions: 1
+  selection_questions: 1
+  assumption_questions: 0
+  recommended_choices: 2
+  questions:
+    - id: "機能"
+      question: "機能を承認しますか"
+      recommended: "A. 承認する(変更要求 0 件のため squash → push → PR)"
+    - id: "A-016"
+      question: "推奨値 60 と違う上限を専用の info 行で知らせない実装を、前提として承認しますか"
+      recommended: "A. 前提として承認する(実装・仕様とも変えない)"
+      alternatives:
+        - "B. 却下(仕様変更: spec.md の文言を --verbose の resolved 行で値を示すに改める。実装は不変)"
+        - "C. 却下(仕様変更: 推奨値 60 と違う行に専用の info 行を出す。実装も変わる)"
+      note: "回答任意(data_format。security / persistence ではない)。S8 の review_attention 候補として個別に提示した"
+  answer_template: "機能=A / 前提=一括承認"
+  answer_template_examples:
+    - "問い 2 = B: 機能=A / 前提=一括承認(例外: A-016:却下(仕様変更: 推奨値との差は --verbose の resolved 行で示すと仕様の文言を改める))"
+    - "問い 2 = C: 機能=A / 前提=一括承認(例外: A-016:却下(仕様変更: 推奨値 60 と違う行に専用の info 行を出す))"
+    - "旧表記 機能=A / 相互運用=A / 監査=A も受け付ける(監査=A は 前提=一括承認 と同義)"
+assumption_summary:
+  total: 23
+  required_answer: 0
+  required_ids: []
+  review_attention_ids:
+    - "A-016"
+  optional_default: "auto_confirmed"
+  verdicts:
+    consistent: 1
+    spec_absent: 22
+    contradicts: 0
+    unlisted: 0
+  change_from_previous_review: "A-012 が仕様に明記されて前提から外れた(24 → 23)。他 23 件は内容・影響箇所とも不変"
+feedback_review_evidence:
+  feedback_id: null
+  draft_path: null
+  draft_sha256: null
+  request_count: 0
+  blocker_count: 0
+implementation_review_evidence:
+  gate_result: "6/6 pass"
+  gates:
+    format: "pass"
+    lint: "pass"
+    tdd: "pass (334/334)"
+    bdd_tier: "pass (41/41)"
+    uc_bdd: "pass (36/36, 本 UC 24/24)"
+    atdd: "pass (2/2)"
+  open_blocker_count: 0
+  open_major_count: 0
+  open_minor_count: 24
+  findings_path: "docs/impl/latest/eff24f55/stages/attempt-6/S5_verify.tier-facade.findings.yaml"
+  assumption_evidence_sha256: "36a40a0ed0f5b84d4f6d8e423ee474968af5dcd4ed8c485c9a82facd32f4d820"
+  assumption_evidence_inputs:
+    - tier: "tier-facade"
+      assumptions_sha256: "0d5632b7da2ce5b1fdd39ed9dc7d5625312319ba0e01ee29765873e01def5412"
+      assumption_verdicts_sha256: "dce486c7e54e41ce1c3da016bf48fff4bb8e2e664a6ce168e563be9cf41f0db2"
+  assumption_evidence_command: "node validateAssumptions.js evidence tier-facade:0d5632b7…:dce486c7…"
+captures: []
+completed_at: "2026-09-23T12:00:00+09:00"
+completed_by: "dist-impl-review@0.14.1"

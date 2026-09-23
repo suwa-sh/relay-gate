@@ -1,0 +1,18 @@
+event_id: 20260922_101500_s4_tier_impl_completed_eff24f55_tier_facade_a5_rerun
+type: stage_completed
+uc_id: eff24f55
+stage: S4
+tier: tier-facade
+attempt: 5
+payload:
+  manifest_sha256: f8cf17f93da5c6e63c9b3ce97c7fbc076f64c6174bd02d27757adf7c8b54ecb1
+  manifest_projection: v2
+  mode: stale_rerun
+  gates: {format: pass, lint: pass, tdd: pass, bdd_tier: pass}
+  tdd: '317 tests, 0 not ok'
+  bdd_tier: '38 scenarios / 129 steps passed'
+  assumptions: {path: attempt-5/S4_tier-impl.tier-facade.assumptions.yaml, count: 24, sha256: 486864f544df207c37474798f0c4ecbf1bafa0590229d7ae92eeb5805bc46f28}
+  performance: '5,000 rows worst case: 4.4s (--verbose 5.3s); before 36s'
+  issues_raised: []
+  rerun_after: 20260922_084000_stage_invalidated_eff24f55_spec_reflux_stale
+created_at: '2026-09-22T10:15:00+09:00'

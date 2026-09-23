@@ -1,0 +1,33 @@
+stage: "S5"
+lane: "verify"
+tier: "tier-facade"
+attempt: 2
+uc_id: "eff24f55"
+manifest_sha256: "f4528376203939a69f1860d8fba45c818c647fa63d56a44f2e91c8e6a2618c21"
+manifest_projection: "v2"
+result: "fail"
+open_blockers: 1
+summary:
+  blocker: 1
+  major: 1
+  minor: 16
+gate_reexec:
+  format: "pass"
+  lint: "pass"
+  tdd: "pass"
+  bdd_tier: "pass"
+assumptions_sha256: "0c1b64e36b33616ed66a38600962beacea5a8bdc33a84d8023179abf8011be96"
+assumption_verdicts_sha256: "ea2a1ef5ba10862a7642e9867f5dea881d9c38462f2678b6da78979aa8969489"
+assumption_verdicts_summary:
+  consistent: 0
+  spec_absent: 17
+  contradicts: 0
+  unlisted: 0
+environment_failures: []
+verification_evidence:
+  tdd: "bats -r test: exit 0, 168/168 passed"
+  bdd_tier: "npx --no-install cucumber-js --config ../cucumber.cjs features: exit 0, 23 scenarios / 74 steps passed; job-map 14 and feature-flag regression 9"
+  environment_probe: "bash/shfmt/shellcheck/bats/node/npx/sort/python3とローカルCucumber・PyYAMLの存在を確認。一時ディレクトリで実ファイル・子プロセス起動成功。本UCにDB/TCP/shared-memory/docker依存なし。"
+  scope: "gitコマンドはユーザー禁止に従い未実行。pwdとルートCLAUDE.mdを確認。Implementer doneは独立検証のread-set制約により未読のため、自己申告結果との差分比較は未実施。実装変更なし。"
+completed_at: "2026-09-19T07:57:18.199627+00:00"
+completed_by: "dist-impl-verify@0.14.1"

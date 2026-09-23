@@ -1,0 +1,22 @@
+round: 3
+reviewer: "fresh context のサブエージェント(最終検証パス。round-2 の修正確認のみ。閾値 medium)"
+verification:
+  - {id: "R-004", verdict: "fixed", note: "Scenario の Given が『実装が複製完了後に実際に呼ぶ補助コマンドを fixture で差し替える』に変わり、Then の commands= は差し替えたコマンド名。契約 out_of_scope は『差し替え後の結果の正しさ』だけを対象外にし、失敗検知の PATH 差し替えテストを明示的に許可。internal_failure.handling に『特定のコマンドの使用を要求しない』あり。連想配列実装でも成立する"}
+  - {id: "R-005", verdict: "fixed", note: "契約 snapshot.validate_config に『作業名(.part)へ書き終えてから最終名へ rename、最終名の出現 = 複製済み』が入り、spec.md / tier-facade.md の Scenario Given と tier-facade.md 保証節がいずれも『.part の付かない最終名の出現』を待機条件にしている。三者の表記は一致(mktemp の扱いは R-010 参照)"}
+  - {id: "R-006", verdict: "fixed", note: "解決 UC tier-facade.md バリデーション文が『定義 UC の「JSON 配列の判定」と同じ実装を共有し bash 単独で行う(契約 runtime_prerequisites.external_commands)』に置換済み。sed / awk の記述は同ファイルから消えている。定義 UC tier-facade.md「JSON 配列の判定」・契約 external_commands と矛盾なし"}
+  - {id: "R-007", verdict: "fixed", note: "解決 UC tier-facade.md エラーメッセージ表と spec.md Scenario の文言が `error: fixed_params is not a json array of strings line=3 job_id=JOB003 value=p1 p2` に揃い、契約・定義 UC spec.md と同文"}
+  - {id: "R-008", verdict: "fixed", note: "契約 internal_failure.handling が (1) 複製の工程 = config snapshot failed(コマンド名を問わず)/ (2) 複製完了後の補助コマンド = internal command failed に工程で分割され、補助コマンドの例示から mktemp を外し errors に『mktemp の失敗もこちら』。定義 UC tier-facade.md「検証器の内部障害」も同じ切り分け"}
+  - {id: "R-009", verdict: "fixed", note: "feature flag tier-facade.md 終了コード表の 6 に『入力の複製の失敗 / 補助コマンドの失敗(契約 config_input_rules.internal_failure。stdout なし、error 行 1 つ(+ hint))』が先頭に追加され、契約 validate-config.sh exit_codes 6 の条件と一致"}
+findings:
+  - id: "R-010"
+    viewpoint: 5
+    severity: "medium"
+    target: "_cross-cutting/api/cli-command-contract.yaml#config_input_rules.snapshot.validate_config(適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/tier-facade.md「読み込み中の差し替えに対する保証」も同旨)"
+    claim: "同じ文の中で『ファイル名は relay-gate- で始まる(mktemp のテンプレート)』と『作業名(最終名 + .part)へ書き終えてから最終名へ rename。最終名が現れた時点で内容は複製済み』が並ぶが、mktemp が作るのが最終名か作業名かを書いていない。素直に `mktemp relay-gate-XXXXXX` で最終名を確保してから .part へ書いて mv で上書きすると、空の最終名が複製前から存在し、R-005 で直した待機条件(最終名の出現 = 複製完了)が破れて Scenario「検証中に差し替わっても…」が不安定に fail する。保証文から逆算すれば『最終名は rename まで存在させない』と導けるが、mktemp の言及が逆の実装を誘導するため、実装者が推測で決める余地が残る"
+    evidence: "契約 snapshot.validate_config『ファイル名は relay-gate- で始まる(mktemp のテンプレート。テストが出現を監視するための識別子)。複製は作業名(最終名 + .part)へ書き終えてから最終名へ rename する(…最終名の relay-gate-* が現れた時点で内容は複製済みで、テストはこれを待機条件にできる)』/ tier-facade.md L68『ファイル名は relay-gate- で始まり、作業名(末尾 .part)へ書き終えてから最終名へ rename する(最終名が現れた時点で複製は完了)』"
+    suggested_fix: "契約の当該文に 1 句追加する: 『mktemp で作るのは作業名(例 `mktemp \"$TMPDIR/relay-gate-XXXXXX.part\"`)で、最終名は rename までディレクトリに存在させない(最終名を先に mktemp で確保しない)』。tier-facade.md L68 にも同じ 1 句を添える"
+resolved:
+  - id: "R-010"
+    resolution: "fixed"
+    by: "orchestrator"
+    note: "契約 snapshot.validate_config と tier-facade.md 保証節に『mktemp で作るのは作業名(.part)。最終名は rename までディレクトリに存在させない』を追加。round 3 は検証パスのため修正 subagent は起こさずオーケストレータが直し、機械検証(validateAllYaml / validateSpecEvent)を再実行して PASS"
