@@ -1,0 +1,51 @@
+uc: "保存済みの確報結果をジョブスケジューラへ返す"
+business: "クロスチェック業務"
+buc: "確報クロスチェックフロー"
+
+bounded_context_id: "BC-003"
+aggregate_id: "AG-003"
+
+models:
+  - name: "RelayStoredResultQuery"
+    tier: "tier-final-crosscheck"
+    layer: "usecase"
+    type: "query"
+    rdra_info: "確報比較依頼(final_crosscheck_request)"
+  - name: "StoredResult"
+    tier: "tier-final-crosscheck"
+    layer: "domain"
+    type: "value-object"
+    rdra_info: "比較ツール実行結果"
+  - name: "FinalCrosscheckRequestRepository"
+    tier: "tier-final-crosscheck"
+    layer: "repository"
+    type: "record"
+    rdra_info: "確報比較依頼(final_crosscheck_request)"
+  - name: "RelayOutput"
+    tier: "tier-final-crosscheck"
+    layer: "presentation"
+    type: "view-model"
+    rdra_info: "ジョブスケジューラ応答"
+
+tables:
+  - name: "final_crosscheck_requests"
+    rdra_info: "確報比較依頼(final_crosscheck_request)"
+    operations:
+      - type: "SELECT"
+        columns:
+          - name: "status"
+            value: ""
+          - name: "exit_code"
+            value: ""
+          - name: "stdout"
+            value: ""
+          - name: "stderr"
+            value: ""
+        where: "final_crosscheck_id = ?(終端判定は domain が担う。tier / spec の SELECT と同じ)"
+    indexes_needed:
+      - columns: ["final_crosscheck_id"]
+        reason: "主キーによる 1 件取得"
+        access_pattern: "終端到達後に 1 回だけ SELECT"
+
+kvs: []
+object_storage: []

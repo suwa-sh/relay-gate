@@ -1,0 +1,40 @@
+{
+  "schema_version": "distillery.feedback-no-domain-change/v1",
+  "type": "feedback_no_domain_change",
+  "event_id": "20260921_084000_feedback_impl_feedback_eff24f55",
+  "created_at": "2026-09-21T08:40:00Z",
+  "stage": "requirements",
+  "domain_event_root": "rdra/events",
+  "reason": "受け入れ基準の分割は USDM SPEC-008-05 の文面だけの変更である。RDRA の情報「ハング検知上限設定」「適用構成文書」、条件「設定所有区分」、BUC「ハング検知上限の調整」は、調整記録をジョブマップの列に持たず適用構成文書に残すことを既に記述しており、モデル要素の追加・変更・削除は無い。そのため rdra/latest は更新しない",
+  "feedback_request": {
+    "feedback_request_id": "20260919_213000_impl_feedback_eff24f55",
+    "input_sha256": "1a7612598a0ed1d3378d7479b1614d6a6aa99ac90eae0fbf55b82e173784a431",
+    "request_ids": [
+      "CR-eff24f55-005"
+    ],
+    "work_unit_ids": [
+      "CR-eff24f55-005#1"
+    ]
+  },
+  "work_unit_results": [
+    {
+      "work_unit_id": "CR-eff24f55-005#1",
+      "disposition": "applied",
+      "reason": "USDM SPEC-008-05 の受け入れ基準 2(1 つの Then に、ジョブマップの列の事実と適用構成文書の記載が混在)を 2 つに分けた。自動判定できる基準は「Given slot ジョブマップが定義されている When ジョブマップの列を確認する Then hang_detect_limit_minutes の調整記録(調整日時・調整根拠)を保持する列は存在しない」とした。運用文書の記載(調整日時と調整根拠を適用構成文書に残す)は、先頭に「[自動判定の対象外: 運用文書の記載]」を付け、適用構成文書は relay-gate が読まない文書のため自動判定の対象にしないことを明記した。specification 本文、受け入れ基準 1、affected_models は変更していない。RDRA モデルは同じ内容を既に記述しているため変更していない",
+      "artifact_refs": [
+        "usdm/events/20260921_084000_feedback_impl_feedback_eff24f55/requirements.yaml"
+      ]
+    }
+  ],
+  "reconciliation_results": [
+    {
+      "work_unit_id": "CR-eff24f55-005#1",
+      "status": "changed",
+      "reason": "USDM SPEC-008-05 の受け入れ基準 2(1 つの Then に、ジョブマップの列の事実と適用構成文書の記載が混在)を 2 つに分けた。自動判定できる基準は「Given slot ジョブマップが定義されている When ジョブマップの列を確認する Then hang_detect_limit_minutes の調整記録(調整日時・調整根拠)を保持する列は存在しない」とした。運用文書の記載(調整日時と調整根拠を適用構成文書に残す)は、先頭に「[自動判定の対象外: 運用文書の記載]」を付け、適用構成文書は relay-gate が読まない文書のため自動判定の対象にしないことを明記した。specification 本文、受け入れ基準 1、affected_models は変更していない。RDRA モデルは同じ内容を既に記述しているため変更していない",
+      "artifact_refs": [
+        "usdm/events/20260921_084000_feedback_impl_feedback_eff24f55/requirements.yaml"
+      ]
+    }
+  ],
+  "evidence_refs": []
+}

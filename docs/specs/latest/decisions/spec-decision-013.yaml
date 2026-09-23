@@ -1,0 +1,50 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "specification"
+artifact_id: "spec-decision-013"
+title: "ジョブマップの work_dir / script は空でなければ受理し、パスの形式(Linux 絶対 / Windows ドライブ文字 / 相対)を検査しない。bash の最低版は 5.0、性能は NFR 共通前提を参照する"
+status: "approved"
+generated_at: "2026-09-21T10:00:00Z"
+context: |
+  - 2026-09-19 の実装フィードバックの制約「方針資料のジョブマップ CSV 例が守備範囲の定めで受理される」を確かめるため、現行の検証コマンドに方針資料の
+    2 例を通した。どちらも終了コード 2 で拒否された。
+    - `TOMM0410010100,督促AP,saiken,G:\scripts,G:\scripts\xxx.bat,"[""param1"",...]",60` → `error: work_dir is not absolute ... value=G:\scripts`
+    - `TOMM0410010100,./beam-batches,./beam-batches/TOMM0410010100.sh,...` → `error: work_dir is not absolute ... value=./beam-batches`
+  - 拒否した規則は spec 側の「work_dir と script は絶対パス(`^/`)」で、USDM・RDRA 条件・方針資料のどこにも無い(spec 生成時に足された規則)。
+    現行仕様は既に「存在確認はしない」と定めており、形だけの検査に守る価値がほとんど無い。
+  - 利用者は 2026-09-22 に問 4 の A(絶対パスの検査をやめ、空でなければ受理する)を選び、根拠を補足した:
+    「ジョブ ID とコマンドのマッピングファイル(ジョブマップ)での定義なら、Windows / Linux 両対応のフルパス / 相対パス指定を受け取れる必要がある」。
+  - 同じ CR は、実装が前提にしてよい bash の最低版と、ジョブマップの想定最大行数・性能目標が実装向けの仕様に無いことも指摘した。
+    インフラ設計(docs/infra/latest)は shell: bash 5。想定最大行数と性能目標は上流の非機能要求(B.1.1.2 / B.2.1.1)が 2026-09-21 に共通前提として確定した。
+decision: |
+  1. ジョブマップの work_dir / script は「非空」だけを検査し、パスの形式は検査しない。Linux 形式(`/var/app/work`)、Windows 形式
+     (`G:\scripts`。ドライブ文字 + バックスラッシュ)、相対パス(`./beam-batches`。実行先のカレントディレクトリ基準)のどれでも受理する。
+     relay-gate はパスを解釈も正規化もせず、実行先へそのまま渡す(存在確認もしない。実行先の OS・シェルが解釈する)。
+     理由: ジョブマップは Windows / Linux 両対応のフルパス / 相対パス指定を受け取れる必要がある(利用者決定 2026-09-22)。
+  2. error 行は `error: work_dir is empty line=N job_id=... value=` / `error: script is empty ...`(既存の `<column> is empty` 形式)。
+     旧 `error: work_dir is not absolute ...` / `error: script is not absolute ...` は CLI 契約・UC 仕様・_api-summary から削除する。
+     実行時に解決する UC「ジョブマップで JOB_ID から実行先を解決する」のバリデーション (9) も同じく非空だけにする。
+  3. feature flag の runner パス(BLUE_RUNNER / GREEN_RUNNER / RAPID_CROSSCHECK_RUNNER / RAPID_CROSSCHECK_WORKER)の絶対パス検査は変えない。
+     これらは relay-gate 自身が起動するローカルの実体で、方針資料と矛盾しない。
+  4. 方針資料の 2 例を BDD Scenario として UC「slot ごとのジョブマップを定義する」の E2E とティア完了条件に置き、SPEC-004-04 に登録する
+     (検証 OK、非 ASCII のホスト名とバックスラッシュは表示も 1 バイトも変わらない)。
+  5. bash の最低版は 5.0 とし、CLI 契約 conventions.runtime_prerequisites に置く(インフラ設計の bash 5 と同じ値)。連想配列などを前提にしてよい。
+     セルの解析は bash 単独で行う制約は形式の制約であり、行単位の外部コマンド利用(`grep` による候補行の絞り込み、`sort` による重複検査、
+     `tr` / `sed` によるバイト点検)を禁じないことを明記する。使ってよい外部コマンドは POSIX 標準コマンドに限る(jq 等は使わない)。
+  6. ジョブマップの想定最大行数・内容の最悪条件・応答時間の目標は NFR B.1.1.2 / B.2.1.1 の共通前提を参照するだけにし、spec で数値を再定義しない。
+     行数に比例する時間で処理できる実装を前提とする。
+consequences:
+  positive:
+    - "方針資料のジョブマップ CSV 例(Windows 形式パス、相対パス、非 ASCII のホスト名)が検証 OK になり、表示も変わらない(CR の制約を満たす)"
+    - "Windows 側の既存 bat を SSH 経由で起動する適用先(方針資料の利用イメージ)をジョブマップで表現できる"
+    - "実装者が bash 5.0 の構文を前提にでき、性能の指摘を NFR の共通前提で重大度判定できる"
+  negative:
+    - "work_dir / script の入力ミス(例: 先頭の `/` の欠落)は検証コマンドで検出されず、実行時に実行先で失敗する(存在確認をしない現行仕様と同じ)"
+    - "旧 `is not absolute` の error 行を期待する現行実装のテストは修正が必要"
+alternatives_considered:
+  - name: "受理する形を列挙する(`/...`、`X:\\...`、`./...` の 3 形だけ)"
+    reason_rejected: "UNC パス(`\\\\server\\share`)や `../` など新しい形が出るたびに改定が必要になる。relay-gate はパスを解釈しないので、形の列挙に守る価値が無い"
+  - name: "現状維持(絶対パス `^/` のみ)。方針資料の例は説明用とみなす"
+    reason_rejected: "方針資料との一致が第一の判断基準。『CSV 例が検証 OK になる』という制約を満たせない"
+  - name: "bash の最低版を 4.x にして実装の互換範囲を広げる"
+    reason_rejected: "インフラ設計は bash 5 で確定しており、値をそろえる要求。4.x を前提にすると 5.0 の構文が使えず性能改善の手段が狭まる"

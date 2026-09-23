@@ -1,0 +1,30 @@
+{
+  "event_id": "20260923_113500_feedback_run_completed",
+  "type": "feedback_run_completed",
+  "run_id": "feedback-20260922_130000_impl_feedback_eff24f55-20260923_110656-17997",
+  "attempt": 1,
+  "created_at": "2026-09-23T02:22:50.852Z",
+  "result_sha256": "50aa892564264e2f15fbdda08a4b5575ad8593554b4410e18d4ab425b14a0379",
+  "feedback_request": {
+    "feedback_request_id": "20260922_130000_impl_feedback_eff24f55",
+    "input_sha256": "8adc8bc900ebe6eb57209cee7c4ed2c727b1313c462a6052efd720b2f31cb2fa",
+    "request_ids": [
+      "CR-eff24f55-006",
+      "CR-eff24f55-007"
+    ],
+    "work_unit_ids": [
+      "CR-eff24f55-006#1",
+      "CR-eff24f55-007#1"
+    ]
+  },
+  "work_unit_dispositions": [
+    {
+      "work_unit_id": "CR-eff24f55-006#1",
+      "disposition": "applied"
+    },
+    {
+      "work_unit_id": "CR-eff24f55-007#1",
+      "disposition": "applied"
+    }
+  ]
+}

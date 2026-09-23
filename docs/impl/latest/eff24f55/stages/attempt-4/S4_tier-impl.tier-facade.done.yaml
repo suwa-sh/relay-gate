@@ -1,0 +1,142 @@
+stage: "S4"
+tier: "tier-facade"
+attempt: 4
+uc_id: "eff24f55"
+manifest_sha256: "f4528376203939a69f1860d8fba45c818c647fa63d56a44f2e91c8e6a2618c21"
+manifest_projection: v2
+result: pass
+gates:
+  format: pass
+  lint: pass
+  tdd: pass
+  bdd_tier: pass
+gate_runs:
+  - gate: "format"
+    cwd: "facade"
+    command: "shfmt -d ."
+    exit_code: 0
+  - gate: "lint"
+    cwd: "facade"
+    command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+    exit_code: 0
+  - gate: "tdd"
+    cwd: "facade"
+    command: "bats -r test"
+    exit_code: 0
+    detail: "277 tests passed, 0 failed"
+  - gate: "bdd_tier"
+    cwd: "facade"
+    command: "npx cucumber-js --config ../cucumber.cjs features"
+    exit_code: 0
+    detail: "23 scenarios passed, 74 steps passed"
+assumptions:
+  path: "attempt-4/S4_tier-impl.tier-facade.assumptions.yaml"
+  count: 34
+  by_category:
+    input_validation: 12
+    data_format: 12
+    error_handling: 7
+    persistence: 0
+    performance: 2
+    security: 1
+  sha256: "fd054bd7387b0068d4d76ffe368726fa89b77be081ae969c6b6c022ac85b83d2"
+  extraction:
+    candidate_count: 61
+    excluded_as_explicit: 27
+    recorded_count: 34
+findings_source: "attempt-3/S5_verify.tier-facade.findings.yaml"
+findings_resolution:
+  - ids: ["F-001"]
+    severity: "blocker"
+    status: "fixed"
+    note: "共通関数 facade/src/domain/cli_field.sh に cli_field_escape_text と cli_field_safe_text を追加し、cli_field_line / cli_path_field_line / cli_field_display_value と、--job-map の error / warn / info の全行、presentation の unknown option / unexpected argument で、制御文字を可視表記へ置き換える。改行とタブは 2 文字のエスケープ、その他の U+0001〜U+001F と U+007F と UTF-8 の C1 制御文字は u00XX 形式。verbose の fixed_params= の JSON エスケープも同じ関数で作る。制御文字を含まない値は 1 バイトも変えない(単体テストと、旧実装との出力比較で確認)。表記の選択は A-040 / A-041 / A-042 に記録した"
+  - ids: ["F-002"]
+    severity: "blocker"
+    status: "fixed"
+    note: "プロセス置換を廃止し、tr と sed の事前走査と sort の結果をコマンド置換で受けて終了状態を確認する(事前走査は PIPESTATUS で全段を確認)。失敗時は stdout を出さず error: internal command failed commands=... の 1 行と終了コード 6 で終える。終了状態 0 のまま出力が欠ける障害も検知する(sort は行数と昇順を確認。事前走査は sed に走査完了の証跡と総行数を出させ、bash が読み込んだ行数と照合)。Verifier と同じ export -f の障害注入を実 CLI で再現する回帰テストを追加した。文言と終了コードの選択は A-043 / A-044 に記録した"
+  - ids: ["F-025"]
+    severity: "blocker"
+    status: "fixed"
+    note: "事前走査(tr と sed。LC_ALL=C、基本正規表現と生のバイトだけ)で UTF-8 として不正な行を検出し、セルに分解せず既存の行 error: csv quote is invalid line=N path: <path> と終了コード 2 で拒否する。妥当性は RFC 3629 の範囲(過長形式、サロゲート、U+10FFFF 超、切れた並びは不正)。コメント行も対象にした。BSD sed と GNU sed 4.9 の両方で確認した。A-031 を書き直し、A-038 / A-039 を追加した"
+  - ids: ["F-010"]
+    severity: "major"
+    status: "not_fixed"
+    note: "A-012 は仕様に照合先が無い前提で、拒否へ変えると契約の stderr に無い error 行を発明することになる。dispatch 指示のとおり実装は変えず、前提として S9 の人間判断に委ねる"
+  - ids: ["F-021", "F-026"]
+    severity: "minor"
+    status: "fixed"
+    note: "仕様に明示された判断の復唱と判定された A-027 と A-032 を前提の記録から外し、excluded_as_explicit に数えた(実装は変えていない)"
+  - ids: ["F-031"]
+    severity: "minor"
+    status: "fixed"
+    note: "A-026 の category を error_handling に改めた(A-031 も同じ分類にした)"
+  - ids: ["F-032"]
+    severity: "minor"
+    status: "fixed"
+    note: "ヘッダー行だけでデータ行 0 件のファイルを検証 OK にする判断を A-037 として前提に追加した(実装は変えていない)"
+  - ids: ["F-011", "F-022"]
+    severity: "minor"
+    status: "fixed"
+    note: "F-001 / F-025 の修正に伴い A-014(U+007F と C1 もエスケープする)と A-028(事前走査が不正な UTF-8 も検出する)の文面を現行の実装に合わせて書き直した。判断そのものは仕様に照合先が無い前提として残す"
+  - ids: ["F-003", "F-004", "F-005", "F-006", "F-007", "F-008", "F-009", "F-012", "F-013", "F-014", "F-015", "F-016", "F-017", "F-018", "F-019", "F-020", "F-023", "F-024", "F-027", "F-028", "F-029", "F-030"]
+    severity: "minor"
+    status: "not_fixed"
+    note: "22 件すべてが仕様に照合先が無い真の前提(spec_absent)の確認で、実装の欠陥の指摘ではない。仕様の範囲で直せる対象が無いため実装は変えず、前提一覧に残して S9 の確認対象にする(target の行番号だけ現行のコードに合わせた)"
+self_inspection:
+  scope: "修正前に、(a) 任意入力が出力へ出る全経路、(b) 補助コマンド・サブシェル・パイプ・プロセス置換の終了状態を捨てている全箇所を、src の printf とコマンド置換とパイプの全件 grep で洗い出した"
+  output_paths:
+    - path: "stdout の map_path / rows / map_version(usecase)"
+      action: "cli_path_field_line と cli_field_line の中で可視表記にする"
+    - path: "error: config file not found / config file is not readable の path(usecase)"
+      action: "可視表記にしたパスを出す"
+    - path: "error: csv quote is invalid の path(ヘッダー行、ヘッダー不一致後、データ行の 3 経路。usecase)"
+      action: "可視表記にしたパスを出す"
+    - path: "warn: unknown column の column と path、error: job map header mismatch の path(domain)"
+      action: "可視表記にする(missing= は契約の列名だけ)"
+    - path: "列の値の error 行の job_id と value、空セルの error 行と credential_ref の warn 行の job_id(domain)"
+      action: "可視表記にする(検証は元の値で行う)"
+    - path: "error: duplicate job_id の job_id(domain)"
+      action: "可視表記にする(比較は元の値で行う)"
+    - path: "warn: mixed map_version の values(domain)"
+      action: "可視表記にする"
+    - path: "info: resolved の job_id / host / user / work_dir / script / fixed_params / hang_detect_limit_minutes(domain)"
+      action: "可視表記にする。fixed_params は同じ関数の JSON エスケープ"
+    - path: "error: unknown option と error: unexpected argument(presentation)"
+      action: "可視表記にする"
+    - path: "error: option required / options are exclusive / validation kind is not implemented(presentation)"
+      action: "変更なし。出る値は一致判定済みの固定のオプション名だけ"
+    - path: "--feature-flag の stdout 15 行(先行 UC)"
+      action: "共通関数の修正で可視表記になる。制御文字を含まない値の出力は変わらない"
+    - path: "--feature-flag の stderr(先行 UC fd678b04 の domain / usecase)"
+      action: "変更していない(本 UC の対象外)。issues に記録した"
+  exit_status_sites:
+    - site: "job_map_repo.sh の事前走査(tr と sed のパイプをプロセス置換で読む)"
+      action: "コマンド置換と PIPESTATUS に変更。失敗・想定外の出力・走査完了の証跡なし・総行数の不一致は終了コード 6"
+    - site: "job_map.sh の job_id 重複検査(sort をプロセス置換で読む。2 箇所)"
+      action: "コマンド置換に変更。失敗・行数の不一致・昇順でない並びは終了コード 6"
+    - site: "行の配列化(while read とプロセス置換、ヒアストリング)"
+      action: "使わない。単語分割(IFS を改行だけにして noglob)で配列にし、一時ファイルやサブプロセスの失敗で行を失わないようにした"
+    - site: "usecase の row_count のコマンド置換"
+      action: "配列の要素数を直接読む形に変更"
+    - site: "usecase の job_map_version_summary のコマンド置換"
+      action: "終了状態と空の結果を確認し、異常なら終了コード 6"
+    - site: "usecase の job_map_row_resolved_line の戻り値"
+      action: "捨てずに確認し、異常なら終了コード 6"
+    - site: "domain の info: resolved 行の中の job_map_fixed_params_to_json のコマンド置換"
+      action: "サブシェルを使わない job_map_fixed_params_json_build に変更"
+    - site: "presentation と bin の dirname / pwd のコマンド置換、usage の cat"
+      action: "変更なし。set -e の下で失敗すると終了コード 1 で終わり、成功扱いにならない"
+    - site: "ファイルを読む while read ループ"
+      action: "read は読み取りエラーと終端を区別できない。事前走査の総行数との照合で、読み込めなかった行があれば終了コード 6"
+  not_covered:
+    - "printf や read などの bash 組み込みコマンドを関数で置き換える障害注入は対象にしていない"
+    - "sort が行数も昇順も保ったまま内容を書き換える障害は検知できない"
+external_review:
+  method: "toolbox:review-refute-loop のサブエージェントフォールバック(fresh context。Implementer と同系統のモデルで、クロスモデルではない)。1 ラウンド"
+  contract: "P1 制御文字の出力経路 / P2 補助コマンドの失敗検知 / P3 不正 UTF-8 の検出 / P4 通常値の出力の不変 / P5 bash の挙動。閾値は medium 以上"
+  result: "P1 / P3 / P4 / P5 は PASS。P2 は CONCERN 1 件(tr / sed が終了状態 0 のまま何も出力しないと NUL 行と不正 UTF-8 行を検証 OK にする)を ACCEPTED として修正した。閾値未満の sort の素通し(並べ替えずに返す)も合わせて修正した"
+  residual: "修正後の外部再レビューは未実施(ローカルのゲートと GNU sed 4.9 のコンテナでの確認のみ)"
+issues_raised:
+  - "docs/impl/latest/eff24f55/issues/20260919_183305_control-char-notation-and-internal-error-undefined.md"
+completed_at: "2026-09-19T09:46:21Z"
+completed_by: "dist-impl-implement@0.14.1"

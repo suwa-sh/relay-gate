@@ -1,0 +1,17 @@
+event_id: 20260919_220020_attempt_opened_eff24f55_a5
+type: attempt_opened
+uc_id: eff24f55
+attempt: 5
+payload:
+  reason: review_rejected_implementation_change
+  cause_event_id: 20260919_220000_review_rejected_eff24f55
+  from_attempt: 4
+  rerun_tiers:
+  - tier-facade
+  carried_forward_tiers: []
+  target_findings:
+  - F-001
+  findings:
+    verify: docs/impl/latest/eff24f55/stages/attempt-4/S5_verify.tier-facade.findings.yaml
+  verify_scope: 'ユーザー指示により S5 は F-001 の解消確認とゲート再実行に限定する(新しい堅牢性の穴探しはしない)'
+created_at: '2026-09-19T22:00:20+09:00'

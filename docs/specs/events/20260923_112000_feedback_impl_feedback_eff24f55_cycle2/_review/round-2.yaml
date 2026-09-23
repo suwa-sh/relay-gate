@@ -1,0 +1,35 @@
+round: 2
+verification:
+  - id: R-001
+    verdict: not_fixed
+    note: "契約 columns.credential_ref.on_format_violation、UC「slot ごとのジョブマップを定義する」の tier-facade.md と spec.md 分岐条件一覧、spec-decision-015 の consequences.negative には『warn して受理した値も execution-spec.json の slots.<role>.credential_ref へそのまま転記される』が入り、定義側の記述としては一意に読める。一方、転記を実装する側の UC「execution-spec.json を確定保存する」は変更されていない。この UC の spec.md 分岐条件一覧「認証情報の非保存」は今も『SSH 鍵パス・パスワード・トークンの値は書かない』と定め、適用箇所は domain SlotSpec である。『/ を含む値(例 /home/batch/.ssh/id_green)は warn して受理し、そのまま転記する』という契約と正面から食い違う。このため、転記側の実装者が SlotSpec で値を取り除くのか転記するのかを選び直す必要が残る。詳細は findings の R-001(target を転記側 UC に更新)"
+  - id: R-002
+    verdict: fixed
+    note: "契約 conventions.credentials と columns.credential_ref.output_rule は同じ適用範囲で書かれている。範囲は validate-config.sh の stdout と stderr(実行ログは持たない)と、slot runner の stderr と実行ログ(execution_log)。UC の tier-facade.md(60 行目)と spec.md 分岐条件一覧(109 行目)、spec-decision-015 の decision 3 も同じ範囲。validate-config.sh の『実行ログ』の曖昧さも解消した。ただし作業記録 3 か所に旧い範囲の記述が残る(新規 R-004)"
+  - id: R-003
+    verdict: fixed
+    note: "契約 on_format_violation の理由と spec-decision-015 の decision 2 から具体例(SSH 設定の Host 別名や鍵の参照名)が外れ、『適用側の認証情報ストアの運用に依存する』だけになった。確定した理由は仮採用の前提に依存しなくなった。change-brief D2 の範囲の注記には、『仮採用』の解消対象がこの UC だけであることが明記されている。なお UC「実装スクリプトを実行して Runner Result を出力する」の実行時解釈の仮採用(tier-facade.md 70 行目、spec.md 52 行目)は docs/todo.md に登録されていない。追跡は完了報告の返却だけに頼っている。この仮採用は本イベントより前からあるため、新規 finding にはしない"
+findings:
+  - id: R-001
+    viewpoint: 4
+    severity: major
+    target: "実装切替業務/実装切替ジョブ実行フロー/execution-spec.json を確定保存する/spec.md"
+    claim: "warn して受理した credential_ref をそのまま転記するという帰結は定義側に明記された。しかし転記を実装する UC の条件には『SSH 鍵パスの値は書かない』が残っており、帰結と矛盾する。/ を含む値(鍵パスそのもの)を credential_ref に置いた場合に execution-spec.json に書くか書かないかが、UC ごとに逆の結果として読める"
+    evidence: "転記側 UC の spec.md 分岐条件一覧「認証情報の非保存」(95 行目)は『JSON には credential_ref(参照名)だけを書く。SSH 鍵パス・パスワード・トークンの値は書かない』(適用箇所 domain SlotSpec)と定める。同じ UC の Scenario「認証情報の値を保存しない(SPEC-004-03)」(219 行目〜)も『Then execution-spec.json に ... 「/home/batch/.ssh/id_green」と鍵の内容は含まれない』と書く。前提は正規の参照名 ssh-key-green に限られる。一方、契約 config_files[<slot>-job-map.csv].columns.credential_ref.on_format_violation と UC「slot ごとのジョブマップを定義する」の tier-facade.md(55 行目・61 行目)は、credential_ref=/home/batch/.ssh/id_green を warn して受理し『execution-spec.json の slots.<role>.credential_ref へそのまま転記される』と定める。転記側 UC は本イベントで変更されていない(前イベントとの diff に含まれない)"
+    suggested_fix: "利用者決定(拒否しない)と転記の帰結は変えず、転記側 UC の記述を帰結に合わせる。spec.md 分岐条件一覧「認証情報の非保存」の判定ルールを『credential_ref 列の値を加工せずにそのまま転記する(形式の検査・除去はしない。形式の扱いの正本は CLI 契約 config_files の <slot>-job-map.csv columns.credential_ref)。relay-gate は SSH 鍵ファイルの中身や実行環境の鍵パスを自ら読んで書くことはしない』に改める。あわせて、形式違反の値(例 /home/batch/.ssh/id_green)を前提に『execution-spec.json の credential_ref にその値がそのまま入り、鍵ファイルの内容は含まれない』を確かめる Scenario を 1 件加える。既存 Scenario の Then が『鍵パスの文字列は含まれない』とだけ読める場合は、『前提の credential_ref が参照名だから含まれない』ことが分かる表現にする"
+  - id: R-004
+    viewpoint: 4
+    severity: minor
+    target: "_review/change-brief.md"
+    claim: "R-002 の修正で、credential_ref の値を出さない規則の適用範囲は『validate-config.sh の stdout/stderr(実行ログは持たない)+ slot runner の stderr/実行ログ』にそろった。しかし作業記録 3 か所は旧い範囲『validate-config.sh の診断行(stdout / stderr / 実行ログ)』のまま残り、正本の契約と食い違う"
+    evidence: "change-brief.md D2 の conventions.credentials の項は『credential_ref の値は validate-config.sh の診断行(stdout / stderr / 実行ログ)に一切出さない』と書く。一方、契約 conventions.credentials の現行文は『validate-config.sh は実行ログを持たない』とし、slot runner の stderr と実行ログを対象に加えている。_inference.md の確認推奨項目 2 の推奨理由も『診断行(stdout / stderr / 実行ログ)に出さない』と書く。spec-event.yaml の source も『credential_ref の値を診断行(stdout / stderr / 実行ログ)に一切出さない規則』のままである"
+    suggested_fix: "change-brief.md D2 の conventions.credentials の項を、契約の現行文と同じ範囲(validate-config.sh の stdout と stderr。validate-config.sh は実行ログを持たない。ジョブマップを読む slot runner の stderr と実行ログ)に直す。_inference.md 確認推奨項目 2 と spec-event.yaml の source の括弧書きも、同じ範囲に直すか『診断行(範囲は契約 conventions.credentials)』のような参照に置き換える"
+resolved:
+  - id: R-001
+    resolution: "fixed"
+    by: "orchestrator"
+    note: "転記側 UC「execution-spec.json を確定保存する」を帰結に合わせた。spec.md 分岐条件一覧「認証情報の非保存」を『credential_ref 列の値は加工せずにそのまま転記する(形式の検査・除去はしない。正本は CLI 契約 columns.credential_ref)。relay-gate は SSH 鍵ファイルの中身や鍵パス等を自ら読んで書かない』に改め、E2E Scenario「認証情報の値を保存しない」の Then に『credential_ref が参照名なので鍵パスや鍵の内容を書く経路は無い』を補足。tier-facade.md の SlotSpec 表とビジネスルールを追従し、ティア完了条件に Scenario「save_slot_spec_once は形式に合わない credential_ref も加工せずに転記する」(/home/batch/.ssh/id_green → そのまま転記、鍵ファイルの内容は含まれない)を追加。Scenario 名・usdm[] は不変"
+  - id: R-004
+    resolution: "fixed"
+    by: "orchestrator"
+    note: "change-brief.md D2、_inference.md 確認推奨項目 2、spec-event.yaml の source の範囲の記述を契約の現行文(validate-config.sh の stdout / stderr、slot runner の stderr / 実行ログ)にそろえた"

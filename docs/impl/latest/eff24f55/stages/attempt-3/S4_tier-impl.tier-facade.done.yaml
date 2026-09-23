@@ -1,0 +1,114 @@
+stage: "S4"
+tier: "tier-facade"
+attempt: 3
+uc_id: "eff24f55"
+manifest_sha256: "f4528376203939a69f1860d8fba45c818c647fa63d56a44f2e91c8e6a2618c21"
+manifest_projection: v2
+result: pass
+gates:
+  format: pass
+  lint: pass
+  tdd: pass
+  bdd_tier: pass
+gate_runs:
+  - gate: "format"
+    cwd: "facade"
+    command: "shfmt -d ."
+    exit_code: 0
+  - gate: "lint"
+    cwd: "facade"
+    command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+    exit_code: 0
+  - gate: "tdd"
+    cwd: "facade"
+    command: "bats -r test"
+    exit_code: 0
+    detail: "219 tests passed, 0 failed"
+  - gate: "bdd_tier"
+    cwd: "facade"
+    command: "npx cucumber-js --config ../cucumber.cjs features"
+    exit_code: 0
+    detail: "23 scenarios passed, 74 steps passed"
+assumptions:
+  path: "attempt-3/S4_tier-impl.tier-facade.assumptions.yaml"
+  count: 28
+  by_category:
+    input_validation: 13
+    data_format: 9
+    error_handling: 3
+    persistence: 0
+    performance: 2
+    security: 1
+  sha256: "0197a297e047f03e0e453c68e13131d523b2e34d94cbd02709831b3bf10ab0bd"
+  extraction:
+    candidate_count: 53
+    excluded_as_explicit: 25
+    recorded_count: 28
+findings_source: "attempt-2/S5_verify.tier-facade.findings.yaml"
+findings_resolution:
+  - ids: ["F-001"]
+    severity: "blocker"
+    status: "fixed"
+    note: "repository が bash へ行を取り込む前に tr と sed で NUL バイトを含む行の行番号を検出し、その行を解析せず quote_invalid として記録する。usecase は既存の契約の行 error: csv quote is invalid line=N path: <path> で全件報告し、終了コード 2 で終える。NUL を落とした文字列は検証にも verbose にも使わない。実ファイルに 0x00 を書いた回帰テストを repository 6 件、usecase 4 件追加した(RED を確認してから修正)。文言の選択は A-026、コメント行の扱いは A-027、検出方式は A-028 に記録した"
+  - ids: ["F-009"]
+    severity: "major"
+    status: "not_fixed"
+    note: "A-012 は仕様に照合先が無い前提で、拒否へ変えると契約の stderr に無い error 行を発明することになる。警告のみで受理する実装を維持し、前提として S9 の人間判断に委ねる"
+  - ids: ["F-002", "F-003", "F-004", "F-005", "F-006", "F-007", "F-008", "F-010", "F-011", "F-012", "F-013", "F-014", "F-015", "F-016", "F-017", "F-018"]
+    severity: "minor"
+    status: "not_fixed"
+    note: "16 件すべてが仕様に照合先が無い真の前提(spec_absent)の確認で、実装の欠陥の指摘ではない。仕様の範囲で直せる対象が無いため実装は変えず、A-001 / A-004 / A-005 / A-006 / A-008 / A-009 / A-010 / A-014 / A-016 / A-017 / A-018 / A-019 / A-020 / A-022 / A-024 / A-025 として前提一覧に残し、S9 の確認対象にする(target の行番号だけ現行のコードに合わせた)"
+self_inspection:
+  scope: "CSV の読み込みから fixed_params 検証、verbose 出力までの経路を、bash が黙って変形または欠落させる入力の観点で点検した。各ケースは実ファイルを bin/validate-config.sh に渡して LC_ALL=C と en_US.UTF-8 の両方で挙動を確定し、bats の回帰テストにした"
+  cases:
+    - input: "NUL バイトを含む行(fixed_params 内、job_id 内、ヘッダー行内、閉じ引用符の直後)"
+      behavior: "終了コード 2 と csv quote is invalid line=N。修正前は NUL が落ちた値を終了コード 0 で受理していた"
+      basis: "A-026"
+    - input: "NUL バイトだけの行(改行あり、改行の無い最終行)"
+      behavior: "空行として読み飛ばさず、終了コード 2 と csv quote is invalid line=N。修正前は黙って無視していた"
+      basis: "A-026"
+    - input: "NUL バイトの直後に # が続く行"
+      behavior: "コメント行として扱わず、終了コード 2 と csv quote is invalid line=N。修正前はコメント行として無視していた"
+      basis: "A-027"
+    - input: "1 バイト目が # で途中に NUL バイトがある行"
+      behavior: "コメント行として無視する"
+      basis: "A-027"
+    - input: "最終行の末尾に改行が無いファイル"
+      behavior: "最終行も検証し、集計に含める"
+      basis: "A-036"
+    - input: "CRLF 改行のファイル"
+      behavior: "CR は行末のセルの値に残る。必須 5 列だけのファイルは header mismatch で終了コード 2。行末が任意列のファイルは unknown column の warn で終了コード 0。データ行だけ CRLF なら行末の値の検証違反で終了コード 2。CRLF の空行は column count mismatch で終了コード 2"
+      basis: "A-029"
+    - input: "先頭に UTF-8 の BOM があるファイル"
+      behavior: "BOM は先頭のセルの値に残る。先頭の列が job_id なら header mismatch missing=job_id で終了コード 2"
+      basis: "A-030"
+    - input: "UTF-8 として不正なバイト列(0xff 0xfe、続きの無い先頭バイト 0xe3 の直後に引用符やカンマ)"
+      behavior: "バイト列を変えずにセルの値として扱う。区切りの判定は変わらない。job_id 内なら job_id is invalid で終了コード 2"
+      basis: "A-031"
+    - input: "アクセント付き文字や全角英数字を含む job_id、全角数字の hang_detect_limit_minutes"
+      behavior: "ロケールに関係なく終了コード 2(job_id is invalid、is not a non-negative integer)"
+      basis: "A-032"
+    - input: "引用符で囲んだセルの途中の改行"
+      behavior: "物理行ごとに csv quote is invalid で終了コード 2"
+      basis: "tier-facade.md 設定契約の「セル内に改行は置けない」と CSV セルのクォート解析規則に明示"
+    - input: "空ファイル、空行だけのファイル、コメント行だけのファイル"
+      behavior: "必須 5 列の header mismatch で終了コード 2"
+      basis: "tier-facade.md ヘッダー検証に明示(attempt 1 の独立検証で復唱と判定済み)"
+    - input: "ヘッダー行だけのファイル(末尾の改行あり、なし)"
+      behavior: "rows=0 と map_version=- で終了コード 0"
+      basis: "tier-facade.md 出力契約の終了コード表(error 0 件)と spec.md 計算ルール「行数集計」に明示"
+    - input: "末尾に空行が続くファイル"
+      behavior: "空行を rows に数えず終了コード 0"
+      basis: "tier-facade.md 設定契約の「空行は無視」に明示"
+    - input: "半角空白だけの行、行頭に空白のある # の行"
+      behavior: "1 セルのデータ行として column count mismatch で終了コード 2"
+      basis: "A-035(行頭が # でない行がコメント行でないことは tier-facade.md 設定契約に明示)"
+    - input: "行末がバックスラッシュの行、glob や変数やコマンド置換やオプション風の値"
+      behavior: "次の行と連結せず、展開もせず、文字どおりの値として扱う"
+      basis: "CSV セルのクォート解析規則が特別扱いする文字はカンマと二重引用符だけ(明示)"
+    - input: "非常に長い行(fixed_params が 10 万文字と 20 万文字、二重化引用符やエスケープが密な 4 万文字と 10 万文字)"
+      behavior: "長さを理由に拒否しない。10 万文字の行は verbose つきで 0.2 秒、密な 10 万文字の行は 8 秒未満。修正前は 10 万文字の行に約 100 秒かかっていた"
+      basis: "A-033 / A-034"
+issues_raised: []
+completed_at: "2026-09-19T08:57:57Z"
+completed_by: "dist-impl-implement@0.14.1"

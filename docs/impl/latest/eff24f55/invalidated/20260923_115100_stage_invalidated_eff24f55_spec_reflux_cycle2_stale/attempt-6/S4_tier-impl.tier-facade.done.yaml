@@ -1,0 +1,97 @@
+stage: "S4"
+tier: "tier-facade"
+attempt: 6
+uc_id: "eff24f55"
+manifest_sha256: "f8cf17f93da5c6e63c9b3ce97c7fbc076f64c6174bd02d27757adf7c8b54ecb1"
+manifest_projection: v2
+result: pass
+rerun_reason: "attempt 5 の独立検証(S5_verify.tier-facade.findings.yaml)の blocker 2 件(F-001 / F-002)による attempt++。attempt 5 の実装(4 ゲート pass)を起点に blocker を解消した"
+gates:
+  format: pass
+  lint: pass
+  tdd: pass
+  bdd_tier: pass
+gate_runs:
+  - gate: "format"
+    cwd: "facade"
+    command: "shfmt -d ."
+    exit_code: 0
+  - gate: "lint"
+    cwd: "facade"
+    command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+    exit_code: 0
+  - gate: "tdd"
+    cwd: "facade"
+    command: "bats -r test"
+    exit_code: 0
+    detail: "324 tests passed, 0 failed (attempt 5 の 317 件 + repository 3 件 + presentation 4 件)"
+  - gate: "bdd_tier"
+    cwd: "facade"
+    command: "npx cucumber-js --config ../cucumber.cjs features"
+    exit_code: 0
+    detail: "38 scenarios passed, 129 steps passed (define-slot-job-maps.feature 29 + configure-feature-flags.feature 9。feature / step は変更なし)"
+assumptions:
+  path: "attempt-6/S4_tier-impl.tier-facade.assumptions.yaml"
+  count: 24
+  by_category:
+    input_validation: 1
+    data_format: 12
+    error_handling: 10
+    persistence: 0
+    performance: 0
+    security: 1
+  sha256: "af1e2927136c7f7492f683b87da2c641501dd8cb13bc34bb7fcb304ead0d514a"
+  extraction:
+    candidate_count: 48
+    excluded_as_explicit: 24
+    recorded_count: 24
+  changes_from_attempt_5:
+    removed_as_restatement: ["A-001", "A-004", "A-039"]
+    added: ["A-055", "A-056", "A-057"]
+    note: "F-004 / F-005 / F-019(consistent = 復唱)の 3 件を除外へ移し、複製の削除 rm の失敗の扱い 3 件を追加した。A-052 / A-053 / A-044 / A-025 / A-017 / A-018 の target 行番号を変更後のコードに合わせた"
+findings_source: "docs/impl/latest/eff24f55/stages/attempt-5/S5_verify.tier-facade.findings.yaml"
+findings_resolution:
+  blocker:
+    - id: "F-001"
+      status: "fixed"
+      fix: "補助コマンド自身の stderr を出さない。事前走査の tr と sed(repository job_map_repo_scan_output)、重複検査の sort 2 回(domain validate_job_map_unique_job_ids)、複製の削除の rm(repository job_map_repo_remove_snapshot)の stderr を /dev/null へ捨て、内部障害時の stderr は契約の error 行 1 つだけにした。mktemp / cat / mv は既に抑止済み"
+      evidence: "PATH 先頭に stderr へ診断を出して exit 1 する tr / sed / sort / rm の fixture を置いた実 CLI 実行で、全ケース exit 6・stdout 0 行・stderr 1 行(error: internal command failed commands=<name> path: <path>)を確認。presentation bats 4 件で回帰検証"
+    - id: "F-002"
+      status: "fixed"
+      fix: "job_map_repo_remove_snapshot が rm の失敗を戻り値で返し、job_map_repo_load は削除の失敗を補助コマンドの失敗(JOB_MAP_REPO_STATUS_COMMAND_FAILED、JOB_MAP_REPO_FAILED_COMMANDS に rm)として読み込み結果を捨てる。usecase は既存の枝で error: internal command failed commands=rm path: <path> と終了コード 6 にし、stdout(map_path / rows / map_version)を出さない。複製の工程の失敗と重なったときは入力の複製の失敗を優先、補助コマンドの失敗と重なったときは失敗順に連結(例: sed,rm)。判断は A-055 / A-056 / A-057 に記録"
+      evidence: "PATH 先頭の rm fixture(exit 1)で有効な 1 行 CSV を検証すると exit 6・stdout 0 行・stderr 1 行(commands=rm)。repository bats 3 件 + presentation bats 1 件で回帰検証"
+  major:
+    - id: "F-003"
+      status: "issue_raised"
+      issue: "docs/impl/latest/eff24f55/issues/20260922_120000_duplicate-job-id-lines-contract-vs-bdd.md"
+      note: "CLI 契約・tier md 列検証表(2 回目以降の行番号)と tier md / spec.md の BDD(lines=2,5 で初出行を含む)の矛盾。実装は BDD に一致。実装では触らない"
+    - id: "F-010"
+      status: "issue_raised"
+      issue: "docs/impl/latest/eff24f55/issues/20260922_120100_credential-ref-warning-boundary-undefined.md"
+      note: "credential_ref が正規表現に合わず / も BEGIN も含まない値の warn / error の境界が未指定(A-012 は記録を維持)。実装では触らない"
+  minor:
+    fixed:
+      - id: "F-004"
+        note: "A-001(物理行番号の数え方)は契約・tier md に明示 = 復唱。前提の記録から外した(コード変更なし)"
+      - id: "F-005"
+        note: "A-004(セル前後の空白を値の一部にする)は config_input_rules.principle / csv_rules に明示 = 復唱。前提の記録から外した(コード変更なし)"
+      - id: "F-019"
+        note: "A-039(RFC 3629 の範囲と先頭 BOM だけの拒否)は config_input_rules.rules に明示 = 復唱。前提の記録から外した(コード変更なし)"
+    deferred:
+      - ids: ["F-006", "F-007", "F-008", "F-009", "F-011", "F-012", "F-013", "F-014", "F-015", "F-016", "F-017", "F-018", "F-020", "F-021", "F-022", "F-023", "F-024", "F-025", "F-026", "F-027"]
+        reason: "いずれも spec_absent の前提(A-005 / A-006 / A-008 / A-010 / A-014 / A-016 / A-017 / A-018 / A-019 / A-020 / A-022 / A-025 / A-043 / A-044 / A-049 / A-050 / A-051 / A-052 / A-053 / A-054)の確認要求で、仕様に照合先が無い。実装を変える根拠が無いため見送り、S9 の人間回答(confirmed / spec_change)に委ねる。前提は attempt-6 の記録に維持した"
+implementation_summary:
+  - "repository(job_map_repo.sh): tr / sed / rm の stderr を抑止。job_map_repo_remove_snapshot が rm の失敗を返し、job_map_repo_load が削除の失敗を補助コマンドの失敗(commands に rm を追加)として読み込み結果を捨てる。複製の失敗が先にあれば複製の失敗を優先"
+  - "domain(job_map.sh): validate_job_map_unique_job_ids の sort 2 回の stderr を抑止"
+  - "usecase(validate_job_map.sh): コード変更なし(ヘッダーコメントに rm と stderr 抑止を追記)。削除の失敗は既存の commands= 報告の枝で終了コード 6"
+test_changes:
+  - "facade/test/repository/job_map_repo.bats: 削除失敗(commands=rm、stderr なし、読み込み結果なし)/ sed と削除の両方の失敗(sed,rm)/ 複製先への書き込みと削除の両方の失敗(複製の失敗を優先)の 3 件を追加"
+  - "facade/test/presentation/validate_config_job_map.bats: 削除失敗で exit 6 と error 行 1 つだけ / sort・tr・sed が stderr に診断を出して失敗しても error 行 1 つだけ、の 4 件を追加"
+performance:
+  worst_case_5000_rows: "facade/bin/validate-config.sh --job-map (5,000 行・9 列全列に値・job_id 全行一意・map_version 全行相違): 3.99 秒、--verbose 4.88 秒(macOS / bash 5.3 の実測。attempt 5 の独立検証 3.71 / 4.62 秒と同水準。NFR B.2.1.1 の 10 秒以内)"
+  note: "変更は stderr のリダイレクト追加と削除の戻り値確認だけで、行数に比例する経路には触れていない"
+issues_raised:
+  - "docs/impl/latest/eff24f55/issues/20260922_120000_duplicate-job-id-lines-contract-vs-bdd.md"
+  - "docs/impl/latest/eff24f55/issues/20260922_120100_credential-ref-warning-boundary-undefined.md"
+completed_at: "2026-09-22T12:30:00Z"
+completed_by: "dist-impl-implement@0.14.1"

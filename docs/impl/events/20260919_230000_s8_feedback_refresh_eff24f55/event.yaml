@@ -1,0 +1,26 @@
+event_id: 20260919_230000_s8_feedback_refresh_eff24f55
+type: stage_completed
+uc_id: eff24f55
+stage: S8
+payload:
+  manifest_sha256: f4528376203939a69f1860d8fba45c818c647fa63d56a44f2e91c8e6a2618c21
+  manifest_projection: v2
+  result: pass
+  mode: refresh
+  feedback_id: 20260919_213000_impl_feedback_eff24f55
+  draft_path: docs/impl/latest/eff24f55/feedback/draft.md
+  draft_sha256: 1a7612598a0ed1d3378d7479b1614d6a6aa99ac90eae0fbf55b82e173784a431
+  previous_draft_sha256: 784e06d7d194f4642f5cf00a46de1abc5704f63c67d287b2528eaf5599b134b6
+  request_count: 5
+  severity_counts:
+    blocker: 1
+    spec-gap: 3
+    improvement: 1
+  updated_requests:
+  - CR-eff24f55-001
+  - CR-eff24f55-002
+  added_requests: []
+  removed_requests: []
+  severity_review: 'CR-001 は blocker を維持: 守備範囲の未定義で独立検証が 4 回収束しなかった状況は変わらず、attempt 5 の検証は差し替えの修正確認に限定したため'
+  summary: 'S8 feedback refresh: reflect F-001 resolution (single snapshot) and attempt-5 assumptions as evidence in CR-001 / CR-002. no new requests or options'
+created_at: '2026-09-19T23:00:00+09:00'

@@ -1,0 +1,107 @@
+stage: S2
+uc_id: eff24f55
+manifest_sha256: f5b57cd9f6aae8e961774f42ec256d56a421cec379741b03b478a5e10ffb4e54
+manifest_projection: v2
+result: pass
+scaffold_mode: initial
+branch_slug: define-slot-job-maps
+tiers:
+  - tier-facade
+red_baseline: pass
+red_baseline_note: "本 UC の 4 段すべてが未実装を理由に fail。BDD 3 段の fail は全件 step skeleton の 'not implemented' Error、TDD の fail は validate-config.sh --job-map が 'error: validation kind is not implemented option=--job-map'(終了コード 6)を返すことによる assertion failure。パースエラー・設定ミス・undefined step・ambiguous step は 0 件。先行 UC(fd678b04)の Scenario / テストは全件 pass のまま"
+transcription_check:
+  method: "spec.md / tier-facade.md の gherkin ブロックを正規表現で抽出し、そのまま feature へ書き出すスクリプトで生成(手入力なし)。先頭に出典コメント 2 行を付与"
+  uc_feature_verbatim: true
+  tier_feature_verbatim: true
+generated:
+  atdd:
+    features:
+      - features/atdd/SPEC-004-04.feature
+      - features/atdd/SPEC-008-05.feature
+    feature_body_changed: false
+    steps: features/atdd/steps/define-slot-job-maps.steps.js
+    scenarios:
+      - SPEC-004-04-4
+      - SPEC-008-05-2
+    skeleton_steps: 5
+    shared_existing_steps:
+      - "設定を検証する"
+    shared_existing_steps_note: "When『設定を検証する』は @atdd_SPEC-001-01-4 と同一文言で features/atdd/steps/configure-feature-flags.steps.js が定義済み。再定義すると ambiguous step になるため S2 では定義していない。S7 で検証種別による起動切替へ拡張が必要(issues の cross-uc-scenarios 4 項)"
+  uc_bdd:
+    feature: features/uc/define-slot-job-maps.feature
+    steps: features/uc/steps/define-slot-job-maps.steps.js
+    source: "docs/specs/latest/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/spec.md#E2E完了条件(BDD)"
+    scenarios: 16
+    skeleton_steps: 46
+    cross_uc_scenarios: 2
+    cross_uc_note: "他 UC の成果物・前提を Given に含む Scenario が 2 件(SPEC-008-05 の execution-spec.json / 導入時 60 分の並行稼働モード)。どちらも Then は本 UC の責務に閉じ、ハーネス注入は不要(fixture 配置で足りる)"
+  tier_bdd:
+    - tier: tier-facade
+      feature: facade/features/define-slot-job-maps.feature
+      steps: facade/features/steps/define-slot-job-maps.steps.js
+      source: "docs/specs/latest/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/tier-facade.md#ティア完了条件(BDD)"
+      scenarios: 14
+      skeleton_steps: 30
+  tdd:
+    - tier: tier-facade
+      file: facade/test/presentation/validate_config_job_map.bats
+      added_tests: 4
+      target: "facade/bin/validate-config.sh --job-map(有効な 9 列 CSV の stdout 3 行 / ファイルなし / fixed_params が JSON 配列でない / --verbose のローカル実行 info 行)"
+  tdd_note: "domain / repository 層の関数シグネチャは仕様に定義が無く S4 の設計事項のため、S2 では存在するエントリポイント経由のテストだけを置いた(未実装ファイルの source による module resolution error を red にしないため)"
+test_runs:
+  - stage: atdd
+    cwd: "."
+    command: "npx cucumber-js --config cucumber.cjs features/atdd --tags '@atdd_SPEC-004-04-4 or @atdd_SPEC-008-05-2'"
+    exit_code: 1
+    summary: "2 scenarios (2 failed), 6 steps (2 failed, 4 skipped)"
+    fail_reason: not_implemented
+    undefined_steps: 0
+    ambiguous_steps: 0
+  - stage: atdd_regression
+    cwd: "."
+    command: "npx cucumber-js --config cucumber.cjs features/atdd --tags @atdd_SPEC-001-01-4"
+    exit_code: 0
+    summary: "1 scenario (1 passed), 3 steps (3 passed)"
+    fail_reason: none
+  - stage: uc_bdd
+    cwd: "."
+    command: "npx cucumber-js --config cucumber.cjs features/uc"
+    exit_code: 1
+    summary: "28 scenarios (16 failed, 12 passed), 105 steps (16 failed, 40 skipped, 49 passed)"
+    fail_reason: not_implemented
+    failed_scope: "define-slot-job-maps.feature の 16 Scenario 全件。configure-feature-flags.feature の 12 Scenario は全件 pass"
+    undefined_steps: 0
+    ambiguous_steps: 0
+  - stage: tier_bdd
+    tier: tier-facade
+    cwd: facade
+    command: "npx cucumber-js --config ../cucumber.cjs features"
+    exit_code: 1
+    summary: "23 scenarios (14 failed, 9 passed), 74 steps (14 failed, 28 skipped, 32 passed)"
+    fail_reason: not_implemented
+    failed_scope: "define-slot-job-maps.feature の 14 Scenario 全件。configure-feature-flags.feature の 9 Scenario は全件 pass"
+    undefined_steps: 0
+    ambiguous_steps: 0
+  - stage: tdd
+    tier: tier-facade
+    cwd: facade
+    command: "bats -r test"
+    exit_code: 1
+    summary: "80 tests, 76 ok, 4 not ok"
+    fail_reason: not_implemented
+    failed_scope: "test/presentation/validate_config_job_map.bats の 4 件のみ(終了コードの assertion failure。実体は 'error: validation kind is not implemented option=--job-map' 終了コード 6)"
+format_check:
+  tier: tier-facade
+  command: "shfmt -d ."
+  exit_code: 0
+lint:
+  tier: tier-facade
+  command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+  exit_code: 0
+dom_snapshot_tests: not_applicable
+dom_snapshot_note: "has_design_system: false。frontend tier が無いため DOM 一致テスト・共通 helper は生成しない"
+issues:
+  - docs/impl/latest/eff24f55/issues/20260919_161456_cross-uc-scenarios.md
+issues_note: "UC 横断 Scenario の一覧と S6 / S7 への申し送り(責務分担の記録。仕様と実装の矛盾・blocker は無し)"
+completed_at: '2026-09-19T16:16:03+09:00'
+completed_by: dist-impl-implement@0.14.1

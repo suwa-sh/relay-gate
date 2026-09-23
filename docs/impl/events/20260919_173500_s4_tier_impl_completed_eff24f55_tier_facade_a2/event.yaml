@@ -1,0 +1,27 @@
+event_id: 20260919_173500_s4_tier_impl_completed_eff24f55_tier_facade_a2
+type: stage_completed
+uc_id: eff24f55
+stage: S4
+tier: tier-facade
+attempt: 2
+payload:
+  manifest_sha256: f4528376203939a69f1860d8fba45c818c647fa63d56a44f2e91c8e6a2618c21
+  manifest_projection: v2
+  result: pass
+  gates:
+    format: pass
+    lint: pass
+    tdd: pass
+    bdd_tier: pass
+  assumptions:
+    count: 17
+    sha256: 0c1b64e36b33616ed66a38600962beacea5a8bdc33a84d8023179abf8011be96
+  findings_input:
+    verify: docs/impl/latest/eff24f55/stages/attempt-1/S5_verify.tier-facade.findings.yaml
+  fixed_blockers:
+  - F-001
+  - F-019
+  - F-024
+  barrier_format: 'shfmt -d over all tier dirs reported no diff (no barrier commit needed)'
+  summary: 'S4 tier-facade attempt-2: reject unescaped control chars in fixed_params JSON, escape verbose output as single-line JSON, count empty map_version as a distinct value, replace quadratic duplicate check and array slicing. bats 168 ok, tier BDD 23 scenarios pass'
+created_at: '2026-09-19T17:35:00+09:00'

@@ -1,0 +1,169 @@
+{
+  "event_id": "20260921_092000_feedback_stage_architecture",
+  "type": "feedback_stage_completed",
+  "run_id": "feedback-20260919_213000_impl_feedback_eff24f55-20260921_082612-74150",
+  "attempt": 1,
+  "created_at": "2026-09-21T09:20:00Z",
+  "stage": "architecture",
+  "direct_work_unit_ids": [],
+  "causal_work_unit_ids": [
+    "CR-eff24f55-004#1",
+    "CR-eff24f55-005#1"
+  ],
+  "work_unit_results": [],
+  "reconciliation_results": [
+    {
+      "work_unit_id": "CR-eff24f55-004#1",
+      "status": "not_impacted",
+      "reason": "NFR B.1.1.2 の設定ファイル共通前提(1 ファイル最大 5,000 行、最悪条件、行数比例の実装)と B.2.1.1 の 10 秒以内の明記は、グレード値を変えない記述の追加である。arch の性能方針は CLI 応答 10 秒以内を目標とし NFR B.2.1.1 を ID で参照するだけで、行数の前提や集計方式を記述していない。前提は NFR が 1 か所で所有するため arch へ複製せず、ティア・レイヤー・データモデルにも影響しない",
+      "artifact_refs": []
+    },
+    {
+      "work_unit_id": "CR-eff24f55-005#1",
+      "status": "not_impacted",
+      "reason": "USDM の受け入れ基準 1 件を 2 つに分けただけで、RDRA モデルは不変である。arch は、ハング検知上限の調整をジョブマップの列値の更新で行い、調整日時と調整根拠は適用構成文書に残してジョブマップの列には持たないことを既に記述しており、分割後の基準と一致する",
+      "artifact_refs": []
+    }
+  ],
+  "work_unit_evidence_refs": [],
+  "domain_event_refs": [
+    {
+      "path": "arch/events/20260921_092000_feedback_impl_feedback_eff24f55/feedback-disposition.json",
+      "sha256": "65ebdee35dab1702e578c5c7dba9288c8fcf12500a4dc788c0902d9d3f5cff8c"
+    }
+  ],
+  "feedback_request": {
+    "feedback_request_id": "20260919_213000_impl_feedback_eff24f55",
+    "input_sha256": "1a7612598a0ed1d3378d7479b1614d6a6aa99ac90eae0fbf55b82e173784a431",
+    "request_ids": [
+      "CR-eff24f55-004",
+      "CR-eff24f55-005"
+    ],
+    "work_unit_ids": [
+      "CR-eff24f55-004#1",
+      "CR-eff24f55-005#1"
+    ]
+  },
+  "post_execution_basis": {
+    "repository_head": "138d7050a835f70eb5482511e396fef183ffc808",
+    "latest_domain_event_ids": {
+      "requirements": {
+        "rdra/events": "20260921_084000_feedback_impl_feedback_eff24f55",
+        "usdm/events": "20260921_084000_feedback_impl_feedback_eff24f55"
+      },
+      "quality_attributes": {
+        "nfr/events": "20260921_090000_feedback_impl_feedback_eff24f55"
+      },
+      "architecture": {
+        "arch/events": "20260921_092000_feedback_impl_feedback_eff24f55"
+      },
+      "infrastructure": {
+        "infra/events": "20260908_021000_feedback_slot_status_wording"
+      },
+      "design_system": {
+        "design/events": null
+      },
+      "spec": {
+        "specs/events": "20260917_100000_feedback_impl_feedback_fd678b04_cycle2"
+      },
+      "spec_stories": {
+        "design/events": null
+      }
+    },
+    "domain_event_root_snapshots": {
+      "rdra/events": {
+        "head_event_id": "20260921_084000_feedback_impl_feedback_eff24f55",
+        "head_event_sha256": "421512202ca356ccc68b143cc3ca7a4cdf4f108ea11c8b207c0def1cd41db8d1",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency",
+          "20260908_011000_feedback_slot_status_wording",
+          "20260921_084000_feedback_impl_feedback_eff24f55"
+        ],
+        "event_set_sha256": "f434696849b1faa85f5bebe6f894bbe73d1772e5cdc65b0aaf99792cd5e21f51",
+        "latest_tree_sha256": "fb37aebe9d1e9fccd46c51cc14f0450b93bf14bc39322450ffbc7fbb018935b1"
+      },
+      "usdm/events": {
+        "head_event_id": "20260921_084000_feedback_impl_feedback_eff24f55",
+        "head_event_sha256": "45d8dcad71f260874c4b70352c44e9a23a45d7abc0ba7d5593b31ab0b5921f0e",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency",
+          "20260908_011000_feedback_slot_status_wording",
+          "20260921_084000_feedback_impl_feedback_eff24f55"
+        ],
+        "event_set_sha256": "f434696849b1faa85f5bebe6f894bbe73d1772e5cdc65b0aaf99792cd5e21f51",
+        "latest_tree_sha256": "ca19848d203557386a9a5b0a5bd53c974d11a5accca4d70a836eb744d2ebba04"
+      },
+      "nfr/events": {
+        "head_event_id": "20260921_090000_feedback_impl_feedback_eff24f55",
+        "head_event_sha256": "3f75dbd8c72aec66c3f224fc67635753f9139b6860f86dc7b8e97dfbb730547d",
+        "event_ids": [
+          "20260830_183726_initial_nfr",
+          "20260905_085000_feedback_todo_resolution",
+          "20260907_013000_feedback_todo_followup",
+          "20260907_120000_feedback_abort_consistency",
+          "20260908_013000_feedback_slot_status_wording",
+          "20260921_090000_feedback_impl_feedback_eff24f55"
+        ],
+        "event_set_sha256": "f9243291281a4f8a2864bcbf31196de5d721e6fb22101bcb6cfb82333a456675",
+        "latest_tree_sha256": "2ddb87e576893f7712d7adaf340a4c4d23060c995060b3529e6a0e41941a6bee"
+      },
+      "arch/events": {
+        "head_event_id": "20260921_092000_feedback_impl_feedback_eff24f55",
+        "head_event_sha256": "e01f88ca0e53b820f8469f60dc5ea6d8c8d66b26fea94791a9a98d9546f78a65",
+        "event_ids": [
+          "20260830_184457_initial_arch",
+          "20260830_202427_arch_infra_feedback_20260830_190412_infra_product_design",
+          "20260905_091000_feedback_todo_resolution",
+          "20260907_015000_feedback_todo_followup",
+          "20260907_122000_feedback_abort_consistency",
+          "20260908_015000_feedback_slot_status_wording",
+          "20260921_092000_feedback_impl_feedback_eff24f55"
+        ],
+        "event_set_sha256": "75ff4bf3bdc1c2e43b532d97801da1c15cb432744d9be94962de98d6627fbe54",
+        "latest_tree_sha256": "0a975f848804dd5bc3d5cf328a5e9717f2e22eb489e1e5f4c477538b77c0b91d"
+      },
+      "infra/events": {
+        "head_event_id": "20260908_021000_feedback_slot_status_wording",
+        "head_event_sha256": "2e1292ab231982c609976791deca51a97e82389b34ab645d4432e463fe1c8c46",
+        "event_ids": [
+          "20260830_190412_infra_product_design",
+          "20260905_093000_feedback_todo_resolution",
+          "20260907_021000_feedback_todo_followup",
+          "20260907_124000_feedback_abort_consistency",
+          "20260908_021000_feedback_slot_status_wording"
+        ],
+        "event_set_sha256": "8077de33d5a65f65ebff5e2c1c20d238e003e9dd69d3d500ae30ef08162ab292",
+        "latest_tree_sha256": "639f743d85b997e1297610b2a7c2db41fd004e74473f96ec6292b601509a6331"
+      },
+      "design/events": {
+        "head_event_id": null,
+        "head_event_sha256": null,
+        "event_ids": [],
+        "event_set_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "latest_tree_sha256": null
+      },
+      "specs/events": {
+        "head_event_id": "20260917_100000_feedback_impl_feedback_fd678b04_cycle2",
+        "head_event_sha256": "1c4bc301adf7663824fc8c6c87077747f92bf2e5c1d12aae340673e0ebf97cfb",
+        "event_ids": [
+          "20260830_202851_spec_generation",
+          "20260905_100000_feedback_todo_resolution",
+          "20260907_024000_feedback_todo_followup",
+          "20260907_131000_feedback_abort_consistency",
+          "20260908_024000_feedback_slot_status_wording",
+          "20260908_062000_feedback_spec_machine_readable",
+          "20260917_050000_feedback_impl_feedback_fd678b04",
+          "20260917_100000_feedback_impl_feedback_fd678b04_cycle2"
+        ],
+        "event_set_sha256": "9d223e77f55efdee7727bb8d0ba00b13bd7d346c337693476ee91f0077d6bd45",
+        "latest_tree_sha256": "250f673174a1514371f5b450ce86492d497186db648d1724887f71b84d7b6b62"
+      }
+    }
+  }
+}

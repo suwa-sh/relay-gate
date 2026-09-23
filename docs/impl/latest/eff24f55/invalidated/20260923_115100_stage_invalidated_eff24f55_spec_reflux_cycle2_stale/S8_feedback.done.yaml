@@ -1,0 +1,89 @@
+stage: "S8"
+uc_id: "eff24f55"
+manifest_sha256: "f8cf17f93da5c6e63c9b3ce97c7fbc076f64c6174bd02d27757adf7c8b54ecb1"
+manifest_projection: v2
+mode: "publish"
+result: pass
+status: "published"
+cycle_note: "仕様還流 20260919_213000_impl_feedback_eff24f55(公開済み・反映済み)後の新しいサイクルの draft。前回の 5 件は再掲しない"
+inputs:
+  issues_new:
+    - "docs/impl/latest/eff24f55/issues/20260922_120000_duplicate-job-id-lines-contract-vs-bdd.md"
+    - "docs/impl/latest/eff24f55/issues/20260922_120100_credential-ref-warning-boundary-undefined.md"
+  issues_resolved_by_previous_feedback:
+    - "docs/impl/latest/eff24f55/issues/20260919_161456_cross-uc-scenarios.md"
+    - "docs/impl/latest/eff24f55/issues/20260919_183305_control-char-notation-and-internal-error-undefined.md"
+    - "docs/impl/latest/eff24f55/issues/20260919_195500_malformed-input-policy-undefined.md"
+    - "docs/impl/latest/eff24f55/issues/20260919_210000_file-replaced-between-scan-and-parse.md"
+  findings: "docs/impl/latest/eff24f55/stages/attempt-6/S5_verify.tier-facade.findings.yaml"
+  assumptions: "docs/impl/latest/eff24f55/stages/attempt-6/S4_tier-impl.tier-facade.assumptions.yaml"
+  review_notes: "docs/impl/latest/eff24f55/review/review-notes.md"
+  policy_docs:
+    - "tmp/RelayGateのしくみ.md"
+    - "tmp/RelayGateの利用イメージ.md"
+classification:
+  spec_origin: 2
+  implementation_origin: 2
+  environment_origin: 2
+  out_of_scope: 1
+  note: "仕様起因 2 件 = F-003(本文と BDD の矛盾)/ F-009(credential_ref の境界)。実装起因 = attempt 5 再実行の blocker 2 件(attempt 6 で修正済み)と F-004。環境起因 = macOS mktemp / Verifier のハッシュ算出基準。対象外 = category_mismatch 4 件"
+assumptions_summary:
+  count: 24
+  consistent: 1
+  spec_absent: 23
+  contradicts: 0
+  rejected_spec_change: 0
+  note: "今回のレビューは未実施。spec_change の却下は 0 件のため、severity spec-gap の要求候補への昇格は無し。前回承認済みの A-012 は Verifier が major を維持したため要求 CR-eff24f55-007 にした"
+feedback_request:
+  feedback_id: "20260922_130000_impl_feedback_eff24f55"
+  created_at: "2026-09-22T13:00:00+09:00"
+  draft_path: "docs/impl/latest/eff24f55/feedback/draft.md"
+  draft_sha256: "8adc8bc900ebe6eb57209cee7c4ed2c727b1313c462a6052efd720b2f31cb2fa"
+  request_count: 2
+  blocker_count: 0
+  published_path: "docs/impl/latest/eff24f55/feedback-requests/20260922_130000_impl_feedback_eff24f55.md"
+  published_sha256: "8adc8bc900ebe6eb57209cee7c4ed2c727b1313c462a6052efd720b2f31cb2fa"
+  published_at: "2026-09-22T13:45:10+09:00"
+  supersedes: null
+  publish_note: "承認済み draft を同じ bytes で atomic rename した(draft.md は公開先へ移動済み)。review 情報は本文に足していない"
+  review_lineage:
+    review_evidence_event_id: "20260922_133000_s9_review_generated_eff24f55_cycle2"
+    review_approved_event_id: "20260922_134000_review_approved_eff24f55_cycle2"
+    publish_started_event_id: "20260922_134500_feedback_request_publish_started_eff24f55_cycle2"
+    published_event_id: "20260922_134510_feedback_request_published_eff24f55_cycle2"
+  publish_prechecks:
+    feedbackRequest_verify: "node feedbackRequest.js verify -> PASS (2 requests, sha256 一致)"
+    validateAssumptions_record: "ok (24 件, af1e2927136c7f7492f683b87da2c641501dd8cb13bc34bb7fcb304ead0d514a)"
+    validateAssumptions_verdicts: "ok (consistent 1 / spec_absent 23 / contradicts 0 / unlisted 0, 5e2cbb47dadcc37087c5758482956f2732a18cffcd6565f73932523d4b66c6e6)"
+    assumption_evidence_sha256: "2201c35792fe76b255963dbcb998c17543ffdd51ae751926a1dd0a2050ebb32c (再計算一致)"
+    assumption_decisions: "24/24 が 1:1、rejected 0 件、必須回答 A-012 = confirmed"
+    approvals_on_current_evidence: 1
+    draft_bytes: "UTF-8 / BOM なし / LF / NFC"
+  previous_published:
+    - "docs/impl/latest/eff24f55/feedback-requests/20260919_213000_impl_feedback_eff24f55.md"
+  severity_counts:
+    blocker: 0
+    spec-gap: 2
+    improvement: 0
+  request_ids:
+    - "CR-eff24f55-006"
+    - "CR-eff24f55-007"
+  machine_validation: "node feedbackRequest.js verify -> PASS (2 requests)"
+  clock_note: "feedback_id と created_at はイベント列の論理時刻(S6/S7 完了 event 20260922_123000 の次)。実時計とはずれがある"
+as_built_summary: "docs/impl/latest/eff24f55/feedback/as-built-summary.md"
+learnings: 4
+learnings_files:
+  - "docs/impl/latest/eff24f55/learnings/20260922_130000_verification-converged-after-scope-fixed.md"
+  - "docs/impl/latest/eff24f55/learnings/20260922_130000_verifier-hash-basis-mismatch.md"
+  - "docs/impl/latest/eff24f55/learnings/20260922_130000_bash5-associative-array-linear-aggregation.md"
+  - "docs/impl/latest/eff24f55/learnings/20260922_130000_bats-separate-stderr-and-bsd-mktemp.md"
+proposals:
+  skill: true
+  context: true
+proposal_files:
+  - "docs/impl/latest/eff24f55/learnings/20260922_130000_proposal-skill.md"
+  - "docs/impl/latest/eff24f55/learnings/20260922_130000_proposal-context.md"
+previous_cycle_files_kept: "前回サイクルの learnings/20260919_* は履歴として残した(公開済み feedback-requests/ と同様に編集しない)"
+completed_at: "2026-09-22T19:45:00+09:00"
+published_completed_at: "2026-09-22T13:45:10+09:00"
+completed_by: "dist-impl-feedback@0.14.1"

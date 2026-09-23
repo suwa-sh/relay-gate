@@ -1,0 +1,71 @@
+stage: S7
+uc_id: eff24f55
+manifest_sha256: 85d1ebda8af9b786c1abbfc4e09198f4716663209279349d7e7ad9c947902002
+manifest_projection: v2
+result: pass
+branch_slug: define-slot-job-maps
+tiers:
+  - tier-facade
+tier_impl_attempt: 6
+rerun: true
+rerun_reason: "stale after spec reflux cycle 2 (spec event 20260923_112000_feedback_impl_feedback_eff24f55_cycle2; invalidated event 20260923_115100_stage_invalidated_eff24f55_spec_reflux_cycle2_stale)"
+previous_done: "docs/impl/latest/eff24f55/invalidated/20260923_115100_stage_invalidated_eff24f55_spec_reflux_cycle2_stale/S7_atdd.done.yaml"
+rerun_note: "features/atdd は S2 scoped 再実行で未変更(atdd: untouched)。既存 step のまま tier-facade attempt-6 で受け入れ基準 2 件が通ることを再確認した"
+atdd_confirmed: true
+atdd_scenarios:
+  - SPEC-004-04-4
+  - SPEC-008-05-2
+features:
+  - features/atdd/SPEC-004-04.feature
+  - features/atdd/SPEC-008-05.feature
+feature_changed: false
+steps:
+  - features/atdd/steps/define-slot-job-maps.steps.js
+  - features/atdd/steps/configure-feature-flags.steps.js
+steps_changed: false
+steps_change_summary: "変更なし。cycle 2 の spec 変更(重複 job_id の lines= 表記、credential_ref の形式外の値の警告)は UC BDD(S6)側の Scenario の責務で、ATDD 対象 2 件の文言・判定内容に影響しない"
+source: "docs/usdm/latest/requirements.yaml の SPEC-004-04 / SPEC-008-05 の acceptance_criteria"
+tier_impl_changed: false
+run:
+  cwd: "."
+  command: "npx cucumber-js --config cucumber.cjs features/atdd --tags \"@atdd_SPEC-004-04-4 or @atdd_SPEC-008-05-2\""
+  selection: "tag exact match only (no name filter, feature not run as a whole)"
+  tag_uniqueness: "@atdd_SPEC-004-04-4 は SPEC-004-04.feature L25、@atdd_SPEC-008-05-2 は SPEC-008-05.feature L13 の各 1 箇所のみ(grep で確認)"
+  exit_code: 0
+  summary: "2 scenarios (2 passed), 6 steps (6 passed)"
+  scenarios_expected: 2
+  scenarios_total: 2
+  scenarios_passed: 2
+  scenarios_failed: 0
+  undefined_steps: 0
+  ambiguous_steps: 0
+  count_matches_atdd_scenarios: true
+tag_results:
+  - tag: "@atdd_SPEC-004-04-4"
+    command: "npx cucumber-js --config cucumber.cjs features/atdd --tags @atdd_SPEC-004-04-4"
+    exit_code: 0
+    result: pass
+    summary: "1 scenario (1 passed), 3 steps (3 passed)"
+  - tag: "@atdd_SPEC-008-05-2"
+    command: "npx cucumber-js --config cucumber.cjs features/atdd --tags @atdd_SPEC-008-05-2"
+    exit_code: 0
+    result: pass
+    summary: "1 scenario (1 passed), 3 steps (3 passed)"
+ci_tag_selection_check:
+  command: "npx cucumber-js --config cucumber.cjs features/atdd --tags \"@atdd_SPEC-001-01-4 or @atdd_SPEC-004-04-4 or @atdd_SPEC-008-05-2\""
+  exit_code: 0
+  summary: "3 scenarios (3 passed), 9 steps (9 passed)"
+  note: "先行 UC(fd678b04)の @atdd_SPEC-001-01-4 を含めた CI 同形のタグ式でも回帰なし"
+harness:
+  sandbox_root: "Scenario ごとの一時ディレクトリを root とし、仕様の絶対パス(/etc/relay-gate/green-job-map.csv)を root 配下の同じ相対位置に実ファイルで配置。出力照合時に root 接頭辞を除去"
+  process: "facade/bin/validate-config.sh を実プロセスとして起動(--job-map <path> [--verbose])"
+  reused_from: features/uc/steps/define-slot-job-maps.steps.js
+  external_connections: none
+injections: []
+injections_note: "ハーネス注入なし。前提の新規抽出なし"
+cross_uc_refs:
+  - docs/impl/latest/eff24f55/issues/20260919_161456_cross-uc-scenarios.md
+issues: []
+issues_note: "新規起票なし。受け入れ基準 2 件は tier-facade attempt-6 の実装で通過し、仕様と実装の食い違いは見つからなかった"
+completed_at: '2026-09-23T11:55:00+09:00'
+completed_by: dist-impl-implement@0.14.1

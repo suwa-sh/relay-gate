@@ -1,0 +1,32 @@
+stage: "S5"
+tier: "tier-facade"
+attempt: 4
+uc_id: "eff24f55"
+manifest_sha256: "f4528376203939a69f1860d8fba45c818c647fa63d56a44f2e91c8e6a2618c21"
+manifest_projection: "v2"
+result: "fail"
+open_blockers: 1
+summary:
+  blocker: 1
+  major: 1
+  minor: 34
+gate_reexec:
+  format: "pass"
+  lint: "pass"
+  tdd: "pass"
+  bdd_tier: "pass"
+environment_failures: []
+assumptions_sha256: "fd054bd7387b0068d4d76ffe368726fa89b77be081ae969c6b6c022ac85b83d2"
+assumption_verdicts_sha256: "b5e5f4fa801d46c342d05bb2dae683d9c26e841c082d878cd90d92a8bb992264"
+assumption_verdicts_summary:
+  consistent: 2
+  spec_absent: 32
+  contradicts: 0
+  unlisted: 0
+findings_path: "docs/impl/latest/eff24f55/stages/attempt-4/S5_verify.tier-facade.findings.yaml"
+completed_at: "2026-09-19T09:56:19.578238+00:00"
+completed_by: "dist-impl-verify@0.14.1"
+notes:
+  - "gitコマンドは禁止指示を優先して一切実行していない。対象cwdとCLAUDE.mdは確認済み。"
+  - "macOS環境の実行結果。必要なバイナリ、一時ファイル、runnerプロセスの起動は利用可能。対象はDB/TCP/shared memory/dockerに依存しない。"
+  - "前提のcontradictsは0件だが、独立に再現した実装欠陥F-001によりresult=fail。"

@@ -1,0 +1,77 @@
+stage: S6
+uc_id: eff24f55
+manifest_sha256: 85d1ebda8af9b786c1abbfc4e09198f4716663209279349d7e7ad9c947902002
+manifest_projection: v2
+result: pass
+branch_slug: define-slot-job-maps
+tiers:
+  - tier-facade
+tier_impl_attempt: 6
+rerun: true
+rerun_reason: "stale after spec reflux cycle 2 (spec event 20260923_112000_feedback_impl_feedback_eff24f55_cycle2; invalidated event 20260923_115100_stage_invalidated_eff24f55_spec_reflux_cycle2_stale)"
+previous_done: "docs/impl/latest/eff24f55/invalidated/20260923_115100_stage_invalidated_eff24f55_spec_reflux_cycle2_stale/S6_uc-bdd.done.yaml"
+rerun_note: "S2 scoped 再実行が spec.md から再転写した 24 Scenario(既存 23 + 追加 1。重複 job_id と credential_ref 警告の Scenario は文言変更)に対し、tier-facade attempt-6(S4 4 ゲート pass / S5 blocker 0)で統合テストが通ることを確認した"
+feature: features/uc/define-slot-job-maps.feature
+feature_changed: false
+steps: features/uc/steps/define-slot-job-maps.steps.js
+steps_changed: true
+steps_change_summary: "S2 が追加した未実装 skeleton step 7 件(Given 1 / Then 6。And は Then 登録)を実装し、skeleton ブロックを撤去。旧文言の Then「終了コード 2 で stderr に \"error: duplicate job_id job_id=JOB001 lines=2,5\" が出る」(末尾の「(初出行 2 を含む)」無し版)は feature から参照されていないことを grep で確認して削除。ハーネス helper assertNotInOutput(生の stdout / stderr に値が出ないことの照合)を追加。他の step 定義は変更なし"
+implemented_steps:
+  - "Then 終了コード 2 で stderr に \"error: duplicate job_id job_id=JOB001 lines=2,5\" が出る(初出行 2 を含む)"
+  - "And stderr に \"duplicate job_id\" を含む行は 1 行だけである"
+  - "And stdout と stderr のどこにも \"/home/batch/.ssh/id_green\" は出ない"
+  - "Given green-job-map.csv の 2 行目(JOB001)の credential_ref が \"ssh key green\"(空白を含み、\"/\" も \"BEGIN\" も含まない)である"
+  - "Then 終了コード 0 で stderr に \"warn: credential_ref looks like a secret or path line=2 job_id=JOB001\" が 1 行だけ出る"
+  - "And stderr に \"error:\" で始まる行は出ず、stdout に \"rows=\" が出る(受理される)"
+  - "And stdout と stderr のどこにも \"ssh key green\" は出ない"
+removed_steps:
+  - "Then 終了コード 2 で stderr に \"error: duplicate job_id job_id=JOB001 lines=2,5\" が出る(旧文言。features/uc/*.feature からの参照 0 件を確認)"
+source: "docs/specs/latest/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/spec.md#E2E完了条件(BDD)"
+tier_impl_changed: false
+run:
+  cwd: "."
+  command: "npx cucumber-js --config cucumber.cjs features/uc"
+  exit_code: 0
+  summary: "36 scenarios (36 passed), 140 steps (140 passed)"
+  scenarios_total: 36
+  scenarios_passed: 36
+  scenarios_failed: 0
+  undefined_steps: 0
+  ambiguous_steps: 0
+target_feature_run:
+  command: "npx cucumber-js --config cucumber.cjs features/uc/define-slot-job-maps.feature"
+  exit_code: 0
+  summary: "24 scenarios (24 passed), 91 steps (91 passed)"
+  scenarios_total: 24
+  scenarios_passed: 24
+  scenarios_failed: 0
+baseline_before_implementation:
+  source: "docs/impl/latest/eff24f55/stages/S2_test-scaffold.done.yaml test_runs[uc_bdd]"
+  summary: "36 scenarios (3 failed, 33 passed), 140 steps (3 failed, 5 skipped, 132 passed)"
+  note: "fail 3 件は全件 S2 skeleton の not implemented Error(文言変更・追加の 3 Scenario)。設定ミス・undefined は 0"
+preceding_uc_run:
+  feature: features/uc/configure-feature-flags.feature
+  scenarios_total: 12
+  scenarios_passed: 12
+  note: "全体実行 36 件のうち先行 UC(fd678b04)の 12 件。step 定義は未変更で全件 pass"
+flakiness_check:
+  scenario: "検証中に差し替わったファイルは複製した時点の内容だけで判定される"
+  command: "npx cucumber-js --config cucumber.cjs features/uc/define-slot-job-maps.feature --name '検証中に差し替わったファイル'"
+  repeats: 5
+  passed: 5
+  note: "タイミング依存の Scenario のみ繰り返し実行で安定性を確認。--name はこの確認専用で、done の判定は全体実行の結果"
+harness:
+  sandbox_root: "Scenario ごとの一時ディレクトリを root とし、feature の絶対パス(/etc/relay-gate/green-job-map.csv, /etc/relay-gate/blue-job-map.csv)を root 配下の同じ相対位置に実ファイルで配置。出力照合時に root 接頭辞を除去"
+  process: "facade/bin/validate-config.sh を実プロセスとして起動(--job-map <path> [--verbose])。パス省略の When は Given が用意した green-job-map.csv を渡す"
+  duplicate_job_id: "job_id=JOB001 を 2 行目と 5 行目に置き、error 行を完全一致で照合したうえで \"duplicate job_id\" を含む stderr 行がちょうど 1 行であることを照合"
+  credential_ref_secrecy: "credential_ref の値(/home/batch/.ssh/id_green と ssh key green)が生の stdout / stderr のどこにも現れないことを部分一致の否定で照合(unsandbox 前の生出力で判定)"
+  credential_ref_nonconforming: "9 列ヘッダーで JOB001 の credential_ref を ssh key green(空白を含み / と BEGIN を含まない)にして --verbose で検証し、終了コード 0・warn 行の完全一致がちょうど 1 行・warn: credential_ref で始まる行が 1 行だけ・error 行なし・stdout に rows= を照合"
+  external_connections: none
+injections: []
+injections_note: "ハーネス注入なし。UC 横断 Scenario 2 件は fixture 配置と前提の記録だけで成立(根拠: docs/impl/latest/eff24f55/issues/20260919_161456_cross-uc-scenarios.md)。追加・変更 Scenario の Then は全件本 UC の責務に閉じる。前提の新規抽出なし"
+cross_uc_refs:
+  - docs/impl/latest/eff24f55/issues/20260919_161456_cross-uc-scenarios.md
+issues: []
+issues_note: "新規起票なし。追加・変更 Scenario は tier-facade attempt-6 の実装で仕様どおりに通過し、仕様と実装の食い違いは見つからなかった"
+completed_at: '2026-09-23T11:50:00+09:00'
+completed_by: dist-impl-implement@0.14.1

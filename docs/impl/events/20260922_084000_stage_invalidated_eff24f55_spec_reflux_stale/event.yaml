@@ -1,0 +1,22 @@
+event_id: 20260922_084000_stage_invalidated_eff24f55_spec_reflux_stale
+type: stage_invalidated
+uc_id: eff24f55
+payload:
+  reason: stale
+  detail: 'input-manifest recomputed after dist-pipeline feedback run 20260919_213000_impl_feedback_eff24f55: spec_md / tier-facade.md / _api-summary.yaml / cli-command-contract.yaml / ui-design.md / nfr-grade.yaml / usdm changed. global projection f5b57cd9 -> fad6601f (S1/S2), f4528376 -> f8cf17f9 (S3+ and tier-facade). every existing done mismatches its projection.'
+  previous_manifest_fixed_at: '2026-09-19T16:20:00+09:00'
+  targets:
+  - {stage: S1, file: stages/S1_uc-init.done.yaml}
+  - {stage: S2, file: stages/S2_test-scaffold.done.yaml}
+  - {stage: S3, file: stages/S3_contracts.done.yaml}
+  - {stage: S4, tier: tier-facade, attempt: 5, file: stages/attempt-5/S4_tier-impl.tier-facade.done.yaml}
+  - {stage: S4, tier: tier-facade, attempt: 5, file: stages/attempt-5/S4_tier-impl.tier-facade.assumptions.yaml}
+  - {stage: S5, tier: tier-facade, attempt: 5, lane: verify, file: stages/attempt-5/S5_verify.tier-facade.done.yaml}
+  - {stage: S5, tier: tier-facade, attempt: 5, lane: verify, file: stages/attempt-5/S5_verify.tier-facade.findings.yaml}
+  - {stage: S6, file: stages/S6_uc-bdd.done.yaml}
+  - {stage: S7, file: stages/S7_atdd.done.yaml}
+  - {stage: S8, file: stages/S8_feedback.done.yaml}
+  - {stage: S9, file: stages/S9_review_generated.done.yaml}
+  archived_to: docs/impl/latest/eff24f55/invalidated/20260922_084000_stage_invalidated_eff24f55_spec_reflux_stale/
+  attempt_policy: 'stale rerun stays in attempt 5 (no attempt++); previous findings are not passed to S4'
+created_at: '2026-09-22T08:40:00+09:00'

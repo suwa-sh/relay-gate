@@ -1,0 +1,19 @@
+event_id: 20260919_220000_review_rejected_eff24f55
+type: review_rejected
+uc_id: eff24f55
+payload:
+  review_evidence_event_id: 20260919_214500_s9_review_generated_eff24f55
+  return_to_stage: S4
+  resolution: implementation_change
+  reason: 'ユーザーが「機能」で取り決めの例外を選択: 検証中のファイル差し替え(attempt 4 の F-001)を今直す。再検証はその指摘が直ったかの観点だけに絞る'
+  target_findings:
+  - attempt: 4
+    tier: tier-facade
+    id: F-001
+  rejected_assumptions: []
+  carried_answers:
+    相互運用: A
+    監査: A
+    前提: 'A-012:承認'
+  review_notes: docs/impl/latest/eff24f55/review/review-notes.md
+created_at: '2026-09-19T22:00:00+09:00'

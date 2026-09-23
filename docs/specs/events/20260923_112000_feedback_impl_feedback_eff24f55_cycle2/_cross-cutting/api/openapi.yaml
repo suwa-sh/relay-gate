@@ -1,0 +1,22 @@
+openapi: "3.1.0"
+info:
+  title: "relay-gate 並行稼働実行基盤"
+  version: "1.0.0"
+  description: |-
+    HTTP API は無い(arch CTP-001、システム概要 interface_kind: cli)。
+    本ファイルはバリデータ互換のスタブであり、CLI コマンド契約の正本は cli-command-contract.yaml、
+    非同期イベント(RDB ジョブキュー・完了通知・通知メール)の正本は asyncapi.yaml である。
+  contact:
+    name: "relay-gate"
+    url: "https://relay-gate.example.com"
+  license:
+    name: "MIT"
+    identifier: "MIT"
+x-cli-contract: "./cli-command-contract.yaml"
+x-async-contract: "./asyncapi.yaml"
+servers:
+  - url: "https://relay-gate.example.com"
+    description: "placeholder(HTTP API なし)"
+paths: {}
+components:
+  schemas: {}

@@ -1,0 +1,25 @@
+event_id: 20260919_180000_s5_verify_completed_eff24f55_tier_facade_a2
+type: stage_completed
+uc_id: eff24f55
+stage: S5
+tier: tier-facade
+attempt: 2
+payload:
+  manifest_sha256: f4528376203939a69f1860d8fba45c818c647fa63d56a44f2e91c8e6a2618c21
+  manifest_projection: v2
+  verifier_model: gpt-6-astra
+  open_blockers: 1
+  open_major: 1
+  open_minor: 16
+  blocker_ids:
+  - F-001
+  assumptions_sha256: 0c1b64e36b33616ed66a38600962beacea5a8bdc33a84d8023179abf8011be96
+  assumption_verdicts_sha256: ea2a1ef5ba10862a7642e9867f5dea881d9c38462f2678b6da78979aa8969489
+  assumption_verdicts_summary:
+    consistent: 0
+    spec_absent: 17
+    contradicts: 0
+    unlisted: 0
+  write_set_check: 'git status after run shows only S5 done / findings (sandbox disabled run)'
+  summary: 'S5 verify attempt-2: 1 blocker (NUL byte silently dropped by read -r, invalid fixed_params JSON accepted with exit 0). attempt-1 blockers confirmed fixed'
+created_at: '2026-09-19T18:00:00+09:00'

@@ -1,0 +1,24 @@
+event_id: 20260919_231500_s9_review_regenerated_eff24f55
+type: stage_completed
+uc_id: eff24f55
+stage: S9
+payload:
+  manifest_sha256: f4528376203939a69f1860d8fba45c818c647fa63d56a44f2e91c8e6a2618c21
+  manifest_projection: v2
+  result: awaiting_review
+  supersedes_evidence_event: 20260919_214500_s9_review_generated_eff24f55
+  feedback_review_evidence:
+    feedback_id: 20260919_213000_impl_feedback_eff24f55
+    draft_path: docs/impl/latest/eff24f55/feedback/draft.md
+    draft_sha256: 1a7612598a0ed1d3378d7479b1614d6a6aa99ac90eae0fbf55b82e173784a431
+    request_count: 5
+  implementation_review_evidence:
+    gate_result: 6/6 pass
+    open_blocker_count: 0
+    open_major_count: 2
+    assumption_evidence_sha256: 96e57c72a5dba70b4d5f42b7ac031622b09e8372827047cdd543c520afabd2f0
+  new_required_answers:
+  - A-047
+  carried_answers: 'review-notes.md の 2026-09-19 回答(相互運用=A / 監査=A / 前提 A-012=承認)'
+  summary: 'S9 review regenerated after attempt-5 fix: 0 open blockers, only the new security assumption (temp copy handling) needs an answer'
+created_at: '2026-09-19T23:15:00+09:00'

@@ -1,0 +1,59 @@
+stage: S9
+uc_id: eff24f55
+manifest_sha256: f4528376203939a69f1860d8fba45c818c647fa63d56a44f2e91c8e6a2618c21
+manifest_projection: v2
+result: pass
+attempt: 4
+review_html_path: "docs/impl/latest/eff24f55/review/index.html"
+review_html_validator: "validateReviewHtml.js: review HTML contract: pass"
+visual_check: "headless Chrome で 1440px と 390px を描画し、3 図の connector 重なり・共有 attach point・node 背面通過・label gap を目視確認"
+feedback_request_count: 5
+open_blocker_count: 1
+decision_summary:
+  approval_questions: 1
+  selection_questions: 2
+  assumption_questions: 1
+  recommended_choices: 4
+  questions:
+    - key: "機能"
+      topic: "今回の実装の扱い"
+      recommended: "A: 仕様の反映待ちとして保存する (PR に進まない)"
+    - key: "相互運用"
+      topic: "変更要求 5 件の公開"
+      recommended: "A: このまま公開する"
+    - key: "監査"
+      topic: "回答任意の前提 33 件の一括承認"
+      recommended: "A: 規則どおり一括承認する"
+    - key: "前提"
+      topic: "回答必須の前提 A-012 (credential_ref の形式不一致を警告のみで受理)"
+      recommended: "A-012:承認"
+  answer_template: "機能=A / 相互運用=A / 監査=A / 前提=A-012:承認 / 補足="
+feedback_review_evidence:
+  feedback_id: "20260919_213000_impl_feedback_eff24f55"
+  draft_path: "docs/impl/latest/eff24f55/feedback/draft.md"
+  draft_sha256: "784e06d7d194f4642f5cf00a46de1abc5704f63c67d287b2528eaf5599b134b6"
+  request_count: 5
+implementation_review_evidence:
+  gate_result: "6/6 pass"
+  open_blocker_count: 1
+  open_major_count: 1
+  assumption_evidence_sha256: "f8bbf135404fdbbefec83e50ed079bdac476887b987f891f037e160d8fc4daae"
+gate_summary:
+  format: "pass"
+  lint: "pass"
+  tdd: "277/277"
+  bdd_tier: "23/23"
+  uc_bdd: "28/28"
+  atdd: "2/2"
+open_blocker_handling: "未解決 blocker (検証中のファイル差し替えで不正な行を受理) は実装へ差し戻さず、変更要求 CR-eff24f55-001 (blocker) として仕様の確定を求める。承認後は変更要求を公開し、仕様の反映待ちで止まる。PR には進まない"
+review_notes_applied:
+  - "進め方: もう 1 回だけ直し、同種の新規穴が出たら仕様の確認待ちへ (確定済み。再質問しない)"
+  - "仕様に無い壊れた入力は既存のエラー文言で拒否し、表示は安全な表記へ置換。文言の妥当性は変更要求に含める (確定済み。再質問しない)"
+notes:
+  - "manifest_sha256 は受領値を再計算せず転記した"
+  - "assumption_evidence_sha256 は validateAssumptions.js evidence tier-facade:{assumptions_sha256}:{assumption_verdicts_sha256} で算出した"
+  - "draft_sha256 は S8 done の値と一致することを shasum で確認した"
+  - "HTML の SHA と capture の SHA は記録しない。capture は無い"
+  - "git コマンドは実行していない"
+completed_at: "2026-09-19T21:40:00+09:00"
+completed_by: "dist-impl-review@0.14.1"

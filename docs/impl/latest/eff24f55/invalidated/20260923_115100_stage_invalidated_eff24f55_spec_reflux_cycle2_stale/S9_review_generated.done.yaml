@@ -1,0 +1,88 @@
+stage: "S9"
+uc_id: "eff24f55"
+manifest_sha256: "f8cf17f93da5c6e63c9b3ce97c7fbc076f64c6174bd02d27757adf7c8b54ecb1"
+manifest_projection: v2
+result: pass
+review_html: "docs/impl/latest/eff24f55/review/index.html"
+review_html_note: "gitignore 済みの再生成可能な派生ビュー。HTML の SHA は証跡に結ばない"
+cycle_note: "仕様還流(20260919_213000_impl_feedback_eff24f55 反映)後の 2 回目のレビュー。前提は仕様確定で作り直した 24 件を改めて提示する"
+source_revision: "feature/define-slot-job-maps @ ac634f7 (作業ツリーの未コミット分を含む)"
+validator:
+  command: "node validateReviewHtml.js docs/impl/latest/eff24f55/review/index.html"
+  result: "pass"
+  visual_check: "localhost 経由で render を目視。connector の重なり・attach point 共有・非 endpoint node 背面通過なし。補助コマンド node の sublabel はみ出しを修正"
+figures:
+  - type: architecture
+    title: "検証コマンドの構成"
+  - type: flowchart
+    title: "検証の処理フロー"
+  - type: data-flow
+    title: "ジョブマップのデータの流れ"
+feedback_request_count: 2
+open_blocker_count: 0
+decision_summary:
+  approval_questions: 1
+  selection_questions: 2
+  assumption_questions: 1
+  recommended_choices: 4
+  questions:
+    - id: "機能"
+      question: "機能を承認しますか"
+      recommended: "A. 承認する"
+    - id: "変更要求の公開"
+      question: "変更要求 2 件(CR-eff24f55-006 / CR-eff24f55-007)をこの内容で公開しますか"
+      recommended: "A. 公開する"
+      alias: "相互運用"
+    - id: "CR-007"
+      question: "形に合わない credential_ref の扱いを warn(案 A)と error(案 B)のどちらで仕様に書きますか"
+      recommended: "A. 現行の warn を確定する"
+    - id: "前提"
+      question: "実装者が補った前提 24 件を承認しますか(回答必須は A-012 のみ。残り 23 件は一括承認)"
+      recommended: "一括承認(A-012 は CR-007=A なら承認)"
+      alias: "監査"
+  answer_template: "機能=A / 変更要求の公開=A / CR-007=A / 前提=一括承認 / 補足="
+  answer_template_examples:
+    - "CR-007=B のとき: 前提=一括承認(例外: A-012:却下(仕様変更: 形式に合わない参照名は error で拒否する))"
+    - "前提=一括承認(例外: A-0xx:却下(実装修正: …))"
+assumption_summary:
+  total: 24
+  required_answer: 1
+  required_ids:
+    - "A-012"
+  optional_default: "auto_confirmed"
+  verdicts:
+    consistent: 1
+    spec_absent: 23
+    contradicts: 0
+    unlisted: 0
+feedback_review_evidence:
+  feedback_id: "20260922_130000_impl_feedback_eff24f55"
+  draft_path: "docs/impl/latest/eff24f55/feedback/draft.md"
+  draft_sha256: "8adc8bc900ebe6eb57209cee7c4ed2c727b1313c462a6052efd720b2f31cb2fa"
+  request_count: 2
+  request_ids:
+    - "CR-eff24f55-006"
+    - "CR-eff24f55-007"
+  blocker_count: 0
+implementation_review_evidence:
+  gate_result: "6/6 pass"
+  gates:
+    format: "pass"
+    lint: "pass"
+    tdd: "pass (324/324)"
+    bdd_tier: "pass (38/38)"
+    uc_bdd: "pass (35/35, 本 UC 23/23)"
+    atdd: "pass (2/2)"
+  open_blocker_count: 0
+  open_major_count: 2
+  open_minor_count: 28
+  findings_path: "docs/impl/latest/eff24f55/stages/attempt-6/S5_verify.tier-facade.findings.yaml"
+  assumption_evidence_sha256: "2201c35792fe76b255963dbcb998c17543ffdd51ae751926a1dd0a2050ebb32c"
+  assumption_evidence_inputs:
+    - tier: "tier-facade"
+      assumptions_sha256: "af1e2927136c7f7492f683b87da2c641501dd8cb13bc34bb7fcb304ead0d514a"
+      assumption_verdicts_sha256: "5e2cbb47dadcc37087c5758482956f2732a18cffcd6565f73932523d4b66c6e6"
+  assumption_evidence_command: "node validateAssumptions.js evidence tier-facade:af1e2927…:5e2cbb47…"
+captures: []
+completed_at: "2026-09-22T20:10:00+09:00"
+completed_by: "dist-impl-review@0.14.1"

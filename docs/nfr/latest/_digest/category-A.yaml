@@ -1,4 +1,4 @@
-# digest of nfr/latest/nfr-grade.yaml section categories[id=A] (L11-181); source_sha256: 69cca2e1c16f18ab4178b5a0e5af690acc7a82338c64a37176767e860a06693f
+# digest of nfr/latest/nfr-grade.yaml section categories[id=A] (L11-181); source_sha256: 5a7c72400cfc8c65de278dc284e656a73d60b643a91f69ecfa44688a0824b653
 # 派生物。正本は nfr-grade.yaml。編集しない
   - id: "A"
     name: "可用性"
