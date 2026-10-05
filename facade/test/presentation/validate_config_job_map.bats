@@ -258,6 +258,7 @@ has_control_byte() {
 
 	# Assert
 	[ "$status" -eq 6 ]
+	echo "ACTUAL<<$output>> status=$status sed=$(type -t sed) PATH=$PATH" >&3
 	[ "$output" = "error: internal command failed commands=sed path: $MAP" ]
 }
 
@@ -301,6 +302,7 @@ has_control_byte() {
 
 	# Assert
 	[ "$status" -eq 6 ]
+	echo "ACTUAL<<$output>> status=$status sed=$(type -t sed) PATH=$PATH" >&3
 	[ "$output" = "error: internal command failed commands=sed path: $MAP" ]
 }
 
@@ -405,6 +407,7 @@ has_control_byte() {
 
 	# Assert
 	[ "$status" -eq 6 ]
+	echo "ACTUAL<<$output>> status=$status sed=$(type -t sed) PATH=$PATH" >&3
 	[ "$output" = "error: internal command failed commands=sed path: $MAP" ]
 }
 
