@@ -1,0 +1,28 @@
+event_id: 20260919_194000_s5_verify_completed_eff24f55_tier_facade_a3
+type: stage_completed
+uc_id: eff24f55
+stage: S5
+tier: tier-facade
+attempt: 3
+payload:
+  manifest_sha256: f4528376203939a69f1860d8fba45c818c647fa63d56a44f2e91c8e6a2618c21
+  manifest_projection: v2
+  verifier_model: gpt-6-astra
+  open_blockers: 3
+  open_major: 1
+  open_minor: 28
+  blocker_ids:
+  - F-001
+  - F-002
+  - F-025
+  assumptions_sha256: 0197a297e047f03e0e453c68e13131d523b2e34d94cbd02709831b3bf10ab0bd
+  assumption_verdicts_sha256: 8012fc8a81fb36aaac543e0c6bf93ed6a543dc6bc0473ca4c2da1eac1635a300
+  assumption_verdicts_summary:
+    consistent: 2
+    spec_absent: 25
+    contradicts: 1
+    unlisted: 1
+  write_set_check: 'git status after run shows only S5 done / findings (sandbox disabled run)'
+  attempt_limit_reached: true
+  summary: 'S5 verify attempt-3: attempt-2 blocker (NUL) confirmed fixed. 3 new blockers: control characters echoed to output (ANSI ban / one fact per line), helper command failure inside process substitution not detected, invalid UTF-8 accepted (A-031 contradicts UTF-8 file format). attempt limit 3 reached, run stops for user decision'
+created_at: '2026-09-19T19:40:00+09:00'

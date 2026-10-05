@@ -1,0 +1,11 @@
+2026-09-19 の実装フィードバックに基づく NFR 再評価(CSV 形式の設定ファイルに共通の想定最大行数と、CLI 応答時間の目標を満たす行数・内容の前提を定める。RDRA モデルは不変)
+trigger_event: rdra:20260921_084000_feedback_impl_feedback_eff24f55
+dialogue_policy: interactive(グレード値の変更なし。確認推奨項目 2 件を 2026-09-21 に利用者が確定。confidence: low の残件なし)
+mode: 差分更新(nfr-grade-diff.yaml。grade の変更なし、B.1.1.2 と B.2.1.1 の grade_description / reason / source_model を更新、confidence を user に変更)
+
+feedback_request_id: 20260919_213000_impl_feedback_eff24f55
+input_sha256: 1a7612598a0ed1d3378d7479b1614d6a6aa99ac90eae0fbf55b82e173784a431
+request_ids: CR-eff24f55-004, CR-eff24f55-005
+direct_work_unit_ids: CR-eff24f55-004#1
+causal_work_unit_ids: CR-eff24f55-004#1, CR-eff24f55-005#1
+feedback_packet: docs/pipeline/feedback-runs/20260919_213000_impl_feedback_eff24f55/stage-packets/quality_attributes.md

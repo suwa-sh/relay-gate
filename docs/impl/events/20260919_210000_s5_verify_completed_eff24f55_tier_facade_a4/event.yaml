@@ -1,0 +1,29 @@
+event_id: 20260919_210000_s5_verify_completed_eff24f55_tier_facade_a4
+type: stage_completed
+uc_id: eff24f55
+stage: S5
+tier: tier-facade
+attempt: 4
+payload:
+  manifest_sha256: f4528376203939a69f1860d8fba45c818c647fa63d56a44f2e91c8e6a2618c21
+  manifest_projection: v2
+  verifier_model: gpt-6-astra
+  open_blockers: 1
+  open_major: 1
+  open_minor: 34
+  blocker_ids:
+  - F-001
+  assumptions_sha256: fd054bd7387b0068d4d76ffe368726fa89b77be081ae969c6b6c022ac85b83d2
+  assumption_verdicts_sha256: b5e5f4fa801d46c342d05bb2dae683d9c26e841c082d878cd90d92a8bb992264
+  assumption_verdicts_summary:
+    consistent: 2
+    spec_absent: 32
+    contradicts: 0
+    unlisted: 0
+  write_set_check: 'git status after run shows only S5 done / findings (sandbox disabled run)'
+  routing:
+    decision: spec_block_route
+    basis: 'user stop rule recorded in 20260919_195500_attempt_opened_eff24f55_a4 (same class of new blocker at attempt 4 -> do not return to S4)'
+    issue: docs/impl/latest/eff24f55/issues/20260919_210000_file-replaced-between-scan-and-parse.md
+  summary: 'S5 verify attempt-4: attempt-3 blockers confirmed fixed. 1 new blocker of the same robustness class (file atomically replaced between byte pre-scan and CSV parse lets a NUL-containing job_id pass). per user stop rule the run does not return to S4 and continues to S6/S7/S8/S9 with the blocker open'
+created_at: '2026-09-19T21:00:00+09:00'

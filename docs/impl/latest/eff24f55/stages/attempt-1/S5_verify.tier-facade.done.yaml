@@ -1,0 +1,55 @@
+stage: "S5"
+tier: "tier-facade"
+attempt: 1
+uc_id: "eff24f55"
+manifest_sha256: "f4528376203939a69f1860d8fba45c818c647fa63d56a44f2e91c8e6a2618c21"
+manifest_projection: "v2"
+result: "pass"
+verification_result: "findings_open"
+open_blockers: 3
+summary:
+  blocker: 3
+  major: 2
+  minor: 26
+gate_reexec:
+  format: "pass"
+  lint: "pass"
+  tdd: "pass"
+  bdd_tier: "pass"
+assumptions_sha256: "153cb57790dd015c7ba37a8aaa054c0a0f5a594acf7fb6386f5cc6ab2088a476"
+assumption_verdicts_sha256: "056fa59efc757ee60e312fa0e74fb058a51be1763b74510c97beb99d26ee4824"
+assumption_verdicts_summary:
+  consistent: 8
+  spec_absent: 13
+  contradicts: 2
+  unlisted: 1
+environment_failures: []
+completed_at: "2026-09-19T07:39:38.730719+00:00"
+completed_by: "dist-impl-verify@0.14.1"
+findings_path: "docs/impl/latest/eff24f55/stages/attempt-1/S5_verify.tier-facade.findings.yaml"
+notes:
+  - "result=passは検証作業の完走を示す。実装の受入れはopen_blockersがあるため不可。"
+  - "gitコマンド禁止を優先。cwdと.git/HEADを直接確認し、feature/define-slot-job-mapsを確認。git statusの確認は行っていない。"
+  - "実装者のdoneは独立検証のread-set制約に従い未読。自己申告との照合はオーケストレータで実施する。"
+  - "macOS上のbashによる実体検証でありLinux実機での性能を保証しない。"
+test_results:
+  - check: "format"
+    command: "shfmt -d ."
+    exit_code: 0
+  - check: "lint"
+    command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+    exit_code: 0
+  - check: "tdd"
+    command: "bats -r test"
+    exit_code: 0
+    passed: 143
+  - check: "bdd_tier"
+    command: "npx --no-install cucumber-js --config ../cucumber.cjs features"
+    exit_code: 0
+    scenarios_passed: 23
+    steps_passed: 74
+    target_uc_scenarios: 14
+    regression_scenarios: 9
+environment_probe:
+  status: "pass"
+  evidence: "bash/shfmt/shellcheck/bats/node/npx/python3とlocal cucumber依存が存在。一時ディレクトリの作成、実ファイル書込、実行を確認。DB/TCP/docker/shared memoryは対象テストの依存なし。"

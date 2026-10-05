@@ -1,0 +1,49 @@
+stage: "S4"
+tier: "tier-facade"
+attempt: 1
+uc_id: "eff24f55"
+manifest_sha256: "f4528376203939a69f1860d8fba45c818c647fa63d56a44f2e91c8e6a2618c21"
+manifest_projection: v2
+result: pass
+gates:
+  format: pass
+  lint: pass
+  tdd: pass
+  bdd_tier: pass
+gate_runs:
+  - gate: "format"
+    cwd: "facade"
+    command: "shfmt -d ."
+    exit_code: 0
+  - gate: "lint"
+    cwd: "facade"
+    command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+    exit_code: 0
+  - gate: "tdd"
+    cwd: "facade"
+    command: "bats -r test"
+    exit_code: 0
+    detail: "143 tests passed, 0 failed"
+  - gate: "bdd_tier"
+    cwd: "facade"
+    command: "npx cucumber-js --config ../cucumber.cjs features"
+    exit_code: 0
+    detail: "23 scenarios passed, 74 steps passed. define-slot-job-maps.feature 14 scenarios, configure-feature-flags.feature 9 scenarios"
+assumptions:
+  path: "attempt-1/S4_tier-impl.tier-facade.assumptions.yaml"
+  count: 23
+  by_category:
+    input_validation: 8
+    data_format: 9
+    error_handling: 5
+    persistence: 0
+    performance: 0
+    security: 1
+  sha256: "153cb57790dd015c7ba37a8aaa054c0a0f5a594acf7fb6386f5cc6ab2088a476"
+  extraction:
+    candidate_count: 32
+    excluded_as_explicit: 9
+    recorded_count: 23
+issues_raised: []
+completed_at: "2026-09-19T07:30:53Z"
+completed_by: "dist-impl-implement@0.14.1"

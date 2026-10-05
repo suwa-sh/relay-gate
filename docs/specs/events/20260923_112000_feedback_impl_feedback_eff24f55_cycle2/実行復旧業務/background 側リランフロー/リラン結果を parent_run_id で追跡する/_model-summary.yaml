@@ -1,0 +1,89 @@
+uc: "リラン結果を parent_run_id で追跡する"
+business: "実行復旧業務"
+buc: "background 側リランフロー"
+bounded_context_id: "BC-004"
+aggregate_id: "AG-001"
+
+models:
+  - name: "RunLineageQuery"
+    tier: "tier-ops"
+    layer: "usecase"
+    type: "query"
+    rdra_info: "リラン指示"
+  - name: "RunLineage"
+    tier: "tier-ops"
+    layer: "domain"
+    type: "value-object"
+    rdra_info: "並行稼働実行(parallel_run)"
+  - name: "ParallelRunRepository"
+    tier: "tier-ops"
+    layer: "repository"
+    type: "record"
+    rdra_info: "並行稼働実行(parallel_run)"
+  - name: "SlotExecutionRepository"
+    tier: "tier-ops"
+    layer: "repository"
+    type: "record"
+    rdra_info: "slot 実行"
+  - name: "CrosscheckRequestRepository"
+    tier: "tier-ops"
+    layer: "repository"
+    type: "record"
+    rdra_info: "速報比較依頼(rapid_crosscheck_request)"
+  - name: "facade/<run_id>/ (成果物ディレクトリ)"
+    tier: "tier-ops"
+    layer: "repository"
+    type: "record"
+    rdra_info: "Runner Result"
+
+tables:
+  - name: "parallel_runs"
+    rdra_info: "並行稼働実行(parallel_run)"
+    operations:
+      - type: "SELECT"
+        columns:
+          - name: "run_id"
+            value: ""
+          - name: "parent_run_id"
+            value: ""
+          - name: "job_id"
+            value: ""
+          - name: "status"
+            value: ""
+          - name: "requested_at"
+            value: ""
+          - name: "completed_at"
+            value: ""
+        where: "run_id = ? (祖先を辿る)"
+      - type: "SELECT"
+        columns:
+          - name: "run_id"
+            value: ""
+          - name: "parent_run_id"
+            value: ""
+        where: "parent_run_id = ? (子孫を辿る)"
+    indexes_needed:
+      - columns: ["parent_run_id"]
+        reason: "子孫の探索(parent_run_id = ?)"
+        access_pattern: "run-lineage.sh の幅優先探索"
+  - name: "slot_executions"
+    rdra_info: "slot 実行"
+    operations:
+      - type: "SELECT"
+        columns:
+          - name: "slot"
+            value: ""
+        where: "run_id = ? (role 導出)"
+    indexes_needed: []
+  - name: "rapid_crosscheck_requests"
+    rdra_info: "速報比較依頼(rapid_crosscheck_request)"
+    operations:
+      - type: "SELECT"
+        columns:
+          - name: "run_id"
+            value: ""
+        where: "run_id = ? (role=rapid-crosscheck の導出)"
+    indexes_needed: []
+
+kvs: []
+object_storage: []

@@ -1,0 +1,176 @@
+event_id: 20260919_233000_review_approved_eff24f55
+type: review_approved
+uc_id: eff24f55
+payload:
+  review_evidence_event_id: 20260919_231500_s9_review_regenerated_eff24f55
+  feedback_review_evidence:
+    feedback_id: 20260919_213000_impl_feedback_eff24f55
+    draft_path: docs/impl/latest/eff24f55/feedback/draft.md
+    draft_sha256: 1a7612598a0ed1d3378d7479b1614d6a6aa99ac90eae0fbf55b82e173784a431
+    request_count: 5
+  implementation_review_evidence:
+    gate_result: 6/6 pass
+    open_blocker_count: 0
+    open_major_count: 2
+    assumption_evidence_sha256: 96e57c72a5dba70b4d5f42b7ac031622b09e8372827047cdd543c520afabd2f0
+  approval_kind: feedback_publish_permission
+  user_answer:
+    機能: A(修正済みの実装を承認し、仕様の確認待ちへ。PR には進まない)
+    相互運用: A(変更要求 5 件をこのまま公開)
+    監査: A(回答任意の前提はグループ規則で一括承認)
+    前提: A-012:承認 / A-047:承認
+  precheck: 承認直前に validateAssumptions.js record / verdicts / evidence を再実行し、S4 / S5 done と S9 evidence に一致。draft の sha256 も一致
+  assumption_decisions:
+  - tier: tier-facade
+    id: A-001
+    decision: confirmed
+    note: 回答任意。ユーザー回答「監査=A」(グループ規則による一括承認)
+  - tier: tier-facade
+    id: A-004
+    decision: confirmed
+    note: 回答任意。ユーザー回答「監査=A」(グループ規則による一括承認)
+  - tier: tier-facade
+    id: A-005
+    decision: confirmed
+    note: 回答任意。ユーザー回答「監査=A」(グループ規則による一括承認)
+  - tier: tier-facade
+    id: A-006
+    decision: confirmed
+    note: 回答任意。ユーザー回答「監査=A」(グループ規則による一括承認)
+  - tier: tier-facade
+    id: A-008
+    decision: confirmed
+    note: 回答任意。ユーザー回答「監査=A」(グループ規則による一括承認)
+  - tier: tier-facade
+    id: A-009
+    decision: confirmed
+    note: 回答任意。ユーザー回答「監査=A」(グループ規則による一括承認)
+  - tier: tier-facade
+    id: A-010
+    decision: confirmed
+    note: 回答任意。ユーザー回答「監査=A」(グループ規則による一括承認)
+  - tier: tier-facade
+    id: A-012
+    decision: confirmed
+    note: 回答必須。ユーザーが承認(2026-09-19)
+  - tier: tier-facade
+    id: A-014
+    decision: confirmed
+    note: 回答任意。ユーザー回答「監査=A」(グループ規則による一括承認)
+  - tier: tier-facade
+    id: A-016
+    decision: confirmed
+    note: 回答任意。ユーザー回答「監査=A」(グループ規則による一括承認)
+  - tier: tier-facade
+    id: A-017
+    decision: confirmed
+    note: 回答任意。ユーザー回答「監査=A」(グループ規則による一括承認)
+  - tier: tier-facade
+    id: A-018
+    decision: confirmed
+    note: 回答任意。ユーザー回答「監査=A」(グループ規則による一括承認)
+  - tier: tier-facade
+    id: A-019
+    decision: confirmed
+    note: 回答任意。ユーザー回答「監査=A」(グループ規則による一括承認)
+  - tier: tier-facade
+    id: A-020
+    decision: confirmed
+    note: 回答任意。ユーザー回答「監査=A」(グループ規則による一括承認)
+  - tier: tier-facade
+    id: A-022
+    decision: confirmed
+    note: 回答任意。ユーザー回答「監査=A」(グループ規則による一括承認)
+  - tier: tier-facade
+    id: A-024
+    decision: confirmed
+    note: 回答任意。ユーザー回答「監査=A」(グループ規則による一括承認)
+  - tier: tier-facade
+    id: A-025
+    decision: confirmed
+    note: 回答任意。ユーザー回答「監査=A」(グループ規則による一括承認)
+  - tier: tier-facade
+    id: A-026
+    decision: confirmed
+    note: 回答任意。ユーザー回答「監査=A」(グループ規則による一括承認)
+  - tier: tier-facade
+    id: A-028
+    decision: confirmed
+    note: 回答任意。ユーザー回答「監査=A」(グループ規則による一括承認)
+  - tier: tier-facade
+    id: A-029
+    decision: confirmed
+    note: 回答任意。ユーザー回答「監査=A」(グループ規則による一括承認)
+  - tier: tier-facade
+    id: A-030
+    decision: confirmed
+    note: 回答任意。ユーザー回答「監査=A」(グループ規則による一括承認)
+  - tier: tier-facade
+    id: A-031
+    decision: confirmed
+    note: 回答任意。ユーザー回答「監査=A」(グループ規則による一括承認)
+  - tier: tier-facade
+    id: A-033
+    decision: confirmed
+    note: 回答任意。ユーザー回答「監査=A」(グループ規則による一括承認)
+  - tier: tier-facade
+    id: A-034
+    decision: confirmed
+    note: 回答任意。ユーザー回答「監査=A」(グループ規則による一括承認)
+  - tier: tier-facade
+    id: A-035
+    decision: confirmed
+    note: 回答任意。ユーザー回答「監査=A」(グループ規則による一括承認)
+  - tier: tier-facade
+    id: A-036
+    decision: confirmed
+    note: 回答任意。ユーザー回答「監査=A」(グループ規則による一括承認)
+  - tier: tier-facade
+    id: A-037
+    decision: confirmed
+    note: 回答任意。ユーザー回答「監査=A」(グループ規則による一括承認)
+  - tier: tier-facade
+    id: A-038
+    decision: confirmed
+    note: 回答任意。ユーザー回答「監査=A」(グループ規則による一括承認)
+  - tier: tier-facade
+    id: A-039
+    decision: confirmed
+    note: 回答任意。ユーザー回答「監査=A」(グループ規則による一括承認)
+  - tier: tier-facade
+    id: A-040
+    decision: confirmed
+    note: 回答任意。ユーザー回答「監査=A」(グループ規則による一括承認)
+  - tier: tier-facade
+    id: A-041
+    decision: confirmed
+    note: 回答任意。ユーザー回答「監査=A」(グループ規則による一括承認)
+  - tier: tier-facade
+    id: A-042
+    decision: confirmed
+    note: 回答任意。ユーザー回答「監査=A」(グループ規則による一括承認)
+  - tier: tier-facade
+    id: A-043
+    decision: confirmed
+    note: 回答任意。ユーザー回答「監査=A」(グループ規則による一括承認)
+  - tier: tier-facade
+    id: A-044
+    decision: confirmed
+    note: 回答任意。ユーザー回答「監査=A」(グループ規則による一括承認)
+  - tier: tier-facade
+    id: A-045
+    decision: confirmed
+    note: 回答任意。ユーザー回答「監査=A」(グループ規則による一括承認)
+  - tier: tier-facade
+    id: A-046
+    decision: confirmed
+    note: 回答任意。ユーザー回答「監査=A」(グループ規則による一括承認)
+  - tier: tier-facade
+    id: A-047
+    decision: confirmed
+    note: 回答必須。ユーザーが承認(2026-09-19)
+  - tier: tier-facade
+    id: A-048
+    decision: confirmed
+    note: 回答任意。ユーザー回答「監査=A」(グループ規則による一括承認)
+created_at: '2026-09-19T23:30:00+09:00'

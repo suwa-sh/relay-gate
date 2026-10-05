@@ -1,0 +1,29 @@
+event_id: 20260919_203500_s4_tier_impl_completed_eff24f55_tier_facade_a4
+type: stage_completed
+uc_id: eff24f55
+stage: S4
+tier: tier-facade
+attempt: 4
+payload:
+  manifest_sha256: f4528376203939a69f1860d8fba45c818c647fa63d56a44f2e91c8e6a2618c21
+  manifest_projection: v2
+  result: pass
+  gates:
+    format: pass
+    lint: pass
+    tdd: pass
+    bdd_tier: pass
+  assumptions:
+    count: 34
+    sha256: fd054bd7387b0068d4d76ffe368726fa89b77be081ae969c6b6c022ac85b83d2
+  findings_input:
+    verify: docs/impl/latest/eff24f55/stages/attempt-3/S5_verify.tier-facade.findings.yaml
+  fixed_blockers:
+  - F-001
+  - F-002
+  - F-025
+  issues_filed:
+  - docs/impl/latest/eff24f55/issues/20260919_183305_control-char-notation-and-internal-error-undefined.md
+  barrier_format: 'shfmt -d over all tier dirs reported no diff (no barrier commit needed)'
+  summary: 'S4 tier-facade attempt-4: escape control characters of arbitrary input in all --job-map output paths, detect helper command failures (exit 6, no success summary), reject invalid UTF-8 with the existing csv quote error. bats 277 ok, tier BDD 23 scenarios pass'
+created_at: '2026-09-19T20:35:00+09:00'

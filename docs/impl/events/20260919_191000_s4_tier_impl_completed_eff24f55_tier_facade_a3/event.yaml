@@ -1,0 +1,25 @@
+event_id: 20260919_191000_s4_tier_impl_completed_eff24f55_tier_facade_a3
+type: stage_completed
+uc_id: eff24f55
+stage: S4
+tier: tier-facade
+attempt: 3
+payload:
+  manifest_sha256: f4528376203939a69f1860d8fba45c818c647fa63d56a44f2e91c8e6a2618c21
+  manifest_projection: v2
+  result: pass
+  gates:
+    format: pass
+    lint: pass
+    tdd: pass
+    bdd_tier: pass
+  assumptions:
+    count: 28
+    sha256: 0197a297e047f03e0e453c68e13131d523b2e34d94cbd02709831b3bf10ab0bd
+  findings_input:
+    verify: docs/impl/latest/eff24f55/stages/attempt-2/S5_verify.tier-facade.findings.yaml
+  fixed_blockers:
+  - F-001
+  barrier_format: 'shfmt -d over all tier dirs reported no diff (no barrier commit needed)'
+  summary: 'S4 tier-facade attempt-3: reject lines containing NUL bytes before bash ingestion (existing csv quote is invalid error, exit 2), byte-level input self-audit (CRLF / BOM / invalid UTF-8 / locale-independent regex / long lines), windowed scanning for long lines. bats 219 ok, tier BDD 23 scenarios pass'
+created_at: '2026-09-19T19:10:00+09:00'

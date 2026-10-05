@@ -1,0 +1,55 @@
+stage: S6
+uc_id: eff24f55
+manifest_sha256: f4528376203939a69f1860d8fba45c818c647fa63d56a44f2e91c8e6a2618c21
+manifest_projection: v2
+result: pass
+branch_slug: define-slot-job-maps
+tiers:
+  - tier-facade
+tier_impl_attempt: 5
+rerun: true
+rerun_reason: "review_rejected 20260919_220000_review_rejected_eff24f55"
+rerun_note: "tier-facade attempt-5(ジョブマップを検証開始時に一時ファイルへ 1 回コピーして検証する方式)で統合テストが通ることの再確認。前回 done は docs/impl/latest/eff24f55/invalidated/20260919_220010_stage_invalidated_eff24f55_review_fix/S6_uc-bdd.done.yaml"
+feature: features/uc/define-slot-job-maps.feature
+feature_changed: false
+steps: features/uc/steps/define-slot-job-maps.steps.js
+steps_changed: false
+steps_change_summary: "再実行では step 定義を変更していない(attempt-5 の実装変更で step の修正は不要だった)"
+source: "docs/specs/latest/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/spec.md#E2E完了条件(BDD)"
+tier_impl_changed: false
+run:
+  cwd: "."
+  command: "npx cucumber-js --config cucumber.cjs features/uc"
+  exit_code: 0
+  summary: "28 scenarios (28 passed), 105 steps (105 passed)"
+  scenarios_total: 28
+  scenarios_passed: 28
+  scenarios_failed: 0
+  undefined_steps: 0
+target_feature_run:
+  command: "npx cucumber-js --config cucumber.cjs features/uc/define-slot-job-maps.feature"
+  exit_code: 0
+  summary: "16 scenarios (16 passed), 56 steps (56 passed)"
+  scenarios_total: 16
+  scenarios_passed: 16
+  scenarios_failed: 0
+preceding_uc_run:
+  feature: features/uc/configure-feature-flags.feature
+  command: "npx cucumber-js --config cucumber.cjs features/uc/configure-feature-flags.feature"
+  summary: "12 scenarios (12 passed), 49 steps (49 passed)"
+  scenarios_total: 12
+  scenarios_passed: 12
+  note: "全体実行 28 件のうち先行 UC の 12 件。step 定義は未変更で全件 pass"
+harness:
+  sandbox_root: "Scenario ごとの一時ディレクトリを root とし、feature の絶対パス(/etc/relay-gate/green-job-map.csv, /etc/relay-gate/blue-job-map.csv)を root 配下の同じ相対位置に実ファイルで配置。出力照合時に root 接頭辞を除去"
+  process: "facade/bin/validate-config.sh を実プロセスとして起動(--job-map <path> [--verbose])。パス省略の When は Given が用意した green-job-map.csv を渡す"
+  execution_spec_fixture: "Scenario「hang_detect_limit_minutes の変更は次回以降の run に反映される」で <root>/var/relay-gate/runs/<run_id>/execution-spec.json に最小形 fixture を配置し、検証コマンド実行の前後でバイト一致と run ディレクトリ構成の不変を照合"
+  both_maps_scenario: "Scenario「導入時は全ジョブ 60 分」は blue(host / user 列なし、全行 0)と green(9 列、全行 60)を個別に検証し、両方の終了コード 0・error 行なし・rows=2 を照合"
+  external_connections: none
+injections: []
+injections_note: "ハーネス注入なし。UC 横断 Scenario 2 件は fixture 配置と前提の記録だけで成立(根拠: docs/impl/latest/eff24f55/issues/20260919_161456_cross-uc-scenarios.md)。前提の新規抽出なし"
+cross_uc_refs:
+  - docs/impl/latest/eff24f55/issues/20260919_161456_cross-uc-scenarios.md
+issues: []
+completed_at: '2026-09-19T20:27:40+09:00'
+completed_by: dist-impl-implement@0.14.1

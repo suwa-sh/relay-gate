@@ -1,0 +1,11 @@
+stage: S3
+uc_id: eff24f55
+manifest_sha256: f4528376203939a69f1860d8fba45c818c647fa63d56a44f2e91c8e6a2618c21
+manifest_projection: v2
+result: pass
+contracts_verified:
+- id: management-db
+  result: pass
+  detail: 'lock input sha256 (2b3ffec0...) matches current rdb-schema.yaml; no regeneration. provider scope: 7 tables declared. consumer side: this UC _model-summary.yaml has tables: [] so no table/column cross-check target'
+completed_at: '2026-09-19T16:32:00+09:00'
+completed_by: dist-impl-run@0.14.1

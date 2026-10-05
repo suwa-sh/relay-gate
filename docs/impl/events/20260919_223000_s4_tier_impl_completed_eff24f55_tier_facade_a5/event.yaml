@@ -1,0 +1,26 @@
+event_id: 20260919_223000_s4_tier_impl_completed_eff24f55_tier_facade_a5
+type: stage_completed
+uc_id: eff24f55
+stage: S4
+tier: tier-facade
+attempt: 5
+payload:
+  manifest_sha256: f4528376203939a69f1860d8fba45c818c647fa63d56a44f2e91c8e6a2618c21
+  manifest_projection: v2
+  result: pass
+  gates:
+    format: pass
+    lint: pass
+    tdd: pass
+    bdd_tier: pass
+  assumptions:
+    count: 38
+    sha256: d3ac508ef77cd2a02e4bfe1aadddd07fce4dd2853703428e576d3db3c9ecab35
+  findings_input:
+    verify: docs/impl/latest/eff24f55/stages/attempt-4/S5_verify.tier-facade.findings.yaml
+  fixed_blockers:
+  - F-001
+  scope: 'レビューでの差し戻しにより F-001 のみ修正(他の finding は範囲外)'
+  barrier_format: 'shfmt -d over all tier dirs reported no diff (no barrier commit needed)'
+  summary: 'S4 tier-facade attempt-5: validate a single snapshot (copy once to a mktemp file, byte check and CSV read use only the copy, cleanup on all exits and HUP/INT/TERM, user path shown in output). bats 287 ok, tier BDD 23 scenarios pass'
+created_at: '2026-09-19T22:30:00+09:00'

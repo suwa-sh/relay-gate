@@ -1,0 +1,12 @@
+event_id: 20260922_110000_attempt_opened_eff24f55_a6
+type: attempt_opened
+uc_id: eff24f55
+attempt: 6
+payload:
+  from_attempt: 5
+  reason: 'S5 verify blockers F-001 (raw stderr leak on helper failure) and F-002 (snapshot deletion failure ignored)'
+  attempt_limit: {limit: 3, exceeded: true, user_decision: continue_once, decided_at: '2026-09-22', decision: '確認 4: A(実装と検証の往復を 1 回追加して続ける)'}
+  tiers_to_rerun: [tier-facade]
+  carry_forward: []
+  findings_passed: {verify: docs/impl/latest/eff24f55/stages/attempt-5/S5_verify.tier-facade.findings.yaml}
+created_at: '2026-09-22T11:00:00+09:00'

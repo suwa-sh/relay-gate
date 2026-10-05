@@ -1,0 +1,24 @@
+uc: "保存済みの確報結果をジョブスケジューラへ返す"
+business: "クロスチェック業務"
+buc: "確報クロスチェックフロー"
+paths: []
+x_cli_commands:
+  - name: "final-crosscheck-runner.sh"
+    tier: "tier-final-crosscheck"
+    role: "uses"
+    synopsis: "final-crosscheck-runner.sh --business-date <YYYY-MM-DD> --catalog-version <ver>(中継部分。コマンド契約の正本は UC「確報比較依頼を登録して終端状態まで待機する」)"
+    invoked_by: "ジョブスケジューラ(確報クロスチェックジョブ定義)"
+    args: []
+    options: []
+    stdin: "なし"
+    stdout: "依頼に保存された stdout をバイト列のまま出す(NULL は 0 バイト)。状態名・差分件数・レポート URI・final_crosscheck_id を追加しない"
+    stderr: "依頼に保存された stderr をバイト列のまま出す(NULL は 0 バイト)。exit_code が NULL(ABORTED で比較未完了)でも追加行は書かない(理由は実行ログに残す。仮採用)"
+    exit_codes:
+      - code: 0
+        meaning: "保存済み exit_code=0(比較 OK)の無加工中継"
+      - code: 3
+        meaning: "保存済み exit_code=3(比較 NG・警告終了)の無加工中継"
+      - code: 6
+        meaning: "保存済み exit_code=6(実行エラー)の無加工中継。または exit_code が NULL(ABORTED で比較未完了)/ 中継直前の SELECT 失敗 / exit_code が 0〜255 の範囲外"
+async_events: []
+schemas: []

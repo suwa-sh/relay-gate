@@ -1,0 +1,36 @@
+stage: "S5"
+tier: "tier-facade"
+attempt: 3
+uc_id: "eff24f55"
+manifest_sha256: "f4528376203939a69f1860d8fba45c818c647fa63d56a44f2e91c8e6a2618c21"
+manifest_projection: "v2"
+result: "fail"
+open_blockers: 3
+summary:
+  blocker: 3
+  major: 1
+  minor: 28
+gate_reexec:
+  format: "pass"
+  lint: "pass"
+  tdd: "pass"
+  bdd_tier: "pass"
+assumptions_sha256: "0197a297e047f03e0e453c68e13131d523b2e34d94cbd02709831b3bf10ab0bd"
+assumption_verdicts_sha256: "8012fc8a81fb36aaac543e0c6bf93ed6a543dc6bc0473ca4c2da1eac1635a300"
+assumption_verdicts_summary:
+  consistent: 2
+  spec_absent: 25
+  contradicts: 1
+  unlisted: 1
+environment_failures: []
+completed_at: "2026-09-19T09:05:27.752031+00:00"
+completed_by: "dist-impl-verify@0.14.1"
+findings_path: "docs/impl/latest/eff24f55/stages/attempt-3/S5_verify.tier-facade.findings.yaml"
+verification_evidence:
+  tdd: "bats -r test: exit 0; 219/219 pass"
+  bdd_tier: "npx --no-install cucumber-js --config ../cucumber.cjs features: exit 0; 23/23 scenarios, 74/74 steps; job-map 14 + feature-flag regression 9"
+  format: "shfmt -d .: exit 0"
+  lint: "find src test -name '*.sh' -exec shellcheck -x {} +: exit 0"
+  environment: "必要バイナリ・ローカル cucumber・Python yaml・一時ファイル作成と子プロセス起動を probe 済み。DB/network 不要。"
+  constraints: "git コマンド禁止を優先して rev-parse/branch/status は未実行。cwd と CLAUDE.md で対象を確認。実装者 done/会話履歴は未読。書き込みは指定 YAML 2 個とリポジトリ外一時領域のみ。"
+hash_note: "hash は指定検証器 validateAssumptions.js の値を採用。同梱簡易 YAML parser は A-014 の二重引用符内のバックスラッシュを PyYAML と異なって保持するため、PyYAML の意味値から算出した hash とは異なる。前提文字列の YAML 意味値は元ファイルと同一。"

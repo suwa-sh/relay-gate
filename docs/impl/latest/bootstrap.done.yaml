@@ -5,8 +5,8 @@ phases:
     at: '2026-09-16T08:29:17+09:00'
   P2_config:
     status: done
-    at: '2026-09-17T10:00:00+09:00'
-    note: 'content-stable rerun after spec_event change (20260917_100000_feedback_impl_feedback_fd678b04_cycle2): derived uc-map / impl-config identical to existing (32 UC, 8-digit uc_id, 4 tiers, no collision), files untouched, no config_confirmed event. previous content-stable rerun: 2026-09-17T07:42:12+09:00 (20260917_050000_feedback_impl_feedback_fd678b04)'
+    at: '2026-09-23T11:45:00+09:00'
+    note: 'content-stable rerun 2026-09-23T11:45:00+09:00 after spec_event change (20260923_112000_feedback_impl_feedback_eff24f55_cycle2, f3a1356e -> 2f08c58c): use_cases business/buc/uc/files identical (32 UC), derived uc-map / impl-config identical, files untouched, no config_confirmed event. previous: content-stable rerun 2026-09-22T17:22:00+09:00 after spec_event change (20260921_100000_feedback_impl_feedback_eff24f55, 5387bab9 -> f3a1356e): derived uc-map / impl-config identical to existing (32 UC, 8-digit uc_id, 4 tiers, no collision, tier ids in files[] all in arch, tier-datastore stays shared asset), files untouched, no config_confirmed event. previous content-stable reruns: 2026-09-17T10:00:00+09:00 (20260917_100000_feedback_impl_feedback_fd678b04_cycle2), 2026-09-17T07:42:12+09:00 (20260917_050000_feedback_impl_feedback_fd678b04)'
   P3_skeleton:
     status: done
     at: '2026-09-16T18:37:01+09:00'
@@ -21,11 +21,12 @@ phases:
     at: '2026-09-16T18:37:01+09:00'
   P7_atdd:
     status: done
-    at: '2026-09-16T18:37:01+09:00'
+    at: '2026-09-22T17:22:00+09:00'
+    note: regenerated after usdm change (20260921_084000_feedback_impl_feedback_eff24f55, 89316e19 -> f027bd61). 49/50 features byte-identical; SPEC-008-05.feature rewritten (SPEC-008-05-2 steps changed, SPEC-008-05-3 added with @manual tag as out-of-automation criterion). no @uc_ tags existed to carry over
 inputs_sha256:
-  spec_event: 5387bab95c67b768032cd1aff6dc0db8a8473f286c4324a92c34002659fc9895
+  spec_event: 2f08c58c5b7fd348d323253f9f0c0fe255b32390e89d0b426d97cb246647505d
   arch: 45a30ece498ff31b18cdec055333a172156d453b8d6d4b4f330b716cfc87de04
-  usdm: 89316e19ac1a54227263e1c50ea13ef0f75cb1032757ae980be1e572ba7cf306
+  usdm: f027bd61f90f3f98cc72893fefdb8a51db05974536ceb0319c120991c88d8e70
   contracts:
     management-db: 2b3ffec01cb9705e508168a4ff8a9e1b7c67278679714ece60c8040a4c0be292
   contracts_decl: a7703a7d906eab15a5efb98e940352b6ba4985cb374bee974d6e0a319ca42402
@@ -52,7 +53,7 @@ inputs_sha256:
     cli_command_contract:
       path: docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml
       exists: true
-      sha256: 0cce7d14462d286f6e41fe01355c3da73a7ef8a5b7b619ba7edd45bcbf525f3b
+      sha256: 2c7b320a9caed338204b58d80abcb63caf848b96f102f9648c463060b1593ad3
       note: contract-registry.md に対応する種別が無い
     rdb_schema:
       path: docs/specs/latest/_cross-cutting/datastore/rdb-schema.yaml
@@ -169,13 +170,17 @@ preflight:
   - id: usdm_acceptance_criteria
     result: pass
     detail: SPEC 50 件すべてに acceptance_criteria あり(P7 の criteria 欠落 SPEC 0 件)
-generated_at: '2026-09-17T10:00:00+09:00'
+generated_at: '2026-09-23T11:45:00+09:00'
 generated_by: distillery-impl@0.14.1
 p3_p7_summary:
   config_confirmed_event: 20260916_183122_config_confirmed_bootstrap_p2
   dev_rules_local_diff: []
   atdd_features: 50
-  atdd_scenarios: 122
+  atdd_scenarios: 123
+  atdd_manual_scenarios:
+  - id: SPEC-008-05-3
+    reason: '自動判定の対象外: 運用文書の記載'
+    tag: '@manual'
   atdd_missing_criteria_specs: []
   atdd_unsplit_criteria: []
   atdd_lost_uc_tags: []

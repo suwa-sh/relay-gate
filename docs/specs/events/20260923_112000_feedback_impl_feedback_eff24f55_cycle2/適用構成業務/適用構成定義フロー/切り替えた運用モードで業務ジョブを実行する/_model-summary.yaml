@@ -1,0 +1,37 @@
+uc: "切り替えた運用モードで業務ジョブを実行する"
+business: "適用構成業務"
+buc: "適用構成定義フロー"
+bounded_context_id: "BC-005"
+aggregate_id: "AG-005"
+
+models:
+  - name: "JobLaunchRequest"
+    tier: "tier-facade"
+    layer: "presentation"
+    type: "request"
+    rdra_info: "ジョブ起動要求"
+  - name: "OperationMode"
+    tier: "tier-facade"
+    layer: "domain"
+    type: "value-object"
+    rdra_info: "feature flag 設定"
+  - name: "FeatureFlagConfig"
+    tier: "tier-facade"
+    layer: "repository"
+    type: "record"
+    rdra_info: "feature flag 設定"
+  - name: "SchedulerResponse"
+    tier: "tier-facade"
+    layer: "presentation"
+    type: "record"
+    rdra_info: "ジョブスケジューラ応答"
+  - name: "AlertMail"
+    tier: "tier-ops"
+    layer: "gateway"
+    type: "record"
+    rdra_info: "通知メール"
+    note: "参照のみ。publish は tier-ops の hang-detector(UC「ハング疑い・実行エラー・比較異常を通知する」)が定義し、facade はメールを送受信しない"
+
+tables: []
+kvs: []
+object_storage: []

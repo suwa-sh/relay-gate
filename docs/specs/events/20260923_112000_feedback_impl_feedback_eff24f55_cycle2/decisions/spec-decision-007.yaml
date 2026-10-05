@@ -1,0 +1,63 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "specification"
+artifact_id: "spec-decision-007"
+title: "中止済み run の判定キー拡張・速報比較依頼の中止対象拡張と worker の条件付き RUNNING 遷移・未着手依頼の中止を競合窓の保険と位置づける Spec 追従"
+status: "approved"
+generated_at: "2026-09-07T13:10:00Z"
+context: |
+  利用者は、(1) 速報比較依頼を作成しない「中止済み run」の判定キーを「並行稼働実行(parallel_run)が ABORTED」から
+  「並行稼働実行が ABORTED、または完了通知の対象 slot の slot 実行が ABORTED(aborted.txt 公開済み)」に広げる(DIST-025 A)、
+  (2) abort-rapid-crosscheck の中止対象を RUNNING 限定から REQUESTED / CLAIMED / RUNNING に広げ、CLAIMED の中止は停止確認 yes のうえ
+  status IN 条件の条件付き UPDATE で行い、claim 済み worker は CLAIMED → RUNNING の条件付き UPDATE が 0 件なら比較を開始しない(DIST-026 A)、
+  (3) abort-blue / abort-green による REQUESTED 依頼の ABORTED 化を「完了通知直後の競合窓を塞ぐ保険。dispatcher 側の中止済み run 判定と併用」と
+  位置づけ直す(DIST-027 A)、と決定した。RDRA / USDM / arch / nfr / infra は先行イベント(20260907_114000 / 120000 / 122000 / 124000)で更新済みで、
+  本イベントは Spec 側(契約・データストア・UC spec / tier / BDD・横断文書)を追従させる。RDRA / USDM / arch は「何を」までしか定めないため、
+  契約(cli-command-contract.yaml)として確定が必要な「どう表すか」を本記録に残す。
+decision: |
+  1. 中止済み run の判定キー(CR-016): rapid-crosscheck-runner.sh(dispatcher)は完了通知のトランザクション内で rapid_runs(FOR UPDATE)→
+     parallel_runs(FOR UPDATE)→ 対象 slot の slot_executions(SELECT。`WHERE run_id = ? AND slot = ?`)の順に読み、parallel_runs.status = 'ABORTED'
+     または対象 slot の slot_executions.status = 'ABORTED' なら両系成功でも依頼を作成しない(request_creation_matrix は縦軸 3 値 × 横軸 3 値)。
+     実行ログ / stderr の reason は判定キーで分け(parallel_run_aborted / slot_execution_aborted。値に空白を含めない)、完了事実は記録して
+     completion_status は BOTH_SUCCEEDED のまま。前イベントの「同 run のいずれかの slot が ABORTED」という Spec 側の広い仮採用は RDRA の判定表
+     (対象 slot)に合わせて狭めた。狭めても抜けが無いことを確認した: foreground 実行中の中止は abort-* が parallel_runs を RUNNING → ABORTED に
+     するため後続の完了通知は「並行稼働実行 ABORTED」で除外され、foreground 中継後(COMPLETED)に中止できるのは background slot だけで、
+     その完了通知は「対象 slot の slot 実行 ABORTED」で除外される(Step4-Review round 1 S4-traceability-4)。
+  2. abort-rapid-crosscheck(CR-017): 現在状態表示 → 停止確認(REQUESTED の依頼にも省略しない。SPEC-010-03)→ yes で
+     `UPDATE rapid_crosscheck_requests SET status='ABORTED', completed_at=? WHERE run_id=? AND status IN ('REQUESTED','CLAIMED','RUNNING')`。
+     終端状態(SUCCEEDED / FAILED / ABORTED)は状態を変更せず 3。表示後に終端した競合(更新件数 0)も 3 で、stderr は再 SELECT した status を含める。
+     abort-final-crosscheck は RUNNING のみを維持(確報の未着手依頼はジョブスケジューラの正規ジョブが同期 polling 中で、runner 側の polling 上限で扱う)。
+     判定表は縦軸クロスチェック種別 × 横軸依頼状態(arch LP-019)。
+  3. worker の CLAIMED → RUNNING(CR-017): `UPDATE ... SET status='RUNNING', started_at=? WHERE run_id=? AND status='CLAIMED' AND worker_id=?`。
+     0 件なら比較ツールを起動せず、成果物ディレクトリ・started-at.txt も作らず、comparison_results も INSERT せず終了コード 0。再 SELECT した
+     status が ABORTED なら実行ログ `WARN comparison not started ... reason=request_aborted`、それ以外(lease 失効で回収済み)は既存の
+     `WARN request not owned`。stdout(--once)は claim の 4 行 + `request_status=<再 SELECT した status>` の既存形を維持する(arch LP-024 / CLP-004)。
+     shared_rules.state_codes.request_status_transitions に CLAIMED → ABORTED を追加し、REQUESTED / CLAIMED / RUNNING → ABORTED(速報。abort-rapid-crosscheck)
+     と RUNNING → ABORTED(確報。abort-final-crosscheck)を分けて書く。rdb-schema のロック順に abort-rapid-crosscheck(requests → parallel_runs。
+     worker と同順)を追加し、デッドロックしないことを注記した。
+  4. abort-blue / abort-green の REQUESTED → ABORTED(CR-018): 「両系の完了通知で依頼が REQUESTED で作成された直後に運用者が slot を中止した場合の
+     競合窓を塞ぐ保険。dispatcher 側の中止済み run 判定(request_creation_matrix)と併用する」に統一し、「両 slot 完了直後の抜けを防ぐ」等の表現と
+     rdra-feedback #14 / #15 への参照を外した。CLAIMED / RUNNING は変更せず、REQUESTED / CLAIMED / RUNNING の明示中止は abort-rapid-crosscheck で行う。
+  5. RDRA フィードバック: #13 / #14 / #15 は本 feedback で RDRA / USDM / arch に反映されたため解消済みへ移し、#9(方針資料 C2 図)は利用者が図を
+     修正済みのため解消済みへ移した。残存は SR-001 / SR-002(スキル側の変更要求)のみ。トレーサビリティは 380 / 380(100%。状態遷移パスに
+     CLAIMED → ABORTED が加わり 47 件)。USDM 受け入れ条件は SPEC-005-02(8 件)/ SPEC-010-01(8 件)/ SPEC-010-02(5 件)を UC-09 / UC-11 / UC-23 の
+     BDD に配置した。
+consequences:
+  positive:
+    - "中止済み run の判定キーが RDRA の判定表(対象 slot)と一致し、Spec 側の仮採用注記が無くなった"
+    - "CLAIMED のまま残った依頼が lease 失効で再 claim されて比較が走る抜けを、abort-rapid-crosscheck と worker の条件付き RUNNING 遷移の組で塞いだ"
+    - "REQUESTED → ABORTED(abort-blue / abort-green)の役割が保険であることが契約・UC・状態モデルで一貫し、dispatcher 側判定との併用が明文化された"
+    - "条件付き UPDATE の 0 件時の扱い(worker: 比較を開始しない / abort-rapid-crosscheck: エラー / abort-blue・abort-green: 正常)が 3 者で明確になった"
+  negative:
+    - "abort-rapid-crosscheck は REQUESTED の依頼(worker プロセスが無い)にも停止確認を求めるため、運用者の操作は 1 手増える(SPEC-010-03 の規則を優先)"
+    - "worker は RUNNING 遷移 0 件時に再 SELECT を 1 回追加する(理由の判別のため)。負荷は無視できるが SQL は 1 本増える"
+    - "確報比較依頼の未着手中止は引き続き polling 上限に依存し、abort-final-crosscheck では止められない"
+alternatives_considered:
+  - name: "中止済み run の判定キーを「同 run のいずれかの slot の slot 実行 ABORTED」(前イベントの仮採用)のまま維持する"
+    reason_rejected: "RDRA の判定表は「完了通知の対象 slot」を縦軸にしており、Spec が RDRA より広い規則を持つと正本が二重になる。対象 slot 限定でも abort-* が parallel_runs を ABORTED にするため抜けは無い"
+  - name: "abort-rapid-crosscheck の CLAIMED 中止を worker 側の lease 失効解放(CLAIMED → REQUESTED)に委ね、REQUESTED になってから中止する"
+    reason_rejected: "lease 失効までの間に別 worker が再 claim して比較が走る。利用者決定(DIST-026 A)は REQUESTED / CLAIMED / RUNNING の直接中止"
+  - name: "worker の RUNNING 遷移 0 件時に stdout を出さず終了コードを非 0 にする"
+    reason_rejected: "中止済み依頼を処理しなかったのは正常系であり、常駐 / --once の双方で 0 を返す既存規則(claim 0 件は 0)と揃える。監視は実行ログの WARN で足りる(infra observability の diagnostic_only_events)"
+  - name: "abort-blue / abort-green の REQUESTED → ABORTED を廃止して dispatcher 側判定だけにする"
+    reason_rejected: "依頼 INSERT の COMMIT と abort の成果物再確認が同時刻に起きる競合窓は dispatcher 側判定では塞げない。利用者決定(DIST-027 A)は保険として併用"

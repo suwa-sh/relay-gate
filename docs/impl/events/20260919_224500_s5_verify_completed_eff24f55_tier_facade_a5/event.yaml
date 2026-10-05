@@ -1,0 +1,37 @@
+event_id: 20260919_224500_s5_verify_completed_eff24f55_tier_facade_a5
+type: stage_completed
+uc_id: eff24f55
+stage: S5
+tier: tier-facade
+attempt: 5
+payload:
+  manifest_sha256: f4528376203939a69f1860d8fba45c818c647fa63d56a44f2e91c8e6a2618c21
+  manifest_projection: v2
+  verifier_model: gpt-6-astra
+  scope: 'ユーザー指示により F-001 の解消確認・ゲート再実行・今回差分の直接欠陥に限定'
+  f001_resolution: resolved
+  open_blockers: 0
+  open_major: 2
+  open_minor: 37
+  in_scope_counts:
+    blocker: 0
+    major: 1
+    minor: 5
+  in_scope_major:
+  - id: F-105
+    assumption_id: A-047
+    note: '一時ファイルの置き場所・権限・削除(security の前提。レビューで回答必須)'
+  carried_forward_major:
+  - id: F-010
+    assumption_id: A-012
+    note: 'レビューで承認済みの回答を持ち越し'
+  assumptions_sha256: d3ac508ef77cd2a02e4bfe1aadddd07fce4dd2853703428e576d3db3c9ecab35
+  assumption_verdicts_sha256: 3af7918447494f7a723760fc03858dbfb9c3b44e75e46294402b0c8d60cc30fe
+  assumption_verdicts_summary:
+    consistent: 2
+    spec_absent: 36
+    contradicts: 0
+    unlisted: 0
+  write_set_check: 'git status after run shows only S5 done / findings (sandbox disabled run)'
+  summary: 'S5 verify attempt-5 (scoped): F-001 resolved including timing variants, gates green, 0 blockers. new security assumption A-047 (temp copy handling) needs a review answer'
+created_at: '2026-09-19T22:45:00+09:00'

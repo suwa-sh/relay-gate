@@ -1,0 +1,18 @@
+event_id: 20260922_134510_feedback_request_published_eff24f55_cycle2
+type: feedback_request_published
+uc_id: eff24f55
+stage: S8
+payload:
+  feedback_id: 20260922_130000_impl_feedback_eff24f55
+  path: docs/impl/latest/eff24f55/feedback-requests/20260922_130000_impl_feedback_eff24f55.md
+  draft_path: docs/impl/latest/eff24f55/feedback/draft.md
+  input_sha256: 8adc8bc900ebe6eb57209cee7c4ed2c727b1313c462a6052efd720b2f31cb2fa
+  request_count: 2
+  blocker_count: 0
+  supersedes: null
+  review_approved_event_id: 20260922_134000_review_approved_eff24f55_cycle2
+  review_evidence_event_id: 20260922_133000_s9_review_generated_eff24f55_cycle2
+  publish_started_event_id: 20260922_134500_feedback_request_publish_started_eff24f55_cycle2
+  published_sha256: 8adc8bc900ebe6eb57209cee7c4ed2c727b1313c462a6052efd720b2f31cb2fa
+  published_at: '2026-09-22T13:45:10+09:00'
+created_at: '2026-09-22T13:45:10+09:00'

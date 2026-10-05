@@ -1,0 +1,23 @@
+event_id: 20260919_212000_s7_atdd_completed_eff24f55
+type: stage_completed
+uc_id: eff24f55
+stage: S7
+payload:
+  manifest_sha256: f4528376203939a69f1860d8fba45c818c647fa63d56a44f2e91c8e6a2618c21
+  manifest_projection: v2
+  result: pass
+  atdd_scenarios:
+  - id: SPEC-004-04-4
+    result: pass
+  - id: SPEC-008-05-2
+    result: pass
+    substituted_assertion: 'Then 前半(調整記録は適用構成文書に残る)は relay-gate が読まない文書が対象のため、ジョブマップ側に調整記録の置き場が無いことの確認で代替'
+  executed_count: 2
+  count_matches_atdd_scenarios: true
+  regression:
+    prior_uc_tag: SPEC-001-01-4
+    result: pass
+  shared_step_extended: 'features/atdd/steps/configure-feature-flags.steps.js の「設定を検証する」を検証種別で起動切替(未設定時は従来どおり --feature-flag)'
+  injections: []
+  summary: 'S7 atdd: 2 scenarios selected by exact tag pass, prior UC scenario stays green, CI-shaped 3-tag run passes'
+created_at: '2026-09-19T21:20:00+09:00'

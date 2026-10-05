@@ -1,0 +1,81 @@
+stage: S7
+uc_id: eff24f55
+manifest_sha256: f4528376203939a69f1860d8fba45c818c647fa63d56a44f2e91c8e6a2618c21
+manifest_projection: v2
+result: pass
+branch_slug: define-slot-job-maps
+tiers:
+  - tier-facade
+tier_impl_attempt: 5
+rerun: true
+rerun_reason: "review_rejected 20260919_220000_review_rejected_eff24f55"
+rerun_note: "tier-facade attempt-5(ジョブマップを検証開始時に一時ファイルへ 1 回コピーして検証する方式)で受け入れ基準が通ることの再確認。前回 done は docs/impl/latest/eff24f55/invalidated/20260919_220010_stage_invalidated_eff24f55_review_fix/S7_atdd.done.yaml"
+atdd_confirmed: true
+atdd_scenarios:
+  - SPEC-004-04-4
+  - SPEC-008-05-2
+features:
+  - features/atdd/SPEC-004-04.feature
+  - features/atdd/SPEC-008-05.feature
+feature_changed: false
+steps:
+  - features/atdd/steps/define-slot-job-maps.steps.js
+  - features/atdd/steps/configure-feature-flags.steps.js
+steps_changed: false
+steps_change_summary: "再実行では step 定義を変更していない(attempt-5 の実装変更で step の修正は不要だった)"
+source: "docs/usdm/latest/requirements.yaml の SPEC-004-04 / SPEC-008-05 の acceptance_criteria"
+tier_impl_changed: false
+run:
+  cwd: "."
+  command: "npx cucumber-js --config cucumber.cjs features/atdd --tags \"@atdd_SPEC-004-04-4 or @atdd_SPEC-008-05-2\""
+  selection: "tag exact match only (no name filter, feature not run as a whole)"
+  tag_uniqueness: "@atdd_SPEC-004-04-4 は SPEC-004-04.feature L25、@atdd_SPEC-008-05-2 は SPEC-008-05.feature L13 の各 1 箇所のみ"
+  exit_code: 0
+  summary: "2 scenarios (2 passed), 6 steps (6 passed)"
+  scenarios_expected: 2
+  scenarios_total: 2
+  scenarios_passed: 2
+  scenarios_failed: 0
+  undefined_steps: 0
+  ambiguous_steps: 0
+  count_matches_atdd_scenarios: true
+tag_results:
+  - tag: "@atdd_SPEC-004-04-4"
+    result: pass
+    steps: 3
+  - tag: "@atdd_SPEC-008-05-2"
+    result: pass
+    steps: 3
+preceding_uc_regression:
+  uc_id: fd678b04
+  tag: "@atdd_SPEC-001-01-4"
+  command: "npx cucumber-js --config cucumber.cjs features/atdd --tags @atdd_SPEC-001-01-4"
+  exit_code: 0
+  summary: "1 scenario (1 passed), 3 steps (3 passed)"
+  note: "先行 UC の受け入れ基準は attempt-5 の tier-facade でも回帰なし"
+ci_tag_selection_check:
+  command: "npx cucumber-js --config cucumber.cjs features/atdd --tags \"@atdd_SPEC-001-01-4 or @atdd_SPEC-004-04-4 or @atdd_SPEC-008-05-2\""
+  exit_code: 0
+  summary: "3 scenarios (3 passed), 9 steps (9 passed)"
+  note: "scripts/ci/atdd-tag-expression.js が本 UC 完了後に出力する tags 式と同形。scripts/ は未変更"
+substituted_assertions:
+  - tag: "@atdd_SPEC-008-05-2"
+    step: "Then 調整日時と調整根拠(警告時経過時間)は適用構成文書に残り、ジョブマップの列には持たない"
+    part: "前半(適用構成文書に残る)"
+    reason: "適用構成文書は relay-gate が読まない人手文書で、実体で自動判定できる対象が無い"
+    substituted_by: "ジョブマップ側に調整記録の置き場が無いことの確認。1) 調整後(60 → 90)のジョブマップは契約の 9 列だけで終了コード 0・error 行なし・warn unknown column なしで検証を通過し、resolved 行に hang_detect_limit_minutes=90 が出る。2) 調整日時・調整根拠らしい列(adjusted_at / adjust_reason_elapsed_minutes)を足すと各列に warn unknown column が出る"
+    basis: docs/impl/latest/eff24f55/issues/20260919_161456_cross-uc-scenarios.md
+    not_verified: "適用構成文書そのものの記載(判定対象外)"
+harness:
+  sandbox_root: "Scenario ごとの一時ディレクトリを root とし、仕様の絶対パス(/etc/relay-gate/green-job-map.csv)を root 配下の同じ相対位置に実ファイルで配置。出力照合時に root 接頭辞を除去"
+  process: "facade/bin/validate-config.sh を実プロセスとして起動(--job-map <path> [--verbose])"
+  spec_004_04_4: "7 列(credential_ref / map_version なし)のジョブマップで終了コード 0・rows=2・map_version=- を確認後、同じジョブマップの末尾に両列を足して再検証し、終了コード 0・warn unknown column なし・map_version=map-v3 を確認"
+  reused_from: features/uc/steps/define-slot-job-maps.steps.js
+  external_connections: none
+injections: []
+injections_note: "ハーネス注入なし。前提の新規抽出なし"
+cross_uc_refs:
+  - docs/impl/latest/eff24f55/issues/20260919_161456_cross-uc-scenarios.md
+issues: []
+completed_at: '2026-09-19T20:28:32+09:00'
+completed_by: dist-impl-implement@0.14.1

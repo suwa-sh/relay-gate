@@ -1,0 +1,16 @@
+event_id: 20260919_180030_attempt_opened_eff24f55_a3
+type: attempt_opened
+uc_id: eff24f55
+attempt: 3
+payload:
+  reason: s5_blockers
+  from_attempt: 2
+  rerun_tiers:
+  - tier-facade
+  carried_forward_tiers: []
+  blocker_ids:
+  - F-001
+  findings:
+    verify: docs/impl/latest/eff24f55/stages/attempt-2/S5_verify.tier-facade.findings.yaml
+  note: 'attempt 上限 3 の最終回'
+created_at: '2026-09-19T18:00:30+09:00'

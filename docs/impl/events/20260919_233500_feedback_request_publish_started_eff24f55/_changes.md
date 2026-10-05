@@ -1,0 +1,3 @@
+# 20260919_233500_feedback_request_publish_started_eff24f55
+
+S8 publish 開始: 20260919_213000_impl_feedback_eff24f55 (要求 5 件 / blocker 1 件, sha256 1a7612598a0ed1d3378d7479b1614d6a6aa99ac90eae0fbf55b82e173784a431) を docs/impl/latest/eff24f55/feedback-requests/20260919_213000_impl_feedback_eff24f55.md へ公開予約。approval 20260919_233000_review_approved_eff24f55 / evidence 20260919_231500_s9_review_regenerated_eff24f55

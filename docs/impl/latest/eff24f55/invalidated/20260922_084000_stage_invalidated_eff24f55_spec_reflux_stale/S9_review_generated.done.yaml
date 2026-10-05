@@ -1,0 +1,83 @@
+stage: S9
+uc_id: eff24f55
+manifest_sha256: f4528376203939a69f1860d8fba45c818c647fa63d56a44f2e91c8e6a2618c21
+manifest_projection: v2
+result: pass
+attempt: 5
+regenerated: true
+regenerated_reason: "review_rejected (差し替えの欠陥を修正) 後の再生成。前回の S9 done は docs/impl/latest/eff24f55/invalidated/20260919_220010_stage_invalidated_eff24f55_review_fix/ に退避済み"
+review_html_path: "docs/impl/latest/eff24f55/review/index.html"
+review_html_validator: "validateReviewHtml.js: review HTML contract: pass"
+visual_check: "headless Chrome で 3 図を個別に描画し、connector 重なり・共有 attach point・node 背面通過・label gap を目視確認。1440px と狭幅で冒頭の判断カードを確認"
+feedback_request_count: 5
+open_blocker_count: 0
+decision_summary:
+  approval_questions: 1
+  selection_questions: 2
+  assumption_questions: 2
+  recommended_choices: 5
+  new_questions: 1
+  prefilled_from_review_notes:
+    - "機能"
+    - "相互運用"
+    - "監査"
+    - "前提 A-012"
+  questions:
+    - key: "機能"
+      topic: "修正済みの実装の扱い (回答済み。再質問しない)"
+      recommended: "A: 修正済みの実装を承認し、変更要求を公開して仕様の反映待ちへ (PR に進まない)"
+    - key: "相互運用"
+      topic: "変更要求 5 件の公開 (回答済み。再質問しない)"
+      recommended: "A: このまま公開する"
+    - key: "監査"
+      topic: "回答任意の前提 36 件の一括承認 (回答済み。A-045 / A-046 / A-048 を同じ規則に含める)"
+      recommended: "A: 規則どおり一括承認する"
+    - key: "前提 A-012"
+      topic: "credential_ref の形式不一致を警告のみで受理 (回答済み)"
+      recommended: "A-012:承認"
+    - key: "前提 A-047"
+      topic: "一時コピーの置き場所 (TMPDIR、未設定なら /tmp)・権限 0600・成功失敗とも削除・出力は利用者指定のパス (今回の新規質問。回答必須)"
+      recommended: "A-047:承認"
+      alternatives:
+        - "A-047:却下(仕様変更: 一時コピーの置き場所を relay-gate 専用の作業ディレクトリに固定する)"
+        - "A-047:却下(仕様変更: 一時コピーを作らず、読み込みの前後の変化を検知したら中断する)"
+  answer_template: "機能=A / 相互運用=A / 監査=A / 前提=A-012:承認 / A-047:承認 / 補足="
+feedback_review_evidence:
+  feedback_id: "20260919_213000_impl_feedback_eff24f55"
+  draft_path: "docs/impl/latest/eff24f55/feedback/draft.md"
+  draft_sha256: "1a7612598a0ed1d3378d7479b1614d6a6aa99ac90eae0fbf55b82e173784a431"
+  request_count: 5
+implementation_review_evidence:
+  gate_result: "6/6 pass"
+  open_blocker_count: 0
+  open_major_count: 2
+  assumption_evidence_sha256: "96e57c72a5dba70b4d5f42b7ac031622b09e8372827047cdd543c520afabd2f0"
+open_major_breakdown:
+  - "A-047 (security 前提、今回の範囲、回答待ち)"
+  - "A-012 (security 前提、前回から持ち越し、承認済み)"
+gate_summary:
+  format: "pass"
+  lint: "pass"
+  tdd: "287/287"
+  bdd_tier: "23/23"
+  uc_bdd: "28/28"
+  atdd: "2/2"
+open_blocker_handling: "実装の blocker は 0 件 (差し替えの欠陥は修正と独立検証で解消を確認)。変更要求 CR-eff24f55-001 は仕様の不足として blocker のまま公開する。承認後は変更要求を公開し、仕様の反映待ちで止まる。PR には進まない"
+known_defects_shown:
+  - "一時ファイル作成直後の HUP / INT / TERM で空の一時ファイルが残る (minor、実装起因。変更要求に含めない)"
+  - "一時ディレクトリに書けない環境では正しい CSV も終了コード 6。error 行が commands=tr,sed のため原因が読み取りにくい (変更要求 1・2 に含む。生成時に TMPDIR=/nonexistent/tmp で実行して確認)"
+  - "SIGKILL では写しが残り得る (A-048 に明記)"
+  - "読み込み中に外部の処理が一時コピーを消すと、シェルのエラーに一時パスが出る場合がある (実装者の自己点検の軽微な残り)"
+review_notes_applied:
+  - "機能: 差し替えの欠陥を直し、直ったかだけを確認。以降は予定どおり (確定済み。再質問しない)"
+  - "相互運用=A / 監査=A / A-012=承認 (確定済み。回答テンプレートに事前記入)"
+  - "修正で増えた回答任意の前提 A-045 / A-046 / A-048 は監査=A の規則に含め、新しい選択肢にしない"
+notes:
+  - "manifest_sha256 は受領値を再計算せず転記した"
+  - "assumption_evidence_sha256 は validateAssumptions.js evidence tier-facade:{assumptions_sha256}:{assumption_verdicts_sha256} で算出した (attempt-5 S5 done の値)"
+  - "draft_sha256 は S8 done の値と一致することを shasum で確認した"
+  - "open_major_count は attempt-5 findings の summary.major (2) に合わせた"
+  - "HTML の SHA と capture の SHA は記録しない。capture は無い"
+  - "git コマンドは実行していない"
+completed_at: "2026-09-19T23:10:00+09:00"
+completed_by: "dist-impl-review@0.14.1"

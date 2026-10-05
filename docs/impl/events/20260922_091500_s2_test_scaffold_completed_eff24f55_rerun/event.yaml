@@ -1,0 +1,19 @@
+event_id: 20260922_091500_s2_test_scaffold_completed_eff24f55_rerun
+type: stage_completed
+uc_id: eff24f55
+stage: S2
+payload:
+  manifest_sha256: fad6601f15e085c02569d6bbab0db9959c85319a72bee2dc49b95b77b73a9f41
+  manifest_projection: v2
+  mode: scoped_rerun
+  tiers: [tier-facade]
+  red_baseline:
+    uc_bdd: '35 scenarios: 7 failed (new skeleton) / 28 passed'
+    tier_bdd: '38 scenarios: 15 failed (new skeleton) / 23 passed'
+    tdd: '311 tests: 51 not ok (20 added + 31 updated) / 260 ok'
+    format_lint: pass
+  notes:
+  - 'features/uc feature regenerated from spec.md (16 -> 23 scenarios); atdd steps untouched (SPEC-008-05-2 undefined until S7)'
+  - 'facade/test/repository/job_map_repo.bats untouched; repository state names need redesign in S4 (per-cause rejection)'
+  rerun_after: 20260922_084000_stage_invalidated_eff24f55_spec_reflux_stale
+created_at: '2026-09-22T09:15:00+09:00'

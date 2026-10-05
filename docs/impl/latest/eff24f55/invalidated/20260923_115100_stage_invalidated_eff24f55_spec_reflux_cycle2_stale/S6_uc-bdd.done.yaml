@@ -1,0 +1,72 @@
+stage: S6
+uc_id: eff24f55
+manifest_sha256: f8cf17f93da5c6e63c9b3ce97c7fbc076f64c6174bd02d27757adf7c8b54ecb1
+manifest_projection: v2
+result: pass
+branch_slug: define-slot-job-maps
+tiers:
+  - tier-facade
+tier_impl_attempt: 6
+rerun: true
+rerun_reason: "stale after spec reflux (spec event 20260921_100000_feedback_impl_feedback_eff24f55; invalidated event 20260922_084000_stage_invalidated_eff24f55_spec_reflux_stale)"
+previous_done: "docs/impl/latest/eff24f55/invalidated/20260922_084000_stage_invalidated_eff24f55_spec_reflux_stale/S6_uc-bdd.done.yaml"
+rerun_note: "S2 scoped 再実行が spec.md から再転写した 23 Scenario(既存 16 + 追加 7)に対し、tier-facade attempt-6(S4 4 ゲート pass / S5 blocker 0)で統合テストが通ることを確認した"
+feature: features/uc/define-slot-job-maps.feature
+feature_changed: false
+steps: features/uc/steps/define-slot-job-maps.steps.js
+steps_changed: true
+steps_change_summary: "S2 が追加した未実装 skeleton step 23 件(Given 8 / When 3 / Then 12。And は Then 登録)を実装し、skeleton ブロックを撤去。既存 16 Scenario の step 定義は 1 件だけ変更(When「validate-config.sh --job-map /etc/relay-gate/green-job-map.csv --verbose を実行する」を async 化し、差し替え計画があるときだけ差し替えつき実行に切り替える。振る舞いは他 Scenario で不変)。ハーネス helper を追加: writeMapBytes(実バイト書き込み)/ useScenarioTmpDir + spawnEnv(Scenario 専用 TMPDIR)/ snapshotFinalNameExists + runJobMapWithSwap(最終名の出現を監視して rename)"
+source: "docs/specs/latest/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/spec.md#E2E完了条件(BDD)"
+tier_impl_changed: false
+run:
+  cwd: "."
+  command: "npx cucumber-js --config cucumber.cjs features/uc"
+  exit_code: 0
+  summary: "35 scenarios (35 passed), 133 steps (133 passed)"
+  scenarios_total: 35
+  scenarios_passed: 35
+  scenarios_failed: 0
+  undefined_steps: 0
+  ambiguous_steps: 0
+target_feature_run:
+  command: "npx cucumber-js --config cucumber.cjs features/uc/define-slot-job-maps.feature"
+  exit_code: 0
+  summary: "23 scenarios (23 passed), 84 steps (84 passed)"
+  scenarios_total: 23
+  scenarios_passed: 23
+  scenarios_failed: 0
+  scenarios_added_since_previous: 7
+baseline_before_implementation:
+  command: "npx cucumber-js --config cucumber.cjs features/uc"
+  summary: "35 scenarios (7 failed, 28 passed), 133 steps (7 failed, 21 skipped, 105 passed)"
+  note: "fail 7 件は全件 S2 skeleton の not implemented Error(追加 7 Scenario)。設定ミス・undefined は 0"
+preceding_uc_run:
+  feature: features/uc/configure-feature-flags.feature
+  scenarios_total: 12
+  scenarios_passed: 12
+  note: "全体実行 35 件のうち先行 UC(fd678b04)の 12 件。step 定義は未変更で全件 pass"
+flakiness_check:
+  scenario: "検証中に差し替わったファイルは複製した時点の内容だけで判定される"
+  command: "npx cucumber-js --config cucumber.cjs features/uc/define-slot-job-maps.feature --name '検証中に差し替わったファイル'"
+  repeats: 5
+  passed: 5
+  note: "タイミング依存(最終名の出現を監視して rename)の Scenario のみ繰り返し実行で安定性を確認。--name はこの確認専用で、done の判定は全体実行の結果"
+harness:
+  sandbox_root: "Scenario ごとの一時ディレクトリを root とし、feature の絶対パス(/etc/relay-gate/green-job-map.csv, /etc/relay-gate/blue-job-map.csv)を root 配下の同じ相対位置に実ファイルで配置。出力照合時に root 接頭辞を除去"
+  process: "facade/bin/validate-config.sh を実プロセスとして起動(--job-map <path> [--verbose])。パス省略の When は Given が用意した green-job-map.csv を渡す"
+  raw_bytes: "NUL / Shift_JIS(不正 UTF-8)/ BOM / CRLF / TAB / ESC / 末尾改行なしは Buffer で実バイトを書く"
+  scenario_tmpdir: "差し替え Scenario と複製失敗 Scenario だけ TMPDIR=<root>/tmp を渡す(複製失敗は存在しないディレクトリを指す)。他 Scenario は TMPDIR を触らない"
+  swap: "TMPDIR に接頭辞 relay-gate- で末尾 .part の付かない最終名が現れたことを setImmediate ポーリングで検知し、NUL を含む新ファイルを fs.renameSync(mv 相当)で同じパスへ置き換える。置き換えが実際に起きたこと(swapDone・元ファイルの消失)も Then で確認"
+  malformed_five: "(a)〜(e) を /etc/relay-gate/green-job-map-{a..e}.csv に同時配置して個別に検証し、error 行を「文言 + path: <当該パス>」の完全一致で照合。(d) は hint 行も照合"
+  control_chars: "可視表記(バックスラッシュ t / バックスラッシュ u001b)の行を完全一致で照合し、生の ESC・TAB を含む行が無いこと、全行が error/warn/hint/info の接頭辞で始まること(制御文字で行が割れていない)、2 事実が各 1 行であることを照合"
+  execution_spec_fixture: "Scenario「hang_detect_limit_minutes の変更は次回以降の run に反映される」で <root>/var/relay-gate/runs/<run_id>/execution-spec.json に最小形 fixture を配置し、前後でバイト一致と run ディレクトリ構成の不変を照合"
+  both_maps_scenario: "Scenario「導入時は全ジョブ 60 分」は blue(host / user 列なし、全行 0)と green(9 列、全行 60)を個別に検証し、両方の終了コード 0・error 行なし・rows=2 を照合"
+  external_connections: none
+injections: []
+injections_note: "ハーネス注入なし。UC 横断 Scenario 2 件は fixture 配置と前提の記録だけで成立(根拠: docs/impl/latest/eff24f55/issues/20260919_161456_cross-uc-scenarios.md)。追加 7 Scenario の Then は全件本 UC の責務に閉じる。前提の新規抽出なし"
+cross_uc_refs:
+  - docs/impl/latest/eff24f55/issues/20260919_161456_cross-uc-scenarios.md
+issues: []
+issues_note: "新規起票なし。追加 7 Scenario は tier-facade attempt-6 の実装で仕様どおりに通過し、仕様と実装の食い違いは見つからなかった"
+completed_at: '2026-09-22T19:26:00+09:00'
+completed_by: dist-impl-implement@0.14.1

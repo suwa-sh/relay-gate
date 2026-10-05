@@ -1,0 +1,78 @@
+stage: S7
+uc_id: eff24f55
+manifest_sha256: 85d1ebda8af9b786c1abbfc4e09198f4716663209279349d7e7ad9c947902002
+manifest_projection: v2
+result: pass
+branch_slug: define-slot-job-maps
+tiers:
+  - tier-facade
+tier_impl_attempt: 6
+rerun: true
+rerun_reason: "ci_linux_failure_post_delivery (invalidated event 20260928_100000_stage_invalidated_eff24f55_ci_linux_fix)。承認後の Linux CI で facade の単体テストが落ちたため facade 実装を修正(commit 90fb05c)。tier-facade attempt-6 の S4 再実行後に受け入れテストを再実行した"
+previous_done: "docs/impl/latest/eff24f55/invalidated/20260928_100000_stage_invalidated_eff24f55_ci_linux_fix/stages/S7_atdd.done.yaml"
+rerun_note: "features/atdd と step 定義は未変更。既存 step のまま tier-facade attempt-6(Linux CI 修正後)で受け入れ基準 2 件が通ることを再確認した"
+atdd_confirmed: true
+atdd_scenarios:
+  - SPEC-004-04-4
+  - SPEC-008-05-2
+features:
+  - features/atdd/SPEC-004-04.feature
+  - features/atdd/SPEC-008-05.feature
+feature_changed: false
+steps:
+  - features/atdd/steps/define-slot-job-maps.steps.js
+  - features/atdd/steps/configure-feature-flags.steps.js
+steps_changed: false
+steps_change_summary: "変更なし。git diff --stat 955db41 -- features/ cucumber.cjs が空、git status --short features/ がクリーンであることを確認"
+source: "docs/usdm/latest/requirements.yaml の SPEC-004-04 / SPEC-008-05 の acceptance_criteria"
+tier_impl_changed: true
+tier_impl_change_ref: "commit 90fb05c impl(eff24f55): fix Linux CI failures(本ステージでは変更していない。S4 再実行の成果物を参照のみ)"
+run:
+  cwd: "."
+  command: "npx cucumber-js --config cucumber.cjs features/atdd --tags \"@atdd_SPEC-004-04-4 or @atdd_SPEC-008-05-2\""
+  selection: "tag exact match only (no name filter, feature not run as a whole)"
+  tag_uniqueness: "@atdd_SPEC-004-04-4 は SPEC-004-04.feature L25、@atdd_SPEC-008-05-2 は SPEC-008-05.feature L13 の各 1 箇所のみ(grep で確認)"
+  exit_code: 0
+  summary: "2 scenarios (2 passed), 6 steps (6 passed)"
+  scenarios_expected: 2
+  scenarios_total: 2
+  scenarios_passed: 2
+  scenarios_failed: 0
+  undefined_steps: 0
+  ambiguous_steps: 0
+  count_matches_atdd_scenarios: true
+tag_results:
+  - tag: "@atdd_SPEC-004-04-4"
+    command: "npx cucumber-js --config cucumber.cjs features/atdd --tags @atdd_SPEC-004-04-4"
+    exit_code: 0
+    result: pass
+    summary: "1 scenario (1 passed), 3 steps (3 passed)"
+  - tag: "@atdd_SPEC-008-05-2"
+    command: "npx cucumber-js --config cucumber.cjs features/atdd --tags @atdd_SPEC-008-05-2"
+    exit_code: 0
+    result: pass
+    summary: "1 scenario (1 passed), 3 steps (3 passed)"
+ci_tag_selection_check:
+  command: "npx cucumber-js --config cucumber.cjs features/atdd --tags \"@atdd_SPEC-001-01-4 or @atdd_SPEC-004-04-4 or @atdd_SPEC-008-05-2\""
+  exit_code: 0
+  summary: "3 scenarios (3 passed), 9 steps (9 passed)"
+  note: "先行 UC(fd678b04)の @atdd_SPEC-001-01-4 を含めた CI 同形のタグ式でも回帰なし"
+linux_equivalent_check:
+  purpose: "Linux CI で落ちた facade 単体テストが修正後に Linux 相当環境で pass することの確認(オーケストレータ指示。S6 と同一の実行結果を参照)"
+  image: "relay-gate-ci:ubuntu24 (Ubuntu 24.04。node は無いため cucumber は macOS で実行)"
+  command: "docker run --rm -e LANG=C.UTF-8 -v \"$PWD:/work\" -w /work/facade relay-gate-ci:ubuntu24 bats -r test"
+  exit_code: 0
+  summary: "1..339, ok 339, not ok 0"
+harness:
+  sandbox_root: "Scenario ごとの一時ディレクトリを root とし、仕様の絶対パス(/etc/relay-gate/green-job-map.csv)を root 配下の同じ相対位置に実ファイルで配置。出力照合時に root 接頭辞を除去"
+  process: "facade/bin/validate-config.sh を実プロセスとして起動(--job-map <path> [--verbose])"
+  reused_from: features/uc/steps/define-slot-job-maps.steps.js
+  external_connections: none
+injections: []
+injections_note: "ハーネス注入なし。前提の新規抽出なし"
+cross_uc_refs:
+  - docs/impl/latest/eff24f55/issues/20260919_161456_cross-uc-scenarios.md
+issues: []
+issues_note: "新規起票なし。受け入れ基準 2 件は Linux CI 修正後の tier-facade attempt-6 の実装で通過し、仕様と実装の食い違いは見つからなかった"
+completed_at: '2026-10-06T12:05:00+09:00'
+completed_by: dist-impl-implement@0.14.1

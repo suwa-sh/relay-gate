@@ -1,0 +1,150 @@
+stage: S2
+uc_id: eff24f55
+manifest_sha256: fad6601f15e085c02569d6bbab0db9959c85319a72bee2dc49b95b77b73a9f41
+manifest_projection: v2
+result: pass
+scaffold_mode: scoped_rerun
+rerun_reason: "stale after spec reflux (spec event 20260921_100000_feedback_impl_feedback_eff24f55; invalidated event 20260922_084000_stage_invalidated_eff24f55_spec_reflux_stale). attempt 5 の実装を残したまま、指定 tier の scaffold だけを更新した"
+branch_slug: define-slot-job-maps
+attempt: 5
+scaffold_scope:
+  tiers:
+    - tier-facade
+  uc_feature: regenerated
+  atdd: untouched
+red_baseline: not_applicable
+red_baseline_note: "scoped 再実行のため red baseline は done 条件にしない(既存実装が残る)。再生成した feature / テストは全件 parse 可能で実行可能。新規・変更分の fail は全件『未実装』(S2 skeleton の not implemented Error、または新仕様の文言・終了コード・性能に対する assertion failure)。パースエラー・設定ミス・undefined step・ambiguous step は UC BDD / tier BDD / TDD で 0 件"
+transcription_check:
+  method: "spec.md / tier-facade.md の gherkin ブロックを正規表現で抽出し、そのまま feature へ書き出すスクリプトで再生成(手入力なし)。先頭に出典コメント 2 行を付与"
+  uc_feature_verbatim: true
+  tier_feature_verbatim: true
+generated:
+  uc_bdd:
+    feature: features/uc/define-slot-job-maps.feature
+    steps: features/uc/steps/define-slot-job-maps.steps.js
+    source: "docs/specs/latest/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/spec.md#E2E完了条件(BDD)"
+    scenarios: 23
+    scenarios_before: 16
+    scenarios_added: 7
+    scenarios_added_names:
+      - "方針資料の Windows 形式パスと非 ASCII の値を含むジョブマップを受理する(SPEC-004-04)"
+      - "方針資料の相対パスのジョブマップを受理する(SPEC-004-04)"
+      - "データ行 0 件のジョブマップは受理される"
+      - "検証中に差し替わったファイルは複製した時点の内容だけで判定される"
+      - "形式から外れた入力は原因ごとの文言で拒否される"
+      - "検証器の内部障害は検証結果にならない"
+      - "出力する値の制御文字は可視表記になる(SPEC-004-04)"
+    existing_steps_kept: true
+    skeleton_steps_added: 23
+    skeleton_note: "新 Scenario の step 23 件を feature のリテラル完全一致で追加。全件 'not implemented (S2 skeleton, UC BDD)' を throw する。既存 16 Scenario の実装済み step(S6 成果)は変更していない"
+    cross_uc_scenarios: 2
+    cross_uc_note: "前回と同じ 2 件(SPEC-008-05 の execution-spec.json 前提 / 導入時 60 分の並行稼働モード前提)。追加 7 Scenario の Then は全件本 UC(validate-config.sh --job-map)の責務に閉じ、新たな UC 横断 Scenario は無い。ハーネス注入は不要"
+  tier_bdd:
+    - tier: tier-facade
+      feature: facade/features/define-slot-job-maps.feature
+      steps: facade/features/steps/define-slot-job-maps.steps.js
+      source: "docs/specs/latest/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/tier-facade.md#ティア完了条件(BDD)"
+      scenarios: 29
+      scenarios_before: 14
+      scenarios_added: 15
+      existing_steps_kept: true
+      skeleton_steps_added: 39
+      skeleton_note: "新 Scenario の step 39 件を追加(全件 'not implemented (S2 skeleton, tier BDD)' を throw)。既存 14 Scenario の step(S4 成果)は変更していない"
+  tdd:
+    - tier: tier-facade
+      files:
+        - facade/test/presentation/validate_config_job_map.bats
+        - facade/test/usecase/validate_job_map.bats
+        - facade/test/domain/job_map.bats
+      added_tests: 24
+      added_tests_by_file: "domain 4 / presentation 13 / usecase 7"
+      updated_tests: 32
+      updated_tests_by_file: "domain 1 / presentation 12 / usecase 19(うち名前も変えたもの 16)"
+      target: "validate-config.sh --job-map(CLI 実プロセス)/ validate_job_map_query(usecase)/ validate_job_map_header・validate_job_map_row(domain)"
+      added_focus:
+        - "NUL / 不正 UTF-8 / BOM / CR の原因ごとの error 行と終了コード 2(コメント行・ヘッダー行・複数行・混在)"
+        - "ヘッダー列名の重複 duplicate column(domain / usecase / CLI)"
+        - "work_dir / script の絶対パス検査の撤回(G:\\scripts、./beam-batches、督促AP の方針資料例を受理し表示を変えない)"
+        - "単一スナップショット(relay-gate- 接頭辞・.part の付かない最終名・0600・終了時削除・HUP 129 / INT 130。既存実装で GREEN)"
+        - "複製失敗 config snapshot failed + hint と補助コマンド失敗 internal command failed commands=<失敗したコマンドだけ> path: の終了コード 6(stdout なし・error 行 1 つだけ)"
+        - "制御文字の可視表記(列名の ESC → \\u001b、値のタブ → \\t。既存実装で GREEN)"
+        - "NFR 共通前提(5,000 行・全列に値・job_id 一意・map_version 全行相違)で 10 秒以内(--verbose 有無)"
+      updated_note: "旧仕様の期待値(NUL / 不正 UTF-8 → csv quote is invalid、CRLF / BOM → header mismatch や値の検証、commands=tr,sed の一括表記、path: の無い internal command failed、複製失敗を internal command failed とする、work_dir / script の is not absolute)を新仕様の文言へ書き換えた。制御文字混在テストの CR は形式違反になるため VT(0x0b)に置き換えた"
+      untouched_note: "facade/test/repository/job_map_repo.bats は repository 内部の状態名(quote_invalid / JOB_MAP_REPO_STATUS_COMMAND_FAILED)を検証する S4 設計物で、外部契約の文言を含まないため S2 では触っていない。NUL / 不正 UTF-8 を quote_invalid として記録する現行設計は新仕様(原因ごとの区別)と両立しないため、S4 再実行で repository の設計変更に合わせて書き換えが必要"
+  atdd:
+    features:
+      - features/atdd/SPEC-004-04.feature
+      - features/atdd/SPEC-008-05.feature
+    feature_body_changed: false
+    steps: features/atdd/steps/define-slot-job-maps.steps.js
+    steps_changed: false
+    scenarios:
+      - SPEC-004-04-4
+      - SPEC-008-05-2
+    handoff: "SPEC-008-05-2 は S0 再実行(P7)で Scenario 文言が変わった(『slot ジョブマップが定義されている / ジョブマップの列を確認する / hang_detect_limit_minutes の調整記録(調整日時・調整根拠)を保持する列は存在しない』)。既存の step 定義は旧文言のため 3 step が undefined。オーケストレータ指示により S2 では atdd step を触っていない。S7 再実行で step を新文言へ追従させる必要がある"
+test_runs:
+  - stage: uc_bdd
+    cwd: "."
+    command: "npx cucumber-js --config cucumber.cjs features/uc"
+    exit_code: 1
+    summary: "35 scenarios (7 failed, 28 passed), 133 steps (7 failed, 21 skipped, 105 passed)"
+    fail_reason: not_implemented
+    failed_scope: "define-slot-job-maps.feature の追加 7 Scenario 全件(S2 skeleton の not implemented Error)。既存 16 Scenario は全件 pass。configure-feature-flags.feature の 12 Scenario も全件 pass"
+    new_failed: 7
+    existing_green: 16
+    undefined_steps: 0
+    ambiguous_steps: 0
+  - stage: tier_bdd
+    tier: tier-facade
+    cwd: facade
+    command: "npx cucumber-js --config ../cucumber.cjs features"
+    exit_code: 1
+    summary: "38 scenarios (15 failed, 23 passed), 129 steps (15 failed, 40 skipped, 74 passed)"
+    fail_reason: not_implemented
+    failed_scope: "define-slot-job-maps.feature の追加 15 Scenario 全件(S2 skeleton の not implemented Error)。既存 14 Scenario は全件 pass。configure-feature-flags.feature の 9 Scenario も全件 pass"
+    new_failed: 15
+    existing_green: 14
+    undefined_steps: 0
+    ambiguous_steps: 0
+  - stage: tdd
+    tier: tier-facade
+    cwd: facade
+    command: "bats -r test"
+    exit_code: 1
+    summary: "311 tests, 260 ok, 51 not ok"
+    fail_reason: not_implemented
+    failed_scope: "51 件すべて本 UC のジョブマップ検証(domain 5 / presentation 24 / usecase 22)。fail は全件 assertion failure(新仕様の文言・終了コード・受理判定・10 秒目標に対する不一致)。先行 UC(fd678b04)のテストと repository 層のテストは全件 pass"
+    new_failed_added: 20
+    new_failed_updated: 31
+    new_green_added: 4
+    new_green_updated: 1
+    existing_green_note: "追加 24 件のうち 4 件(制御文字の可視表記 / 一時ファイルの名前と 0600 / HUP 129 / INT 130)、更新 32 件のうち 1 件(複数違反の全件報告。work_dir 空)は既存実装で pass。それ以外の 260 件の pass は据え置いた既存テスト(先行 UC・repository 層・本 UC の変更のないテスト)"
+    nfr_note: "5,000 行最悪条件は現状 10 秒超で fail(nfr-grade B.1.1.2 の実測 36 秒と一致。版の集計を行数に比例する処理へ改める S4 の改善対象)"
+  - stage: atdd
+    cwd: "."
+    command: "npx cucumber-js --config cucumber.cjs features/atdd --tags '@atdd_SPEC-004-04-4 or @atdd_SPEC-008-05-2'"
+    exit_code: 1
+    summary: "2 scenarios (1 undefined, 1 passed), 6 steps (3 undefined, 3 passed)"
+    fail_reason: undefined_after_feature_regeneration
+    failed_scope: "SPEC-008-05-2 の 3 step が undefined(S0 P7 再生成で文言変更。step は本 S2 の write-set 外)。SPEC-004-04-4 は pass"
+  - stage: atdd_regression
+    cwd: "."
+    command: "npx cucumber-js --config cucumber.cjs features/atdd --tags @atdd_SPEC-001-01-4"
+    exit_code: 0
+    summary: "1 scenario (1 passed), 3 steps (3 passed)"
+    fail_reason: none
+format_check:
+  tier: tier-facade
+  command: "shfmt -d ."
+  exit_code: 0
+lint:
+  tier: tier-facade
+  command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+  exit_code: 0
+dom_snapshot_tests: not_applicable
+dom_snapshot_note: "has_design_system: false。frontend tier が無いため DOM 一致テスト・共通 helper は生成しない"
+issues:
+  - docs/impl/latest/eff24f55/issues/20260919_161456_cross-uc-scenarios.md
+issues_note: "新規起票なし。UC 横断 Scenario は前回起票の 2 件から増減なし。仕様と実装の矛盾・blocker は無し(新仕様に対する既存実装の不一致は S4 再実行の対象であり issues ではない)"
+completed_at: '2026-09-22T09:30:00+09:00'
+completed_by: dist-impl-implement@0.14.1

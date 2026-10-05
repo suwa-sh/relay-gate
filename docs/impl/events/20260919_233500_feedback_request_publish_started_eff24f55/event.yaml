@@ -1,0 +1,15 @@
+event_id: 20260919_233500_feedback_request_publish_started_eff24f55
+type: feedback_request_publish_started
+uc_id: eff24f55
+stage: S8
+payload:
+  feedback_id: 20260919_213000_impl_feedback_eff24f55
+  path: docs/impl/latest/eff24f55/feedback-requests/20260919_213000_impl_feedback_eff24f55.md
+  draft_path: docs/impl/latest/eff24f55/feedback/draft.md
+  input_sha256: 1a7612598a0ed1d3378d7479b1614d6a6aa99ac90eae0fbf55b82e173784a431
+  request_count: 5
+  blocker_count: 1
+  supersedes: null
+  review_approved_event_id: 20260919_233000_review_approved_eff24f55
+  review_evidence_event_id: 20260919_231500_s9_review_regenerated_eff24f55
+created_at: '2026-09-19T23:35:00+09:00'

@@ -1,0 +1,204 @@
+stage: S8
+uc_id: eff24f55
+manifest_sha256: f4528376203939a69f1860d8fba45c818c647fa63d56a44f2e91c8e6a2618c21
+manifest_projection: v2
+result: pass
+mode: publish
+attempt: 5
+previous_mode: refresh
+refreshed_at: "2026-09-19T23:00:00+09:00"
+refresh_trigger:
+  review_rejected_event: "docs/impl/events/20260919_220000_review_rejected_eff24f55/event.yaml"
+  review_notes: "docs/impl/latest/eff24f55/review/review-notes.md"
+  previous_done: "docs/impl/latest/eff24f55/invalidated/20260919_220010_stage_invalidated_eff24f55_review_fix/S8_feedback.done.yaml"
+  previous_draft_sha256: 784e06d7d194f4642f5cf00a46de1abc5704f63c67d287b2528eaf5599b134b6
+feedback_request:
+  feedback_id: 20260919_213000_impl_feedback_eff24f55
+  feedback_id_policy: "refresh の規則に従い、feedback ID、created_at、既存 CR ID を維持した (draft は未公開のため訂正版ではない。supersedes なし)"
+  draft_path: null
+  draft_note: "draft は atomic rename で公開先へ移動済み (feedback/draft.md は存在しない)"
+  draft_sha256: 1a7612598a0ed1d3378d7479b1614d6a6aa99ac90eae0fbf55b82e173784a431
+  draft_verify: "feedbackRequest.js verify --feedback: PASS (5 requests)"
+  published_path: "docs/impl/latest/eff24f55/feedback-requests/20260919_213000_impl_feedback_eff24f55.md"
+  published_sha256: 1a7612598a0ed1d3378d7479b1614d6a6aa99ac90eae0fbf55b82e173784a431
+  published_at: "2026-09-19T23:35:10+09:00"
+  supersedes: null
+  bytes: "UTF-8, BOM なし, LF, NFC, front matter byte 0, 21569 bytes (publish 直前に再確認)"
+  request_count: 5
+  blocker_count: 1
+  severity_counts:
+    blocker: 1
+    spec-gap: 3
+    improvement: 1
+  requests:
+    - id: CR-eff24f55-001
+      severity: blocker
+      title: "設定ファイル検証が守る範囲(異常な入力・異常な環境)が未定義"
+      sources:
+        - "attempt-4 F-001 (blocker、attempt-5 で解消)"
+        - "attempt-5 A-045 / A-047 / A-048 (F-103 / F-105 / F-106)"
+        - "issues/20260919_210000_file-replaced-between-scan-and-parse.md"
+        - "issues/20260919_195500_malformed-input-policy-undefined.md"
+    - id: CR-eff24f55-002
+      severity: spec-gap
+      title: "異常な入力の拒否と検証器の内部障害に、専用の error 行が無い"
+      sources:
+        - "issues/20260919_183305_control-char-notation-and-internal-error-undefined.md"
+        - "A-026 / A-031 / A-038 / A-043 / A-046"
+    - id: CR-eff24f55-003
+      severity: spec-gap
+      title: "任意入力を出力するときの制御文字の表記が未定義"
+      sources:
+        - "issues/20260919_183305_control-char-notation-and-internal-error-undefined.md"
+        - "A-040 / A-041 / A-042"
+    - id: CR-eff24f55-004
+      severity: spec-gap
+      title: "実装の実行前提(bash の版、ジョブマップの想定最大行数)が実装向けの仕様に無い"
+      sources:
+        - "docs/impl/events/20260919_173500_s4_tier_impl_completed_eff24f55_tier_facade_a2/_changes.md"
+        - "attempt-4 F-002 (minor)"
+        - "A-024"
+    - id: CR-eff24f55-005
+      severity: improvement
+      title: "1 つの受け入れ基準に、自動判定できる事実と運用文書の記載が混在している"
+      sources:
+        - "issues/20260919_161456_cross-uc-scenarios.md"
+updated:
+  - id: CR-eff24f55-001
+    change: "F-001 を未解決の欠陥から実装で対応済みへ書き換えた。実装済みの判断 (単一スナップショット、差し替えを検知しない、一時ファイルの置き場所 TMPDIR / 権限 0600 / 削除時期、シグナル受信時の削除、複製失敗時の終了コード 6、元のパスの出力) を観測した事実に表で追加した。修正後の再現手順の再実行結果と、検証範囲を差し替えの確認に絞ったことを追記した。変更してほしいことの 3 を「実装済みの単一スナップショットを確定または変更し、一時ファイルの置き場所・権限・削除時期・書き込めない環境の扱いを定める」へ具体化し、4 に複製の失敗を含めるかを追記した。完了条件に一時ファイルの扱いを 1 件追加した。方針資料に一時ファイルの記載が無いこと (新規の決定が必要) を追記した"
+  - id: CR-eff24f55-002
+    change: "観測した事実の表に、入力の複製の失敗 (commands=tr,sed の行、終了コード 6) を追加した。commands= に実際に失敗した処理名が出ないこと、内部障害で stdout を出さないことを追記した。変更してほしいことの 3 に複製の失敗の扱いを、完了条件に複製の失敗の error 行と終了コードを追記した"
+added: []
+removed: []
+unchanged:
+  - CR-eff24f55-003
+  - CR-eff24f55-004
+  - CR-eff24f55-005
+severity_review:
+  - id: CR-eff24f55-001
+    before: blocker
+    after: blocker
+    decision: "blocker を維持する"
+    reasons:
+      - "blocker の根拠は、実装の未解決の欠陥だけではない。守備範囲が仕様に無いため、異常系の独立検証が 4 回続けて収束しなかったことが主な根拠である。この根拠は F-001 の解消後も残る"
+      - "attempt 5 の独立検証は、利用者の指示で F-001 の解消確認と差分の退行だけに絞った。新しい異常系の探索はしていない。blocker 0 件は、異常系の検証の完了を意味しない"
+      - "attempt 5 の修正そのもの (単一スナップショット、一時ファイルの置き場所・権限・削除) が仕様に根拠の無い判断で、A-047 は security の major として人の確認事項になっている"
+      - "同じ論点は、設定ファイルを読む後続の機能 (feature flag、クロスチェックのジョブマップ、対象カタログ) にもある。守備範囲が決まるまで、後続の機能も同じく検証が収束しない"
+      - "review notes の決定事項は、F-001 が直っても守備範囲の確定を blocker として公開し、仕様の反映待ちに入ると記録している。重大度を変えると承認対象の blocker 件数が変わり、再確認が必要になる"
+  - id: CR-eff24f55-002
+    before: spec-gap
+    after: spec-gap
+    decision: "維持 (根拠の追記だけで、意味の変更は無い)"
+review_constraints_applied:
+  - "新しい要求と新しい選択肢は追加していない (review notes のユーザー回答「以降は予定通りに」)"
+  - "A-012 は承認済み。spec_change の却下は 0 件のため、要求を追加していない"
+  - "attempt 5 の F-101 (minor、一時ファイル作成直後のシグナルで空ファイルが残る) は実装起因のため要求にしていない"
+  - "attempt 5 の前提 A-045〜A-048 は、既存の CR-001 / 002 の根拠へ追記した。A-028 の文面変更は CR-001 の事実 (点検と解析が複製だけを読む) に反映した"
+open_blocker_handling: "未解決の実装 blocker は 0 件 (attempt-4 F-001 は attempt-5 で解消。docs/impl/latest/eff24f55/stages/attempt-5/S5_verify.tier-facade.findings.yaml#f001_resolution)。CR-eff24f55-001 は仕様の不足として blocker のまま公開する"
+publish:
+  review_evidence_event_id: 20260919_231500_s9_review_regenerated_eff24f55
+  review_approved_event_id: 20260919_233000_review_approved_eff24f55
+  publish_started_event_id: 20260919_233500_feedback_request_publish_started_eff24f55
+  published_event_id: 20260919_233510_feedback_request_published_eff24f55
+  event_order_check: "review evidence (231500) < approval (233000) < publish started (233500) < published (233510)"
+  approval_count_for_current_evidence: 1
+  prior_publish_events_for_feedback_id: 0
+  evidence_match:
+    feedback_review_evidence: "S9 done / S9 event / approval で feedback_id・draft_path・draft_sha256・request_count が exact 一致 (期待値 20260919_213000_impl_feedback_eff24f55 / 1a761259… / 5 とも一致)"
+    implementation_review_evidence: "S9 done / S9 event / approval で gate_result 6/6 pass・open_blocker_count 0・open_major_count 2・assumption_evidence_sha256 96e57c72… が exact 一致 (canonical 4 field)"
+    blocker_count: "draft の severity blocker 1 件 = S8 done の blocker_count 1 (CR-eff24f55-001)"
+  assumption_completeness:
+    record_rerun: "validateAssumptions.js record tier-facade attempt 5: ok, count 38, sha256 d3ac508e… (S4 done / S5 done と一致)"
+    verdicts_rerun: "validateAssumptions.js verdicts tier-facade attempt 5: ok, verdicts_sha256 3af79184… (S5 done と一致), requires_answer 2"
+    evidence_rerun: "validateAssumptions.js evidence: 96e57c72… (S9 evidence / approval と一致)"
+    decisions_1to1: "assumption_decisions 38 件 = S5 assumption_verdicts 38 件 (未知 id・重複・欠落なし)"
+    required_answered: "A-012 / A-047 (security, spec_absent) は confirmed"
+    rejected: "0 件"
+  path_checks:
+    parents: "docs / docs/impl / docs/impl/latest / docs/impl/latest/eff24f55 / feedback / feedback-requests を lstat + realpath で確認。symlink なし、UC root 内"
+    destination_parent: "feedback-requests/ は未作成だったため UC root 直下に作成し、作成後に lstat + realpath を確認"
+    draft: "regular file, non-symlink (dev 16777230 / ino 434822998 / size 21569)"
+    destination_before: "未作成"
+    same_filesystem: "draft 親と公開先親は同一 device 16777230"
+  rename:
+    method: "os.rename (atomic, same filesystem)"
+    precheck: "rename 直前に lstat と no-follow open を再実行し device/inode/size と sha256 が検証時と一致"
+    postcheck: "公開先は regular/non-symlink、同一 device/inode/size。no-follow open で sha256 1a761259… を再確認。draft は消滅"
+    verify_after: "feedbackRequest.js verify (distillery 1.15.1 installPath) --feedback: PASS (5 requests)"
+  bytes_unchanged: true
+as_built_summary: "docs/impl/latest/eff24f55/feedback/as-built-summary.md"
+classification:
+  spec_origin: 5
+  implementation_origin: 3
+  environment_origin: 1
+  implementation_origin_items:
+    - "attempt-4 F-001 の直接原因 (バイト点検と CSV 読み込みで同じパスを 2 回開く)。attempt 5 で修正済み"
+    - "attempt-5 F-101 (minor): 一時ファイル作成直後の HUP / INT / TERM で空の一時ファイルが残る。後始末の順序の欠陥"
+    - "attempt-4 F-002 (minor): map_version の distinct 集計の二重ループ。attempt 5 の対象外で未修正"
+  environment_origin_items:
+    - "ATDD の step 文言の重複 (先行 UC と同文)。S7 で起動切替により解決済み"
+  excluded_from_draft:
+    - "F-010 (major, A-012 security): review で承認済み。spec_change の却下なし"
+    - "守備範囲・文言・表記に関わらない spec_absent の minor 前提 16 件: review で一括承認済み"
+    - "F-101 (minor): 実装起因"
+assumption_handling:
+  source: "docs/impl/latest/eff24f55/stages/attempt-5/S5_verify.tier-facade.findings.yaml"
+  assumptions_path: "docs/impl/latest/eff24f55/stages/attempt-5/S4_tier-impl.tier-facade.assumptions.yaml"
+  assumptions_sha256: d3ac508ef77cd2a02e4bfe1aadddd07fce4dd2853703428e576d3db3c9ecab35
+  assumptions_file_sha256: be58a1a50fb504eef1b2beca4252acf2cf48bc232d428c8a7f715abfdd4412c4
+  findings_file_sha256: e02c89a164649bf40ecf829780646ba7647957592c844abee4d00c5ab805ed67
+  total: 38
+  consistent: 2
+  spec_absent: 36
+  contradicts: 0
+  unlisted: 0
+  added_after_review:
+    - A-045
+    - A-046
+    - A-047
+    - A-048
+  changed_after_review:
+    - A-028
+  requires_attention:
+    - id: A-047
+      note: "security の前提で、attempt-5 F-105 (major) と review_questions がある。CR-eff24f55-001 の変更してほしいことの 3 (一時ファイルの置き場所・権限・削除時期) に根拠として含めた。人の確認は再生成する review で扱う"
+  human_decisions: "review-notes.md: 相互運用=A / 監査=A (回答任意の前提を一括承認) / A-012=承認"
+  human_rejected_spec_change: 0
+learnings: 3
+learning_files:
+  - "docs/impl/latest/eff24f55/learnings/20260919_213000_robustness-scope-undefined-verify-not-converging.md"
+  - "docs/impl/latest/eff24f55/learnings/20260919_213000_bash-input-pitfalls.md"
+  - "docs/impl/latest/eff24f55/learnings/20260919_230000_tempfile-snapshot-signal-cleanup.md"
+proposals:
+  skill: true
+  context: true
+proposal_files:
+  skill:
+    - "docs/impl/latest/eff24f55/learnings/20260919_213000_proposal-skill.md"
+    - "docs/impl/latest/eff24f55/learnings/20260919_230000_proposal-skill.md"
+  context:
+    - "docs/impl/latest/eff24f55/learnings/20260919_213000_proposal-context.md"
+policy_docs_checked:
+  - "tmp/RelayGateのしくみ.md"
+  - "tmp/RelayGateの利用イメージ.md"
+policy_docs_note: "方針資料との整合は前回確認済み。今回の追記 (単一スナップショット、一時ファイルの置き場所・権限・削除時期、複製の失敗の error 行) は方針資料に記載が無いため、CR-001 / 002 に「新規の決定が必要」と明記した"
+inputs_read:
+  - "docs/impl/latest/eff24f55/feedback/draft.md (refresh 前)"
+  - "docs/impl/latest/eff24f55/feedback/as-built-summary.md (refresh 前)"
+  - "docs/impl/latest/eff24f55/invalidated/20260919_220010_stage_invalidated_eff24f55_review_fix/S8_feedback.done.yaml"
+  - "docs/impl/events/20260919_220000_review_rejected_eff24f55/event.yaml"
+  - "docs/impl/latest/eff24f55/review/review-notes.md"
+  - "docs/impl/latest/eff24f55/stages/attempt-5/S4_tier-impl.tier-facade.assumptions.yaml"
+  - "docs/impl/latest/eff24f55/stages/attempt-5/S4_tier-impl.tier-facade.done.yaml"
+  - "docs/impl/latest/eff24f55/stages/attempt-5/S5_verify.tier-facade.findings.yaml"
+  - "docs/impl/latest/eff24f55/learnings/ (既存 4 件)"
+next_command: "/distillery:dist-pipeline docs/impl/latest/eff24f55/feedback-requests/20260919_213000_impl_feedback_eff24f55.md"
+next_note: "公開済み。仕様の反映待ち (blocked_on_spec)。PR には進まない"
+notes:
+  - "manifest_sha256 は受領値を再計算せず転記した"
+  - "git コマンドは実行していない。write-set 外のファイルは変更していない (status.yaml の更新はオーケストレータ)"
+  - "既存の learnings と提案ファイルは変更していない"
+  - "公開 Markdown に review 情報 (承認者・承認時刻) は追加していない"
+  - "completed_at はイベントの論理時刻に合わせた"
+completed_at: "2026-09-19T23:35:10+09:00"
+completed_by: dist-impl-feedback@0.14.1

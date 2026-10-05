@@ -1,15 +1,15 @@
 version: "1.0"
-event_id: "20260908_011000_feedback_slot_status_wording"
-created_at: "2026-09-08T01:10:00"
-source: "docs/usdm/events/ を順に適用したスナップショット(初期構築 20260830_181841_initial_build に feedback 20260905_todo_resolution の増分 20260905_083000_feedback_todo_resolution、feedback 20260907_todo_followup の増分 20260907_011000_feedback_todo_followup、feedback 20260907_abort_consistency の増分 20260907_114000_feedback_abort_consistency、feedback 20260908_slot_status_wording の増分 20260908_011000_feedback_slot_status_wording を適用)"
+event_id: "20260921_084000_feedback_impl_feedback_eff24f55"
+created_at: "2026-09-21T08:40:00"
+source: "docs/usdm/events/ を順に適用したスナップショット(初期構築 20260830_181841_initial_build に feedback 20260905_todo_resolution の増分 20260905_083000_feedback_todo_resolution、feedback 20260907_todo_followup の増分 20260907_011000_feedback_todo_followup、feedback 20260907_abort_consistency の増分 20260907_114000_feedback_abort_consistency、feedback 20260908_slot_status_wording の増分 20260908_011000_feedback_slot_status_wording、feedback 20260919_213000_impl_feedback_eff24f55 の増分 20260921_084000_feedback_impl_feedback_eff24f55 を適用)"
 system_name: "relay-gate 並行稼働実行基盤"
-last_updated: "2026-09-08T01:10:00"
-last_event_id: "20260908_011000_feedback_slot_status_wording"
+last_updated: "2026-09-21T08:40:00"
+last_event_id: "20260921_084000_feedback_impl_feedback_eff24f55"
 feedback_request:
-  feedback_request_id: "20260908_slot_status_wording"
-  input_sha256: "19b24f61aa56ced09d1b35120acf027c40554b785129c5c945f33c55bd8d7fcf"
-  request_ids: ["CR-c770d8f0-019"]
-  work_unit_ids: ["CR-c770d8f0-019#1"]
+  feedback_request_id: "20260919_213000_impl_feedback_eff24f55"
+  input_sha256: "1a7612598a0ed1d3378d7479b1614d6a6aa99ac90eae0fbf55b82e173784a431"
+  request_ids: ["CR-eff24f55-005"]
+  work_unit_ids: ["CR-eff24f55-005#1"]
 
 requirements:
   - id: "REQ-001"
@@ -568,11 +568,12 @@ requirements:
         specification: "hang_detect_limit_minutes は導入時に全ジョブ 60 分に設定し、正常終了パターンの警告が出そろった時点でジョブごとに最後の警告の経過時間を基準に調整する。foreground role は 0 を設定して検知対象から除外できる"
         acceptance_criteria:
           - "Given ジョブマップの hang_detect_limit_minutes を変更した When 次回以降の run を実行する Then 新しい上限が execution-spec.json に反映され判定に使われる"
-          - "Given hang_detect_limit_minutes を調整した When 調整の記録を確認する Then 調整日時と調整根拠(警告時経過時間)は適用構成文書に残り、ジョブマップの列には持たない"
+          - "Given slot ジョブマップが定義されている When ジョブマップの列を確認する Then hang_detect_limit_minutes の調整記録(調整日時・調整根拠)を保持する列は存在しない"
+          - "[自動判定の対象外: 運用文書の記載] Given hang_detect_limit_minutes を調整した When 運用者が調整を記録する Then 調整日時と調整根拠(警告時経過時間)を適用構成文書に残す。適用構成文書は relay-gate が読まない文書のため、relay-gate の出力またはファイルによる自動判定の対象にしない"
         feedback_source:
-          feedback_request_id: "20260905_todo_resolution"
+          feedback_request_id: "20260919_213000_impl_feedback_eff24f55"
           work_unit_ids:
-            - "CR-c770d8f0-007#1"
+            - "CR-eff24f55-005#1"
         affected_models:
           - type: "business_policy"
             action: "add"

@@ -1,0 +1,78 @@
+uc: "速報比較依頼だけを新規作成する"
+business: "実行復旧業務"
+buc: "background 側リランフロー"
+paths: []
+x_cli_commands:
+  - name: "background-rerun.sh"
+    tier: "tier-ops"
+    role: "uses"
+    synopsis: "background-rerun.sh --source-run-id <RUN_ID> --role rapid-crosscheck"
+    invoked_by: "ジョブスケジューラ(background リラン専用ジョブ)/ 運用者"
+    args: []
+    options:
+      - name: "--source-run-id"
+        type: "string"
+        required: true
+        default: ""
+        description: "元 run_id(新 run の parent_run_id。比較対象は元 run の blue / green 成果物)"
+      - name: "--role"
+        type: "enum"
+        required: true
+        default: ""
+        description: "rapid-crosscheck(本 UC の経路)"
+    stdin: "なし"
+    stdout: "固定順: role=rapid-crosscheck, job_id, request_status=REQUESTED, blue_artifact_uri: file://..., green_artifact_uri: file://..., run_id={新 run_id}, parent_run_id={元 run_id}(runner は起動せず、新 run_id の成果物ディレクトリは worker が比較実行時に作る)"
+    stderr: "error: source artifacts not found run_id=... role=rapid-crosscheck missing=... / error: management db insert failed table=... run_id=..."
+    exit_codes:
+      - code: 0
+        meaning: "依頼を REQUESTED で作成し COMMIT した(業務ジョブは再実行しない)"
+      - code: 3
+        meaning: "事前検証 NG / 元 run の成果物 URI が無い"
+      - code: 6
+        meaning: "管理 DB 接続・INSERT・COMMIT 失敗"
+  - name: "rapid-crosscheck-worker.sh"
+    tier: "tier-rapid-crosscheck"
+    role: "uses"
+    synopsis: "rapid-crosscheck-worker.sh [--once] [--worker-id <ID>]"
+    invoked_by: "ジョブスケジューラ / 常駐"
+    args: []
+    options:
+      - name: "--once"
+        type: "boolean"
+        required: false
+        default: "false"
+        description: "1 回だけ poll / claim / 実行"
+      - name: "--worker-id"
+        type: "string"
+        required: false
+        default: "ホスト名-PID"
+        description: "claim に記録する worker_id"
+    stdin: "なし"
+    stdout: "他 UC「速報比較依頼を claim する」の契約に従う"
+    stderr: "同上"
+    exit_codes:
+      - code: 0
+        meaning: "依頼を 1 件処理した / 依頼が無かった"
+      - code: 6
+        meaning: "claim / DB / 比較ツール起動失敗"
+async_events:
+  - name: "rapid-crosscheck-requests"
+    channel: "rapid-crosscheck-requests"
+    direction: "publish"
+    message: "RapidCrosscheckRequestMessage"
+    summary: "background-rerun が新 run_id の速報比較依頼を REQUESTED で作成し、worker の通常 claim に委ねる(管理 DB のジョブキュー)"
+schemas:
+  - name: "RapidCrosscheckRequestMessage"
+    properties:
+      - name: "run_id"
+        type: "string"
+        required: true
+      - name: "job_id"
+        type: "string"
+        required: true
+      - name: "status"
+        type: "string"
+        required: true
+      - name: "requested_at"
+        type: "string"
+        required: true

@@ -1,0 +1,226 @@
+{
+  "schema_version": "distillery.feedback-result/v1",
+  "run_id": "feedback-20260919_213000_impl_feedback_eff24f55-20260921_082612-74150",
+  "attempt": 1,
+  "feedback_request_id": "20260919_213000_impl_feedback_eff24f55",
+  "input_sha256": "1a7612598a0ed1d3378d7479b1614d6a6aa99ac90eae0fbf55b82e173784a431",
+  "status": "completed",
+  "stages": [
+    {
+      "stage_id": "requirements",
+      "state": "succeeded",
+      "event_ids": [
+        "20260921_084000_feedback_stage_requirements"
+      ],
+      "direct_work_unit_ids": [
+        "CR-eff24f55-005#1"
+      ],
+      "causal_work_unit_ids": [
+        "CR-eff24f55-005#1"
+      ]
+    },
+    {
+      "stage_id": "quality_attributes",
+      "state": "succeeded",
+      "event_ids": [
+        "20260921_090000_feedback_stage_quality_attributes"
+      ],
+      "direct_work_unit_ids": [
+        "CR-eff24f55-004#1"
+      ],
+      "causal_work_unit_ids": [
+        "CR-eff24f55-004#1",
+        "CR-eff24f55-005#1"
+      ]
+    },
+    {
+      "stage_id": "architecture",
+      "state": "succeeded",
+      "event_ids": [
+        "20260921_092000_feedback_stage_architecture"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-eff24f55-004#1",
+        "CR-eff24f55-005#1"
+      ]
+    },
+    {
+      "stage_id": "infrastructure",
+      "state": "succeeded",
+      "event_ids": [
+        "20260921_094000_feedback_stage_infrastructure"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-eff24f55-004#1",
+        "CR-eff24f55-005#1"
+      ]
+    },
+    {
+      "stage_id": "spec",
+      "state": "succeeded",
+      "event_ids": [
+        "20260921_100000_feedback_stage_spec"
+      ],
+      "direct_work_unit_ids": [
+        "CR-eff24f55-001#1",
+        "CR-eff24f55-002#1",
+        "CR-eff24f55-003#1",
+        "CR-eff24f55-004#2"
+      ],
+      "causal_work_unit_ids": [
+        "CR-eff24f55-001#1",
+        "CR-eff24f55-002#1",
+        "CR-eff24f55-003#1",
+        "CR-eff24f55-004#1",
+        "CR-eff24f55-004#2",
+        "CR-eff24f55-005#1"
+      ]
+    }
+  ],
+  "work_units": [
+    {
+      "work_unit_id": "CR-eff24f55-001#1",
+      "disposition": "applied",
+      "reason": "At least one required closure stage changed its domain artifacts.",
+      "artifact_refs": [
+        "specs/events/20260921_100000_feedback_impl_feedback_eff24f55/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20260921_100000_feedback_impl_feedback_eff24f55/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/spec.md",
+        "specs/events/20260921_100000_feedback_impl_feedback_eff24f55/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/tier-facade.md",
+        "specs/events/20260921_100000_feedback_impl_feedback_eff24f55/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/_api-summary.yaml",
+        "specs/events/20260921_100000_feedback_impl_feedback_eff24f55/実装切替業務/実装切替ジョブ実行フロー/ジョブマップで JOB_ID から実行先を解決する/spec.md",
+        "specs/events/20260921_100000_feedback_impl_feedback_eff24f55/実装切替業務/実装切替ジョブ実行フロー/ジョブマップで JOB_ID から実行先を解決する/tier-facade.md",
+        "specs/events/20260921_100000_feedback_impl_feedback_eff24f55/適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/spec.md",
+        "specs/events/20260921_100000_feedback_impl_feedback_eff24f55/適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/tier-rapid-crosscheck.md",
+        "specs/events/20260921_100000_feedback_impl_feedback_eff24f55/適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/tier-final-crosscheck.md",
+        "specs/events/20260921_100000_feedback_impl_feedback_eff24f55/適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md",
+        "specs/events/20260921_100000_feedback_impl_feedback_eff24f55/適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md",
+        "specs/events/20260921_100000_feedback_impl_feedback_eff24f55/実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/tier-facade.md",
+        "specs/events/20260921_100000_feedback_impl_feedback_eff24f55/クロスチェック業務/速報クロスチェックフロー/速報クロスチェック runner へ完了通知を送信する/tier-facade.md",
+        "specs/events/20260921_100000_feedback_impl_feedback_eff24f55/クロスチェック業務/速報クロスチェックフロー/速報クロスチェック runner へ完了通知を送信する/tier-rapid-crosscheck.md",
+        "specs/events/20260921_100000_feedback_impl_feedback_eff24f55/クロスチェック業務/速報クロスチェックフロー/両系成功時に速報比較依頼を作成する/tier-rapid-crosscheck.md",
+        "specs/events/20260921_100000_feedback_impl_feedback_eff24f55/クロスチェック業務/速報クロスチェックフロー/速報比較依頼を claim する/tier-rapid-crosscheck.md",
+        "specs/events/20260921_100000_feedback_impl_feedback_eff24f55/クロスチェック業務/確報クロスチェックフロー/確報比較依頼を登録して終端状態まで待機する/tier-final-crosscheck.md",
+        "specs/events/20260921_100000_feedback_impl_feedback_eff24f55/クロスチェック業務/確報クロスチェックフロー/確報比較依頼を claim する/tier-final-crosscheck.md",
+        "specs/events/20260921_100000_feedback_impl_feedback_eff24f55/実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/tier-ops.md",
+        "specs/events/20260921_100000_feedback_impl_feedback_eff24f55/実行監視業務/background 実行監視フロー/ハング疑い・実行エラー・比較異常を通知する/tier-ops.md",
+        "specs/events/20260921_100000_feedback_impl_feedback_eff24f55/_cross-cutting/usdm-acceptance-matrix.md",
+        "specs/events/20260921_100000_feedback_impl_feedback_eff24f55/_cross-cutting/traceability-matrix.md",
+        "specs/events/20260921_100000_feedback_impl_feedback_eff24f55/spec-event.yaml",
+        "specs/events/20260921_100000_feedback_impl_feedback_eff24f55/decisions/spec-decision-011.yaml",
+        "specs/events/20260921_100000_feedback_impl_feedback_eff24f55/decisions/spec-decision-013.yaml"
+      ]
+    },
+    {
+      "work_unit_id": "CR-eff24f55-002#1",
+      "disposition": "applied",
+      "reason": "At least one required closure stage changed its domain artifacts.",
+      "artifact_refs": [
+        "specs/events/20260921_100000_feedback_impl_feedback_eff24f55/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20260921_100000_feedback_impl_feedback_eff24f55/_cross-cutting/ux-ui/ui-design.md",
+        "specs/events/20260921_100000_feedback_impl_feedback_eff24f55/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/spec.md",
+        "specs/events/20260921_100000_feedback_impl_feedback_eff24f55/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/tier-facade.md",
+        "specs/events/20260921_100000_feedback_impl_feedback_eff24f55/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/_api-summary.yaml",
+        "specs/events/20260921_100000_feedback_impl_feedback_eff24f55/実装切替業務/実装切替ジョブ実行フロー/ジョブマップで JOB_ID から実行先を解決する/tier-facade.md",
+        "specs/events/20260921_100000_feedback_impl_feedback_eff24f55/spec-event.yaml",
+        "specs/events/20260921_100000_feedback_impl_feedback_eff24f55/decisions/spec-decision-012.yaml"
+      ]
+    },
+    {
+      "work_unit_id": "CR-eff24f55-003#1",
+      "disposition": "applied",
+      "reason": "At least one required closure stage changed its domain artifacts.",
+      "artifact_refs": [
+        "specs/events/20260921_100000_feedback_impl_feedback_eff24f55/_cross-cutting/ux-ui/ui-design.md",
+        "specs/events/20260921_100000_feedback_impl_feedback_eff24f55/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20260921_100000_feedback_impl_feedback_eff24f55/適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md",
+        "specs/events/20260921_100000_feedback_impl_feedback_eff24f55/適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md",
+        "specs/events/20260921_100000_feedback_impl_feedback_eff24f55/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/spec.md",
+        "specs/events/20260921_100000_feedback_impl_feedback_eff24f55/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/tier-facade.md",
+        "specs/events/20260921_100000_feedback_impl_feedback_eff24f55/spec-event.yaml",
+        "specs/events/20260921_100000_feedback_impl_feedback_eff24f55/decisions/spec-decision-012.yaml"
+      ]
+    },
+    {
+      "work_unit_id": "CR-eff24f55-004#1",
+      "disposition": "applied",
+      "reason": "At least one required closure stage changed its domain artifacts.",
+      "artifact_refs": [
+        "nfr/events/20260921_090000_feedback_impl_feedback_eff24f55/nfr-grade-diff.yaml",
+        "nfr/events/20260921_090000_feedback_impl_feedback_eff24f55/_changes.md",
+        "specs/events/20260921_100000_feedback_impl_feedback_eff24f55/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20260921_100000_feedback_impl_feedback_eff24f55/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/tier-facade.md",
+        "specs/events/20260921_100000_feedback_impl_feedback_eff24f55/spec-event.yaml"
+      ]
+    },
+    {
+      "work_unit_id": "CR-eff24f55-004#2",
+      "disposition": "applied",
+      "reason": "At least one required closure stage changed its domain artifacts.",
+      "artifact_refs": [
+        "specs/events/20260921_100000_feedback_impl_feedback_eff24f55/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20260921_100000_feedback_impl_feedback_eff24f55/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/tier-facade.md",
+        "specs/events/20260921_100000_feedback_impl_feedback_eff24f55/実装切替業務/実装切替ジョブ実行フロー/ジョブマップで JOB_ID から実行先を解決する/spec.md",
+        "specs/events/20260921_100000_feedback_impl_feedback_eff24f55/実装切替業務/実装切替ジョブ実行フロー/ジョブマップで JOB_ID から実行先を解決する/tier-facade.md",
+        "specs/events/20260921_100000_feedback_impl_feedback_eff24f55/spec-event.yaml",
+        "specs/events/20260921_100000_feedback_impl_feedback_eff24f55/decisions/spec-decision-013.yaml"
+      ]
+    },
+    {
+      "work_unit_id": "CR-eff24f55-005#1",
+      "disposition": "applied",
+      "reason": "At least one required closure stage changed its domain artifacts.",
+      "artifact_refs": [
+        "usdm/events/20260921_084000_feedback_impl_feedback_eff24f55/requirements.yaml",
+        "specs/events/20260921_100000_feedback_impl_feedback_eff24f55/実行監視業務/background 実行監視フロー/hang_detect_limit_minutes をジョブごとに調整する/spec.md",
+        "specs/events/20260921_100000_feedback_impl_feedback_eff24f55/_cross-cutting/usdm-acceptance-matrix.md",
+        "specs/events/20260921_100000_feedback_impl_feedback_eff24f55/spec-event.yaml"
+      ]
+    }
+  ],
+  "requests": [
+    {
+      "request_id": "CR-eff24f55-001",
+      "work_unit_ids": [
+        "CR-eff24f55-001#1"
+      ],
+      "disposition": "applied",
+      "reason": "At least one work unit was applied and all work units completed successfully."
+    },
+    {
+      "request_id": "CR-eff24f55-002",
+      "work_unit_ids": [
+        "CR-eff24f55-002#1"
+      ],
+      "disposition": "applied",
+      "reason": "At least one work unit was applied and all work units completed successfully."
+    },
+    {
+      "request_id": "CR-eff24f55-003",
+      "work_unit_ids": [
+        "CR-eff24f55-003#1"
+      ],
+      "disposition": "applied",
+      "reason": "At least one work unit was applied and all work units completed successfully."
+    },
+    {
+      "request_id": "CR-eff24f55-004",
+      "work_unit_ids": [
+        "CR-eff24f55-004#1",
+        "CR-eff24f55-004#2"
+      ],
+      "disposition": "applied",
+      "reason": "At least one work unit was applied and all work units completed successfully."
+    },
+    {
+      "request_id": "CR-eff24f55-005",
+      "work_unit_ids": [
+        "CR-eff24f55-005#1"
+      ],
+      "disposition": "applied",
+      "reason": "At least one work unit was applied and all work units completed successfully."
+    }
+  ],
+  "terminal_event_id": "20260921_103000_feedback_run_completed"
+}

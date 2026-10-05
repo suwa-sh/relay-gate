@@ -1,0 +1,37 @@
+{
+  "schema_version": "distillery.feedback-no-domain-change/v1",
+  "type": "feedback_no_domain_change",
+  "event_id": "20260921_094000_feedback_impl_feedback_eff24f55",
+  "created_at": "2026-09-21T09:40:00Z",
+  "stage": "infrastructure",
+  "domain_event_root": "infra/events",
+  "reason": "上流の変更は、NFR B.1.1.2 への CSV 形式の設定ファイルの共通前提(1 ファイルあたり想定最大 5,000 行、最悪条件、行数に比例する実装が前提)の追記、B.2.1.1 の目標をその前提で 10 秒以内とする明記、USDM の受け入れ基準 1 件の分割(RDRA・arch は不変)である。NFR のグレード値は変わらず、arch は no-change である。infra/latest の MCL 入力は「facade の起動・中継と中止 / リラン CLI の応答は 10 秒以内」を B.2.1.1 の ID 参照つきで記述しており、新しい前提と矛盾しない。設定ファイルの行数上限は NFR が 1 か所で所有する決定で、ワークロード種別・トラフィック・復旧目標・データ機微度などの MCL 入力フィールドに影響しない。実行環境のシェルは実装仕様とサービスマッピングに既に「bash 5」と記載済みで、下流の spec がこの値にそろえる。MCL の再実行と arch へのフィードバックは不要なため infra/latest は更新しない",
+  "feedback_request": {
+    "feedback_request_id": "20260919_213000_impl_feedback_eff24f55",
+    "input_sha256": "1a7612598a0ed1d3378d7479b1614d6a6aa99ac90eae0fbf55b82e173784a431",
+    "request_ids": [
+      "CR-eff24f55-004",
+      "CR-eff24f55-005"
+    ],
+    "work_unit_ids": [
+      "CR-eff24f55-004#1",
+      "CR-eff24f55-005#1"
+    ]
+  },
+  "work_unit_results": [],
+  "reconciliation_results": [
+    {
+      "work_unit_id": "CR-eff24f55-004#1",
+      "status": "not_impacted",
+      "reason": "NFR B.1.1.2 の設定ファイル共通前提(1 ファイル最大 5,000 行、最悪条件、行数比例の実装)と B.2.1.1 の 10 秒以内の明記は、グレード値を変えない記述の追加である。インフラ設計の MCL 入力は CLI 応答 10 秒以内を B.2.1.1 の ID 参照つきで記述するだけで、行数の前提を持たない。5,000 行の CSV はローカルディスク上の小さな設定ファイルで、サーバ構成・ストレージ・トラフィック想定に影響しない。シェルは実装仕様とサービスマッピングに既に bash 5 と記載済みで変更不要である",
+      "artifact_refs": []
+    },
+    {
+      "work_unit_id": "CR-eff24f55-005#1",
+      "status": "not_impacted",
+      "reason": "USDM の受け入れ基準 1 件を 2 つに分けただけで、RDRA モデル・NFR グレード・arch は不変である。ハング検知上限の調整記録を適用構成文書に残す運用は、インフラ設計のサービス構成・配置ファイル・監視設定のいずれも変えない",
+      "artifact_refs": []
+    }
+  ],
+  "evidence_refs": []
+}

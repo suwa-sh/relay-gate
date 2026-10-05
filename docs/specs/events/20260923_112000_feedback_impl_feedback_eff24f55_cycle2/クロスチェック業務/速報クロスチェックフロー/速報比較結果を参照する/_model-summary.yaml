@@ -1,0 +1,66 @@
+uc: "速報比較結果を参照する"
+business: "クロスチェック業務"
+buc: "速報クロスチェックフロー"
+bounded_context_id: "BC-002"
+aggregate_id: "AG-002"
+
+models:
+  - name: "RapidResultQuery"
+    tier: "tier-rapid-crosscheck"
+    layer: "presentation"
+    type: "request"
+    rdra_info: "速報比較依頼(rapid_crosscheck_request)"
+  - name: "ShowRapidResult"
+    tier: "tier-rapid-crosscheck"
+    layer: "usecase"
+    type: "query"
+    rdra_info: "比較結果(comparison_result)"
+  - name: "RapidResultView"
+    tier: "tier-rapid-crosscheck"
+    layer: "domain"
+    type: "value-object"
+    rdra_info: "比較結果(comparison_result)"
+  - name: "RapidCrosscheckRequestRecord"
+    tier: "tier-rapid-crosscheck"
+    layer: "repository"
+    type: "record"
+    rdra_info: "速報比較依頼(rapid_crosscheck_request)"
+  - name: "ComparisonResultRecord"
+    tier: "tier-rapid-crosscheck"
+    layer: "repository"
+    type: "record"
+    rdra_info: "比較結果(comparison_result)"
+  - name: "RapidRunRecord"
+    tier: "tier-rapid-crosscheck"
+    layer: "repository"
+    type: "record"
+    rdra_info: "速報実行(rapid_run)"
+
+tables:
+  - name: "rapid_crosscheck_requests"
+    rdra_info: "速報比較依頼(rapid_crosscheck_request)"
+    operations:
+      - type: "SELECT"
+        columns: []
+        where: "run_id = ?"
+    indexes_needed: []
+  - name: "comparison_results"
+    rdra_info: "比較結果(comparison_result)"
+    operations:
+      - type: "SELECT"
+        columns: []
+        where: "run_id = ? ORDER BY compared_at ASC, comparison_result_id ASC LIMIT ?"
+    indexes_needed:
+      - columns: ["run_id", "compared_at"]
+        reason: "run_id 単位の比較結果一覧を compared_at 順で取得する"
+        access_pattern: "rapid-crosscheck-result.sh の run_id 参照"
+  - name: "rapid_runs"
+    rdra_info: "速報実行(rapid_run)"
+    operations:
+      - type: "SELECT"
+        columns: []
+        where: "run_id = ?"
+    indexes_needed: []
+
+kvs: []
+object_storage: []

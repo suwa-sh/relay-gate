@@ -1,0 +1,142 @@
+{
+  "schema_version": "distillery.feedback-run/v1",
+  "feedback_request_id": "20260919_213000_impl_feedback_eff24f55",
+  "input_sha256": "1a7612598a0ed1d3378d7479b1614d6a6aa99ac90eae0fbf55b82e173784a431",
+  "ambiguity_policy": "interactive",
+  "routing_basis": {
+    "ownership_catalog_version": "1.0.0",
+    "ownership_catalog_sha256": "801750c2abe99945a3de9387b82339b2bc96ccb2da564f9923cc0e9b76a2bd39",
+    "routing_policy_version": "1.1.0",
+    "routing_policy_sha256": "3873275bf4adb3d9d7b7c41c22c9463d054a3614df7bbcab7514f0c1e23e166e",
+    "prompt_schema_sha256": "bf7c7f34d7a2fc5976ccd2589a454172a4630e1448c509966b620f88029732c4",
+    "stage_packet_renderer_version": "1",
+    "skipped_stages": [
+      "design_system",
+      "spec_stories"
+    ],
+    "repository_head": "138d7050a835f70eb5482511e396fef183ffc808",
+    "latest_domain_event_ids": {
+      "requirements": {
+        "rdra/events": "20260908_011000_feedback_slot_status_wording",
+        "usdm/events": "20260908_011000_feedback_slot_status_wording"
+      },
+      "quality_attributes": {
+        "nfr/events": "20260908_013000_feedback_slot_status_wording"
+      },
+      "architecture": {
+        "arch/events": "20260908_015000_feedback_slot_status_wording"
+      },
+      "infrastructure": {
+        "infra/events": "20260908_021000_feedback_slot_status_wording"
+      },
+      "design_system": {
+        "design/events": null
+      },
+      "spec": {
+        "specs/events": "20260917_100000_feedback_impl_feedback_fd678b04_cycle2"
+      },
+      "spec_stories": {
+        "design/events": null
+      }
+    },
+    "domain_event_root_snapshots": {
+      "rdra/events": {
+        "head_event_id": "20260908_011000_feedback_slot_status_wording",
+        "head_event_sha256": "b090b166d4f0153d029cb6aefec68101eb2c27e70baf9c95adcce67c57d9024e",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency",
+          "20260908_011000_feedback_slot_status_wording"
+        ],
+        "event_set_sha256": "8cb2285c08b0aa19e0b6acb3befd7d7180afd7c1105be106c4a9a4e7f5a164a5",
+        "latest_tree_sha256": "fb37aebe9d1e9fccd46c51cc14f0450b93bf14bc39322450ffbc7fbb018935b1"
+      },
+      "usdm/events": {
+        "head_event_id": "20260908_011000_feedback_slot_status_wording",
+        "head_event_sha256": "2f083a378142c06b74987ec8f2c11b303e2a9369746ec6065d56c2dd60dc4e45",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency",
+          "20260908_011000_feedback_slot_status_wording"
+        ],
+        "event_set_sha256": "8cb2285c08b0aa19e0b6acb3befd7d7180afd7c1105be106c4a9a4e7f5a164a5",
+        "latest_tree_sha256": "e1733eb0ebeff504ee3ab2ef90f47b050e6f3eb05cdb287d649c57d6724f5a31"
+      },
+      "nfr/events": {
+        "head_event_id": "20260908_013000_feedback_slot_status_wording",
+        "head_event_sha256": "9c460abcc88fcbf4b495658c71b4a4bbc49d9d9f309e46ad0c0bae58aa4dda0c",
+        "event_ids": [
+          "20260830_183726_initial_nfr",
+          "20260905_085000_feedback_todo_resolution",
+          "20260907_013000_feedback_todo_followup",
+          "20260907_120000_feedback_abort_consistency",
+          "20260908_013000_feedback_slot_status_wording"
+        ],
+        "event_set_sha256": "99463150965b02f6b7670ee3f4f853722b6c561281e6297a3e58a9afe414b4a4",
+        "latest_tree_sha256": "51f9059e35f6f5c65fc18cd1f1457bd5beca3b5b23271d538f4304b0ece9c7ef"
+      },
+      "arch/events": {
+        "head_event_id": "20260908_015000_feedback_slot_status_wording",
+        "head_event_sha256": "4e467155c8adfbefce4aa18ae2cee40f92c55545711dc66fc9c05b57b6f9a2e8",
+        "event_ids": [
+          "20260830_184457_initial_arch",
+          "20260830_202427_arch_infra_feedback_20260830_190412_infra_product_design",
+          "20260905_091000_feedback_todo_resolution",
+          "20260907_015000_feedback_todo_followup",
+          "20260907_122000_feedback_abort_consistency",
+          "20260908_015000_feedback_slot_status_wording"
+        ],
+        "event_set_sha256": "b710a5cb1a0d295f1b5c15523a2181492f16924414fb77886efd0bdb3f7d0a4b",
+        "latest_tree_sha256": "0a975f848804dd5bc3d5cf328a5e9717f2e22eb489e1e5f4c477538b77c0b91d"
+      },
+      "infra/events": {
+        "head_event_id": "20260908_021000_feedback_slot_status_wording",
+        "head_event_sha256": "2e1292ab231982c609976791deca51a97e82389b34ab645d4432e463fe1c8c46",
+        "event_ids": [
+          "20260830_190412_infra_product_design",
+          "20260905_093000_feedback_todo_resolution",
+          "20260907_021000_feedback_todo_followup",
+          "20260907_124000_feedback_abort_consistency",
+          "20260908_021000_feedback_slot_status_wording"
+        ],
+        "event_set_sha256": "8077de33d5a65f65ebff5e2c1c20d238e003e9dd69d3d500ae30ef08162ab292",
+        "latest_tree_sha256": "639f743d85b997e1297610b2a7c2db41fd004e74473f96ec6292b601509a6331"
+      },
+      "design/events": {
+        "head_event_id": null,
+        "head_event_sha256": null,
+        "event_ids": [],
+        "event_set_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "latest_tree_sha256": null
+      },
+      "specs/events": {
+        "head_event_id": "20260917_100000_feedback_impl_feedback_fd678b04_cycle2",
+        "head_event_sha256": "1c4bc301adf7663824fc8c6c87077747f92bf2e5c1d12aae340673e0ebf97cfb",
+        "event_ids": [
+          "20260830_202851_spec_generation",
+          "20260905_100000_feedback_todo_resolution",
+          "20260907_024000_feedback_todo_followup",
+          "20260907_131000_feedback_abort_consistency",
+          "20260908_024000_feedback_slot_status_wording",
+          "20260908_062000_feedback_spec_machine_readable",
+          "20260917_050000_feedback_impl_feedback_fd678b04",
+          "20260917_100000_feedback_impl_feedback_fd678b04_cycle2"
+        ],
+        "event_set_sha256": "9d223e77f55efdee7727bb8d0ba00b13bd7d346c337693476ee91f0077d6bd45",
+        "latest_tree_sha256": "250f673174a1514371f5b450ce86492d497186db648d1724887f71b84d7b6b62"
+      }
+    }
+  },
+  "basis_snapshot": {
+    "ownership_catalog": "ownership-catalog.json",
+    "routing_policy": "routing-policy.json",
+    "prompt_data_policy": "prompt-data-policy.txt"
+  },
+  "stage_packet_renderer_version": "1",
+  "initial_routing_state": "resolved",
+  "execution_state_at_creation": "resolved"
+}

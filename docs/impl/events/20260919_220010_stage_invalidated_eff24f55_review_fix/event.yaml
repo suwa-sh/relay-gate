@@ -1,0 +1,14 @@
+event_id: 20260919_220010_stage_invalidated_eff24f55_review_fix
+type: stage_invalidated
+uc_id: eff24f55
+payload:
+  reason: review_rejected
+  cause_event_id: 20260919_220000_review_rejected_eff24f55
+  invalidated_dones:
+  - docs/impl/latest/eff24f55/stages/S6_uc-bdd.done.yaml
+  - docs/impl/latest/eff24f55/stages/S7_atdd.done.yaml
+  - docs/impl/latest/eff24f55/stages/S8_feedback.done.yaml
+  - docs/impl/latest/eff24f55/stages/S9_review_generated.done.yaml
+  archived_to: docs/impl/latest/eff24f55/invalidated/20260919_220010_stage_invalidated_eff24f55_review_fix/
+  kept: 'attempt-1〜4 の S4 / S5 done は各 attempt の履歴として残す。S1〜S3 は影響なし'
+created_at: '2026-09-19T22:00:10+09:00'

@@ -76,6 +76,8 @@ Before(function () {
   fs.mkdirSync(this.sandbox('/opt/relay-gate/bin'), { recursive: true });
   this.env = {};
   this.result = null;
+  // 検証種別は Scenario ごとに既定(feature flag)へ戻す
+  this.validation = null;
 });
 
 After(function () {
@@ -138,8 +140,24 @@ Given(
 
 // ---- When ----
 
+// 「設定を検証する」は複数 SPEC の受け入れ基準が同じ文言で使う(@atdd_SPEC-001-01-4 / @atdd_SPEC-004-04-4)。
+// 同じ文言を UC ごとに再定義すると ambiguous step になるため、定義はここ 1 箇所に置き、
+// Given が World に置いた検証種別(this.validation)で起動を切り替える。
+//   未設定(既定)      → --feature-flag <envPath>(@atdd_SPEC-001-01-4。従来の起動と同一)
+//   kind = 'job-map'   → --job-map <path>(@atdd_SPEC-004-04-4。define-slot-job-maps.steps.js の Given が設定)
+// 根拠: docs/impl/latest/eff24f55/issues/20260919_161456_cross-uc-scenarios.md(4. step 文言の重複)
+function validationArgs(world) {
+  const validation = world.validation || { kind: 'feature-flag' };
+  if (validation.kind === 'job-map') {
+    assert.ok(validation.path, 'job map path must be prepared by Given');
+    return ['--job-map', validation.path];
+  }
+  assert.equal(validation.kind, 'feature-flag', `unsupported validation kind: ${validation.kind}`);
+  return ['--feature-flag', world.envPath];
+}
+
 When(literal('設定を検証する'), function () {
-  const proc = spawnSync(VALIDATE_CONFIG, ['--feature-flag', this.envPath], {
+  const proc = spawnSync(VALIDATE_CONFIG, validationArgs(this), {
     cwd: this.root,
     encoding: 'utf8',
     env: { ...process.env, RELAY_GATE_CONFIG_DIR: this.configDir },

@@ -1,0 +1,21 @@
+event_id: 20260922_113000_s4_tier_impl_completed_eff24f55_tier_facade_a6
+type: stage_completed
+uc_id: eff24f55
+stage: S4
+tier: tier-facade
+attempt: 6
+payload:
+  manifest_sha256: f8cf17f93da5c6e63c9b3ce97c7fbc076f64c6174bd02d27757adf7c8b54ecb1
+  manifest_projection: v2
+  mode: blocker_fix
+  gates: {format: pass, lint: pass, tdd: pass, bdd_tier: pass}
+  tdd: '324 tests, 0 not ok'
+  bdd_tier: '38 scenarios / 129 steps passed'
+  assumptions: {path: attempt-6/S4_tier-impl.tier-facade.assumptions.yaml, count: 24, sha256: af1e2927136c7f7492f683b87da2c641501dd8cb13bc34bb7fcb304ead0d514a}
+  blockers_resolved: [F-001, F-002]
+  issues_raised:
+  - docs/impl/latest/eff24f55/issues/20260922_120000_duplicate-job-id-lines-contract-vs-bdd.md
+  - docs/impl/latest/eff24f55/issues/20260922_120100_credential-ref-warning-boundary-undefined.md
+  minor: {fixed: 3, deferred: 20}
+  performance: '5,000 rows worst case: 3.99s (--verbose 4.88s)'
+created_at: '2026-09-22T11:30:00+09:00'

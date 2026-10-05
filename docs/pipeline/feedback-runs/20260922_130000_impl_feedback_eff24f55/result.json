@@ -1,0 +1,80 @@
+{
+  "schema_version": "distillery.feedback-result/v1",
+  "run_id": "feedback-20260922_130000_impl_feedback_eff24f55-20260923_110656-17997",
+  "attempt": 1,
+  "feedback_request_id": "20260922_130000_impl_feedback_eff24f55",
+  "input_sha256": "8adc8bc900ebe6eb57209cee7c4ed2c727b1313c462a6052efd720b2f31cb2fa",
+  "status": "completed",
+  "stages": [
+    {
+      "stage_id": "spec",
+      "state": "succeeded",
+      "event_ids": [
+        "20260923_112000_feedback_stage_spec"
+      ],
+      "direct_work_unit_ids": [
+        "CR-eff24f55-006#1",
+        "CR-eff24f55-007#1"
+      ],
+      "causal_work_unit_ids": [
+        "CR-eff24f55-006#1",
+        "CR-eff24f55-007#1"
+      ]
+    }
+  ],
+  "work_units": [
+    {
+      "work_unit_id": "CR-eff24f55-006#1",
+      "disposition": "applied",
+      "reason": "At least one required closure stage changed its domain artifacts.",
+      "artifact_refs": [
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/spec.md",
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/tier-facade.md",
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/_api-summary.yaml",
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/spec.md",
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/tier-rapid-crosscheck.md",
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/tier-final-crosscheck.md",
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/実装切替業務/実装切替ジョブ実行フロー/ジョブマップで JOB_ID から実行先を解決する/tier-facade.md",
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/decisions/spec-decision-014.yaml",
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/spec-event.yaml"
+      ]
+    },
+    {
+      "work_unit_id": "CR-eff24f55-007#1",
+      "disposition": "applied",
+      "reason": "At least one required closure stage changed its domain artifacts.",
+      "artifact_refs": [
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/spec.md",
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/tier-facade.md",
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/_api-summary.yaml",
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/実装切替業務/実装切替ジョブ実行フロー/execution-spec.json を確定保存する/spec.md",
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/実装切替業務/実装切替ジョブ実行フロー/execution-spec.json を確定保存する/tier-facade.md",
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/_cross-cutting/usdm-acceptance-matrix.md",
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/_cross-cutting/traceability-matrix.md",
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/decisions/spec-decision-015.yaml",
+        "specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/spec-event.yaml"
+      ]
+    }
+  ],
+  "requests": [
+    {
+      "request_id": "CR-eff24f55-006",
+      "work_unit_ids": [
+        "CR-eff24f55-006#1"
+      ],
+      "disposition": "applied",
+      "reason": "At least one work unit was applied and all work units completed successfully."
+    },
+    {
+      "request_id": "CR-eff24f55-007",
+      "work_unit_ids": [
+        "CR-eff24f55-007#1"
+      ],
+      "disposition": "applied",
+      "reason": "At least one work unit was applied and all work units completed successfully."
+    }
+  ],
+  "terminal_event_id": "20260923_113500_feedback_run_completed"
+}

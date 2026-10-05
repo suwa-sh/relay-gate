@@ -1,0 +1,12 @@
+stage: S3
+uc_id: eff24f55
+manifest_sha256: 85d1ebda8af9b786c1abbfc4e09198f4716663209279349d7e7ad9c947902002
+manifest_projection: v2
+result: pass
+contracts_verified:
+- id: management-db
+  result: pass
+  detail: 'lock input sha256 (2b3ffec0...) matches current rdb-schema.yaml and contracts_decl (a7703a7d...) unchanged; contracts.lock.yaml sha (4192970b...) unchanged; no regeneration. consumer side: this UC _model-summary.yaml (sha d1800fe8..., unchanged) has tables: [] so no table/column cross-check target (spec reflux cycle 2 did not touch the datastore).'
+rerun_reason: 'stale after spec reflux 20260922_130000_impl_feedback_eff24f55 (invalidated event 20260923_115100_stage_invalidated_eff24f55_spec_reflux_cycle2_stale)'
+completed_at: '2026-09-23T11:51:50+09:00'
+completed_by: dist-impl-run@0.14.1

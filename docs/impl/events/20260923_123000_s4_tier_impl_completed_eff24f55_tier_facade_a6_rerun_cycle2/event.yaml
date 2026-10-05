@@ -1,0 +1,19 @@
+event_id: 20260923_123000_s4_tier_impl_completed_eff24f55_tier_facade_a6_rerun_cycle2
+type: stage_completed
+uc_id: eff24f55
+stage: S4
+tier: tier-facade
+attempt: 6
+payload:
+  manifest_sha256: 85d1ebda8af9b786c1abbfc4e09198f4716663209279349d7e7ad9c947902002
+  manifest_projection: v2
+  mode: stale_rerun
+  gates: {format: pass, lint: pass, tdd: pass, bdd_tier: pass}
+  tdd: '334 tests, 0 not ok'
+  bdd_tier: '41 scenarios / 143 steps passed'
+  assumptions: {path: attempt-6/S4_tier-impl.tier-facade.assumptions.yaml, count: 23, sha256: 0d5632b7da2ce5b1fdd39ed9dc7d5625312319ba0e01ee29765873e01def5412}
+  notes:
+  - 'no behaviour change in facade/src or facade/bin; tier BDD skeleton steps implemented, obsolete step removed'
+  - 'A-012 (credential_ref format violation) removed: now defined by spec'
+  rerun_after: 20260923_115100_stage_invalidated_eff24f55_spec_reflux_cycle2_stale
+created_at: '2026-09-23T12:30:00+09:00'

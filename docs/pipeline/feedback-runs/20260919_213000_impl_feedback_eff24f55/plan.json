@@ -1,0 +1,390 @@
+{
+  "schema_version": "distillery.feedback-plan/v1",
+  "feedback_request_id": "20260919_213000_impl_feedback_eff24f55",
+  "input_sha256": "1a7612598a0ed1d3378d7479b1614d6a6aa99ac90eae0fbf55b82e173784a431",
+  "ambiguity_policy": "interactive",
+  "routing_basis": {
+    "ownership_catalog_version": "1.0.0",
+    "ownership_catalog_sha256": "801750c2abe99945a3de9387b82339b2bc96ccb2da564f9923cc0e9b76a2bd39",
+    "routing_policy_version": "1.1.0",
+    "routing_policy_sha256": "3873275bf4adb3d9d7b7c41c22c9463d054a3614df7bbcab7514f0c1e23e166e",
+    "prompt_schema_sha256": "bf7c7f34d7a2fc5976ccd2589a454172a4630e1448c509966b620f88029732c4",
+    "stage_packet_renderer_version": "1",
+    "skipped_stages": [
+      "design_system",
+      "spec_stories"
+    ],
+    "repository_head": "138d7050a835f70eb5482511e396fef183ffc808",
+    "latest_domain_event_ids": {
+      "requirements": {
+        "rdra/events": "20260908_011000_feedback_slot_status_wording",
+        "usdm/events": "20260908_011000_feedback_slot_status_wording"
+      },
+      "quality_attributes": {
+        "nfr/events": "20260908_013000_feedback_slot_status_wording"
+      },
+      "architecture": {
+        "arch/events": "20260908_015000_feedback_slot_status_wording"
+      },
+      "infrastructure": {
+        "infra/events": "20260908_021000_feedback_slot_status_wording"
+      },
+      "design_system": {
+        "design/events": null
+      },
+      "spec": {
+        "specs/events": "20260917_100000_feedback_impl_feedback_fd678b04_cycle2"
+      },
+      "spec_stories": {
+        "design/events": null
+      }
+    },
+    "domain_event_root_snapshots": {
+      "rdra/events": {
+        "head_event_id": "20260908_011000_feedback_slot_status_wording",
+        "head_event_sha256": "b090b166d4f0153d029cb6aefec68101eb2c27e70baf9c95adcce67c57d9024e",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency",
+          "20260908_011000_feedback_slot_status_wording"
+        ],
+        "event_set_sha256": "8cb2285c08b0aa19e0b6acb3befd7d7180afd7c1105be106c4a9a4e7f5a164a5",
+        "latest_tree_sha256": "fb37aebe9d1e9fccd46c51cc14f0450b93bf14bc39322450ffbc7fbb018935b1"
+      },
+      "usdm/events": {
+        "head_event_id": "20260908_011000_feedback_slot_status_wording",
+        "head_event_sha256": "2f083a378142c06b74987ec8f2c11b303e2a9369746ec6065d56c2dd60dc4e45",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency",
+          "20260908_011000_feedback_slot_status_wording"
+        ],
+        "event_set_sha256": "8cb2285c08b0aa19e0b6acb3befd7d7180afd7c1105be106c4a9a4e7f5a164a5",
+        "latest_tree_sha256": "e1733eb0ebeff504ee3ab2ef90f47b050e6f3eb05cdb287d649c57d6724f5a31"
+      },
+      "nfr/events": {
+        "head_event_id": "20260908_013000_feedback_slot_status_wording",
+        "head_event_sha256": "9c460abcc88fcbf4b495658c71b4a4bbc49d9d9f309e46ad0c0bae58aa4dda0c",
+        "event_ids": [
+          "20260830_183726_initial_nfr",
+          "20260905_085000_feedback_todo_resolution",
+          "20260907_013000_feedback_todo_followup",
+          "20260907_120000_feedback_abort_consistency",
+          "20260908_013000_feedback_slot_status_wording"
+        ],
+        "event_set_sha256": "99463150965b02f6b7670ee3f4f853722b6c561281e6297a3e58a9afe414b4a4",
+        "latest_tree_sha256": "51f9059e35f6f5c65fc18cd1f1457bd5beca3b5b23271d538f4304b0ece9c7ef"
+      },
+      "arch/events": {
+        "head_event_id": "20260908_015000_feedback_slot_status_wording",
+        "head_event_sha256": "4e467155c8adfbefce4aa18ae2cee40f92c55545711dc66fc9c05b57b6f9a2e8",
+        "event_ids": [
+          "20260830_184457_initial_arch",
+          "20260830_202427_arch_infra_feedback_20260830_190412_infra_product_design",
+          "20260905_091000_feedback_todo_resolution",
+          "20260907_015000_feedback_todo_followup",
+          "20260907_122000_feedback_abort_consistency",
+          "20260908_015000_feedback_slot_status_wording"
+        ],
+        "event_set_sha256": "b710a5cb1a0d295f1b5c15523a2181492f16924414fb77886efd0bdb3f7d0a4b",
+        "latest_tree_sha256": "0a975f848804dd5bc3d5cf328a5e9717f2e22eb489e1e5f4c477538b77c0b91d"
+      },
+      "infra/events": {
+        "head_event_id": "20260908_021000_feedback_slot_status_wording",
+        "head_event_sha256": "2e1292ab231982c609976791deca51a97e82389b34ab645d4432e463fe1c8c46",
+        "event_ids": [
+          "20260830_190412_infra_product_design",
+          "20260905_093000_feedback_todo_resolution",
+          "20260907_021000_feedback_todo_followup",
+          "20260907_124000_feedback_abort_consistency",
+          "20260908_021000_feedback_slot_status_wording"
+        ],
+        "event_set_sha256": "8077de33d5a65f65ebff5e2c1c20d238e003e9dd69d3d500ae30ef08162ab292",
+        "latest_tree_sha256": "639f743d85b997e1297610b2a7c2db41fd004e74473f96ec6292b601509a6331"
+      },
+      "design/events": {
+        "head_event_id": null,
+        "head_event_sha256": null,
+        "event_ids": [],
+        "event_set_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "latest_tree_sha256": null
+      },
+      "specs/events": {
+        "head_event_id": "20260917_100000_feedback_impl_feedback_fd678b04_cycle2",
+        "head_event_sha256": "1c4bc301adf7663824fc8c6c87077747f92bf2e5c1d12aae340673e0ebf97cfb",
+        "event_ids": [
+          "20260830_202851_spec_generation",
+          "20260905_100000_feedback_todo_resolution",
+          "20260907_024000_feedback_todo_followup",
+          "20260907_131000_feedback_abort_consistency",
+          "20260908_024000_feedback_slot_status_wording",
+          "20260908_062000_feedback_spec_machine_readable",
+          "20260917_050000_feedback_impl_feedback_fd678b04",
+          "20260917_100000_feedback_impl_feedback_fd678b04_cycle2"
+        ],
+        "event_set_sha256": "9d223e77f55efdee7727bb8d0ba00b13bd7d346c337693476ee91f0077d6bd45",
+        "latest_tree_sha256": "250f673174a1514371f5b450ce86492d497186db648d1724887f71b84d7b6b62"
+      }
+    }
+  },
+  "request_ids": [
+    "CR-eff24f55-001",
+    "CR-eff24f55-002",
+    "CR-eff24f55-003",
+    "CR-eff24f55-004",
+    "CR-eff24f55-005"
+  ],
+  "work_units": [
+    {
+      "request_id": "CR-eff24f55-001",
+      "constraint_key": "config-input-defense-scope",
+      "direct_stage": "spec",
+      "reason": "設定ファイルを読む機能に共通する入力の守備範囲(バイト・行・構造・環境の異常の扱い、検証中の差し替えに対する保証、一時ファイルの扱い、補助コマンドの失敗、対象外の明記)を機能横断の規約として定め、各機能の仕様から参照させる要求であり、変更対象は spec の cross-cutting と UC 別 tier 仕様。USDM SPEC-004-04 が定める CSV 形式(ヘッダー、列名、fixed_params の引用規則)は変更せず文脈参照とする。先行 run(確報の制御キーの範囲)と同じく、方針資料に記載の無い検証規則の詳細は spec が正本の所有者",
+      "evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "SPEC-004-04"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/tier-facade.md"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml"
+        },
+        {
+          "kind": "request_text",
+          "value": "設定ファイルを読む機能に共通する「入力の守備範囲」を、機能横断の規約として定める"
+        }
+      ],
+      "id": "CR-eff24f55-001#1",
+      "required_closure_stages": [
+        "spec"
+      ]
+    },
+    {
+      "request_id": "CR-eff24f55-002",
+      "constraint_key": "validate-config-error-lines",
+      "direct_stage": "spec",
+      "reason": "拒否する異常ごとの error 行の文言、validate-config.sh の終了コード 6 の条件、内部障害時の stdout の有無を CLI 契約に定める要求であり、変更対象は spec の CLI コマンド契約と UC 別 tier 仕様のみ",
+      "evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "SPEC-004-04"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/tier-facade.md"
+        },
+        {
+          "kind": "request_text",
+          "value": "原因が文言から分かる error 行を CLI 契約に定める"
+        }
+      ],
+      "id": "CR-eff24f55-002#1",
+      "required_closure_stages": [
+        "spec"
+      ]
+    },
+    {
+      "request_id": "CR-eff24f55-003",
+      "constraint_key": "output-control-char-notation",
+      "direct_stage": "spec",
+      "reason": "任意入力を stdout / stderr に出すときの制御文字の表記規則を出力フォーマット規約に定め、既存の全コマンドへ適用する要求であり、変更対象は spec の cross-cutting(ux-ui の出力規約と CLI 契約)と先行 UC の仕様のみ",
+      "evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "SPEC-004-04"
+        },
+        {
+          "kind": "related_id_prefix",
+          "value": "SPEC-001-01"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/_cross-cutting/ux-ui/ui-design.md"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml"
+        },
+        {
+          "kind": "request_text",
+          "value": "制御文字の表記規則を、出力フォーマット規約に定める"
+        }
+      ],
+      "id": "CR-eff24f55-003#1",
+      "required_closure_stages": [
+        "spec"
+      ]
+    },
+    {
+      "request_id": "CR-eff24f55-004",
+      "constraint_key": "job-map-max-rows-performance",
+      "direct_stage": "quality_attributes",
+      "reason": "1 つのジョブマップの想定最大行数と、CLI 応答時間の目標(B.2.1.1、10 秒)をどの行数・内容で満たすかは、非機能要求グレード(性能・拡張性の業務処理量と性能目標値)の変更であり nfr-grade.yaml が正本。spec は下流で追従する",
+      "evidence": [
+        {
+          "kind": "related_id",
+          "value": "B.2.1.1"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/nfr/latest/nfr-grade.yaml"
+        },
+        {
+          "kind": "request_text",
+          "value": "1 つのジョブマップの想定最大行数を定める。性能目標(CLI 応答 10 秒)を、どの行数・どの内容のジョブマップで満たすかを定める"
+        }
+      ],
+      "id": "CR-eff24f55-004#1",
+      "required_closure_stages": [
+        "quality_attributes",
+        "architecture",
+        "infrastructure",
+        "spec"
+      ]
+    },
+    {
+      "request_id": "CR-eff24f55-004",
+      "constraint_key": "bash-minimum-version",
+      "direct_stage": "spec",
+      "reason": "実装が前提にしてよい bash の最低版を実装向けの仕様に明記する要求。インフラ設計の成果物は既に bash 5 と記載しており変更不要で、spec 側がその値にそろえる。変更対象は spec のみ",
+      "evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "SPEC-004-04"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/tier-facade.md"
+        },
+        {
+          "kind": "existing_artifact",
+          "value": "docs/infra/latest/docs/mcl/product/output/product-impl-onprem.yaml shell: bash 5"
+        },
+        {
+          "kind": "request_text",
+          "value": "実装が前提にしてよい bash の最低版を、実装向けの仕様または規約に明記する。インフラ設計の「bash 5」と、同じ値にそろえる"
+        }
+      ],
+      "id": "CR-eff24f55-004#2",
+      "required_closure_stages": [
+        "spec"
+      ]
+    },
+    {
+      "request_id": "CR-eff24f55-005",
+      "constraint_key": "hang-limit-adjustment-criteria-split",
+      "direct_stage": "requirements",
+      "reason": "USDM SPEC-008-05 の受け入れ基準 2 を、relay-gate が判定できる事実と運用文書の記載に分け、後者を自動判定の対象外と明記する要求であり、変更対象は USDM requirements.yaml の受け入れ基準。要件正本が最上流(related_ids の SPEC- 接頭辞は USDM の仕様 ID であり、spec stage の成果物 ID ではない)",
+      "evidence": [
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/usdm/latest/requirements.yaml"
+        },
+        {
+          "kind": "related_id",
+          "value": "SPEC-008-05 (USDM specification id under REQ-008)"
+        },
+        {
+          "kind": "request_text",
+          "value": "受け入れ基準 2 を、次の 2 つに分ける"
+        }
+      ],
+      "id": "CR-eff24f55-005#1",
+      "required_closure_stages": [
+        "requirements",
+        "quality_attributes",
+        "architecture",
+        "infrastructure",
+        "spec"
+      ]
+    }
+  ],
+  "execution_stages": [
+    {
+      "id": "requirements",
+      "steps": [
+        "1"
+      ],
+      "direct_work_unit_ids": [
+        "CR-eff24f55-005#1"
+      ],
+      "causal_work_unit_ids": [
+        "CR-eff24f55-005#1"
+      ],
+      "stage_packet": "stage-packets/requirements.md"
+    },
+    {
+      "id": "quality_attributes",
+      "steps": [
+        "2"
+      ],
+      "direct_work_unit_ids": [
+        "CR-eff24f55-004#1"
+      ],
+      "causal_work_unit_ids": [
+        "CR-eff24f55-004#1",
+        "CR-eff24f55-005#1"
+      ],
+      "stage_packet": "stage-packets/quality_attributes.md"
+    },
+    {
+      "id": "architecture",
+      "steps": [
+        "3"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-eff24f55-004#1",
+        "CR-eff24f55-005#1"
+      ],
+      "stage_packet": "stage-packets/architecture.md"
+    },
+    {
+      "id": "infrastructure",
+      "steps": [
+        "4a",
+        "4b"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-eff24f55-004#1",
+        "CR-eff24f55-005#1"
+      ],
+      "stage_packet": "stage-packets/infrastructure.md"
+    },
+    {
+      "id": "spec",
+      "steps": [
+        "6"
+      ],
+      "direct_work_unit_ids": [
+        "CR-eff24f55-001#1",
+        "CR-eff24f55-002#1",
+        "CR-eff24f55-003#1",
+        "CR-eff24f55-004#2"
+      ],
+      "causal_work_unit_ids": [
+        "CR-eff24f55-001#1",
+        "CR-eff24f55-002#1",
+        "CR-eff24f55-003#1",
+        "CR-eff24f55-004#1",
+        "CR-eff24f55-004#2",
+        "CR-eff24f55-005#1"
+      ],
+      "stage_packet": "stage-packets/spec.md"
+    }
+  ],
+  "outside_work_unit_ids": []
+}

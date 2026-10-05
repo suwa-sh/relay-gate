@@ -11,3 +11,4 @@
 | 2026-09-07 01:30:00 | [20260907_013000_feedback_todo_followup](../../nfr/events/20260907_013000_feedback_todo_followup) |
 | 2026-09-07 12:00:00 | [20260907_120000_feedback_abort_consistency](../../nfr/events/20260907_120000_feedback_abort_consistency) |
 | 2026-09-08 01:30:00 | [20260908_013000_feedback_slot_status_wording](../../nfr/events/20260908_013000_feedback_slot_status_wording) |
+| 2026-09-21 09:00:00 | [20260921_090000_feedback_impl_feedback_eff24f55](../../nfr/events/20260921_090000_feedback_impl_feedback_eff24f55) |

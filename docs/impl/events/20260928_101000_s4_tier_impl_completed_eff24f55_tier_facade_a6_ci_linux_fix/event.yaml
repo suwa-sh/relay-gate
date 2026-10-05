@@ -1,0 +1,23 @@
+event_id: 20260928_101000_s4_tier_impl_completed_eff24f55_tier_facade_a6_ci_linux_fix
+type: stage_completed
+uc_id: eff24f55
+stage: S4
+tier: tier-facade
+attempt: 6
+payload:
+  manifest_sha256: 85d1ebda8af9b786c1abbfc4e09198f4716663209279349d7e7ad9c947902002
+  manifest_projection: v2
+  mode: ci_linux_fix
+  gates:
+    format: pass
+    lint: pass
+    tdd: pass
+    bdd_tier: pass
+  tdd: 339 tests, 0 not ok (macOS and Ubuntu 24.04 with LANG unset and LANG=C.UTF-8)
+  bdd_tier: 41 scenarios / 143 steps passed
+  assumptions:
+    path: attempt-6/S4_tier-impl.tier-facade.assumptions.yaml
+    count: 23
+    sha256: ea33d97a79450798abbe2a21e5ad406bf6d6706b315b316d17d5706dcad3b1fc
+  rerun_after: 20260928_100000_stage_invalidated_eff24f55_ci_linux_fix
+created_at: '2026-09-28T10:10:00+09:00'

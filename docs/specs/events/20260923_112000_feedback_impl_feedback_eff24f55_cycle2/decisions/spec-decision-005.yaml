@@ -1,0 +1,44 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "specification"
+artifact_id: "spec-decision-005"
+title: "feedback todo-resolution-20260905 の Spec 追従: CSV セル解析規則・ファイル正本の状態導出・operation_mode 英字コード・グループ間統一決定"
+status: "approved"
+generated_at: "2026-09-05T10:00:00Z"
+context: |
+  feedback request todo-resolution-20260905(CR-c770d8f0-001〜012)で、利用者は feature flag を元資料の 9 キー(3 値)に戻し、
+  ジョブマップ系ファイルを CSV、run_id をローカルタイムゾーン形式、Runner Result に aborted.txt を追加して slot 実行の状態を
+  ファイル正本から導出すると決定した。RDRA / USDM / arch / nfr / infra は先行イベントで更新済みで、本イベントは Spec 側を追従させる。
+  RDRA / USDM は「何を」までしか定めないため、契約(cli-command-contract.yaml)として確定が必要な「どう表すか」を本記録に残す。
+  UC 単位の差分更新を 5 グループ + cross-cutting 3 担当の subagent で並列に行ったため、グループ間で食い違った表現を統一する必要があった。
+decision: |
+  - CSV セル解析規則: セルはカンマ区切り。二重引用符で囲める(囲まないセルはカンマ・二重引用符を含められない)。囲んだセル内の二重引用符は `""` に二重化。
+    fixed_params は JSON 配列文字列のセルで必ず二重引用符で囲む。bash 単独(外部 CSV パーサ非依存)で 1 文字ずつの状態機械で解析できる範囲に限定(ネスト・複数行セル不可)。
+    slot ジョブマップの列はヘッダー名で対応付け(必須 5 列 + 任意 host / user(両方揃える)+ 末尾任意 credential_ref / map_version。impl_version 列は無し、未知列は warn)。
+    クロスチェックジョブマップ・対象カタログは列順固定のまま形式だけ CSV。
+  - slot 実行の状態導出(条件「slot 実行の状態導出規則」): exitcode.txt → SUCCEEDED(0)/ FAILED(非 0)、無く aborted.txt → ABORTED、どちらも無し → RUNNING。両方あれば exitcode.txt 優先。
+    abort-blue / abort-green・background-rerun --role blue|green・hang-detector は RAPID_CROSSCHECK_MODE によらずこの規則で判定し、管理 DB の slot_executions.status は二重マッピング(off 以外のみ)。
+    abort-* の順序は 成果物再確認 → aborted.txt を .tmp → mv で公開 → (off 以外)条件付き UPDATE。UPDATE 0 件は WARN で 0、接続・SQL 失敗は 6(aborted.txt は残す)、再適用は冪等。
+  - feature flag の値は runner が feature-flag.env を読まず、facade.sh / background-rerun.sh が環境変数(RAPID_CROSSCHECK_MODE / RAPID_CROSSCHECK_RUNNER / BLUE_IMPL / GREEN_IMPL)で渡す。
+  - operation_mode(RDRA バリエーション「運用モード」)の stdout / 実行ログ上の表現は英字コード parallel / green_only / next_gen_parallel / custom。
+  - run_id / final_crosscheck_id の時刻部はホストのローカルタイムゾーン(Z 無し)、それ以外の日時(実行ログ・*_at 列・started-at.txt・aborted.txt・メール本文)は UTC ISO 8601 Z 付きのまま(arch CLP-002 は未変更)。
+  - parallel_run の STARTED → RUNNING は全 slot 起動後(RDRA 状態.tsv の記述どおり)。UPDATE 失敗は runner 起動済みのため終了コードに反映せず実行ログ ERROR のみ。
+  - 文言・キー順の正本は cli-command-contract.yaml(validate-config.sh の stdout キー順、feature flag / ジョブマップ検証のエラー・警告文言、完了通知失敗の WARN 文言)。UC spec / tier md はこれに揃える。
+consequences:
+  positive:
+    - "元資料の設定契約(9 キー / CSV 列名)と Spec が一致し、RDRA / USDM の受け入れ条件(SPEC-001-01 / 004-04 / 010-01 / 011-04)を BDD で直接検証できる"
+    - "RAPID_CROSSCHECK_MODE=off でも中止・リラン・ハング検知が成果物ファイルだけで成立し、管理 DB 無しの縮退運転が仕様として閉じる"
+    - "並列更新したグループ間の文言差(エラー文言・ログ文言・英字コード)を契約 1 ファイルに寄せたため、実装時の照合先が一意になる"
+  negative:
+    - "CSV 解析を bash 状態機械に限定したため、複数行セルやネストした JSON は扱えない(適用側の fixed_params 設計に制約)"
+    - "run_id の時刻部(ローカル TZ)とログ日時(UTC)が混在する。運用者が突き合わせるときはタイムゾーン差を意識する必要がある(確認推奨項目として返却)"
+    - "operation_mode の英字コードは RDRA に定義が無い Spec 側の命名であり、利用者確認が望ましい"
+alternatives_considered:
+  - name: "ジョブマップを TSV のまま維持し CSV への変換層を置く"
+    reason_rejected: "利用者決定(CR-002)は元資料どおりの CSV。変換層は実装と運用の二重管理になる"
+  - name: "abort-blue / abort-green を off では不可(管理 DB が無い旨を出して終了)のまま維持"
+    reason_rejected: "利用者決定(CR-004)は off でも aborted.txt で中止が成立すること。USDM SPEC-010-01 の受け入れ条件に反する"
+  - name: "operation_mode を日本語名のまま stdout に出す"
+    reason_rejected: "stdout は key=value の ASCII 規約(ui-design.md)。パイプ処理と実行ログの grep 適性を優先"
+  - name: "parallel_run の STARTED → RUNNING を runner 起動前に行う(契約側の第 1 版)"
+    reason_rejected: "RDRA 状態.tsv は「background slot をすべて起動してから foreground slot を起動」した時点を RUNNING と定める。UC 4 か所も同じ順序"

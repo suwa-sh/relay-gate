@@ -1,0 +1,20 @@
+event_id: 20260928_123000_s5_verify_completed_eff24f55_tier_facade_a6_f001_fix
+type: stage_completed
+uc_id: eff24f55
+stage: S5
+tier: tier-facade
+attempt: 6
+payload:
+  manifest_sha256: 85d1ebda8af9b786c1abbfc4e09198f4716663209279349d7e7ad9c947902002
+  manifest_projection: v2
+  lane: verify
+  verifier_model: gpt-6-astra
+  result: pass
+  open_blockers: 0
+  open_majors: 0
+  minor: 30
+  assumptions_sha256: 40fd91da14ab9a90f39339c9bf859e223fadbcf4d4c1175618af1aabd21d9d2a
+  assumption_verdicts_sha256: 9d62848cbe1f1a4da15e285abf3698a27fb75dadd20ced0ed64e1c28535d743f
+  assumption_verdicts_summary: {consistent: 2, spec_absent: 22, contradicts: 0, unlisted: 5}
+  rerun_after: 20260928_113000_stage_invalidated_eff24f55_f001_fix
+created_at: '2026-09-28T12:30:00+09:00'

@@ -1,0 +1,24 @@
+event_id: 20260922_104500_s5_verify_completed_eff24f55_tier_facade_a5_rerun
+type: stage_completed
+uc_id: eff24f55
+stage: S5
+tier: tier-facade
+attempt: 5
+lane: verify
+payload:
+  manifest_sha256: f8cf17f93da5c6e63c9b3ce97c7fbc076f64c6174bd02d27757adf7c8b54ecb1
+  manifest_projection: v2
+  verifier_model: gpt-6-astra
+  result: fail
+  gates: {format: pass, lint: pass, tdd: pass, bdd_tier: pass}
+  findings: {blocker: 2, major: 2, minor: 23}
+  blockers:
+  - {id: F-001, summary: 'helper command failure leaks raw stderr in addition to the contract error line'}
+  - {id: F-002, summary: 'snapshot deletion failure is ignored; temp file remains and exit 0 is returned'}
+  assumptions_sha256: 486864f544df207c37474798f0c4ecbf1bafa0590229d7ae92eeb5805bc46f28
+  assumption_verdicts_sha256: 2ea3f58bf917d070da22c4c477116ac71f95b5a7012cdf46272d4243229df13e
+  assumption_verdicts_summary: {consistent: 3, spec_absent: 21, contradicts: 0, unlisted: 0}
+  performance: '5,000 rows worst case: 3.710s (--verbose 4.623s)'
+  format_fix_note: 'verifier initially recorded a wrong assumptions_sha256; returned for format-only correction (no content change); validateAssumptions verdicts ok'
+  rerun_after: 20260922_084000_stage_invalidated_eff24f55_spec_reflux_stale
+created_at: '2026-09-22T10:45:00+09:00'

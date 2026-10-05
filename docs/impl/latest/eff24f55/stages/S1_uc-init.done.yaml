@@ -1,0 +1,23 @@
+stage: S1
+uc_id: eff24f55
+manifest_sha256: 1c96b5d216dd8e2248eb6ab01d27da88edc475692681d5e5480fd39689bc24cc
+manifest_projection: v2
+result: pass
+input_preflight:
+  files_exist: true
+  yaml_parse: true
+  gherkin_blocks: 3
+  gherkin_blocks_note: 'spec.md 2 / tier-facade.md 1'
+  tier_ids_in_arch:
+  - tier-facade
+  conditional_inputs_consistent: true
+lineage_ok: true
+lineage_note: 'spec-event 20260923_112000_feedback_impl_feedback_eff24f55_cycle2 trigger_event = rdra:20260921_084000 + arch:20260921_092000 (same trigger as the previous spec event; no new rdra/usdm/arch events). heads of rdra/arch events match the trigger. usdm latest stays 20260921_084000 (requirements.yaml sha unchanged); arch latest event_id stays 20260908_015000 (arch-design.yaml sha unchanged).'
+atdd_scenarios:
+- SPEC-004-04-4
+- SPEC-008-05-2
+atdd_mapping: 'uc-map atdd_confirmed: true, confirmed by 20260917_004437_config_confirmed_atdd_mapping_all_ucs (not re-asked). SPEC-008-05-3 (@manual, operational-document criterion) is intentionally not in atdd_scenarios: it is marked non-automatable in USDM.'
+shared_spec_refs_note: 'same 5 refs as previous manifest (direct: cli-command-contract.yaml / ui-design.md / asyncapi.yaml; transitive: rdb-schema.yaml / data-visualization.md). only cli-command-contract.yaml changed (CR-006 lines= rule / CR-007 credential_ref rule). openapi.yaml stays excluded (paths: {} stub). reader UC spec.md links (resolve-by-JOB_ID / hang_detect_limit) are not shared definitions and stay excluded, unchanged from the previous cycle.'
+rerun_reason: 'stale after spec reflux 20260922_130000_impl_feedback_eff24f55 (invalidated event 20260923_115100_stage_invalidated_eff24f55_spec_reflux_cycle2_stale)'
+completed_at: '2026-09-23T11:51:30+09:00'
+completed_by: dist-impl-run@0.14.1

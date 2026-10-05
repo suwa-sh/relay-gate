@@ -1,0 +1,116 @@
+stage: S8
+uc_id: eff24f55
+manifest_sha256: f4528376203939a69f1860d8fba45c818c647fa63d56a44f2e91c8e6a2618c21
+manifest_projection: v2
+result: pass
+mode: initial
+attempt: 4
+feedback_request:
+  feedback_id: 20260919_213000_impl_feedback_eff24f55
+  draft_path: "docs/impl/latest/eff24f55/feedback/draft.md"
+  draft_sha256: 784e06d7d194f4642f5cf00a46de1abc5704f63c67d287b2528eaf5599b134b6
+  draft_verify: "feedbackRequest.js verify --feedback: PASS (5 requests)"
+  request_count: 5
+  blocker_count: 1
+  severity_counts:
+    blocker: 1
+    spec-gap: 3
+    improvement: 1
+  requests:
+    - id: CR-eff24f55-001
+      severity: blocker
+      title: "設定ファイル検証が守る範囲(異常な入力・異常な環境)が未定義"
+      sources:
+        - "attempt-4 F-001 (blocker)"
+        - "issues/20260919_210000_file-replaced-between-scan-and-parse.md"
+        - "issues/20260919_195500_malformed-input-policy-undefined.md"
+    - id: CR-eff24f55-002
+      severity: spec-gap
+      title: "異常な入力の拒否と検証器の内部障害に、専用の error 行が無い"
+      sources:
+        - "issues/20260919_183305_control-char-notation-and-internal-error-undefined.md"
+        - "A-026 / A-031 / A-038 / A-043"
+    - id: CR-eff24f55-003
+      severity: spec-gap
+      title: "任意入力を出力するときの制御文字の表記が未定義"
+      sources:
+        - "issues/20260919_183305_control-char-notation-and-internal-error-undefined.md"
+        - "A-040 / A-041 / A-042"
+    - id: CR-eff24f55-004
+      severity: spec-gap
+      title: "実装の実行前提(bash の版、ジョブマップの想定最大行数)が実装向けの仕様に無い"
+      sources:
+        - "docs/impl/events/20260919_173500_s4_tier_impl_completed_eff24f55_tier_facade_a2/_changes.md"
+        - "attempt-4 F-002 (minor)"
+        - "A-024"
+    - id: CR-eff24f55-005
+      severity: improvement
+      title: "1 つの受け入れ基準に、自動判定できる事実と運用文書の記載が混在している"
+      sources:
+        - "issues/20260919_161456_cross-uc-scenarios.md"
+open_blocker_handling: "attempt-4 F-001 は実装へ差し戻さず、CR-eff24f55-001 (blocker) として仕様の確定を求める (user_decision / stop_rule: docs/impl/events/20260919_195500_attempt_opened_eff24f55_a4/event.yaml)"
+as_built_summary: "docs/impl/latest/eff24f55/feedback/as-built-summary.md"
+classification:
+  spec_origin: 5
+  implementation_origin: 2
+  environment_origin: 1
+  implementation_origin_items:
+    - "F-001 の直接原因 (バイト点検と CSV 読み込みで同じパスを 2 回開く)。仕様確定後の次の attempt で修正"
+    - "F-002 (minor): map_version の distinct 集計の二重ループ。次の attempt で修正"
+  environment_origin_items:
+    - "ATDD の step 文言の重複 (先行 UC と同文)。S7 で起動切替により解決済み"
+  excluded_from_draft:
+    - "F-010 (major, A-012 security, spec_absent): 人の回答待ち。review で spec_change の却下があれば refresh で要求化する"
+    - "守備範囲・文言・表記に関わらない spec_absent の minor 前提 16 件: review で判断する"
+assumption_handling:
+  source: "docs/impl/latest/eff24f55/stages/attempt-4/S5_verify.tier-facade.findings.yaml"
+  assumptions_sha256: fd054bd7387b0068d4d76ffe368726fa89b77be081ae969c6b6c022ac85b83d2
+  verdicts_sha256: b5e5f4fa801d46c342d05bb2dae683d9c26e841c082d878cd90d92a8bb992264
+  total: 34
+  consistent: 2
+  spec_absent: 32
+  contradicts: 0
+  unlisted: 0
+  requires_answer_ids:
+    - A-012
+  human_decisions: "未取得 (review で回答)"
+  human_rejected_spec_change: 0
+learnings: 2
+learning_files:
+  - "docs/impl/latest/eff24f55/learnings/20260919_213000_robustness-scope-undefined-verify-not-converging.md"
+  - "docs/impl/latest/eff24f55/learnings/20260919_213000_bash-input-pitfalls.md"
+proposals:
+  skill: true
+  context: true
+proposal_files:
+  skill: "docs/impl/latest/eff24f55/learnings/20260919_213000_proposal-skill.md"
+  context: "docs/impl/latest/eff24f55/learnings/20260919_213000_proposal-context.md"
+policy_docs_checked:
+  - "tmp/RelayGateのしくみ.md"
+  - "tmp/RelayGateの利用イメージ.md"
+policy_docs_note: "文字コード・バイト異常・検証中の差し替え・出力の制御文字・bash の版は方針資料に記載なし (新規の決定が必要) と各要求に明記した。方針資料の CSV 例 (非 ASCII 値、バックスラッシュを含むパス) を受理し続けることを完了条件に入れた"
+inputs_read:
+  - "docs/impl/latest/eff24f55/issues/20260919_161456_cross-uc-scenarios.md"
+  - "docs/impl/latest/eff24f55/issues/20260919_183305_control-char-notation-and-internal-error-undefined.md"
+  - "docs/impl/latest/eff24f55/issues/20260919_195500_malformed-input-policy-undefined.md"
+  - "docs/impl/latest/eff24f55/issues/20260919_210000_file-replaced-between-scan-and-parse.md"
+  - "docs/impl/latest/eff24f55/stages/attempt-4/S5_verify.tier-facade.findings.yaml"
+  - "docs/impl/latest/eff24f55/stages/attempt-4/S4_tier-impl.tier-facade.assumptions.yaml"
+  - "docs/impl/latest/eff24f55/stages/attempt-1/S5_verify.tier-facade.findings.yaml"
+  - "docs/impl/latest/eff24f55/stages/attempt-2/S5_verify.tier-facade.findings.yaml"
+  - "docs/impl/latest/eff24f55/stages/attempt-3/S5_verify.tier-facade.findings.yaml"
+  - "docs/impl/events/20260919_195500_attempt_opened_eff24f55_a4/event.yaml"
+  - "docs/impl/events/*eff24f55*/_changes.md"
+  - "docs/specs/latest/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/tier-facade.md"
+  - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml"
+  - "docs/specs/latest/_cross-cutting/ux-ui/ui-design.md"
+  - "docs/usdm/latest/requirements.yaml"
+next_command: "/distillery:dist-pipeline docs/impl/latest/eff24f55/feedback-requests/20260919_213000_impl_feedback_eff24f55.md"
+next_note: "review で承認後に publish する。review では A-012 (credential_ref) の回答が必須"
+notes:
+  - "manifest_sha256 は受領値を再計算せず転記した"
+  - "git コマンドは実行していない。write-set 外のファイルは変更していない"
+  - "review/review-notes.md は存在しない (review 前)"
+  - "completed_at はパイプラインの論理時刻 (S7 done 21:20 の後) に合わせた"
+completed_at: "2026-09-19T21:30:00+09:00"
+completed_by: dist-impl-feedback@0.14.1
