@@ -57,9 +57,9 @@ stages:
   S9_review:
     status: done
     state: approved
-    review_event: 20260923_132000_s9_review_generated_eff24f55_cycle3
-    approved_event: 20260923_134000_review_approved_eff24f55_cycle3
-    delivery_prepared_event: 20260923_134100_delivery_prepared_eff24f55
+    review_event: 20260928_140000_s9_review_generated_eff24f55_ci_linux_fix
+    approved_event: 20260928_150000_review_approved_eff24f55_ci_linux_fix
+    delivery_prepared_event: 20260928_150100_delivery_prepared_eff24f55_ci_linux_fix
 attempt_limit:
   reached: true
   user_decision: continue_once

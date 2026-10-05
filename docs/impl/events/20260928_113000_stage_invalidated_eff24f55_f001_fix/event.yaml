@@ -1,0 +1,13 @@
+event_id: 20260928_113000_stage_invalidated_eff24f55_f001_fix
+type: stage_invalidated
+uc_id: eff24f55
+payload:
+  reason: blocker_fix_same_attempt
+  detail: 'S5 blocker F-001 (locale-dependent whitespace test for key=value / key: value) fixed in facade within attempt 6 of the Linux CI fix cycle (user decision A, 2026-10-06). S5 and S6/S7 rerun required.'
+  invalidated:
+  - stages/attempt-6/S5_verify.tier-facade.done.yaml
+  - stages/attempt-6/S5_verify.tier-facade.findings.yaml
+  - stages/S6_uc-bdd.done.yaml
+  - stages/S7_atdd.done.yaml
+  archive_dir: docs/impl/latest/eff24f55/invalidated/20260928_113000_stage_invalidated_eff24f55_f001_fix
+created_at: '2026-09-28T11:30:00+09:00'

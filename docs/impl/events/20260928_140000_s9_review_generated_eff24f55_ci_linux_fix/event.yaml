@@ -1,0 +1,11 @@
+event_id: 20260928_140000_s9_review_generated_eff24f55_ci_linux_fix
+type: stage_completed
+uc_id: eff24f55
+stage: S9
+payload:
+  manifest_sha256: 85d1ebda8af9b786c1abbfc4e09198f4716663209279349d7e7ad9c947902002
+  manifest_projection: v2
+  feedback_review_evidence: {feedback_id: null, draft_path: null, draft_sha256: null, request_count: 0, blocker_count: 0}
+  implementation_review_evidence: {gate_result: '6/6 pass', open_blocker_count: 0, open_major_count: 0, assumption_evidence_sha256: efbe4937e8665c971cce41fe5d0a11f707db6cdfe749258d381d6215bfa1996d}
+  state_after: awaiting_review
+created_at: '2026-09-28T14:00:00+09:00'

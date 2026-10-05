@@ -1,0 +1,50 @@
+event_id: 20260928_150000_review_approved_eff24f55_ci_linux_fix
+type: review_approved
+uc_id: eff24f55
+stage: S9
+payload:
+  review_evidence_event_id: 20260928_140000_s9_review_generated_eff24f55_ci_linux_fix
+  approval_kind: delivery_approval
+  supersedes: 20260923_134000_review_approved_eff24f55_cycle3
+  user_answer: '機能=A / 前提=一括承認'
+  feedback_review_evidence:
+    feedback_id: null
+    draft_sha256: null
+    request_count: 0
+  implementation_review_evidence:
+    gate_result: '6/6 pass'
+    open_blocker_count: 0
+    open_major_count: 0
+    assumption_evidence_sha256: efbe4937e8665c971cce41fe5d0a11f707db6cdfe749258d381d6215bfa1996d
+  selections:
+    A-058: 'A: 前提として承認(空白 = ASCII 6 種のみ、ロケール非依存)'
+    A-053: 'A: 前提として承認(sed 失敗時は tr の終了状態を見ない)'
+  assumption_decisions:
+  - {tier: tier-facade, id: A-005, decision: auto_confirmed}
+  - {tier: tier-facade, id: A-006, decision: auto_confirmed}
+  - {tier: tier-facade, id: A-008, decision: auto_confirmed}
+  - {tier: tier-facade, id: A-010, decision: auto_confirmed}
+  - {tier: tier-facade, id: A-014, decision: auto_confirmed}
+  - {tier: tier-facade, id: A-016, decision: auto_confirmed}
+  - {tier: tier-facade, id: A-017, decision: auto_confirmed}
+  - {tier: tier-facade, id: A-018, decision: auto_confirmed}
+  - {tier: tier-facade, id: A-019, decision: auto_confirmed}
+  - {tier: tier-facade, id: A-020, decision: auto_confirmed}
+  - {tier: tier-facade, id: A-022, decision: auto_confirmed}
+  - {tier: tier-facade, id: A-025, decision: auto_confirmed}
+  - {tier: tier-facade, id: A-043, decision: auto_confirmed}
+  - {tier: tier-facade, id: A-044, decision: auto_confirmed}
+  - {tier: tier-facade, id: A-049, decision: auto_confirmed}
+  - {tier: tier-facade, id: A-050, decision: auto_confirmed}
+  - {tier: tier-facade, id: A-051, decision: auto_confirmed}
+  - {tier: tier-facade, id: A-052, decision: auto_confirmed}
+  - {tier: tier-facade, id: A-053, decision: confirmed, note: 'selection A: tr exit status ignored when sed fails'}
+  - {tier: tier-facade, id: A-054, decision: auto_confirmed}
+  - {tier: tier-facade, id: A-055, decision: auto_confirmed}
+  - {tier: tier-facade, id: A-056, decision: auto_confirmed}
+  - {tier: tier-facade, id: A-057, decision: auto_confirmed}
+  - {tier: tier-facade, id: A-058, decision: confirmed, note: 'selection A: whitespace for key=value choice is the 6 ASCII characters only, locale independent'}
+  assumption_hash_recheck: {assumptions_sha256: 40fd91da14ab9a90f39339c9bf859e223fadbcf4d4c1175618af1aabd21d9d2a, assumption_verdicts_sha256: 9d62848cbe1f1a4da15e285abf3698a27fb75dadd20ced0ed64e1c28535d743f, rechecked_at: '2026-09-28T15:00:00+09:00'}
+  review_notes: docs/impl/latest/eff24f55/review/review-notes.md
+  next_state: delivery_ready
+created_at: '2026-09-28T15:00:00+09:00'

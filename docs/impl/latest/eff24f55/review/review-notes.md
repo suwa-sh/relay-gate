@@ -85,3 +85,13 @@ S9 承認対話の記録(オーケストレータが追記。S8 refresh の入�
   - 前提 A-016: 案 A(前提として承認。推奨値 60 との差の専用 info 行は設けず、--verbose の resolved 行でのみ示す)
   - 他の前提 22 件: 回答任意のため auto_confirmed。却下 0
 - 次: delivery_ready → squash → push → PR
+
+
+## 2026-10-06 レビュー(Linux CI 修正後・4 回目)
+
+- 経緯: 2026-09-23 の承認後、PR #11 の Linux CI(ubuntu-latest)で facade の単体テスト 5 件が失敗。利用者の決定「A: 同じ branch で修正」(2026-10-06)に従い attempt 6 内で修正
+- 対象 evidence: S9 event `20260928_140000_s9_review_generated_eff24f55_ci_linux_fix`(変更要求 0 件、gate 6/6 pass(macOS + Ubuntu 24.04 両ロケール)、blocker 0 / major 0 / minor 30、assumption evidence efbe4937…)
+- 独立検証 2 回: 1 回目 blocker 1(F-001 空白判定のロケール依存)→ 修正 → 2 回目 blocker 0
+- 回答: `機能=A / 前提=一括承認`
+- 決定: 機能承認 / A-058(空白 = ASCII 6 種のみ)= A / A-053(sed 失敗時は tr の終了状態を見ない)= A / 他 22 件 auto_confirmed。却下 0
+- 次: delivery_ready → 修正分を squash して PR #11 へ push → CI pass 確認 → merge

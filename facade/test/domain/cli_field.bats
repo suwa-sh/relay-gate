@@ -33,6 +33,23 @@ setup() {
 	[ "$output" = 'green_impl: rel\t1' ]
 }
 
+@test "cli_field_line_値にUnicode空白を含む場合_ロケールによらずkey=value形式で出すこと" {
+	# Arrange(EM SPACE U+2003 / 全角空白 U+3000 / NBSP U+00A0。ASCII の空白ではないので `key=value`。
+	#         UTF-8 ロケールの [[:space:]] に任せると環境で形式が変わるため、C と UTF-8 の両方で同じ結果を確かめる)
+	local value=$'v\xe2\x80\x83x\xe3\x80\x80y\xc2\xa0z'
+	local utf8_locale
+	utf8_locale="$(locale -a 2>/dev/null | grep -i -E '^(en_US|C)\.utf-?8$' | head -n 1 || true)"
+
+	# Act / Assert
+	LC_ALL=C run cli_field_line map_version "$value"
+	[ "$output" = "map_version=$value" ]
+	LC_ALL="${utf8_locale:-C}" run cli_field_line map_version "$value"
+	[ "$output" = "map_version=$value" ]
+	# ASCII の空白は UTF-8 ロケールでも `key: value`
+	LC_ALL="${utf8_locale:-C}" run cli_field_line map_version $'v\x0bx'
+	[ "$output" = 'map_version: v\u000bx' ]
+}
+
 @test "cli_field_line_値が空の場合_空値表記-で出すこと" {
 	# Arrange / Act
 	run cli_field_line blue_impl ""

@@ -124,6 +124,52 @@ validate_job_map_query() {
   return "${status:-0}"
 }
 
+# validate_job_map_rows の結果: error 行の件数 / 重複検査に渡す「行番号 job_id」の組 / 版の集計に渡す map_version
+VALIDATE_JOB_MAP_ROW_ERRORS=0
+VALIDATE_JOB_MAP_JOB_ID_PAIRS=()
+VALIDATE_JOB_MAP_MAP_VERSIONS=()
+
+# (4) 行ごとの検証(全件。validate_job_map_run から呼ぶ。ヘッダーは job_map_header_bind 済み)。
+# 列数不一致の行(空白だけの行を含む)は列を対応付けられないため、列検証・重複検査の対象にしない。
+# 戻り値: 0 … 全行を検査した(違反の有無は VALIDATE_JOB_MAP_ROW_ERRORS)/ 1 … 検証器の障害を報告した(呼び出し元は終了コード 6)
+# 引数: verbose shown_path
+validate_job_map_rows() {
+  local verbose="$1" shown_path="$2"
+  local row_index=0 row_count="${#JOB_MAP_ROW_LINES[@]}" line expected="${#JOB_MAP_HEADER[@]}" actual
+  # 行ごとの判定(列の値域・JSON 配列・可視表記)はすべてバイト単位。行数に比例して呼ぶ関数が LC_ALL を設定し直さずに済むよう、
+  # ループ全体を C にする(値の比較と組み立てだけで、ロケールに依存する判定は含まない)
+  local LC_ALL=C
+  VALIDATE_JOB_MAP_ROW_ERRORS=0
+  VALIDATE_JOB_MAP_JOB_ID_PAIRS=()
+  VALIDATE_JOB_MAP_MAP_VERSIONS=()
+  while [ "$row_index" -lt "$row_count" ]; do
+    line="${JOB_MAP_ROW_LINES[$row_index]}"
+    actual="${JOB_MAP_ROW_CELL_COUNTS[$row_index]}"
+    if [ "${JOB_MAP_ROW_STATUSES[$row_index]}" = "$JOB_MAP_PARSE_QUOTE_INVALID" ]; then
+      job_map_emit "error: csv quote is invalid line=$line path: $shown_path"
+      VALIDATE_JOB_MAP_ROW_ERRORS=$((VALIDATE_JOB_MAP_ROW_ERRORS + 1))
+    elif [ "$actual" -ne "$expected" ]; then
+      job_map_emit "error: column count mismatch line=$line expected=$expected actual=$actual"
+      VALIDATE_JOB_MAP_ROW_ERRORS=$((VALIDATE_JOB_MAP_ROW_ERRORS + 1))
+    else
+      job_map_row_bind_at JOB_MAP_CELLS "${JOB_MAP_ROW_OFFSETS[$row_index]}"
+      if validate_job_map_row "$line"; then
+        # 検証を通過した行の解決結果は必ず作れる。作れなければ検証器の障害として扱う(黙って行を落とさない)
+        if [ "$verbose" = "true" ] && ! job_map_row_resolved_line; then
+          validate_job_map_report_command_failure "job_map_row_resolved_line" "$shown_path"
+          return 1
+        fi
+      else
+        VALIDATE_JOB_MAP_ROW_ERRORS=$((VALIDATE_JOB_MAP_ROW_ERRORS + 1))
+      fi
+      VALIDATE_JOB_MAP_JOB_ID_PAIRS+=("$line" "$JOB_MAP_ROW_JOB_ID")
+      VALIDATE_JOB_MAP_MAP_VERSIONS+=("$JOB_MAP_ROW_MAP_VERSION")
+    fi
+    row_index=$((row_index + 1))
+  done
+  return 0
+}
+
 # 検証の本体(validate_job_map_query から呼ぶ。JOB_MAP_REPORT_SINK は配列)
 # 引数: path verbose shown_path
 validate_job_map_run() {
@@ -162,39 +208,16 @@ validate_job_map_run() {
   fi
   job_map_header_bind "${JOB_MAP_HEADER[@]}"
 
-  # (4) 行ごとの検証(全件)
-  local errors=0 row_index=0 row_count="${#JOB_MAP_ROW_LINES[@]}" line expected="${#JOB_MAP_HEADER[@]}" actual
-  local job_id_pairs=() map_versions=()
-  while [ "$row_index" -lt "$row_count" ]; do
-    line="${JOB_MAP_ROW_LINES[$row_index]}"
-    actual="${JOB_MAP_ROW_CELL_COUNTS[$row_index]}"
-    if [ "${JOB_MAP_ROW_STATUSES[$row_index]}" = "$JOB_MAP_PARSE_QUOTE_INVALID" ]; then
-      job_map_emit "error: csv quote is invalid line=$line path: $shown_path"
-      errors=$((errors + 1))
-    elif [ "$actual" -ne "$expected" ]; then
-      # 列数不一致の行(空白だけの行を含む)は列を対応付けられないため、列検証・重複検査の対象にしない
-      job_map_emit "error: column count mismatch line=$line expected=$expected actual=$actual"
-      errors=$((errors + 1))
-    else
-      job_map_row_bind_at JOB_MAP_CELLS "${JOB_MAP_ROW_OFFSETS[$row_index]}"
-      if validate_job_map_row "$line"; then
-        # 検証を通過した行の解決結果は必ず作れる。作れなければ検証器の障害として扱う(黙って行を落とさない)
-        if [ "$verbose" = "true" ] && ! job_map_row_resolved_line; then
-          validate_job_map_report_command_failure "job_map_row_resolved_line" "$shown_path"
-          return "$JOB_MAP_EXIT_EXECUTION_ERROR"
-        fi
-      else
-        errors=$((errors + 1))
-      fi
-      job_id_pairs+=("$line" "$JOB_MAP_ROW_JOB_ID")
-      map_versions+=("$JOB_MAP_ROW_MAP_VERSION")
-    fi
-    row_index=$((row_index + 1))
-  done
+  # (4) 行ごとの検証(全件)。結果は VALIDATE_JOB_MAP_ROW_ERRORS / VALIDATE_JOB_MAP_JOB_ID_PAIRS / VALIDATE_JOB_MAP_MAP_VERSIONS
+  local errors=0 row_count="${#JOB_MAP_ROW_LINES[@]}"
+  if ! validate_job_map_rows "$verbose" "$shown_path"; then
+    return "$JOB_MAP_EXIT_EXECUTION_ERROR"
+  fi
+  errors="$VALIDATE_JOB_MAP_ROW_ERRORS"
 
   # (5) job_id の重複検査(0 … 重複なし / 1 … 重複あり / それ以外 … sort の失敗。重複検査が未実施のまま検証 OK にしない)
   local unique_status=0
-  validate_job_map_unique_job_ids ${job_id_pairs[@]+"${job_id_pairs[@]}"} || unique_status=$?
+  validate_job_map_unique_job_ids ${VALIDATE_JOB_MAP_JOB_ID_PAIRS[@]+"${VALIDATE_JOB_MAP_JOB_ID_PAIRS[@]}"} || unique_status=$?
   if [ "$unique_status" -eq "$JOB_MAP_STATUS_COMMAND_FAILED" ]; then
     validate_job_map_report_command_failure "sort" "$shown_path"
     return "$JOB_MAP_EXIT_EXECUTION_ERROR"
@@ -204,7 +227,7 @@ validate_job_map_run() {
   fi
 
   # (6) 版の集計(集計値は JOB_MAP_VERSION_SUMMARY、版の混在は warn。warn は拒否しない)
-  if ! job_map_version_summary ${map_versions[@]+"${map_versions[@]}"} || [ -z "$JOB_MAP_VERSION_SUMMARY" ]; then
+  if ! job_map_version_summary ${VALIDATE_JOB_MAP_MAP_VERSIONS[@]+"${VALIDATE_JOB_MAP_MAP_VERSIONS[@]}"} || [ -z "$JOB_MAP_VERSION_SUMMARY" ]; then
     validate_job_map_report_command_failure "job_map_version_summary" "$shown_path"
     return "$JOB_MAP_EXIT_EXECUTION_ERROR"
   fi

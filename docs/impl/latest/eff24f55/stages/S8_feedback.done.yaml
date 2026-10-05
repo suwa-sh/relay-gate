@@ -5,12 +5,14 @@ manifest_projection: v2
 mode: "initial"
 result: pass
 status: "no_request"
-cycle_note: "仕様還流 cycle 2(spec event 20260923_112000_feedback_impl_feedback_eff24f55_cycle2)後の再実行。公開済みの 20260919_213000_impl_feedback_eff24f55(CR-001〜005)と 20260922_130000_impl_feedback_eff24f55(CR-006 / 007)はどちらも仕様へ反映済みで、再掲しない"
+cycle_note: "承認済み実装(2026-09-23)が PR #11 の Linux CI で 5 件失敗し、同じ attempt 6 内で実装を修正(commit 90fb05c: UTF-8 ロケールの read / SIGPIPE 無視の tr / 5,000 行の性能。commit 0a193cb: S5 blocker F-001 の空白判定を ASCII 固定、前提 A-058 追加)した後の再実行。旧 done は invalidated/20260928_100000_stage_invalidated_eff24f55_ci_linux_fix/ に退避済み。公開済みの 20260919_213000_impl_feedback_eff24f55(CR-001〜005)と 20260922_130000_impl_feedback_eff24f55(CR-006 / 007)は仕様へ反映済みで再掲しない"
 inputs:
   issues_dir: "docs/impl/latest/eff24f55/issues/"
   findings: "docs/impl/latest/eff24f55/stages/attempt-6/S5_verify.tier-facade.findings.yaml"
+  previous_findings_invalidated: "docs/impl/latest/eff24f55/invalidated/20260928_113000_stage_invalidated_eff24f55_f001_fix/stages/attempt-6/S5_verify.tier-facade.findings.yaml"
   assumptions: "docs/impl/latest/eff24f55/stages/attempt-6/S4_tier-impl.tier-facade.assumptions.yaml"
   s4_done: "docs/impl/latest/eff24f55/stages/attempt-6/S4_tier-impl.tier-facade.done.yaml"
+  s5_done: "docs/impl/latest/eff24f55/stages/attempt-6/S5_verify.tier-facade.done.yaml"
   s6_done: "docs/impl/latest/eff24f55/stages/S6_uc-bdd.done.yaml"
   s7_done: "docs/impl/latest/eff24f55/stages/S7_atdd.done.yaml"
   review_notes: "docs/impl/latest/eff24f55/review/review-notes.md"
@@ -36,34 +38,49 @@ resolution:
       evidence: "cli-command-contract.yaml の validate-config.sh stderr、tier-facade.md 列検証表、spec.md の本文と BDD が「初出行を含む全行番号」に統一済み(CR-eff24f55-006 の反映)"
     - path: "docs/impl/latest/eff24f55/issues/20260922_120100_credential-ref-warning-boundary-undefined.md"
       verdict: "resolved"
-      evidence: "cli-command-contract.yaml の columns.credential_ref.on_format_violation と tier-facade.md が「理由を問わず同じ warn で受理し値は出さない」と明記(CR-eff24f55-007 案 A の反映)。前提 A-012 は仕様の復唱になり前提一覧から外れた"
+      evidence: "cli-command-contract.yaml の columns.credential_ref.on_format_violation と tier-facade.md が「理由を問わず同じ warn で受理し値は出さない」と明記(CR-eff24f55-007 案 A の反映)"
   new_issues_in_current_attempt: 0
   findings:
     blocker: 0
     major: 0
-    minor: 24
+    minor: 30
     spec_absent: 22
-    restatement: 1
+    restatement: 2
     category_mismatch: 1
+    unlisted: 5
     contradicts: 0
-    unlisted: 0
-    verdict: "仕様起因の要求なし。spec_absent の minor 22 件は人が spec_change で却下していないため要求にしない。F-021 は契約どおりの復唱、F-024 は分類差で verdict と severity に影響しない"
+    resolved_previous_blockers:
+      - "F-001"
+    verdict: "仕様起因の要求なし。前回の blocker F-001(空白判定のロケール依存)は実装側で解消(A-058)。spec_absent の minor 22 件は人が spec_change で却下していないため要求にしない。unlisted 5 件(V-001〜V-005)は前提記録の規則の解釈差で仕様起因ではない"
   rejected_spec_change: 0
 classification:
   spec_origin: 0
-  implementation_origin: 0
-  environment_origin: 1
-  out_of_scope: 2
-  note: "環境起因 = 開発機 macOS の mktemp(A-052 の互換処理で吸収)。対象外 = F-021(復唱)/ F-024(分類差)"
+  implementation_origin_fixed: 2
+  environment_origin: 2
+  out_of_scope: 3
+  note: "実装起因(修正済み)= Linux CI の 5 件失敗(commit 90fb05c)/ S5 blocker F-001(commit 0a193cb)。環境起因 = 開発機 macOS の mktemp(A-052)/ CI runner の SIGPIPE 無視(A-053)。対象外 = 復唱 2 件(F-106 / F-121)/ 分類差 1 件(F-130)/ unlisted 5 件(F-125〜F-129)"
+  linux_ci_fixes:
+    - "job_map_repo: read snapshot under LC_ALL=C (UTF-8 locale read merged a dangling lead byte line with the next line)"
+    - "job_map_repo: when sed fails, ignore tr exit status (SIGPIPE ignored on CI runners makes tr exit 1 instead of 141)"
+    - "performance: 5,000 rows verbose 7.06s -> 3.16s on Ubuntu arm64 (IFS-based CSV fast path, linear join, single setlocale)"
+    - "cli_field: key=value / key: value whitespace test uses the fixed ASCII set under LC_ALL=C (A-058)"
 assumptions_summary:
-  count: 23
-  consistent: 1
+  count: 24
+  consistent: 2
   spec_absent: 22
   contradicts: 0
+  unlisted: 5
   rejected_spec_change: 0
+  changed_from_previous:
+    added:
+      - "A-058"
+    updated:
+      - "A-053"
   review_attention:
-    - "A-016"
-  note: "今回のレビューは未実施。A-016(confidence low。推奨値 60 との差の専用 info 行を出さない)は仕様の文言と解釈が分かれ得るため、as-built summary でレビュー確認の候補に挙げた。spec_change で却下された場合だけ refresh で要求にする"
+    - "A-058"
+    - "A-053"
+  whitespace_definition_decision: "A-058(空白 = ASCII 6 種、ロケール非依存)は仕様変更要求にせず、実装前提として S9 で承認を取る。理由: (1) 契約の他箇所の「空白」は ASCII の意味で使われ、独立検証も contradicts ではなく spec_absent と判定 (2) Unicode 空白の集合は libc で異なり、仕様に含めると実装が環境依存に戻る (3) 要求の対象は人が spec_change で却下した前提だけ (4) 書くなら cross-cutting の出力規約の文言追加で UC の blocker ではない。spec_change で却下されたときだけ refresh で要求にする"
+  note: "今回のレビューは未実施。A-058(今回追加)と A-053(内容更新)を as-built summary の「レビューで確認してほしい前提」に挙げた"
 feedback_request:
   feedback_id: null
   draft_path: null
@@ -74,11 +91,12 @@ feedback_request:
 as_built_summary: "docs/impl/latest/eff24f55/feedback/as-built-summary.md"
 learnings: 1
 learning_files:
-  - "docs/impl/latest/eff24f55/learnings/20260923_115040_zero-request-after-reflux-cycle2.md"
+  - "docs/impl/latest/eff24f55/learnings/20261006_080400_linux-ci-fails-after-macos-green.md"
 proposals:
   skill: true
-  context: false
+  context: true
 proposal_files:
-  - "docs/impl/latest/eff24f55/learnings/20260923_115040_proposal-skill.md"
-completed_at: "2026-09-23T11:50:40+09:00"
+  - "docs/impl/latest/eff24f55/learnings/20261006_080400_proposal-skill.md"
+  - "docs/impl/latest/eff24f55/learnings/20261006_080400_proposal-context.md"
+completed_at: "2026-10-06T08:04:00+09:00"
 completed_by: "dist-impl-feedback@0.14.1"

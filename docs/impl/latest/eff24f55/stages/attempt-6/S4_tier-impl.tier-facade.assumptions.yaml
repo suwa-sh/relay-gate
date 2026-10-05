@@ -11,15 +11,20 @@ attempt: 6
 #     tier-facade.md 設定契約 job_id 行で確定した。旧記録にも前提としては無かった(除外済みの扱い)ため件数は変えない
 #   - A-025(重複した job_id が複数あるときの error 行どうしの順序)は、lines= 規則が 1 キー内の並びだけを定めるため残す
 #   - 実装コード(facade/src)は旧 attempt 6 から変更なし(コメント 3 行の根拠表記だけ更新。行番号は不変)。target は旧記録のまま有効
+#   - 2026-10-06 Linux CI 対応(PR #11): UTF-8 ロケールの read の行結合・SIGPIPE 無視環境の tr の write error・5,000 行の性能を
+#     実装側で修正。内容が変わった前提は A-053 だけ(sed 失敗時は tr の終了状態を見ない)。他は target の行番号だけを現物に合わせた
+#   - 2026-10-06 S5 F-001(blocker)対応: stdout の `key=value` / `key: value` の空白判定を ASCII 空白のみのバイト単位に固定(A-058 を追加)。
+#     S5 の unlisted V-001〜V-005(CSV の高速経路・窓幅 1024・fixed_params の早期判定と再利用・LC_ALL=C の重複設定の省略)は
+#     外から観測できる挙動を変えない内部の実装選択で、仕様の空白の解釈ではないため前提には記録しない
 extraction:
-  candidate_count: 48
+  candidate_count: 49
   excluded_as_explicit: 25
-  recorded_count: 23
+  recorded_count: 24
 assumptions:
   - id: "A-005"
     category: "error_handling"
     assumption: "ヘッダー行がクォート不正のときは、ヘッダー行とデータ行の csv quote is invalid だけを全件報告し、ヘッダー検証と列検証を行わずに終了コード 2 で終える"
-    target: "facade/src/usecase/validate_job_map.sh:151"
+    target: "facade/src/usecase/validate_job_map.sh:197"
     reason: "仕様のクォート不正の Scenario はデータ行だけで、ヘッダー行がクォート不正のときに後続の検証をどこまで行うかの定義が無い"
     confidence: "medium"
     spec_refs:
@@ -28,7 +33,7 @@ assumptions:
   - id: "A-006"
     category: "error_handling"
     assumption: "ヘッダー不一致(必須列の欠落、host / user の片方だけ)のときは、データ行の列検証と job_id 重複検査を行わず、データ行の csv quote is invalid だけを追加で報告して終了コード 2 で終える"
-    target: "facade/src/usecase/validate_job_map.sh:158"
+    target: "facade/src/usecase/validate_job_map.sh:204"
     reason: "仕様は全行を検査して全件報告すると定めるが、ヘッダー不一致で列を対応付けられないときにデータ行の検証をどこまで行うかの定義が無い"
     confidence: "medium"
     spec_refs:
@@ -46,7 +51,7 @@ assumptions:
   - id: "A-010"
     category: "error_handling"
     assumption: "csv quote is invalid または column count mismatch になったデータ行は、列ごとの検証、job_id 重複検査、map_version の集計の対象にしない"
-    target: "facade/src/usecase/validate_job_map.sh:176"
+    target: "facade/src/usecase/validate_job_map.sh:152"
     reason: "列を対応付けられない行を、後続の列検証、重複検査、版の集計に含めるかどうかの定義が無い"
     confidence: "medium"
     spec_refs:
@@ -55,7 +60,7 @@ assumptions:
   - id: "A-014"
     category: "data_format"
     assumption: "info: resolved 行の fixed_params= は、解析後の要素を要素間に空白を置かない 1 行の JSON 配列に組み立て直し、スラッシュ(/)と U+00A0 以上の非 ASCII 文字はエスケープしない"
-    target: "facade/src/domain/job_map.sh:420"
+    target: "facade/src/domain/job_map.sh:447"
     reason: "契約は fixed_params を JSON の文字列規則(\" と \\ のエスケープ、制御文字の \\n / \\t / \\u00XX)で出すと定めるが、JSON として等価な複数の表記のうちどれにするか(要素間の空白の有無、/ のエスケープ、非 ASCII 文字の \\uXXXX 化の有無)の定義が無い"
     confidence: "medium"
     spec_refs:
@@ -65,7 +70,7 @@ assumptions:
   - id: "A-016"
     category: "data_format"
     assumption: "hang_detect_limit_minutes が導入時の推奨値 60 と違う行に対する専用の info: 行は出さず、--verbose の info: resolved 行の hang_detect_limit_minutes=N で値を示すだけにする"
-    target: "facade/src/domain/job_map.sh:509"
+    target: "facade/src/domain/job_map.sh:540"
     reason: "spec.md のバリエーション一覧は推奨値との差を info: と記すが、その info: 行の文言と出力条件が tier-facade.md の出力契約と CLI コマンド契約のどちらにも無い"
     confidence: "low"
     spec_refs:
@@ -75,7 +80,7 @@ assumptions:
   - id: "A-017"
     category: "data_format"
     assumption: "map_version の distinct 値が複数あるとき、stdout の map_version= と warn: mixed map_version の values= には、distinct 値を初出順のカンマ区切りで出す"
-    target: "facade/src/domain/job_map.sh:655"
+    target: "facade/src/domain/job_map.sh:678"
     reason: "版の混在は warn で終了コード 0 と定義されているが、そのときの stdout の map_version の値と distinct 値の並び順の定義が無い"
     confidence: "medium"
     spec_refs:
@@ -84,7 +89,7 @@ assumptions:
   - id: "A-018"
     category: "data_format"
     assumption: "map_version が空の行と値のある行が混在するとき、空の値は warn: mixed map_version の values= と stdout の map_version= に空値表記 - で出す(例: 空の行と v1 の行なら values=-,v1 と map_version=-,v1)"
-    target: "facade/src/domain/job_map.sh:655"
+    target: "facade/src/domain/job_map.sh:678"
     reason: "計算ルール「版の集計」は全行の distinct 値を数え複数あれば warn と定めるため、空も distinct 値の 1 つとして数える。ただし distinct 値の一覧の中で空の値をどう表記するかの定義が無い(ui-design.md の空値表記 - は key=value の値全体が空のときの規則)"
     confidence: "medium"
     spec_refs:
@@ -94,7 +99,7 @@ assumptions:
   - id: "A-019"
     category: "data_format"
     assumption: "--verbose の info: resolved 行は列ごとの検証を通過した行にだけ出し、違反のある行には出さない(他の行に違反があって終了コード 2 になるときも、通過した行の分は出す)"
-    target: "facade/src/usecase/validate_job_map.sh:180"
+    target: "facade/src/usecase/validate_job_map.sh:156"
     reason: "契約は info: resolved を 1 行 1 job_id で出し終了コードに影響しないと定めるが、違反のある行や検証 NG のときに出すかどうかの定義が無い"
     confidence: "medium"
     spec_refs:
@@ -103,7 +108,7 @@ assumptions:
   - id: "A-020"
     category: "data_format"
     assumption: "stderr の行は、入力の守備範囲の error(行番号順。hint は最後の CR の次)、ヘッダーの unknown column の warn、duplicate column の error、header mismatch の error、データ行ごとの error と warn と info(行番号の昇順)、duplicate job_id、mixed map_version の順に、検証を終えてからまとめて出す"
-    target: "facade/src/usecase/validate_job_map.sh:129"
+    target: "facade/src/usecase/validate_job_map.sh:175"
     reason: "stdout の固定順と hint の位置は定義されているが、stderr に出す複数種類の行の出力順と、検証の途中で逐次出すかまとめて出すかの定義が無い(内部障害のときに他の行を出さないため、まとめて出す方式を選んだ)"
     confidence: "medium"
     spec_refs:
@@ -113,7 +118,7 @@ assumptions:
   - id: "A-022"
     category: "input_validation"
     assumption: "job_id 重複検査は、job_id is invalid になった値も文字列(バイト列の完全一致)として比較の対象に含め、空の job_id だけを対象から外す"
-    target: "facade/src/usecase/validate_job_map.sh:189"
+    target: "facade/src/usecase/validate_job_map.sh:165"
     reason: "job_id の形式違反や空の行を重複検査に含めるかどうかの定義が無い"
     confidence: "low"
     spec_refs:
@@ -122,7 +127,7 @@ assumptions:
   - id: "A-025"
     category: "data_format"
     assumption: "複数の job_id が重複しているとき、error: duplicate job_id の行は、その job_id が 1 回目に現れた行番号の昇順で出す"
-    target: "facade/src/domain/job_map.sh:636"
+    target: "facade/src/domain/job_map.sh:659"
     reason: "契約は重複した job_id ごとの行の形式と lines= の列挙を定めるが、重複した job_id が複数あるときの error: 行どうしの出力順の定義が無い"
     confidence: "medium"
     spec_refs:
@@ -131,7 +136,7 @@ assumptions:
   - id: "A-043"
     category: "error_handling"
     assumption: "検証を通過した行の解決結果(info: resolved)や版の集計を作れない内部障害は、補助コマンドの失敗と同じ error: internal command failed commands=<関数名> path: <path> の 1 行と終了コード 6 で終える(commands= に外部コマンドではなく関数名 job_map_row_resolved_line / job_map_version_summary を入れる)"
-    target: "facade/src/usecase/validate_job_map.sh:183"
+    target: "facade/src/usecase/validate_job_map.sh:159"
     reason: "契約の internal_failure は複製の工程と補助コマンドの失敗の 2 区分を定めるが、外部コマンドを伴わない検証器内部の障害(解決結果を組み立てられない等)の区分と commands= の値の定義が無い"
     confidence: "low"
     spec_refs:
@@ -141,7 +146,7 @@ assumptions:
   - id: "A-044"
     category: "error_handling"
     assumption: "補助コマンドが終了状態 0 を返しても、次のどれかに当たるときは補助コマンドの失敗として扱う。sort の出力の行数が入力の行数と違う。sort の出力が job_id のバイト列の昇順に並んでいない。事前走査の出力に最終行まで走査した証跡(証跡の文字と総行数)が無い・想定外の文字がある。事前走査が数えた総行数と bash が読み込んだ行数が違う"
-    target: "facade/src/domain/job_map.sh:605"
+    target: "facade/src/domain/job_map.sh:628"
     reason: "契約は補助コマンドの『失敗・想定外の出力』を内部障害と定めるが、想定外の出力をどこまで確かめるか(終了状態だけでよいか)の定義が無い。終了状態だけでは、出力を返さずに 0 で終わる障害を重複なしや異常行なしとして受理してしまう"
     confidence: "medium"
     spec_refs:
@@ -160,7 +165,7 @@ assumptions:
   - id: "A-050"
     category: "error_handling"
     assumption: "入力の守備範囲の違反(NUL / 不正な UTF-8 / BOM / CR)が 1 行でもあるときは、その error 行(+ hint)だけを全件報告し、ヘッダー検証・行の検証・job_id 重複検査・版の集計は行わずに終了コード 2 で終える(違反の無い行の csv quote is invalid や列の違反も報告しない)"
-    target: "facade/src/usecase/validate_job_map.sh:145"
+    target: "facade/src/usecase/validate_job_map.sh:191"
     reason: "UC ロジックは (2) バイト点検 → (3) ヘッダー → (4) 行 → (5) 重複 の順で全行を検査してから全件報告すると定め、BDD は BOM のとき header mismatch を、NUL のとき csv quote is invalid を出さないことを求めるが、バイト点検の違反があるときに違反の無い他の行の検証結果を報告するかどうかの定義が無い"
     confidence: "medium"
     spec_refs:
@@ -179,7 +184,7 @@ assumptions:
   - id: "A-052"
     category: "data_format"
     assumption: "mktemp がテンプレート末尾以外の X を置き換えない環境(BSD 系の開発機)では、テンプレートのままの名前で作られた作業ファイルを relay-gate-<pid>-<乱数>.part へ移してから使う(最終名は同じ規則で .part を外した名前。実行環境の Linux ではテンプレート relay-gate-XXXXXX.part をそのまま使う)"
-    target: "facade/src/repository/job_map_repo.sh:333"
+    target: "facade/src/repository/job_map_repo.sh:378"
     reason: "契約は mktemp のテンプレート例 relay-gate-XXXXXX.part を示すが、末尾以外の X を置き換えない mktemp(BSD 系)での作業名の決め方の定義が無い(実行環境はオンプレ Linux のため契約はそれを前提にしている)"
     confidence: "high"
     spec_refs:
@@ -187,9 +192,9 @@ assumptions:
       - "docs/specs/latest/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/tier-facade.md#設定契約(slot ジョブマップ CSV)"
   - id: "A-053"
     category: "error_handling"
-    assumption: "事前走査のパイプライン(tr | sed)の commands= は、sed が非 0 で終わり tr が SIGPIPE(終了状態 141)で終わったときは sed だけとし、sed の出力が想定外(原因の文字と数字以外・証跡なし)のときは sed、走査した総行数と読み込んだ行数が合わないときは tr,sed とする"
-    target: "facade/src/repository/job_map_repo.sh:500"
-    reason: "契約は commands= に『実際に失敗したコマンド名だけ』を書くと定めるが、パイプラインで後段の失敗が前段の SIGPIPE を引き起こす場合や、出力の欠落がどちらのコマンドに起因するか判別できない場合の記載規則の定義が無い"
+    assumption: "事前走査のパイプライン(tr | sed)の commands= は、sed が非 0 で終わったときは tr の終了状態によらず sed だけとし(sed が読まずに終わると tr は SIGPIPE の 141、SIGPIPE を無視する環境(CI の runner 等)では write error の 1 で終わり、tr 自身の失敗と区別できない)、sed が 0 で tr が非 0 のときは tr、sed の出力が想定外(原因の文字と数字以外・証跡なし)のときは sed、走査した総行数と読み込んだ行数が合わないときは tr,sed とする"
+    target: "facade/src/repository/job_map_repo.sh:547"
+    reason: "契約は commands= に『実際に失敗したコマンド名だけ』を書くと定めるが、パイプラインで後段の失敗が前段の SIGPIPE や write error を引き起こす場合や、出力の欠落がどちらのコマンドに起因するか判別できない場合の記載規則の定義が無い"
     confidence: "medium"
     spec_refs:
       - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#config_input_rules.internal_failure"
@@ -206,7 +211,7 @@ assumptions:
   - id: "A-055"
     category: "error_handling"
     assumption: "読み込み後の複製の削除(rm)が失敗したときは、読み込み結果を検証結果として使わず、補助コマンドの失敗として error: internal command failed commands=rm path: <path> の 1 行と終了コード 6 で終える(stdout の map_path / rows / map_version は出さない)"
-    target: "facade/src/repository/job_map_repo.sh:307"
+    target: "facade/src/repository/job_map_repo.sh:352"
     reason: "契約 snapshot.validate_config は読み込み後の削除を求め、internal_failure は複製の工程(作成・書き込み・rename)と複製完了後の補助コマンドの 2 区分を定めるが、削除の失敗がどちらの区分か、専用の文言があるかの定義が無い。rm は複製完了後に実行する補助コマンドなので commands=rm の枠に入れた(attempt 5 独立検証 F-002 の修正。可変プロンプト(オーケストレータの attempt 6 指示)の commands=rm の提案も判断に使った)"
     confidence: "medium"
     spec_refs:
@@ -216,7 +221,7 @@ assumptions:
   - id: "A-056"
     category: "error_handling"
     assumption: "複製の工程(mktemp / cat / mv)の失敗と複製の削除(rm)の失敗が重なったときは、入力の複製の失敗(error: config snapshot failed + hint: check TMPDIR is writable、終了コード 6)として報告し、commands=rm の行は出さない"
-    target: "facade/src/repository/job_map_repo.sh:307"
+    target: "facade/src/repository/job_map_repo.sh:352"
     reason: "契約は複製の失敗と補助コマンドの失敗を別の文言で定めるが、同じ実行で両方が起きたときにどちらを報告するかの定義が無い(置き場所に書き込めないことが共通の原因で hint も同じため、複製の失敗を優先した)"
     confidence: "medium"
     spec_refs:
@@ -225,9 +230,19 @@ assumptions:
   - id: "A-057"
     category: "data_format"
     assumption: "複製完了後の補助コマンド(tr / sed)の失敗と複製の削除(rm)の失敗が重なったときは、commands= に失敗した順でカンマ区切りに並べる(例: commands=sed,rm)"
-    target: "facade/src/repository/job_map_repo.sh:312"
+    target: "facade/src/repository/job_map_repo.sh:357"
     reason: "契約は commands=<name,...> に実際に失敗したコマンド名だけを書くと定めるが、複数のコマンドが失敗したときの並び順の定義が無い"
     confidence: "medium"
     spec_refs:
       - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#config_input_rules.internal_failure"
       - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#commands[validate-config.sh].stderr"
+  - id: "A-058"
+    category: "data_format"
+    assumption: "stdout の `key=value` / `key: value` の選択に使う「値に空白を含む」の空白は、ASCII の空白文字(半角空白・タブ・LF・VT・FF・CR。C ロケールの [[:space:]] と同じ集合)だけとし、ロケールに関係なくバイト単位で判定する。Unicode の空白(U+2003 EM SPACE、U+3000 全角空白、U+00A0 NBSP 等)は空白として扱わず `key=value` にする"
+    target: "facade/src/domain/cli_field.sh:133"
+    reason: "契約と ui-design.md は『値に空白を含めば key: value』と定めるが空白の定義が無い。他の箇所の『空白』は半角空白・タブ・空白区切りと ASCII の意味で使われ、制御文字の規則もコードポイント範囲でバイト単位に定める。bash の [[:space:]] に任せると UTF-8 ロケールでだけ Unicode 空白に一致して出力形式が環境で変わり(S5 F-001)、Unicode 空白の集合自体も libc(glibc は U+00A0 / U+202F を含まない)で異なるため、ロケール・OS に関係なく同じ結果になる定義は ASCII だけ。stdout の消費側(シェル / awk)の分割単位とも一致する"
+    confidence: "medium"
+    spec_refs:
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#conventions.output_format.stdout"
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#conventions.output_format.control_chars"
+      - "docs/specs/latest/_cross-cutting/ux-ui/ui-design.md#出力フォーマット"

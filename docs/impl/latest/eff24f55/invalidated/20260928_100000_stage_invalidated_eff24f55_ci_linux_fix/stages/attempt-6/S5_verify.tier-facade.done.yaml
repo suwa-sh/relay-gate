@@ -1,0 +1,26 @@
+schema_version: "1.0"
+stage: "S5_verify"
+uc_id: "eff24f55"
+tier: "tier-facade"
+attempt: 6
+manifest_sha256: "85d1ebda8af9b786c1abbfc4e09198f4716663209279349d7e7ad9c947902002"
+manifest_projection: "v2"
+result: "pass"
+open_blockers: 0
+open_majors: 0
+open_minors: 24
+assumptions_sha256: "0d5632b7da2ce5b1fdd39ed9dc7d5625312319ba0e01ee29765873e01def5412"
+assumption_verdicts_summary:
+  consistent: 1
+  spec_absent: 22
+  contradicts: 0
+  unlisted: 0
+environment_failures: []
+completed_at: "2026-09-23T02:45:40.136766+00:00"
+completed_by: "dist-impl-verify@0.14.1"
+gate_reexec:
+  format: "pass"
+  lint: "pass"
+  tdd: "pass"
+  bdd_tier: "pass"
+assumption_verdicts_sha256: "dce486c7e54e41ce1c3da016bf48fff4bb8e2e664a6ce168e563be9cf41f0db2"

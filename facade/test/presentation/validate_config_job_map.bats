@@ -944,3 +944,29 @@ has_control_byte() {
 	[ "$(printf '%s\n' "${lines[@]}" | grep -c -x 'warn: credential_ref looks like a secret or path line=2 job_id=JOB001')" -eq 1 ]
 	[[ "$output" != *"BEGIN_KEY"* ]]
 }
+
+@test "validate-config_sh_--job-mapでmap_versionにUnicode空白がある場合_LANG未設定とC_UTF-8とLC_ALL=Cで同じmap_version=形式を出すこと" {
+	# Arrange(S5 F-001 の再現入力: EM SPACE U+2003。ASCII の空白ではないので `key=value`。
+	#         ロケールで stdout の区切りが変わらないことを 3 条件で固定する。C.UTF-8 が無い環境では en_US.UTF-8 を使う)
+	{
+		printf '%s\n' 'job_id,work_dir,script,fixed_params,hang_detect_limit_minutes,map_version'
+		printf 'J1,/w,/s,[],60,v\342\200\203x\n'
+	} >"$MAP"
+	local expected=$'map_version=v\xe2\x80\x83x'
+	local utf8_locale
+	utf8_locale="$(locale -a 2>/dev/null | grep -i -E '^(en_US|C)\.utf-?8$' | head -n 1 || true)"
+	[ -n "$utf8_locale" ]
+
+	# Act / Assert(LANG 未設定)
+	run env -u LANG -u LC_ALL "$SCRIPT" --job-map "$MAP"
+	[ "$status" -eq 0 ]
+	[ "${lines[2]}" = "$expected" ]
+	# LANG=UTF-8 ロケール(CI の runner と同じ)
+	run env -u LC_ALL LANG="$utf8_locale" "$SCRIPT" --job-map "$MAP"
+	[ "$status" -eq 0 ]
+	[ "${lines[2]}" = "$expected" ]
+	# LC_ALL=C
+	run env LC_ALL=C "$SCRIPT" --job-map "$MAP"
+	[ "$status" -eq 0 ]
+	[ "${lines[2]}" = "$expected" ]
+}

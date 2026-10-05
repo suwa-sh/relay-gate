@@ -1,0 +1,84 @@
+stage: "S8"
+uc_id: "eff24f55"
+manifest_sha256: "85d1ebda8af9b786c1abbfc4e09198f4716663209279349d7e7ad9c947902002"
+manifest_projection: v2
+mode: "initial"
+result: pass
+status: "no_request"
+cycle_note: "仕様還流 cycle 2(spec event 20260923_112000_feedback_impl_feedback_eff24f55_cycle2)後の再実行。公開済みの 20260919_213000_impl_feedback_eff24f55(CR-001〜005)と 20260922_130000_impl_feedback_eff24f55(CR-006 / 007)はどちらも仕様へ反映済みで、再掲しない"
+inputs:
+  issues_dir: "docs/impl/latest/eff24f55/issues/"
+  findings: "docs/impl/latest/eff24f55/stages/attempt-6/S5_verify.tier-facade.findings.yaml"
+  assumptions: "docs/impl/latest/eff24f55/stages/attempt-6/S4_tier-impl.tier-facade.assumptions.yaml"
+  s4_done: "docs/impl/latest/eff24f55/stages/attempt-6/S4_tier-impl.tier-facade.done.yaml"
+  s6_done: "docs/impl/latest/eff24f55/stages/S6_uc-bdd.done.yaml"
+  s7_done: "docs/impl/latest/eff24f55/stages/S7_atdd.done.yaml"
+  review_notes: "docs/impl/latest/eff24f55/review/review-notes.md"
+resolution:
+  previous_feedback_ids:
+    - "20260919_213000_impl_feedback_eff24f55"
+    - "20260922_130000_impl_feedback_eff24f55"
+  issues:
+    - path: "docs/impl/latest/eff24f55/issues/20260919_161456_cross-uc-scenarios.md"
+      verdict: "not_spec_issue"
+      evidence: "UC 横断 Scenario の責務分担の記録で、起票時から仕様疑義ではない。S6 / S7 はハーネス注入なしで pass"
+    - path: "docs/impl/latest/eff24f55/issues/20260919_183305_control-char-notation-and-internal-error-undefined.md"
+      verdict: "resolved"
+      evidence: "cli-command-contract.yaml の conventions.output_format.control_chars と config_input_rules.internal_failure に規定済み(CR-eff24f55-002 / 003 の反映)"
+    - path: "docs/impl/latest/eff24f55/issues/20260919_195500_malformed-input-policy-undefined.md"
+      verdict: "resolved"
+      evidence: "cli-command-contract.yaml の config_input_rules に拒否する異常の一覧と原因別の文言を規定済み(CR-eff24f55-001 の反映)"
+    - path: "docs/impl/latest/eff24f55/issues/20260919_210000_file-replaced-between-scan-and-parse.md"
+      verdict: "resolved"
+      evidence: "cli-command-contract.yaml の config_input_rules.snapshot.validate_config に単一スナップショットを規定済み。UC BDD の差し替え Scenario が 5 回連続 pass"
+    - path: "docs/impl/latest/eff24f55/issues/20260922_120000_duplicate-job-id-lines-contract-vs-bdd.md"
+      verdict: "resolved"
+      evidence: "cli-command-contract.yaml の validate-config.sh stderr、tier-facade.md 列検証表、spec.md の本文と BDD が「初出行を含む全行番号」に統一済み(CR-eff24f55-006 の反映)"
+    - path: "docs/impl/latest/eff24f55/issues/20260922_120100_credential-ref-warning-boundary-undefined.md"
+      verdict: "resolved"
+      evidence: "cli-command-contract.yaml の columns.credential_ref.on_format_violation と tier-facade.md が「理由を問わず同じ warn で受理し値は出さない」と明記(CR-eff24f55-007 案 A の反映)。前提 A-012 は仕様の復唱になり前提一覧から外れた"
+  new_issues_in_current_attempt: 0
+  findings:
+    blocker: 0
+    major: 0
+    minor: 24
+    spec_absent: 22
+    restatement: 1
+    category_mismatch: 1
+    contradicts: 0
+    unlisted: 0
+    verdict: "仕様起因の要求なし。spec_absent の minor 22 件は人が spec_change で却下していないため要求にしない。F-021 は契約どおりの復唱、F-024 は分類差で verdict と severity に影響しない"
+  rejected_spec_change: 0
+classification:
+  spec_origin: 0
+  implementation_origin: 0
+  environment_origin: 1
+  out_of_scope: 2
+  note: "環境起因 = 開発機 macOS の mktemp(A-052 の互換処理で吸収)。対象外 = F-021(復唱)/ F-024(分類差)"
+assumptions_summary:
+  count: 23
+  consistent: 1
+  spec_absent: 22
+  contradicts: 0
+  rejected_spec_change: 0
+  review_attention:
+    - "A-016"
+  note: "今回のレビューは未実施。A-016(confidence low。推奨値 60 との差の専用 info 行を出さない)は仕様の文言と解釈が分かれ得るため、as-built summary でレビュー確認の候補に挙げた。spec_change で却下された場合だけ refresh で要求にする"
+feedback_request:
+  feedback_id: null
+  draft_path: null
+  request_count: 0
+  blocker_count: 0
+  supersedes: null
+  note: "有効な要求が 0 件のため draft を作らない。公開済みの 2 ファイルは変更していない"
+as_built_summary: "docs/impl/latest/eff24f55/feedback/as-built-summary.md"
+learnings: 1
+learning_files:
+  - "docs/impl/latest/eff24f55/learnings/20260923_115040_zero-request-after-reflux-cycle2.md"
+proposals:
+  skill: true
+  context: false
+proposal_files:
+  - "docs/impl/latest/eff24f55/learnings/20260923_115040_proposal-skill.md"
+completed_at: "2026-09-23T11:50:40+09:00"
+completed_by: "dist-impl-feedback@0.14.1"

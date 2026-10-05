@@ -100,8 +100,11 @@ cli_field_escape_text() {
 # バックスラッシュは置き換えない(制御文字を含まない値の表示を変えないため)。
 # 引数: text
 cli_field_safe_text() {
-  # 置き換える文字が無い値(通常の値)はそのまま返す(行数に比例して呼ばれるため、関数呼び出しを重ねない)
-  local LC_ALL=C
+  # 置き換える文字が無い値(通常の値)はそのまま返す(行数に比例して呼ばれるため、関数呼び出しを重ねない)。
+  # バイト単位で判定する。LC_ALL の設定は setlocale を伴い関数呼び出しより重いため、呼び出し元が C にしていれば設定しない
+  if [ "${LC_ALL:-}" != C ]; then
+    local LC_ALL=C
+  fi
   if [[ "${1:-}" != *["$CLI_FIELD_SAFE_SPECIAL_CHARS"]* ]]; then
     CLI_FIELD_SAFE_TEXT="${1:-}"
     return 0
@@ -120,9 +123,18 @@ cli_field_display_value() {
   fi
 }
 
-# 値に空白(半角空白・タブ等の [[:space:]])を含むか
+# `key=value` / `key: value` の選択に使う「空白」: ASCII の空白文字(半角空白・タブ・LF・VT・FF・CR。C ロケールの [[:space:]] と同じ集合)。
+# 契約は空白を定義しないが、他の箇所では「半角空白」「空白だけの行(半角空白・タブだけ)」「空白区切り」と ASCII の意味で使い、
+# 制御文字の規則もバイト単位で定める。Unicode の空白(U+2003 等)は空白として扱わない: `[[:space:]]` に任せると UTF-8 ロケールでだけ
+# 一致して出力形式が環境で変わり、Unicode 空白の集合自体も libc(glibc / macOS)で異なるため、ロケールに関係なく同じ結果にできない
+CLI_FIELD_SPACE_CHARS=$' \t\n\v\f\r'
+
+# 値に空白(CLI_FIELD_SPACE_CHARS)を含むか。バイト単位で判定する(ロケールに依存させない)
 cli_field_value_has_space() {
-  [[ "$1" == *[[:space:]]* ]]
+  if [ "${LC_ALL:-}" != C ]; then
+    local LC_ALL=C
+  fi
+  [[ "$1" == *["$CLI_FIELD_SPACE_CHARS"]* ]]
 }
 
 # 汎用フィールド 1 行: 空白を含まない値は `key=value`、含む値は `key: value`

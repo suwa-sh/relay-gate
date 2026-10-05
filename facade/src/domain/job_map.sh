@@ -229,19 +229,34 @@ job_map_row_bind() {
 }
 
 # 全データ行のセルを連結した配列(repository の JOB_MAP_CELLS)から、offset で始まる 1 行分を JobMapRow に載せる。
-# job_map_row_bind と同じ結果になる(行ごとにセルの配列を作り直さないため、行数に比例して呼ぶ usecase 向け)。
+# job_map_row_bind と同じ結果になる(行ごとにセルの配列を作り直さず、列ごとに添字を引いて直接載せる。
+# 行数に比例して呼ぶ usecase 向け)。
 # 引数: cells_array_name offset
 job_map_row_bind_at() {
   local -n job_map_cells_ref="$1"
-  local offset="$2" values=() index
-  for index in "${JOB_MAP_COLUMN_INDEXES[@]}"; do
-    if [ "$index" -eq "$JOB_MAP_COLUMN_ABSENT" ]; then
-      values+=("")
-    else
-      values+=("${job_map_cells_ref[offset + index]}")
-    fi
-  done
-  job_map_row_assign "${values[@]}"
+  local offset="$2"
+  # JOB_MAP_COLUMNS の並び(job_map_row_assign と同じ)。ヘッダーに無い列の値は空
+  JOB_MAP_ROW_JOB_ID=""
+  JOB_MAP_ROW_HOST=""
+  JOB_MAP_ROW_USER=""
+  JOB_MAP_ROW_WORK_DIR=""
+  JOB_MAP_ROW_SCRIPT=""
+  JOB_MAP_ROW_FIXED_PARAMS=""
+  JOB_MAP_ROW_HANG_DETECT_LIMIT_MINUTES=""
+  JOB_MAP_ROW_CREDENTIAL_REF=""
+  JOB_MAP_ROW_MAP_VERSION=""
+  [ "${JOB_MAP_COLUMN_INDEXES[0]}" -ne "$JOB_MAP_COLUMN_ABSENT" ] && JOB_MAP_ROW_JOB_ID="${job_map_cells_ref[offset + JOB_MAP_COLUMN_INDEXES[0]]}"
+  [ "${JOB_MAP_COLUMN_INDEXES[1]}" -ne "$JOB_MAP_COLUMN_ABSENT" ] && JOB_MAP_ROW_HOST="${job_map_cells_ref[offset + JOB_MAP_COLUMN_INDEXES[1]]}"
+  [ "${JOB_MAP_COLUMN_INDEXES[2]}" -ne "$JOB_MAP_COLUMN_ABSENT" ] && JOB_MAP_ROW_USER="${job_map_cells_ref[offset + JOB_MAP_COLUMN_INDEXES[2]]}"
+  [ "${JOB_MAP_COLUMN_INDEXES[3]}" -ne "$JOB_MAP_COLUMN_ABSENT" ] && JOB_MAP_ROW_WORK_DIR="${job_map_cells_ref[offset + JOB_MAP_COLUMN_INDEXES[3]]}"
+  [ "${JOB_MAP_COLUMN_INDEXES[4]}" -ne "$JOB_MAP_COLUMN_ABSENT" ] && JOB_MAP_ROW_SCRIPT="${job_map_cells_ref[offset + JOB_MAP_COLUMN_INDEXES[4]]}"
+  [ "${JOB_MAP_COLUMN_INDEXES[5]}" -ne "$JOB_MAP_COLUMN_ABSENT" ] && JOB_MAP_ROW_FIXED_PARAMS="${job_map_cells_ref[offset + JOB_MAP_COLUMN_INDEXES[5]]}"
+  [ "${JOB_MAP_COLUMN_INDEXES[6]}" -ne "$JOB_MAP_COLUMN_ABSENT" ] && JOB_MAP_ROW_HANG_DETECT_LIMIT_MINUTES="${job_map_cells_ref[offset + JOB_MAP_COLUMN_INDEXES[6]]}"
+  [ "${JOB_MAP_COLUMN_INDEXES[7]}" -ne "$JOB_MAP_COLUMN_ABSENT" ] && JOB_MAP_ROW_CREDENTIAL_REF="${job_map_cells_ref[offset + JOB_MAP_COLUMN_INDEXES[7]]}"
+  # map_version は usecase の「版の集計」が読む(このファイル内では参照しない)
+  # shellcheck disable=SC2034
+  [ "${JOB_MAP_COLUMN_INDEXES[8]}" -ne "$JOB_MAP_COLUMN_ABSENT" ] && JOB_MAP_ROW_MAP_VERSION="${job_map_cells_ref[offset + JOB_MAP_COLUMN_INDEXES[8]]}"
+  JOB_MAP_FIXED_PARAMS_BOUND=false
 }
 
 # JobMapRow の値を JOB_MAP_COLUMNS の並びで受けて JOB_MAP_ROW_* に載せる
@@ -263,23 +278,33 @@ job_map_row_assign() {
   JOB_MAP_FIXED_PARAMS_BOUND=false
 }
 
+# 行数に比例して呼ばれる関数は、バイト単位の判定のための LC_ALL=C を呼び出し元が設定済みなら設定しない
+# (LC_ALL の設定は setlocale を伴い、関数呼び出しより重い。usecase の行ループと repository の読み込みは C にして呼ぶ)
+
 # job_id は `^[A-Za-z0-9_-]+$`。
 # 文字範囲は ASCII のバイトとして判定する(ロケールの照合順序で範囲にアクセント付き文字や全角数字が入らないようにする)
 job_map_is_valid_job_id() {
-  local LC_ALL=C
+  if [ "${LC_ALL:-}" != C ]; then
+    local LC_ALL=C
+  fi
   [[ "$1" =~ ^[A-Za-z0-9_-]+$ ]]
 }
 
 # HangDetectLimit: hang_detect_limit_minutes は `^[0-9]+$`(0 = 検知対象外)
 job_map_is_valid_hang_detect_limit() {
-  local LC_ALL=C
+  if [ "${LC_ALL:-}" != C ]; then
+    local LC_ALL=C
+  fi
   [[ "$1" =~ ^[0-9]+$ ]]
 }
 
 # 条件「認証情報の非保存」: 参照名(`^[A-Za-z0-9_.-]*$`)の形でない値(`/`・空白・非 ASCII 等、理由を問わない)と `BEGIN` を含む値は
 # 同じ warn で受理する(契約 config_files <slot>-job-map.csv columns.credential_ref.on_format_violation)
 job_map_credential_ref_looks_like_secret() {
-  local value="$1" LC_ALL=C
+  local value="$1"
+  if [ "${LC_ALL:-}" != C ]; then
+    local LC_ALL=C
+  fi
   if [[ "$value" == */* ]] || [[ "$value" == *BEGIN* ]]; then
     return 0
   fi
@@ -387,7 +412,9 @@ job_map_fixed_params_parse() {
 # 引数: text
 job_map_fixed_params_parse_plain() {
   local text="$1" inner rest separator='","'
-  local LC_ALL=C
+  if [ "${LC_ALL:-}" != C ]; then
+    local LC_ALL=C
+  fi
   JOB_MAP_FIXED_PARAMS=()
   if [ "$text" = "[]" ]; then
     return 0
@@ -419,7 +446,9 @@ job_map_fixed_params_to_json() {
 # JOB_MAP_FIXED_PARAMS を 1 行の JSON 配列表記にして JOB_MAP_FIXED_PARAMS_JSON に載せる(サブシェルを使わない)
 job_map_fixed_params_json_build() {
   local element json="" separator=""
-  local LC_ALL=C
+  if [ "${LC_ALL:-}" != C ]; then
+    local LC_ALL=C
+  fi
   for element in ${JOB_MAP_FIXED_PARAMS[@]+"${JOB_MAP_FIXED_PARAMS[@]}"}; do
     # エスケープの要らない要素(通常の値)はそのまま置く(行数に比例して呼ばれるため)
     if [[ "$element" != *["$JOB_MAP_JSON_BACKSLASH_ESCAPED_CHARS$CLI_FIELD_SAFE_SPECIAL_CHARS"]* ]]; then
@@ -443,27 +472,29 @@ job_map_json_escape_string() {
   JOB_MAP_JSON_ESCAPED="$CLI_FIELD_ESCAPED"
 }
 
-# 必須列の空セル: `error: <column> is empty line=N job_id=<v> value=`
-# 引数: column line job_id(表示用に置き換え済みの値)
+# 必須列の空セル: `error: <column> is empty line=N job_id=<v> value=`(job_id は表示用に制御文字を可視表記にする)
+# 引数: column line job_id(元の値)
 job_map_empty_cell_error() {
-  job_map_emit "error: $1 is empty line=$2 job_id=$3 value="
+  cli_field_safe_text "$3"
+  job_map_emit "error: $1 is empty line=$2 job_id=$CLI_FIELD_SAFE_TEXT value="
 }
 
-# 列の値の違反: `error: <column> is <reason> line=N job_id=<v> value=<v>`(value は表示用に制御文字を可視表記にする)
-# 引数: column_and_reason line job_id(表示用に置き換え済みの値) value(元の値)
+# 列の値の違反: `error: <column> is <reason> line=N job_id=<v> value=<v>`(job_id と value は表示用に制御文字を可視表記にする)
+# 引数: column_and_reason line job_id(元の値) value(元の値)
 job_map_value_error() {
+  local job_id
+  cli_field_safe_text "$3"
+  job_id="$CLI_FIELD_SAFE_TEXT"
   cli_field_safe_text "$4"
-  job_map_emit "error: $1 line=$2 job_id=$3 value=$CLI_FIELD_SAFE_TEXT"
+  job_map_emit "error: $1 line=$2 job_id=$job_id value=$CLI_FIELD_SAFE_TEXT"
 }
 
 # 列ごとの検証(JOB_MAP_ROW_* を検証する。違反は全件出す)。
+# 検証は元の値で行い、メッセージには表示用の値(制御文字を可視表記にしたもの)を出す(置き換えは報告する行だけで行う。
+# 違反の無い行が通常で、行数に比例して呼ばれるため)
 # 引数: line(行番号)
 validate_job_map_row() {
-  local line="$1" errors=0
-  # 検証は元の値で行い、メッセージには表示用の値(制御文字を可視表記にしたもの)を出す
-  local job_id
-  cli_field_safe_text "$JOB_MAP_ROW_JOB_ID"
-  job_id="$CLI_FIELD_SAFE_TEXT"
+  local line="$1" errors=0 job_id="$JOB_MAP_ROW_JOB_ID"
 
   # job_id
   if [ -z "$JOB_MAP_ROW_JOB_ID" ]; then
@@ -517,7 +548,8 @@ validate_job_map_row() {
 
   # credential_ref: 秘密らしい値は警告(拒否しない)。値そのものは出力しない
   if job_map_credential_ref_looks_like_secret "$JOB_MAP_ROW_CREDENTIAL_REF"; then
-    job_map_emit "warn: credential_ref looks like a secret or path line=$line job_id=$job_id"
+    cli_field_safe_text "$job_id"
+    job_map_emit "warn: credential_ref looks like a secret or path line=$line job_id=$CLI_FIELD_SAFE_TEXT"
   fi
 
   [ "$errors" -eq 0 ]
@@ -538,21 +570,12 @@ job_map_row_resolved_line() {
   fi
   job_map_fixed_params_json_build
   # host / user / work_dir / script は任意の文字を含む(表示用に制御文字を可視表記にする)。
-  # job_id と hang_detect_limit_minutes は検証済みの ASCII 文字だけだが、同じ経路で出す
-  local job_id work_dir script limit
-  cli_field_safe_text "$JOB_MAP_ROW_JOB_ID"
-  job_id="$CLI_FIELD_SAFE_TEXT"
-  cli_field_safe_text "$host"
-  host="$CLI_FIELD_SAFE_TEXT"
-  cli_field_safe_text "$user"
-  user="$CLI_FIELD_SAFE_TEXT"
-  cli_field_safe_text "$JOB_MAP_ROW_WORK_DIR"
-  work_dir="$CLI_FIELD_SAFE_TEXT"
-  cli_field_safe_text "$JOB_MAP_ROW_SCRIPT"
-  script="$CLI_FIELD_SAFE_TEXT"
-  cli_field_safe_text "$JOB_MAP_ROW_HANG_DETECT_LIMIT_MINUTES"
-  limit="$CLI_FIELD_SAFE_TEXT"
-  job_map_emit "info: resolved job_id=$job_id host=$host user=$user exec=$exec_kind work_dir=$work_dir script=$script fixed_params=$JOB_MAP_FIXED_PARAMS_JSON hang_detect_limit_minutes=$limit"
+  # job_id と hang_detect_limit_minutes は検証済みの ASCII 文字だけだが、同じ経路で出す。
+  # 可視表記への置き換えはバイトごとの写像で、値の間の固定文字列は ASCII の表示文字、fixed_params の JSON は
+  # エスケープ済み(置き換える文字を含まない)なので、組み立てた 1 行にまとめて 1 回かけても値ごとにかけた結果と同じ
+  # (行数に比例して呼ばれるため、関数呼び出しを重ねない)
+  cli_field_safe_text "info: resolved job_id=$JOB_MAP_ROW_JOB_ID host=$host user=$user exec=$exec_kind work_dir=$JOB_MAP_ROW_WORK_DIR script=$JOB_MAP_ROW_SCRIPT fixed_params=$JOB_MAP_FIXED_PARAMS_JSON hang_detect_limit_minutes=$JOB_MAP_ROW_HANG_DETECT_LIMIT_MINUTES"
+  job_map_emit "$CLI_FIELD_SAFE_TEXT"
 }
 
 # 改行区切りの文字列を行の配列 JOB_MAP_LINES にする(空行は含めない)。
@@ -667,7 +690,12 @@ job_map_version_summary() {
       seen["v$version"]=1
       distinct_count=$((distinct_count + 1))
       shown="${version:-$JOB_MAP_EMPTY_VALUE}"
-      joined="${joined:+$joined,}$shown"
+      # 連結は += で行う(`joined="$joined,$shown"` の形は連結のたびに全体を作り直すため、distinct 値の数の 2 乗の時間がかかる。
+      # UTF-8 ロケールではさらに文字単位の走査が加わる)
+      if [ "$distinct_count" -gt 1 ]; then
+        joined+=","
+      fi
+      joined+="$shown"
     fi
   done
   if [ "$distinct_count" -eq 0 ]; then

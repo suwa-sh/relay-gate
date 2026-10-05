@@ -452,6 +452,29 @@ output_has_line() {
 	[ "${lines[5]}" = "error: encoding is not utf-8 line=7 path: $MAP" ]
 }
 
+@test "validate_job_map_query_UTF-8ロケールで行末が切れた先頭バイトの行がある場合_次の行と結合せず全件をencoding is not utf-8で報告して2を返すこと" {
+	# Arrange(CI の runner は LANG=C.UTF-8。UTF-8 ロケールの bash の read は、続きの無い先頭バイト 0xE3 に続く改行を
+	#          多バイト文字の一部として取り込み、次の行と結合して行数が走査の総行数と合わなくなる(内部障害 6 になっていた))
+	{
+		printf '%s\n' 'job_id,work_dir,script,fixed_params,hang_detect_limit_minutes,map_version'
+		printf 'J1,/w,/s,"[]",60,v\343\n'
+		printf '%s\n' 'J2,/w,/s,"[]",60,v1'
+		printf 'J3,/w,/s,"[]",60,\300\257\n'
+	} >"$MAP"
+	# UTF-8 ロケールは環境にあるものを使う(無い環境では C ロケールの検証だけ行う)
+	local utf8_locale
+	utf8_locale="$(locale -a 2>/dev/null | grep -i -E '^(en_US|C)\.utf-?8$' | head -n 1 || true)"
+
+	# Act
+	LC_ALL="${utf8_locale:-C}" run validate_job_map_query "$MAP" false
+
+	# Assert
+	[ "$status" -eq 2 ]
+	[ "${#lines[@]}" -eq 2 ]
+	[ "${lines[0]}" = "error: encoding is not utf-8 line=2 path: $MAP" ]
+	[ "${lines[1]}" = "error: encoding is not utf-8 line=4 path: $MAP" ]
+}
+
 @test "validate_job_map_query_ヘッダー行に不正なUTF-8バイト列がある場合_ヘッダー行のencoding is not utf-8で2を返すこと" {
 	# Arrange
 	{

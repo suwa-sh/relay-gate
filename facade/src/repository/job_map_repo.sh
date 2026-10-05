@@ -68,8 +68,6 @@ JOB_MAP_SCAN_MARK_ENCODING="u"
 JOB_MAP_SCAN_MARKS="$JOB_MAP_SCAN_MARK_NUL$JOB_MAP_SCAN_MARK_CR$JOB_MAP_SCAN_MARK_BOM$JOB_MAP_SCAN_MARK_ENCODING$JOB_MAP_SCAN_END_MARKER"
 # 走査のパイプラインが失敗したとき、失敗したコマンド名を伝える最終行の先頭文字(job_map_repo_scan_output)
 JOB_MAP_SCAN_FAILED_MARKER="!"
-# 書き込み先のパイプが先に閉じたコマンドの終了状態(128 + SIGPIPE 13)
-JOB_MAP_SCAN_SIGPIPE_STATUS=141
 JOB_MAP_SCAN_SED_SCRIPT=(
   # 最終行で、証跡の文字と総行数を先に出す(ホールドスペースと入れ替えて証跡の文字に置き換えて出し、元に戻す)
   -e $'${\nx\ns/.*/E/\np\nx\n=\n}'
@@ -96,6 +94,10 @@ CSV_STATE_QUOTED="quoted"
 CSV_STATE_QUOTE_CLOSED="quote_closed"
 # csv_parse が 1 回に取り込む窓の大きさ(バイト)。解析結果には影響しない(長い行の処理時間だけに効く)
 CSV_PARSE_WINDOW_BYTES=1024
+# csv_parse_short が単語分割(IFS)の前に足す区切り文字。単語分割の分割点になるのは展開の結果だけで、
+# リテラルの区切り文字(`$line,`)は分割点にならないため、変数の展開として足す
+CSV_SPLIT_COMMA=","
+CSV_SPLIT_QUOTE='"'
 
 # csv_parse の結果(1 行分のセル)
 CSV_CELLS=()
@@ -107,8 +109,11 @@ JOB_MAP_ROW=()
 # 引数: line(改行を含まない 1 行)
 csv_parse() {
   # バイト単位で処理する(ロケールに依存させない)。UTF-8 の多バイト文字の各バイトは 0x80 以上で、
-  # 区切りの ASCII 文字と重ならない(UTF-8 として不正な行は job_map_repo_load が解析前に除く。この関数はバイト列を変えない)
-  local LC_ALL=C
+  # 区切りの ASCII 文字と重ならない(UTF-8 として不正な行は job_map_repo_load が解析前に除く。この関数はバイト列を変えない)。
+  # 行数に比例して呼ばれるため、呼び出し元(読み込み)が LC_ALL=C にしていれば設定しない(setlocale を伴い関数呼び出しより重い)
+  if [ "${LC_ALL:-}" != C ]; then
+    local LC_ALL=C
+  fi
   # 窓に収まる長さの行(通常のジョブマップの行)は、窓の取り込みを省いた同じ文法の解析で済ませる(行数に比例して呼ばれるため)
   if [ "${#1}" -le "$CSV_PARSE_WINDOW_BYTES" ]; then
     csv_parse_short "$1"
@@ -199,56 +204,96 @@ csv_parse() {
 }
 
 # csv_parse の窓なし版(窓に収まる長さの行だけに使う。受理する文法と結果は窓ありの状態機械と同じ)。
-# セルごとに、囲みセルなら閉じ引用符(`""` は二重引用符 1 文字)まで、囲まないセルならカンマか二重引用符の手前までをまとめて取り込む。
+# 行数に比例して呼ばれるため、文字ごとのパターン照合(位置ごとに照合をやり直すので行の長さに比例した回数になる)ではなく、
+# bash の単語分割(IFS)で区切り文字ごとにまとめて分ける。単語分割は末尾の空の語を 1 つ落とすので、区切り文字を 1 つ足してから分ける
+# (`a,b,` + `,` → a / b / 空。bash 5.2 と 5.3 で同じ)。パス名展開は止めて行う(セルは glob 文字を含む)。
 # 戻り値: csv_parse と同じ
 # 引数: line
 csv_parse_short() {
-  local rest="$1" cell run
-  local LC_ALL=C
+  local noglob_was_set=false status=0
+  case "$-" in
+    *f*) noglob_was_set=true ;;
+  esac
+  set -f
+  csv_parse_short_split "$1" || status=$?
+  if [ "$noglob_was_set" = false ]; then
+    set +f
+  fi
+  return "$status"
+}
+
+# csv_parse_short の本体(パス名展開を止めた状態で呼ぶ)。
+#   - 二重引用符を含まない行: カンマで分けるだけ
+#   - 含む行: 二重引用符で分けた断片を「囲みの外 / 囲みの中」の交互として読む。囲みの外の断片はカンマ区切りの囲まないセル
+#     (次に囲みが始まるなら空かカンマで終わる)。囲みの中の `""` は、囲みの中の断片に挟まれた空の外側の断片として現れる
+# 引数: line
+csv_parse_short_split() {
+  local line="$1" IFS
+  if [ "${LC_ALL:-}" != C ]; then
+    local LC_ALL=C
+  fi
+  local -a pieces cells
+  local piece index=0 count cell="" in_quoted=false
   CSV_CELLS=()
-  while :; do
-    if [[ "$rest" == \"* ]]; then
-      rest="${rest:1}"
-      cell=""
-      while :; do
-        run="${rest%%\"*}"
-        # 閉じ引用符が無いまま行末に達した
-        if [ "${#run}" -eq "${#rest}" ]; then
-          return 1
-        fi
-        cell+="$run"
-        rest="${rest:${#run}+1}"
-        if [[ "$rest" == \"* ]]; then
-          # 囲んだセル内の `""` は二重引用符 1 文字
-          cell+='"'
-          rest="${rest:1}"
-        else
-          break
-        fi
-      done
-      if [ -z "$rest" ]; then
+  if [[ "$line" != *\"* ]]; then
+    IFS=,
+    # shellcheck disable=SC2206
+    CSV_CELLS=($line$CSV_SPLIT_COMMA)
+    return 0
+  fi
+  IFS='"'
+  # shellcheck disable=SC2206
+  pieces=($line$CSV_SPLIT_QUOTE)
+  count="${#pieces[@]}"
+  while [ "$index" -lt "$count" ]; do
+    piece="${pieces[index]}"
+    if [ "$in_quoted" = true ]; then
+      if [ -z "$piece" ] && [ "$((index + 1))" -lt "$count" ]; then
+        # 囲んだセル内の `""` は二重引用符 1 文字(次の断片も囲みの中)
+        cell+="\"${pieces[index + 1]}"
+        index=$((index + 2))
+        continue
+      fi
+      if [ -z "$piece" ]; then
+        # 閉じ引用符で行が終わる
         CSV_CELLS+=("$cell")
         return 0
       fi
       # 閉じ引用符の直後がカンマでも行末でもない
-      if [[ "$rest" != ,* ]]; then
+      if [[ "$piece" != ,* ]]; then
         return 1
       fi
-    else
-      cell="${rest%%[\",]*}"
-      rest="${rest:${#cell}}"
-      if [ -z "$rest" ]; then
-        CSV_CELLS+=("$cell")
-        return 0
-      fi
-      # 囲まないセルは二重引用符を含められない
-      if [[ "$rest" == \"* ]]; then
-        return 1
-      fi
+      CSV_CELLS+=("$cell")
+      in_quoted=false
+      piece="${piece:1}"
     fi
-    CSV_CELLS+=("$cell")
-    rest="${rest:1}"
+    if [ "$((index + 1))" -lt "$count" ]; then
+      # 次の断片は囲みの中。開き引用符はセルの先頭にしか置けないため、この断片は空かカンマで終わる
+      if [ -n "$piece" ]; then
+        # 囲まないセルは二重引用符を含められない
+        if [[ "$piece" != *, ]]; then
+          return 1
+        fi
+        IFS=,
+        # shellcheck disable=SC2206
+        cells=($piece)
+        CSV_CELLS+=("${cells[@]}")
+        IFS='"'
+      fi
+      cell="${pieces[index + 1]}"
+      in_quoted=true
+      index=$((index + 2))
+      continue
+    fi
+    # 最後の断片(閉じ引用符とカンマの後に残る、囲まないセルの並び)
+    IFS=,
+    # shellcheck disable=SC2206
+    cells=($piece$CSV_SPLIT_COMMA)
+    CSV_CELLS+=("${cells[@]}")
+    return 0
   done
+  # 閉じ引用符が無いまま行末に達した
+  return 1
 }
 
 job_map_repo_reset() {
@@ -363,6 +408,9 @@ job_map_repo_load_snapshot() {
   if ! job_map_repo_scan_malformed_lines "$snapshot"; then
     return "$JOB_MAP_REPO_STATUS_COMMAND_FAILED"
   fi
+  # 行の読み込みもバイト単位で行う(事前走査の行番号と対応させる)。UTF-8 ロケールの read は、続きの無い先頭バイト
+  # (例: 行末の 0xE3)に続く改行を多バイト文字の一部として取り込み、次の行と結合して行数が合わなくなる
+  local LC_ALL=C
   # 最終行に改行が無くても読む
   while IFS= read -r line || [ -n "$line" ]; do
     line_number=$((line_number + 1))
@@ -493,12 +541,13 @@ job_map_repo_scan_output() {
   local path="$1" statuses failed=""
   LC_ALL=C tr '\000N' 'Nx' <"$path" 2>/dev/null | LC_ALL=C sed -n "${JOB_MAP_SCAN_SED_SCRIPT[@]}" 2>/dev/null
   statuses=("${PIPESTATUS[@]}")
+  # sed が読み切らずに終わると、書き込み先を失った tr は SIGPIPE(128 + 13)で終わる。SIGPIPE を無視する環境
+  # (CI の runner 等。無視の設定は子プロセスへ引き継がれ、bash からは戻せない)では tr は write error の終了状態 1 で終わり、
+  # tr 自身の失敗と区別できない。どちらも sed の失敗の結果なので、sed が失敗したときは tr の終了状態を見ない
   if [ "${statuses[1]}" -ne 0 ]; then
     failed="sed"
-  fi
-  # sed が読み切らずに終わると tr は SIGPIPE(128 + 13)で終わる。これは sed の失敗の結果なので tr を失敗に数えない
-  if [ "${statuses[0]}" -ne 0 ] && { [ -z "$failed" ] || [ "${statuses[0]}" -ne "$JOB_MAP_SCAN_SIGPIPE_STATUS" ]; }; then
-    failed="tr${failed:+,$failed}"
+  elif [ "${statuses[0]}" -ne 0 ]; then
+    failed="tr"
   fi
   if [ -n "$failed" ]; then
     printf '\n%s%s\n' "$JOB_MAP_SCAN_FAILED_MARKER" "$failed"

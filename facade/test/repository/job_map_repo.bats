@@ -134,6 +134,48 @@ setup() {
 	[ "$(job_map_repo_row_count)" -eq 1 ]
 }
 
+@test "csv_parse_glob文字と前後の空白を含むセルの場合_パス名展開も空白の除去もせずセルへ分解すること" {
+	# Arrange(窓なし版は単語分割で分けるため、パス名展開と IFS の空白処理が結果を変えないことを確かめる)
+	cd "$BATS_TEST_TMPDIR"
+	touch a.txt
+
+	# Act
+	csv_parse $'*,?, a ,\tb\t,[a],"* ?"'
+
+	# Assert
+	[ "${#CSV_CELLS[@]}" -eq 6 ]
+	[ "${CSV_CELLS[0]}" = "*" ]
+	[ "${CSV_CELLS[1]}" = "?" ]
+	[ "${CSV_CELLS[2]}" = " a " ]
+	[ "${CSV_CELLS[3]}" = $'\tb\t' ]
+	[ "${CSV_CELLS[4]}" = "[a]" ]
+	[ "${CSV_CELLS[5]}" = "* ?" ]
+	# パス名展開が有効な状態を変えない
+	[[ "$-" != *f* ]]
+}
+
+@test "csv_parse_囲みセルの前後に空セルがある場合_空文字のセルを落とさずセルへ分解すること" {
+	# Arrange / Act
+	csv_parse ',"a",,"b",'
+
+	# Assert
+	[ "${#CSV_CELLS[@]}" -eq 5 ]
+	[ "${CSV_CELLS[0]}" = "" ]
+	[ "${CSV_CELLS[1]}" = "a" ]
+	[ "${CSV_CELLS[2]}" = "" ]
+	[ "${CSV_CELLS[3]}" = "b" ]
+	[ "${CSV_CELLS[4]}" = "" ]
+}
+
+@test "csv_parse_二重化引用符の直後で行が終わる場合_閉じ引用符が無いものとしてクォート不正を返し閉じ引用符があれば1文字に戻すこと" {
+	# Arrange / Act / Assert(`"a""` は二重化引用符の後に閉じ引用符が無い。`"a"""` は二重化引用符の後に閉じ引用符がある)
+	run csv_parse '"a""'
+	[ "$status" -eq 1 ]
+	csv_parse '"a"""'
+	[ "${#CSV_CELLS[@]}" -eq 1 ]
+	[ "${CSV_CELLS[0]}" = 'a"' ]
+}
+
 @test "csv_parse_不正なUTF-8バイト列の直後に区切りがある場合_バイト列を変えずにセルへ分解すること" {
 	# Arrange(0xe3 は UTF-8 の 3 バイト文字の先頭バイト。続きのバイトが無いまま引用符・カンマが来る)
 	local line=$'J1,/w\xe3,"[""a\xe3""]",60'
@@ -588,6 +630,31 @@ setup() {
 @test "job_map_repo_load_sedが失敗する場合_行を読み込まず失敗の状態とコマンド名sedだけを返すこと" {
 	# Arrange(sed が読まずに終わると tr は SIGPIPE で終わるが、それは sed の失敗の結果なので commands= に含めない)
 	printf '%s\n' 'job_id,work_dir,script,fixed_params,hang_detect_limit_minutes' >"$MAP"
+	sed() { return 1; }
+
+	# Act
+	local status=0
+	job_map_repo_load "$MAP" || status=$?
+
+	# Assert
+	[ "$status" -eq "$JOB_MAP_REPO_STATUS_COMMAND_FAILED" ]
+	[ "$JOB_MAP_REPO_FAILED_COMMANDS" = "sed" ]
+	[ "$(job_map_repo_row_count)" -eq 0 ]
+}
+
+@test "job_map_repo_load_SIGPIPEを無視する環境でsedが失敗する場合_trのwrite_errorを失敗に数えずコマンド名sedだけを返すこと" {
+	# Arrange(CI の runner のように SIGPIPE を無視して起動された環境(無視の設定は子プロセスへ引き継がれる)。
+	#          sed が読まずに終わると、tr はパイプのバッファを超えた書き込みで write error(終了状態 1)になる。
+	#          バッファ(Linux は 64 KiB)より大きい入力で必ず起こす。tr の失敗は sed の失敗の結果なので commands= に含めない)
+	{
+		printf '%s\n' 'job_id,work_dir,script,fixed_params,hang_detect_limit_minutes'
+		local index=1
+		while [ "$index" -le 4000 ]; do
+			printf 'JOB%05d,/var/app/work,/opt/app/bin/job.sh,"[]",60\n' "$index"
+			index=$((index + 1))
+		done
+	} >"$MAP"
+	trap '' PIPE
 	sed() { return 1; }
 
 	# Act

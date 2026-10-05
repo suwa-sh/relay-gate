@@ -1,0 +1,15 @@
+event_id: 20260928_130000_s8_feedback_completed_eff24f55_ci_linux_fix
+type: stage_completed
+uc_id: eff24f55
+stage: S8
+payload:
+  manifest_sha256: 85d1ebda8af9b786c1abbfc4e09198f4716663209279349d7e7ad9c947902002
+  manifest_projection: v2
+  mode: initial
+  status: no_request
+  request_count: 0
+  blocker_count: 0
+  feedback_id: null
+  draft_path: null
+  rerun_after: 20260928_100000_stage_invalidated_eff24f55_ci_linux_fix
+created_at: '2026-09-28T13:00:00+09:00'

@@ -1,0 +1,12 @@
+event_id: 20260928_103000_s6_s7_completed_eff24f55_ci_linux_fix
+type: stage_completed
+uc_id: eff24f55
+stage: S6+S7
+payload:
+  manifest_sha256: 85d1ebda8af9b786c1abbfc4e09198f4716663209279349d7e7ad9c947902002
+  manifest_projection: v2
+  s6_uc_bdd: {result: pass, scenarios: 36, steps: 140}
+  s7_atdd: {result: pass, scenarios: 2, count_matches_atdd_scenarios: true}
+  linux_equivalent_check: 'ubuntu24 LANG=C.UTF-8 bats 339/339'
+  rerun_after: 20260928_100000_stage_invalidated_eff24f55_ci_linux_fix
+created_at: '2026-09-28T10:30:00+09:00'

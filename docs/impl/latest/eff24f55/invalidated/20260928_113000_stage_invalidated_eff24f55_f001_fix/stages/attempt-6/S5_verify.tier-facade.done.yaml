@@ -1,0 +1,30 @@
+stage: "S5"
+tier: "tier-facade"
+attempt: 6
+uc_id: "eff24f55"
+manifest_sha256: "85d1ebda8af9b786c1abbfc4e09198f4716663209279349d7e7ad9c947902002"
+manifest_projection: "v2"
+result: "fail"
+open_blockers: 1
+open_majors: 0
+assumptions_sha256: "ea33d97a79450798abbe2a21e5ad406bf6d6706b315b316d17d5706dcad3b1fc"
+assumption_verdicts_sha256: "cc4f314646b5d5b0f1b28ae2963e63ed6b64502bdb48b05773f4559768a4741d"
+assumption_verdicts_summary:
+  consistent: 1
+  spec_absent: 22
+  contradicts: 1
+  unlisted: 5
+gate_reexec:
+  format: "pass"
+  lint: "pass"
+  tdd: "pass"
+  bdd_tier: "pass"
+environment_failures: []
+findings_path: "docs/impl/latest/eff24f55/stages/attempt-6/S5_verify.tier-facade.findings.yaml"
+summary:
+  blocker: 1
+  major: 0
+  minor: 28
+completed_at: "2026-10-05T22:47:07.989700+00:00"
+completed_by: "dist-impl-verify@0.14.1"
+note: "ゲート全通過。Unicode空白を含むmap_versionのstdout形式にロケール依存差を再現したためF-001をblockerとしてfail。manifest_sha256は指定値を転記し再計算していない。"

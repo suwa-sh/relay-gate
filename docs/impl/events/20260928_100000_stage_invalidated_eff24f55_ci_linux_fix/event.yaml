@@ -1,0 +1,17 @@
+event_id: 20260928_100000_stage_invalidated_eff24f55_ci_linux_fix
+type: stage_invalidated
+uc_id: eff24f55
+payload:
+  reason: ci_linux_failure_post_delivery
+  detail: 'PR #11 CI (ubuntu-latest) tdd(facade) failed 5/334 after delivery approval; implementation fixed on the same branch within attempt 6 (no attempt++: environment-driven defects, user decision A on 2026-10-06). Approval 20260923_134000_review_approved_eff24f55_cycle3 and delivery_prepared 20260923_134100 are superseded; new S9 evidence and approval required.'
+  invalidated:
+  - stages/attempt-6/S4_tier-impl.tier-facade.done.yaml
+  - stages/attempt-6/S5_verify.tier-facade.done.yaml
+  - stages/attempt-6/S5_verify.tier-facade.findings.yaml
+  - stages/S6_uc-bdd.done.yaml
+  - stages/S7_atdd.done.yaml
+  - stages/S8_feedback.done.yaml
+  - stages/S9_review_generated.done.yaml
+  archive_dir: docs/impl/latest/eff24f55/invalidated/20260928_100000_stage_invalidated_eff24f55_ci_linux_fix
+  assumptions_kept: 'stages/attempt-6/S4_tier-impl.tier-facade.assumptions.yaml (updated in place: A-053 content, target lines)'
+created_at: '2026-09-28T10:00:00+09:00'
