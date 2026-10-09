@@ -35,6 +35,22 @@ source "$VALIDATE_CONFIG_SRC_DIR/repository/job_map_repo.sh"
 # shellcheck source=../usecase/validate_job_map.sh
 source "$VALIDATE_CONFIG_SRC_DIR/usecase/validate_job_map.sh"
 
+# 他 tier が所有する検証種別の handler を source する(契約 validate-config.sh の tier_note / options[].owner_tier:
+# --crosscheck-job-map = tier-rapid-crosscheck、--target-catalog = tier-final-crosscheck。各 tier md「変更概要」の
+# 「bash の source で直接依存(CLP-003)」に従う)。handler ファイルは所有 tier の src/presentation/ に置き、
+# `validate_config_<kind>` 関数を定義する。ファイルが無い場合は handler 未定義として既存の判定(終了コード 6)に任せる。
+# 登録の所在は docs/impl/latest/dcd8234d/issues/20261010_084142_facade-dispatch-and-csv-parser-outside-tiers.md
+RELAY_GATE_TIERS_DIR="${RELAY_GATE_TIERS_DIR:-$(cd "$VALIDATE_CONFIG_SRC_DIR/../.." && pwd)}"
+for validate_config_handler_file in \
+  "$RELAY_GATE_TIERS_DIR/rapid-crosscheck/src/presentation/validate_config_crosscheck_job_map.sh" \
+  "$RELAY_GATE_TIERS_DIR/final-crosscheck/src/presentation/validate_config_target_catalog.sh"; do
+  if [ -f "$validate_config_handler_file" ]; then
+    # shellcheck source=/dev/null
+    source "$validate_config_handler_file"
+  fi
+done
+unset validate_config_handler_file
+
 VALIDATE_CONFIG_KIND_OPTIONS="--feature-flag|--job-map|--crosscheck-job-map|--target-catalog"
 
 validate_config_usage() {
