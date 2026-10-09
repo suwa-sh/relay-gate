@@ -20,7 +20,9 @@ stages:
   S1_uc_init:
     status: done
   S2_test_scaffold:
-    status: pending
+    status: done
+    red_baseline: pass
+    mode: initial
   S3_contracts:
     status: pending
   S4_tier_impl:
@@ -47,4 +49,4 @@ stages:
     status: pending
   S9_review:
     status: pending
-updated_at: '2026-10-10T08:36:55+09:00'
+updated_at: '2026-10-10T08:46:02+09:00'
