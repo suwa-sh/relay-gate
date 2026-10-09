@@ -1,0 +1,16 @@
+stage: S3
+uc_id: dcd8234d
+manifest_sha256: ddcab64014c49e5f65a082b66a7d2c381cefd50c4744ad3457a3a8d5ef9d8289
+manifest_projection: v2
+result: pass
+contracts_verified:
+- id: management-db
+  result: pass
+  detail: 'lock input sha256 (2b3ffec0...) matches current rdb-schema.yaml and contracts_decl
+    (a7703a7d...) unchanged; contracts.lock.yaml sha (4192970b...) unchanged; no regeneration.
+    consumer side: this UC _model-summary.yaml (sha 77119b24...) has tables: [] so
+    no table/column cross-check target (validate-config.sh --crosscheck-job-map /
+    --target-catalog read CSV files only). provider side (tier-ops, not in this UC)
+    not re-verified.'
+completed_at: '2026-10-10T08:46:02+09:00'
+completed_by: dist-impl-run@0.14.1

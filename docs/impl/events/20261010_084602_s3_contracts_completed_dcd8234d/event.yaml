@@ -1,0 +1,12 @@
+event_id: 20261010_084602_s3_contracts_completed_dcd8234d
+type: stage_completed
+uc_id: dcd8234d
+stage: S3
+payload:
+  manifest_sha256: ddcab64014c49e5f65a082b66a7d2c381cefd50c4744ad3457a3a8d5ef9d8289
+  manifest_projection: v2
+  contracts_verified:
+  - id: management-db
+    result: pass
+    regenerated: false
+created_at: '2026-10-10T08:46:02+09:00'

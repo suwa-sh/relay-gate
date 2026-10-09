@@ -24,7 +24,7 @@ stages:
     red_baseline: pass
     mode: initial
   S3_contracts:
-    status: pending
+    status: done
   S4_tier_impl:
     tier-final-crosscheck:
       status: pending
