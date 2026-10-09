@@ -1,0 +1,50 @@
+schema_version: '1.0'
+uc_id: dcd8234d
+business: 適用構成業務
+buc: 適用構成定義フロー
+uc: クロスチェックのジョブマップと比較定義を定義する
+state: running
+current_attempt: 1
+resolved_models:
+  implementer: claude-fable-5-1
+  verifier: gpt-6-astra
+git_delivery:
+  required: true
+  uc_english_name: Define crosscheck job map and comparison definitions
+  branch_slug: define-crosscheck-job-map-and-comparison-definitions
+  base_branch: main
+  base_head: eee392b767caca105d94e6246ced9577d2443b00
+  feature_branch: feature/define-crosscheck-job-map-and-comparison-definitions
+  remote: origin
+stages:
+  S1_uc_init:
+    status: done
+  S2_test_scaffold:
+    status: pending
+  S3_contracts:
+    status: pending
+  S4_tier_impl:
+    tier-final-crosscheck:
+      status: pending
+      attempt: 1
+    tier-rapid-crosscheck:
+      status: pending
+      attempt: 1
+  S5_verify:
+    tier-final-crosscheck:
+      status: pending
+      attempt: 1
+      open_blockers: 0
+    tier-rapid-crosscheck:
+      status: pending
+      attempt: 1
+      open_blockers: 0
+  S6_uc_bdd:
+    status: pending
+  S7_atdd:
+    status: pending
+  S8_feedback:
+    status: pending
+  S9_review:
+    status: pending
+updated_at: '2026-10-10T08:36:55+09:00'
