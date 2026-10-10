@@ -4,7 +4,7 @@ manifest_sha256: "ddcab64014c49e5f65a082b66a7d2c381cefd50c4744ad3457a3a8d5ef9d82
 manifest_projection: v2
 mode: "initial"
 result: pass
-status: "draft"
+status: "published"
 attempt: 4
 attempt_note: "attempt 上限(3)到達後にユーザーが continue_once で許可した attempt 4 の S4 / S5 両 tier pass を入力にした。attempt-1〜3 の findings は解消済みの履歴として扱い、要求にしていない"
 inputs:
@@ -117,11 +117,19 @@ assumptions_summary:
   note: "人のレビューは未実施。spec_change の却下が出た前提は refresh で要求に加える。S9 で前提が承認された場合、CR-005 は実装どおりの文言を契約に書く要求として残す(要求の内容は変わらない)"
 feedback_request:
   feedback_id: "20261010_104636_impl_feedback_dcd8234d"
-  draft_path: "docs/impl/latest/dcd8234d/feedback/draft.md"
+  draft_path: null
+  published_path: "docs/impl/latest/dcd8234d/feedback-requests/20261010_104636_impl_feedback_dcd8234d.md"
+  input_sha256: "d4ddd211752998f5480a51d9dddfa3a58937badd62f72092c9257ed1384448fd"
+  published_sha256: "d4ddd211752998f5480a51d9dddfa3a58937badd62f72092c9257ed1384448fd"
   request_count: 4
   blocker_count: 0
   supersedes: null
   draft_sha256: "d4ddd211752998f5480a51d9dddfa3a58937badd62f72092c9257ed1384448fd"
+  review_approved_event_id: "20261010_184919_review_approved_dcd8234d_feedback_publish"
+  review_evidence_event_id: "20261010_182853_s9_review_generated_dcd8234d_simplification"
+  publish_started_event_id: "20261010_185130_feedback_request_publish_started_dcd8234d"
+  published_event_id: "20261010_185203_feedback_request_published_dcd8234d"
+  published_at: "2026-10-10T18:52:03+09:00"
   requests:
     - id: "CR-dcd8234d-007"
       severity: "spec-gap"
@@ -229,3 +237,24 @@ refresh_2:
     - "docs/impl/latest/dcd8234d/learnings/20261010_104636_proposal-skill.md(提案 6)"
   as_built_summary_appended: "第 8 節「レビュー対話での仕様選択(第 2 回。簡素化)」"
   refreshed_by: "dist-impl-feedback@0.14.1"
+publish:
+  mode: "publish"
+  published_at: "2026-10-10T18:52:03+09:00"
+  published_path: "docs/impl/latest/dcd8234d/feedback-requests/20261010_104636_impl_feedback_dcd8234d.md"
+  feedback_id: "20261010_104636_impl_feedback_dcd8234d"
+  input_sha256: "d4ddd211752998f5480a51d9dddfa3a58937badd62f72092c9257ed1384448fd"
+  published_sha256: "d4ddd211752998f5480a51d9dddfa3a58937badd62f72092c9257ed1384448fd"
+  request_count: 4
+  blocker_count: 0
+  review_approved_event_id: "20261010_184919_review_approved_dcd8234d_feedback_publish"
+  review_evidence_event_id: "20261010_182853_s9_review_generated_dcd8234d_simplification"
+  publish_started_event_id: "20261010_185130_feedback_request_publish_started_dcd8234d"
+  published_event_id: "20261010_185203_feedback_request_published_dcd8234d"
+  evidence_check: "approval / S9 event / S9 done の feedback_review_evidence(feedback_id・draft_sha256・request_count 4)と implementation_review_evidence の canonical 4 field が exact 一致。current evidence への approval は 1 件のみ"
+  assumption_recheck: "validateAssumptions.js record / verdicts を attempt-4 の両 tier で再実行し、sha256 と verdicts_sha256 が S4 / S5 done と一致。evidence 再計算 18852606… が S9 evidence と一致。assumption_decisions 36 件は S5 verdicts と 1:1、全件 auto_confirmed(回答必須 0 件、rejected 0 件)"
+  bytes_check: "no-follow で開いた fd から sha256 を取得。UTF-8 / BOM なし / LF / NFC。feedbackRequest.js verify PASS(4 requests)を rename 前後で確認"
+  rename_check: "rename 直前に lstat を再実行し dev / inode / size(16777230 / 454687640 / 40515)が検証時と一致。親 component は UC root 内の regular directory で symlink なし、realpath 一致、same filesystem。公開先は未存在。rename 後も同一 inode の regular file"
+  draft_removed: true
+  next_state: "blocked_on_spec"
+  write_set_note: "書き込みは feedback/draft.md(rename 元)、feedback-requests/(公開先)、本 done、events/ の publish_started / published の 2 件のみ。本文は変更していない。git コマンドは実行していない"
+  published_by: "dist-impl-feedback@0.14.1"
