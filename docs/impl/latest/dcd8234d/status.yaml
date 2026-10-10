@@ -3,7 +3,7 @@ uc_id: dcd8234d
 business: 適用構成業務
 buc: 適用構成定義フロー
 uc: クロスチェックのジョブマップと比較定義を定義する
-state: running
+state: awaiting_review
 current_attempt: 4
 resolved_models:
   implementer: claude-fable-5-1
@@ -71,8 +71,10 @@ stages:
     draft_path: docs/impl/latest/dcd8234d/feedback/draft.md
     feedback_id: 20261010_104636_impl_feedback_dcd8234d
   S9_review:
-    status: running
-updated_at: '2026-10-10T10:52:39+09:00'
+    status: done
+    state: awaiting_review
+    review_event: 20261010_110908_s9_review_generated_dcd8234d
+updated_at: '2026-10-10T11:09:08+09:00'
 attempt_limit:
   reached: true
   attempt: 3
