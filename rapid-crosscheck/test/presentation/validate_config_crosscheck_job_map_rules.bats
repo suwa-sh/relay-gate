@@ -771,6 +771,70 @@ has_line() {
 	[ "${lines[7]}" = "violations=3" ]
 }
 
+@test "validate-config_sh_--crosscheck-job-mapで参照カタログが1列ヘッダーで半角空白だけの行がある場合_列数が一致しても拒否し終了コード2であること" {
+	# Arrange(S5 attempt 3 F-018 の再現入力: catalog_version だけのヘッダー + 該当版の行 + 半角空白 1 文字の行。
+	#         空白だけの行はヘッダーの列数に関係なく拒否する。文言は config_input_rules の既存の column count mismatch)
+	write_valid_map
+	{
+		printf '%s\n' 'catalog_version'
+		printf '%s\n' 'v1'
+		printf '%s\n' ' '
+	} >"$CATALOG"
+
+	# Act
+	run_split --crosscheck-job-map "$MAP"
+
+	# Assert
+	[ "$status" -eq 2 ]
+	read_stderr_lines
+	[ "${#STDERR_LINES[@]}" -eq 3 ]
+	[ "${STDERR_LINES[0]}" = "error: column count mismatch line=3 expected=1 actual=1" ]
+	[ "${STDERR_LINES[1]}" = "error: target catalog reference unresolved path=$CATALOG catalog_version=v1" ]
+	[ "${STDERR_LINES[2]}" = "hint: fix the rows above and rerun validate-config.sh --crosscheck-job-map $MAP" ]
+	[ "${lines[6]}" = "status=invalid" ]
+	[ "${lines[7]}" = "violations=2" ]
+}
+
+@test "validate-config_sh_--crosscheck-job-mapで参照カタログが1列ヘッダーでタブだけ・空白複数の行がある場合_全件拒否し終了コード2であること" {
+	# Arrange(タブ 1 文字の行と、半角空白とタブを混ぜた行。空白だけの行は半角空白・タブだけの行)
+	write_valid_map
+	{
+		printf '%s\n' 'catalog_version'
+		printf '%s\n' "$(printf '\t')"
+		printf '%s\n' 'v1'
+		printf '%s\n' "$(printf ' \t  ')"
+	} >"$CATALOG"
+
+	# Act
+	run_split --crosscheck-job-map "$MAP"
+
+	# Assert
+	[ "$status" -eq 2 ]
+	read_stderr_lines
+	[ "${#STDERR_LINES[@]}" -eq 4 ]
+	[ "${STDERR_LINES[0]}" = "error: column count mismatch line=2 expected=1 actual=1" ]
+	[ "${STDERR_LINES[1]}" = "error: column count mismatch line=4 expected=1 actual=1" ]
+	[ "${STDERR_LINES[2]}" = "error: target catalog reference unresolved path=$CATALOG catalog_version=v1" ]
+	[ "${lines[7]}" = "violations=3" ]
+}
+
+@test "validate-config_sh_--crosscheck-job-mapで参照カタログが1列ヘッダーで該当版の行だけの場合_受理して終了コード0であること" {
+	# Arrange(空白だけの行の拒否が、1 列ヘッダーの妥当な行を巻き込まないこと)
+	write_valid_map
+	{
+		printf '%s\n' 'catalog_version'
+		printf '%s\n' 'v1'
+	} >"$CATALOG"
+
+	# Act
+	run_split --crosscheck-job-map "$MAP"
+
+	# Assert
+	[ "$status" -eq 0 ]
+	[ "${lines[6]}" = "status=valid" ]
+	[ ! -s "$ERR" ]
+}
+
 @test "validate-config_sh_--crosscheck-job-mapで参照カタログの列数が不足する行がある場合_column count mismatchと参照未解決であること" {
 	# Arrange(4 列の行。該当版の行は別にある)
 	write_valid_map

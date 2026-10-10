@@ -115,6 +115,28 @@ write_valid_map() {
 	[ "${lines[1]}" = "error: column count mismatch line=4 expected=5 actual=1" ]
 }
 
+@test "crosscheck_target_catalog_report_row_errors_1列ヘッダーで空白だけの行がある場合_列数が一致しても拒否すること" {
+	# Arrange(S5 attempt 3 F-018: 空白だけの行はヘッダーの列数に依存せず拒否。`" "` のような空でない 1 列の値は受理)
+	{
+		printf '%s\n' 'catalog_version'
+		printf '%s\n' ' '
+		printf '%s\n' 'v1'
+		printf '%s\n' "$(printf '\t \t')"
+		printf '%s\n' '""'
+	} >"$CATALOG"
+	crosscheck_target_catalog_repo_load "$CATALOG"
+	JOB_MAP_REPORT_SINK=""
+
+	# Act
+	run crosscheck_target_catalog_report_row_errors "$CATALOG"
+
+	# Assert
+	[ "$status" -eq 1 ]
+	[ "${#lines[@]}" -eq 2 ]
+	[ "${lines[0]}" = "error: column count mismatch line=2 expected=1 actual=1" ]
+	[ "${lines[1]}" = "error: column count mismatch line=4 expected=1 actual=1" ]
+}
+
 @test "crosscheck_target_catalog_report_row_errors_全行が妥当な場合_何も出さず戻り値0であること" {
 	# Arrange
 	crosscheck_target_catalog_repo_load "$CATALOG"

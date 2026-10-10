@@ -219,9 +219,20 @@ validate_crosscheck_job_map_rows() {
   done
 }
 
+# 解析済みのデータ行が「空白だけの行(半角空白・タブだけ)」か(config_input_rules: 列数に関係なく拒否する行)。
+# 空白だけの物理行は 1 セル(中身が空白だけ)に解析されるので、1 セルで中身が空でなく空白以外を含まない行を該当とする
+# (解析後は元の行を持たないため、`" "` のように引用で囲んだ空白だけの値も同じ扱いになる。空のセル `""` は該当しない)。
+# 戻り値: 0 … 空白だけの行 / 1 … それ以外
+# 引数: cell_count first_cell
+crosscheck_csv_row_is_blank() {
+  local cell_count="$1" first_cell="$2"
+  [ "$cell_count" -eq 1 ] && [ -n "$first_cell" ] && [ -z "${first_cell//[$' \t']/}" ]
+}
+
 # 読み込み済みの対象カタログ(JOB_MAP_*)のデータ行の形式違反を全件、物理行順に共通文言で報告する(config_input_rules は
-# 全設定ファイル共通。クォート不正は `csv quote is invalid`(path はカタログ)、列数不一致(空白だけの行を含む)は
+# 全設定ファイル共通。クォート不正は `csv quote is invalid`(path はカタログ)、列数不一致と空白だけの行は
 # `column count mismatch`)。expected はカタログのヘッダー行の列数(列名・列数の検証は tier-final-crosscheck に委ねる)。
+# 空白だけの行はヘッダーが 1 列でも拒否する(列数の比較だけでは expected=1 / actual=1 で通ってしまう。S5 F-018)。
 # 戻り値: 0 … 違反なし / 1 … 違反あり(報告済み。件数は CROSSCHECK_TARGET_CATALOG_ROW_ERRORS)
 # 引数: shown_path
 CROSSCHECK_TARGET_CATALOG_ROW_ERRORS=0
@@ -234,7 +245,7 @@ crosscheck_target_catalog_report_row_errors() {
     if [ "${JOB_MAP_ROW_STATUSES[$row_index]}" = "$JOB_MAP_PARSE_QUOTE_INVALID" ]; then
       job_map_emit "error: csv quote is invalid line=$line path: $shown_path"
       CROSSCHECK_TARGET_CATALOG_ROW_ERRORS=$((CROSSCHECK_TARGET_CATALOG_ROW_ERRORS + 1))
-    elif [ "$actual" -ne "$expected" ]; then
+    elif [ "$actual" -ne "$expected" ] || crosscheck_csv_row_is_blank "$actual" "${JOB_MAP_CELLS[${JOB_MAP_ROW_OFFSETS[$row_index]}]}"; then
       job_map_emit "error: column count mismatch line=$line expected=$expected actual=$actual"
       CROSSCHECK_TARGET_CATALOG_ROW_ERRORS=$((CROSSCHECK_TARGET_CATALOG_ROW_ERRORS + 1))
     fi
