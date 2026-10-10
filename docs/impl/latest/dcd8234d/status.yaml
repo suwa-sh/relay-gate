@@ -61,12 +61,13 @@ stages:
     scenarios: 43
     this_uc: 7
   S7_atdd:
-    status: running
+    status: done
+    scenarios: 1
   S8_feedback:
-    status: pending
+    status: running
   S9_review:
     status: pending
-updated_at: '2026-10-10T10:41:39+09:00'
+updated_at: '2026-10-10T10:44:18+09:00'
 attempt_limit:
   reached: true
   attempt: 3

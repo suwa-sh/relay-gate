@@ -1,0 +1,62 @@
+stage: S7
+uc_id: dcd8234d
+manifest_sha256: ddcab64014c49e5f65a082b66a7d2c381cefd50c4744ad3457a3a8d5ef9d8289
+manifest_projection: v2
+result: pass
+branch_slug: define-crosscheck-job-map-and-comparison-definitions
+tiers:
+  - tier-final-crosscheck
+  - tier-rapid-crosscheck
+tier_impl_attempt: 4
+atdd_confirmed: true
+atdd_scenarios:
+  - SPEC-004-04-5
+features:
+  - features/atdd/SPEC-004-04.feature
+feature_changed: false
+feature_changed_note: "feature 本文(Scenario 文言・タグ)は変更していない。@atdd_SPEC-004-04-5 は bootstrap P7 生成時から付与済み"
+steps:
+  - features/atdd/steps/define-crosscheck-job-map-and-comparison-definitions.steps.js
+steps_changed: true
+steps_change_summary: "S2 skeleton の 3 step(Given / When / Then)を実装。World / Before / After は configure-feature-flags.steps.js の定義を共有し、setWorldConstructor は呼ばない"
+implemented_steps: 3
+source: "docs/usdm/latest/requirements.yaml の SPEC-004-04 の acceptance_criteria(5 件目)"
+tier_impl_changed: false
+run:
+  cwd: "."
+  command: "npx cucumber-js --config cucumber.cjs features/atdd --tags '@atdd_SPEC-004-04-5'"
+  selection: "tag exact match only (no name filter, feature not run as a whole)"
+  tag_uniqueness: "@atdd_SPEC-004-04-5 は features/atdd/SPEC-004-04.feature L31 の 1 箇所のみ(grep で確認)"
+  exit_code: 0
+  summary: "1 scenario (1 passed), 3 steps (3 passed)"
+  scenarios_expected: 1
+  scenarios_total: 1
+  scenarios_passed: 1
+  scenarios_failed: 0
+  undefined_steps: 0
+  ambiguous_steps: 0
+  count_matches_atdd_scenarios: true
+ci_tag_selection_check:
+  command: "npx cucumber-js --config cucumber.cjs features/atdd --tags '@atdd_SPEC-001-01-4 or @atdd_SPEC-004-04-4 or @atdd_SPEC-008-05-2 or @atdd_SPEC-004-04-5'"
+  exit_code: 0
+  summary: "4 scenarios (4 passed), 12 steps (12 passed)"
+  note: "先行 UC(fd678b04 / eff24f55)の 3 タグを含めた CI 同形のタグ式でも回帰なし(scripts/ci/atdd-tag-expression.js は status.yaml が completed の UC の atdd_scenarios からタグ式を組む)"
+verification_method:
+  given: "sandbox 配下の /etc/relay-gate/crosscheck-job-map.csv(宣言 3 行 + ヘッダー + 2 行)と /etc/relay-gate/target-catalog.csv(ヘッダー + 2 行)を実ファイルで配置。両ファイルともカンマ区切り・1 行目ヘッダー・カンマを含む引用セル・二重化した引用符を含む引用セルを持つ。compare_command の比較ツールは /opt/compare/ に exit 0 の実行可能スタブを配置"
+  when: "facade/bin/validate-config.sh を実プロセスとして --crosscheck-job-map と --target-catalog の両方で起動(RELAY_GATE_CONFIG_DIR を sandbox に向ける)"
+  then: "両方が終了コード 0・stdout に status=valid と rows=2・stderr に error 行なし。引用セルが 1 セルとして解析されなければ列数不一致で status=valid にならず rows も 2 にならないため、slot ジョブマップと同じ CSV 形式(クォート解析結果)で受理されたと判定する"
+  io_boundary: "Scenario ごとの一時ディレクトリ(World の sandbox root)。/etc /opt へは書き込まない。出力中の sandbox 接頭辞は World.unsandbox で除去"
+  external_connections: none
+harness:
+  sandbox_root: "Scenario ごとの一時ディレクトリを root とし、仕様の絶対パスを root 配下の同じ相対位置に実ファイルで配置"
+  process: "facade/bin/validate-config.sh を実プロセスとして起動(--crosscheck-job-map <path> / --target-catalog <path>)"
+  reused_from: features/uc/steps/define-crosscheck-job-map-and-comparison-definitions.steps.js
+  world_shared_with: features/atdd/steps/configure-feature-flags.steps.js
+injections: []
+injections_note: "ハーネス注入なし。前提の新規抽出なし。比較ツールのスタブ配置は fixture であり注入ではない(issues/20261010_084142_cross-uc-scenarios.md #1 の判定に従う)"
+cross_uc_refs:
+  - docs/impl/latest/dcd8234d/issues/20261010_084142_cross-uc-scenarios.md
+issues: []
+issues_note: "新規起票なし。受け入れ基準 SPEC-004-04-5 は tier-rapid-crosscheck / tier-final-crosscheck attempt-4 の実装で通過し、仕様と実装の食い違いは見つからなかった"
+completed_at: '2026-10-10T10:43:53+09:00'
+completed_by: dist-impl-implement@0.14.1
