@@ -1,0 +1,25 @@
+stage: "S5"
+tier: "tier-final-crosscheck"
+attempt: 3
+uc_id: "dcd8234d"
+manifest_sha256: "29b7f16040fdc687588276e46996815ac2dbb10faef246c02ef78d4023412ac3"
+manifest_projection: "v2"
+result: "pass"
+open_blockers: 0
+open_majors: 0
+open_minors: 18
+assumptions_sha256: "91403d5781aa01449a3932210b8bc551fef3285111a09932e1b5dc0b750324b6"
+assumption_verdicts_sha256: "c30d56285d6913139398e84551751fe1d3a046068f7870ac680f4a679c48a458"
+assumption_verdicts_summary:
+  consistent: 0
+  spec_absent: 18
+  contradicts: 0
+  unlisted: 0
+gate_reexec:
+  format: "pass"
+  lint: "pass"
+  tdd: "pass"
+  bdd_tier: "pass"
+environment_failures: []
+findings_path: "docs/impl/latest/dcd8234d/stages/attempt-3/S5_verify.tier-final-crosscheck.findings.yaml"
+completed_at: "2026-10-10T00:50:53.491051+00:00"

@@ -1,0 +1,55 @@
+stage: "S5"
+lane: "verify"
+tier: "tier-rapid-crosscheck"
+attempt: 3
+uc_id: "dcd8234d"
+manifest_sha256: "81d5dba283cd5c746d42428fa2713f0e7f2d15891575284e8b93e17b6b2d9f93"
+manifest_projection: "v2"
+result: "fail"
+open_blockers: 1
+open_majors: 0
+assumptions_sha256: "16632a4e0f593bba5d470ac43cdc48414411a06bb5b540206b1c59937c0790e4"
+assumption_verdicts_summary:
+  consistent: 0
+  spec_absent: 17
+  contradicts: 0
+  unlisted: 0
+gate_reexec:
+  format: "pass"
+  lint: "pass"
+  tdd: "pass"
+  bdd_tier: "pass"
+viewpoints_checked:
+  spec_conformance:
+    status: "done"
+    note: "tierルール1〜11、固定順stdout7行、違反時8行、宣言・予約行・プレースホルダ・参照を照合。前回通常5列カタログの2件は解消。1列ヘッダーに残る空白行拒否漏れをF-018とする。旧_api-summaryでv2 slice対象外。models4層、tables空、RDB操作なし、UIなし。"
+  readability_maintainability:
+    status: "done"
+    note: "dev-rules3ファイル、4層構成、日本語コメント、AAA・テスト命名を確認。共有CSV解析のtier間依存は依頼者の確定規約・既存issueとして扱う。"
+  security:
+    status: "done"
+    note: "CSV値やcompare_commandを実行しない。credential_refを混入した不正ヘッダーの合成秘密値がstdout/stderrへ出ないことを独立実行。制御文字表示テスト成功。snapshot0600を実測。"
+  performance:
+    status: "done"
+    note: "macOS独立測定で5000行正常1.380秒、5000行多重違反2.534秒。既存の5000行最悪条件verbose性能テストもmacOS/Linuxで成功。測定範囲でNFR10秒以内。"
+  operability:
+    status: "done"
+    note: "LANG未設定、LANG=C.UTF-8、LC_ALL=Cで正常・最終LFなしは0/7行、NUL/不正UTF-8/BOM/CR/重複ヘッダー/クォート/列数/空白は通常5列カタログで2/8行。共通文言とerror数を照合。1列空白の例外はF-018。"
+  fault_tolerance:
+    status: "done"
+    note: "sort失敗・TMPDIR不存在でstdoutなし終了コード6のゲート成功。元マップをsnapshot出現後にatomic置換し、旧5000行で成功することを独立確認。snapshot0600、終了後残存0。"
+  refactoring:
+    status: "done"
+    note: "読み取り・業務検証・出力の分離、共有CSV再利用を確認。rapid handler32関数とfinal handler28関数の積集合0。同一bashへ両方source後60関数。名前衝突なし。"
+  assumption_conformance:
+    status: "done"
+    note: "観点1〜7完走後にid/assumption/targetのみ読み、S4固定指示と仕様で全17件を判定後、reason/confidence/spec_refsを確認。17件spec_absent、分類不一致0。1列ヘッダーのexpected選択はA-022に記録済みでunlistedなし。"
+environment_failures: []
+findings_path: "docs/impl/latest/dcd8234d/stages/attempt-3/S5_verify.tier-rapid-crosscheck.findings.yaml"
+summary:
+  blocker: 1
+  major: 0
+  minor: 17
+completed_at: "2026-10-10T00:50:59.554413+00:00"
+completed_by: "dist-impl-verify@0.14.1"
+assumption_verdicts_sha256: "a81aabe7781a8c6676e2381e76c6b48bec423ba569dfc242cc7343153190c078"
