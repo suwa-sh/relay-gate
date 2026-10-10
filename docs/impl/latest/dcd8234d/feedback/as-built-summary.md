@@ -2,7 +2,7 @@
 
 - 対象: `validate-config.sh --crosscheck-job-map`(tier-rapid-crosscheck)と `validate-config.sh --target-catalog`(tier-final-crosscheck)
 - 位置づけ: 独立検証の attempt 上限(3)到達後、利用者の承認で開いた attempt 4 で両 tier が pass した時点の記録
-- 結論: **仕様起因の要求 5 件**(blocker 0)。draft は `docs/impl/latest/dcd8234d/feedback/draft.md`
+- 結論: **仕様起因の要求 6 件**(blocker 0)。draft は `docs/impl/latest/dcd8234d/feedback/draft.md`。初版は 5 件。2026-10-10 のレビュー対話での仕様選択(第 7 節)を refresh で反映し、CR-006 を追加、CR-005 を整理した
 - 根拠:
   - `docs/impl/latest/dcd8234d/issues/` の 4 件
   - `docs/impl/latest/dcd8234d/stages/attempt-4/S5_verify.tier-rapid-crosscheck.findings.yaml`(blocker 0 / major 0 / minor 18)
@@ -146,3 +146,19 @@ HTTP endpoint・状態遷移・header は本 UC に無い。CLI の出力と終�
 - CR-001 / CR-003: 方針資料はスクリプトの内部構成(tier 間の関数共有・名前空間)を定めていない。どちらに決めても矛盾しない。
 - CR-002: 方針資料は「同じ CSV 形式」とだけ定める。関数の共有は方針資料の要求ではないため、受け入れ基準から外しても意図は変わらない。
 - CR-004 / CR-005: 方針資料は違反文言と BDD の例を定めていない。追加・修正は矛盾しない。
+
+## 7. レビュー対話での仕様選択(案 A。2026-10-10 refresh で追記)
+
+- 入力: `docs/impl/latest/dcd8234d/review/review-notes.md`「2026-10-10 レビュー対話での仕様選択」。承認(review_approved)は記録せず、S8 を refresh で再実行した
+- 利用者の問い: 「target-catalog.csv は何の対象か。クロスチェック自体は別ツールが行うので対象一覧は不要。速報は blue/green のジョブ情報を渡し、確報は何も渡さずキックするだけ」
+- 照合結果: 方針資料(`tmp/RelayGateのしくみ.md` 42 行目)は「比較対象の定義は、適用側で定義します」と定める。確報依頼のデータ項目「business_date」「対象カタログの版」は方針資料にもあるが、対象カタログの列・検証・`{catalog_path}` の受け渡しは仕様策定フェーズの推論(`docs/specs/latest/_inference.md` #5 仮採用。本 UC の tier-final-crosscheck.md も「所在は _inference.md #5 仮採用」と注記)
+- 決定(案 A): 確報クロスチェックは比較ツールを起動するだけにする。対象カタログ(target-catalog.csv / `validate-config.sh --target-catalog` / 確報依頼の catalog_version)と business_date を relay-gate から外す(relay-gate はアプリ独自 DB の業務日付を参照できない)。速報の `{blue}` / `{green}` の受け渡しは変えない。方針資料側の確報依頼データ項目は利用者がそろえる
+- 分類: **仕様起因(方針資料との乖離)** → CR-dcd8234d-006 を追加。実装起因ではない(実装は仮採用の仕様どおりで、独立検証も pass)
+- 既存要求の整理:
+  - CR-001: 確報ティアの検証関数が無くなるため、対象を facade と速報クロスチェックの 2 ティア間に絞った
+  - CR-002: Then の文言だけを対象に残し、Scenario 名・受け入れ基準の「対象カタログ」の削除は CR-006 に寄せた
+  - CR-003: 衝突の実例は確報側の関数だったが、規則の不在は残るため要求は維持。完了条件の対象ティアを facade / 速報に直した
+  - CR-004: 変更なし
+  - CR-005: `catalog_version is invalid` の文言(final A-006)と参照先カタログの `expected` の基準(rapid A-022)は対象自体が廃止されるため CR-006 に吸収。速報側の違反文言 2 件(rapid A-008 / A-016)だけを残した
+- 本 UC の確報側成果物(final-crosscheck/ の `validate_config_target_catalog` と bats 57 件、速報側の検証ルール 9)は、仕様反映後の再実装で削除される。前提一覧(第 5 節)のうち確報ティア 18 件と速報ティアの参照解決に関する前提(A-011 / A-012 / A-022 / A-023)は、仕様反映後は対象が無くなる
+- 学び: `learnings/20261010_172853_tentative-spec-confirm-before-impl.md`(仮採用注記のある設定ファイルは実装前に利用者確認する)

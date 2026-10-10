@@ -71,11 +71,11 @@ resolution:
     verdict: "attempt 4 の findings は両 tier とも spec_absent の minor のみ。前提は S9 で人が回答する。契約の文言・規則に関わる 4 件(rapid A-008 / A-016 / A-022、final A-006)だけを CR-005 の要求候補にした"
   rejected_spec_change: 0
 classification:
-  spec_origin: 5
+  spec_origin: 6
   implementation_origin_fixed: 3
   environment_origin: 0
   out_of_scope: 32
-  note: "仕様起因 = issue 4 件(CR-001〜004)+ 契約に無い違反文言と参照先カタログの expected の基準(CR-005)。実装起因(修正済み)= attempt 1 / 2 / 3 の blocker(各 attempt で解消)。環境起因 = なし(両 tier environment_failures 空)。対象外 = spec_absent の前提 32 件(S9 で前提として回答)"
+  note: "仕様起因 = issue 4 件(CR-001〜004)+ 契約に無い速報側の違反文言 2 件(CR-005)+ レビュー対話での仕様選択(案 A。方針資料との乖離。CR-006)。実装起因(修正済み)= attempt 1 / 2 / 3 の blocker(各 attempt で解消)。環境起因 = なし(両 tier environment_failures 空)。対象外 = spec_absent の前提 32 件(S9 で前提として回答)"
 assumptions_summary:
   count: 36
   by_tier:
@@ -97,12 +97,12 @@ assumptions_summary:
       reason: "compare_targets is not catalog の文言が契約に無い"
     - id: "A-022"
       tier: "tier-rapid-crosscheck"
-      cr: "CR-dcd8234d-005"
-      reason: "参照先カタログの column count mismatch の expected の基準が無い(独立検証が S9 確認対象と明記)"
+      cr: "CR-dcd8234d-006"
+      reason: "参照先カタログの column count mismatch の expected の基準が無い(独立検証が S9 確認対象と明記)。refresh で CR-005 から CR-006 へ移動(参照解決自体を廃止)"
     - id: "A-006"
       tier: "tier-final-crosscheck"
-      cr: "CR-dcd8234d-005"
-      reason: "catalog_version is invalid の文言が契約に無い"
+      cr: "CR-dcd8234d-006"
+      reason: "catalog_version is invalid の文言が契約に無い。refresh で CR-005 から CR-006 へ移動(対象カタログの検証自体を廃止)"
     - id: "A-018"
       tier: "tier-final-crosscheck"
       cr: "CR-dcd8234d-001"
@@ -118,9 +118,10 @@ assumptions_summary:
 feedback_request:
   feedback_id: "20261010_104636_impl_feedback_dcd8234d"
   draft_path: "docs/impl/latest/dcd8234d/feedback/draft.md"
-  request_count: 5
+  request_count: 6
   blocker_count: 0
   supersedes: null
+  draft_sha256: "f896078854dd5c6fb6adb9c2daa0b5de781f89acb33f124dc2ae7336533defc9"
   requests:
     - id: "CR-dcd8234d-001"
       severity: "spec-gap"
@@ -136,13 +137,17 @@ feedback_request:
       title: "ティア仕様の BDD「compare_options にプレースホルダが無い」の Given と Then の値が一致しない"
     - id: "CR-dcd8234d-005"
       severity: "spec-gap"
-      title: "実装が補った違反文言 3 件と、参照先カタログの列数不一致の基準が CLI 契約に無い"
+      title: "実装が補った速報側の違反文言 2 件が CLI 契約に無い"
+    - id: "CR-dcd8234d-006"
+      severity: "spec-gap"
+      title: "確報クロスチェックの対象カタログと業務日付を relay-gate が検証・配布する仕様が、方針資料「比較対象の定義は適用側で定義する」と乖離している"
 as_built_summary: "docs/impl/latest/dcd8234d/feedback/as-built-summary.md"
-learnings: 3
+learnings: 4
 learning_files:
   - "docs/impl/latest/dcd8234d/learnings/20261010_104636_same-shell-source-function-name-collision.md"
   - "docs/impl/latest/dcd8234d/learnings/20261010_104636_referenced-csv-shares-config-input-rules.md"
   - "docs/impl/latest/dcd8234d/learnings/20261010_104636_attempt-limit-reached-blockers-8-2-1-0.md"
+  - "docs/impl/latest/dcd8234d/learnings/20261010_172853_tentative-spec-confirm-before-impl.md"
 proposals:
   skill: true
   context: true
@@ -152,3 +157,38 @@ proposal_files:
 write_set_note: "書き込みは docs/impl/latest/dcd8234d/feedback/、learnings/、stages/S8_feedback.done.yaml のみ。issues/ と仕様・実装・SKILL.md・CLAUDE.md・dev-rules は変更していない"
 completed_at: "2026-10-10T10:46:36+09:00"
 completed_by: "dist-impl-feedback@0.14.1"
+refresh:
+  mode: "refresh"
+  refreshed_at: "2026-10-10T17:28:53+09:00"
+  input: "docs/impl/latest/dcd8234d/review/review-notes.md の節「2026-10-10 レビュー対話での仕様選択(承認前。S8 refresh の入力)」。利用者決定 = 案 A(確報クロスチェックは比較ツールを起動するだけ。対象カタログと business_date を relay-gate から外す)"
+  verify: "feedbackRequest.js verify PASS(6 requests)"
+  feedback_id_kept: true
+  updated:
+    - id: "CR-dcd8234d-001"
+      change: "対象を facade と速報クロスチェックの 2 ティア間に絞った(確報ティアの検証関数は CR-006 で無くなる)。related_files から tier-final-crosscheck.md を外した"
+    - id: "CR-dcd8234d-002"
+      change: "Then の文言だけを対象に残し、Scenario 名・受け入れ基準の「対象カタログ」の削除を CR-006 に寄せる注記を追加"
+    - id: "CR-dcd8234d-003"
+      change: "完了条件の対象ティアを facade / 速報に直した。related_files から tier-final-crosscheck.md を外した"
+    - id: "CR-dcd8234d-005"
+      change: "catalog_version is invalid の文言(final A-006)と参照先カタログの expected の基準(rapid A-022)を CR-006 に吸収。速報側の違反文言 2 件だけに縮小し、題名を変更"
+  added:
+    - id: "CR-dcd8234d-006"
+      severity: "spec-gap"
+      note: "方針資料「比較対象の定義は適用側で定義する」と仕様「relay-gate が対象カタログを検証して配る」の乖離。severity は検証スクリプトの許容値(blocker / spec-gap / improvement)に spec-conflict が無いため spec-gap にした"
+  removed: []
+  unchanged:
+    - "CR-dcd8234d-004"
+  counts:
+    updated: 4
+    added: 1
+    removed: 0
+    request_count_before: 5
+    request_count_after: 6
+    blocker_count: 0
+  learnings_added:
+    - "docs/impl/latest/dcd8234d/learnings/20261010_172853_tentative-spec-confirm-before-impl.md"
+  proposals_appended:
+    - "docs/impl/latest/dcd8234d/learnings/20261010_104636_proposal-skill.md(提案 5)"
+  as_built_summary_appended: "第 7 節「レビュー対話での仕様選択(案 A)」"
+  refreshed_by: "dist-impl-feedback@0.14.1"
