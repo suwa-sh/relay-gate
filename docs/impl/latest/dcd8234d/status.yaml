@@ -45,13 +45,17 @@ stages:
         bdd_tier: pass
   S5_verify:
     tier-final-crosscheck:
-      status: running
+      status: done
       attempt: 4
+      result: pass
       open_blockers: 0
+      open_major: 0
     tier-rapid-crosscheck:
-      status: running
+      status: done
       attempt: 4
+      result: pass
       open_blockers: 0
+      open_major: 0
   S6_uc_bdd:
     status: pending
   S7_atdd:
@@ -60,10 +64,10 @@ stages:
     status: pending
   S9_review:
     status: pending
-updated_at: '2026-10-10T10:32:07+09:00'
+updated_at: '2026-10-10T10:36:02+09:00'
 attempt_limit:
   reached: true
   attempt: 3
   user_decision: continue_once
-  decision_event: 20261010_102424_attempt_opened_dcd8234d_a4
-  note: ユーザー承認で attempt 4 を 1 回だけ許可。attempt 4 で blocker が残れば再度停止する
+  result_attempt_4: pass
+  note: attempt 4(ユーザー承認)で両 tier pass
