@@ -70,6 +70,48 @@ bind_row() {
 	[ "${TARGET_CATALOG_REPORT_LINES[0]}" = 'error: header mismatch expected=catalog_version,target_type,target_identifier,compare_condition,business_date_handling actual=catalog_version\ttarget_type path: /etc/x.csv' ]
 }
 
+@test "validate_target_catalog_headerで引用により5列名が1セルに結合された場合_header_mismatchでactualを引用付きで出すこと" {
+	# Arrange / Act(`"catalog_version,target_type,...,business_date_handling"` の 1 行は解析後 1 セル。
+	#              カンマで再連結すると契約の 5 列と同じ文字列になるため、セル数と位置で判定する。S5 F-001 の回帰)
+	run_status=0
+	validate_target_catalog_header /etc/x.csv 'catalog_version,target_type,target_identifier,compare_condition,business_date_handling' || run_status=$?
+
+	# Assert(actual= はカンマを含む列名を引用し、1 セルだと分かる表記にする)
+	[ "$run_status" -eq 1 ]
+	[ "${#TARGET_CATALOG_REPORT_LINES[@]}" -eq 1 ]
+	[ "${TARGET_CATALOG_REPORT_LINES[0]}" = 'error: header mismatch expected=catalog_version,target_type,target_identifier,compare_condition,business_date_handling actual="catalog_version,target_type,target_identifier,compare_condition,business_date_handling" path: /etc/x.csv' ]
+}
+
+@test "validate_target_catalog_headerで引用により先頭2列が1セルに結合された4セルの場合_header_mismatchであること" {
+	# Arrange / Act(`"catalog_version,target_type",target_identifier,...` は解析後 4 セル。S5 F-001 の回帰)
+	run_status=0
+	validate_target_catalog_header /etc/x.csv 'catalog_version,target_type' target_identifier compare_condition business_date_handling || run_status=$?
+
+	# Assert
+	[ "$run_status" -eq 1 ]
+	[ "${TARGET_CATALOG_REPORT_LINES[0]}" = 'error: header mismatch expected=catalog_version,target_type,target_identifier,compare_condition,business_date_handling actual="catalog_version,target_type",target_identifier,compare_condition,business_date_handling path: /etc/x.csv' ]
+}
+
+@test "validate_target_catalog_headerで6セル目に空の列名がある場合_header_mismatchであること" {
+	# Arrange / Act(末尾のカンマで 6 セル。セル数の不一致)
+	run_status=0
+	validate_target_catalog_header /etc/x.csv catalog_version target_type target_identifier compare_condition business_date_handling "" || run_status=$?
+
+	# Assert
+	[ "$run_status" -eq 1 ]
+	[ "${TARGET_CATALOG_REPORT_LINES[0]}" = 'error: header mismatch expected=catalog_version,target_type,target_identifier,compare_condition,business_date_handling actual=catalog_version,target_type,target_identifier,compare_condition,business_date_handling, path: /etc/x.csv' ]
+}
+
+@test "validate_target_catalog_headerで列名に二重引用符を含む場合_actualで二重化して引用すること" {
+	# Arrange / Act(列名 `a"b` は入力のクォート規則どおり `"a""b"` と表記する)
+	run_status=0
+	validate_target_catalog_header /etc/x.csv 'a"b' target_type target_identifier compare_condition business_date_handling || run_status=$?
+
+	# Assert
+	[ "$run_status" -eq 1 ]
+	[ "${TARGET_CATALOG_REPORT_LINES[0]}" = 'error: header mismatch expected=catalog_version,target_type,target_identifier,compare_condition,business_date_handling actual="a""b",target_type,target_identifier,compare_condition,business_date_handling path: /etc/x.csv' ]
+}
+
 @test "target_catalog_is_valid_catalog_versionで英数字とドットとアンダースコアとハイフンの場合_受理すること" {
 	target_catalog_is_valid_catalog_version "v1.2_rc-3"
 }

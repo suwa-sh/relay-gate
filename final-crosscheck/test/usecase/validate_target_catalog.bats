@@ -98,6 +98,20 @@ setup() {
 	[[ "${stderr_lines[1]}" == "error: header mismatch expected=$HEADER actual=catalog_version,catalog_version,"* ]]
 }
 
+@test "validate_target_catalogでヘッダー行全体が引用された1セルの場合_header_mismatchで終了コード2でstdoutを出さないこと" {
+	# Arrange(S5 F-001 の回帰: 引用により 1 セルになったヘッダーは契約の 5 列ではない)
+	printf '%s\n' "\"$HEADER\"" 'v1,table,A,-,-' >"$CATALOG"
+
+	# Act
+	run --separate-stderr validate_target_catalog "$CATALOG" false
+
+	# Assert
+	[ "$status" -eq 2 ]
+	[ "${#lines[@]}" -eq 0 ]
+	[ "${stderr_lines[0]}" = "error: header mismatch expected=$HEADER actual=\"$HEADER\" path: $CATALOG" ]
+	[ "${stderr_lines[1]}" = "hint: fix the rows above and rerun validate-config.sh --target-catalog $CATALOG" ]
+}
+
 @test "validate_target_catalogでヘッダー行のクォートが不正な場合_ヘッダーと行のクォート不正を全件出すこと" {
 	# Arrange
 	printf '%s\n' '"catalog_version,target_type,target_identifier,compare_condition,business_date_handling' 'v1,table,"X,-,-' >"$CATALOG"

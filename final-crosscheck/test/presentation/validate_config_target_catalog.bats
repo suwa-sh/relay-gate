@@ -156,6 +156,32 @@ has_line() {
 	[ "${lines[1]}" = "hint: fix the rows above and rerun validate-config.sh --target-catalog $CATALOG" ]
 }
 
+@test "validate-config_sh_--target-catalogでヘッダー行全体が引用された1セルの場合_header_mismatchで終了コード2であること" {
+	# Arrange(S5 F-001 の回帰: 1 行目を二重引用符で囲むと解析後は 1 セル。5 列の定義と一致しない)
+	printf '%s\n' "\"$HEADER\"" 'v1,table,A,-,-' >"$CATALOG"
+
+	# Act
+	run "$SCRIPT" --target-catalog "$CATALOG"
+
+	# Assert(stdout の集計は出ず、結合出力は error + hint の 2 行)
+	[ "$status" -eq 2 ]
+	[ "${#lines[@]}" -eq 2 ]
+	[ "${lines[0]}" = "error: header mismatch expected=$HEADER actual=\"$HEADER\" path: $CATALOG" ]
+	[ "${lines[1]}" = "hint: fix the rows above and rerun validate-config.sh --target-catalog $CATALOG" ]
+}
+
+@test "validate-config_sh_--target-catalogでヘッダーの先頭2列が引用で結合された4セルの場合_header_mismatchで終了コード2であること" {
+	# Arrange(S5 F-001 の回帰: `"catalog_version,target_type",...` は 4 セル)
+	printf '%s\n' '"catalog_version,target_type",target_identifier,compare_condition,business_date_handling' 'v1,table,A,-,-' >"$CATALOG"
+
+	# Act
+	run "$SCRIPT" --target-catalog "$CATALOG"
+
+	# Assert
+	[ "$status" -eq 2 ]
+	[ "${lines[0]}" = "error: header mismatch expected=$HEADER actual=\"catalog_version,target_type\",target_identifier,compare_condition,business_date_handling path: $CATALOG" ]
+}
+
 @test "validate-config_sh_--target-catalogでslotジョブマップのヘッダーの場合_header_mismatchで拒否すること" {
 	# Arrange(設定所有区分: slot ジョブマップの列が混入)
 	printf '%s\n' 'job_id,work_dir,script,fixed_params,hang_detect_limit_minutes' >"$CATALOG"

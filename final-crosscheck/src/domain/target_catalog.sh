@@ -29,6 +29,8 @@ TARGET_CATALOG_COLUMNS=(
 )
 # ヘッダー不一致の expected= に出す列名(契約の列順。カンマ区切り)
 TARGET_CATALOG_HEADER_EXPECTED="catalog_version,target_type,target_identifier,compare_condition,business_date_handling"
+# target_catalog_header_cell_shown の結果(actual= に出す 1 セル分の表記)
+TARGET_CATALOG_HEADER_CELL_SHOWN=""
 
 # 対象種別の列挙(検証ルール 4。バリエーション「対象カタログの対象種別」)
 TARGET_CATALOG_TYPE_TABLE="table"
@@ -95,17 +97,35 @@ target_catalog_is_valid_target_type() {
   [ "$1" = "$TARGET_CATALOG_TYPE_TABLE" ] || [ "$1" = "$TARGET_CATALOG_TYPE_FILE" ]
 }
 
+# actual= に出す列名の 1 セル分の表記: カンマまたは二重引用符を含む列名は入力と同じクォート規則(二重引用符で囲み、
+# 内側の二重引用符は `""`)で囲む。引用で結合された 1 セルのヘッダー(`"catalog_version,target_type,..."`)を
+# 契約どおりの 5 列と見分けられるようにする(カンマで再連結した文字列は 5 列の表記と同じになるため)
+# 結果: TARGET_CATALOG_HEADER_CELL_SHOWN
+# 引数: column
+target_catalog_header_cell_shown() {
+  local column="$1"
+  case "$column" in
+    *,* | *\"*)
+      column="${column//\"/\"\"}"
+      TARGET_CATALOG_HEADER_CELL_SHOWN="\"$column\""
+      ;;
+    *) TARGET_CATALOG_HEADER_CELL_SHOWN="$column" ;;
+  esac
+}
+
 # 検証ルール 2 / 入力の守備範囲「ヘッダー列名の重複」: ヘッダー行が列定義と完全一致するか(列順固定)。
 #   - 同じ列名が 2 回以上あれば `error: duplicate column column=<name> path: ...`(重複した列名ごとに 1 行。config_input_rules)
 #   - 列定義と一致しなければ `error: header mismatch expected=<契約の列> actual=<実際の列> path: ...`
 #     (ヘッダー行が無い空のファイル・コメントだけのファイルは actual= が空。タブ区切りのファイルは 1 セルの列名として actual= に出る)
+# 一致の判定は、解析済みのセル数が列定義の数と等しく、かつ各セルが同じ位置の列名と等しいことで行う
+# (カンマで再連結した文字列の比較では、引用で結合された 1 セル・4 セルのヘッダーを 5 列と誤認する)。
 # 出力順: duplicate column の error → header mismatch の error
 # 戻り値: 0 … 一致 / 1 … 違反あり(報告済み)
 # 引数: path header...
 validate_target_catalog_header() {
   local path="$1"
   shift
-  local shown_path column key errors=0 actual="" separator=""
+  local shown_path column key errors=0 actual="" separator="" index=0 mismatch=0
   cli_field_safe_text "$path"
   shown_path="$CLI_FIELD_SAFE_TEXT"
 
@@ -125,12 +145,25 @@ validate_target_catalog_header() {
     fi
   done
 
-  # 列名は任意入力(表示用に制御文字を可視表記にする。比較は元の値で行う)
-  for column in "$@"; do
-    actual+="$separator$column"
-    separator=","
-  done
-  if [ "$actual" != "$TARGET_CATALOG_HEADER_EXPECTED" ]; then
+  # セル数と位置ごとの列名で一致を判定する(比較は元の値で行う)
+  if [ "$#" -ne "${#TARGET_CATALOG_COLUMNS[@]}" ]; then
+    mismatch=1
+  else
+    for column in "$@"; do
+      if [ "$column" != "${TARGET_CATALOG_COLUMNS[index]}" ]; then
+        mismatch=1
+        break
+      fi
+      index=$((index + 1))
+    done
+  fi
+  if [ "$mismatch" -ne 0 ]; then
+    # 列名は任意入力(表示用に制御文字を可視表記にし、カンマを含む列名は引用して列境界を示す)
+    for column in "$@"; do
+      target_catalog_header_cell_shown "$column"
+      actual+="$separator$TARGET_CATALOG_HEADER_CELL_SHOWN"
+      separator=","
+    done
     cli_field_safe_text "$actual"
     target_catalog_emit "error: header mismatch expected=$TARGET_CATALOG_HEADER_EXPECTED actual=$CLI_FIELD_SAFE_TEXT path: $shown_path"
     errors=$((errors + 1))
