@@ -1,0 +1,128 @@
+stage: S4
+tier: tier-rapid-crosscheck
+attempt: 2
+uc_id: dcd8234d
+manifest_sha256: 81d5dba283cd5c746d42428fa2713f0e7f2d15891575284e8b93e17b6b2d9f93
+manifest_projection: v2
+result: pass
+findings_source: "docs/impl/latest/dcd8234d/stages/attempt-1/S5_verify.tier-rapid-crosscheck.findings.yaml"
+findings_resolved:
+  - F-001
+  - F-002
+  - F-004
+  - F-010
+  - F-013
+  - F-018
+  - F-021
+  - F-022
+findings_fixes:
+  - id: F-001
+    summary: "ヘッダーはセルの再結合文字列ではなく、列の個数と各位置の列名で判定する(CROSSCHECK_JOB_MAP_EXPECTED_COLUMNS)。actual= はカンマ・二重引用符を含む列名を CSV の囲みで出し、1 セルに全列名が入った入力を expected= と区別できるようにした(A-021)"
+    regression_tests:
+      - "test/domain/comparison_definition_rules.bats: validate_crosscheck_job_map_header_全列名が1セルに入っている場合 / 列名の順序が異なる場合"
+      - "test/presentation/validate_config_crosscheck_job_map_rules.bats: ヘッダー全体が1つの引用セルの場合"
+  - id: F-002
+    summary: "job_id 重複検査が出した error 行の件数(重複した job_id ごとに 1 行)を violations=N に加える(validate_crosscheck_job_map_count_errors_since)"
+    regression_tests:
+      - "test/presentation/validate_config_crosscheck_job_map_rules.bats: 2つのjob_idがそれぞれ重複する場合_error2行とviolations=2"
+  - id: F-004
+    summary: "宣言はヘッダー行より前のコメント行だけから読む(crosscheck_job_map_repo_read_declarations はヘッダー行で読み終える)。末尾に置いた宣言は declaration not found になる。ヘッダー行以降の宣言形式のコメントは自由なコメント(A-002)"
+    regression_tests:
+      - "test/repository/crosscheck_job_map_repo.bats: ヘッダー行より後に宣言形式のコメントがある場合"
+      - "test/presentation/validate_config_crosscheck_job_map_rules.bats: 宣言がヘッダー行より後にある場合 / ヘッダー行より後に宣言形式のコメントがある場合"
+  - id: F-010
+    summary: "compare_command は `/` で始まる絶対パスだけを受理し、相対パスは `error: compare_command is not absolute line=N job_id=... value=...`(契約の行の値不正の共通形式)で違反にする(A-008)"
+    regression_tests:
+      - "test/domain/comparison_definition_rules.bats: compare_commandが相対パスの場合"
+      - "test/presentation/validate_config_crosscheck_job_map_rules.bats: compare_commandが相対パスの場合(cwd に実行可能な ./compare.sh を置く)"
+  - id: F-013
+    summary: "対象カタログの読み込みを crosscheck_target_catalog_repo_load(形式違反を FORMAT_INVALID で返す)と crosscheck_target_catalog_repo_has_version に分け、カタログの NUL / UTF-8 / BOM / CR / ヘッダーのクォート不正を config_input_rules の共通文言(path はカタログのパス)で報告してから参照未解決を出す(A-011)"
+    regression_tests:
+      - "test/repository/crosscheck_job_map_repo.bats: crosscheck_target_catalog_repo_load_カタログにCRがある場合 / ヘッダーがクォート不正の場合"
+      - "test/presentation/validate_config_crosscheck_job_map_rules.bats: 参照カタログのコメント行にNULがある場合 / CRLF改行の場合 / ヘッダーがクォート不正の場合"
+  - id: F-018
+    summary: "comparison_type=full の行は compare_targets が `catalog` 固定であることを検証し、違反は `error: compare_targets is not catalog line=N job_id=... value=...`(A-016)"
+    regression_tests:
+      - "test/domain/comparison_definition_rules.bats: full行のcompare_targetsがcatalogでない場合 / job行のcompare_targetsがcatalog以外の場合"
+      - "test/presentation/validate_config_crosscheck_job_map_rules.bats: full行のcompare_targetsがcatalogでない場合"
+  - id: F-021
+    summary: "ヘッダーの列名の重複は report_duplicate_columns で `error: duplicate column column=<name> path: ...` を重複名ごとに出し、その後に header mismatch を出す(A-019)"
+    regression_tests:
+      - "test/domain/comparison_definition_rules.bats: 列名が重複する場合_duplicate columnをheader mismatchより先に出す / report_duplicate_columns 2 件"
+      - "test/presentation/validate_config_crosscheck_job_map_rules.bats: ヘッダーにjob_idが2回ある場合"
+  - id: F-022
+    summary: "参照カタログのヘッダーも同じ report_duplicate_columns で検査し、重複があれば duplicate column(path はカタログ)を出して参照未解決にする。初出の列では解決しない(A-020)"
+    regression_tests:
+      - "test/presentation/validate_config_crosscheck_job_map_rules.bats: 参照カタログのヘッダーにcatalog_versionが2回ある場合"
+minor_findings_handling: "category_mismatch(F-023〜F-027)は Verifier の verified_category を採用した。restatement(F-008 / F-009 / F-011 / F-012)の前提 A-006 / A-007 / A-009 / A-010 は記録から除外した。spec_absent の前提は維持(文言・対象行を更新)。tier BDD の Given / Then 不整合(issues/20261010_093000)は依頼どおり変更していない"
+changes:
+  - path: rapid-crosscheck/src/domain/comparison_definition_rules.sh
+    summary: "ヘッダーの列ごとの一致判定(CROSSCHECK_JOB_MAP_EXPECTED_COLUMNS)、report_duplicate_columns(ヘッダー列名の重複。ジョブマップとカタログの両方に使う)、comparison_definition_header_text(actual= の表記)、compare_command の絶対パス検査、full 行の compare_targets=catalog 検査"
+  - path: rapid-crosscheck/src/repository/crosscheck_job_map_repo.sh
+    summary: "宣言はヘッダー行より前のコメント行だけから読む。対象カタログは crosscheck_target_catalog_repo_load(LOADED / MISSING / FORMAT_INVALID / 内部障害)と crosscheck_target_catalog_repo_has_version(読み込み済みデータの版の有無)に分割。関数名・定数名に tier の接頭辞を付けた(final-crosscheck の target_catalog_repo_load と衝突したため)"
+  - path: rapid-crosscheck/src/usecase/validate_crosscheck_job_map.sh
+    summary: "validate_crosscheck_job_map_count_errors_since(溜めた error 行の件数)、重複 job_id の件数を違反件数に合算、validate_crosscheck_job_map_resolve_catalog(カタログの形式違反・列名の重複の共通診断 → 参照未解決)"
+  - path: rapid-crosscheck/test/domain/comparison_definition_rules.bats
+    summary: "回帰テスト 8 件を追加(ヘッダーの列ごとの判定・重複列・相対パス・compare_targets=catalog)。計 27 件"
+  - path: rapid-crosscheck/test/repository/crosscheck_job_map_repo.bats
+    summary: "宣言の読み取り範囲の変更に合わせて既存 1 件を更新、ヘッダー後の宣言形式コメント 1 件を追加。対象カタログのテストを load / has_version の 2 関数向けに書き直し(計 9 件)。計 15 件"
+  - path: rapid-crosscheck/test/presentation/validate_config_crosscheck_job_map_rules.bats
+    summary: "重複宣言のテストを先頭コメント行内の重複に変更。blocker ごとの回帰テスト 11 件を追加(実プロセス起動)。計 40 件"
+implementation_note: "facade/ と final-crosscheck/ は変更していない。attempt-1/ 配下も変更していない。facade の csv_parse 系 / cli_field_* / job_map_repo_* / job_map_emit / validate_job_map_unique_job_ids の再利用は issues/20261010_084142_facade-dispatch-and-csv-parser-outside-tiers.md を根拠にした暫定依存のまま(A-017)。validate-config.sh が両 tier の handler を同じシェルに source するため、本 tier の対象カタログ関数は final-crosscheck の target_catalog_repo_load と名前が衝突した。接頭辞で回避し issues に起票した"
+gates:
+  format: pass
+  lint: pass
+  tdd: pass
+  bdd_tier: pass
+gate_runs:
+  - gate: format
+    cwd: rapid-crosscheck
+    command: "shfmt -d ."
+    exit_code: 0
+  - gate: lint
+    cwd: rapid-crosscheck
+    command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+    exit_code: 0
+  - gate: tdd
+    cwd: rapid-crosscheck
+    command: "bats -r test"
+    exit_code: 0
+    detail: "89 tests, 89 ok, 0 not ok(S2 の 4 件を含む。macOS)"
+  - gate: bdd_tier
+    cwd: rapid-crosscheck
+    command: "npx cucumber-js --config ../cucumber.cjs features"
+    exit_code: 0
+    detail: "4 scenarios (4 passed), 12 steps (12 passed)"
+linux_equivalent_check:
+  command: "docker run --rm -e LANG=C.UTF-8 -v \"$PWD/..:/work\" -w /work/rapid-crosscheck relay-gate-ci:ubuntu24 bats -r test"
+  exit_code: 0
+  detail: "89 tests, 89 ok(Ubuntu 24.04 arm64、LANG=C.UTF-8。root では読み取り権限のテスト 1 件が skip)"
+performance:
+  note: "ジョブマップ 5,000 行 + 参照先カタログ 5,000 行(該当版は最終行)の validate-config.sh --crosscheck-job-map の所要時間(fixture 生成を除く)。重複列の検査はヘッダー 1 行分なので行数に影響しない"
+  macos_seconds: "2"
+  ubuntu_arm64_seconds: "bats の 10 秒以内の判定が pass(個別計測なし)"
+  threshold_seconds: 10
+assumptions:
+  path: attempt-2/S4_tier-impl.tier-rapid-crosscheck.assumptions.yaml
+  count: 17
+  by_category:
+    input_validation: 9
+    data_format: 4
+    error_handling: 4
+    persistence: 0
+    performance: 0
+    security: 0
+  sha256: 33dd85da13bdcaf709ab9c022a48d49ec1fab2a280510926fa6bc240effd81be
+  extraction:
+    candidate_count: 32
+    excluded_as_explicit: 15
+    recorded_count: 17
+  validator: "validateAssumptions.js record → ok: true"
+  changes_from_attempt_1: "contradicts の A-002 / A-008 / A-011 / A-016 / A-019 を仕様に合わせて書き直し、V-001 を A-020 として記録。restatement の A-006 / A-007 / A-009 / A-010 を除外。A-021(actual= の表記)を追加。category_mismatch 5 件は Verifier の分類を採用"
+issues:
+  new:
+    - docs/impl/latest/dcd8234d/issues/20261010_092630_tier-handler-function-namespace-collision.md
+  note: "validate-config.sh が複数 tier の handler を同じシェルに source するため関数名が衝突し得る(dev-rules に接頭辞の規則が無い)。本 tier は接頭辞で回避した"
+write_set_note: "書き込みは rapid-crosscheck/ 配下、docs/impl/latest/dcd8234d/stages/attempt-2/ の本 tier の done / assumptions、docs/impl/latest/dcd8234d/issues/ の新規 1 件のみ。facade/ / final-crosscheck/ / attempt-1/ / docs/specs は変更していない"
+completed_at: '2026-10-10T09:30:00+09:00'
+completed_by: dist-impl-implement@0.14.1

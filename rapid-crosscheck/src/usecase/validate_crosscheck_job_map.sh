@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # usecase: ValidateCrosscheckJobMap(`validate-config.sh --crosscheck-job-map <path>` の検証本体)。
-# 入力の複製(単一スナップショット)→ バイト点検(NUL / UTF-8 / BOM / CR)→ ヘッダー検証(列順固定)→ 宣言検証
-# → 行ごとの列検証 → job_id 重複検査 → 対象カタログ参照の解決 → 集計出力。違反は全件収集してから出力する(1 件目で止めない)。
+# 入力の複製(単一スナップショット)→ バイト点検(NUL / UTF-8 / BOM / CR)→ ヘッダー検証(列名の重複 → 列順固定の一致)→ 宣言検証
+# → 行ごとの列検証 → job_id 重複検査 → 対象カタログ参照の解決(カタログの形式違反・列名の重複 → 版の有無)→ 集計出力。
+# 違反は全件収集してから出力する(1 件目で止めない)。violations=N は出した error 行の件数(warn / info / hint は数えない)。
 # 仕様: docs/specs/latest/適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/tier-rapid-crosscheck.md
 #       「出力契約」「検証ルール一覧」「UC ロジック」/ spec.md「計算ルール一覧」(行数集計・対象カタログ参照の解決)
 #       _cross-cutting/api/cli-command-contract.yaml commands[validate-config.sh].stdout / stderr、config_input_rules
@@ -21,6 +22,21 @@ CROSSCHECK_JOB_MAP_EXIT_VALIDATION_ERROR=2
 CROSSCHECK_JOB_MAP_EXIT_EXECUTION_ERROR=6
 CROSSCHECK_JOB_MAP_CONFIG_NAME="crosscheck-job-map"
 CROSSCHECK_JOB_MAP_OPTION="--crosscheck-job-map"
+
+# 溜めた報告行のうち、添字 from 以降にある error 行の件数(warn / info / hint は数えない。違反件数 violations=N の単位)。
+# 結果は VALIDATE_CROSSCHECK_JOB_MAP_COUNTED_ERRORS
+# 引数: from
+VALIDATE_CROSSCHECK_JOB_MAP_COUNTED_ERRORS=0
+validate_crosscheck_job_map_count_errors_since() {
+  local index="$1" count="${#JOB_MAP_REPORT_LINES[@]}"
+  VALIDATE_CROSSCHECK_JOB_MAP_COUNTED_ERRORS=0
+  while [ "$index" -lt "$count" ]; do
+    case "${JOB_MAP_REPORT_LINES[$index]}" in
+      "error: "*) VALIDATE_CROSSCHECK_JOB_MAP_COUNTED_ERRORS=$((VALIDATE_CROSSCHECK_JOB_MAP_COUNTED_ERRORS + 1)) ;;
+    esac
+    index=$((index + 1))
+  done
+}
 
 # 溜めた報告行を stderr へ出す
 validate_crosscheck_job_map_flush_report() {
@@ -202,6 +218,51 @@ validate_crosscheck_job_map_rows() {
   done
 }
 
+# 対象カタログ参照の解決(検証ルール #9)。カタログを読み込み、入力の守備範囲の違反(config_input_rules は全設定ファイル共通)は
+# ジョブマップと同じ文言で path をカタログのパスにして報告し、ヘッダーの列名の重複も同じ規則で拒否する。
+# 形式違反・列名の重複・catalog_version 列なし・該当行なし・ファイル不在のいずれも、参照は解決できないので
+# 最後に `error: target catalog reference unresolved path=... catalog_version=...` を 1 行出す。
+# 出した error 行の件数は VALIDATE_CROSSCHECK_JOB_MAP_CATALOG_ERRORS(解決できたら 0)。
+# 戻り値: 0 … 解決の判定を終えた / 1 … 内部障害(報告済み。呼び出し元が終了コード 6 にする)
+# 引数: catalog_path version
+VALIDATE_CROSSCHECK_JOB_MAP_CATALOG_ERRORS=0
+validate_crosscheck_job_map_resolve_catalog() {
+  local catalog_path="$1" version="$2" load_status=0 resolved=false shown_catalog shown_version
+  local report_index="${#JOB_MAP_REPORT_LINES[@]}"
+  VALIDATE_CROSSCHECK_JOB_MAP_CATALOG_ERRORS=0
+  cli_field_safe_text "$catalog_path"
+  shown_catalog="$CLI_FIELD_SAFE_TEXT"
+  crosscheck_target_catalog_repo_load "$catalog_path" || load_status=$?
+  if [ "$load_status" -eq "$JOB_MAP_REPO_STATUS_SNAPSHOT_FAILED" ]; then
+    validate_crosscheck_job_map_report_snapshot_failure "$shown_catalog"
+    return 1
+  fi
+  if [ "$load_status" -eq "$JOB_MAP_REPO_STATUS_COMMAND_FAILED" ]; then
+    validate_crosscheck_job_map_report_command_failure "$JOB_MAP_REPO_FAILED_COMMANDS" "$shown_catalog"
+    return 1
+  fi
+  if [ "$load_status" -eq "$CROSSCHECK_TARGET_CATALOG_FORMAT_INVALID" ]; then
+    # 形式違反の行は解析できないため、ヘッダーの判定に進まない(ジョブマップ側と同じ順序)
+    if ! validate_crosscheck_job_map_report_byte_errors "$shown_catalog"; then
+      :
+    elif [ "$JOB_MAP_HEADER_STATUS" = "$JOB_MAP_PARSE_QUOTE_INVALID" ]; then
+      job_map_emit "error: csv quote is invalid line=$JOB_MAP_HEADER_LINE path: $shown_catalog"
+    fi
+  elif [ "$load_status" -eq "$CROSSCHECK_TARGET_CATALOG_LOADED" ]; then
+    if report_duplicate_columns "$shown_catalog" ${JOB_MAP_HEADER[@]+"${JOB_MAP_HEADER[@]}"} && crosscheck_target_catalog_repo_has_version "$version"; then
+      resolved=true
+    fi
+  fi
+  if [ "$resolved" = false ]; then
+    cli_field_safe_text "$version"
+    shown_version="$CLI_FIELD_SAFE_TEXT"
+    job_map_emit "error: target catalog reference unresolved path=$shown_catalog catalog_version=$shown_version"
+  fi
+  validate_crosscheck_job_map_count_errors_since "$report_index"
+  VALIDATE_CROSSCHECK_JOB_MAP_CATALOG_ERRORS="$VALIDATE_CROSSCHECK_JOB_MAP_COUNTED_ERRORS"
+  return 0
+}
+
 # 集計出力(stdout。出力契約の固定順)
 # 引数: path rows target_catalog_path catalog_version exit_code_contract errors
 validate_crosscheck_job_map_print_summary() {
@@ -263,38 +324,25 @@ validate_crosscheck_job_map_run() {
   validate_crosscheck_job_map_rows "$verbose" "$shown_path"
   errors=$((errors + VALIDATE_CROSSCHECK_JOB_MAP_ROW_ERRORS))
 
-  # (6) job_id の重複検査(予約 job_id final-crosscheck の最大 1 行も同じ検査で違反になる)
-  local unique_status=0
+  # (6) job_id の重複検査(予約 job_id final-crosscheck の最大 1 行も同じ検査で違反になる)。
+  #     重複した job_id ごとに error 1 行が出るので、出た error 行の件数を違反件数に加える(戻り値は有無しか伝えない)
+  local unique_status=0 report_index="${#JOB_MAP_REPORT_LINES[@]}"
   validate_job_map_unique_job_ids ${VALIDATE_CROSSCHECK_JOB_MAP_JOB_ID_PAIRS[@]+"${VALIDATE_CROSSCHECK_JOB_MAP_JOB_ID_PAIRS[@]}"} || unique_status=$?
   if [ "$unique_status" -eq "$JOB_MAP_STATUS_COMMAND_FAILED" ]; then
     validate_crosscheck_job_map_report_command_failure "sort" "$shown_path"
     return "$CROSSCHECK_JOB_MAP_EXIT_EXECUTION_ERROR"
   fi
   if [ "$unique_status" -ne 0 ]; then
-    errors=$((errors + 1))
+    validate_crosscheck_job_map_count_errors_since "$report_index"
+    errors=$((errors + VALIDATE_CROSSCHECK_JOB_MAP_COUNTED_ERRORS))
   fi
 
   # (7) 対象カタログ参照の解決(検証ルール #9。宣言が揃っているときだけ。カタログの読み込みは JOB_MAP_* を上書きするため最後に行う)
   local catalog_path="$VALIDATE_CROSSCHECK_JOB_MAP_TARGET_CATALOG_PATH" catalog_version="$VALIDATE_CROSSCHECK_JOB_MAP_CATALOG_VERSION"
-  local exit_code_contract="$VALIDATE_CROSSCHECK_JOB_MAP_EXIT_CODE_CONTRACT" resolve_status=0 shown_catalog shown_version
+  local exit_code_contract="$VALIDATE_CROSSCHECK_JOB_MAP_EXIT_CODE_CONTRACT"
   if [ "$VALIDATE_CROSSCHECK_JOB_MAP_REFERENCE_DECLARED" = true ]; then
-    target_catalog_repo_has_version "$catalog_path" "$catalog_version" || resolve_status=$?
-    cli_field_safe_text "$catalog_path"
-    shown_catalog="$CLI_FIELD_SAFE_TEXT"
-    if [ "$resolve_status" -eq "$JOB_MAP_REPO_STATUS_SNAPSHOT_FAILED" ]; then
-      validate_crosscheck_job_map_report_snapshot_failure "$shown_catalog"
-      return "$CROSSCHECK_JOB_MAP_EXIT_EXECUTION_ERROR"
-    fi
-    if [ "$resolve_status" -eq "$JOB_MAP_REPO_STATUS_COMMAND_FAILED" ]; then
-      validate_crosscheck_job_map_report_command_failure "$JOB_MAP_REPO_FAILED_COMMANDS" "$shown_catalog"
-      return "$CROSSCHECK_JOB_MAP_EXIT_EXECUTION_ERROR"
-    fi
-    if [ "$resolve_status" -ne 0 ]; then
-      cli_field_safe_text "$catalog_version"
-      shown_version="$CLI_FIELD_SAFE_TEXT"
-      job_map_emit "error: target catalog reference unresolved path=$shown_catalog catalog_version=$shown_version"
-      errors=$((errors + 1))
-    fi
+    validate_crosscheck_job_map_resolve_catalog "$catalog_path" "$catalog_version" || return "$CROSSCHECK_JOB_MAP_EXIT_EXECUTION_ERROR"
+    errors=$((errors + VALIDATE_CROSSCHECK_JOB_MAP_CATALOG_ERRORS))
   fi
 
   # (8) 出力(stderr の報告行 → hint → stdout の集計)

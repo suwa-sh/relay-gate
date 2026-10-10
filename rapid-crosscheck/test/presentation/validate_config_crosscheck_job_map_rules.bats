@@ -141,10 +141,14 @@ has_line() {
 	[ "${STDERR_LINES[0]}" = "error: target catalog reference unresolved path=$BATS_TEST_TMPDIR/missing.csv catalog_version=v1" ]
 }
 
-@test "validate-config_sh_--crosscheck-job-mapで同じ宣言が2回ある場合_2回目をdeclaration is invalidにし初出の値を使うこと" {
-	# Arrange
-	write_valid_map
-	printf '%s\n' '# catalog_version=v2' >>"$MAP"
+@test "validate-config_sh_--crosscheck-job-mapで同じ宣言が先頭のコメント行に2回ある場合_2回目をdeclaration is invalidにし初出の値を使うこと" {
+	# Arrange(宣言は先頭のコメント行。2 回目もヘッダー行より前に置く)
+	{
+		write_declarations
+		printf '%s\n' '# catalog_version=v2'
+		printf '%s\n' "$HEADER"
+		printf '%s\n' "JOB001,job,output.csv,$COMPARE,--blue {blue} --green {green},v1"
+	} >"$MAP"
 
 	# Act
 	run_split --crosscheck-job-map "$MAP"
@@ -515,4 +519,206 @@ has_line() {
 	[ "$status" -eq 2 ]
 	read_stderr_lines
 	[ "${STDERR_LINES[0]}" = "error: option required option=--crosscheck-job-map" ]
+}
+
+# ---- S5 verify(attempt 1)の blocker に対する回帰テスト ----
+
+@test "validate-config_sh_--crosscheck-job-mapでヘッダー全体が1つの引用セルの場合_header mismatchで終了コード2であること" {
+	# Arrange(S5 F-001: 再結合した文字列では expected と区別できない入力。actual= は列の境界が読めるよう CSV の囲みで出す)
+	{
+		write_declarations
+		printf '%s\n' "\"$HEADER\""
+		printf '%s\n' "JOB001,job,output.csv,$COMPARE,--blue {blue} --green {green},v1"
+	} >"$MAP"
+
+	# Act
+	run_split --crosscheck-job-map "$MAP"
+
+	# Assert
+	[ "$status" -eq 2 ]
+	read_stderr_lines
+	[ "${STDERR_LINES[0]}" = "error: header mismatch expected=$HEADER actual=\"$HEADER\" path: $MAP" ]
+	[ "${STDERR_LINES[1]}" = "hint: fix the rows above and rerun validate-config.sh --crosscheck-job-map $MAP" ]
+	[ "${#lines[@]}" -eq 0 ]
+}
+
+@test "validate-config_sh_--crosscheck-job-mapで2つのjob_idがそれぞれ重複する場合_error2行とviolations=2であること" {
+	# Arrange(S5 F-002: 重複した job_id ごとに 1 件を集計する)
+	{
+		write_declarations
+		printf '%s\n' "$HEADER"
+		printf '%s\n' "A,job,output.csv,$COMPARE,--blue {blue} --green {green},v1"
+		printf '%s\n' "B,job,output.csv,$COMPARE,--blue {blue} --green {green},v1"
+		printf '%s\n' "A,job,output.csv,$COMPARE,--blue {blue} --green {green},v1"
+		printf '%s\n' "B,job,output.csv,$COMPARE,--blue {blue} --green {green},v1"
+	} >"$MAP"
+
+	# Act
+	run_split --crosscheck-job-map "$MAP"
+
+	# Assert
+	[ "$status" -eq 2 ]
+	read_stderr_lines
+	[ "${#STDERR_LINES[@]}" -eq 3 ]
+	[ "${STDERR_LINES[0]}" = "error: duplicate job_id job_id=A lines=5,7" ]
+	[ "${STDERR_LINES[1]}" = "error: duplicate job_id job_id=B lines=6,8" ]
+	[ "${lines[2]}" = "rows=4" ]
+	[ "${lines[7]}" = "violations=2" ]
+}
+
+@test "validate-config_sh_--crosscheck-job-mapで宣言がヘッダー行より後にある場合_declaration not found3件で終了コード2であること" {
+	# Arrange(S5 F-004: 宣言は先頭のコメント行に置く。末尾の宣言は受理しない)
+	{
+		printf '%s\n' "$HEADER"
+		printf '%s\n' "JOB001,job,output.csv,$COMPARE,--blue {blue} --green {green},v1"
+		write_declarations
+	} >"$MAP"
+
+	# Act
+	run_split --crosscheck-job-map "$MAP"
+
+	# Assert
+	[ "$status" -eq 2 ]
+	read_stderr_lines
+	[ "${#STDERR_LINES[@]}" -eq 4 ]
+	[ "${STDERR_LINES[0]}" = "error: exit_code_contract declaration not found path: $MAP" ]
+	[ "${STDERR_LINES[1]}" = "error: target_catalog_path declaration not found path: $MAP" ]
+	[ "${STDERR_LINES[2]}" = "error: catalog_version declaration not found path: $MAP" ]
+	[ "${lines[3]}" = "target_catalog_path: -" ]
+	[ "${lines[4]}" = "catalog_version=-" ]
+	[ "${lines[7]}" = "violations=3" ]
+}
+
+@test "validate-config_sh_--crosscheck-job-mapでヘッダー行より後に宣言形式のコメントがある場合_自由なコメントとして無視し終了コード0であること" {
+	# Arrange(先頭の宣言が揃っていれば、後続の `# catalog_version=v2` は重複宣言にしない)
+	write_valid_map
+	printf '%s\n' '# catalog_version=v2' >>"$MAP"
+
+	# Act
+	run_split --crosscheck-job-map "$MAP"
+
+	# Assert
+	[ "$status" -eq 0 ]
+	[ "${lines[4]}" = "catalog_version=v1" ]
+	[ ! -s "$ERR" ]
+}
+
+@test "validate-config_sh_--crosscheck-job-mapでcompare_commandが相対パスの場合_not absoluteで終了コード2であること" {
+	# Arrange(S5 F-010: 契約 columns.compare_command は absolute path。cwd に実行可能な ./compare.sh を置いても受理しない)
+	write_valid_map
+	sed -i.bak "5s|.*|JOB001,job,output.csv,./compare.sh,--blue {blue} --green {green},v1|" "$MAP"
+	cp "$COMPARE" "$BATS_TEST_TMPDIR/compare.sh.rel"
+
+	# Act
+	run env ERR="$ERR" bash -c 'cd "$1" && cp compare.sh.rel compare.sh && chmod +x compare.sh && "$0" --crosscheck-job-map "$2" 2>"$ERR"' "$SCRIPT" "$BATS_TEST_TMPDIR" "$MAP"
+
+	# Assert
+	[ "$status" -eq 2 ]
+	read_stderr_lines
+	[ "${STDERR_LINES[0]}" = "error: compare_command is not absolute line=5 job_id=JOB001 value=./compare.sh" ]
+	[ "${lines[6]}" = "status=invalid" ]
+}
+
+@test "validate-config_sh_--crosscheck-job-mapで参照カタログのコメント行にNULがある場合_nul byteの共通診断と参照未解決で終了コード2であること" {
+	# Arrange(S5 F-013: config_input_rules は全設定ファイルに適用する。path はカタログのパス、行番号はカタログの物理行)
+	write_valid_map
+	{
+		printf '%s\n' 'catalog_version,target_type,target_identifier,compare_condition,business_date_handling'
+		printf '%s\n' 'v1,table,SALES_DAILY,key=sales_id,column=business_date'
+		printf '# comment\0with nul\n'
+	} >"$CATALOG"
+
+	# Act
+	run_split --crosscheck-job-map "$MAP"
+
+	# Assert
+	[ "$status" -eq 2 ]
+	read_stderr_lines
+	[ "${#STDERR_LINES[@]}" -eq 3 ]
+	[ "${STDERR_LINES[0]}" = "error: nul byte is not allowed line=3 path: $CATALOG" ]
+	[ "${STDERR_LINES[1]}" = "error: target catalog reference unresolved path=$CATALOG catalog_version=v1" ]
+	[ "${lines[7]}" = "violations=2" ]
+}
+
+@test "validate-config_sh_--crosscheck-job-mapで参照カタログがCRLF改行の場合_carriage returnの共通診断とLFのhintと参照未解決であること" {
+	# Arrange(S5 F-013: hint は最後の CR の error 行の次に 1 回)
+	write_valid_map
+	printf 'catalog_version,target_type\r\nv1,table\r\n' >"$CATALOG"
+
+	# Act
+	run_split --crosscheck-job-map "$MAP"
+
+	# Assert
+	[ "$status" -eq 2 ]
+	read_stderr_lines
+	[ "${STDERR_LINES[0]}" = "error: carriage return is not allowed line=1 path: $CATALOG" ]
+	[ "${STDERR_LINES[1]}" = "error: carriage return is not allowed line=2 path: $CATALOG" ]
+	[ "${STDERR_LINES[2]}" = "hint: use LF line endings" ]
+	[ "${STDERR_LINES[3]}" = "error: target catalog reference unresolved path=$CATALOG catalog_version=v1" ]
+	[ "${lines[7]}" = "violations=3" ]
+}
+
+@test "validate-config_sh_--crosscheck-job-mapで参照カタログのヘッダーがクォート不正の場合_csv quote is invalidと参照未解決であること" {
+	# Arrange
+	write_valid_map
+	printf '%s\n' '"catalog_version,target_type' 'v1,table' >"$CATALOG"
+
+	# Act
+	run_split --crosscheck-job-map "$MAP"
+
+	# Assert
+	[ "$status" -eq 2 ]
+	read_stderr_lines
+	[ "${STDERR_LINES[0]}" = "error: csv quote is invalid line=1 path: $CATALOG" ]
+	[ "${STDERR_LINES[1]}" = "error: target catalog reference unresolved path=$CATALOG catalog_version=v1" ]
+}
+
+@test "validate-config_sh_--crosscheck-job-mapでfull行のcompare_targetsがcatalogでない場合_not catalogで終了コード2であること" {
+	# Arrange(S5 F-018: 契約 columns.compare_targets は full 行を catalog 固定)
+	write_valid_map
+	printf '%s\n' "final-crosscheck,full,arbitrary,$COMPARE,--catalog-version {catalog_version} --business-date {business_date},v1" >>"$MAP"
+
+	# Act
+	run_split --crosscheck-job-map "$MAP"
+
+	# Assert
+	[ "$status" -eq 2 ]
+	read_stderr_lines
+	[ "${STDERR_LINES[0]}" = "error: compare_targets is not catalog line=7 job_id=final-crosscheck value=arbitrary" ]
+	[ "${lines[7]}" = "violations=1" ]
+}
+
+@test "validate-config_sh_--crosscheck-job-mapでヘッダーにjob_idが2回ある場合_duplicate columnとheader mismatchで終了コード2であること" {
+	# Arrange(S5 F-021: config_input_rules「ヘッダー列名の重複」の文言を列順固定の不一致より先に出す)
+	write_valid_map
+	sed -i.bak "4s/.*/$HEADER,job_id/" "$MAP"
+
+	# Act
+	run_split --crosscheck-job-map "$MAP"
+
+	# Assert
+	[ "$status" -eq 2 ]
+	read_stderr_lines
+	[ "${#STDERR_LINES[@]}" -eq 3 ]
+	[ "${STDERR_LINES[0]}" = "error: duplicate column column=job_id path: $MAP" ]
+	[ "${STDERR_LINES[1]}" = "error: header mismatch expected=$HEADER actual=$HEADER,job_id path: $MAP" ]
+	[ "${STDERR_LINES[2]}" = "hint: fix the rows above and rerun validate-config.sh --crosscheck-job-map $MAP" ]
+	[ "${#lines[@]}" -eq 0 ]
+}
+
+@test "validate-config_sh_--crosscheck-job-mapで参照カタログのヘッダーにcatalog_versionが2回ある場合_duplicate columnと参照未解決で終了コード2であること" {
+	# Arrange(S5 F-022: 参照先の重複列も同じ規則で拒否する。初出の列で解決しない)
+	write_valid_map
+	printf '%s\n' 'catalog_version,catalog_version' 'v1,v2' >"$CATALOG"
+
+	# Act
+	run_split --crosscheck-job-map "$MAP"
+
+	# Assert
+	[ "$status" -eq 2 ]
+	read_stderr_lines
+	[ "${#STDERR_LINES[@]}" -eq 3 ]
+	[ "${STDERR_LINES[0]}" = "error: duplicate column column=catalog_version path: $CATALOG" ]
+	[ "${STDERR_LINES[1]}" = "error: target catalog reference unresolved path=$CATALOG catalog_version=v1" ]
+	[ "${lines[7]}" = "violations=2" ]
 }

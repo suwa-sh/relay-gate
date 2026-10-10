@@ -66,9 +66,11 @@ crosscheck_job_map_repo_load() {
 }
 
 # 複製から宣言(行頭 `#` + 空白 0 個以上 + `name=value`。name は `[A-Za-z0-9_]+`)を出現順に取り出す。
-# 宣言の形に合わないコメント行は無視する。形式違反の行(JOB_MAP_MALFORMED_LINES)は読まない。
+# 宣言はファイル先頭のコメント行(ヘッダー行より前)だけから読む(設定契約「先頭のコメント行にファイル全体の宣言を置く」)。
+# ヘッダー行以降のコメント行は宣言として扱わない(自由なコメント)。宣言の形に合わないコメント行は無視する。
+# 形式違反の行(JOB_MAP_MALFORMED_LINES)は読まない。
 # 行の読み込みはバイト単位(LC_ALL=C。事前走査の行番号と対応させる)。行数に比例する時間で処理する。
-# 引数: snapshot
+# 引数: snapshot(JOB_MAP_HEADER_LINE は job_map_repo_load_snapshot が先に確定させる)
 crosscheck_job_map_repo_read_declarations() {
   local snapshot="$1" line line_number=0 malformed_index=0 body name
   # `#` の直後に許す空白は半角空白とタブ(ASCII。Unicode 空白は空白として扱わない)
@@ -76,6 +78,9 @@ crosscheck_job_map_repo_read_declarations() {
   local LC_ALL=C
   while IFS= read -r line || [ -n "$line" ]; do
     line_number=$((line_number + 1))
+    if [ "$JOB_MAP_HEADER_LINE" -gt 0 ] && [ "$line_number" -ge "$JOB_MAP_HEADER_LINE" ]; then
+      break
+    fi
     if [ "$malformed_index" -lt "${#JOB_MAP_MALFORMED_LINES[@]}" ] && [ "${JOB_MAP_MALFORMED_LINES[malformed_index]}" -eq "$line_number" ]; then
       malformed_index=$((malformed_index + 1))
       continue
@@ -116,23 +121,43 @@ crosscheck_job_map_repo_declaration() {
   done
 }
 
-# 対象カタログ参照の解決(計算ルール「対象カタログ参照の解決」): カタログ CSV に catalog_version 列があり、
-# 値が version に一致する解析可能な行が 1 件以上あるか。カタログの列の検証は tier-final-crosscheck に委ね、ここでは参照解決だけを行う。
-# カタログも同じ CSV 解析関数(job_map_repo_load)で読む(JOB_MAP_* を上書きするため、ジョブマップ側の行を読み終えてから呼ぶ)。
-# 戻り値: 0 … 解決できた / 1 … 解決できない(ファイル不在・読めない・形式違反・ヘッダーに catalog_version が無い・該当行なし)/
+# 対象カタログの読み込み(計算ルール「対象カタログ参照の解決」の前段)。カタログも同じ CSV 解析関数(job_map_repo_load)で
+# 読む(JOB_MAP_* を上書きするため、ジョブマップ側の行を読み終えてから呼ぶ)。入力の守備範囲(config_input_rules)は
+# 全設定ファイル共通なので、カタログの形式違反は「参照未解決」に丸めず CROSSCHECK_TARGET_CATALOG_FORMAT_INVALID で返し、
+# usecase が JOB_MAP_* から共通の文言(nul byte / encoding / byte order mark / carriage return / csv quote)で報告する。
+# カタログの列の検証は tier-final-crosscheck に委ね、ここでは参照解決に必要な読み込みだけを行う。
+# 戻り値: CROSSCHECK_TARGET_CATALOG_LOADED … 解析できた(ヘッダーは JOB_MAP_HEADER)/
+#         CROSSCHECK_TARGET_CATALOG_MISSING … ファイル不在・読めない /
+#         CROSSCHECK_TARGET_CATALOG_FORMAT_INVALID … 形式違反(NUL / 不正な UTF-8 / BOM / CR の行がある、ヘッダー行のクォート不正)/
 #         JOB_MAP_REPO_STATUS_SNAPSHOT_FAILED / JOB_MAP_REPO_STATUS_COMMAND_FAILED … 内部障害(usecase が終了コード 6 にする)
-# 引数: catalog_path version
-target_catalog_repo_has_version() {
-  local catalog_path="$1" version="$2" status=0 column_index=0 found=false
-  local row_index=0 row_count offset
+# 引数: catalog_path
+CROSSCHECK_TARGET_CATALOG_LOADED=0
+CROSSCHECK_TARGET_CATALOG_MISSING=1
+CROSSCHECK_TARGET_CATALOG_FORMAT_INVALID=2
+crosscheck_target_catalog_repo_load() {
+  local catalog_path="$1" status=0
   if [ ! -f "$catalog_path" ] || [ ! -r "$catalog_path" ]; then
-    return 1
+    return "$CROSSCHECK_TARGET_CATALOG_MISSING"
   fi
   job_map_repo_load "$catalog_path" || status=$?
   if [ "$status" -ne 0 ]; then
     return "$status"
   fi
-  if [ "${#JOB_MAP_MALFORMED_LINES[@]}" -ne 0 ] || [ "$JOB_MAP_HEADER_STATUS" != "$JOB_MAP_PARSE_OK" ]; then
+  if [ "${#JOB_MAP_MALFORMED_LINES[@]}" -ne 0 ] || [ "$JOB_MAP_HEADER_STATUS" = "$JOB_MAP_PARSE_QUOTE_INVALID" ]; then
+    return "$CROSSCHECK_TARGET_CATALOG_FORMAT_INVALID"
+  fi
+  return "$CROSSCHECK_TARGET_CATALOG_LOADED"
+}
+
+# 対象カタログ参照の解決(計算ルール「対象カタログ参照の解決」): 読み込み済みのカタログ(JOB_MAP_*)に catalog_version 列があり、
+# 値が version に一致する解析可能な行が 1 件以上あるか。ヘッダー行が無い・catalog_version 列が無いときは解決できない。
+# 列名の重複(どの列を使うか決められない)は呼び出し元が report_duplicate_columns で先に拒否する。
+# 戻り値: 0 … 解決できた / 1 … 解決できない(ヘッダー行が無い・catalog_version 列が無い・該当行なし)
+# 引数: version
+crosscheck_target_catalog_repo_has_version() {
+  local version="$1" column_index=0 found=false
+  local row_index=0 row_count offset
+  if [ "$JOB_MAP_HEADER_STATUS" != "$JOB_MAP_PARSE_OK" ]; then
     return 1
   fi
   for column_index in "${!JOB_MAP_HEADER[@]}"; do

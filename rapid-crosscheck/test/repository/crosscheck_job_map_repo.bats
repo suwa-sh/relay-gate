@@ -24,15 +24,16 @@ setup() {
 }
 
 @test "crosscheck_job_map_repo_load_宣言3行とヘッダーと2行の場合_宣言を出現順に行番号付きで取り出しデータ行は2行であること" {
-	# Arrange
+	# Arrange(宣言は先頭のコメント行。ヘッダー行より後の `# map_version=m1` は自由なコメントとして扱う)
 	{
 		printf '%s\n' '# exit_code_contract=0:OK,3:NG,6:ERROR'
 		printf '%s\n' '#target_catalog_path=/etc/relay-gate/target-catalog.csv'
 		printf '%s\n' '#   catalog_version=v1'
 		printf '%s\n' '# this is a free comment'
+		printf '%s\n' '# map_version=m1'
 		printf '%s\n' 'job_id,comparison_type,compare_targets,compare_command,compare_options,definition_version'
 		printf '%s\n' 'JOB001,job,output.csv,/opt/compare/compare.sh,--blue {blue} --green {green},v1'
-		printf '%s\n' '# map_version=m1'
+		printf '%s\n' '# map_version=m2'
 		printf '%s\n' 'JOB002,job,"a,b",/opt/compare/compare.sh,--blue {blue} --green {green},v1'
 	} >"$MAP"
 
@@ -49,10 +50,11 @@ setup() {
 	[ "${CROSSCHECK_JOB_MAP_DECL_NAMES[2]}" = "catalog_version" ]
 	[ "${CROSSCHECK_JOB_MAP_DECL_VALUES[2]}" = "v1" ]
 	[ "${CROSSCHECK_JOB_MAP_DECL_NAMES[3]}" = "map_version" ]
-	[ "${CROSSCHECK_JOB_MAP_DECL_LINES[3]}" -eq 7 ]
-	[ "$JOB_MAP_HEADER_LINE" -eq 5 ]
+	[ "${CROSSCHECK_JOB_MAP_DECL_VALUES[3]}" = "m1" ]
+	[ "${CROSSCHECK_JOB_MAP_DECL_LINES[3]}" -eq 5 ]
+	[ "$JOB_MAP_HEADER_LINE" -eq 6 ]
 	[ "${#JOB_MAP_ROW_LINES[@]}" -eq 2 ]
-	[ "${JOB_MAP_ROW_LINES[1]}" -eq 8 ]
+	[ "${JOB_MAP_ROW_LINES[1]}" -eq 9 ]
 	# 同じクォート解析関数: カンマを含む引用セルは 1 セル
 	[ "${JOB_MAP_ROW_CELL_COUNTS[1]}" -eq 6 ]
 	job_map_repo_row 1
@@ -111,57 +113,119 @@ setup() {
 	[ -z "$CROSSCHECK_JOB_MAP_DECL_VALUE" ]
 }
 
-@test "target_catalog_repo_has_version_該当版の行がある場合_戻り値0であること" {
+@test "crosscheck_job_map_repo_load_ヘッダー行より後に宣言形式のコメントがある場合_宣言として取り込まないこと" {
+	# Arrange(設定契約: 宣言は先頭のコメント行に置く。ヘッダー行以降の `# name=value` は自由なコメント。S5 F-004 の回帰)
+	{
+		printf '%s\n' 'job_id,comparison_type,compare_targets,compare_command,compare_options,definition_version'
+		printf '%s\n' 'JOB001,job,output.csv,/opt/compare/compare.sh,--blue {blue} --green {green},v1'
+		printf '%s\n' '# exit_code_contract=0:OK,3:NG,6:ERROR'
+		printf '%s\n' '# target_catalog_path=/etc/relay-gate/target-catalog.csv'
+		printf '%s\n' '# catalog_version=v1'
+	} >"$MAP"
+
+	# Act
+	crosscheck_job_map_repo_load "$MAP"
+
+	# Assert
+	[ "${#CROSSCHECK_JOB_MAP_DECL_NAMES[@]}" -eq 0 ]
+	[ "$JOB_MAP_HEADER_LINE" -eq 1 ]
+	[ "${#JOB_MAP_ROW_LINES[@]}" -eq 1 ]
+}
+
+@test "crosscheck_target_catalog_repo_load_妥当なカタログの場合_戻り値0でヘッダーをJOB_MAP_HEADERに載せること" {
+	# Arrange
+	printf '%s\n' 'catalog_version,target_type,target_identifier,compare_condition,business_date_handling' 'v1,table,SALES_DAILY,key=sales_id,column=business_date' >"$CATALOG"
+
+	# Act
+	crosscheck_target_catalog_repo_load "$CATALOG"
+	status=$?
+
+	# Assert
+	[ "$status" -eq "$CROSSCHECK_TARGET_CATALOG_LOADED" ]
+	[ "${JOB_MAP_HEADER[0]}" = "catalog_version" ]
+	[ "${#JOB_MAP_ROW_LINES[@]}" -eq 1 ]
+}
+
+@test "crosscheck_target_catalog_repo_load_カタログが存在しない場合_戻り値がMISSINGであること" {
+	# Arrange / Act
+	run crosscheck_target_catalog_repo_load "$BATS_TEST_TMPDIR/missing.csv"
+
+	# Assert
+	[ "$status" -eq "$CROSSCHECK_TARGET_CATALOG_MISSING" ]
+}
+
+@test "crosscheck_target_catalog_repo_load_カタログにCRがある場合_戻り値がFORMAT_INVALIDでCRの行番号が載ること" {
+	# Arrange(S5 F-013 の回帰: 形式違反を参照未解決に丸めない)
+	printf 'catalog_version,target_type\r\nv1,table\r\n' >"$CATALOG"
+	status=0
+
+	# Act
+	crosscheck_target_catalog_repo_load "$CATALOG" || status=$?
+
+	# Assert
+	[ "$status" -eq "$CROSSCHECK_TARGET_CATALOG_FORMAT_INVALID" ]
+	[ "${JOB_MAP_CR_LINES[0]}" -eq 1 ]
+	[ "${JOB_MAP_CR_LINES[1]}" -eq 2 ]
+}
+
+@test "crosscheck_target_catalog_repo_load_カタログのヘッダーがクォート不正の場合_戻り値がFORMAT_INVALIDであること" {
+	# Arrange
+	printf '%s\n' '"catalog_version,target_type' 'v1,table' >"$CATALOG"
+
+	# Act
+	run crosscheck_target_catalog_repo_load "$CATALOG"
+
+	# Assert
+	[ "$status" -eq "$CROSSCHECK_TARGET_CATALOG_FORMAT_INVALID" ]
+}
+
+@test "crosscheck_target_catalog_repo_has_version_該当版の行がある場合_戻り値0であること" {
 	# Arrange(catalog_version 列が先頭でなくても列名で引く)
 	{
 		printf '%s\n' 'target_type,catalog_version,target_identifier,compare_condition,business_date_handling'
 		printf '%s\n' 'table,v1,SALES_DAILY,"key=sales_id,branch_id",column=business_date'
 		printf '%s\n' 'file,v2,/data/out/summary.tsv,-,filename'
 	} >"$CATALOG"
+	crosscheck_target_catalog_repo_load "$CATALOG"
 
 	# Act
-	run target_catalog_repo_has_version "$CATALOG" v2
+	run crosscheck_target_catalog_repo_has_version v2
 
 	# Assert
 	[ "$status" -eq 0 ]
 }
 
-@test "target_catalog_repo_has_version_該当版の行が無い場合_戻り値1であること" {
+@test "crosscheck_target_catalog_repo_has_version_該当版の行が無い場合_戻り値1であること" {
 	# Arrange
 	printf '%s\n' 'catalog_version,target_type,target_identifier,compare_condition,business_date_handling' 'v1,table,SALES_DAILY,key=sales_id,column=business_date' >"$CATALOG"
+	crosscheck_target_catalog_repo_load "$CATALOG"
 
 	# Act
-	run target_catalog_repo_has_version "$CATALOG" v9
+	run crosscheck_target_catalog_repo_has_version v9
 
 	# Assert
 	[ "$status" -eq 1 ]
 }
 
-@test "target_catalog_repo_has_version_catalog_version列が無い場合_戻り値1であること" {
+@test "crosscheck_target_catalog_repo_has_version_catalog_version列が無い場合_戻り値1であること" {
 	# Arrange
 	printf '%s\n' 'version,target_type' 'v1,table' >"$CATALOG"
+	crosscheck_target_catalog_repo_load "$CATALOG"
 
 	# Act
-	run target_catalog_repo_has_version "$CATALOG" v1
+	run crosscheck_target_catalog_repo_has_version v1
 
 	# Assert
 	[ "$status" -eq 1 ]
 }
 
-@test "target_catalog_repo_has_version_カタログが存在しない場合_戻り値1であること" {
-	# Arrange / Act
-	run target_catalog_repo_has_version "$BATS_TEST_TMPDIR/missing.csv" v1
-
-	# Assert
-	[ "$status" -eq 1 ]
-}
-
-@test "target_catalog_repo_has_version_カタログにCRがある場合_形式違反として解決できず戻り値1であること" {
-	# Arrange
-	printf 'catalog_version,target_type\r\nv1,table\r\n' >"$CATALOG"
+@test "crosscheck_target_catalog_repo_has_version_ヘッダー行が無いカタログの場合_戻り値1であること" {
+	# Arrange(コメントだけのファイル)
+	printf '%s\n' '# empty catalog' >"$CATALOG"
+	crosscheck_target_catalog_repo_load "$CATALOG"
 
 	# Act
-	run target_catalog_repo_has_version "$CATALOG" v1
+	run crosscheck_target_catalog_repo_has_version v1
 
 	# Assert
 	[ "$status" -eq 1 ]

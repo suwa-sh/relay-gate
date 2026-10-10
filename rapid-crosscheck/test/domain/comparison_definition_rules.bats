@@ -198,3 +198,85 @@ setup() {
 	[ "$status" -eq 1 ]
 	[ "$output" = "error: catalog_version declaration is invalid value= path: map.csv" ]
 }
+
+# ---- S5 verify(attempt 1)の blocker に対する回帰テスト ----
+
+@test "validate_crosscheck_job_map_header_全列名が1セルに入っている場合_列数不一致としてheader mismatchであること" {
+	# Arrange / Act(S5 F-001: 再結合した文字列は expected と同じになる入力。列ごとに判定する)
+	run validate_crosscheck_job_map_header map.csv "job_id,comparison_type,compare_targets,compare_command,compare_options,definition_version"
+
+	# Assert(actual= はカンマを含む列名を CSV の囲みで出す)
+	[ "$status" -eq 1 ]
+	[ "$output" = 'error: header mismatch expected=job_id,comparison_type,compare_targets,compare_command,compare_options,definition_version actual="job_id,comparison_type,compare_targets,compare_command,compare_options,definition_version" path: map.csv' ]
+}
+
+@test "validate_crosscheck_job_map_header_列名の順序が異なる場合_header mismatchであること" {
+	# Arrange / Act
+	run validate_crosscheck_job_map_header map.csv comparison_type job_id compare_targets compare_command compare_options definition_version
+
+	# Assert
+	[ "$status" -eq 1 ]
+	[ "$output" = "error: header mismatch expected=job_id,comparison_type,compare_targets,compare_command,compare_options,definition_version actual=comparison_type,job_id,compare_targets,compare_command,compare_options,definition_version path: map.csv" ]
+}
+
+@test "validate_crosscheck_job_map_header_列名が重複する場合_duplicate columnをheader mismatchより先に出すこと" {
+	# Arrange / Act(S5 F-021)
+	run validate_crosscheck_job_map_header map.csv job_id comparison_type compare_targets compare_command compare_options definition_version job_id
+
+	# Assert
+	[ "$status" -eq 1 ]
+	[ "${#lines[@]}" -eq 2 ]
+	[ "${lines[0]}" = "error: duplicate column column=job_id path: map.csv" ]
+	[ "${lines[1]}" = "error: header mismatch expected=job_id,comparison_type,compare_targets,compare_command,compare_options,definition_version actual=job_id,comparison_type,compare_targets,compare_command,compare_options,definition_version,job_id path: map.csv" ]
+}
+
+@test "report_duplicate_columns_2つの列名がそれぞれ重複する場合_初出順に1行ずつ出すこと" {
+	# Arrange / Act
+	run report_duplicate_columns catalog.csv catalog_version target_type catalog_version target_type
+
+	# Assert
+	[ "$status" -eq 1 ]
+	[ "${#lines[@]}" -eq 2 ]
+	[ "${lines[0]}" = "error: duplicate column column=catalog_version path: catalog.csv" ]
+	[ "${lines[1]}" = "error: duplicate column column=target_type path: catalog.csv" ]
+}
+
+@test "report_duplicate_columns_重複が無い場合_戻り値0で何も出さないこと" {
+	# Arrange / Act
+	run report_duplicate_columns catalog.csv catalog_version target_type target_identifier
+
+	# Assert
+	[ "$status" -eq 0 ]
+	[ -z "$output" ]
+}
+
+@test "validate_comparison_definition_row_compare_commandが相対パスの場合_not absoluteのerrorであること" {
+	# Arrange(S5 F-010: 実行可能でも相対パスは受理しない)
+	cp "$COMPARE" "$BATS_TEST_TMPDIR/rel.sh"
+	cd "$BATS_TEST_TMPDIR"
+
+	# Act
+	run validate_comparison_definition_row 5 JOB001 job output.csv ./rel.sh "--blue {blue} --green {green}" v1
+
+	# Assert
+	[ "$status" -eq 1 ]
+	[ "$output" = "error: compare_command is not absolute line=5 job_id=JOB001 value=./rel.sh" ]
+}
+
+@test "validate_comparison_definition_row_full行のcompare_targetsがcatalogでない場合_not catalogのerrorであること" {
+	# Arrange / Act(S5 F-018)
+	run validate_comparison_definition_row 7 final-crosscheck full arbitrary "$COMPARE" "--catalog-version {catalog_version} --business-date {business_date}" v1
+
+	# Assert
+	[ "$status" -eq 1 ]
+	[ "$output" = "error: compare_targets is not catalog line=7 job_id=final-crosscheck value=arbitrary" ]
+}
+
+@test "validate_comparison_definition_row_job行のcompare_targetsがcatalog以外の場合_固定値の検査はせず違反0件であること" {
+	# Arrange / Act(固定値 catalog は full 行だけ)
+	run validate_comparison_definition_row 5 JOB001 job arbitrary "$COMPARE" "--blue {blue} --green {green}" v1
+
+	# Assert
+	[ "$status" -eq 0 ]
+	[ -z "$output" ]
+}
