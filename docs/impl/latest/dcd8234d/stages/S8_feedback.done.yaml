@@ -1,0 +1,154 @@
+stage: "S8"
+uc_id: "dcd8234d"
+manifest_sha256: "ddcab64014c49e5f65a082b66a7d2c381cefd50c4744ad3457a3a8d5ef9d8289"
+manifest_projection: v2
+mode: "initial"
+result: pass
+status: "draft"
+attempt: 4
+attempt_note: "attempt 上限(3)到達後にユーザーが continue_once で許可した attempt 4 の S4 / S5 両 tier pass を入力にした。attempt-1〜3 の findings は解消済みの履歴として扱い、要求にしていない"
+inputs:
+  issues_dir: "docs/impl/latest/dcd8234d/issues/"
+  findings:
+    - "docs/impl/latest/dcd8234d/stages/attempt-4/S5_verify.tier-rapid-crosscheck.findings.yaml"
+    - "docs/impl/latest/dcd8234d/stages/attempt-4/S5_verify.tier-final-crosscheck.findings.yaml"
+  assumptions:
+    - "docs/impl/latest/dcd8234d/stages/attempt-4/S4_tier-impl.tier-rapid-crosscheck.assumptions.yaml"
+    - "docs/impl/latest/dcd8234d/stages/attempt-4/S4_tier-impl.tier-final-crosscheck.assumptions.yaml"
+  s4_done:
+    - "docs/impl/latest/dcd8234d/stages/attempt-4/S4_tier-impl.tier-rapid-crosscheck.done.yaml"
+    - "docs/impl/latest/dcd8234d/stages/attempt-4/S4_tier-impl.tier-final-crosscheck.done.yaml"
+  s5_done:
+    - "docs/impl/latest/dcd8234d/stages/attempt-4/S5_verify.tier-rapid-crosscheck.done.yaml"
+    - "docs/impl/latest/dcd8234d/stages/attempt-4/S5_verify.tier-final-crosscheck.done.yaml"
+  s6_done: "docs/impl/latest/dcd8234d/stages/S6_uc-bdd.done.yaml"
+  s7_done: "docs/impl/latest/dcd8234d/stages/S7_atdd.done.yaml"
+  review_notes: "docs/impl/latest/dcd8234d/review/review-notes.md"
+  ui_review_findings: []
+  ui_review_note: "UI Reviewer は dispatch なし(UI 画面なし)"
+resolution:
+  issues:
+    - path: "docs/impl/latest/dcd8234d/issues/20261010_084142_cross-uc-scenarios.md"
+      verdict: "spec_issue"
+      cr_ids:
+        - "CR-dcd8234d-002"
+      evidence: "責務分担の記録自体は仕様疑義ではない。SPEC-004-04 の Then「同じ CSV クォート解析関数が使われ」は実装構造の要求で実行結果から判定できず、S6 の step 実装が代替した"
+    - path: "docs/impl/latest/dcd8234d/issues/20261010_084142_facade-dispatch-and-csv-parser-outside-tiers.md"
+      verdict: "spec_issue"
+      cr_ids:
+        - "CR-dcd8234d-001"
+      evidence: "handler 登録はオーケストレータが facade に固定パス source の hook を追加して解消(commit 4b0be23)。tier-facade と rapid / final の関数共有(両方向)が契約として未宣言のまま"
+    - path: "docs/impl/latest/dcd8234d/issues/20261010_092630_tier-handler-function-namespace-collision.md"
+      verdict: "spec_issue"
+      cr_ids:
+        - "CR-dcd8234d-003"
+      evidence: "実装は接頭辞で回避済み。同じプロセスに source される tier の名前空間の規則が CLP-003・契約・tier 仕様に無い。dev-rules への追記は proposal-context に記録"
+    - path: "docs/impl/latest/dcd8234d/issues/20261010_093000_tier-bdd-placeholder-scenario-given-then-mismatch.md"
+      verdict: "spec_issue"
+      cr_ids:
+        - "CR-dcd8234d-004"
+      evidence: "tier-rapid-crosscheck.md の BDD の Given(--fast)と Then(value=--blue {blue})が両立しない。step 定義で代替済み"
+  new_issues_in_current_attempt: 0
+  findings:
+    rapid:
+      blocker: 0
+      major: 0
+      minor: 18
+      spec_absent: 18
+      contradicts: 0
+      unlisted: 0
+    final:
+      blocker: 0
+      major: 0
+      minor: 18
+      spec_absent: 18
+      contradicts: 0
+      unlisted: 0
+    resolved_previous_blockers:
+      attempt_1: "rapid 8 件 / final 1 件(attempt 2 で解消)"
+      attempt_2: "rapid F-007 / F-018(attempt 3 で解消)"
+      attempt_3: "rapid F-018(attempt 4 で解消。前提 A-024 追加)"
+    verdict: "attempt 4 の findings は両 tier とも spec_absent の minor のみ。前提は S9 で人が回答する。契約の文言・規則に関わる 4 件(rapid A-008 / A-016 / A-022、final A-006)だけを CR-005 の要求候補にした"
+  rejected_spec_change: 0
+classification:
+  spec_origin: 5
+  implementation_origin_fixed: 3
+  environment_origin: 0
+  out_of_scope: 32
+  note: "仕様起因 = issue 4 件(CR-001〜004)+ 契約に無い違反文言と参照先カタログの expected の基準(CR-005)。実装起因(修正済み)= attempt 1 / 2 / 3 の blocker(各 attempt で解消)。環境起因 = なし(両 tier environment_failures 空)。対象外 = spec_absent の前提 32 件(S9 で前提として回答)"
+assumptions_summary:
+  count: 36
+  by_tier:
+    tier-rapid-crosscheck: 18
+    tier-final-crosscheck: 18
+  consistent: 0
+  spec_absent: 36
+  contradicts: 0
+  unlisted: 0
+  rejected_spec_change: 0
+  cr_candidates:
+    - id: "A-008"
+      tier: "tier-rapid-crosscheck"
+      cr: "CR-dcd8234d-005"
+      reason: "compare_command is not absolute の文言が契約に無い"
+    - id: "A-016"
+      tier: "tier-rapid-crosscheck"
+      cr: "CR-dcd8234d-005"
+      reason: "compare_targets is not catalog の文言が契約に無い"
+    - id: "A-022"
+      tier: "tier-rapid-crosscheck"
+      cr: "CR-dcd8234d-005"
+      reason: "参照先カタログの column count mismatch の expected の基準が無い(独立検証が S9 確認対象と明記)"
+    - id: "A-006"
+      tier: "tier-final-crosscheck"
+      cr: "CR-dcd8234d-005"
+      reason: "catalog_version is invalid の文言が契約に無い"
+    - id: "A-018"
+      tier: "tier-final-crosscheck"
+      cr: "CR-dcd8234d-001"
+      reason: "handler の配置と関数名(登録方法)が仕様に無い"
+    - id: "A-019"
+      tier: "tier-final-crosscheck"
+      cr: "CR-dcd8234d-001"
+      reason: "tier-facade の CSV 解析・表記関数の共有面が契約に無い"
+  review_attention:
+    - "A-022"
+    - "A-024"
+  note: "人のレビューは未実施。spec_change の却下が出た前提は refresh で要求に加える。S9 で前提が承認された場合、CR-005 は実装どおりの文言を契約に書く要求として残す(要求の内容は変わらない)"
+feedback_request:
+  feedback_id: "20261010_104636_impl_feedback_dcd8234d"
+  draft_path: "docs/impl/latest/dcd8234d/feedback/draft.md"
+  request_count: 5
+  blocker_count: 0
+  supersedes: null
+  requests:
+    - id: "CR-dcd8234d-001"
+      severity: "spec-gap"
+      title: "validate-config.sh の検証ロジックの委譲と CSV 解析関数の共有が、ティア間の契約として宣言されていない"
+    - id: "CR-dcd8234d-002"
+      severity: "spec-gap"
+      title: "受け入れ基準の Then に「同じ関数を使う」という実装構造の要求が混ざり、テストで判定できない"
+    - id: "CR-dcd8234d-003"
+      severity: "spec-gap"
+      title: "同じシェルに source されるティアの関数名・グローバル変数名の名前空間の規則が無い"
+    - id: "CR-dcd8234d-004"
+      severity: "spec-gap"
+      title: "ティア仕様の BDD「compare_options にプレースホルダが無い」の Given と Then の値が一致しない"
+    - id: "CR-dcd8234d-005"
+      severity: "spec-gap"
+      title: "実装が補った違反文言 3 件と、参照先カタログの列数不一致の基準が CLI 契約に無い"
+as_built_summary: "docs/impl/latest/dcd8234d/feedback/as-built-summary.md"
+learnings: 3
+learning_files:
+  - "docs/impl/latest/dcd8234d/learnings/20261010_104636_same-shell-source-function-name-collision.md"
+  - "docs/impl/latest/dcd8234d/learnings/20261010_104636_referenced-csv-shares-config-input-rules.md"
+  - "docs/impl/latest/dcd8234d/learnings/20261010_104636_attempt-limit-reached-blockers-8-2-1-0.md"
+proposals:
+  skill: true
+  context: true
+proposal_files:
+  - "docs/impl/latest/dcd8234d/learnings/20261010_104636_proposal-skill.md"
+  - "docs/impl/latest/dcd8234d/learnings/20261010_104636_proposal-context.md"
+write_set_note: "書き込みは docs/impl/latest/dcd8234d/feedback/、learnings/、stages/S8_feedback.done.yaml のみ。issues/ と仕様・実装・SKILL.md・CLAUDE.md・dev-rules は変更していない"
+completed_at: "2026-10-10T10:46:36+09:00"
+completed_by: "dist-impl-feedback@0.14.1"

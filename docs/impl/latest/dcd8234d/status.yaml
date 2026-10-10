@@ -64,10 +64,15 @@ stages:
     status: done
     scenarios: 1
   S8_feedback:
-    status: running
+    status: done
+    mode: initial
+    request_count: 5
+    blocker_count: 0
+    draft_path: docs/impl/latest/dcd8234d/feedback/draft.md
+    feedback_id: 20261010_104636_impl_feedback_dcd8234d
   S9_review:
-    status: pending
-updated_at: '2026-10-10T10:44:18+09:00'
+    status: running
+updated_at: '2026-10-10T10:52:39+09:00'
 attempt_limit:
   reached: true
   attempt: 3
