@@ -1,0 +1,181 @@
+schema_version: "1.0"
+uc_id: "dcd8234d"
+tier: "tier-rapid-crosscheck"
+attempt: 3
+# attempt 2 の記録を引き継ぎ、S5 verify(attempt 2)の判定に従って更新した:
+#   - contradicts の A-011(F-007)は、参照カタログのデータ行のクォート不正・列数不一致(空白だけの行を含む)も
+#     config_input_rules の共通文言で全件報告するよう実装を直し、新しい判断として書き直した。
+#     V-001(F-018。空白だけの行の受理)は A-011 の書き直しと A-022 で扱う(別 id は立てない)
+#   - restatement(F-013 / F-016)と判定された A-017 / A-020 は除外した(excluded_as_explicit に含める)
+#   - A-022 / A-023 は F-007 / F-018 の修正で新たに決めた判断
+#   - spec_absent の minor(F-001〜F-006 / F-008〜F-012 / F-014 / F-015 / F-017)は真の前提として維持(対象行を更新)
+# 仕様・契約・dev-rules・S4 固定指示に明示されていたため除外した主な事項:
+#   終了コード 0 / 2 / 6、stderr の共通文言、stdout の固定順と `-` の空値表記、lines= の規則、rows= の数え方、列数 6、
+#   入力の守備範囲(NUL / UTF-8 / BOM / CR / ヘッダー列名の重複 / クォート不正 / 空白だけの行)が参照先カタログにも適用されること、
+#   単一スナップショット、内部障害の扱い、job_id の文字集合、full 行の予約 job_id と compare_targets=catalog、
+#   compare_command の絶対パス、プレースホルダ、制御文字の可視表記、hint の出力、violations=N の単位、
+#   予約 job_id 行の job 種別の拒否、列挙外の種別にプレースホルダ規則を適用しないこと、
+#   handler の配置と tier-facade の CSV 解析関数の再利用(spec.md SPEC-004-04 / tier md 変更概要 / オーケストレータ確定)、
+#   参照カタログのヘッダー列名の重複の拒否(config_input_rules)
+extraction:
+  candidate_count: 34
+  excluded_as_explicit: 17
+  recorded_count: 17
+assumptions:
+  - id: "A-001"
+    category: "input_validation"
+    assumption: "宣言のコメント行は `#` の直後に半角空白・タブを 0 個以上挟んだ `name=value`(name は `[A-Za-z0-9_]+`)として読み、この形に合わないコメント行は宣言として扱わず無視する"
+    target: "rapid-crosscheck/src/repository/crosscheck_job_map_repo.sh:74"
+    reason: "設定契約は `# exit_code_contract=...` の例しか示さず、`#` と名前の間の空白の有無や宣言でないコメント行の扱いの定義が無い"
+    confidence: "medium"
+    spec_refs:
+      - "tier-rapid-crosscheck.md#設定契約(クロスチェックジョブマップ) 宣言(コメント行)表"
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#config_files crosscheck-job-map.csv header_declarations"
+  - id: "A-002"
+    category: "input_validation"
+    assumption: "宣言はヘッダー行より前のコメント行だけから読み、ヘッダー行以降にある `# name=value` 形式のコメント行は自由なコメントとして無視する(宣言にも違反にもしない)"
+    target: "rapid-crosscheck/src/repository/crosscheck_job_map_repo.sh:82"
+    reason: "設定契約は「先頭のコメント行にファイル全体の宣言を置く」と定めるが、ヘッダー行より後にある宣言形式のコメント行を無視するか違反にするかの定義が無い(違反にする文言も契約に無い)"
+    confidence: "medium"
+    spec_refs:
+      - "tier-rapid-crosscheck.md#設定契約(クロスチェックジョブマップ)"
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#config_files crosscheck-job-map.csv format"
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#commands validate-config.sh stderr 宣言不正"
+  - id: "A-003"
+    category: "input_validation"
+    assumption: "同じ名前の宣言が先頭のコメント行に複数回あるときは初出の値を採用し、2 回目以降の出現を `error: <name> declaration is invalid value=<値> path: ...` として違反にする"
+    target: "rapid-crosscheck/src/usecase/validate_crosscheck_job_map.sh:162"
+    reason: "宣言の重複時にどの値を使うか、違反にするかの定義が無い"
+    confidence: "medium"
+    spec_refs:
+      - "tier-rapid-crosscheck.md#設定契約(クロスチェックジョブマップ) 宣言(コメント行)表"
+      - "tier-rapid-crosscheck.md#検証ルール一覧 #8"
+  - id: "A-004"
+    category: "input_validation"
+    assumption: "宣言の値は前後の空白を除かずに比較し、`target_catalog_path` / `catalog_version` の値が空のときは `error: <name> declaration is invalid value= path: ...` にする"
+    target: "rapid-crosscheck/src/domain/comparison_definition_rules.sh:181"
+    reason: "宣言の値の正規化(空白除去)と、宣言はあるが値が空のときの扱いの定義が無い(契約の宣言不正の文言は not found / is invalid の 2 種のみ)"
+    confidence: "medium"
+    spec_refs:
+      - "tier-rapid-crosscheck.md#設定契約(クロスチェックジョブマップ) 宣言(コメント行)表"
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#commands validate-config.sh stderr 宣言不正"
+  - id: "A-005"
+    category: "error_handling"
+    assumption: "ファイル不在・読み取り不可・入力の守備範囲の違反・ヘッダー行のクォート不正・ヘッダー不一致(列名の重複を含む)のときは stdout の集計(config= 〜 status=)を出さず、stderr の error 行と hint だけを出す"
+    target: "rapid-crosscheck/src/usecase/validate_crosscheck_job_map.sh:381"
+    reason: "出力契約の stdout は「違反ありのときは status=invalid と violations=N」と定めるが、rows= を数えられない(列を対応付けられない)段階で止まるときに stdout を出すかの定義が無い"
+    confidence: "medium"
+    spec_refs:
+      - "tier-rapid-crosscheck.md#出力契約 stdout"
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#commands validate-config.sh stdout --crosscheck-job-map"
+  - id: "A-008"
+    category: "input_validation"
+    assumption: "compare_command が `/` で始まらない値(相対パス)は、存在・実行権限を調べる前に `error: compare_command is not absolute line=N job_id=... value=...` として違反にする(文言は契約の行の値不正の共通形式 `<column> is <reason>` に合わせた)"
+    target: "rapid-crosscheck/src/domain/comparison_definition_rules.sh:255"
+    reason: "列定義と契約は compare_command を absolute path と定めるが、絶対パスでない値の違反メッセージが検証ルール一覧と契約の stderr に無い(#6 の `not executable` は存在・実行権限の違反)"
+    confidence: "medium"
+    spec_refs:
+      - "tier-rapid-crosscheck.md#検証ルール一覧 #6"
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#config_files crosscheck-job-map.csv columns.compare_command"
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#commands validate-config.sh stderr 行の値不正"
+  - id: "A-011"
+    category: "error_handling"
+    assumption: "対象カタログの参照解決で、カタログに config_input_rules の違反(NUL / 不正な UTF-8 / BOM / CR / ヘッダー行のクォート不正 / ヘッダー列名の重複 / データ行のクォート不正 / 列数不一致(空白だけの行を含む))が 1 件でもあるときは、それぞれ共通文言(path はカタログのパス、line はカタログの物理行)で全件報告した上で版を照合せず `error: target catalog reference unresolved path=... catalog_version=...` を 1 行出す(該当版の妥当な行が別にあっても参照解決にしない)。カタログ読み込み中の内部障害は path をカタログのパスにして終了コード 6 にする"
+    target: "rapid-crosscheck/src/usecase/validate_crosscheck_job_map.sh:257"
+    reason: "config_input_rules は全設定ファイルの読み手に共通文言での拒否を求めるが、ジョブマップの検証から参照するカタログの形式違反を参照未解決(#9)と併せて報告するか、形式違反のある行を除いた残りの行で版を照合するかの定義が無い"
+    confidence: "medium"
+    spec_refs:
+      - "tier-rapid-crosscheck.md#検証ルール一覧 #9"
+      - "spec.md#計算ルール一覧 対象カタログ参照の解決"
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#config_input_rules scope / rules / internal_failure"
+  - id: "A-012"
+    category: "input_validation"
+    assumption: "対象カタログ参照の解決(#9)は target_catalog_path と catalog_version の両宣言が妥当なときだけ行い、`# target_catalog_path=` の相対パスは validate-config.sh のカレントディレクトリ基準でそのまま使う"
+    target: "rapid-crosscheck/src/usecase/validate_crosscheck_job_map.sh:375"
+    reason: "宣言が欠けたときに #9 を実行するか、相対パスの基準をどこに置くかの定義が無い"
+    confidence: "medium"
+    spec_refs:
+      - "tier-rapid-crosscheck.md#検証ルール一覧 #9"
+      - "tier-rapid-crosscheck.md#設定契約(クロスチェックジョブマップ) 宣言(コメント行)表"
+  - id: "A-013"
+    category: "data_format"
+    assumption: "--verbose の `info: checked job_id=<v>` は列数が 6 で解析できた行ごとに違反の有無を問わず出し、クォート不正・列数不一致の行には出さない"
+    target: "rapid-crosscheck/src/usecase/validate_crosscheck_job_map.sh:214"
+    reason: "コマンド契約は「行ごとの info: checked job_id=... を stderr に出す」とだけ定め、違反行や解析できない行にも出すかの定義が無い"
+    confidence: "medium"
+    spec_refs:
+      - "tier-rapid-crosscheck.md#コマンド契約 引数・オプション --verbose"
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#commands validate-config.sh stderr 補助出力(--verbose)"
+  - id: "A-014"
+    category: "data_format"
+    assumption: "stdout の `target_catalog_path:` / `catalog_version=` / `exit_code_contract=` は宣言が不正でも宣言された値をそのまま出し、宣言が無いときだけ空値 `-` を出す"
+    target: "rapid-crosscheck/src/usecase/validate_crosscheck_job_map.sh:300"
+    reason: "出力契約の `exit_code_contract=0:OK,3:NG,6:ERROR` は妥当なときの例で、宣言不正のときに何を出すかの定義が無い"
+    confidence: "medium"
+    spec_refs:
+      - "tier-rapid-crosscheck.md#出力契約 stdout"
+      - "docs/specs/latest/_cross-cutting/ux-ui/ui-design.md#出力フォーマット 空値"
+  - id: "A-015"
+    category: "error_handling"
+    assumption: "stderr の error 行の順序は、宣言(exit_code_contract → target_catalog_path → catalog_version → 重複宣言)→ 行ごとの違反(物理行順)→ 重複 job_id → 対象カタログ(バイト点検 → ヘッダーのクォート不正 → 列名の重複 → データ行の違反(物理行順)→ 参照未解決)→ hint とする"
+    target: "rapid-crosscheck/src/usecase/validate_crosscheck_job_map.sh:381"
+    reason: "違反を全件出すことは定めるが、種類の異なる違反どうしの出力順の定義が無い"
+    confidence: "medium"
+    spec_refs:
+      - "tier-rapid-crosscheck.md#出力契約 stderr"
+      - "tier-rapid-crosscheck.md#UC ロジック バリデーション"
+  - id: "A-016"
+    category: "input_validation"
+    assumption: "comparison_type=full の行の compare_targets が非空で `catalog` と異なるときは `error: compare_targets is not catalog line=N job_id=... value=...` として違反にする(job 行の compare_targets は非空だけを検査する)"
+    target: "rapid-crosscheck/src/domain/comparison_definition_rules.sh:245"
+    reason: "契約の列定義と予約 job_id の表は full 行の compare_targets を `catalog` 固定と定めるが、固定値違反のメッセージが検証ルール一覧(#10 は非空のみ)と契約の stderr に無い"
+    confidence: "medium"
+    spec_refs:
+      - "tier-rapid-crosscheck.md#予約 job_id final-crosscheck compare_targets 行"
+      - "tier-rapid-crosscheck.md#検証ルール一覧 #10"
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#config_files crosscheck-job-map.csv columns.compare_targets"
+  - id: "A-018"
+    category: "input_validation"
+    assumption: "クォート不正・列数不一致の行は列検証と job_id の重複検査の対象にしない(その行の job_id は重複判定に使わない)"
+    target: "rapid-crosscheck/src/usecase/validate_crosscheck_job_map.sh:190"
+    reason: "列を対応付けられない行の job_id を重複検査に含めるかの定義が無い"
+    confidence: "high"
+    spec_refs:
+      - "tier-rapid-crosscheck.md#検証ルール一覧 #3 / #4 / #11"
+  - id: "A-019"
+    category: "error_handling"
+    assumption: "ヘッダー行に重複した列名があるときは `error: duplicate column column=<name> path: ...` を重複した列名ごとに 1 行(初出順)出し、その後に列順固定の不一致として `error: header mismatch expected=... actual=... path: ...` も 1 行出す(両方を出す)"
+    target: "rapid-crosscheck/src/domain/comparison_definition_rules.sh:132"
+    reason: "config_input_rules は CSV 共通で列名の重複を `duplicate column` で拒否すると定め、#2 は列順固定の完全一致を求めるが、重複のある入力に両方を出すか一方だけにするかの定義が無い"
+    confidence: "medium"
+    spec_refs:
+      - "tier-rapid-crosscheck.md#検証ルール一覧 #2"
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#config_input_rules rules ヘッダー列名の重複(CSV)"
+  - id: "A-021"
+    category: "data_format"
+    assumption: "ヘッダー不一致の `actual=` に出す列名の並びは、カンマまたは二重引用符を含む列名を CSV と同じ二重引用符の囲み(内側の `\"` は `\"\"`)で出す(それ以外の列名はカンマ区切りでそのまま並べる)"
+    target: "rapid-crosscheck/src/domain/comparison_definition_rules.sh:108"
+    reason: "契約の `actual=<col1,...>` は列名をカンマ区切りで並べる形だけを示し、列名自体がカンマを含む(1 セルに全列名が入った)入力でも expected= と区別できる表記にする規則が無い"
+    confidence: "medium"
+    spec_refs:
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#commands validate-config.sh stderr ヘッダー不一致(列順固定)"
+      - "docs/specs/latest/_cross-cutting/ux-ui/ui-design.md#出力フォーマット 制御文字の表記"
+  - id: "A-022"
+    category: "input_validation"
+    assumption: "参照する対象カタログの列数不一致 `error: column count mismatch line=N expected=<n> actual=<n>` の expected は、そのカタログのヘッダー行の列数とする(本 tier は契約の列定義 5 列と照合せず、ヘッダーの列名・列数の検証は tier-final-crosscheck に委ねる)"
+    target: "rapid-crosscheck/src/usecase/validate_crosscheck_job_map.sh:229"
+    reason: "config_input_rules は空白だけの行を `expected=<n> actual=1` で拒否すると定めるが、ヘッダーを検証しない読み手(参照解決のみの #9)が expected に何を使うかの定義が無い"
+    confidence: "medium"
+    spec_refs:
+      - "tier-rapid-crosscheck.md#検証ルール一覧 #9"
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#config_input_rules rules 空白だけの行"
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#config_files target-catalog.csv columns"
+  - id: "A-023"
+    category: "error_handling"
+    assumption: "参照する対象カタログのヘッダー行がクォート不正のときは、ヘッダーの `csv quote is invalid` に続けてデータ行のクォート不正も物理行順に報告し、列数不一致は報告しない(列数の基準になるヘッダーが無いため)"
+    target: "rapid-crosscheck/src/usecase/validate_crosscheck_job_map.sh:279"
+    reason: "config_input_rules と契約の stderr は文言を定めるが、ヘッダー行を解析できない入力でデータ行の形式違反をどこまで報告するかの定義が無い(ジョブマップ本体と同じ扱いにした)"
+    confidence: "medium"
+    spec_refs:
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#commands validate-config.sh stderr CSV クォート不正(全 CSV 共通)"
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#config_input_rules rules 空白だけの行"

@@ -121,12 +121,14 @@ crosscheck_job_map_repo_declaration() {
   done
 }
 
-# 対象カタログの読み込み(計算ルール「対象カタログ参照の解決」の前段)。カタログも同じ CSV 解析関数(job_map_repo_load)で
-# 読む(JOB_MAP_* を上書きするため、ジョブマップ側の行を読み終えてから呼ぶ)。入力の守備範囲(config_input_rules)は
-# 全設定ファイル共通なので、カタログの形式違反は「参照未解決」に丸めず CROSSCHECK_TARGET_CATALOG_FORMAT_INVALID で返し、
-# usecase が JOB_MAP_* から共通の文言(nul byte / encoding / byte order mark / carriage return / csv quote)で報告する。
-# カタログの列の検証は tier-final-crosscheck に委ね、ここでは参照解決に必要な読み込みだけを行う。
-# 戻り値: CROSSCHECK_TARGET_CATALOG_LOADED … 解析できた(ヘッダーは JOB_MAP_HEADER)/
+# 対象カタログの読み込み(計算ルール「対象カタログ参照の解決」の前段)。カタログも同じ CSV 解析関数(job_map_repo_load。
+# 入力の複製(単一スナップショット)・バイト点検・クォート解析を含む)で読む(JOB_MAP_* を上書きするため、ジョブマップ側の
+# 行を読み終えてから呼ぶ)。入力の守備範囲(config_input_rules)は全設定ファイル共通なので、カタログの形式違反は
+# 「参照未解決」に丸めない: 解析できない段階の違反(NUL / 不正な UTF-8 / BOM / CR の行、ヘッダー行のクォート不正)は
+# CROSSCHECK_TARGET_CATALOG_FORMAT_INVALID で返し、データ行の違反(クォート不正・列数不一致)は読み込み結果
+# (JOB_MAP_ROW_STATUSES / JOB_MAP_ROW_CELL_COUNTS)に残す。どちらも usecase が共通の文言で報告する。
+# カタログの列の検証(列名・必須・値域)は tier-final-crosscheck に委ね、ここでは参照解決に必要な読み込みだけを行う。
+# 戻り値: CROSSCHECK_TARGET_CATALOG_LOADED … 解析できた(ヘッダーは JOB_MAP_HEADER。データ行の形式違反は含み得る)/
 #         CROSSCHECK_TARGET_CATALOG_MISSING … ファイル不在・読めない /
 #         CROSSCHECK_TARGET_CATALOG_FORMAT_INVALID … 形式違反(NUL / 不正な UTF-8 / BOM / CR の行がある、ヘッダー行のクォート不正)/
 #         JOB_MAP_REPO_STATUS_SNAPSHOT_FAILED / JOB_MAP_REPO_STATUS_COMMAND_FAILED … 内部障害(usecase が終了コード 6 にする)
@@ -150,16 +152,19 @@ crosscheck_target_catalog_repo_load() {
 }
 
 # 対象カタログ参照の解決(計算ルール「対象カタログ参照の解決」): 読み込み済みのカタログ(JOB_MAP_*)に catalog_version 列があり、
-# 値が version に一致する解析可能な行が 1 件以上あるか。ヘッダー行が無い・catalog_version 列が無いときは解決できない。
+# 値が version に一致する行が 1 件以上あるか。照合に使うのは、クォート解析でき列数がヘッダーの列数と一致する行だけ
+# (クォート不正・列数不一致の行は列を対応付けられない。報告は usecase の crosscheck_target_catalog_report_row_errors)。
+# ヘッダー行が無い・catalog_version 列が無いときは解決できない。
 # 列名の重複(どの列を使うか決められない)は呼び出し元が report_duplicate_columns で先に拒否する。
 # 戻り値: 0 … 解決できた / 1 … 解決できない(ヘッダー行が無い・catalog_version 列が無い・該当行なし)
 # 引数: version
 crosscheck_target_catalog_repo_has_version() {
   local version="$1" column_index=0 found=false
-  local row_index=0 row_count offset
+  local row_index=0 row_count offset column_count
   if [ "$JOB_MAP_HEADER_STATUS" != "$JOB_MAP_PARSE_OK" ]; then
     return 1
   fi
+  column_count="${#JOB_MAP_HEADER[@]}"
   for column_index in "${!JOB_MAP_HEADER[@]}"; do
     if [ "${JOB_MAP_HEADER[$column_index]}" = "$CROSSCHECK_DECL_CATALOG_VERSION" ]; then
       found=true
@@ -171,7 +176,7 @@ crosscheck_target_catalog_repo_has_version() {
   fi
   row_count="${#JOB_MAP_ROW_LINES[@]}"
   while [ "$row_index" -lt "$row_count" ]; do
-    if [ "${JOB_MAP_ROW_STATUSES[$row_index]}" = "$JOB_MAP_PARSE_OK" ] && [ "${JOB_MAP_ROW_CELL_COUNTS[$row_index]}" -gt "$column_index" ]; then
+    if [ "${JOB_MAP_ROW_STATUSES[$row_index]}" = "$JOB_MAP_PARSE_OK" ] && [ "${JOB_MAP_ROW_CELL_COUNTS[$row_index]}" -eq "$column_count" ]; then
       offset="${JOB_MAP_ROW_OFFSETS[$row_index]}"
       if [ "${JOB_MAP_CELLS[offset + column_index]}" = "$version" ]; then
         return 0

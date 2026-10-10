@@ -219,6 +219,58 @@ setup() {
 	[ "$status" -eq 1 ]
 }
 
+@test "crosscheck_target_catalog_repo_load_カタログを読む場合_TMPDIRのrelay-gate-で始まる複製だけを読み終えたら削除すること" {
+	# Arrange(config_input_rules.snapshot: カタログもジョブマップと同じ単一スナップショットで読む。
+	#         複製を読む関数を差し替えて、渡された複製のパスと内容を記録する)
+	printf '%s\n' 'catalog_version,target_type,target_identifier,compare_condition,business_date_handling' 'v1,table,SALES_DAILY,key=sales_id,column=business_date' >"$CATALOG"
+	SEEN_SNAPSHOT=""
+	SEEN_CONTENT=""
+	job_map_repo_load_snapshot() {
+		SEEN_SNAPSHOT="$2"
+		SEEN_CONTENT="$(cat "$2")"
+		return 0
+	}
+
+	# Act
+	crosscheck_target_catalog_repo_load "$CATALOG"
+
+	# Assert
+	[ "${SEEN_SNAPSHOT#"$TMPDIR"/relay-gate-}" != "$SEEN_SNAPSHOT" ]
+	[ "$SEEN_SNAPSHOT" != "$CATALOG" ]
+	[ "$SEEN_CONTENT" = "$(cat "$CATALOG")" ]
+	[ -z "$(ls -A "$TMPDIR")" ]
+}
+
+@test "crosscheck_target_catalog_repo_load_カタログのデータ行がクォート不正の場合_戻り値LOADEDで行の解析結果にquote_invalidが載ること" {
+	# Arrange(S5 F-007: データ行の形式違反は読み込み結果に残し、報告は usecase が行う)
+	printf '%s\n' 'catalog_version,target_type,target_identifier,compare_condition,business_date_handling' 'v1,table,SALES_DAILY,key=sales_id,column=business_date' '"broken,table,X,-,filename' >"$CATALOG"
+	status=0
+
+	# Act
+	crosscheck_target_catalog_repo_load "$CATALOG" || status=$?
+
+	# Assert
+	[ "$status" -eq "$CROSSCHECK_TARGET_CATALOG_LOADED" ]
+	[ "${JOB_MAP_ROW_STATUSES[1]}" = "$JOB_MAP_PARSE_QUOTE_INVALID" ]
+	[ "${JOB_MAP_ROW_LINES[1]}" -eq 3 ]
+}
+
+@test "crosscheck_target_catalog_repo_has_version_該当版の行の列数がヘッダーと異なる場合_戻り値1であること" {
+	# Arrange(列数不一致の行は版の照合に使わない。空白だけの行は 1 セル)
+	{
+		printf '%s\n' 'catalog_version,target_type,target_identifier,compare_condition,business_date_handling'
+		printf '%s\n' 'v1,table'
+		printf '%s\n' 'v1'
+	} >"$CATALOG"
+	crosscheck_target_catalog_repo_load "$CATALOG"
+
+	# Act
+	run crosscheck_target_catalog_repo_has_version v1
+
+	# Assert
+	[ "$status" -eq 1 ]
+}
+
 @test "crosscheck_target_catalog_repo_has_version_ヘッダー行が無いカタログの場合_戻り値1であること" {
 	# Arrange(コメントだけのファイル)
 	printf '%s\n' '# empty catalog' >"$CATALOG"

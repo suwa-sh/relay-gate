@@ -36,19 +36,22 @@ stages:
         tdd: pass
         bdd_tier: pass
     tier-rapid-crosscheck:
-      status: pending
+      status: done
       attempt: 3
+      gates:
+        format: pass
+        lint: pass
+        tdd: pass
+        bdd_tier: pass
   S5_verify:
     tier-final-crosscheck:
-      status: pending
+      status: running
       attempt: 3
       open_blockers: 0
     tier-rapid-crosscheck:
-      status: done
-      attempt: 2
-      result: fail
-      open_blockers: 2
-      open_major: 0
+      status: running
+      attempt: 3
+      open_blockers: 0
   S6_uc_bdd:
     status: pending
   S7_atdd:
@@ -57,7 +60,7 @@ stages:
     status: pending
   S9_review:
     status: pending
-updated_at: '2026-10-10T09:34:56+09:00'
+updated_at: '2026-10-10T09:47:27+09:00'
 attempt_limit:
   reached: true
   attempt: 3

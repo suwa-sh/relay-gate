@@ -722,3 +722,170 @@ has_line() {
 	[ "${STDERR_LINES[1]}" = "error: target catalog reference unresolved path=$CATALOG catalog_version=v1" ]
 	[ "${lines[7]}" = "violations=2" ]
 }
+
+# 参照カタログの入力の守備範囲(config_input_rules は全設定ファイル共通。S5 attempt-2 F-007 / F-018 の回帰)。
+# ジョブマップ本体と同じ文言で、path はカタログ、line はカタログの物理行。形式違反のあるカタログでは版を照合せず参照未解決にする
+
+@test "validate-config_sh_--crosscheck-job-mapで参照カタログのデータ行がクォート不正の場合_該当版の行があってもcsv quote is invalidと参照未解決で終了コード2であること" {
+	# Arrange(S5 F-007: 妥当な v1 行の後に閉じていない引用符で始まる 3 行目)
+	write_valid_map
+	{
+		printf '%s\n' 'catalog_version,target_type,target_identifier,compare_condition,business_date_handling'
+		printf '%s\n' 'v1,table,SALES_DAILY,key=sales_id,column=business_date'
+		printf '%s\n' '"broken,table,SALES_DAILY,key=sales_id,column=business_date'
+	} >"$CATALOG"
+
+	# Act
+	run_split --crosscheck-job-map "$MAP"
+
+	# Assert
+	[ "$status" -eq 2 ]
+	read_stderr_lines
+	[ "${#STDERR_LINES[@]}" -eq 3 ]
+	[ "${STDERR_LINES[0]}" = "error: csv quote is invalid line=3 path: $CATALOG" ]
+	[ "${STDERR_LINES[1]}" = "error: target catalog reference unresolved path=$CATALOG catalog_version=v1" ]
+	[ "${lines[6]}" = "status=invalid" ]
+	[ "${lines[7]}" = "violations=2" ]
+}
+
+@test "validate-config_sh_--crosscheck-job-mapで参照カタログに空白だけの行がある場合_column count mismatch actual=1と参照未解決で終了コード2であること" {
+	# Arrange(S5 F-018: 空白だけの行は 1 セルのデータ行として列数不一致。expected はカタログのヘッダーの列数)
+	write_valid_map
+	{
+		printf '%s\n' 'catalog_version,target_type,target_identifier,compare_condition,business_date_handling'
+		printf '%s\n' 'v1,table,SALES_DAILY,key=sales_id,column=business_date'
+		printf '%s\n' ' '
+		printf '%s\n' "$(printf '\t')"
+	} >"$CATALOG"
+
+	# Act
+	run_split --crosscheck-job-map "$MAP"
+
+	# Assert
+	[ "$status" -eq 2 ]
+	read_stderr_lines
+	[ "${#STDERR_LINES[@]}" -eq 4 ]
+	[ "${STDERR_LINES[0]}" = "error: column count mismatch line=3 expected=5 actual=1" ]
+	[ "${STDERR_LINES[1]}" = "error: column count mismatch line=4 expected=5 actual=1" ]
+	[ "${STDERR_LINES[2]}" = "error: target catalog reference unresolved path=$CATALOG catalog_version=v1" ]
+	[ "${lines[7]}" = "violations=3" ]
+}
+
+@test "validate-config_sh_--crosscheck-job-mapで参照カタログの列数が不足する行がある場合_column count mismatchと参照未解決であること" {
+	# Arrange(4 列の行。該当版の行は別にある)
+	write_valid_map
+	{
+		printf '%s\n' 'catalog_version,target_type,target_identifier,compare_condition,business_date_handling'
+		printf '%s\n' 'v1,table,SALES_DAILY,key=sales_id,column=business_date'
+		printf '%s\n' 'v1,table,SALES_DAILY,key=sales_id'
+	} >"$CATALOG"
+
+	# Act
+	run_split --crosscheck-job-map "$MAP"
+
+	# Assert
+	[ "$status" -eq 2 ]
+	read_stderr_lines
+	[ "${STDERR_LINES[0]}" = "error: column count mismatch line=3 expected=5 actual=4" ]
+	[ "${STDERR_LINES[1]}" = "error: target catalog reference unresolved path=$CATALOG catalog_version=v1" ]
+	[ "${lines[7]}" = "violations=2" ]
+}
+
+@test "validate-config_sh_--crosscheck-job-mapで参照カタログにクォート不正と列数不一致が混在する場合_物理行順に全件出すこと" {
+	# Arrange(2 行目クォート不正、3 行目列数不一致、4 行目妥当)
+	write_valid_map
+	{
+		printf '%s\n' 'catalog_version,target_type,target_identifier,compare_condition,business_date_handling'
+		printf '%s\n' 'v1,"table,SALES_DAILY,key=sales_id,column=business_date'
+		printf '%s\n' 'v1,table'
+		printf '%s\n' 'v1,table,SALES_DAILY,key=sales_id,column=business_date'
+	} >"$CATALOG"
+
+	# Act
+	run_split --crosscheck-job-map "$MAP"
+
+	# Assert
+	[ "$status" -eq 2 ]
+	read_stderr_lines
+	[ "${#STDERR_LINES[@]}" -eq 4 ]
+	[ "${STDERR_LINES[0]}" = "error: csv quote is invalid line=2 path: $CATALOG" ]
+	[ "${STDERR_LINES[1]}" = "error: column count mismatch line=3 expected=5 actual=2" ]
+	[ "${STDERR_LINES[2]}" = "error: target catalog reference unresolved path=$CATALOG catalog_version=v1" ]
+	[ "${lines[7]}" = "violations=3" ]
+}
+
+@test "validate-config_sh_--crosscheck-job-mapで参照カタログのヘッダーがクォート不正でデータ行もクォート不正の場合_両方のcsv quote is invalidを出すこと" {
+	# Arrange(ヘッダーが使えないので列数不一致は出さない。ジョブマップ本体と同じ順序)
+	write_valid_map
+	printf '%s\n' '"catalog_version,target_type' 'v1,table' '"v1,table' >"$CATALOG"
+
+	# Act
+	run_split --crosscheck-job-map "$MAP"
+
+	# Assert
+	[ "$status" -eq 2 ]
+	read_stderr_lines
+	[ "${#STDERR_LINES[@]}" -eq 4 ]
+	[ "${STDERR_LINES[0]}" = "error: csv quote is invalid line=1 path: $CATALOG" ]
+	[ "${STDERR_LINES[1]}" = "error: csv quote is invalid line=3 path: $CATALOG" ]
+	[ "${STDERR_LINES[2]}" = "error: target catalog reference unresolved path=$CATALOG catalog_version=v1" ]
+	[ "${lines[7]}" = "violations=3" ]
+}
+
+@test "validate-config_sh_--crosscheck-job-mapで参照カタログにUTF-8として不正なバイト列がある場合_encoding is not utf-8と参照未解決であること" {
+	# Arrange(2 行目の値に孤立した継続バイト 0x80)
+	write_valid_map
+	{
+		printf '%s\n' 'catalog_version,target_type,target_identifier,compare_condition,business_date_handling'
+		printf 'v1,table,SALES\x80DAILY,key=sales_id,column=business_date\n'
+	} >"$CATALOG"
+
+	# Act
+	run_split --crosscheck-job-map "$MAP"
+
+	# Assert
+	[ "$status" -eq 2 ]
+	read_stderr_lines
+	[ "${#STDERR_LINES[@]}" -eq 3 ]
+	[ "${STDERR_LINES[0]}" = "error: encoding is not utf-8 line=2 path: $CATALOG" ]
+	[ "${STDERR_LINES[1]}" = "error: target catalog reference unresolved path=$CATALOG catalog_version=v1" ]
+	[ "${lines[7]}" = "violations=2" ]
+}
+
+@test "validate-config_sh_--crosscheck-job-mapで参照カタログの先頭にBOMがある場合_byte order markと参照未解決であること" {
+	# Arrange
+	write_valid_map
+	{
+		printf '\xef\xbb\xbfcatalog_version,target_type,target_identifier,compare_condition,business_date_handling\n'
+		printf '%s\n' 'v1,table,SALES_DAILY,key=sales_id,column=business_date'
+	} >"$CATALOG"
+
+	# Act
+	run_split --crosscheck-job-map "$MAP"
+
+	# Assert
+	[ "$status" -eq 2 ]
+	read_stderr_lines
+	[ "${#STDERR_LINES[@]}" -eq 3 ]
+	[ "${STDERR_LINES[0]}" = "error: byte order mark is not allowed line=1 path: $CATALOG" ]
+	[ "${STDERR_LINES[1]}" = "error: target catalog reference unresolved path=$CATALOG catalog_version=v1" ]
+	[ "${lines[7]}" = "violations=2" ]
+}
+
+@test "validate-config_sh_--crosscheck-job-mapで参照カタログの最終行に改行が無い場合_受理して終了コード0であること" {
+	# Arrange(config_input_rules の例外: 最終行の改行なしは通常の行として読む。該当版はその最終行)
+	write_valid_map
+	{
+		printf '%s\n' 'catalog_version,target_type,target_identifier,compare_condition,business_date_handling'
+		printf '%s\n' 'v0,table,SALES_DAILY,key=sales_id,column=business_date'
+		printf '%s' 'v1,table,SALES_DAILY,key=sales_id,column=business_date'
+	} >"$CATALOG"
+
+	# Act
+	run_split --crosscheck-job-map "$MAP"
+
+	# Assert
+	[ "$status" -eq 0 ]
+	[ ! -s "$ERR" ]
+	[ "${lines[6]}" = "status=valid" ]
+}

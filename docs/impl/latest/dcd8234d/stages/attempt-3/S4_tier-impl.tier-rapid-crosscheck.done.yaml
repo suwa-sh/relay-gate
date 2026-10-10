@@ -1,0 +1,120 @@
+stage: S4
+tier: tier-rapid-crosscheck
+attempt: 3
+uc_id: dcd8234d
+manifest_sha256: 81d5dba283cd5c746d42428fa2713f0e7f2d15891575284e8b93e17b6b2d9f93
+manifest_projection: v2
+result: pass
+findings_source: "docs/impl/latest/dcd8234d/stages/attempt-2/S5_verify.tier-rapid-crosscheck.findings.yaml"
+findings_resolved:
+  - F-007
+  - F-018
+findings_fixes:
+  - id: F-007
+    summary: "参照カタログのデータ行のクォート不正を、ジョブマップ本体と同じ共通文言 `error: csv quote is invalid line=N path: <カタログ>` で全件(物理行順)報告し、形式違反のあるカタログでは版を照合せず参照未解決にする(該当版の妥当な行が別にあっても status=valid にしない)。ヘッダー行がクォート不正のときもデータ行のクォート不正を続けて報告する(A-011 / A-023)"
+    regression_tests:
+      - "test/presentation/validate_config_crosscheck_job_map_rules.bats: 参照カタログのデータ行がクォート不正の場合(Verifier の再現手順と同じ入力) / クォート不正と列数不一致が混在する場合 / ヘッダーがクォート不正でデータ行もクォート不正の場合"
+      - "test/repository/crosscheck_job_map_repo.bats: カタログのデータ行がクォート不正の場合_戻り値LOADEDで行の解析結果にquote_invalidが載ること"
+      - "test/usecase/validate_crosscheck_job_map.bats: crosscheck_target_catalog_report_row_errors 2 件"
+  - id: F-018
+    summary: "参照カタログの空白だけの行(半角空白・タブ)を 1 セルのデータ行として `error: column count mismatch line=N expected=<ヘッダーの列数> actual=1` で拒否し、列数が合わない行も同じ文言で全件報告してから参照未解決にする。版の照合に使う行はクォート解析でき列数がヘッダーと一致する行だけ(A-011 / A-022)"
+    regression_tests:
+      - "test/presentation/validate_config_crosscheck_job_map_rules.bats: 参照カタログに空白だけの行がある場合(半角空白 1 文字とタブ 1 文字の 2 行) / 列数が不足する行がある場合"
+      - "test/repository/crosscheck_job_map_repo.bats: crosscheck_target_catalog_repo_has_version_該当版の行の列数がヘッダーと異なる場合_戻り値1であること"
+catalog_input_rules_coverage:
+  note: "参照カタログの読み込み経路に対する config_input_rules の全規則の回帰テスト(path= はカタログ、line= はカタログの物理行。実プロセス validate-config.sh 経由)"
+  rules:
+    - rule: "NUL バイト"
+      test: "参照カタログのコメント行にNULがある場合(attempt 2 既存)"
+    - rule: "UTF-8 として不正なバイト列"
+      test: "参照カタログにUTF-8として不正なバイト列がある場合(追加)"
+    - rule: "BOM"
+      test: "参照カタログの先頭にBOMがある場合(追加)"
+    - rule: "CR"
+      test: "参照カタログがCRLF改行の場合(attempt 2 既存。hint を含む)"
+    - rule: "ヘッダー列名の重複"
+      test: "参照カタログのヘッダーにcatalog_versionが2回ある場合(attempt 2 既存)"
+    - rule: "クォート不正(ヘッダー行)"
+      test: "参照カタログのヘッダーがクォート不正の場合(attempt 2 既存)/ ヘッダーとデータ行の両方(追加)"
+    - rule: "クォート不正(データ行)"
+      test: "参照カタログのデータ行がクォート不正の場合(追加。F-007)"
+    - rule: "列数不一致"
+      test: "参照カタログの列数が不足する行がある場合 / クォート不正と列数不一致が混在する場合(追加)"
+    - rule: "空白だけの行"
+      test: "参照カタログに空白だけの行がある場合(追加。F-018)"
+    - rule: "最終行の改行なし(受理の例外)"
+      test: "参照カタログの最終行に改行が無い場合_受理して終了コード0(追加)"
+    - rule: "1 時点スナップショット"
+      test: "repository: crosscheck_target_catalog_repo_load_カタログを読む場合_TMPDIRのrelay-gate-で始まる複製だけを読み終えたら削除すること(追加。複製を読む関数を差し替えて複製のパスと内容を記録)"
+reuse_check: "final-crosscheck/src/repository/target_catalog_repo.sh(読むだけ)は job_map_repo_load の結果を TARGET_CATALOG_* に写すだけで、行単位の診断は final-crosscheck の usecase が持つ(本 tier から呼ぶと final-crosscheck の usecase 依存になる)。facade の job_map_repo_load はバイト点検とクォート解析までで列数は判定しない。よって本 tier は同じ読み込み経路(job_map_repo_load。単一スナップショット・バイト点検・クォート解析)を再利用し、行単位の診断(クォート不正・列数不一致)だけを自 tier の usecase(crosscheck_target_catalog_report_row_errors)で行った"
+minor_findings_handling: "restatement(F-013 / F-016)の前提 A-017 / A-020 は記録から除外した(excluded_as_explicit に含める)。spec_absent の minor(F-001〜F-006 / F-008〜F-012 / F-014 / F-015 / F-017)は真の前提として維持し、対象行を更新した。A-015(順序)は参照カタログの行単位の診断を含む形に更新した"
+changes:
+  - path: rapid-crosscheck/src/usecase/validate_crosscheck_job_map.sh
+    summary: "crosscheck_target_catalog_report_row_errors(カタログのデータ行のクォート不正・列数不一致を物理行順に共通文言で報告。expected はヘッダーの列数)を追加。validate_crosscheck_job_map_resolve_catalog は列名の重複と行単位の診断を両方行い、形式違反が 1 件でもあれば版を照合せず参照未解決にする。ヘッダーがクォート不正のときはデータ行のクォート不正も報告する"
+  - path: rapid-crosscheck/src/repository/crosscheck_job_map_repo.sh
+    summary: "crosscheck_target_catalog_repo_has_version は列数がヘッダーの列数と一致する行だけを版の照合に使う(列数不一致の行を除外)。読み込み関数の責務のコメントを更新(データ行の形式違反は読み込み結果に残し usecase が報告)"
+  - path: rapid-crosscheck/test/presentation/validate_config_crosscheck_job_map_rules.bats
+    summary: "参照カタログの形式規則の回帰テスト 8 件を追加(クォート不正データ行 / 空白だけの行 / 列数不足 / 混在 / ヘッダーとデータ行のクォート不正 / 不正 UTF-8 / BOM / 最終行の改行なし)。計 48 件"
+  - path: rapid-crosscheck/test/repository/crosscheck_job_map_repo.bats
+    summary: "複製経由の読み込み / データ行のクォート不正の読み込み結果 / 列数不一致の行を版の照合に使わない の 3 件を追加。計 18 件"
+  - path: rapid-crosscheck/test/usecase/validate_crosscheck_job_map.bats
+    summary: "crosscheck_target_catalog_report_row_errors の単体テスト 2 件を追加。計 6 件"
+implementation_note: "facade/ と final-crosscheck/ は変更していない。attempt-1/ attempt-2/ 配下と attempt-3/ の final-crosscheck のファイルも変更していない。新規トップレベル名は crosscheck_ / CROSSCHECK_ 接頭辞(crosscheck_target_catalog_report_row_errors / CROSSCHECK_TARGET_CATALOG_ROW_ERRORS)。facade の共有関数 + 本 tier の handler を source したシェルと、facade + final-crosscheck の handler を source したシェルの declare -F / compgen -v の差集合を比較し、関数名・グローバル変数名の衝突 0 を確認した(rapid 32 関数 / final 28 関数)。facade の csv_parse 系 / cli_field_* / job_map_repo_* / job_map_emit / validate_job_map_unique_job_ids の再利用は issues/20261010_084142_facade-dispatch-and-csv-parser-outside-tiers.md を根拠にした暫定依存(ソースのコメントに記載。AssumptionRecord では Verifier の restatement 判定 F-013 に従い除外)"
+gates:
+  format: pass
+  lint: pass
+  tdd: pass
+  bdd_tier: pass
+gate_runs:
+  - gate: format
+    cwd: rapid-crosscheck
+    command: "shfmt -d ."
+    exit_code: 0
+  - gate: lint
+    cwd: rapid-crosscheck
+    command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+    exit_code: 0
+  - gate: tdd
+    cwd: rapid-crosscheck
+    command: "bats -r test"
+    exit_code: 0
+    detail: "102 tests, 102 ok, 0 not ok(S2 の 4 件を含む。macOS)。新規 13 件のうち 8 件は実装前に fail(RED)を確認した"
+  - gate: bdd_tier
+    cwd: rapid-crosscheck
+    command: "npx cucumber-js --config ../cucumber.cjs features"
+    exit_code: 0
+    detail: "4 scenarios (4 passed), 12 steps (12 passed)"
+linux_equivalent_check:
+  command: "docker run --rm -e LANG=C.UTF-8 -v \"$PWD/..:/work\" -w /work/rapid-crosscheck relay-gate-ci:ubuntu24 bats -r test"
+  exit_code: 0
+  detail: "102 tests, 102 ok(Ubuntu 24.04 arm64、LANG=C.UTF-8。root では読み取り権限のテスト 1 件が skip)"
+performance:
+  note: "ジョブマップ 5,000 行 + 参照先カタログ 5,000 行の validate-config.sh --crosscheck-job-map の所要時間(fixture 生成を除く。独立スクリプトで計測)。最悪ケースはカタログ 5,000 行すべてが空白だけの行(error 5,000 行 + 参照未解決、violations=5001)"
+  macos_seconds_normal: "2.75"
+  macos_seconds_worst: "2.47"
+  ubuntu_arm64_seconds_normal: "2.38"
+  ubuntu_arm64_seconds_worst: "2.09"
+  threshold_seconds: 10
+assumptions:
+  path: attempt-3/S4_tier-impl.tier-rapid-crosscheck.assumptions.yaml
+  count: 17
+  by_category:
+    input_validation: 9
+    data_format: 3
+    error_handling: 5
+    persistence: 0
+    performance: 0
+    security: 0
+  sha256: 16632a4e0f593bba5d470ac43cdc48414411a06bb5b540206b1c59937c0790e4
+  extraction:
+    candidate_count: 34
+    excluded_as_explicit: 17
+    recorded_count: 17
+  validator: "validateAssumptions.js record → ok: true"
+  changes_from_attempt_2: "contradicts の A-011 を修正内容(カタログの全形式違反を共通文言で報告し版を照合しない)に書き直し、V-001 は A-011 と A-022 で扱う。restatement の A-017 / A-020 を除外。A-022(列数不一致の expected はカタログのヘッダーの列数)/ A-023(ヘッダーがクォート不正のときのデータ行の報告範囲)を追加。A-015 の順序にカタログの行単位の診断を追加。対象行番号を更新"
+issues:
+  new: []
+  note: "新規の仕様疑義なし。関数名の名前空間は issues/20261010_092630_tier-handler-function-namespace-collision.md の方針(接頭辞)を継続"
+write_set_note: "書き込みは rapid-crosscheck/ 配下、docs/impl/latest/dcd8234d/stages/attempt-3/ の本 tier の done / assumptions のみ。facade/ / final-crosscheck/ / attempt-1/ / attempt-2/ / docs/specs / issues は変更していない"
+completed_at: '2026-10-10T11:10:00+09:00'
+completed_by: dist-impl-implement@0.14.1

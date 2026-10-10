@@ -93,3 +93,37 @@ write_valid_map() {
 	[ "${lines[3]}" = "hint: fix the rows above and rerun validate-config.sh --crosscheck-job-map $MAP" ]
 	[ "${lines[11]}" = "violations=3" ]
 }
+
+@test "crosscheck_target_catalog_report_row_errors_クォート不正と列数不一致の行がある場合_物理行順に共通文言で出し件数を返すこと" {
+	# Arrange(config_input_rules: 空白だけの行は 1 セルのデータ行。expected はカタログのヘッダーの列数)
+	{
+		printf '%s\n' 'catalog_version,target_type,target_identifier,compare_condition,business_date_handling'
+		printf '%s\n' 'v1,table,SALES_DAILY,key=sales_id,column=business_date'
+		printf '%s\n' '"broken,table,X,-,filename'
+		printf '%s\n' ' '
+	} >"$CATALOG"
+	crosscheck_target_catalog_repo_load "$CATALOG"
+	JOB_MAP_REPORT_SINK=""
+
+	# Act
+	run crosscheck_target_catalog_report_row_errors "$CATALOG"
+
+	# Assert
+	[ "$status" -eq 1 ]
+	[ "${#lines[@]}" -eq 2 ]
+	[ "${lines[0]}" = "error: csv quote is invalid line=3 path: $CATALOG" ]
+	[ "${lines[1]}" = "error: column count mismatch line=4 expected=5 actual=1" ]
+}
+
+@test "crosscheck_target_catalog_report_row_errors_全行が妥当な場合_何も出さず戻り値0であること" {
+	# Arrange
+	crosscheck_target_catalog_repo_load "$CATALOG"
+	JOB_MAP_REPORT_SINK=""
+
+	# Act
+	run crosscheck_target_catalog_report_row_errors "$CATALOG"
+
+	# Assert
+	[ "$status" -eq 0 ]
+	[ -z "$output" ]
+}

@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # usecase: ValidateCrosscheckJobMap(`validate-config.sh --crosscheck-job-map <path>` の検証本体)。
 # 入力の複製(単一スナップショット)→ バイト点検(NUL / UTF-8 / BOM / CR)→ ヘッダー検証(列名の重複 → 列順固定の一致)→ 宣言検証
-# → 行ごとの列検証 → job_id 重複検査 → 対象カタログ参照の解決(カタログの形式違反・列名の重複 → 版の有無)→ 集計出力。
+# → 行ごとの列検証 → job_id 重複検査 → 対象カタログ参照の解決(カタログのバイト点検・クォート不正・列名の重複・列数不一致を
+#   ジョブマップと同じ共通文言で全件報告 → 形式違反が無ければ版の有無)→ 集計出力。
 # 違反は全件収集してから出力する(1 件目で止めない)。violations=N は出した error 行の件数(warn / info / hint は数えない)。
 # 仕様: docs/specs/latest/適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/tier-rapid-crosscheck.md
 #       「出力契約」「検証ルール一覧」「UC ロジック」/ spec.md「計算ルール一覧」(行数集計・対象カタログ参照の解決)
@@ -218,8 +219,35 @@ validate_crosscheck_job_map_rows() {
   done
 }
 
-# 対象カタログ参照の解決(検証ルール #9)。カタログを読み込み、入力の守備範囲の違反(config_input_rules は全設定ファイル共通)は
-# ジョブマップと同じ文言で path をカタログのパスにして報告し、ヘッダーの列名の重複も同じ規則で拒否する。
+# 読み込み済みの対象カタログ(JOB_MAP_*)のデータ行の形式違反を全件、物理行順に共通文言で報告する(config_input_rules は
+# 全設定ファイル共通。クォート不正は `csv quote is invalid`(path はカタログ)、列数不一致(空白だけの行を含む)は
+# `column count mismatch`)。expected はカタログのヘッダー行の列数(列名・列数の検証は tier-final-crosscheck に委ねる)。
+# 戻り値: 0 … 違反なし / 1 … 違反あり(報告済み。件数は CROSSCHECK_TARGET_CATALOG_ROW_ERRORS)
+# 引数: shown_path
+CROSSCHECK_TARGET_CATALOG_ROW_ERRORS=0
+crosscheck_target_catalog_report_row_errors() {
+  local shown_path="$1" row_index=0 row_count="${#JOB_MAP_ROW_LINES[@]}" expected="${#JOB_MAP_HEADER[@]}" line actual
+  CROSSCHECK_TARGET_CATALOG_ROW_ERRORS=0
+  while [ "$row_index" -lt "$row_count" ]; do
+    line="${JOB_MAP_ROW_LINES[$row_index]}"
+    actual="${JOB_MAP_ROW_CELL_COUNTS[$row_index]}"
+    if [ "${JOB_MAP_ROW_STATUSES[$row_index]}" = "$JOB_MAP_PARSE_QUOTE_INVALID" ]; then
+      job_map_emit "error: csv quote is invalid line=$line path: $shown_path"
+      CROSSCHECK_TARGET_CATALOG_ROW_ERRORS=$((CROSSCHECK_TARGET_CATALOG_ROW_ERRORS + 1))
+    elif [ "$actual" -ne "$expected" ]; then
+      job_map_emit "error: column count mismatch line=$line expected=$expected actual=$actual"
+      CROSSCHECK_TARGET_CATALOG_ROW_ERRORS=$((CROSSCHECK_TARGET_CATALOG_ROW_ERRORS + 1))
+    fi
+    row_index=$((row_index + 1))
+  done
+  [ "$CROSSCHECK_TARGET_CATALOG_ROW_ERRORS" -eq 0 ]
+}
+
+# 対象カタログ参照の解決(検証ルール #9)。カタログを読み込み、入力の守備範囲の違反(config_input_rules は全設定ファイル共通)を
+# ジョブマップ本体と同じ順序・同じ文言(path はカタログのパス、line はカタログの物理行)で全件報告する:
+#   バイト点検(NUL / 不正な UTF-8 / BOM / CR)→ ヘッダー行のクォート不正(+ データ行のクォート不正)→ ヘッダーの列名の重複
+#   → データ行のクォート不正・列数不一致(空白だけの行を含む)。
+# 形式違反のあるカタログでは版を照合しない(列を対応付けられない行を無視して成功にしない)。
 # 形式違反・列名の重複・catalog_version 列なし・該当行なし・ファイル不在のいずれも、参照は解決できないので
 # 最後に `error: target catalog reference unresolved path=... catalog_version=...` を 1 行出す。
 # 出した error 行の件数は VALIDATE_CROSSCHECK_JOB_MAP_CATALOG_ERRORS(解決できたら 0)。
@@ -227,7 +255,7 @@ validate_crosscheck_job_map_rows() {
 # 引数: catalog_path version
 VALIDATE_CROSSCHECK_JOB_MAP_CATALOG_ERRORS=0
 validate_crosscheck_job_map_resolve_catalog() {
-  local catalog_path="$1" version="$2" load_status=0 resolved=false shown_catalog shown_version
+  local catalog_path="$1" version="$2" load_status=0 resolved=false format_ok=true shown_catalog shown_version
   local report_index="${#JOB_MAP_REPORT_LINES[@]}"
   VALIDATE_CROSSCHECK_JOB_MAP_CATALOG_ERRORS=0
   cli_field_safe_text "$catalog_path"
@@ -246,10 +274,14 @@ validate_crosscheck_job_map_resolve_catalog() {
     if ! validate_crosscheck_job_map_report_byte_errors "$shown_catalog"; then
       :
     elif [ "$JOB_MAP_HEADER_STATUS" = "$JOB_MAP_PARSE_QUOTE_INVALID" ]; then
+      # ヘッダーが使えないので列数不一致は判定できない。データ行のクォート不正だけを報告する(ジョブマップ本体と同じ)
       job_map_emit "error: csv quote is invalid line=$JOB_MAP_HEADER_LINE path: $shown_catalog"
+      validate_crosscheck_job_map_report_quote_errors "$shown_catalog"
     fi
   elif [ "$load_status" -eq "$CROSSCHECK_TARGET_CATALOG_LOADED" ]; then
-    if report_duplicate_columns "$shown_catalog" ${JOB_MAP_HEADER[@]+"${JOB_MAP_HEADER[@]}"} && crosscheck_target_catalog_repo_has_version "$version"; then
+    report_duplicate_columns "$shown_catalog" ${JOB_MAP_HEADER[@]+"${JOB_MAP_HEADER[@]}"} || format_ok=false
+    crosscheck_target_catalog_report_row_errors "$shown_catalog" || format_ok=false
+    if [ "$format_ok" = true ] && crosscheck_target_catalog_repo_has_version "$version"; then
       resolved=true
     fi
   fi
