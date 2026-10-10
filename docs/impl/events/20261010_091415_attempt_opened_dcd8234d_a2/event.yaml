@@ -1,0 +1,19 @@
+event_id: 20261010_091415_attempt_opened_dcd8234d_a2
+type: attempt_opened
+uc_id: dcd8234d
+attempt: 2
+payload:
+  from_attempt: 1
+  to_attempt: 2
+  reason: blocker
+  blockers:
+    tier-rapid-crosscheck: 8
+    tier-final-crosscheck: 1
+  rerun_tiers:
+  - tier-final-crosscheck
+  - tier-rapid-crosscheck
+  carry_forward_tiers: []
+  findings:
+    tier-rapid-crosscheck: attempt-1/S5_verify.tier-rapid-crosscheck.findings.yaml
+    tier-final-crosscheck: attempt-1/S5_verify.tier-final-crosscheck.findings.yaml
+created_at: '2026-10-10T09:14:15+09:00'

@@ -1,0 +1,19 @@
+stage: "S5"
+tier: "tier-rapid-crosscheck"
+attempt: 1
+uc_id: "dcd8234d"
+manifest_sha256: "81d5dba283cd5c746d42428fa2713f0e7f2d15891575284e8b93e17b6b2d9f93"
+manifest_projection: "v2"
+result: "fail"
+open_blockers: 8
+open_majors: 0
+assumptions_sha256: "91e47b4440d256ea78d2419b6e51af54fda7887f41e7335cd32f777bddcab94c"
+assumption_verdicts_summary:
+  consistent: 5
+  spec_absent: 9
+  contradicts: 6
+  unlisted: 0
+environment_failures: []
+completed_at: "2026-10-10T00:12:46.488116+00:00"
+completed_by: "dist-impl-verify@0.14.1"
+assumption_verdicts_sha256: "283f9b0fdf11f3609edc7e6fba02228a54c4459123d89beb1c085be447b9defc"

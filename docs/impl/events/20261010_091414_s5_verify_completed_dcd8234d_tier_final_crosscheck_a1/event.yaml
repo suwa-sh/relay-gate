@@ -1,0 +1,22 @@
+event_id: 20261010_091414_s5_verify_completed_dcd8234d_tier_final_crosscheck_a1
+type: stage_completed
+uc_id: dcd8234d
+stage: S5
+tier: tier-final-crosscheck
+attempt: 1
+lane: verify
+payload:
+  manifest_sha256: 29b7f16040fdc687588276e46996815ac2dbb10faef246c02ef78d4023412ac3
+  manifest_projection: v2
+  result: fail
+  open_blockers: 1
+  open_majors: 0
+  assumptions_sha256: 8b6d409728be62e674b5233aaa8ccc71cc8488140ef29eaa02cd1841b8f86812
+  assumption_verdicts_sha256: 14cc4cd4647a7abf358bcc7879fa6b96cb37b7e11727bde06717ed3197f08a39
+  assumption_verdicts_summary:
+    consistent: 3
+    spec_absent: 17
+    contradicts: 0
+    unlisted: 0
+  verifier_model: gpt-6-astra
+created_at: '2026-10-10T09:14:14+09:00'
