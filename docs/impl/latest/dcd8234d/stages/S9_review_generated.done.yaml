@@ -1,0 +1,180 @@
+stage: "S9"
+uc_id: "dcd8234d"
+manifest_sha256: "ddcab64014c49e5f65a082b66a7d2c381cefd50c4744ad3457a3a8d5ef9d8289"
+manifest_projection: v2
+result: pass
+review_html: "docs/impl/latest/dcd8234d/review/index.html"
+review_html_note: "gitignore 済みの再生成可能な派生ビュー。HTML の SHA は証跡に結ばない"
+cycle_note: "再生成(第 3 版)。レビュー対話で利用者が「クロスチェックを元の構想に戻す簡素化」を確定し、S8 refresh 第 2 回で変更要求が 4 件(主要求 CR-007 + CR-001〜003)になった状態を反映した。前回版(invalidated/ に退避)の問い 6 つのうち「BDD の直す側」「列数の基準」は主要求に吸収されたため外し、登録方式に案 C(委譲自体を無くす)を追加した。機能の承認は「現在の到達点(独立検証 pass、全テスト pass)を記録として承認し、仕様反映後に簡素化後の仕様へ作り直す」意味であることを本文に明記した"
+source_revision: "feature/define-crosscheck-job-map-and-comparison-definitions @ 18c48a8"
+validator:
+  command: "node validateReviewHtml.js docs/impl/latest/dcd8234d/review/index.html"
+  result: "pass"
+  human_html_review_validate: "python3 validate.py docs/impl/latest/dcd8234d/review/index.html → VALID (17 warnings)。WARN はすべて付録(data-role=appendix)内の変更要求 4 件の全文転記(draft.md と同文)の長い段落・4 文超の項目で、本文は WARN 0 / 内部 ID 0(付録を除いたコピーで VALID、警告 0 を確認)"
+  visual_check: "headless Chrome で 1440px / 500px の全体を render して目視(390px は Chrome の最小幅で切れるため 500px で代替)。前後ペア図は 1440px で横並び、500px で縦積みの横スクロール。初回 render で「後」図の矢印ラベル「ジョブ ID・終了コード」が runner の箱に重なったためラベルを外し(DB の副題に同じ情報あり)、「前」図の「成果物パス」ラベルのマスクを線幅内(40px)に狭めて再 render。connector の重なり・attach point 共有(worker 上辺 2 本は 32px 離す)・非 endpoint node 背面通過・diagonal なし。label と connector の gap は 8px。回答ビルダーは JS で有効化され既定文面 4 行が組み上がることを render で確認"
+figures:
+  - type: architecture
+    title: "作業全体の流れと現在地(9 段階。仕様反映・作り直し・取り込みを追加)"
+    nodes: 9
+    arrows: 8
+  - type: architecture
+    title: "前: 現在の仕様と今回の実装(比較定義 CSV・対象カタログ・成果物パス・ファイル保存・比較結果レコード。runner / worker のセグメント)"
+    nodes: 9
+    arrows: 9
+  - type: architecture
+    title: "後: 確定した構想(起動コマンド 1 行と DB の依頼レコードだけ。結果を書き戻す)"
+    nodes: 6
+    arrows: 6
+  - type: flowchart
+    title: "実装と独立検証の繰り返しからレビューまで"
+    nodes: 6
+    arrows: 6
+  - type: architecture
+    title: "クロスチェック設定の検証コマンドの構成(簡素化後の行き先を副題に併記)"
+    nodes: 8
+    arrows: 7
+  - type: flowchart
+    title: "検証コマンドの処理フロー"
+    nodes: 9
+    arrows: 8
+  - type: data-flow
+    title: "設定ファイルのデータの流れ"
+    nodes: 7
+    arrows: 7
+  - type: flowchart
+    title: "前提 1 件ごとの判断"
+    nodes: 6
+    arrows: 5
+feedback_request_count: 4
+open_blocker_count: 0
+decision_summary:
+  approval_questions: 1
+  selection_questions: 2
+  assumption_questions: 0
+  recommended_choices: 3
+  questions:
+    - id: "機能"
+      question: "現在の到達点(独立検証 pass、全テスト pass)を記録として承認しますか(承認しても実装はそのまま取り込まず、仕様反映後に簡素化後の仕様へ作り直す)"
+      recommended: "A. 承認する(到達点を記録。要求公開後に blocked_on_spec)"
+      alternatives:
+        - "B. 差し戻す(再現条件と期待結果を添える)"
+    - id: "要求"
+      question: "仕様への変更要求 4 件(主要求 = 簡素化、検証関数の共有の契約化、受け入れ基準の書き方、関数名の規則)を公開しますか"
+      recommended: "公開(4 件すべて、推奨案どおり)"
+      alternatives:
+        - "公開(除外: 要求 N)"
+        - "保留(実装だけ承認し、公開しない)"
+      note: "主要求(CR-007)の除外・保留は簡素化が仕様に入らずレビュー対話の決定と矛盾するため推奨しない旨を本文に明記"
+    - id: "登録"
+      question: "要求「検証関数の共有」(CR-001)の検証関数の登録方式(facade の本体が所有 tier の固定パスを存在時だけ source する案 A / 設定ディレクトリを探索する案 B / 委譲自体を無くし facade 単独で検証する案 C)"
+      recommended: "A. 固定パス(現在の実装。動作確認済み、探索順序と衝突規則を新たに決めなくてよい)"
+      alternatives:
+        - "B. 探索方式(tier 追加時に facade を変えない。仕様反映後に facade の本体を修正する作業が要る)"
+        - "C. 委譲自体を無くす(CR-001 の 4 項。CR-001 と CR-003 が不要になる。CLI 契約の tier_note / owner_tier を書き換える)"
+      note: "review-notes の未決 (a) に対応。確報 A-018 の却下(仕様変更)と同義。旧問い「BDD」(旧 CR-004)と「列数」(旧 CR-005)は CR-007 に吸収されたため外した"
+    - id: "前提"
+      question: "実装者が仕様に無くて自分で決めた前提 36 件を一括承認しますか"
+      recommended: "一括承認(回答必須 0 件。注目 4 件のうち 3 件は CR-007 で対象が消える)"
+      alternatives:
+        - "一括承認(例外: 前提名:却下(仕様変更|実装修正: …))"
+  answer_template: "機能=A / 要求=公開 / 登録=A / 前提=一括承認"
+  answer_template_examples:
+    - "登録を B に: 機能=A / 要求=公開 / 登録=B / 前提=一括承認"
+    - "登録を C に: 機能=A / 要求=公開 / 登録=C(委譲自体を無くし、入口側だけで検証する) / 前提=一括承認"
+    - "要求の一部を外す: 機能=A / 要求=公開(除外: 要求 3) / 登録=A / 前提=一括承認"
+    - "要求を公開しない: 機能=A / 要求=保留 / 前提=一括承認"
+    - "前提を個別に却下: 機能=A / 要求=公開 / 登録=A / 前提=一括承認(例外: 速報 A-024:却下(実装修正: 引用で囲んだ空白は受理する))"
+    - "差し戻し: 機能=B(再現条件: … / 期待結果: …)"
+    - "旧表記 機能=A / 相互運用=A / 監査=A も受け付ける(相互運用=A は 要求=公開(推奨案どおり)、監査=A は 前提=一括承認 と同義)"
+  assumption_id_note: "前提 ID は両 tier で番号が重なる(A-001 / A-002 / A-004 / A-005 / A-011 / A-012 / A-014 / A-015 / A-016 / A-018 / A-019 / A-021)ため、回答では 速報 / 確報 を前に付ける"
+  removed_questions:
+    - id: "BDD"
+      reason: "旧 CR-004(tier BDD の Given / Then 不一致)は該当の検証ルール自体が CR-007 で廃止されるため、refresh_2 で CR-007 に吸収・削除"
+    - id: "列数"
+      reason: "旧 CR-005(違反文言 3 件と参照先カタログの expected の基準)は対象の列・参照解決自体が CR-007 で廃止されるため、refresh_2 で CR-007 に吸収・削除"
+assumption_summary:
+  total: 36
+  by_tier:
+    tier-rapid-crosscheck: 18
+    tier-final-crosscheck: 18
+  required_answer: 0
+  required_ids: []
+  required_note: "全 36 件が spec_absent。category / verified_category はすべて input_validation / data_format / error_handling / performance で、security / persistence は 0 件(grep で再確認)。回答必須 0 件のため 前提=一括承認 をテンプレートにした"
+  review_attention_ids:
+    - "tier-rapid-crosscheck:A-022"
+    - "tier-rapid-crosscheck:A-024"
+    - "tier-final-crosscheck:A-018"
+    - "tier-final-crosscheck:A-019"
+  review_attention_note: "A-022 / A-024 は S8 の review_attention(独立検証が S9 確認対象と明記)。A-018 / A-019 は CR-001 と同じ内容(登録方式・共有面)。4 件を HTML の前提節の先頭に集め、A-022 / A-018 / A-019 は CR-007 で対象が消える旨を併記した"
+  simplification_note: "確報 tier 18 件と速報 tier の宣言・参照解決・列構造に関する前提は、CR-007 反映後に対象が無くなる。承認しても作り直しの妨げにならない旨を本文に明記"
+  optional_default: "auto_confirmed"
+  verdicts:
+    consistent: 0
+    spec_absent: 36
+    contradicts: 0
+    unlisted: 0
+  unlisted_ids: []
+  cr_linked_ids:
+    - "tier-rapid-crosscheck:A-008"
+    - "tier-rapid-crosscheck:A-016"
+    - "tier-rapid-crosscheck:A-022"
+    - "tier-final-crosscheck:A-006"
+    - "tier-final-crosscheck:A-018"
+    - "tier-final-crosscheck:A-019"
+  cr_linked_note: "A-008 / A-016 / A-022 / A-006 は refresh_2 で旧 CR-005 / CR-006 から CR-007(残す検証 2 点の文言の明記)へ移動。A-018 / A-019 は CR-001"
+feedback_review_evidence:
+  feedback_id: "20261010_104636_impl_feedback_dcd8234d"
+  draft_path: "docs/impl/latest/dcd8234d/feedback/draft.md"
+  draft_sha256: "d4ddd211752998f5480a51d9dddfa3a58937badd62f72092c9257ed1384448fd"
+  request_count: 4
+  blocker_count: 0
+  requests:
+    - id: "CR-dcd8234d-007"
+      severity: "spec-gap"
+      html_title: "簡素化(主要求): クロスチェックの比較定義と依頼レコードを元の構想に戻す"
+      decision_key: "機能"
+    - id: "CR-dcd8234d-001"
+      severity: "spec-gap"
+      html_title: "検証関数の共有: 検証コマンド本体と速報側の関数共有をティア間の契約として宣言する"
+      decision_key: "登録"
+    - id: "CR-dcd8234d-002"
+      severity: "spec-gap"
+      html_title: "受け入れ基準の書き方: 受け入れ基準から「同じ関数を使う」という実装構造の要求を外す"
+      decision_key: null
+    - id: "CR-dcd8234d-003"
+      severity: "spec-gap"
+      html_title: "関数名の規則: 同じシェルに読み込まれるティアの関数名・変数名の規則を決める"
+      decision_key: null
+  requests_note: "refresh_2 後の現在値(S8 done の feedback_request と一致)。本文の呼び名は「要求 1 簡素化(主要求)/ 要求 2 検証関数の共有 / 要求 3 受け入れ基準の書き方 / 要求 4 関数名の規則」で、draft.md の掲載順と同じ"
+implementation_review_evidence:
+  gate_result: "6/6 pass"
+  gates:
+    format: "pass (tier-rapid-crosscheck / tier-final-crosscheck)"
+    lint: "pass (tier-rapid-crosscheck / tier-final-crosscheck)"
+    tdd: "pass (rapid 106/106 macOS, 105 + 1 skip Ubuntu 24.04; final 57/57 macOS and Ubuntu 24.04)"
+    bdd_tier: "pass (rapid 4/4, final 4/4)"
+    uc_bdd: "pass (43/43, 本 UC 7/7)"
+    atdd: "pass (1/1, @atdd_SPEC-004-04-5)"
+  open_blocker_count: 0
+  open_major_count: 0
+  open_minor_count: 36
+  open_minor_note: "rapid 18 + final 18。すべて assumption_conformance の spec_absent(前提 36 件と 1 対 1)"
+  findings_paths:
+    - "docs/impl/latest/dcd8234d/stages/attempt-4/S5_verify.tier-final-crosscheck.findings.yaml"
+    - "docs/impl/latest/dcd8234d/stages/attempt-4/S5_verify.tier-rapid-crosscheck.findings.yaml"
+  s4_carried_from:
+    tier-final-crosscheck: "attempt-3"
+  assumption_evidence_sha256: "18852606ab7ecab128e37bfddf669efbe1d00c8bc647bd5f3dae240e2746018d"
+  assumption_evidence_inputs:
+    - tier: "tier-final-crosscheck"
+      assumptions_sha256: "91403d5781aa01449a3932210b8bc551fef3285111a09932e1b5dc0b750324b6"
+      assumption_verdicts_sha256: "c30d56285d6913139398e84551751fe1d3a046068f7870ac680f4a679c48a458"
+    - tier: "tier-rapid-crosscheck"
+      assumptions_sha256: "2152be1c987ae1edadecdfc96e05150d78d2bf663d60d78104647d575db9ca8f"
+      assumption_verdicts_sha256: "701ff3e95033ea51aee712ca276e5322a394a33bb200a11a18c6eabae90e3e3c"
+  assumption_evidence_command: "node validateAssumptions.js evidence tier-final-crosscheck:91403d5781aa01449a3932210b8bc551fef3285111a09932e1b5dc0b750324b6:c30d56285d6913139398e84551751fe1d3a046068f7870ac680f4a679c48a458 tier-rapid-crosscheck:2152be1c987ae1edadecdfc96e05150d78d2bf663d60d78104647d575db9ca8f:701ff3e95033ea51aee712ca276e5322a394a33bb200a11a18c6eabae90e3e3c"
+  assumption_evidence_note: "オーケストレータが算出済みの値を転記(再計算していない)。manifest_sha256 も引数の値を転記"
+captures: []
+write_set_note: "書き込みは docs/impl/latest/dcd8234d/review/index.html(gitignore 済み。上書き)と本 done のみ。review-notes.md、feedback/、stages/attempt-*/、invalidated/、仕様、実装、テストは変更していない。git コマンドは実行していない"
+completed_at: "2026-10-10T18:30:00+09:00"
+completed_by: "dist-impl-review@0.14.1"
