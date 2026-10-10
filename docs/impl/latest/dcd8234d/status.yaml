@@ -27,11 +27,21 @@ stages:
     status: done
   S4_tier_impl:
     tier-final-crosscheck:
-      status: pending
+      status: done
       attempt: 1
+      gates:
+        format: pass
+        lint: pass
+        tdd: pass
+        bdd_tier: pass
     tier-rapid-crosscheck:
-      status: pending
+      status: done
       attempt: 1
+      gates:
+        format: pass
+        lint: pass
+        tdd: pass
+        bdd_tier: pass
   S5_verify:
     tier-final-crosscheck:
       status: pending
@@ -49,4 +59,4 @@ stages:
     status: pending
   S9_review:
     status: pending
-updated_at: '2026-10-10T08:46:02+09:00'
+updated_at: '2026-10-10T09:07:55+09:00'

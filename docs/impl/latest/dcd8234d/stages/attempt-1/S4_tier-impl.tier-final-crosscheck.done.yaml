@@ -1,0 +1,87 @@
+stage: S4
+tier: tier-final-crosscheck
+attempt: 1
+uc_id: dcd8234d
+manifest_sha256: 29b7f16040fdc687588276e46996815ac2dbb10faef246c02ef78d4023412ac3
+manifest_projection: v2
+result: pass
+changes:
+- path: final-crosscheck/src/presentation/validate_config_target_catalog.sh
+  summary: "--target-catalog の handler(新規)。validate_config_target_catalog <path> <verbose> を定義し、自 tier の domain / repository / usecase を自ファイル位置からの相対パスで source して validate_target_catalog に委譲する。facade は source しない"
+- path: final-crosscheck/src/usecase/validate_target_catalog.sh
+  summary: "validate_target_catalog(新規)。ファイル存在・可読性 → 入力の複製とバイト点検 → ヘッダー検証 → 行ごとの列検証 → 重複検査 → 集計の順で全件収集し、stderr(error / info / hint)と stdout(config= 〜 status= / violations=)を出力契約の固定順で出す。内部障害は終了コード 6 で stdout を出さない"
+- path: final-crosscheck/src/domain/target_catalog.sh
+  summary: "TargetCatalogRules(新規)。列定義・ヘッダー完全一致(列名の重複を含む)・catalog_version の許可文字・target_type の列挙・必須列の非空・(catalog_version, target_type, target_identifier)の重複検査(連想配列)・カタログ版の集計(初出順)・tables / files の集計・--verbose の info 行"
+- path: final-crosscheck/src/repository/target_catalog_repo.sh
+  summary: "TargetCatalogRecord(新規)。tier-facade の job_map_repo_load(slot ジョブマップと同じ CSV クォート解析関数)をそのまま呼び、結果を TARGET_CATALOG_* に写す。共有関数が無い環境は内部障害(6)にする"
+- path: final-crosscheck/features/steps/define-crosscheck-job-map-and-comparison-definitions.steps.js
+  summary: "S2 skeleton の step 9 件を実装した。Before / After(Scenario ごとの一時ディレクトリ)を本ファイルに追加し、facade/bin/validate-config.sh を実プロセスとして起動する"
+- path: final-crosscheck/test/presentation/validate_config_target_catalog.bats
+  summary: "S2 の 4 件を green にし、値省略 / --verbose / 版の追加 / 引用セル / タブ区切り / slot ジョブマップのヘッダー混入 / invalid 時の stdout / 5,000 行(通常・verbose)の 9 件を追加した"
+- path: final-crosscheck/test/domain/target_catalog.bats
+  summary: "domain の単体テスト 20 件(新規。ヘッダー検証・列検証・重複検査・集計・可視表記)"
+- path: final-crosscheck/test/repository/target_catalog_repo.bats
+  summary: "repository の単体テスト 5 件(新規。引用セル・コメント行・クォート不正・BOM / CR・共有関数の不在・一時ファイルの削除)"
+- path: final-crosscheck/test/usecase/validate_target_catalog.bats
+  summary: "usecase の単体テスト 12 件(新規。stderr / stdout の分離受信で違反の順序・verbose・rows=0・空ファイル・列名重複・ヘッダーのクォート不正・CRLF・BOM / NUL / UTF-8・読めない・パスの可視表記・snapshot 失敗・sed 失敗)"
+- path: final-crosscheck/src/.gitkeep
+  summary: "削除(src/ に実ファイルを置いたため)"
+- path: final-crosscheck/test/.gitkeep
+  summary: "削除(test/ に実ファイルを置いたため)"
+implementation_note: "facade/ と rapid-crosscheck/ には書いていない。tier-facade の関数(job_map_repo_load / csv_parse / cli_field_*)への依存は契約未宣言の tier 間依存として、依存箇所のコメントで issues/20261010_084142_facade-dispatch-and-csv-parser-outside-tiers.md を参照し、AssumptionRecord A-018 / A-019 に前提として記録した。bats は facade/src を読むだけで source する。連想配列は `declare -gA` で宣言する(関数の中から source されても大域変数になるようにする)"
+gates:
+  format: pass
+  lint: pass
+  tdd: pass
+  bdd_tier: pass
+gate_runs:
+- gate: format
+  cwd: final-crosscheck
+  command: shfmt -d .
+  exit_code: 0
+- gate: lint
+  cwd: final-crosscheck
+  command: find src test -name '*.sh' -exec shellcheck -x {} +
+  exit_code: 0
+- gate: tdd
+  cwd: final-crosscheck
+  command: bats -r test
+  exit_code: 0
+  detail: "50 tests passed, 0 failed(presentation 13 / domain 20 / repository 5 / usecase 12)"
+- gate: bdd_tier
+  cwd: final-crosscheck
+  command: npx cucumber-js --config ../cucumber.cjs features
+  exit_code: 0
+  detail: "4 scenarios passed, 12 steps passed(define-crosscheck-job-map-and-comparison-definitions.feature)"
+linux_equivalent_check:
+- image: relay-gate-ci:ubuntu24
+  command: "docker run --rm -e LANG=C.UTF-8 -v \"$PWD/..:/work\" -w /work/final-crosscheck relay-gate-ci:ubuntu24 bats -r test"
+  exit_code: 0
+  detail: "50 tests passed, 0 failed(arm64)。5,000 行のテストは 3087ms / verbose 3080ms"
+- image: relay-gate-ci:ubuntu24-amd64
+  command: "docker run --rm --platform linux/amd64 -e LANG=C.UTF-8 -v \"$PWD/..:/work\" -w /work/final-crosscheck relay-gate-ci:ubuntu24-amd64 bats -r test"
+  exit_code: 0
+  detail: "50 tests passed, 0 failed(amd64 エミュレーション)。5,000 行のテストは 4924ms / verbose 4779ms。同じ環境で facade の既存 5,000 行テストは 7169ms / verbose 17251ms(verbose は 10 秒超で fail)のため、エミュレーション環境は実 CI より遅く、本 tier の追加分は共有ローダーより小さい"
+performance_note: "行数に比例する実装(連想配列の重複検査・初出順の版集計・行ループで LC_ALL=C を 1 回)。NFR 共通前提 5,000 行・10 秒(AssumptionRecord A-020)"
+assumptions:
+  path: attempt-1/S4_tier-impl.tier-final-crosscheck.assumptions.yaml
+  count: 20
+  by_category:
+    input_validation: 5
+    data_format: 6
+    error_handling: 8
+    persistence: 0
+    performance: 1
+    security: 0
+  sha256: 8b6d409728be62e674b5233aaa8ccc71cc8488140ef29eaa02cd1841b8f86812
+  extraction:
+    candidate_count: 27
+    excluded_as_explicit: 7
+    recorded_count: 20
+  validator: "validateAssumptions.js record → ok: true"
+findings_source: "none(attempt 1。findings は渡されていない)"
+issues:
+  new: []
+  note: "仕様どおりに実装すると動かない事実は新たに見つからなかった。S2 起票の issues/20261010_084142_facade-dispatch-and-csv-parser-outside-tiers.md(handler の登録と CSV 解析関数の共有)は、オーケストレータが確定した配置規約(commit 4b0be23)に従って実装し、依存箇所のコメントと AssumptionRecord(A-018 / A-019)で参照した。issues/20261010_084142_cross-uc-scenarios.md は S6 / S7 の判定に関する記録で S4 では扱わない"
+completed_at: "2026-10-10T09:02:31+09:00"
+completed_by: dist-impl-implement@0.14.1

@@ -1,0 +1,23 @@
+event_id: 20261010_090755_s4_tier_impl_completed_dcd8234d_tier_final_crosscheck_a1
+type: stage_completed
+uc_id: dcd8234d
+stage: S4
+tier: tier-final-crosscheck
+attempt: 1
+payload:
+  manifest_sha256: 29b7f16040fdc687588276e46996815ac2dbb10faef246c02ef78d4023412ac3
+  manifest_projection: v2
+  result: pass
+  gates:
+    format: pass
+    lint: pass
+    tdd: pass
+    bdd_tier: pass
+  tdd_tests: 50
+  bdd_scenarios: 4
+  linux_tdd: pass (relay-gate-ci:ubuntu24, LANG=C.UTF-8)
+  assumptions:
+    count: 20
+    sha256: 8b6d409728be62e674b5233aaa8ccc71cc8488140ef29eaa02cd1841b8f86812
+  issues: []
+created_at: '2026-10-10T09:07:55+09:00'
