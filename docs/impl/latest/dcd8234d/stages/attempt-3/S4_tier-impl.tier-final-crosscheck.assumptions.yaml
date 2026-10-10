@@ -1,0 +1,175 @@
+schema_version: "1.0"
+uc_id: "dcd8234d"
+tier: "tier-final-crosscheck"
+attempt: 3
+extraction:
+  candidate_count: 28
+  excluded_as_explicit: 10
+  recorded_count: 18
+assumptions:
+  - id: A-001
+    category: data_format
+    assumption: "--verbose の行ごとの補助出力は `info: checked target_identifier=<id> catalog_version=<v> target_type=<t> line=<N>` の 1 行(制御文字は可視表記)とする"
+    target: "final-crosscheck/src/domain/target_catalog.sh:327"
+    reason: "tier md のコマンド契約は `info: checked target_identifier=...` とだけ書き、続く項目と行番号の有無を定義していない"
+    confidence: medium
+    spec_refs:
+      - "tier-final-crosscheck.md#コマンド契約(--verbose)"
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#commands[validate-config.sh].stderr(補助出力)"
+  - id: A-002
+    category: data_format
+    assumption: "--verbose の info 行は列検証(検証ルール 4 / 7)を通過した行だけに出し、違反のある行には出さない"
+    target: "final-crosscheck/src/usecase/validate_target_catalog.sh:150"
+    reason: "tier md は『行ごとの info』とだけ書き、違反行にも出すかを定義していない(slot ジョブマップの `info: resolved` と同じ扱いにした)。分類は S5 F-022 の判定(診断の表示選択は data_format)に合わせた"
+    confidence: medium
+    spec_refs:
+      - "tier-final-crosscheck.md#コマンド契約(--verbose)"
+      - "tier-final-crosscheck.md#UC ロジック"
+  - id: A-004
+    category: error_handling
+    assumption: "stdout の集計ブロック(config= 〜 status= / violations=)はヘッダーが列定義と一致した場合だけ出し、ファイル不在・読めない・入力の守備範囲の違反・ヘッダー行のクォート不正・ヘッダー不一致では stdout を出さない"
+    target: "final-crosscheck/src/usecase/validate_target_catalog.sh:178"
+    reason: "出力契約は違反時に status=invalid を出すと書くが、行数や版を数えられない段階(ヘッダー不一致・バイト違反)でも集計ブロックを出すかを定義していない"
+    confidence: medium
+    spec_refs:
+      - "tier-final-crosscheck.md#出力契約"
+      - "tier-final-crosscheck.md#検証ルール一覧(#1 #2 #8)"
+  - id: A-005
+    category: error_handling
+    assumption: "`hint: fix the rows above and rerun validate-config.sh --target-catalog <path>` はファイル内容の違反(入力の守備範囲・ヘッダー・行・重複)で終了コード 2 になるときに最後へ 1 回出し、ファイル不在・読めない(2)と内部障害(6)では出さない。<path> は利用者が指定したパス(制御文字は可視表記)"
+    target: "final-crosscheck/src/usecase/validate_target_catalog.sh:40"
+    reason: "出力契約は『最後に hint:』とだけ書き、どの終了経路で出すかと <path> の表記を定義していない"
+    confidence: medium
+    spec_refs:
+      - "tier-final-crosscheck.md#出力契約(stderr)"
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#commands[validate-config.sh].stderr(hint)"
+  - id: A-006
+    category: error_handling
+    assumption: "catalog_version が非空だが許可文字(英数字・`.`・`_`・`-`)以外を含む行の違反メッセージは `error: catalog_version is invalid line=N value=<v>` とする"
+    target: "final-crosscheck/src/domain/target_catalog.sh:217"
+    reason: "設定契約の列の検証表は許可文字を定めるが、検証ルール一覧にこの違反の文言が無い(契約の共通形式 `<column> is <reason>` の reason を slot ジョブマップの `job_id is invalid` に揃えた)。分類は S5 F-023 の判定(失敗時の報告方針は error_handling)に合わせた"
+    confidence: medium
+    spec_refs:
+      - "tier-final-crosscheck.md#設定契約(列の検証表 catalog_version)"
+      - "tier-final-crosscheck.md#検証ルール一覧"
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#commands[validate-config.sh].stderr(行の値不正)"
+  - id: A-007
+    category: input_validation
+    assumption: "target_type が空セルの行は `error: target_type is empty line=N value=`(検証ルール 7)だけを出し、`target_type is not in table,file`(検証ルール 4)は重ねて出さない"
+    target: "final-crosscheck/src/domain/target_catalog.sh:223"
+    reason: "検証ルール 4 と 7 の両方に該当する空セルをどちらで報告するかが定義されていない"
+    confidence: high
+    spec_refs:
+      - "tier-final-crosscheck.md#検証ルール一覧(#4 #7)"
+  - id: A-009
+    category: data_format
+    assumption: "stdout の `catalog_versions=` は catalog_version 列の distinct 値をファイル内の初出順にカンマ区切りで並べる(ソートしない)"
+    target: "final-crosscheck/src/domain/target_catalog.sh:295"
+    reason: "計算ルール『カタログ版の集計』は『ユニーク値をカンマ区切り』とだけ書き、並び順を定義していない(BDD の `v1,v2` は初出順でもソート順でも成立する)"
+    confidence: medium
+    spec_refs:
+      - "spec.md#計算ルール一覧(カタログ版の集計)"
+      - "tier-final-crosscheck.md#出力契約"
+  - id: A-010
+    category: data_format
+    assumption: "集計(catalog_versions / tables / files)と重複検査は列数が 5 の全データ行を対象にし、他の列に違反がある行も含める(catalog_versions には非空の catalog_version をすべて含め、tables / files は target_type がちょうど table / file の行だけ数える)。列数不一致・クォート不正の行は対象にしない"
+    target: "final-crosscheck/src/usecase/validate_target_catalog.sh:154"
+    reason: "計算ルールと出力契約は、違反のある行を集計に含めるかを定義していない。分類は S5 F-025 の判定(集計の母集団は出力形式の選択 = data_format)に合わせた"
+    confidence: medium
+    spec_refs:
+      - "spec.md#計算ルール一覧(行数集計 / カタログ版の集計)"
+      - "tier-final-crosscheck.md#出力契約"
+      - "tier-final-crosscheck.md#検証ルール一覧(#3 #5)"
+  - id: A-011
+    category: input_validation
+    assumption: "重複検査(検証ルール 5)はキー 3 列(catalog_version / target_type / target_identifier)がすべて非空の行だけを対象にし、いずれかが空の行は検証ルール 7 の報告だけにする"
+    target: "final-crosscheck/src/domain/target_catalog.sh:243"
+    reason: "検証ルール 5 は空のキーを持つ行どうしを重複として報告するかを定義していない"
+    confidence: high
+    spec_refs:
+      - "tier-final-crosscheck.md#検証ルール一覧(#5 #7)"
+  - id: A-012
+    category: data_format
+    assumption: "複数のキーが重複するとき、`error: duplicate target ...` 行どうしは各キーの初出行の昇順に並べる"
+    target: "final-crosscheck/src/domain/target_catalog.sh:260"
+    reason: "契約の lines= 規則は 1 つのキー内の行番号の並びだけを定め、error 行どうしの順序を定義していない。分類は S5 F-026 の判定(診断の並び順は出力表現 = data_format)に合わせた"
+    confidence: medium
+    spec_refs:
+      - "tier-final-crosscheck.md#検証ルール一覧(#5)"
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#commands[validate-config.sh].stderr(重複キー lines= の規則)"
+  - id: A-014
+    category: error_handling
+    assumption: "入力の守備範囲の違反(BOM / NUL / 不正な UTF-8 / CR)が 1 件以上あれば、その報告と hint だけを出して終了コード 2 とし、ヘッダー・行・重複の検証には進まない"
+    target: "final-crosscheck/src/usecase/validate_target_catalog.sh:178"
+    reason: "config_input_rules は各違反の文言と終了コードを定めるが、形式違反の行を含むファイルで他の検証を続けるかを定義していない"
+    confidence: medium
+    spec_refs:
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#config_input_rules.rules"
+      - "tier-final-crosscheck.md#設定契約(形式から外れた入力の拒否)"
+  - id: A-015
+    category: error_handling
+    assumption: "同じ行に複数の形式違反があるときは BOM → NUL → 不正な UTF-8 → CR の順に 1 行ずつ出し、`hint: use LF line endings` は最後の CR の error 行の直後に 1 回出す"
+    target: "final-crosscheck/src/usecase/validate_target_catalog.sh:60"
+    reason: "config_input_rules は違反ごとの文言を定めるが、同一行に複数の原因があるときの出力順を定義していない"
+    confidence: medium
+    spec_refs:
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#config_input_rules.rules"
+  - id: A-016
+    category: error_handling
+    assumption: "ヘッダー不一致(検証ルール 2)のときはデータ行のクォート不正(検証ルール 8)だけを合わせて報告し、列数不一致・列の値・重複の検証はしない"
+    target: "final-crosscheck/src/usecase/validate_target_catalog.sh:193"
+    reason: "検証ルール一覧は『違反は全件収集』と書くが、ヘッダーが使えない状態でどのルールまで適用するかを定義していない"
+    confidence: medium
+    spec_refs:
+      - "tier-final-crosscheck.md#検証ルール一覧(#2 #3 #8)"
+      - "tier-final-crosscheck.md#UC ロジック(バリデーション)"
+  - id: A-017
+    category: error_handling
+    assumption: "共有の CSV 読み込み関数 job_map_repo_load が source されていない環境で呼ばれたときは `error: internal command failed commands=job_map_repo_load path: ...` を出して終了コード 6 とする"
+    target: "final-crosscheck/src/repository/target_catalog_repo.sh:71"
+    reason: "config_input_rules.internal_failure は補助コマンドの失敗を定めるが、依存する関数の不在をどう扱うかは定義していない"
+    confidence: medium
+    spec_refs:
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#config_input_rules.internal_failure"
+      - "docs/impl/latest/dcd8234d/issues/20261010_084142_facade-dispatch-and-csv-parser-outside-tiers.md"
+  - id: A-018
+    category: data_format
+    assumption: "handler は `final-crosscheck/src/presentation/validate_config_target_catalog.sh` に置き、関数 `validate_config_target_catalog <path> <verbose>`(verbose は true / false)を定義して usecase の validate_target_catalog に委譲する。自 tier の domain / repository / usecase は handler の位置からの相対パスで source する"
+    target: "final-crosscheck/src/presentation/validate_config_target_catalog.sh:22"
+    reason: "tier md は関数名 validate_target_catalog と『本 tier が関数を提供する』ことだけを定め、エントリポイントが source するファイルの所在と handler の関数名・引数は S4 の可変プロンプト(オーケストレータの確定事項。commit 4b0be23)で渡された"
+    confidence: high
+    spec_refs:
+      - "tier-final-crosscheck.md#変更概要"
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#commands[validate-config.sh].tier_note"
+      - "docs/impl/latest/dcd8234d/issues/20261010_084142_facade-dispatch-and-csv-parser-outside-tiers.md"
+  - id: A-019
+    category: data_format
+    assumption: "対象カタログの CSV 解析(入力の複製・バイト点検・クォート解析)は tier-facade の job_map_repo_load / csv_parse を、出力フィールドの表記は cli_field_* をそのまま使い、本 tier に CSV パーサを持たない(契約 contracts[] に無い tier 間依存。validate-config.sh のエントリポイントが先に source している前提)"
+    target: "final-crosscheck/src/repository/target_catalog_repo.sh:75"
+    reason: "spec.md の Then は『同じ CSV クォート解析関数が使われる』と書くが、関数共有は impl-config の contracts[] にも shared_spec_refs にも宣言されていない。再利用の方針は S4 の可変プロンプトで指示された"
+    confidence: medium
+    spec_refs:
+      - "spec.md#E2E 完了条件(SPEC-004-04 の Then)"
+      - "docs/impl/latest/impl-config.yaml#contracts"
+      - "docs/dev-rules/tier-rules.md#全種別共通"
+      - "docs/impl/latest/dcd8234d/issues/20261010_084142_facade-dispatch-and-csv-parser-outside-tiers.md"
+  - id: A-020
+    category: performance
+    assumption: "5,000 行の対象カタログを内容によらず 10 秒以内に検証するため、行ごとの処理を行数に比例させる(重複検査と版の集計は連想配列、行ループは LC_ALL=C を 1 回設定、集計値の連結は +=)。実測は Linux arm64 コンテナで約 3.1 秒、エミュレーション下の amd64 で約 4.9 秒"
+    target: "final-crosscheck/src/usecase/validate_target_catalog.sh:140"
+    reason: "NFR の共通前提(5,000 行・10 秒)は tier md に無く、S4 の可変プロンプトと config_input_rules の『処理時間は NFR B.1.1.2 の共通前提の範囲で保証する』から採った。実装方式(連想配列・ロケール固定)は仕様に無い"
+    confidence: high
+    spec_refs:
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#config_input_rules.rules(行・セルの長さの上限 / 5,000 行を超えるファイル)"
+      - "tier-final-crosscheck.md#UC ロジック"
+      - "docs/impl/latest/eff24f55/learnings/20261006_080400_linux-ci-fails-after-macos-green.md"
+  - id: A-021
+    category: data_format
+    assumption: "`error: header mismatch ... actual=<...>` の actual= は解析済みのセルをカンマで連結して出し、カンマまたは二重引用符を含むセルは入力と同じクォート規則(二重引用符で囲み、内側の二重引用符は `\"\"`)で囲む。引用で 1 セルに結合されたヘッダーは `actual=\"catalog_version,target_type,...\"` と表記する"
+    target: "final-crosscheck/src/domain/target_catalog.sh:105"
+    reason: "契約は `actual=<col1,...>` と書くだけで、セルにカンマを含むヘッダーの表記を定義していない。カンマで単純連結すると、引用で 1 セルになったヘッダーの actual= が expected= と同じ文字列になり、利用者が違いを読み取れない(S5 F-001 の修正で判断した)"
+    confidence: medium
+    spec_refs:
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#commands[validate-config.sh].stderr(ヘッダー不一致 列順固定)"
+      - "tier-final-crosscheck.md#検証ルール一覧(#2)"
+      - "docs/specs/latest/_cross-cutting/ux-ui/ui-design.md#制御文字の表記"
