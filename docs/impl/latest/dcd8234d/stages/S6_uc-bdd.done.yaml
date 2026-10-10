@@ -1,0 +1,43 @@
+stage: S6
+uc_id: dcd8234d
+manifest_sha256: ddcab64014c49e5f65a082b66a7d2c381cefd50c4744ad3457a3a8d5ef9d8289
+manifest_projection: v2
+result: pass
+branch_slug: define-crosscheck-job-map-and-comparison-definitions
+attempt: 4
+feature: features/uc/define-crosscheck-job-map-and-comparison-definitions.feature
+steps: features/uc/steps/define-crosscheck-job-map-and-comparison-definitions.steps.js
+implemented_steps: 25
+implemented_steps_note: "S2 skeleton の一意な step 文言 25 件(Given 10 / When 5 / Then 10)を全件実装。feature 本文は変更していない。World / Before / After は configure-feature-flags.steps.js の定義を共有"
+test_runs:
+  - stage: uc_bdd
+    cwd: "."
+    command: "npx cucumber-js --config cucumber.cjs features/uc"
+    exit_code: 0
+    summary: "43 scenarios (43 passed), 168 steps (168 passed)"
+    uc_scope: "本 UC の 7 Scenario / 28 step は全件 pass。先行 UC(fd678b04 / eff24f55)の 36 Scenario も回帰なし"
+    undefined_steps: 0
+    ambiguous_steps: 0
+  - stage: uc_bdd_scoped
+    cwd: "."
+    command: "npx cucumber-js --config cucumber.cjs features/uc/define-crosscheck-job-map-and-comparison-definitions.feature"
+    exit_code: 0
+    summary: "7 scenarios (7 passed), 28 steps (28 passed)"
+verification_method:
+  io_boundary: "Scenario ごとの一時ディレクトリ(World の sandbox root)配下に /etc/relay-gate/*.csv と /opt/compare/*.sh を同じ相対位置で実ファイル配置し、facade/bin/validate-config.sh を実プロセスとして起動(RELAY_GATE_CONFIG_DIR を sandbox に向ける)。出力は sandbox 接頭辞を落として feature の文言と行単位で完全一致を判定"
+  docstring_paths: "DocString 内の /etc/relay-gate/ と /opt/compare/ は sandbox 配下へ写像して書き込む(target_catalog_path 宣言も sandbox の絶対パス)。/data/out/... の対象識別子は触らない"
+  scenario_independence: "「前シナリオの ...」「crosscheck-job-map.csv の JOB002 行 ...」の Given は SPEC-004-01 と同じ基準 fixture(宣言 3 行 + ヘッダー + JOB001 + JOB002 / ヘッダー + table 行 + file 行)を書き直してから差分を加える"
+  db_not_connected: "PATH 先頭に psql の番兵(起動記録を残して終了コード 97 で失敗)を置き、起動記録が無いことと stderr に psql が出ないことを判定"
+  scripts_unchanged: "facade/bin, facade/src, rapid-crosscheck/src, final-crosscheck/src の全ファイル SHA-256 を初回起動前に採取し、Then で再採取して一致を判定"
+cross_uc_handling:
+  issue: docs/impl/latest/dcd8234d/issues/20261010_084142_cross-uc-scenarios.md
+  compare_tool_stub: "SPEC-004-01 の Given(/opt/compare/compare.sh と compare-v2.sh が実行可能)は、sandbox に exit 0 の実行可能スタブを置く fixture で成立(ハーネス注入なし)"
+  same_csv_parser: "SPEC-004-04 の Then 前半「同じ CSV クォート解析関数が使われ」は実行結果で判定できないため、issue の提案どおり「二重化した引用符を含む引用セルを 1 セルとして受理(rows=2 / status=valid)」と後半「タブ区切りは error: header mismatch で拒否(終了コード 2)」で代替。代替した旨と issue パスを step のコメントに記載"
+harness_injection: none
+harness_injection_note: "認証ヘッダ等の仕様外の前提は不要だった。前提の新規抽出も行っていない"
+given_then_mismatch: none
+given_then_mismatch_note: "UC feature には tier BDD(issues/20261010_093000)と同種の Given/Then 不一致は無い。7 Scenario とも Given の値から Then の期待値が導ける"
+issues_written: []
+write_set_note: "変更は features/uc/steps/define-crosscheck-job-map-and-comparison-definitions.steps.js と本 done のみ。features/uc/*.feature、features/atdd/、facade/、rapid-crosscheck/、final-crosscheck/ は変更していない(git status で確認)"
+completed_at: '2026-10-10T10:41:00+09:00'
+completed_by: dist-impl-implement@0.14.1

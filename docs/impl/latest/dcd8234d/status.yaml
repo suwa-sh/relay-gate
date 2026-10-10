@@ -57,14 +57,16 @@ stages:
       open_blockers: 0
       open_major: 0
   S6_uc_bdd:
-    status: pending
+    status: done
+    scenarios: 43
+    this_uc: 7
   S7_atdd:
-    status: pending
+    status: running
   S8_feedback:
     status: pending
   S9_review:
     status: pending
-updated_at: '2026-10-10T10:36:02+09:00'
+updated_at: '2026-10-10T10:41:39+09:00'
 attempt_limit:
   reached: true
   attempt: 3
