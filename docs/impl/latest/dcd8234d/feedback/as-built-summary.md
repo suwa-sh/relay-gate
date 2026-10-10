@@ -2,7 +2,7 @@
 
 - 対象: `validate-config.sh --crosscheck-job-map`(tier-rapid-crosscheck)と `validate-config.sh --target-catalog`(tier-final-crosscheck)
 - 位置づけ: 独立検証の attempt 上限(3)到達後、利用者の承認で開いた attempt 4 で両 tier が pass した時点の記録
-- 結論: **仕様起因の要求 6 件**(blocker 0)。draft は `docs/impl/latest/dcd8234d/feedback/draft.md`。初版は 5 件。2026-10-10 のレビュー対話での仕様選択(第 7 節)を refresh で反映し、CR-006 を追加、CR-005 を整理した
+- 結論: **仕様起因の要求 4 件**(blocker 0)。draft は `docs/impl/latest/dcd8234d/feedback/draft.md`。初版は 5 件。2026-10-10 のレビュー対話での仕様選択(第 7 節。案 A)を refresh 第 1 回で反映して 6 件にし、同日の第 2 回(第 8 節。簡素化)で CR-007 に統合して 4 件(CR-007 / 001 / 002 / 003)にした
 - 根拠:
   - `docs/impl/latest/dcd8234d/issues/` の 4 件
   - `docs/impl/latest/dcd8234d/stages/attempt-4/S5_verify.tier-rapid-crosscheck.findings.yaml`(blocker 0 / major 0 / minor 18)
@@ -162,3 +162,20 @@ HTTP endpoint・状態遷移・header は本 UC に無い。CLI の出力と終�
   - CR-005: `catalog_version is invalid` の文言(final A-006)と参照先カタログの `expected` の基準(rapid A-022)は対象自体が廃止されるため CR-006 に吸収。速報側の違反文言 2 件(rapid A-008 / A-016)だけを残した
 - 本 UC の確報側成果物(final-crosscheck/ の `validate_config_target_catalog` と bats 57 件、速報側の検証ルール 9)は、仕様反映後の再実装で削除される。前提一覧(第 5 節)のうち確報ティア 18 件と速報ティアの参照解決に関する前提(A-011 / A-012 / A-022 / A-023)は、仕様反映後は対象が無くなる
 - 学び: `learnings/20261010_172853_tentative-spec-confirm-before-impl.md`(仮採用注記のある設定ファイルは実装前に利用者確認する)
+
+## 8. レビュー対話での仕様選択(第 2 回。簡素化。2026-10-10 refresh 第 2 回で追記)
+
+- 入力: `docs/impl/latest/dcd8234d/review/review-notes.md`「2026-10-10 レビュー対話での仕様選択(第 2 回。簡素化案で確定)」。第 1 回(案 A)向けの S9 再生成は方針変更のため中断し、承認(review_approved)は記録していない
+- 利用者の元の構想: 「blue / green runner → DB ← worker → 比較ツール」「確報 runner → DB ← worker → 比較ツール」。速報はジョブ ID を渡し、確報はパラメータなし。worker は任意の比較コマンドを 1 つ定義でき、速報はそのパラメータを動的に渡せる。現在の仕様(ジョブ ID ごとの比較定義 CSV・比較対象 / 定義版の列・成果物パスの受け渡し・対象カタログ・検証ルール群)は複雑にし過ぎ
+- 想定環境の制約: runner と worker は別ネットワークセグメントで動く。worker はファイルパスを渡されても読めない。必要な情報は DB の依頼レコードに含める
+- 照合結果: 方針資料(`tmp/RelayGateのしくみ.md` 42 行目「比較対象の定義は、適用側で定義します」/ 261 行目「worker は stdout・stderr・exitcode を依頼レコードへ保存」/ 595〜625 行目の状態と終了コードの対応、`tmp/RelayGateの利用イメージ.md` 326 行目「速報も確報も同じ比較ツールのパターン。違いは対象の量」)と一致する。比較定義 CSV の列構造・`{blue}` `{green}` の成果物パス・対象カタログ・worker のファイル保存・`comparison_results` の抽出は仕様策定の推論(`_inference.md` #5 仮採用ほか)で、方針資料に無い
+- 確定した内容(7 点): (a) worker に必要な情報は DB の依頼レコードに含める / (b) 速報の起動コマンドは設定 1 行(`{job_id}` 必須、`{run_id}` `{params}` `{blue_exit_code}` `{green_exit_code}` 任意)、確報は 1 行・プレースホルダなし / (c) 完了通知は run_id / job_id / exit_code(artifact_uri を外す) / (d) worker の結果保存は依頼レコードの stdout / stderr / exitcode 列だけ。0 → SUCCEEDED、非 0 または起動失敗 → FAILED / (e) `comparison_results`(difference_count / report_uri の抽出)を廃止 / (f) 確報の依頼レコードは識別子・状態・時刻・結果だけ / (g) 比較定義 CSV の行構造・比較対象と定義版の列・対象カタログ・`{blue}` `{green}`・worker のファイル保存・検証ルール群を廃止。検証は「コマンドが絶対パスで実行可能」「速報に `{job_id}` がある」の 2 点
+- 分類: **仕様起因(方針資料との乖離。環境制約の未反映)** → CR-dcd8234d-007 に統合。実装起因ではない(実装は仮採用の仕様どおりで、独立検証も pass)
+- 既存要求の整理(6 件 → 4 件):
+  - CR-007(新規・主要求): 上記 (a)〜(g) を正本ごとに書いた。本 UC の範囲を「速報の起動コマンド 1 行の設定とその検証」に縮小し、`tier-final-crosscheck.md` を削除する。方針資料側(確報依頼の business_date / 対象カタログの版、所有者の表、rapid_run の artifact_uri)は利用者がそろえる
+  - CR-006(案 A): CR-007 に吸収して削除
+  - CR-001 / CR-003: 簡素化後も `validate-config.sh` の入口(facade)が速報側の検証関数を読み込む構成が残るなら維持。委譲自体を無くす構成を採る場合は不要になる旨を 4 項に追記
+  - CR-002: 対象カタログの記述削除を CR-007 に寄せたうえで、「同じ CSV 解析関数」の文言を振る舞いに直す要求として維持。設定の置き場が env になる場合は書き直し不要とし、新しい受け入れ基準にも実装構造を書かない要求に広げた
+  - CR-004(BDD の Given / Then 不一致)/ CR-005(違反文言 2 件): 該当の検証ルール(`{blue}` `{green}` 必須、compare_targets 固定値、compare_command の文言)自体が廃止されるため、CR-007 の完了条件「残す検証 2 点の文言を契約に明記する」に吸収して削除
+- 本 UC の成果物への影響: 速報ティア(bats 106 件)の検証ルール群と確報ティア(bats 57 件)の対象カタログ検証は、仕様反映後の再実装でほぼ全面的に置き換わる。前提一覧(第 5 節)36 件のうち、CSV 構造・宣言・参照解決・対象カタログに関するものは対象が無くなる
+- 学び: `learnings/20261010_175258_separate-network-segments-pass-values-via-db.md`(別セグメントの runner / worker 間ではファイルパスを受け渡しに使えない。依頼レコードに必要値を持たせる)。提案: `learnings/20261010_104636_proposal-skill.md` 提案 6(S1 でプロセス間の受け渡し経路を配置図と照合する)

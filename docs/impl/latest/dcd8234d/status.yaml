@@ -66,13 +66,13 @@ stages:
   S8_feedback:
     status: done
     mode: refresh
-    request_count: 6
+    request_count: 4
     blocker_count: 0
     draft_path: docs/impl/latest/dcd8234d/feedback/draft.md
     feedback_id: 20261010_104636_impl_feedback_dcd8234d
   S9_review:
     status: running
-updated_at: '2026-10-10T17:33:12+09:00'
+updated_at: '2026-10-10T17:58:15+09:00'
 attempt_limit:
   reached: true
   attempt: 3

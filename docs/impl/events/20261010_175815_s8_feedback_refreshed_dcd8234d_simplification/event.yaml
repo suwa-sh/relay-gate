@@ -1,0 +1,18 @@
+event_id: 20261010_175815_s8_feedback_refreshed_dcd8234d_simplification
+type: stage_completed
+uc_id: dcd8234d
+stage: S8
+payload:
+  mode: refresh
+  refreshed_at: '2026-10-10T17:52:58+09:00'
+  updated: 3
+  added: 1
+  removed: 3
+  manifest_sha256: ddcab64014c49e5f65a082b66a7d2c381cefd50c4744ad3457a3a8d5ef9d8289
+  manifest_projection: v2
+  feedback_id: 20261010_104636_impl_feedback_dcd8234d
+  draft_sha256: d4ddd211752998f5480a51d9dddfa3a58937badd62f72092c9257ed1384448fd
+  request_count: 4
+  blocker_count: 0
+  trigger: 'second review decision: crosscheck simplification (CR-007 absorbs CR-004/005/006)'
+created_at: '2026-10-10T17:58:15+09:00'
