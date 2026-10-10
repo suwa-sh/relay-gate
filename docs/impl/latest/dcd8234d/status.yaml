@@ -3,8 +3,8 @@ uc_id: dcd8234d
 business: 適用構成業務
 buc: 適用構成定義フロー
 uc: クロスチェックのジョブマップと比較定義を定義する
-state: awaiting_review
-current_attempt: 3
+state: running
+current_attempt: 4
 resolved_models:
   implementer: claude-fable-5-1
   verifier: gpt-6-astra
@@ -28,34 +28,25 @@ stages:
   S4_tier_impl:
     tier-final-crosscheck:
       status: done
-      attempt: 3
-      carried_from: attempt-2
+      attempt: 4
+      carried_from: attempt-3
       gates:
         format: pass
         lint: pass
         tdd: pass
         bdd_tier: pass
     tier-rapid-crosscheck:
-      status: done
-      attempt: 3
-      gates:
-        format: pass
-        lint: pass
-        tdd: pass
-        bdd_tier: pass
+      status: pending
+      attempt: 4
   S5_verify:
     tier-final-crosscheck:
-      status: done
-      attempt: 3
-      result: pass
+      status: pending
+      attempt: 4
       open_blockers: 0
-      open_major: 0
     tier-rapid-crosscheck:
-      status: done
-      attempt: 3
-      result: fail
-      open_blockers: 1
-      open_major: 0
+      status: pending
+      attempt: 4
+      open_blockers: 0
   S6_uc_bdd:
     status: pending
   S7_atdd:
@@ -64,12 +55,10 @@ stages:
     status: pending
   S9_review:
     status: pending
-updated_at: '2026-10-10T09:52:31+09:00'
+updated_at: '2026-10-10T10:24:25+09:00'
 attempt_limit:
   reached: true
   attempt: 3
-  blocker_remaining:
-    tier-rapid-crosscheck:
-    - F-018
-  user_decision: pending
-  note: attempt 上限 3 に到達。続行(attempt 4)/ 仕様ブロック / 手動介入 のユーザー判断待ち
+  user_decision: continue_once
+  decision_event: 20261010_102424_attempt_opened_dcd8234d_a4
+  note: ユーザー承認で attempt 4 を 1 回だけ許可。attempt 4 で blocker が残れば再度停止する
