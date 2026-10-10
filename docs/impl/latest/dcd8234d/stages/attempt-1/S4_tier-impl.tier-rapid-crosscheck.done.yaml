@@ -1,0 +1,85 @@
+stage: S4
+tier: tier-rapid-crosscheck
+attempt: 1
+uc_id: dcd8234d
+manifest_sha256: 81d5dba283cd5c746d42428fa2713f0e7f2d15891575284e8b93e17b6b2d9f93
+manifest_projection: v2
+result: pass
+changes:
+  - path: rapid-crosscheck/src/presentation/validate_config_crosscheck_job_map.sh
+    summary: "--crosscheck-job-map の handler(validate_config_crosscheck_job_map <path> <verbose>)。facade/src/presentation/validate-config.sh が存在すれば source する。自 tier の domain / repository / usecase を相対パスで source し usecase へ委譲する"
+  - path: rapid-crosscheck/src/usecase/validate_crosscheck_job_map.sh
+    summary: "ValidateCrosscheckJobMap(validate_crosscheck_job_map)。複製 → バイト点検 → ヘッダー → 宣言 → 行 → 重複 → 対象カタログ参照の順に全件収集し、stderr(error / info / hint)と stdout(固定 7 行 + violations)を出す。内部障害は終了コード 6"
+  - path: rapid-crosscheck/src/domain/comparison_definition_rules.sh
+    summary: "ComparisonDefinitionRules(純粋関数)。ヘッダー完全一致、exit_code_contract 宣言、必須宣言、行ごとの列検証(#5 / #6 / #7 / #7a / #7b / #10)"
+  - path: rapid-crosscheck/src/repository/crosscheck_job_map_repo.sh
+    summary: "CrosscheckJobMapRecord。facade の job_map_repo_*(単一スナップショット・バイト点検・CSV クォート解析)を再利用し、同じ複製から宣言(コメント行)を取り出す。対象カタログの版の有無の解決"
+  - path: rapid-crosscheck/features/steps/define-crosscheck-job-map-and-comparison-definitions.steps.js
+    summary: "S2 skeleton 9 step を実装(Before / After の一時ディレクトリ、比較ツールのスタブ、facade/bin/validate-config.sh の実プロセス起動)"
+  - path: rapid-crosscheck/test/domain/comparison_definition_rules.bats
+    summary: "domain の単体テスト 19 件"
+  - path: rapid-crosscheck/test/repository/crosscheck_job_map_repo.bats
+    summary: "repository の単体テスト 10 件(宣言の取り出し・複製の削除・対象カタログ参照の解決)"
+  - path: rapid-crosscheck/test/usecase/validate_crosscheck_job_map.bats
+    summary: "usecase の単体テスト 4 件(sink の復元・読み取り専用・not readable・violations の合算)"
+  - path: rapid-crosscheck/test/presentation/validate_config_crosscheck_job_map_rules.bats
+    summary: "実プロセスの単体テスト 29 件(検証ルール #2〜#11、tier BDD 4 Scenario 相当、CRLF / BOM、内部障害 6、5,000 行の性能)"
+implementation_note: "facade/ と final-crosscheck/ は変更していない。CSV 解析・可視表記・報告 sink・job_id 重複検査は tier-facade の関数を再利用した(契約未宣言の tier 間依存。issues/20261010_084142_facade-dispatch-and-csv-parser-outside-tiers.md を各ファイルのコメントと A-017 に記録)。has_ddd_plugin は impl-config に無いため docs/dev-rules/coding-rules.md の基準のみで実装した"
+gates:
+  format: pass
+  lint: pass
+  tdd: pass
+  bdd_tier: pass
+gate_runs:
+  - gate: format
+    cwd: rapid-crosscheck
+    command: "shfmt -d ."
+    exit_code: 0
+  - gate: lint
+    cwd: rapid-crosscheck
+    command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+    exit_code: 0
+  - gate: tdd
+    cwd: rapid-crosscheck
+    command: "bats -r test"
+    exit_code: 0
+    detail: "66 tests, 66 ok, 0 not ok(S2 の 4 件を含む。macOS)"
+  - gate: bdd_tier
+    cwd: rapid-crosscheck
+    command: "npx cucumber-js --config ../cucumber.cjs features"
+    exit_code: 0
+    detail: "4 scenarios (4 passed), 12 steps (12 passed)"
+linux_equivalent_check:
+  command: "docker run --rm -e LANG=C.UTF-8 -v \"$PWD/..:/work\" -w /work/rapid-crosscheck relay-gate-ci:ubuntu24 bats -r test"
+  exit_code: 0
+  detail: "66 tests, 66 ok(Ubuntu 24.04 arm64、LANG=C.UTF-8)"
+performance:
+  note: "設定 CSV 5,000 行(ジョブマップ 5,000 行 + 参照先カタログ 5,000 行、該当版は最終行)の validate-config.sh --crosscheck-job-map の所要時間(fixture 生成を除く)"
+  macos_seconds: "2(通常)/ 3(--verbose)"
+  ubuntu_arm64_seconds: "2 / 2"
+  ubuntu_amd64_emulated_seconds: "4 / 4"
+  threshold_seconds: 10
+assumptions:
+  path: attempt-1/S4_tier-impl.tier-rapid-crosscheck.assumptions.yaml
+  count: 19
+  by_category:
+    input_validation: 7
+    data_format: 5
+    error_handling: 7
+    persistence: 0
+    performance: 0
+    security: 0
+  sha256: 91e47b4440d256ea78d2419b6e51af54fda7887f41e7335cd32f777bddcab94c
+  extraction:
+    candidate_count: 30
+    excluded_as_explicit: 11
+    recorded_count: 19
+  validator: "validateAssumptions.js record → ok: true"
+findings_source: "none(attempt 1。findings は渡されていない)"
+issues:
+  new:
+    - docs/impl/latest/dcd8234d/issues/20261010_093000_tier-bdd-placeholder-scenario-given-then-mismatch.md
+  note: "tier BDD「compare_options にプレースホルダが無い」の Given(`--fast`)と Then(`value=--blue {blue}`)が両立しない。実装はルール #7 どおり元の値を value= に出し、step 定義の Given は Then と整合する `--blue {blue}` を書く(step のコメントに issue を参照)。S8 で仕様側に Given / Then の一致を要求する"
+write_set_note: "書き込みは rapid-crosscheck/ 配下、docs/impl/latest/dcd8234d/stages/attempt-1/ の本 tier の done / assumptions、docs/impl/latest/dcd8234d/issues/ の新規 1 件のみ。facade/ / final-crosscheck/ / docs/specs は変更していない"
+completed_at: '2026-10-10T09:07:00+09:00'
+completed_by: dist-impl-implement@0.14.1
