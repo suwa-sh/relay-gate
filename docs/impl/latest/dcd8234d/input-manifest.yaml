@@ -1,54 +1,50 @@
 schema_version: '1.0'
 uc_id: dcd8234d
-fixed_at: '2026-10-10T08:36:14+09:00'
+fixed_at: '2026-10-27T08:30:00+09:00'
 inputs:
   spec_event:
-    event_id: spec:20260923_112000_feedback_impl_feedback_eff24f55_cycle2
-    sha256: 2f08c58c5b7fd348d323253f9f0c0fe255b32390e89d0b426d97cb246647505d
+    event_id: spec:20261027_055000_feedback_impl_feedback_dcd8234d
+    sha256: 2c49001369ec37a9c1e0917d996c04485c0378167fbbc63ebb74c7065a4f6a55
   spec_md:
     path: docs/specs/latest/適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/spec.md
-    sha256: 8adfe0f0e02107508cd5b1457cbd1282c0d97a90632f6d1a04ee9988f49e9a87
+    sha256: 204e9ae0289899cd2d5c9fed4285039856d31175437a7d84f66e8165862b0369
   tier_mds:
-  - tier: tier-final-crosscheck
-    path: docs/specs/latest/適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/tier-final-crosscheck.md
-    sha256: 959f53375c5703ef482687dc4bd95a1cb9dc1a36c8aaf0f3f46f8419a448caf3
-  - tier: tier-rapid-crosscheck
-    path: docs/specs/latest/適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/tier-rapid-crosscheck.md
-    sha256: 25bbd5f99ff145733f79075893acd7a1fb93dd05a689bf87e34c00601e920667
+  - tier: tier-facade
+    path: docs/specs/latest/適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/tier-facade.md
+    sha256: ae8ccabf8a81e955d38ba87f8997a4e40f2c323466afd85e65930857ba9c582b
   api_summary:
     path: docs/specs/latest/適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/_api-summary.yaml
-    sha256: f3bc8190f20d6be58c9a0daf770ef219be1f0bf229e031d5e03fe0e108cf137b
+    sha256: 9cb90cd30bec51e89b6f5fdc67dee04f2c4a70db3ef73aa36cb3e4fced8171da
   shared_spec_refs:
   - path: docs/specs/latest/_cross-cutting/api/asyncapi.yaml
-    sha256: 29053f6331ab76ed5473d2e7c71528b8145bee95672849f4b91929396b01551a
+    sha256: c1d5aaf174ad7b4be5833f3e4a1b4bf43d6a4f03d57ef54693c17c95294f9a65
   - path: docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml
-    sha256: 2c7b320a9caed338204b58d80abcb63caf848b96f102f9648c463060b1593ad3
+    sha256: 9030b13e7d8254a3b65256954a4dfb24edf52511e48f9042f88cba85a1122a96
   - path: docs/specs/latest/_cross-cutting/datastore/rdb-schema.yaml
-    sha256: 2b3ffec01cb9705e508168a4ff8a9e1b7c67278679714ece60c8040a4c0be292
+    sha256: e3bd8af635cddca433c764b0efa77b05ec2dbfbb91bb08294696aad543356515
   - path: docs/specs/latest/_cross-cutting/ux-ui/data-visualization.md
-    sha256: 69dab4f18faca57468579bdde4cdfbcd0ccb3aec0ce13914f174741c916b5b38
+    sha256: 1e545b80dd39a47f26e754de62264c99da46fbebb7a0d32d68223e3d31173bce
   - path: docs/specs/latest/_cross-cutting/ux-ui/ui-design.md
-    sha256: c40723b3f8b192ae5f842c731157213d4a90f6d475352229e8844d0099beb046
+    sha256: 47a32f078689093b5ab105efd77512babd2fea2242a7023439d39ac3a6999435
   model_summary:
     path: docs/specs/latest/適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/_model-summary.yaml
-    sha256: 77119b24610d7bddb7809fa5ad8009605aeb71bfd246a2254d2ebe9f7d188074
+    sha256: 4029503a5c8a73b91894f69b8a40fbc05335f8e6f5e09aab968c12e2741819eb
   datastore_schema:
     path: docs/specs/latest/_cross-cutting/datastore/rdb-schema.yaml
-    sha256: 2b3ffec01cb9705e508168a4ff8a9e1b7c67278679714ece60c8040a4c0be292
+    sha256: e3bd8af635cddca433c764b0efa77b05ec2dbfbb91bb08294696aad543356515
   nfr:
     path: docs/nfr/latest/nfr-grade.yaml
-    sha256: 5a7c72400cfc8c65de278dc284e656a73d60b643a91f69ecfa44688a0824b653
+    sha256: 0283ce5aa1c4ada1b8836ec191174c23e526e329f29bc266dcc8d2137ea3accf
   usdm:
-    event_id: 20260921_084000_feedback_impl_feedback_eff24f55
-    sha256: f027bd61f90f3f98cc72893fefdb8a51db05974536ceb0319c120991c88d8e70
+    event_id: 20261010_200000_feedback_impl_feedback_dcd8234d
+    sha256: 35d4984e36eec37d8bdc8f337f50f1df3b7734dee2d6950ad6b3e62deab57050
   arch:
-    event_id: 20260908_015000_feedback_slot_status_wording
-    sha256: 45a30ece498ff31b18cdec055333a172156d453b8d6d4b4f330b716cfc87de04
+    event_id: 20261010_202000_feedback_impl_feedback_dcd8234d
+    sha256: 4c5cf9d626f8441479f7bc337f09a9b89d2478b4bd1397852284f41b3d3c2adc
   contracts_decl:
-    sha256: a7703a7d906eab15a5efb98e940352b6ba4985cb374bee974d6e0a319ca42402
+    sha256: 7841f9ba9d00013173c0b90f45ffabb37034ae872ddafdd02d5fdaff26b7d6e5
   contracts_lock:
     path: docs/impl/latest/contracts.lock.yaml
-    sha256: 4192970b0fd0a1a448c48c8efc2c30912210f71373cf1366f4fa48603c03fe13
+    sha256: 98d3515f05096d93dba396cc6afae3944952e21aa45b6f2146bbe8e8f31944b6
   dev_rules_sha256: 6ea5fb63bf9ba32e793f87c4514b912050cd95b958660576b545ba5c484991b2
 lineage_ok: true
-

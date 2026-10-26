@@ -1,0 +1,26 @@
+event_id: 20261027_082600_s1_uc_init_completed_dcd8234d
+type: stage_completed
+uc_id: dcd8234d
+stage: S1
+payload:
+  manifest_sha256: 1be633861c44014ebfcfe9bf065e0d15167bbfe5f89d01553accdef7ba99d19c
+  manifest_projection: v2
+  manifest_fixed_at: '2026-10-27T08:30:00+09:00'
+  lineage_ok: true
+  tiers:
+  - tier-facade
+  atdd_scenarios:
+  - SPEC-004-04-5
+  - SPEC-004-04-6
+  - SPEC-004-04-7
+  - SPEC-004-04-8
+  - SPEC-004-04-10
+  - SPEC-004-04-11
+  git_delivery:
+    base_branch: main
+    base_head: eee392b767caca105d94e6246ced9577d2443b00
+    feature_branch: feature/define-crosscheck-job-map-and-comparison-definitions
+  resolved_models:
+    implementer: claude-opus-5-5
+    verifier: gpt-6-astra
+created_at: '2026-10-27T08:26:00+09:00'
