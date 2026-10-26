@@ -39,7 +39,11 @@ stages:
         bdd_tier: pass
   S5_verify:
     tier-facade:
-      status: pending
+      status: done
+      attempt: 4
+      result: pass
+      open_blockers: 0
+      open_major: 0
   S6_uc_bdd:
     status: pending
   S7_atdd:
