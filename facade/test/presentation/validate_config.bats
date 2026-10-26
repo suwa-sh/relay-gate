@@ -24,7 +24,7 @@ setup() {
 
 	# Assert
 	[ "$status" -eq 2 ]
-	[ "${lines[0]}" = "error: option required option=--feature-flag|--job-map|--crosscheck-job-map|--target-catalog" ]
+	[ "${lines[0]}" = "error: option required option=--feature-flag|--job-map|--rapid-crosscheck|--final-crosscheck" ]
 }
 
 @test "validate-config_sh_検証種別オプションを2つ指定した場合_排他違反で終了コード2であること" {
@@ -93,11 +93,11 @@ setup() {
 
 @test "validate-config_sh_未実装の検証種別を指定した場合_終了コード6であること" {
 	# Arrange / Act
-	run "$SCRIPT" --target-catalog "$CONFIG_DIR/x.csv"
+	run "$SCRIPT" --final-crosscheck "$CONFIG_DIR/x.env"
 
 	# Assert
 	[ "$status" -eq 6 ]
-	[ "${lines[0]}" = "error: validation kind is not implemented option=--target-catalog" ]
+	[ "${lines[0]}" = "error: validation kind is not implemented option=--final-crosscheck" ]
 }
 
 @test "validate-config_sh_runnerが終了しない場合_待機上限で戻りwarnと版-で終了コード0であること" {

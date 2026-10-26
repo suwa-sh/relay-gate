@@ -30,7 +30,13 @@ stages:
     event: 20261027_084700_s3_contracts_completed_dcd8234d
   S4_tier_impl:
     tier-facade:
-      status: pending
+      status: done
+      attempt: 4
+      gates:
+        format: pass
+        lint: pass
+        tdd: pass
+        bdd_tier: pass
   S5_verify:
     tier-facade:
       status: pending
