@@ -71,6 +71,12 @@ tables:
             value: "通知の run_id(主キー)"
           - name: "job_id"
             value: "parallel_runs.job_id(通知の --job-id は照合のみ。不一致は warn: job_id mismatch を出して parallel_runs の値を採用)"
+          - name: "parameters"
+            value: "parallel_runs.parameters を JSON 配列文字列のまま複製(worker の {params} 置換に使う)"
+          - name: "blue_exit_code"
+            value: "0(両系成功時のみ作成されるため作成時は 0)"
+          - name: "green_exit_code"
+            value: "0(同上)"
           - name: "status"
             value: "REQUESTED"
           - name: "requested_at"
@@ -87,9 +93,11 @@ tables:
         columns:
           - name: "job_id"
             value: ""
+          - name: "parameters"
+            value: "依頼作成時に rapid_crosscheck_requests.parameters へ複製する"
           - name: "status"
             value: ""
-        where: "run_id = ? FOR UPDATE(job_id の照合と status の参照。同一トランザクション内の行ロックで abort-blue / abort-green の parallel_runs 無条件行ロック(SELECT 1 ... FOR UPDATE)と直列化する。ABORTED なら依頼を作成しない。ロック順: rapid_runs → parallel_runs → slot_executions(対象 slot の行の SELECT)→ rapid_crosscheck_requests)"
+        where: "run_id = ? FOR UPDATE(job_id / parameters の取得と status の参照。同一トランザクション内の行ロックで abort-blue / abort-green の parallel_runs 無条件行ロック(SELECT 1 ... FOR UPDATE)と直列化する。ABORTED なら依頼を作成しない。ロック順: rapid_runs → parallel_runs → slot_executions(対象 slot の行の SELECT)→ rapid_crosscheck_requests)"
     indexes_needed: []
   - name: "slot_executions"
     # 完了通知の対象 slot の状態参照(条件「中止済み run の比較依頼作成除外」の判定材料。aborted.txt 公開済みのミラー)

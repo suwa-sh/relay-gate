@@ -1,0 +1,247 @@
+{
+  "event_id": "20261010_203000_feedback_stage_infrastructure",
+  "type": "feedback_stage_completed",
+  "run_id": "feedback-20261010_104636_impl_feedback_dcd8234d-20261010_194639-34461",
+  "attempt": 1,
+  "created_at": "2026-10-10T20:30:00Z",
+  "stage": "infrastructure",
+  "direct_work_unit_ids": [],
+  "causal_work_unit_ids": [
+    "CR-dcd8234d-007#1",
+    "CR-dcd8234d-001#1",
+    "CR-dcd8234d-002#1",
+    "CR-dcd8234d-003#1"
+  ],
+  "work_unit_results": [],
+  "reconciliation_results": [
+    {
+      "work_unit_id": "CR-dcd8234d-007#1",
+      "status": "changed",
+      "reason": "クロスチェック簡素化(前段 arch 20261010_202000 / NFR 20261010_201000)の確定を受け、インフラ設計(MCL 出力と IaC スケルトン)の廃止構造への追従を行った。設定ファイル集合から比較定義 CSV(crosscheck-job-map.csv)と対象カタログ(target-catalog.csv)を外し、比較ツール起動コマンドを rapid-crosscheck.env(速報。{job_id} 置換)と新規 final-crosscheck.env(確報。確報 worker の DB 接続参照と起動コマンド 1 行)へ移した。管理 DB の比較結果テーブルへの言及(E-018)、config_store の E-007 / E-008 参照、worker_start_update の comparison_result 文言を除去し、確報 worker を別ネットワークセグメント前提(runner 側成果物パスを読まない)に合わせた。MCL は全面再実行せず差分更新(skipped_targeted_update)。infra-event validate PASS、latest 更新済み",
+      "artifact_refs": [
+        "infra/events/20261010_203000_feedback_impl_feedback_dcd8234d/infra-event-diff.yaml",
+        "infra/events/20261010_203000_feedback_impl_feedback_dcd8234d/docs/mcl/product/input/product-input.yaml",
+        "infra/events/20261010_203000_feedback_impl_feedback_dcd8234d/docs/mcl/product/output/product-workload-model.yaml",
+        "infra/events/20261010_203000_feedback_impl_feedback_dcd8234d/docs/mcl/product/output/product-mapping-onprem.yaml",
+        "infra/events/20261010_203000_feedback_impl_feedback_dcd8234d/docs/mcl/product/output/product-impl-onprem.yaml",
+        "infra/events/20261010_203000_feedback_impl_feedback_dcd8234d/docs/cloud-context/conformance/product/product-conformance-onprem.yaml",
+        "infra/events/20261010_203000_feedback_impl_feedback_dcd8234d/infra/product/onprem/ansible/roles/relay-gate-config/tasks/main.yml"
+      ]
+    },
+    {
+      "work_unit_id": "CR-dcd8234d-001#1",
+      "status": "not_impacted",
+      "reason": "validate-config.sh のティア間委譲撤廃・facade 単独検証(CTR-007)はアプリケーション内部のシェル関数構成・検証所在の決定であり、サーバ構成・配置ファイル・監視・ネットワークのいずれも変えない。設定検証の所在が facade に寄る点はインフラ設計の MCL 入力・出力フィールドに影響しない",
+      "artifact_refs": []
+    },
+    {
+      "work_unit_id": "CR-dcd8234d-002#1",
+      "status": "not_impacted",
+      "reason": "受け入れ基準(UC の Then)の文言変更のみで、RDRA モデル・NFR グレード・arch のグレード値は不変。インフラ設計のサービス構成・配置ファイル・監視設定のいずれも変えない",
+      "artifact_refs": []
+    },
+    {
+      "work_unit_id": "CR-dcd8234d-003#1",
+      "status": "not_impacted",
+      "reason": "同一プロセス内のシェル関数の名前空間一般規則 CTR-007 はアプリケーション実装規約であり、ホスト構成・配置物・ネットワークセグメント設計に影響しない",
+      "artifact_refs": []
+    }
+  ],
+  "work_unit_evidence_refs": [
+    {
+      "work_unit_id": "CR-dcd8234d-007#1",
+      "path": "infra/events/20261010_203000_feedback_impl_feedback_dcd8234d/infra-event-diff.yaml",
+      "sha256": "dd91d9efe94a907495ac84140fc24bf2cce5fadf42ff2dfbf99ad3480fcacb36"
+    },
+    {
+      "work_unit_id": "CR-dcd8234d-007#1",
+      "path": "infra/events/20261010_203000_feedback_impl_feedback_dcd8234d/docs/mcl/product/input/product-input.yaml",
+      "sha256": "3e1684b46d720bf9967b41b60d8111f6893b6d37ebcfccf16d558052d93d56c0"
+    },
+    {
+      "work_unit_id": "CR-dcd8234d-007#1",
+      "path": "infra/events/20261010_203000_feedback_impl_feedback_dcd8234d/docs/mcl/product/output/product-workload-model.yaml",
+      "sha256": "0a753cf7eb66250293b6a1df016b8735c7e07e65f97e2bb1026c08561f4d5d8c"
+    },
+    {
+      "work_unit_id": "CR-dcd8234d-007#1",
+      "path": "infra/events/20261010_203000_feedback_impl_feedback_dcd8234d/docs/mcl/product/output/product-mapping-onprem.yaml",
+      "sha256": "a2d4f807bc98812e2c4ce1b153092a8e2d48d3220528410e8906eb9ee387cb9d"
+    },
+    {
+      "work_unit_id": "CR-dcd8234d-007#1",
+      "path": "infra/events/20261010_203000_feedback_impl_feedback_dcd8234d/docs/mcl/product/output/product-impl-onprem.yaml",
+      "sha256": "48914c5bb580c8cc9fffe80d1ec769c556b269b87b2df2b68b641124ffb77e9f"
+    },
+    {
+      "work_unit_id": "CR-dcd8234d-007#1",
+      "path": "infra/events/20261010_203000_feedback_impl_feedback_dcd8234d/docs/cloud-context/conformance/product/product-conformance-onprem.yaml",
+      "sha256": "47153de3a0337eb9334888b6d98b19b7ff27006b71c83fdd8eb3df7970acce3d"
+    },
+    {
+      "work_unit_id": "CR-dcd8234d-007#1",
+      "path": "infra/events/20261010_203000_feedback_impl_feedback_dcd8234d/infra/product/onprem/ansible/roles/relay-gate-config/tasks/main.yml",
+      "sha256": "009e63923b1506cd681cc30534e818817a2e86b6dd401584ca67706943332f84"
+    }
+  ],
+  "domain_event_refs": [
+    {
+      "path": "infra/events/20261010_203000_feedback_impl_feedback_dcd8234d/event.json",
+      "sha256": "0bb6b0925ab4f56cf1ccb9012ac6cf83d977828c8405a9dd96343858b86b8475"
+    },
+    {
+      "path": "infra/events/20261010_203000_feedback_impl_feedback_dcd8234d/infra-event.yaml",
+      "sha256": "0473a6481e462d7b440eb69a02cca4fa5032a39aeb0593142c91bf40cfdec9ce"
+    },
+    {
+      "path": "infra/events/20261010_203000_feedback_impl_feedback_dcd8234d/infra-event-diff.yaml",
+      "sha256": "dd91d9efe94a907495ac84140fc24bf2cce5fadf42ff2dfbf99ad3480fcacb36"
+    }
+  ],
+  "feedback_request": {
+    "feedback_request_id": "20261010_104636_impl_feedback_dcd8234d",
+    "input_sha256": "d4ddd211752998f5480a51d9dddfa3a58937badd62f72092c9257ed1384448fd",
+    "request_ids": [
+      "CR-dcd8234d-007",
+      "CR-dcd8234d-001",
+      "CR-dcd8234d-002",
+      "CR-dcd8234d-003"
+    ],
+    "work_unit_ids": [
+      "CR-dcd8234d-007#1",
+      "CR-dcd8234d-001#1",
+      "CR-dcd8234d-002#1",
+      "CR-dcd8234d-003#1"
+    ]
+  },
+  "post_execution_basis": {
+    "repository_head": "a36dbc1031d7f25675bb51393810f9377cabf59e",
+    "latest_domain_event_ids": {
+      "requirements": {
+        "rdra/events": "20261010_200000_feedback_impl_feedback_dcd8234d",
+        "usdm/events": "20261010_200000_feedback_impl_feedback_dcd8234d"
+      },
+      "quality_attributes": {
+        "nfr/events": "20261010_201000_feedback_impl_feedback_dcd8234d"
+      },
+      "architecture": {
+        "arch/events": "20261010_202000_feedback_impl_feedback_dcd8234d"
+      },
+      "infrastructure": {
+        "infra/events": "20261010_203000_feedback_impl_feedback_dcd8234d"
+      },
+      "design_system": {
+        "design/events": null
+      },
+      "spec": {
+        "specs/events": "20260923_112000_feedback_impl_feedback_eff24f55_cycle2"
+      },
+      "spec_stories": {
+        "design/events": null
+      }
+    },
+    "domain_event_root_snapshots": {
+      "rdra/events": {
+        "head_event_id": "20261010_200000_feedback_impl_feedback_dcd8234d",
+        "head_event_sha256": "9a80cc0094748b411ef776b9b336129555da29e7f147697d045eb9160d145bc5",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency",
+          "20260908_011000_feedback_slot_status_wording",
+          "20260921_084000_feedback_impl_feedback_eff24f55",
+          "20261010_200000_feedback_impl_feedback_dcd8234d"
+        ],
+        "event_set_sha256": "614436dc22fc9bbebf353b7ec6b4ff6ca3eb3966bbd810ab461e345123ee69b7",
+        "latest_tree_sha256": "3d0b9856826a0a3c1cdab6ccbd73781e831f171165490e90989415aaa5296114"
+      },
+      "usdm/events": {
+        "head_event_id": "20261010_200000_feedback_impl_feedback_dcd8234d",
+        "head_event_sha256": "f3c0d898c01f28aafb6445107264c0310a5d50774331812624fc89f7401eea7c",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency",
+          "20260908_011000_feedback_slot_status_wording",
+          "20260921_084000_feedback_impl_feedback_eff24f55",
+          "20261010_200000_feedback_impl_feedback_dcd8234d"
+        ],
+        "event_set_sha256": "614436dc22fc9bbebf353b7ec6b4ff6ca3eb3966bbd810ab461e345123ee69b7",
+        "latest_tree_sha256": "ca018d4ac7287eadffb26e3ac124e193a804a4657b85293da9b262953b11e3d7"
+      },
+      "nfr/events": {
+        "head_event_id": "20261010_201000_feedback_impl_feedback_dcd8234d",
+        "head_event_sha256": "fb98a74807d68e02d214f009cb5e2a3929c133c71b217ed5a49cbb24a1e6d379",
+        "event_ids": [
+          "20260830_183726_initial_nfr",
+          "20260905_085000_feedback_todo_resolution",
+          "20260907_013000_feedback_todo_followup",
+          "20260907_120000_feedback_abort_consistency",
+          "20260908_013000_feedback_slot_status_wording",
+          "20260921_090000_feedback_impl_feedback_eff24f55",
+          "20261010_201000_feedback_impl_feedback_dcd8234d"
+        ],
+        "event_set_sha256": "3203f8419d84259aec2a11a113333eaa9dba1d5ea3333195cfcbf1facc6c3aab",
+        "latest_tree_sha256": "24f652e932a342a58ccd87291fa6523e66c6c274a88d3563253c085480e15def"
+      },
+      "arch/events": {
+        "head_event_id": "20261010_202000_feedback_impl_feedback_dcd8234d",
+        "head_event_sha256": "0e77694bbe3cfd58b8332dedf214e3e470dcfd77ce252057acdda86d645a58db",
+        "event_ids": [
+          "20260830_184457_initial_arch",
+          "20260830_202427_arch_infra_feedback_20260830_190412_infra_product_design",
+          "20260905_091000_feedback_todo_resolution",
+          "20260907_015000_feedback_todo_followup",
+          "20260907_122000_feedback_abort_consistency",
+          "20260908_015000_feedback_slot_status_wording",
+          "20260921_092000_feedback_impl_feedback_eff24f55",
+          "20261010_202000_feedback_impl_feedback_dcd8234d"
+        ],
+        "event_set_sha256": "75edbf8442f5d62ca61a13f8ccc3fe17d5ea5a82fdec15d04d3d118a7f5c112a",
+        "latest_tree_sha256": "8a89784f41dfe0ea7192f0210cbfd59a6db43d1dab010f0c52097422275f0c54"
+      },
+      "infra/events": {
+        "head_event_id": "20261010_203000_feedback_impl_feedback_dcd8234d",
+        "head_event_sha256": "2559c70b42979c16ccfc5ba8179fec1108e0c82d16f12f14316ba3b5bf947dd9",
+        "event_ids": [
+          "20260830_190412_infra_product_design",
+          "20260905_093000_feedback_todo_resolution",
+          "20260907_021000_feedback_todo_followup",
+          "20260907_124000_feedback_abort_consistency",
+          "20260908_021000_feedback_slot_status_wording",
+          "20260921_094000_feedback_impl_feedback_eff24f55",
+          "20261010_203000_feedback_impl_feedback_dcd8234d"
+        ],
+        "event_set_sha256": "c56dc85271ed5edc4bfd664153a20f7778d2cc9fd5292baf189f3b90b1b3ddb8",
+        "latest_tree_sha256": "d10377e522e03db8f1afdc88774f27bcbf19df41a6da542350beeff780f308e9"
+      },
+      "design/events": {
+        "head_event_id": null,
+        "head_event_sha256": null,
+        "event_ids": [],
+        "event_set_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "latest_tree_sha256": null
+      },
+      "specs/events": {
+        "head_event_id": "20260923_112000_feedback_impl_feedback_eff24f55_cycle2",
+        "head_event_sha256": "733252b1eb4974060d0214f300325fff032e02dc3280d09f4f6b8d3bbb354e7f",
+        "event_ids": [
+          "20260830_202851_spec_generation",
+          "20260905_100000_feedback_todo_resolution",
+          "20260907_024000_feedback_todo_followup",
+          "20260907_131000_feedback_abort_consistency",
+          "20260908_024000_feedback_slot_status_wording",
+          "20260908_062000_feedback_spec_machine_readable",
+          "20260917_050000_feedback_impl_feedback_fd678b04",
+          "20260917_100000_feedback_impl_feedback_fd678b04_cycle2",
+          "20260921_100000_feedback_impl_feedback_eff24f55",
+          "20260923_112000_feedback_impl_feedback_eff24f55_cycle2"
+        ],
+        "event_set_sha256": "911c360cf82cf12de3c8d314c54915af59ec52db248b325427f21adf0422be84",
+        "latest_tree_sha256": "bd19eaf49f9ce40c4d62fee13e8207cca97a117132a86f7e62d8f8cdfa879ae1"
+      }
+    }
+  }
+}

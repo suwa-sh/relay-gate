@@ -32,7 +32,6 @@ graph LR
   end
   subgraph DB["内部データストア: ジョブキュー兼管理 DB(RDB)"]
     RQ[("rapid_crosscheck_requests\nstatus / started_at / requested_at / exit_code")]
-    CR[("comparison_results\nstatus")]
     MR[("monitor_records\nmonitor_status")]
   end
   JOB -->|"引数なし"| P
@@ -40,7 +39,6 @@ graph LR
   R -->|"ファイル読み込み"| HE
   G1 -->|"ディレクトリ走査 / ファイル読み込み"| A
   G2 -->|"SQL SELECT (off 以外のみ)"| RQ
-  G2 -->|"SQL SELECT (off 以外のみ)"| CR
   G2 -->|"SQL SELECT 現在の monitor_status (off 以外のみ)"| MR
   D -->|"判定結果 (run_id, role, judgement)"| U2["usecase\nNotify (UC 通知) / Record (UC 記録)"]
 ```
@@ -49,9 +47,9 @@ graph LR
 |---------|------------|---------|
 | presentation | HangDetectorArgs(`--verbose`) | 引数検証(引数なしが正常) |
 | usecase | ScanAndJudgeCommand | feature flag を読む → 成果物走査 → (off 以外なら)未終端依頼の取得 → 対象ごとに判定 → 通知 UC / 記録 UC へ渡す |
-| domain | MonitorTarget(run_id, role, job_id, target_type, started_at, exit_code, limit_minutes, mode, slot_status) / HangJudgement(NOT_TARGET / COMPLETED / EXEC_ERROR / MONITORING / HANG_SUSPECTED / COMPARE_ERROR の 6 値) | slot 実行の状態導出(exitcode.txt / aborted.txt の有無・値 → RUNNING / SUCCEEDED / FAILED / ABORTED)、判定表(導出状態 × 経過時間と上限)、異常判定表(依頼状態 × 比較結果)、対象除外(limit 0 / foreground → NOT_TARGET) |
+| domain | MonitorTarget(run_id, role, job_id, target_type, started_at, exit_code, limit_minutes, mode, slot_status) / HangJudgement(NOT_TARGET / COMPLETED / EXEC_ERROR / MONITORING / HANG_SUSPECTED / COMPARE_ERROR の 6 値) | slot 実行の状態導出(exitcode.txt / aborted.txt の有無・値 → RUNNING / SUCCEEDED / FAILED / ABORTED)、判定表(導出状態 × 経過時間と上限)、異常判定表(依頼の status / exit_code)、対象除外(limit 0 / foreground → NOT_TARGET) |
 | repository | ArtifactScanRepository | `facade/*/` のうち started-at.txt が `HANG_SCAN_WINDOW_HOURS` 以内の run を列挙し、execution-spec.json から job_id / role ごとの mode / hang_detect_limit_minutes を読み、`<role>/exitcode.txt` / `<role>/aborted.txt` の有無と値を読む。execution-spec.json が無い run は `warn: execution-spec missing run_id=...` を stderr に出して判定対象外にする(job_id / mode の出所が無いため。監視記録も作らない)。RAPID_CROSSCHECK_MODE によらず slot 実行の状態は成果物ファイルだけから導出する(管理 DB の `slot_executions.status` は条件付き UPDATE で一度だけ終端値を書いた複製(abort-blue / abort-green で ABORTED にした後に実装が走り切って exitcode.txt を公開した経路では ABORTED のまま残り、導出値と異なる)であり、判定には読まない) |
-| repository | RapidRequestRepository(off 以外のみ) | `rapid_crosscheck_requests` の status ∈ {REQUESTED, CLAIMED, RUNNING} と、監視記録が未終端(記録なし / MONITORING / HANG_SUSPECTED_NOTIFIED)の FAILED / SUCCEEDED / ABORTED を取得し、`comparison_results.status` を結合 |
+| repository | RapidRequestRepository(off 以外のみ) | `rapid_crosscheck_requests` の status ∈ {REQUESTED, CLAIMED, RUNNING} と、監視記録が未終端(記録なし / MONITORING / HANG_SUSPECTED_NOTIFIED)の FAILED / SUCCEEDED / ABORTED を取得する(status と exit_code だけで比較異常を判定する。別テーブルの結合はしない) |
 | repository | MonitorRecordRepository(off 以外のみ) | 現在の monitor_status を読む(終端済み = COMPLETED / EXEC_ERROR_NOTIFIED / COMPARE_ERROR_NOTIFIED / NOT_MONITORED は走査対象から除く。HANG_SUSPECTED_NOTIFIED は未終端として再判定する) |
 
 ## 処理フロー
@@ -82,7 +80,7 @@ sequenceDiagram
   end
   alt RAPID_CROSSCHECK_MODE が off 以外(foreground / background)
     U->>R: 未終端の速報比較依頼と監視記録を取得
-    R->>G: SELECT rapid_crosscheck_requests JOIN comparison_results / SELECT monitor_records
+    R->>G: SELECT rapid_crosscheck_requests / SELECT monitor_records
     G->>DB: SQL
     alt DB 接続失敗
       P-->>Sched: stderr error: management db connection failed conn_ref=..., 終了コード 6(成果物側の判定は行ったうえで 6)
@@ -106,7 +104,7 @@ sequenceDiagram
       D-->>U: HANG_SUSPECTED
     end
     alt 速報比較依頼(off 以外のみ)
-      D-->>U: FAILED または comparison_results.status ∈ {NG, FAILED} → COMPARE_ERROR / RUNNING かつ elapsed > limit → HANG_SUSPECTED / それ以外 → MONITORING / SUCCEEDED かつ OK → COMPLETED / ABORTED → COMPLETED(中止済み)
+      D-->>U: 依頼 FAILED → COMPARE_ERROR / RUNNING かつ elapsed > limit → HANG_SUSPECTED / それ以外 → MONITORING / SUCCEEDED → COMPLETED / ABORTED → COMPLETED(中止済み)
     end
     U->>LOG: INFO judged run_id=... role=... judgement=... elapsed_minutes=... limit_minutes=...
     U->>U: UC「ハング疑い・実行エラー・比較異常を通知する」へ(EXEC_ERROR / HANG_SUSPECTED / COMPARE_ERROR)
@@ -124,10 +122,10 @@ sequenceDiagram
 | ハング検知判定結果 | 監視中 | hang_judgement=MONITORING。exitcode.txt も aborted.txt もなし・経過時間 ≤ 上限。通知しない | tier-ops | `judge_background_role` |
 | ハング検知判定結果 | ハング疑い | hang_judgement=HANG_SUSPECTED。exitcode.txt も aborted.txt もなし・経過時間 > 上限。warning 通知へ | tier-ops | `judge_background_role` |
 | ハング検知判定結果 | 実行エラー | hang_judgement=EXEC_ERROR。exitcode.txt 非 0。error 通知へ | tier-ops | `judge_background_role` |
-| ハング検知判定結果 | 比較異常 | hang_judgement=COMPARE_ERROR。速報比較依頼の FAILED / 比較 NG(下記「速報クロスチェック監視判定」) | tier-ops | `judge_rapid_request` |
-| 速報クロスチェック監視判定 | 速報クロスチェック異常(FAILED / 比較 NG) | hang_judgement=COMPARE_ERROR。依頼 FAILED または comparison_results.status ∈ {NG, FAILED}。error 通知へ | tier-ops | `judge_rapid_request` |
+| ハング検知判定結果 | 比較異常 | hang_judgement=COMPARE_ERROR。速報比較依頼の status=FAILED(下記「速報クロスチェック監視判定」) | tier-ops | `judge_rapid_request` |
+| 速報クロスチェック監視判定 | 速報クロスチェック異常(依頼 FAILED) | hang_judgement=COMPARE_ERROR。依頼 status=FAILED(比較 NG(exit_code=3)・実行エラー(exit_code=6)・起動失敗を含む)。error 通知へ | tier-ops | `judge_rapid_request` |
 | 速報クロスチェック監視判定 | ハング疑い(RUNNING 継続) | hang_judgement=HANG_SUSPECTED。依頼 RUNNING かつ経過時間 > 上限。warning 通知へ。状態は変更しない | tier-ops | `judge_rapid_request` |
-| 速報クロスチェック監視判定 | 正常 | 依頼 SUCCEEDED かつ比較結果 OK(COMPLETED)、依頼 ABORTED(中止済み → COMPLETED)、または REQUESTED / CLAIMED / RUNNING で上限以内(MONITORING) | tier-ops | `judge_rapid_request` |
+| 速報クロスチェック監視判定 | 正常 | 依頼 SUCCEEDED(COMPLETED)、依頼 ABORTED(中止済み → COMPLETED)、または REQUESTED / CLAIMED / RUNNING で上限以内(MONITORING) | tier-ops | `judge_rapid_request` |
 | ハング検知上限設定 | 60 分(導入時既定) | execution-spec.json の `slots.<role>.hang_detect_limit_minutes` を使う(速報比較依頼は hang-detector.env の RAPID_HANG_DETECT_LIMIT_MINUTES) | tier-ops | `judge_background_role` / `judge_rapid_request` |
 | ハング検知上限設定 | ジョブごとの調整値 | 同上(run 開始時に確定した値。以後のジョブマップ変更は反映しない) | tier-ops | `judge_background_role` |
 | ハング検知上限設定 | 0(検知対象外) | 監視対象外 | tier-ops | `is_target` |
@@ -151,7 +149,7 @@ sequenceDiagram
 | ハング検知判定 | 導出状態 SUCCEEDED(exitcode.txt=0)→ COMPLETED(正常終了)/ FAILED(exitcode.txt 非 0)→ EXEC_ERROR / ABORTED(exitcode.txt なし・aborted.txt あり)→ COMPLETED(中止済み。通知しない)/ RUNNING かつ elapsed ≤ limit → MONITORING / RUNNING かつ elapsed > limit → HANG_SUSPECTED。elapsed = floor((now - started-at.txt) / 60 分) | tier-ops | `judge_background_role`(domain) | 上限超過をハング疑いと判定する / 非 0 終了を実行エラーと判定する / 0 終了は通知対象外 / aborted.txt がある slot 実行は中止済みとして終端する(SPEC-010-01) |
 | ハング検知対象の除外 | execution-spec.json の role の mode が foreground、または hang_detect_limit_minutes が 0 なら NOT_TARGET(監視対象外 → NOT_MONITORED) | tier-ops | `is_target`(domain) | foreground と limit 0 は監視対象外 |
 | execution-spec.json 欠落 | started-at.txt があるのに execution-spec.json が無い run は契約違反状態(execution-spec.json は実装実行前に一度だけ書かれる)。job_id / mode の出所が無いため判定せず、stderr に `warn: execution-spec missing run_id=...` を出して飛ばす(監視記録も作らない。終了コードは 0 のまま) | tier-ops | `ArtifactScanRepository` | execution-spec.json が無い run は判定対象外にする |
-| 速報比較依頼の異常判定 | 依頼 FAILED または comparison_results.status ∈ {NG, FAILED} → COMPARE_ERROR / RUNNING かつ elapsed(started_at 起点)> RAPID_HANG_DETECT_LIMIT_MINUTES(hang-detector.env。既定 60)→ HANG_SUSPECTED(状態は変更しない)/ SUCCEEDED かつ OK → COMPLETED / ABORTED(未終端の監視記録がある依頼のみ走査。abort-rapid-crosscheck による中止と、abort-blue / abort-green による未着手依頼(REQUESTED)の中止を含む)→ COMPLETED(中止済み)/ REQUESTED・CLAIMED・上限以内の RUNNING → MONITORING | tier-ops | `judge_rapid_request`(domain) | FAILED の速報比較依頼を比較異常と判定する / ハング疑い通知後に中止された速報比較依頼を終端する |
+| 速報比較依頼の異常判定 | 依頼 status=FAILED → COMPARE_ERROR / RUNNING かつ elapsed(started_at 起点)> RAPID_HANG_DETECT_LIMIT_MINUTES(hang-detector.env。既定 60)→ HANG_SUSPECTED(状態は変更しない)/ SUCCEEDED → COMPLETED / ABORTED(未終端の監視記録がある依頼のみ走査。abort-rapid-crosscheck による中止と、abort-blue / abort-green による未着手依頼(REQUESTED)の中止を含む)→ COMPLETED(中止済み)/ REQUESTED・CLAIMED・上限以内の RUNNING → MONITORING。判定は依頼の status と exit_code だけで行い、別テーブルを結合しない | tier-ops | `judge_rapid_request`(domain) | FAILED の速報比較依頼を比較異常と判定する / ハング疑い通知後に中止された速報比較依頼を終端する |
 | 速報クロスチェック有効判定 | RAPID_CROSSCHECK_MODE=off なら管理 DB に接続せず、成果物ディレクトリだけを走査する。foreground / background(off 以外)なら管理 DB の依頼・監視記録も走査する | tier-ops | `ScanAndJudgeCommand` / `ArtifactScanRepository` | off では管理 DB なしで成果物だけを走査する |
 | 成果物公開判定 | 確定名の exitcode.txt / aborted.txt が存在するときだけ「あり」とみなす。`exitcode.txt.tmp` / `aborted.txt.tmp` は無視する | tier-ops | ファイルシステム走査アダプタ | 上限超過をハング疑いと判定する(`.tmp` は無視) |
 
@@ -173,9 +171,9 @@ sequenceDiagram
 |-----------|--------|--------|---------|---------|---------|----------|
 | 監視状態 | `[*]` | 監視対象外(NOT_MONITORED) | 定期ジョブが監視記録を作成 | role の mode が foreground、または hang_detect_limit_minutes=0 | 通知しない。UC「監視記録を保存する」で記録 | tier-ops |
 | 監視状態 | `[*]` | 監視中(MONITORING) | 定期ジョブが監視記録を作成 | background slot または速報比較依頼で limit > 0、exitcode.txt 未出力かつ elapsed ≤ limit | 通知しない。記録 | tier-ops |
-| 監視状態 | `[*]` | 正常終了(COMPLETED) | 定期ジョブが監視記録を作成 | 初回判定時に既に exitcode.txt=0、または exitcode.txt が無く aborted.txt がある(依頼は SUCCEEDED かつ OK / ABORTED)。契約 monitor_status_transitions の「(初回判定)→ COMPLETED」 | 通知しない。COMPLETED の監視記録を UPSERT(状態.tsv「監視状態」に無い遷移。rdra-feedback 候補) | tier-ops |
-| 監視状態 | 監視中(MONITORING) | 正常終了(COMPLETED) | 定期ジョブの判定 | exitcode.txt=0(依頼は SUCCEEDED かつ OK)、または中止済み(exitcode.txt が無く aborted.txt がある / 依頼 ABORTED) | 通知しない。記録 | tier-ops |
-| 監視状態 | ハング疑い通知済み(HANG_SUSPECTED_NOTIFIED) | 正常終了(COMPLETED) | 定期ジョブの判定 | 通知後に exitcode.txt=0(通知後正常終了。依頼は通知後に SUCCEEDED かつ OK)、または通知後に中止済み(aborted.txt / 依頼 ABORTED) | 警告時の経過時間(elapsed_minutes_at_alert)を残したまま COMPLETED にする | tier-ops |
+| 監視状態 | `[*]` | 正常終了(COMPLETED) | 定期ジョブが監視記録を作成 | 初回判定時に既に exitcode.txt=0、または exitcode.txt が無く aborted.txt がある(依頼は SUCCEEDED / ABORTED)。契約 monitor_status_transitions の「(初回判定)→ COMPLETED」 | 通知しない。COMPLETED の監視記録を UPSERT(状態.tsv「監視状態」に無い遷移。rdra-feedback 候補) | tier-ops |
+| 監視状態 | 監視中(MONITORING) | 正常終了(COMPLETED) | 定期ジョブの判定 | exitcode.txt=0(依頼は SUCCEEDED)、または中止済み(exitcode.txt が無く aborted.txt がある / 依頼 ABORTED) | 通知しない。記録 | tier-ops |
+| 監視状態 | ハング疑い通知済み(HANG_SUSPECTED_NOTIFIED) | 正常終了(COMPLETED) | 定期ジョブの判定 | 通知後に exitcode.txt=0(通知後正常終了。依頼は通知後に SUCCEEDED)、または通知後に中止済み(aborted.txt / 依頼 ABORTED) | 警告時の経過時間(elapsed_minutes_at_alert)を残したまま COMPLETED にする | tier-ops |
 
 - ハング疑い通知後(HANG_SUSPECTED_NOTIFIED)の対象は終端ではなく、次回以降の定期ジョブで引き続き走査・再判定する。中止済み(aborted.txt / 依頼 ABORTED)を正常終了(COMPLETED)で終端する遷移と、通知後正常終了(HANG_SUSPECTED_NOTIFIED → COMPLETED)は状態.tsv「監視状態」に定義された遷移である(監視記録を終端にして hang-detect-trend.sh の run_count に永続的に数えない)
 - (監視中 → ハング疑い通知済み / 実行エラー通知済み / 比較異常通知済み、ハング疑い通知済み → 実行エラー通知済み / 比較異常通知済み は UC「ハング疑い・実行エラー・比較異常を通知する」に記載)
@@ -191,8 +189,7 @@ sequenceDiagram
 | 情報 | Runner Result | started-at.txt / exitcode.txt / aborted.txt(中止時のみ) |
 | 情報 | 実行設定(execution-spec) | `slots.<role>.mode` と `slots.<role>.hang_detect_limit_minutes` |
 | 情報 | ハング検知上限設定 | 上限値 |
-| 情報 | 速報比較依頼(rapid_crosscheck_request) | 監視対象(off 以外)。ABORTED(abort-blue / abort-green による未着手依頼の中止を含む)は中止済み終端 |
-| 情報 | 比較結果(comparison_result) | NG / FAILED の判定入力(off 以外) |
+| 情報 | 速報比較依頼(rapid_crosscheck_request) | 監視対象(off 以外)。status=FAILED は比較異常、ABORTED(abort-blue / abort-green による未着手依頼の中止を含む)は中止済み終端 |
 | 情報 | feature flag 設定 | RAPID_CROSSCHECK_MODE(foreground / background / off)の読み取り |
 | 情報 | ハング検知定期ジョブ設定 | hang-detector.env。管理 DB 接続参照名 HANG_DB_CONN_REF(off 以外で使用)と運用チューニング値の出所 |
 | 情報 | 監視記録 | 現在の monitor_status の読み取り |
@@ -209,7 +206,7 @@ sequenceDiagram
 | 条件 | slot 実行の状態導出規則 | exitcode.txt / aborted.txt からの状態導出 |
 | 条件 | ハング検知判定 | 判定表(aborted.txt がある対象は中止済みとして終端) |
 | 条件 | ハング検知対象の除外 | foreground / limit 0 |
-| 条件 | 速報比較依頼の異常判定 | 依頼状態 × 比較結果 |
+| 条件 | 速報比較依頼の異常判定 | 依頼の status / exit_code(別テーブルを結合しない) |
 | 条件 | 速報クロスチェック有効判定 | off では DB に触れない |
 | 条件 | 成果物公開判定 | 確定名のみを読む |
 | 画面 | hang-detect 判定出力(→ CLI 出力) | `--verbose` 時の `info: judged ...` と実行ログ |
@@ -299,13 +296,13 @@ Feature: background 実行の経過時間と終了状態を判定する
 
   Scenario: FAILED の速報比較依頼を比較異常と判定する(SPEC-008-02)
     Given RAPID_CROSSCHECK_MODE=background である
-    And rapid_crosscheck_requests に run_id=20260830T113000-JOB001-3f9a1c2e job_id=JOB001 status=FAILED exit_code=3 の行があり comparison_results に status=NG の行がある
+    And rapid_crosscheck_requests に run_id=20260830T113000-JOB001-3f9a1c2e job_id=JOB001 status=FAILED exit_code=3 の行がある
     When hang-detector.sh を起動する
     Then run_id=20260830T113000-JOB001-3f9a1c2e role=rapid-crosscheck の判定は COMPARE_ERROR である
 
   Scenario: ハング疑い通知後の速報比較依頼も再判定する(SPEC-008-02)
     Given RAPID_CROSSCHECK_MODE=background で monitor_records に run_id=20260830T113000-JOB001-3f9a1c2e role=rapid-crosscheck monitor_status=HANG_SUSPECTED_NOTIFIED の行がある
-    And rapid_crosscheck_requests の該当行が status=FAILED exit_code=3 になり comparison_results に status=NG の行がある
+    And rapid_crosscheck_requests の該当行が status=FAILED exit_code=3 になっている
     When hang-detector.sh を起動する
     Then 該当依頼は走査対象に含まれ、role=rapid-crosscheck の判定は COMPARE_ERROR である
 

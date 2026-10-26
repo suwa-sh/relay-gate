@@ -144,7 +144,7 @@ Feature: 保存済みの確報結果をジョブスケジューラへ返す
   Scenario: exit_code=0 の SUCCEEDED をそのまま返す
     Given final-crosscheck.env に FINAL_POLL_INTERVAL_SEC=1 がある
     And 別プロセスが 3 秒後に、runner が登録した最新の依頼を status=SUCCEEDED exit_code=0 stdout="all 42 targets matched\n" stderr="" completed_at=now に更新する
-    When final-crosscheck-runner.sh --business-date 2026-08-30 --catalog-version v3 を実行する
+    When final-crosscheck-runner.sh を業務上の引数なしで実行する
     Then 標準出力は "all 42 targets matched\n" と完全一致する
     And 標準エラーは 0 バイトである
     And 終了コードは 0 である
@@ -152,7 +152,7 @@ Feature: 保存済みの確報結果をジョブスケジューラへ返す
   Scenario: exit_code=3 の FAILED をそのまま返す(SPEC-006-03)
     Given final-crosscheck.env に FINAL_POLL_INTERVAL_SEC=1 がある
     And 別プロセスが 3 秒後に、runner が登録した最新の依頼を status=FAILED exit_code=3 stdout="diff found: 12 rows\n" stderr="warn: table T_ORDER differs\n" に更新する
-    When final-crosscheck-runner.sh --business-date 2026-08-30 --catalog-version v3 を実行する
+    When final-crosscheck-runner.sh を業務上の引数なしで実行する
     Then 標準出力は "diff found: 12 rows\n" と完全一致し、"FAILED" "difference_count" "report_uri" "final_crosscheck_id" の文字列を含まない
     And 標準エラーは "warn: table T_ORDER differs\n" と完全一致する
     And 終了コードは 3 である
@@ -166,7 +166,7 @@ ABORTED の依頼は `abort-final-crosscheck.sh` が状態だけを更新し、w
   Scenario: ABORTED で exit_code が NULL のとき終了コード 6 を返す
     Given final-crosscheck.env に FINAL_POLL_INTERVAL_SEC=1 がある
     And 別プロセスが 3 秒後に、runner が登録した最新の依頼を status=ABORTED(exit_code / stdout / stderr は NULL のまま)に更新する
-    When final-crosscheck-runner.sh --business-date 2026-08-30 --catalog-version v3 を実行する
+    When final-crosscheck-runner.sh を業務上の引数なしで実行する
     Then 標準出力は 0 バイトである
     And 標準エラーは 0 バイトである
     And 終了コードは 6 で、実行ログに "WARN relay without stored exit_code final_crosscheck_id=<id> status=ABORTED" が残る(<id> は実行ログの "request registered" 行の final_crosscheck_id と一致する)

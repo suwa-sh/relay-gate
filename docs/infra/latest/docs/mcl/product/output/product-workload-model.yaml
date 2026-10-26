@@ -117,7 +117,7 @@ elements:
   - id: "product.database.management_db"
     name: "管理 DB(ジョブキュー兼管理 DB)"
     category: "database"
-    description: "リレーショナル・強整合性の単一インスタンス DB。速報側(並行稼働実行 / slot 実行 / 速報比較依頼 / 比較結果)と確報側(確報比較依頼)のテーブルを分離し、worker の poll / claim / lease によるジョブキューとして使う。速報比較依頼の状態遷移(worker の CLAIMED → RUNNING、abort-rapid-crosscheck による REQUESTED / CLAIMED / RUNNING → ABORTED、abort-blue / abort-green による REQUESTED → ABORTED)は WHERE 句で現在状態を条件にした条件付き UPDATE で行い、更新件数で競合を判定する"
+    description: "リレーショナル・強整合性の単一インスタンス DB。速報側(並行稼働実行 / slot 実行 / 速報比較依頼)と確報側(確報比較依頼)のテーブルを分離し、worker の poll / claim / lease によるジョブキューとして使う。速報比較依頼の状態遷移(worker の CLAIMED → RUNNING、abort-rapid-crosscheck による REQUESTED / CLAIMED / RUNNING → ABORTED、abort-blue / abort-green による REQUESTED → ABORTED)は WHERE 句で現在状態を条件にした条件付き UPDATE で行い、更新件数で競合を判定する"
     requirements:
       - id: "REQ-DB-001"
         description: "行ロック付きトランザクションで claim / lease の排他を実現できる"
@@ -177,7 +177,7 @@ elements:
   - id: "product.storage.config_store"
     name: "設定ファイル配置"
     category: "storage"
-    description: "feature flag(env 形式。BLUE_MODE / GREEN_MODE / RAPID_CROSSCHECK_MODE / BLUE_IMPL / GREEN_IMPL / BLUE_RUNNER / GREEN_RUNNER / RAPID_CROSSCHECK_RUNNER / RAPID_CROSSCHECK_WORKER の 9 キー)/ ジョブマップ・クロスチェックジョブマップ・対象カタログ(CSV 形式。1 行目ヘッダー、セルは二重引用符で囲み内部の二重引用符は二重化)/ ハング検知定期ジョブ設定(env 形式。ALERT_MAIL_TO / ALERT_MAIL_CMD / ALERT_SUBJECT_PREFIX / HANG_DB_CONN_REF)/ 速報クロスチェック設定(env 形式 rapid-crosscheck.env。RAPID_DB_CONN_REF / RAPID_LEASE_SEC / RAPID_POLL_INTERVAL_SEC。速報有効時のみ)/ 適用文書を配置する領域。設定版は持たず、マップ版はジョブマップ側の任意列。適用側が版管理して配置する"
+    description: "feature flag(env 形式。BLUE_MODE / GREEN_MODE / RAPID_CROSSCHECK_MODE / BLUE_IMPL / GREEN_IMPL / BLUE_RUNNER / GREEN_RUNNER / RAPID_CROSSCHECK_RUNNER / RAPID_CROSSCHECK_WORKER の 9 キー)/ ジョブマップ(CSV 形式 <role>-job-map.csv。1 行目ヘッダー、セルは二重引用符で囲み内部の二重引用符は二重化)/ ハング検知定期ジョブ設定(env 形式。ALERT_MAIL_TO / ALERT_MAIL_CMD / ALERT_SUBJECT_PREFIX / HANG_DB_CONN_REF)/ 速報クロスチェック設定(env 形式 rapid-crosscheck.env。RAPID_DB_CONN_REF / RAPID_LEASE_SEC / RAPID_POLL_INTERVAL_SEC と速報比較ツールの起動コマンド 1 行。速報有効時のみ)/ 確報クロスチェック worker 設定(env 形式 final-crosscheck.env。確報 worker の DB 接続参照と確報比較ツールの起動コマンド 1 行)/ 適用文書を配置する領域。比較対象の定義は比較ツール側が持ち、ジョブ ID ごとの比較定義 CSV・対象カタログは持たない。設定版は持たず、マップ版はジョブマップ側の任意列。適用側が版管理して配置する"
     requirements:
       - id: "REQ-CFG-001"
         description: "facade が起動のたびに読み込め、変更が次回起動から反映される"

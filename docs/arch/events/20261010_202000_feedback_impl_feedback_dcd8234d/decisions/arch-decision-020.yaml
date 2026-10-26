@@ -1,0 +1,44 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "architecture"
+artifact_id: "arch-decision-020"
+title: "クロスチェック簡素化に追従し、arch から廃止構造(クロスチェックジョブマップ・対象カタログ・比較結果レコード・成果物 URI の受け渡し・確報の business_date / カタログ版)への言及を除去する"
+status: "approved"
+generated_at: "2026-10-10T20:20:00Z"
+context: |
+  前段の要求仕様(requirements)と非機能要求(NFR)が、クロスチェックを元の方針資料の構成へ戻す簡素化を反映した
+  (2026-10-10)。比較定義は速報・確報の比較ツール起動コマンド各 1 行だけになり、比較対象とジョブ ID ごとの比較内容は比較ツール側
+  (適用側)が持つ。worker は依頼レコードの値(job_id / parameters / blue_exit_code / green_exit_code)で起動コマンドの {job_id} を
+  置換して起動し、stdout / stderr / exit_code を依頼レコードの列へ保存する(別レコード・ファイルに保存しない)。完了通知は
+  run_id / job_id / exit_code だけを渡す。確報は業務上の引数なしで登録する。
+  これに伴い RDRA から情報「クロスチェックジョブマップ」「対象カタログ」「比較結果(comparison_result)」、バリエーション「比較種別」
+  「対象カタログの対象種別」「比較結果ステータス」、条件「比較結果の登録条件」が削除された。アーキテクチャ設計の latest は
+  これらの廃止要素を各セクション(technology_context / domain_architecture / system_architecture / app_architecture /
+  data_architecture)でまだ参照していた。方針資料(tmp/RelayGateのしくみ.md 42 / 261 / 595〜625 行、
+  tmp/RelayGateの利用イメージ.md 326 行)とも一致する簡素化である。
+decision: |
+  - data_architecture: エンティティ E-007(クロスチェックジョブマップ)/ E-008(対象カタログ)/ E-018(比較結果(comparison_result))を
+    削除する。E-006(比較定義)を「比較ツール起動コマンド 1 行」に簡素化し、E-015(完了通知)から artifact_uri を、E-016(速報実行)から
+    blue/green_artifact_uri を外す。E-017(速報比較依頼)に parameters / blue_exit_code / green_exit_code を加え、comparison_result への
+    関係を外す。E-019(確報比較依頼)から business_date / catalog_version と対象カタログへの関係を外す。E-020(比較ツール実行結果)は
+    依頼レコードの列に保存する旨を明記し、crosscheck_type の表記を「クロスチェック種別」に改める。E-027(速報クロスチェック設定)に
+    速報の比較ツール起動コマンド(1 行。{job_id} 必須)を加える。storage_mapping からも E-007 / E-008 / E-018 を外す
+  - domain_architecture: BC-002 の owned_entity から E-018、BC-005 の owned_entity から E-007 / E-008 を外す。BC-003・BC-005 の
+    ユビキタス言語と、CM-007 / CM-008 の翻訳記述、AG-002 / AG-003 の不変条件を簡素化後の表現(起動コマンド・業務上の引数なし・終了コード)
+    に合わせる
+  - system_architecture: 速報・確報・データストアの各ティアの説明・technology_candidates・ポリシー(SP-009 / SP-011 / SP-012 / SP-013 /
+    SP-015 / SP-023 / SP-025)・ルール(SR-003 / SR-004)から廃止要素への言及を外し、比較ツール起動コマンドを速報クロスチェック設定・
+    確報クロスチェック worker 設定が持つ構成へ合わせる
+  - app_architecture: 速報・確報ティアのレイヤー責務・ポリシー(LP-008 / LP-011 / LP-023 / LP-024)・図から comparison_result 登録・
+    クロスチェックジョブマップ・対象カタログ・成果物 URI・business_date への言及を外す
+  - technology_context: 設定契約の列挙から「クロスチェックジョブマップ」を外し、速報クロスチェック設定・確報クロスチェック worker 設定を加える
+  - グレード値・ティア構成・レイヤリング・依存ルールの骨格は変えない。廃止要素の言及除去と属性・説明の追従に限る
+consequences:
+  positive:
+    - "arch latest が簡素化後の要求・RDRA・NFR と一致し、下流の infra / spec が廃止構造を引き継がない"
+    - "比較対象の定義を比較ツール側へ寄せ、relay-gate は起動コマンド 1 行だけを設定として持つ元の方針資料の構成に戻る"
+  negative:
+    - "比較結果の差分件数・レポート URI を管理 DB の構造化レコードとして持たなくなり、原因調査は依頼レコードの stdout / stderr / exit_code を run_id で参照する運用になる(方針資料どおり)"
+alternatives_considered:
+  - name: "arch を変えず spec の注記だけで吸収する"
+    reason_rejected: "arch が廃止エンティティ(E-007 / E-008 / E-018)と対象カタログ・成果物 URI の受け渡しを参照したままでは、データアーキテクチャのクロスリファレンスが成立せず(validator の owned_entity_ids 整合でエラー)、下流も不整合を引き継ぐ。最上流の要求で削除された構造は arch からも除去する"

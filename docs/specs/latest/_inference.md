@@ -64,7 +64,7 @@ BUC.tsv から抽出。UC 数 **32**、BUC 数 **7**、業務数 **5**。
         ├── feature flag を設定する                           [基盤適用設計者] 画面: feature flag 設定検証出力
         ├── slot runner の実体スクリプトを割り当てる          [基盤適用設計者] 画面: slot runner 割当検証出力
         ├── slot ごとのジョブマップを定義する                 [基盤適用設計者] 画面: slot ジョブマップ検証出力
-        └── クロスチェックのジョブマップと比較定義を定義する  [基盤適用設計者] 画面: クロスチェックジョブマップ検証出力
+        └── クロスチェックのジョブマップと比較定義を定義する  [基盤適用設計者] 画面: 速報クロスチェック設定検証出力
 ```
 
 - RDRA の「画面」は UI 画面ではなく **CLI の出力(stdout / stderr / 終了コード)** を表す(`interface_kind: cli`、条件「CLI とメールによる提示」)
@@ -97,11 +97,11 @@ BUC.tsv から抽出。UC 数 **32**、BUC 数 **7**、業務数 **5**。
 | 4 | execution-spec.json を確定保存する | tier-facade | slot runner の repository(一度きり保存) |
 | 5 | 実装スクリプトを実行して Runner Result を出力する | tier-facade | slot runner の SSH gateway + Runner Result 公開 |
 | 6 | foreground slot の結果をジョブスケジューラへ中継する | tier-facade | facade presentation の無加工中継 |
-| 7 | 速報比較結果を参照する | tier-rapid-crosscheck | comparison_result / 依頼レコードの参照 CLI |
+| 7 | 速報比較結果を参照する | tier-rapid-crosscheck | 依頼レコードの stdout / stderr / exit_code の参照 CLI |
 | 8 | 速報クロスチェック runner へ完了通知を送信する | tier-facade, tier-rapid-crosscheck | 送信側は slot runner(gateway)、受信側は rapid runner の公開 function |
 | 9 | 両系成功時に速報比較依頼を作成する | tier-rapid-crosscheck | dispatcher の両系成功判定 + 一意作成 |
 | 10 | 速報比較依頼を claim する | tier-rapid-crosscheck | worker の poll / claim / lease |
-| 11 | 比較ツールでジョブ単位比較を実行して結果を登録する | tier-rapid-crosscheck | worker の比較実行 + comparison_result 登録 |
+| 11 | 比較ツールでジョブ単位比較を実行して結果を登録する | tier-rapid-crosscheck | worker の比較実行(起動コマンド置換)+ 依頼レコードへの stdout / stderr / exit_code 保存 |
 | 12 | 確報クロスチェック結果を確認する | tier-final-crosscheck | 確報 runner 応答の契約を運用者が読む |
 | 13 | 確報比較依頼を登録して終端状態まで待機する | tier-final-crosscheck | final runner の登録 + 同期 polling |
 | 14 | 確報比較依頼を claim する | tier-final-crosscheck | final worker の poll / claim / lease |
@@ -122,14 +122,14 @@ BUC.tsv から抽出。UC 数 **32**、BUC 数 **7**、業務数 **5**。
 | 29 | feature flag を設定する | tier-facade | feature flag 設定ファイルの契約と検証 |
 | 30 | slot runner の実体スクリプトを割り当てる | tier-facade | BLUE_RUNNER / GREEN_RUNNER の契約と runner IF |
 | 31 | slot ごとのジョブマップを定義する | tier-facade | slot ジョブマップファイルの契約と検証 |
-| 32 | クロスチェックのジョブマップと比較定義を定義する | tier-rapid-crosscheck, tier-final-crosscheck | 比較定義(速報)と対象カタログ(確報)の設定契約 |
+| 32 | クロスチェックのジョブマップと比較定義を定義する | tier-facade | 速報の比較ツール起動コマンド 1 行(rapid-crosscheck.env の RAPID_COMPARE_COMMAND)の設定と validate-config.sh --rapid-crosscheck 検証(facade 単独。委譲なし) |
 
 ## Step3 の subagent グループ分割(4 グループ、単一メッセージで同時起動)
 
 | グループ | 担当 UC | UC 数 |
 |---|---|---|
 | G1 実装切替 + 適用構成 | #1〜#6, #28〜#31 | 10 |
-| G2 速報 + 比較定義 | #7〜#11, #32 | 6 |
+| G2 速報 + 起動コマンド設定 | #7〜#11, #32 | 6 |
 | G3 確報 + 監視 | #12〜#16, #17〜#20 | 9 |
 | G4 監視調整 + 復旧 | #21〜#27 | 7 |
 
@@ -141,16 +141,16 @@ HTTP API は存在しない(arch `technology_context.constraints`「HTTP API は
 |---|---|---|---|
 | `facade.sh JOB_ID [PARAM...]` | tier-facade | ジョブスケジューラ(業務ジョブ) | JOB_ID, PARAM... |
 | `$BLUE_RUNNER` / `$GREEN_RUNNER`(runner IF) | tier-facade | facade.sh / background-rerun | run_id, job_id, role, PARAM... / `--execution-spec <path>` |
-| `rapid-crosscheck-runner.sh blue-completed|green-completed` | tier-rapid-crosscheck | slot runner | run_id, job_id, exit_code, artifact_uri |
+| `rapid-crosscheck-runner.sh blue-completed|green-completed` | tier-rapid-crosscheck | slot runner | run_id, job_id, exit_code |
 | `rapid-crosscheck-worker.sh [--once]` | tier-rapid-crosscheck | ジョブスケジューラ / 常駐 | worker_id |
 | `rapid-crosscheck-result.sh --run-id` | tier-rapid-crosscheck | 運用者 | run_id |
-| `final-crosscheck-runner.sh --business-date --catalog-version` | tier-final-crosscheck | ジョブスケジューラ(確報ジョブ) | business_date, catalog_version |
+| `final-crosscheck-runner.sh` | tier-final-crosscheck | ジョブスケジューラ(確報ジョブ) | なし(引数なしで起動) |
 | `final-crosscheck-worker.sh [--once]` | tier-final-crosscheck | ジョブスケジューラ / 常駐(DB セグメント) | worker_id |
 | `hang-detector.sh` | tier-ops | ジョブスケジューラ(定期ジョブ 5 分ごと) | なし |
 | `background-rerun.sh --source-run-id --role` | tier-ops | ジョブスケジューラ(専用ジョブ) | source_run_id, role |
 | `abort-blue.sh|abort-green.sh|abort-rapid-crosscheck.sh|abort-final-crosscheck.sh --run-id` | tier-ops | 運用者(直接起動) | run_id, 対話応答 yes/no |
 | `run-lineage.sh --run-id` | tier-ops | 運用者 | run_id |
-| `validate-config.sh`(feature flag / ジョブマップ / クロスチェックジョブマップの検証) | tier-facade / rapid / final | 基盤適用設計者 | 設定ファイルパス |
+| `validate-config.sh`(feature flag / slot ジョブマップ / 速報・確報の比較ツール起動コマンド設定の検証) | tier-facade | 基盤適用設計者 | 設定ファイルパス |
 
 ## 非同期イベント
 
@@ -242,6 +242,8 @@ UI 画面が無いため可視化は「出力の集計・表形式」に限る�
 **推奨理由**: low — arch storage_mapping E-001「env 形式」は high だが、ジョブマップの形式は arch に「JOB_ID の行」以上の記述が無い。保守的に bash 単独で扱える TSV を仮採用(todo 登録)
 
 > 2026-09-05 利用者決定で解消(feedback 20260905_todo_resolution): feature flag は元資料の 9 キー(`CONFIG_VERSION` 削除。`RAPID_CROSSCHECK_MODE` は foreground / background / off)、ジョブマップ・クロスチェックジョブマップ・対象カタログは **CSV**(`.csv`。ヘッダー名で列対応、`fixed_params` は二重引用符で囲んだ JSON 配列セル)に変更(D1 / D2)。env 形式の採用自体は維持
+
+> 2026-10-10 利用者決定で簡素化(クロスチェックを元の方針資料の構成へ戻す)。クロスチェックの比較定義は、ジョブ ID ごとの行構造を持つ CSV(crosscheck-job-map.csv)と対象カタログ(target-catalog.csv)を廃止し、**速報・確報の比較ツール起動コマンド各 1 行**に縮退した。速報は `rapid-crosscheck.env` の `RAPID_COMPARE_COMMAND`(プレースホルダ `{job_id}` 必須、`{run_id}` / `{params}` / `{blue_exit_code}` / `{green_exit_code}` 任意)、確報は `final-crosscheck.env` の `FINAL_COMPARE_COMMAND`(プレースホルダ無し)。比較対象の定義は適用側(比較ツール側)が持つ(方針資料 `tmp/RelayGateのしくみ.md` 42 行)。worker は DB の依頼レコードと自身の設定ファイルだけで起動し、成果物ファイル保存・比較結果レコード(comparison_results)・成果物 URI の受け渡しをしない。検証は validate-config.sh が facade 単独で行い(ティア間委譲なし。arch CTR-007)、残す検証はコマンド部分が絶対パスで実行可能・速報は `{job_id}` を含むの 2 点だけ(2026-10-27 の CR-dcd8234d-008 で、起動コマンドを引数の並びとして解釈・起動する共通規則 shared_rules.compare_command_argv を追加し、`{params}` の位置検査を足した。起動は argv 配列で行い文字列をシェルに解釈させない。詳細は下記 20261027 の差分更新履歴)
 
 ### 6: lease 期間・poll 間隔・polling 上限の既定値
 - **Option A** (⭐推奨): lease 10 分 / worker poll 30 秒 / final runner polling 60 秒 / polling 上限 8 時間(超過時は非 0 で終了し依頼は変更しない)。すべて設定で上書き可 — NFR B.2.2.1(8 時間)と B.2.1.2(〜10 TPS)に収まる保守値
@@ -422,3 +424,18 @@ UI 画面が無いため可視化は「出力の集計・表形式」に限る�
 | 3 | credential_ref の値の出力 | 診断行に一切出さない(value= を付けない) | 利用者の事前指定 |
 | 4 | 実行ログ `WARN duplicate job_id in job map ... lines=` | 同じ規則を適用 | 同じキー名の表記を 1 つの意味にそろえる(本イベントの帰結。確認推奨) |
 | 5 | warn して受理した credential_ref の保存 | execution-spec.json へそのまま転記(Option A) | 利用者決定「拒否しない」の帰結(確認推奨。第三者レビュー R-001) |
+
+## 差分更新履歴(event 20261027_055000_feedback_impl_feedback_dcd8234d)
+
+- 2026-10-27 05:50:00Z(event_id: `20261027_055000_feedback_impl_feedback_dcd8234d`)。2026-10-27 の実装フィードバック(CR-dcd8234d-008。direct 1 件 / causal 1 件。spec 直接所有の spec-gap。前イベント `20261010_204000_feedback_impl_feedback_dcd8234d` の続き)
+- direct_stage: spec。上流(RDRA / USDM / arch / nfr / infra)の変更は無く、SPEC-005-03 / SPEC-006-02 と RDRA は「設定 1 行の起動コマンドを依頼レコードの値で起動する」を定めるだけで引数の分け方・起動方式を持たないため文脈参照とする(trigger_event なし)
+- design 無しモード判定: 引数 `design_available=false`(最優先条件)。`docs/design/latest/` は読まない
+- dialogue_policy: auto_adopt。利用者が 2026-10-27 のレビューで案 A(比較ツールの起動コマンドを引数ごとに分けて起動する決まりを仕様に書く)を選択済み。確認推奨項目は下記のとおり(FAILED 時の文言・{params} 違反文言の決定)で ⭐推奨を採用して続行
+- 性質: 比較ツール起動コマンド(RAPID_COMPARE_COMMAND / FINAL_COMPARE_COMMAND)を引数の並び(argv)として解釈・起動する共通規則を CLI 契約 `shared_rules.compare_command_argv` に 1 か所新設し、速報/確報 worker と validate-config.sh から参照させた。設定読込時に空白区切りで引数に分割(シェル記法は非解釈)、置換は引数 1 つの中だけ、`{params}` は引数全体のときだけ JSON 配列を 1 項目 1 引数へ展開、起動は argv 配列(eval / bash -c / sh -c / 引用符なし展開を禁止)、速報は置換前に job_id / run_id / parameters を形式検査。UC ツリー・ティア構成・UC-ティアマッピング・RDRA 要素は不変(32 UC / 7 BUC / 5 業務)
+- usdm[] の Scenario 追加: 速報 worker UC「比較ツールでジョブ単位比較を実行して結果を登録する」SPEC-005-03 に 3 件(記号・空白・$(...) を含む値も 1 引数 / job_id 形式違反で FAILED / parameters 非 JSON で FAILED)、確報 worker UC「比較ツールで日次全量比較を実行して結果を保存する」SPEC-006-02 に 2 件(依頼レコードと設定以外を読まない(既存 spec.md の取り込み)/ argv 分割でシェル非解釈)、設定 UC「クロスチェックのジョブマップと比較定義を定義する」SPEC-004-04 に 2 件({params} 位置違反 / {params} 引数全体で valid)。あわせて速報・確報 UC の古い Scenario 名のドリフト(「… と OK を登録する」等)を現行 spec.md の名称へ是正
+- 決定した文言: 置換値の形式検査 NG = 依頼 FAILED / exit_code=6 / error_summary=`invalid request value: <field>`、stderr `error: compare request value is invalid run_id=... field=<job_id|run_id|parameters>`(既存の launch failed と同じ依頼状態・終了コードで文言だけ分ける)。`{params}` の位置違反 = validate-config.sh --rapid-crosscheck の `error: placeholder {params} must be a whole argument key=RAPID_COMPARE_COMMAND value=...`(終了コード 2)
+- 変更の正本: decisions/spec-decision-018.yaml。影響: cross-cutting(cli-command-contract.yaml の shared_rules / 速報・確報 worker の note / external_interfaces 2 件 / config_files 2 件 / validate-config.sh の stdout・violation・exit_code・option 説明、traceability-matrix.md)、UC 3 件(速報 worker spec.md + tier-rapid-crosscheck.md、確報 worker spec.md + tier-final-crosscheck.md、設定 UC spec.md + tier-facade.md)、各 UC の _api-summary.yaml、spec-event.yaml
+- 「置換後の文字列をコマンドとして起動する」という書き方を仕様から除去(grep 0 件を確認)
+- 方針資料との照合: `tmp/RelayGateのしくみ.md` は「設定 1 行の起動コマンドを依頼レコードの値で起動する」を定めるだけで、引数の分け方・起動方式(シェル解釈の可否)の記載は無い。本イベントの決定(argv 分割・シェル非解釈・置換前検査)は方針資料と矛盾せず、設定 1 行 + プレースホルダの形・プレースホルダ集合・既存検証 2 点を保つ
+- 解消した仮採用: なし。新規の仮採用(confidence: low)は作らない(docs/todo.md への登録なし)
+- `_inputs-digest.md` は前イベントのまま(arch / nfr latest に変更なし)

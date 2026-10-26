@@ -2,11 +2,11 @@
 
 | 項目 | 値 |
 |------|-----|
-| イベント ID | 20260907_124000_feedback_abort_consistency |
-| 作成日時 | 2026-09-07T12:40:00Z |
-| ソース | feedback request 20260907_abort_consistency(RDRA / NFR / arch 差分)に基づくインフラ設計の差分更新 |
-| Arch 参照 | 20260907_122000_feedback_abort_consistency |
-| NFR 参照 | 20260907_120000_feedback_abort_consistency |
+| イベント ID | 20261010_203000_feedback_impl_feedback_dcd8234d |
+| 作成日時 | 2026-10-10T20:30:00Z |
+| ソース | feedback request 20261010_104636_impl_feedback_dcd8234d(クロスチェック簡素化。RDRA / NFR / arch 差分)に基づくインフラ設計の差分更新 |
+| Arch 参照 | 20261010_202000_feedback_impl_feedback_dcd8234d |
+| NFR 参照 | 20261010_201000_feedback_impl_feedback_dcd8234d |
 
 ## 変換サマリ
 

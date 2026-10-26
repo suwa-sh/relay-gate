@@ -3,8 +3,8 @@
 ## 前提(これだけ知っていれば読める)
 
 - relay-gate は HTTP API を持たない。UC 間の連携は **CLI コマンド起動 / 内部データストアであるジョブキュー兼管理 DB(RDB)のテーブル / 完了通知(同期プロセス起動)/ ファイル契約(execution-spec.json・Runner Result(started-at.txt / stdout.log / stderr.log / exitcode.txt / aborted.txt(中止時のみ)))/ 設定ファイル(env・CSV)** の 5 種だけで成り立つ。管理 DB は外部システムではない(外部システムは 6 種: ジョブスケジューラ / 現行実装(blue) / 新実装(green) / 比較ツール / メール通知 / リモート実行ホスト(SSH))
-- 契約の正本は `api/cli-command-contract.yaml`(コマンド・設定ファイル・成果物レイアウト・環境変数)、`api/asyncapi.yaml`(RDB ジョブキュー・完了通知・通知メール)、`datastore/rdb-schema.yaml`(7 テーブル)の 3 ファイル
-- 設定ファイルは 7 種(feature-flag.env / blue-job-map.csv・green-job-map.csv(`<role>-job-map.csv`)/ crosscheck-job-map.csv / target-catalog.csv / rapid-crosscheck.env / hang-detector.env / final-crosscheck.env)。`rapid-crosscheck.env`(RDRA 情報「速報クロスチェック設定」。所有者は基盤適用設計者。定義元 UC は入力情報として紐づく UC-02 / UC-08 / UC-09 / UC-10 の 4 つ。`RAPID_DB_CONN_REF` / `RAPID_LEASE_SEC` / `RAPID_POLL_INTERVAL_SEC`)は管理 DB を使う全コマンド(facade.sh / slot runner を含む)が readers として宣言されている。`hang-detector.env`(RDRA 情報「ハング検知定期ジョブ設定」。所有者は基盤適用設計者。`ALERT_MAIL_TO` / `ALERT_MAIL_CMD` / `ALERT_SUBJECT_PREFIX` / `HANG_DB_CONN_REF` + 運用チューニング値)は hang-detector.sh だけが読み、定義元 UC は UC-18「background 実行の経過時間と終了状態を判定する」と UC-19「ハング疑い・実行エラー・比較異常を通知する」(契約 `config_files[hang-detector.env].defined_in_uc`)。slot ジョブマップの列は `job_id / host / user / work_dir / script / fixed_params / hang_detect_limit_minutes[, credential_ref][, map_version]`(ヘッダー名で対応付け。host / user は両方省略でローカル実行、credential_ref / map_version は末尾の任意列、実装版列は無い)
+- 契約の正本は `api/cli-command-contract.yaml`(コマンド・設定ファイル・成果物レイアウト・環境変数)、`api/asyncapi.yaml`(RDB ジョブキュー・完了通知・通知メール)、`datastore/rdb-schema.yaml`(6 テーブル)の 3 ファイル
+- 設定ファイルは 5 種(feature-flag.env / blue-job-map.csv・green-job-map.csv(`<role>-job-map.csv`)/ rapid-crosscheck.env / hang-detector.env / final-crosscheck.env)。`rapid-crosscheck.env`(RDRA 情報「速報クロスチェック設定」。所有者は基盤適用設計者。定義元 UC は入力情報として紐づく UC-02 / UC-08 / UC-09 / UC-10 の 4 つ。`RAPID_DB_CONN_REF` / `RAPID_LEASE_SEC` / `RAPID_POLL_INTERVAL_SEC` / `RAPID_COMPARE_COMMAND`(速報の比較ツール起動コマンド 1 行。{job_id} 必須))は管理 DB を使う全コマンド(facade.sh / slot runner を含む)が readers として宣言されている。`hang-detector.env`(RDRA 情報「ハング検知定期ジョブ設定」。所有者は基盤適用設計者。`ALERT_MAIL_TO` / `ALERT_MAIL_CMD` / `ALERT_SUBJECT_PREFIX` / `HANG_DB_CONN_REF` + 運用チューニング値)は hang-detector.sh だけが読み、定義元 UC は UC-18「background 実行の経過時間と終了状態を判定する」と UC-19「ハング疑い・実行エラー・比較異常を通知する」(契約 `config_files[hang-detector.env].defined_in_uc`)。slot ジョブマップの列は `job_id / host / user / work_dir / script / fixed_params / hang_detect_limit_minutes[, credential_ref][, map_version]`(ヘッダー名で対応付け。host / user は両方省略でローカル実行、credential_ref / map_version は末尾の任意列、実装版列は無い)
 - feature flag の値は slot runner が feature-flag.env を読んで得るのではなく、facade.sh / background-rerun.sh が環境変数で渡す(`RAPID_CROSSCHECK_MODE`、off 以外なら `RAPID_CROSSCHECK_RUNNER`(完了通知の送信先実体)、通常起動なら自 slot の `BLUE_IMPL` / `GREEN_IMPL`。契約 `commands[facade.sh].notes` / slot runner IF `environment`)。この経路は「UC-02 / UC-26 → UC-29(設定ファイル)」と「UC-03〜UC-05 / UC-08 → UC-02(runner IF 引数・環境変数)」の 2 段の依存として表す
 - 環境変数 `RELAY_GATE_NOW`(テスト専用の現在時刻注入。`environment_variables`)は UC-10 / UC-14 / UC-18 / UC-19 / UC-20 / UC-23 の BDD Given に現れるが、UC 間の依存ではない(全コマンド共通の横断規則。facade.sh / background-rerun.sh は runner に引き継ぐ)
 - 本ファイルは第 3 ラウンド(Step6.5 反証レビュー round-1 の修正: `_review/round-1-resolution-*.md` / `round-1-consolidation.md`)後の UC Spec / 契約に対して再検証済み。主な変更: validate-config.sh は tier-facade 単一定義(定義元 UC-29、他 4 UC は uses)/ rapid-crosscheck-runner.sh の定義元は UC-08(UC-09 は uses)/ runner IF の定義元は UC-30(UC-26 は uses)/ abort-* の `used_by_ucs` に UC-25 追加 / background-rerun.sh `--role rapid-crosscheck` は execution-spec.json を読まず rapid_crosscheck_requests を参照 / hang_judgement 6 値化と ABORTED の終端処理(当時は UC-18 が slot_executions を読んでいた。本イベントで aborted.txt 読みに変更。下記)
@@ -28,11 +28,11 @@
 | UC-08 | [速報クロスチェック runner へ完了通知を送信する](<../クロスチェック業務/速報クロスチェックフロー/速報クロスチェック runner へ完了通知を送信する/spec.md>) | クロスチェック業務 / 速報クロスチェックフロー | facade, rapid-crosscheck | rapid-crosscheck-runner.sh blue-completed / green-completed(defines。契約 `defined_in_uc` と一致)、slot-completed(publish 送信側 / subscribe 受信側) |
 | UC-09 | [両系成功時に速報比較依頼を作成する](<../クロスチェック業務/速報クロスチェックフロー/両系成功時に速報比較依頼を作成する/spec.md>) | クロスチェック業務 / 速報クロスチェックフロー | rapid-crosscheck | rapid-crosscheck-runner.sh(uses。両系成功判定・依頼 INSERT。stdout 3 行を追記) |
 | UC-10 | [速報比較依頼を claim する](<../クロスチェック業務/速報クロスチェックフロー/速報比較依頼を claim する/spec.md>) | クロスチェック業務 / 速報クロスチェックフロー | rapid-crosscheck | rapid-crosscheck-worker.sh(defines、claim)、rapid-crosscheck.env(defines) |
-| UC-11 | [比較ツールでジョブ単位比較を実行して結果を登録する](<../クロスチェック業務/速報クロスチェックフロー/比較ツールでジョブ単位比較を実行して結果を登録する/spec.md>) | クロスチェック業務 / 速報クロスチェックフロー | rapid-crosscheck | rapid-crosscheck-worker.sh(uses。比較実行・comparison_results。条件「比較結果の登録条件」。リラン由来(依頼だけ再作成)run の parallel_runs を依頼終端時に COMPLETED) |
+| UC-11 | [比較ツールでジョブ単位比較を実行して結果を登録する](<../クロスチェック業務/速報クロスチェックフロー/比較ツールでジョブ単位比較を実行して結果を登録する/spec.md>) | クロスチェック業務 / 速報クロスチェックフロー | rapid-crosscheck | rapid-crosscheck-worker.sh(uses。RAPID_COMPARE_COMMAND を依頼レコードの値で置換して比較実行し stdout / stderr / exit_code を依頼レコードへ保存。リラン由来(依頼だけ再作成)run の parallel_runs を依頼終端時に COMPLETED) |
 | UC-12 | [確報クロスチェック結果を確認する](<../クロスチェック業務/確報クロスチェックフロー/確報クロスチェック結果を確認する/spec.md>) | クロスチェック業務 / 確報クロスチェックフロー | final-crosscheck | final-crosscheck-runner.sh の応答契約(読む UC。uses) |
 | UC-13 | [確報比較依頼を登録して終端状態まで待機する](<../クロスチェック業務/確報クロスチェックフロー/確報比較依頼を登録して終端状態まで待機する/spec.md>) | クロスチェック業務 / 確報クロスチェックフロー | final-crosscheck | final-crosscheck-runner.sh(defines、登録 + polling)、final-crosscheck.env(defines。UC-14 と共同) |
 | UC-14 | [確報比較依頼を claim する](<../クロスチェック業務/確報クロスチェックフロー/確報比較依頼を claim する/spec.md>) | クロスチェック業務 / 確報クロスチェックフロー | final-crosscheck | final-crosscheck-worker.sh(defines、claim) |
-| UC-15 | [比較ツールで日次全量比較を実行して結果を保存する](<../クロスチェック業務/確報クロスチェックフロー/比較ツールで日次全量比較を実行して結果を保存する/spec.md>) | クロスチェック業務 / 確報クロスチェックフロー | final-crosscheck | final-crosscheck-worker.sh(uses。全量比較・依頼へ保存) |
+| UC-15 | [比較ツールで日次全量比較を実行して結果を保存する](<../クロスチェック業務/確報クロスチェックフロー/比較ツールで日次全量比較を実行して結果を保存する/spec.md>) | クロスチェック業務 / 確報クロスチェックフロー | final-crosscheck | final-crosscheck-worker.sh(uses。final-crosscheck.env の FINAL_COMPARE_COMMAND をそのまま起動して全量比較し stdout / stderr / exit_code を依頼へ保存)。確報の起動コマンド設定の検証(validate-config.sh --final-crosscheck)は tier-facade が担う |
 | UC-16 | [保存済みの確報結果をジョブスケジューラへ返す](<../クロスチェック業務/確報クロスチェックフロー/保存済みの確報結果をジョブスケジューラへ返す/spec.md>) | クロスチェック業務 / 確報クロスチェックフロー | final-crosscheck | final-crosscheck-runner.sh(uses。無加工中継) |
 | UC-17 | [background 異常の通知メールを受け取る](<../実行監視業務/background 実行監視フロー/background 異常の通知メールを受け取る/spec.md>) | 実行監視業務 / background 実行監視フロー | ops | hang-alert-mail の受信(読む UC)。abort-* / background-rerun.sh / rapid-crosscheck-result.sh(uses) |
 | UC-18 | [background 実行の経過時間と終了状態を判定する](<../実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/spec.md>) | 実行監視業務 / background 実行監視フロー | ops | hang-detector.sh(defines、判定。hang_judgement 6 値: NOT_TARGET / COMPLETED / MONITORING / HANG_SUSPECTED / EXEC_ERROR / COMPARE_ERROR。slot 実行の状態は exitcode.txt / aborted.txt のファイル正本から導出し slot_executions は読まない)、hang-detector.env(defines。UC-19 と共同。RDRA 情報「ハング検知定期ジョブ設定」) |
@@ -49,7 +49,7 @@
 | UC-29 | [feature flag を設定する](<../適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md>) | 適用構成業務 / 適用構成定義フロー | facade | feature-flag.env(defines)、validate-config.sh(defines。tier-facade 単一定義。契約 `defined_in_uc` と一致) |
 | UC-30 | [slot runner の実体スクリプトを割り当てる](<../適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/spec.md>) | 適用構成業務 / 適用構成定義フロー | facade | runner IF($BLUE_RUNNER / $GREEN_RUNNER、defines。契約 `defined_in_uc` と一致)、validate-config.sh --feature-flag(uses) |
 | UC-31 | [slot ごとのジョブマップを定義する](<../適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/spec.md>) | 適用構成業務 / 適用構成定義フロー | facade | `<slot>`-job-map.csv(defines)、validate-config.sh --job-map(uses。定義元は UC-29) |
-| UC-32 | [クロスチェックのジョブマップと比較定義を定義する](<../適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/spec.md>) | 適用構成業務 / 適用構成定義フロー | final-crosscheck, rapid-crosscheck | crosscheck-job-map.csv / target-catalog.csv(defines)、validate-config.sh --crosscheck-job-map / --target-catalog(uses。定義元は UC-29(tier-facade)。検証ロジックの所有 tier は契約 `options[].owner_tier`) |
+| UC-32 | [クロスチェックのジョブマップと比較定義を定義する](<../適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/spec.md>) | 適用構成業務 / 適用構成定義フロー | facade | rapid-crosscheck.env の RAPID_COMPARE_COMMAND(速報の比較ツール起動コマンド 1 行。defines)、validate-config.sh --rapid-crosscheck(uses。定義元は UC-29(tier-facade)。残す検証 2 点: コマンド部分が絶対パスで実行可能 / {job_id} を含む) |
 
 ## 依存グラフ
 
@@ -135,13 +135,12 @@ graph LR
   U09 -->|"notice + cmd 定義"| U08
   U10 -->|"rdb:rapid_crosscheck_requests"| U09
   U11 -->|"claim 済み依頼"| U10
-  U11 -->|"cfg:crosscheck-job-map.csv"| U32
-  U11 -->|"rdb:rapid_runs artifact_uri"| U08
-  U07 -->|"rdb:comparison_results 依頼終端"| U11
-  U13 -->|"cfg:target-catalog.csv"| U32
+  U11 -->|"cfg:rapid-crosscheck.env RAPID_COMPARE_COMMAND"| U32
+  U11 -->|"rdb:rapid_crosscheck_requests parameters/exit_code"| U09
+  U07 -->|"rdb:rapid_crosscheck_requests stdout/stderr/exit_code"| U11
   U14 -->|"rdb:final_crosscheck_requests"| U13
   U15 -->|"claim 済み依頼"| U14
-  U15 -->|"cfg:crosscheck-job-map.csv full 行"| U32
+  U15 -->|"cfg:final-crosscheck.env FINAL_COMPARE_COMMAND"| U13
   U16 -->|"rdb:final_crosscheck_requests 終端"| U15
   U12 -->|"cmd final-crosscheck-runner.sh 出力契約"| U16
   U18 -->|"file:started-at exitcode aborted"| U05
@@ -198,20 +197,20 @@ graph LR
 | 14 | UC-10 | UC-09 | RDB(producer: UC-09 → consumer: UC-10) | asyncapi.yaml `rapid-crosscheck-requests`、rdb-schema.yaml `rapid_crosscheck_requests` | spec.md 概要「REQUESTED の依頼を条件付き UPDATE で CLAIMED」 |
 | 15 | UC-11 | UC-10 | 処理順序(同一 worker 内) | cli-command-contract.yaml `commands[rapid-crosscheck-worker.sh].idempotency`(off は exit 3。CLAIMED → RUNNING は `status='CLAIMED' AND worker_id=?` の条件付き UPDATE で 0 件なら比較を開始せず 0。終端 UPDATE 0 件は request_status=ABORTED で 0) | spec.md 概要「claim した速報クロスチェック worker が依頼を CLAIMED → RUNNING」 |
 | 15a | UC-11 | UC-27 | RDB(producer: UC-27 → consumer: UC-11。本イベントで追加、D9) | rdb-schema.yaml `parallel_runs.used_by`(UC-27 INSERT / UC-11 UPDATE)、cli-command-contract.yaml `shared_rules.state_codes.parallel_run_transitions`「RUNNING → COMPLETED(rapid-crosscheck-worker.sh)」/ `commands[rapid-crosscheck-worker.sh].notes`(依頼終端後、parallel_runs.parent_run_id IS NOT NULL かつ当該 run_id の slot_executions 行が 0 件なら `UPDATE parallel_runs SET status='COMPLETED' ... WHERE run_id=? AND status='RUNNING'`。実行ログ `INFO parallel_run status changed from=RUNNING to=COMPLETED run_id=...`) | spec.md 正常系「速報比較依頼だけのリラン由来 run は依頼終端で parallel_run を COMPLETED にする」/ UC-27 spec.md 正常系「再作成した依頼が終端すると parallel_runs は COMPLETED になる」 |
-| 16 | UC-11 | UC-32 | 設定ファイル | cli-command-contract.yaml `config_files[crosscheck-job-map.csv]`(readers: rapid-crosscheck-worker.sh comparison_type=job 行)、`external_interfaces[比較ツール(速報)]` | spec.md 概要「クロスチェックジョブマップの job_id ごとの比較定義」/ 異常系「比較定義が無い job_id」 |
-| 17 | UC-11 | UC-08 | RDB(producer: UC-08 → consumer: UC-11) | rdb-schema.yaml `rapid_runs.blue_artifact_uri / green_artifact_uri`(UC-11 SELECT) | spec.md データフロー(compare_options の {blue} / {green} 置換) |
-| 18 | UC-07 | UC-11 | RDB(producer: UC-11 → consumer: UC-07) | rdb-schema.yaml `comparison_results` / `rapid_crosscheck_requests`(stdout / stderr / exit_code) | spec.md 概要 / cli-command-contract `rapid-crosscheck-result.sh.stdout`(compared_at 昇順・同値は comparison_result_id 昇順) |
+| 16 | UC-11 | UC-32 | 設定ファイル | cli-command-contract.yaml `config_files[rapid-crosscheck.env].keys[RAPID_COMPARE_COMMAND]`(readers: rapid-crosscheck-worker.sh)、`external_interfaces[比較ツール(速報)]` | spec.md 概要「速報の比較ツール起動コマンドを依頼レコードの値で置換して起動」/ 異常系「比較ツールの起動に失敗する」 |
+| 17 | UC-11 | UC-09 | RDB(producer: UC-09 → consumer: UC-11) | rdb-schema.yaml `rapid_crosscheck_requests.parameters / blue_exit_code / green_exit_code`(UC-11 SELECT) | spec.md データフロー(起動コマンドのプレースホルダ {job_id} / {run_id} / {params} / {blue_exit_code} / {green_exit_code} を依頼レコードの値で置換) |
+| 18 | UC-07 | UC-11 | RDB(producer: UC-11 → consumer: UC-07) | rdb-schema.yaml `rapid_crosscheck_requests`(stdout / stderr / exit_code) | spec.md 概要 / cli-command-contract `rapid-crosscheck-result.sh.stdout`(requested_at 昇順) |
 | 19 | UC-07 | UC-29 | 設定ファイル | cli-command-contract.yaml `config_files[feature-flag.env].readers`(rapid-crosscheck-result.sh) | spec.md 異常系「RAPID_CROSSCHECK_MODE=off で参照する」(終了コード 3) |
-| 20 | UC-13 | UC-32 | 設定ファイル | cli-command-contract.yaml `config_files[crosscheck-job-map.csv].header_declarations` / `config_files[target-catalog.csv].readers`(final-crosscheck-runner.sh) | spec.md 異常系「catalog_version が対象カタログに無い」 |
+| 20 | UC-13 | —(依存なし) | — | 2026-10-10 の実装からの変更要求で確報比較依頼の登録が業務上の引数なしになり、対象カタログ・クロスチェックジョブマップへの設定依存が無くなった(確報の起動コマンドは worker が final-crosscheck.env から読む。#24 を参照) | spec.md 概要「業務上の引数なしで確報比較依頼を REQUESTED で登録する」 |
 | 21 | UC-13 | UC-15 | RDB(producer: UC-15 → consumer: UC-13、終端待機) | asyncapi.yaml `final-crosscheck-requests`(polling は status のみ。上限 FINAL_POLL_LIMIT_SEC) | spec.md 概要「SUCCEEDED / FAILED / ABORTED の終端状態になるまで…polling」 |
 | 22 | UC-14 | UC-13 | RDB(producer: UC-13 → consumer: UC-14)+ 設定ファイル(共同定義) | asyncapi.yaml `final-crosscheck-requests`、rdb-schema.yaml `final_crosscheck_requests`、cli-command-contract.yaml `config_files[final-crosscheck.env]`(defined_in_uc: UC-13 / UC-14) | spec.md 概要「REQUESTED の確報比較依頼を条件付き UPDATE で CLAIMED」 |
-| 23 | UC-15 | UC-14 | 処理順序(同一 worker 内) | cli-command-contract.yaml `commands[final-crosscheck-worker.sh]`(終端 UPDATE 0 件 = 中止済みで 0、カタログ 0 行 = 6) | spec.md 概要「claim 済みの確報比較依頼を…RUNNING にし」 |
-| 24 | UC-15 | UC-32 | 設定ファイル | cli-command-contract.yaml `config_files[crosscheck-job-map.csv]`(job_id=final-crosscheck 行)、`config_files[target-catalog.csv]`、`external_interfaces[比較ツール(確報)]` | spec.md 正常系「対象カタログの全行を比較ツールへ渡す」/「対象一覧を成果物に記録する」 |
+| 23 | UC-15 | UC-14 | 処理順序(同一 worker 内) | cli-command-contract.yaml `commands[final-crosscheck-worker.sh]`(終端 UPDATE 0 件 = 中止済みで 0、起動失敗 = 6) | spec.md 概要「claim 済みの確報比較依頼を…RUNNING にし」 |
+| 24 | UC-15 | UC-13 | 設定ファイル(FINAL_COMPARE_COMMAND)+ 外部 IF | cli-command-contract.yaml `config_files[final-crosscheck.env].keys[FINAL_COMPARE_COMMAND]`(readers: final-crosscheck-worker.sh)、`external_interfaces[比較ツール(確報)]`。確報の起動コマンド設定の検証は validate-config.sh --final-crosscheck(tier-facade) | spec.md 正常系「確報の起動コマンドをそのまま起動して全テーブル・全ファイルを比較する」 |
 | 25 | UC-16 | UC-15 | RDB(producer: UC-15 → consumer: UC-16) | rdb-schema.yaml `final_crosscheck_requests.stdout / stderr / exit_code` | spec.md 概要「保存された stdout / stderr / exit_code をそのまま…返す」 |
 | 26 | UC-12 | UC-16 | コマンド出力契約 | cli-command-contract.yaml `commands[final-crosscheck-runner.sh].exit_codes`(無加工中継) | spec.md 概要「UC『保存済みの確報結果をジョブスケジューラへ返す』の応答契約そのもの」 |
 | 27 | UC-18 | UC-05 | ファイル契約 | cli-command-contract.yaml `artifact_layout.files[started-at.txt / exitcode.txt / aborted.txt].readers`(hang-detector.sh。`shared_rules.exitcode_to_status.slot_execution`: exitcode.txt あり 0=SUCCEEDED / 非 0=FAILED、なしは aborted.txt の有無で ABORTED / RUNNING。両方あれば exitcode.txt 優先。`commands[hang-detector.sh].idempotency`「slot_executions.status は読まない」) | spec.md 概要「slot 実行の状態をファイル正本(exitcode.txt / aborted.txt の有無と値。条件『slot 実行の状態導出規則』)から導出し、経過時間(now - started-at)…」 |
 | 28 | UC-18 | UC-04 | ファイル契約 | cli-command-contract.yaml `artifact_layout.files[execution-spec.json].readers`(slots.<role>.mode / hang_detect_limit_minutes。無い run は `warn: execution-spec missing` で判定対象外。既定値で判定しない) | spec.md 概要「execution-spec.json の hang_detect_limit_minutes」/ 異常系「execution-spec.json が無い run は判定対象外にする」 |
-| 29 | UC-18 | UC-11 | RDB(producer: UC-11 → consumer: UC-18、参照のみ) | asyncapi.yaml `rapid-crosscheck-requests`(judge_background_elapsed_and_exit_state_receive)、rdb-schema.yaml `comparison_results` | spec.md 正常系「FAILED の速報比較依頼を比較異常と判定する」 |
+| 29 | UC-18 | UC-11 | RDB(producer: UC-11 → consumer: UC-18、参照のみ) | asyncapi.yaml `rapid-crosscheck-requests`(judge_background_elapsed_and_exit_state_receive)、rdb-schema.yaml `rapid_crosscheck_requests`(status / exit_code) | spec.md 正常系「FAILED の速報比較依頼を比較異常と判定する」 |
 | 30 | UC-18 | UC-29 | 設定ファイル | cli-command-contract.yaml `config_files[feature-flag.env].readers`(hang-detector.sh RAPID_CROSSCHECK_MODE のみ)。`config_files[hang-detector.env]`(defined_in_uc: UC-18 / UC-19。owner: 基盤適用設計者(設定所有区分: ハング検知定期ジョブ設定。RDRA 情報「ハング検知定期ジョブ設定」)。readers: hang-detector.sh のみ。キー: HANG_DB_CONN_REF(off 以外で必須)/ ALERT_MAIL_TO / ALERT_MAIL_CMD / ALERT_SUBJECT_PREFIX(任意、既定 `[relay-gate]`)+ RAPID_HANG_DETECT_LIMIT_MINUTES / HANG_SCAN_WINDOW_HOURS)は UC-18 / UC-19 自身が定義元で、他 UC への依存ではない | spec.md 正常系「off では管理 DB なしで成果物だけを走査する」/ UC-19 spec.md 概要「宛先・送信コマンド・件名プレフィックスはハング検知定期ジョブ設定(hang-detector.env)から取得する」 |
 | 31 | UC-19 | UC-18 | 処理順序(同一 hang-detector.sh 内) | cli-command-contract.yaml `commands[hang-detector.sh]`、`shared_rules.state_codes.hang_judgement`(6 値)と `hang_judgement_to_monitor_status` | spec.md 概要「判定結果に応じて…メール」 |
 | 32 | UC-20 | UC-19 | 処理順序(同一 hang-detector.sh 内)+ RDB(monitor_status の遷移有無で冪等判定。hang_suspected_at = 送信成功日時) | rdb-schema.yaml `monitor_records`、asyncapi `hang-alert-mail`(冪等性)、cli-command-contract `hang-detector.sh.idempotency` | spec.md 概要「判定と…送信結果を…UPSERT」/ UC-19 spec.md「同じ対象に同じ通知を二重送信しない」 |
@@ -258,15 +257,15 @@ graph LR
 
 | 段 | UC | 理由 |
 |---|---|---|
-| 0 | UC-29, UC-31, UC-32(+ rapid-crosscheck.env のキー定義) | 設定ファイル契約(env / CSV)と validate-config.sh(tier-facade 単一定義。--crosscheck-job-map / --target-catalog の検証ロジックは UC-32 の tier が提供)。他 UC に依存しない。`rapid-crosscheck.env` は定義元が UC-10 だがキー定義は契約(cli-command-contract.yaml)で確定済みのため、この段で読み込み実装を共通化してよい(UC-10 の worker 本体は段 7) |
+| 0 | UC-29, UC-31, UC-32(+ rapid-crosscheck.env のキー定義) | 設定ファイル契約(env / CSV)と validate-config.sh(tier-facade 単一定義。--rapid-crosscheck / --final-crosscheck の検証ロジックも tier-facade が提供)。他 UC に依存しない。`rapid-crosscheck.env` は定義元が UC-10 だがキー定義は契約(cli-command-contract.yaml)で確定済みのため、この段で読み込み実装を共通化してよい(UC-10 の worker 本体は段 7) |
 | 1 | UC-30, UC-02 | runner IF の定義(UC-30 は UC-29 の検証と UC-31 のジョブマップ存在検証を使う)と facade.sh 起動。UC-02 は UC-29 / UC-30 の契約だけを要する |
 | 2 | UC-03 | runner のジョブマップ解決(UC-31 の CSV、UC-02 の runner IF 引数) |
 | 3 | UC-04 | execution-spec.json 確定保存(UC-03 の解決結果。impl_version は facade 経由の環境変数 BLUE_IMPL / GREEN_IMPL、#4a) |
 | 4 | UC-05 | SSH またはローカル実行と Runner Result(UC-04 の spec。リラン由来 run の parallel_runs COMPLETED(#48a)は UC-26 の後で E2E 可能になるが、契約が確定済みのため実装はこの段でよい) |
-| 5 | UC-06, UC-08, UC-13 | foreground 中継(UC-05)、完了通知の送受信(UC-05・UC-02 の rapid_runs。rapid-crosscheck-runner.sh のコマンド定義はここで確定)、確報 runner の登録(UC-32) |
+| 5 | UC-06, UC-08, UC-13 | foreground 中継(UC-05)、完了通知の送受信(UC-05・UC-02 の rapid_runs。rapid-crosscheck-runner.sh のコマンド定義はここで確定)、確報 runner の登録(final-crosscheck.env。業務上の引数なし) |
 | 6 | UC-01, UC-09, UC-14 | facade 応答契約(読む UC)、両系成功判定(UC-08 のコマンド定義に stdout 3 行を追記)、確報 claim(UC-13) |
-| 7 | UC-10, UC-15 | 速報 claim(UC-09)、全量比較(UC-14・UC-32)。UC-13 の終端待機はここで E2E 可能になる |
-| 8 | UC-11, UC-16 | ジョブ単位比較(UC-10・UC-32・UC-08)、確報中継(UC-15) |
+| 7 | UC-10, UC-15 | 速報 claim(UC-09)、全量比較(UC-14・final-crosscheck.env の FINAL_COMPARE_COMMAND)。UC-13 の終端待機はここで E2E 可能になる |
+| 8 | UC-11, UC-16 | ジョブ単位比較(UC-10・UC-32・UC-09)、確報中継(UC-15) |
 | 9 | UC-07, UC-12, UC-22 | 速報結果参照(UC-11)、確報結果確認(UC-16)、停止確認(UC-02・UC-11・UC-15) |
 | 10 | UC-18/19/20, UC-23, UC-25 | hang-detector 3 段(UC-04・UC-05・UC-11・UC-29。ABORTED の終端処理は UC-23 が書く aborted.txt(と off 以外の依頼 ABORTED)を読むため UC-23 と同段以降。UC-19 のメール定型文は abort-* / background-rerun.sh / rapid-crosscheck-result.sh の synopsis を参照するが、書式は契約で確定済みのため実装順には影響しない)、ABORTED 遷移(UC-22)、リラン事前検証(UC-04・UC-05・UC-23) |
 | 11 | UC-17, UC-21, UC-26, UC-27, UC-28 | メール受信(読む UC。UC-19・UC-22・UC-25・UC-07 の契約を参照)、上限調整(UC-20・UC-31)、復元起動(UC-25・UC-30・UC-08)、依頼再作成(UC-25・UC-09・UC-10)、運用モード実行(読む UC。UC-19 まで揃って E2E 可能) |

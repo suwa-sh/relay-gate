@@ -4,12 +4,12 @@
 
 | 項目 | 内容 |
 |------|------|
-| イベントID | 20260908_015000_feedback_slot_status_wording |
-| 作成日時 | 2026-09-08T01:50:00Z |
-| ソース | RDRA 差分 20260908_011000_feedback_slot_status_wording に基づくアーキテクチャ再評価(条件「slot 実行の状態導出規則」の管理 DB 側文言の追従: slot_executions.status は aborted.txt / exitcode.txt 公開時点の状態を条件付き更新(RUNNING のときだけ)で一度だけ書き、abort 後は ABORTED のまま残してファイル正本へ再同期しない。実装挙動は不変) |
+| イベントID | 20261010_202000_feedback_impl_feedback_dcd8234d |
+| 作成日時 | 2026-10-10T20:20:00Z |
+| ソース | クロスチェック簡素化(前段 requirements / NFR 更新)への追従と、validate-config.sh のティア間共有・名前空間規則の決定。廃止構造(クロスチェックジョブマップ・対象カタログ・比較結果レコード・成果物 URI の受け渡し・確報依頼の business_date / カタログ版)への言及を除去し、比較ツール起動コマンドを速報クロスチェック設定・確報クロスチェック worker 設定が持つ構成に合わせる。validate-config.sh はティア間委譲を無くし facade 単独で設定検証を完結させ、同一プロセスに source されるティアの名前空間の一般規則を CTR-007 に追加 |
 | 言語 | bash(シェルスクリプト。facade / runner / worker / 監視 / 復旧の全スクリプト), SQL(管理 DB のジョブキュー操作。RDB クライアント CLI 経由), JavaScript(CommonJS。BDD の step 定義のみ。実行時には使用しない) |
 | フレームワーク | なし(フレームワーク非採用。bash 標準コマンド + ssh + RDB クライアント CLI + OS のメール送信コマンドで構成) |
-| 技術的制約 | エアーギャップ環境のオンプレミス Linux。実行時にインターネット接続・外部 SaaS を要求しない, UI 画面を持たない。CLI(標準出力・標準エラー・終了コード)と定期ジョブとメール通知だけで動作する。presentation 系 tier(frontend / web / ui)は作らない, HTTP API は無い。IdP / API Gateway / 認可サービスは導入しない(SSH 鍵と OS 権限のみ), 方針資料の C2/C3/C4 構成(facade / slot runner / rapid-crosscheck runner・worker / final-crosscheck runner・worker / hang-detector / background-rerun / abort-*)と Runner Result Contract(stdout.log / stderr.log / exitcode.txt + execution-spec.json)を spec 都合で変更しない, 設定契約(feature flag / slot ジョブマップ / クロスチェックジョブマップ / 適用文書)の設定所有区分を維持する, 管理 DB は RDB 1 種(ジョブキュー兼管理 DB)。速報側と確報側のデータモデルを分離する, 成果物に特定案件の固有名(製品名・サーバ名・業務名)を記載しない(中立表現), 実行履歴・監査の正本はジョブスケジューラ。relay-gate はファイル(成果物・実行ログ)と管理レコードを残すだけ |
+| 技術的制約 | エアーギャップ環境のオンプレミス Linux。実行時にインターネット接続・外部 SaaS を要求しない, UI 画面を持たない。CLI(標準出力・標準エラー・終了コード)と定期ジョブとメール通知だけで動作する。presentation 系 tier(frontend / web / ui)は作らない, HTTP API は無い。IdP / API Gateway / 認可サービスは導入しない(SSH 鍵と OS 権限のみ), 方針資料の C2/C3/C4 構成(facade / slot runner / rapid-crosscheck runner・worker / final-crosscheck runner・worker / hang-detector / background-rerun / abort-*)と Runner Result Contract(stdout.log / stderr.log / exitcode.txt + execution-spec.json)を spec 都合で変更しない, 設定契約(feature flag / slot ジョブマップ / 速報クロスチェック設定 / 確報クロスチェック worker 設定 / 適用文書)の設定所有区分を維持する, 管理 DB は RDB 1 種(ジョブキュー兼管理 DB)。速報側と確報側のデータモデルを分離する, 成果物に特定案件の固有名(製品名・サーバ名・業務名)を記載しない(中立表現), 実行履歴・監査の正本はジョブスケジューラ。relay-gate はファイル(成果物・実行ログ)と管理レコードを残すだけ |
 
 ## ドメインアーキテクチャ
 
@@ -46,10 +46,10 @@ BC4 -->|Conformist| BC3
 | ID | 名前 | 所属 SD | 所有 entity | 所有 BUC | チーム | confidence | 根拠 |
 |----|------|:------:|-----------|---------|--------|:----------:|------|
 | BC-001 | 並行稼働実行コンテキスト | SD-001 | E-009, E-010, E-011, E-012, E-013, E-014, E-025 | 実装切替ジョブ実行フロー | - | 中 | 状態モデル「並行稼働実行」「slot 実行」が独立して閉じ、facade と slot runner が扱う語彙(run / slot / mode / Runner Result)が他コンテキストと異なるため |
-| BC-002 | 速報クロスチェックコンテキスト | SD-002 | E-015, E-016, E-017, E-018 | 速報クロスチェックフロー | - | 中 | 方針資料が「速報と確報の比較規約はそれぞれ別ドメインが所有する」と明示し、rapid_run / rapid_crosscheck_request / comparison_result のモデルが確報側と分離されているため |
-| BC-003 | 確報クロスチェックコンテキスト | SD-002 | E-019, E-020 | 確報クロスチェックフロー | - | 中 | 条件「速報と確報のモデル分離」により final_crosscheck_request と対象カタログを用い、速報側の rapid_run / rapid_crosscheck_request を作成・変更しないと定義されているため独立 BC とする |
+| BC-002 | 速報クロスチェックコンテキスト | SD-002 | E-015, E-016, E-017 | 速報クロスチェックフロー | - | 中 | 方針資料が「速報と確報の比較規約はそれぞれ別ドメインが所有する」と明示し、rapid_run / rapid_crosscheck_request のモデルが確報側と分離されているため。比較結果は依頼レコードの stdout / stderr / exit_code で参照し、別レコードは持たない |
+| BC-003 | 確報クロスチェックコンテキスト | SD-002 | E-019, E-020 | 確報クロスチェックフロー | - | 中 | 条件「速報と確報のモデル分離」により final_crosscheck_request を用い、速報側の rapid_run / rapid_crosscheck_request を作成・変更しないと定義されているため独立 BC とする |
 | BC-004 | 実行監視・復旧コンテキスト | SD-003 | E-021, E-022, E-023, E-024 | background 実行監視フロー, 実行中止フロー, background 側リランフロー | - | 中 | 状態モデル「監視状態」が独立し、hang-detector / background-rerun / abort-* が通常起動の facade から分離された運用スクリプト群として方針資料に定義されているため |
-| BC-005 | 適用構成コンテキスト | SD-004 | E-001, E-002, E-003, E-004, E-005, E-006, E-007, E-008, E-026, E-027 | 適用構成定義フロー | - | 中 | 基盤適用設計者だけが扱う設定契約の語彙(feature flag / ジョブマップ / 比較定義 / ハング検知定期ジョブ設定 / 速報クロスチェック設定 / 適用文書)で閉じており、実行系コンテキストは読み取り専用で従うため |
+| BC-005 | 適用構成コンテキスト | SD-004 | E-001, E-002, E-003, E-004, E-005, E-006, E-026, E-027 | 適用構成定義フロー | - | 中 | 基盤適用設計者だけが扱う設定契約の語彙(feature flag / ジョブマップ / 比較定義(比較ツール起動コマンド)/ ハング検知定期ジョブ設定 / 速報クロスチェック設定 / 適用文書)で閉じており、実行系コンテキストは読み取り専用で従うため |
 
 #### ユビキタス言語
 
@@ -74,8 +74,7 @@ BC4 -->|Conformist| BC3
 
 | 用語 | 定義 |
 |------|------|
-| 確報比較依頼 | business_date と対象カタログの版で登録する日次全量比較の依頼。runner が終端状態まで同期 polling し、保存済み stdout / stderr / exitcode だけを中継する |
-| 対象カタログ | 全テーブル・全ファイルを target_type / target_identifier と版で定義する比較対象の一覧。リリース判断の正本となる比較範囲 |
+| 確報比較依頼 | 業務上の引数なしで登録する日次全量比較の依頼。runner が終端状態まで同期 polling し、保存済み stdout / stderr / exitcode だけを中継する。全量比較の対象は比較ツール側(適用側)が定義し、確報 worker は設定の起動コマンドをそのまま起動する |
 
 **BC-004 実行監視・復旧コンテキスト**
 
@@ -92,7 +91,7 @@ BC4 -->|Conformist| BC3
 | feature flag | 9 キー(BLUE_MODE / GREEN_MODE / RAPID_CROSSCHECK_MODE / BLUE_IMPL / GREEN_IMPL / BLUE_RUNNER / GREEN_RUNNER / RAPID_CROSSCHECK_RUNNER / RAPID_CROSSCHECK_WORKER)で slot ごとの実行モード・実装版・runner 実体・速報クロスチェックモード(foreground / background / off)と完了通知先・worker 実体を切り替える正本。設定版は持たない。運用モード(並行稼働 / 単独本番 / 次世代並行稼働)を組み合わせで表現する |
 | ジョブマップ | JOB_ID から実行先(host・user・work_dir・script・fixed_params・hang_detect_limit_minutes)を slot ごとに解決する正本。1 行目ヘッダーの CSV(1 行 1 job_id)で、credential_ref / map_version は末尾の任意列 |
 | 速報クロスチェック設定 | 速報クロスチェック用の env 設定ファイル(rapid-crosscheck.env)。管理 DB 接続参照名(RAPID_DB_CONN_REF。値は置かず参照名のみ)・lease 期間(RAPID_LEASE_SEC)・worker の poll 間隔(RAPID_POLL_INTERVAL_SEC)を保持し、facade・slot runner・速報クロスチェック runner・worker が読む。RAPID_CROSSCHECK_MODE=off では不要。ハング検知定期ジョブ設定と同型だが所有項目と読み手が異なるため別ファイル |
-| 設定所有区分 | 各設定項目の正本をどこ(feature flag / slot ジョブマップ / クロスチェックジョブマップ / ハング検知定期ジョブ設定 / 速報クロスチェック設定 / 適用文書)が所有するかの区分 |
+| 設定所有区分 | 各設定項目の正本をどこ(feature flag / slot ジョブマップ / ハング検知定期ジョブ設定 / 速報クロスチェック設定(速報の比較ツール起動コマンドを含む)/ 確報クロスチェック worker 設定(確報の比較ツール起動コマンドを含む)/ 適用文書)が所有するかの区分。比較対象は比較ツール側(適用側)が持つ |
 
 ### コンテキストマップ
 
@@ -104,8 +103,8 @@ BC4 -->|Conformist| BC3
 | CM-004 | BC-004 | BC-001 | conformist | downstream | BC-004(監視・復旧)は BC-001 の成果物(started-at.txt / exitcode.txt / execution-spec.json)と slot 実行・parallel_run の状態をそのまま読み、監視は通知のみ、中止は状態更新のみ、リランは execution-spec.json からの復元で新 run を作る | - | 中 |
 | CM-005 | BC-004 | BC-002 | conformist | downstream | BC-004 は速報比較依頼の状態と終了コードを読み取り異常を通知し、abort-rapid-crosscheck で REQUESTED / CLAIMED / RUNNING の速報比較依頼を(運用者の worker 停止確認のうえ status IN (REQUESTED, CLAIMED, RUNNING) を条件とする条件付き UPDATE で)ABORTED に、abort-blue / abort-green で対象 run の REQUESTED(未着手)の速報比較依頼を競合窓の保険として ABORTED に更新し、background-rerun(--role rapid-crosscheck)で新 run_id の速報比較依頼を作成する。比較の要否判断(中止済み run の除外を含む)は BC-002 の dispatcher が持ち、CLAIMED で中止された依頼の比較を開始しない規則(CLAIMED → RUNNING の条件付き UPDATE が 0 件なら終了)は BC-002 の worker が持つ。BC-004 は状態遷移規則に従って更新するだけ | - | 中 |
 | CM-006 | BC-004 | BC-003 | conformist | downstream | BC-004 は abort-final-crosscheck で RUNNING の確報比較依頼を ABORTED に更新するだけ。確報の再実行はジョブスケジューラの正規ジョブに委ね、background-rerun の対象にしない | - | 中 |
-| CM-007 | BC-002 | BC-005 | conformist | downstream | BC-002 は BC-005 のクロスチェックジョブマップ(job_id ごとの比較定義)を読み、比較ツールの起動コマンド・比較対象・オプションをそのまま用いる | - | 中 |
-| CM-008 | BC-003 | BC-005 | conformist | downstream | BC-003 は BC-005 の対象カタログ(版付き)を読み、確報比較依頼に版を紐付けて全量比較の範囲を確定する | - | 中 |
+| CM-007 | BC-002 | BC-005 | conformist | downstream | BC-002 は BC-005 の速報クロスチェック設定(速報の比較ツール起動コマンド 1 行。{job_id} を含む)を読み、{job_id} を依頼レコードの値で置換して比較ツールを起動する。比較対象は比較ツール側が持つ | - | 中 |
+| CM-008 | BC-003 | BC-005 | conformist | downstream | BC-003 は BC-005 の確報クロスチェック worker 設定(確報の比較ツール起動コマンド 1 行)を読み、業務上の引数なしでそのまま起動する。全量比較の対象は比較ツール側が持つ | - | 中 |
 
 ### 集約境界の仮説
 
@@ -114,8 +113,8 @@ BC4 -->|Conformist| BC3
 | ID | BC | root entity | members | invariants | confidence | 備考 |
 |----|----|-----------|---------|-----------|:----------:|------|
 | AG-001 | BC-001 | E-013 | E-014, E-010, E-011, E-012 | • blue と green の両方が foreground の構成は許可しない(入力検証でエラー終了し、どの slot も起動しない)<br/>• background slot をすべて起動してから foreground slot を起動し、foreground の PID だけを待機する<br/>• execution-spec.json は run 開始時に一度だけ確定保存し、以後上書きしない。認証情報の値は保存しない<br/>• slot 実行終了時に stdout.log / stderr.log / exitcode.txt が揃う。exitcode.txt は数値 1 行で runner の終了コードと一致する<br/>• ジョブスケジューラへの応答は foreground slot の Runner Result のみ。background と速報の結果は反映しない | 低 | 仮説。最終確定は dist-spec または ddd-tactical-implementation で行う。RAPID_CROSSCHECK_MODE=off では parallel_run を作成せず成果物ファイルだけで動作するため、root の永続化有無はモードに依存する |
-| AG-002 | BC-002 | E-016 | E-015, E-017, E-018 | • blue と green の両方が成功(exitcode 0)したときに限り速報比較依頼を作成する<br/>• 中止済み run(並行稼働実行が ABORTED、または完了通知の対象 slot の slot 実行が ABORTED(aborted.txt 公開済み))では両系成功でも速報比較依頼を作成しない。完了事実(blue_status / green_status / 成果物 URI)だけを rapid_run に記録し、実行ログに警告を残す。判定材料は parallel_run.status と slot_executions.status<br/>• 1 つの run_id に対する速報比較依頼は完了順にかかわらず 1 件だけ(run_id 主キー)<br/>• claim 中(lease 有効)の依頼は他 worker が取得できない。lease 失効かつ未開始なら REQUESTED に戻す。lease 期間と poll 間隔は速報クロスチェック設定から読む<br/>• REQUESTED で未着手の速報比較依頼は対象 run の abort-blue / abort-green(競合窓の保険)または abort-rapid-crosscheck で ABORTED になる。CLAIMED / RUNNING の依頼は abort-rapid-crosscheck だけが ABORTED にする(確報比較依頼は RUNNING のみ)<br/>• CLAIMED から RUNNING への遷移は status = CLAIMED を条件とする条件付き UPDATE で行い、更新件数が 0 件(ABORTED 済み)なら worker は比較を開始しない<br/>• 依頼状態は比較ツールの exitcode に従う(0=SUCCEEDED / 非 0・実行エラー=FAILED) | 低 | 仮説。最終確定は dist-spec または ddd-tactical-implementation で行う。rapid_run と rapid_crosscheck_request を同一集約に置くか(両系成功→依頼作成の原子性)、依頼を別集約にするか(worker の claim 競合)は実装時に再判断する |
-| AG-003 | BC-003 | E-019 | E-020 | • 確報比較依頼は business_date と対象カタログの版を持って REQUESTED で登録する<br/>• ジョブスケジューラへ返すのは保存済みの stdout / stderr / exitcode だけ。状態名や差分件数・レポート URI は返さない<br/>• rapid_run / rapid_crosscheck_request を作成・変更しない | 低 | 仮説。最終確定は dist-spec または ddd-tactical-implementation で行う |
+| AG-002 | BC-002 | E-016 | E-015, E-017 | • blue と green の両方が成功(exitcode 0)したときに限り速報比較依頼を作成する<br/>• 中止済み run(並行稼働実行が ABORTED、または完了通知の対象 slot の slot 実行が ABORTED(aborted.txt 公開済み))では両系成功でも速報比較依頼を作成しない。完了事実(blue_status / green_status と終了コード)だけを rapid_run に記録し、実行ログに警告を残す。判定材料は parallel_run.status と slot_executions.status<br/>• 1 つの run_id に対する速報比較依頼は完了順にかかわらず 1 件だけ(run_id 主キー)<br/>• claim 中(lease 有効)の依頼は他 worker が取得できない。lease 失効かつ未開始なら REQUESTED に戻す。lease 期間と poll 間隔は速報クロスチェック設定から読む<br/>• REQUESTED で未着手の速報比較依頼は対象 run の abort-blue / abort-green(競合窓の保険)または abort-rapid-crosscheck で ABORTED になる。CLAIMED / RUNNING の依頼は abort-rapid-crosscheck だけが ABORTED にする(確報比較依頼は RUNNING のみ)<br/>• CLAIMED から RUNNING への遷移は status = CLAIMED を条件とする条件付き UPDATE で行い、更新件数が 0 件(ABORTED 済み)なら worker は比較を開始しない<br/>• 依頼状態は比較ツールの exitcode に従う(0=SUCCEEDED / 非 0・実行エラー=FAILED) | 低 | 仮説。最終確定は dist-spec または ddd-tactical-implementation で行う。rapid_run と rapid_crosscheck_request を同一集約に置くか(両系成功→依頼作成の原子性)、依頼を別集約にするか(worker の claim 競合)は実装時に再判断する |
+| AG-003 | BC-003 | E-019 | E-020 | • 確報比較依頼は業務上の引数なしで REQUESTED で登録する。全量比較の対象は比較ツール側が持ち、worker は設定の起動コマンドをそのまま起動する<br/>• ジョブスケジューラへ返すのは保存済みの stdout / stderr / exitcode だけ。状態名や差分件数・レポート URI は返さない<br/>• rapid_run / rapid_crosscheck_request を作成・変更しない | 低 | 仮説。最終確定は dist-spec または ddd-tactical-implementation で行う |
 | AG-004 | BC-004 | E-021 | E-022 | • 監視は monitor_status / hang_suspected_at / alerted_at を記録し通知するだけ。RUNNING を ABORTED にせず、プロセスを停止せず、新しい実行依頼を作成しない<br/>• hang_detect_limit_minutes が 0 の role と foreground role は検知対象外<br/>• ハング疑いは warning、background 実行エラーと速報クロスチェック異常は error | 低 | 仮説。最終確定は dist-spec または ddd-tactical-implementation で行う。リラン指示・中止指示は状態更新の指示であり、集約というより並行稼働実行 / 依頼に対するコマンドとして扱う可能性が高い |
 | AG-005 | BC-005 | E-003 | E-004 | • JOB_ID の行がジョブマップに存在するときのみ実行先を解決できる。未定義なら runner は非 0 の exitcode.txt と原因を含む stderr.log を出力する<br/>• 固定引数は JSON 配列で引数の数と空白・カンマを維持し、その後ろに PARAM を順序を変えずに連結する。空の固定引数は []<br/>• hang_detect_limit_minutes の変更は次回以降の run の execution-spec.json にのみ反映される | 低 | 仮説。最終確定は dist-spec または ddd-tactical-implementation で行う。設定はファイルとして版管理されるため、集約というより不変の設定スナップショットとして扱う |
 
@@ -147,10 +146,10 @@ FINAL -->|stdout / stderr / exitcode| SCHED
 | ID | ティア名 | 説明 | テクノロジー候補 |
 |-----|---------|------|----------------|
 | tier-facade | facade / slot runner ティア | ジョブスケジューラの業務ジョブから JOB_ID [PARAM...] で同期起動される CLI。facade.sh が feature flag(9 キー)で slot と mode を選択し、run_id を発行して blue / green slot runner を起動し、foreground の Runner Result だけを中継する。slot runner はジョブマップ(CSV)で実行先を解決し、SSH で実装スクリプトを実行して Runner Result を出力し、速報有効時(RAPID_CROSSCHECK_MODE が foreground / background)に RAPID_CROSSCHECK_RUNNER へ完了通知を送る。速報有効時の管理 DB 接続参照名は速報クロスチェック設定(rapid-crosscheck.env)から読み、off では読まない | シェルスクリプト CLI(bash), SSH クライアント(リモート実行ホストへの実装スクリプト起動), ローカル / 共有ファイルシステム(成果物ディレクトリ facade/<run_id>/), RDB クライアント CLI(速報有効時のみ parallel_run を作成。接続先は速報クロスチェック設定の RAPID_DB_CONN_REF で解決) |
-| tier-rapid-crosscheck | 速報クロスチェックティア | rapid-crosscheck-runner(dispatcher。runner から完了通知を受ける一回ごとの起動スクリプト)と rapid-crosscheck-worker(管理 DB のジョブキューを継続的に poll / claim し、比較ツールでジョブ単位比較を実行して結果を登録する worker)で構成する。管理 DB 接続参照名・lease 期間・worker の poll 間隔は速報クロスチェック設定(rapid-crosscheck.env)から読む | シェルスクリプト CLI(bash。dispatcher は都度起動、worker は常駐ループまたは定期起動。poll 間隔は速報クロスチェック設定の RAPID_POLL_INTERVAL_SEC), RDB クライアント CLI(ジョブキュー: rapid_run / rapid_crosscheck_request / comparison_result。接続先は速報クロスチェック設定の RAPID_DB_CONN_REF で解決), 比較ツール起動アダプタ(job_id ごとの比較定義に従うコマンド実行) |
-| tier-final-crosscheck | 確報クロスチェックティア | ジョブスケジューラの別ジョブ定義から起動される final-crosscheck-runner(依頼登録 → 終端状態まで同期 polling → 保存済み結果の中継)と、DB セグメントで依頼を poll / claim して全テーブル・全ファイルの日次全量比較を実行する final-crosscheck-worker で構成する | シェルスクリプト CLI(bash。runner は都度起動、worker は DB セグメント上の常駐ループまたは定期起動), RDB クライアント CLI(ジョブキュー: final_crosscheck_request / 対象カタログ), 比較ツール起動アダプタ(対象カタログに基づく全量比較) |
+| tier-rapid-crosscheck | 速報クロスチェックティア | rapid-crosscheck-runner(dispatcher。runner から完了通知を受ける一回ごとの起動スクリプト)と rapid-crosscheck-worker(管理 DB のジョブキューを継続的に poll / claim し、比較ツールでジョブ単位比較を実行して結果を登録する worker)で構成する。管理 DB 接続参照名・lease 期間・worker の poll 間隔は速報クロスチェック設定(rapid-crosscheck.env)から読む | シェルスクリプト CLI(bash。dispatcher は都度起動、worker は常駐ループまたは定期起動。poll 間隔は速報クロスチェック設定の RAPID_POLL_INTERVAL_SEC), RDB クライアント CLI(ジョブキュー: rapid_run / rapid_crosscheck_request。接続先は速報クロスチェック設定の RAPID_DB_CONN_REF で解決), 比較ツール起動アダプタ(速報クロスチェック設定の起動コマンドの {job_id} を依頼レコードの値で置換して実行) |
+| tier-final-crosscheck | 確報クロスチェックティア | ジョブスケジューラの別ジョブ定義から起動される final-crosscheck-runner(依頼登録 → 終端状態まで同期 polling → 保存済み結果の中継)と、DB セグメントで依頼を poll / claim して全テーブル・全ファイルの日次全量比較を実行する final-crosscheck-worker で構成する | シェルスクリプト CLI(bash。runner は都度起動、worker は DB セグメント上の常駐ループまたは定期起動), RDB クライアント CLI(ジョブキュー: final_crosscheck_request), 比較ツール起動アダプタ(確報クロスチェック worker 設定の起動コマンドで全量比較。対象は比較ツール側が定義) |
 | tier-ops | 実行監視・復旧ティア | hang-detector(ジョブスケジューラの定期ジョブ)、background-rerun(専用ジョブ)、abort-blue / abort-green / abort-rapid-crosscheck / abort-final-crosscheck(運用者が配置ディレクトリから直接起動する対話 CLI)で構成する。監視は通知のみ、中止は状態更新(slot は aborted.txt の書き込みを正本とする)のみ、リランは execution-spec.json からの復元で行う。通知先・送信コマンド・件名プレフィックス・管理 DB 接続参照名はハング検知定期ジョブ設定から読む | シェルスクリプト CLI(bash。定期ジョブ / 専用ジョブ / 対話 CLI), OS 標準のメール送信コマンド(warning / error 通知。コマンドと宛先はハング検知定期ジョブ設定で指定), RDB クライアント CLI(監視記録・状態更新・parallel_run 作成。RAPID_CROSSCHECK_MODE=off では使わない), ファイルシステム走査・書き込み(started-at.txt / exitcode.txt / aborted.txt / execution-spec.json) |
-| tier-datastore | データストアティア | 管理 DB(RDB。relay-gate 内部のジョブキュー兼管理 DB。外部システムではない)、成果物ディレクトリ(facade/<run_id>/ 配下の Runner Result と execution-spec.json)、設定ファイル(feature flag / ジョブマップ / クロスチェックジョブマップ / 対象カタログ / ハング検知定期ジョブ設定 / 速報クロスチェック設定 / 適用文書)、実行ログファイルで構成する | RDB(単一インスタンス。速報側と確報側のテーブルを分離), ローカル / 共有ファイルシステム(成果物ディレクトリ・設定ファイル・実行ログ) |
+| tier-datastore | データストアティア | 管理 DB(RDB。relay-gate 内部のジョブキュー兼管理 DB。外部システムではない)、成果物ディレクトリ(facade/<run_id>/ 配下の Runner Result と execution-spec.json)、設定ファイル(feature flag / ジョブマップ / ハング検知定期ジョブ設定 / 速報クロスチェック設定 / 確報クロスチェック worker 設定 / 適用文書)、実行ログファイルで構成する | RDB(単一インスタンス。速報側と確報側のテーブルを分離), ローカル / 共有ファイルシステム(成果物ディレクトリ・設定ファイル・実行ログ) |
 
 ### facade / slot runner ティア (tier-facade) の方針・ルール
 
@@ -180,16 +179,16 @@ FINAL -->|stdout / stderr / exitcode| SCHED
 
 | ID | 方針名 | 内容 | 根拠 | RDRA/NFR 要素 | 確信度 |
 |-----|---------|------|------|--------------|:------:|
-| SP-009 | 両系成功判定と比較依頼の一意作成 | dispatcher は完了通知を受けて rapid_run の blue_status / green_status を更新し、blue と green の両方が成功(exitcode 0)で完了したときに限り、完了順にかかわらず run_id を主キーとする速報比較依頼を 1 件だけ REQUESTED で作成する。いずれかが失敗した場合は作成しない。中止済み run(並行稼働実行(parallel_run)が ABORTED、または完了通知の対象 slot の slot 実行が ABORTED(成果物ディレクトリに aborted.txt が公開済み)のいずれか)では、完了通知を受けても両系成功でも依頼を作成せず、完了事実(blue_status / green_status と成果物 URI)だけを rapid_run に記録して実行ログに警告を残す。判定材料は管理 DB の parallel_run.status と slot_executions.status(ファイル正本 aborted.txt のミラー)。並行稼働実行は foreground slot の結果を中継した時点で COMPLETED になるため、foreground 完了後に background slot を abort-blue / abort-green で中止した典型経路は slot 実行 ABORTED の側で除外する。この判断は dispatcher が持ち、slot runner には持たせない。速報有効時(foreground / background)だけに適用する | 条件「両系成功判定」「比較依頼の一意性」「中止済み run の比較依頼作成除外」(判定キー: 並行稼働実行 ABORTED または対象 slot の slot 実行 ABORTED)。失敗結果同士や片方失敗の比較と重複作成を防ぎ、中止後に実装が走り切った run の比較を止めるため。並行稼働実行だけを見ると foreground 完了後の background 中止が除外されないため slot 実行の状態も判定材料にする。比較の要否判断を方針資料どおり速報クロスチェック側に閉じ込める | 条件: 両系成功判定, 比較依頼の一意性, 中止済み run の比較依頼作成除外, 状態: 速報実行の完了状況, 並行稼働実行, slot 実行, 情報: 速報実行(rapid_run), 速報比較依頼(rapid_crosscheck_request), 完了通知, slot 実行, 実行ログ, BUC: 速報クロスチェックフロー, NFR C.3.3.1 | 高 |
+| SP-009 | 両系成功判定と比較依頼の一意作成 | dispatcher は完了通知を受けて rapid_run の blue_status / green_status を更新し、blue と green の両方が成功(exitcode 0)で完了したときに限り、完了順にかかわらず run_id を主キーとする速報比較依頼を 1 件だけ REQUESTED で作成する。いずれかが失敗した場合は作成しない。中止済み run(並行稼働実行(parallel_run)が ABORTED、または完了通知の対象 slot の slot 実行が ABORTED(成果物ディレクトリに aborted.txt が公開済み)のいずれか)では、完了通知を受けても両系成功でも依頼を作成せず、完了事実(blue_status / green_status と終了コード)だけを rapid_run に記録して実行ログに警告を残す。判定材料は管理 DB の parallel_run.status と slot_executions.status(ファイル正本 aborted.txt のミラー)。並行稼働実行は foreground slot の結果を中継した時点で COMPLETED になるため、foreground 完了後に background slot を abort-blue / abort-green で中止した典型経路は slot 実行 ABORTED の側で除外する。この判断は dispatcher が持ち、slot runner には持たせない。速報有効時(foreground / background)だけに適用する | 条件「両系成功判定」「比較依頼の一意性」「中止済み run の比較依頼作成除外」(判定キー: 並行稼働実行 ABORTED または対象 slot の slot 実行 ABORTED)。失敗結果同士や片方失敗の比較と重複作成を防ぎ、中止後に実装が走り切った run の比較を止めるため。並行稼働実行だけを見ると foreground 完了後の background 中止が除外されないため slot 実行の状態も判定材料にする。比較の要否判断を方針資料どおり速報クロスチェック側に閉じ込める | 条件: 両系成功判定, 比較依頼の一意性, 中止済み run の比較依頼作成除外, 状態: 速報実行の完了状況, 並行稼働実行, slot 実行, 情報: 速報実行(rapid_run), 速報比較依頼(rapid_crosscheck_request), 完了通知, slot 実行, 実行ログ, BUC: 速報クロスチェックフロー, NFR C.3.3.1 | 高 |
 | SP-010 | worker の poll / claim / lease による多重実行防止 | worker は管理 DB を poll し、REQUESTED の依頼を worker_id と lease_until 付きで CLAIMED にする。lease 有効中は他の worker が同じ依頼を取得できない。lease が失効しかつ比較が未開始なら REQUESTED に戻し、別の worker が再取得できるようにする。lease 期間(RAPID_LEASE_SEC)と poll 間隔(RAPID_POLL_INTERVAL_SEC)は速報クロスチェック設定から読み、コードに埋め込まない。worker はサーバ追加で水平に増やせる | 条件「claim 排他」「lease 失効判定」と情報「速報クロスチェック設定」、NFR B.3.1.1(スケールアウト)への対応 | 条件: claim 排他, lease 失効判定, 状態: クロスチェック依頼, 情報: 速報クロスチェック設定, NFR B.3.1.1, NFR B.1.2.1 | 高 |
-| SP-011 | 比較定義に従うジョブ単位比較と結果登録 | claim した worker は依頼を status = CLAIMED を条件とする条件付き UPDATE で RUNNING にし、更新件数が 0 件(abort-rapid-crosscheck で ABORTED 済み)なら比較を開始せず終了する(comparison_result も登録しない)。RUNNING にできたときだけクロスチェックジョブマップ(CSV)の job_id ごとの比較定義に従って比較ツールでジョブ単位比較を実行する。比較ツールの stdout / stderr / exitcode を依頼に保存し、exitcode 0 で SUCCEEDED、非 0(3=比較 NG / 6=実行エラー)または実行エラーで FAILED とする。comparison_result は比較ツールを起動して終了コードを得たときだけ登録し、比較定義なし・起動失敗では登録せず依頼だけを FAILED(exit_code=6 相当、error_summary に理由)で終端する。速報比較依頼だけを新規作成したリラン由来の parallel_run は、依頼が終端状態(SUCCEEDED / FAILED)になった時点で worker が COMPLETED にする | 条件「比較定義の選択」「依頼状態遷移規則」「比較ツール終了コードの対応」「比較結果の登録条件」「依頼中止可否判定」(CLAIMED 中止時の競合規則)と状態モデル「クロスチェック依頼」(CLAIMED → RUNNING は条件付き UPDATE)「並行稼働実行」(リラン由来 run の COMPLETED 到達)。比較実装は外部ツールに委譲し、規約だけを worker に閉じ込める。claim 後に abort-rapid-crosscheck で中止された依頼の比較を開始しないため | 条件: 比較定義の選択, 依頼状態遷移規則, 比較ツール終了コードの対応, 比較結果の登録条件, 依頼中止可否判定, 外部システム: 比較ツール, 情報: 比較定義, 比較結果(comparison_result), 比較ツール実行結果, 状態: 並行稼働実行, クロスチェック依頼 | 高 |
-| SP-012 | 速報結果の位置付け(原因調査用) | 速報クロスチェックの exitcode や失敗は通常業務ジョブの結果としてジョブスケジューラへ返さない。比較結果(comparison_result)と依頼の stdout / stderr / exitcode は運用者が run_id で参照し、両実装の差分の原因調査に使う。リリース判断の正本には用いない | 条件「速報結果の位置付け」。速報は非同期の background 処理であり本番結果に影響させないため | 条件: 速報結果の位置付け, アクター: 運用者, バリエーション: 比較結果ステータス, クロスチェック種別 | 高 |
+| SP-011 | 比較定義に従うジョブ単位比較と結果登録 | claim した worker は依頼を status = CLAIMED を条件とする条件付き UPDATE で RUNNING にし、更新件数が 0 件(abort-rapid-crosscheck で ABORTED 済み)なら比較を開始せず終了する。RUNNING にできたときだけ速報クロスチェック設定の比較ツール起動コマンド(1 行。{job_id} を含む)を依頼レコードの値(job_id / parameters / blue_exit_code / green_exit_code)で置換して比較ツールを実行する。比較ツールの stdout / stderr / exitcode を依頼レコードの列へ保存し(別レコード・ファイルには保存しない)、exitcode 0 で SUCCEEDED、非 0(3=比較 NG / 6=実行エラー)または実行エラーで FAILED とする。起動失敗では依頼だけを FAILED(exit_code=6 相当、error_summary に理由)で終端する。速報比較依頼だけを新規作成したリラン由来の parallel_run は、依頼が終端状態(SUCCEEDED / FAILED)になった時点で worker が COMPLETED にする | 条件「比較定義の選択」「依頼状態遷移規則」「比較ツール終了コードの対応」「依頼中止可否判定」(CLAIMED 中止時の競合規則)と状態モデル「クロスチェック依頼」(CLAIMED → RUNNING は条件付き UPDATE)「並行稼働実行」(リラン由来 run の COMPLETED 到達)。比較実装は外部ツールに委譲し、規約だけを worker に閉じ込める。claim 後に abort-rapid-crosscheck で中止された依頼の比較を開始しないため | 条件: 比較定義の選択, 依頼状態遷移規則, 比較ツール終了コードの対応, 依頼中止可否判定, 外部システム: 比較ツール, 情報: 比較定義, 比較ツール実行結果, 状態: 並行稼働実行, クロスチェック依頼 | 高 |
+| SP-012 | 速報結果の位置付け(原因調査用) | 速報クロスチェックの exitcode や失敗は通常業務ジョブの結果としてジョブスケジューラへ返さない。依頼レコードの stdout / stderr / exit_code は運用者が run_id で参照し、両実装の差分の原因調査に使う。リリース判断の正本には用いない | 条件「速報結果の位置付け」。速報は非同期の background 処理であり本番結果に影響させないため | 条件: 速報結果の位置付け, アクター: 運用者, クロスチェック種別 | 高 |
 
 #### ルール
 
 | ID | ルール名 | 内容 | 根拠 | RDRA/NFR 要素 | 確信度 |
 |-----|---------|------|------|--------------|:------:|
-| SR-003 | 速報側データモデルの所有 | rapid_run / rapid_crosscheck_request / comparison_result は速報クロスチェックティアだけが作成・更新する。確報側および facade は参照・作成しない。parallel_run の作成は facade と background-rerun が行い、速報クロスチェックティアはリラン由来 run の COMPLETED 更新だけを行う | 方針資料「速報と確報の比較規約はそれぞれ別ドメインが所有する」への対応。管理 DB は relay-gate 内部のジョブキュー兼管理 DB として速報側 / 確報側のテーブルを分離する | 条件: 速報と確報のモデル分離, システム概要: ジョブキュー兼管理 DB(内部データストア), 状態: 並行稼働実行 | 高 |
+| SR-003 | 速報側データモデルの所有 | rapid_run / rapid_crosscheck_request は速報クロスチェックティアだけが作成・更新する。確報側および facade は参照・作成しない。比較結果は依頼レコードの stdout / stderr / exit_code 列に保存し別レコードは持たない。parallel_run の作成は facade と background-rerun が行い、速報クロスチェックティアはリラン由来 run の COMPLETED 更新だけを行う | 方針資料「速報と確報の比較規約はそれぞれ別ドメインが所有する」への対応。管理 DB は relay-gate 内部のジョブキュー兼管理 DB として速報側 / 確報側のテーブルを分離する | 条件: 速報と確報のモデル分離, システム概要: ジョブキュー兼管理 DB(内部データストア), 状態: 並行稼働実行 | 高 |
 
 ### 確報クロスチェックティア (tier-final-crosscheck) の方針・ルール
 
@@ -197,15 +196,15 @@ FINAL -->|stdout / stderr / exitcode| SCHED
 
 | ID | 方針名 | 内容 | 根拠 | RDRA/NFR 要素 | 確信度 |
 |-----|---------|------|------|--------------|:------:|
-| SP-013 | 確報比較依頼の登録と同期 polling | runner はジョブスケジューラから起動されたとき business_date と対象カタログの版を持つ確報比較依頼を REQUESTED で登録し、SUCCEEDED / FAILED / ABORTED の終端状態になるまで同期 polling する。日次確報は夜間バッチウィンドウ内(8 時間以内)に完了させる | 条件「確報依頼の登録条件」と NFR B.2.2.1(バッチ処理時間)への対応 | 条件: 確報依頼の登録条件, 情報: 確報比較依頼(final_crosscheck_request), 対象カタログ, 外部システム: ジョブスケジューラ, BUC: 確報クロスチェックフロー, NFR B.2.2.1 | 高 |
+| SP-013 | 確報比較依頼の登録と同期 polling | runner はジョブスケジューラから起動されたとき業務上の引数なしで確報比較依頼を REQUESTED で登録し、SUCCEEDED / FAILED / ABORTED の終端状態になるまで同期 polling する。全量比較の対象は比較ツール側(適用側)が持つ。日次確報は夜間バッチウィンドウ内(8 時間以内)に完了させる | 条件「確報依頼の登録条件」と NFR B.2.2.1(バッチ処理時間)への対応 | 条件: 確報依頼の登録条件, 情報: 確報比較依頼(final_crosscheck_request), 外部システム: ジョブスケジューラ, BUC: 確報クロスチェックフロー, NFR B.2.2.1 | 高 |
 | SP-014 | 確報結果の無加工中継 | runner は依頼に保存された stdout / stderr / exitcode だけをそのまま標準出力・標準エラー・終了コードとしてジョブスケジューラへ返す。チェック結果・差分件数・レポート URI などの追加連携データや依頼の状態名は返さない。比較 OK=0 / 比較 NG=3(警告終了) / 実行エラー=6(エラー終了)の終了コードをそのまま中継する | 条件「確報結果の中継制約」「比較ツール終了コードの対応」。ジョブスケジューラ側の判定を比較ツールの終了コード契約に委ねるため | 条件: 確報結果の中継制約, 比較ツール終了コードの対応, 外部システム: 比較ツール, バリエーション: 比較ツール終了コード, アクター: 運用者 | 高 |
-| SP-015 | 確報 worker の DB セグメント実行と claim / lease | worker は DB セグメントで管理 DB を poll し、REQUESTED の確報比較依頼を worker_id と lease_until 付きで CLAIMED にし、RUNNING で対象カタログに従う全量比較を実行して stdout / stderr / exitcode を保存する。lease 失効かつ未開始なら REQUESTED に戻す規則は速報と同一とする | 条件「依頼状態遷移規則」「claim 排他」「lease 失効判定」。DB セグメント経由の配置制約を worker 側に閉じ込めるため | 条件: 依頼状態遷移規則, claim 排他, lease 失効判定, 状態: クロスチェック依頼, 情報: 比較ツール実行結果, 適用構成文書 | 高 |
+| SP-015 | 確報 worker の DB セグメント実行と claim / lease | worker は DB セグメントで管理 DB を poll し、REQUESTED の確報比較依頼を worker_id と lease_until 付きで CLAIMED にし、RUNNING で確報クロスチェック worker 設定の比較ツール起動コマンドをそのまま起動して全量比較を実行し、stdout / stderr / exitcode を依頼レコードの列へ保存する。全量比較の対象は比較ツール側が持つ。lease 失効かつ未開始なら REQUESTED に戻す規則は速報と同一とする | 条件「依頼状態遷移規則」「claim 排他」「lease 失効判定」。DB セグメント経由の配置制約を worker 側に閉じ込めるため | 条件: 依頼状態遷移規則, claim 排他, lease 失効判定, 状態: クロスチェック依頼, 情報: 比較ツール実行結果, 適用構成文書 | 高 |
 
 #### ルール
 
 | ID | ルール名 | 内容 | 根拠 | RDRA/NFR 要素 | 確信度 |
 |-----|---------|------|------|--------------|:------:|
-| SR-004 | 速報と確報のモデル分離 | 確報クロスチェックは final_crosscheck_request と対象カタログだけを用い、rapid_run / rapid_crosscheck_request を作成・変更しない。確報の再実行はジョブスケジューラの正規ジョブを直接再実行し、background-rerun を使わない | 条件「速報と確報のモデル分離」「復旧手段の選択」への対応 | 条件: 速報と確報のモデル分離, 復旧手段の選択, バリエーション: 再実行経路 | 高 |
+| SR-004 | 速報と確報のモデル分離 | 確報クロスチェックは final_crosscheck_request だけを用い、rapid_run / rapid_crosscheck_request を作成・変更しない。全量比較の対象は比較ツール側(適用側)が持つ。確報の再実行はジョブスケジューラの正規ジョブを直接再実行し、background-rerun を使わない | 条件「速報と確報のモデル分離」「復旧手段の選択」への対応 | 条件: 速報と確報のモデル分離, 復旧手段の選択, バリエーション: 再実行経路 | 高 |
 
 ### 実行監視・復旧ティア (tier-ops) の方針・ルール
 
@@ -233,9 +232,9 @@ FINAL -->|stdout / stderr / exitcode| SCHED
 
 | ID | 方針名 | 内容 | 根拠 | RDRA/NFR 要素 | 確信度 |
 |-----|---------|------|------|--------------|:------:|
-| SP-023 | 管理 DB をジョブキューとして使う | MQ を導入せず、管理 DB の依頼レコード(rapid_crosscheck_request / final_crosscheck_request)を worker が poll / claim するジョブキューとして使う。速報側(parallel_run / rapid_run / rapid_crosscheck_request / comparison_result)と確報側(final_crosscheck_request / 対象カタログ)のテーブルを分離し、監視記録もここに保持する | システム概要で管理 DB(RDB)が relay-gate 内部のジョブキュー兼管理 DB と定義され、NFR B.2.1.2(〜10 TPS)の低頻度書き込みで十分なため。エアーギャップ環境で追加ミドルウェアを増やさない | システム概要: ジョブキュー兼管理 DB(内部データストア), 条件: 速報と確報のモデル分離, claim 排他, NFR B.2.1.2, NFR B.1.1.1, NFR B.1.1.3, NFR A.2.5.1 | 高 |
+| SP-023 | 管理 DB をジョブキューとして使う | MQ を導入せず、管理 DB の依頼レコード(rapid_crosscheck_request / final_crosscheck_request)を worker が poll / claim するジョブキューとして使う。速報側(parallel_run / rapid_run / rapid_crosscheck_request)と確報側(final_crosscheck_request)のテーブルを分離し、監視記録もここに保持する。比較結果は依頼レコードの stdout / stderr / exit_code 列に保存し別テーブルは持たない | システム概要で管理 DB(RDB)が relay-gate 内部のジョブキュー兼管理 DB と定義され、NFR B.2.1.2(〜10 TPS)の低頻度書き込みで十分なため。エアーギャップ環境で追加ミドルウェアを増やさない | システム概要: ジョブキュー兼管理 DB(内部データストア), 条件: 速報と確報のモデル分離, claim 排他, NFR B.2.1.2, NFR B.1.1.1, NFR B.1.1.3, NFR A.2.5.1 | 高 |
 | SP-024 | 成果物ファイルを外部 IF の正本にする | Runner Result(started-at.txt / stdout.log / stderr.log / exitcode.txt。中止時のみ aborted.txt)と execution-spec.json はファイルとして成果物ディレクトリに残し、ジョブスケジューラ応答・完了通知・ハング検知・中止・リラン・障害調査が共通に参照する。slot 実行の状態はこのファイル正本から導出し、RAPID_CROSSCHECK_MODE=off では管理 DB なしにファイルだけで slot 実行・監視・中止・リランが成立する | Runner Result Contract と条件「実行履歴はジョブスケジューラの責務」「slot 実行の状態導出規則」への対応。DB 喪失時も execution-spec.json と Runner Result からリランできる(NFR A.3.1.1 / A.4.1.1 / A.4.1.3) | 情報: Runner Result, 実行設定(execution-spec), 条件: 実行履歴はジョブスケジューラの責務, slot 実行の状態導出規則, NFR A.3.1.1, NFR A.3.1.2, NFR A.4.1.1, NFR A.4.1.3, NFR F.1.2.2 | 高 |
-| SP-025 | 設定所有区分に基づく設定ファイル配置 | 実装スロット・実装版(BLUE_IMPL / GREEN_IMPL)・runner と完了通知先・worker 実体の割当は feature flag(env 形式 9 キー)、実行先とハング検知上限は該当 slot のジョブマップ(CSV)、比較対象と対象カタログはクロスチェックジョブマップ(CSV)、通知先メールアドレス・送信コマンド・件名プレフィックス・管理 DB 接続参照名はハング検知定期ジョブ設定(env 形式)、速報クロスチェックの管理 DB 接続参照名(RAPID_DB_CONN_REF)・lease 期間(RAPID_LEASE_SEC)・worker の poll 間隔(RAPID_POLL_INTERVAL_SEC)は速報クロスチェック設定(env 形式 rapid-crosscheck.env。facade・slot runner・速報クロスチェック runner・worker が読み、RAPID_CROSSCHECK_MODE=off では不要)、外部 IF 方針・ネットワーク制約・ホスト配置・hang_detect_limit_minutes の調整記録は適用文書が所有する。所有者はいずれも基盤適用設計者。接続参照名は値を置かず参照名のみとする。feature flag は設定版を持たず、実装版は BLUE_IMPL / GREEN_IMPL、マップ版はジョブマップ側の任意列 map_version、カタログ版・文書版はそれぞれのファイルが持ち、適用側が版管理する | 条件「設定所有区分」「適用側で定義する事項」と元の方針資料の設定契約(9 キー・CSV 列名)への対応。正本を一意に定め、relay-gate のスクリプトを変更せずに案件・世代を切り替えるため | 条件: 設定所有区分, 適用側で定義する事項, ジョブマップ解決条件, 認証情報の非保存, 情報: feature flag 設定, ジョブマップ, クロスチェックジョブマップ, 対象カタログ, ハング検知定期ジョブ設定, 速報クロスチェック設定, 適用構成文書, バリエーション: 設定所有区分, アクター: 基盤適用設計者, BUC: 適用構成定義フロー, NFR C.2.2.1, NFR C.1.2.2, NFR E.5.1.1 | 高 |
+| SP-025 | 設定所有区分に基づく設定ファイル配置 | 実装スロット・実装版(BLUE_IMPL / GREEN_IMPL)・runner と完了通知先・worker 実体の割当は feature flag(env 形式 9 キー)、実行先とハング検知上限は該当 slot のジョブマップ(CSV)、速報の比較ツール起動コマンド(1 行。{job_id} を含む)は速報クロスチェック設定、確報の比較ツール起動コマンド(1 行)は確報クロスチェック worker 設定が持ち、比較対象は比較ツール側(適用側)が定義する、通知先メールアドレス・送信コマンド・件名プレフィックス・管理 DB 接続参照名はハング検知定期ジョブ設定(env 形式)、速報クロスチェックの管理 DB 接続参照名(RAPID_DB_CONN_REF)・lease 期間(RAPID_LEASE_SEC)・worker の poll 間隔(RAPID_POLL_INTERVAL_SEC)は速報クロスチェック設定(env 形式 rapid-crosscheck.env。facade・slot runner・速報クロスチェック runner・worker が読み、RAPID_CROSSCHECK_MODE=off では不要)、外部 IF 方針・ネットワーク制約・ホスト配置・hang_detect_limit_minutes の調整記録は適用文書が所有する。所有者はいずれも基盤適用設計者。接続参照名は値を置かず参照名のみとする。feature flag は設定版を持たず、実装版は BLUE_IMPL / GREEN_IMPL、マップ版はジョブマップ側の任意列 map_version、文書版は適用文書が持ち、適用側が版管理する | 条件「設定所有区分」「適用側で定義する事項」と元の方針資料の設定契約(9 キー・CSV 列名)への対応。正本を一意に定め、relay-gate のスクリプトを変更せずに案件・世代を切り替えるため | 条件: 設定所有区分, 適用側で定義する事項, ジョブマップ解決条件, 認証情報の非保存, 情報: feature flag 設定, ジョブマップ, 比較定義, ハング検知定期ジョブ設定, 速報クロスチェック設定, 適用構成文書, バリエーション: 設定所有区分, アクター: 基盤適用設計者, BUC: 適用構成定義フロー, NFR C.2.2.1, NFR C.1.2.2, NFR E.5.1.1 | 高 |
 | SP-026 | バックアップと復旧地点 | 管理 DB は日次のフル+差分バックアップを取り、数時間以内の復旧地点(RPO)と半日以内の復旧(RTO)を目標にする。成果物ディレクトリと管理 DB は最低限のミラーリング(RAID1 相当)に置く。遠隔地の災害対策は基盤単体では持たない | NFR C.1.2.1(フル+差分バックアップ日次)、A.4.1.1(RPO 数時間)、A.4.1.2(RTO 半日)、A.2.5.1(ストレージ冗長化)、A.3.1.1(災害対策なし)への対応 | NFR C.1.2.1, NFR A.4.1.1, NFR A.4.1.2, NFR A.2.5.1, NFR A.3.1.1, NFR A.2.1.1 | 中 |
 
 #### ルール
@@ -270,6 +269,7 @@ FINAL -->|stdout / stderr / exitcode| SCHED
 | CTR-004 | 中立表現と案件固有事項の非記載 | スクリプト・設定サンプル・ドキュメントには特定案件の固有名(製品名・サーバ名・業務名)を記載しない。案件固有事項は適用文書・ジョブマップ・runner 実体に置く | MIT の OSS として公開するため。条件「適用側で定義する事項」への対応 | 条件: 適用側で定義する事項, 情報: 適用構成文書 | 高 |
 | CTR-005 | 実装言語と実行環境 | 実装は bash シェルスクリプトとし、単一 OS(オンプレミス Linux)で動作させる。コードの識別子・エラーメッセージ・ログは英語、コメントは日本語とする。BDD の step 定義のみ JavaScript(CommonJS)を用いる | NFR F.1.1.1(単一 OS)とユーザー指定の実装規約への対応 | NFR F.1.1.1 | ユーザー指定 |
 | CTR-006 | オンプレミス代替構成における手動運用への配慮 | 自動スケール・自動フェイルオーバー・オブジェクトストレージのライフサイクル管理はオンプレミス構成では持たない(OS標準機能による手動水平スケール、単一インスタンスDBの手動復旧、ファイル領域での手動ローテーション)。運用手順書にホスト追加・障害復旧・保持期間超過分削除の手動手順を明記し、自動化が無いことを前提にした運用体制を組む | インフラ設計(MCL product-design)の結果に基づく: product-mapping-onprem.yamlでfidelity=\"partial\"と評価された箇所(実行基盤・管理DB・成果物ストレージ・バックアップ監視)に共通する制約をクロスティアルールとして明示化する | infra: product-mapping-onprem.yaml → mappings[].fidelity=partial | 中 |
+| CTR-007 | ティアは独立プロセス・ティア間のシェル関数共有の規則 | 各ティアの CLI(facade.sh / 各 runner / 各 worker / 運用スクリプト / validate-config.sh)は独立したプロセスとして起動し、原則として他ティアのシェルファイルを source して関数を共有しない。ティア間連携は宣言済みの契約(管理 DB スキーマ、成果物ファイル(Runner Result Contract)、設定ファイル、公開 function(完了通知 blue-completed / green-completed)、終了コード契約)だけで行う。設定ファイルの検証は validate-config.sh(エントリポイントの所有ティアは tier-facade)が全設定ファイル(feature flag / slot ジョブマップ / 速報クロスチェック設定(速報の比較ツール起動コマンドのキーを含む)/ ハング検知定期ジョブ設定 / 確報クロスチェック worker 設定)を tier-facade 自身の解析関数で検証し、他ティアの検証関数を source して委譲しない(クロスチェック簡素化後、速報の検証は「起動コマンドが絶対パスで存在し実行可能」「{job_id} を含む」の 2 点で、CSV クォート解析を要さないため facade 単独で完結する)。将来ティアを増やして同一プロセスにシェルファイルを source する必要が生じた場合に備え、一般規則として: (1) 各ティアが定義するトップレベルの関数名・グローバル変数名にはティア固有の接頭辞を付ける(例: 速報クロスチェックは crosscheck_ / CROSSCHECK_)、(2) facade が共有面として公開する関数は契約に列挙した名前だけを他ティアから呼べる名前とし、それ以外は facade 固有の接頭辞で閉じる、(3) 検証関数ファイルは関数定義だけを行い source 時に副作用(シェルオプションの変更・グローバル変数の上書き・コマンドの実行)を起こさない、(4) 他ティアが定義した名前を再定義しない | validate-config.sh の検証ロジックの委譲と共有関数がティア間の契約として宣言されていない問題、および同一プロセスに source されるティアの名前空間の規則が無い問題への対応。クロスチェック簡素化で速報の設定検証が env の起動コマンド 1 キーの検証に縮退し、facade 単独で完結できるため、ティア間の関数委譲を無くす構成(委譲撤廃)を採用する。CLI 契約の validate-config.sh の tier_note / owner_tier からティア間委譲の記述を外し、UC ティア仕様を追従させるのは下流 spec の責務。名前空間の規則は将来のティア追加に備えた一般規則として残す。方針資料は validate-config.sh の内部構成を定めておらず、本規則と矛盾しない | 条件: 実装固有事項の runner への閉じ込め, 適用側で定義する事項, 情報: 速報クロスチェック設定, Runner Result, 完了通知, 開発規約: 契約に無いティア間依存の禁止 | 高 |
 
 ## アプリケーションアーキテクチャ
 
@@ -358,7 +358,7 @@ R --> G[gateway: SSH / filesystem / RDB / completed 通知]
 graph TD
 P[presentation: blue-completed / green-completed / worker 起動口] --> U[usecase: dispatcher / worker フロー]
 U --> D[domain: 両系成功判定・依頼ライフサイクル]
-U --> R[repository: rapid_run / request / comparison_result / 比較定義]
+U --> R[repository: rapid_run / request / 起動コマンド]
 R --> D
 R --> G[gateway: RDB / 比較ツール]
 ```
@@ -366,9 +366,9 @@ R --> G[gateway: RDB / 比較ツール]
 | ID | レイヤー名 | 責務 | 依存許可先 |
 |-----|---------|------|----------|
 | L-rapid-presentation | プレゼンテーション層(CLI エントリ) | rapid-crosscheck-runner の公開 function(blue-completed / green-completed)の引数検証と、rapid-crosscheck-worker の起動口(poll ループ / 1 回実行)。終了コードの決定 | L-rapid-usecase |
-| L-rapid-usecase | ユースケース層 | 完了通知の登録 → 中止済み run 判定(並行稼働実行と完了通知の対象 slot の slot 実行の状態)→ 両系成功判定 → 比較依頼の一意作成(dispatcher。中止済み run では依頼を作成せず完了事実の記録と警告ログだけ)、poll → claim → RUNNING(条件付き UPDATE。0 件なら比較を開始せず終了)→ 比較実行 → 結果保存 → comparison_result 登録(比較ツールの終了コードを得たときだけ)→ リラン由来 parallel_run の COMPLETED 更新(worker)のフロー制御 | L-rapid-domain, L-rapid-repository |
+| L-rapid-usecase | ユースケース層 | 完了通知の登録 → 中止済み run 判定(並行稼働実行と完了通知の対象 slot の slot 実行の状態)→ 両系成功判定 → 比較依頼の一意作成(dispatcher。中止済み run では依頼を作成せず完了事実の記録と警告ログだけ)、poll → claim → RUNNING(条件付き UPDATE。0 件なら比較を開始せず終了)→ 起動コマンドの置換 → 比較実行 → 依頼レコードへ stdout / stderr / exit_code 保存 → リラン由来 parallel_run の COMPLETED 更新(worker)のフロー制御 | L-rapid-domain, L-rapid-repository |
 | L-rapid-domain | ドメイン層 | 速報実行の完了状況(両系未完了 / 片系完了 / 両系成功 / いずれか失敗 / 比較依頼作成済み)の遷移、中止済み run の依頼作成除外判定(並行稼働実行の状態 × 対象 slot の slot 実行の状態 × 両系成功判定)、クロスチェック依頼のライフサイクル(REQUESTED / CLAIMED / RUNNING → ABORTED と、CLAIMED → RUNNING の条件付き遷移を含む)、lease 失効判定、比較ツール終了コード → 依頼状態の対応表 | - |
-| L-rapid-repository | リポジトリ層 | rapid_run / rapid_crosscheck_request / comparison_result の読み書きと parallel_run・slot 実行(slot_executions)の状態参照(管理 DB)、クロスチェックジョブマップの比較定義の読み取り(設定ファイル)、速報クロスチェック設定(env 形式 rapid-crosscheck.env: RAPID_DB_CONN_REF / RAPID_LEASE_SEC / RAPID_POLL_INTERVAL_SEC)の読み取り | L-rapid-domain, L-rapid-gateway |
+| L-rapid-repository | リポジトリ層 | rapid_run / rapid_crosscheck_request の読み書き(比較ツールの stdout / stderr / exit_code は依頼レコードの列に保存)と parallel_run・slot 実行(slot_executions)の状態参照(管理 DB)、速報クロスチェック設定(env 形式 rapid-crosscheck.env: RAPID_DB_CONN_REF / RAPID_LEASE_SEC / RAPID_POLL_INTERVAL_SEC と速報の比較ツール起動コマンド)の読み取り | L-rapid-domain, L-rapid-gateway |
 | L-rapid-gateway | ゲートウェイ層 | RDB クライアントアダプタ(poll / claim と CLAIMED → RUNNING の条件付き UPDATE。更新件数を usecase に返す。接続先は速報クロスチェック設定の接続参照名で解決)、比較ツール起動アダプタ(比較定義のコマンドを実行し stdout / stderr / exitcode を取得) | - |
 
 #### プレゼンテーション層(CLI エントリ) (L-rapid-presentation) の方針・ルール
@@ -377,7 +377,7 @@ R --> G[gateway: RDB / 比較ツール]
 
 | ID | 方針名 | 内容 | 根拠 | RDRA/NFR 要素 | 確信度 |
 |-----|---------|------|------|--------------|:------:|
-| LP-008 | 系統ごとの公開 function | 完了通知の受け口は blue-completed / green-completed の 2 つに分け、run_id・job_id・終了コード・成果物ディレクトリ(artifact_uri)を受け取る | 条件「完了通知の系統独立」への対応 | 条件: 完了通知の系統独立, 情報: 完了通知 | 高 |
+| LP-008 | 系統ごとの公開 function | 完了通知の受け口は blue-completed / green-completed の 2 つに分け、run_id・job_id・終了コードを受け取る | 条件「完了通知の系統独立」への対応 | 条件: 完了通知の系統独立, 情報: 完了通知 | 高 |
 
 #### ユースケース層 (L-rapid-usecase) の方針・ルール
 
@@ -386,8 +386,8 @@ R --> G[gateway: RDB / 比較ツール]
 | ID | 方針名 | 内容 | 根拠 | RDRA/NFR 要素 | 確信度 |
 |-----|---------|------|------|--------------|:------:|
 | LP-009 | 依頼作成と claim の原子性 | 両系成功 → 比較依頼作成、REQUESTED → CLAIMED の遷移は 1 トランザクション(条件付き UPDATE / INSERT)で行い、重複作成と二重 claim を防ぐ | 条件「比較依頼の一意性」「claim 排他」への対応 | 条件: 比較依頼の一意性, claim 排他, 状態: 速報実行の完了状況 | 高 |
-| LP-023 | 中止済み run では依頼を作成しない | dispatcher の usecase は完了通知を登録した後、同じトランザクション内で並行稼働実行(parallel_run.status)と完了通知の対象 slot の slot 実行(slot_executions.status。ファイル正本 aborted.txt のミラー)の状態を読み、いずれかが ABORTED なら中止済み run として両系成功でも速報比較依頼を作成せず、rapid_run の完了事実(blue_status / green_status / 成果物 URI)だけを保存して実行ログに warning を残し、正常終了する。並行稼働実行は foreground 中継完了で COMPLETED になるため、foreground 完了後の background 中止は slot 実行 ABORTED の側で除外される。slot runner に中止判定を持たせない。速報有効時だけの規則で、off では完了通知自体が存在しない | 条件「中止済み run の比較依頼作成除外」(判定キー: 並行稼働実行 ABORTED または対象 slot の slot 実行 ABORTED)への対応。判断主体を速報クロスチェック runner に置き、方針資料の責務分担(blue / green runner は比較依頼を判断しない)を守るため | 条件: 中止済み run の比較依頼作成除外, 両系成功判定, 状態: 並行稼働実行, slot 実行, 速報実行の完了状況, 情報: 速報実行(rapid_run), 完了通知, slot 実行, 実行ログ | 高 |
-| LP-024 | claim 後の比較開始は条件付き UPDATE で判定する | worker の usecase は claim した依頼を比較開始前に status = CLAIMED(かつ自 worker_id)を条件とする条件付き UPDATE で RUNNING にし、更新件数が 0 件(abort-rapid-crosscheck で ABORTED 済み)なら比較ツールを起動せず comparison_result も登録せずに正常終了し、その旨を実行ログに残す。RUNNING にできたときだけ比較を実行する | 条件「依頼中止可否判定」(CLAIMED の速報比較依頼を中止する際の競合規則)と状態モデル「クロスチェック依頼」(CLAIMED → RUNNING の条件付き UPDATE、CLAIMED → ABORTED)への対応。運用者が worker 停止を確認して中止した依頼を、停止漏れの worker が比較してしまう競合を DB の条件付き UPDATE で閉じるため | 条件: 依頼中止可否判定, 依頼状態遷移規則, claim 排他, 状態: クロスチェック依頼, 情報: 速報比較依頼(rapid_crosscheck_request), 実行ログ | 高 |
+| LP-023 | 中止済み run では依頼を作成しない | dispatcher の usecase は完了通知を登録した後、同じトランザクション内で並行稼働実行(parallel_run.status)と完了通知の対象 slot の slot 実行(slot_executions.status。ファイル正本 aborted.txt のミラー)の状態を読み、いずれかが ABORTED なら中止済み run として両系成功でも速報比較依頼を作成せず、rapid_run の完了事実(blue_status / green_status と終了コード)だけを保存して実行ログに warning を残し、正常終了する。並行稼働実行は foreground 中継完了で COMPLETED になるため、foreground 完了後の background 中止は slot 実行 ABORTED の側で除外される。slot runner に中止判定を持たせない。速報有効時だけの規則で、off では完了通知自体が存在しない | 条件「中止済み run の比較依頼作成除外」(判定キー: 並行稼働実行 ABORTED または対象 slot の slot 実行 ABORTED)への対応。判断主体を速報クロスチェック runner に置き、方針資料の責務分担(blue / green runner は比較依頼を判断しない)を守るため | 条件: 中止済み run の比較依頼作成除外, 両系成功判定, 状態: 並行稼働実行, slot 実行, 速報実行の完了状況, 情報: 速報実行(rapid_run), 完了通知, slot 実行, 実行ログ | 高 |
+| LP-024 | claim 後の比較開始は条件付き UPDATE で判定する | worker の usecase は claim した依頼を比較開始前に status = CLAIMED(かつ自 worker_id)を条件とする条件付き UPDATE で RUNNING にし、更新件数が 0 件(abort-rapid-crosscheck で ABORTED 済み)なら比較ツールを起動せず正常終了し、その旨を実行ログに残す。RUNNING にできたときだけ比較を実行する | 条件「依頼中止可否判定」(CLAIMED の速報比較依頼を中止する際の競合規則)と状態モデル「クロスチェック依頼」(CLAIMED → RUNNING の条件付き UPDATE、CLAIMED → ABORTED)への対応。運用者が worker 停止を確認して中止した依頼を、停止漏れの worker が比較してしまう競合を DB の条件付き UPDATE で閉じるため | 条件: 依頼中止可否判定, 依頼状態遷移規則, claim 排他, 状態: クロスチェック依頼, 情報: 速報比較依頼(rapid_crosscheck_request), 実行ログ | 高 |
 
 #### ドメイン層 (L-rapid-domain) の方針・ルール
 
@@ -403,13 +403,13 @@ R --> G[gateway: RDB / 比較ツール]
 
 | ID | 方針名 | 内容 | 根拠 | RDRA/NFR 要素 | 確信度 |
 |-----|---------|------|------|--------------|:------:|
-| LP-011 | 比較ツール呼び出しの分離 | 比較ツールの起動コマンド・オプションは job_id ごとの比較定義から受け取り、gateway は実行と結果取得だけを行う。ツール固有の終了コード解釈は domain の対応表に委ねる | 条件「比較定義の選択」への対応。比較ツールを差し替え可能にするため | 条件: 比較定義の選択, 外部システム: 比較ツール, 情報: 比較定義 | 高 |
+| LP-011 | 比較ツール呼び出しの分離 | 比較ツールの起動コマンドは速報クロスチェック設定の 1 行({job_id} を含む)を依頼レコードの値で置換して受け取り、gateway は実行と結果取得だけを行う。ツール固有の終了コード解釈は domain の対応表に委ねる | 条件「比較定義の選択」への対応。比較ツールを差し替え可能にするため | 条件: 比較定義の選択, 外部システム: 比較ツール, 情報: 比較定義, 速報クロスチェック設定 | 高 |
 
 #### レイヤー共通の方針
 
 | ID | 方針名 | 内容 | 根拠 | RDRA/NFR 要素 | 確信度 |
 |-----|---------|------|------|--------------|:------:|
-| CLP-003 | IF なし(直接依存) | tier-facade と同じく直接依存とし、gateway アダプタの差し替えで製品差異を吸収する | 一般的なベストプラクティスとして適用 | なし | デフォルト |
+| CLP-003 | IF なし(直接依存) | tier-facade と同じく直接依存とし、gateway アダプタの差し替えで製品差異を吸収する。これはティア内のレイヤー間依存の規則である。ティア間(本ティアと tier-facade など)のシェル関数の共有・source の規則は CTR-007(ティアは独立プロセス・ティア間のシェル関数共有の規則)に従う。本ティアは tier-facade の validate-config.sh へ検証関数を提供せず、validate-config.sh から source されない(クロスチェック簡素化後、速報の設定検証は facade 単独で完結する) | 一般的なベストプラクティスとして適用。ティア間のシェル関数共有の規則は CTR-007 に集約する | なし | デフォルト |
 | CLP-004 | 実行ログの出力方針 | tier-facade の CLP-002 と同一(日時はホストのローカルタイムゾーン、タイムゾーン指示子なし)。worker は claim した依頼の run_id と worker_id をログに含め、RUNNING への条件付き UPDATE が 0 件で比較を開始しなかったこともログに残す。dispatcher は中止済み run(並行稼働実行 ABORTED または対象 slot の slot 実行 ABORTED)で依頼を作成しなかったことを warning で残す | NFR C.6.1.1・C.3.1.1 への対応 | 情報: 実行ログ, NFR C.6.1.1, NFR C.3.1.1 | 中 |
 
 #### レイヤー共通のルール
@@ -426,18 +426,18 @@ R --> G[gateway: RDB / 比較ツール]
 graph TD
 P[presentation: final runner / worker 起動口] --> U[usecase: 登録・polling・中継 / 比較実行]
 U --> D[domain: 依頼ライフサイクル・終了コード対応]
-U --> R[repository: final_crosscheck_request / 対象カタログ]
+U --> R[repository: final_crosscheck_request / 起動コマンド]
 R --> D
 R --> G[gateway: RDB / 比較ツール]
 ```
 
 | ID | レイヤー名 | 責務 | 依存許可先 |
 |-----|---------|------|----------|
-| L-final-presentation | プレゼンテーション層(CLI エントリ) | final-crosscheck-runner の起動口(business_date・対象カタログ版の引数検証)と worker の起動口。保存済み stdout / stderr / exitcode の無加工中継と終了コードの決定 | L-final-usecase |
+| L-final-presentation | プレゼンテーション層(CLI エントリ) | final-crosscheck-runner の起動口(業務上の引数なし。未知オプションのみ検証)と worker の起動口。保存済み stdout / stderr / exitcode の無加工中継と終了コードの決定 | L-final-usecase |
 | L-final-usecase | ユースケース層 | 依頼登録 → 終端状態までの同期 polling → 結果中継(runner)、poll → claim → RUNNING → 全量比較 → 結果保存(worker)のフロー制御 | L-final-domain, L-final-repository |
 | L-final-domain | ドメイン層 | クロスチェック依頼のライフサイクル(速報と共有する規則)、lease 失効判定、比較ツール終了コード → 依頼状態の対応表、終端状態の判定 | - |
-| L-final-repository | リポジトリ層 | final_crosscheck_request と対象カタログの読み書き(管理 DB)。速報側のテーブルには触れない | L-final-domain, L-final-gateway |
-| L-final-gateway | ゲートウェイ層 | RDB クライアントアダプタ(DB セグメントからの poll / claim)、比較ツール起動アダプタ(対象カタログに基づく全テーブル・全ファイル比較) | - |
+| L-final-repository | リポジトリ層 | final_crosscheck_request の読み書き(比較ツールの stdout / stderr / exit_code は依頼レコードの列に保存)と確報クロスチェック worker 設定の起動コマンドの読み取り。速報側のテーブルには触れない | L-final-domain, L-final-gateway |
+| L-final-gateway | ゲートウェイ層 | RDB クライアントアダプタ(DB セグメントからの poll / claim)、比較ツール起動アダプタ(確報クロスチェック worker 設定の起動コマンドで全テーブル・全ファイル比較。対象は比較ツール側が定義) | - |
 
 #### プレゼンテーション層(CLI エントリ) (L-final-presentation) の方針・ルール
 
@@ -469,14 +469,14 @@ R --> G[gateway: RDB / 比較ツール]
 
 | ID | 方針名 | 内容 | 根拠 | RDRA/NFR 要素 | 確信度 |
 |-----|---------|------|------|--------------|:------:|
-| LP-015 | 対象カタログに基づく全量比較の起動 | gateway は対象カタログ(target_type / target_identifier / 比較条件 / business_date の扱い)を比較ツールの入力に変換して起動し、stdout / stderr / exitcode を取得する | 条件「適用側で定義する事項」への対応 | 条件: 適用側で定義する事項, 情報: 対象カタログ, 外部システム: 比較ツール | 高 |
+| LP-015 | 確報の比較ツール起動コマンドによる全量比較の起動 | gateway は確報クロスチェック worker 設定の比較ツール起動コマンドをそのまま起動し、stdout / stderr / exitcode を取得する。比較対象(テーブル・ファイル)は比較ツール側(適用側)が持つ | 条件「適用側で定義する事項」への対応 | 条件: 適用側で定義する事項, 情報: 比較定義, 外部システム: 比較ツール | 高 |
 
 #### レイヤー共通の方針
 
 | ID | 方針名 | 内容 | 根拠 | RDRA/NFR 要素 | 確信度 |
 |-----|---------|------|------|--------------|:------:|
 | CLP-005 | IF なし(直接依存) | tier-facade と同じく直接依存とする | 一般的なベストプラクティスとして適用 | なし | デフォルト |
-| CLP-006 | 実行ログの出力方針 | tier-facade の CLP-002 と同一。final_crosscheck_id と business_date をログに含める | NFR C.6.1.1・C.3.1.1 への対応 | 情報: 実行ログ, NFR C.6.1.1, NFR C.3.1.1 | 中 |
+| CLP-006 | 実行ログの出力方針 | tier-facade の CLP-002 と同一。final_crosscheck_id をログに含める | NFR C.6.1.1・C.3.1.1 への対応 | 情報: 実行ログ, NFR C.6.1.1, NFR C.3.1.1 | 中 |
 
 #### レイヤー共通のルール
 
@@ -718,55 +718,15 @@ EXECUTION_LOG }o--o| PARALLEL_RUN : traces
 
 | 属性名 | 型 | 説明 | NULL | PK |
 |--------|-----|------|:----:|:--:|
-| job_id | string | JOB_ID | No | Yes |
+| crosscheck_type | string | クロスチェック種別(速報 / 確報) | No | Yes |
 | definition_version | string | 定義版 | No | Yes |
-| comparison_type | string | 比較種別 | No |  |
-| targets | text | 比較対象(テーブル・ファイル) | No |  |
-| tool_command | string | 比較ツール起動コマンド | No |  |
-| tool_options | text | 比較オプション | Yes |  |
+| tool_command | string | 比較ツール起動コマンド(1 行。速報は {job_id} を含む)。比較対象とジョブ ID ごとの比較内容は比較ツール側(適用側)が持つ。速報の起動コマンドは速報クロスチェック設定、確報の起動コマンドは確報クロスチェック worker 設定が所有する | No |  |
 
 **リレーション**
 
 | 対象エンティティ | カーディナリティ | 説明 |
 |-----------------|:---------------:|------|
-| E-007 | N:1 | クロスチェックジョブマップに属する |
-
-#### E-007: クロスチェックジョブマップ
-
-- **参照元**: 情報: クロスチェックジョブマップ
-- **モデル種別**: リソース(SCD2)
-
-| 属性名 | 型 | 説明 | NULL | PK |
-|--------|-----|------|:----:|:--:|
-| map_version | string | マップ版 | No | Yes |
-| target_list | text | 比較対象一覧 | No |  |
-| catalog_ref | string | 対象カタログ参照(版) | No |  |
-
-**リレーション**
-
-| 対象エンティティ | カーディナリティ | 説明 |
-|-----------------|:---------------:|------|
-| E-006 | 1:N | job_id ごとの比較定義を保持する |
-| E-008 | 1:1 | 確報用の対象カタログを参照する |
-
-#### E-008: 対象カタログ
-
-- **参照元**: 情報: 対象カタログ
-- **モデル種別**: リソース(SCD2)
-
-| 属性名 | 型 | 説明 | NULL | PK |
-|--------|-----|------|:----:|:--:|
-| catalog_version | string | カタログ版 | No | Yes |
-| target_type | string | target_type(テーブル / ファイル) | No | Yes |
-| target_identifier | string | target_identifier | No | Yes |
-| comparison_condition | text | 比較条件 | Yes |  |
-| business_date_handling | string | business_date の扱い | Yes |  |
-
-**リレーション**
-
-| 対象エンティティ | カーディナリティ | 説明 |
-|-----------------|:---------------:|------|
-| E-019 | 1:N | 確報比較依頼がカタログ版を紐付ける |
+| E-027 | 1:1 | 速報の比較ツール起動コマンドは速報クロスチェック設定が持つ |
 
 #### E-009: ジョブ起動要求
 
@@ -920,7 +880,6 @@ EXECUTION_LOG }o--o| PARALLEL_RUN : traces
 | job_id | string | JOB_ID | No |  |
 | notification_type | string | 通知種別(blue-completed / green-completed) | No |  |
 | exit_code | integer | 終了コード | No |  |
-| artifact_uri | string | 成果物ディレクトリまたは artifact_uri | No |  |
 | occurred_at | datetime | 完了日時(ホストのローカルタイムゾーン、タイムゾーン指示子なし) | No |  |
 
 **リレーション**
@@ -940,8 +899,6 @@ EXECUTION_LOG }o--o| PARALLEL_RUN : traces
 | run_id | string | run_id | No | Yes |
 | blue_status | string | blue_status | Yes |  |
 | green_status | string | green_status | Yes |  |
-| blue_artifact_uri | string | blue_artifact_uri | Yes |  |
-| green_artifact_uri | string | green_artifact_uri | Yes |  |
 | completion_status | string | 完了状況(両系未完了 / 片系完了 / 両系成功 / いずれか失敗 / 比較依頼作成済み)。中止済み run(並行稼働実行が ABORTED、または完了通知の対象 slot の slot 実行が ABORTED)では両系成功でも比較依頼作成済みへ進めず、完了事実だけを記録する | No |  |
 
 **リレーション**
@@ -962,6 +919,9 @@ EXECUTION_LOG }o--o| PARALLEL_RUN : traces
 |--------|-----|------|:----:|:--:|
 | run_id | string | run_id(主キー) | No | Yes |
 | job_id | string | JOB_ID | No |  |
+| parameters | text | parameters(JSON。元 run の job_id とともに比較ツール起動コマンドの {job_id} 置換に使う値) | Yes |  |
+| blue_exit_code | integer | blue slot の終了コード(worker が起動コマンドを置換できるよう依頼レコードに揃える) | Yes |  |
+| green_exit_code | integer | green slot の終了コード(worker が起動コマンドを置換できるよう依頼レコードに揃える) | Yes |  |
 | status | string | REQUESTED / CLAIMED / RUNNING / SUCCEEDED / FAILED / ABORTED(REQUESTED → ABORTED は対象 run の abort-blue / abort-green による未着手依頼の中止(競合窓の保険)または abort-rapid-crosscheck、CLAIMED → ABORTED と RUNNING → ABORTED は abort-rapid-crosscheck(運用者の worker 停止確認のうえ status IN (REQUESTED, CLAIMED, RUNNING) 条件の条件付き UPDATE)。CLAIMED → RUNNING は status = CLAIMED 条件の条件付き UPDATE で、更新件数 0 なら worker は比較を開始しない。CLAIMED / RUNNING の依頼は abort-blue / abort-green では変更しない) | No |  |
 | worker_id | string | worker_id | Yes |  |
 | lease_until | datetime | lease_until(claim 時刻 + 速報クロスチェック設定の lease 期間 RAPID_LEASE_SEC) | Yes |  |
@@ -975,30 +935,8 @@ EXECUTION_LOG }o--o| PARALLEL_RUN : traces
 | 対象エンティティ | カーディナリティ | 説明 |
 |-----------------|:---------------:|------|
 | E-016 | 1:1 | 速報実行から作成される |
-| E-018 | 1:N | 比較結果を生む |
-| E-006 | N:1 | job_id ごとの比較定義に従う |
-| E-027 | N:1 | claim の lease 期間と worker の poll 間隔を速報クロスチェック設定から得る |
-
-#### E-018: 比較結果(comparison_result)
-
-- **参照元**: 情報: 比較結果(comparison_result)
-- **モデル種別**: イベント
-
-| 属性名 | 型 | 説明 | NULL | PK |
-|--------|-----|------|:----:|:--:|
-| comparison_result_id | string | comparison_result_id | No | Yes |
-| run_id | string | run_id | No |  |
-| comparison_type | string | comparison_type | No |  |
-| status | string | 比較 OK / 比較 NG / FAILED | No |  |
-| difference_count | integer | difference_count | Yes |  |
-| report_uri | string | report_uri | Yes |  |
-| occurred_at | datetime | compared_at | No |  |
-
-**リレーション**
-
-| 対象エンティティ | カーディナリティ | 説明 |
-|-----------------|:---------------:|------|
-| E-017 | N:1 | 速報比較依頼に属する |
+| E-006 | N:1 | 速報の比較ツール起動コマンド(比較定義)に従い、{job_id} を依頼レコードの値で置換して起動する |
+| E-027 | N:1 | claim の lease 期間と worker の poll 間隔、速報の比較ツール起動コマンドを速報クロスチェック設定から得る |
 
 #### E-019: 確報比較依頼(final_crosscheck_request)
 
@@ -1008,8 +946,6 @@ EXECUTION_LOG }o--o| PARALLEL_RUN : traces
 | 属性名 | 型 | 説明 | NULL | PK |
 |--------|-----|------|:----:|:--:|
 | final_crosscheck_id | string | final_crosscheck_id | No | Yes |
-| business_date | date | business_date | No |  |
-| catalog_version | string | 対象カタログの版 | No |  |
 | status | string | REQUESTED / CLAIMED / RUNNING / SUCCEEDED / FAILED / ABORTED | No |  |
 | worker_id | string | worker_id | Yes |  |
 | lease_until | datetime | lease_until | Yes |  |
@@ -1022,8 +958,7 @@ EXECUTION_LOG }o--o| PARALLEL_RUN : traces
 
 | 対象エンティティ | カーディナリティ | 説明 |
 |-----------------|:---------------:|------|
-| E-008 | N:1 | 対象カタログの版を紐付ける |
-| E-020 | 1:1 | 比較ツール実行結果を保存する |
+| E-020 | 1:1 | 比較ツール実行結果を依頼レコードの列に保存する |
 
 #### E-020: 比較ツール実行結果
 
@@ -1033,7 +968,7 @@ EXECUTION_LOG }o--o| PARALLEL_RUN : traces
 | 属性名 | 型 | 説明 | NULL | PK |
 |--------|-----|------|:----:|:--:|
 | request_id | string | 依頼 ID(run_id または final_crosscheck_id) | No | Yes |
-| crosscheck_type | string | 比較種別(速報 / 確報) | No | Yes |
+| crosscheck_type | string | クロスチェック種別(速報 / 確報)。依頼レコード(速報は rapid_crosscheck_request、確報は final_crosscheck_request)の stdout / stderr / exit_code 列として保存し、別レコード・ファイルには保存しない | No | Yes |
 | stdout | text | stdout | No |  |
 | stderr | text | stderr | No |  |
 | exit_code | integer | exitcode(0=比較 OK / 3=比較 NG / 6=実行エラー) | No |  |
@@ -1193,12 +1128,14 @@ EXECUTION_LOG }o--o| PARALLEL_RUN : traces
 | db_conn_ref | string | 管理 DB 接続参照名(RAPID_DB_CONN_REF。認証情報の値は置かず参照名のみ) | No |  |
 | lease_sec | integer | 依頼の claim に付与する lease 期間(秒。RAPID_LEASE_SEC) | No |  |
 | poll_interval_sec | integer | worker が依頼を poll する間隔(秒。RAPID_POLL_INTERVAL_SEC) | No |  |
+| rapid_compare_command | string | 速報の比較ツール起動コマンド(1 行。{job_id} を含む必須)。worker が依頼レコードの値で {job_id} を置換して起動する。比較対象とジョブ ID ごとの比較内容は比較ツール側(適用側)が持つ | No |  |
 
 **リレーション**
 
 | 対象エンティティ | カーディナリティ | 説明 |
 |-----------------|:---------------:|------|
-| E-017 | 1:N | 速報比較依頼の claim の lease 期間と poll 間隔を与える |
+| E-017 | 1:N | 速報比較依頼の claim の lease 期間と poll 間隔、速報の比較ツール起動コマンドを与える |
+| E-006 | 1:1 | 速報の比較定義(比較ツール起動コマンド)を保持する |
 | E-013 | 1:N | facade が parallel_run を作成する管理 DB の接続参照名を与える(速報有効時のみ) |
 | E-015 | 1:N | 完了通知の登録先(管理 DB)の接続参照名を与える |
 | E-026 | 1:1 | ハング検知定期ジョブ設定と同型(env 形式・接続参照名)だが、所有項目と読み手が異なるため別ファイル |
@@ -1212,9 +1149,7 @@ EXECUTION_LOG }o--o| PARALLEL_RUN : traces
 | E-003 | ファイル | slot ジョブマップは 1 行目ヘッダーの CSV(列: job_id / host / user / work_dir / script / fixed_params / hang_detect_limit_minutes。credential_ref / map_version は末尾の任意列)として適用側が版管理する設定ファイル。fixed_params は JSON 配列文字列を二重引用符で囲んだセル(内部の二重引用符は二重化)で、bash 単独で解析する。run 開始時に execution-spec.json へ確定保存される | 高 |
 | E-004 | ファイル | ハング検知上限はジョブマップの一部として所有され、execution-spec.json に反映される | 高 |
 | E-005 | ファイル | 適用文書は relay-gate の仕組みに含めない案件固有事項の文書。適用側が版管理する | 高 |
-| E-006 | ファイル | 比較定義はクロスチェックジョブマップの一部として job_id ごとに差し替える設定ファイル | 高 |
-| E-007 | ファイル | クロスチェックジョブマップは slot ジョブマップと同じ CSV 形式(1 行目ヘッダー、1 行 1 job_id、JSON 配列セルは二重引用符で囲む)で適用側が定義する設定ファイル | 高 |
-| E-008 | ファイル | 対象カタログは slot ジョブマップと同じ CSV 形式で適用側が版管理する定義ファイル。確報比較依頼は版だけを紐付ける(infra: product-mapping-onprem.yaml → config_storeのfidelity=exactで適合確認) | 高 |
+| E-006 | ファイル | 比較定義(比較ツール起動コマンド 1 行)は速報クロスチェック設定(速報。{job_id} を含む)と確報クロスチェック worker 設定(確報)が所有する env の 1 行として適用側が差し替える。比較対象は比較ツール側が持つ | 高 |
 | E-009 | ファイル | ジョブ起動要求は永続レコードを持たず、execution-spec.json(追加引数)と実行ログに取り込まれる | 低 |
 | E-010 | ファイル | facade/<run_id>/execution-spec.json として成果物ディレクトリに一度だけ確定保存する(Runner Result Contract) | 高 |
 | E-011 | ファイル | started-at.txt / stdout.log / stderr.log / exitcode.txt として成果物ディレクトリに残す外部 IF の正本 | 高 |
@@ -1222,10 +1157,9 @@ EXECUTION_LOG }o--o| PARALLEL_RUN : traces
 | E-013 | RDB | run_id で成果物・rapid_run・比較依頼を相関付ける管理レコード。速報有効時のみ作成し、リラン系譜を parent_run_id で追跡する | 高 |
 | E-014 | ファイル | slot 実行の状態はファイル正本(exitcode.txt があれば SUCCEEDED / FAILED、無く aborted.txt があれば ABORTED、どちらも無ければ RUNNING)から導出し、RAPID_CROSSCHECK_MODE=off では成果物ファイルだけで実行・監視・中止・リランが成立する。abort-blue / abort-green は aborted.txt(中止日時 1 行)を一時ファイル → リネームで書く | 高 |
 | E-014 | RDB | RAPID_CROSSCHECK_MODE が foreground / background のときは mode / PID / 状態を管理 DB にも保持し、abort-blue / abort-green と background-rerun の対象特定、dispatcher の中止済み run 判定(条件「中止済み run の比較依頼作成除外」)、運用者の参照に使う。status は aborted.txt または exitcode.txt の公開時点の状態を条件付き更新(RUNNING のときだけ)で一度だけ書く。abort-blue / abort-green で ABORTED にした後に実装が走り切って exitcode.txt を公開した場合も管理 DB は ABORTED のまま残し、ファイル正本の導出値(exitcode.txt 優先)へ再同期しない(ファイル正本の導出値と管理 DB の値はこの経路で一致しない)。二重マッピング(ファイル正本 + 速報有効時の管理 DB への一度書き)として確定する(条件「slot 実行の状態導出規則」) | 高 |
-| E-015 | RDB | 完了通知は rapid_run の blue_status / green_status / artifact_uri / completed_at として管理 DB に反映される | 高 |
+| E-015 | RDB | 完了通知は rapid_run の blue_status / green_status / completed_at として管理 DB に反映される(run_id・job_id・exit_code を渡し、成果物 URI は渡さない) | 高 |
 | E-016 | RDB | 両系成功判定と比較依頼の一意作成を行う管理 DB レコード(rapid_run) | 高 |
 | E-017 | RDB | 管理 DB 上のジョブキュー。worker の poll / claim / lease による多重実行防止に RDB のトランザクションを使う | 高 |
-| E-018 | RDB | 速報比較の結果を run_id で参照するための管理 DB レコード(comparison_result) | 高 |
 | E-019 | RDB | 確報側のジョブキュー(final_crosscheck_request)。速報側と別テーブルに分離する | 高 |
 | E-020 | RDB | 比較ツールの stdout / stderr / exitcode は依頼レコード(速報 / 確報)に保存される | 高 |
 | E-021 | RDB | 監視記録は管理 DB(接続先はハング検知定期ジョブ設定の管理 DB 接続参照名)に保持し、monitor_status の 6 値と通知後・中止後の終端を含めて警告傾向の確認と hang_detect_limit_minutes の調整根拠にする。RAPID_CROSSCHECK_MODE=off ではファイルのみで監視し記録は実行ログに残す | 中 |

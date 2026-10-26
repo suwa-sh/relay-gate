@@ -151,10 +151,10 @@ Feature: background 異常の通知メールを受け取る
 
   Scenario: 速報クロスチェック異常メールを受け取って原因調査する(SPEC-008-02)
     Given hang-detector.sh が件名 "[relay-gate][error] rapid-crosscheck-error run_id=20260830T113000-JOB001-3f9a1c2e job_id=JOB001 role=rapid-crosscheck" のメールを送った
-    And 本文に "exit_code=3" "request_status=FAILED" と "recommended_action: inspect the comparison result: rapid-crosscheck-result.sh --run-id 20260830T113000-JOB001-3f9a1c2e; this result is for investigation only and does not affect the scheduler response" がある
-    And comparison_results に run_id=20260830T113000-JOB001-3f9a1c2e status=NG difference_count=12 report_uri=/var/relay-gate/facade/20260830T113000-JOB001-3f9a1c2e/rapid-crosscheck/report.txt の行がある
-    When 運用者が rapid-crosscheck-result.sh --run-id 20260830T113000-JOB001-3f9a1c2e を実行する
-    Then comparison_result の status=NG difference_count=12 report_uri=/var/relay-gate/facade/20260830T113000-JOB001-3f9a1c2e/rapid-crosscheck/report.txt が表示され、運用者は差分の原因調査に進む
+    And 本文に "exit_code=3" "request_status=FAILED" と "recommended_action: inspect the comparison result: rapid-crosscheck-result.sh --run-id 20260830T113000-JOB001-3f9a1c2e --show-output; this result is for investigation only and does not affect the scheduler response" がある
+    And rapid_crosscheck_requests に run_id=20260830T113000-JOB001-3f9a1c2e status=FAILED exit_code=3 があり、比較ツールの出力が stdout / stderr 列に保存されている
+    When 運用者が rapid-crosscheck-result.sh --run-id 20260830T113000-JOB001-3f9a1c2e --show-output を実行する
+    Then 依頼の status=FAILED exit_code=3 と比較ツールの stdout / stderr が表示され、運用者は差分の原因調査に進む
     And 業務ジョブのジョブスケジューラ応答(foreground の結果)は変更されない
 ```
 

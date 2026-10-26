@@ -1,51 +1,48 @@
 meta:
-  event_id: "20260907_124000_feedback_abort_consistency"
-  trigger_event: "arch:20260907_122000_feedback_abort_consistency, nfr:20260907_120000_feedback_abort_consistency"
-  created_at: "2026-09-07T12:40:00Z"
+  event_id: "20261010_203000_feedback_impl_feedback_dcd8234d"
+  trigger_event: "arch:20261010_202000_feedback_impl_feedback_dcd8234d, nfr:20261010_201000_feedback_impl_feedback_dcd8234d"
+  created_at: "2026-10-10T20:30:00Z"
   mode: "differential"
   mcl_rerun: "skipped_targeted_update"
-  mcl_rerun_reason: "translation(workload_type / availability_tier / latency / data_classification / traffic / consistency / cost_posture / target_clouds)は無変更。影響は管理 DB の実装仕様(条件付き UPDATE の対象状態と更新件数の扱い)、観測仕様の診断専用事象とアラート対象外の範囲、適合性検証への REQ-DB-006 追加、構成図の辺の説明に限られるため、MCL product-design の全量再実行は行わず MCL 出力を対象箇所だけ更新した(前回 20260907_021000 と同じ判断)"
+  mcl_rerun_reason: "translation(workload_type / availability_tier / latency / data_classification / traffic / consistency / cost_posture / target_clouds)は無変更。クロスチェック簡素化の影響は、設定ファイル集合(比較定義 CSV crosscheck-job-map.csv と対象カタログ target-catalog.csv の廃止、比較ツール起動コマンドの rapid-crosscheck.env / final-crosscheck.env への移動)、管理 DB の比較結果テーブルの廃止、確報 worker の接続解決とネットワークセグメント前提に限られる。サーバ構成・ストレージ・トラフィック・復旧目標は変わらないため、MCL product-design の全量再実行は行わず MCL 出力を対象箇所だけ更新した(前回 20260907_124000 / 20260921_094000 と同じ差分更新判断)"
 feedback_request:
-  feedback_request_id: "20260907_abort_consistency"
-  input_sha256: "70cda63f92e887e459a3817580e45a840e3ff201065a534085ad113fb8910b81"
-  request_ids: ["CR-c770d8f0-016","CR-c770d8f0-017","CR-c770d8f0-018"]
-  work_unit_ids: ["CR-c770d8f0-016#1","CR-c770d8f0-017#1","CR-c770d8f0-018#1"]
+  feedback_request_id: "20261010_104636_impl_feedback_dcd8234d"
+  input_sha256: "d4ddd211752998f5480a51d9dddfa3a58937badd62f72092c9257ed1384448fd"
+  request_ids: ["CR-dcd8234d-007","CR-dcd8234d-001","CR-dcd8234d-002","CR-dcd8234d-003"]
+  work_unit_ids: ["CR-dcd8234d-007#1","CR-dcd8234d-001#1","CR-dcd8234d-002#1","CR-dcd8234d-003#1"]
 changes:
-  event_id: "20260907_124000_feedback_abort_consistency"
-  created_at: "2026-09-07T12:40:00Z"
-  source: "feedback request 20260907_abort_consistency(RDRA / NFR / arch 差分)に基づくインフラ設計の差分更新"
-  arch_event_ref: "20260907_122000_feedback_abort_consistency"
-  nfr_event_ref: "20260907_120000_feedback_abort_consistency"
+  event_id: "20261010_203000_feedback_impl_feedback_dcd8234d"
+  created_at: "2026-10-10T20:30:00Z"
+  source: "feedback request 20261010_104636_impl_feedback_dcd8234d(クロスチェック簡素化。RDRA / NFR / arch 差分)に基づくインフラ設計の差分更新"
+  arch_event_ref: "20261010_202000_feedback_impl_feedback_dcd8234d"
+  nfr_event_ref: "20261010_201000_feedback_impl_feedback_dcd8234d"
   translation:
     unchanged: true
   mcl_execution:
     status: "completed"
-    completed_at: "2026-09-07T12:40:00Z"
+    completed_at: "2026-10-10T20:30:00Z"
     outputs_updated:
       - path: "docs/mcl/product/input/product-input.yaml"
-        change: "source_refs を arch / nfr の feedback event に更新。observability_needs.notes の中止済み run を「並行稼働実行 ABORTED または対象 slot の slot 実行 ABORTED」に拡張し、worker の条件付き UPDATE 0 件による未開始と abort-rapid-crosscheck の対象(REQUESTED / CLAIMED / RUNNING。確報は RUNNING のみ)を追記"
-        work_units: ["CR-c770d8f0-016#1","CR-c770d8f0-017#1"]
+        change: "management_db の entity_refs から E-018(比較結果)を、config_store の entity_refs から E-007(クロスチェックジョブマップ)/ E-008(対象カタログ)を除去。config_store の説明を、ジョブ ID ごとの比較定義 CSV・対象カタログの廃止と、rapid-crosscheck.env(速報比較ツールの起動コマンド 1 行を追加)/ final-crosscheck.env(確報 worker の DB 接続参照と確報比較ツールの起動コマンド 1 行)へ更新。比較対象の定義は比較ツール側が持つ旨を明記"
+        work_units: ["CR-dcd8234d-007#1"]
       - path: "docs/mcl/product/output/product-workload-model.yaml"
-        change: "product.database.management_db の説明に速報比較依頼の状態遷移を条件付き UPDATE で行い更新件数で競合を判定する旨を追加し、REQ-DB-006(WHERE 句で現在状態を条件にした UPDATE の更新件数を CLI クライアントから取得できる。must)を追加"
-        work_units: ["CR-c770d8f0-017#1","CR-c770d8f0-018#1"]
+        change: "product.database.management_db の説明から速報側の『比較結果』テーブルを外した。product.storage.config_store の説明を、比較定義 CSV・対象カタログの廃止、rapid-crosscheck.env への速報比較ツール起動コマンド 1 行の追加、final-crosscheck.env(確報 worker の DB 接続参照と確報比較ツールの起動コマンド 1 行)の追加へ更新。artifact_store(Runner Result)は不変で、worker を参照者に含めない既存前提のまま"
+        work_units: ["CR-dcd8234d-007#1"]
       - path: "docs/mcl/product/output/product-mapping-onprem.yaml"
-        change: "management_db の vendor_feature に条件付き UPDATE のコマンドタグ(UPDATE n)による更新件数取得を追加。configuration_notes に worker の CLAIMED → RUNNING(0 件は比較を開始しない)、abort-rapid-crosscheck の status IN 条件(0 件はエラー)、abort-blue / abort-green の REQUESTED 条件(競合窓の保険。0 件は正常)と app_rw 権限で足りる旨を追記"
-        work_units: ["CR-c770d8f0-017#1","CR-c770d8f0-018#1"]
+        change: "config_store の configuration_notes から crosscheck-job-map.csv / target-catalog.csv を外し、rapid-crosscheck.env に速報比較ツールの起動コマンド 1 行、final-crosscheck.env(確報 worker の DB 接続参照と確報比較ツールの起動コマンド 1 行)を追記。比較対象の定義は比較ツール側が持つ旨を明記。artifact_store の configuration_notes は不変"
+        work_units: ["CR-dcd8234d-007#1"]
       - path: "docs/mcl/product/output/product-impl-onprem.yaml"
-        change: "impl.database.management_db の abort_updates を abort-rapid-crosscheck(worker 停止確認のうえ status IN ('REQUESTED','CLAIMED','RUNNING') の条件付き UPDATE。0 件はエラー)・abort-final-crosscheck(RUNNING のみ)・abort-blue / abort-green(REQUESTED。競合窓の保険)に書き直し、worker_start_update(CLAIMED かつ自 worker_id 条件の条件付き UPDATE。0 件なら比較を開始せず正常終了しログに残す)と aborted_run_judgement(parallel_run.status と slot_executions.status を同一トランザクションで読む。テーブル・権限追加不要)を追加。validation_rules に psql コマンドタグ UPDATE 0 の取得と分岐(REQ-DB-006)を追加"
-        work_units: ["CR-c770d8f0-016#1","CR-c770d8f0-017#1","CR-c770d8f0-018#1"]
-      - path: "docs/mcl/product/output/product-observability.yaml"
-        change: "logging.diagnostic_only_events の中止済み run を slot 実行 ABORTED を含む定義に拡張し、worker の条件付き UPDATE 0 件による未開始(run_id / worker_id 付き)を診断専用事象に追加。alert-error-rate の condition の対象外事象に abort-rapid-crosscheck による REQUESTED / CLAIMED / RUNNING 依頼の ABORTED 化と worker の 0 件終了を追記し、abort-blue / abort-green の ABORTED 化を競合窓の保険と明記"
-        work_units: ["CR-c770d8f0-016#1","CR-c770d8f0-017#1","CR-c770d8f0-018#1"]
+        change: "impl.database.management_db の worker_start_update から comparison_result 登録の文言を除去。connection_resolution を、速報 worker は rapid-crosscheck.env、確報 worker は final-crosscheck.env の DB 接続参照で解決し、確報 worker は別ネットワークセグメント(DB セグメント)で runner 側の成果物ファイルパスを読まず依頼レコードと自身の設定だけで起動する旨へ更新。impl.storage.config_store の contents を比較定義 CSV・対象カタログの廃止と rapid / final の env 起動コマンドへ更新し、検証規則の列名検証から E-007 / E-008 を外し(E-003 のみ)、rapid-crosscheck.env 検証に起動コマンドのキーを追加、final-crosscheck.env の存在とキー構成の検証を追加(起動コマンドの内容検証は validate-config.sh が所有)"
+        work_units: ["CR-dcd8234d-007#1"]
       - path: "docs/cloud-context/conformance/product/product-conformance-onprem.yaml"
-        change: "REQ-DB-006(conformant。PostgreSQL のコマンドタグ UPDATE n と psql -c による取得)を追加。summary を 25 要件(conformant 20 / partial 5)に更新"
-        work_units: ["CR-c770d8f0-017#1"]
-      - path: "docs/cloud-context/generated-md/product/relay-gate-target-architecture.md"
-        change: "ops CLI → 管理 DB の辺を abort-rapid-crosscheck(REQUESTED・CLAIMED・RUNNING 依頼を ABORTED)と abort-blue / abort-green(未着手依頼を ABORTED。保険)に書き直し、rapid runner → 管理 DB の辺に中止済み run 判定(parallel_run と slot_executions)と CLAIMED → RUNNING の条件付き UPDATE を追記。適合性サマリを 25 要件に更新"
-        work_units: ["CR-c770d8f0-016#1","CR-c770d8f0-017#1","CR-c770d8f0-018#1"]
+        change: "設定配置の notes から crosscheck-job-map.csv / target-catalog.csv を外し、rapid-crosscheck.env の起動コマンド 1 行と final-crosscheck.env(確報比較ツールの起動コマンド 1 行と確報 worker の DB 接続参照)を追記。比較対象の定義は比較ツール側が持つ旨を明記"
+        work_units: ["CR-dcd8234d-007#1"]
+      - path: "infra/product/onprem/ansible/roles/relay-gate-config/tasks/main.yml"
+        change: "config ロールの配置ループから crosscheck-job-map.csv / target-catalog.csv を除去。final-crosscheck.env(確報 worker の DB 接続参照と確報比較ツールの起動コマンド 1 行)の配置タスクと非空検査を追加し、確報 worker が別セグメントで動き runner 側成果物パスを読まない旨をコメントに明記。rapid-crosscheck.env のタスク名に起動コマンド 1 行を追記。ヘッダーコメントに比較定義 CSV・対象カタログを配置しない旨を追記"
+        work_units: ["CR-dcd8234d-007#1"]
   arch_feedback:
     status: "no_new_feedback"
-    reason: "本イベントの差分はすべて arch 20260907_122000_feedback_abort_consistency の変更(SP-009 / SP-011 / SP-022 / LP-021 / LP-023 / LP-024 / CLP-004 / AG-002 / E-016 / E-017 / E-024)を下流へ追従したもの。REQ-DB-006(条件付き UPDATE の更新件数取得)は LP-021 / LP-024 が既に「更新件数」で判定すると定めており、RDB 製品側の実現手段(psql コマンドタグ)を確認したに過ぎないため arch の記述を変える知見ではなく arch イベントは作成しない。既存の arch_feedback(20260830_202427_arch_infra_feedback_20260830_190412_infra_product_design)は据え置き"
+    reason: "本イベントの差分はすべて arch 20261010_202000_feedback_impl_feedback_dcd8234d のクロスチェック簡素化(E-006 の起動コマンド 1 行化、E-007 / E-008 / E-018 削除、E-015 / E-016 / E-017 / E-019 / E-020 / E-027 の追従、technology_context の設定契約列挙の更新)を下流のインフラ設計へ追従したものである。infra から arch への新規フィードバック(ベンダーニュートラル化された制約・ポリシーの追加や confidence の昇格)は無い。本 stage は feedback controller の指示により Phase4(arch フィードバック)を実行しないため、arch root の latest・新規 arch event は作成しない"
   writeback_check:
     result: "not_required"
-    reason: "arch 差分はティア構成・認証認可方式・DR 方針・外部連携・storage_type を変えていない(条件付き UPDATE の対象状態と中止済み run の判定キーの変更はアプリケーション規則と管理 DB の実装仕様に閉じる)。translation の各フィールドに影響しないため product-input の再生成と Step2 の再実行は不要"
+    reason: "arch 差分はティア構成・認証認可方式・DR 方針・外部連携・storage_type を変えていない(比較定義 CSV・対象カタログの廃止と比較ツール起動コマンドの env 移動はアプリケーション規則と設定ファイル配置に閉じる)。translation の各フィールドに影響しないため product-input の再生成と Step2 の再実行は不要"

@@ -1,0 +1,18 @@
+Spec 差分更新(design 無しモード): 2026-10-27 の実装フィードバック(spec 直接所有)。
+
+CR-dcd8234d-008: 比較ツールの起動コマンド(RAPID_COMPARE_COMMAND / FINAL_COMPARE_COMMAND)を、シェルに解釈させず引数ごとに分けて起動する決まりを仕様に定める(利用者が 2026-10-27 に案 A を選択)。
+
+- 起動コマンドを引数の並び(argv)として解釈する共通規則を CLI 契約 shared_rules.compare_command_argv に 1 か所で新設し、速報 worker(rapid-crosscheck-worker.sh)・確報 worker(final-crosscheck-worker.sh)・validate-config.sh(--rapid-crosscheck / --final-crosscheck)から参照させる。
+- 規則: 設定読込時に空白(スペース・タブ 1 個以上)で引数に分割、クォート・エスケープ・$ 等のシェル記法は非解釈。置換は引数 1 つの中だけ。{params} は引数全体のときだけ JSON 配列を 1 項目 1 引数へ展開([] は 0 個)、それ以外の位置は validate-config.sh --rapid-crosscheck の違反。起動は argv 配列で行い eval / bash -c / sh -c / 引用符なし展開を禁止。確報も同じ規則で分割して起動。
+- 速報 worker は置換前に job_id / run_id / parameters の形式を検査し、不適合なら比較ツールを起動せず依頼を FAILED / exit_code=6 / error_summary=invalid request value: <field>(stderr: compare request value is invalid run_id=... field=...)。
+- 「置換後の文字列をコマンドとして起動する」という書き方を仕様から除去。設定 1 行 + プレースホルダの形・プレースホルダ集合・既存検証 2 点は不変。記号を含む設定を拒否する規則は追加しない。判断は decisions/spec-decision-018。
+
+feedback request:
+- feedback_request_id: 20261027_053600_impl_feedback_dcd8234d
+- input_sha256: 141579fa0eca73d2b5999a0c4dccfe6c057e54658c3491decefcbd95935a9cfc
+- request_ids: CR-dcd8234d-008
+- direct_work_unit_ids: CR-dcd8234d-008#1
+- causal_work_unit_ids: CR-dcd8234d-008#1
+- stage packet: docs/pipeline/feedback-runs/20261027_053600_impl_feedback_dcd8234d/stage-packets/spec.md
+
+direct_stage: spec(上流 RDRA / USDM / arch / nfr / infra の変更なし。trigger_event なし)

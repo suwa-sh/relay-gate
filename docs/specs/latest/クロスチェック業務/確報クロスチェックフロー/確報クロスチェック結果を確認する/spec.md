@@ -2,7 +2,7 @@
 
 ## 概要
 
-運用者が、ジョブスケジューラに登録した確報クロスチェックジョブ(`final-crosscheck-runner.sh`)の実行結果(標準出力・標準エラー・終了コード)で、business_date 単位の全テーブル・全ファイルの日次整合性を確認し、リリース判断の正本として用いる。終了コード以外の連携データは無いため、ジョブスケジューラの標準的な仕組み(終了コードによる成否判定と実行履歴)だけで判定する。この UC は運用者が「読む」UC であり、relay-gate 側の処理は UC「保存済みの確報結果をジョブスケジューラへ返す」の応答契約そのものである。
+運用者が、ジョブスケジューラに登録した確報クロスチェックジョブ(`final-crosscheck-runner.sh`。業務上の引数なしで起動する)の実行結果(標準出力・標準エラー・終了コード)で、全テーブル・全ファイルの日次整合性を確認し、リリース判断の正本として用いる。終了コード以外の連携データは無いため、ジョブスケジューラの標準的な仕組み(終了コードによる成否判定と実行履歴)だけで判定する。この UC は運用者が「読む」UC であり、relay-gate 側の処理は UC「保存済みの確報結果をジョブスケジューラへ返す」の応答契約そのものである。
 
 ## データフロー
 
@@ -37,7 +37,7 @@ sequenceDiagram
     participant P as presentation
   end
 
-  Sched->>P: final-crosscheck-runner.sh --business-date 2026-08-30 --catalog-version v3(別ジョブ定義)
+  Sched->>P: final-crosscheck-runner.sh(別ジョブ定義。業務上の引数なし)
   Note over P: UC「確報比較依頼を登録して終端状態まで待機する」→ UC「保存済みの確報結果をジョブスケジューラへ返す」
   P-->>Sched: 標準出力 / 標準エラー / 終了コード(無加工)
   Sched->>Sched: 終了コードでジョブ成否を判定し実行履歴に保存
@@ -119,11 +119,11 @@ sequenceDiagram
 Feature: 確報クロスチェック結果を確認する
 
   Scenario: 終了コード 0 で日次整合性 OK と判断する(SPEC-005-05)
-    Given ジョブスケジューラの確報ジョブ定義が final-crosscheck-runner.sh --business-date 2026-08-30 --catalog-version v3 を起動した
+    Given ジョブスケジューラの確報ジョブ定義が final-crosscheck-runner.sh を業務上の引数なしで起動した
     And 依頼 20260830T210000-final-7b2c9e1f が exit_code=0 stdout="all 42 targets matched\n" で SUCCEEDED になった
     When 運用者がジョブスケジューラの実行履歴で確報ジョブの結果を参照する
     Then 終了コードは 0、標準出力は "all 42 targets matched\n" である
-    And 運用者は 2026-08-30 の日次整合性を OK と判断し、速報比較結果(rapid-crosscheck-result.sh)の内容にかかわらずリリース判断の正本にする
+    And 運用者はその日の日次整合性を OK と判断し、速報比較結果(rapid-crosscheck-result.sh)の内容にかかわらずリリース判断の正本にする
 
   Scenario: 終了コード 3 で比較 NG と判断する(SPEC-006-03)
     Given 依頼が exit_code=3 stdout="diff found: 12 rows\n" stderr="warn: table T_ORDER differs\n" で FAILED になった

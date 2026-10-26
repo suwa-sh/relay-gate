@@ -43,9 +43,9 @@ flowchart LR
 ```mermaid
 flowchart LR
   A["slot runner\nblue-completed / green-completed"] --> B["rapid-crosscheck-runner.sh\n両系成功判定 → 依頼 REQUESTED"]
-  B --> C["rapid-crosscheck-worker.sh\nclaim → 比較ツール実行 → comparison_result"]
+  B --> C["rapid-crosscheck-worker.sh\nclaim → 比較ツール起動 → 依頼レコードへ結果保存"]
   C --> D["rapid-crosscheck-result.sh --run-id\n速報比較結果を参照 (原因調査)"]
-  D --> E["ジョブスケジューラ: 確報ジョブ定義\nfinal-crosscheck-runner.sh --business-date --catalog-version"]
+  D --> E["ジョブスケジューラ: 確報ジョブ定義\nfinal-crosscheck-runner.sh (引数なし)"]
   E --> F["final-crosscheck-worker.sh\nclaim → 日次全量比較 → 結果保存"]
   F --> G["ジョブスケジューラ応答\n保存済み stdout / stderr / exitcode を無加工中継"]
   G --> H["運用者: リリース判断"]
@@ -57,9 +57,9 @@ flowchart LR
 |---------|------|---|------|---------|
 | 完了通知 | slot runner → `$RAPID_CROSSCHECK_RUNNER blue-completed / green-completed` | 速報クロスチェック runner へ完了通知を送信する | ニュートラル(自動) | 運用者の操作なし。RAPID_CROSSCHECK_MODE が off 以外(foreground / background)で送信し、off では送信しない。送信失敗は自動検知せず、runner の実行ログに `WARN completion notice failed ...` を残す(条件「完了通知失敗の扱い」)。復旧は運用者が速報クロスチェック runner を同一引数で再実行する(冪等・先勝ち) |
 | 比較依頼の作成 | `rapid-crosscheck-runner.sh` | 両系成功時に速報比較依頼を作成する | ニュートラル(自動) | 完了順にかかわらず 1 run_id に 1 件。重複作成しない |
-| 比較の実行 | `rapid-crosscheck-worker.sh [--once]` | 速報比較依頼を claim する / 比較ツールでジョブ単位比較を実行して結果を登録する | ニュートラル(自動) | 比較 NG / FAILED は hang-detector の error メールで運用者に届く |
-| 速報結果の参照 | `rapid-crosscheck-result.sh --run-id` | 速報比較結果を参照する | ネガティブ(差分あり)〜ポジティブ | 依頼状態・比較結果ステータス・difference_count・report_uri を 1 行 1 事実で出す。速報は原因調査用であり、リリース判断に使わないことを stderr の info で明示 |
-| 確報の起動 | ジョブスケジューラ → `final-crosscheck-runner.sh --business-date --catalog-version` | 確報比較依頼を登録して終端状態まで待機する | ニュートラル | polling 上限(既定 8 時間)超過は終了コード 6 で終了し、依頼は変更しない |
+| 比較の実行 | `rapid-crosscheck-worker.sh [--once]` | 速報比較依頼を claim する / 比較ツールでジョブ単位比較を実行して結果を登録する | ニュートラル(自動) | 比較ツールの stdout / stderr / exit_code を依頼レコードの列へ保存する。比較 NG / FAILED は hang-detector の error メールで運用者に届く |
+| 速報結果の参照 | `rapid-crosscheck-result.sh --run-id` | 速報比較結果を参照する | ネガティブ(差分あり)〜ポジティブ | 依頼状態・両系の完了結果・exit_code を 1 行 1 事実で出し、比較ツールの本文は `--show-output` で末尾に出す。速報は原因調査用であり、リリース判断に使わないことを stderr の info で明示 |
+| 確報の起動 | ジョブスケジューラ → `final-crosscheck-runner.sh`(引数なし) | 確報比較依頼を登録して終端状態まで待機する | ニュートラル | polling 上限(既定 8 時間)超過は終了コード 6 で終了し、依頼は変更しない |
 | 確報結果の確認 | ジョブスケジューラ応答(保存済み 3 値の無加工中継) | 確報クロスチェック結果を確認する / 保存済みの確報結果をジョブスケジューラへ返す | ポジティブ | 比較ツールの終了コード 0 / 3 / 6 がそのままジョブスケジューラの判定に使える。依頼の状態名は返さない |
 
 ### 適用構成業務: 適用構成の定義から切り替え後の運用まで
@@ -71,7 +71,7 @@ flowchart LR
 flowchart LR
   A["feature flag 設定 (9 キー)\nBLUE_MODE / GREEN_MODE / RAPID_CROSSCHECK_MODE\nBLUE_IMPL / GREEN_IMPL"] --> B["runner 割当\nBLUE_RUNNER / GREEN_RUNNER\nRAPID_CROSSCHECK_RUNNER / RAPID_CROSSCHECK_WORKER"]
   B --> C["slot ジョブマップ定義 (CSV)\njob_id → 実行先 + fixed_params + hang_detect_limit_minutes"]
-  C --> D["クロスチェックジョブマップ定義 (CSV)\n比較定義 + 対象カタログ"]
+  C --> D["比較ツール起動コマンド設定 (env)\n速報 rapid-crosscheck.env (RAPID_COMPARE_COMMAND)\n確報 final-crosscheck.env (FINAL_COMPARE_COMMAND)"]
   D --> E["validate-config.sh\n設定検証 (終了コード 0 / 2)"]
   E --> F["ジョブスケジューラ: 業務ジョブ定義\nfacade.sh JOB_ID PARAM..."]
   F --> G["運用者: 切り替えた運用モードで実行結果を確認"]
@@ -84,7 +84,7 @@ flowchart LR
 | feature flag 設定 | `feature-flag.env` 編集(9 キー。設定版は持たない) → `validate-config.sh` | feature flag を設定する | ニュートラル | foreground × foreground の組合せを検証で拒否し、どの slot も起動しない。元資料の 9 キーで書けば未知キー警告は出ない。モードは 3 値(foreground / background / off)、実装版は BLUE_IMPL / GREEN_IMPL |
 | runner 割当 | `feature-flag.env` 編集 → `validate-config.sh` | slot runner の実体スクリプトを割り当てる | ニュートラル | BLUE_RUNNER / GREEN_RUNNER(と off 以外のときの RAPID_CROSSCHECK_RUNNER / RAPID_CROSSCHECK_WORKER)の絶対パス・存在・実行権限を検証で確認する |
 | slot ジョブマップ定義 | `blue-job-map.csv` / `green-job-map.csv` 編集 → `validate-config.sh` | slot ごとのジョブマップを定義する | ニュートラル | CSV(1 行目ヘッダー、列はヘッダー名で対応付け)。`fixed_params` の JSON 配列セル(二重引用符で囲む)と hang_detect_limit_minutes(0 以上の整数)、host / user の両方あり・両方なしを検証で確認する |
-| クロスチェック定義 | `crosscheck-job-map.csv` / `target-catalog.csv` 編集 → `validate-config.sh` | クロスチェックのジョブマップと比較定義を定義する | ニュートラル | job_id ごとの比較定義参照が解決できることを検証で確認する |
+| 比較ツール起動コマンド定義 | `rapid-crosscheck.env`(`RAPID_COMPARE_COMMAND`)/ `final-crosscheck.env`(`FINAL_COMPARE_COMMAND`)編集 → `validate-config.sh` | クロスチェックのジョブマップと比較定義を定義する | ニュートラル | 起動コマンドのコマンド部分(先頭の語)が絶対パスで存在・実行可能であること(速報は加えて `{job_id}` を含むこと)を検証で確認する |
 | 切り替え後の運用 | ジョブスケジューラ → `facade.sh` | 切り替えた運用モードで業務ジョブを実行する | ポジティブ | ジョブ定義を変えずに運用モードが切り替わる。ジョブスケジューラの見え方は変わらない |
 
 ### 実行監視業務: 定期ハング検知から hang_detect_limit_minutes の調整まで
@@ -129,7 +129,7 @@ graph LR
   R --> R1["rapid-crosscheck-runner.sh blue-completed | green-completed"]
   R --> R2["rapid-crosscheck-worker.sh [--once]"]
   R --> R3["rapid-crosscheck-result.sh --run-id"]
-  FC --> FC1["final-crosscheck-runner.sh --business-date --catalog-version"]
+  FC --> FC1["final-crosscheck-runner.sh (引数なし)"]
   FC --> FC2["final-crosscheck-worker.sh [--once]"]
   O --> O1["hang-detector.sh"]
   O --> O2["hang-detect-trend.sh [--job-id]"]
@@ -147,7 +147,7 @@ graph LR
 | 起動元 | コマンド | ティア | 起動の性質 |
 |---|---|---|---|
 | ジョブスケジューラ: 業務ジョブ定義 | `facade.sh JOB_ID [PARAM...]` | tier-facade | 同期。foreground の終了を待って応答する |
-| ジョブスケジューラ: 確報クロスチェックジョブ定義 | `final-crosscheck-runner.sh --business-date --catalog-version` | tier-final-crosscheck | 同期。終端状態まで polling して応答する |
+| ジョブスケジューラ: 確報クロスチェックジョブ定義 | `final-crosscheck-runner.sh`(引数なし) | tier-final-crosscheck | 同期。終端状態まで polling して応答する |
 | ジョブスケジューラ: ハング検知定期ジョブ(5 分ごと) | `hang-detector.sh` | tier-ops | 定期。通知のみで状態を変えない |
 | ジョブスケジューラ: background リラン専用ジョブ | `background-rerun.sh --source-run-id --role` | tier-ops | 同期。事前検証後に新 run_id で起動して戻る |
 | ジョブスケジューラ / 常駐: worker | `rapid-crosscheck-worker.sh [--once]` / `final-crosscheck-worker.sh [--once]` | tier-rapid-crosscheck / tier-final-crosscheck | `--once` で 1 回の poll / claim / 実行。常駐時は poll 間隔で繰り返す |
@@ -175,7 +175,7 @@ graph LR
 - **run_id の相関**: `facade.sh` が run 開始時に run_id を発行し、以降のすべてのコマンド(runner / 完了通知 / 比較依頼 / 監視記録 / abort / rerun / lineage)は同じ run_id で相関付ける。run_id は成果物ディレクトリ名(`facade/<run_id>/`)と管理 DB の主キーに共通で使う(arch CTP-003)。形式は `{ローカル yyyymmddThhmmss}-{job_id}-{8 桁 hex}`(`ui-design.md`)で、RAPID_CROSSCHECK_MODE=off でも facade 単独で発行する
 - **Runner Result の 3 ファイル**: slot runner → facade / hang-detector / rapid-crosscheck-runner の受け渡しは `stdout.log` / `stderr.log` / `exitcode.txt` の 3 ファイル(+ `started-at.txt` / `execution-spec.json`。中止時は abort-blue / abort-green が書く `aborted.txt`)で行う。一時ファイルへ出力してから確定名へリネームし、確定名が存在するときだけ完了とみなす(arch CTR-001)。slot 実行の状態はこれらのファイルから導出する(`exitcode.txt` → SUCCEEDED / FAILED、`aborted.txt` → ABORTED、どちらも無し → RUNNING)
 - **終了コードの引き継ぎ**: `facade.sh` は foreground の `exitcode.txt` を、`final-crosscheck-runner.sh` は依頼に保存された `exit_code` を、**そのまま**プロセス終了コードとしてジョブスケジューラへ返す。relay-gate 自身の終了コード体系(0 / 2 / 3 / 6)はこの中継経路には適用しない(arch CTR-002)
-- **完了通知の受け渡し**: slot runner → `$RAPID_CROSSCHECK_RUNNER`(送信先は facade / background-rerun が環境変数で渡す)は `run_id` / `job_id` / `exit_code` / `artifact_uri` を引数で渡す。runner は自系統の通知だけを送り、相手側の状態を判断しない(条件「完了通知の系統独立」)。送信失敗は自動検知せず、実行ログの `WARN completion notice failed ...` を手がかりに運用者が同一引数で再実行する(条件「完了通知失敗の扱い」。冪等・先勝ちで完了結果は一度だけ登録される)
+- **完了通知の受け渡し**: slot runner → `$RAPID_CROSSCHECK_RUNNER`(送信先は facade / background-rerun が環境変数で渡す)は `run_id` / `job_id` / `exit_code` を引数で渡す(成果物 URI は渡さない)。runner は自系統の通知だけを送り、相手側の状態を判断しない(条件「完了通知の系統独立」)。送信失敗は自動検知せず、実行ログの `WARN completion notice failed ...` を手がかりに運用者が同一引数で再実行する(条件「完了通知失敗の扱い」。冪等・先勝ちで完了結果は一度だけ登録される)
 - **ジョブキューの受け渡し**: runner(dispatcher)→ worker は管理 DB の依頼レコード(`rapid_crosscheck_requests` / `final_crosscheck_requests`)で受け渡す。claim は `worker_id` + `lease_until` で排他する(arch CTP-004)
 - **リランの受け渡し**: `background-rerun.sh` → slot runner は元の `execution-spec.json` を `--execution-spec <path>` で渡し、最新ジョブマップを再解決しない。新 run_id の `parent_run_id` に元 run_id を設定する。事前検証はファイル正本で行うため off でもリランできる。off 以外では、リラン由来の parallel_run は background slot の終端(exitcode.txt 公開)時に slot runner が、速報比較依頼だけを作り直した run は依頼の終端時に速報クロスチェック worker が COMPLETED にする
 - **通知メールの受け渡し**: `hang-detector.sh` → 運用者は件名に重要度・通知種別・run_id・job_id・role を含め、本文に成果物ディレクトリと推奨対処を含める。運用者はメールの run_id をそのまま `abort-*` / `background-rerun.sh` / `rapid-crosscheck-result.sh` の引数に使える
@@ -192,8 +192,8 @@ graph LR
 | **フレーミング効果 (Framing)** | 通知レベルの表現 | ハング疑いは「warning(静観可。正常終了することがある)」、実行エラー・比較異常は「error(対処要)」として本文の推奨対処に静観・対処の判断材料を書く。同じ「異常」でも運用者の行動が変わるように表現を分ける |
 | **デフォルト効果 (Default Bias)** | `hang_detect_limit_minutes` の導入時既定値、worker の `--once`、lease / poll の既定値 | 導入時は全ジョブ 60 分をジョブマップの既定にし、警告傾向が出そろってからジョブごとに調整する。lease 10 分 / poll 30 秒 / polling 60 秒 / 上限 8 時間は設定で上書きできるが、未指定でも安全側で動く |
 | **ピーク・エンドの法則 (Peak-End Rule)** | 異常終了時の stderr、`background-rerun.sh` の成功時 stdout | 異常終了の最後の行を `error: {原因}` + 次の行に `hint: {次にやること}` で終え、運用者が次の一手を迷わない。リラン成功時は最後の行に `run_id={新 run_id}` と `parent_run_id={元 run_id}` を出し、追跡の起点を渡す |
-| **段階的開示 (Progressive Disclosure)** | `rapid-crosscheck-result.sh`(`--show-output`)/ `hang-detect-trend.sh`(`--all`)/ `run-lineage.sh`(`--verbose`) | 既定は要約(状態・結果ステータス・件数・URI)だけを出す。`rapid-crosscheck-result.sh` は比較ツールの stdout / stderr 本文を `--show-output` 指定時だけ末尾に出す。`hang-detect-trend.sh` は既定で `hang_suspected_count > 0` の行だけを出し `--all` で全行、`run-lineage.sh` は `--verbose` で各 run の成果物ディレクトリを stderr の `info:` に出す |
-| **系列位置効果 (Serial Position Effect)** | 通知メール本文、TSV 出力の列順 | 本文の先頭に通知種別と run_id、末尾に推奨対処を置く。TSV は左端に識別子(run_id / job_id)、右端に判断材料(status / difference_count / 警告時経過時間)を置く |
+| **段階的開示 (Progressive Disclosure)** | `rapid-crosscheck-result.sh`(`--show-output`)/ `hang-detect-trend.sh`(`--all`)/ `run-lineage.sh`(`--verbose`) | 既定は要約(依頼状態・両系の完了結果・exit_code)だけを出す。`rapid-crosscheck-result.sh` は比較ツールの stdout / stderr 本文を `--show-output` 指定時だけ末尾に出す。`hang-detect-trend.sh` は既定で `hang_suspected_count > 0` の行だけを出し `--all` で全行、`run-lineage.sh` は `--verbose` で各 run の成果物ディレクトリを stderr の `info:` に出す |
+| **系列位置効果 (Serial Position Effect)** | 通知メール本文、TSV 出力の列順 | 本文の先頭に通知種別と run_id、末尾に推奨対処を置く。TSV は左端に識別子(run_id / job_id)、右端に判断材料(status / 警告回数 / 警告時経過時間)を置く |
 
 - 選定基準: BtoB の社内運用系 CLI で、アクターは運用者と基盤適用設計者の 2 種。動機づけ系(ゲーミフィケーション・希少性・社会的証明)は適用しない
 - 「ドハティの閾値」は CLI の応答 10 秒以内(NFR B.2.1.1)で代替し、進捗表示は行わない(非 TTY 起動が主のため)

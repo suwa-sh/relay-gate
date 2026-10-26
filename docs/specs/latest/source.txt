@@ -1,16 +1,18 @@
-Spec 差分更新: feedback 20260922_130000_impl_feedback_eff24f55(cycle 2。design 無しモード。UI 画面なし・CLI と定期ジョブのみ。実装フェーズ UC eff24f55「slot ごとのジョブマップを定義する」からの spec-gap 2 件: CR-006 重複報告の lines= を「初出行を含む全行番号を出現順に」へ一本化し、CLI 契約・列検証表・BDD と対象カタログ / クロスチェックジョブマップの重複報告を同じ規則にそろえた / CR-007 参照名の形式に合わない credential_ref は理由を問わず同じ warn で受理し(案 A。拒否しない理由 = 参照名の形式は認証情報ストアの運用に依存)、credential_ref の値を診断行に一切出さない規則を契約に明記、UC 仕様の「仮採用」注記を確定内容へ置換)
-event_id: 20260923_112000_feedback_impl_feedback_eff24f55_cycle2
-created_at: 2026-09-23T11:20:00Z
-previous_event: 20260921_100000_feedback_impl_feedback_eff24f55
-trigger_event: rdra:20260921_084000_feedback_impl_feedback_eff24f55, arch:20260921_092000_feedback_impl_feedback_eff24f55
-related_event: usdm:20260921_084000_feedback_impl_feedback_eff24f55、nfr:20260921_090000_feedback_impl_feedback_eff24f55、infra:20260921_094000_feedback_impl_feedback_eff24f55(本 run では前段 head は変更なし)
-design_available: false(引数指定。docs/design/latest/ は読まない)
-dialogue_policy: recommended_auto(feedback run は --recommended-auto で開始。CR-007 は利用者が 2026-09-22 のレビューで案 A を選択済み、CR-006 は要求本文の推奨「初出行を含める」を ⭐推奨として採用。確認推奨項目は _inference.md に記録し完了報告で返却)
-feedback_request_id: 20260922_130000_impl_feedback_eff24f55
-input_sha256: 8adc8bc900ebe6eb57209cee7c4ed2c727b1313c462a6052efd720b2f31cb2fa
-request_ids: CR-eff24f55-006, CR-eff24f55-007
-direct_work_unit_ids: CR-eff24f55-006#1, CR-eff24f55-007#1
-causal_work_unit_ids: CR-eff24f55-006#1, CR-eff24f55-007#1
-stage_packet: docs/pipeline/feedback-runs/20260922_130000_impl_feedback_eff24f55/stage-packets/spec.md
-入力の正本: docs/rdra/latest/(20260908_011000。20260921_084000 は no-change)、docs/usdm/latest/(20260921_084000)、docs/nfr/latest/(20260921_090000)、docs/arch/latest/(20260908_015000。20260921_092000 は no-change)、docs/infra/latest/(20260907_124000。20260921_094000 は no-change)、docs/specs/latest/(20260921_100000_feedback_impl_feedback_eff24f55 を差分更新の起点)、方針資料 tmp/RelayGateのしくみ.md / tmp/RelayGateの利用イメージ.md(git 管理外・読み取りのみ)
-変更の正本(作業記録): _review/change-brief.md(D1〜D3)
+Spec 差分更新(design 無しモード): 2026-10-27 の実装フィードバック(spec 直接所有)。
+
+CR-dcd8234d-008: 比較ツールの起動コマンド(RAPID_COMPARE_COMMAND / FINAL_COMPARE_COMMAND)を、シェルに解釈させず引数ごとに分けて起動する決まりを仕様に定める(利用者が 2026-10-27 に案 A を選択)。
+
+- 起動コマンドを引数の並び(argv)として解釈する共通規則を CLI 契約 shared_rules.compare_command_argv に 1 か所で新設し、速報 worker(rapid-crosscheck-worker.sh)・確報 worker(final-crosscheck-worker.sh)・validate-config.sh(--rapid-crosscheck / --final-crosscheck)から参照させる。
+- 規則: 設定読込時に空白(スペース・タブ 1 個以上)で引数に分割、クォート・エスケープ・$ 等のシェル記法は非解釈。置換は引数 1 つの中だけ。{params} は引数全体のときだけ JSON 配列を 1 項目 1 引数へ展開([] は 0 個)、それ以外の位置は validate-config.sh --rapid-crosscheck の違反。起動は argv 配列で行い eval / bash -c / sh -c / 引用符なし展開を禁止。確報も同じ規則で分割して起動。
+- 速報 worker は置換前に job_id / run_id / parameters の形式を検査し、不適合なら比較ツールを起動せず依頼を FAILED / exit_code=6 / error_summary=invalid request value: <field>(stderr: compare request value is invalid run_id=... field=...)。
+- 「置換後の文字列をコマンドとして起動する」という書き方を仕様から除去。設定 1 行 + プレースホルダの形・プレースホルダ集合・既存検証 2 点は不変。記号を含む設定を拒否する規則は追加しない。判断は decisions/spec-decision-018。
+
+feedback request:
+- feedback_request_id: 20261027_053600_impl_feedback_dcd8234d
+- input_sha256: 141579fa0eca73d2b5999a0c4dccfe6c057e54658c3491decefcbd95935a9cfc
+- request_ids: CR-dcd8234d-008
+- direct_work_unit_ids: CR-dcd8234d-008#1
+- causal_work_unit_ids: CR-dcd8234d-008#1
+- stage packet: docs/pipeline/feedback-runs/20261027_053600_impl_feedback_dcd8234d/stage-packets/spec.md
+
+direct_stage: spec(上流 RDRA / USDM / arch / nfr / infra の変更なし。trigger_event なし)

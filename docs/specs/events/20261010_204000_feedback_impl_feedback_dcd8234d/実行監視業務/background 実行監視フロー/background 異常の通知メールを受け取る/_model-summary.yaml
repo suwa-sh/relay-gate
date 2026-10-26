@@ -1,0 +1,17 @@
+uc: "background 異常の通知メールを受け取る"
+business: "実行監視業務"
+buc: "background 実行監視フロー"
+
+bounded_context_id: "BC-004"
+
+models:
+  - name: "HangAlertMail"
+    tier: "tier-ops"
+    layer: "gateway"
+    type: "value-object"
+    rdra_info: "通知メール"
+
+tables: []
+
+kvs: []
+object_storage: []

@@ -225,7 +225,7 @@ Feature: ハング疑い・実行エラー・比較異常を通知する
 
   Scenario: ハング疑い通知後の速報比較依頼の比較異常は別種別として 1 回送る(SPEC-008-03)
     Given RAPID_CROSSCHECK_MODE=background で monitor_records に run_id=20260830T113000-JOB001-3f9a1c2e role=rapid-crosscheck monitor_status=HANG_SUSPECTED_NOTIFIED の行がある
-    And rapid_crosscheck_requests の該当行が status=FAILED exit_code=3 になり comparison_results に status=NG の行があり、判定が COMPARE_ERROR である
+    And rapid_crosscheck_requests の該当行が status=FAILED exit_code=3 になり、判定が COMPARE_ERROR である
     When hang-detector.sh が通知処理を実行する
     Then 件名が "[relay-gate][error] rapid-crosscheck-error" で始まるメールが 1 通送られ、monitor_status は COMPARE_ERROR_NOTIFIED になる
     And RELAY_GATE_NOW を 5 分進めて再実行しても rapid-crosscheck-error のメールは送られない

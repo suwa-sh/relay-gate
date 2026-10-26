@@ -1,0 +1,10 @@
+Spec 差分更新(design 無しモード): 2026-10-10 の実装フィードバックによるクロスチェック簡素化。
+
+クロスチェックを元の方針資料(blue/green runner → DB ← worker → 比較ツール。worker は DB の依頼レコードと自身の設定だけで起動)の構成へ戻す。
+
+- 比較定義 CSV(crosscheck-job-map.csv の行構造)と対象カタログ(target-catalog.csv)を廃止し、比較ツール起動コマンドを速報・確報の env に各 1 行へ縮退(速報 = rapid-crosscheck.env の RAPID_COMPARE_COMMAND、確報 = final-crosscheck.env の FINAL_COMPARE_COMMAND)。
+- worker は依頼レコードの値で起動コマンドを置換(確報は置換なし)して起動し、stdout / stderr / exit_code を依頼レコードの列へ保存。成果物 3 ファイル保存・成果物 URI 受け渡し・比較結果レコード(comparison_results)・確報依頼の business_date / catalog_version を廃止。完了通知は run_id / job_id / exit_code のみ。
+- validate-config.sh のティア間委譲を撤廃し facade 単独で全設定ファイルを検証(arch CTR-007)。検証種別 --crosscheck-job-map / --target-catalog を --rapid-crosscheck / --final-crosscheck へ置換。残す検証はコマンド部分が絶対パスで実行可能・速報は {job_id} を含むの 2 点。
+- 本 UC「クロスチェックのジョブマップと比較定義を定義する」は速報の起動コマンド設定と検証だけに縮小し tier-final-crosscheck.md を削除、tier-rapid-crosscheck.md を tier-facade.md に置換。確報の起動コマンド設定と検証は UC「比較ツールで日次全量比較を実行して結果を保存する」へ移動。
+
+trigger_event: rdra:20261010_200000_feedback_impl_feedback_dcd8234d, arch:20261010_202000_feedback_impl_feedback_dcd8234d

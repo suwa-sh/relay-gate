@@ -1,0 +1,9 @@
+クロスチェック簡素化(前段 requirements / NFR 更新)への追従と、validate-config.sh のティア間共有・名前空間規則の決定。廃止構造(クロスチェックジョブマップ・対象カタログ・比較結果レコード・成果物 URI の受け渡し・確報依頼の business_date / カタログ版)への言及を arch から除去し、比較ツール起動コマンドを速報クロスチェック設定・確報クロスチェック worker 設定が持つ構成へ合わせた。validate-config.sh のティア間委譲を無くして facade 単独で設定検証を完結させ、同一プロセスに source されるティアの名前空間の一般規則を CTR-007 に追加した。
+trigger_event: rdra:20261010_200000_feedback_impl_feedback_dcd8234d, nfr:20261010_201000_feedback_impl_feedback_dcd8234d
+
+feedback_request_id: 20261010_104636_impl_feedback_dcd8234d
+input_sha256: d4ddd211752998f5480a51d9dddfa3a58937badd62f72092c9257ed1384448fd
+request_ids: CR-dcd8234d-007, CR-dcd8234d-001, CR-dcd8234d-002, CR-dcd8234d-003
+direct_work_unit_ids: CR-dcd8234d-001#1, CR-dcd8234d-003#1
+causal_work_unit_ids: CR-dcd8234d-007#1, CR-dcd8234d-001#1, CR-dcd8234d-002#1, CR-dcd8234d-003#1
+stage_packet: docs/pipeline/feedback-runs/20261010_104636_impl_feedback_dcd8234d/stage-packets/architecture.md

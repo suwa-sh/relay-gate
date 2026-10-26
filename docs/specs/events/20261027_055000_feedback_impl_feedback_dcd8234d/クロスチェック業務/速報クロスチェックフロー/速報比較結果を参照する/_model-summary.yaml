@@ -1,0 +1,51 @@
+uc: "速報比較結果を参照する"
+business: "クロスチェック業務"
+buc: "速報クロスチェックフロー"
+bounded_context_id: "BC-002"
+aggregate_id: "AG-002"
+
+models:
+  - name: "RapidResultQuery"
+    tier: "tier-rapid-crosscheck"
+    layer: "presentation"
+    type: "request"
+    rdra_info: "速報比較依頼(rapid_crosscheck_request)"
+  - name: "ShowRapidResult"
+    tier: "tier-rapid-crosscheck"
+    layer: "usecase"
+    type: "query"
+    rdra_info: "速報比較依頼(rapid_crosscheck_request)"
+  - name: "RapidResultView"
+    tier: "tier-rapid-crosscheck"
+    layer: "domain"
+    type: "value-object"
+    rdra_info: "速報比較依頼(rapid_crosscheck_request)"
+  - name: "RapidCrosscheckRequestRecord"
+    tier: "tier-rapid-crosscheck"
+    layer: "repository"
+    type: "record"
+    rdra_info: "速報比較依頼(rapid_crosscheck_request)"
+  - name: "RapidRunRecord"
+    tier: "tier-rapid-crosscheck"
+    layer: "repository"
+    type: "record"
+    rdra_info: "速報実行(rapid_run)"
+
+tables:
+  - name: "rapid_crosscheck_requests"
+    rdra_info: "速報比較依頼(rapid_crosscheck_request)"
+    operations:
+      - type: "SELECT"
+        columns: []
+        where: "run_id = ?(status / worker_id / exit_code / stdout / stderr / requested_at / completed_at を取得)"
+    indexes_needed: []
+  - name: "rapid_runs"
+    rdra_info: "速報実行(rapid_run)"
+    operations:
+      - type: "SELECT"
+        columns: []
+        where: "run_id = ?"
+    indexes_needed: []
+
+kvs: []
+object_storage: []

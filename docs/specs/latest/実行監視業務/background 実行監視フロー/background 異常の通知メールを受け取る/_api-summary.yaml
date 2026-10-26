@@ -50,12 +50,12 @@ x_cli_commands:
   - name: "rapid-crosscheck-result.sh"
     tier: "tier-rapid-crosscheck"
     role: "uses"
-    synopsis: "rapid-crosscheck-result.sh --run-id <run_id> [--limit N] [--show-output] [--verbose] [--help]"
+    synopsis: "rapid-crosscheck-result.sh --run-id <run_id> [--show-output] [--verbose] [--help]"
     invoked_by: "運用者(rapid-crosscheck-error メールの推奨対処)"
     args: []
     options: []
     stdin: "なし"
-    stdout: "依頼状態と comparison_result(契約は UC「速報比較結果を参照する」)"
+    stdout: "依頼レコードの固定行(status / exit_code 等)と --show-output 時の比較ツール stdout / stderr(契約は UC「速報比較結果を参照する」)"
     stderr: "info: rapid result is for investigation only"
     exit_codes: []
 async_events:

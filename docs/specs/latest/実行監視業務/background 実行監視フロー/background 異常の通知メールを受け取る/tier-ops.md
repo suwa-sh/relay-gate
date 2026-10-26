@@ -67,7 +67,7 @@
 - **エラーハンドリング**(運用者の判断):
   - warning(hang-suspected): 実行ホストのプロセスを確認。動いていれば待つ(正常終了すれば監視記録に警告時経過時間が残り、`hang-detect-trend.sh` で上限調整の根拠になる)。ハングなら自分でプロセスを止めてから `abort-{role}.sh --run-id`、必要なら `background-rerun.sh`
   - error(background-exec-error): `{artifact_dir}/stderr.log` で原因を確認し、取り除いてから `background-rerun.sh --source-run-id --role`(元の実行は FAILED なので abort 不要)
-  - error(rapid-crosscheck-error): `rapid-crosscheck-result.sh --run-id` で status / difference_count / report_uri を見て原因調査。必要なら `background-rerun.sh --role rapid-crosscheck`。リリース判断は確報で行う
+  - error(rapid-crosscheck-error): `rapid-crosscheck-result.sh --run-id --show-output` で依頼の status / exit_code と比較ツールの stdout / stderr を見て原因調査。必要なら `background-rerun.sh --role rapid-crosscheck`。リリース判断は確報で行う
 - **クラッシュ耐性**: 該当なし
 
 ## データモデル変更

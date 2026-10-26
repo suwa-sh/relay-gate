@@ -24,3 +24,5 @@
 | 16 | [速報クロスチェック設定(rapid-crosscheck.env)を BC-005 所有の設定エンティティ E-027 として追加し、env 形式の設定ファイルに配置する](../../arch/events/20260907_015000_feedback_todo_followup/decisions/arch-decision-016.yaml) | approved |
 | 17 | [中止済み run の判定キーに対象 slot の slot 実行 ABORTED を加え、abort-rapid-crosscheck を REQUESTED / CLAIMED / RUNNING の速報比較依頼に拡張し、REQUESTED → ABORTED を競合窓の保険と位置づける](../../arch/events/20260907_122000_feedback_abort_consistency/decisions/arch-decision-017.yaml) | approved |
 | 18 | [slot 実行の管理 DB 側状態(slot_executions.status)は公開時点の状態を条件付き更新で一度だけ書き、abort 後は ABORTED のまま残してファイル正本へ再同期しない](../../arch/events/20260908_015000_feedback_slot_status_wording/decisions/arch-decision-018.yaml) | approved |
+| 19 | [validate-config.sh はティア間の関数委譲を無くし facade 単独で設定検証を完結させる。同一プロセスに source されるティアの名前空間の一般規則を CTR-007 に追加する](../../arch/events/20261010_202000_feedback_impl_feedback_dcd8234d/decisions/arch-decision-019.yaml) | approved |
+| 20 | [クロスチェック簡素化に追従し、arch から廃止構造(クロスチェックジョブマップ・対象カタログ・比較結果レコード・成果物 URI の受け渡し・確報の business_date / カタログ版)への言及を除去する](../../arch/events/20261010_202000_feedback_impl_feedback_dcd8234d/decisions/arch-decision-020.yaml) | approved |

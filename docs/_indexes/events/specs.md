@@ -16,3 +16,5 @@
 | 2026-09-17 10:00:00 | [20260917_100000_feedback_impl_feedback_fd678b04_cycle2](../../specs/events/20260917_100000_feedback_impl_feedback_fd678b04_cycle2) |
 | 2026-09-21 10:00:00 | [20260921_100000_feedback_impl_feedback_eff24f55](../../specs/events/20260921_100000_feedback_impl_feedback_eff24f55) |
 | 2026-09-23 11:20:00 | [20260923_112000_feedback_impl_feedback_eff24f55_cycle2](../../specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2) |
+| 2026-10-10 20:40:00 | [20261010_204000_feedback_impl_feedback_dcd8234d](../../specs/events/20261010_204000_feedback_impl_feedback_dcd8234d) |
+| 2026-10-27 05:50:00 | [20261027_055000_feedback_impl_feedback_dcd8234d](../../specs/events/20261027_055000_feedback_impl_feedback_dcd8234d) |

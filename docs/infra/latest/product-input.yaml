@@ -99,15 +99,15 @@ elements:
   - id: "management_db"
     category: "database"
     description: "ジョブキュー兼管理 DB。リレーショナル・強整合性・単一インスタンス。速報側と確報側のテーブルを分離"
-    entity_refs: ["E-013", "E-014", "E-015", "E-016", "E-017", "E-018", "E-019", "E-020", "E-021", "E-023", "E-024"]
+    entity_refs: ["E-013", "E-014", "E-015", "E-016", "E-017", "E-019", "E-020", "E-021", "E-023", "E-024"]
   - id: "artifact_store"
     category: "storage"
     description: "成果物ディレクトリ(facade/<run_id>/ の Runner Result: started-at.txt / stdout.log / stderr.log / exitcode.txt / aborted.txt(中止時のみ)と execution-spec.json)。POSIX ファイルシステム。一時ファイル → リネームの原子的確定が必要。slot 実行の状態は exitcode.txt / aborted.txt の有無と値から導出する(ファイル正本)"
     entity_refs: ["E-009", "E-010", "E-011", "E-014"]
   - id: "config_store"
     category: "storage"
-    description: "設定ファイル(feature flag: env 形式 9 キー / ジョブマップ・クロスチェックジョブマップ・対象カタログ: CSV 形式 / ハング検知定期ジョブ設定: env 形式 / 速報クロスチェック設定: env 形式 rapid-crosscheck.env(RAPID_DB_CONN_REF / RAPID_LEASE_SEC / RAPID_POLL_INTERVAL_SEC。速報有効時に facade・slot runner・速報クロスチェック runner・worker が起動のたびに読む。off では不要)/ 適用文書)。適用側が版管理して配置。設定版は持たず、マップ版はジョブマップ側の任意列とする。認証情報は参照名のみで値を置かない"
-    entity_refs: ["E-001", "E-002", "E-003", "E-004", "E-005", "E-006", "E-007", "E-008", "E-026", "E-027"]
+    description: "設定ファイル(feature flag: env 形式 9 キー / ジョブマップ: CSV 形式(<role>-job-map.csv)/ ハング検知定期ジョブ設定: env 形式 / 速報クロスチェック設定: env 形式 rapid-crosscheck.env(RAPID_DB_CONN_REF / RAPID_LEASE_SEC / RAPID_POLL_INTERVAL_SEC と速報比較ツールの起動コマンド 1 行。速報有効時に facade・slot runner・速報クロスチェック runner・速報 worker が起動のたびに読む。off では不要)/ 確報クロスチェック worker 設定: env 形式 final-crosscheck.env(確報 worker の DB 接続参照と確報比較ツールの起動コマンド 1 行。確報 worker が起動のたびに読む)/ 適用文書)。比較対象の定義は比較ツール側が持ち、relay-gate はジョブ ID ごとの比較定義 CSV・対象カタログを持たない。適用側が版管理して配置。設定版は持たず、マップ版はジョブマップ側の任意列とする。認証情報は参照名のみで値を置かない"
+    entity_refs: ["E-001", "E-002", "E-003", "E-004", "E-005", "E-006", "E-026", "E-027"]
   - id: "execution_log_store"
     category: "storage"
     description: "各スクリプトの実行ログファイル。3 ヶ月保管。行の日時はホストのローカルタイムゾーン(ISO 8601 秒精度、タイムゾーン指示子なし)で run_id の時刻部と同じ時刻軸。UTC への統一はしない"

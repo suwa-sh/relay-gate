@@ -65,7 +65,7 @@
   1. `$RELAY_GATE_ARTIFACT_ROOT/facade/*/` を列挙。`<role>/started-at.txt`(role ∈ {blue, green})が 1 つも無い run ディレクトリは `execution-spec.json` を読まずに飛ばす。started-at.txt がある run だけ `execution-spec.json` の `job_id` と `slots.<role>` を読む。execution-spec.json が無い run は `warn: execution-spec missing run_id=...` を出して判定対象外にする(job_id / mode を埋められないため。監視記録も作らない)。`final-crosscheck` ディレクトリは走査しない
   2. started-at.txt が `HANG_SCAN_WINDOW_HOURS` より古く、かつ(off 以外なら)監視記録が終端(COMPLETED / EXEC_ERROR_NOTIFIED / COMPARE_ERROR_NOTIFIED / NOT_MONITORED)の run は除く。HANG_SUSPECTED_NOTIFIED は未終端として引き続き走査する。off では窓だけで絞る
   3. 走査対象 run の `<role>/exitcode.txt` と `<role>/aborted.txt` を読み、slot 実行の状態を導出する(RUNNING / SUCCEEDED / FAILED / ABORTED。RAPID_CROSSCHECK_MODE によらず成果物ファイルが正本。`slot_executions` は読まない)
-  4. off 以外のとき `rapid_crosscheck_requests` から status ∈ {REQUESTED, CLAIMED, RUNNING} と、monitor_records が未終端(記録なし / MONITORING / HANG_SUSPECTED_NOTIFIED)の {SUCCEEDED, FAILED} と、monitor_records が未終端(MONITORING / HANG_SUSPECTED_NOTIFIED の記録あり)の ABORTED を取得し、`comparison_results.status` を結合(HANG_SUSPECTED_NOTIFIED の依頼を除外しない。除外すると warning 通知後に終端・中止した依頼が二度と判定されず run_count に永続的に数えられる)
+  4. off 以外のとき `rapid_crosscheck_requests` から status ∈ {REQUESTED, CLAIMED, RUNNING} と、monitor_records が未終端(記録なし / MONITORING / HANG_SUSPECTED_NOTIFIED)の {SUCCEEDED, FAILED} と、monitor_records が未終端(MONITORING / HANG_SUSPECTED_NOTIFIED の記録あり)の ABORTED を取得する。比較異常は依頼の status(と exit_code)だけで判定し、別テーブルは結合しない(HANG_SUSPECTED_NOTIFIED の依頼を除外しない。除外すると warning 通知後に終端・中止した依頼が二度と判定されず run_count に永続的に数えられる)
   5. 対象ごとに domain の判定表で判定
 - **状態導出表**(domain `derive_slot_status`。条件「slot 実行の状態導出規則」。縦軸 exitcode.txt、横軸 aborted.txt):
   | exitcode.txt | aborted.txt なし | aborted.txt あり |
@@ -83,16 +83,15 @@
   | RUNNING | なし | ≤ limit | MONITORING |
   | RUNNING | なし | > limit | HANG_SUSPECTED |
   前提: mode=background かつ limit > 0。それ以外は NOT_TARGET(監視対象外 → NOT_MONITORED)。走査窓内の ABORTED slot は監視記録の有無によらず COMPLETED と判定し、記録 UC が COMPLETED の監視記録を UPSERT する(off 以外。終端済みの監視記録がある run は手順 2 で走査から外れる)。現在の monitor_status が HANG_SUSPECTED_NOTIFIED でも同じ表で再判定する(遷移の可否は通知 UC の冪等判定が決める)
-- **異常判定表**(domain `judge_rapid_request`):
-  | 依頼状態 | 比較結果 | 経過時間 | 判定 |
-  |---|---|---|---|
-  | FAILED | 任意 | — | COMPARE_ERROR |
-  | SUCCEEDED | NG / FAILED | — | COMPARE_ERROR |
-  | SUCCEEDED | OK | — | COMPLETED |
-  | RUNNING | — | > RAPID_HANG_DETECT_LIMIT_MINUTES | HANG_SUSPECTED |
-  | RUNNING | — | ≤ RAPID_HANG_DETECT_LIMIT_MINUTES | MONITORING |
-  | REQUESTED / CLAIMED | — | — | MONITORING |
-  | ABORTED(未終端の監視記録がある依頼のみ走査。abort-rapid-crosscheck による中止と abort-blue / abort-green による未着手依頼の中止を含む) | — | — | COMPLETED(運用者が中止済み → monitor_status COMPLETED で終端。状態.tsv「監視状態」の中止済み終端) |
+- **異常判定表**(domain `judge_rapid_request`。入力は依頼の status / exit_code / 経過時間だけ。別テーブルは結合しない):
+  | 依頼状態 | 経過時間 | 判定 |
+  |---|---|---|
+  | FAILED(exit_code=3 比較 NG / 6 実行エラー / 起動失敗) | — | COMPARE_ERROR |
+  | SUCCEEDED | — | COMPLETED |
+  | RUNNING | > RAPID_HANG_DETECT_LIMIT_MINUTES | HANG_SUSPECTED |
+  | RUNNING | ≤ RAPID_HANG_DETECT_LIMIT_MINUTES | MONITORING |
+  | REQUESTED / CLAIMED | — | MONITORING |
+  | ABORTED(未終端の監視記録がある依頼のみ走査。abort-rapid-crosscheck による中止と abort-blue / abort-green による未着手依頼の中止を含む) | — | COMPLETED(運用者が中止済み → monitor_status COMPLETED で終端。状態.tsv「監視状態」の中止済み終端) |
 - **エラーハンドリング**: 1 対象の読み取り失敗(不正な started-at.txt、execution-spec.json 欠落・不正)は `warn:` を出して他の対象を継続(終了コードは 0 のまま)。DB 失敗は成果物側の判定・通知・記録を終えてから終了コード 6
 - **クラッシュ耐性**: 状態を変更しないため途中終了で壊れるものは無い。次回の定期起動が同じ判定をやり直す。通知の二重送信は監視記録の遷移判定で防ぐ(通知 UC)
 - **監視は通知のみ**: usecase は abort / rerun / 依頼作成の repository を呼ばない(LP-017)
@@ -106,12 +105,11 @@
 | run_id / role | string | 主キー | 追加(参照) |
 | monitor_status | string | 終端済み(COMPLETED / EXEC_ERROR_NOTIFIED / COMPARE_ERROR_NOTIFIED / NOT_MONITORED)の判定に使う。HANG_SUSPECTED_NOTIFIED は未終端 | 追加(参照) |
 
-### rapid_crosscheck_requests / comparison_results(参照。off 以外のみ。内部データストア: ジョブキュー兼管理 DB)
+### rapid_crosscheck_requests(参照。off 以外のみ。内部データストア: ジョブキュー兼管理 DB)
 
 | カラム | 型 | 説明 | 変更種別 |
 |--------|---|------|---------|
-| rapid_crosscheck_requests.run_id / job_id / status / started_at / requested_at / exit_code | string / string / string / datetime / datetime / integer | 異常判定の入力(ABORTED は未終端の監視記録がある依頼のみ) | 追加(参照) |
-| comparison_results.run_id / status | string / string | NG / FAILED の判定 | 追加(参照) |
+| rapid_crosscheck_requests.run_id / job_id / status / started_at / requested_at / exit_code | string / string / string / datetime / datetime / integer | 異常判定の入力(status=FAILED → 比較異常。ABORTED は未終端の監視記録がある依頼のみ)。別テーブルは結合しない | 追加(参照) |
 
 - `slot_executions` は読まない(slot 実行の状態はファイル正本から導出する。管理 DB の status は同じ値の複製)
 

@@ -1,4 +1,4 @@
-# digest of arch/latest/arch-design.yaml section app_architecture (L710-1111); source_sha256: 45a30ece498ff31b18cdec055333a172156d453b8d6d4b4f330b716cfc87de04
+# digest of arch/latest/arch-design.yaml section app_architecture (L710-1111); source_sha256: 4c5cf9d626f8441479f7bc337f09a9b89d2478b4bd1397852284f41b3d3c2adc
 # 派生物。正本は arch-design.yaml。編集しない
 app_architecture:
   tier_layers:
@@ -124,14 +124,14 @@ app_architecture:
           policies:
             - id: "LP-008"
               name: "系統ごとの公開 function"
-              description: "完了通知の受け口は blue-completed / green-completed の 2 つに分け、run_id・job_id・終了コード・成果物ディレクトリ(artifact_uri)を受け取る"
+              description: "完了通知の受け口は blue-completed / green-completed の 2 つに分け、run_id・job_id・終了コードを受け取る"
               reason: "条件「完了通知の系統独立」への対応"
               source_model: "条件: 完了通知の系統独立, 情報: 完了通知"
               confidence: "high"
           rules: []
         - id: "L-rapid-usecase"
           name: "ユースケース層"
-          responsibility: "完了通知の登録 → 中止済み run 判定(並行稼働実行と完了通知の対象 slot の slot 実行の状態)→ 両系成功判定 → 比較依頼の一意作成(dispatcher。中止済み run では依頼を作成せず完了事実の記録と警告ログだけ)、poll → claim → RUNNING(条件付き UPDATE。0 件なら比較を開始せず終了)→ 比較実行 → 結果保存 → comparison_result 登録(比較ツールの終了コードを得たときだけ)→ リラン由来 parallel_run の COMPLETED 更新(worker)のフロー制御"
+          responsibility: "完了通知の登録 → 中止済み run 判定(並行稼働実行と完了通知の対象 slot の slot 実行の状態)→ 両系成功判定 → 比較依頼の一意作成(dispatcher。中止済み run では依頼を作成せず完了事実の記録と警告ログだけ)、poll → claim → RUNNING(条件付き UPDATE。0 件なら比較を開始せず終了)→ 起動コマンドの置換 → 比較実行 → 依頼レコードへ stdout / stderr / exit_code 保存 → リラン由来 parallel_run の COMPLETED 更新(worker)のフロー制御"
           allowed_dependencies:
             - "L-rapid-domain"
             - "L-rapid-repository"
@@ -144,13 +144,13 @@ app_architecture:
               confidence: "high"
             - id: "LP-023"
               name: "中止済み run では依頼を作成しない"
-              description: "dispatcher の usecase は完了通知を登録した後、同じトランザクション内で並行稼働実行(parallel_run.status)と完了通知の対象 slot の slot 実行(slot_executions.status。ファイル正本 aborted.txt のミラー)の状態を読み、いずれかが ABORTED なら中止済み run として両系成功でも速報比較依頼を作成せず、rapid_run の完了事実(blue_status / green_status / 成果物 URI)だけを保存して実行ログに warning を残し、正常終了する。並行稼働実行は foreground 中継完了で COMPLETED になるため、foreground 完了後の background 中止は slot 実行 ABORTED の側で除外される。slot runner に中止判定を持たせない。速報有効時だけの規則で、off では完了通知自体が存在しない"
+              description: "dispatcher の usecase は完了通知を登録した後、同じトランザクション内で並行稼働実行(parallel_run.status)と完了通知の対象 slot の slot 実行(slot_executions.status。ファイル正本 aborted.txt のミラー)の状態を読み、いずれかが ABORTED なら中止済み run として両系成功でも速報比較依頼を作成せず、rapid_run の完了事実(blue_status / green_status と終了コード)だけを保存して実行ログに warning を残し、正常終了する。並行稼働実行は foreground 中継完了で COMPLETED になるため、foreground 完了後の background 中止は slot 実行 ABORTED の側で除外される。slot runner に中止判定を持たせない。速報有効時だけの規則で、off では完了通知自体が存在しない"
               reason: "条件「中止済み run の比較依頼作成除外」(判定キー: 並行稼働実行 ABORTED または対象 slot の slot 実行 ABORTED)への対応。判断主体を速報クロスチェック runner に置き、方針資料の責務分担(blue / green runner は比較依頼を判断しない)を守るため"
               source_model: "条件: 中止済み run の比較依頼作成除外, 両系成功判定, 状態: 並行稼働実行, slot 実行, 速報実行の完了状況, 情報: 速報実行(rapid_run), 完了通知, slot 実行, 実行ログ"
               confidence: "high"
             - id: "LP-024"
               name: "claim 後の比較開始は条件付き UPDATE で判定する"
-              description: "worker の usecase は claim した依頼を比較開始前に status = CLAIMED(かつ自 worker_id)を条件とする条件付き UPDATE で RUNNING にし、更新件数が 0 件(abort-rapid-crosscheck で ABORTED 済み)なら比較ツールを起動せず comparison_result も登録せずに正常終了し、その旨を実行ログに残す。RUNNING にできたときだけ比較を実行する"
+              description: "worker の usecase は claim した依頼を比較開始前に status = CLAIMED(かつ自 worker_id)を条件とする条件付き UPDATE で RUNNING にし、更新件数が 0 件(abort-rapid-crosscheck で ABORTED 済み)なら比較ツールを起動せず正常終了し、その旨を実行ログに残す。RUNNING にできたときだけ比較を実行する"
               reason: "条件「依頼中止可否判定」(CLAIMED の速報比較依頼を中止する際の競合規則)と状態モデル「クロスチェック依頼」(CLAIMED → RUNNING の条件付き UPDATE、CLAIMED → ABORTED)への対応。運用者が worker 停止を確認して中止した依頼を、停止漏れの worker が比較してしまう競合を DB の条件付き UPDATE で閉じるため"
               source_model: "条件: 依頼中止可否判定, 依頼状態遷移規則, claim 排他, 状態: クロスチェック依頼, 情報: 速報比較依頼(rapid_crosscheck_request), 実行ログ"
               confidence: "high"
@@ -169,7 +169,7 @@ app_architecture:
           rules: []
         - id: "L-rapid-repository"
           name: "リポジトリ層"
-          responsibility: "rapid_run / rapid_crosscheck_request / comparison_result の読み書きと parallel_run・slot 実行(slot_executions)の状態参照(管理 DB)、クロスチェックジョブマップの比較定義の読み取り(設定ファイル)、速報クロスチェック設定(env 形式 rapid-crosscheck.env: RAPID_DB_CONN_REF / RAPID_LEASE_SEC / RAPID_POLL_INTERVAL_SEC)の読み取り"
+          responsibility: "rapid_run / rapid_crosscheck_request の読み書き(比較ツールの stdout / stderr / exit_code は依頼レコードの列に保存)と parallel_run・slot 実行(slot_executions)の状態参照(管理 DB)、速報クロスチェック設定(env 形式 rapid-crosscheck.env: RAPID_DB_CONN_REF / RAPID_LEASE_SEC / RAPID_POLL_INTERVAL_SEC と速報の比較ツール起動コマンド)の読み取り"
           allowed_dependencies:
             - "L-rapid-domain"
             - "L-rapid-gateway"
@@ -182,16 +182,16 @@ app_architecture:
           policies:
             - id: "LP-011"
               name: "比較ツール呼び出しの分離"
-              description: "比較ツールの起動コマンド・オプションは job_id ごとの比較定義から受け取り、gateway は実行と結果取得だけを行う。ツール固有の終了コード解釈は domain の対応表に委ねる"
+              description: "比較ツールの起動コマンドは速報クロスチェック設定の 1 行({job_id} を含む)を依頼レコードの値で置換して受け取り、gateway は実行と結果取得だけを行う。ツール固有の終了コード解釈は domain の対応表に委ねる"
               reason: "条件「比較定義の選択」への対応。比較ツールを差し替え可能にするため"
-              source_model: "条件: 比較定義の選択, 外部システム: 比較ツール, 情報: 比較定義"
+              source_model: "条件: 比較定義の選択, 外部システム: 比較ツール, 情報: 比較定義, 速報クロスチェック設定"
               confidence: "high"
           rules: []
       cross_layer_policies:
         - id: "CLP-003"
           name: "IF なし(直接依存)"
-          description: "tier-facade と同じく直接依存とし、gateway アダプタの差し替えで製品差異を吸収する"
-          reason: "一般的なベストプラクティスとして適用"
+          description: "tier-facade と同じく直接依存とし、gateway アダプタの差し替えで製品差異を吸収する。これはティア内のレイヤー間依存の規則である。ティア間(本ティアと tier-facade など)のシェル関数の共有・source の規則は CTR-007(ティアは独立プロセス・ティア間のシェル関数共有の規則)に従う。本ティアは tier-facade の validate-config.sh へ検証関数を提供せず、validate-config.sh から source されない(クロスチェック簡素化後、速報の設定検証は facade 単独で完結する)"
+          reason: "一般的なベストプラクティスとして適用。ティア間のシェル関数共有の規則は CTR-007 に集約する"
           source_model: "なし"
           confidence: "default"
         - id: "CLP-004"
@@ -211,14 +211,14 @@ app_architecture:
         graph TD
           P[presentation: blue-completed / green-completed / worker 起動口] --> U[usecase: dispatcher / worker フロー]
           U --> D[domain: 両系成功判定・依頼ライフサイクル]
-          U --> R[repository: rapid_run / request / comparison_result / 比較定義]
+          U --> R[repository: rapid_run / request / 起動コマンド]
           R --> D
           R --> G[gateway: RDB / 比較ツール]
     - tier_id: "tier-final-crosscheck"
       layers:
         - id: "L-final-presentation"
           name: "プレゼンテーション層(CLI エントリ)"
-          responsibility: "final-crosscheck-runner の起動口(business_date・対象カタログ版の引数検証)と worker の起動口。保存済み stdout / stderr / exitcode の無加工中継と終了コードの決定"
+          responsibility: "final-crosscheck-runner の起動口(業務上の引数なし。未知オプションのみ検証)と worker の起動口。保存済み stdout / stderr / exitcode の無加工中継と終了コードの決定"
           allowed_dependencies:
             - "L-final-usecase"
           policies:
@@ -257,7 +257,7 @@ app_architecture:
           rules: []
         - id: "L-final-repository"
           name: "リポジトリ層"
-          responsibility: "final_crosscheck_request と対象カタログの読み書き(管理 DB)。速報側のテーブルには触れない"
+          responsibility: "final_crosscheck_request の読み書き(比較ツールの stdout / stderr / exit_code は依頼レコードの列に保存)と確報クロスチェック worker 設定の起動コマンドの読み取り。速報側のテーブルには触れない"
           allowed_dependencies:
             - "L-final-domain"
             - "L-final-gateway"
@@ -265,14 +265,14 @@ app_architecture:
           rules: []
         - id: "L-final-gateway"
           name: "ゲートウェイ層"
-          responsibility: "RDB クライアントアダプタ(DB セグメントからの poll / claim)、比較ツール起動アダプタ(対象カタログに基づく全テーブル・全ファイル比較)"
+          responsibility: "RDB クライアントアダプタ(DB セグメントからの poll / claim)、比較ツール起動アダプタ(確報クロスチェック worker 設定の起動コマンドで全テーブル・全ファイル比較。対象は比較ツール側が定義)"
           allowed_dependencies: []
           policies:
             - id: "LP-015"
-              name: "対象カタログに基づく全量比較の起動"
-              description: "gateway は対象カタログ(target_type / target_identifier / 比較条件 / business_date の扱い)を比較ツールの入力に変換して起動し、stdout / stderr / exitcode を取得する"
+              name: "確報の比較ツール起動コマンドによる全量比較の起動"
+              description: "gateway は確報クロスチェック worker 設定の比較ツール起動コマンドをそのまま起動し、stdout / stderr / exitcode を取得する。比較対象(テーブル・ファイル)は比較ツール側(適用側)が持つ"
               reason: "条件「適用側で定義する事項」への対応"
-              source_model: "条件: 適用側で定義する事項, 情報: 対象カタログ, 外部システム: 比較ツール"
+              source_model: "条件: 適用側で定義する事項, 情報: 比較定義, 外部システム: 比較ツール"
               confidence: "high"
           rules: []
       cross_layer_policies:
@@ -284,7 +284,7 @@ app_architecture:
           confidence: "default"
         - id: "CLP-006"
           name: "実行ログの出力方針"
-          description: "tier-facade の CLP-002 と同一。final_crosscheck_id と business_date をログに含める"
+          description: "tier-facade の CLP-002 と同一。final_crosscheck_id をログに含める"
           reason: "NFR C.6.1.1・C.3.1.1 への対応"
           source_model: "情報: 実行ログ, NFR C.6.1.1, NFR C.3.1.1"
           confidence: "medium"
@@ -299,7 +299,7 @@ app_architecture:
         graph TD
           P[presentation: final runner / worker 起動口] --> U[usecase: 登録・polling・中継 / 比較実行]
           U --> D[domain: 依頼ライフサイクル・終了コード対応]
-          U --> R[repository: final_crosscheck_request / 対象カタログ]
+          U --> R[repository: final_crosscheck_request / 起動コマンド]
           R --> D
           R --> G[gateway: RDB / 比較ツール]
     - tier_id: "tier-ops"

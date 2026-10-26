@@ -17,7 +17,7 @@ conventions:
       condition: "処理が完了した。参照系は対象が見つかり出力できた"
     - code: 2
       class: "入力・引数・設定検証エラー"
-      condition: "引数不足・不正な値・未知のオプション、feature flag / ジョブマップ / クロスチェックジョブマップの検証 NG、非対話で --yes なし、環境変数・設定ファイルの未設定"
+      condition: "引数不足・不正な値・未知のオプション、feature flag / ジョブマップ / 比較ツール起動コマンド設定の検証 NG、非対話で --yes なし、環境変数・設定ファイルの未設定"
     - code: 3
       class: "業務エラー"
       condition: "事前検証 NG(rerun)、中止不可(abort)、停止確認 no、参照系で対象が存在しない、RAPID_CROSSCHECK_MODE=off で管理 DB が無い(依頼レコード・系譜・集計を管理 DB にしか持たないコマンド。abort-blue / abort-green と background-rerun --role blue|green は off でも成果物ファイルだけで成立するため該当しない)"
@@ -70,7 +70,7 @@ conventions:
       applies_to: "rapid-crosscheck-worker.sh / final-crosscheck-worker.sh"
       behavior: "1 回だけ poll / claim / 実行して終了する(定期ジョブ運転用)"
     - name: "--limit N"
-      applies_to: "rapid-crosscheck-result.sh / run-lineage.sh / hang-detect-trend.sh"
+      applies_to: "run-lineage.sh / hang-detect-trend.sh"
       behavior: "出力行数の上限(既定 100)"
     - name: "--show-output"
       applies_to: "rapid-crosscheck-result.sh"
@@ -80,7 +80,7 @@ conventions:
       purpose: "relay-gate の配置ディレクトリ(スクリプトの所在)。内部呼び出しの解決に使う"
       default: "スクリプト自身のディレクトリ($(dirname \"$0\"))"
     - name: "RELAY_GATE_CONFIG_DIR"
-      purpose: "設定ファイル置き場(feature-flag.env / <slot>-job-map.csv / crosscheck-job-map.csv / target-catalog.csv / rapid-crosscheck.env / hang-detector.env / final-crosscheck.env)"
+      purpose: "設定ファイル置き場(feature-flag.env / <slot>-job-map.csv / rapid-crosscheck.env / hang-detector.env / final-crosscheck.env)"
       default: "$RELAY_GATE_HOME/config"
       on_missing: "未設定かつ既定パスが無い場合は終了コード 2"
     - name: "RELAY_GATE_ARTIFACT_ROOT"
@@ -116,10 +116,7 @@ shared_rules:
     example: "20260830T210000-final-7b2c9e1f"
     timezone: "run_id と同じ(ローカルタイムゾーン、Z 無し。RELAY_GATE_NOW 設定時はローカルタイムゾーンへ変換した値)"
     issuer: "final-crosscheck-runner.sh(起動のたびに新規発行)"
-    note: "abort-final-crosscheck.sh の --run-id はこの値を受け取る(canonical C7)。成果物ディレクトリ名にも使う(facade/<final_crosscheck_id>/final-crosscheck/)"
-  comparison_result_id:
-    format: "8 桁 hex"
-    issuer: "rapid-crosscheck-worker.sh"
+    note: "abort-final-crosscheck.sh の --run-id はこの値を受け取る(canonical C7)。確報 worker は成果物ディレクトリを作らず、比較結果を依頼レコードの stdout / stderr / exit_code 列に保存する"
   argument_concatenation:
     rule: "実装スクリプトへ渡す引数 = ジョブマップの fixed_params(JSON 配列 of string)を順序どおり展開 + runner IF の `--` 以降の PARAM... を順序保持で後置"
     fixed_params: "JSON 配列(要素は string のみ)。空は `[]`。bash 単独で解析できる範囲(ネスト不可)"
@@ -130,29 +127,32 @@ shared_rules:
     ssh_failure: "SSH 接続・実行失敗は exitcode.txt=6(仮採用)"
     runner_result_incomplete: "facade.sh は foreground の exitcode.txt が無い / 非数値のとき終了コード 6"
   compare_tool_exit_code:
-    contract: "0:OK,3:NG,6:ERROR(crosscheck-job-map.csv の宣言 `# exit_code_contract=0:OK,3:NG,6:ERROR` と一致)"
+    contract: "0:OK,3:NG,6:ERROR(比較ツール終了コード契約。比較ツールは適用側が用意し、relay-gate は値を変換しない)"
     mapping:
       - exit_code: 0
         request_status: "SUCCEEDED"
-        comparison_result_status: "OK"
         final_runner_relay: 0
         rapid_notification: "なし"
       - exit_code: 3
         request_status: "FAILED"
-        comparison_result_status: "NG"
         final_runner_relay: 3
         rapid_notification: "hang-detector が rapid-crosscheck-error(error)メール"
       - exit_code: 6
         request_status: "FAILED"
-        comparison_result_status: "FAILED"
         final_runner_relay: 6
         rapid_notification: "同上"
       - exit_code: "その他の非 0"
         request_status: "FAILED"
-        comparison_result_status: "FAILED"
         final_runner_relay: "その値(無加工)"
         rapid_notification: "同上"
     launch_failure: "比較ツールの起動自体に失敗した場合は依頼を FAILED / exit_code=6 で保存し、worker は終了コード 6"
+  compare_command_argv:
+    summary: "比較ツール起動コマンド(RAPID_COMPARE_COMMAND / FINAL_COMPARE_COMMAND)を引数の並び(argv)として解釈・起動する共通規則。速報 worker(rapid-crosscheck-worker.sh)・確報 worker(final-crosscheck-worker.sh)・validate-config.sh(--rapid-crosscheck / --final-crosscheck)はこの 1 か所だけを参照する(他の節に同じ規則を書かない)"
+    split: "設定を読み込んだ時点で値を空白(スペースまたはタブの 1 個以上の連続)で区切って引数の並びに分ける。ここでいう値は env 解析後の値 = KEY=VALUE の VALUE の先頭末尾の `\"` / `'` を 1 組だけ除去したもの(config_input_rules.env_files と UC「feature flag を設定する」の設定契約。`source` せず、シェル変数展開・コマンド置換は行わない)。分割では引用符・エスケープ・`$`・バッククォート・`;` / `|` / `&` / `*` などのシェルの記法を一切解釈せず、すべて引数の中の 1 文字として扱う。空白の連続は 1 つの区切りとして扱い、空の引数は作らない"
+    command_part: "先頭の引数(この規則で分けた argv の 1 番目)をコマンド部分とする。validate-config.sh の『コマンド部分(先頭の語)』はこの先頭の引数と同一で、worker が実際に起動するコマンドと一致する"
+    placeholder_substitution: "プレースホルダの置換は分けた引数 1 つの中だけで行い、置換の結果で引数の数や区切りは変わらない。`{job_id}` / `{run_id}` / `{blue_exit_code}` / `{green_exit_code}` は引数の一部としても置換できる(例 `--job={job_id}` は置換後も 1 引数)。`{params}` は引数 1 つ全体がちょうど `{params}` のときだけ使え、parameters の JSON 配列の各項目を順序どおりに 1 項目 1 引数へ展開する(`[]` なら 0 個)。それ以外の位置の `{params}`(引数の一部に `{params}` を含む)は設定の違反とする(違反文言は下記 validate-config.sh の『比較ツール起動コマンド』。--rapid-crosscheck のみ)。確報の FINAL_COMPARE_COMMAND はプレースホルダを持たず置換しない"
+    pre_substitution_check: "速報 worker は置換の前に置換値を検査する: job_id は shared_rules.run_id.job_id_charset、run_id は shared_rules.run_id.format に合うこと、parameters は JSON 配列として読めること。いずれかに合わなければ比較ツールを起動せず依頼を FAILED / exit_code=6 / error_summary=`invalid request value: <field>`(field は job_id | run_id | parameters)で終端し、stderr に `error: compare request value is invalid run_id=... field=<job_id|run_id|parameters>` を出す(worker 自身は 6。launch_failure と同じ依頼状態・終了コードで、error_summary と stderr の文言だけを分けて診断できるようにする)。確報はプレースホルダ無しのため置換値の検査はしない"
+    launch: "起動は分けた引数の並びをそのまま渡して行う(`\"${argv[@]}\"` 相当の argv 配列起動)。`eval` / `bash -c` / `sh -c` / 引用符なしの変数展開による起動を禁止する(文字列をシェルに解釈させない)。確報の FINAL_COMPARE_COMMAND も同じ規則で分けて argv として起動する"
   time_precision: "ISO 8601 秒精度。実行ログ / *_at 列 / stdout / メール本文はホストのローカルタイムゾーン(指示子なし。conventions.datetime)、started-at.txt / aborted.txt の中身は UTC Z 付き(artifact_layout)。経過時間は floor((now - started_at) / 60) 分(started-at.txt の UTC 値と now を同じ時刻軸に揃えて計算する)"
   worker_id_default: "{hostname}-{pid}(canonical C4)。--worker-id の文字種は英数字・_・- のみ。既定値のホスト名に `.` が含まれる場合(FQDN)は `.` を `-` に置換して生成する(速報・確報 worker 共通。仮採用)"
   lease_and_poll:
@@ -171,7 +171,7 @@ shared_rules:
     slot: "execution-spec.json の slots.<role>.hang_detect_limit_minutes(0 は監視対象外)"
     rapid_request: "hang-detector.env の RAPID_HANG_DETECT_LIMIT_MINUTES(既定 60)"
   state_codes:
-    note: "列挙値の正本は _cross-cutting/datastore/rdb-schema.yaml の columns[].enum。DB 列に対応する項目(parallel_run_status / slot_execution_status / request_status / rapid_run_completion / monitor_status / comparison_result_status)は derived_from で正本の列を指し(derived_from は {table, column} の object。複数列が同一の値集合を共有する request_status だけは {table, column} の配列で、実装のドリフトテストは object / 配列の両形を配列として扱う)、values は rdb-schema.yaml の enum の複製。不一致は rdb-schema を正とし、実装フェーズのドリフトテストで一致を検証する(利用者決定 2026-09-08: 案 A = 値の複製 + derived_from)。DB 列に対応しない項目(slot_mode / role / hang_judgement / alert_level / alert_kind)はリテラルで持ち、source に出所を記す。遷移説明(*_transitions / *_labels / *_derivation / hang_judgement_to_monitor_status)は本ファイルが正本"
+    note: "列挙値の正本は _cross-cutting/datastore/rdb-schema.yaml の columns[].enum。DB 列に対応する項目(parallel_run_status / slot_execution_status / request_status / rapid_run_completion / monitor_status)は derived_from で正本の列を指し(derived_from は {table, column} の object。複数列が同一の値集合を共有する request_status だけは {table, column} の配列で、実装のドリフトテストは object / 配列の両形を配列として扱う)、values は rdb-schema.yaml の enum の複製。不一致は rdb-schema を正とし、実装フェーズのドリフトテストで一致を検証する(利用者決定 2026-09-08: 案 A = 値の複製 + derived_from)。DB 列に対応しない項目(slot_mode / role / hang_judgement / alert_level / alert_kind)はリテラルで持ち、source に出所を記す。遷移説明(*_transitions / *_labels / *_derivation / hang_judgement_to_monitor_status)は本ファイルが正本"
     parallel_run_status:
       derived_from:
         table: "parallel_runs"
@@ -203,7 +203,7 @@ shared_rules:
       - "(新規)→ REQUESTED(rapid-crosscheck-runner.sh の両系成功判定 / background-rerun.sh --role rapid-crosscheck / final-crosscheck-runner.sh の登録)"
       - "REQUESTED → CLAIMED(rapid-crosscheck-worker.sh / final-crosscheck-worker.sh の claim。条件付き UPDATE status='REQUESTED')"
       - "CLAIMED → REQUESTED(worker の lease 失効解放。lease_until < now かつ started_at IS NULL)"
-      - "CLAIMED → RUNNING(rapid-crosscheck-worker.sh / final-crosscheck-worker.sh の比較開始。条件付き UPDATE status='CLAIMED' AND worker_id=自 worker。速報は 0 件(abort-rapid-crosscheck.sh で ABORTED 済み、または lease 失効で回収済み)なら比較を開始せず comparison_results も登録しない)"
+      - "CLAIMED → RUNNING(rapid-crosscheck-worker.sh / final-crosscheck-worker.sh の比較開始。条件付き UPDATE status='CLAIMED' AND worker_id=自 worker。速報は 0 件(abort-rapid-crosscheck.sh で ABORTED 済み、または lease 失効で回収済み)なら比較ツールを起動しない)"
       - "RUNNING → SUCCEEDED / FAILED(worker の終端 UPDATE。速報は条件付き UPDATE status='RUNNING' AND worker_id=自 worker(rapid-crosscheck-worker.sh)、確報は `WHERE final_crosscheck_id=? AND status='RUNNING'`(final-crosscheck-worker.sh)。0 件は ABORTED 済み)"
       - "REQUESTED / CLAIMED / RUNNING → ABORTED(abort-rapid-crosscheck.sh。速報比較依頼のみ。停止確認 yes 後の条件付き UPDATE status IN ('REQUESTED','CLAIMED','RUNNING')。0 件 = 終端済みでエラー(3))"
       - "CLAIMED → ABORTED(abort-rapid-crosscheck.sh。claim 済み速報比較依頼の中止。claim 済み worker は RUNNING への条件付き UPDATE が 0 件になり比較を開始しない。状態「クロスチェック依頼」CLAIMED → ABORTED)"
@@ -219,11 +219,6 @@ shared_rules:
         table: "monitor_records"
         column: "monitor_status"
       values: ["NOT_MONITORED", "MONITORING", "HANG_SUSPECTED_NOTIFIED", "EXEC_ERROR_NOTIFIED", "COMPARE_ERROR_NOTIFIED", "COMPLETED"]
-    comparison_result_status:
-      derived_from:
-        table: "comparison_results"
-        column: "status"
-      values: ["OK", "NG", "FAILED"]
     hang_judgement:
       source: "RDRA バリエーション「ハング検知判定結果」(6 値の英字コード。DB 列には持たず hang_judgement_to_monitor_status で monitor_status へ写す)"
       values: ["NOT_TARGET", "COMPLETED", "MONITORING", "HANG_SUSPECTED", "EXEC_ERROR", "COMPARE_ERROR"]
@@ -378,11 +373,11 @@ commands:
       - "ジョブマップ解決: <role>-job-map.csv(config_files)を CSV 規則で解析し、列はヘッダー名で対応付ける。host / user の両方が無い・両方空の行はローカル実行。execution-spec.json の slots.<role>.host / user は `null`。片方だけは exitcode.txt=2。入力の守備範囲(バイト・改行の異常は exitcode.txt=2、1 時点の内容だけで解決、補助コマンドの失敗は exitcode.txt=6)は config_input_rules に従う。work_dir / script は形式を検査せずそのまま実行先へ渡す(config_files.columns)"
       - "ローカル実行の起動形式(host / user が null の slot): SSH せず、runner のプロセスユーザーで `cd {work_dir} && {script} {fixed_params...} {PARAM...}` を直接起動する(stdin は `/dev/null`。stdout / stderr は SSH 実行と同じく stdout.log / stderr.log へ)。引数連結は shared_rules.argument_concatenation。ローカル実行は外部 IF ではないため external_interfaces には載せない。実行ログは `INFO local exec started ...` / `INFO local exec finished ...`(execution_log)"
       - "execution-spec.json の slots.<role>: impl_version = 環境変数 BLUE_IMPL / GREEN_IMPL の転記、map_version = ジョブマップの任意列 map_version の転記(列が無い・空なら null)、fixed_params = fixed_params セルの JSON 配列を解析した配列、credential_ref = 任意列(無ければ null)"
-      - "完了通知(RAPID_CROSSCHECK_MODE が off 以外): exitcode.txt 公開後に `$RAPID_CROSSCHECK_RUNNER blue-completed|green-completed --run-id ... --job-id ... --exit-code ... --artifact-uri ...` を同期起動する。条件「完了通知失敗の扱い」: 送信失敗は自動検知しない。runner は実行ログに `WARN completion notice failed run_id=... role=... runner=<RAPID_CROSSCHECK_RUNNER> exit_code=...` を残し、Runner Result と終了コードは実装の exitcode のまま変えない。復旧は運用者が RAPID_CROSSCHECK_RUNNER を同一引数で再実行する(冪等・先勝ち)"
+      - "完了通知(RAPID_CROSSCHECK_MODE が off 以外): exitcode.txt 公開後に `$RAPID_CROSSCHECK_RUNNER blue-completed|green-completed --run-id ... --job-id ... --exit-code ...` を同期起動する(成果物 URI は渡さない)。条件「完了通知失敗の扱い」: 送信失敗は自動検知しない。runner は実行ログに `WARN completion notice failed run_id=... role=... runner=<RAPID_CROSSCHECK_RUNNER> exit_code=...` を残し、Runner Result と終了コードは実装の exitcode のまま変えない。復旧は運用者が RAPID_CROSSCHECK_RUNNER を同一引数で再実行する(冪等・先勝ち)"
 
   - name: "rapid-crosscheck-runner.sh"
     tier: "tier-rapid-crosscheck"
-    synopsis: "rapid-crosscheck-runner.sh blue-completed|green-completed --run-id <run_id> --job-id <job_id> --exit-code <n> --artifact-uri <uri> [--verbose] [--help]"
+    synopsis: "rapid-crosscheck-runner.sh blue-completed|green-completed --run-id <run_id> --job-id <job_id> --exit-code <n> [--verbose] [--help]"
     invoked_by: "内部呼び出し(slot runner の lib/runner-notify.sh が feature-flag.env の RAPID_CROSSCHECK_RUNNER(facade / background-rerun から環境変数で受領)が指す実体として起動する。RAPID_CROSSCHECK_MODE が off 以外(foreground / background)のときのみ、exitcode.txt 公開後に同期起動)/ 運用者(完了通知失敗時の復旧として同一引数で再実行)"
     defined_in_uc: "クロスチェック業務/速報クロスチェックフロー/速報クロスチェック runner へ完了通知を送信する"
     used_by_ucs:
@@ -406,10 +401,6 @@ commands:
         type: "integer"
         required: true
         description: "公開済み exitcode.txt の値(0〜255 の整数。範囲外・非整数は終了コード 2)"
-      - name: "--artifact-uri"
-        type: "string"
-        required: true
-        description: "成果物ディレクトリ URI(file:// 絶対パス)"
       - name: "--verbose"
         type: "boolean"
         required: false
@@ -453,7 +444,7 @@ commands:
     notes:
       - "条件「中止済み run の比較依頼作成除外」: 中止済みの run(parallel_runs.status が ABORTED、または完了通知の対象 slot の slot_executions.status が ABORTED)では、完了通知を受けても速報比較依頼を作成せず、完了事実だけを rapid_runs に記録して実行ログに WARN を残す(reason は判定キーで分ける: parallel_run_aborted / slot_execution_aborted)。典型経路 = 並行稼働実行は foreground slot の結果を中継した時点で COMPLETED になるため、foreground 完了後に background slot を abort-blue / abort-green で中止した run は「対象 slot の slot 実行 ABORTED」の側で除外される。判断主体は本コマンド(dispatcher)。slot runner は自 slot の中止状態(aborted.txt)を判断せず、中止後に実装が走り切って exitcode.txt を公開した場合も通常どおり完了通知を送る(条件「完了通知の系統独立」)。RAPID_CROSSCHECK_MODE=off では完了通知も依頼も存在しないため、速報有効時だけに適用する。中止した run を background-rerun.sh --role rapid-crosscheck でリランした場合は新 run_id(parallel_runs は RUNNING、slot_executions 行なし)で依頼が作成される"
       - "条件「完了通知失敗の扱い」(1): slot runner は本コマンドの非 0 終了(起動失敗を含む。$RAPID_CROSSCHECK_RUNNER を起動できなかった場合の exit_code は 127)を runner の実行ログに `WARN completion notice failed run_id=... role=... runner=<RAPID_CROSSCHECK_RUNNER> exit_code=N` として残すだけで、stderr.log には追記しない(exitcode.txt 公開後の 3 ファイルは変更しない。foreground の場合 facade が中継する stderr が変わらないため、ジョブスケジューラへの応答は速報クロスチェックの失敗で変わらない)。runner 自身の終了コードは実装の exitcode.txt の値のまま変えない(通知の成否を業務ジョブの成否に混ぜない)"
-      - "条件「完了通知失敗の扱い」(2): 送信失敗は自動検知しない(hang-detector の対象外)。復旧は運用者が同一引数(subcommand / --run-id / --job-id / --exit-code / --artifact-uri)で本コマンド(RAPID_CROSSCHECK_RUNNER)を再実行する。冪等・先勝ちのため完了結果は一度だけ登録され、重複依頼は作られない"
+      - "条件「完了通知失敗の扱い」(2): 送信失敗は自動検知しない(hang-detector の対象外)。復旧は運用者が同一引数(subcommand / --run-id / --job-id / --exit-code)で本コマンド(RAPID_CROSSCHECK_RUNNER)を再実行する。冪等・先勝ちのため完了結果は一度だけ登録され、重複依頼は作られない"
 
   - name: "rapid-crosscheck-worker.sh"
     tier: "tier-rapid-crosscheck"
@@ -481,11 +472,11 @@ commands:
         default: false
         description: "info を stderr に出す"
     stdin: "なし"
-    stdout: "--once で claim できたとき固定順: run_id= / job_id= / worker_id= / lease_until= / request_status=(SUCCEEDED|FAILED|ABORTED。RUNNING 遷移 0 件のときは再 SELECT した現在の status をそのまま出す。ABORTED 以外(REQUESTED / 他 worker の CLAIMED / RUNNING / 別 worker が終端まで進めた SUCCEEDED / FAILED)は lease 失効で回収済み = WARN request not owned) / result_status=(OK|NG|FAILED|-) / exit_code=(整数|-) / comparison_result_id=(8 桁 hex|-) / artifact_dir: <絶対パス>。comparison_results を作らないケース(比較定義なし・起動失敗)は result_status=- / comparison_result_id=-(exit_code=6 は出す)。終端 UPDATE が 0 件(比較中に abort-rapid-crosscheck.sh で ABORTED)のときは request_status=ABORTED / result_status=- / exit_code=- / comparison_result_id=-。claim 後の RUNNING 遷移(条件付き UPDATE `WHERE run_id=? AND status='CLAIMED' AND worker_id=?`)が 0 件(abort-rapid-crosscheck.sh で ABORTED 済み / lease 失効で別 worker に回収された)のときは比較ツールを起動せず、成果物ディレクトリと started-at.txt も作らず、claim の 4 行に続けて request_status=<再 SELECT した現在の status> / result_status=- / exit_code=- / comparison_result_id=- / artifact_dir: - を出して 0(実行ログは再 SELECT の status が ABORTED なら `WARN comparison not started run_id=... worker_id=... reason=request_aborted`、それ以外は `WARN request not owned run_id=... status=...`。条件「依頼中止可否判定」)。claim 0 件なら 0 行。常駐時は実行ログのみ"
+    stdout: "--once で claim できたとき固定順: run_id= / job_id= / worker_id= / lease_until= / request_status=(SUCCEEDED|FAILED|ABORTED。RUNNING 遷移 0 件のときは再 SELECT した現在の status をそのまま出す。ABORTED 以外(REQUESTED / 他 worker の CLAIMED / RUNNING / 別 worker が終端まで進めた SUCCEEDED / FAILED)は lease 失効で回収済み = WARN request not owned) / exit_code=(整数|-)。比較結果は依頼レコードの stdout / stderr / exit_code 列に保存するため別レコード・成果物ファイルを作らない。起動失敗のときは exit_code=6 を出す(request_status=FAILED)。終端 UPDATE が 0 件(比較中に abort-rapid-crosscheck.sh で ABORTED)のときは request_status=ABORTED / exit_code=-。claim 後の RUNNING 遷移(条件付き UPDATE `WHERE run_id=? AND status='CLAIMED' AND worker_id=?`)が 0 件(abort-rapid-crosscheck.sh で ABORTED 済み / lease 失効で別 worker に回収された)のときは比較ツールを起動せず、claim の 4 行に続けて request_status=<再 SELECT した現在の status> / exit_code=- を出して 0(実行ログは再 SELECT の status が ABORTED なら `WARN comparison not started run_id=... worker_id=... reason=request_aborted`、それ以外は `WARN request not owned run_id=... status=...`。条件「依頼中止可否判定」)。claim 0 件なら 0 行。常駐時は実行ログのみ"
     stderr: "error: management db is not configured mode=off(3)/ error: management db connection failed worker_id=... conn_ref=...(6)/ error: unknown option option=... / error: invalid worker_id value=... / error: config file not found path: ...(2。RAPID_CROSSCHECK_MODE が off 以外で rapid-crosscheck.env 不在)/ error: option required option=RAPID_DB_CONN_REF path: ...(2)/ error: compare tool launch failed run_id=... command=... / error: management db update failed run_id=... 。終端 UPDATE 0 件(比較中に ABORTED)は stderr に出さず実行ログ `WARN request already terminal run_id=... status=ABORTED` のみ(継続。stdout は request_status=ABORTED)。比較開始前の RUNNING 遷移 0 件(CLAIMED 中に ABORTED / 回収済み)も stderr に出さず実行ログ(`WARN comparison not started ... reason=request_aborted` / `WARN request not owned ...`)のみ"
     exit_codes:
       - code: 0
-        meaning: "--once で 1 件を終端状態まで処理した、または依頼が無かった(比較 NG / 実行エラーの 3 / 6 も 0)。crosscheck-job-map.csv に job_id の行が無い場合は比較ツールを起動せず、comparison_results を INSERT せずに依頼を FAILED / exit_code=6 / error_summary=`comparison definition not found job_id=...` で終端し 0。終端 UPDATE が 0 件(ABORTED 済み)の場合は成果物 3 ファイルを残し、実行ログに `WARN request already terminal run_id=... status=ABORTED` を残して 0(stderr には出さない。stdout は request_status=ABORTED)。claim 後・比較開始前の RUNNING 遷移(条件付き UPDATE status='CLAIMED' AND worker_id=?)が 0 件(abort-rapid-crosscheck.sh で ABORTED 済み、または lease 失効で回収済み)の場合は比較ツールを起動せず、成果物ディレクトリも comparison_results も作らずに 0(条件「依頼中止可否判定」。arch LP-024)。常駐は SIGTERM で 0"
+        meaning: "--once で 1 件を終端状態まで処理した、または依頼が無かった(比較 NG / 実行エラーの 3 / 6 も 0)。比較ツールの起動自体に失敗した場合は依頼を FAILED / exit_code=6 / error_summary=`launch failed` で終端し 0(別レコード・成果物ファイルは作らない)。終端 UPDATE が 0 件(ABORTED 済み)の場合は実行ログに `WARN request already terminal run_id=... status=ABORTED` を残して 0(stderr には出さない。stdout は request_status=ABORTED)。claim 後・比較開始前の RUNNING 遷移(条件付き UPDATE status='CLAIMED' AND worker_id=?)が 0 件(abort-rapid-crosscheck.sh で ABORTED 済み、または lease 失効で回収済み)の場合は比較ツールを起動せず 0(条件「依頼中止可否判定」。arch LP-024)。常駐は SIGTERM で 0"
         condition: "1 サイクル完了"
       - code: 2
         meaning: "オプション・env の検証エラー"
@@ -496,15 +487,16 @@ commands:
       - code: 6
         meaning: "実行エラー"
         condition: "claim / DB 接続失敗(--once)、比較ツールの起動自体に失敗、成果物ディレクトリ作成不可、DB 更新失敗。常駐時は次 poll で再試行"
-    idempotency: "条件付き UPDATE による claim(更新件数 1 のみ成功)で多重 worker の重複処理を防ぐ。CLAIMED → RUNNING(比較開始前。`UPDATE rapid_crosscheck_requests SET status='RUNNING', started_at=? WHERE run_id=? AND status='CLAIMED' AND worker_id=?`)と RUNNING → 終端はいずれも status と worker_id を条件にした条件付き UPDATE。前者 0 件 = 中止済み(abort-rapid-crosscheck.sh)または回収済み(lease 失効)で比較を開始しない(比較ツールを起動せず、成果物ディレクトリと started-at.txt も作らず、comparison_results も INSERT せず 0。0 件のとき依頼を再 SELECT し、status = ABORTED なら実行ログ `WARN comparison not started run_id=... worker_id=... reason=request_aborted`、それ以外(lease 失効で回収済み: REQUESTED / 他 worker の CLAIMED / RUNNING / 別 worker が終端まで進めた SUCCEEDED / FAILED)は `WARN request not owned run_id=... status=...`)、後者 0 件 = 比較中に中止済みで comparison_results を INSERT しない。成果物は .tmp → mv。条件「比較結果の登録条件」: comparison_results は比較ツールを起動して終了コードを得たときだけ INSERT する(比較定義なし・起動失敗では INSERT せず、依頼だけ FAILED / exit_code=6 / error_summary に理由で終端)。起動前に feature-flag.env の RAPID_CROSSCHECK_MODE を読み、off なら DB に接続しない"
+    idempotency: "条件付き UPDATE による claim(更新件数 1 のみ成功)で多重 worker の重複処理を防ぐ。CLAIMED → RUNNING(比較開始前。`UPDATE rapid_crosscheck_requests SET status='RUNNING', started_at=? WHERE run_id=? AND status='CLAIMED' AND worker_id=?`)と RUNNING → 終端はいずれも status と worker_id を条件にした条件付き UPDATE。前者 0 件 = 中止済み(abort-rapid-crosscheck.sh)または回収済み(lease 失効)で比較を開始しない(比較ツールを起動せず 0。0 件のとき依頼を再 SELECT し、status = ABORTED なら実行ログ `WARN comparison not started run_id=... worker_id=... reason=request_aborted`、それ以外(lease 失効で回収済み: REQUESTED / 他 worker の CLAIMED / RUNNING / 別 worker が終端まで進めた SUCCEEDED / FAILED)は `WARN request not owned run_id=... status=...`)、後者 0 件 = 比較中に中止済みで終端結果を保存しない。比較ツールの起動に成功し終了コード(0 / 3 / 6 / その他)を得たら stdout / stderr / exit_code を rapid_crosscheck_requests の列へ保存し status を SUCCEEDED(0)/ FAILED(非 0)にする。起動自体に失敗した依頼は FAILED / exit_code=6 / error_summary=`launch failed` で終端する。起動前に feature-flag.env の RAPID_CROSSCHECK_MODE を読み、off なら DB に接続しない"
     notes:
-      - "条件「比較結果の登録条件」: 比較ツールの起動に成功し終了コード(0 / 3 / 6 / その他)を得た依頼だけ comparison_results を登録する。crosscheck-job-map.csv に job_id 行が無い(error_summary=`comparison definition not found job_id=...`)/ 起動失敗(error_summary=`launch failed`)は登録せず依頼を FAILED / exit_code=6 で終端する(stdout は result_status=- / comparison_result_id=-)"
-      - "条件「依頼中止可否判定」(worker 側の競合規則): claim 済みの依頼が abort-rapid-crosscheck.sh で ABORTED になった場合、CLAIMED → RUNNING の条件付き UPDATE(status='CLAIMED' AND worker_id=?)が 0 件になり、worker は比較を開始しない(shared_rules.state_codes.request_status_transitions の CLAIMED → RUNNING / CLAIMED → ABORTED)。実行ログ `WARN comparison not started run_id=... worker_id=... reason=request_aborted`。stdout(--once)は claim の 4 行 + request_status=ABORTED / result_status=- / exit_code=- / comparison_result_id=- / artifact_dir: -。終了コード 0"
+      - "worker が読む入力は DB の依頼レコード(rapid_crosscheck_requests)と自身の設定ファイル(rapid-crosscheck.env)だけ。runner と worker は別ネットワークセグメントで動き worker はファイルパスを読めないため、比較ツールへ渡す値は依頼レコードの値だけとし成果物 URI・対象カタログのパスを渡さない"
+      - "起動コマンドの解決: rapid-crosscheck.env の RAPID_COMPARE_COMMAND(1 行の文字列)を shared_rules.compare_command_argv に従って引数の並びに分け、各引数の中でプレースホルダを依頼レコードの値へ置換する。`{job_id}`(必須)= job_id、`{run_id}` = run_id、`{params}` = parameters、`{blue_exit_code}` = blue_exit_code、`{green_exit_code}` = green_exit_code(任意。両系成功時のみ依頼が作られるため作成時はともに 0)。`{params}` は引数 1 つ全体のときだけ使え JSON 配列を 1 項目 1 引数へ展開する(`[]` は 0 個)。置換の前に job_id / run_id / parameters を検査し(shared_rules.compare_command_argv.pre_substitution_check)、不適合なら比較ツールを起動せず依頼を FAILED(exit_code=6 / error_summary=`invalid request value: <field>`)で終端する。起動は引数の並びをそのまま渡して行い、文字列をシェルに解釈させない(`eval` / `bash -c` / `sh -c` / 引用符なし展開で起動しない)。得た stdout / stderr / exit_code を依頼レコードの列へ保存する(別レコード・成果物ファイルを作らない)"
+      - "条件「依頼中止可否判定」(worker 側の競合規則): claim 済みの依頼が abort-rapid-crosscheck.sh で ABORTED になった場合、CLAIMED → RUNNING の条件付き UPDATE(status='CLAIMED' AND worker_id=?)が 0 件になり、worker は比較を開始しない(shared_rules.state_codes.request_status_transitions の CLAIMED → RUNNING / CLAIMED → ABORTED)。実行ログ `WARN comparison not started run_id=... worker_id=... reason=request_aborted`。stdout(--once)は claim の 4 行 + request_status=ABORTED / exit_code=-。終了コード 0"
       - "リラン由来 run の COMPLETED(shared_rules.state_codes.parallel_run_transitions): 依頼を終端(SUCCEEDED / FAILED)にした後、parallel_runs.parent_run_id IS NOT NULL かつ当該 run_id の slot_executions 行が 0 件(background-rerun --role rapid-crosscheck で依頼だけを新規作成した run)なら、同一トランザクションで parallel_runs を RUNNING → COMPLETED に条件付き UPDATE する(SQL: `UPDATE parallel_runs SET status='COMPLETED', completed_at=? WHERE run_id=? AND status='RUNNING'`)。実行ログ `INFO parallel_run status changed from=RUNNING to=COMPLETED run_id=...`(UC 側もこの文言に揃える)。0 件(既に ABORTED)は WARN のみ。通常 run(slot_executions あり)は facade が COMPLETED にするため触れない"
 
   - name: "rapid-crosscheck-result.sh"
     tier: "tier-rapid-crosscheck"
-    synopsis: "rapid-crosscheck-result.sh --run-id <run_id> [--limit N] [--show-output] [--verbose] [--help]"
+    synopsis: "rapid-crosscheck-result.sh --run-id <run_id> [--show-output] [--verbose] [--help]"
     invoked_by: "運用者(直接起動。rapid-crosscheck-error メールの推奨対処)"
     defined_in_uc: "クロスチェック業務/速報クロスチェックフロー/速報比較結果を参照する"
     used_by_ucs:
@@ -517,11 +509,6 @@ commands:
         type: "string"
         required: true
         description: "参照する run_id"
-      - name: "--limit"
-        type: "integer"
-        required: false
-        default: 100
-        description: "comparison_result TSV の出力上限(1 以上)"
       - name: "--show-output"
         type: "boolean"
         required: false
@@ -533,8 +520,8 @@ commands:
         default: false
         description: "info を stderr に出す"
     stdin: "なし"
-    stdout: "固定順 9 行: run_id / job_id / request_status / blue_status / green_status / exit_code / worker_id / requested_at / completed_at。続けて TSV(ヘッダー: comparison_result_id, comparison_type, status, difference_count, report_uri, compared_at。compared_at 昇順・同値は comparison_result_id 昇順、--limit まで。0 件でもヘッダー行は出す)。--show-output 時は TSV の後に空行 1 行、`--- stdout ---` 行、本文、`--- stderr ---` 行、本文(data-visualization.md 1. が正)"
-    stderr: "info: rapid result is for investigation only; use final crosscheck for release decision(常時)/ warn: output truncated limit=N / error: option required option=--run-id(2)/ error: invalid value option=--run-id|--limit value=...(2)/ error: unknown option option=...(2)/ error: rapid crosscheck request not found run_id=... / error: rapid crosscheck is off; no management db to query mode=off / error: management db query failed run_id=..."
+    stdout: "固定順 9 行: run_id / job_id / request_status / blue_status / green_status / exit_code / worker_id / requested_at / completed_at(速報比較の結果は依頼レコードの stdout / stderr / exit_code で参照する。別レコードの一覧は出さない)。--show-output 時は 9 行の後に空行 1 行、`--- stdout ---` 行、依頼に保存された stdout 本文、`--- stderr ---` 行、stderr 本文(data-visualization.md 1. が正)"
+    stderr: "info: rapid result is for investigation only; use final crosscheck for release decision(常時)/ error: option required option=--run-id(2)/ error: invalid value option=--run-id value=...(2)/ error: unknown option option=...(2)/ error: rapid crosscheck request not found run_id=... / error: rapid crosscheck is off; no management db to query mode=off / error: management db query failed run_id=..."
     exit_codes:
       - code: 0
         meaning: "依頼が見つかり出力できた"
@@ -552,41 +539,33 @@ commands:
 
   - name: "final-crosscheck-runner.sh"
     tier: "tier-final-crosscheck"
-    synopsis: "final-crosscheck-runner.sh --business-date <YYYY-MM-DD> --catalog-version <ver> [--verbose] [--help]"
-    invoked_by: "ジョブスケジューラ(確報クロスチェックジョブ定義)。結果は運用者がジョブスケジューラの実行履歴で読む"
+    synopsis: "final-crosscheck-runner.sh [--verbose] [--help]"
+    invoked_by: "ジョブスケジューラ(確報クロスチェックジョブ定義)。引数なしで起動する。結果は運用者がジョブスケジューラの実行履歴で読む"
     defined_in_uc: "クロスチェック業務/確報クロスチェックフロー/確報比較依頼を登録して終端状態まで待機する"
     used_by_ucs:
       - "クロスチェック業務/確報クロスチェックフロー/保存済みの確報結果をジョブスケジューラへ返す"
       - "クロスチェック業務/確報クロスチェックフロー/確報クロスチェック結果を確認する"
     args: []
     options:
-      - name: "--business-date"
-        type: "string"
-        required: true
-        description: "比較対象の業務日付(YYYY-MM-DD)"
-      - name: "--catalog-version"
-        type: "string"
-        required: true
-        description: "対象カタログの版。target-catalog.csv の catalog_version 列に存在する値。crosscheck-job-map.csv の `# catalog_version=` より優先"
       - name: "--verbose"
         type: "boolean"
         required: false
         default: false
         description: "info を実行ログに出す(stderr には出さない)"
     stdin: "なし"
-    stdout: "待機中は出力しない。終端到達後は依頼に保存された stdout をバイト列のまま出す(NULL は 0 バイト)。状態名・差分件数・レポート URI・final_crosscheck_id を追加しない"
-    stderr: "終端到達後は依頼に保存された stderr をバイト列のまま出す。中継に至る前の relay-gate 自身のエラーのみ `error:`(+ `hint:`): error: option required option=--business-date|--catalog-version / error: invalid value option=--business-date value=... / error: unknown option option=... / error: config file not found path: ...(final-crosscheck.env 不在)/ error: option required option=FINAL_DB_CONN_REF path: ... / error: target_catalog_path declaration not found path: ...(crosscheck-job-map.csv に `# target_catalog_path=` なし)/ error: catalog version not found catalog_version=... path: ... / error: management db connection failed conn_ref=... / error: management db query failed final_crosscheck_id=... / error: polling limit exceeded final_crosscheck_id=... status=... limit_sec=...(status は超過時点の依頼 status)/ error: request aborted before completion final_crosscheck_id=...(exit_code NULL)。待機中の進捗は実行ログにのみ(`INFO polling final_crosscheck_id=... status=... elapsed_minutes=...`)"
+    stdout: "待機中は出力しない。終端到達後は依頼に保存された stdout をバイト列のまま出す(NULL は 0 バイト)。状態名・final_crosscheck_id を追加しない"
+    stderr: "終端到達後は依頼に保存された stderr をバイト列のまま出す。中継に至る前の relay-gate 自身のエラーのみ `error:`(+ `hint:`): error: unknown option option=... / error: config file not found path: ...(final-crosscheck.env 不在)/ error: option required option=FINAL_DB_CONN_REF path: ... / error: management db connection failed conn_ref=... / error: management db query failed final_crosscheck_id=... / error: polling limit exceeded final_crosscheck_id=... status=... limit_sec=...(status は超過時点の依頼 status)/ error: request aborted before completion final_crosscheck_id=...(exit_code NULL)。待機中の進捗は実行ログにのみ(`INFO polling final_crosscheck_id=... status=... elapsed_minutes=...`)"
     exit_codes:
       - code: "依頼に保存された exit_code(0 / 3 / 6 / その他)"
         meaning: "無加工中継。0 = 比較 OK(リリース判断の正本)/ 3 = 比較 NG / 6 = 実行エラー"
         condition: "依頼が SUCCEEDED / FAILED に到達し exit_code が 0〜255"
       - code: 2
         meaning: "入力・設定検証エラー(中継に至る前)"
-        condition: "引数欠落、business_date 形式不正、未知のオプション、final-crosscheck.env 不在または必須キー欠落、`# target_catalog_path=` なし、対象カタログに catalog_version の行が無い"
+        condition: "未知のオプション、final-crosscheck.env 不在または必須キー欠落"
       - code: 6
         meaning: "実行エラー(中継に至る前、または中継不能)"
         condition: "管理 DB 接続・INSERT・SELECT 失敗、polling 上限 FINAL_POLL_LIMIT_SEC 超過(依頼は変更しない)、exit_code が NULL(ABORTED で比較未完了)、exit_code が 0〜255 の範囲外"
-    idempotency: "起動のたびに新しい final_crosscheck_id で依頼を 1 件登録する(同じ business_date / catalog_version で複数回起動すれば依頼は複数件)。polling 中は状態を UPDATE しない。再実行はジョブスケジューラの正規ジョブで行う"
+    idempotency: "起動のたびに新しい final_crosscheck_id で依頼を 1 件登録する(引数なしで起動され、複数回起動すれば依頼は複数件)。polling 中は状態を UPDATE しない。再実行はジョブスケジューラの正規ジョブで行う"
 
   - name: "final-crosscheck-worker.sh"
     tier: "tier-final-crosscheck"
@@ -613,19 +592,22 @@ commands:
         default: false
         description: "info を stderr にも出す(info: claimed ... / info: no request to claim ...)"
     stdin: "なし"
-    stdout: "出力しない(常駐ログは実行ログ final-crosscheck-worker.sh.log へ。比較ツールの stdout は依頼レコードと stdout.log に保存)"
-    stderr: "error: management db connection failed worker_id=... conn_ref=...(6。速報 worker と同文)/ error: management db query failed ...(6)/ error: management db update failed final_crosscheck_id=...(6)/ error: compare tool launch failed final_crosscheck_id=... command=...(6。依頼は FAILED exit_code=6 error_summary=`launch failed`。速報 worker と同じ値)/ error: no catalog rows catalog_version=... path: ...(6。依頼は FAILED exit_code=6 error_summary=`no catalog rows catalog_version=...`)/ error: artifact dir is not writable path: ...(6)/ error: config file not found path: ... / error: option required option=FINAL_DB_CONN_REF path: ...(2)/ hint:。終端 UPDATE 0 件(比較中に ABORTED)は stderr に出さず実行ログ `WARN request already terminal final_crosscheck_id=... status=ABORTED` のみ(継続、終了コード 0)。比較ツールの stderr は流さない"
+    stdout: "出力しない(常駐ログは実行ログ final-crosscheck-worker.sh.log へ。比較ツールの stdout は依頼レコードの stdout 列に保存)"
+    stderr: "error: management db connection failed worker_id=... conn_ref=...(6。速報 worker と同文)/ error: management db query failed ...(6)/ error: management db update failed final_crosscheck_id=...(6)/ error: compare tool launch failed final_crosscheck_id=... command=...(6。依頼は FAILED exit_code=6 error_summary=`launch failed`。速報 worker と同じ値)/ error: config file not found path: ... / error: option required option=FINAL_DB_CONN_REF path: ...(2)/ hint:。終端 UPDATE 0 件(比較中に ABORTED)は stderr に出さず実行ログ `WARN request already terminal final_crosscheck_id=... status=ABORTED` のみ(継続、終了コード 0)。比較ツールの stderr は流さない"
     exit_codes:
       - code: 0
-        meaning: "1 サイクル完了(claim して終端まで保存した / 依頼が無かった、のどちらも 0)。比較ツールの非 0 は反映しない。終端 UPDATE が 0 件(比較中に abort-final-crosscheck.sh で ABORTED)の場合は成果物 3 ファイルを残し、実行ログに `WARN request already terminal final_crosscheck_id=... status=ABORTED` を残して 0(stderr には出さない)。常駐は SIGTERM で 0"
+        meaning: "1 サイクル完了(claim して終端まで保存した / 依頼が無かった、のどちらも 0)。比較ツールの非 0 は反映しない。終端 UPDATE が 0 件(比較中に abort-final-crosscheck.sh で ABORTED)の場合は実行ログに `WARN request already terminal final_crosscheck_id=... status=ABORTED` を残して 0(stderr には出さない)。常駐は SIGTERM で 0"
         condition: "1 サイクル完了"
       - code: 2
         meaning: "入力・設定検証エラー"
         condition: "未知のオプション、--worker-id の文字種不正、final-crosscheck.env 不在または必須キー欠落"
       - code: 6
         meaning: "実行エラー"
-        condition: "管理 DB 接続・SQL 失敗、比較ツール起動失敗(依頼は FAILED exit_code=6 を保存)、対象カタログに catalog_version の行が 0 行(起動失敗と同じ扱い。依頼は FAILED exit_code=6)、成果物書き込み失敗、内部エラー"
-    idempotency: "条件付き UPDATE による claim。RUNNING 到達後(started_at あり)は lease 失効でも戻さない(中止は abort-final-crosscheck.sh)。終端 UPDATE は `WHERE final_crosscheck_id=? AND status='RUNNING'`(0 件 = 中止済み)。DB の終端 UPDATE に失敗しても成果物 3 ファイルは残る。runner の polling は status 列のみを読み、終端検知後に 1 回だけ status / exit_code / stdout / stderr の 4 列を SELECT する"
+        condition: "管理 DB 接続・SQL 失敗、比較ツール起動失敗(依頼は FAILED exit_code=6 を保存)、内部エラー"
+    idempotency: "条件付き UPDATE による claim。RUNNING 到達後(started_at あり)は lease 失効でも戻さない(中止は abort-final-crosscheck.sh)。終端 UPDATE は `WHERE final_crosscheck_id=? AND status='RUNNING'`(0 件 = 中止済み)。runner の polling は status 列のみを読み、終端検知後に 1 回だけ status / exit_code / stdout / stderr の 4 列を SELECT する"
+    notes:
+      - "worker が読む入力は DB の依頼レコード(final_crosscheck_requests)と自身の設定ファイル(final-crosscheck.env)だけ。runner と worker は別ネットワークセグメントで動く"
+      - "起動コマンドの解決: final-crosscheck.env の FINAL_COMPARE_COMMAND(1 行の文字列。プレースホルダ無し)を shared_rules.compare_command_argv に従って引数の並びに分け、その並びをそのまま渡して起動する(置換はしない。文字列をシェルに解釈させない = `eval` / `bash -c` / `sh -c` / 引用符なし展開で起動しない)。得た stdout / stderr / exit_code を依頼レコードの列へ保存する(別レコード・成果物ファイル・対象カタログの抜き出しを行わない)。状態 = exit_code 0 → SUCCEEDED / 非 0 または起動失敗 → FAILED"
 
   - name: "hang-detector.sh"
     tier: "tier-ops"
@@ -744,7 +726,7 @@ commands:
         default: false
         description: "info を stderr に出す"
     stdin: "なし"
-    stdout: "blue / green: 固定順 role, mode=background, pid, artifact_dir: ..., execution_spec: ..., run_id={新 run_id}, parent_run_id={元 run_id}。rapid-crosscheck: 固定順 role=rapid-crosscheck, job_id, request_status=REQUESTED, blue_artifact_uri: ..., green_artifact_uri: ..., run_id={新 run_id}, parent_run_id={元 run_id}。検証 NG 時は出さない"
+    stdout: "blue / green: 固定順 role, mode=background, pid, artifact_dir: ..., execution_spec: ..., run_id={新 run_id}, parent_run_id={元 run_id}。rapid-crosscheck: 固定順 role=rapid-crosscheck, job_id, request_status=REQUESTED, run_id={新 run_id}, parent_run_id={元 run_id}(元の依頼の job_id / parameters / blue_exit_code / green_exit_code を引き継ぐ。成果物 URI は持たない)。検証 NG 時は出さない"
     stderr: |-
       各 UC の tier-ops.md 出力契約表を転記(機械可読な正本)。`error:` 1 行 + 対処が明確なら `hint:` 1 行。
       事前検証(UC「リラン対象を検証する」):
@@ -767,7 +749,6 @@ commands:
       - `error: artifact dir is not writable path: ...`(6)
       - `error: management db insert failed table=... run_id=...`(6)
       依頼再作成(UC「速報比較依頼だけを新規作成する」):
-      - `error: source artifacts not found run_id=... role=rapid-crosscheck missing=blue_artifact_uri|green_artifact_uri`(3)
       - `error: management db insert failed table=... run_id=...`(6)
     exit_codes:
       - code: 0
@@ -778,13 +759,13 @@ commands:
         condition: "--source-run-id / --role 欠落、role が列挙外(final-crosscheck を含む)、run_id 形式不正、未知オプション"
       - code: 3
         meaning: "事前検証 NG(状態を変更しない)"
-        condition: "--role blue|green: 元 mode が foreground / off(execution-spec.json に slots.{role} 節が無い = off)、元 slot が RUNNING(exitcode.txt も aborted.txt も無い)、元 slot が未起動(started-at.txt なし。status=-)、execution-spec.json なし。元 slot の状態は off でも off 以外でも常にファイル正本(shared_rules.exitcode_to_status.slot_execution)で判定し、ABORTED(aborted.txt あり)/ SUCCEEDED / FAILED はリラン可。--role rapid-crosscheck: 依頼が REQUESTED / CLAIMED / RUNNING、依頼(rapid_crosscheck_requests)・rapid_runs なし、元 run の成果物 URI(rapid_runs.blue_artifact_uri / green_artifact_uri)が無い、RAPID_CROSSCHECK_MODE=off(管理 DB 未設定)。rapid-crosscheck では execution-spec.json の有無を検証しない(元実行は管理 DB だけで特定する)"
+        condition: "--role blue|green: 元 mode が foreground / off(execution-spec.json に slots.{role} 節が無い = off)、元 slot が RUNNING(exitcode.txt も aborted.txt も無い)、元 slot が未起動(started-at.txt なし。status=-)、execution-spec.json なし。元 slot の状態は off でも off 以外でも常にファイル正本(shared_rules.exitcode_to_status.slot_execution)で判定し、ABORTED(aborted.txt あり)/ SUCCEEDED / FAILED はリラン可。--role rapid-crosscheck: 依頼が REQUESTED / CLAIMED / RUNNING、依頼(rapid_crosscheck_requests)・rapid_runs なし、RAPID_CROSSCHECK_MODE=off(管理 DB 未設定)。rapid-crosscheck では execution-spec.json の有無を検証せず、成果物 URI の存在確認も行わない(元実行は管理 DB だけで特定する)"
       - code: 6
         meaning: "実行エラー"
         condition: "execution-spec.json 読み取り失敗(JSON 不正・必須キー欠落を含む)、成果物ディレクトリ作成・spec 保存失敗、runner 起動失敗、run_id 発行の再試行上限(3 回)超過、runner 起動前の管理 DB 接続・INSERT・COMMIT 失敗(起動後の slot_executions.pid UPDATE と parallel_runs STARTED→RUNNING UPDATE の失敗は runner 起動済みのため終了コードに反映せず実行ログ ERROR のみ)"
     idempotency: "起動のたびに新 run_id を発行する(同じ元 run_id から複数回リランすれば系譜が伸びる)。blue / green は新 run ディレクトリへ元 execution-spec.json をコピーし run_id / parent_run_id / restored_at を書き換える。RAPID_CROSSCHECK_MODE が off 以外のとき新 run の parallel_runs(status=STARTED)と slot_executions を facade.sh と同じく runner 起動前に pid=NULL / status=RUNNING で INSERT し、起動後に pid を UPDATE してから parallel_runs を STARTED → RUNNING に条件付き UPDATE する(runner の終端 UPDATE より先に行が存在することを保証する。起動失敗時は slot_executions を status=FAILED にベストエフォートで UPDATE。起動後の pid UPDATE / STARTED→RUNNING UPDATE の失敗は runner 起動済みのため終了コードに反映せず実行ログ ERROR のみ。shared_rules.state_codes.parallel_run_transitions)。この run の parallel_runs は background slot の終端時に slot runner が RUNNING → COMPLETED にする(shared_rules.state_codes.parallel_run_transitions)。rapid-crosscheck は execution-spec.json を必須とせず(元実行は rapid_crosscheck_requests / rapid_runs / parallel_runs から特定)、新 run の parallel_runs(execution_spec_uri は元 run の値を引き継ぐ)・rapid_runs と依頼を INSERT する(canonical C3)。rapid-crosscheck リランで作られた run(execution-spec.json を持たない)を再び --source-run-id に指定できる(数珠つなぎ可。SPEC-009-01)"
     notes:
-      - "--role rapid-crosscheck の事前検証順: feature-flag.env の RAPID_CROSSCHECK_MODE(off なら 3)→ rapid_crosscheck_requests(run_id)の存在と status → rapid_runs の blue_artifact_uri / green_artifact_uri。ファイルシステム(facade/<source_run_id>/)は読まない"
+      - "--role rapid-crosscheck の事前検証順: feature-flag.env の RAPID_CROSSCHECK_MODE(off なら 3)→ rapid_crosscheck_requests(run_id)の存在と status。新しい依頼には元の依頼の job_id / parameters / blue_exit_code / green_exit_code を引き継ぐ(成果物 URI は使わない)。ファイルシステム(facade/<source_run_id>/)は読まない"
       - "--role blue|green の事前検証順: facade/<source_run_id>/execution-spec.json の存在・可読 → slots.{role} 節の有無(無し = mode off で 3)→ mode → 元状態(off でも off 以外でも成果物ファイルから導出: started-at.txt なし=未起動(status=-、3)/ exitcode.txt あり 0=SUCCEEDED / 非 0=FAILED / exitcode.txt なし・aborted.txt あり=ABORTED / どちらも無し=RUNNING(3))。slot_executions は事前検証に使わない(管理 DB は新 run の INSERT にだけ使う)"
       - "復元起動で runner へ引き継ぐ環境変数は facade.sh の notes と同じ(4 つ + RAPID_CROSSCHECK_MODE が off 以外なら RAPID_CROSSCHECK_RUNNER + 設定時の RELAY_GATE_NOW)。impl_version は元 execution-spec.json の値を使うため BLUE_IMPL / GREEN_IMPL は渡さない"
       - "rapid-crosscheck リランで作られた run の parallel_runs は、依頼の終端時に rapid-crosscheck-worker.sh が RUNNING → COMPLETED にする(shared_rules.state_codes.parallel_run_transitions)"
@@ -1024,13 +1005,14 @@ commands:
 
   - name: "validate-config.sh"
     tier: "tier-facade"
-    tier_note: "エントリポイントの所有 tier は tier-facade(bin/ 配置先)。検証種別ごとの検証ロジックの所有 tier は options[].owner_tier に従う(--crosscheck-job-map = tier-rapid-crosscheck、--target-catalog = tier-final-crosscheck)"
-    synopsis: "validate-config.sh (--feature-flag <path> | --job-map <path> | --crosscheck-job-map <path> | --target-catalog <path>) [--verbose] [--help]"
+    tier_note: "全検証種別の所有 tier は tier-facade(bin/ 配置先)。validate-config.sh は tier-facade が全設定ファイルを自身の解析関数で検証し、他ティアへ検証ロジックを委譲せず他ティアのシェルファイルを source しない(arch CTR-007。同一プロセスに複数ティアを source する場合の名前空間の一般規則も CTR-007)"
+    synopsis: "validate-config.sh (--feature-flag <path> | --job-map <path> | --rapid-crosscheck <path> | --final-crosscheck <path>) [--verbose] [--help]"
     invoked_by: "基盤適用設計者 / 運用者(直接起動)"
     defined_in_uc: "適用構成業務/適用構成定義フロー/feature flag を設定する"
     used_by_ucs:
       - "適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する"
       - "適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する"
+      - "クロスチェック業務/確報クロスチェックフロー/比較ツールで日次全量比較を実行して結果を保存する"
       - "適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる"
       - "実行監視業務/background 実行監視フロー/hang_detect_limit_minutes をジョブごとに調整する"
       - "適用構成業務/適用構成定義フロー/切り替えた運用モードで業務ジョブを実行する"
@@ -1046,16 +1028,16 @@ commands:
         required: false
         owner_tier: "tier-facade"
         description: "検証する slot ジョブマップ CSV のパス。他の検証種別オプションと排他"
-      - name: "--crosscheck-job-map"
+      - name: "--rapid-crosscheck"
         type: "string"
         required: false
-        owner_tier: "tier-rapid-crosscheck"
-        description: "検証するクロスチェックジョブマップ CSV のパス。値必須(既定パス $RELAY_GATE_CONFIG_DIR/crosscheck-job-map.csv を使う場合も明示的に渡す。conventions.option_style の `--key value` 固定に従う)。他の検証種別オプションと排他"
-      - name: "--target-catalog"
+        owner_tier: "tier-facade"
+        description: "検証する速報クロスチェック設定ファイル(rapid-crosscheck.env)のパス。値必須(既定パス $RELAY_GATE_CONFIG_DIR/rapid-crosscheck.env を使う場合も明示的に渡す。conventions.option_style の `--key value` 固定に従う)。RAPID_COMPARE_COMMAND の起動コマンドを検証する(shared_rules.compare_command_argv で分けた先頭の引数 = コマンド部分が絶対パスで存在・実行可能、`{job_id}` を含む、`{params}` は引数 1 つ全体のときだけ)。他の検証種別オプションと排他"
+      - name: "--final-crosscheck"
         type: "string"
         required: false
-        owner_tier: "tier-final-crosscheck"
-        description: "検証する対象カタログ CSV のパス。値必須(既定パス $RELAY_GATE_CONFIG_DIR/target-catalog.csv を使う場合も明示的に渡す)。他の検証種別オプションと排他"
+        owner_tier: "tier-facade"
+        description: "検証する確報クロスチェック worker 設定ファイル(final-crosscheck.env)のパス。値必須(既定パス $RELAY_GATE_CONFIG_DIR/final-crosscheck.env を使う場合も明示的に渡す)。FINAL_COMPARE_COMMAND の起動コマンドを検証する(shared_rules.compare_command_argv で分けた先頭の引数 = コマンド部分が絶対パスで存在・実行可能。プレースホルダ無しのため `{job_id}` / `{params}` の検査はしない)。他の検証種別オプションと排他"
       - name: "--verbose"
         type: "boolean"
         required: false
@@ -1083,21 +1065,20 @@ commands:
       検証種別ごとに固定順の key=value:
       - --feature-flag: config_path, blue_mode, green_mode, blue_impl, green_impl, blue_runner, green_runner, rapid_crosscheck_mode, rapid_crosscheck_runner, rapid_crosscheck_worker, operation_mode, blue_job_map, green_job_map, blue_runner_if_version, green_runner_if_version(operation_mode は config_files.feature-flag.env.derived の英字コード parallel | green_only | next_gen_parallel | custom。off の slot は <slot>_impl / <slot>_runner / <slot>_job_map / <slot>_runner_if_version が `-`。RAPID_CROSSCHECK_MODE=off では rapid_crosscheck_runner / rapid_crosscheck_worker が `-`。runner が --help に「応答しない」と判定した場合(判定基準は runner_help_probe)も <slot>_runner_if_version=- で warn:)
       - --job-map: map_path, rows, map_version(任意列 map_version が無い・空なら `-`。impl_version は出さない)
-      - --crosscheck-job-map: config=crosscheck-job-map, path: ..., rows=N, target_catalog_path: ..., catalog_version=, exit_code_contract=0:OK,3:NG,6:ERROR, status=valid|invalid, violations=N(invalid 時)
-      - --target-catalog: config=target-catalog, path: ..., rows=N, catalog_versions=v1,v2, tables=N, files=N, status=valid|invalid, violations=N(invalid 時)
+      - --rapid-crosscheck: config=rapid-crosscheck, path: ..., command_path: <RAPID_COMPARE_COMMAND の先頭の語 = shared_rules.compare_command_argv で分けた先頭の引数>, has_job_id_placeholder=true|false, status=valid|invalid, violations=N(invalid 時)
+      - --final-crosscheck: config=final-crosscheck, path: ..., command_path: <FINAL_COMPARE_COMMAND の先頭の語 = shared_rules.compare_command_argv で分けた先頭の引数>, status=valid|invalid, violations=N(invalid 時)
     stderr: |-
-      違反ごとに `error:` 1 行(全件)。同種の違反は検証種別(--feature-flag / --job-map / --crosscheck-job-map / --target-catalog)を問わず次の共通形式にする(各 UC の tier md はこれに揃える):
+      違反ごとに `error:` 1 行(全件)。同種の違反は検証種別(--feature-flag / --job-map / --rapid-crosscheck / --final-crosscheck)を問わず次の共通形式にする(各 UC の tier md はこれに揃える):
       - ファイル無し・読めない: `error: config file not found path: ...`(2)/ `error: config file is not readable path: ...`(2)
       - 入力の守備範囲(全設定ファイル共通。config_input_rules が正本。行番号は物理行番号、path は利用者が指定したパス): NUL バイト `error: nul byte is not allowed line=N path: ...`(2)/ UTF-8 として不正なバイト列(コメント行を含む)`error: encoding is not utf-8 line=N path: ...`(2)/ BOM `error: byte order mark is not allowed line=1 path: ...`(2)/ CR(CRLF を含む)`error: carriage return is not allowed line=N path: ...` + 次行 `hint: use LF line endings`(2)/ ヘッダー列名の重複(CSV)`error: duplicate column column=<name> path: ...`(2)。いずれも同種の行が複数あれば行ごとに 1 行(全件)
       - 検証器の内部障害(config_input_rules.internal_failure): 補助コマンドの失敗 `error: internal command failed commands=<name,...> path: ...`(6。commands= には実際に失敗したコマンド名だけを書く)/ 入力の複製の失敗 `error: config snapshot failed path: ...` + 次行 `hint: check TMPDIR is writable`(6)。内部障害では stdout を出さず、他の error / warn 行も出さない(検証 OK も違反も返さない)
       - ヘッダー不一致(slot ジョブマップ。列はヘッダー名で対応付ける): `error: job map header mismatch missing=<col,...> path: ...`(2。必須列の欠落、host / user の片方だけ。順序違いは違反にしない。未知列は `warn: unknown column column=<name> path: ...`。旧 `expected=... actual=...` 形式は使わない)
-      - ヘッダー不一致(クロスチェックジョブマップ・対象カタログ。列順固定): `error: header mismatch expected=<col1,col2,...> actual=<col1,...> path: ...`(2)
-      - CSV クォート不正(全 CSV 共通): `error: csv quote is invalid line=N path: ...`(2。閉じられていない二重引用符、囲みの外に二重引用符、囲み無しセルのカンマ等。config_files の csv_rules)
+      - CSV クォート不正(slot ジョブマップ): `error: csv quote is invalid line=N path: ...`(2。閉じられていない二重引用符、囲みの外に二重引用符、囲み無しセルのカンマ等。config_files の csv_rules)
+      - 比較ツール起動コマンド(--rapid-crosscheck / --final-crosscheck。コマンド部分(先頭の語)は shared_rules.compare_command_argv で分けた先頭の引数と定義する。検証はコマンド部分と `{job_id}` / `{params}` の位置だけに行い、ほかの引数部分の内容は検査しない): 必須キー欠落・空 `error: option required option=<KEY> path: ...`(2)/ コマンド部分が絶対パスでない `error: path is not absolute key=<KEY> path=...`(2)/ コマンド部分が存在しない・実行不可 `error: file not executable key=<KEY> path=...`(2)/ 速報の起動コマンドに `{job_id}` が無い `error: placeholder {job_id} is missing key=<KEY> value=...`(2。--rapid-crosscheck のみ)/ 速報の `{params}` が引数 1 つ全体でない位置に現れる `error: placeholder {params} must be a whole argument key=<KEY> value=...`(2。--rapid-crosscheck のみ。shared_rules.compare_command_argv.placeholder_substitution)。確報(--final-crosscheck)はプレースホルダ無しのため `{job_id}` / `{params}` の検査はしない。<KEY> は RAPID_COMPARE_COMMAND / FINAL_COMPARE_COMMAND。記号(`;` / `|` / `$` / 空白を含む値)は検証で拒否しない(引数として渡せば文字として届くため。shared_rules.compare_command_argv)
       - 列数不一致: `error: column count mismatch line=N expected=<n> actual=<n>`(2)
       - feature flag(--feature-flag): 必須キー欠落・空 `error: option required option=<KEY> path: ...`(2)/ enum 外 `error: invalid value key=<KEY> value=...`(2。RAPID_CROSSCHECK_MODE / BLUE_MODE / GREEN_MODE では次行に `hint: use foreground, background or off` を続ける)/ 絶対パスでない `error: path is not absolute key=<KEY> path=...`(2)/ 実体が無い・実行不可 `error: file not executable key=<KEY> path=...`(2)/ foreground 重複・無し `error: foreground slot must be exactly one blue_mode=... green_mode=...`(2)/ 確報制御キーあり(キー名が `FINAL_` で始まる。範囲は config_files.feature-flag.env.validation_rules)`error: final crosscheck key is not allowed key=<KEY>`(2)/ job map 実体無し `error: job map not found slot=<blue|green> map=<path>`(2)/ 未知キー `warn: unknown key key=<KEY> path: ...`(継続)。文言は config_files.feature-flag.env.error_messages が正で、facade.sh の起動時検証も同文
-      - 重複キー: `error: duplicate job_id job_id=... lines=<n1,n2,...>`(2)。対象カタログの重複は `error: duplicate target catalog_version=... target_type=... target_identifier=... lines=<n1,n2,...>`(2)。`lines=` の規則(検証種別を問わず全ての重複報告で共通): そのキーが現れた全行の物理行番号を、初出行を含めて出現順(昇順)にカンマ区切り・空白なしで並べる。重複したキー 1 つにつき error 行は 1 行。例: 2 行目と 5 行目に同じ job_id がある入力は `lines=2,5`、2・3・4 行目にある入力は `lines=2,3,4`(`lines=5` のように初出行を省かない)
-      - 行の値不正: `error: <column> is <reason> line=N job_id=... value=...`(例: `error: hang_detect_limit_minutes is not a non-negative integer line=N job_id=... value=...` / `error: host is empty line=N job_id=... value=`(user だけ値があり host が空)/ `error: user is empty line=N job_id=... value=`(host だけ値があり user が空。両方空はローカル実行で正常)/ `error: work_dir is empty line=N job_id=... value=` / `error: script is empty line=N job_id=... value=`(work_dir / script は空でなければ受理する。絶対パス・相対パス・Windows 形式(ドライブ文字 + バックスラッシュ)のどれでもよく、形式の検査はしない。config_files の columns.work_dir / script。旧 `is not absolute` 形式は使わない)/ `error: fixed_params is not a json array of strings line=N job_id=... value=...` / `error: compare_options is missing {blue} or {green} line=N job_id=... value=...` / `error: job_id is not final-crosscheck for comparison_type=full line=N job_id=... value=...` / `error: <column> is empty line=N job_id=... value=`。job_id 列を持たない対象カタログは `job_id=` を付けない: `error: target_type is not in table,file line=N value=...`)
-      - 宣言不正: `error: <declaration> declaration not found path: ...` / `error: <declaration> declaration is invalid value=... path: ...`(2)
+      - 重複キー(slot ジョブマップ): `error: duplicate job_id job_id=... lines=<n1,n2,...>`(2)。`lines=` の規則: そのキーが現れた全行の物理行番号を、初出行を含めて出現順(昇順)にカンマ区切り・空白なしで並べる。重複したキー 1 つにつき error 行は 1 行。例: 2 行目と 5 行目に同じ job_id がある入力は `lines=2,5`、2・3・4 行目にある入力は `lines=2,3,4`(`lines=5` のように初出行を省かない)
+      - 行の値不正(slot ジョブマップ): `error: <column> is <reason> line=N job_id=... value=...`(例: `error: hang_detect_limit_minutes is not a non-negative integer line=N job_id=... value=...` / `error: host is empty line=N job_id=... value=`(user だけ値があり host が空)/ `error: user is empty line=N job_id=... value=`(host だけ値があり user が空。両方空はローカル実行で正常)/ `error: work_dir is empty line=N job_id=... value=` / `error: script is empty line=N job_id=... value=`(work_dir / script は空でなければ受理する。絶対パス・相対パス・Windows 形式(ドライブ文字 + バックスラッシュ)のどれでもよく、形式の検査はしない。config_files の columns.work_dir / script。旧 `is not absolute` 形式は使わない)/ `error: fixed_params is not a json array of strings line=N job_id=... value=...` / `error: <column> is empty line=N job_id=... value=`)
       未知キー(`warn: unknown key key=<KEY> path: ...`)・未知列(`warn: unknown column column=<name> path: ...`。slot ジョブマップの impl_version 列を含む)・credential_ref の形式の扱い(参照名の形式 `^[A-Za-z0-9_.-]*$` に合わない値、または `BEGIN` を含む値。`/` を含むか・空白や非 ASCII 文字を含むか等の理由を問わず同じ `warn: credential_ref looks like a secret or path line=N job_id=<v>` を 1 行出して受理し、終了コードに影響しない。値は出さない。正本は config_files の <slot>-job-map.csv columns.credential_ref)・版の混在(`warn: mixed map_version values=<a>,<b>`)・runner-if-version 未応答(`warn: runner does not respond to --help slot=... runner=...`。待機上限・判定基準は runner_help_probe)は `warn:`。runner --help 問い合わせの準備失敗は `error: runner probe failed slot=... reason=...`(6。runner_help_probe.preparation_failure)。対処が明確なら `hint:`
       補助出力(--verbose、stderr): `--job-map --verbose` は解決結果を 1 行 1 job_id で `info: resolved job_id=... host=<host|-> user=<user|-> exec=<ssh|local> work_dir=... script=... fixed_params=[...] hang_detect_limit_minutes=N`(host / user が無い・空の行は host=- user=- exec=local。fixed_params は解析後の配列を JSON 配列表記(conventions.output_format.control_chars の例外規則: JSON の文字列規則でエスケープ)。work_dir / script の値はそのまま(バックスラッシュも置き換えない。例 `work_dir=G:\\scripts`))。終了コードには影響しない
       任意入力の表示: error / warn / info 行の value= / column= / key= / path: に出す任意入力は conventions.output_format.control_chars の可視表記にする(例: 列名が `abc<ESC>` なら `warn: unknown column column=abc\\u001b path: ...`)
@@ -1107,7 +1088,7 @@ commands:
         condition: "全ルール通過。データ行 0 件(ヘッダーだけ)の CSV も検証 OK(`rows=0`。config_input_rules の例外)"
       - code: 2
         meaning: "入力・設定検証エラー"
-        condition: "検証種別オプションの指定数不正 / 未知のオプション / ファイル不在・読み取り不可 / 入力の守備範囲の違反(NUL バイト、UTF-8 として不正なバイト列、BOM、CR。config_input_rules)/ ヘッダー不一致(必須列欠落、host / user の片方だけ)/ ヘッダー列名の重複 / CSV クォート不正 / 列数不一致(空白だけの行を含む)/ 行の違反 1 件以上(job_id 不正・重複、必須列が空(work_dir / script を含む)、host / user の片方だけ空、fixed_params 不正、hang_detect_limit_minutes 不正、mode 列挙外、両 slot foreground、foreground 無し、off でない slot の BLUE_IMPL / GREEN_IMPL 欠落・空、BLUE_RUNNER / GREEN_RUNNER / RAPID_CROSSCHECK_RUNNER / RAPID_CROSSCHECK_WORKER の絶対パス違反・実行不可、確報制御キー(`FINAL_` で始まるキー)あり、compare_command 実行不可、プレースホルダ欠落、exit_code_contract 宣言不正、対象カタログ参照未解決、target_type 不正、対象重複)。ジョブマップの work_dir / script の形式(絶対 / 相対 / Windows 形式)は違反にしない"
+        condition: "検証種別オプションの指定数不正 / 未知のオプション / ファイル不在・読み取り不可 / 入力の守備範囲の違反(NUL バイト、UTF-8 として不正なバイト列、BOM、CR。config_input_rules)/ ヘッダー不一致(slot ジョブマップの必須列欠落、host / user の片方だけ)/ ヘッダー列名の重複 / CSV クォート不正 / 列数不一致(空白だけの行を含む)/ 行の違反 1 件以上(job_id 不正・重複、必須列が空(work_dir / script を含む)、host / user の片方だけ空、fixed_params 不正、hang_detect_limit_minutes 不正、mode 列挙外、両 slot foreground、foreground 無し、off でない slot の BLUE_IMPL / GREEN_IMPL 欠落・空、BLUE_RUNNER / GREEN_RUNNER / RAPID_CROSSCHECK_RUNNER / RAPID_CROSSCHECK_WORKER の絶対パス違反・実行不可、確報制御キー(`FINAL_` で始まるキー)あり、比較ツール起動コマンド(RAPID_COMPARE_COMMAND / FINAL_COMPARE_COMMAND)のコマンド部分(先頭の引数)の絶対パス違反・存在しない・実行不可、速報の起動コマンドに `{job_id}` が無い、速報の `{params}` が引数全体でない位置にある)。ジョブマップの work_dir / script の形式(絶対 / 相対 / Windows 形式)は違反にしない"
       - code: 6
         meaning: "実行エラー"
         condition: "検証器の内部障害(config_input_rules.internal_failure): 入力の複製(単一スナップショット)の失敗、バイト点検・重複検査などの補助コマンドの失敗。--feature-flag では加えて runner --help 問い合わせの準備(一時ファイルの作成・プロセスグループでの起動)に失敗した場合(runner_help_probe.preparation_failure。runner の未応答は 6 ではなく warn で継続)。6 のときは検証 OK も違反も返さず(stdout なし)、error 行 1 つ(+ hint)だけを出す"
@@ -1115,16 +1096,16 @@ commands:
 
 # 比較ツールは外部システム(適用側が用意)。commands には含めず、relay-gate から見た起動契約と終了コード契約だけを書く。
 external_interfaces:
-  - name: "比較ツール(速報。comparison_type=job)"
+  - name: "比較ツール(速報)"
     invoked_by: "rapid-crosscheck-worker.sh"
-    launch: "crosscheck-job-map.csv の該当 job_id 行: `compare_command` + `compare_options`(`{blue}` / `{green}` を成果物 URI に置換。空白区切り)"
-    stdout_stderr: "facade/<run_id>/rapid-crosscheck/stdout.log / stderr.log へ保存(.tmp → mv)し、依頼レコードの stdout / stderr 列にも保存"
+    launch: "rapid-crosscheck.env の RAPID_COMPARE_COMMAND(1 行の文字列)を shared_rules.compare_command_argv に従って引数の並びに分け、各引数の中でプレースホルダを依頼レコード(rapid_crosscheck_requests)の値へ置換してから、引数の並びをそのまま渡して起動する(文字列をシェルに解釈させない)。`{job_id}`(必須)= job_id、`{run_id}` = run_id、`{params}` = parameters(引数 1 つ全体のときだけ 1 項目 1 引数へ展開)、`{blue_exit_code}` = blue_exit_code、`{green_exit_code}` = green_exit_code(任意)。ファイルパス(成果物 URI)は渡さない(worker は別ネットワークセグメントで動きファイルパスを読めない)"
+    stdout_stderr: "依頼レコード(rapid_crosscheck_requests)の stdout / stderr 列へ保存する(成果物ファイルには保存しない)"
     exit_code_contract: "0 = 比較 OK / 3 = 比較 NG(警告終了)/ 6 = 実行エラー / その他の非 0 = 比較ツール実装の契約に従う。relay-gate は値を変換しない(shared_rules.compare_tool_exit_code)"
-    result_registration: "comparison_results に comparison_type=job、status=OK|NG|FAILED、difference_count、report_uri を登録(difference_count / report_uri の取得方法は比較ツール契約に依存。方針資料に定めが無い)。crosscheck-job-map.csv に job_id の行が無い場合は起動せず、comparison_results を INSERT しないで依頼を FAILED / exit_code=6 / error_summary=`comparison definition not found job_id=...` で終端する"
-  - name: "比較ツール(確報。comparison_type=full)"
+    result_registration: "別レコードを作らない。exit_code を依頼レコードの exit_code 列に保存し status を SUCCEEDED(0)/ FAILED(非 0)にする。起動自体に失敗した場合は依頼を FAILED / exit_code=6 / error_summary=`launch failed` で終端する"
+  - name: "比較ツール(確報)"
     invoked_by: "final-crosscheck-worker.sh"
-    launch: "crosscheck-job-map.csv の `job_id=final-crosscheck` / `comparison_type=full` 行: `compare_command` + `compare_options`(`{catalog_path}` / `{catalog_version}` / `{business_date}` を置換)。対象カタログの該当版の行だけを facade/<final_crosscheck_id>/final-crosscheck/input/target-catalog.csv に抜き出して渡す"
-    stdout_stderr: "facade/<final_crosscheck_id>/final-crosscheck/stdout.log / stderr.log へ保存し、依頼レコードの stdout / stderr 列にも保存(final-crosscheck-runner.sh が無加工中継する)"
+    launch: "final-crosscheck.env の FINAL_COMPARE_COMMAND(1 行の文字列。プレースホルダ無し)を shared_rules.compare_command_argv に従って引数の並びに分け、その並びをそのまま渡して起動する(置換はしない。文字列をシェルに解釈させない)。ファイルパス(対象カタログ)は渡さない"
+    stdout_stderr: "依頼レコード(final_crosscheck_requests)の stdout / stderr 列へ保存する(final-crosscheck-runner.sh が無加工中継する。成果物ファイルには保存しない)"
     exit_code_contract: "速報と同じ(0 / 3 / 6 / その他)。依頼レコードの exit_code に保存し、確報 runner がジョブスケジューラへそのまま返す"
   - name: "メール送信コマンド(OS 標準)"
     invoked_by: "hang-detector.sh"
@@ -1146,7 +1127,7 @@ internal_datastores:
 
 # 設定ファイルの入力の守備範囲(全設定ファイル共通の正本。2026-09-22 に利用者が確定。方針資料に記載の無い新規の決定)
 config_input_rules:
-  scope: "config_files の全ファイル(CSV 4 ファイル: blue-job-map.csv / green-job-map.csv / crosscheck-job-map.csv / target-catalog.csv、env 4 ファイル: feature-flag.env / hang-detector.env / final-crosscheck.env / rapid-crosscheck.env)を読むすべてのコマンド(validate-config.sh の 4 検証種別、facade.sh / slot runner / worker / runner / hang-detector / 運用系の起動時読み込み)に適用する。各 UC の tier md は値を複写せず本節を参照する"
+  scope: "config_files の全ファイル(CSV 2 ファイル: blue-job-map.csv / green-job-map.csv、env 4 ファイル: feature-flag.env / hang-detector.env / final-crosscheck.env / rapid-crosscheck.env)を読むすべてのコマンド(validate-config.sh の 4 検証種別 --feature-flag / --job-map / --rapid-crosscheck / --final-crosscheck、facade.sh / slot runner / worker / runner / hang-detector / 運用系の起動時読み込み)に適用する。各 UC の tier md は値を複写せず本節を参照する"
   principle: "形式(文字コード UTF-8、改行 LF、1 行目ヘッダー(CSV)、KEY=VALUE(env))の定義から外れた入力は拒否する(検証コマンドは終了コード 2、runner は exitcode.txt=2、その他の読み手は終了コード 2)。形式の内側にある値はそのまま受理する。『警告して受理』の区分は設けない(warn は未知列・未知キー・版の混在・認証情報らしい値など既存の規則にだけ使う)。例外は下表の 2 件(最終行の改行なし、データ行 0 件)"
   rules:
     - topic: "NUL バイト(0x00)"
@@ -1276,7 +1257,6 @@ config_files:
       - "セルはカンマ区切り。セルは二重引用符で囲める(囲まない場合はカンマ・二重引用符を含められない)。囲んだセル内の二重引用符は `\"\"` と二重化する"
       - "fixed_params は JSON 配列文字列を格納するセルで、必ず二重引用符で囲む(例: `\"[\"\"p1\"\",\"\"p2 p3\"\"]\"` → 固定引数 `p1` と `p2 p3` の 2 要素。空は `\"[]\"` または `[]`)"
       - "bash 単独(外部 CSV パーサ非依存)で 1 文字ずつ状態機械で解析できる範囲に限定する(ネスト・複数行セル不可)。違反は `error: csv quote is invalid line=N path: ...`(2)。これは形式の制約で、行単位の外部コマンド利用(候補行の絞り込みや重複検査)を禁じない(conventions.runtime_prerequisites.external_commands)"
-      - "クロスチェックジョブマップ・対象カタログも同じ CSV 規則(列構成は各ファイルの columns。宣言行は行頭 `#` のコメント行に置く)"
       - "セルの値に含まれる制御文字(タブ・ESC 等。改行と CR と NUL は形式の違反)は値の一部として受理する。出力するときは conventions.output_format.control_chars の可視表記にする"
     column_matching: "列はヘッダー名で対応付ける(順序は job_id,host,user,work_dir,script,fixed_params,hang_detect_limit_minutes[,credential_ref][,map_version] を推奨するが検証は名前で行う)。必須列 5: job_id / work_dir / script / fixed_params / hang_detect_limit_minutes。任意列: host / user(両方あるか両方無いか。両方無い、または両方の値が空 = ローカル実行。片方だけある = `error: job map header mismatch missing=<host|user> path: ...`、片方だけ空 = `error: host is empty ...` / `error: user is empty ...`)、credential_ref / map_version(末尾の任意列。ヘッダーに無ければ無いものとして扱い、値が空も可)。未知列(impl_version を含む)は `warn: unknown column column=<name> path: ...`。必須列の欠落は `error: job map header mismatch missing=<col,...> path: ...`(2)"
     columns:
@@ -1320,79 +1300,6 @@ config_files:
         required: false
         description: "末尾の任意列。マップ版(execution-spec.json の slots.<role>.map_version に転記。列が無い・空なら null。validate-config.sh --job-map では `map_version=-`)。実装版(impl_version)の列は無い(実装版は feature-flag.env の BLUE_IMPL / GREEN_IMPL)"
     edit_rule: "一時ファイルへ書いて mv で置き換える(編集途中を runner が読まないため。運用ガイド)。読み手側は config_input_rules.snapshot の保証(1 時点の内容だけで判定)で置き換えと両立する"
-  - file: "crosscheck-job-map.csv"
-    path: "$RELAY_GATE_CONFIG_DIR/crosscheck-job-map.csv"
-    format: "CSV(1 行目ヘッダー、列順固定。行頭 `#` のコメント行にファイル全体の宣言。セルのクォート規則は <slot>-job-map.csv の csv_rules と同じ。入力の守備範囲は config_input_rules)"
-    owner: "基盤適用設計者(設定所有区分: クロスチェックジョブマップ)"
-    defined_in_uc: "適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する"
-    readers: ["rapid-crosscheck-worker.sh(comparison_type=job 行)", "final-crosscheck-worker.sh / final-crosscheck-runner.sh(final-crosscheck 行とヘッダーコメント)", "validate-config.sh --crosscheck-job-map"]
-    header_declarations:
-      - name: "# exit_code_contract=0:OK,3:NG,6:ERROR"
-        required: true
-        description: "比較ツール終了コード契約への適合宣言(固定文字列)"
-      - name: "# target_catalog_path=<path>"
-        required: true
-        description: "確報用の対象カタログ CSV の所在(設定所有区分: クロスチェックジョブマップ)"
-      - name: "# catalog_version=<ver>"
-        required: true
-        description: "参照する対象カタログの既定版(runner の --catalog-version が優先)"
-      - name: "# map_version=<ver>"
-        required: false
-        description: "マップ版(記録用)"
-    columns:
-      - name: "job_id"
-        type: "string"
-        required: true
-        description: "英数字・_・- のみ。一意。`final-crosscheck` は確報用の予約値"
-      - name: "comparison_type"
-        type: "enum"
-        enum: ["job", "full"]
-        required: true
-        description: "job = 速報(comparison_results.comparison_type に転記)/ full = 確報(job_id=final-crosscheck の行のみ、最大 1 行)"
-      - name: "compare_targets"
-        type: "string"
-        required: true
-        description: "比較対象識別子(複数はカンマ区切り。カンマを含むセルは csv_rules に従い二重引用符で囲む)。full 行は `catalog` 固定"
-      - name: "compare_command"
-        type: "string(absolute path)"
-        required: true
-        description: "比較ツールの絶対パス。存在・実行権限"
-      - name: "compare_options"
-        type: "string"
-        required: true
-        description: "空白区切り。job 行は `{blue}` `{green}` 必須。full 行は `{catalog_version}` `{business_date}` 必須(`{catalog_path}` 任意)"
-      - name: "definition_version"
-        type: "string"
-        required: true
-        description: "比較定義版(非空)"
-  - file: "target-catalog.csv"
-    path: "$RELAY_GATE_CONFIG_DIR/target-catalog.csv(crosscheck-job-map.csv の `# target_catalog_path=` が指す)"
-    format: "CSV(1 行目ヘッダー、列順固定。行頭 `#` はコメント。複数の版を同一ファイルに持てる。セルのクォート規則は <slot>-job-map.csv の csv_rules と同じ。入力の守備範囲は config_input_rules)"
-    owner: "基盤適用設計者(設定所有区分: クロスチェックジョブマップ。対象カタログはクロスチェックジョブマップが所有)"
-    defined_in_uc: "適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する(tier-final-crosscheck)"
-    readers: ["final-crosscheck-runner.sh(catalog_version の存在検証)", "final-crosscheck-worker.sh(該当版の行を input/target-catalog.csv に抜き出す)", "validate-config.sh --target-catalog"]
-    columns:
-      - name: "catalog_version"
-        type: "string"
-        required: true
-        description: "非空。英数字・.・_・-"
-      - name: "target_type"
-        type: "enum"
-        enum: ["table", "file"]
-        required: true
-        description: "対象種別"
-      - name: "target_identifier"
-        type: "string"
-        required: true
-        description: "テーブル名またはファイルパスパターン。同一 catalog_version 内で target_type + target_identifier が一意"
-      - name: "compare_condition"
-        type: "string"
-        required: false
-        description: "比較条件(比較ツールへそのまま渡す。カンマ・二重引用符を含む場合は二重引用符で囲む)"
-      - name: "business_date_handling"
-        type: "string"
-        required: false
-        description: "業務日付の扱い(比較ツールへそのまま渡す。カンマ・二重引用符を含む場合は二重引用符で囲む)"
   - file: "hang-detector.env"
     path: "$RELAY_GATE_CONFIG_DIR/hang-detector.env"
     format: "env(入力の守備範囲は config_input_rules(env_files))"
@@ -1430,14 +1337,18 @@ config_files:
   - file: "final-crosscheck.env"
     path: "$RELAY_GATE_CONFIG_DIR/final-crosscheck.env"
     format: "env(入力の守備範囲は config_input_rules(env_files))"
-    owner: "運用者(仮採用: _inference.md #6)"
-    defined_in_uc: "クロスチェック業務/確報クロスチェックフロー/確報比較依頼を登録して終端状態まで待機する / 確報比較依頼を claim する"
-    readers: ["final-crosscheck-runner.sh", "final-crosscheck-worker.sh", "abort-final-crosscheck.sh(FINAL_DB_CONN_REF のみ)"]
+    owner: "基盤適用設計者(設定所有区分: 確報クロスチェック worker 設定。FINAL_COMPARE_COMMAND の設定・検証)/ 運用者(接続・polling の運用チューニング値。仮採用: _inference.md #6)"
+    defined_in_uc: "クロスチェック業務/確報クロスチェックフロー/比較ツールで日次全量比較を実行して結果を保存する(FINAL_COMPARE_COMMAND の設定と validate-config.sh --final-crosscheck 検証)/ 確報比較依頼を登録して終端状態まで待機する / 確報比較依頼を claim する"
+    readers: ["final-crosscheck-runner.sh", "final-crosscheck-worker.sh(FINAL_COMPARE_COMMAND を起動)", "abort-final-crosscheck.sh(FINAL_DB_CONN_REF のみ)", "validate-config.sh --final-crosscheck(FINAL_COMPARE_COMMAND の検証)"]
     keys:
       - name: "FINAL_DB_CONN_REF"
         type: "string"
         required: true
         description: "管理 DB 接続情報の参照名(値は置かない)"
+      - name: "FINAL_COMPARE_COMMAND"
+        type: "string"
+        required: true
+        description: "確報の比較ツール起動コマンド 1 行の文字列。プレースホルダ無し。確報 worker は値を shared_rules.compare_command_argv に従って空白区切りで引数の並びに分け、その並びをそのまま渡して起動する(置換なし。文字列をシェルに解釈させない)。検証(validate-config.sh --final-crosscheck)はコマンド部分(先頭の語 = 先頭の引数)が絶対パスで存在・実行可能であることだけを見る(引数部分の内容は検査しない)。情報「確報クロスチェック worker 設定」の属性「確報比較ツール起動コマンド」"
       - name: "FINAL_POLL_INTERVAL_SEC"
         type: "integer(>=1)"
         required: false
@@ -1461,12 +1372,13 @@ config_files:
   - file: "rapid-crosscheck.env"
     path: "$RELAY_GATE_CONFIG_DIR/rapid-crosscheck.env"
     format: "env(入力の守備範囲は config_input_rules(env_files))"
-    owner: "基盤適用設計者(設定所有区分: 速報クロスチェック設定。RDRA 情報「速報クロスチェック設定」)"
-    defined_in_uc: "実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する / クロスチェック業務/速報クロスチェックフロー/速報クロスチェック runner へ完了通知を送信する / クロスチェック業務/速報クロスチェックフロー/両系成功時に速報比較依頼を作成する / クロスチェック業務/速報クロスチェックフロー/速報比較依頼を claim する"
+    owner: "基盤適用設計者(設定所有区分: 速報クロスチェック設定。RDRA 情報「速報クロスチェック設定」。RAPID_COMPARE_COMMAND の設定・検証を含む)"
+    defined_in_uc: "適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する(RAPID_COMPARE_COMMAND の設定と validate-config.sh --rapid-crosscheck 検証)/ 実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する / クロスチェック業務/速報クロスチェックフロー/速報クロスチェック runner へ完了通知を送信する / クロスチェック業務/速報クロスチェックフロー/両系成功時に速報比較依頼を作成する / クロスチェック業務/速報クロスチェックフロー/速報比較依頼を claim する / クロスチェック業務/速報クロスチェックフロー/比較ツールでジョブ単位比較を実行して結果を登録する(RAPID_COMPARE_COMMAND を起動)"
     readers:
       - "rapid-crosscheck-runner.sh(RAPID_DB_CONN_REF)"
-      - "rapid-crosscheck-worker.sh(全キー)"
+      - "rapid-crosscheck-worker.sh(全キー。RAPID_COMPARE_COMMAND を起動)"
       - "rapid-crosscheck-result.sh(RAPID_DB_CONN_REF)"
+      - "validate-config.sh --rapid-crosscheck(RAPID_COMPARE_COMMAND の検証)"
       - "abort-blue.sh / abort-green.sh / abort-rapid-crosscheck.sh(RAPID_DB_CONN_REF。RAPID_CROSSCHECK_MODE が off 以外のときのみ)"
       - "run-lineage.sh / hang-detect-trend.sh(RAPID_DB_CONN_REF。off 以外のときのみ)"
       - "background-rerun.sh(RAPID_DB_CONN_REF。off 以外のときのみ)"
@@ -1477,6 +1389,10 @@ config_files:
         type: "string"
         required: "RAPID_CROSSCHECK_MODE が off でないとき Yes"
         description: "管理 DB 接続情報の参照名(値は置かない。認証情報の値は含めない)。情報「速報クロスチェック設定」の属性「管理 DB 接続参照名」。hang-detector.env の HANG_DB_CONN_REF と同じ参照名を指してよい"
+      - name: "RAPID_COMPARE_COMMAND"
+        type: "string"
+        required: "RAPID_CROSSCHECK_MODE が off でないとき Yes"
+        description: "速報の比較ツール起動コマンド 1 行の文字列。プレースホルダ `{job_id}` 必須、`{run_id}` / `{params}` / `{blue_exit_code}` / `{green_exit_code}` 任意。値は shared_rules.compare_command_argv に従って空白区切りで引数の並びに分け、各引数の中でプレースホルダを依頼レコード(rapid_crosscheck_requests)の run_id / job_id / parameters / blue_exit_code / green_exit_code へ置換し、引数の並びをそのまま渡して起動する(文字列をシェルに解釈させない)。`{params}` は引数 1 つ全体のときだけ使え JSON 配列を 1 項目 1 引数へ展開する。検証(validate-config.sh --rapid-crosscheck)はコマンド部分(先頭の語 = 先頭の引数)が絶対パスで存在・実行可能であること・`{job_id}` を含むこと・`{params}` が引数全体のときだけ使われていることを見る(引数部分の内容は検査しない)。情報「速報クロスチェック設定」の属性「速報比較ツール起動コマンド」"
       - name: "RAPID_LEASE_SEC"
         type: "integer(>=1)"
         required: false
@@ -1497,27 +1413,23 @@ artifact_layout:
       execution-spec.json              run 単位 1 ファイル(slots.<role> 節を各 runner が追加)
       execution-spec.json.tmp          一時(mv 前)
       execution-spec.lock/             mkdir による排他 lock(mtime 60 秒超は残留とみなし強制取得)
-      <role>/                          role = blue | green | rapid-crosscheck
-        started-at.txt                 UTC ISO 8601 秒精度 Z 付き 1 行(例 2026-08-30T11:30:05Z。起動時刻。SSH 実行直前 / 比較開始時。RELAY_GATE_NOW 設定時はその値。表示・実行ログ・DB 転記時はローカルへ変換する)
-        stdout.log                     実装または比較ツールの stdout
-        stderr.log                     実装または比較ツールの stderr(relay-gate 自身のエラーは exitcode.txt 公開前に末尾へ error: 1 行。公開後は変更しない。完了通知失敗の warn は書かない)
+      <role>/                          role = blue | green(slot runner が実装の Runner Result を書く。速報・確報 worker は成果物ディレクトリを作らず、比較結果を依頼レコードの stdout / stderr / exit_code 列に保存する)
+        started-at.txt                 UTC ISO 8601 秒精度 Z 付き 1 行(例 2026-08-30T11:30:05Z。起動時刻。SSH 実行直前。RELAY_GATE_NOW 設定時はその値。表示・実行ログ・DB 転記時はローカルへ変換する)
+        stdout.log                     実装の stdout
+        stderr.log                     実装の stderr(relay-gate 自身のエラーは exitcode.txt 公開前に末尾へ error: 1 行。公開後は変更しない。完了通知失敗の warn は書かない)
         exitcode.txt                   数値 1 行(0-255)
         aborted.txt                    中止日時 1 行(UTC ISO 8601 秒精度 Z 付き)。abort-blue.sh / abort-green.sh が中止時のみ生成(role = blue | green)
-    $RELAY_GATE_ARTIFACT_ROOT/facade/<final_crosscheck_id>/
-      final-crosscheck/
-        input/target-catalog.csv       対象カタログの該当版の行だけを抜き出した入力(比較の再現性のため。仮採用)
-        started-at.txt / stdout.log / stderr.log / exitcode.txt
   files:
     - name: "started-at.txt"
-      writer: "slot runner / rapid-crosscheck-worker.sh / final-crosscheck-worker.sh"
-      when: "実装実行(SSH)の直前 / 比較ツール起動の直前"
+      writer: "slot runner"
+      when: "実装実行(SSH)の直前"
       content: "UTC ISO 8601 秒精度 Z 付き 1 行(例 2026-08-30T11:30:05Z。RELAY_GATE_NOW 設定時はその値。表示・実行ログ・DB 転記時はローカルへ変換する)"
       readers: "hang-detector.sh(経過時間の起点)。background-rerun.sh --role blue|green(元状態の導出: started-at.txt なし=未起動で 3。以降は shared_rules.exitcode_to_status.slot_execution。中身の時刻は読まない。off でも off 以外でも同じ)。abort-blue.sh / abort-green.sh(なし=未起動で 3。stdout の started_at にこの値を表示)"
     - name: "stdout.log / stderr.log"
-      writer: "同上"
+      writer: "slot runner"
       when: "実行終了後に .tmp → mv"
-      content: "実装 / 比較ツールの出力バイト列そのまま"
-      readers: "facade.sh(foreground 中継)、比較ツール(成果物 URI 経由)、運用者"
+      content: "実装の出力バイト列そのまま"
+      readers: "facade.sh(foreground 中継)、運用者"
     - name: "exitcode.txt"
       writer: "同上"
       when: "stdout.log / stderr.log の後に最後に公開する(3 ファイル契約の完了マーカー)"
@@ -1533,7 +1445,6 @@ artifact_layout:
       when: "ジョブマップ解決直後・実装実行前に一度だけ。復元起動では書かない"
       content: "下記 execution_spec_example(canonical C1)。UTF-8、末尾改行、パーミッション 0640(仮採用)"
       readers: "hang-detector.sh(slots.<role>.mode / hang_detect_limit_minutes / job_id。無い run は warn: execution-spec missing で判定対象外)、background-rerun.sh --role blue|green(slots.<role>.*、params。--role rapid-crosscheck は読まない)、slot runner(--execution-spec 復元起動)、UC「hang_detect_limit_minutes をジョブごとに調整する」(調整後の値が次回 run の slots.<role>.hang_detect_limit_minutes に反映されたことの確認。hang-detect-trend.sh 自体は monitor_records の転記値を読む)"
-  artifact_uri: "file://<絶対パス>(rapid-crosscheck-runner.sh の --artifact-uri、比較ツールの {blue} / {green} 置換値、background-rerun の blue_artifact_uri / green_artifact_uri)"
   execution_spec_example: |-
     {
       "schema_version": "1",

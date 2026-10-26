@@ -86,8 +86,10 @@ mappings:
     fidelity: "exact"
     configuration_notes: >-
       /etc/relay-gate/ 相当に feature-flag.env(9 キー)、slot ごとのジョブマップ(<role>-job-map.csv)、
-      crosscheck-job-map.csv、target-catalog.csv、hang-detector.env、rapid-crosscheck.env(速報有効時のみ。
-      RAPID_DB_CONN_REF / RAPID_LEASE_SEC / RAPID_POLL_INTERVAL_SEC)を配置する。設定版のファイルは持たず、
+      hang-detector.env、rapid-crosscheck.env(速報有効時のみ。
+      RAPID_DB_CONN_REF / RAPID_LEASE_SEC / RAPID_POLL_INTERVAL_SEC と速報比較ツールの起動コマンド 1 行)、
+      final-crosscheck.env(確報 worker の DB 接続参照と確報比較ツールの起動コマンド 1 行)を配置する。
+      比較対象の定義は比較ツール側が持ち、ジョブ ID ごとの比較定義 CSV・対象カタログは配置しない。設定版のファイルは持たず、
       マップ版はジョブマップ側の任意列で表す。配布は適用側の構成管理ツールで行い、配布後に facade / runner / worker /
       hang-detector が次回起動から読み込む(常駐 worker は再起動で反映)。認証情報は参照名のみ置き、実体は実行ユーザーのホームまたは OS のシークレット領域に置く。
     gap_description: ""

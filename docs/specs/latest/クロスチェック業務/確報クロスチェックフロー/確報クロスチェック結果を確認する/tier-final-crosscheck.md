@@ -8,15 +8,14 @@
 
 ### final-crosscheck-runner.sh(応答の読み手としての契約)
 
-- **書式**: `final-crosscheck-runner.sh --business-date <YYYY-MM-DD> --catalog-version <ver>`(ジョブスケジューラの確報ジョブ定義に登録する)
+- **書式**: `final-crosscheck-runner.sh [--verbose] [--help]`(業務上の引数なし。ジョブスケジューラの確報ジョブ定義に登録する)
 - **アクセス権**: 起動はジョブスケジューラ。結果の参照は運用者がジョブスケジューラの実行履歴で行う
 
 #### 引数・オプション
 
 | 名前 | 型 | 必須 | 既定値 | 説明 |
 |------|---|------|-------|------|
-| `--business-date` | string | Yes | — | 比較対象の業務日付 |
-| `--catalog-version` | string | Yes | — | 対象カタログの版 |
+| (業務上の引数なし) | — | — | — | 受け付けるのは `--verbose` / `--help` のみ(UC「確報比較依頼を登録して終端状態まで待機する」の tier md を正とする) |
 
 - **stdin**: なし
 
@@ -30,7 +29,7 @@
   | 0 | 比較 OK(日次整合性 OK) | 比較ツールが 0 で終了し依頼が SUCCEEDED |
   | 3 | 比較 NG(警告終了) | 比較ツールが 3 で終了し依頼が FAILED。差分の原因調査へ |
   | 6 | 実行エラー(エラー終了) | 比較ツールが 6 で終了(依頼 FAILED)、または relay-gate 自身の実行エラー(DB 接続失敗・polling 上限超過・ABORTED で exit_code NULL) |
-  | 2 | 入力・設定検証エラー | ジョブ定義の引数誤り、対象カタログ不備(中継に至る前) |
+  | 2 | 入力・設定検証エラー | ジョブ定義のオプション誤り、final-crosscheck.env 不在・必須キー欠落(中継に至る前) |
   | その他の非 0 | 比較ツール実装の契約に従う | relay-gate は値を変換しない |
 
 - 応答に**含まれないもの**: 依頼の状態名(SUCCEEDED / FAILED / ABORTED)、final_crosscheck_id、差分件数、レポート URI、速報比較の結果、background slot の結果
@@ -45,7 +44,7 @@
   - 終了コード 3 → 標準出力・標準エラーの差分内容を読む。必要なら速報結果(`rapid-crosscheck-result.sh --run-id`)を参考にするが、リリース判断は確報で行う
   - 終了コード 6 で標準エラーが比較ツール由来 → 比較ツール側の原因を取り除いて確報ジョブを直接再実行
   - 終了コード 6 で `error: polling limit exceeded` → worker の稼働を確認し、RUNNING のまま残った依頼は `abort-final-crosscheck.sh --run-id <final_crosscheck_id>` で中止してから再実行
-  - 終了コード 2 → ジョブ定義の引数・対象カタログを修正
+  - 終了コード 2 → ジョブ定義のオプション・final-crosscheck.env を修正
 - **クラッシュ耐性**: 該当なし(参照のみ)。ジョブスケジューラの実行履歴が正本
 
 ## データモデル変更
@@ -55,7 +54,6 @@
 | カラム | 型 | 説明 | 変更種別 |
 |--------|---|------|---------|
 | final_crosscheck_id | string | 応答には含まれない。実行ログ `final-crosscheck-runner.sh.log` の `request registered` 行から特定する | 追加(参照) |
-| business_date / catalog_version | date / string | 対象 | 追加(参照) |
 | status | string | 応答には含まれない | 追加(参照) |
 | exit_code / stdout / stderr | integer / text / text | 応答と同じ値 | 追加(参照) |
 
@@ -74,12 +72,12 @@ Feature: 確報クロスチェック結果を確認する - 確報クロスチ�
   Scenario: 応答に 3 値だけが含まれる
     Given final-crosscheck.env に FINAL_POLL_INTERVAL_SEC=1 がある
     And 別プロセスが 3 秒後に、runner が登録した最新の依頼(requested_at が最大の行)を status=FAILED exit_code=3 stdout="diff found: 12 rows\n" stderr="warn: table T_ORDER differs\n" に更新する(runner は起動のたびに新規 id を登録して polling するため、事前 INSERT した行は中継されない)
-    When `final-crosscheck-runner.sh --business-date 2026-08-30 --catalog-version v3` を実行して応答を確認する
+    When `final-crosscheck-runner.sh` を業務上の引数なしで実行して応答を確認する
     Then 終了コード 3 で stdout は "diff found: 12 rows\n"、stderr は "warn: table T_ORDER differs\n" と完全一致する
     And stdout と stderr に "status=" "final_crosscheck_id=" "difference_count" "report_uri" は含まれない
 
   Scenario: relay-gate 由来の終了コード 6 を標準エラーで区別できる
     Given final-crosscheck-worker.sh が停止しており、final-crosscheck.env に FINAL_POLL_INTERVAL_SEC=1 FINAL_POLL_LIMIT_SEC=2 がある
-    When `final-crosscheck-runner.sh --business-date 2026-08-30 --catalog-version v3` を実行する
+    When `final-crosscheck-runner.sh` を業務上の引数なしで実行する
     Then 終了コード 6 で stderr の 1 行目が "error: polling limit exceeded final_crosscheck_id=" で始まる
 ```

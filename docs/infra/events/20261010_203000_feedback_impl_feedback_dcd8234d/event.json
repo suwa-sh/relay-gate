@@ -1,0 +1,78 @@
+{
+  "schema_version": "distillery.infra-feedback-event/v1",
+  "event_id": "20261010_203000_feedback_impl_feedback_dcd8234d",
+  "created_at": "2026-10-10T20:30:00Z",
+  "stage": "infrastructure",
+  "trigger_event": "arch:20261010_202000_feedback_impl_feedback_dcd8234d, nfr:20261010_201000_feedback_impl_feedback_dcd8234d",
+  "previous_event_ref": "20260921_094000_feedback_impl_feedback_eff24f55",
+  "feedback_request": {
+    "feedback_request_id": "20261010_104636_impl_feedback_dcd8234d",
+    "input_sha256": "d4ddd211752998f5480a51d9dddfa3a58937badd62f72092c9257ed1384448fd",
+    "request_ids": [
+      "CR-dcd8234d-007",
+      "CR-dcd8234d-001",
+      "CR-dcd8234d-002",
+      "CR-dcd8234d-003"
+    ],
+    "work_unit_ids": [
+      "CR-dcd8234d-007#1",
+      "CR-dcd8234d-001#1",
+      "CR-dcd8234d-002#1",
+      "CR-dcd8234d-003#1"
+    ]
+  },
+  "members": [
+    {
+      "path": "infra/events/20261010_203000_feedback_impl_feedback_dcd8234d/_changes.md",
+      "sha256": "f7fe1b8e6c884d7a75397231a3298dedc21f0c7ba79960b68c26396b06fd12e6"
+    },
+    {
+      "path": "infra/events/20261010_203000_feedback_impl_feedback_dcd8234d/_inference.md",
+      "sha256": "b722641929c8cba8bddc8154b11ec6f1d2346ac9b88e0875da50e516fac71af0"
+    },
+    {
+      "path": "infra/events/20261010_203000_feedback_impl_feedback_dcd8234d/docs/cloud-context/conformance/product/product-conformance-onprem.yaml",
+      "sha256": "47153de3a0337eb9334888b6d98b19b7ff27006b71c83fdd8eb3df7970acce3d"
+    },
+    {
+      "path": "infra/events/20261010_203000_feedback_impl_feedback_dcd8234d/docs/mcl/product/input/product-input.yaml",
+      "sha256": "3e1684b46d720bf9967b41b60d8111f6893b6d37ebcfccf16d558052d93d56c0"
+    },
+    {
+      "path": "infra/events/20261010_203000_feedback_impl_feedback_dcd8234d/docs/mcl/product/output/product-impl-onprem.yaml",
+      "sha256": "48914c5bb580c8cc9fffe80d1ec769c556b269b87b2df2b68b641124ffb77e9f"
+    },
+    {
+      "path": "infra/events/20261010_203000_feedback_impl_feedback_dcd8234d/docs/mcl/product/output/product-mapping-onprem.yaml",
+      "sha256": "a2d4f807bc98812e2c4ce1b153092a8e2d48d3220528410e8906eb9ee387cb9d"
+    },
+    {
+      "path": "infra/events/20261010_203000_feedback_impl_feedback_dcd8234d/docs/mcl/product/output/product-workload-model.yaml",
+      "sha256": "0a753cf7eb66250293b6a1df016b8735c7e07e65f97e2bb1026c08561f4d5d8c"
+    },
+    {
+      "path": "infra/events/20261010_203000_feedback_impl_feedback_dcd8234d/infra-event-diff.yaml",
+      "sha256": "dd91d9efe94a907495ac84140fc24bf2cce5fadf42ff2dfbf99ad3480fcacb36"
+    },
+    {
+      "path": "infra/events/20261010_203000_feedback_impl_feedback_dcd8234d/infra-event.md",
+      "sha256": "3c9b80dc9e9c59e6e331eddaed1389fcf30dac18fb3fafcfdcefd0413fe44c96"
+    },
+    {
+      "path": "infra/events/20261010_203000_feedback_impl_feedback_dcd8234d/infra-event.yaml",
+      "sha256": "0473a6481e462d7b440eb69a02cca4fa5032a39aeb0593142c91bf40cfdec9ce"
+    },
+    {
+      "path": "infra/events/20261010_203000_feedback_impl_feedback_dcd8234d/infra/product/onprem/ansible/roles/relay-gate-config/tasks/main.yml",
+      "sha256": "009e63923b1506cd681cc30534e818817a2e86b6dd401584ca67706943332f84"
+    },
+    {
+      "path": "infra/events/20261010_203000_feedback_impl_feedback_dcd8234d/product-input.yaml",
+      "sha256": "3e1684b46d720bf9967b41b60d8111f6893b6d37ebcfccf16d558052d93d56c0"
+    },
+    {
+      "path": "infra/events/20261010_203000_feedback_impl_feedback_dcd8234d/source.txt",
+      "sha256": "e65e38d32b07fdb5a14d06876ccde54d048b6f186b7ea5803533b3f3a1a50f50"
+    }
+  ]
+}

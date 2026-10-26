@@ -1,0 +1,24 @@
+feedback request lineage (requirements stage)
+
+feedback_request_id: 20261010_104636_impl_feedback_dcd8234d
+input_sha256: d4ddd211752998f5480a51d9dddfa3a58937badd62f72092c9257ed1384448fd
+stage_packet: docs/pipeline/feedback-runs/20261010_104636_impl_feedback_dcd8234d/stage-packets/requirements.md
+request_ids: CR-dcd8234d-007, CR-dcd8234d-002
+direct_work_unit_ids: CR-dcd8234d-007#1, CR-dcd8234d-002#1
+causal_work_unit_ids: CR-dcd8234d-007#1, CR-dcd8234d-002#1
+
+feedback_request:
+  feedback_request_id: "20261010_104636_impl_feedback_dcd8234d"
+  input_sha256: "d4ddd211752998f5480a51d9dddfa3a58937badd62f72092c9257ed1384448fd"
+  request_ids: ["CR-dcd8234d-007","CR-dcd8234d-002"]
+  work_unit_ids: ["CR-dcd8234d-007#1","CR-dcd8234d-002#1"]
+
+work unit → USDM 反映先(CR 本文は packet を正本とし、ここには複製しない)
+
+- CR-dcd8234d-007#1 (crosscheck-simplification-to-original-design): クロスチェックの比較定義・依頼レコード・完了通知・worker の結果保存を元の方針資料の構成へ戻す簡素化。
+  - 方針資料との照合: tmp/RelayGateのしくみ.md 42 行目(比較対象の定義は適用側)、261 行目(worker は stdout / stderr / exitcode を依頼レコードへ保存し、連携データを追加しない)、595〜625 行目(exitcode 0 → SUCCEEDED、非 0 または実行エラー → FAILED。確報は保存した exitcode を中継、速報は返さない)、tmp/RelayGateの利用イメージ.md 326 行目(速報と確報は同じ比較パターン。違いは対象の量)を読み、書き直した仕様がこれらと一致することを確認した。
+  - 利用者の決定(docs/impl/latest/dcd8234d/review/review-notes.md 2026-10-10 第 2 回): 速報は {job_id} を渡し、確報は引数なし。worker は設定の起動コマンド 1 行を起動し、stdout / stderr / exit_code を依頼レコードへ保存する。runner と worker は別ネットワークセグメントで動き、worker はファイルパスを読めない。
+  - USDM: SPEC-004-01(所有者の表から「比較対象と対象カタログはクロスチェックのジョブマップ」を外し、起動コマンド各 1 行を worker の設定が所有、比較対象は比較ツール側)、SPEC-004-04(クロスチェックジョブマップ・対象カタログの CSV を廃止し、起動コマンド 1 行の設定と残す検証 2 点を受け入れ基準に記述)、SPEC-005-01(完了通知は run_id / job_id / exit_code。成果物 URI を外す)、SPEC-005-02(完了事実は状態と終了コード。依頼レコードから run_id / job_id / parameters / blue・green の exit_code が取れる)、SPEC-005-03(worker は設定の 1 行を依頼レコードの値で置換して起動し、stdout / stderr / exit_code を依頼レコードの列だけに保存。比較結果レコード・ファイル保存・「比較定義が無い」失敗を廃止)、SPEC-005-04(「比較結果の書き込み」を外す)、SPEC-005-06(速報クロスチェック設定に速報の起動コマンド 1 行を追加。キー名は仕様で確定)、SPEC-006-01(確報 runner は引数なしで依頼 1 件を登録)、SPEC-006-02(確報 worker は設定の 1 行をそのまま起動。入力は依頼レコードと自分の設定だけ)、SPEC-006-04(確報の依頼レコードは識別子・状態・時刻・結果だけ)、SPEC-007-02(比較差分の詳細は依頼レコードの stdout / stderr のみ。別レコードへ抽出しない)、REQ-011 本文と SPEC-011-02(rapid_run から成果物 URI を外し、comparison_result を廃止)、SPEC-011-03(final_crosscheck_request から business_date / 対象カタログの版を外す)、SPEC-013-01(比較対象の定義は比較ツール側。relay-gate が持つのは起動コマンド各 1 行)。
+  - RDRA: 情報「クロスチェックジョブマップ」「対象カタログ」「比較結果(comparison_result)」とバリエーション「比較種別」「対象カタログの対象種別」「比較結果ステータス」、条件「比較結果の登録条件」を削除。情報「比較定義」(速報・確報の起動コマンド各 1 行の設定に書き換え)、「完了通知」「速報実行(rapid_run)」「速報比較依頼(rapid_crosscheck_request)」「確報比較依頼(final_crosscheck_request)」「比較ツール実行結果」「速報クロスチェック設定」「適用構成文書」「並行稼働実行(parallel_run)」「リラン指示」、条件「比較定義の選択」「確報依頼の登録条件」「速報と確報のモデル分離」「適用側で定義する事項」「設定所有区分」「速報比較依頼の異常判定」「比較ツール終了コードの対応」「速報結果の位置付け」、バリエーション「設定所有区分」、アクター「基盤適用設計者」、状態「クロスチェック依頼」の遷移説明、BUC の該当 UC(速報クロスチェックフロー 5 UC、確報クロスチェックフロー 4 UC、速報比較依頼だけを新規作成する、クロスチェックのジョブマップと比較定義を定義する)を変更。
+  - 設定の置き場・キー名、依頼レコードの列の持ち方、違反文言は CR の指示どおり仕様側(spec stage)で決める。USDM は推奨案(既存 env ファイルにキーを 1 つずつ追加)と矛盾しない表現にした。
+- CR-dcd8234d-002#1 (acceptance-criteria-behavior-only): CR-007 で書き直した SPEC-004-04 の受け入れ基準(残す検証 2 点)を、validate-config.sh の終了コード・stdout・stderr だけで判定できる文言で確定した。関数の共有や内部呼び出しなど実装の構造は書いていない。現在の USDM には「同じ CSV クォート解析関数」の文言は無く、他の受け入れ基準の書き換えは無い。

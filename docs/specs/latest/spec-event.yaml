@@ -1,21 +1,14 @@
 version: "1.0"
-event_id: "20260923_112000_feedback_impl_feedback_eff24f55_cycle2"
-created_at: "2026-09-23T11:20:00Z"
-source: "Spec 差分更新: 2026-09-22 の実装フィードバック cycle 2(design 無しモード。実装フェーズ UC eff24f55「slot ごとのジョブマップを定義する」からの spec-gap 2 件)。前イベント 20260921_100000_feedback_impl_feedback_eff24f55 を起点に、CR-006: validate-config.sh の重複報告(duplicate job_id / duplicate target)の lines= を『そのキーが現れた全行の物理行番号を初出行を含めて出現順に並べる。重複したキーごとに error 1 行』に一本化し(要求本文の推奨を採用)、正本を cli-command-contract.yaml の validate-config.sh stderr に置いて、UC「slot ごとのジョブマップを定義する」の列検証表・分岐条件・BDD(lines=2,5 を維持、3 行重複 lines=2,3,4 を追加)と UC「クロスチェックのジョブマップと比較定義を定義する」の検証ルール・BDD(lines=5,6 / lines=2,3)、UC「ジョブマップで JOB_ID から実行先を解決する」の実行ログ WARN を同じ規則にそろえた。CR-007: 参照名 ^[A-Za-z0-9_.-]*$ に合わない credential_ref は / や BEGIN を含むかどうかにかかわらず同じ warn: credential_ref looks like a secret or path line=N job_id=<v> を 1 行出して受理し(利用者が 2026-09-22 のレビューで選択した案 A。拒否しない理由 = 参照名の形式は認証情報ストアの運用に依存)、credential_ref の値を診断行(validate-config.sh の stdout / stderr と slot runner の stderr / 実行ログ)に一切出さない規則を契約 conventions.credentials と columns.credential_ref に明記。受理した値は execution-spec.json へ加工せずに転記されることを契約と UC「execution-spec.json を確定保存する」に明記(同 UC のティア完了条件に Scenario 1 件)。UC 仕様の『仮採用』注記を確定内容に置き換え、値の種類ごとの扱いの表と BDD(E2E に SPEC-004-03 の Scenario 1 件、ティア完了条件に 2 件)を追加。判断は decisions/spec-decision-014 / 015。trigger_event: rdra:20260921_084000_feedback_impl_feedback_eff24f55, arch:20260921_092000_feedback_impl_feedback_eff24f55"
+event_id: "20261027_055000_feedback_impl_feedback_dcd8234d"
+created_at: "2026-10-27T05:50:00Z"
+source: "Spec 差分更新(spec 直接所有の還流。design 無しモード)。CR-dcd8234d-008: 比較ツールの起動コマンド(RAPID_COMPARE_COMMAND / FINAL_COMPARE_COMMAND)を引数の並び(argv)として解釈・起動する共通規則を CLI 契約 shared_rules.compare_command_argv に 1 か所で新設し、速報 worker(rapid-crosscheck-worker.sh)・確報 worker(final-crosscheck-worker.sh)・validate-config.sh(--rapid-crosscheck / --final-crosscheck)から参照させた。規則: 設定読込時に空白(スペース・タブの 1 個以上)で引数に分割、クォート・エスケープ・$ 等のシェル記法は解釈しない。置換は引数 1 つの中だけで行い({job_id} 等は引数の一部でも可)、{params} は引数全体のときだけ JSON 配列を 1 項目 1 引数へ展開([] は 0 個)、それ以外の位置の {params} は validate-config.sh --rapid-crosscheck の違反(placeholder {params} must be a whole argument)。起動は argv 配列で行い eval / bash -c / sh -c / 引用符なし展開を禁止(確報も同じ規則)。速報 worker は置換前に job_id / run_id / parameters の形式を検査し、不適合なら比較ツールを起動せず依頼を FAILED / exit_code=6 / error_summary=invalid request value: <field>(stderr: compare request value is invalid run_id=... field=...)。『置換後の文字列をコマンドとして起動する』という書き方を仕様から除去。反映先: cli-command-contract.yaml(shared_rules 追加・速報/確報 worker の起動コマンドの解決・external_interfaces 2 件の launch・config_files の RAPID_COMPARE_COMMAND/FINAL_COMPARE_COMMAND・validate-config.sh の検証と違反文言)、速報 worker UC(BDD: 記号・空白・$(...) を含む値も 1 引数、job_id/parameters 形式違反で FAILED)、確報 worker UC(BDD: argv 分割でシェル非解釈)、設定 UC(BDD: {params} 位置違反)。設定 1 行 + プレースホルダの形・プレースホルダ集合・既存検証 2 点は不変。記号を含む設定を拒否する規則は追加しない。判断は decisions/spec-decision-018。利用者が 2026-10-27 に案 A(引数ごとに分けて起動)を選択済み"
 design_available: false
-previous_event_ref: "20260921_100000_feedback_impl_feedback_eff24f55"
-trigger_event:
-  - "rdra:20260921_084000_feedback_impl_feedback_eff24f55"
-  - "arch:20260921_092000_feedback_impl_feedback_eff24f55"
-related_event_refs:
-  - "usdm:20260921_084000_feedback_impl_feedback_eff24f55"
-  - "nfr:20260921_090000_feedback_impl_feedback_eff24f55"
-  - "infra:20260921_094000_feedback_impl_feedback_eff24f55"
+previous_event_ref: "20261010_204000_feedback_impl_feedback_dcd8234d"
 feedback_request:
-  feedback_request_id: "20260922_130000_impl_feedback_eff24f55"
-  input_sha256: "8adc8bc900ebe6eb57209cee7c4ed2c727b1313c462a6052efd720b2f31cb2fa"
-  request_ids: ["CR-eff24f55-006","CR-eff24f55-007"]
-  work_unit_ids: ["CR-eff24f55-006#1","CR-eff24f55-007#1"]
+  feedback_request_id: "20261027_053600_impl_feedback_dcd8234d"
+  input_sha256: "141579fa0eca73d2b5999a0c4dccfe6c057e54658c3491decefcbd95935a9cfc"
+  request_ids: ["CR-dcd8234d-008"]
+  work_unit_ids: ["CR-dcd8234d-008#1"]
 
 use_cases:
   - business: "クロスチェック業務"
@@ -103,6 +96,8 @@ use_cases:
         scenarios:
           - "exit_code=0 で SUCCEEDED になる(SPEC-006-02)"
           - "exit_code=3 で FAILED になる(SPEC-006-02)"
+          - "依頼レコードと設定以外の入力を読まない(SPEC-006-02)"
+          - "起動コマンドは引数の並びに分けてそのまま渡し、シェルに解釈させない"
       - req_id: "REQ-007"
         spec_id: "SPEC-007-01"
         scenarios:
@@ -114,11 +109,11 @@ use_cases:
       - req_id: "REQ-003"
         spec_id: "SPEC-003-03"
         scenarios:
-          - "起動失敗でも 3 ファイルと FAILED を残す(SPEC-003-03)"
+          - "起動失敗でも依頼を FAILED にする(SPEC-003-03)"
       - req_id: "REQ-011"
         spec_id: "SPEC-011-03"
         scenarios:
-          - "対象一覧を成果物に記録する(SPEC-011-03)"
+          - "exit_code=0 で SUCCEEDED になる(SPEC-006-02)"
   - business: "クロスチェック業務"
     buc: "確報クロスチェックフロー"
     uc: "保存済みの確報結果をジョブスケジューラへ返す"
@@ -225,22 +220,24 @@ use_cases:
       - req_id: "REQ-005"
         spec_id: "SPEC-005-03"
         scenarios:
-          - "比較 OK で SUCCEEDED と OK を登録する(SPEC-005-03)"
-          - "job_id の比較定義が使われる(SPEC-005-03)"
-          - "比較定義が無い job_id(SPEC-005-03)"
+          - "比較 OK で SUCCEEDED を登録する(SPEC-005-03)"
+          - "起動コマンドのプレースホルダが依頼レコードの値で置換される(SPEC-005-03)"
           - "比較ツールの起動に失敗する(SPEC-005-03)"
+          - "パラメータに記号や空白を含む値が入っても 1 引数として渡りほかのコマンドは実行されない(SPEC-005-03)"
+          - "job_id が形式に合わないと比較ツールを起動せず FAILED にする(SPEC-005-03)"
+          - "parameters が JSON 配列でないと比較ツールを起動せず FAILED にする(SPEC-005-03)"
       - req_id: "REQ-007"
         spec_id: "SPEC-007-01"
         scenarios:
-          - "比較 OK で SUCCEEDED と OK を登録する(SPEC-005-03)"
+          - "比較 OK で SUCCEEDED を登録する(SPEC-005-03)"
       - req_id: "REQ-007"
         spec_id: "SPEC-007-03"
         scenarios:
-          - "比較 NG(3)で FAILED と NG を登録する(SPEC-007-03)"
+          - "比較 NG(3)で FAILED を登録する(SPEC-007-03)"
       - req_id: "REQ-011"
         spec_id: "SPEC-011-02"
         scenarios:
-          - "比較 OK で SUCCEEDED と OK を登録する(SPEC-005-03)"
+          - "比較 OK で SUCCEEDED を登録する(SPEC-005-03)"
       - req_id: "REQ-011"
         spec_id: "SPEC-011-06"
         scenarios:
@@ -872,27 +869,28 @@ use_cases:
     uc: "クロスチェックのジョブマップと比較定義を定義する"
     files:
       - spec.md
-      - tier-final-crosscheck.md
-      - tier-rapid-crosscheck.md
+      - tier-facade.md
     api_count: 0
     async_event_count: 0
     usdm:
       - req_id: "REQ-004"
         spec_id: "SPEC-004-01"
         scenarios:
-          - "比較定義と対象カタログを検証する(SPEC-004-01)"
+          - "速報の起動コマンドを検証する(SPEC-004-01)"
       - req_id: "REQ-004"
         spec_id: "SPEC-004-04"
         scenarios:
-          - "クロスチェックジョブマップと対象カタログは slot ジョブマップと同じ CSV 形式である(SPEC-004-04)"
+          - "速報の起動コマンドを検証する(SPEC-004-01)"
+          - "{params} が引数全体でない位置にある"
+          - "{params} が引数 1 つ全体なら valid"
       - req_id: "REQ-013"
         spec_id: "SPEC-013-01"
         scenarios:
-          - "比較定義と対象カタログを検証する(SPEC-004-01)"
+          - "速報の起動コマンドを検証する(SPEC-004-01)"
       - req_id: "REQ-005"
         spec_id: "SPEC-005-03"
         scenarios:
-          - "job_id が重複している"
+          - "コマンド部分が実行できない"
   - business: "適用構成業務"
     buc: "適用構成定義フロー"
     uc: "切り替えた運用モードで業務ジョブを実行する"
@@ -946,7 +944,7 @@ cross_cutting:
   cli_command_contract:
     file: "_cross-cutting/api/cli-command-contract.yaml"
   datastore:
-    rdb_tables: 7
+    rdb_tables: 6
   traceability:
     file: "_cross-cutting/traceability-matrix.md"
   extra_files:
@@ -962,11 +960,19 @@ stats:
   bucs: 7
 
 review:
-  method: "差分更新(重複報告の lines= の規則の一本化 / credential_ref の形式違反の扱いと値の非出力)の Step6.5 反証レビュー: 生成とは別コンテキストのサブエージェント(fresh context。修正禁止)が観点 5(CR-006 / CR-007 の完了条件 / 契約・UC・tier・_api-summary の三者一致 / Scenario 名の一致 / gherkin の実行可能性 / 方針資料との整合)、閾値 minor で 3 ラウンド。修正はオーケストレータ、修正後に機械検証(validateAllYaml / validateSpecEvent / validateApiSummary / validateModelSummary / validateSpecProse / md-mermaid-lint)。記録は events 側 _review/ のみ、latest へはコピーしない"
-  rounds: 3
+  method: "差分更新(CR-dcd8234d-008。比較ツール起動コマンドを引数の並びとして解釈・起動する共通規則 shared_rules.compare_command_argv の新設と、速報/確報 worker・validate-config.sh の参照。シェル非解釈起動・{params} 展開・置換前検査)の Step6.5 反証レビュー: 生成とは別コンテキストのサブエージェント(fresh context。修正禁止)が観点 5(CR-dcd8234d-008 の完了条件 / 契約・UC・tier・spec-event の三者一致 / 廃止語『置換後の文字列をコマンドとして起動する』の除去 / gherkin の実行可能性 / 方針資料との整合)。修正はオーケストレータ、修正後に機械検証(validateAllYaml / validateSpecEvent / validateApiSummary / validateModelSummary / validateSpecProse)。記録は events 側 _review/ のみ、latest へはコピーしない"
+  rounds: 2
   converged: true
-  final_state: "blocker 0 / 未解決 major 0(3 ラウンド。round 1 major 1 + minor 2(R-001 warn して受理した credential_ref の execution-spec.json への保存の扱い / R-002 値を出さない規則の適用範囲の食い違い / R-003 拒否しない理由が実行時解釈の仮採用に依存。全件 fixed)、round 2 で R-002 / R-003 fixed を確認、R-001 は転記側 UC の条件の取り残しとして major 継続 + 新規 minor 1(R-004 作業記録の範囲の記述)。全件 fixed、round 3 検証パスで R-001 / R-004 fixed を確認、新規指摘 0。収束)"
+  final_state: "blocker 0 / 未解決 major 0(2 ラウンドで収束)。round 1: major 1(R-1 確報 UC の spec-event.yaml に簡素化で廃止した SPEC-011-03 scenario『対象一覧を成果物に記録する』が残存 = 前イベント由来のドリフト。scenario 名を実在の『exit_code=0 で SUCCEEDED になる(SPEC-006-02)』へ是正し spec.md 関連 USDM 表にも SPEC-011-03 行を追加して三者一致。CR-008 本体は完了条件 1〜7 充足)。round 2: R-1 は誤検知(是正行は spec.md 169 行目に実在。レビュアーが 163-168 のみ参照して見落とし)で解消確認、新規 minor 1(R-2 usdm-acceptance-matrix.md の UC-15 受け入れ文に廃止済み『3 ファイル』の stale 記述。現 SPEC-003-03 シナリオへ是正)を fixed。収束"
   history:
+    - round: 1
+      event: "20261027_055000_feedback_impl_feedback_dcd8234d"
+      findings: "major 1(R-1。前イベント由来の SPEC-011-03 scenario ドリフト。fixed)"
+      resolution: "_review/round-1.yaml の resolved"
+    - round: 2
+      event: "20261027_055000_feedback_impl_feedback_dcd8234d"
+      findings: "R-1 誤検知(是正済みを確認)。新規 minor 1(R-2 マトリクスの stale『3 ファイル』。fixed)"
+      resolution: "_review/round-2.yaml の resolved(blocker 0 / 未解決 major 0 で収束)"
     - round: 1
       event: "20260923_112000_feedback_impl_feedback_eff24f55_cycle2"
       findings: "major 1 / minor 2(R-001〜R-003。全件 fixed)"

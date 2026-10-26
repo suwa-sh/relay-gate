@@ -40,7 +40,7 @@
   - 本文: `text/plain; charset=UTF-8`。行順 1〜12 は `kind` / `level` / `run_id` / `job_id` / `role` / `started_at` / `elapsed_minutes` / `hang_detect_limit_minutes`(依頼は RAPID_HANG_DETECT_LIMIT_MINUTES)/ `exit_code`(hang-suspected は `-`)/ `request_status`(rapid-crosscheck-error 以外は `-`)/ `artifact_dir: <絶対パス>` / `detected_at`。13 行目は空行。14 行目は `recommended_action: <定型文>` の 1 行(定型文は下表)。**80 桁制限は 1〜13 行目のうち 11 行目 `artifact_dir:` を除く行に適用する**(artifact_dir は折り返さず 80 桁を超えてよい。ui-design.md「行長」/ asyncapi HangAlertMail と同じ)。14 行目は折り返さず 1 行で出す(80 桁を超えてよい。メールクライアントの表示折り返しに委ねる。run_id 付きコマンドをコピーしやすくするため)。15 行目以降は無い
   - `detected_at` は判定 UC と同じ now(`RELAY_GATE_NOW` 設定時はその UTC 値をローカル時刻へ変換した値)
   - 本文の日時(`started_at` / `detected_at`)はホストのローカルタイムゾーンの ISO 8601 秒精度・指示子なし(例 `2026-08-30T11:30:05`。run_id の時刻部・実行ログ・管理 DB の *_at 列と同じ時刻軸)。`started_at` のうち started-at.txt 由来の値は中身(UTC Z 付き)をローカル時刻へ変換して載せる(D3-4。ui-design.md「通知メール規約」)
-  - `artifact_dir` は background slot なら `<ARTIFACT_ROOT>/facade/<run_id>/<role>`、速報比較依頼なら `<ARTIFACT_ROOT>/facade/<run_id>/rapid-crosscheck`(ディレクトリが無くてもパスを出す)
+  - `artifact_dir` は background slot(hang-suspected / background-exec-error)なら `<ARTIFACT_ROOT>/facade/<run_id>/<role>`(ディレクトリが無くてもパスを出す)。速報比較依頼(rapid-crosscheck-error)は成果物ディレクトリを作らないため `artifact_dir: -`(速報比較の結果は依頼レコードの stdout / stderr / exit_code を `rapid-crosscheck-result.sh --run-id {run_id} --show-output` で参照する。recommended_action を参照)
 
 | 通知種別 | level | recommended_action |
 |---|---|---|

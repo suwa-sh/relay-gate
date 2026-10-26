@@ -4,9 +4,9 @@
 
 | 項目 | 内容 |
 |------|------|
-| Event ID | 20260923_112000_feedback_impl_feedback_eff24f55_cycle2 |
-| Created At | 2026-09-23T11:20:00Z |
-| Source | Spec 差分更新: 2026-09-22 の実装フィードバック cycle 2(design 無しモード。実装フェーズ UC eff24f55「slot ごとのジョブマップを定義する」からの spec-gap 2 件)。前イベント 20260921_100000_feedback_impl_feedback_eff24f55 を起点に、CR-006: validate-config.sh の重複報告(duplicate job_id / duplicate target)の lines= を『そのキーが現れた全行の物理行番号を初出行を含めて出現順に並べる。重複したキーごとに error 1 行』に一本化し(要求本文の推奨を採用)、正本を cli-command-contract.yaml の validate-config.sh stderr に置いて、UC「slot ごとのジョブマップを定義する」の列検証表・分岐条件・BDD(lines=2,5 を維持、3 行重複 lines=2,3,4 を追加)と UC「クロスチェックのジョブマップと比較定義を定義する」の検証ルール・BDD(lines=5,6 / lines=2,3)、UC「ジョブマップで JOB_ID から実行先を解決する」の実行ログ WARN を同じ規則にそろえた。CR-007: 参照名 ^[A-Za-z0-9_.-]*$ に合わない credential_ref は / や BEGIN を含むかどうかにかかわらず同じ warn: credential_ref looks like a secret or path line=N job_id=<v> を 1 行出して受理し(利用者が 2026-09-22 のレビューで選択した案 A。拒否しない理由 = 参照名の形式は認証情報ストアの運用に依存)、credential_ref の値を診断行(validate-config.sh の stdout / stderr と slot runner の stderr / 実行ログ)に一切出さない規則を契約 conventions.credentials と columns.credential_ref に明記。受理した値は execution-spec.json へ加工せずに転記されることを契約と UC「execution-spec.json を確定保存する」に明記(同 UC のティア完了条件に Scenario 1 件)。UC 仕様の『仮採用』注記を確定内容に置き換え、値の種類ごとの扱いの表と BDD(E2E に SPEC-004-03 の Scenario 1 件、ティア完了条件に 2 件)を追加。判断は decisions/spec-decision-014 / 015。trigger_event: rdra:20260921_084000_feedback_impl_feedback_eff24f55, arch:20260921_092000_feedback_impl_feedback_eff24f55 |
+| Event ID | 20261027_055000_feedback_impl_feedback_dcd8234d |
+| Created At | 2026-10-27T05:50:00Z |
+| Source | Spec 差分更新(spec 直接所有の還流。design 無しモード)。CR-dcd8234d-008: 比較ツールの起動コマンド(RAPID_COMPARE_COMMAND / FINAL_COMPARE_COMMAND)を引数の並び(argv)として解釈・起動する共通規則を CLI 契約 shared_rules.compare_command_argv に 1 か所で新設し、速報 worker(rapid-crosscheck-worker.sh)・確報 worker(final-crosscheck-worker.sh)・validate-config.sh(--rapid-crosscheck / --final-crosscheck)から参照させた。規則: 設定読込時に空白(スペース・タブの 1 個以上)で引数に分割、クォート・エスケープ・$ 等のシェル記法は解釈しない。置換は引数 1 つの中だけで行い({job_id} 等は引数の一部でも可)、{params} は引数全体のときだけ JSON 配列を 1 項目 1 引数へ展開([] は 0 個)、それ以外の位置の {params} は validate-config.sh --rapid-crosscheck の違反(placeholder {params} must be a whole argument)。起動は argv 配列で行い eval / bash -c / sh -c / 引用符なし展開を禁止(確報も同じ規則)。速報 worker は置換前に job_id / run_id / parameters の形式を検査し、不適合なら比較ツールを起動せず依頼を FAILED / exit_code=6 / error_summary=invalid request value: <field>(stderr: compare request value is invalid run_id=... field=...)。『置換後の文字列をコマンドとして起動する』という書き方を仕様から除去。反映先: cli-command-contract.yaml(shared_rules 追加・速報/確報 worker の起動コマンドの解決・external_interfaces 2 件の launch・config_files の RAPID_COMPARE_COMMAND/FINAL_COMPARE_COMMAND・validate-config.sh の検証と違反文言)、速報 worker UC(BDD: 記号・空白・$(...) を含む値も 1 引数、job_id/parameters 形式違反で FAILED)、確報 worker UC(BDD: argv 分割でシェル非解釈)、設定 UC(BDD: {params} 位置違反)。設定 1 行 + プレースホルダの形・プレースホルダ集合・既存検証 2 点は不変。記号を含む設定を拒否する規則は追加しない。判断は decisions/spec-decision-018。利用者が 2026-10-27 に案 A(引数ごとに分けて起動)を選択済み |
 | UC 総数 | 32 |
 | API 総数 | 0 |
 | 非同期イベント総数 | 4 |
@@ -112,7 +112,7 @@
 - **feature flag を設定する**: spec.md, tier-facade.md
 - **slot runner の実体スクリプトを割り当てる**: spec.md, tier-facade.md
 - **slot ごとのジョブマップを定義する**: spec.md, tier-facade.md
-- **クロスチェックのジョブマップと比較定義を定義する**: spec.md, tier-final-crosscheck.md, tier-rapid-crosscheck.md
+- **クロスチェックのジョブマップと比較定義を定義する**: spec.md, tier-facade.md
 - **切り替えた運用モードで業務ジョブを実行する**: spec.md, tier-facade.md
 
 ## 全体横断仕様

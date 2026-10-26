@@ -15,7 +15,7 @@ feature flag 設定(env)の 9 キー定義・検証ルールを **設定契約**
 
 | 名前 | 型 | 必須 | 既定値 | 説明 |
 |------|---|------|-------|------|
-| --feature-flag | string(パス) | Yes(この検証種別を選ぶ) | なし | 検証する env ファイル。`--job-map` / `--crosscheck-job-map` / `--target-catalog` と排他(同時指定は終了コード 2) |
+| --feature-flag | string(パス) | Yes(この検証種別を選ぶ) | なし | 検証する env ファイル。`--job-map` / `--rapid-crosscheck` / `--final-crosscheck` と排他(同時指定は終了コード 2) |
 | --verbose | boolean | No | false | `info:` を stderr に出す(読み込んだキー一覧など) |
 | --help | boolean | No | false | 使い方を stdout に出して終了コード 0 |
 

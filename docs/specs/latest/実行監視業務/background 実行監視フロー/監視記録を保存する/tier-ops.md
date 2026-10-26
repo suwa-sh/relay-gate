@@ -51,7 +51,7 @@
 - **off 時**: 管理 DB に接続しない。実行ログの `INFO monitor record` 行が記録。`hang-detect-trend.sh` は off では終了コード 3(data-visualization.md)
 - **エラーハンドリング**: UPSERT 失敗は `error:` 1 回 + 実行ログ ERROR。他の対象を継続して最後に 6。実行ログの書き込み不可は `warn:` で継続(ui-design.md 環境変数)
 - **クラッシュ耐性**: UPSERT は 1 対象 1 文で原子的。途中終了しても部分更新の行は生じない。通知送信後・記録前の終了は通知 UC の「再送を許容」に従う
-- **監視は通知のみ**: `monitor_records` 以外のテーブルに書かない(LP-017)。`rapid_crosscheck_requests` / `comparison_results` には SELECT しか発行せず(判定 UC)、`slot_executions` / `parallel_runs` には触れない(slot 実行の状態は成果物ファイルから導出する)
+- **監視は通知のみ**: `monitor_records` 以外のテーブルに書かない(LP-017)。`rapid_crosscheck_requests` には SELECT しか発行せず(判定 UC)、`slot_executions` / `parallel_runs` には触れない(slot 実行の状態は成果物ファイルから導出する)
 
 ## データモデル変更
 

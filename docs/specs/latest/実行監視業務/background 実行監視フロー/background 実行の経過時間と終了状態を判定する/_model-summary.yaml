@@ -101,20 +101,7 @@ tables:
       - columns: ["status", "requested_at"]
         reason: "未終端依頼の走査"
         access_pattern: "5 分ごとの範囲検索"
-  - name: "comparison_results"
-    rdra_info: "比較結果(comparison_result)"
-    operations:
-      - type: "SELECT"
-        columns:
-          - name: "run_id"
-            value: ""
-          - name: "status"
-            value: ""
-        where: "run_id IN (走査対象の run_id)(RAPID_CROSSCHECK_MODE が off 以外のみ)"
-    indexes_needed:
-      - columns: ["run_id"]
-        reason: "依頼との結合"
-        access_pattern: "run_id での結合"
+  # 比較異常の判定は rapid_crosscheck_requests の status / exit_code だけで行う(別テーブルの結合はしない)
   - name: "monitor_records"
     rdra_info: "監視記録"
     operations:

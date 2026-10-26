@@ -1,4 +1,4 @@
-# digest of arch/latest/arch-design.yaml section data_architecture (L1112-2544); source_sha256: 45a30ece498ff31b18cdec055333a172156d453b8d6d4b4f330b716cfc87de04
+# digest of arch/latest/arch-design.yaml section data_architecture (L1112-2404); source_sha256: 4c5cf9d626f8441479f7bc337f09a9b89d2478b4bd1397852284f41b3d3c2adc
 # 派生物。正本は arch-design.yaml。編集しない
 data_architecture:
   entities:
@@ -224,9 +224,9 @@ data_architecture:
       source_info: "情報: 比較定義"
       model_type: "resource_scd2"
       attributes:
-        - name: "job_id"
+        - name: "crosscheck_type"
           type: "string"
-          description: "JOB_ID"
+          description: "クロスチェック種別(速報 / 確報)"
           nullable: false
           primary_key: true
         - name: "definition_version"
@@ -234,91 +234,15 @@ data_architecture:
           description: "定義版"
           nullable: false
           primary_key: true
-        - name: "comparison_type"
-          type: "string"
-          description: "比較種別"
-          nullable: false
-          primary_key: false
-        - name: "targets"
-          type: "text"
-          description: "比較対象(テーブル・ファイル)"
-          nullable: false
-          primary_key: false
         - name: "tool_command"
           type: "string"
-          description: "比較ツール起動コマンド"
-          nullable: false
-          primary_key: false
-        - name: "tool_options"
-          type: "text"
-          description: "比較オプション"
-          nullable: true
-          primary_key: false
-      relationships:
-        - target_entity: "E-007"
-          type: "N:1"
-          description: "クロスチェックジョブマップに属する"
-    - id: "E-007"
-      name: "クロスチェックジョブマップ"
-      source_info: "情報: クロスチェックジョブマップ"
-      model_type: "resource_scd2"
-      attributes:
-        - name: "map_version"
-          type: "string"
-          description: "マップ版"
-          nullable: false
-          primary_key: true
-        - name: "target_list"
-          type: "text"
-          description: "比較対象一覧"
-          nullable: false
-          primary_key: false
-        - name: "catalog_ref"
-          type: "string"
-          description: "対象カタログ参照(版)"
+          description: "比較ツール起動コマンド(1 行。速報は {job_id} を含む)。比較対象とジョブ ID ごとの比較内容は比較ツール側(適用側)が持つ。速報の起動コマンドは速報クロスチェック設定、確報の起動コマンドは確報クロスチェック worker 設定が所有する"
           nullable: false
           primary_key: false
       relationships:
-        - target_entity: "E-006"
-          type: "1:N"
-          description: "job_id ごとの比較定義を保持する"
-        - target_entity: "E-008"
+        - target_entity: "E-027"
           type: "1:1"
-          description: "確報用の対象カタログを参照する"
-    - id: "E-008"
-      name: "対象カタログ"
-      source_info: "情報: 対象カタログ"
-      model_type: "resource_scd2"
-      attributes:
-        - name: "catalog_version"
-          type: "string"
-          description: "カタログ版"
-          nullable: false
-          primary_key: true
-        - name: "target_type"
-          type: "string"
-          description: "target_type(テーブル / ファイル)"
-          nullable: false
-          primary_key: true
-        - name: "target_identifier"
-          type: "string"
-          description: "target_identifier"
-          nullable: false
-          primary_key: true
-        - name: "comparison_condition"
-          type: "text"
-          description: "比較条件"
-          nullable: true
-          primary_key: false
-        - name: "business_date_handling"
-          type: "string"
-          description: "business_date の扱い"
-          nullable: true
-          primary_key: false
-      relationships:
-        - target_entity: "E-019"
-          type: "1:N"
-          description: "確報比較依頼がカタログ版を紐付ける"
+          description: "速報の比較ツール起動コマンドは速報クロスチェック設定が持つ"
     - id: "E-009"
       name: "ジョブ起動要求"
       source_info: "情報: ジョブ起動要求"
@@ -667,11 +591,6 @@ data_architecture:
           description: "終了コード"
           nullable: false
           primary_key: false
-        - name: "artifact_uri"
-          type: "string"
-          description: "成果物ディレクトリまたは artifact_uri"
-          nullable: false
-          primary_key: false
         - name: "occurred_at"
           type: "datetime"
           description: "完了日時(ホストのローカルタイムゾーン、タイムゾーン指示子なし)"
@@ -702,16 +621,6 @@ data_architecture:
         - name: "green_status"
           type: "string"
           description: "green_status"
-          nullable: true
-          primary_key: false
-        - name: "blue_artifact_uri"
-          type: "string"
-          description: "blue_artifact_uri"
-          nullable: true
-          primary_key: false
-        - name: "green_artifact_uri"
-          type: "string"
-          description: "green_artifact_uri"
           nullable: true
           primary_key: false
         - name: "completion_status"
@@ -746,6 +655,21 @@ data_architecture:
           type: "string"
           description: "JOB_ID"
           nullable: false
+          primary_key: false
+        - name: "parameters"
+          type: "text"
+          description: "parameters(JSON。元 run の job_id とともに比較ツール起動コマンドの {job_id} 置換に使う値)"
+          nullable: true
+          primary_key: false
+        - name: "blue_exit_code"
+          type: "integer"
+          description: "blue slot の終了コード(worker が起動コマンドを置換できるよう依頼レコードに揃える)"
+          nullable: true
+          primary_key: false
+        - name: "green_exit_code"
+          type: "integer"
+          description: "green slot の終了コード(worker が起動コマンドを置換できるよう依頼レコードに揃える)"
+          nullable: true
           primary_key: false
         - name: "status"
           type: "string"
@@ -786,59 +710,12 @@ data_architecture:
         - target_entity: "E-016"
           type: "1:1"
           description: "速報実行から作成される"
-        - target_entity: "E-018"
-          type: "1:N"
-          description: "比較結果を生む"
         - target_entity: "E-006"
           type: "N:1"
-          description: "job_id ごとの比較定義に従う"
+          description: "速報の比較ツール起動コマンド(比較定義)に従い、{job_id} を依頼レコードの値で置換して起動する"
         - target_entity: "E-027"
           type: "N:1"
-          description: "claim の lease 期間と worker の poll 間隔を速報クロスチェック設定から得る"
-    - id: "E-018"
-      name: "比較結果(comparison_result)"
-      source_info: "情報: 比較結果(comparison_result)"
-      model_type: "event"
-      attributes:
-        - name: "comparison_result_id"
-          type: "string"
-          description: "comparison_result_id"
-          nullable: false
-          primary_key: true
-        - name: "run_id"
-          type: "string"
-          description: "run_id"
-          nullable: false
-          primary_key: false
-        - name: "comparison_type"
-          type: "string"
-          description: "comparison_type"
-          nullable: false
-          primary_key: false
-        - name: "status"
-          type: "string"
-          description: "比較 OK / 比較 NG / FAILED"
-          nullable: false
-          primary_key: false
-        - name: "difference_count"
-          type: "integer"
-          description: "difference_count"
-          nullable: true
-          primary_key: false
-        - name: "report_uri"
-          type: "string"
-          description: "report_uri"
-          nullable: true
-          primary_key: false
-        - name: "occurred_at"
-          type: "datetime"
-          description: "compared_at"
-          nullable: false
-          primary_key: false
-      relationships:
-        - target_entity: "E-017"
-          type: "N:1"
-          description: "速報比較依頼に属する"
+          description: "claim の lease 期間と worker の poll 間隔、速報の比較ツール起動コマンドを速報クロスチェック設定から得る"
     - id: "E-019"
       name: "確報比較依頼(final_crosscheck_request)"
       source_info: "情報: 確報比較依頼(final_crosscheck_request)"
@@ -849,16 +726,6 @@ data_architecture:
           description: "final_crosscheck_id"
           nullable: false
           primary_key: true
-        - name: "business_date"
-          type: "date"
-          description: "business_date"
-          nullable: false
-          primary_key: false
-        - name: "catalog_version"
-          type: "string"
-          description: "対象カタログの版"
-          nullable: false
-          primary_key: false
         - name: "status"
           type: "string"
           description: "REQUESTED / CLAIMED / RUNNING / SUCCEEDED / FAILED / ABORTED"
@@ -895,12 +762,9 @@ data_architecture:
           nullable: true
           primary_key: false
       relationships:
-        - target_entity: "E-008"
-          type: "N:1"
-          description: "対象カタログの版を紐付ける"
         - target_entity: "E-020"
           type: "1:1"
-          description: "比較ツール実行結果を保存する"
+          description: "比較ツール実行結果を依頼レコードの列に保存する"
     - id: "E-020"
       name: "比較ツール実行結果"
       source_info: "情報: 比較ツール実行結果"
@@ -913,7 +777,7 @@ data_architecture:
           primary_key: true
         - name: "crosscheck_type"
           type: "string"
-          description: "比較種別(速報 / 確報)"
+          description: "クロスチェック種別(速報 / 確報)。依頼レコード(速報は rapid_crosscheck_request、確報は final_crosscheck_request)の stdout / stderr / exit_code 列として保存し、別レコード・ファイルには保存しない"
           nullable: false
           primary_key: true
         - name: "stdout"
@@ -1269,10 +1133,18 @@ data_architecture:
           description: "worker が依頼を poll する間隔(秒。RAPID_POLL_INTERVAL_SEC)"
           nullable: false
           primary_key: false
+        - name: "rapid_compare_command"
+          type: "string"
+          description: "速報の比較ツール起動コマンド(1 行。{job_id} を含む必須)。worker が依頼レコードの値で {job_id} を置換して起動する。比較対象とジョブ ID ごとの比較内容は比較ツール側(適用側)が持つ"
+          nullable: false
+          primary_key: false
       relationships:
         - target_entity: "E-017"
           type: "1:N"
-          description: "速報比較依頼の claim の lease 期間と poll 間隔を与える"
+          description: "速報比較依頼の claim の lease 期間と poll 間隔、速報の比較ツール起動コマンドを与える"
+        - target_entity: "E-006"
+          type: "1:1"
+          description: "速報の比較定義(比較ツール起動コマンド)を保持する"
         - target_entity: "E-013"
           type: "1:N"
           description: "facade が parallel_run を作成する管理 DB の接続参照名を与える(速報有効時のみ)"
@@ -1305,15 +1177,7 @@ data_architecture:
       confidence: "high"
     - entity_id: "E-006"
       storage_type: "file"
-      reason: "比較定義はクロスチェックジョブマップの一部として job_id ごとに差し替える設定ファイル"
-      confidence: "high"
-    - entity_id: "E-007"
-      storage_type: "file"
-      reason: "クロスチェックジョブマップは slot ジョブマップと同じ CSV 形式(1 行目ヘッダー、1 行 1 job_id、JSON 配列セルは二重引用符で囲む)で適用側が定義する設定ファイル"
-      confidence: "high"
-    - entity_id: "E-008"
-      storage_type: "file"
-      reason: "対象カタログは slot ジョブマップと同じ CSV 形式で適用側が版管理する定義ファイル。確報比較依頼は版だけを紐付ける(infra: product-mapping-onprem.yaml → config_storeのfidelity=exactで適合確認)"
+      reason: "比較定義(比較ツール起動コマンド 1 行)は速報クロスチェック設定(速報。{job_id} を含む)と確報クロスチェック worker 設定(確報)が所有する env の 1 行として適用側が差し替える。比較対象は比較ツール側が持つ"
       confidence: "high"
     - entity_id: "E-009"
       storage_type: "file"
@@ -1345,7 +1209,7 @@ data_architecture:
       confidence: "high"
     - entity_id: "E-015"
       storage_type: "rdb"
-      reason: "完了通知は rapid_run の blue_status / green_status / artifact_uri / completed_at として管理 DB に反映される"
+      reason: "完了通知は rapid_run の blue_status / green_status / completed_at として管理 DB に反映される(run_id・job_id・exit_code を渡し、成果物 URI は渡さない)"
       confidence: "high"
     - entity_id: "E-016"
       storage_type: "rdb"
@@ -1354,10 +1218,6 @@ data_architecture:
     - entity_id: "E-017"
       storage_type: "rdb"
       reason: "管理 DB 上のジョブキュー。worker の poll / claim / lease による多重実行防止に RDB のトランザクションを使う"
-      confidence: "high"
-    - entity_id: "E-018"
-      storage_type: "rdb"
-      reason: "速報比較の結果を run_id で参照するための管理 DB レコード(comparison_result)"
       confidence: "high"
     - entity_id: "E-019"
       storage_type: "rdb"

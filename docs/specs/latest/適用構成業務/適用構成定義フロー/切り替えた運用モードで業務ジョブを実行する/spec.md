@@ -84,7 +84,7 @@ sequenceDiagram
 | 実装スロット | blue / green | 運用モードごとに役割(応答元 / 比較対象 / 停止)が変わる | tier-facade | facade.sh |
 | slot 実行モード | foreground / background / off | 運用モードの構成要素 | tier-facade | facade.sh |
 | 速報クロスチェックモード | foreground / background / off | 並行稼働系は off 以外(background)、単独本番は off。facade は「off か off 以外か」だけで判定する(foreground と background の挙動差は区別しない) | tier-facade | facade.sh |
-| 設定所有区分 | feature flag / slot ジョブマップ / クロスチェックジョブマップ / 適用文書 | 切り替えで触るのは feature flag(と世代交代時の runner・ジョブマップ)。ジョブ定義は触らない | tier-facade | repository `feature_flag_config` |
+| 設定所有区分 | feature flag / slot ジョブマップ / 速報クロスチェック設定 / 確報クロスチェック worker 設定 / 適用文書 | 切り替えで触るのは feature flag(と世代交代時の runner・ジョブマップ)。ジョブ定義は触らない | tier-facade | repository `feature_flag_config` |
 | ジョブスケジューラ起動ジョブ種別 | 業務ジョブ(facade) | 運用モードによらず同じジョブ定義 | tier-facade | presentation `facade.sh` |
 
 ## 分岐条件一覧

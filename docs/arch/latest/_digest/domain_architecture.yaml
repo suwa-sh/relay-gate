@@ -1,4 +1,4 @@
-# digest of arch/latest/arch-design.yaml section domain_architecture (L21-348); source_sha256: 45a30ece498ff31b18cdec055333a172156d453b8d6d4b4f330b716cfc87de04
+# digest of arch/latest/arch-design.yaml section domain_architecture (L21-342); source_sha256: 4c5cf9d626f8441479f7bc337f09a9b89d2478b4bd1397852284f41b3d3c2adc
 # 派生物。正本は arch-design.yaml。編集しない
 domain_architecture:
   subdomains:
@@ -82,20 +82,17 @@ domain_architecture:
         - "E-015"
         - "E-016"
         - "E-017"
-        - "E-018"
       owned_buc_ids:
         - "速報クロスチェックフロー"
       team_ownership: null
-      reason: "方針資料が「速報と確報の比較規約はそれぞれ別ドメインが所有する」と明示し、rapid_run / rapid_crosscheck_request / comparison_result のモデルが確報側と分離されているため"
-      source_model: "BUC: 速報クロスチェックフロー, 情報: 速報実行(rapid_run), 速報比較依頼(rapid_crosscheck_request), 比較結果(comparison_result), 完了通知, slot 実行, 状態: 速報実行の完了状況, クロスチェック依頼, slot 実行, 条件: 中止済み run の比較依頼作成除外, 依頼中止可否判定"
+      reason: "方針資料が「速報と確報の比較規約はそれぞれ別ドメインが所有する」と明示し、rapid_run / rapid_crosscheck_request のモデルが確報側と分離されているため。比較結果は依頼レコードの stdout / stderr / exit_code で参照し、別レコードは持たない"
+      source_model: "BUC: 速報クロスチェックフロー, 情報: 速報実行(rapid_run), 速報比較依頼(rapid_crosscheck_request), 完了通知, slot 実行, 状態: 速報実行の完了状況, クロスチェック依頼, slot 実行, 条件: 中止済み run の比較依頼作成除外, 依頼中止可否判定"
       confidence: "medium"
     - id: "BC-003"
       name: "確報クロスチェックコンテキスト"
       ubiquitous_language:
         - term: "確報比較依頼"
-          definition: "business_date と対象カタログの版で登録する日次全量比較の依頼。runner が終端状態まで同期 polling し、保存済み stdout / stderr / exitcode だけを中継する"
-        - term: "対象カタログ"
-          definition: "全テーブル・全ファイルを target_type / target_identifier と版で定義する比較対象の一覧。リリース判断の正本となる比較範囲"
+          definition: "業務上の引数なしで登録する日次全量比較の依頼。runner が終端状態まで同期 polling し、保存済み stdout / stderr / exitcode だけを中継する。全量比較の対象は比較ツール側(適用側)が定義し、確報 worker は設定の起動コマンドをそのまま起動する"
       related_subdomain_id: "SD-002"
       owned_entity_ids:
         - "E-019"
@@ -103,8 +100,8 @@ domain_architecture:
       owned_buc_ids:
         - "確報クロスチェックフロー"
       team_ownership: null
-      reason: "条件「速報と確報のモデル分離」により final_crosscheck_request と対象カタログを用い、速報側の rapid_run / rapid_crosscheck_request を作成・変更しないと定義されているため独立 BC とする"
-      source_model: "BUC: 確報クロスチェックフロー, 情報: 確報比較依頼(final_crosscheck_request), 対象カタログ, 比較ツール実行結果, 条件: 速報と確報のモデル分離"
+      reason: "条件「速報と確報のモデル分離」により final_crosscheck_request を用い、速報側の rapid_run / rapid_crosscheck_request を作成・変更しないと定義されているため独立 BC とする"
+      source_model: "BUC: 確報クロスチェックフロー, 情報: 確報比較依頼(final_crosscheck_request), 比較ツール実行結果, 条件: 速報と確報のモデル分離"
       confidence: "medium"
     - id: "BC-004"
       name: "実行監視・復旧コンテキスト"
@@ -139,7 +136,7 @@ domain_architecture:
         - term: "速報クロスチェック設定"
           definition: "速報クロスチェック用の env 設定ファイル(rapid-crosscheck.env)。管理 DB 接続参照名(RAPID_DB_CONN_REF。値は置かず参照名のみ)・lease 期間(RAPID_LEASE_SEC)・worker の poll 間隔(RAPID_POLL_INTERVAL_SEC)を保持し、facade・slot runner・速報クロスチェック runner・worker が読む。RAPID_CROSSCHECK_MODE=off では不要。ハング検知定期ジョブ設定と同型だが所有項目と読み手が異なるため別ファイル"
         - term: "設定所有区分"
-          definition: "各設定項目の正本をどこ(feature flag / slot ジョブマップ / クロスチェックジョブマップ / ハング検知定期ジョブ設定 / 速報クロスチェック設定 / 適用文書)が所有するかの区分"
+          definition: "各設定項目の正本をどこ(feature flag / slot ジョブマップ / ハング検知定期ジョブ設定 / 速報クロスチェック設定(速報の比較ツール起動コマンドを含む)/ 確報クロスチェック worker 設定(確報の比較ツール起動コマンドを含む)/ 適用文書)が所有するかの区分。比較対象は比較ツール側(適用側)が持つ"
       related_subdomain_id: "SD-004"
       owned_entity_ids:
         - "E-001"
@@ -148,15 +145,13 @@ domain_architecture:
         - "E-004"
         - "E-005"
         - "E-006"
-        - "E-007"
-        - "E-008"
         - "E-026"
         - "E-027"
       owned_buc_ids:
         - "適用構成定義フロー"
       team_ownership: null
-      reason: "基盤適用設計者だけが扱う設定契約の語彙(feature flag / ジョブマップ / 比較定義 / ハング検知定期ジョブ設定 / 速報クロスチェック設定 / 適用文書)で閉じており、実行系コンテキストは読み取り専用で従うため"
-      source_model: "BUC: 適用構成定義フロー, アクター: 基盤適用設計者, 情報: feature flag 設定, ジョブマップ, クロスチェックジョブマップ, ハング検知定期ジョブ設定, 速報クロスチェック設定, 適用構成文書, 条件: 設定所有区分, バリエーション: 設定所有区分"
+      reason: "基盤適用設計者だけが扱う設定契約の語彙(feature flag / ジョブマップ / 比較定義(比較ツール起動コマンド)/ ハング検知定期ジョブ設定 / 速報クロスチェック設定 / 適用文書)で閉じており、実行系コンテキストは読み取り専用で従うため"
+      source_model: "BUC: 適用構成定義フロー, アクター: 基盤適用設計者, 情報: feature flag 設定, ジョブマップ, 比較定義, ハング検知定期ジョブ設定, 速報クロスチェック設定, 適用構成文書, 条件: 設定所有区分, バリエーション: 設定所有区分"
       confidence: "medium"
   context_map:
     - id: "CM-001"
@@ -226,9 +221,9 @@ domain_architecture:
       to_bc_id: "BC-005"
       pattern: "conformist"
       direction: "downstream"
-      translator_description: "BC-002 は BC-005 のクロスチェックジョブマップ(job_id ごとの比較定義)を読み、比較ツールの起動コマンド・比較対象・オプションをそのまま用いる"
+      translator_description: "BC-002 は BC-005 の速報クロスチェック設定(速報の比較ツール起動コマンド 1 行。{job_id} を含む)を読み、{job_id} を依頼レコードの値で置換して比較ツールを起動する。比較対象は比較ツール側が持つ"
       integration_events: []
-      reason: "比較定義は適用側が job_id ごとに差し替える設定契約であり、速報 worker はそれに従うだけのため"
+      reason: "比較定義(起動コマンド)は適用側が差し替える設定契約であり、速報 worker はそれに従うだけのため"
       source_model: "条件: 比較定義の選択, 設定所有区分"
       confidence: "medium"
     - id: "CM-008"
@@ -236,9 +231,9 @@ domain_architecture:
       to_bc_id: "BC-005"
       pattern: "conformist"
       direction: "downstream"
-      translator_description: "BC-003 は BC-005 の対象カタログ(版付き)を読み、確報比較依頼に版を紐付けて全量比較の範囲を確定する"
+      translator_description: "BC-003 は BC-005 の確報クロスチェック worker 設定(確報の比較ツール起動コマンド 1 行)を読み、業務上の引数なしでそのまま起動する。全量比較の対象は比較ツール側が持つ"
       integration_events: []
-      reason: "比較対象と対象カタログはクロスチェックのジョブマップで適用側が定義すると条件に定められているため"
+      reason: "比較対象は比較ツール側(適用側)が定義し、確報 worker は設定の起動コマンドをそのまま起動すると条件に定められているため"
       source_model: "条件: 適用側で定義する事項, 設定所有区分"
       confidence: "medium"
   aggregate_hypotheses:
@@ -265,17 +260,16 @@ domain_architecture:
       member_entity_ids:
         - "E-015"
         - "E-017"
-        - "E-018"
       invariants:
         - "blue と green の両方が成功(exitcode 0)したときに限り速報比較依頼を作成する"
-        - "中止済み run(並行稼働実行が ABORTED、または完了通知の対象 slot の slot 実行が ABORTED(aborted.txt 公開済み))では両系成功でも速報比較依頼を作成しない。完了事実(blue_status / green_status / 成果物 URI)だけを rapid_run に記録し、実行ログに警告を残す。判定材料は parallel_run.status と slot_executions.status"
+        - "中止済み run(並行稼働実行が ABORTED、または完了通知の対象 slot の slot 実行が ABORTED(aborted.txt 公開済み))では両系成功でも速報比較依頼を作成しない。完了事実(blue_status / green_status と終了コード)だけを rapid_run に記録し、実行ログに警告を残す。判定材料は parallel_run.status と slot_executions.status"
         - "1 つの run_id に対する速報比較依頼は完了順にかかわらず 1 件だけ(run_id 主キー)"
         - "claim 中(lease 有効)の依頼は他 worker が取得できない。lease 失効かつ未開始なら REQUESTED に戻す。lease 期間と poll 間隔は速報クロスチェック設定から読む"
         - "REQUESTED で未着手の速報比較依頼は対象 run の abort-blue / abort-green(競合窓の保険)または abort-rapid-crosscheck で ABORTED になる。CLAIMED / RUNNING の依頼は abort-rapid-crosscheck だけが ABORTED にする(確報比較依頼は RUNNING のみ)"
         - "CLAIMED から RUNNING への遷移は status = CLAIMED を条件とする条件付き UPDATE で行い、更新件数が 0 件(ABORTED 済み)なら worker は比較を開始しない"
         - "依頼状態は比較ツールの exitcode に従う(0=SUCCEEDED / 非 0・実行エラー=FAILED)"
       note: "仮説。最終確定は dist-spec または ddd-tactical-implementation で行う。rapid_run と rapid_crosscheck_request を同一集約に置くか(両系成功→依頼作成の原子性)、依頼を別集約にするか(worker の claim 競合)は実装時に再判断する"
-      source_model: "情報: 速報実行(rapid_run), 完了通知, 速報比較依頼(rapid_crosscheck_request), 比較結果(comparison_result), 速報クロスチェック設定, slot 実行, 状態: 速報実行の完了状況, クロスチェック依頼, 並行稼働実行, slot 実行, 条件: 両系成功判定, 中止済み run の比較依頼作成除外, 比較依頼の一意性, claim 排他, lease 失効判定, slot 中止可否判定, 依頼中止可否判定"
+      source_model: "情報: 速報実行(rapid_run), 完了通知, 速報比較依頼(rapid_crosscheck_request), 速報クロスチェック設定, slot 実行, 状態: 速報実行の完了状況, クロスチェック依頼, 並行稼働実行, slot 実行, 条件: 両系成功判定, 中止済み run の比較依頼作成除外, 比較依頼の一意性, claim 排他, lease 失効判定, slot 中止可否判定, 依頼中止可否判定"
       confidence: "low"
     - id: "AG-003"
       bounded_context_id: "BC-003"
@@ -283,7 +277,7 @@ domain_architecture:
       member_entity_ids:
         - "E-020"
       invariants:
-        - "確報比較依頼は business_date と対象カタログの版を持って REQUESTED で登録する"
+        - "確報比較依頼は業務上の引数なしで REQUESTED で登録する。全量比較の対象は比較ツール側が持ち、worker は設定の起動コマンドをそのまま起動する"
         - "ジョブスケジューラへ返すのは保存済みの stdout / stderr / exitcode だけ。状態名や差分件数・レポート URI は返さない"
         - "rapid_run / rapid_crosscheck_request を作成・変更しない"
       note: "仮説。最終確定は dist-spec または ddd-tactical-implementation で行う"

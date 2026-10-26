@@ -6,18 +6,18 @@ x_cli_commands:
   - name: "final-crosscheck-runner.sh"
     tier: "tier-final-crosscheck"
     role: "uses"
-    synopsis: "final-crosscheck-runner.sh --business-date <YYYY-MM-DD> --catalog-version <ver>"
-    invoked_by: "ジョブスケジューラ(確報クロスチェックジョブ定義)。結果は運用者がジョブスケジューラの実行履歴で読む"
+    synopsis: "final-crosscheck-runner.sh [--verbose] [--help]"
+    invoked_by: "ジョブスケジューラ(確報クロスチェックジョブ定義)。業務上の引数なしで起動する。結果は運用者がジョブスケジューラの実行履歴で読む"
     args: []
     options:
-      - name: "--business-date"
-        type: "string"
-        required: true
-        description: "比較対象の業務日付(YYYY-MM-DD)"
-      - name: "--catalog-version"
-        type: "string"
-        required: true
-        description: "対象カタログの版"
+      - name: "--verbose"
+        type: "boolean"
+        required: false
+        description: "info を実行ログに出す(stderr には出さない)"
+      - name: "--help"
+        type: "boolean"
+        required: false
+        description: "usage を stdout に出して終了コード 0"
     stdin: "なし"
     stdout: "比較ツールの標準出力そのもの(依頼の stdout)。状態名・差分件数・レポート URI・final_crosscheck_id は含まれない"
     stderr: "比較ツールの標準エラーそのもの(依頼の stderr)。中継に至る前の relay-gate 自身のエラーのみ 'error: ...' 形式"

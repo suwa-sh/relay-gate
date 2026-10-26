@@ -8,7 +8,7 @@
 
 ### final-crosscheck-runner.sh(中継部分)
 
-- **書式**: `final-crosscheck-runner.sh --business-date <YYYY-MM-DD> --catalog-version <ver>`(引数契約は UC「確報比較依頼を登録して終端状態まで待機する」の tier md を正とする)
+- **書式**: `final-crosscheck-runner.sh [--verbose] [--help]`(業務上の引数なし。引数契約は UC「確報比較依頼を登録して終端状態まで待機する」の tier md を正とする)
 - **アクセス権**: ジョブスケジューラの確報クロスチェックジョブ定義
 
 #### 引数・オプション

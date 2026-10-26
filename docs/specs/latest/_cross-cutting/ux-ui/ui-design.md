@@ -10,7 +10,7 @@
 |---|---|---|
 | 全コマンドの自身の出力(検証エラー・参照結果・info / warn / error) | 適用 | relay-gate が生成する出力 |
 | `facade.sh` の foreground 中継(`<role>/stdout.log` → stdout、`<role>/stderr.log` → stderr、`<role>/exitcode.txt` → 終了コード) | **適用外(無加工)** | ジョブスケジューラ応答の決定(条件)。装飾・プレフィックス・追記を一切付けない |
-| `final-crosscheck-runner.sh` の確報中継(依頼に保存された `stdout` → stdout、`stderr` → stderr、`exit_code` → 終了コード) | **適用外(無加工)** | 確報結果の中継制約(条件)。依頼の状態名・差分件数・レポート URI を追記しない |
+| `final-crosscheck-runner.sh` の確報中継(依頼に保存された `stdout` → stdout、`stderr` → stderr、`exit_code` → 終了コード) | **適用外(無加工)** | 確報結果の中継制約(条件)。依頼の状態名や集計結果を追記しない |
 
 - 中継経路でも、中継に至る**前**の relay-gate 自身のエラー(設定検証 NG・run_id 発行失敗・polling 上限超過など)は本規約に従い stderr + 終了コード 2 / 3 / 6 で返す
 - 中継経路で relay-gate 自身の info / warn を出す必要がある場合は stderr ではなく実行ログファイルに出す(stdout / stderr を汚さない。arch CLP-002)
@@ -36,7 +36,7 @@ _inference.md 採用値 #2(共通 4 分類)。
 | コード | 分類 | 条件 |
 |-------|------|------|
 | 0 | 成功 | 処理が完了した。参照系は対象が見つかり出力できた |
-| 2 | 入力・引数・設定検証エラー | 引数不足・不正な値・未知のオプション、feature flag / ジョブマップ / クロスチェックジョブマップの検証 NG(foreground × foreground、必須キー欠落、enum 外の値、runner 実体なし・実行不可、CSV クォート不正、`fixed_params` の JSON 配列不正、host / user の片方だけ空 等)、非対話で `--yes` なし、環境変数の未設定 |
+| 2 | 入力・引数・設定検証エラー | 引数不足・不正な値・未知のオプション、feature flag / ジョブマップ / 比較ツール起動コマンド設定の検証 NG(foreground × foreground、必須キー欠落、enum 外の値、runner 実体なし・実行不可、CSV クォート不正、`fixed_params` の JSON 配列不正、host / user の片方だけ空、比較ツール起動コマンドが絶対パスでない・実行不可・速報の `{job_id}` 欠落 等)、非対話で `--yes` なし、環境変数の未設定 |
 | 3 | 業務エラー | 事前検証 NG(rerun: 元の mode が foreground / off、元の実行が RUNNING(`exitcode.txt` も `aborted.txt` も無い)、role 未対応)、中止不可(abort: 対象が background かつ RUNNING でない / 速報比較依頼が REQUESTED・CLAIMED・RUNNING のいずれでもない(終端状態)/ 確報比較依頼が RUNNING でない)、停止確認 `no`、参照系で対象 run_id が存在しない、RAPID_CROSSCHECK_MODE=off で管理 DB を使わない構成での速報系・参照系の拒否(`abort-rapid-crosscheck.sh` / `rapid-crosscheck-result.sh` / `run-lineage.sh` / `hang-detect-trend.sh`。`abort-blue.sh` / `abort-green.sh` は off でも `aborted.txt` で中止が成立するため該当しない) |
 | 6 | 実行エラー | SSH 接続・実行失敗、管理 DB 接続・SQL 失敗、比較ツールの起動失敗、メール送信失敗、成果物ファイルの書き込み失敗、polling 上限超過、内部エラー(想定外の例外) |
 
@@ -46,12 +46,14 @@ _inference.md 採用値 #2(共通 4 分類)。
 
 ### 比較ツール終了コード契約との対応
 
-| 比較ツールの終了コード | 意味 | 依頼状態 | 比較結果ステータス | 確報 runner がジョブスケジューラへ返す終了コード | 速報での扱い |
-|---|---|---|---|---|---|
-| `0` | 比較 OK | SUCCEEDED | OK | `0`(無加工中継) | comparison_result に OK を登録。通知なし |
-| `3` | 比較 NG(警告終了) | FAILED | NG | `3`(無加工中継) | comparison_result に NG を登録。hang-detector が error メール |
-| `6` | 実行エラー(エラー終了) | FAILED | FAILED | `6`(無加工中継) | comparison_result に FAILED を登録。hang-detector が error メール |
-| その他の非 0 | 比較ツール実装の契約に従う | FAILED | FAILED | その値(無加工中継) | 同上 |
+| 比較ツールの終了コード | 意味 | 依頼状態 | 確報 runner がジョブスケジューラへ返す終了コード | 速報での扱い |
+|---|---|---|---|---|
+| `0` | 比較 OK | SUCCEEDED | `0`(無加工中継) | 通知なし |
+| `3` | 比較 NG(警告終了) | FAILED | `3`(無加工中継) | hang-detector が error メール |
+| `6` | 実行エラー(エラー終了) | FAILED | `6`(無加工中継) | hang-detector が error メール |
+| その他の非 0 | 比較ツール実装の契約に従う | FAILED | その値(無加工中継) | 同上 |
+
+- 速報・確報とも比較ツールの終了コード(0 / 3 / 6 / その他)と stdout / stderr は依頼レコード(`rapid_crosscheck_requests` / `final_crosscheck_requests`)の列に保存する。別レコードや成果物ファイルは作らない
 
 - relay-gate の 4 分類(0 / 2 / 3 / 6)は比較ツール契約(0 / 3 / 6)と値の意味を揃えている(3 = 業務上の NG、6 = 実行失敗)。運用者は同じ読み方で判断できる
 - 比較ツールを差し替えた場合、終了コードの値と意味はその実装の契約に従う(方針資料)。relay-gate は値を変換しない
@@ -59,7 +61,7 @@ _inference.md 採用値 #2(共通 4 分類)。
 ## 出力フォーマット
 
 - **既定**: plain。1 行 1 事実。`key=value`(値に空白を含まない場合)または `key: value`(値に空白・パスを含む場合。`:` の後に半角空白 1 つ)。キーは snake_case 英字。出力順はコマンドごとに固定し、`cli-command-contract.yaml` に記載する
-- **表形式**: 複数行の参照系(`rapid-crosscheck-result.sh` の comparison_result 一覧 / `run-lineage.sh` / `hang-detect-trend.sh`)は **TSV**(タブ区切り、1 行目はヘッダー行、列名は snake_case)。値にタブ・改行を含めない(含む場合は下記「制御文字の表記」の可視表記 `\t` / `\n` へ置き換える。旧規則の「半角空白へ置換」は使わない)。列定義は `data-visualization.md` を正本とする
+- **表形式**: 複数行の参照系(`run-lineage.sh` / `hang-detect-trend.sh`)は **TSV**(タブ区切り、1 行目はヘッダー行、列名は snake_case)。値にタブ・改行を含めない(含む場合は下記「制御文字の表記」の可視表記 `\t` / `\n` へ置き換える。旧規則の「半角空白へ置換」は使わない)。列定義は `data-visualization.md` を正本とする。`rapid-crosscheck-result.sh` は TSV を出さず、依頼レコードの固定行 + `--show-output` 本文だけを出す(下記「出力例」)
 - **制御文字の表記**(全コマンドの stdout / stderr、実行ログ、メール本文に共通。任意入力 = 設定ファイルのセルの値・列名・キー名・パス・コマンド引数を出力するときの規則。利用者決定 2026-09-22):
   - 置き換える文字の範囲: C0 制御文字(U+0001〜U+001F)、DEL(U+007F)、UTF-8 で符号化した C1 制御文字(U+0080〜U+009F。バイト列 `C2 80`〜`C2 9F`)。U+0000(NUL)は設定ファイルの形式違反として読み込み時に拒否されるため出力に現れない
   - 置き換え後の表記: 改行(U+000A)は `\n`、タブ(U+0009)は `\t`、それ以外は `\u00XX`(16 進小文字 4 桁。例: ESC は `\u001b`、CR は `\u000d`、U+009B は `\u009b`)
@@ -91,8 +93,26 @@ exit_code=3
 worker_id=worker-01
 requested_at=2026-08-30T11:45:10
 completed_at=2026-08-30T11:47:02
-comparison_result_id	comparison_type	status	difference_count	report_uri	compared_at
-c0a8f1d2	job	NG	12	file:///var/relay-gate/reports/20260830T113000-JOB001-3f9a1c2e/job.html	2026-08-30T11:47:01
+```
+
+(固定順 9 行のみ。速報比較の結果は依頼レコードの `exit_code` と、`--show-output` 指定時に末尾へ出す比較ツールの stdout / stderr 本文で読む。別レコードの一覧は出さない)
+
+```text
+$ rapid-crosscheck-result.sh --run-id 20260830T113000-JOB001-3f9a1c2e --show-output
+run_id=20260830T113000-JOB001-3f9a1c2e
+job_id=JOB001
+request_status=FAILED
+blue_status=SUCCEEDED
+green_status=SUCCEEDED
+exit_code=3
+worker_id=worker-01
+requested_at=2026-08-30T11:45:10
+completed_at=2026-08-30T11:47:02
+
+--- stdout ---
+(依頼に保存された比較ツールの stdout 本文をバイト列のまま出す)
+--- stderr ---
+(同じく stderr 本文)
 ```
 
 ```text
@@ -217,7 +237,6 @@ $ echo $?
 | クロスチェック依頼(速報・確報共通)`status` | `REQUESTED` / `CLAIMED` / `RUNNING` / `SUCCEEDED` / `FAILED` / `ABORTED` | 依頼済み / 取得済み / 実行中 / 成功 / 失敗 / 中止 | 終端状態は SUCCEEDED / FAILED / ABORTED |
 | 速報実行の完了状況(rapid_run)`completion` | `PENDING` / `ONE_COMPLETED` / `BOTH_SUCCEEDED` / `ANY_FAILED` / `REQUEST_CREATED` | 両系未完了 / 片系完了 / 両系成功 / いずれか失敗 / 比較依頼作成済み | `blue_status` / `green_status` と併記する |
 | 監視状態 `monitor_status` | `NOT_MONITORED` / `MONITORING` / `HANG_SUSPECTED_NOTIFIED` / `EXEC_ERROR_NOTIFIED` / `COMPARE_ERROR_NOTIFIED` / `COMPLETED` | 監視対象外 / 監視中 / ハング疑い通知済み / 実行エラー通知済み / 比較異常通知済み / 正常終了 | 状態.tsv とバリエーション「監視状態」は同じ 6 値(利用者決定 2026-09-05)。「通知後正常終了」は遷移 HANG_SUSPECTED_NOTIFIED → COMPLETED の別名。遷移: MONITORING → COMPLETED(exitcode 0、または監視対象が ABORTED で中止済み終端)、HANG_SUSPECTED_NOTIFIED → EXEC_ERROR_NOTIFIED / COMPARE_ERROR_NOTIFIED / COMPLETED |
-| 比較結果ステータス(comparison_result)`status` | `OK` / `NG` / `FAILED` | 比較 OK / 比較 NG / 実行失敗 | 比較ツール終了コード 0 / 3 / 6 に対応 |
 | 通知レベル | `warning` / `error` | 警告 / 異常 | 小文字。件名の `{ALERT_SUBJECT_PREFIX}[warning]`(既定 `[relay-gate][warning]`)と本文の `level=warning` で同じ値 |
 | 通知種別 | `hang-suspected` / `background-exec-error` / `rapid-crosscheck-error` | ハング疑い / background 実行エラー / 速報クロスチェック異常 | kebab-case。件名と本文 `kind=` で同じ値 |
 | ハング検知判定結果 | `NOT_TARGET` / `COMPLETED` / `MONITORING` / `HANG_SUSPECTED` / `EXEC_ERROR` / `COMPARE_ERROR` | 監視対象外 / 正常終了(中止済み対象の終端を含む) / 継続監視 / ハング疑い / background 実行エラー / 速報クロスチェック異常(比較 NG・FAILED) | hang-detector の `--verbose` 出力とログにのみ現れる(`cli-command-contract.yaml` `shared_rules.state_codes.hang_judgement` と同じ 6 値)。監視状態への対応は NOT_TARGET → NOT_MONITORED、COMPLETED → COMPLETED、MONITORING → MONITORING、HANG_SUSPECTED → HANG_SUSPECTED_NOTIFIED、EXEC_ERROR → EXEC_ERROR_NOTIFIED、COMPARE_ERROR → COMPARE_ERROR_NOTIFIED |
@@ -264,7 +283,7 @@ $ echo $?
 - **冪等性**: 同じ監視対象 ID(run_id + role)・同じ通知種別のメールは 1 回だけ送る(監視記録の `monitor_status` の遷移有無で判定。判定結果に対応する監視状態が現在値と同じなら送らない。`alerted_at` は送信成功の記録であり判定根拠ではない)。ハング疑い通知後に実行エラー・比較異常へ遷移した場合は別種別として追加で 1 回送る
 - **通知しない終端**: `exitcode.txt` が無く `aborted.txt` がある監視対象(中止済み)と、ABORTED の速報比較依頼は判定 `COMPLETED` として監視記録を終端し、メールは送らない。完了通知の送信失敗は監視対象外(条件「完了通知失敗の扱い」)
 - **送信失敗**: 終了コード 6 で終了し、監視記録は `alerted_at` を更新しない(次回の定期実行で再送する)
-- **日次メールサマリー**(arch CTP-010)は本規約の範囲外。採用する場合は件名 `[relay-gate][info] daily-summary date={business_date}`、本文は `data-visualization.md` 2. の警告傾向 TSV(`hang-detect-trend.sh --since {前日 00:00:00(ローカル)}` の出力)をそのまま貼る形を推奨する(仕様は未確定。todo。`data-visualization.md`「全体サマリー」と同文)
+- **日次メールサマリー**(arch CTP-010)は本規約の範囲外。採用する場合は件名 `[relay-gate][info] daily-summary date={集計日(ローカル)}`、本文は `data-visualization.md` 2. の警告傾向 TSV(`hang-detect-trend.sh --since {前日 00:00:00(ローカル)}` の出力)をそのまま貼る形を推奨する(仕様は未確定。todo。`data-visualization.md`「全体サマリー」と同文)
 
 ## 共通オプション・環境変数
 
@@ -288,7 +307,7 @@ $ echo $?
 | 環境変数 | 用途 | 既定値 | 備考 |
 |---|---|---|---|
 | `RELAY_GATE_HOME` | relay-gate の配置ディレクトリ(スクリプトの所在) | スクリプト自身のディレクトリ(`$(dirname "$0")`) | 設定・成果物・ログの既定パスの解決に使う。slot runner と速報クロスチェック runner / worker の実体は feature flag(`BLUE_RUNNER` / `GREEN_RUNNER` / `RAPID_CROSSCHECK_RUNNER` / `RAPID_CROSSCHECK_WORKER`)で解決する(固定パス解決はしない) |
-| `RELAY_GATE_CONFIG_DIR` | 設定ファイル置き場(`feature-flag.env`、`blue-job-map.csv` / `green-job-map.csv`、`crosscheck-job-map.csv`、`target-catalog.csv`、`rapid-crosscheck.env` / `hang-detector.env` / `final-crosscheck.env`) | `$RELAY_GATE_HOME/config` | 未設定かつ既定パスが無い場合は終了コード 2 |
+| `RELAY_GATE_CONFIG_DIR` | 設定ファイル置き場(`feature-flag.env`、`blue-job-map.csv` / `green-job-map.csv`、`rapid-crosscheck.env` / `hang-detector.env` / `final-crosscheck.env`) | `$RELAY_GATE_HOME/config` | 未設定かつ既定パスが無い場合は終了コード 2 |
 | `RELAY_GATE_ARTIFACT_ROOT` | 成果物ルート。`$RELAY_GATE_ARTIFACT_ROOT/facade/<run_id>/` に Runner Result を置く | `$RELAY_GATE_HOME/var` | 書き込み不可は終了コード 6 |
 | `RELAY_GATE_LOG_DIR` | 実行ログの出力先(`{script}.log`) | `$RELAY_GATE_HOME/log` | 書き込み不可は stderr に `warn:` を出して処理は継続する |
 | `RELAY_GATE_NOW` | テスト専用の現在時刻注入(UTC ISO 8601 秒精度、`Z` 付き。例 `2026-08-30T12:45:00Z`)。設定時は全スクリプトの時刻取得(経過時間・`*_at` 列・`started-at.txt`・`aborted.txt`・`detected_at`)がこの値になる。`started-at.txt` / `aborted.txt` の中身はこの UTC 値のまま。run_id / final_crosscheck_id の時刻部・実行ログ・`*_at` 列・stdout の日時はこの UTC 値をプロセスのローカルタイムゾーン(`TZ`)へ変換した値(BDD の例示値は `TZ=UTC` 前提。`RELAY_GATE_NOW=2026-08-30T11:30:00Z` → run_id `20260830T113000`、ログ・stdout `2026-08-30T11:30:00`) | 未設定(実時刻) | 本番では設定しない。形式不正は終了コード 2。facade / background-rerun は runner にも引き継ぐ。run_id の乱数部は注入せず、テストでは形式パターンで照合する(`cli-command-contract.yaml` `environment_variables` / `shared_rules.run_id.test_verification`) |

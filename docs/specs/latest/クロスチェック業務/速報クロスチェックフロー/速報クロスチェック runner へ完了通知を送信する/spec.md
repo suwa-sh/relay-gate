@@ -2,7 +2,7 @@
 
 ## 概要
 
-blue / green の slot runner が Runner Result(exitcode.txt)を公開した直後に、自系統の公開 function `<RAPID_CROSSCHECK_RUNNER> blue-completed|green-completed --run-id --job-id --exit-code --artifact-uri` を起動して完了結果を一方向に通知する。送信先の実体は feature flag の `RAPID_CROSSCHECK_RUNNER`(速報クロスチェック runner の絶対パス)で解決し、facade / background-rerun が環境変数で slot runner へ渡す。runner は相手側の状態や比較依頼の要否を判断せず、自 slot の中止状態(aborted.txt の有無)も判断しない(中止後に実装が走り切って exitcode.txt を公開した場合も通常どおり通知する。条件「完了通知の系統独立」)。`RAPID_CROSSCHECK_MODE` が off 以外(foreground / background。両値の挙動は同じ)のときだけ通知し、off のときは完了通知を送信せず、速報管理 DB への接続・書き込みも行わない。完了通知の送信失敗は自動検知せず、slot runner は実行ログに警告を残して Runner Result と終了コードを変更しない(条件「完了通知失敗の扱い」)。受信側(tier-rapid-crosscheck)は速報クロスチェック設定(rapid-crosscheck.env。情報「速報クロスチェック設定」)の管理 DB 接続参照名で管理 DB に接続し、引数を検証して rapid_runs の自系統の status / artifact_uri / completed_at を更新する(両系成功判定と依頼作成は UC「両系成功時に速報比較依頼を作成する」)。
+blue / green の slot runner が Runner Result(exitcode.txt)を公開した直後に、自系統の公開 function `<RAPID_CROSSCHECK_RUNNER> blue-completed|green-completed --run-id --job-id --exit-code` を起動して完了結果を一方向に通知する。完了通知で DB に入れる値は run_id / job_id / exit_code だけで、成果物のファイルパス(URI)は渡さない(worker は別ネットワークセグメントで動きファイルパスを読めないため、比較ツールへ渡す値は依頼レコードの値だけとする)。送信先の実体は feature flag の `RAPID_CROSSCHECK_RUNNER`(速報クロスチェック runner の絶対パス)で解決し、facade / background-rerun が環境変数で slot runner へ渡す。runner は相手側の状態や比較依頼の要否を判断せず、自 slot の中止状態(aborted.txt の有無)も判断しない(中止後に実装が走り切って exitcode.txt を公開した場合も通常どおり通知する。条件「完了通知の系統独立」)。`RAPID_CROSSCHECK_MODE` が off 以外(foreground / background。両値の挙動は同じ)のときだけ通知し、off のときは完了通知を送信せず、速報管理 DB への接続・書き込みも行わない。完了通知の送信失敗は自動検知せず、slot runner は実行ログに警告を残して Runner Result と終了コードを変更しない(条件「完了通知失敗の扱い」)。受信側(tier-rapid-crosscheck)は速報クロスチェック設定(rapid-crosscheck.env。情報「速報クロスチェック設定」)の管理 DB 接続参照名で管理 DB に接続し、引数を検証して rapid_runs の自系統の status / completed_at を更新する(両系成功判定と依頼作成は UC「両系成功時に速報比較依頼を作成する」)。
 
 ## データフロー
 
@@ -18,7 +18,7 @@ graph LR
     F_UC --> F_GW
   end
   subgraph RAPID["tier-rapid-crosscheck(dispatcher)"]
-    R_Pres["presentation\nSlotCompletedArgs(subcommand, run_id, job_id, exit_code, artifact_uri)"]
+    R_Pres["presentation\nSlotCompletedArgs(subcommand, run_id, job_id, exit_code)"]
     R_UC["usecase\nRegisterCompletion"]
     R_Dom["domain\nSlotResult(exit_code → SUCCEEDED / FAILED)"]
     R_Repo["repository\nRapidRunRecord"]
@@ -30,19 +30,19 @@ graph LR
     A["facade/<run_id>/<role>/exitcode.txt"]
   end
   subgraph DB["内部データストア: ジョブキュー兼管理 DB(RDB)"]
-    T_RUN[("rapid_runs\nblue_status / green_status\nblue_artifact_uri / green_artifact_uri\nblue_completed_at / green_completed_at")]
+    T_RUN[("rapid_runs\nblue_status / green_status\nblue_completed_at / green_completed_at")]
   end
   A -->|"ファイル読み取り"| F_Repo
-  F_GW -->|"$RAPID_CROSSCHECK_RUNNER blue-completed|green-completed --run-id --job-id --exit-code --artifact-uri"| R_Pres
-  R_GW -->|"SQL UPDATE rapid_runs SET {role}_status=?, {role}_artifact_uri=?, {role}_completed_at=? WHERE run_id=?"| T_RUN
+  F_GW -->|"$RAPID_CROSSCHECK_RUNNER blue-completed|green-completed --run-id --job-id --exit-code"| R_Pres
+  R_GW -->|"SQL UPDATE rapid_runs SET {role}_status=?, {role}_completed_at=? WHERE run_id=?"| T_RUN
   R_Pres -->|"終了コード 0 / 2 / 3 / 6"| F_GW
 ```
 
 | レイヤー | データモデル | 変換内容 |
 |---------|------------|---------|
 | facade usecase | PublishRunnerResult | exitcode.txt 公開後、RapidModeGuard が off 以外(foreground / background)のときだけ gateway を呼ぶ。RAPID_CROSSCHECK_MODE / RAPID_CROSSCHECK_RUNNER は facade / background-rerun が feature-flag.env から環境変数で渡す(runner 自身は feature-flag.env を読まない) |
-| facade gateway | SlotCompletedNotice(run_id, job_id, exit_code, artifact_uri) | 引数へシリアライズして `$RAPID_CROSSCHECK_RUNNER <role>-completed` を同期起動。終了コードを実行ログに記録し、slot runner 自身の終了コードには反映しない(条件「完了通知失敗の扱い」) |
-| rapid presentation | SlotCompletedArgs | サブコマンド・引数の検証(欠落・形式・exit_code 整数・artifact_uri のスキーム `file://` と絶対パス形式。存在確認はしない) |
+| facade gateway | SlotCompletedNotice(run_id, job_id, exit_code) | 引数へシリアライズして `$RAPID_CROSSCHECK_RUNNER <role>-completed` を同期起動。終了コードを実行ログに記録し、slot runner 自身の終了コードには反映しない(条件「完了通知失敗の扱い」) |
+| rapid presentation | SlotCompletedArgs | サブコマンド・引数の検証(欠落・形式・exit_code 整数) |
 | rapid domain | SlotResult | exit_code 0 → SUCCEEDED、非 0 → FAILED |
 | rapid repository | RapidRunRecord | 自系統列の条件付き UPDATE(先勝ち。既に値があれば上書きせず終了コード 0) |
 
@@ -73,17 +73,17 @@ sequenceDiagram
     FDom-->>FUC: false
     FUC-->>Sched: 完了通知を送らず終了(管理 DB に触れない)
   else off 以外(foreground / background)
-    FUC->>FGW: notify_slot_completed(role, run_id, job_id, exit_code, artifact_uri)
-    FGW->>RPres: $RAPID_CROSSCHECK_RUNNER {role}-completed --run-id ... --job-id ... --exit-code ... --artifact-uri ...
+    FUC->>FGW: notify_slot_completed(role, run_id, job_id, exit_code)
+    FGW->>RPres: $RAPID_CROSSCHECK_RUNNER {role}-completed --run-id ... --job-id ... --exit-code ...
     RPres->>RPres: 引数検証
     alt 引数不正
       RPres-->>FGW: stderr error / 終了コード 2
     end
-    RPres->>RUC: RegisterCompletion(role, run_id, job_id, exit_code, artifact_uri)
+    RPres->>RUC: RegisterCompletion(role, run_id, job_id, exit_code)
     RUC->>RGW: BEGIN(dispatcher の判定・INSERT と同一トランザクション)
     RUC->>RDom: slot_status_from_exit_code(exit_code)
     RDom-->>RUC: SUCCEEDED / FAILED
-    RUC->>RRepo: rapid_run_update_slot(run_id, role, status, artifact_uri, now)
+    RUC->>RRepo: rapid_run_update_slot(run_id, role, status, now)
     RRepo->>RGW: UPDATE rapid_runs ... WHERE run_id=? AND {role}_status IS NULL
     RGW->>DB: SQL
     DB-->>RGW: 更新行数
@@ -101,7 +101,7 @@ sequenceDiagram
 
 | バリエーション名 | 値 | 処理内容 | 適用 tier | 適用箇所 |
 |----------------|---|---------|----------|---------|
-| 実装スロット | blue | `blue-completed` を起動し、`blue_status` / `blue_artifact_uri` / `blue_completed_at` を更新する | tier-facade / tier-rapid-crosscheck | notify_slot_completed / rapid_run_update_slot |
+| 実装スロット | blue | `blue-completed` を起動し、`blue_status` / `blue_completed_at` を更新する | tier-facade / tier-rapid-crosscheck | notify_slot_completed / rapid_run_update_slot |
 | 実装スロット | green | `green-completed` を起動し、`green_*` 列を更新する | tier-facade / tier-rapid-crosscheck | notify_slot_completed / rapid_run_update_slot |
 | 速報クロスチェックモード | foreground / background | 完了通知を送信する(両値で同じ挙動。判定は「off か off 以外か」) | tier-facade | publish_runner_result |
 | 速報クロスチェックモード | off | 完了通知を送信せず、管理 DB へ接続・書き込みしない | tier-facade | publish_runner_result |
@@ -124,7 +124,6 @@ sequenceDiagram
 | 計算名 | 入力情報 | 計算式/ロジック | 出力情報 | 適用 tier |
 |--------|---------|---------------|---------|----------|
 | slot 結果の判定 | exit_code | 0 → SUCCEEDED、非 0 → FAILED | rapid_runs.{role}_status | tier-rapid-crosscheck |
-| artifact_uri の組み立て | RELAY_GATE_ARTIFACT_ROOT, run_id, role | `file://<RELAY_GATE_ARTIFACT_ROOT>/facade/<run_id>/<role>` | 通知引数 `--artifact-uri` | tier-facade |
 | 完了日時 | 通知受信時刻 | ホストのローカルタイムゾーンの ISO 8601 秒精度(タイムゾーン指示子なし。run_id の時刻部と同じ時刻軸) | rapid_runs.{role}_completed_at | tier-rapid-crosscheck |
 | 管理 DB 接続先 | `RAPID_DB_CONN_REF`(速報クロスチェック設定 rapid-crosscheck.env の属性「管理 DB 接続参照名」) | 参照名から接続情報を解決する(値そのものは設定ファイルに置かない) | 受信側 gateway の接続先 | tier-rapid-crosscheck |
 
@@ -142,7 +141,7 @@ sequenceDiagram
 | BUC | 速報クロスチェックフロー | この UC を含む BUC(アクティビティ: 完了通知の送信) |
 | アクター | 運用者 | 受益者(操作なし。自動) |
 | 情報 | 完了通知 | 送信・受信する |
-| 情報 | Runner Result | exit_code と artifact_uri の出所 |
+| 情報 | Runner Result | exit_code の出所 |
 | 情報 | slot 実行 | 通知元の slot |
 | 情報 | feature flag 設定 | RAPID_CROSSCHECK_MODE(foreground / background / off)と RAPID_CROSSCHECK_RUNNER(完了通知の送信先)の参照(facade / background-rerun が環境変数で渡す) |
 | 情報 | 実行ログ | 通知の開始・終了と `WARN completion notice failed` を残す |
@@ -178,8 +177,8 @@ Feature: 速報クロスチェック runner へ完了通知を送信する
     And rapid_runs に run_id=20260830T113000-JOB001-3f9a1c2e, blue_status=NULL, green_status=NULL の行がある
     And facade/20260830T113000-JOB001-3f9a1c2e/blue/exitcode.txt の中身が `0` である
     When blue runner が実装実行を終えて Runner Result を公開する
-    Then blue runner は `/opt/relay-gate/rapid-crosscheck-runner.sh blue-completed --run-id 20260830T113000-JOB001-3f9a1c2e --job-id JOB001 --exit-code 0 --artifact-uri file:///var/relay-gate/facade/20260830T113000-JOB001-3f9a1c2e/blue` を起動する(送信先は環境変数 RAPID_CROSSCHECK_RUNNER の値)
-    And rapid_runs の blue_status は `SUCCEEDED`、blue_artifact_uri は `file:///var/relay-gate/facade/20260830T113000-JOB001-3f9a1c2e/blue`、blue_completed_at はローカル ISO 8601(タイムゾーン指示子なし)の値である
+    Then blue runner は `/opt/relay-gate/rapid-crosscheck-runner.sh blue-completed --run-id 20260830T113000-JOB001-3f9a1c2e --job-id JOB001 --exit-code 0` を起動する(送信先は環境変数 RAPID_CROSSCHECK_RUNNER の値。成果物のファイルパスは引数に含まれない)
+    And rapid_runs の blue_status は `SUCCEEDED`、blue_completed_at はローカル ISO 8601(タイムゾーン指示子なし)の値である
     And green_status は NULL のままである
 
   Scenario: 設定された参照名で管理 DB に接続して完了結果を登録する(SPEC-005-06)
@@ -194,7 +193,7 @@ Feature: 速報クロスチェック runner へ完了通知を送信する
     Given feature flag 設定に BLUE_MODE=foreground GREEN_MODE=background RAPID_CROSSCHECK_MODE=foreground RAPID_CROSSCHECK_RUNNER=/opt/relay-gate/rapid-crosscheck-runner.sh が定義されている
     And rapid_runs に run_id=20260830T113000-JOB001-3f9a1c2e, green_status=NULL の行がある
     When green runner が exit_code=0 で実装実行を終えて Runner Result を公開する
-    Then green runner は `/opt/relay-gate/rapid-crosscheck-runner.sh green-completed --run-id 20260830T113000-JOB001-3f9a1c2e --job-id JOB001 --exit-code 0 --artifact-uri file:///var/relay-gate/facade/20260830T113000-JOB001-3f9a1c2e/green` を起動する
+    Then green runner は `/opt/relay-gate/rapid-crosscheck-runner.sh green-completed --run-id 20260830T113000-JOB001-3f9a1c2e --job-id JOB001 --exit-code 0` を起動する
     And rapid_runs の green_status は `SUCCEEDED` になる(background のときと同じ)
 
   Scenario: green 未完了でも blue の通知は完結する(SPEC-005-01)
@@ -207,7 +206,7 @@ Feature: 速報クロスチェック runner へ完了通知を送信する
     Given RAPID_CROSSCHECK_MODE=background RAPID_CROSSCHECK_RUNNER=/opt/relay-gate/rapid-crosscheck-runner.sh で run_id=20260830T113000-JOB001-3f9a1c2e の green slot(background)に対して運用者が abort-green を実行し、facade/20260830T113000-JOB001-3f9a1c2e/green/aborted.txt が公開されている
     And 中止後も green の実装スクリプトが走り切り、facade/20260830T113000-JOB001-3f9a1c2e/green/exitcode.txt が `0` で公開された
     When green runner が Runner Result の公開に続けて完了通知を送る
-    Then green runner は aborted.txt の有無を判断せず `/opt/relay-gate/rapid-crosscheck-runner.sh green-completed --run-id 20260830T113000-JOB001-3f9a1c2e --job-id JOB001 --exit-code 0 --artifact-uri file:///var/relay-gate/facade/20260830T113000-JOB001-3f9a1c2e/green` を通常どおり起動する
+    Then green runner は aborted.txt の有無を判断せず `/opt/relay-gate/rapid-crosscheck-runner.sh green-completed --run-id 20260830T113000-JOB001-3f9a1c2e --job-id JOB001 --exit-code 0` を通常どおり起動する
     And rapid_runs.green_status は `SUCCEEDED` になり、比較依頼の要否は green runner ではなく速報クロスチェック runner(dispatcher)が判断する(条件「中止済み run の比較依頼作成除外」。UC「両系成功時に速報比較依頼を作成する」)
 ```
 
@@ -232,7 +231,7 @@ Feature: 速報クロスチェック runner へ完了通知を送信する
   Scenario: 通知失敗を運用者が同じ引数の再実行で復旧する(SPEC-005-01)
     Given run_id=20260830T113000-JOB001-3f9a1c2e の green の完了通知が終了コード 6 で失敗し、rapid_runs.green_status が NULL、exitcode.txt が `0` である
     And 管理 DB が復旧している
-    When 運用者が `/opt/relay-gate/rapid-crosscheck-runner.sh green-completed --run-id 20260830T113000-JOB001-3f9a1c2e --job-id JOB001 --exit-code 0 --artifact-uri file:///var/relay-gate/facade/20260830T113000-JOB001-3f9a1c2e/green` を再実行する
+    When 運用者が `/opt/relay-gate/rapid-crosscheck-runner.sh green-completed --run-id 20260830T113000-JOB001-3f9a1c2e --job-id JOB001 --exit-code 0` を再実行する
     Then 終了コードは 0 で rapid_runs.green_status は `SUCCEEDED` になり、green の Runner Result と業務ジョブのジョブスケジューラ応答は変わらない
     And 同じコマンドをもう 1 回実行しても終了コードは 0 で rapid_runs の green_* 列は変わらない(先勝ち。完了結果は一度だけ登録される)
 

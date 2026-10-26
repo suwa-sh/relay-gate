@@ -13,7 +13,7 @@ x_cli_commands:
       - name: "--feature-flag"
         type: "string"
         required: false
-        description: "検証する feature flag env ファイルのパス。検証種別オプション(--feature-flag / --job-map / --crosscheck-job-map / --target-catalog)のうちちょうど 1 つを指定する(排他。0 個または 2 個以上は終了コード 2)"
+        description: "検証する feature flag env ファイルのパス。検証種別オプション(--feature-flag / --job-map / --rapid-crosscheck / --final-crosscheck)のうちちょうど 1 つを指定する(排他。0 個または 2 個以上は終了コード 2)"
       - name: "--verbose"
         type: "boolean"
         required: false

@@ -112,7 +112,7 @@ results:
     requirement_id: "REQ-CFG-001"
     status: "conformant"
     evidence: "/etc/relay-gate/への配置。facade起動時に毎回読み込む前提で設計"
-    notes: "feature-flag.env(9 キー)、ジョブマップ系 CSV(<role>-job-map.csv / crosscheck-job-map.csv / target-catalog.csv)、hang-detector.env、rapid-crosscheck.env(速報有効時のみ。facade / runner / worker が起動のたびに読む)を配置。設定版ファイルは持たない"
+    notes: "feature-flag.env(9 キー)、ジョブマップ CSV(<role>-job-map.csv)、hang-detector.env、rapid-crosscheck.env(速報有効時のみ。速報比較ツールの起動コマンド 1 行を含む。facade / runner / 速報 worker が起動のたびに読む)、final-crosscheck.env(確報比較ツールの起動コマンド 1 行と確報 worker の DB 接続参照。確報 worker が読む)を配置。比較対象の定義は比較ツール側が持ち、ジョブ ID ごとの比較定義 CSV・対象カタログは配置しない。設定版ファイルは持たない"
     deviation_ref: ""
   - canonical_element_id: "product.storage.config_store"
     requirement_id: "REQ-CFG-002"

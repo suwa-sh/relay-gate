@@ -12,6 +12,10 @@
 
 残存する RDRA への変更要望は無い(#16 は前イベントで解消済み)。後工程・スキルへの変更要求(SR-*)も残存しない(SR-001 / SR-002 は本イベントで解消済み)。
 
+### 2026-10-10 の実装からの変更要求(クロスチェック簡素化)による整理
+
+2026-10-10 の実装からの変更要求で、クロスチェックを元の方針資料の形(runner → DB ← worker → 比較ツール。worker は依頼レコードと自身の設定だけで起動)へ戻す簡素化を行った。これに伴い、下記「解消済み」に歴史的記録として残る次の構造はいずれも廃止された(クロスチェックのジョブマップ・対象カタログの CSV、別レコードの比較結果テーブルと比較種別・差分件数・レポート URI、確報の処理日・カタログ版の引数)。これらの廃止は要件側で `dist-requirements` 経由で取り込むため、本ファイル(Spec 生成時の RDRA への変更要望)には新たな未解決の RDRA 変更要望を生じない。下記の歴史的記録は過去の解決事実を残すためのものであり、各行に「(2026-10-10 の簡素化で廃止)」の注記を付けた。
+
 ## 解消済み(feedback 20260905_todo_resolution / 20260907_todo_followup / 20260907_abort_consistency / 20260908_slot_status_wording で RDRA / USDM / arch に反映済み、または方針資料側で対応済み)
 
 | 旧 # | 対象 | 反映先 | Spec 側の対応 |
@@ -34,7 +38,7 @@
 | 8 | 完了通知失敗の検知の要否 | CR-005: 条件「完了通知失敗の扱い」を新設(自動検知しない。運用者が同一引数で再実行) | 「(spec 追加 / スコープ外)」注記を条件名参照へ置換 |
 | 10 | USDM SPEC-001-01 の feature flag キー | CR-001: 契約側を元資料の 9 キーへ戻す(USDM 本文が正) | `config_files[feature-flag.env]` を 9 キーに変更、`CONFIG_VERSION` 削除 |
 | 11 | 状態「監視状態」の中止済み終端 / バリエーション「ハング検知判定結果」の値集合 | CR-004 / CR-008: 条件「ハング検知判定」に aborted.txt の終端を追記、判定結果を 6 値に統一 | `hang_judgement` 6 値の注記を「RDRA 準拠」に変更 |
-| 12 | 条件「comparison_results の登録条件」 | CR-011: 条件「比較結果の登録条件」を新設 | 条件名を改名し「(spec 追加)」注記を除去 |
+| 12 | 条件「比較結果の登録条件」(当時の別レコードの比較結果テーブルの登録条件) | CR-011: 条件「比較結果の登録条件」を新設 | 条件名を改名し「(spec 追加)」注記を除去。(2026-10-10 の簡素化で廃止: 別レコードの比較結果テーブルは削除し、速報の結果は依頼レコードの stdout / stderr / exit_code で参照する) |
 
 ## 対応方針
 
@@ -48,4 +52,4 @@
 | # | 由来 | 対象 | 変更要求(要約) | 解消 |
 |---|------|------|---------|------|
 | SR-001 | 20260907_024000 round-1 F(minor) | dist-spec スキーマ `schema-spec-event.json`(`use_cases[]`) | `use_cases[]` に `usdm: [{req_id, spec_id, scenarios: [..]}]` を追加し、spec.md「関連 USDM」表と同内容を YAML にも出す。`validateSpecEvent.js` で spec_id の USDM 実在チェックを行う | distillery 1.15.1 で対応済み。本イベント(CR-c770d8f0-020)で `spec-event.yaml` の 32 UC すべてに `usdm[]`(133 行、Scenario 参照 210 件)を投入し、各 spec.md「関連 USDM」表の「対応 BDD Scenario」列を実 Scenario の完全名(SPEC 接尾辞込み)に整えた。機械照合の正本は `spec-event.yaml` の `use_cases[].usdm`、`usdm-acceptance-matrix.md` は usdm[] から再集計(受け入れ条件 122 / 振る舞い SPEC 49 / 49 で不変) |
-| SR-002 | 20260907_024000 round-1 F(minor) | dist-spec スキーマ `schema-rdb-schema.json`(`columns[]`) | `columns[]` に任意の `enum: [..]` を追加し、`rdb-schema.yaml` の列挙列に機械可読な enum を持たせる。`cli-command-contract.yaml` `shared_rules.state_codes` はそれを参照する形にして二重管理を解消する | distillery 1.15.1 で対応済み。本イベント(CR-c770d8f0-021 / 022)で `rdb-schema.yaml` の列挙列 14 列に `enum[]`(RDRA 状態.tsv / バリエーション.tsv 由来の値。comparison_type は [job, full] = 利用者決定 D2 A)を投入し、`shared_rules.state_codes` の DB 対応 6 項目を `{derived_from: {table, column}, values: [...]}`(利用者決定 D1 A。values は enum の複製、不一致は rdb-schema を正)に改めた。列挙値の正本は `rdb-schema.yaml` の enum |
+| SR-002 | 20260907_024000 round-1 F(minor) | dist-spec スキーマ `schema-rdb-schema.json`(`columns[]`) | `columns[]` に任意の `enum: [..]` を追加し、`rdb-schema.yaml` の列挙列に機械可読な enum を持たせる。`cli-command-contract.yaml` `shared_rules.state_codes` はそれを参照する形にして二重管理を解消する | distillery 1.15.1 で対応済み。本イベント(CR-c770d8f0-021 / 022)で `rdb-schema.yaml` の列挙列に `enum[]`(RDRA 状態.tsv / バリエーション.tsv 由来の値)を投入し、`shared_rules.state_codes` の DB 対応項目を `{derived_from: {table, column}, values: [...]}`(利用者決定 D1 A。values は enum の複製、不一致は rdb-schema を正)に改めた。列挙値の正本は `rdb-schema.yaml` の enum。(2026-10-10 の簡素化で廃止: 当時投入した列挙のうち、別レコードの比較結果テーブルの比較種別・比較結果ステータスの列挙は削除された。残る列挙列はドリフトテストで追従する) |

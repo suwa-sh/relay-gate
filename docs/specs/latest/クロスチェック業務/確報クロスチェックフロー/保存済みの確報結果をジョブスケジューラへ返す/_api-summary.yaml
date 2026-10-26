@@ -6,7 +6,7 @@ x_cli_commands:
   - name: "final-crosscheck-runner.sh"
     tier: "tier-final-crosscheck"
     role: "uses"
-    synopsis: "final-crosscheck-runner.sh --business-date <YYYY-MM-DD> --catalog-version <ver>(中継部分。コマンド契約の正本は UC「確報比較依頼を登録して終端状態まで待機する」)"
+    synopsis: "final-crosscheck-runner.sh [--verbose] [--help](中継部分。業務上の引数なし。コマンド契約の正本は UC「確報比較依頼を登録して終端状態まで待機する」)"
     invoked_by: "ジョブスケジューラ(確報クロスチェックジョブ定義)"
     args: []
     options: []

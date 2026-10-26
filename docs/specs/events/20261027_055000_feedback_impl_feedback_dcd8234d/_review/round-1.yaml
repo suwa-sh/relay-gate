@@ -1,0 +1,61 @@
+round: 1
+findings:
+  - id: R-1
+    viewpoint: 4
+    severity: major
+    target: "spec-event.yaml"
+    claim: >-
+      確報 UC「比較ツールで日次全量比較を実行して結果を保存する」の
+      spec-event.yaml usdm[] に REQ-011 / SPEC-011-03 の scenario
+      「対象一覧を成果物に記録する(SPEC-011-03)」が残っているが、同 UC の
+      spec.md には同名の Scenario: が存在せず、spec.md の「関連 USDM」表にも
+      SPEC-011-03 行が無い。三者(spec.md / tier / spec-event.yaml)が一致しない。
+      さらにこの scenario は簡素化(CR-dcd8234d-007 / spec-decision-016・017)で
+      廃止した「成果物ファイル保存」の挙動を指しており、現仕様の
+      「worker 側で成果物ファイルを保存しない」(spec.md 概要)と矛盾する stale 参照。
+    evidence: >-
+      spec-event.yaml:116 に
+      - "対象一覧を成果物に記録する(SPEC-011-03)" がある(REQ-011 / SPEC-011-03)。
+      一方
+      クロスチェック業務/確報クロスチェックフロー/比較ツールで日次全量比較を実行して結果を保存する/spec.md
+      の Scenario は exit_code=0 で SUCCEEDED になる(SPEC-006-02) /
+      exit_code=3 で FAILED になる(SPEC-006-02) /
+      依頼レコードと設定以外の入力を読まない(SPEC-006-02) /
+      起動コマンドは引数の並びに分けてそのまま渡し、シェルに解釈させない /
+      確報の起動コマンドが絶対パスで実行可能なら valid になる /
+      起動失敗でも依頼を FAILED にする(SPEC-003-03) /
+      絶対パスでない起動コマンドは invalid になる /
+      lease 失効で別 worker に回収された依頼は RUNNING にしない /
+      比較中に ABORTED された依頼の終端 UPDATE は 0 件になる の 9 件のみで、
+      「対象一覧を成果物に記録する」は含まれない。spec.md の「関連 USDM」表(163-168 行)も
+      REQ-006 / REQ-007 x2 / REQ-003 のみで SPEC-011-03 行が無い。
+      spec.md の注記は「機械照合は spec-event.yaml の scenarios[] を使う」としており、
+      存在しない scenario 名を機械照合に渡すと SPEC-011-03 の ATDD/BDD マッピングが
+      このUCで解決できない(前イベント 20261010_204000 の spec-event.yaml:121 にも
+      同じ stale 参照があり、CR-008 ではなく CR-007 簡素化時の取りこぼしが
+      本イベントへ引き継がれたもの)。
+    suggested_fix: >-
+      確報 UC「比較ツールで日次全量比較を実行して結果を保存する」の
+      spec-event.yaml usdm[] から REQ-011 / SPEC-011-03 の
+      「対象一覧を成果物に記録する(SPEC-011-03)」エントリを削除する
+      (成果物記録は簡素化で廃止済みで、このUCは成果物ファイルを保存しない)。
+      SPEC-011-03 の acceptance が別UC「確報比較依頼を登録して終端状態まで待機する」
+      (spec-event.yaml の同 SPEC-011-03 → 既存 Scenario にマップ)で充足されていることを確認し、
+      本UCには載せない。spec.md の関連USDM表と spec-event.yaml を一致させる。
+      ※ CR-dcd8234d-008(argv 規則)自体は、CLI 契約 shared_rules.compare_command_argv の
+      1 か所集約・速報/確報 worker と validate-config.sh の参照・{params} 展開と違反文言・
+      置換前検査・シェル非解釈の明記・BDD(記号/空白/$(...) の 1 引数化、job_id/parameters 形式違反)・
+      「置換後の文字列をコマンドとして起動する」書き方の除去(normative spec に grep 0 件)まで
+      契約と 3 UC(spec.md / tier / spec-event.yaml)で三者一致しており、完了条件 1〜7 を満たす。
+resolved:
+  - id: R-1
+    resolution: fixed
+    by: orchestrator
+    note: >-
+      確報 UC「比較ツールで日次全量比較を実行して結果を保存する」は usdm-acceptance-matrix.md(SPEC-011-03 の
+      受け入れ「結果列を依頼レコードへ保存」= UC-15 で covered)上この UC に正しく対応するため、エントリは残し、
+      stale な scenario 名「対象一覧を成果物に記録する(SPEC-011-03)」(簡素化で廃止した成果物保存を指す)を、
+      実在し結果列保存を示す「exit_code=0 で SUCCEEDED になる(SPEC-006-02)」へ是正した。あわせて spec.md の関連 USDM 表に
+      REQ-011 / SPEC-011-03 行(同 scenario 参照)を追加し、spec.md / tier / spec-event.yaml の三者を一致させた。
+      成果物ファイル保存の挙動を指す記述は残していない。
+

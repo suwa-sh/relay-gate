@@ -6,7 +6,7 @@ x_cli_commands:
   - name: "rapid-crosscheck-runner.sh blue-completed|green-completed"
     tier: "tier-rapid-crosscheck"
     role: "defines"
-    synopsis: "rapid-crosscheck-runner.sh blue-completed|green-completed --run-id <run_id> --job-id <job_id> --exit-code <n> --artifact-uri <uri> [--verbose] [--help]"
+    synopsis: "rapid-crosscheck-runner.sh blue-completed|green-completed --run-id <run_id> --job-id <job_id> --exit-code <n> [--verbose] [--help]"
     invoked_by: "内部呼び出し(slot runner。RAPID_CROSSCHECK_MODE が off 以外のとき。送信先実体は feature flag の RAPID_CROSSCHECK_RUNNER)"
     args:
       - name: "subcommand"
@@ -29,11 +29,6 @@ x_cli_commands:
         required: true
         default: ""
         description: "公開済み exitcode.txt の値(0〜255 の整数。範囲外・非整数は終了コード 2)"
-      - name: "--artifact-uri"
-        type: "string"
-        required: true
-        default: ""
-        description: "成果物ディレクトリ URI(file:// 絶対パス)"
       - name: "--verbose"
         type: "boolean"
         required: false
@@ -69,7 +64,7 @@ async_events:
     channel: "slot-completed"
     direction: "publish"
     message: "SlotCompletedNotice"
-    summary: "slot runner(tier-facade)が exitcode.txt 公開後に $RAPID_CROSSCHECK_RUNNER <role>-completed を同期起動して完了結果(run_id, job_id, exit_code, artifact_uri)を送る。RAPID_CROSSCHECK_MODE が off 以外(foreground / background)のとき publish し、off では publish しない。送信失敗は自動検知せず実行ログの WARN にのみ残す"
+    summary: "slot runner(tier-facade)が exitcode.txt 公開後に $RAPID_CROSSCHECK_RUNNER <role>-completed を同期起動して完了結果(run_id, job_id, exit_code)を送る。RAPID_CROSSCHECK_MODE が off 以外(foreground / background)のとき publish し、off では publish しない。送信失敗は自動検知せず実行ログの WARN にのみ残す"
   - name: "slot-completed"
     channel: "slot-completed"
     direction: "subscribe"
@@ -89,7 +84,4 @@ schemas:
         required: true
       - name: "exit_code"
         type: "integer"
-        required: true
-      - name: "artifact_uri"
-        type: "string"
         required: true

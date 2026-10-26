@@ -1,4 +1,4 @@
-# digest of nfr/latest/nfr-grade.yaml section model_system (L6-8); source_sha256: 5a7c72400cfc8c65de278dc284e656a73d60b643a91f69ecfa44688a0824b653
+# digest of nfr/latest/nfr-grade.yaml section model_system (L6-8); source_sha256: 0283ce5aa1c4ada1b8836ec191174c23e526e329f29bc266dcc8d2137ea3accf
 # 派生物。正本は nfr-grade.yaml。編集しない
 model_system:
   type: "model1"

@@ -6,7 +6,7 @@ x_cli_commands:
   - name: "rapid-crosscheck-runner.sh blue-completed|green-completed"
     tier: "tier-rapid-crosscheck"
     role: "uses"
-    synopsis: "rapid-crosscheck-runner.sh blue-completed|green-completed --run-id <run_id> --job-id <job_id> --exit-code <n> --artifact-uri <uri> [--verbose] [--help]"
+    synopsis: "rapid-crosscheck-runner.sh blue-completed|green-completed --run-id <run_id> --job-id <job_id> --exit-code <n> [--verbose] [--help]"
     invoked_by: "内部呼び出し(slot runner。RAPID_CROSSCHECK_MODE が off 以外(foreground / background)のとき)。コマンド定義(オプション・終了コード)は UC「速報クロスチェック runner へ完了通知を送信する」が持つ。本 UC は同一起動内の dispatcher フローで stdout 3 行を追記する"
     args:
       - name: "subcommand"
@@ -31,7 +31,7 @@ async_events:
     channel: "rapid-crosscheck-requests"
     direction: "publish"
     message: "RapidCrosscheckRequestMessage"
-    summary: "両系成功時に rapid_crosscheck_requests へ status=REQUESTED の行を run_id 主キーで 1 件 INSERT する(RDB ジョブキュー)。worker が subscribe する"
+    summary: "両系成功時に rapid_crosscheck_requests へ status=REQUESTED の行を run_id 主キーで 1 件 INSERT する(RDB ジョブキュー)。parameters(parallel_runs から複製)/ blue_exit_code=0 / green_exit_code=0 を入れる。worker が subscribe する"
 schemas:
   - name: "RapidCrosscheckRequestMessage"
     properties:
@@ -40,6 +40,15 @@ schemas:
         required: true
       - name: "job_id"
         type: "string"
+        required: true
+      - name: "parameters"
+        type: "string"
+        required: true
+      - name: "blue_exit_code"
+        type: "integer"
+        required: true
+      - name: "green_exit_code"
+        type: "integer"
         required: true
       - name: "status"
         type: "string"

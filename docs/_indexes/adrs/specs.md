@@ -21,3 +21,6 @@
 | 13 | [ジョブマップの work_dir / script は空でなければ受理し、パスの形式(Linux 絶対 / Windows ドライブ文字 / 相対)を検査しない。bash の最低版は 5.0、性能は NFR 共通前提を参照する](../../specs/events/20260921_100000_feedback_impl_feedback_eff24f55/decisions/spec-decision-013.yaml) | approved |
 | 14 | [設定ファイル検証の重複報告の lines= は、そのキーが現れた全行の物理行番号を初出行を含めて出現順に並べる](../../specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/decisions/spec-decision-014.yaml) | approved |
 | 15 | [参照名の形式に合わない credential_ref は理由を問わず同じ warn を出して受理し、credential_ref の値は診断行に一切出さない](../../specs/events/20260923_112000_feedback_impl_feedback_eff24f55_cycle2/decisions/spec-decision-015.yaml) | approved |
+| 16 | [クロスチェックの比較定義は比較ツール起動コマンド 1 行とし、設定は env に置く。worker は DB の依頼レコードと自身の設定だけで起動する](../../specs/events/20261010_204000_feedback_impl_feedback_dcd8234d/decisions/spec-decision-016.yaml) | approved |
+| 17 | [validate-config.sh は facade 単独で全設定ファイルを検証し、起動コマンドの検証はコマンド部分と {job_id} の 2 点だけにする](../../specs/events/20261010_204000_feedback_impl_feedback_dcd8234d/decisions/spec-decision-017.yaml) | approved |
+| 18 | [比較ツール起動コマンドを引数の並びとして解釈・起動する共通規則を CLI 契約に 1 か所で定める(文字列をシェルに解釈させない)](../../specs/events/20261027_055000_feedback_impl_feedback_dcd8234d/decisions/spec-decision-018.yaml) | approved |
