@@ -1,0 +1,20 @@
+event_id: 20261027_084500_s2_test_scaffold_completed_dcd8234d
+type: stage_completed
+uc_id: dcd8234d
+stage: S2
+payload:
+  manifest_sha256: 1be633861c44014ebfcfe9bf065e0d15167bbfe5f89d01553accdef7ba99d19c
+  manifest_projection: v2
+  mode: initial
+  red_baseline: pass
+  tiers:
+  - tier-facade
+  counts:
+    uc_bdd_scenarios: 7
+    tier_bdd_scenarios: 5
+    tdd_cases: 7
+    atdd_scenarios: 6
+  issues:
+  - docs/impl/latest/dcd8234d/issues/20261027_083500_cross-uc-scenarios.md
+  - docs/impl/latest/dcd8234d/issues/20261027_083600_params-rule-vs-usdm-two-checks.md
+created_at: '2026-10-27T08:45:00+09:00'

@@ -21,7 +21,10 @@ stages:
     status: done
     event: 20261027_082600_s1_uc_init_completed_dcd8234d
   S2_test_scaffold:
-    status: pending
+    status: done
+    red_baseline: pass
+    mode: initial
+    event: 20261027_084500_s2_test_scaffold_completed_dcd8234d
   S3_contracts:
     status: pending
   S4_tier_impl:

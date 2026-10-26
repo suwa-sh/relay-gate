@@ -1,58 +1,44 @@
 # source: docs/specs/latest/適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/spec.md#E2E完了条件(BDD)
-# 転写: 正常系・異常系の 2 ブロックを意訳せず結合(S2 test-scaffold 生成。uc_id=dcd8234d)
+# 転写: 正常系・異常系の 2 ブロックを意訳せず結合(S2 test-scaffold 生成。uc_id=dcd8234d。spec event 20261027_055000_feedback_impl_feedback_dcd8234d)
 Feature: クロスチェックのジョブマップと比較定義を定義する
 
-  Scenario: 比較定義と対象カタログを検証する(SPEC-004-01)
-    Given /etc/relay-gate/crosscheck-job-map.csv の内容が次である
+  Scenario: 速報の起動コマンドを検証する(SPEC-004-01)
+    Given /etc/relay-gate/rapid-crosscheck.env の内容が次である
       """
-      # exit_code_contract=0:OK,3:NG,6:ERROR
-      # target_catalog_path=/etc/relay-gate/target-catalog.csv
-      # catalog_version=v1
-      job_id,comparison_type,compare_targets,compare_command,compare_options,definition_version
-      JOB001,job,output.csv,/opt/compare/compare.sh,--blue {blue} --green {green},v1
-      JOB002,job,summary.tsv,/opt/compare/compare-v2.sh,--blue {blue} --green {green} --ignore-header,v1
+      RAPID_DB_CONN_REF=rapid_db
+      RAPID_COMPARE_COMMAND=/opt/compare/compare.sh --job {job_id} --run {run_id}
       """
-    And /opt/compare/compare.sh と /opt/compare/compare-v2.sh が実行可能である
-    And /etc/relay-gate/target-catalog.csv の内容が次である
-      """
-      catalog_version,target_type,target_identifier,compare_condition,business_date_handling
-      v1,table,SALES_DAILY,key=sales_id,column=business_date
-      v1,file,/data/out/summary_{business_date}.tsv,-,filename
-      """
-    When 基盤適用設計者が `validate-config.sh --crosscheck-job-map /etc/relay-gate/crosscheck-job-map.csv` を実行する
-    And 続けて `validate-config.sh --target-catalog /etc/relay-gate/target-catalog.csv` を実行する
-    Then 1 回目は終了コード 0 で stdout に `config=crosscheck-job-map`、`path: /etc/relay-gate/crosscheck-job-map.csv`、`rows=2`、`target_catalog_path: /etc/relay-gate/target-catalog.csv`、`catalog_version=v1`、`exit_code_contract=0:OK,3:NG,6:ERROR`、`status=valid` がこの順で出る
-    And 2 回目は終了コード 0 で stdout に `config=target-catalog`、`path: /etc/relay-gate/target-catalog.csv`、`rows=2`、`catalog_versions=v1`、`tables=1`、`files=1`、`status=valid` がこの順で出る
+    And /opt/compare/compare.sh が実行可能である
+    When 基盤適用設計者が `validate-config.sh --rapid-crosscheck /etc/relay-gate/rapid-crosscheck.env` を実行する
+    Then 終了コード 0 で stdout に `config=rapid-crosscheck`、`path: /etc/relay-gate/rapid-crosscheck.env`、`command_path: /opt/compare/compare.sh`、`has_job_id_placeholder=true`、`status=valid` がこの順で出る
     And 管理 DB への接続は行われず、relay-gate のスクリプトは変更されていない
 
-  Scenario: job_id ごとに比較定義を差し替えて検証する
-    Given crosscheck-job-map.csv の JOB002 行の compare_command を /opt/compare/compare-v3.sh に変更し、実行可能である
-    When `validate-config.sh --crosscheck-job-map /etc/relay-gate/crosscheck-job-map.csv` を実行する
-    Then 終了コード 0 で `status=valid` が出て、JOB001 の定義は変更されていない
+  Scenario: 起動コマンドを差し替えて検証する
+    Given rapid-crosscheck.env の RAPID_COMPARE_COMMAND を `/opt/compare/compare-v2.sh --job {job_id}` に変更し、/opt/compare/compare-v2.sh が実行可能である
+    When `validate-config.sh --rapid-crosscheck /etc/relay-gate/rapid-crosscheck.env` を実行する
+    Then 終了コード 0 で stdout に `command_path: /opt/compare/compare-v2.sh`、`status=valid` が出る
 
-  Scenario: クロスチェックジョブマップと対象カタログは slot ジョブマップと同じ CSV 形式である(SPEC-004-04)
-    Given crosscheck-job-map.csv の JOB002 行の compare_targets セルが二重引用符で囲まれた `"output.csv,summary.csv"` である(カンマを含むセル)
-    And target-catalog.csv の compare_condition セルが二重引用符で囲まれた `"key=sales_id,branch_id"` である
-    When `validate-config.sh --crosscheck-job-map /etc/relay-gate/crosscheck-job-map.csv` と `validate-config.sh --target-catalog /etc/relay-gate/target-catalog.csv` を実行する
-    Then どちらも終了コード 0 で `status=valid` が出て、囲んだセルはカンマを含む 1 セルとして解析される
-    And slot ジョブマップの読み込みと同じ CSV クォート解析関数が使われ、タブ区切りのファイルは `error: header mismatch` で拒否される
+  Scenario: コマンド部分が実行できない
+    Given rapid-crosscheck.env の RAPID_COMPARE_COMMAND が `/opt/compare/missing.sh --job {job_id}` でコマンド部分が存在しない
+    When `validate-config.sh --rapid-crosscheck /etc/relay-gate/rapid-crosscheck.env` を実行する
+    Then 終了コードは 2 で stderr に `error: file not executable key=RAPID_COMPARE_COMMAND path=/opt/compare/missing.sh` が出る
 
-  Scenario: job_id が重複している
-    Given 前シナリオの crosscheck-job-map.csv(宣言 3 行 + ヘッダー + JOB001 + JOB002 の 6 行)の 6 行目(JOB002 行)を JOB001 行の複製に置き換える
-    When `validate-config.sh --crosscheck-job-map /etc/relay-gate/crosscheck-job-map.csv` を実行する
-    Then 終了コードは 2 で stderr に `error: duplicate job_id job_id=JOB001 lines=5,6` が出る(初出行 5 を含む)
+  Scenario: コマンド部分が絶対パスでない
+    Given rapid-crosscheck.env の RAPID_COMPARE_COMMAND が `compare.sh --job {job_id}` で先頭の語が絶対パスでない
+    When `validate-config.sh --rapid-crosscheck /etc/relay-gate/rapid-crosscheck.env` を実行する
+    Then 終了コードは 2 で stderr に `error: path is not absolute key=RAPID_COMPARE_COMMAND path=compare.sh` が出る
 
-  Scenario: compare_command が実行できない
-    Given crosscheck-job-map.csv の JOB001 行の compare_command が /opt/compare/missing.sh で存在しない
-    When `validate-config.sh --crosscheck-job-map /etc/relay-gate/crosscheck-job-map.csv` を実行する
-    Then 終了コードは 2 で stderr に `error: compare_command is not executable line=5 job_id=JOB001 value=/opt/compare/missing.sh` が出る
+  Scenario: {job_id} プレースホルダが無い
+    Given rapid-crosscheck.env の RAPID_COMPARE_COMMAND が `/opt/compare/compare.sh --run {run_id}` で `{job_id}` を含まない
+    When `validate-config.sh --rapid-crosscheck /etc/relay-gate/rapid-crosscheck.env` を実行する
+    Then 終了コードは 2 で stderr に `error: placeholder {job_id} is missing key=RAPID_COMPARE_COMMAND value=/opt/compare/compare.sh --run {run_id}` が出る
 
-  Scenario: ヘッダー列が契約と異なる
-    Given crosscheck-job-map.csv のヘッダー行が `job_id,host,comparison_type,compare_targets,compare_command,compare_options,definition_version` である(slot ジョブマップの host 列が混入している)
-    When `validate-config.sh --crosscheck-job-map /etc/relay-gate/crosscheck-job-map.csv` を実行する
-    Then 終了コードは 2 で stderr に `error: header mismatch expected=job_id,comparison_type,compare_targets,compare_command,compare_options,definition_version actual=job_id,host,comparison_type,compare_targets,compare_command,compare_options,definition_version path: /etc/relay-gate/crosscheck-job-map.csv` が出る
+  Scenario: {params} が引数全体でない位置にある
+    Given rapid-crosscheck.env の RAPID_COMPARE_COMMAND が `/opt/compare/compare.sh --job {job_id} --args={params}` で、`{params}` が `--args=` と同じ引数の一部になっている
+    When `validate-config.sh --rapid-crosscheck /etc/relay-gate/rapid-crosscheck.env` を実行する
+    Then 終了コードは 2 で stderr に `error: placeholder {params} must be a whole argument key=RAPID_COMPARE_COMMAND value=/opt/compare/compare.sh --job {job_id} --args={params}` が出る
 
-  Scenario: 対象カタログの target_type が不正
-    Given 前シナリオの target-catalog.csv(ヘッダー + 2 行)の 3 行目(file 行)の target_type を view に変える
-    When `validate-config.sh --target-catalog /etc/relay-gate/target-catalog.csv` を実行する
-    Then 終了コードは 2 で stderr に `error: target_type is not in table,file line=3 value=view` が出る
+  Scenario: {params} が引数 1 つ全体なら valid
+    Given rapid-crosscheck.env の RAPID_COMPARE_COMMAND が `/opt/compare/compare.sh --job {job_id} {params}` で、`{params}` が独立した 1 引数であり /opt/compare/compare.sh が実行可能である
+    When `validate-config.sh --rapid-crosscheck /etc/relay-gate/rapid-crosscheck.env` を実行する
+    Then 終了コード 0 で stdout に `status=valid` が出る
