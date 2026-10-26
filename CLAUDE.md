@@ -98,7 +98,7 @@ dev-rules 正本は `docs/dev-rules/`(coding-rules / test-strategy / tier-rules)
 | tier-final-crosscheck | `final-crosscheck/` | cli | bash |
 | tier-ops | `ops/` | cli | bash |
 
-- 契約: `management-db`(rdb-schema、7 テーブル、provider tier-ops)。生成物は `packages/contracts/management-db/`。asyncapi / openapi は契約として宣言しない。`cli-command-contract.yaml` は契約外の共有仕様(S1 の shared_spec_refs)
+- 契約: `management-db`(rdb-schema、6 テーブル、provider tier-ops)。生成物は `packages/contracts/management-db/`。asyncapi / openapi は契約として宣言しない。`cli-command-contract.yaml` は契約外の共有仕様(S1 の shared_spec_refs)
 - コマンド(tier dir を cwd に実行): format_check `shfmt -d .` / lint `find src test -name '*.sh' -exec shellcheck -x {} +` / test `bats -r test` / bdd `npx cucumber-js --config ../cucumber.cjs features`
 - 統合テスト(リポルート): uc_bdd `npx cucumber-js --config cucumber.cjs features/uc` / atdd `npx cucumber-js --config cucumber.cjs features/atdd`
 - 4 段テスト: ATDD `features/atdd/{spec_id}.feature`(S0 生成、`@atdd_{SPEC-ID}-{連番}` タグで選択実行)/ UC BDD `features/uc/{branch_slug}.feature` / tier BDD `{tier_dir}/features/{branch_slug}.feature` / TDD `{tier_dir}/test/`(bats)。step 定義は JavaScript(CommonJS)

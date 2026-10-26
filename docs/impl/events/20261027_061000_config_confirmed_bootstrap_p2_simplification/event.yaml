@@ -1,0 +1,16 @@
+event_id: "20261027_061000_config_confirmed_bootstrap_p2_simplification"
+type: config_confirmed
+uc_id: null
+stage: "S0"
+payload:
+  confirmed_by: "user"
+  confirmed_via: "tmp/reviews/dcd8234d-resume-config-review.html(selection mode)+ チャット回答「設定=承認 / テスト=A(5〜11 の 7 件)」"
+  items:
+    - key: "uc_map.use_cases[dcd8234d].tiers"
+      before: [tier-final-crosscheck, tier-rapid-crosscheck]
+      after: [tier-facade]
+      note: "spec-event.yaml の当該 UC の files[] が tier-facade.md のみになった(feedback 20261010_104636_impl_feedback_dcd8234d のクロスチェック簡素化)。他 31 UC は不変"
+    - key: "contracts[management-db].scope"
+      before: [parallel_runs, slot_executions, rapid_runs, rapid_crosscheck_requests, comparison_results, final_crosscheck_requests, monitor_records]
+      after: [parallel_runs, slot_executions, rapid_runs, rapid_crosscheck_requests, final_crosscheck_requests, monitor_records]
+      note: "rdb-schema.yaml から comparison_results が削除された。type / source / provider / consumers は不変"

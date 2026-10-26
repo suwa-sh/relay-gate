@@ -47,8 +47,7 @@ use_cases:
   branch_slug: define-crosscheck-job-map-and-comparison-definitions
   path: docs/specs/latest/適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する
   tiers:
-  - tier-final-crosscheck
-  - tier-rapid-crosscheck
+  - tier-facade
   atdd_scenarios:
   - SPEC-004-04-5
   atdd_confirmed: true

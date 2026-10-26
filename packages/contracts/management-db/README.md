@@ -1,6 +1,6 @@
 # contract: management-db(rdb-schema)
 
-contract-codegen: from rdb-schema.yaml scope={parallel_runs, slot_executions, rapid_runs, rapid_crosscheck_requests, comparison_results, final_crosscheck_requests, monitor_records}
+contract-codegen: from rdb-schema.yaml scope={parallel_runs, slot_executions, rapid_runs, rapid_crosscheck_requests, final_crosscheck_requests, monitor_records}
 
 - source: `specs/latest/_cross-cutting/datastore/rdb-schema.yaml`(specs_root 相対)
 - provider: `tier-ops` / consumers: `tier-facade`, `tier-rapid-crosscheck`, `tier-final-crosscheck`

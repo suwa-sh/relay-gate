@@ -1,4 +1,5 @@
-# distillery-impl 実装設定(正本)。確定値は docs/impl/events/20260916_183122_config_confirmed_bootstrap_p2 の config_confirmed イベント。
+# distillery-impl 実装設定(正本)。確定値は docs/impl/events/20260916_183122_config_confirmed_bootstrap_p2 の config_confirmed イベント
+# (2026-10-27 の差分確定: docs/impl/events/20261027_061000_config_confirmed_bootstrap_p2_simplification。management-db の scope を 6 テーブルへ)。
 # specs_root / repo_root は同一リポ(distillery 出力 docs/ と実装先が同居)。tier-datastore は実装 tier ではなく共有資産(datastore_owner)。
 # capabilities は P1 の存在プローブ結果の記録であり契約の正ではない(asyncapi.yaml は存在するが契約としては宣言しない。
 # cli-command-contract.yaml は契約外の共有仕様として S1 の shared_spec_refs で扱う)。
@@ -52,7 +53,6 @@ contracts:
   - slot_executions
   - rapid_runs
   - rapid_crosscheck_requests
-  - comparison_results
   - final_crosscheck_requests
   - monitor_records
   provider: tier-ops

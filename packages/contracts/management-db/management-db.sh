@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2034  # 定数は source 先で参照する(このファイル内では未使用)
-# contract-codegen: from rdb-schema.yaml scope={parallel_runs, slot_executions, rapid_runs, rapid_crosscheck_requests, comparison_results, final_crosscheck_requests, monitor_records}
+# contract-codegen: from rdb-schema.yaml scope={parallel_runs, slot_executions, rapid_runs, rapid_crosscheck_requests, final_crosscheck_requests, monitor_records}
 # 生成物。直接編集禁止(再生成は bootstrap P4 / S3 のみ)。source: docs/specs/latest/_cross-cutting/datastore/rdb-schema.yaml
 # provider: tier-ops / consumers: tier-facade, tier-rapid-crosscheck, tier-final-crosscheck
 # 使い方: source "$(dirname "${BASH_SOURCE[0]}")/management-db.sh" してテーブル名・列名・列挙値の定数を参照する。
@@ -69,7 +69,7 @@ readonly RG_COL_SLOT_EXECUTIONS_COMPLETED_AT="completed_at"
 # ---- rapid_runs: 速報実行(rapid_run)
 readonly RG_TABLE_RAPID_RUNS="rapid_runs"
 readonly RG_PK_RAPID_RUNS="run_id"
-readonly RG_COLUMNS_RAPID_RUNS="run_id blue_status green_status blue_artifact_uri green_artifact_uri blue_completed_at green_completed_at completion_status"
+readonly RG_COLUMNS_RAPID_RUNS="run_id blue_status green_status blue_completed_at green_completed_at completion_status"
 # run_id: string
 readonly RG_COL_RAPID_RUNS_RUN_ID="run_id"
 # blue_status: string nullable
@@ -82,10 +82,6 @@ readonly RG_COL_RAPID_RUNS_GREEN_STATUS="green_status"
 readonly RG_ENUM_RAPID_RUNS_GREEN_STATUS="SUCCEEDED FAILED"
 readonly RG_RAPID_RUNS_GREEN_STATUS_SUCCEEDED="SUCCEEDED"
 readonly RG_RAPID_RUNS_GREEN_STATUS_FAILED="FAILED"
-# blue_artifact_uri: string nullable
-readonly RG_COL_RAPID_RUNS_BLUE_ARTIFACT_URI="blue_artifact_uri"
-# green_artifact_uri: string nullable
-readonly RG_COL_RAPID_RUNS_GREEN_ARTIFACT_URI="green_artifact_uri"
 # blue_completed_at: datetime nullable
 readonly RG_COL_RAPID_RUNS_BLUE_COMPLETED_AT="blue_completed_at"
 # green_completed_at: datetime nullable
@@ -102,11 +98,17 @@ readonly RG_RAPID_RUNS_COMPLETION_STATUS_REQUEST_CREATED="REQUEST_CREATED"
 # ---- rapid_crosscheck_requests: 速報比較依頼(rapid_crosscheck_request)
 readonly RG_TABLE_RAPID_CROSSCHECK_REQUESTS="rapid_crosscheck_requests"
 readonly RG_PK_RAPID_CROSSCHECK_REQUESTS="run_id"
-readonly RG_COLUMNS_RAPID_CROSSCHECK_REQUESTS="run_id job_id status worker_id lease_until requested_at started_at completed_at exit_code stdout stderr error_summary"
+readonly RG_COLUMNS_RAPID_CROSSCHECK_REQUESTS="run_id job_id parameters blue_exit_code green_exit_code status worker_id lease_until requested_at started_at completed_at exit_code stdout stderr error_summary"
 # run_id: string
 readonly RG_COL_RAPID_CROSSCHECK_REQUESTS_RUN_ID="run_id"
 # job_id: string
 readonly RG_COL_RAPID_CROSSCHECK_REQUESTS_JOB_ID="job_id"
+# parameters: text
+readonly RG_COL_RAPID_CROSSCHECK_REQUESTS_PARAMETERS="parameters"
+# blue_exit_code: integer
+readonly RG_COL_RAPID_CROSSCHECK_REQUESTS_BLUE_EXIT_CODE="blue_exit_code"
+# green_exit_code: integer
+readonly RG_COL_RAPID_CROSSCHECK_REQUESTS_GREEN_EXIT_CODE="green_exit_code"
 # status: string
 readonly RG_COL_RAPID_CROSSCHECK_REQUESTS_STATUS="status"
 readonly RG_ENUM_RAPID_CROSSCHECK_REQUESTS_STATUS="REQUESTED CLAIMED RUNNING SUCCEEDED FAILED ABORTED"
@@ -135,42 +137,12 @@ readonly RG_COL_RAPID_CROSSCHECK_REQUESTS_STDERR="stderr"
 # error_summary: string nullable
 readonly RG_COL_RAPID_CROSSCHECK_REQUESTS_ERROR_SUMMARY="error_summary"
 
-# ---- comparison_results: 比較結果(comparison_result)
-readonly RG_TABLE_COMPARISON_RESULTS="comparison_results"
-readonly RG_PK_COMPARISON_RESULTS="comparison_result_id"
-readonly RG_COLUMNS_COMPARISON_RESULTS="comparison_result_id run_id comparison_type status difference_count report_uri compared_at"
-# comparison_result_id: string
-readonly RG_COL_COMPARISON_RESULTS_COMPARISON_RESULT_ID="comparison_result_id"
-# run_id: string
-readonly RG_COL_COMPARISON_RESULTS_RUN_ID="run_id"
-# comparison_type: string
-readonly RG_COL_COMPARISON_RESULTS_COMPARISON_TYPE="comparison_type"
-readonly RG_ENUM_COMPARISON_RESULTS_COMPARISON_TYPE="job full"
-readonly RG_COMPARISON_RESULTS_COMPARISON_TYPE_JOB="job"
-readonly RG_COMPARISON_RESULTS_COMPARISON_TYPE_FULL="full"
-# status: string
-readonly RG_COL_COMPARISON_RESULTS_STATUS="status"
-readonly RG_ENUM_COMPARISON_RESULTS_STATUS="OK NG FAILED"
-readonly RG_COMPARISON_RESULTS_STATUS_OK="OK"
-readonly RG_COMPARISON_RESULTS_STATUS_NG="NG"
-readonly RG_COMPARISON_RESULTS_STATUS_FAILED="FAILED"
-# difference_count: integer nullable
-readonly RG_COL_COMPARISON_RESULTS_DIFFERENCE_COUNT="difference_count"
-# report_uri: string nullable
-readonly RG_COL_COMPARISON_RESULTS_REPORT_URI="report_uri"
-# compared_at: datetime
-readonly RG_COL_COMPARISON_RESULTS_COMPARED_AT="compared_at"
-
 # ---- final_crosscheck_requests: 確報比較依頼(final_crosscheck_request)
 readonly RG_TABLE_FINAL_CROSSCHECK_REQUESTS="final_crosscheck_requests"
 readonly RG_PK_FINAL_CROSSCHECK_REQUESTS="final_crosscheck_id"
-readonly RG_COLUMNS_FINAL_CROSSCHECK_REQUESTS="final_crosscheck_id business_date catalog_version status worker_id lease_until requested_at started_at completed_at exit_code stdout stderr error_summary"
+readonly RG_COLUMNS_FINAL_CROSSCHECK_REQUESTS="final_crosscheck_id status worker_id lease_until requested_at started_at completed_at exit_code stdout stderr error_summary"
 # final_crosscheck_id: string
 readonly RG_COL_FINAL_CROSSCHECK_REQUESTS_FINAL_CROSSCHECK_ID="final_crosscheck_id"
-# business_date: date
-readonly RG_COL_FINAL_CROSSCHECK_REQUESTS_BUSINESS_DATE="business_date"
-# catalog_version: string
-readonly RG_COL_FINAL_CROSSCHECK_REQUESTS_CATALOG_VERSION="catalog_version"
 # status: string
 readonly RG_COL_FINAL_CROSSCHECK_REQUESTS_STATUS="status"
 readonly RG_ENUM_FINAL_CROSSCHECK_REQUESTS_STATUS="REQUESTED CLAIMED RUNNING SUCCEEDED FAILED ABORTED"
