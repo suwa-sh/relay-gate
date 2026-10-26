@@ -26,7 +26,8 @@ stages:
     mode: initial
     event: 20261027_084500_s2_test_scaffold_completed_dcd8234d
   S3_contracts:
-    status: pending
+    status: done
+    event: 20261027_084700_s3_contracts_completed_dcd8234d
   S4_tier_impl:
     tier-facade:
       status: pending
