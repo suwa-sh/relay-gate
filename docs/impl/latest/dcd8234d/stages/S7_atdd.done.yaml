@@ -1,0 +1,95 @@
+stage: S7
+uc_id: dcd8234d
+manifest_sha256: 945094d65bb404232b80a8b2e224753f6661edc1fcf8e311aafdea570dd022cd
+manifest_projection: v2
+result: pass
+branch_slug: define-crosscheck-job-map-and-comparison-definitions
+tiers:
+  - tier-facade
+tier_impl_attempt: 4
+atdd_confirmed: true
+atdd_scenarios:
+  - SPEC-004-04-5
+  - SPEC-004-04-6
+  - SPEC-004-04-7
+  - SPEC-004-04-8
+  - SPEC-004-04-10
+  - SPEC-004-04-11
+excluded_scenarios_note: "同 feature の @atdd_SPEC-004-04-1〜-4 は UC eff24f55、-9(確報の起動コマンド)は別 UC の担当で、本 UC では定義も実行もしない"
+features:
+  - features/atdd/SPEC-004-04.feature
+feature_changed: false
+steps:
+  - features/atdd/steps/define-crosscheck-job-map-and-comparison-definitions.steps.js
+steps_changed: true
+steps_change_summary: "S2 skeleton(全 step が not implemented)を実装に置き換えた。step 文言は feature の完全一致のまま。World / Before / After は features/atdd/steps/configure-feature-flags.steps.js の定義を共有し、他 UC の step 定義には触れていない"
+source: "docs/usdm/latest/requirements.yaml の SPEC-004-04 の acceptance_criteria"
+tier_impl_changed: false
+run:
+  cwd: "."
+  command: "npx cucumber-js --config cucumber.cjs features/atdd --tags \"@atdd_SPEC-004-04-5 or @atdd_SPEC-004-04-6 or @atdd_SPEC-004-04-7 or @atdd_SPEC-004-04-8 or @atdd_SPEC-004-04-10 or @atdd_SPEC-004-04-11\""
+  selection: "tag exact match only (no name filter, feature not run as a whole)"
+  tag_uniqueness: "6 タグはいずれも features/atdd/SPEC-004-04.feature の 1 箇所だけに現れる(grep -x で確認)"
+  exit_code: 0
+  summary: "6 scenarios (6 passed), 18 steps (18 passed)"
+  scenarios_expected: 6
+  scenarios_total: 6
+  scenarios_passed: 6
+  scenarios_failed: 0
+  undefined_steps: 0
+  ambiguous_steps: 0
+  count_matches_atdd_scenarios: true
+tag_results:
+  - tag: "@atdd_SPEC-004-04-5"
+    exit_code: 0
+    result: pass
+    summary: "1 scenario (1 passed), 3 steps (3 passed)"
+  - tag: "@atdd_SPEC-004-04-6"
+    exit_code: 0
+    result: pass
+    summary: "1 scenario (1 passed), 3 steps (3 passed)"
+  - tag: "@atdd_SPEC-004-04-7"
+    exit_code: 0
+    result: pass
+    summary: "1 scenario (1 passed), 3 steps (3 passed)"
+  - tag: "@atdd_SPEC-004-04-8"
+    exit_code: 0
+    result: pass
+    summary: "1 scenario (1 passed), 3 steps (3 passed)"
+  - tag: "@atdd_SPEC-004-04-10"
+    exit_code: 0
+    result: pass
+    summary: "1 scenario (1 passed), 3 steps (3 passed)"
+  - tag: "@atdd_SPEC-004-04-11"
+    exit_code: 0
+    result: pass
+    summary: "1 scenario (1 passed), 3 steps (3 passed)"
+ci_tag_selection_check:
+  command: "npx cucumber-js --config cucumber.cjs features/atdd --tags \"@atdd_SPEC-001-01-4 or @atdd_SPEC-004-04-4 or @atdd_SPEC-008-05-2 or @atdd_SPEC-004-04-5 or @atdd_SPEC-004-04-6 or @atdd_SPEC-004-04-7 or @atdd_SPEC-004-04-8 or @atdd_SPEC-004-04-10 or @atdd_SPEC-004-04-11\""
+  exit_code: 0
+  summary: "9 scenarios (9 passed), 27 steps (27 passed)"
+  note: "先行 UC(fd678b04 の -001-01-4、eff24f55 の -004-04-4 / -008-05-2)を含めた CI 同形のタグ式でも回帰なし"
+scenario_coverage:
+  SPEC-004-04-5: "compare.sh(実行可能)+ {job_id} を含む起動コマンドで終了コード 0・error 行 0"
+  SPEC-004-04-6: "先頭の語が名前だけ / 相対パスの 2 ケース。非 0・error 行ちょうど 1 行・path is not absolute・key と path を含む"
+  SPEC-004-04-7: "存在しない / 存在するが実行権なし(0644)の 2 ケース。非 0・error 行ちょうど 1 行・file not executable・key と path を含む"
+  SPEC-004-04-8: "プレースホルダなし / {run_id} だけの 2 ケース。非 0・error 行ちょうど 1 行・placeholder {job_id} is missing・key と value を含む"
+  SPEC-004-04-10: "引数部分を 6 通り(空・存在しないパス・未知の語・未知のフラグ・記号やシェル展開風の文字列・任意プレースホルダ)に変え、コマンド部分が妥当な場合(全て 0・error 行 0)と絶対パスでない場合(全て同じ非 0 と同じ error 行)の両方で、終了コードと error 行が引数部分に影響されないことを確認"
+  SPEC-004-04-11: "配布する設定ファイル置き場(facade/config)にクロスチェックジョブマップ・対象カタログに当たるファイルが無いこと、validate-config.sh --help にその検証種別が無いこと、--crosscheck-job-map / --target-catalog / --catalog が未知のオプション(終了コード 2)になることを確認"
+harness:
+  sandbox_root: "Scenario ごとの一時ディレクトリを root とし、仕様の例示パス(/etc/relay-gate/rapid-crosscheck.env, /opt/compare/*.sh)を root 配下の同じ相対位置に実ファイルで配置。コマンド部分は絶対パスのときだけ root 配下へ写像し、相対パスと引数部分は書き換えない。出力照合時に root 接頭辞を除去"
+  process: "facade/bin/validate-config.sh を実プロセスとして起動(--rapid-crosscheck <path> / --help / 廃止名のオプション)"
+  reused_from: features/uc/steps/define-crosscheck-job-map-and-comparison-definitions.steps.js
+  external_connections: none
+fixture_constraints:
+  - scenario: SPEC-004-04-10
+    constraint: "引数部分に {params} を含めない(USDM の 2 点と spec の 3 点の食い違い。両仕様が一致する範囲で判定)"
+    ref: docs/impl/latest/dcd8234d/issues/20261027_083600_params-rule-vs-usdm-two-checks.md
+injections: []
+injections_note: "ハーネス注入なし。前提の新規抽出なし"
+cross_uc_refs:
+  - docs/impl/latest/dcd8234d/issues/20261027_083500_cross-uc-scenarios.md
+issues: []
+issues_note: "新規起票なし。受け入れ基準 6 件は tier-facade attempt-4 の実装で通過した。{params} の位置規則の食い違いは S2 起票済みの issue で扱う"
+completed_at: "2026-10-27T09:08:00+09:00"
+completed_by: dist-impl-implement@0.14.1

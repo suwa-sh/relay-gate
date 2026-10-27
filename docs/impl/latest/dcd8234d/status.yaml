@@ -45,9 +45,12 @@ stages:
       open_blockers: 0
       open_major: 0
   S6_uc_bdd:
-    status: pending
+    status: done
+    scenarios: 43
+    this_uc: 7
   S7_atdd:
-    status: pending
+    status: done
+    scenarios: 6
   S8_feedback:
     status: pending
     previous_published:
