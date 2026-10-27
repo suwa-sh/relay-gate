@@ -82,5 +82,5 @@ issues:
   note: "新規の仕様疑義なし。USDM SPEC-004-04(2 点)と spec.md / tier-facade.md(3 点)の差は既存の issues/20261027_083600_params-rule-vs-usdm-two-checks.md のとおりで、実装は spec.md / tier-facade.md / CLI 契約の 3 点を正とした"
 namespace_note: "新規トップレベル名は launch_command_* / LAUNCH_COMMAND_*(domain)、rapid_crosscheck_env_* / RAPID_CROSSCHECK_ENV_*(repository)、validate_rapid_crosscheck_* / VALIDATE_RAPID_CROSSCHECK_*(usecase)、validate_config_rapid_crosscheck(presentation)。速報クロスチェック tier の接頭辞 crosscheck_ / CROSSCHECK_ と feature flag の RAPID_COMPARE_COMMAND / RAPID_CROSSCHECK_MODE 等の変数名は使わない。他ティアのシェルファイルは source しない"
 write_set_note: "書き込みは facade/ 配下と attempt-4/ の本 tier の done / assumptions のみ。issues/ への新規起票なし"
-completed_at: '2026-10-27T18:30:00+09:00'
+completed_at: '2026-10-27T08:50:00+09:00'
 completed_by: dist-impl-implement@0.14.1

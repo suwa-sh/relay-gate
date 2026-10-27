@@ -1,4 +1,4 @@
-event_id: 20261027_093000_s5_verify_completed_dcd8234d_facade
+event_id: 20261027_085800_s5_verify_completed_dcd8234d_facade
 type: stage_completed
 uc_id: dcd8234d
 stage: S5
@@ -17,4 +17,4 @@ payload:
   assumption_verdicts_sha256: 93d3ba68135195dbeeb35a5efbf844076ba4db328183f7422076ce99152ea881
   assumption_verdicts_summary: {consistent: 0, spec_absent: 12, contradicts: 0, unlisted: 0}
   ui_review: not_dispatched (has_design_system false)
-created_at: '2026-10-27T09:30:00+09:00'
+created_at: '2026-10-27T08:58:00+09:00'

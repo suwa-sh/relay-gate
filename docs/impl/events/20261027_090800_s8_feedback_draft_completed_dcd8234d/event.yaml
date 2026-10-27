@@ -1,4 +1,4 @@
-event_id: 20261027_091100_s8_feedback_draft_completed_dcd8234d
+event_id: 20261027_090800_s8_feedback_draft_completed_dcd8234d
 type: stage_completed
 uc_id: dcd8234d
 stage: S8
@@ -12,4 +12,4 @@ payload:
   request_count: 1
   blocker_count: 0
   cr_ids: [CR-dcd8234d-009]
-created_at: '2026-10-27T09:11:00+09:00'
+created_at: '2026-10-27T09:08:00+09:00'
