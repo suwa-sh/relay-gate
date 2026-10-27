@@ -52,7 +52,12 @@ stages:
     status: done
     scenarios: 6
   S8_feedback:
-    status: pending
+    status: done
+    mode: initial
+    request_count: 1
+    blocker_count: 0
+    draft_path: docs/impl/latest/dcd8234d/feedback/draft.md
+    feedback_id: 20261027_091000_impl_feedback_dcd8234d
     previous_published:
     - feedback_id: 20261010_104636_impl_feedback_dcd8234d
       published_event: 20261010_185203_feedback_request_published_dcd8234d
