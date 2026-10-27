@@ -1,0 +1,15 @@
+event_id: 20261027_093500_stage_invalidated_dcd8234d_s9_review_decision
+type: stage_invalidated
+uc_id: dcd8234d
+stage: S9
+payload:
+  reason: review_decision_requires_feedback_refresh
+  targets:
+  - stages/S9_review_generated.done.yaml
+  archived_to: docs/impl/latest/dcd8234d/invalidated/20261027_093500_stage_invalidated_dcd8234d_s9_review_decision/
+  detail: 'S9 レビューでユーザーが前提 A-009(tier-facade)を仕様変更で却下したため、S8 refresh で変更要求を追加し S9 を再生成する。review_approved は未記録'
+  rejected_assumptions_spec_change:
+  - tier: tier-facade
+    id: A-009
+  review_notes: docs/impl/latest/dcd8234d/review/review-notes.md
+created_at: '2026-10-27T09:35:00+09:00'

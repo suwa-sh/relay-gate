@@ -64,9 +64,9 @@ stages:
     - feedback_id: 20261027_053600_impl_feedback_dcd8234d
       note: spec-only request written by the orchestrator after the S9 security finding (reflected by dist-pipeline run 20261027_053600)
   S9_review:
-    status: done
-    state: awaiting_review
-    review_event: 20261027_092806_s9_review_generated_dcd8234d
+    status: pending
+    state: refresh_requested
+    previous_review_event: 20261027_092806_s9_review_generated_dcd8234d
 restart:
   at: '2026-10-27T08:20:00+09:00'
   reason: reflux reflected (crosscheck simplification + argv launch rule). all done stale, UC tiers -> [tier-facade]
