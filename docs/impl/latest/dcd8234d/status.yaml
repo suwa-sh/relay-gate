@@ -3,7 +3,7 @@ uc_id: dcd8234d
 business: 適用構成業務
 buc: 適用構成定義フロー
 uc: クロスチェックのジョブマップと比較定義を定義する
-state: publishing_feedback
+state: blocked_on_spec
 current_attempt: 4
 resolved_models:
   implementer: claude-opus-5-5
@@ -52,11 +52,11 @@ stages:
     status: done
     scenarios: 6
   S8_feedback:
-    status: done
-    mode: refresh
+    status: published
+    mode: publish
     request_count: 2
     blocker_count: 0
-    draft_path: docs/impl/latest/dcd8234d/feedback/draft.md
+    draft_path: null
     feedback_id: 20261027_091000_impl_feedback_dcd8234d
     previous_published:
     - feedback_id: 20261010_104636_impl_feedback_dcd8234d
@@ -64,6 +64,8 @@ stages:
     - feedback_id: 20261027_053600_impl_feedback_dcd8234d
       note: spec-only request written by the orchestrator after the S9 security finding
         (reflected by dist-pipeline run 20261027_053600)
+    published_path: docs/impl/latest/dcd8234d/feedback-requests/20261027_091000_impl_feedback_dcd8234d.md
+    published_event: 20261027_113048_feedback_request_published_dcd8234d
   S9_review:
     status: done
     state: approved
@@ -84,4 +86,4 @@ attempt_limit:
   user_decision: continue_once
   result_attempt_4: pass
   note: attempt 4(ユーザー承認)で旧 2 tier pass。仕様反映後の再実行は stale 由来のため attempt 制御に乗せない
-updated_at: '2026-10-27T11:27:30+09:00'
+updated_at: '2026-10-27T11:31:59+09:00'
