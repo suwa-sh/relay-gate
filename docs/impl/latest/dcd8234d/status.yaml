@@ -3,7 +3,7 @@ uc_id: dcd8234d
 business: 適用構成業務
 buc: 適用構成定義フロー
 uc: クロスチェックのジョブマップと比較定義を定義する
-state: running
+state: awaiting_review
 current_attempt: 4
 resolved_models:
   implementer: claude-opus-5-5
@@ -64,7 +64,9 @@ stages:
     - feedback_id: 20261027_053600_impl_feedback_dcd8234d
       note: spec-only request written by the orchestrator after the S9 security finding (reflected by dist-pipeline run 20261027_053600)
   S9_review:
-    status: pending
+    status: done
+    state: awaiting_review
+    review_event: 20261027_092806_s9_review_generated_dcd8234d
 restart:
   at: '2026-10-27T08:20:00+09:00'
   reason: reflux reflected (crosscheck simplification + argv launch rule). all done stale, UC tiers -> [tier-facade]
