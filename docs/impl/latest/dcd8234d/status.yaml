@@ -3,7 +3,7 @@ uc_id: dcd8234d
 business: 適用構成業務
 buc: 適用構成定義フロー
 uc: クロスチェックのジョブマップと比較定義を定義する
-state: awaiting_review
+state: publishing_feedback
 current_attempt: 4
 resolved_models:
   implementer: claude-opus-5-5
@@ -62,21 +62,26 @@ stages:
     - feedback_id: 20261010_104636_impl_feedback_dcd8234d
       published_event: 20261010_185203_feedback_request_published_dcd8234d
     - feedback_id: 20261027_053600_impl_feedback_dcd8234d
-      note: spec-only request written by the orchestrator after the S9 security finding (reflected by dist-pipeline run 20261027_053600)
+      note: spec-only request written by the orchestrator after the S9 security finding
+        (reflected by dist-pipeline run 20261027_053600)
   S9_review:
     status: done
-    state: awaiting_review
+    state: approved
     review_event: 20261027_100325_s9_review_generated_dcd8234d_refresh
     previous_review_event: 20261027_092806_s9_review_generated_dcd8234d
+    approval_event: 20261027_112730_review_approved_dcd8234d_feedback_publish
+    approval_kind: feedback_publish_approval
 restart:
   at: '2026-10-27T08:20:00+09:00'
-  reason: reflux reflected (crosscheck simplification + argv launch rule). all done stale, UC tiers -> [tier-facade]
+  reason: reflux reflected (crosscheck simplification + argv launch rule). all done
+    stale, UC tiers -> [tier-facade]
   invalidation_event: 20261027_082000_stage_invalidated_dcd8234d_stale_after_reflux
-  note: stale re-execution stays in attempt-4 (no attempt++). attempts 1-3 kept as history
+  note: stale re-execution stays in attempt-4 (no attempt++). attempts 1-3 kept as
+    history
 attempt_limit:
   reached: true
   attempt: 3
   user_decision: continue_once
   result_attempt_4: pass
   note: attempt 4(ユーザー承認)で旧 2 tier pass。仕様反映後の再実行は stale 由来のため attempt 制御に乗せない
-updated_at: '2026-10-27T08:26:00+09:00'
+updated_at: '2026-10-27T11:27:30+09:00'

@@ -46,3 +46,9 @@
 - 却下した前提: tier-facade A-009(spec_change)。期待: CLI 契約の引用符除去の 2 か所の記述を、現行実装の規則(先頭と末尾の引用符を別々に 1 文字ずつ外す。対の一致は要求しない)に揃える。実装コードは変更しない
 - 承認した前提: A-012(--final-crosscheck は受理して未実装の終了コード 6)、残り 10 件
 - 手順: review_approved は記録せず、S8 を mode=refresh で再実行して A-009 の仕様変更要求を追加 → S9 再生成 → 回答と exact に一致すれば公開許可として記録 → S8 publish → blocked_on_spec
+
+## 2026-10-27 承認(要求公開許可。S9 evidence 20261027_100325_s9_review_generated_dcd8234d_refresh)
+
+- ユーザー回答(原文): 要求=公開(変更要求 2 件) / 確認=前回の回答どおり
+- 照合: draft sha256 37b8b54d…・要求 2 件・gate 6/6・open blocker/major 0・前提 evidence 71a22185… が S9 done / event と一致。前提ファイルの hash を validateAssumptions record / verdicts で再計算して一致
+- 意味: 変更要求 2 件(CR-dcd8234d-009 検証 3 点への要求・受け入れ基準の揃え / CR-dcd8234d-010 引用符の外し方の契約記述)の公開許可。delivery approval ではない(仕様反映後に要求 0 件で再レビュー)
