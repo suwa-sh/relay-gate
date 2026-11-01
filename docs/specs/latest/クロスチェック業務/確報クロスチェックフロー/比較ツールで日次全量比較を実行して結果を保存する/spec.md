@@ -166,6 +166,7 @@ sequenceDiagram
 | REQ-007 | SPEC-007-01 | exit_code=0 で SUCCEEDED になる(SPEC-006-02) |
 | REQ-007 | SPEC-007-03 | exit_code=3 で FAILED になる(SPEC-006-02) |
 | REQ-003 | SPEC-003-03 | 起動失敗でも依頼を FAILED にする(SPEC-003-03) |
+| REQ-004 | SPEC-004-04 | 確報の起動コマンドが絶対パスで実行可能なら valid になる / 絶対パスでない起動コマンドは invalid になる ※ 受け入れ基準 9(確報はプレースホルダ無しで終了コード 0)= 前者、基準 6 の確報側(コマンド部分が絶対パスでない)= 後者。基準 10(引数部分の任意文字列)は速報側の UC「クロスチェックのジョブマップと比較定義を定義する」で判定する |
 | REQ-011 | SPEC-011-03 | exit_code=0 で SUCCEEDED になる(SPEC-006-02) ※ 比較ツールの stdout / stderr / exit_code を確報比較依頼レコードの結果列へ保存する(識別子・状態・時刻・結果だけを持つ) |
 
 > 機械可読の正本は `spec-event.yaml` の `use_cases[].usdm`(本表と同内容)。「対応 BDD Scenario」列は本 UC の `Scenario:` 名(接尾の SPEC ID を含む完全名)を「 / 」で区切って列挙し、Scenario 名以外の補足は「※」以降に置く。区切りは人が読む用で、Scenario 名自体に「 / 」を含むものがあるため機械分割には使わず、機械照合は `spec-event.yaml` の `scenarios[]` を使う。
@@ -209,6 +210,7 @@ Feature: 比較ツールで日次全量比較を実行して結果を保存す�
     Given final-crosscheck.env の FINAL_COMPARE_COMMAND が "/opt/compare/final.sh --full" で、/opt/compare/final.sh が存在し実行可能である
     When validate-config.sh --final-crosscheck /etc/relay-gate/final-crosscheck.env を実行する
     Then 終了コード 0 で stdout に "config=final-crosscheck"、"command_path: /opt/compare/final.sh"、"status=valid" が出る
+    And stderr に error 行は出ない(プレースホルダが 1 つも無くても違反にならない)
 ```
 
 ### 異常系

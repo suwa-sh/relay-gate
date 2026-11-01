@@ -439,3 +439,17 @@ UI 画面が無いため可視化は「出力の集計・表形式」に限る�
 - 方針資料との照合: `tmp/RelayGateのしくみ.md` は「設定 1 行の起動コマンドを依頼レコードの値で起動する」を定めるだけで、引数の分け方・起動方式(シェル解釈の可否)の記載は無い。本イベントの決定(argv 分割・シェル非解釈・置換前検査)は方針資料と矛盾せず、設定 1 行 + プレースホルダの形・プレースホルダ集合・既存検証 2 点を保つ
 - 解消した仮採用: なし。新規の仮採用(confidence: low)は作らない(docs/todo.md への登録なし)
 - `_inputs-digest.md` は前イベントのまま(arch / nfr latest に変更なし)
+
+## 差分更新履歴(event 20261101_105000_feedback_impl_feedback_dcd8234d)
+
+- 2026-11-01 10:50:00Z(event_id: `20261101_105000_feedback_impl_feedback_dcd8234d`)。2026-11-01 の実装フィードバック(direct 1 件 = CR-dcd8234d-010#1 / causal 2 件 = CR-dcd8234d-009#1・010#1。前イベント `20261027_055000_feedback_impl_feedback_dcd8234d` の続き)
+- trigger_event: usdm `20261101_101000_feedback_impl_feedback_dcd8234d`(SPEC-004-04 の検証 3 点化・受け入れ基準 10 の絞り込み・基準 12 追加)、arch `20261101_103000_feedback_impl_feedback_dcd8234d`(CTR-007 の括弧書きを 3 点へ。arch-decision-021)、infra `20261101_104000_feedback_impl_feedback_dcd8234d`。rdra / nfr は no-change
+- design 無しモード判定: 引数 `design_available=false`(最優先条件)。`_inputs-digest.md` は arch latest の更新に合わせて再生成した
+- dialogue_policy: interactive。確認推奨項目は完了報告で返す(値の前後の空白の扱い)
+- 変更 1(CR-010、spec 直接所有): CLI 契約 `shared_rules.compare_command_argv.split` と `config_input_rules.env_files` に、引用符の外し方を同じ文で書いた。先頭の 1 文字が `"` か `'` なら外し、それとは別に(先頭を外した後の)末尾の 1 文字が `"` か `'` なら外す。種類の一致・対は求めない(例 4 件)。env_files の委譲をやめ、UC「feature flag を設定する」の tier-facade.md を契約参照へ改め「仮採用」を外した。実装(facade の 2 つの unquote 関数)と同じ規則で、実装は変えない
+- 変更 2(CR-009、上流追従): 速報の起動コマンドの検証を 3 点(コマンド部分 / `{job_id}` / `{params}` は引数 1 つ全体)として、CLI 契約の config_files RAPID_COMPARE_COMMAND の説明、UC「クロスチェックのジョブマップと比較定義を定義する」の spec.md(概要・データフロー表・分岐条件・関連 USDM)/ tier-facade.md / _api-summary.yaml(stderr・終了コード 2 の理由・終了コード 6)を揃えた
+- BDD: 受け入れ基準 10 = 新規「引数部分の内容は検査しない(SPEC-004-04)」(引数部分に存在しないパスと未知の語。`{params}` を一部に含まず `{job_id}` を含む)、基準 11 = 新規「クロスチェックジョブマップと対象カタログの検証種別は無い(SPEC-004-04)」(従来は usdm-acceptance-matrix が UC-32 の spec.md に実在しない Scenario 名を挙げていた)、基準 12 = 既存「{params} が引数全体でない位置にある」。tier-facade.md の tier BDD にも引数部分の任意文字列のシナリオを追加
+- トレーサビリティ: このリポジトリに traceability-index.json は無い。基準と UC のひもづけは spec-event.yaml `use_cases[].usdm`、spec.md「関連 USDM」表、`_cross-cutting/usdm-acceptance-matrix.md`(受け入れ条件 142 → 143)で行う
+- 判断の正本: decisions/spec-decision-019.yaml(spec-decision-017 の「2 点」、spec-decision-018 の「1 組除去」はこれで読み替える。旧決定記録の本文は当時の記録として変更しない)
+- 方針資料との照合: `tmp/RelayGateのしくみ.md` は設定値の引用符の扱いと起動コマンドの検証項目の数を定めていない。今回の変更は実装済みの振る舞いを明記するもので、方針資料と矛盾しない
+- UC ツリー・ティア構成・UC-ティアマッピング・RDRA 要素は不変(32 UC / 7 BUC / 5 業務)。新規の仮採用は作らない。feature flag の引用符の「仮採用」は解消した

@@ -21,11 +21,13 @@ x_cli_commands:
         description: "行ごとの info を stderr に出す"
     stdin: "なし"
     stdout: "--rapid-crosscheck: config=rapid-crosscheck / path: ... / command_path: <RAPID_COMPARE_COMMAND の先頭の語> / has_job_id_placeholder=true|false / status=valid|invalid / violations=N(invalid 時)"
-    stderr: "契約 validate-config.sh の共通形式: error: config file not found path: ... / error: option required option=RAPID_COMPARE_COMMAND path: ... / error: path is not absolute key=RAPID_COMPARE_COMMAND path=... / error: file not executable key=RAPID_COMPARE_COMMAND path=... / error: placeholder {job_id} is missing key=RAPID_COMPARE_COMMAND value=..."
+    stderr: "契約 validate-config.sh の共通形式: error: config file not found path: ... / error: option required option=RAPID_COMPARE_COMMAND path: ... / error: path is not absolute key=RAPID_COMPARE_COMMAND path=... / error: file not executable key=RAPID_COMPARE_COMMAND path=... / error: placeholder {job_id} is missing key=RAPID_COMPARE_COMMAND value=... / error: placeholder {params} must be a whole argument key=RAPID_COMPARE_COMMAND value=..."
     exit_codes:
       - code: 0
         meaning: "違反 0 件"
       - code: 2
-        meaning: "検証種別オプションの指定数不正・値なし・ファイル不在・RAPID_COMPARE_COMMAND 欠落・コマンド部分の絶対パス違反・存在しない・実行不可・{job_id} 欠落・未知のオプション"
+        meaning: "検証種別オプションの指定数不正・値なし・ファイル不在・RAPID_COMPARE_COMMAND 欠落・コマンド部分の絶対パス違反・存在しない・実行不可・{job_id} 欠落・{params} が引数 1 つ全体でない位置にある・未知のオプション"
+      - code: 6
+        meaning: "検証器の内部障害(契約 config_input_rules.internal_failure)"
 async_events: []
 schemas: []

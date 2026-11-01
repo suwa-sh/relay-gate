@@ -156,7 +156,7 @@ components:
         description: "CSV 形式・列名(E-003)の検証。ジョブ ID ごとの比較定義 CSV・対象カタログは廃止したため検証対象にしない"
       - rule: "RAPID_CROSSCHECK_MODE が off 以外のとき rapid-crosscheck.env が存在し、RAPID_DB_CONN_REF / RAPID_LEASE_SEC / RAPID_POLL_INTERVAL_SEC の 3 キーと速報比較ツールの起動コマンドのキーを持ち、秒の 2 キーが正の整数であること"
         type: "static"
-        description: "速報クロスチェック設定(E-027)の存在とキー構成の検証。起動コマンドの内容検証(コマンド部分が絶対パスで実行可能・{job_id} を含む)は validate-config.sh が所有する"
+        description: "速報クロスチェック設定(E-027)の存在とキー構成の検証。起動コマンドの内容検証(コマンド部分が絶対パスで実行可能・{job_id} を含む・{params} を使うなら引数 1 つ全体がちょうど {params} の 3 点)は validate-config.sh が所有する"
       - rule: "final-crosscheck.env が存在し、確報 worker の DB 接続参照のキーと確報比較ツールの起動コマンドのキーを持つこと"
         type: "static"
         description: "確報クロスチェック worker 設定の存在とキー構成の検証。起動コマンドの内容検証(コマンド部分が絶対パスで実行可能)は validate-config.sh が所有する"

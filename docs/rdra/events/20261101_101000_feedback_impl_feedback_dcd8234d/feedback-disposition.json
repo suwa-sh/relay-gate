@@ -1,0 +1,40 @@
+{
+  "schema_version": "distillery.feedback-no-domain-change/v1",
+  "type": "feedback_no_domain_change",
+  "event_id": "20261101_101000_feedback_impl_feedback_dcd8234d",
+  "created_at": "2026-11-01T10:10:00Z",
+  "stage": "requirements",
+  "domain_event_root": "rdra/events",
+  "reason": "速報の起動コマンドの検証を 3 点にする変更は USDM SPEC-004-04 の本文と受け入れ基準だけの変更である。RDRA の情報「比較定義」「速報クロスチェック設定」、条件、バリエーションは検証項目の個数や {params} の位置を持たず、モデル要素の追加・変更・削除は無い。そのため rdra/latest は更新しない",
+  "feedback_request": {
+    "feedback_request_id": "20261027_091000_impl_feedback_dcd8234d",
+    "input_sha256": "37b8b54d7a4a8b1a978e389924c4b6e3ee9a1d276823a9d877f10fd01b866ca8",
+    "request_ids": [
+      "CR-dcd8234d-009"
+    ],
+    "work_unit_ids": [
+      "CR-dcd8234d-009#1"
+    ]
+  },
+  "work_unit_results": [
+    {
+      "work_unit_id": "CR-dcd8234d-009#1",
+      "disposition": "applied",
+      "reason": "USDM SPEC-004-04 の specification 本文で、設定検証が起動コマンドに対して行う検証を 2 点から 3 点にした(3 点目: 速報の起動コマンドで {params} を使うなら、引数 1 つ全体がちょうど {params} であること)。「検証はコマンド部分に対して行い、引数部分の内容は検査しない」を「{job_id} の有無と {params} の位置のほかは、引数部分の内容を検査しない」に改めた。受け入れ基準 10 の Given を、仕様で違反になる入力を含まないよう「起動コマンドの引数部分が {params} を引数の一部に含まない任意の文字列で、速報の起動コマンドの場合は {job_id} を含む」に絞り、{params} が引数の一部に含まれる(--args={params})と非 0 の終了コードで終了し stderr に {params} が引数全体でない旨の error 行がキー名と値つきで 1 行出る受け入れ基準を末尾に 1 件追加した。既存の受け入れ基準の順序と番号は変えていない。RDRA の情報・状態・条件・バリエーションは検証項目の個数を持たないため変更していない",
+      "artifact_refs": [
+        "usdm/events/20261101_101000_feedback_impl_feedback_dcd8234d/requirements.yaml"
+      ]
+    }
+  ],
+  "reconciliation_results": [
+    {
+      "work_unit_id": "CR-dcd8234d-009#1",
+      "status": "changed",
+      "reason": "USDM SPEC-004-04 の specification 本文で、設定検証が起動コマンドに対して行う検証を 2 点から 3 点にした(3 点目: 速報の起動コマンドで {params} を使うなら、引数 1 つ全体がちょうど {params} であること)。「検証はコマンド部分に対して行い、引数部分の内容は検査しない」を「{job_id} の有無と {params} の位置のほかは、引数部分の内容を検査しない」に改めた。受け入れ基準 10 の Given を、仕様で違反になる入力を含まないよう「起動コマンドの引数部分が {params} を引数の一部に含まない任意の文字列で、速報の起動コマンドの場合は {job_id} を含む」に絞り、{params} が引数の一部に含まれる(--args={params})と非 0 の終了コードで終了し stderr に {params} が引数全体でない旨の error 行がキー名と値つきで 1 行出る受け入れ基準を末尾に 1 件追加した。既存の受け入れ基準の順序と番号は変えていない。RDRA の情報・状態・条件・バリエーションは検証項目の個数を持たないため変更していない",
+      "artifact_refs": [
+        "usdm/events/20261101_101000_feedback_impl_feedback_dcd8234d/requirements.yaml"
+      ]
+    }
+  ],
+  "evidence_refs": []
+}

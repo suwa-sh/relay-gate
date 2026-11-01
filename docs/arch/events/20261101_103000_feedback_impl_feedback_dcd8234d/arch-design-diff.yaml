@@ -1,0 +1,18 @@
+meta:
+  event_id: "20261101_103000_feedback_impl_feedback_dcd8234d"
+  trigger_event: "usdm:20261101_101000_feedback_impl_feedback_dcd8234d, rdra:20261101_101000_feedback_impl_feedback_dcd8234d, nfr:20261101_102000_feedback_impl_feedback_dcd8234d"
+  created_at: "2026-11-01T10:30:00Z"
+  source: "速報の起動コマンドに対する設定検証(validate-config.sh)を要求側で 2 点から 3 点({params} を使うなら引数 1 つ全体がちょうど {params})にした前段 requirements 更新への追従。クロスティアルール CTR-007 の説明に残っていた検証 2 点の記述を 3 点へ改め、検証項目の正本が要求と CLI 契約であることを明記する。facade 単独で設定検証を完結させる構成は変えない"
+feedback_request:
+  feedback_request_id: "20261027_091000_impl_feedback_dcd8234d"
+  input_sha256: "37b8b54d7a4a8b1a978e389924c4b6e3ee9a1d276823a9d877f10fd01b866ca8"
+  request_ids: ["CR-dcd8234d-009"]
+  work_unit_ids: ["CR-dcd8234d-009#1"]
+system_architecture:
+  cross_tier_rules:
+    - id: "CTR-007"
+      name: "ティアは独立プロセス・ティア間のシェル関数共有の規則"
+      description: "各ティアの CLI(facade.sh / 各 runner / 各 worker / 運用スクリプト / validate-config.sh)は独立したプロセスとして起動し、原則として他ティアのシェルファイルを source して関数を共有しない。ティア間連携は宣言済みの契約(管理 DB スキーマ、成果物ファイル(Runner Result Contract)、設定ファイル、公開 function(完了通知 blue-completed / green-completed)、終了コード契約)だけで行う。設定ファイルの検証は validate-config.sh(エントリポイントの所有ティアは tier-facade)が全設定ファイル(feature flag / slot ジョブマップ / 速報クロスチェック設定(速報の比較ツール起動コマンドのキーを含む)/ ハング検知定期ジョブ設定 / 確報クロスチェック worker 設定)を tier-facade 自身の解析関数で検証し、他ティアの検証関数を source して委譲しない(クロスチェック簡素化後、速報の起動コマンドの検証は「コマンド部分(先頭の語)が絶対パスで存在し実行可能」「{job_id} を含む」「{params} を使うなら引数 1 つ全体がちょうど {params}」の 3 点で、いずれも CSV クォート解析を要さず、ティア間で共有すべき解析関数も無いため facade 単独で完結する。検証項目の正本は要求 SPEC-004-04 と CLI 契約で、本規則は検証を facade 単独で完結させる構成だけを定める)。将来ティアを増やして同一プロセスにシェルファイルを source する必要が生じた場合に備え、一般規則として: (1) 各ティアが定義するトップレベルの関数名・グローバル変数名にはティア固有の接頭辞を付ける(例: 速報クロスチェックは crosscheck_ / CROSSCHECK_)、(2) facade が共有面として公開する関数は契約に列挙した名前だけを他ティアから呼べる名前とし、それ以外は facade 固有の接頭辞で閉じる、(3) 検証関数ファイルは関数定義だけを行い source 時に副作用(シェルオプションの変更・グローバル変数の上書き・コマンドの実行)を起こさない、(4) 他ティアが定義した名前を再定義しない"
+      reason: "validate-config.sh の検証ロジックの委譲と共有関数がティア間の契約として宣言されていない問題、および同一プロセスに source されるティアの名前空間の規則が無い問題への対応。クロスチェック簡素化で速報の設定検証が env の起動コマンド 1 キーの検証に縮退し、facade 単独で完結できるため、ティア間の関数委譲を無くす構成(委譲撤廃)を採用する。CLI 契約の validate-config.sh の tier_note / owner_tier からティア間委譲の記述を外し、UC ティア仕様を追従させるのは下流 spec の責務。名前空間の規則は将来のティア追加に備えた一般規則として残す。方針資料は validate-config.sh の内部構成を定めておらず、本規則と矛盾しない"
+      source_model: "条件: 実装固有事項の runner への閉じ込め, 適用側で定義する事項, 情報: 速報クロスチェック設定, Runner Result, 完了通知, 開発規約: 契約に無いティア間依存の禁止"
+      confidence: "high"

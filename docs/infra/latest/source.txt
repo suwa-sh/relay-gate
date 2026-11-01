@@ -1,1 +1,6 @@
-feedback request 20261010_104636_impl_feedback_dcd8234d(クロスチェック簡素化)に基づくインフラ設計の差分追従。前段イベント arch:20261010_202000_feedback_impl_feedback_dcd8234d, nfr:20261010_201000_feedback_impl_feedback_dcd8234d の変更を MCL 出力と IaC スケルトンへ反映した(差分更新。MCL 全面再実行なし)。
+feedback request 20261027_091000_impl_feedback_dcd8234d(速報の起動コマンドに対する設定検証を 2 点から 3 点へ)に基づくインフラ設計の差分追従。前段イベント usdm:20261101_101000_feedback_impl_feedback_dcd8234d, arch:20261101_103000_feedback_impl_feedback_dcd8234d の変更を MCL 出力(実装仕様)と IaC スケルトンの説明文へ反映した(差分更新。MCL 全面再実行なし)。
+- input_sha256: 37b8b54d7a4a8b1a978e389924c4b6e3ee9a1d276823a9d877f10fd01b866ca8
+- request_ids: CR-dcd8234d-009
+- direct_work_unit_ids: (なし)
+- causal_work_unit_ids: CR-dcd8234d-009#1
+- packet: docs/pipeline/feedback-runs/20261027_091000_impl_feedback_dcd8234d/stage-packets/infrastructure.md

@@ -6,7 +6,7 @@
 
 - `validate-config.sh --rapid-crosscheck <path>` を facade ティアが単独で実装する(エントリポイントの定義元は UC「feature flag を設定する」。本 UC はその検証種別 `--rapid-crosscheck` の検証ルールを定義する)。
 - 検証対象は `rapid-crosscheck.env` の `RAPID_COMPARE_COMMAND`(速報の比較ツール起動コマンド 1 行)。
-- 検証は 3 点: コマンド部分(先頭の語 = shared_rules.compare_command_argv で空白区切りに分けた先頭の引数)が絶対パスで存在・実行可能であること、`{job_id}` を含むこと、`{params}` を使うなら引数 1 つ全体のときだけであること。ほかの引数部分の内容は検査しない(記号・空白を含む値は拒否しない)。
+- 検証は 3 点: コマンド部分(先頭の語 = shared_rules.compare_command_argv で空白区切りに分けた先頭の引数)が絶対パスで存在・実行可能であること、`{job_id}` を含むこと、`{params}` を使うなら引数 1 つ全体のときだけであること。`{job_id}` の有無と `{params}` の位置のほかは、引数部分の内容を検査しない(存在しないパス・未知の語・記号・空白を含む値は拒否しない)。
 
 ## コマンド契約
 
@@ -22,7 +22,7 @@
 
 ## 検証ルール(domain: launch_command_rules)
 
-コマンド部分(先頭の語)は shared_rules.compare_command_argv に従って値を空白区切りで引数の並びに分けた先頭の引数と定義する。検証はコマンド部分と `{job_id}` / `{params}` の位置だけに行い、ほかの引数部分の内容は検査しない。
+コマンド部分(先頭の語)は shared_rules.compare_command_argv に従って値を空白区切りで引数の並びに分けた先頭の引数と定義する。検証はコマンド部分と `{job_id}` の有無・`{params}` の位置に行い、`{job_id}` の有無と `{params}` の位置のほかは、引数部分の内容を検査しない。
 
 | # | ルール | 違反文言(終了コード 2) |
 |---|--------|------------------------|
@@ -43,6 +43,11 @@ Feature: tier-facade 速報クロスチェック設定の検証
     Given RAPID_COMPARE_COMMAND=/opt/compare/compare.sh --job {job_id} で /opt/compare/compare.sh が実行可能
     When validate-config.sh --rapid-crosscheck <path> を実行する
     Then 終了コード 0 で stdout に status=valid、command_path: /opt/compare/compare.sh、has_job_id_placeholder=true が出る
+
+  Scenario: 引数部分に存在しないパスや未知の語があっても valid
+    Given RAPID_COMPARE_COMMAND=/opt/compare/compare.sh --job {job_id} --in /no/such/path unknown-word で /opt/compare/compare.sh が実行可能
+    When validate-config.sh --rapid-crosscheck <path> を実行する
+    Then 終了コード 0 で stdout に status=valid が出て、stderr に error 行は出ない
 
   Scenario: コマンド部分が実行不可なら 2
     Given RAPID_COMPARE_COMMAND=/opt/compare/missing.sh --job {job_id} でコマンド部分が存在しない

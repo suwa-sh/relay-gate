@@ -1,0 +1,52 @@
+{
+  "schema_version": "distillery.infra-feedback-event/v1",
+  "event_id": "20261101_104000_feedback_impl_feedback_dcd8234d",
+  "created_at": "2026-11-01T10:40:00Z",
+  "stage": "infrastructure",
+  "trigger_event": "usdm:20261101_101000_feedback_impl_feedback_dcd8234d, arch:20261101_103000_feedback_impl_feedback_dcd8234d",
+  "previous_event_ref": "20261010_203000_feedback_impl_feedback_dcd8234d",
+  "feedback_request": {
+    "feedback_request_id": "20261027_091000_impl_feedback_dcd8234d",
+    "input_sha256": "37b8b54d7a4a8b1a978e389924c4b6e3ee9a1d276823a9d877f10fd01b866ca8",
+    "request_ids": [
+      "CR-dcd8234d-009"
+    ],
+    "work_unit_ids": [
+      "CR-dcd8234d-009#1"
+    ]
+  },
+  "members": [
+    {
+      "path": "infra/events/20261101_104000_feedback_impl_feedback_dcd8234d/_changes.md",
+      "sha256": "f6f28fd05e48fa5b390e5dea95586c3b92d49867ba4393140429f81c8c4f5af9"
+    },
+    {
+      "path": "infra/events/20261101_104000_feedback_impl_feedback_dcd8234d/_inference.md",
+      "sha256": "f8f8a914c3b84ae0dee9ee36905d2358d72a66e2486ce0a33455624ff7a5466c"
+    },
+    {
+      "path": "infra/events/20261101_104000_feedback_impl_feedback_dcd8234d/docs/mcl/product/output/product-impl-onprem.yaml",
+      "sha256": "bb172664742ea0885cb566eebb7947d7820f5d0e35d64783389d0dbb42cbf968"
+    },
+    {
+      "path": "infra/events/20261101_104000_feedback_impl_feedback_dcd8234d/infra-event-diff.yaml",
+      "sha256": "a9a69de9dd1c0735efa820b4bd023f7382d0d50455706b546311edf31a728c98"
+    },
+    {
+      "path": "infra/events/20261101_104000_feedback_impl_feedback_dcd8234d/infra-event.md",
+      "sha256": "770ac7c1aed7c05db692d8fcc560b61fe8b9e856c59b0299a30714b1db9970dd"
+    },
+    {
+      "path": "infra/events/20261101_104000_feedback_impl_feedback_dcd8234d/infra-event.yaml",
+      "sha256": "44b325e9a574c5e4521e4fd52f4338e18a55494c9a3598b270c5576aff7a2f52"
+    },
+    {
+      "path": "infra/events/20261101_104000_feedback_impl_feedback_dcd8234d/infra/product/onprem/ansible/roles/relay-gate-config/tasks/main.yml",
+      "sha256": "36e85bea602a1c5d92b8665a3f1d1489e8771fc7c4b267c349f5cf04158471b8"
+    },
+    {
+      "path": "infra/events/20261101_104000_feedback_impl_feedback_dcd8234d/source.txt",
+      "sha256": "0040bc68ca02f4b9e515018f753fcaf2273cf277bf216fea7b8c892aeb8f1c38"
+    }
+  ]
+}

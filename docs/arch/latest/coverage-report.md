@@ -1,7 +1,7 @@
 # アーキテクチャ設計 要件網羅率レポート
 
-- arch-design: 20261010_202000_feedback_impl_feedback_dcd8234d
-- arch-design 作成日時: 2026-10-10T20:20:00Z
+- arch-design: 20261101_103000_feedback_impl_feedback_dcd8234d
+- arch-design 作成日時: 2026-11-01T10:30:00Z
 
 ## 網羅率サマリ
 

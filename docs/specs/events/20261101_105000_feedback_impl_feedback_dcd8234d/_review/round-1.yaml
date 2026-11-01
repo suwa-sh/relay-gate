@@ -1,0 +1,80 @@
+round: 1
+findings:
+  - id: R-001
+    viewpoint: 1
+    severity: major
+    target: "spec-event.yaml(UC「クロスチェックのジョブマップと比較定義を定義する」の usdm[] SPEC-004-04)/ 適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/spec.md(関連 USDM)/ _cross-cutting/usdm-acceptance-matrix.md(SPEC-004-04 行)"
+    claim: "SPEC-004-04 の受け入れ基準 6(絶対パスでない)・7(存在しない / 実行可能でない)・8({job_id} が無い)・9(確報はプレースホルダ無しで 0)が SPEC-004-04 にひもづいていない。それでも対応表は SPEC-004-04 を covered と数えている"
+    evidence: "usdm[] の SPEC-004-04 の scenarios は「速報の起動コマンドを検証する(SPEC-004-01)/ 引数部分の内容は検査しない(SPEC-004-04)/ {params} が引数全体でない位置にある / {params} が引数 1 つ全体なら valid / クロスチェックジョブマップと対象カタログの検証種別は無い(SPEC-004-04)」の 5 件だけ。基準 6〜8 に当たる Scenario「コマンド部分が絶対パスでない」「コマンド部分が実行できない」「{job_id} プレースホルダが無い」は spec.md にあるが、SPEC-004-04 の行には無い(「コマンド部分が実行できない」は SPEC-005-03 だけ、残り 2 件はどの SPEC にもひもづいていない)。基準 9 に当たる確報 UC「比較ツールで日次全量比較を実行して結果を保存する」の Scenario「確報の起動コマンドが絶対パスで実行可能なら valid になる」も SPEC-004-04 にひもづいていない(SPEC-004-04 の対応 UC に確報 UC が含まれない)。基準 10 の確報側(確報の引数部分の任意文字列)も同様"
+    suggested_fix: "spec-event.yaml usdm[] と spec.md「関連 USDM」表の SPEC-004-04 に「コマンド部分が絶対パスでない」「コマンド部分が実行できない」「{job_id} プレースホルダが無い」を加える。確報 UC の usdm[] / 関連 USDM 表に SPEC-004-04 の行を加え「確報の起動コマンドが絶対パスで実行可能なら valid になる」(基準 9。必要なら基準 10 の確報側として引数部分に存在しないパスを含む例)をひもづける。usdm-acceptance-matrix.md の SPEC-004-04 行の対応 UC と主要シナリオを追従させる"
+  - id: R-002
+    viewpoint: 5
+    severity: major
+    target: "適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/spec.md(E2E 完了条件)"
+    claim: "受け入れ基準 5・6・7・8・12 の Then が要求する「stderr に error 行が出ない」「error 行が 1 行出る」を、対応する Scenario の Then が字面どおりに判定していない"
+    evidence: "基準 5 は「終了コード 0 で終了し、stderr に error 行が出ない」だが、Scenario「速報の起動コマンドを検証する(SPEC-004-01)」の Then は stdout と管理 DB 非接続だけを見ており stderr を検査しない。基準 6・7・8・12 は「error 行がキー名と(パス|値)つきで 1 行出る」だが、Scenario「コマンド部分が絶対パスでない」「コマンド部分が実行できない」「{job_id} プレースホルダが無い」「{params} が引数全体でない位置にある」の Then はいずれも「stderr に `error: ...` が出る」で、error 行がちょうど 1 行であること(他の error 行が出ないこと)を判定しない"
+    suggested_fix: "「速報の起動コマンドを検証する(SPEC-004-01)」に「And stderr に error 行は出ない」を加える。異常系 4 件の Then を「stderr の error 行は `error: ...` の 1 行だけである」の形にする(tier-facade.md の tier BDD も同じ判定に揃える)"
+  - id: R-003
+    viewpoint: 5
+    severity: major
+    target: "適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/spec.md(Scenario「クロスチェックジョブマップと対象カタログの検証種別は無い(SPEC-004-04)」)"
+    claim: "受け入れ基準 11 の Then(設定ファイル置き場にクロスチェックジョブマップ CSV・対象カタログ CSV が存在しない / それらを検証する種別が無い)のうち、対象カタログ側の検証種別と置き場のファイル不在を実行可能な形で判定していない。And の 1 文は実行時に観測できない"
+    evidence: "When は `--crosscheck-job-map` 1 種だけを試し、対象カタログの検証種別(例 `--target-catalog`)は試していない。Given は「設定ファイル置き場と CLI 契約 config_files の一覧」で、テストが用意する状態になっていない。And「config_files にクロスチェックジョブマップ CSV と対象カタログ CSV は無く、relay-gate はどちらのファイルも読まない」は文書の照合と、否定の網羅(どのコマンドも読まない)で、validate-config.sh の終了コード・stdout・stderr から判定できない"
+    suggested_fix: "When/Then を 2 本(または Scenario Outline)にし、`--crosscheck-job-map <path>` と `--target-catalog <path>` のそれぞれで終了コード 2 と `error: unknown option option=...` の 1 行を判定する。置き場の不在は「$RELAY_GATE_CONFIG_DIR に crosscheck-job-map.csv / target-catalog.csv を置いても validate-config.sh --rapid-crosscheck / --final-crosscheck の結果と stdout が変わらない」など観測できる Then にするか、文書照合の部分は「関連 USDM」表の注記(BDD の対象外)へ移す"
+  - id: R-004
+    viewpoint: 4
+    severity: major
+    target: "_cross-cutting/api/cli-command-contract.yaml(config_input_rules.env_files / shared_rules.compare_command_argv.split)"
+    claim: "引用符の外し方は「先頭の 1 文字」「末尾の 1 文字」で決まるが、VALUE の前後の空白(`KEY= \"abc\"`、`KEY=\"abc\" ` の行末空白、`KEY = value` のように `=` の前後に空白がある行)を外し方の前に除くかどうかが契約のどこにも書かれていない。空白の扱いで結果が変わり、推測なしに同じ結果を読めない"
+    evidence: "env_files は KEY=VALUE・コメント・空行・`=` を含まない行の扱いだけを定め、値の前後の空白に触れていない。前後の空白の除去を書いているのは runner IF の version_line_selection だけ。行末に空白がある `RAPID_COMPARE_COMMAND=\"/opt/compare/compare.sh --job {job_id}\" ` は、空白を残すと末尾の 1 文字が空白になり `\"` が外れず、分けた最後の引数が `{job_id}\"` になる。先頭に空白がある場合は先頭の引数が `\"/opt/...` になり絶対パス違反になる。今回のイベントの推論記録も「値の前後の空白の扱い」を確認推奨項目として未決のまま残している"
+    suggested_fix: "env_files に、引用符を外す前の値の前後の空白の扱い(除かない / 除く)と `=` の前後の空白の扱いを、実装(facade の 2 つの引用符外し関数と env 読み込み)の現在の振る舞いどおりに 1 文で書き、例を 1 件(行末に空白がある値)加える。split は env_files を参照しているので同じ結果になる"
+  - id: R-005
+    viewpoint: 4
+    severity: minor
+    target: "_cross-cutting/api/cli-command-contract.yaml(shared_rules.compare_command_argv.summary)"
+    claim: "summary が「この 1 か所だけを参照する(他の節に同じ規則を書かない)」と言う一方で、引用符の外し方の規則は split と env_files の 2 か所に同じ文で書かれた。どちらが正本で、変えるときに両方を直すことが契約の本文から読めない"
+    evidence: "summary は変更されていない。split は「引用符の外し方は config_input_rules.env_files と同じ規則」と書いたうえで規則全文を再掲し、env_files も全文を書く。2 か所に書く判断と、変えるときは 2 か所を同時に直すという結果は決定記録にだけある"
+    suggested_fix: "summary の「同じ規則を書かない」の対象を argv への分け方・置換・起動の規則に限ると明記し、引用符の外し方は env_files を正本として split に同文を写していること(変えるときは 2 か所を同時に直す)を split か env_files に 1 文で書く"
+  - id: R-006
+    viewpoint: 4
+    severity: minor
+    target: "_cross-cutting/api/cli-command-contract.yaml(validate-config.sh の比較ツール起動コマンドの違反文言の前置き)/ 適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/tier-facade.md(25 行目)"
+    claim: "検査範囲の言い方が、要求・spec.md・config_files の「{job_id} の有無と {params} の位置のほかは、引数部分の内容を検査しない」と揃っていない"
+    evidence: "2 か所とも「検証はコマンド部分と `{job_id}` / `{params}` の位置だけに行い、ほかの引数部分の内容は検査しない」のままで、「{job_id} の位置」を検査するとも読める。同じ tier-facade.md の 9 行目と config_files の RAPID_COMPARE_COMMAND は改めた表現になっている"
+    suggested_fix: "2 か所を「検証はコマンド部分・`{job_id}` の有無・`{params}` の位置だけに行い、`{job_id}` の有無と `{params}` の位置のほかは、引数部分の内容を検査しない(確報はコマンド部分だけ)」に揃える"
+  - id: R-007
+    viewpoint: 4
+    severity: minor
+    target: "適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/spec.md(データフロー図・データフロー表・シーケンス)"
+    claim: "_api-summary.yaml と tier-facade.md は終了コード 6(検証器の内部障害)を持つが、spec.md の出力は終了コード 0 / 2 だけを書いている"
+    evidence: "spec.md のデータフロー図「終了コード 0 or 2」、データフロー表の出力行「終了コード 0 / 2」、シーケンスの応答は 0 / 2 だけ。今回のイベントで _api-summary.yaml に code 6 を追加し、tier-facade.md の終了コード行も 6 を持つ"
+    suggested_fix: "データフロー表の出力行を「終了コード 0 / 2 / 6(内部障害。CLI 契約 config_input_rules.internal_failure)」にし、図とシーケンスも同じにするか、出力行に 6 は契約参照である旨を注記する"
+resolved:
+  - id: R-001
+    resolution: fixed
+    note: "SPEC-004-04 の usdm[] と関連 USDM 表に、基準 6 / 7 / 8 の UC-32 既存シナリオ(絶対パスでない / 実行できない / {job_id} が無い)を追加。確報 UC に SPEC-004-04 行を追加し、基準 9 と基準 10・6 の確報側を既存シナリオへひもづけ。usdm-acceptance-matrix の対応 UC に UC-15 を追加"
+    by: orchestrator
+  - id: R-002
+    resolution: fixed
+    note: "基準 5 のシナリオ(速報・確報)に「stderr に error 行は出ない」を追加。基準 6 / 7 / 8 / 12 のシナリオの Then を「の 1 行だけが error 行として出る」に変更"
+    by: orchestrator
+  - id: R-003
+    resolution: fixed
+    note: "基準 11 を Scenario Outline に変更し、--crosscheck-job-map と --target-catalog の 2 例で終了コード 2・unknown option・config= 行なしを判定する。判定できない And(読まない)を削除"
+    by: orchestrator
+  - id: R-004
+    resolution: deferred
+    note: "値の前後の空白と = の前後の空白の扱いは今回の変更要求の範囲外(実装は引用符を外す前に前後の空白を除く)。仕様へ黙って加えず、確認推奨項目として利用者へ返す"
+    by: orchestrator
+  - id: R-005
+    resolution: fixed
+    note: "split に「正本は config_input_rules.env_files。変えるときはこの節と同時に直す」、summary に引用符の規則は再掲である旨を追記"
+    by: orchestrator
+  - id: R-006
+    resolution: fixed
+    note: "CLI 契約の validate-config.sh 比較ツール起動コマンドの前置きと tier-facade.md 25 行目を「{job_id} の有無と {params} の位置のほかは」に揃えた"
+    by: orchestrator
+  - id: R-007
+    resolution: fixed
+    note: "spec.md データフロー表の出力行に終了コード 6(内部障害。契約参照)を追加"
+    by: orchestrator

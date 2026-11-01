@@ -1,16 +1,16 @@
 version: "1.0"
-event_id: "20261010_203000_feedback_impl_feedback_dcd8234d"
-created_at: "2026-10-10T20:30:00Z"
-source: "feedback request 20261010_104636_impl_feedback_dcd8234d(クロスチェック簡素化。RDRA / NFR / arch 差分)に基づくインフラ設計の差分更新"
-trigger_event: "arch:20261010_202000_feedback_impl_feedback_dcd8234d, nfr:20261010_201000_feedback_impl_feedback_dcd8234d"
-previous_event_ref: "20260921_094000_feedback_impl_feedback_eff24f55"
+event_id: "20261101_104000_feedback_impl_feedback_dcd8234d"
+created_at: "2026-11-01T10:40:00Z"
+source: "feedback request 20261027_091000_impl_feedback_dcd8234d(速報の起動コマンドに対する設定検証を 2 点から 3 点へ。USDM / arch 差分)に基づくインフラ設計の差分更新"
+trigger_event: "usdm:20261101_101000_feedback_impl_feedback_dcd8234d, arch:20261101_103000_feedback_impl_feedback_dcd8234d"
+previous_event_ref: "20261010_203000_feedback_impl_feedback_dcd8234d"
 feedback_request:
-  feedback_request_id: "20261010_104636_impl_feedback_dcd8234d"
-  input_sha256: "d4ddd211752998f5480a51d9dddfa3a58937badd62f72092c9257ed1384448fd"
-  request_ids: ["CR-dcd8234d-007","CR-dcd8234d-001","CR-dcd8234d-002","CR-dcd8234d-003"]
-  work_unit_ids: ["CR-dcd8234d-007#1","CR-dcd8234d-001#1","CR-dcd8234d-002#1","CR-dcd8234d-003#1"]
+  feedback_request_id: "20261027_091000_impl_feedback_dcd8234d"
+  input_sha256: "37b8b54d7a4a8b1a978e389924c4b6e3ee9a1d276823a9d877f10fd01b866ca8"
+  request_ids: ["CR-dcd8234d-009"]
+  work_unit_ids: ["CR-dcd8234d-009#1"]
 
-arch_event_ref: "20261010_202000_feedback_impl_feedback_dcd8234d"
+arch_event_ref: "20261101_103000_feedback_impl_feedback_dcd8234d"
 nfr_event_ref: "20261010_201000_feedback_impl_feedback_dcd8234d"
 foundation_context_ref: "foundation-context"
 shared_platform_context_ref: "shared-platform-context"
@@ -41,7 +41,7 @@ mcl_execution:
       description: "オンプレミス サービスマッピング(systemd/PostgreSQL/ローカルディスク/Postfix。20260905 差分: 配置ファイル名・aborted.txt・hang-detector.env。20260907 差分: 接続参照名の解決・rapid-crosscheck.env・ログ日時のローカルタイムゾーンと TZ / NTP 統一。20260907 中止整合差分: management_db の vendor_feature と notes に psql コマンドタグによる更新件数取得と 3 種の条件付き UPDATE の扱い。20261010 クロスチェック簡素化差分: config_store の configuration_notes から比較定義 CSV・対象カタログを外し、rapid-crosscheck.env に速報比較ツールの起動コマンド 1 行、final-crosscheck.env(確報 worker の DB 接続参照と確報比較ツールの起動コマンド 1 行)を追記)"
     - path: "docs/mcl/product/output/product-impl-onprem.yaml"
       status: "generated"
-      description: "オンプレミス実装仕様(コンポーネント別configuration/validation_rules。20260905 差分: config_store の contents / versioning / backup / 検証規則 2 件、artifact_store の状態導出、mail_relay の送信コマンド出所。20260907 差分: execution_hosts の timezone と検証規則、management_db の接続解決 / abort 時 UPDATE、config_store の rapid-crosscheck.env と検証規則、execution_log_store の timestamp。20260907 中止整合差分: management_db の abort_updates を abort-rapid-crosscheck(REQUESTED / CLAIMED / RUNNING)・abort-final-crosscheck(RUNNING のみ)・abort-blue / abort-green(REQUESTED。保険)に書き直し、worker_start_update と aborted_run_judgement、条件付き UPDATE の更新件数取得の検証規則を追加。20261010 クロスチェック簡素化差分: worker_start_update から comparison_result 登録の文言を外し、connection_resolution に確報 worker の final-crosscheck.env 接続参照と別ネットワークセグメント前提(runner 側成果物パスを読まない)を追記、config_store の contents を比較定義 CSV・対象カタログの廃止と rapid / final の env 起動コマンドへ更新、検証規則から E-007 / E-008 を外し final-crosscheck.env の存在検査を追加)"
+      description: "オンプレミス実装仕様(コンポーネント別configuration/validation_rules。20260905 差分: config_store の contents / versioning / backup / 検証規則 2 件、artifact_store の状態導出、mail_relay の送信コマンド出所。20260907 差分: execution_hosts の timezone と検証規則、management_db の接続解決 / abort 時 UPDATE、config_store の rapid-crosscheck.env と検証規則、execution_log_store の timestamp。20260907 中止整合差分: management_db の abort_updates を abort-rapid-crosscheck(REQUESTED / CLAIMED / RUNNING)・abort-final-crosscheck(RUNNING のみ)・abort-blue / abort-green(REQUESTED。保険)に書き直し、worker_start_update と aborted_run_judgement、条件付き UPDATE の更新件数取得の検証規則を追加。20261010 クロスチェック簡素化差分: worker_start_update から comparison_result 登録の文言を外し、connection_resolution に確報 worker の final-crosscheck.env 接続参照と別ネットワークセグメント前提(runner 側成果物パスを読まない)を追記、config_store の contents を比較定義 CSV・対象カタログの廃止と rapid / final の env 起動コマンドへ更新、検証規則から E-007 / E-008 を外し final-crosscheck.env の存在検査を追加。20261101 起動コマンド検証 3 点差分: rapid-crosscheck.env 検証規則の説明で validate-config.sh が所有する起動コマンドの内容検証を 3 点({params} を使うなら引数 1 つ全体がちょうど {params} を追加)に改めた)"
     - path: "docs/mcl/product/output/product-observability.yaml"
       status: "generated"
       description: "SLI/SLO・ログ・アラート仕様(20260905 差分: aborted.txt の終端扱いと通知設定の出所。20260907 差分: ログ日時の時刻軸、中止済み run の warning はメール通知対象外。20260907 中止整合差分: diagnostic_only_events に slot 実行 ABORTED による中止済み run と worker の 0 件終了、alert-error-rate の対象外事象に abort-rapid-crosscheck による ABORTED 化と worker の 0 件終了)"
@@ -74,7 +74,7 @@ mcl_execution:
       description: "ホスト/ネットワークセグメントの論理定義(プレースホルダ。provider未確定)"
     - path: "infra/product/onprem/ansible/"
       status: "generated"
-      description: "5ロール(runtime/postgresql/config/mail/backup)のIaCスケルトン(20260905 差分: config ロールの配置ファイル名を feature-flag.env / *.csv に変更し hang-detector.env 配置と平文認証情報検査を追加。20260907 差分: config ロールに rapid-crosscheck.env の配置と検査、runtime ロールに TZ 統一と時刻同期確認、inventory 例に変数を追加。20260907 中止整合差分: 変更なし。20261010 クロスチェック簡素化差分: config ロールの配置対象から crosscheck-job-map.csv / target-catalog.csv を外し、final-crosscheck.env の配置と非空検査を追加、rapid-crosscheck.env のコメントに起動コマンド 1 行を明記)"
+      description: "5ロール(runtime/postgresql/config/mail/backup)のIaCスケルトン(20260905 差分: config ロールの配置ファイル名を feature-flag.env / *.csv に変更し hang-detector.env 配置と平文認証情報検査を追加。20260907 差分: config ロールに rapid-crosscheck.env の配置と検査、runtime ロールに TZ 統一と時刻同期確認、inventory 例に変数を追加。20260907 中止整合差分: 変更なし。20261010 クロスチェック簡素化差分: config ロールの配置対象から crosscheck-job-map.csv / target-catalog.csv を外し、final-crosscheck.env の配置と非空検査を追加、rapid-crosscheck.env のコメントに起動コマンド 1 行を明記。20261101 起動コマンド検証 3 点差分: config ロールのコメントで validate-config.sh が所有する起動コマンドの内容検証に {params} の位置(引数 1 つ全体がちょうど {params})を追記)"
     - path: "docs/cloud-context/sources/onprem/"
       status: "generated"
       description: "ベンダーソース(PostgreSQL HA / RabbitMQ / MinIO / Redis。取得済み4件)"

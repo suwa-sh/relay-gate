@@ -2,10 +2,10 @@
 
 | 項目 | 値 |
 |------|-----|
-| イベント ID | 20261010_203000_feedback_impl_feedback_dcd8234d |
-| 作成日時 | 2026-10-10T20:30:00Z |
-| ソース | feedback request 20261010_104636_impl_feedback_dcd8234d(クロスチェック簡素化。RDRA / NFR / arch 差分)に基づくインフラ設計の差分更新 |
-| Arch 参照 | 20261010_202000_feedback_impl_feedback_dcd8234d |
+| イベント ID | 20261101_104000_feedback_impl_feedback_dcd8234d |
+| 作成日時 | 2026-11-01T10:40:00Z |
+| ソース | feedback request 20261027_091000_impl_feedback_dcd8234d(速報の起動コマンドに対する設定検証を 2 点から 3 点へ。USDM / arch 差分)に基づくインフラ設計の差分更新 |
+| Arch 参照 | 20261101_103000_feedback_impl_feedback_dcd8234d |
 | NFR 参照 | 20261010_201000_feedback_impl_feedback_dcd8234d |
 
 ## 変換サマリ

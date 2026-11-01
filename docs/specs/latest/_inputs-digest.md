@@ -1,10 +1,10 @@
 design_available: false
-event_id: 20261010_204000_feedback_impl_feedback_dcd8234d
+event_id: 20261101_105000_feedback_impl_feedback_dcd8234d
 
 # arch ダイジェスト
 
 - 転写元: `docs/arch/latest/arch-design.yaml`
-- source_sha256: `4c5cf9d626f8441479f7bc337f09a9b89d2478b4bd1397852284f41b3d3c2adc`
+- source_sha256: `42ba88928ec088c26d15ebb64f90299d73f7cad0cffa5f6576a96a470ae3a419`
 - 生成: `extractSections.js`（原文転写。要約・言い換えなし）
 
 ## 転写済みセクションのチェックリスト

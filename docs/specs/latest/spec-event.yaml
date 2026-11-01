@@ -1,14 +1,14 @@
 version: "1.0"
-event_id: "20261027_055000_feedback_impl_feedback_dcd8234d"
-created_at: "2026-10-27T05:50:00Z"
-source: "Spec 差分更新(spec 直接所有の還流。design 無しモード)。CR-dcd8234d-008: 比較ツールの起動コマンド(RAPID_COMPARE_COMMAND / FINAL_COMPARE_COMMAND)を引数の並び(argv)として解釈・起動する共通規則を CLI 契約 shared_rules.compare_command_argv に 1 か所で新設し、速報 worker(rapid-crosscheck-worker.sh)・確報 worker(final-crosscheck-worker.sh)・validate-config.sh(--rapid-crosscheck / --final-crosscheck)から参照させた。規則: 設定読込時に空白(スペース・タブの 1 個以上)で引数に分割、クォート・エスケープ・$ 等のシェル記法は解釈しない。置換は引数 1 つの中だけで行い({job_id} 等は引数の一部でも可)、{params} は引数全体のときだけ JSON 配列を 1 項目 1 引数へ展開([] は 0 個)、それ以外の位置の {params} は validate-config.sh --rapid-crosscheck の違反(placeholder {params} must be a whole argument)。起動は argv 配列で行い eval / bash -c / sh -c / 引用符なし展開を禁止(確報も同じ規則)。速報 worker は置換前に job_id / run_id / parameters の形式を検査し、不適合なら比較ツールを起動せず依頼を FAILED / exit_code=6 / error_summary=invalid request value: <field>(stderr: compare request value is invalid run_id=... field=...)。『置換後の文字列をコマンドとして起動する』という書き方を仕様から除去。反映先: cli-command-contract.yaml(shared_rules 追加・速報/確報 worker の起動コマンドの解決・external_interfaces 2 件の launch・config_files の RAPID_COMPARE_COMMAND/FINAL_COMPARE_COMMAND・validate-config.sh の検証と違反文言)、速報 worker UC(BDD: 記号・空白・$(...) を含む値も 1 引数、job_id/parameters 形式違反で FAILED)、確報 worker UC(BDD: argv 分割でシェル非解釈)、設定 UC(BDD: {params} 位置違反)。設定 1 行 + プレースホルダの形・プレースホルダ集合・既存検証 2 点は不変。記号を含む設定を拒否する規則は追加しない。判断は decisions/spec-decision-018。利用者が 2026-10-27 に案 A(引数ごとに分けて起動)を選択済み"
+event_id: "20261101_105000_feedback_impl_feedback_dcd8234d"
+created_at: "2026-11-01T10:50:00Z"
+source: "Spec 差分更新(design 無しモード。2026-11-01 の実装フィードバック)。CR-dcd8234d-010(spec 直接所有): CLI 契約の 2 か所(shared_rules.compare_command_argv.split と config_input_rules.env_files)の env 値の引用符の外し方を同じ規則で書いた(先頭の 1 文字が \" か ' なら外し、それとは別に末尾の 1 文字が \" か ' なら外す。種類の一致・対は求めない。例 \"abc\" → abc / \"abc → abc / abc' → abc / \"abc' → abc)。env_files は委譲をやめて規則そのものを書き、UC「feature flag を設定する」の tier-facade.md は契約へ参照させ仮採用を外した。実装は変えない。CR-dcd8234d-009(上流 USDM 更新済みの追従): 速報の起動コマンドの検証 3 点(コマンド部分 / {job_id} / {params} は引数 1 つ全体)に揃え、UC「クロスチェックのジョブマップと比較定義を定義する」の _api-summary.yaml の stderr と終了コード 2 の理由に {params} の位置違反を追加、spec.md / tier-facade.md / CLI 契約の「引数部分の内容は検査しない」を「{job_id} の有無と {params} の位置のほかは」に改め、受け入れ基準 10(引数部分の任意文字列)と 11(クロスチェックジョブマップ・対象カタログの検証種別は無い)の BDD を追加、基準 12({params} の位置違反)は既存 BDD で覆う。spec-event usdm / usdm-acceptance-matrix / uc-dependencies を追従。判断は decisions/spec-decision-019"
 design_available: false
-previous_event_ref: "20261010_204000_feedback_impl_feedback_dcd8234d"
+previous_event_ref: "20261027_055000_feedback_impl_feedback_dcd8234d"
 feedback_request:
-  feedback_request_id: "20261027_053600_impl_feedback_dcd8234d"
-  input_sha256: "141579fa0eca73d2b5999a0c4dccfe6c057e54658c3491decefcbd95935a9cfc"
-  request_ids: ["CR-dcd8234d-008"]
-  work_unit_ids: ["CR-dcd8234d-008#1"]
+  feedback_request_id: "20261027_091000_impl_feedback_dcd8234d"
+  input_sha256: "37b8b54d7a4a8b1a978e389924c4b6e3ee9a1d276823a9d877f10fd01b866ca8"
+  request_ids: ["CR-dcd8234d-009","CR-dcd8234d-010"]
+  work_unit_ids: ["CR-dcd8234d-009#1","CR-dcd8234d-010#1"]
 
 use_cases:
   - business: "クロスチェック業務"
@@ -114,6 +114,11 @@ use_cases:
         spec_id: "SPEC-011-03"
         scenarios:
           - "exit_code=0 で SUCCEEDED になる(SPEC-006-02)"
+      - req_id: "REQ-004"
+        spec_id: "SPEC-004-04"
+        scenarios:
+          - "確報の起動コマンドが絶対パスで実行可能なら valid になる"
+          - "絶対パスでない起動コマンドは invalid になる"
   - business: "クロスチェック業務"
     buc: "確報クロスチェックフロー"
     uc: "保存済みの確報結果をジョブスケジューラへ返す"
@@ -881,8 +886,13 @@ use_cases:
         spec_id: "SPEC-004-04"
         scenarios:
           - "速報の起動コマンドを検証する(SPEC-004-01)"
+          - "引数部分の内容は検査しない(SPEC-004-04)"
+          - "コマンド部分が絶対パスでない"
+          - "コマンド部分が実行できない"
+          - "{job_id} プレースホルダが無い"
           - "{params} が引数全体でない位置にある"
           - "{params} が引数 1 つ全体なら valid"
+          - "クロスチェックジョブマップと対象カタログの検証種別は無い(SPEC-004-04)"
       - req_id: "REQ-013"
         spec_id: "SPEC-013-01"
         scenarios:
@@ -960,11 +970,19 @@ stats:
   bucs: 7
 
 review:
-  method: "差分更新(CR-dcd8234d-008。比較ツール起動コマンドを引数の並びとして解釈・起動する共通規則 shared_rules.compare_command_argv の新設と、速報/確報 worker・validate-config.sh の参照。シェル非解釈起動・{params} 展開・置換前検査)の Step6.5 反証レビュー: 生成とは別コンテキストのサブエージェント(fresh context。修正禁止)が観点 5(CR-dcd8234d-008 の完了条件 / 契約・UC・tier・spec-event の三者一致 / 廃止語『置換後の文字列をコマンドとして起動する』の除去 / gherkin の実行可能性 / 方針資料との整合)。修正はオーケストレータ、修正後に機械検証(validateAllYaml / validateSpecEvent / validateApiSummary / validateModelSummary / validateSpecProse)。記録は events 側 _review/ のみ、latest へはコピーしない"
+  method: "差分更新(CR-dcd8234d-010: CLI 契約 2 か所の引用符の外し方の統一 / CR-dcd8234d-009: 速報の起動コマンドの検証 3 点への追従)の Step6.5 反証レビュー: 生成とは別コンテキストのサブエージェント(fresh context。修正禁止)が観点 4(検証 3 点の記述一致 / 受け入れ基準 10・11・12 と BDD・usdm[] の対応 / 引用符規則の 2 か所一致 / ID 混入)。修正はオーケストレータ、修正後に機械検証(validateAllYaml / validateSpecEvent / validateApiSummary / validateSpecProse)。記録は events 側 _review/ のみ、latest へはコピーしない"
   rounds: 2
   converged: true
-  final_state: "blocker 0 / 未解決 major 0(2 ラウンドで収束)。round 1: major 1(R-1 確報 UC の spec-event.yaml に簡素化で廃止した SPEC-011-03 scenario『対象一覧を成果物に記録する』が残存 = 前イベント由来のドリフト。scenario 名を実在の『exit_code=0 で SUCCEEDED になる(SPEC-006-02)』へ是正し spec.md 関連 USDM 表にも SPEC-011-03 行を追加して三者一致。CR-008 本体は完了条件 1〜7 充足)。round 2: R-1 は誤検知(是正行は spec.md 169 行目に実在。レビュアーが 163-168 のみ参照して見落とし)で解消確認、新規 minor 1(R-2 usdm-acceptance-matrix.md の UC-15 受け入れ文に廃止済み『3 ファイル』の stale 記述。現 SPEC-003-03 シナリオへ是正)を fixed。収束"
+  final_state: "blocker 0 / 未解決 major 0(2 ラウンドで収束)。round 1: major 4 / minor 3。R-001(基準 6〜9 の usdm ひもづけ不足)・R-002(error 行の行数を Then で判定していない)・R-003(基準 11 のシナリオが判定不能)・R-005〜R-007 を fixed、R-004(値の前後の空白の扱い)は変更要求の範囲外として deferred し確認推奨項目へ。round 2: minor 4。R-003 残り(基準 11 前半の BDD 対象外の注記)と R-009(確報 UC のひもづけの絞り込み)を fixed、R-008(tier BDD の行数表現)と R-010(実行権限なしのシナリオ)は deferred"
   history:
+    - round: 1
+      event: "20261101_105000_feedback_impl_feedback_dcd8234d"
+      findings: "major 4 / minor 3(R-001〜R-007。R-004 deferred、他 fixed)"
+      resolution: "_review/round-1.yaml の resolved"
+    - round: 2
+      event: "20261101_105000_feedback_impl_feedback_dcd8234d"
+      findings: "minor 4(R-003 残り / R-008〜R-010。R-003・R-009 fixed、R-008・R-010 deferred)"
+      resolution: "_review/round-2.yaml の resolved(blocker 0 / 未解決 major 0 で収束)"
     - round: 1
       event: "20261027_055000_feedback_impl_feedback_dcd8234d"
       findings: "major 1(R-1。前イベント由来の SPEC-011-03 scenario ドリフト。fixed)"

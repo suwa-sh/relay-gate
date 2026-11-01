@@ -1,0 +1,36 @@
+meta:
+  event_id: "20261101_104000_feedback_impl_feedback_dcd8234d"
+  trigger_event: "usdm:20261101_101000_feedback_impl_feedback_dcd8234d, arch:20261101_103000_feedback_impl_feedback_dcd8234d"
+  created_at: "2026-11-01T10:40:00Z"
+  mode: "differential"
+  mcl_rerun: "skipped_targeted_update"
+  mcl_rerun_reason: "translation(workload_type / availability_tier / latency / data_classification / traffic / consistency / cost_posture / target_clouds)は無変更。上流の変更は、速報の起動コマンドに対する設定検証(validate-config.sh)の検証項目を 2 点から 3 点({params} を使うなら引数 1 つ全体がちょうど {params})にしたことと、arch CTR-007 の説明文の列挙をそれに合わせたことだけで、ティア構成・依存・配置・サーバ構成・ストレージ・トラフィック・復旧目標は変わらない。インフラ設計には、validate-config.sh が所有する起動コマンドの内容検証を 2 点で列挙した記述が 2 か所(実装仕様の rapid-crosscheck.env 検証規則の説明と config ロールのコメント)あったため、その列挙だけを 3 点へ差分更新した(MCL product-design の全量再実行は行わない)"
+feedback_request:
+  feedback_request_id: "20261027_091000_impl_feedback_dcd8234d"
+  input_sha256: "37b8b54d7a4a8b1a978e389924c4b6e3ee9a1d276823a9d877f10fd01b866ca8"
+  request_ids: ["CR-dcd8234d-009"]
+  work_unit_ids: ["CR-dcd8234d-009#1"]
+changes:
+  event_id: "20261101_104000_feedback_impl_feedback_dcd8234d"
+  created_at: "2026-11-01T10:40:00Z"
+  source: "feedback request 20261027_091000_impl_feedback_dcd8234d(速報の起動コマンドに対する設定検証を 2 点から 3 点へ。USDM / arch 差分)に基づくインフラ設計の差分更新"
+  arch_event_ref: "20261101_103000_feedback_impl_feedback_dcd8234d"
+  nfr_event_ref: "20261010_201000_feedback_impl_feedback_dcd8234d"
+  translation:
+    unchanged: true
+  mcl_execution:
+    status: "completed"
+    completed_at: "2026-11-01T10:40:00Z"
+    outputs_updated:
+      - path: "docs/mcl/product/output/product-impl-onprem.yaml"
+        change: "impl.storage.config_store の validation_rules のうち rapid-crosscheck.env 検証規則の description で、validate-config.sh が所有する起動コマンドの内容検証の列挙を 2 点(コマンド部分が絶対パスで実行可能・{job_id} を含む)から 3 点({params} を使うなら引数 1 つ全体がちょうど {params} を追加)へ改めた。規則本体(存在とキー構成の検証)と final-crosscheck.env の規則は不変"
+        work_units: ["CR-dcd8234d-009#1"]
+      - path: "infra/product/onprem/ansible/roles/relay-gate-config/tasks/main.yml"
+        change: "final-crosscheck.env 非空検査の直前のコメントで、validate-config.sh が所有する起動コマンドの内容検証に速報の {params} の位置(引数 1 つ全体がちょうど {params})を追記した。タスク(配置・非空検査・平文認証情報検査)は不変"
+        work_units: ["CR-dcd8234d-009#1"]
+  arch_feedback:
+    status: "no_new_feedback"
+    reason: "本イベントの差分は、上流(USDM と arch CTR-007)で確定した検証項目 3 点をインフラ設計の説明文へ追従させたものだけである。infra から arch への新規フィードバック(ベンダーニュートラル化された制約・ポリシーの追加や confidence の昇格)は無い。本 stage は feedback controller の指示により Phase4(arch フィードバック)を実行しないため、arch root の latest・新規 arch event は作成しない"
+  writeback_check:
+    result: "not_required"
+    reason: "arch 差分は CTR-007 の説明文の検証項目列挙だけで、ティア構成・認証認可方式・DR 方針・外部連携・storage_type を変えていない。translation の各フィールドに影響しないため product-input の再生成と Step2 の再実行は不要"

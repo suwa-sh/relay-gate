@@ -1,18 +1,24 @@
-Spec 差分更新(design 無しモード): 2026-10-27 の実装フィードバック(spec 直接所有)。
+Spec 差分更新(design 無しモード): 2026-11-01 の実装フィードバック(dist-pipeline feedback mode Step6)。
 
-CR-dcd8234d-008: 比較ツールの起動コマンド(RAPID_COMPARE_COMMAND / FINAL_COMPARE_COMMAND)を、シェルに解釈させず引数ごとに分けて起動する決まりを仕様に定める(利用者が 2026-10-27 に案 A を選択)。
+CR-dcd8234d-010(spec 直接所有): CLI 契約の 2 か所(shared_rules.compare_command_argv.split / config_input_rules.env_files)の env 値の引用符の外し方を同じ規則で書く。
 
-- 起動コマンドを引数の並び(argv)として解釈する共通規則を CLI 契約 shared_rules.compare_command_argv に 1 か所で新設し、速報 worker(rapid-crosscheck-worker.sh)・確報 worker(final-crosscheck-worker.sh)・validate-config.sh(--rapid-crosscheck / --final-crosscheck)から参照させる。
-- 規則: 設定読込時に空白(スペース・タブ 1 個以上)で引数に分割、クォート・エスケープ・$ 等のシェル記法は非解釈。置換は引数 1 つの中だけ。{params} は引数全体のときだけ JSON 配列を 1 項目 1 引数へ展開([] は 0 個)、それ以外の位置は validate-config.sh --rapid-crosscheck の違反。起動は argv 配列で行い eval / bash -c / sh -c / 引用符なし展開を禁止。確報も同じ規則で分割して起動。
-- 速報 worker は置換前に job_id / run_id / parameters の形式を検査し、不適合なら比較ツールを起動せず依頼を FAILED / exit_code=6 / error_summary=invalid request value: <field>(stderr: compare request value is invalid run_id=... field=...)。
-- 「置換後の文字列をコマンドとして起動する」という書き方を仕様から除去。設定 1 行 + プレースホルダの形・プレースホルダ集合・既存検証 2 点は不変。記号を含む設定を拒否する規則は追加しない。判断は decisions/spec-decision-018。
+- 規則: 先頭の 1 文字が " か ' なら外し、それとは別に(先頭を外した後の)末尾の 1 文字が " か ' なら外す。先頭と末尾の種類の一致や対は求めない。例 "abc" → abc / "abc → abc / abc' → abc / "abc' → abc。
+- env_files は UC「feature flag を設定する」への委譲をやめて規則そのものを書いた。feature flag UC の tier-facade.md は契約 env_files へ参照させ「仮採用」を外した。
+- 実装は変えない(facade の feature_flag_config_unquote / rapid_crosscheck_env_unquote と同じ規則)。
+
+CR-dcd8234d-009(因果。上流 USDM SPEC-004-04 は更新済み): 速報の起動コマンドの検証を 3 点に揃える。
+
+- UC「クロスチェックのジョブマップと比較定義を定義する」の _api-summary.yaml の stderr と終了コード 2 の理由に {params} の位置違反を追加(終了コード 6 も tier-facade.md に合わせて追加)。
+- spec.md / tier-facade.md / CLI 契約(config_files の RAPID_COMPARE_COMMAND)の「引数部分の内容は検査しない」を「{job_id} の有無と {params} の位置のほかは」に改めた。
+- BDD: 受け入れ基準 10(引数部分の任意文字列。{params} を一部に含まず {job_id} を含む)と 11(クロスチェックジョブマップ・対象カタログの検証種別は無い)のシナリオを追加。基準 12 は既存「{params} が引数全体でない位置にある」で覆う。
+- spec-event.yaml usdm[] / usdm-acceptance-matrix.md / uc-dependencies.md を追従。判断は decisions/spec-decision-019。
 
 feedback request:
-- feedback_request_id: 20261027_053600_impl_feedback_dcd8234d
-- input_sha256: 141579fa0eca73d2b5999a0c4dccfe6c057e54658c3491decefcbd95935a9cfc
-- request_ids: CR-dcd8234d-008
-- direct_work_unit_ids: CR-dcd8234d-008#1
-- causal_work_unit_ids: CR-dcd8234d-008#1
-- stage packet: docs/pipeline/feedback-runs/20261027_053600_impl_feedback_dcd8234d/stage-packets/spec.md
+- feedback_request_id: 20261027_091000_impl_feedback_dcd8234d
+- input_sha256: 37b8b54d7a4a8b1a978e389924c4b6e3ee9a1d276823a9d877f10fd01b866ca8
+- request_ids: CR-dcd8234d-009, CR-dcd8234d-010
+- direct_work_unit_ids: CR-dcd8234d-010#1
+- causal_work_unit_ids: CR-dcd8234d-009#1, CR-dcd8234d-010#1
+- stage packet: docs/pipeline/feedback-runs/20261027_091000_impl_feedback_dcd8234d/stage-packets/spec.md
 
-direct_stage: spec(上流 RDRA / USDM / arch / nfr / infra の変更なし。trigger_event なし)
+trigger_event: usdm:20261101_101000_feedback_impl_feedback_dcd8234d, arch:20261101_103000_feedback_impl_feedback_dcd8234d, infra:20261101_104000_feedback_impl_feedback_dcd8234d(rdra / nfr は no-change)

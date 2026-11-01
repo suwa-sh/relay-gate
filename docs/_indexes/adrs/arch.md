@@ -26,3 +26,4 @@
 | 18 | [slot 実行の管理 DB 側状態(slot_executions.status)は公開時点の状態を条件付き更新で一度だけ書き、abort 後は ABORTED のまま残してファイル正本へ再同期しない](../../arch/events/20260908_015000_feedback_slot_status_wording/decisions/arch-decision-018.yaml) | approved |
 | 19 | [validate-config.sh はティア間の関数委譲を無くし facade 単独で設定検証を完結させる。同一プロセスに source されるティアの名前空間の一般規則を CTR-007 に追加する](../../arch/events/20261010_202000_feedback_impl_feedback_dcd8234d/decisions/arch-decision-019.yaml) | approved |
 | 20 | [クロスチェック簡素化に追従し、arch から廃止構造(クロスチェックジョブマップ・対象カタログ・比較結果レコード・成果物 URI の受け渡し・確報の business_date / カタログ版)への言及を除去する](../../arch/events/20261010_202000_feedback_impl_feedback_dcd8234d/decisions/arch-decision-020.yaml) | approved |
+| 21 | [CTR-007 に残っていた速報の起動コマンドの検証項目数(2 点)を、要求の 3 点へ追従させる。検証を facade 単独で完結させる構成は変えない](../../arch/events/20261101_103000_feedback_impl_feedback_dcd8234d/decisions/arch-decision-021.yaml) | approved |

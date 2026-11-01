@@ -1,0 +1,34 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "architecture"
+artifact_id: "arch-decision-021"
+title: "CTR-007 に残っていた速報の起動コマンドの検証項目数(2 点)を、要求の 3 点へ追従させる。検証を facade 単独で完結させる構成は変えない"
+status: "approved"
+generated_at: "2026-11-01T10:30:00Z"
+context: |
+  前段の要求仕様(requirements)が、設定検証(validate-config.sh)が速報の比較ツール起動コマンドに対して行う検証を
+  2 点から 3 点にした(2026-11-01)。3 点目は「速報の起動コマンドで {params} を使うなら、引数 1 つ全体がちょうど {params} であること」で、
+  {job_id} の有無と {params} の位置のほかは引数部分の内容を検査しない。RDRA と NFR は変更されていない。
+  アーキテクチャ設計の latest では、クロスティアルール CTR-007(ティアは独立プロセス・ティア間のシェル関数共有の規則)の説明が、
+  facade 単独で設定検証を完結できる根拠として「速報の検証は 2 点」と検証項目を列挙しており、要求と食い違っていた。
+  ティア構成・ティア間依存・レイヤー・データモデル・ストレージマッピング・他の決定記録(arch-decision-019 は 2026-10-10 時点の文脈記録)に、
+  検証項目の数や {params} の位置を前提にした規則は無い。
+decision: |
+  - system_architecture/cross_tier_rules/CTR-007 の説明の括弧書きを、検証 3 点(コマンド部分が絶対パスで存在し実行可能 / {job_id} を含む /
+    {params} を使うなら引数 1 つ全体がちょうど {params})へ改める。3 点とも CSV クォート解析を要さず、ティア間で共有すべき解析関数も無いため、
+    facade 単独で完結するという結論は変わらない
+  - 検証項目の正本は要求(SPEC-004-04)と CLI 契約であり、CTR-007 は検証を facade 単独で完結させる構成だけを定めることを明記する
+    (今後、検証項目が増減しても arch の規則は変わらないことを示す)
+  - arch-decision-019 は当時の文脈を記録した決定記録のため書き換えない
+  - 違反時の stderr 文言・終了コード、CLI 契約と UC ティア仕様の追従は下流 spec の責務
+consequences:
+  positive:
+    - "arch latest の CTR-007 が要求の検証 3 点と一致し、下流 spec が 2 点の記述を引き継がない"
+    - "検証項目の正本を要求と CLI 契約に寄せたことで、arch に検証項目を複製し続ける必要がなくなる"
+  negative:
+    - "CTR-007 の括弧書きに検証項目の列挙が残るため、将来の検証項目変更時は arch の追従確認が引き続き必要になる(正本は要求である旨を明記して影響を最小化した)"
+alternatives_considered:
+  - name: "arch を変えない(not_impacted とする)"
+    reason_rejected: "CTR-007 の説明が「2 点」と明記しており、要求の 3 点と食い違ったまま下流 spec の入力になるため"
+  - name: "CTR-007 から検証項目の列挙を完全に削除し、要求への参照だけにする"
+    reason_rejected: "facade 単独で完結できる根拠(いずれも CSV クォート解析と共有関数を要さない)が読み取りにくくなる。列挙を残し正本の所在を明記する案のほうが規則の妥当性を arch 単独で確認できる"

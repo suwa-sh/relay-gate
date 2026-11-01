@@ -1,15 +1,15 @@
 version: "1.0"
-event_id: "20261010_200000_feedback_impl_feedback_dcd8234d"
-created_at: "2026-10-10T20:00:00"
-source: "docs/usdm/events/ を順に適用したスナップショット(既存スナップショットに feedback 20261010_104636_impl_feedback_dcd8234d の増分 20261010_200000_feedback_impl_feedback_dcd8234d を適用。CR-dcd8234d-007 クロスチェック簡素化と CR-dcd8234d-002 受け入れ基準の振る舞い限定を反映)"
+event_id: "20261101_101000_feedback_impl_feedback_dcd8234d"
+created_at: "2026-11-01T10:10:00"
+source: "docs/usdm/events/ を順に適用したスナップショット(既存スナップショットに feedback 20261027_091000_impl_feedback_dcd8234d の増分 20261101_101000_feedback_impl_feedback_dcd8234d を適用。CR-dcd8234d-009 速報の起動コマンドの検証 3 点化を反映)"
 system_name: "relay-gate 並行稼働実行基盤"
-last_updated: "2026-10-10T20:00:00"
-last_event_id: "20261010_200000_feedback_impl_feedback_dcd8234d"
+last_updated: "2026-11-01T10:10:00"
+last_event_id: "20261101_101000_feedback_impl_feedback_dcd8234d"
 feedback_request:
-  feedback_request_id: "20261010_104636_impl_feedback_dcd8234d"
-  input_sha256: "d4ddd211752998f5480a51d9dddfa3a58937badd62f72092c9257ed1384448fd"
-  request_ids: ["CR-dcd8234d-007","CR-dcd8234d-002"]
-  work_unit_ids: ["CR-dcd8234d-007#1","CR-dcd8234d-002#1"]
+  feedback_request_id: "20261027_091000_impl_feedback_dcd8234d"
+  input_sha256: "37b8b54d7a4a8b1a978e389924c4b6e3ee9a1d276823a9d877f10fd01b866ca8"
+  request_ids: ["CR-dcd8234d-009"]
+  work_unit_ids: ["CR-dcd8234d-009#1"]
 
 requirements:
   - id: "REQ-001"
@@ -235,7 +235,7 @@ requirements:
             action: "modify"
             target: "ジョブ解決契約"
       - id: "SPEC-004-04"
-        specification: "slot ジョブマップは CSV ファイル(1 行目ヘッダー、1 行 1 job_id)とする。列は元資料の列名 job_id,host,user,work_dir,script,fixed_params,hang_detect_limit_minutes を用い、host と user はローカル実行の slot では省略できる。fixed_params は JSON 配列文字列を格納する CSV セルで、セルは二重引用符で囲み、セル内の二重引用符は二重化する。認証情報の参照名(credential_ref)とマップ版(map_version)は末尾の任意列として許容し必須にしない。実装版の列は持たず、実装版は feature flag(BLUE_IMPL / GREEN_IMPL)が所有する。クロスチェックの設定はジョブ ID ごとの行構造を持つ CSV(クロスチェックジョブマップ)や対象カタログにせず、速報・確報の比較ツール起動コマンドを 1 行の文字列として、それぞれの worker が読む設定ファイルに 1 つずつ定義する(ファイル名・キー名は仕様で確定する。推奨は既存の速報クロスチェック設定と確報クロスチェック worker の設定にキーを 1 つずつ追加する案)。設定検証(validate-config.sh)が起動コマンドに対して行う検証は次の 2 点だけとする: (1) コマンド部分(先頭の語)が絶対パスで、存在し、実行可能であること、(2) 速報の起動コマンドに {job_id} が含まれること。検証はコマンド部分に対して行い、引数部分の内容は検査しない。違反時の文言は CLI 契約(仕様)で確定する"
+        specification: "slot ジョブマップは CSV ファイル(1 行目ヘッダー、1 行 1 job_id)とする。列は元資料の列名 job_id,host,user,work_dir,script,fixed_params,hang_detect_limit_minutes を用い、host と user はローカル実行の slot では省略できる。fixed_params は JSON 配列文字列を格納する CSV セルで、セルは二重引用符で囲み、セル内の二重引用符は二重化する。認証情報の参照名(credential_ref)とマップ版(map_version)は末尾の任意列として許容し必須にしない。実装版の列は持たず、実装版は feature flag(BLUE_IMPL / GREEN_IMPL)が所有する。クロスチェックの設定はジョブ ID ごとの行構造を持つ CSV(クロスチェックジョブマップ)や対象カタログにせず、速報・確報の比較ツール起動コマンドを 1 行の文字列として、それぞれの worker が読む設定ファイルに 1 つずつ定義する(ファイル名・キー名は仕様で確定する。推奨は既存の速報クロスチェック設定と確報クロスチェック worker の設定にキーを 1 つずつ追加する案)。設定検証(validate-config.sh)が起動コマンドに対して行う検証は次の 3 点だけとする: (1) コマンド部分(先頭の語)が絶対パスで、存在し、実行可能であること、(2) 速報の起動コマンドに {job_id} が含まれること、(3) 速報の起動コマンドで {params} を使うなら、引数 1 つ全体がちょうど {params} であること。{job_id} の有無と {params} の位置のほかは、引数部分の内容を検査しない。違反時の文言は CLI 契約(仕様)で確定する"
         acceptance_criteria:
           - "Given 元資料どおりの列名(job_id,host,user,work_dir,script,fixed_params,hang_detect_limit_minutes)の CSV ジョブマップ When runner が JOB_ID を解決する Then 列名の読み替えなしに host・user・script・work_dir・fixed_params・hang_detect_limit_minutes が得られる"
           - "Given fixed_params セルに p1 と p2 p3 の 2 要素の JSON 配列を、二重引用符で囲み内部の二重引用符を二重化して書いた When runner が固定引数を解析する Then 空白とカンマを維持した 2 引数として得られる"
@@ -246,13 +246,13 @@ requirements:
           - "Given 起動コマンドのコマンド部分のファイルが存在しない、または実行可能でない When validate-config.sh で検証する Then 非 0 の終了コードで終了し、stderr に実行可能でない旨の error 行がキー名とパスつきで 1 行出る"
           - "Given 速報の起動コマンドに {job_id} が含まれない When validate-config.sh で検証する Then 非 0 の終了コードで終了し、stderr に {job_id} が無い旨の error 行がキー名と値つきで 1 行出る"
           - "Given 確報の起動コマンドにプレースホルダが 1 つも無い When validate-config.sh で確報の起動コマンドの設定を検証する Then 終了コード 0 で終了する(確報の起動コマンドにプレースホルダは要求しない)"
-          - "Given 起動コマンドの引数部分に任意の文字列(存在しないパスや未知の語を含む) When validate-config.sh で検証する Then 引数部分を理由とする error 行は出ず、終了コードは引数部分の内容に影響されない"
+          - "Given 起動コマンドの引数部分が、{params} を引数の一部に含まない任意の文字列(存在しないパスや未知の語を含む)で、速報の起動コマンドの場合は {job_id} を含む When validate-config.sh で検証する Then 引数部分を理由とする error 行は出ず、終了コードは引数部分の内容に影響されない"
           - "Given relay-gate の設定ファイル置き場 When クロスチェックジョブマップ CSV や対象カタログ CSV を探す Then 存在せず、validate-config.sh にそれらを検証する種別も無い"
+          - "Given 速報の起動コマンドの引数の一部に {params} を含む(--args={params}) When validate-config.sh で速報の起動コマンドの設定を検証する Then 非 0 の終了コードで終了し、stderr に {params} が引数全体でない旨の error 行がキー名と値つきで 1 行出る"
         feedback_source:
-          feedback_request_id: "20261010_104636_impl_feedback_dcd8234d"
+          feedback_request_id: "20261027_091000_impl_feedback_dcd8234d"
           work_unit_ids:
-            - "CR-dcd8234d-007#1"
-            - "CR-dcd8234d-002#1"
+            - "CR-dcd8234d-009#1"
         affected_models:
           - type: "information"
             action: "modify"

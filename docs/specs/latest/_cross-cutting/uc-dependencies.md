@@ -49,7 +49,7 @@
 | UC-29 | [feature flag を設定する](<../適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md>) | 適用構成業務 / 適用構成定義フロー | facade | feature-flag.env(defines)、validate-config.sh(defines。tier-facade 単一定義。契約 `defined_in_uc` と一致) |
 | UC-30 | [slot runner の実体スクリプトを割り当てる](<../適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/spec.md>) | 適用構成業務 / 適用構成定義フロー | facade | runner IF($BLUE_RUNNER / $GREEN_RUNNER、defines。契約 `defined_in_uc` と一致)、validate-config.sh --feature-flag(uses) |
 | UC-31 | [slot ごとのジョブマップを定義する](<../適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/spec.md>) | 適用構成業務 / 適用構成定義フロー | facade | `<slot>`-job-map.csv(defines)、validate-config.sh --job-map(uses。定義元は UC-29) |
-| UC-32 | [クロスチェックのジョブマップと比較定義を定義する](<../適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/spec.md>) | 適用構成業務 / 適用構成定義フロー | facade | rapid-crosscheck.env の RAPID_COMPARE_COMMAND(速報の比較ツール起動コマンド 1 行。defines)、validate-config.sh --rapid-crosscheck(uses。定義元は UC-29(tier-facade)。残す検証 2 点: コマンド部分が絶対パスで実行可能 / {job_id} を含む) |
+| UC-32 | [クロスチェックのジョブマップと比較定義を定義する](<../適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/spec.md>) | 適用構成業務 / 適用構成定義フロー | facade | rapid-crosscheck.env の RAPID_COMPARE_COMMAND(速報の比較ツール起動コマンド 1 行。defines)、validate-config.sh --rapid-crosscheck(uses。定義元は UC-29(tier-facade)。検証 3 点: コマンド部分が絶対パスで実行可能 / {job_id} を含む / {params} を使うなら引数 1 つ全体) |
 
 ## 依存グラフ
 

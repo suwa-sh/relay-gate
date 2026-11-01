@@ -59,7 +59,7 @@
     mode: "0640"
   notify: notify config change (no restart required)
 
-# 起動コマンドの内容検証(コマンド部分が絶対パスで実行可能・速報は {job_id} を含む)は validate-config.sh が所有する。
+# 起動コマンドの内容検証(コマンド部分が絶対パスで実行可能・速報は {job_id} を含み、{params} を使うなら引数 1 つ全体がちょうど {params})は validate-config.sh が所有する。
 # ここでは配置物が空でないことだけを確認する。
 - name: 確報クロスチェック worker 設定が空でないことを検査する
   ansible.builtin.shell: "test -s /etc/relay-gate/final-crosscheck.env"

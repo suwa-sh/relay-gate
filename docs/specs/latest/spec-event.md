@@ -4,9 +4,9 @@
 
 | 項目 | 内容 |
 |------|------|
-| Event ID | 20261027_055000_feedback_impl_feedback_dcd8234d |
-| Created At | 2026-10-27T05:50:00Z |
-| Source | Spec 差分更新(spec 直接所有の還流。design 無しモード)。CR-dcd8234d-008: 比較ツールの起動コマンド(RAPID_COMPARE_COMMAND / FINAL_COMPARE_COMMAND)を引数の並び(argv)として解釈・起動する共通規則を CLI 契約 shared_rules.compare_command_argv に 1 か所で新設し、速報 worker(rapid-crosscheck-worker.sh)・確報 worker(final-crosscheck-worker.sh)・validate-config.sh(--rapid-crosscheck / --final-crosscheck)から参照させた。規則: 設定読込時に空白(スペース・タブの 1 個以上)で引数に分割、クォート・エスケープ・$ 等のシェル記法は解釈しない。置換は引数 1 つの中だけで行い({job_id} 等は引数の一部でも可)、{params} は引数全体のときだけ JSON 配列を 1 項目 1 引数へ展開([] は 0 個)、それ以外の位置の {params} は validate-config.sh --rapid-crosscheck の違反(placeholder {params} must be a whole argument)。起動は argv 配列で行い eval / bash -c / sh -c / 引用符なし展開を禁止(確報も同じ規則)。速報 worker は置換前に job_id / run_id / parameters の形式を検査し、不適合なら比較ツールを起動せず依頼を FAILED / exit_code=6 / error_summary=invalid request value: <field>(stderr: compare request value is invalid run_id=... field=...)。『置換後の文字列をコマンドとして起動する』という書き方を仕様から除去。反映先: cli-command-contract.yaml(shared_rules 追加・速報/確報 worker の起動コマンドの解決・external_interfaces 2 件の launch・config_files の RAPID_COMPARE_COMMAND/FINAL_COMPARE_COMMAND・validate-config.sh の検証と違反文言)、速報 worker UC(BDD: 記号・空白・$(...) を含む値も 1 引数、job_id/parameters 形式違反で FAILED)、確報 worker UC(BDD: argv 分割でシェル非解釈)、設定 UC(BDD: {params} 位置違反)。設定 1 行 + プレースホルダの形・プレースホルダ集合・既存検証 2 点は不変。記号を含む設定を拒否する規則は追加しない。判断は decisions/spec-decision-018。利用者が 2026-10-27 に案 A(引数ごとに分けて起動)を選択済み |
+| Event ID | 20261101_105000_feedback_impl_feedback_dcd8234d |
+| Created At | 2026-11-01T10:50:00Z |
+| Source | Spec 差分更新(design 無しモード。2026-11-01 の実装フィードバック)。CR-dcd8234d-010(spec 直接所有): CLI 契約の 2 か所(shared_rules.compare_command_argv.split と config_input_rules.env_files)の env 値の引用符の外し方を同じ規則で書いた(先頭の 1 文字が \" か ' なら外し、それとは別に末尾の 1 文字が \" か ' なら外す。種類の一致・対は求めない。例 \"abc\" → abc / \"abc → abc / abc' → abc / \"abc' → abc)。env_files は委譲をやめて規則そのものを書き、UC「feature flag を設定する」の tier-facade.md は契約へ参照させ仮採用を外した。実装は変えない。CR-dcd8234d-009(上流 USDM 更新済みの追従): 速報の起動コマンドの検証 3 点(コマンド部分 / {job_id} / {params} は引数 1 つ全体)に揃え、UC「クロスチェックのジョブマップと比較定義を定義する」の _api-summary.yaml の stderr と終了コード 2 の理由に {params} の位置違反を追加、spec.md / tier-facade.md / CLI 契約の「引数部分の内容は検査しない」を「{job_id} の有無と {params} の位置のほかは」に改め、受け入れ基準 10(引数部分の任意文字列)と 11(クロスチェックジョブマップ・対象カタログの検証種別は無い)の BDD を追加、基準 12({params} の位置違反)は既存 BDD で覆う。spec-event usdm / usdm-acceptance-matrix / uc-dependencies を追従。判断は decisions/spec-decision-019 |
 | UC 総数 | 32 |
 | API 総数 | 0 |
 | 非同期イベント総数 | 4 |

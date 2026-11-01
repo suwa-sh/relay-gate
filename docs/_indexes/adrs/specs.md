@@ -24,3 +24,4 @@
 | 16 | [クロスチェックの比較定義は比較ツール起動コマンド 1 行とし、設定は env に置く。worker は DB の依頼レコードと自身の設定だけで起動する](../../specs/events/20261010_204000_feedback_impl_feedback_dcd8234d/decisions/spec-decision-016.yaml) | approved |
 | 17 | [validate-config.sh は facade 単独で全設定ファイルを検証し、起動コマンドの検証はコマンド部分と {job_id} の 2 点だけにする](../../specs/events/20261010_204000_feedback_impl_feedback_dcd8234d/decisions/spec-decision-017.yaml) | approved |
 | 18 | [比較ツール起動コマンドを引数の並びとして解釈・起動する共通規則を CLI 契約に 1 か所で定める(文字列をシェルに解釈させない)](../../specs/events/20261027_055000_feedback_impl_feedback_dcd8234d/decisions/spec-decision-018.yaml) | approved |
+| 19 | [env 形式の設定値の引用符は先頭と末尾を別々に 1 文字ずつ外す規則で CLI 契約の 2 か所に同文で書き、速報の起動コマンドの検証を 3 点に揃える](../../specs/events/20261101_105000_feedback_impl_feedback_dcd8234d/decisions/spec-decision-019.yaml) | approved |

@@ -1,0 +1,29 @@
+{
+  "schema_version": "distillery.feedback-no-domain-change/v1",
+  "type": "feedback_no_domain_change",
+  "event_id": "20261101_102000_feedback_impl_feedback_dcd8234d",
+  "created_at": "2026-11-01T10:20:00Z",
+  "stage": "quality_attributes",
+  "domain_event_root": "nfr/events",
+  "reason": "要求 SPEC-004-04 の速報の起動コマンドに対する設定検証(validate-config.sh)へ 3 点目「{params} を使うなら引数 1 つ全体がちょうど {params}」を加え、受け入れ基準 10 の Given を絞り {params} 位置違反の受け入れ基準を 1 件追加した変更で、機能要件(検証規則と受け入れ基準)の精緻化に留まる。nfr-grade.yaml は起動コマンドの検証規則・{params} の位置・終了コードを引用しておらず、関連しうる B.2.1.1(性能目標値)・B.1.1.x(業務処理量)の前提は CSV 形式の設定ファイル(slot ジョブマップ)の行数で、比較定義は 1 行の起動コマンドのため検証点が 1 つ増えても処理量・性能の前提は変わらない。RDRA も変更なしで、グレード値・根拠とも影響が無いため latest/ は更新しない",
+  "feedback_request": {
+    "feedback_request_id": "20261027_091000_impl_feedback_dcd8234d",
+    "input_sha256": "37b8b54d7a4a8b1a978e389924c4b6e3ee9a1d276823a9d877f10fd01b866ca8",
+    "request_ids": [
+      "CR-dcd8234d-009"
+    ],
+    "work_unit_ids": [
+      "CR-dcd8234d-009#1"
+    ]
+  },
+  "work_unit_results": [],
+  "reconciliation_results": [
+    {
+      "work_unit_id": "CR-dcd8234d-009#1",
+      "status": "not_impacted",
+      "reason": "要求 SPEC-004-04 の速報の起動コマンドに対する設定検証(validate-config.sh)へ 3 点目「{params} を使うなら引数 1 つ全体がちょうど {params}」を加え、受け入れ基準 10 の Given を絞り {params} 位置違反の受け入れ基準を 1 件追加した変更で、機能要件(検証規則と受け入れ基準)の精緻化に留まる。nfr-grade.yaml は起動コマンドの検証規則・{params} の位置・終了コードを引用しておらず、関連しうる B.2.1.1(性能目標値)・B.1.1.x(業務処理量)の前提は CSV 形式の設定ファイル(slot ジョブマップ)の行数で、比較定義は 1 行の起動コマンドのため検証点が 1 つ増えても処理量・性能の前提は変わらない。RDRA も変更なしで、グレード値・根拠とも影響が無いため latest/ は更新しない",
+      "artifact_refs": []
+    }
+  ],
+  "evidence_refs": []
+}
