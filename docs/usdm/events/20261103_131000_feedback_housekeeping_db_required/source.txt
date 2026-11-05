@@ -1,0 +1,20 @@
+feedback request lineage (requirements stage)
+
+feedback_request_id: 20261103_housekeeping_db_required
+input_sha256: 94cde505fc6dda4705b1bb75134beaf9a85a7af65d7c90f1e786112e8b1031e7
+stage_packet: docs/pipeline/feedback-runs/20261103_housekeeping_db_required/stage-packets/requirements.md
+request_ids: CR-9d2e6c41-001
+direct_work_unit_ids: CR-9d2e6c41-001#1
+causal_work_unit_ids: CR-9d2e6c41-001#1
+
+work unit → USDM / RDRA 反映先(CR 本文は packet を正本とし、ここには複製しない)
+
+- CR-9d2e6c41-001#1 (housekeeping-db-ref-required-when-db-used): 管理 DB を使う機能が 1 つでもある設置(RAPID_CROSSCHECK_MODE が off 以外、または確報クロスチェックを使う設置)では、ハウスキープ設定の管理 DB 接続参照名を必須にする。利用者が 2026-11-03 に承認。
+  - USDM: SPEC-014-07 の仕様文に接続参照名の要否(必須となる 2 条件、無い・空なら設定エラーで非 0 終了し何も削除しない、省略できるのは管理 DB を一切使わない設置だけ)を追加。受け入れ基準に「off で確報クロスチェックを使う設置で接続参照名が無い・空 → 設定エラーで何も削除しない」(CR 完了条件 1)と「off 以外で接続参照名が無い・空 → 設定エラー」を追加。
+  - USDM: SPEC-014-08 の「管理 DB に接続しないとき」の条件を「RAPID_CROSSCHECK_MODE=off で、確報クロスチェック worker の設定が無い設置で、接続参照名が無い・空」に絞り、受け入れ基準 4 件の前提も揃えた(CR 完了条件 2)。off 以外や確報クロスチェックを使う設置で接続参照名が無い・空なら SPEC-014-07 の設定エラーになる旨を追記。
+  - USDM: SPEC-014-04 に、off でも確報クロスチェックを使う設置では確報比較依頼を同じ規則で消す旨と、その受け入れ基準(CR 完了条件 3)を追加。
+  - USDM: SPEC-014-03 は「管理 DB に接続しないときの扱いは SPEC-014-08 に従う」の参照のままで条件の記述を持たないため変更しない。SPEC-014-01 / 02 / 05 / 06 も変更しない。
+  - RDRA: 情報「ハウスキープ設定」の属性と説明、条件「ハウスキープの削除判定」の説明を、接続参照名の要否の条件に揃えた(新しい要素は追加しない)。「確報クロスチェックを使う設置」は既存のバリエーション値「確報クロスチェック worker 設定」の語で表す。
+  - 「確報クロスチェック worker の設定がある」とみなす判定方法(ファイルの有無か接続参照名の有無か)、キー名・ファイル名・終了コードは仕様(CLI 契約の housekeep.sh と既存の確報系コマンドの判定)で確定するため要求には書かない。
+
+方針資料との照合: 確報クロスチェックは速報クロスチェックのモードにかかわらず管理 DB を使う(CLI 契約の確報系)。管理 DB を使う設置で確報比較依頼が保持日数で消えない状態をなくし、「容量は保持日数で頭打ち」という前提を保つ方向の変更で、tmp/RelayGateのしくみ.md の housekeep.sh 節(off は成果物だけで判定)とも矛盾しない。

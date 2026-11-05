@@ -22,7 +22,7 @@
 
 #### 運用モード別の振る舞い
 
-| 運用モード | feature flag | 起動順 | 待機 | 応答元 | 管理 DB | 完了通知 / 速報 | 通知メールの対象 |
+| 運用モード | feature flag | 起動順 | 待機 | 応答元 | 管理 DB | 完了通知 / 速報 | ハング検知ジョブが知らせる対象(alert 行) |
 |---|---|---|---|---|---|---|---|
 | 並行稼働 | blue=foreground / green=background / rapid=background | green(bg)→ blue(fg) | blue | blue | parallel_runs / slot_executions / rapid_runs を作成 | 両 runner が RAPID_CROSSCHECK_RUNNER へ送信。両系成功で速報比較依頼 | green の実行エラー・ハング疑い、速報の異常 |
 | 新実装の単独本番 | blue=off / green=foreground / rapid=off | green(fg) | green | green | 接続しない | 送信しない | なし(hang-detector は成果物走査のみで対象無し) |
@@ -57,6 +57,13 @@
 ## 設定契約
 
 feature flag(UC「feature flag を設定する」)、slot ジョブマップ(UC「slot ごとのジョブマップを定義する」)、runner 割当(UC「slot runner の実体スクリプトを割り当てる」)の契約に従う。本 UC が追加する設定は無い。
+
+RAPID_CROSSCHECK_MODE を off から off 以外へ切り替える運用モードの変更(単独本番 → 次世代並行稼働など)では、定期ジョブの設定に管理 DB の接続参照名が必要になる。
+
+| 設定ファイル | キー | off 以外で未設定のとき |
+|---|---|---|
+| hang-detector.env | HANG_DB_CONN_REF | hang-detector.sh が走査前に終了コード 2 |
+| housekeep.env | HOUSEKEEP_DB_CONN_REF | housekeep.sh が何も削除せず終了コード 2(off でも、確報クロスチェックを使う設置では同じく必須。契約 `shared_rules.housekeep_rules.db_requirement`) |
 
 ## データモデル変更
 

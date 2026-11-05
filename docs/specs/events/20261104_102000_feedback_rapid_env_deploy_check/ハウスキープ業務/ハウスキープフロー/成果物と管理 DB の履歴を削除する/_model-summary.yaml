@@ -1,0 +1,109 @@
+uc: "成果物と管理 DB の履歴を削除する"
+business: "ハウスキープ業務"
+buc: "ハウスキープフロー"
+
+bounded_context_id: "BC-006"
+
+models:
+  - name: "DeleteRunUnitCommand"
+    tier: "tier-ops"
+    layer: "usecase"
+    type: "command"
+    rdra_info: "並行稼働実行(parallel_run)"
+  - name: "DeleteFinalRequestCommand"
+    tier: "tier-ops"
+    layer: "usecase"
+    type: "command"
+    rdra_info: "確報比較依頼(final_crosscheck_request)"
+  - name: "PurgePendingCommand"
+    tier: "tier-ops"
+    layer: "usecase"
+    type: "command"
+    rdra_info: "Runner Result"
+  - name: "RunUnitDeletionOrder"
+    tier: "tier-ops"
+    layer: "domain"
+    type: "value-object"
+    rdra_info: "並行稼働実行(parallel_run)"
+  - name: "OrphanMark"
+    tier: "tier-ops"
+    layer: "domain"
+    type: "value-object"
+    rdra_info: "監視記録"
+  - name: "HousekeepResult"
+    tier: "tier-ops"
+    layer: "domain"
+    type: "value-object"
+    rdra_info: "ハウスキープ設定"
+  - name: "ArtifactDeletionRepository"
+    tier: "tier-ops"
+    layer: "repository"
+    type: "record"
+    rdra_info: "Runner Result"
+  - name: "ManagementDbDeletionRepository"
+    tier: "tier-ops"
+    layer: "repository"
+    type: "record"
+    rdra_info: "並行稼働実行(parallel_run)"
+  - name: "housekeep-pending/<run_id> / notified-<run_id>.<role>"
+    tier: "tier-ops"
+    layer: "gateway"
+    type: "record"
+    rdra_info: "Runner Result"
+  - name: "hang-detector-notified/<run_id>.<role>"
+    tier: "tier-ops"
+    layer: "gateway"
+    type: "record"
+    rdra_info: "監視記録"
+  - name: "housekeep.sh.log"
+    tier: "tier-ops"
+    layer: "repository"
+    type: "record"
+    rdra_info: "実行ログ"
+
+tables:
+  - name: "monitor_records"
+    rdra_info: "監視記録"
+    operations:
+      - type: "DELETE"
+        columns: []
+        where: "run_id IN (単位内のすべての run_id)。単位の 1 トランザクションの 1 文目。管理 DB に接続しているときだけ"
+    indexes_needed: []
+  - name: "rapid_crosscheck_requests"
+    rdra_info: "速報比較依頼(rapid_crosscheck_request)"
+    operations:
+      - type: "DELETE"
+        columns: []
+        where: "run_id IN (単位内のすべての run_id) AND status IN ('SUCCEEDED', 'FAILED', 'ABORTED')。主キー run_id で絞る"
+    indexes_needed: []
+  - name: "rapid_runs"
+    rdra_info: "速報実行(rapid_run)"
+    operations:
+      - type: "DELETE"
+        columns: []
+        where: "run_id IN (単位内のすべての run_id)。主キー run_id で絞る"
+    indexes_needed: []
+  - name: "slot_executions"
+    rdra_info: "slot 実行"
+    operations:
+      - type: "DELETE"
+        columns: []
+        where: "run_id IN (単位内のすべての run_id) AND status IN ('SUCCEEDED', 'FAILED', 'ABORTED')。主キー (run_id, slot) の先頭列で絞る"
+    indexes_needed: []
+  - name: "parallel_runs"
+    rdra_info: "並行稼働実行(parallel_run)"
+    operations:
+      - type: "DELETE"
+        columns: []
+        where: "run_id = ? AND status IN ('COMPLETED', 'ABORTED')。単位内の親子関係で深いものから 1 行ずつ(parent_run_id の自己参照外部キーが RESTRICT のため)。子の行が残っていれば外部キー違反でトランザクション全体をロールバックする"
+    indexes_needed: []
+  - name: "final_crosscheck_requests"
+    rdra_info: "確報比較依頼(final_crosscheck_request)"
+    operations:
+      - type: "DELETE"
+        columns: []
+        where: "final_crosscheck_id = ? AND status IN ('SUCCEEDED', 'FAILED', 'ABORTED') AND completed_at < ?(cutoff のバインド値)。1 件 1 トランザクション。主キーで絞る"
+    indexes_needed: []
+
+kvs: []
+object_storage: []

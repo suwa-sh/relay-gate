@@ -1,0 +1,74 @@
+{
+  "schema_version": "distillery.feedback-result/v1",
+  "run_id": "feedback-20261105_single_management_db-20261105_110000-20592",
+  "attempt": 1,
+  "feedback_request_id": "20261105_single_management_db",
+  "input_sha256": "97bb80ca208301540a11760f416c348f73ea0c1898d9535a80c5a8f013df194a",
+  "status": "completed",
+  "stages": [
+    {
+      "stage_id": "infrastructure",
+      "state": "succeeded",
+      "event_ids": [
+        "20261105_111000_feedback_stage_infrastructure"
+      ],
+      "direct_work_unit_ids": [
+        "CR-f4c8b261-001#1"
+      ],
+      "causal_work_unit_ids": [
+        "CR-f4c8b261-001#1"
+      ]
+    },
+    {
+      "stage_id": "spec",
+      "state": "succeeded",
+      "event_ids": [
+        "20261105_112000_feedback_stage_spec"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-f4c8b261-001#1"
+      ]
+    }
+  ],
+  "work_units": [
+    {
+      "work_unit_id": "CR-f4c8b261-001#1",
+      "disposition": "applied",
+      "reason": "At least one required closure stage changed its domain artifacts.",
+      "artifact_refs": [
+        "infra/events/20261105_111000_feedback_single_management_db/infra-event-diff.yaml",
+        "infra/events/20261105_111000_feedback_single_management_db/infra/product/onprem/README.md",
+        "infra/events/20261105_111000_feedback_single_management_db/infra/product/onprem/ansible/roles/relay-gate-config/tasks/main.yml",
+        "infra/events/20261105_111000_feedback_single_management_db/infra/product/onprem/ansible/roles/relay-gate-runtime/tasks/main.yml",
+        "infra/events/20261105_111000_feedback_single_management_db/infra/product/onprem/ansible/inventory.ini.example",
+        "infra/events/20261105_111000_feedback_single_management_db/docs/mcl/product/output/product-impl-onprem.yaml",
+        "infra/events/20261105_111000_feedback_single_management_db/docs/mcl/product/output/product-mapping-onprem.yaml",
+        "infra/events/20261105_111000_feedback_single_management_db/docs/mcl/product/output/product-workload-model.yaml",
+        "infra/events/20261105_111000_feedback_single_management_db/docs/cloud-context/conformance/product/product-conformance-onprem.yaml",
+        "infra/events/20261105_111000_feedback_single_management_db/docs/cloud-context/generated-md/product/relay-gate-target-architecture.md",
+        "infra/events/20261105_111000_feedback_single_management_db/docs/mcl/product/input/product-input.yaml",
+        "specs/events/20261105_112000_feedback_single_management_db/spec-event.yaml",
+        "specs/events/20261105_112000_feedback_single_management_db/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20261105_112000_feedback_single_management_db/decisions/spec-decision-032.yaml",
+        "specs/events/20261105_112000_feedback_single_management_db/クロスチェック業務/確報クロスチェックフロー/確報比較依頼を claim する/tier-final-crosscheck.md",
+        "specs/events/20261105_112000_feedback_single_management_db/クロスチェック業務/確報クロスチェックフロー/確報比較依頼を登録して終端状態まで待機する/tier-final-crosscheck.md",
+        "specs/events/20261105_112000_feedback_single_management_db/クロスチェック業務/速報クロスチェックフロー/速報クロスチェック runner へ完了通知を送信する/tier-rapid-crosscheck.md",
+        "specs/events/20261105_112000_feedback_single_management_db/クロスチェック業務/速報クロスチェックフロー/速報比較依頼を claim する/tier-rapid-crosscheck.md",
+        "specs/events/20261105_112000_feedback_single_management_db/ハウスキープ業務/ハウスキープフロー/保持日数を過ぎた終了済みの実行と確報比較依頼を判定する/tier-ops.md",
+        "specs/events/20261105_112000_feedback_single_management_db/実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/tier-ops.md"
+      ]
+    }
+  ],
+  "requests": [
+    {
+      "request_id": "CR-f4c8b261-001",
+      "work_unit_ids": [
+        "CR-f4c8b261-001#1"
+      ],
+      "disposition": "applied",
+      "reason": "At least one work unit was applied and all work units completed successfully."
+    }
+  ],
+  "terminal_event_id": "20261105_115900_feedback_run_completed"
+}

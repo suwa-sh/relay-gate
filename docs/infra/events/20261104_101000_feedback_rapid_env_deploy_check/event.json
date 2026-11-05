@@ -1,0 +1,96 @@
+{
+  "schema_version": "distillery.infra-feedback-event/v1",
+  "event_id": "20261104_101000_feedback_rapid_env_deploy_check",
+  "created_at": "2026-11-04T10:10:00Z",
+  "stage": "infrastructure",
+  "trigger_event": "infra:20261104_091000_feedback_external_review_fixes",
+  "previous_event_ref": "20261104_091000_feedback_external_review_fixes",
+  "feedback_request": {
+    "feedback_request_id": "20261104_rapid_env_deploy_check",
+    "input_sha256": "aaab9c2bbac2b4952afa8c2bf3db4c42cf8b84a4e3b570bfcf15b1d180dda0c2",
+    "request_ids": [
+      "CR-d8a2f4b6-001"
+    ],
+    "work_unit_ids": [
+      "CR-d8a2f4b6-001#1"
+    ]
+  },
+  "members": [
+    {
+      "path": "infra/events/20261104_101000_feedback_rapid_env_deploy_check/_changes.md",
+      "sha256": "3620343948d5234621a4081891cb9b4f98f19bd0370cf1bc5c239c7d32797a4b"
+    },
+    {
+      "path": "infra/events/20261104_101000_feedback_rapid_env_deploy_check/_inference.md",
+      "sha256": "46b5fd232831aec5af77f3146949a9b54f00dad98f59589781074472a3e3cdfe"
+    },
+    {
+      "path": "infra/events/20261104_101000_feedback_rapid_env_deploy_check/docs/cloud-context/conformance/product/product-conformance-onprem.yaml",
+      "sha256": "35b7d8ed35cb2dccba04231b7d10902525a3c2594d152dfd7b28c03b68fea388"
+    },
+    {
+      "path": "infra/events/20261104_101000_feedback_rapid_env_deploy_check/docs/cloud-context/generated-md/product/relay-gate-target-architecture.md",
+      "sha256": "b200177c30f8f69cefb6f96091557784298a7c3642eda50beb1778d1f234e972"
+    },
+    {
+      "path": "infra/events/20261104_101000_feedback_rapid_env_deploy_check/docs/mcl/foundation/output/foundation-context.yaml",
+      "sha256": "c84abbadb97865417580f462cff4da1b97e97ee4419c8ece591959b376c5d770"
+    },
+    {
+      "path": "infra/events/20261104_101000_feedback_rapid_env_deploy_check/docs/mcl/product/input/product-input.yaml",
+      "sha256": "7508c9c7abc65e2205598b1f072a71582b7d2a5a38c5186de237c97e1b3b5d25"
+    },
+    {
+      "path": "infra/events/20261104_101000_feedback_rapid_env_deploy_check/docs/mcl/product/output/product-impl-onprem.yaml",
+      "sha256": "e1a71134af555bb70d2833ff83d2f485263ee07b24f93f288e684a72b6c51829"
+    },
+    {
+      "path": "infra/events/20261104_101000_feedback_rapid_env_deploy_check/docs/mcl/product/output/product-mapping-onprem.yaml",
+      "sha256": "be205c3bbc39a0f0b974f0a34068ec14f0ed7141f360940696e9b881daa32d1b"
+    },
+    {
+      "path": "infra/events/20261104_101000_feedback_rapid_env_deploy_check/docs/mcl/product/output/product-workload-model.yaml",
+      "sha256": "b0c3eaf2093130c09ed5494b0ab2fc6534391052c702101a7d4a6a24464d4e1c"
+    },
+    {
+      "path": "infra/events/20261104_101000_feedback_rapid_env_deploy_check/docs/mcl/shared-platform/output/shared-platform-context.yaml",
+      "sha256": "c5cba4bb88bbc4f06aa3f38784b06ea9eb65b1c250b8c2c0f731d8ce08fdb6ef"
+    },
+    {
+      "path": "infra/events/20261104_101000_feedback_rapid_env_deploy_check/infra-event-diff.yaml",
+      "sha256": "83cdef8f3e3126851bc091493ecac8679cacf40c81445ee41f8f8a4746188312"
+    },
+    {
+      "path": "infra/events/20261104_101000_feedback_rapid_env_deploy_check/infra-event.md",
+      "sha256": "9c3073f0ca913b01934f8dd88ae1dcae2335bc5ff3e0679b982c6a0bf30e07ae"
+    },
+    {
+      "path": "infra/events/20261104_101000_feedback_rapid_env_deploy_check/infra-event.yaml",
+      "sha256": "6422bf1d910feea29570524414a3b737f46a88825ef60eed7f2ba3a643dc2aca"
+    },
+    {
+      "path": "infra/events/20261104_101000_feedback_rapid_env_deploy_check/infra/product/onprem/README.md",
+      "sha256": "69528bd3587f948bdb6a7eaf77d4bfb7aa6ab73d62306f4159a42743deba6222"
+    },
+    {
+      "path": "infra/events/20261104_101000_feedback_rapid_env_deploy_check/infra/product/onprem/ansible/inventory.ini.example",
+      "sha256": "a1d9d2fe23daec70272ae9c8ed71ca87b96e6638de67fa81c0e59f610232a2bb"
+    },
+    {
+      "path": "infra/events/20261104_101000_feedback_rapid_env_deploy_check/infra/product/onprem/ansible/roles/relay-gate-config/tasks/main.yml",
+      "sha256": "1fe11e9ef99332d1af54c867d7b5d6f22c6b2388b1d1cd0e5ce471db142546e7"
+    },
+    {
+      "path": "infra/events/20261104_101000_feedback_rapid_env_deploy_check/infra/product/onprem/ansible/site.yml",
+      "sha256": "f742239fd07c8f5be48df8a6df935eb2c9e26aac432c14f82810592e69e3e440"
+    },
+    {
+      "path": "infra/events/20261104_101000_feedback_rapid_env_deploy_check/product-input.yaml",
+      "sha256": "7508c9c7abc65e2205598b1f072a71582b7d2a5a38c5186de237c97e1b3b5d25"
+    },
+    {
+      "path": "infra/events/20261104_101000_feedback_rapid_env_deploy_check/source.txt",
+      "sha256": "6f8f26960b668e485c08db82d36ee4a3615fb874ac6fa7524b9bf95e172c342b"
+    }
+  ]
+}

@@ -1,0 +1,182 @@
+---
+# relay-gate-config: feature flag / ジョブマップ(CSV) / ハング検知定期ジョブ設定 / ハウスキープ設定 / 速報クロスチェック設定 / 確報クロスチェック worker 設定を読み取り専用配置する
+# 比較対象の定義は比較ツール側が持つため、ジョブ ID ごとの比較定義 CSV(crosscheck-job-map.csv)・対象カタログ(target-catalog.csv)は配置しない
+# 対応: product-impl-onprem.yaml#impl.storage.config_store
+# 実行ホストセグメント(segment == 'execution')と DB セグメント(segment == 'db')の両方に適用する(site.yml)。
+# DB セグメントに置くのは確報クロスチェック worker 設定だけで、他の設定ファイルは実行ホストセグメントだけに置く。
+# 確報クロスチェック worker 設定は置き場ごとに中身が違う(実行ホストセグメントは確報 runner 用、DB セグメントは確報 worker 用)。
+# relay-gate の処理の中から設定ファイルを配ることはしない。全ホストがこの構築手順で同じようにデプロイされていることを前提にし、
+# 比較コマンドなど設定を変えたら構築手順で配り直す。
+# 管理 DB は 1 つで、すべての接続先の参照名(rapid-crosscheck.env の RAPID_DB_CONN_REF、実行ホストと DB セグメントそれぞれの
+# final-crosscheck.env の FINAL_DB_CONN_REF、hang-detector.env の HANG_DB_CONN_REF、ハウスキープ設定の HOUSEKEEP_DB_CONN_REF)が
+# 同じ 1 つの管理 DB に解決されることを前提にする(2026-11-05 利用者決定)。ハウスキープは専用 DB ロールで同じ管理 DB に接続する。
+# 条件は参照名の文字列が同じことではなく、解決先(接続先の DB)が同じこと。このロールは解決先を判定しない(導入する側が確かめる)。
+
+- name: 設定配置ディレクトリを作成する
+  ansible.builtin.file:
+    path: /etc/relay-gate
+    state: directory
+    owner: relay-gate-deploy
+    group: relay-gate
+    mode: "0750"
+
+- name: feature flag / ジョブマップ(CSV)等を配置する(読み取り専用)
+  ansible.builtin.copy:
+    src: "files/{{ item }}"
+    dest: "/etc/relay-gate/{{ item }}"
+    owner: relay-gate-deploy
+    group: relay-gate
+    mode: "0644"
+  loop:
+    - feature-flag.env
+    - blue-job-map.csv
+    - green-job-map.csv
+  when: segment == 'execution'
+  notify: notify config change (no restart required)
+
+- name: ハング検知定期ジョブ設定を配置する(HANG_DB_CONN_REF / RAPID_HANG_DETECT_LIMIT_MINUTES / HANG_SCAN_WINDOW_HOURS の 3 キーを持ち得る。参照名のみ。グループ read)
+  ansible.builtin.copy:
+    src: files/hang-detector.env
+    dest: /etc/relay-gate/hang-detector.env
+    owner: relay-gate-deploy
+    group: relay-gate
+    mode: "0640"
+  when: segment == 'execution'
+  notify: notify config change (no restart required)
+
+# メール通知は廃止した。ハング検知定期ジョブ設定は通知の宛先・送信コマンド・件名のキーを持たない。
+# 配置時の検査はファイルがあることの確認だけにする(ハウスキープ設定の配置と同じ考え方)。
+# 中身の検査は CLI 契約(docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml の config_files の hang-detector.env と
+# config_input_rules の env_files)が所有し、hang-detector.sh が起動時に行う。配置時にキーや値は判定しない:
+#   - キーの定義と未知キーの扱い: HANG_DB_CONN_REF / 任意キー RAPID_HANG_DETECT_LIMIT_MINUTES(既定 60)/ HANG_SCAN_WINDOW_HOURS(既定 72)
+#   - HANG_DB_CONN_REF の必須判定は RAPID_CROSSCHECK_MODE が off 以外のときだけ(off では読まない。欠落・空なら終了コード 2)
+#   - 行の形(KEY=VALUE。コメント行は前後の空白を除いて # で始まる行で、字下げしたコメント行もコメントとして扱う)
+# validate-config.sh には hang-detector.env の検証種別が無いため、中身の確認は hang-detector.sh の起動時検査(終了コード 2)に任せる。
+- name: ハング検知定期ジョブ設定が存在することを検査する
+  ansible.builtin.shell: "test -f /etc/relay-gate/hang-detector.env"
+  changed_when: false
+  when: segment == 'execution'
+
+# ハウスキープ設定 housekeep.env(配置先 /etc/relay-gate/housekeep.env。CLI 契約 config_files の housekeep.env)。キーは保持日数 HOUSEKEEP_RETENTION_DAYS(既定 90 日)と、
+# ハウスキープ専用 DB ロール housekeep_del の接続参照名 HOUSEKEEP_DB_CONN_REF。
+# HOUSEKEEP_RETENTION_DAYS は省略でき(既定 90 日)、管理 DB を一切使わない設置では HOUSEKEEP_DB_CONN_REF も省略・空にできるため、空のファイルも正当な設定になり得る。
+# off 以外または確報クロスチェックを使う設置での HOUSEKEEP_DB_CONN_REF の必須検査は housekeep.sh が起動時に行う(配置時にモードや確報設定は判定しない)。
+# ファイル名は適用側の変数 relay_gate_housekeep_config_file で受け取り、値は housekeep.env にする。HOUSEKEEP_RETENTION_DAYS が正の整数であることの検査は validate-config.sh --housekeep が所有する。
+- name: ハウスキープ設定を配置する(参照名のみ。グループ read。実行ホストセグメントのみ)
+  ansible.builtin.copy:
+    src: "files/{{ relay_gate_housekeep_config_file }}"
+    dest: "/etc/relay-gate/{{ relay_gate_housekeep_config_file }}"
+    owner: relay-gate-deploy
+    group: relay-gate
+    mode: "0640"
+  when: segment == 'execution' and relay_gate_housekeep_config_file is defined
+  notify: notify config change (no restart required)
+
+- name: ハウスキープ設定が存在することを検査する(空でもよい)
+  ansible.builtin.shell: "test -f /etc/relay-gate/{{ relay_gate_housekeep_config_file }}"
+  changed_when: false
+  when: segment == 'execution' and relay_gate_housekeep_config_file is defined
+
+- name: 速報クロスチェック設定を配置する(速報有効時のみ。必須は RAPID_DB_CONN_REF と RAPID_COMPARE_COMMAND、任意は RAPID_LEASE_SEC(既定 600)/ RAPID_POLL_INTERVAL_SEC(既定 30)。参照名のみ。グループ read)
+  ansible.builtin.copy:
+    src: files/rapid-crosscheck.env
+    dest: /etc/relay-gate/rapid-crosscheck.env
+    owner: relay-gate-deploy
+    group: relay-gate
+    mode: "0640"
+  when:
+    - segment == 'execution'
+    - rapid_crosscheck_mode | default('off') != 'off'
+  notify: notify config change (no restart required)
+
+# 配置時の検査はファイルがあることの確認だけにする(ハング検知定期ジョブ設定・ハウスキープ設定の配置と同じ考え方)。
+# 中身の検査は CLI 契約(docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml の config_files の rapid-crosscheck.env と
+# config_input_rules の env_files)が所有する。配置時にキーや値は判定しない:
+#   - 起動コマンド RAPID_COMPARE_COMMAND の検証(コマンド部分が絶対パスで存在・実行可能、{job_id} を含む、{params} は引数 1 つ全体のときだけ)は
+#     validate-config.sh --rapid-crosscheck が行う
+#   - RAPID_DB_CONN_REF の欠落・空と RAPID_* の値の不正は、読み手(facade.sh / slot runner / 速報クロスチェック runner / 速報 worker など)が起動時に検査する(終了コード 2)
+#   - RAPID_LEASE_SEC / RAPID_POLL_INTERVAL_SEC は任意キーで、無ければ既定 600 / 30 秒を使う
+#   - 行の形(KEY=VALUE。キーと値の前後の空白を除き、値の先頭末尾の引用符を外す。前後の空白を除いて # で始まる行はコメント行)
+- name: 速報クロスチェック設定が存在することを検査する(速報有効時のみ)
+  ansible.builtin.shell: "test -f /etc/relay-gate/rapid-crosscheck.env"
+  changed_when: false
+  when:
+    - segment == 'execution'
+    - rapid_crosscheck_mode | default('off') != 'off'
+
+# 確報クロスチェック worker 設定(final-crosscheck.env)。置き場ごとに配る中身を分ける(CLI 契約 config_files の final-crosscheck.env の readers / note)。
+# 各読み手は自分のホストの /etc/relay-gate/final-crosscheck.env だけを読み、他方のファイルを読まない。配置先のファイル名は両方とも同じ。
+#   - 実行ホストセグメント(src: files/final-crosscheck-runner.env): 必須 FINAL_DB_CONN_REF、任意 FINAL_POLL_INTERVAL_SEC(既定 60)/
+#     FINAL_POLL_LIMIT_SEC(既定 28800)。実行ホストの読み手(確報 runner / abort-final-crosscheck.sh / housekeep.sh)は
+#     いずれも FINAL_DB_CONN_REF だけを接続または判定に使う。FINAL_COMPARE_COMMAND は配らない(runner は読まない)
+#   - DB セグメント(src: files/final-crosscheck-worker.env): 必須 FINAL_DB_CONN_REF / FINAL_COMPARE_COMMAND、任意 FINAL_LEASE_MINUTES /
+#     FINAL_WORKER_POLL_INTERVAL_SEC。確報の比較ツール起動コマンドを持つのはこのファイルの FINAL_COMPARE_COMMAND だけ(2026-11-04 利用者決定)
+# 確報を使うかは構築の変数 relay_gate_final_crosscheck_enabled(既定 false。速報の rapid_crosscheck_mode と同じく inventory で指定)で決める。
+# true の設置では両方の置き場にそれぞれの中身を配置して存在を確認する。false の設置では両方の置き場からファイルを消す(state: absent)。
+# 構築手順をサーバーの状態の正本とし、以前置いたファイルが残って housekeep.sh が「確報クロスチェックを使う設置」と誤判定するのを防ぐ。
+# CLI 契約は final-crosscheck.env が無い・FINAL_DB_CONN_REF が無い・空を「確報クロスチェックを使わない設置」として扱う
+# (housekeep.sh / abort-final-crosscheck.sh)ため、ファイルを置かないことと矛盾しない。
+# 確報 worker は DB セグメントで動き、runner 側の成果物ファイルパスを読まない。起動値は依頼レコードと本設定だけから得る。
+# 2 つの置き場の FINAL_DB_CONN_REF は、同じ 1 つの管理 DB に解決されなければならない(参照名の文字列ではなく接続先の DB が同じこと)。
+# 確報 runner が登録した依頼を確報 worker が同じキューから取得するため、別の DB に解決されると、設定の検査を通っても確報ジョブが完了しない。
+# 配置時の検査は存在確認だけで解決先は判定しないため、解決先が同じことは導入する側が確かめる。
+- name: 確報クロスチェック worker 設定を配置する(実行ホストセグメントの確報 runner 用。確報を使う設置のみ。必須 FINAL_DB_CONN_REF、任意 FINAL_POLL_INTERVAL_SEC / FINAL_POLL_LIMIT_SEC。FINAL_COMPARE_COMMAND は配らない。参照名のみ。グループ read)
+  ansible.builtin.copy:
+    src: files/final-crosscheck-runner.env
+    dest: /etc/relay-gate/final-crosscheck.env
+    owner: relay-gate-deploy
+    group: relay-gate
+    mode: "0640"
+  when:
+    - relay_gate_final_crosscheck_enabled | default(false) | bool
+    - segment == 'execution'
+  notify: notify config change (no restart required)
+
+- name: 確報クロスチェック worker 設定を配置する(DB セグメントの確報 worker 用。確報を使う設置のみ。必須 FINAL_DB_CONN_REF / FINAL_COMPARE_COMMAND、任意 FINAL_LEASE_MINUTES / FINAL_WORKER_POLL_INTERVAL_SEC。参照名のみ。グループ read)
+  ansible.builtin.copy:
+    src: files/final-crosscheck-worker.env
+    dest: /etc/relay-gate/final-crosscheck.env
+    owner: relay-gate-deploy
+    group: relay-gate
+    mode: "0640"
+  when:
+    - relay_gate_final_crosscheck_enabled | default(false) | bool
+    - segment == 'db'
+  notify: notify config change (no restart required)
+
+# 配置時の検査はファイルがあることの確認だけにする(置き場ごとの中身の違いも配置時には判定しない)。中身の検査は CLI 契約
+# (config_files の final-crosscheck.env と config_input_rules の env_files)が所有し、各読み手は自分が使うキーだけを検査する:
+#   - 実行ホストセグメント: 確報 runner が起動時に FINAL_DB_CONN_REF の欠落・空と FINAL_POLL_INTERVAL_SEC / FINAL_POLL_LIMIT_SEC の値を検査する(終了コード 2)。
+#     FINAL_COMPARE_COMMAND が無いことは正当で、runner は検査しない
+#   - DB セグメント: 確報 worker が起動時に FINAL_DB_CONN_REF / FINAL_COMPARE_COMMAND の欠落・空と FINAL_LEASE_MINUTES /
+#     FINAL_WORKER_POLL_INTERVAL_SEC の値を検査する(終了コード 2)。起動コマンド FINAL_COMPARE_COMMAND の検証
+#     (コマンド部分が絶対パスで存在・実行可能)は validate-config.sh --final-crosscheck を DB セグメント(worker が動くホスト)で
+#     この置き場のファイルに対して実行する(実行ホストのファイルには FINAL_COMPARE_COMMAND が無いため、そちらに対しては実行しない)
+- name: 確報クロスチェック worker 設定が存在することを検査する(確報を使う設置のみ。両セグメント)
+  ansible.builtin.shell: "test -f /etc/relay-gate/final-crosscheck.env"
+  changed_when: false
+  when: relay_gate_final_crosscheck_enabled | default(false) | bool
+
+- name: 確報クロスチェック worker 設定を消す(確報を使わない設置。両セグメント)
+  ansible.builtin.file:
+    path: /etc/relay-gate/final-crosscheck.env
+    state: absent
+  when: not (relay_gate_final_crosscheck_enabled | default(false) | bool)
+  notify: notify config change (no restart required)
+
+# 認証情報らしい値の確認(警告のみ。構築は止めない)。CLI 契約の「秘密らしい値は警告して受け付ける」方針(2026-09-22 に利用者が確定。
+# ジョブマップの credential_ref の形式の扱い)と揃え、一致した行があっても失敗にしない。認証情報は参照名だけを置く方針は変えない。
+# CLI 契約では env のコメント行(前後の空白を除いて # で始まる行)は値を持たないため、env のコメント行は対象から外す
+# (CSV にはコメント行の定義が無いため全行を見る)。警告には該当ファイルと行番号だけを出し、行の中身(値)は出さない。
+# 両セグメントで行う(DB セグメントでは置き場にあるのは確報クロスチェック worker 設定だけなので、そのファイルだけが対象になる)。
+- name: 設定ファイルの認証情報らしい値を探す(警告のみ。env のコメント行は除く)
+  ansible.builtin.shell: "grep -n -H -E -i '(password|secret|token)[[:space:]]*=' /etc/relay-gate/*.env /etc/relay-gate/*.csv 2>/dev/null | grep -v -E '^[^:]*[.]env:[0-9]+:[[:space:]]*#' | cut -d: -f1,2 || true"
+  register: relay_gate_secret_like_lines
+  changed_when: false
+  failed_when: false
+
+- name: 認証情報らしい値の行を警告する(該当ファイルと行番号。構築は続ける)
+  ansible.builtin.debug:
+    msg: "warn: value looks like a secret; use a reference name instead location={{ item }}"
+  loop: "{{ relay_gate_secret_like_lines.stdout_lines }}"
+  when: relay_gate_secret_like_lines.stdout_lines | length > 0

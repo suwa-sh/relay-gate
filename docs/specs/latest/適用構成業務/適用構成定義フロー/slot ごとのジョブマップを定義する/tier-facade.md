@@ -79,6 +79,8 @@ slot ジョブマップ(CSV)の列定義・CSV セルのクォート解析規則
 | 5,000 行超 | 対象外(拒否しない。NFR の性能保証の範囲外) | なし |
 | 非 ASCII の値・空白とカンマを含む固定引数・Windows 形式や相対パスの work_dir / script | 値として受理 | なし |
 
+- NUL / UTF-8 / BOM / CR の 4 種類(バイト・改行の検査)は、最初の 1 件で止めずファイル内の全件を物理行番号の昇順に出す。同じ行に種類の違う違反があれば表の順(NUL → UTF-8 → BOM → CR)に 1 種類 1 行。hint は最後の CR の error 行の次に 1 回だけ。4 種類のどれかが 1 件でもあれば、ヘッダー・クォート・列数・列の値・job_id の重複の検査は行わない(CLI 契約 `config_input_rules.byte_checks`)
+
 - **読み込み中の差し替えに対する保証**(`config_input_rules.snapshot`): 検証結果は検証開始時の 1 時点のファイル内容だけに基づく。旧内容と新内容を混ぜた結果を返さない。差し替えは検知も報告もしない。実現: 検証開始時に入力を一時ファイルへ 1 回だけ複製し、バイト点検と解析は複製だけを読む。置き場所は `TMPDIR`(未設定なら `/tmp`)、ファイル名は `relay-gate-` で始まり、作業名(末尾 `.part`。mktemp で作るのはこの作業名)へ書き終えてから最終名へ rename する(最終名は rename までディレクトリに存在させない。最終名が現れた時点で複製は完了)、権限 0600、成功・失敗を問わず読み込み後に削除、HUP / INT / TERM 受信時は削除して終了コード 129 / 130 / 143。出力の `map_path:` / `path:` には利用者が指定したパスを出す。SIGKILL で複製が残り得ること、意図的な関数・コマンドの差し替えは対象外
 - **検証器の内部障害**(`config_input_rules.internal_failure`): 複製の工程(一時ファイルの作成・複製先への書き込み・最終名への rename)で起きた失敗はコマンド名を問わず `error: config snapshot failed path: <path>` + `hint: check TMPDIR is writable`、複製完了後の補助コマンド(tr / sed / sort / cat 等)の失敗は `error: internal command failed commands=<name,...> path: <path>`。いずれも終了コード 6 で、stdout を出さず、検証 OK も違反も返さない(他の error / warn 行も出さない)
 - **hang_detect_limit_minutes の運用**(条件: ハング検知上限の調整基準): 導入時は全ジョブ 60。foreground で動く slot のファイルは 0。警告傾向(`hang-detect-trend.sh`)を見てジョブごとに調整する。変更は次回以降の run の execution-spec.json にのみ反映される。調整記録(調整日時・調整根拠となる警告時経過時間)は適用構成文書に残す
@@ -130,7 +132,7 @@ TOMM0410010100,./beam-batches,./beam-batches/TOMM0410010100.sh,"[""param1"",""pa
 
 ## UC ロジック
 
-- **バリデーション**: (1) 入力の複製(単一スナップショット)→ (2) バイト点検(NUL / UTF-8 / BOM / CR。行番号を記録)→ (3) ヘッダー(必須列・host / user の対・列名の重複・未知列)→ (4) 行ごと(クォート・列数・列の値)→ (5) job_id 重複 → (6) 集計。全行を検査してから全件報告。(1)(2)(5) の補助コマンドが失敗したら以降を行わず終了コード 6
+- **バリデーション**: (1) 入力の複製(単一スナップショット)→ (2) バイト点検(NUL / UTF-8 / BOM / CR。行番号を記録。違反はファイル内の全件を行番号の昇順に、同じ行は NUL → UTF-8 → BOM → CR の順に 1 種類 1 行で出し、hint は最後の CR の error 行の次に 1 回。違反が 1 件でもあれば (2) の error 行と hint だけを出して止め、(3) 以降を行わない。CLI 契約 `config_input_rules.byte_checks`)→ (3) ヘッダー(必須列・host / user の対・列名の重複・未知列)→ (4) 行ごと(クォート・列数・列の値)→ (5) job_id 重複 → (6) 集計。全行を検査してから全件報告。(1)(2)(5) の補助コマンドが失敗したら以降を行わず終了コード 6
 - **確認プロンプト**: なし
 - **冪等性**: 読み取り専用(一時ファイルは TMPDIR 配下に作り、終了時に削除する)
 - **エラーハンドリング**: ファイルなしは `error: config file not found path: <path>`、終了コード 2。内部障害は終了コード 6(上表)
@@ -297,6 +299,19 @@ Feature: slot ごとのジョブマップを定義する - facade / slot runner 
     Given map.csv の全行が CRLF で終わる(ヘッダーと 1 データ行)
     When `validate-config.sh --job-map map.csv` を実行する
     Then 終了コード 2 で stderr に "error: carriage return is not allowed line=1 path: map.csv" と "error: carriage return is not allowed line=2 path: map.csv" と "hint: use LF line endings" が出る
+
+  Scenario: validate-config_sh_job-map は種類の違うバイト・改行の違反を全件、行番号の昇順と表の順で出す
+    Given map.csv の 1 行目が BOM 付きのヘッダーで CRLF で終わり、2 行目のデータ行が NUL バイトと UTF-8 として不正なバイト列を含み CRLF で終わり、3 行目のデータ行が LF で終わり、4 行目のデータ行が NUL バイトを含む
+    When `validate-config.sh --job-map map.csv` を実行する
+    Then 終了コード 2 で stdout は 0 行、stderr は次の 7 行がこの順に出る(hint は最後の CR の error 行(2 行目)の次で、4 行目の error 行より前)
+      | error: byte order mark is not allowed line=1 path: map.csv |
+      | error: carriage return is not allowed line=1 path: map.csv |
+      | error: nul byte is not allowed line=2 path: map.csv        |
+      | error: encoding is not utf-8 line=2 path: map.csv          |
+      | error: carriage return is not allowed line=2 path: map.csv |
+      | hint: use LF line endings                                  |
+      | error: nul byte is not allowed line=4 path: map.csv        |
+    And stderr に "job map header mismatch" / "csv quote is invalid" / "column count mismatch" を含む行は出ない
 
   Scenario: validate-config_sh_job-map は空白だけの行を列数不一致として拒否する
     Given map.csv の 2 行目が半角空白 3 つだけで、ヘッダーは 5 列である

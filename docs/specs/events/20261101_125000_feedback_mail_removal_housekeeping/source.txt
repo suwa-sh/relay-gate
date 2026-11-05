@@ -1,0 +1,30 @@
+Spec 差分更新(design 無しモード): 2026-11-01 のメール通知廃止とハウスキープ新設、env 値の空白規則(dist-pipeline feedback mode Step6)。
+
+CR-e4ea8aaa-003(spec 直接所有): CLI 契約 config_input_rules.env_files に、env 形式の設定値の取り出し方を順序つき規則で書いた。
+
+- 規則: (1) 行を最初の = でキーと値に分ける → (2) キーの前後の空白を除く → (3) 値の前後の空白を除く → (4) 値の先頭と末尾の引用符を独立に 1 文字ずつ外す。空白は半角空白とタブだけ。CR は既存のバイト検査で拒否。
+- 例: `KEY= "abc" ` → キー KEY・値 abc / ` KEY = 'a b' ` → キー KEY・値 `a b` / `KEY="  a  "` → 値 `  a  ` / `KEY=a=b` → 値 `a=b`。
+- shared_rules.compare_command_argv.split の再掲にも同じ順序を反映。UC 側は契約へ参照(独自の記述が無いことを確認)。
+- 実装は変えない。実装との差分: 実装は bash の [:space:] で空白を除くため VT(0x0B)/ FF(0x0C)も除く(UTF-8 ロケールではロケールの空白も除き得る)。判断は decisions/spec-decision-022。
+
+CR-e4ea8aaa-001(因果。上流 USDM / RDRA / NFR / arch / infra は更新済み): メール送信をやめ、ハング検知の異常を hang-detector.sh 自身の終了結果で知らせる。
+
+- 終了コード: 0 = 新たな異常なし / 3 = ハング疑いだけ(警告終了)/ 6 = 実行エラー・比較異常あり、または自身の実行エラー / 2 = 走査前の設定エラー。優先順位 6 > 3 > 0。
+- 標準エラー: `alert: level=<warning|error> kind=<...> run_id=... role=... job_id=... elapsed_minutes=...` の 1 件 1 行。
+- 通知済みの判定: off 以外は監視記録の遷移規則、RAPID_CROSSCHECK_MODE=off は `$RELAY_GATE_ARTIFACT_ROOT/hang-detector-notified/<run_id>.<role>`(内容は通知済み状態 1 行、.tmp → mv)。保存失敗は 6 で次回も知らせる。
+- hang-detector.env のメール 3 キー、AsyncAPI の通知メールチャネル、ui-design.md の通知メール規約を削除。UC「background 異常の通知メールを受け取る」を「ハング検知ジョブの異常終了を確認する」へ改名。判断は decisions/spec-decision-020。
+
+CR-e4ea8aaa-002(因果): ハウスキープ(housekeep.sh)を新設。
+
+- 新業務「ハウスキープ業務」/ BUC「ハウスキープフロー」の 2 UC(保持日数を過ぎた終了済みの実行と確報比較依頼を判定する / 成果物と管理 DB の履歴を削除する)の UC spec を新規作成。
+- 設定 housekeep.env(HOUSEKEEP_RETENTION_DAYS 既定 90・正の整数 / HOUSEKEEP_DB_CONN_REF)、validate-config.sh --housekeep、削除待ちの置き場 `$RELAY_GATE_ARTIFACT_ROOT/housekeep-pending/`、専用 DB ロール housekeep_del(6 テーブルの SELECT / DELETE)、削除順序と回復、run ディレクトリ列挙の規則(shared_rules.artifact_root_entries)。判断は decisions/spec-decision-021。
+
+feedback request:
+- feedback_request_id: 20261101_mail_removal_housekeeping
+- input_sha256: 7be2e54314163ff4cae802f01005fe771da312621c06ff123a43b09f562afb11
+- request_ids: CR-e4ea8aaa-001, CR-e4ea8aaa-002, CR-e4ea8aaa-003
+- direct_work_unit_ids: CR-e4ea8aaa-003#1
+- causal_work_unit_ids: CR-e4ea8aaa-001#1, CR-e4ea8aaa-002#1, CR-e4ea8aaa-003#1
+- stage packet: docs/pipeline/feedback-runs/20261101_mail_removal_housekeeping/stage-packets/spec.md
+
+trigger_event: usdm:20261101_121000_feedback_mail_removal_housekeeping, rdra:20261101_121000_feedback_mail_removal_housekeeping, nfr:20261101_122000_feedback_mail_removal_housekeeping, arch:20261101_123000_feedback_mail_removal_housekeeping, infra:20261101_124000_feedback_mail_removal_housekeeping

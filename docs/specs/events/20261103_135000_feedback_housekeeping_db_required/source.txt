@@ -1,0 +1,27 @@
+Spec 差分更新(design 無しモード): 2026-11-03 のハウスキープの管理 DB 接続参照名の必須化と、env 形式の字下げしたコメント行(dist-pipeline feedback mode Step6)。
+
+CR-9d2e6c41-002(spec 直接所有): env 形式の設定で、前後の空白を除いて `#` で始まる行をコメントとする。
+
+- CLI 契約 config_input_rules.env_files のコメント行の定義を「行の前後の空白(半角空白とタブ)を除いた結果が `#` で始まる行」に改めた。`=` での分割より先に判定する。例: `# x` / `  # x` / タブ + `# x` / `  # A=B` はいずれもコメント行。
+- 空白だけの行・キーが空の行・`=` を含まない行は invalid line のまま。`KEY=#abc` は値 `#abc` のまま。CSV(ジョブマップ)のコメントは行頭 `#` のまま。
+- 全 env 設定ファイル(feature-flag.env / rapid-crosscheck.env / hang-detector.env / final-crosscheck.env / housekeep.env)に共通。compare_command_argv.split、feature-flag.env の format、出力規約(ui-design.md)、UC「feature flag を設定する」の tier-facade.md、UC「クロスチェックのジョブマップと比較定義を定義する」の tier-facade.md、確報の比較ツール UC の tier-final-crosscheck.md を揃えた。
+- 実装は変えない。速報クロスチェック設定の読み込み(rapid_crosscheck_env.sh)は行頭の `#` だけをコメントとし、字下げした `#` 行を invalid line(`=` なし)またはキーが `#` で始まる行(`=` あり)にする差分を、実装を契約に合わせる対象として記録。feature flag 設定の読み込み(feature_flag_config.sh)はこの点では新しい契約どおり。spec-decision-023 の参考記録との関係も記録。判断は decisions/spec-decision-026。
+
+CR-9d2e6c41-001(因果。上流 USDM / RDRA / NFR / arch / infra は更新済み): 管理 DB を使う機能が 1 つでもあれば、ハウスキープの管理 DB 接続参照名を必須にする。
+
+- HOUSEKEEP_DB_CONN_REF は「RAPID_CROSSCHECK_MODE が off 以外」または「確報クロスチェックを使う設置」で必須。欠落・空は `error: option required option=HOUSEKEEP_DB_CONN_REF path: ...`(終了コード 2)。
+- 確報クロスチェックを使う設置 = `$RELAY_GATE_CONFIG_DIR/final-crosscheck.env` があり、その FINAL_DB_CONN_REF が欠落していない(キーがあり値が空でない)。abort-final-crosscheck.sh の「final-crosscheck.env 不在または FINAL_DB_CONN_REF 欠落 = 管理 DB なし」と同じ規則(欠落 = キーが無い、または値が空を同コマンドにも明記)。
+- final-crosscheck.env は off で HOUSEKEEP_DB_CONN_REF が無い・空のときだけ読む。あるのに読めなければ `error: config file is not readable path: ...`(2)。FINAL_DB_CONN_REF 以外は検査せず、値は出力しない。
+- 設定の検査を housekeep.sh processing_order の手順 0 とし、削除待ちの置き場の残りの削除(手順 1)を含むすべての削除より先に行う。設定エラーなら置き場の中身も消さない。
+- 管理 DB に接続しない振る舞い(warn: management db is not configured ...、warn: run kept rapid crosscheck mode ...)は、管理 DB を一切使わない設置で接続参照名が無い・空のときだけ。off でも確報クロスチェックを使う設置では確報比較依頼を保持日数で削除する。
+- 正本は契約 shared_rules.housekeep_rules.db_requirement(新設)。判定 UC に分岐 B-09・要否の表・BDD(SPEC-014-04 に 1 件、SPEC-014-07 に 2 件)、削除 UC に手順 1 の前提と tier BDD。SPEC-014-08 のシナリオに「確報クロスチェック worker の設定が無い設置」を記載。usdm-acceptance-matrix.md(受け入れ条件 190)、traceability-matrix.md、spec-event.yaml の use_cases[].usdm を揃えた。判断は decisions/spec-decision-027。
+
+feedback request:
+- feedback_request_id: 20261103_housekeeping_db_required
+- input_sha256: 94cde505fc6dda4705b1bb75134beaf9a85a7af65d7c90f1e786112e8b1031e7
+- request_ids: CR-9d2e6c41-001, CR-9d2e6c41-002
+- direct_work_unit_ids: CR-9d2e6c41-002#1
+- causal_work_unit_ids: CR-9d2e6c41-001#1, CR-9d2e6c41-002#1
+- stage packet: docs/pipeline/feedback-runs/20261103_housekeeping_db_required/stage-packets/spec.md
+
+trigger_event: usdm:20261103_131000_feedback_housekeeping_db_required, rdra:20261103_131000_feedback_housekeeping_db_required, nfr:20261103_132000_feedback_housekeeping_db_required, arch:20261103_133000_feedback_housekeeping_db_required, infra:20261103_134000_feedback_housekeeping_db_required

@@ -84,12 +84,12 @@ string error_summary
 
 | テーブル名 | RDRA 情報 | 説明 | カラム数 | インデックス数 | 利用 UC 数 |
 |-----------|----------|------|:-------:|:----------:|:--------:|
-| parallel_runs | 並行稼働実行(parallel_run) | 1 回の並行稼働を run_id で相関付ける管理レコード(arch E-013)。run_id 自体は RAPID_CROSSCHECK_MODE によらず facade が常に発行し(成果物ディレクトリ名と同値)、RAPID_CROSSCHECK_MODE が off 以外(foreground / background)のときだけ本レコードを作成する。background-rerun はリラン時に parent_run_id 付きで新規作成する。成果物ディレクトリ・rapid_runs・比較依頼を run_id で紐付ける | 8 | 1 | 11 |
-| slot_executions | slot 実行 | run_id ごとの blue / green 各 slot の実行(mode・PID・成果物ディレクトリ・状態)を識別するレコード(arch E-014)。RAPID_CROSSCHECK_MODE が off 以外のときのみ RDB に永続化し、off ではファイルのみ(採用値 #7)。status は runner / abort-* の条件付き UPDATE(WHERE status='RUNNING')で一度だけ終端値を書く列(条件「slot 実行の状態導出規則」の管理 DB 側の規則。arch storage_mapping E-014 rdb)。abort 後に実装が走り切って exitcode.txt を公開した経路だけファイル正本の導出値(exitcode.txt 優先)と一致せず ABORTED のまま残る(再同期しない。詳細は columns.status)。ハング検知・中止・background 側リランの状態判定はファイル正本で行い、本テーブルは off 以外での参照(dispatcher の中止済み run 判定・系譜の role 導出)に使う | 9 | 0 | 8 |
-| rapid_runs | 速報実行(rapid_run) | run_id ごとに blue / green の完了通知を集約して両系成功判定を行うレコード(arch E-016)。facade が parallel_runs と同一トランザクションで completion_status = PENDING で作成し(canonical C3)、速報クロスチェック runner が完了通知を受けて更新する | 6 | 0 | 6 |
-| rapid_crosscheck_requests | 速報比較依頼(rapid_crosscheck_request) | blue と green が両方成功したときに run_id を主キーとして 1 件だけ作成される、管理 DB 上のジョブキューのレコード(arch E-017)。速報クロスチェック worker が poll / claim し、worker_id と lease_until で多重実行を防ぐ。worker が起動コマンド(rapid-crosscheck.env の RAPID_COMPARE_COMMAND)のプレースホルダを置換するのに必要な値(run_id / job_id / parameters / blue_exit_code / green_exit_code)を持ち、比較ツールの stdout / stderr / exit_code をそのまま保持する(E-020 を内包) | 15 | 2 | 10 |
-| final_crosscheck_requests | 確報比較依頼(final_crosscheck_request) | 確報クロスチェック runner が引数なしで起動されて 1 件登録し、終端状態まで同期 polling する依頼レコード(arch E-019)。確報クロスチェック worker が claim / lease し、final-crosscheck.env の FINAL_COMPARE_COMMAND をそのまま起動して stdout / stderr / exit_code を保存する(E-020 を内包)。識別子・状態・時刻・結果だけを持ち、比較対象の定義は比較ツール側(適用側)にある。速報側と別ドメインとして分離し、他テーブルへの FK を持たない | 11 | 2 | 6 |
-| monitor_records | 監視記録 | 定期起動されたハング検知スクリプトが、未完了の background slot 実行と速報比較依頼について残す監視レコード(arch E-021)。監視対象 ID は run_id + role。5 分ごとに UPSERT され、通知の冪等判定と hang_detect_limit_minutes 調整の根拠(警告時経過時間)に使う。RAPID_CROSSCHECK_MODE が off 以外(foreground / background)のときだけ書き込む(採用値 #8)。接続先はハング検知定期ジョブ設定(hang-detector.env)の HANG_DB_CONN_REF で解決する。列名は canonical C2 に従う | 12 | 2 | 4 |
+| parallel_runs | 並行稼働実行(parallel_run) | 1 回の並行稼働を run_id で相関付ける管理レコード(arch E-013)。run_id 自体は RAPID_CROSSCHECK_MODE によらず facade が常に発行し(成果物ディレクトリ名と同値)、RAPID_CROSSCHECK_MODE が off 以外(foreground / background)のときだけ本レコードを作成する。background-rerun はリラン時に parent_run_id 付きで新規作成する。成果物ディレクトリ・rapid_runs・比較依頼を run_id で紐付ける | 8 | 1 | 13 |
+| slot_executions | slot 実行 | run_id ごとの blue / green 各 slot の実行(mode・PID・成果物ディレクトリ・状態)を識別するレコード(arch E-014)。RAPID_CROSSCHECK_MODE が off 以外のときのみ RDB に永続化し、off ではファイルのみ(採用値 #7)。status は runner / abort-* の条件付き UPDATE(WHERE status='RUNNING')で一度だけ終端値を書く列(条件「slot 実行の状態導出規則」の管理 DB 側の規則。arch storage_mapping E-014 rdb)。abort 後に実装が走り切って exitcode.txt を公開した経路だけファイル正本の導出値(exitcode.txt 優先)と一致せず ABORTED のまま残る(再同期しない。詳細は columns.status)。ハング検知・中止・background 側リランの状態判定はファイル正本で行い、本テーブルは off 以外での参照(dispatcher の中止済み run 判定・系譜の role 導出)に使う | 9 | 0 | 10 |
+| rapid_runs | 速報実行(rapid_run) | run_id ごとに blue / green の完了通知を集約して両系成功判定を行うレコード(arch E-016)。facade が parallel_runs と同一トランザクションで completion_status = PENDING で作成し(canonical C3)、速報クロスチェック runner が完了通知を受けて更新する | 6 | 0 | 7 |
+| rapid_crosscheck_requests | 速報比較依頼(rapid_crosscheck_request) | blue と green が両方成功したときに run_id を主キーとして 1 件だけ作成される、管理 DB 上のジョブキューのレコード(arch E-017)。速報クロスチェック worker が poll / claim し、worker_id と lease_until で多重実行を防ぐ。worker が起動コマンド(rapid-crosscheck.env の RAPID_COMPARE_COMMAND)のプレースホルダを置換するのに必要な値(run_id / job_id / parameters / blue_exit_code / green_exit_code)を持ち、比較ツールの stdout / stderr / exit_code をそのまま保持する(E-020 を内包) | 15 | 2 | 12 |
+| final_crosscheck_requests | 確報比較依頼(final_crosscheck_request) | 確報クロスチェック runner が引数なしで起動されて 1 件登録し、終端状態まで同期 polling する依頼レコード(arch E-019)。確報クロスチェック worker が claim / lease し、final-crosscheck.env の FINAL_COMPARE_COMMAND をそのまま起動して stdout / stderr / exit_code を保存する(E-020 を内包)。識別子・状態・時刻・結果だけを持ち、比較対象の定義は比較ツール側(適用側)にある。速報側と別ドメインとして分離し、他テーブルへの FK を持たない | 11 | 2 | 8 |
+| monitor_records | 監視記録 | 定期起動されたハング検知スクリプトが、未完了の background slot 実行と速報比較依頼について残す監視レコード(arch E-021)。監視対象 ID は run_id + role。5 分ごとに UPSERT され、通知の冪等判定と hang_detect_limit_minutes 調整の根拠(警告時経過時間)に使う。RAPID_CROSSCHECK_MODE が off 以外(foreground / background)のときだけ書き込む(採用値 #8)。接続先はハング検知定期ジョブ設定(hang-detector.env)の HANG_DB_CONN_REF で解決する。列名は canonical C2 に従う | 12 | 2 | 5 |
 
 ### parallel_runs
 
@@ -136,6 +136,8 @@ string error_summary
 | 実行を ABORTED へ遷移させる | UPDATE |
 | 実装スクリプトを実行して Runner Result を出力する | UPDATE |
 | 比較ツールでジョブ単位比較を実行して結果を登録する | SELECT, UPDATE |
+| 保持日数を過ぎた終了済みの実行と確報比較依頼を判定する | SELECT |
+| 成果物と管理 DB の履歴を削除する | DELETE |
 
 ### slot_executions
 
@@ -174,6 +176,8 @@ string error_summary
 | 実行を ABORTED へ遷移させる | UPDATE |
 | 比較ツールでジョブ単位比較を実行して結果を登録する | SELECT |
 | 両系成功時に速報比較依頼を作成する | SELECT |
+| 保持日数を過ぎた終了済みの実行と確報比較依頼を判定する | SELECT |
+| 成果物と管理 DB の履歴を削除する | DELETE |
 
 ### rapid_runs
 
@@ -207,6 +211,7 @@ string error_summary
 | 比較ツールでジョブ単位比較を実行して結果を登録する | SELECT |
 | 速報比較結果を参照する | SELECT |
 | 速報比較依頼だけを新規作成する | SELECT, INSERT |
+| 成果物と管理 DB の履歴を削除する | DELETE |
 
 ### rapid_crosscheck_requests
 
@@ -260,6 +265,8 @@ string error_summary
 | 速報比較依頼だけを新規作成する | INSERT |
 | 現在状態を確認して停止確認に応答する | SELECT |
 | 実行を ABORTED へ遷移させる | UPDATE |
+| 保持日数を過ぎた終了済みの実行と確報比較依頼を判定する | SELECT |
+| 成果物と管理 DB の履歴を削除する | DELETE |
 
 ### final_crosscheck_requests
 
@@ -299,6 +306,8 @@ string error_summary
 | 保存済みの確報結果をジョブスケジューラへ返す | SELECT |
 | 現在状態を確認して停止確認に応答する | SELECT |
 | 実行を ABORTED へ遷移させる | UPDATE |
+| 保持日数を過ぎた終了済みの実行と確報比較依頼を判定する | SELECT |
+| 成果物と管理 DB の履歴を削除する | DELETE |
 
 ### monitor_records
 
@@ -311,14 +320,14 @@ string error_summary
 |---------|---|:----:|------|
 | **run_id** (PK) | string | NO | 監視対象の run_id。off モードでは parallel_runs が無いため FK にしない。情報.tsv: 監視対象 ID(run_id + role) |
 | **role** (PK) | string | NO | 監視対象の run role(RDRA バリエーション「リラン対象 role」と同じ 3 値。取りうる値は enum)。blue / green は background slot 実行、rapid-crosscheck は速報比較依頼。final-crosscheck は監視対象外のため含めない |
-| target_type | string | NO | 監視対象種別(情報「監視記録」の属性「監視対象種別」の英字コード。取りうる値は enum)。background_slot は background slot 実行、rapid_request は速報比較依頼。role から一意に導出できる(blue / green → background_slot、rapid-crosscheck → rapid_request)ため 3NF 上は role への推移従属だが、情報.tsv の属性「監視対象種別」を写し、傾向集計・通知メールでの可読性のため非正規化して保持する(hang-detector が role と同時に書き込み、以後変更しない) |
+| target_type | string | NO | 監視対象種別(情報「監視記録」の属性「監視対象種別」の英字コード。取りうる値は enum)。background_slot は background slot 実行、rapid_request は速報比較依頼。role から一意に導出できる(blue / green → background_slot、rapid-crosscheck → rapid_request)ため 3NF 上は role への推移従属だが、情報.tsv の属性「監視対象種別」を写し、傾向集計と alert 行の確認での可読性のため非正規化して保持する(hang-detector が role と同時に書き込み、以後変更しない) |
 | job_id | string | NO | 監視対象の JOB_ID(execution-spec.json または依頼レコードから転記)。parallel_runs と JOIN せずに傾向集計するために保持する(canonical C2) |
 | monitor_status | string | NO | 監視状態(状態モデル「監視状態」6 値の英字コード。取りうる値は enum)。NOT_MONITORED = 監視対象外、MONITORING = 監視中、HANG_SUSPECTED_NOTIFIED = ハング疑い通知済み、EXEC_ERROR_NOTIFIED = 実行エラー通知済み、COMPARE_ERROR_NOTIFIED = 比較異常通知済み、COMPLETED = 正常終了(中止済み対象の終端を含む)。遷移(状態モデル「監視状態」): MONITORING → HANG_SUSPECTED_NOTIFIED / EXEC_ERROR_NOTIFIED / COMPARE_ERROR_NOTIFIED / COMPLETED(exitcode 0、または監視対象が ABORTED で中止済み終端)、HANG_SUSPECTED_NOTIFIED → EXEC_ERROR_NOTIFIED / COMPARE_ERROR_NOTIFIED / COMPLETED(通知後に対象が終端または ABORTED になった場合。「通知後正常終了」はこの遷移の別名)。hang_judgement(RDRA バリエーション「ハング検知判定結果」の 6 値の英字コード。cli-command-contract.yaml shared_rules.state_codes.hang_judgement)から hang_judgement_to_monitor_status の対応で導出する。EXEC_ERROR_NOTIFIED / COMPARE_ERROR_NOTIFIED / COMPLETED は終端 |
 | started_at | datetime | NO | 監視対象の開始時刻(ローカル時刻)。background slot は started-at.txt、速報比較依頼は started_at(未開始は requested_at)。情報.tsv: 開始時刻(started-at.txt) |
 | elapsed_minutes | integer | NO | 最新の判定時点での started_at からの経過時間(分)。情報.tsv: 経過時間 |
 | hang_detect_limit_minutes | integer | NO | 判定に使ったハング検知上限(分)。background slot は execution-spec.json の slots.<role>.hang_detect_limit_minutes を転記(0 は対象外)、速報比較依頼(role=rapid-crosscheck)は hang-detector.env の RAPID_HANG_DETECT_LIMIT_MINUTES(既定 60)を転記。情報.tsv: hang_detect_limit_minutes |
-| hang_suspected_at | datetime | YES | ハング疑い通知(hang-suspected)の送信成功日時(ローカル時刻。MONITORING → HANG_SUSPECTED_NOTIFIED へ遷移した時刻。UC『監視記録を保存する』の計算ルールと同じ)。UPSERT では NULL で上書きしない。未通知は NULL。情報.tsv: hang_suspected_at |
-| alerted_at | datetime | YES | 最新の通知メールの送信成功日時(ローカル時刻)。送信成功時のみ更新(送信失敗では更新せず次回再送)。送信要否の冪等判定は monitor_status の遷移有無で行い、本列は記録用。未通知は NULL。情報.tsv: alerted_at |
+| hang_suspected_at | datetime | YES | ハング疑い(kind=hang-suspected)の alert 行を出した日時(ローカル時刻。MONITORING → HANG_SUSPECTED_NOTIFIED へ遷移した時刻。UC『監視記録を保存する』の計算ルールと同じ)。UPSERT では NULL で上書きしない。未通知は NULL。情報.tsv: hang_suspected_at |
+| alerted_at | datetime | YES | 最新の通知(hang-detector.sh が alert 行を出した)日時(ローカル時刻。判定時刻)。alert 行を出した回の監視記録の UPSERT で更新する。UPSERT に失敗した場合は monitor_status も変わらないため、次回同じ異常を再び知らせる。再通知の要否は monitor_status の遷移有無で判定し、本列は記録用。未通知は NULL。情報.tsv: alerted_at |
 | elapsed_minutes_at_alert | integer | YES | 最初の警告時の経過時間(分)。hang_detect_limit_minutes の調整根拠。以後の判定で上書きしない。未通知は NULL。情報.tsv: 警告時の経過時間(arch E-021 の elapsed_at_alert_minutes を canonical C2 で改名) |
 | judged_at | datetime | NO | 最新の判定日時(ローカル時刻)。UPSERT のたびに更新。傾向集計の期間絞り込みに使う。情報.tsv: 判定日時 |
 
@@ -337,3 +346,4 @@ string error_summary
 | ハング疑い・実行エラー・比較異常を通知する | SELECT |
 | 監視記録を保存する | INSERT, UPDATE |
 | hang_detect_limit_minutes をジョブごとに調整する | SELECT |
+| 成果物と管理 DB の履歴を削除する | DELETE |

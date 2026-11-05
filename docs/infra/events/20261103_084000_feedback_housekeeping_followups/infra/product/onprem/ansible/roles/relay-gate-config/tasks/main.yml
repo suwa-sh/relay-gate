@@ -1,0 +1,93 @@
+---
+# relay-gate-config: feature flag / ジョブマップ(CSV) / ハング検知定期ジョブ設定 / ハウスキープ設定 / 速報クロスチェック設定 / 確報クロスチェック worker 設定を読み取り専用配置する
+# 比較対象の定義は比較ツール側が持つため、ジョブ ID ごとの比較定義 CSV(crosscheck-job-map.csv)・対象カタログ(target-catalog.csv)は配置しない
+# 対応: product-impl-onprem.yaml#impl.storage.config_store
+
+- name: 設定配置ディレクトリを作成する
+  ansible.builtin.file:
+    path: /etc/relay-gate
+    state: directory
+    owner: relay-gate-deploy
+    group: relay-gate
+    mode: "0750"
+
+- name: feature flag / ジョブマップ(CSV)等を配置する(読み取り専用)
+  ansible.builtin.copy:
+    src: "files/{{ item }}"
+    dest: "/etc/relay-gate/{{ item }}"
+    owner: relay-gate-deploy
+    group: relay-gate
+    mode: "0644"
+  loop:
+    - feature-flag.env
+    - blue-job-map.csv
+    - green-job-map.csv
+  notify: notify config change (no restart required)
+
+- name: ハング検知定期ジョブ設定を配置する(HANG_DB_CONN_REF だけ。参照名のみ。グループ read)
+  ansible.builtin.copy:
+    src: files/hang-detector.env
+    dest: /etc/relay-gate/hang-detector.env
+    owner: relay-gate-deploy
+    group: relay-gate
+    mode: "0640"
+  notify: notify config change (no restart required)
+
+# メール通知は廃止した。ハング検知定期ジョブ設定は通知の宛先・送信コマンド・件名のキーを持たない。
+- name: ハング検知定期ジョブ設定が HANG_DB_CONN_REF だけを持つことを検査する
+  ansible.builtin.shell: "grep -q '^HANG_DB_CONN_REF=' /etc/relay-gate/hang-detector.env && ! grep -Ev '^(#|$|HANG_DB_CONN_REF=)' /etc/relay-gate/hang-detector.env"
+  changed_when: false
+
+# ハウスキープ設定(保持日数。既定 90 日と、ハウスキープ専用 DB ロールの接続参照名)。ファイル名・キー名は仕様で確定するため、
+# 保持日数のキーは省略でき(既定 90 日)、RAPID_CROSSCHECK_MODE=off では接続参照名も省略・空にできるため、空のファイルも正当な設定になり得る。
+# 適用側の変数 relay_gate_housekeep_config_file で受け取る。保持日数が正の整数であることの検査は validate-config.sh が所有する。
+- name: ハウスキープ設定を配置する(参照名のみ。グループ read。実行ホストセグメントのみ)
+  ansible.builtin.copy:
+    src: "files/{{ relay_gate_housekeep_config_file }}"
+    dest: "/etc/relay-gate/{{ relay_gate_housekeep_config_file }}"
+    owner: relay-gate-deploy
+    group: relay-gate
+    mode: "0640"
+  when: segment == 'execution' and relay_gate_housekeep_config_file is defined
+  notify: notify config change (no restart required)
+
+- name: ハウスキープ設定が存在することを検査する(空でもよい)
+  ansible.builtin.shell: "test -f /etc/relay-gate/{{ relay_gate_housekeep_config_file }}"
+  changed_when: false
+  when: segment == 'execution' and relay_gate_housekeep_config_file is defined
+
+- name: 速報クロスチェック設定を配置する(速報有効時のみ。DB 接続参照と速報比較ツールの起動コマンド 1 行。グループ read)
+  ansible.builtin.copy:
+    src: files/rapid-crosscheck.env
+    dest: /etc/relay-gate/rapid-crosscheck.env
+    owner: relay-gate-deploy
+    group: relay-gate
+    mode: "0640"
+  when: rapid_crosscheck_mode | default('off') != 'off'
+  notify: notify config change (no restart required)
+
+- name: 速報クロスチェック設定のキー構成を検査する(RAPID_DB_CONN_REF / RAPID_LEASE_SEC / RAPID_POLL_INTERVAL_SEC)
+  ansible.builtin.shell: "grep -q '^RAPID_DB_CONN_REF=' /etc/relay-gate/rapid-crosscheck.env && grep -Eq '^RAPID_LEASE_SEC=[1-9][0-9]*$' /etc/relay-gate/rapid-crosscheck.env && grep -Eq '^RAPID_POLL_INTERVAL_SEC=[1-9][0-9]*$' /etc/relay-gate/rapid-crosscheck.env"
+  changed_when: false
+  when: rapid_crosscheck_mode | default('off') != 'off'
+
+# 確報クロスチェック worker 設定(確報 worker の DB 接続参照と確報比較ツールの起動コマンド 1 行)。確報は常時有効のため無条件に配置する。
+# 確報 worker は DB セグメントで動き、runner 側の成果物ファイルパスを読まない。起動値は依頼レコードと本設定だけから得る。
+- name: 確報クロスチェック worker 設定を配置する(参照名のみ。グループ read)
+  ansible.builtin.copy:
+    src: files/final-crosscheck.env
+    dest: /etc/relay-gate/final-crosscheck.env
+    owner: relay-gate-deploy
+    group: relay-gate
+    mode: "0640"
+  notify: notify config change (no restart required)
+
+# 起動コマンドの内容検証(コマンド部分が絶対パスで実行可能・速報は {job_id} を含み、{params} を使うなら引数 1 つ全体がちょうど {params})は validate-config.sh が所有する。
+# ここでは配置物が空でないことだけを確認する。
+- name: 確報クロスチェック worker 設定が空でないことを検査する
+  ansible.builtin.shell: "test -s /etc/relay-gate/final-crosscheck.env"
+  changed_when: false
+
+- name: 設定ファイルに認証情報の平文値が無いことを検査する(参照名のみ許可)
+  ansible.builtin.shell: "! grep -E -i '(password|secret|token)\\s*=' /etc/relay-gate/*.env /etc/relay-gate/*.csv"
+  changed_when: false

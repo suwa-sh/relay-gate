@@ -1,0 +1,24 @@
+{
+  "event_id": "20261103_155900_feedback_run_completed",
+  "type": "feedback_run_completed",
+  "run_id": "feedback-20261103_env_duplicate_key-20261103_150000-61681",
+  "attempt": 1,
+  "created_at": "2026-11-03T07:28:57.030Z",
+  "result_sha256": "a306f21ba1365e687133ddc4baad61dee2d27a70c0a749f9abab61004d9b4fe4",
+  "feedback_request": {
+    "feedback_request_id": "20261103_env_duplicate_key",
+    "input_sha256": "5b71b3905f390aa2a260e59320c024d4415fa9cf8cbc574f299c24243f55a1d8",
+    "request_ids": [
+      "CR-b7c40e19-001"
+    ],
+    "work_unit_ids": [
+      "CR-b7c40e19-001#1"
+    ]
+  },
+  "work_unit_dispositions": [
+    {
+      "work_unit_id": "CR-b7c40e19-001#1",
+      "disposition": "applied"
+    }
+  ]
+}

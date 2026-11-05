@@ -2,7 +2,7 @@
 
 ## 概要
 
-運用者が、基盤適用設計者の定義した feature flag・runner・ジョブマップ・比較定義に基づき、ジョブスケジューラのジョブ定義を変更せずに、並行稼働・新実装の単独本番・次世代実装との並行稼働の各運用モードで業務ジョブを実行し、その結果(ジョブスケジューラ応答)と通知(メール)を受け取る。この UC は運用者視点の「読む」UC であり、relay-gate 側の処理は運用モードごとの facade の振る舞いと見え方の契約である。
+運用者が、基盤適用設計者の定義した feature flag・runner・ジョブマップ・比較定義に基づき、ジョブスケジューラのジョブ定義を変更せずに、並行稼働・新実装の単独本番・次世代実装との並行稼働の各運用モードで業務ジョブを実行し、その結果(ジョブスケジューラ応答)と、ハング検知ジョブの異常終了の知らせ(ジョブスケジューラのジョブ監視・障害通知)を受け取る。この UC は運用者視点の「読む」UC であり、relay-gate 側の処理は運用モードごとの facade の振る舞いと見え方の契約である。
 
 ## データフロー
 
@@ -23,14 +23,14 @@ graph LR
   subgraph FS["FS(設定ファイル)"]
     FF[("feature-flag.env")]
   end
-  subgraph MAIL["メール通知"]
-    ALERT["hang-detector の warning / error"]
+  subgraph HANG["ハング検知ジョブ(ジョブスケジューラの定期ジョブ)"]
+    ALERT["hang-detector.sh\n終了コード 3 / 6 + 標準エラーの alert 行"]
   end
   CFG -->|"ファイル書き込み"| FF
   JOB -->|"引数"| P
   R -->|"ファイル読み込み"| FF
   P -->|"無加工中継"| HIST
-  ALERT -->|"background の異常のみ"| OPS["運用者"]
+  ALERT -->|"background の異常のみ\nジョブ監視・障害通知"| OPS["運用者"]
   HIST -->|"参照"| OPS
 ```
 
@@ -39,7 +39,7 @@ graph LR
 | 基盤適用設計者 | 設定ファイル | 運用モードを feature flag の組合せで表現(UC「feature flag を設定する」) |
 | presentation / usecase | facade.sh | 起動のたびに feature flag を読み、運用モードに応じた slot を起動し foreground を中継(UC「slot 実行モードを選択して runner を起動する」「foreground slot の結果をジョブスケジューラへ中継する」) |
 | ジョブスケジューラ | 実行結果 | 運用モードによらず同じ 3 チャネル |
-| メール通知 | 通知 | background slot と速報の異常だけがメールで届く(並行稼働 / 次世代並行稼働のみ) |
+| ハング検知ジョブ | 終了コードと alert 行 | background slot と速報の異常だけが、ハング検知ジョブの警告終了(3)・失敗(6)として届く(並行稼働 / 次世代並行稼働のみ) |
 
 ## 処理フロー
 
@@ -52,7 +52,7 @@ sequenceDiagram
     participant Facade as facade.sh
   end
   participant FS as FS(feature-flag.env)
-  participant Mail as メール通知
+  participant Hang as ハング検知ジョブ(hang-detector.sh)
 
   Designer->>FS: 運用モードに応じた feature flag(validate-config.sh で検証済み)
   Note over Sched: ジョブ定義は facade.sh JOB001 のまま変更しない
@@ -61,15 +61,15 @@ sequenceDiagram
   alt 運用モード: 並行稼働(blue foreground / green background / 速報 background)
     Facade->>Facade: green を background 起動 → blue を foreground 起動 → blue を待機
     Facade-->>Sched: blue の結果
-    Mail-->>Ops: green / 速報の異常があれば warning / error メール
+    Hang-->>Ops: green / 速報の異常があれば終了コード 3 / 6 と alert 行(ジョブ監視・障害通知)
   else 運用モード: 新実装の単独本番(blue off / green foreground / 速報 off)
     Facade->>Facade: green を foreground 起動 → 待機(管理 DB に触れない)
     Facade-->>Sched: green の結果
-    Note over Mail: background も速報も無いためメールは無い
+    Note over Hang: background も速報も無いため知らせる異常は無い(終了コード 0)
   else 運用モード: 次世代実装との並行稼働(blue background / green foreground / 速報 background)
     Facade->>Facade: blue を background 起動 → green を foreground 起動 → green を待機
     Facade-->>Sched: green の結果
-    Mail-->>Ops: blue / 速報の異常があれば warning / error メール
+    Hang-->>Ops: blue / 速報の異常があれば終了コード 3 / 6 と alert 行(ジョブ監視・障害通知)
   end
   Ops->>Sched: 実行結果を確認(UC「業務ジョブの実行結果を確認する」)
 ```
@@ -78,9 +78,9 @@ sequenceDiagram
 
 | バリエーション名 | 値 | 処理内容 | 適用 tier | 適用箇所 |
 |----------------|---|---------|----------|---------|
-| 運用モード | 並行稼働 | blue foreground / green background / 速報 background。応答 = blue。メール = green / 速報の異常 | tier-facade | facade.sh |
-| 運用モード | 新実装の単独本番 | blue off / green foreground / 速報 off。応答 = green。メール無し。管理 DB 不要 | tier-facade | facade.sh |
-| 運用モード | 次世代実装との並行稼働 | blue background / green foreground / 速報 background。応答 = green。メール = blue / 速報の異常。blue の runner・実装版(BLUE_RUNNER / BLUE_IMPL)は旧 green のもの、green の runner・実装版(GREEN_RUNNER / GREEN_IMPL)は次世代実装 | tier-facade | facade.sh |
+| 運用モード | 並行稼働 | blue foreground / green background / 速報 background。応答 = blue。ハング検知ジョブの異常終了 = green / 速報の異常 | tier-facade | facade.sh |
+| 運用モード | 新実装の単独本番 | blue off / green foreground / 速報 off。応答 = green。ハング検知ジョブの異常終了は無い。管理 DB 不要 | tier-facade | facade.sh |
+| 運用モード | 次世代実装との並行稼働 | blue background / green foreground / 速報 background。応答 = green。ハング検知ジョブの異常終了 = blue / 速報の異常。blue の runner・実装版(BLUE_RUNNER / BLUE_IMPL)は旧 green のもの、green の runner・実装版(GREEN_RUNNER / GREEN_IMPL)は次世代実装 | tier-facade | facade.sh |
 | 実装スロット | blue / green | 運用モードごとに役割(応答元 / 比較対象 / 停止)が変わる | tier-facade | facade.sh |
 | slot 実行モード | foreground / background / off | 運用モードの構成要素 | tier-facade | facade.sh |
 | 速報クロスチェックモード | foreground / background / off | 並行稼働系は off 以外(background)、単独本番は off。facade は「off か off 以外か」だけで判定する(foreground と background の挙動差は区別しない) | tier-facade | facade.sh |
@@ -117,11 +117,11 @@ sequenceDiagram
 | 情報 | feature flag 設定 | 運用モードの正本 |
 | 情報 | ジョブ起動要求 | 不変のジョブ定義 |
 | 情報 | ジョブスケジューラ応答 | 運用モードによらず同じ 3 チャネル |
-| 情報 | 通知メール | background / 速報の異常。宛先・送信コマンド・件名プレフィックス(ALERT_SUBJECT_PREFIX)の出所は情報「ハング検知定期ジョブ設定」(hang-detector.env。所有者: 基盤適用設計者) |
+| 情報 | 監視記録 | background / 速報の異常の判定結果。運用者へはハング検知ジョブの終了コードと標準エラーの alert 行で届く |
 | 条件 | foreground slot 排他 / 設定所有区分 / facade の責務限定 | 分岐条件一覧を参照 |
 | 画面 | facade 運用モード出力(→ CLI 出力) | ジョブスケジューラ応答と実行ログの operation_mode |
-| イベント | 運用モード別の業務ジョブ起動 / 運用モード別の異常通知受信 | 起動 / 通知 |
-| 外部システム | ジョブスケジューラ / メール通知 | 起動元 / 通知経路 |
+| イベント | 運用モード別の業務ジョブ起動 / 運用モード別のハング検知ジョブ異常終了の受信 | 起動 / 通知 |
+| 外部システム | ジョブスケジューラ | 業務ジョブの起動元。ハング検知ジョブの警告終了・失敗をジョブ監視・障害通知で運用者へ届ける |
 
 ## 関連 USDM
 
@@ -147,7 +147,7 @@ Feature: 切り替えた運用モードで業務ジョブを実行する
     And blue は終了コード 0、green は終了コード 0 で終了し速報比較は OK である
     When ジョブスケジューラが facade.sh JOB001 を実行する
     Then ジョブスケジューラは blue の結果(終了コード 0)を受け取る
-    And 運用者に通知メールは届かない
+    And その後のハング検知ジョブは終了コード 0 で終わり、標準エラーに alert 行を出さない
     And 実行ログに "operation_mode=parallel" が出る
 
   Scenario: 単独本番モードで業務ジョブを実行する(SPEC-001-03)
@@ -178,11 +178,12 @@ Feature: 切り替えた運用モードで業務ジョブを実行する
     Then R1 の green はそのまま実行を継続し、R1 の execution-spec.json は変わらない
     And 次の facade.sh JOB001 の起動から単独本番モードで動く
 
-  Scenario: 並行稼働モードで background の異常は通知メールで届く
+  Scenario: 並行稼働モードで background の異常はハング検知ジョブの失敗で届く
     Given 並行稼働モードで blue は終了コード 0、green(background)は終了コード 1 で終了した
     When hang-detector.sh の定期ジョブが実行される
     Then ジョブスケジューラの応答は終了コード 0 のままである
-    And 運用者に件名 "<ALERT_SUBJECT_PREFIX>[error] background-exec-error run_id=<run_id> job_id=JOB001 role=green" のメールが届く(件名プレフィックスは hang-detector.env の ALERT_SUBJECT_PREFIX。既定 "[relay-gate]")
+    And hang-detector.sh は終了コード 6 で終わり、標準エラーに "alert: level=error kind=background-exec-error run_id=<run_id> role=green job_id=JOB001 elapsed_minutes=<n>" を 1 行出す
+    And 運用者はジョブスケジューラのジョブ監視・障害通知でハング検知ジョブの失敗を受け取る
 ```
 
 ### 異常系
@@ -201,6 +202,5 @@ Feature: 切り替えた運用モードで業務ジョブを実行する
 
 ### 統合契約
 
-- [CLI コマンド契約](../../../_cross-cutting/api/cli-command-contract.yaml)(`facade.sh` を uses)
-- [AsyncAPI Spec](../../../_cross-cutting/api/asyncapi.yaml)(`hang-alert-mail` を subscribe する側は運用者。定義は tier-ops)
-- 関連: [feature flag を設定する](../feature%20flag%20を設定する/spec.md) / [slot 実行モードを選択して runner を起動する](../../../実装切替業務/実装切替ジョブ実行フロー/slot%20実行モードを選択して%20runner%20を起動する/spec.md) / [業務ジョブの実行結果を確認する](../../../実装切替業務/実装切替ジョブ実行フロー/業務ジョブの実行結果を確認する/spec.md)
+- [CLI コマンド契約](../../../_cross-cutting/api/cli-command-contract.yaml)(`facade.sh` を uses。`hang-detector.sh` の終了コードと alert 行を参照する。定義は tier-ops)
+- 関連: [ハング検知ジョブの異常終了を確認する](../../../実行監視業務/background%20実行監視フロー/ハング検知ジョブの異常終了を確認する/spec.md) / [feature flag を設定する](../feature%20flag%20を設定する/spec.md) / [slot 実行モードを選択して runner を起動する](../../../実装切替業務/実装切替ジョブ実行フロー/slot%20実行モードを選択して%20runner%20を起動する/spec.md) / [業務ジョブの実行結果を確認する](../../../実装切替業務/実装切替ジョブ実行フロー/業務ジョブの実行結果を確認する/spec.md)

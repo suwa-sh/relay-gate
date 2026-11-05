@@ -1,0 +1,39 @@
+uc: "成果物と管理 DB の履歴を削除する"
+business: "ハウスキープ業務"
+buc: "ハウスキープフロー"
+paths: []
+x_cli_commands:
+  - name: "housekeep.sh"
+    tier: "tier-ops"
+    role: "uses"
+    synopsis: "housekeep.sh [--verbose] [--help](削除部分。コマンド契約の定義元は UC「保持日数を過ぎた終了済みの実行と確報比較依頼を判定する」)"
+    invoked_by: "ジョブスケジューラ(ハウスキープ定期ジョブ、1 日 1 回)"
+    args: []
+    options: []
+    stdin: "なし"
+    stdout: "固定順の key=value 8 行: retention_days=<N> / cutoff=<ローカル日時> / purged_pending_entries=<N> / deleted_run_units=<N> / deleted_runs=<N> / deleted_final_crosscheck_requests=<N> / deleted_orphan_marks=<N> / kept_units=<N>。終了コード 0 と 6 で出し、2 では出さない。削除の途中で失敗した単位は deleted_run_units / deleted_runs / kept_units のどれにも数えない"
+    stderr: "error: pending entry delete failed path: ... / error: pending dir create failed path: ... / error: artifact move failed run_id=... path: ... / error: artifact delete failed path: ... / error: management db delete failed run_ids=<run_id,...>(ロールバック済み)/ error: management db delete failed final_crosscheck_id=... / --verbose 時 info: unit deleted root_run_id=... run_ids=N latest_completed_at=..."
+    exit_codes:
+      - code: 0
+        meaning: "失敗なく終えた(削除件数 0 を含む)。直前に削除し終えた状態で再実行すると件数はすべて 0"
+      - code: 6
+        meaning: "置き場の残りの削除、置き場の作成、成果物の移動・削除、管理 DB の行の削除(ロールバック)、確報比較依頼の削除のいずれかの失敗が 1 件以上。削除できたものは削除したうえで 6"
+  - name: "background-rerun.sh"
+    tier: "tier-ops"
+    role: "uses"
+    synopsis: "background-rerun.sh --source-run-id <RUN_ID> --role blue|green|rapid-crosscheck"
+    invoked_by: "運用者 / ジョブスケジューラ(background リラン専用ジョブ)。この UC では、成果物が消えて管理 DB の行が残った期限切れの実行をリランしたときの結果だけを扱う"
+    args: []
+    options:
+      - name: "--role"
+        type: "enum"
+        required: true
+        description: "blue / green は元の execution-spec.json が無いため error: execution-spec not found(3)。rapid-crosscheck は execution-spec.json を読まないため、管理 DB の行が残っている間は依頼の再作成に成功する"
+    stdin: "なし"
+    stdout: "契約 background-rerun.sh のとおり(この UC で変更しない)"
+    stderr: "error: execution-spec not found run_id=... path: ...(3。--role blue|green)"
+    exit_codes:
+      - code: 3
+        meaning: "--role blue|green で元の execution-spec.json が無い"
+async_events: []
+schemas: []

@@ -12,7 +12,6 @@ decision_refs:
   - "product-decision-001"
   - "product-decision-002"
   - "product-decision-003"
-  - "product-decision-004"
   - "product-decision-005"
 inputs_ref:
   - "product-relay-gate-workload-model"
@@ -35,6 +34,8 @@ mappings:
       DB セグメントの専用ホストに final-crosscheck-worker を配置する。worker は systemd service として常駐させ、
       Restart=on-failure で復帰させる。SSH は実行ユーザーごとの鍵ペアを使い、known_hosts を事前配布する。
       水平スケールは worker ホストを追加して同じ unit を配置する(手動)。
+      hang-detector(5 分ごと)と housekeep(1 日 1 回)はホストの systemd timer / cron に登録せず、ジョブスケジューラの
+      定期ジョブとして登録する(hang-detector の終了結果がジョブスケジューラの障害通知に乗ることが唯一の通知経路のため)。
     gap_description: "自動スケール・自動復旧(ホスト障害時のフェイルオーバー)はマネージド相当が無く、ホスト追加と再起動は運用手順で行う"
     alternatives:
       - "Kubernetes CronJob / Deployment(コンテナ基盤が既にある場合。今回は前提にしない)"
@@ -49,9 +50,19 @@ mappings:
       DB セグメントの単一ホストに配置する。速報側テーブルと確報側テーブルはスキーマを分けて配置する
       (例: rapid / final)。claim は FOR UPDATE SKIP LOCKED で行い、lease_until を UPDATE する。
       接続は pg_hba.conf で実行ホストセグメントと DB セグメントの IP 範囲に限定し、
-      ロールは app_rw(runner / worker)と ops_ro(参照)に分ける。facade / slot runner / 速報クロスチェック runner / worker は
-      速報クロスチェック設定の接続参照名(RAPID_DB_CONN_REF)、hang-detector はハング検知定期ジョブ設定の接続参照名
-      (HANG_DB_CONN_REF)で接続先と認証情報を解決する(参照名の実体は実行ユーザーの認証情報ファイル等に置く)。
+      ロールは app_rw(runner / worker。SELECT / INSERT / UPDATE のみで DELETE は与えない)、ops_ro(参照)、
+      housekeep_del(ハウスキープ専用。6 テーブルへの SELECT / DELETE のみ)に分ける。facade / slot runner / 速報クロスチェック runner / worker は
+      速報クロスチェック設定の接続参照名(RAPID_DB_CONN_REF)、確報 runner(と実行ホストの abort-final-crosscheck)は実行ホストの
+      final-crosscheck.env の FINAL_DB_CONN_REF、確報 worker は DB セグメントの final-crosscheck.env の FINAL_DB_CONN_REF、
+      hang-detector はハング検知定期ジョブ設定の接続参照名(HANG_DB_CONN_REF)、housekeep はハウスキープ設定の接続参照名
+      (HOUSEKEEP_DB_CONN_REF。専用 DB ロール housekeep_del で接続する)で接続先と認証情報を解決する
+      (参照名の実体は実行ユーザーの認証情報ファイル等に置く)。管理 DB は 1 つで、これらの参照名はすべて同じ 1 つの管理 DB に
+      解決されることを前提にする(2026-11-05 利用者決定。条件は参照名の文字列が同じことではなく、解決先の DB が同じこと。確報 runner が登録した
+      依頼を確報 worker が同じキューから取得するため、別の DB に解決されると設定の検査を通っても確報ジョブが完了しない。
+      構築時の検査は存在確認だけで、解決先が同じことは導入する側が確かめる)。housekeep は削除単位ごとに管理 DB の行を 1 トランザクションで削除する。
+      容量は保持日数(既定 90 日)分の行で頭打ちになる。RAPID_CROSSCHECK_MODE が off 以外、または確報クロスチェックを使う設置で
+      ハウスキープ設定の接続参照名が無い・空なら、housekeep は設定エラーで何も削除せず非 0 で終わる(削除されないまま行が増え続けることはない)。
+      housekeep が管理 DB に接続しないのは、管理 DB を一切使わない設置(off で確報クロスチェック worker の設定が無く、接続参照名が無い・空)だけである。
       速報比較依頼の状態更新は WHERE 句で現在状態を条件にした条件付き UPDATE とし、psql のコマンドタグ(UPDATE n)から
       更新件数を取る(worker の CLAIMED → RUNNING は 0 件なら比較を開始しない。abort-rapid-crosscheck の
       status IN (REQUESTED, CLAIMED, RUNNING) → ABORTED は 0 件をエラー。abort-blue / abort-green の REQUESTED → ABORTED は
@@ -74,7 +85,11 @@ mappings:
       一時ファイルは確定先と同じファイルシステム上に作り rename で確定する(クロスデバイス rename を避ける)。
       abort-blue / abort-green が書く aborted.txt も同じ規則で確定し、ハング検知・リラン CLI はこのファイルの有無で
       中止済みを判定する(管理 DB を参照しない)。NFS の場合は同一 export 内で完結させる。
-    gap_description: "オブジェクトストレージのバージョニング・ライフサイクル管理は無い。保持期間超過分の削除はログローテーション同様に cron で行う"
+      成果物ルート配下に、RAPID_CROSSCHECK_MODE=off 時のハング検知の通知済みの印(hang-detector-notified/<run_id>.<role>。一時ファイル → リネーム)と、
+      ハウスキープの削除待ちの置き場(housekeep-pending/)を置く。置き場は成果物ルートと同じファイルシステム
+      (NFS の場合は同一 export)に置き、rename(2) で移してから削除する。容量は保持日数(既定 90 日)× 1 日あたりの成果物量で頭打ちになる。
+      管理 DB を一切使わない設置では、速報クロスチェックのモードが off でない期間に作られた実行の成果物は日数にかかわらず残る。
+    gap_description: "オブジェクトストレージのバージョニング・ライフサイクル管理は無い。保持日数(既定 90 日)を過ぎた終了済みの実行の成果物はハウスキープ定期ジョブ(housekeep.sh。ジョブスケジューラから 1 日 1 回)が削除する"
     alternatives:
       - "MinIO(オブジェクトストレージ API 前提に切り替える場合。現行契約は POSIX パス参照のため不採用)"
     source_refs:
@@ -86,12 +101,16 @@ mappings:
     fidelity: "exact"
     configuration_notes: >-
       /etc/relay-gate/ 相当に feature-flag.env(9 キー)、slot ごとのジョブマップ(<role>-job-map.csv)、
-      hang-detector.env、rapid-crosscheck.env(速報有効時のみ。
-      RAPID_DB_CONN_REF / RAPID_LEASE_SEC / RAPID_POLL_INTERVAL_SEC と速報比較ツールの起動コマンド 1 行)、
-      final-crosscheck.env(確報 worker の DB 接続参照と確報比較ツールの起動コマンド 1 行)を配置する。
+      hang-detector.env(HANG_DB_CONN_REF と任意キー RAPID_HANG_DETECT_LIMIT_MINUTES / HANG_SCAN_WINDOW_HOURS の 3 キーを持ち得る。HANG_DB_CONN_REF は RAPID_CROSSCHECK_MODE が off 以外のときだけ必須)、ハウスキープ設定(保持日数と専用 DB ロールの接続参照名。接続参照名は off 以外または確報クロスチェックを使う設置では必須で、省略・空にできるのは管理 DB を一切使わない設置だけ。ファイルは housekeep.env(配置先 /etc/relay-gate/housekeep.env)で、保持日数のキーは HOUSEKEEP_RETENTION_DAYS、接続参照名のキーは HOUSEKEEP_DB_CONN_REF)、
+      rapid-crosscheck.env(速報有効時のみ。
+      必須は RAPID_DB_CONN_REF と速報比較ツールの起動コマンド 1 行、任意は RAPID_LEASE_SEC(既定 600)/ RAPID_POLL_INTERVAL_SEC(既定 30))、
+      final-crosscheck.env(確報を使う設置(構築の変数 relay_gate_final_crosscheck_enabled=true。既定 false)だけ、読み手のいる実行ホストセグメントと DB セグメントの両方に同じファイル名で置き場ごとに中身を分けて配置し、使わない設置では両方から消す。実行ホストセグメント(確報 runner 用)は FINAL_DB_CONN_REF と runner の任意キー FINAL_POLL_INTERVAL_SEC / FINAL_POLL_LIMIT_SEC だけで確報比較ツールの起動コマンドを置かない。DB セグメント(確報 worker 用)は FINAL_DB_CONN_REF・確報比較ツールの起動コマンド 1 行 FINAL_COMPARE_COMMAND と worker の任意キー FINAL_LEASE_MINUTES / FINAL_WORKER_POLL_INTERVAL_SEC。各読み手は自分のホストのファイルだけを読む)を配置する。
+      配置時の検査はファイルの存在確認だけで、中身の検査は CLI 契約(validate-config.sh と各読み手の起動時検査)が所有する。
+      relay-gate の処理の中から設定ファイルを配ることはせず、全ホストが構築手順で同じようにデプロイされていることを前提にする。比較コマンドなど設定を変えたら構築手順で配り直す。
+      認証情報らしい値(password / secret / token の直後に = がある行)は構築時に該当ファイルと行番号を警告するだけで構築を止めない(CLI 契約の秘密らしい値は警告して受け付ける方針に揃える)。
       比較対象の定義は比較ツール側が持ち、ジョブ ID ごとの比較定義 CSV・対象カタログは配置しない。設定版のファイルは持たず、
       マップ版はジョブマップ側の任意列で表す。配布は適用側の構成管理ツールで行い、配布後に facade / runner / worker /
-      hang-detector が次回起動から読み込む(常駐 worker は再起動で反映)。認証情報は参照名のみ置き、実体は実行ユーザーのホームまたは OS のシークレット領域に置く。
+      hang-detector / housekeep が次回起動から読み込む(常駐 worker は再起動で反映)。認証情報は参照名のみ置き、実体は実行ユーザーのホームまたは OS のシークレット領域に置く。
     gap_description: ""
     alternatives:
       - "NFS 共有上の設定ディレクトリ(全ホストで一括反映したい場合)"
@@ -113,30 +132,19 @@ mappings:
     source_refs:
       - "docs/mcl/product/output/product-workload-model.yaml#product.storage.execution_log_store"
 
-  - canonical_element_id: "product.messaging.mail_notification"
-    vendor_service: "Postfix(ローカル MTA、組織内 SMTP へ relayhost 設定)+ mail / sendmail コマンド"
-    vendor_feature: "relayhost / 送信キュー(中継先一時停止時のリトライ)"
-    fidelity: "exact"
-    configuration_notes: >-
-      各実行ホストの Postfix を satellite 構成にし relayhost に組織内 SMTP を指定する。
-      スクリプトは hang-detector.env の ALERT_MAIL_CMD(既定は mail コマンド)で送信し、送信内容(件名・宛先・本文要約)を実行ログに残す。
-      宛先(ALERT_MAIL_TO)は運用体制で定めた配布リストとし、件名プレフィックス(ALERT_SUBJECT_PREFIX)とともに
-      ハング検知定期ジョブ設定として基盤適用設計者が所有する。
-    gap_description: ""
-    alternatives:
-      - "msmtp(軽量 MTA。キューを持たないためリトライは呼び出し側で行う)"
-    source_refs:
-      - "docs/mcl/product/output/product-workload-model.yaml#product.messaging.mail_notification"
-
   - canonical_element_id: "product.integration.job_scheduler"
     vendor_service: "組織既存のジョブスケジューラ(製品固定なし)"
-    vendor_feature: "ジョブ定義(コマンド + 引数)/ 定期・日次スケジュール / 終了コード判定"
-    fidelity: "exact"
+    vendor_feature: "ジョブ定義(コマンド + 引数)/ 定期・日次スケジュール / 終了コード判定 / 既存のジョブ監視・障害通知"
+    fidelity: "partial"
     configuration_notes: >-
       業務ジョブのコマンドを facade.sh JOB_ID [PARAM...] に置き換える。確報クロスチェックジョブ、
-      5 分ごとのハング検知ジョブ、background リラン専用ジョブを追加定義する。
+      5 分ごとのハング検知ジョブ、1 日 1 回のハウスキープジョブ、background リラン専用ジョブを追加定義する。
+      ハング検知ジョブの警告終了・失敗はスケジューラの既存の障害通知で運用者へ届け、詳細(対象・段階・経過時間)は
+      ジョブログに残る標準エラーで確認する。業務ジョブの障害と区別できるようジョブ定義名で識別する。
+      ハウスキープジョブの失敗も同じ障害通知で届く(次回の実行で残りを削除できるため即時対応は要さない)。
+      ハウスキープジョブの登録手順は運用手順書に記載し、削除したくない場合は登録しない。
       実行履歴・監査はスケジューラ側の機能で参照し、relay-gate 側に複製しない。
-    gap_description: ""
+    gap_description: "警告終了を失敗と区別して通知できるかはジョブスケジューラ製品の機能に依存する。区別できない場合は警告終了の終了コードを失敗として扱い、標準エラーの段階表示(warning / error)で見分ける運用とする"
     alternatives:
       - "cron(スケジューラを持たないテスト環境での代替)"
     source_refs:
@@ -150,8 +158,8 @@ mappings:
       DB ホストで日次 pg_basebackup(フル)と archive_command による WAL アーカイブ(差分)を cron で回し、
       バックアップ先はミラーリングされた別ボリュームに置く。復旧手順(PITR)を文書化しテスト環境で年 1 回演習する。
       ホストの CPU / メモリ / ディスク / ネットワークは組織既存の監視エージェントに載せ、
-      relay-gate 固有のハング検知・異常通知はワークロード自身の hang-detector が担う。
-    gap_description: "組織既存の監視が無い場合、OS 標準(sar / df + cron メール)で代替し、ダッシュボードは持たない"
+      relay-gate 固有のハング検知・異常通知はワークロード自身の hang-detector が担い、ジョブスケジューラの障害通知で届く。
+    gap_description: "組織既存の監視が無い場合、OS 標準(sar / df)の閾値検査スクリプトをジョブスケジューラの定期ジョブとして登録し、閾値超過を失敗終了としてジョブスケジューラの障害通知で届ける。ダッシュボードは持たない"
     alternatives:
       - "Prometheus + Grafana + node_exporter(監視基盤を新規導入する場合。今回は導入しない方針)"
       - "Zabbix(組織標準がある場合)"

@@ -20,13 +20,13 @@ x_cli_commands:
         default: "false"
         description: "行ごとの info を stderr に出す"
     stdin: "なし"
-    stdout: "--rapid-crosscheck: config=rapid-crosscheck / path: ... / command_path: <RAPID_COMPARE_COMMAND の先頭の語> / has_job_id_placeholder=true|false / status=valid|invalid / violations=N(invalid 時)"
-    stderr: "契約 validate-config.sh の共通形式: error: config file not found path: ... / error: option required option=RAPID_COMPARE_COMMAND path: ... / error: path is not absolute key=RAPID_COMPARE_COMMAND path=... / error: file not executable key=RAPID_COMPARE_COMMAND path=... / error: placeholder {job_id} is missing key=RAPID_COMPARE_COMMAND value=... / error: placeholder {params} must be a whole argument key=RAPID_COMPARE_COMMAND value=..."
+    stdout: "--rapid-crosscheck: config=rapid-crosscheck / path: ... / command_path: <RAPID_COMPARE_COMMAND の先頭の語> / has_job_id_placeholder=true|false|- / status=valid|invalid / violations=N(invalid 時)。入力の守備範囲の違反で値を使わないときは command_path / has_job_id_placeholder を -(契約 config_input_rules.env_files)"
+    stderr: "契約 validate-config.sh の共通形式: error: config file not found path: ... / error: option required option=RAPID_COMPARE_COMMAND path: ... / error: path is not absolute key=RAPID_COMPARE_COMMAND path=... / error: file not executable key=RAPID_COMPARE_COMMAND path=... / error: placeholder {job_id} is missing key=RAPID_COMPARE_COMMAND value=... / error: placeholder {params} must be a whole argument key=RAPID_COMPARE_COMMAND value=... / 入力の守備範囲の違反(invalid line / error: duplicate key key=<KEY> lines=<n1,n2,...> path: ... など。文言と報告の順は契約 config_input_rules.env_files)。キー表(契約 config_files.rapid-crosscheck.env の keys)に無いキーは `warn: unknown key key=<KEY> path: ...` を出して継続する(終了コード・violations に数えない。他の読み手が使うキーは未知キーではない。契約 config_files.rapid-crosscheck.env note)"
     exit_codes:
       - code: 0
         meaning: "違反 0 件"
       - code: 2
-        meaning: "検証種別オプションの指定数不正・値なし・ファイル不在・RAPID_COMPARE_COMMAND 欠落・コマンド部分の絶対パス違反・存在しない・実行不可・{job_id} 欠落・{params} が引数 1 つ全体でない位置にある・未知のオプション"
+        meaning: "検証種別オプションの指定数不正・値なし・ファイル不在・入力の守備範囲の違反(invalid line・同じキーの重複を含む)・RAPID_COMPARE_COMMAND 欠落・コマンド部分の絶対パス違反・存在しない・実行不可・{job_id} 欠落・{params} が引数 1 つ全体でない位置にある・未知のオプション"
       - code: 6
         meaning: "検証器の内部障害(契約 config_input_rules.internal_failure)"
 async_events: []

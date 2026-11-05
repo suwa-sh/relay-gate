@@ -1,0 +1,66 @@
+round: 1
+findings:
+  - id: R-001
+    viewpoint: 4
+    severity: major
+    target: "_cross-cutting/api/cli-command-contract.yaml"
+    claim: "通知済みの印の確定名がディレクトリ(notified_mark.invalid が「読めない」の例として明記)の対象で、alert 行を出したとき・判定が COMPLETED のときの書き直しの結果が 1 つに決まらない。規定の手順(<run_id>.<role>.tmp に書いて mv で確定名へ置き換える)は、確定名がディレクトリだと mv が .tmp をそのディレクトリの中へ移して成功してしまう。印はディレクトリのまま残り、error 行は出ず(保存失敗にならない)、次の回も印の不正 → C=MONITORING → 同じ alert 行が見回りのたびに出続ける"
+    evidence: "shared_rules.hang_alert.notified_mark.invalid は『通常のファイルでない(ディレクトリなど)』を読めない印に含め、(1) alert 行を出した対象は write_rule の手順で S へ書き直す、(2) 判定が COMPLETED の対象は COMPLETED へ書き直す、と定める。write_rule は『.tmp へ書いてから mv で確定名へ置き換える』だけで、確定名がディレクトリ・その他の非通常ファイルのときの扱いが無い。通知 UC tier-ops.md の BDD『印の場所がディレクトリなら読めない印として扱う』は判定が MONITORING(書き直さない)の場合だけで、書き直しが起きる場合の結果を示していない。方針資料『通知済みの異常は、次回以降の監視で再び通知しません』"
+    suggested_fix: "notified_mark.invalid(または write_rule)に、確定名が通常のファイルでないときの書き直しを 1 つに決めて書く。例: 置き換え先が通常のファイルでない(ディレクトリ等)なら書き直さず `error: notified mark save failed run_id=... role=... path: ...`(6)とする(mv -T 相当で中へ移さない)。または確定名のエントリを先に取り除いてから置き換える。通知 UC の tier-ops.md「通知済みの印」の表と BDD(ディレクトリの印で判定が HANG_SUSPECTED の例: 1 対象の中で error: notified mark invalid → alert → error: notified mark save failed の 3 行)を揃える"
+  - id: R-002
+    viewpoint: 4
+    severity: minor
+    target: "_cross-cutting/api/cli-command-contract.yaml"
+    claim: "判定されない対象(started-at.txt が不正 / execution-spec.json の slots に role が無い / execution-spec.json が無い run)に窓内の不正な印があるとき、`error: notified mark invalid` を出すか・印を書き直すかが決まっていない。また off で印の置き場 hang-detector-notified/ 自体を列挙・読めないときの扱い(全対象の印の不正として対象ごとに出すのか、1 行の実行エラーか、窓外の HANG_SUSPECTED_NOTIFIED の run の走査を黙って落とすのか)も無い。stderr の行数と終了コード(0 か 6 か)が実装で変わる"
+    evidence: "notified_mark.invalid は『その対象について error 行を出し、C を MONITORING として判定を続ける』と判定される対象を前提に書かれている。scan_rules / 判定 UC tier-ops.md の走査手順 1 は execution-spec.json が無い run・started-at が不正な role を判定対象外とするが、その対象の印の読み取りと error 行の有無に触れていない。hang_alert.order は warn 行を対象ごとの行より前に置くとだけ書き、判定対象外の対象の印の行を位置づけていない。置き場ディレクトリの読み取り失敗は commands の hang-detector.sh の stderr の一覧に無い"
+    suggested_fix: "notified_mark.invalid に『判定対象外(warn を出した run / role)の印は読まない(error 行を出さず、書き直さない)』のように 1 つ決めて書く。置き場ディレクトリを読めないときの行と終了コード(例: `error: notified mark dir is not readable path: ...` 1 行で 6、窓の例外の走査はしない)も commands の hang-detector.sh と判定 UC tier-ops.md に足す"
+  - id: R-003
+    viewpoint: 4
+    severity: minor
+    target: "ハウスキープ業務/ハウスキープフロー/成果物と管理 DB の履歴を削除する/tier-ops.md"
+    claim: "単位内の手順 3(置き場へ移したものの削除)で 1 つのエントリの削除に失敗したとき、同じ単位の残りのエントリの削除を続けるか止めるかが書かれていない。このため 1 単位で出る `error: artifact delete failed` の行数(1 行か、失敗したエントリの数か)が 1 つに決まらない"
+    evidence: "「処理の順」の表は手順 3 の error 行の順を『処理した順』とし(複数行を示唆)、手順 1・2 は『最初の失敗で単位の残りをしないため 1 単位 1 行』と明記している。一方「単位の削除手順」の表の手順 3 の『失敗した場合』は『管理 DB の行を消さない』だけで、残りのエントリの扱いが無い。契約 deletion_order の 3 と processing_sequence も同じ"
+    suggested_fix: "手順 3 の失敗時の扱いを 1 つに決めて、契約 processing_sequence と tier-ops.md の 2 つの表に書く(例: 失敗しても同じ単位の残りのエントリの削除を続け、失敗したエントリごとに 1 行。管理 DB の行は消さない)"
+  - id: R-004
+    viewpoint: 4
+    severity: minor
+    target: "実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/_api-summary.yaml"
+    claim: "_api-summary.yaml の stderr は『走査前の設定エラーは検査の順で最初の 1 件だけ』と書き、入力の守備範囲の違反(バイト・改行の全件、invalid line・duplicate key の全件)が複数行になる例外を書いていない。tier-ops.md・契約と食い違う"
+    evidence: "同 UC tier-ops.md は『最初に設定エラーを見つけたところで止め、その error 行(と hint)だけを出す(入力の守備範囲の違反が複数行あるときは契約 config_input_rules のとおり複数行)』。契約 commands の hang-detector.sh も『入力の守備範囲の違反が複数行あるときの出し方は config_input_rules』。_api-summary.yaml には括弧書きが無い"
+    suggested_fix: "_api-summary.yaml の stderr に『(入力の守備範囲の違反は 1 つのファイルについて config_input_rules のとおり複数行。byte_checks / env_files)』を足す"
+  - id: R-005
+    viewpoint: 4
+    severity: minor
+    target: "_cross-cutting/ux-ui/ui-design.md"
+    claim: "出力規約の「ハング検知の通知出力」の 1 対象の中の順が『印の不正の error 行 → alert 行 → 保存失敗の error 行』で、契約の『alert 行または --verbose の info: alert skipped 行』の info 行が抜けている。また契約 hang_alert.order も含め、対象ごとでない走査中の error 行(`error: artifact root is not readable path: ...`)の位置が並び順の規則に無い"
+    evidence: "契約 shared_rules.hang_alert.order『1 つの対象の中では error: notified mark invalid → alert: または info: alert skipped → 保存失敗』、『走査中の warn 行と --verbose の info: judged 行は対象ごとの行より前』。artifact root is not readable は commands の hang-detector.sh で『走査の途中の実行エラー(6。他の対象の判定・通知は続ける)』に入っているが、order に出てこない"
+    suggested_fix: "ui-design.md の順を『印の不正の error 行 → alert 行(または --verbose の info: alert skipped 行)→ 保存失敗の error 行』に揃える。契約 order に artifact root is not readable の位置(例: 走査の warn 行と同じく対象ごとの行より前)を足す"
+  - id: R-006
+    viewpoint: 5
+    severity: minor
+    target: "実行監視業務/background 実行監視フロー/ハング疑い・実行エラー・比較異常を通知する/spec.md"
+    claim: "Scenario『off で通知済みの印が不正・読めない対象は error 行を出して監視中として判定し印を書き直す(SPEC-008-07)』は、20260830T114000-JOB002-5e6f7a8b の blue が正常終了していること(exitcode.txt=0)を Given に書かず、Then の括弧書き『(blue は正常終了)』でだけ示している。前提が Then にあるため、テスト化するときに Given を推測で補う必要がある(blue の execution-spec.json・started-at.txt も Given に無い)"
+    evidence: "Given は『...JOB002-5e6f7a8b.blue は hang-detector.sh のプロセスユーザーが読めない(置き場のディレクトリには書き込める)』だけ。Then に『20260830T114000-JOB002-5e6f7a8b.blue(blue は正常終了)の中身は「COMPLETED」+ LF に書き直され』。stderr の 3 行目(blue の印の不正のあと alert 行が無い)と COMPLETED への書き直しは、blue の判定が COMPLETED であることに依存する"
+    suggested_fix: "Given に『20260830T114000-JOB002-5e6f7a8b の blue は background で started-at.txt が 2026-08-30T11:40:05Z、blue/exitcode.txt の中身が 0 である』を足し、Then の括弧書きを外す"
+  - id: R-007
+    viewpoint: 5
+    severity: minor
+    target: "実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/tier-ops.md"
+    claim: "tier BDD『管理 DB に接続できない回は成果物を走査しない』の Then『facade/ 配下のファイルは読まれない(execution-spec.json・started-at.txt の読み取りが記録されない)』は、何で読み取りを記録するかが決まっておらず、そのままでは検証できない"
+    evidence: "同シナリオの観測点は stderr 1 行・stdout 0 行・終了コード 6 で足りている。読み取りの記録の手段(テストのフック・ファイルの権限・実行ログ等)は spec にも test-strategy への参照にも無い"
+    suggested_fix: "観測できる結果に置き換える。例: Given で facade/ 配下に execution-spec.json が無い run を置き、Then で『「warn: execution-spec missing」で始まる行が出ない』と確かめる(spec.md の BDD と同じ方法)。または実行ログに「INFO judged」行が残らないことで確かめる"
+resolved:
+  - id: R-001
+    resolution: "fixed: 契約 notified_mark.write_rule に、確定名が通常のファイルでないときは中へ移さず(mv -T 相当)notified mark save failed(6)とし .tmp を残さない規則を加え、通知 UC tier-ops の印の表と tier BDD(ディレクトリの印で HANG_SUSPECTED → invalid / alert / save failed の 3 行)を加えた"
+  - id: R-002
+    resolution: "fixed: 契約 notified_mark に unjudged_targets(判定しない対象の印は読まない)と directory_unreadable(置き場を読めない回は error: notified mark dir is not readable 1 行で走査せず 6)を加え、commands の hang-detector.sh・判定 UC tier-ops / _api-summary・通知 UC tier-ops・出力規約に揃え、tier BDD 2 件を加えた"
+  - id: R-003
+    resolution: "fixed: 契約 deletion_order の 3 と削除 UC tier-ops の 2 つの表に、失敗しても同じ単位の残りのエントリの削除を続け、失敗したエントリごとに 1 行、1 つでも失敗したら管理 DB の行を消さないと書いた"
+  - id: R-004
+    resolution: "fixed: 判定 UC _api-summary.yaml に入力の守備範囲の違反は config_input_rules のとおり複数行の括弧書きを足した"
+  - id: R-005
+    resolution: "fixed: ui-design.md の 1 対象の中の順に info: alert skipped を加え、契約 hang_alert.order と出力規約に artifact root is not readable の位置(走査の最初。対象ごとの行より前)を足した"
+  - id: R-006
+    resolution: "fixed: Given に JOB002 blue の background・started-at.txt・exitcode.txt=0 を足し、Then の括弧書きを外した"
+  - id: R-007
+    resolution: "fixed: Then を warn: execution-spec missing / info: judged が出ないこと・実行ログに INFO judged が残らないことに置き換えた"

@@ -1,0 +1,133 @@
+round: 1
+findings:
+  - id: R-001
+    viewpoint: 4
+    severity: major
+    target: "クロスチェック業務/速報クロスチェックフロー/速報比較依頼を claim する/_api-summary.yaml, クロスチェック業務/確報クロスチェックフロー/確報比較依頼を claim する/_api-summary.yaml, クロスチェック業務/確報クロスチェックフロー/確報比較依頼を登録して終端状態まで待機する/_api-summary.yaml"
+    claim: "今回変更した 3 UC の _api-summary.yaml が更新されておらず、契約と tier md の終了コード 2 の条件・stderr 一覧と食い違っている"
+    evidence: |
+      - 速報 claim の _api-summary.yaml: stderr に `error: option required option=RAPID_COMPARE_COMMAND path: ...` と `error: invalid value key=RAPID_LEASE_SEC|RAPID_POLL_INTERVAL_SEC ... + hint: use a positive integer` が無い。code 2 の meaning は「rapid-crosscheck.env 不在・RAPID_DB_CONN_REF 欠落」のまま(契約 commands.rapid-crosscheck-worker.sh の exit_codes[2].condition と tier md は RAPID_COMPARE_COMMAND 欠落・空、整数キー不正、入力の守備範囲の違反を含む)
+      - 確報 claim の _api-summary.yaml: code 2 の meaning が「final-crosscheck.env 不在または必須キー欠落」のまま(契約は worker の必須キー FINAL_DB_CONN_REF / FINAL_COMPARE_COMMAND の欠落・空、FINAL_LEASE_MINUTES / FINAL_WORKER_POLL_INTERVAL_SEC の値不正)
+      - 確報 runner の _api-summary.yaml: code 2 の meaning が「final-crosscheck.env 不在または FINAL_DB_CONN_REF 欠落」で、FINAL_POLL_INTERVAL_SEC / FINAL_POLL_LIMIT_SEC の値不正が無い
+    suggested_fix: "3 ファイルの stderr と exit_codes[code=2].meaning を、契約 commands の該当コマンドの stderr / exit_codes と tier md の終了コード表に合わせて更新する(読み手ごとの必須キー、正の整数の検査、検査の順の参照先を含める)"
+
+  - id: R-002
+    viewpoint: 5
+    severity: major
+    target: "クロスチェック業務/速報クロスチェックフロー/速報比較依頼を claim する/tier-rapid-crosscheck.md, クロスチェック業務/速報クロスチェックフロー/速報比較依頼を claim する/spec.md"
+    claim: "既存の BDD「rapid-crosscheck.env の lease 期間と poll 間隔を使う(SPEC-005-06)」と「設定された lease 期間と poll 間隔で claim と poll が行われる(SPEC-005-06)」の設定ファイルに RAPID_COMPARE_COMMAND が無い。今回の変更で RAPID_COMPARE_COMMAND の欠落・空が起動時の必須キー検査(終了コード 2、管理 DB に接続しない)になったため、契約どおり実装すると両シナリオは終了コード 2 で失敗する"
+    evidence: |
+      - tier-rapid-crosscheck.md L133: `rapid-crosscheck.env に RAPID_DB_CONN_REF=relaygate-db, RAPID_LEASE_SEC=300, RAPID_POLL_INTERVAL_SEC=10 があり` → Then `終了コード 0`
+      - spec.md L173: `RAPID_DB_CONN_REF=relaygate-db`、`RAPID_LEASE_SEC=300`、`RAPID_POLL_INTERVAL_SEC=10` の行
+      - 新しい検査の順(tier md L35 / 契約 rapid-crosscheck-worker.sh stderr): 必須キー(RAPID_DB_CONN_REF → RAPID_COMPARE_COMMAND)の欠落・空 → 最初の違反で 2
+      - あわせて spec.md のシーケンス L57「RAPID_DB_CONN_REF を読む(不在・欠落は終了コード 2)」と条件表 L105「速報クロスチェック有効判定」も RAPID_DB_CONN_REF だけを書いており、RAPID_COMPARE_COMMAND の欠落・整数キー不正で 2 になることが spec.md から読めない
+    suggested_fix: "両シナリオの Given に RAPID_COMPARE_COMMAND の行(例 `/opt/compare/rapid.sh {job_id}`)を足す。spec.md のシーケンスと条件表の『不在・欠落は終了コード 2』を、必須キー 2 つの欠落・空と整数キーの値不正を含む表現(検査の順は tier md / 契約参照)に揃える。ほかの claim 系シナリオで Background 等に設定行が明示されていない場合は、有効な rapid-crosscheck.env を前提とする旨を書く"
+
+  - id: R-003
+    viewpoint: 4
+    severity: major
+    target: "_cross-cutting/api/cli-command-contract.yaml(config_files.final-crosscheck.env.keys FINAL_COMPARE_COMMAND), クロスチェック業務/確報クロスチェックフロー/確報比較依頼を claim する/tier-final-crosscheck.md"
+    claim: "spec-decision-030 は『キー表が FINAL_COMPARE_COMMAND を無条件に必須としていた』ことを穴として挙げたが、契約のキー表は `required: true` のまま残っている。readers(runner は検査しない)と矛盾し、キー表だけを読む実装者は runner でも必須検査を入れうる。また確報 worker の tier md の設定契約表には worker の必須キー FINAL_COMPARE_COMMAND の行が無い"
+    evidence: |
+      - 契約 L1514-1516: `name: "FINAL_COMPARE_COMMAND"` / `required: true`(無条件)
+      - 同 readers: runner は「FINAL_COMPARE_COMMAND … は読まず、欠落も値も検査しない」
+      - runner の tier md は `Yes(worker)` に変えたが、契約側は変えていない
+      - 確報 claim の tier-final-crosscheck.md 設定契約表: FINAL_LEASE_MINUTES / FINAL_WORKER_POLL_INTERVAL_SEC / FINAL_DB_CONN_REF の 3 行だけ(終了コード 2 の条件には FINAL_COMPARE_COMMAND の欠落・空がある)
+    suggested_fix: "契約のキー表の FINAL_COMPARE_COMMAND の required を『final-crosscheck-worker.sh と validate-config.sh --final-crosscheck で Yes(runner は検査しない)』のような読み手条件つきの表現にする(rapid-crosscheck.env の required が条件文字列であるのと同じ形)。確報 claim の tier md の設定契約表に FINAL_COMPARE_COMMAND(必須 Yes。欠落・空は `error: option required option=FINAL_COMPARE_COMMAND path: ...` で 2)の行を足す"
+
+  - id: R-004
+    viewpoint: 4
+    severity: major
+    target: "_cross-cutting/api/cli-command-contract.yaml(commands.rapid-crosscheck-worker.sh.stderr, config_files.final-crosscheck.env.note), クロスチェック業務/速報クロスチェックフロー/速報比較依頼を claim する/tier-rapid-crosscheck.md"
+    claim: "起動時の検査の順の『最初の違反の error 行(と hint)だけを出す』が、config_input_rules.env_files の (i)(ii) の出力規則(その段の違反を全件出す。validate-config.sh と同じ順・同じ件数)と衝突して読める。(i)(ii) に該当する違反が複数あるとき、1 行だけ出すのか全件出すのかを実装者が決められない"
+    evidence: |
+      - 契約 rapid-crosscheck-worker.sh stderr: 「検査の順は … → config_input_rules.env_files の (i)(ii) → 必須キー … の値で、最初の違反の error 行(と hint)だけを出す」
+      - config_files.final-crosscheck.env note: 「… (i)(ii) → … とし、最初の違反の error 行(と hint)だけを出して終了コード 2 で終える」
+      - config_input_rules.env_files: (i) はファイル内の全件を行番号の昇順、(ii) は invalid line 全件 → duplicate key 全件。「実行時の読み手 … は (i) と (ii) の error 行(と (i) の hint)を validate-config.sh と同じ順・同じ件数で … 出す」
+      - conventions.output_format.stderr も入力の守備範囲の違反を「該当行ごとに 1 行」の例外としている
+    suggested_fix: "『(i)(ii) で違反があれば env_files のとおりその段の error 行を全件出して止める。(iii) 以降(必須キー → 任意キーの値)は最初の違反の error 行(と hint)1 件だけを出して止める』と段ごとに書き分ける。契約 2 か所と速報 claim の tier md L35 を同じ文にする"
+
+  - id: R-005
+    viewpoint: 5
+    severity: major
+    target: "クロスチェック業務/確報クロスチェックフロー/確報比較依頼を登録して終端状態まで待機する/tier-final-crosscheck.md, クロスチェック業務/確報クロスチェックフロー/確報比較依頼を claim する/tier-final-crosscheck.md"
+    claim: "確報 runner / worker の tier md に、起動時の検査の順と、今回足した error 行(正の整数の違反、worker の FINAL_COMPARE_COMMAND 欠落)の出力一覧が無く、BDD も無い。特に決定の中心である『runner は自分の置き場の FINAL_COMPARE_COMMAND が無くても止まらない』『確報の整数キー不正は該当する読み手だけが 2 で止まる』を検証するシナリオが無い"
+    evidence: |
+      - runner の tier md「エラーメッセージ」(L48-52): config file not found / option required FINAL_DB_CONN_REF / query failed / polling limit exceeded だけで、`error: invalid value key=FINAL_POLL_INTERVAL_SEC|FINAL_POLL_LIMIT_SEC ... + hint: use a positive integer` が無い。検査の順の記述も無い(速報 claim の tier md L35 には有る)
+      - worker の tier md「出力契約」stderr は `error: ...`(+ `hint:`)のみで、option required FINAL_COMPARE_COMMAND / invalid value 行と検査の順が無い
+      - 両 tier md の BDD は既存シナリオのみ(速報 claim には 2 件追加したが確報には追加なし)
+      - spec-decision-030 consequences.positive: 「runner の置き場の FINAL_COMPARE_COMMAND の有無で runner が止まらないことも決まる」
+    suggested_fix: "両 tier md に、契約 config_files.final-crosscheck.env note の検査の順を参照する 1 行と、今回足した error 行を出力一覧に追記する。BDD を足す: runner — final-crosscheck.env に FINAL_COMPARE_COMMAND が無く FINAL_LEASE_MINUTES=abc があっても設定エラーにならず依頼を登録する / FINAL_POLL_LIMIT_SEC=0 で `error: invalid value key=FINAL_POLL_LIMIT_SEC value=0 path: ...` + hint の 2 行だけ・終了コード 2・管理 DB に接続しない。worker — FINAL_COMPARE_COMMAND が無いと `error: option required option=FINAL_COMPARE_COMMAND path: ...` で 2 / FINAL_LEASE_MINUTES=0 で invalid value + hint で 2 / FINAL_POLL_LIMIT_SEC=abc は検査しない"
+
+  - id: R-006
+    viewpoint: 4
+    severity: minor
+    target: "_cross-cutting/api/cli-command-contract.yaml(commands.rapid-crosscheck-worker.sh / final-crosscheck-runner.sh / final-crosscheck-worker.sh の stderr)"
+    claim: "検査の順の第 1 段を『ファイルの存在・読み取り』としたが、3 コマンドの stderr 一覧に読み取れないときの文言が無い。hang-detector.sh / housekeep.sh / validate-config.sh は `error: config file is not readable path: ...`(2)を持つ"
+    evidence: "契約 L689 / L808 / L1233 には `error: config file is not readable path: ...` があるが、L528 / L609 / L648 の stderr には `config file not found` しか無い"
+    suggested_fix: "3 コマンドの stderr と tier md に `error: config file is not readable path: ...`(2)を足すか、読み取り不可を not found と同じ文言で扱うことを明記する"
+
+  - id: R-007
+    viewpoint: 4
+    severity: minor
+    target: "_cross-cutting/api/cli-command-contract.yaml(config_files.rapid-crosscheck.env / final-crosscheck.env)"
+    claim: "config_input_rules.env_files の (iii) は『キーごとの検査と未知キーの warn』を含むが、今回の起動時の検査の順には未知キーの warn の扱い(出すか、どの位置か)が無い。rapid-crosscheck.env / final-crosscheck.env の契約にも未知キーの規則が無く、読み手が未知キーで warn を出すかを決められない"
+    evidence: "env_files (iii): 『各設定ファイルの契約のキーごとの検査 … と未知キーの warn』。feature-flag.env / hang-detector.env は `warn: unknown key key=<KEY> path: ...` を定義済み。rapid / final の config_files と新しい検査の順には記述なし"
+    suggested_fix: "rapid-crosscheck.env / final-crosscheck.env で未知キーを warn するか黙って無視するかを決めて config_files に書く(他の読み手のキー、例えば runner から見た FINAL_LEASE_MINUTES は未知キーではないことも明記する)"
+
+  - id: R-008
+    viewpoint: 4
+    severity: minor
+    target: "_cross-cutting/ux-ui/ui-design.md"
+    claim: "全コマンド共通の定型文の節に、正の整数の値違反 `error: invalid value key=<KEY> value=... path: ...` + `hint: use a positive integer` が無い。既存の enum 外の定型文は `path:` を持たない形のため、同じ `invalid value` で path の有無が異なる 2 系統が出力規約から読めない"
+    evidence: "ui-design.md L191-200 の定型文: enum 外は `error: invalid value key=<KEY> value=...`(path なし)。`positive integer` は ui-design.md に出現しない(hang-detector / housekeep / 今回の 6 キーで使用)"
+    suggested_fix: "ui-design.md の設定ファイルの定型文に、正の整数のキーの値違反の文言と hint を足し、enum 外(feature flag)との path の有無の違いを書く"
+
+  - id: R-009
+    viewpoint: 4
+    severity: minor
+    target: "クロスチェック業務/確報クロスチェックフロー/確報比較依頼を登録して終端状態まで待機する/spec.md, クロスチェック業務/確報クロスチェックフロー/確報クロスチェック結果を確認する/tier-final-crosscheck.md"
+    claim: "runner の終了コード 2 の条件を書いている他の箇所が古いまま残っている"
+    evidence: |
+      - 確報 runner の spec.md シーケンス L70: `alt final-crosscheck.env 不在 / FINAL_DB_CONN_REF 欠落` だけで、整数キー不正・入力の守備範囲の違反の分岐が無い
+      - 確報クロスチェック結果を確認する tier md L32: 「final-crosscheck.env 不在・必須キー欠落(中継に至る前)」。runner の必須キーが FINAL_DB_CONN_REF だけになったことが読めず、FINAL_COMPARE_COMMAND 欠落でも 2 と読める
+    suggested_fix: "シーケンスの alt を『設定検証 NG(不在・読み取り不可・入力の守備範囲・FINAL_DB_CONN_REF 欠落・空・FINAL_POLL_* の値不正)』に、結果確認 UC の表を『final-crosscheck.env 不在・FINAL_DB_CONN_REF の欠落・空・FINAL_POLL_* の値不正』に揃える"
+
+  - id: R-010
+    viewpoint: 5
+    severity: minor
+    target: "クロスチェック業務/速報クロスチェックフロー/速報比較依頼を claim する/tier-rapid-crosscheck.md(Scenario: 任意キーを省き、空白と引用符を含む設定を受理する)"
+    claim: "Then の『lease_until は claim 時刻 + 600 秒になる』は claim 時刻が観測できず検証値が決まらない。同じ tier md の他シナリオは RELAY_GATE_NOW と TZ を固定して絶対値で検証している。また --once は claim 後に比較実行まで進むが、比較ツール /opt/compare/rapid.sh の存在・結果が Given に無く、stderr に比較起動失敗の error 行が出うるため『設定エラーは出ず』の判定範囲があいまい"
+    evidence: "L162-165。対比: L133-135 は RELAY_GATE_NOW=2026-08-30T11:45:40Z(TZ=UTC 前提)で lease_until=2026-08-30T11:50:40 を検証"
+    suggested_fix: "Given に RELAY_GATE_NOW と TZ=UTC を足し、Then を lease_until の絶対値にする。比較ツールは 0 を返すスタブを指すことを Given に書くか、Then を『stderr に option required / invalid value / invalid line / duplicate key の行が無い』のように検証対象を限定する"
+resolved:
+  - id: R-001
+    resolution: "fixed: 3 UC の _api-summary.yaml の stderr と終了コード 2 の meaning を契約・tier md に揃えた"
+    by: "generator"
+  - id: R-002
+    resolution: "fixed: 既存 BDD 2 件に RAPID_COMPARE_COMMAND(終了コード 0 のスタブ)を足し、spec.md のシーケンスと条件表を必須キー 2 つ・整数キー・読み取り不可・入力の守備範囲を含む表現にした。tier md の BDD 冒頭に、Given に書かない限り有効な設定がある前提を書いた"
+    by: "generator"
+  - id: R-003
+    resolution: "fixed: 契約の FINAL_COMPARE_COMMAND の required を読み手条件つきにし、確報 claim の tier md の設定契約表に FINAL_COMPARE_COMMAND 行(と runner だけが使うキーの行)を足した"
+    by: "generator"
+  - id: R-004
+    resolution: "fixed: 検査の順を段ごとに書き分けた((2) 入力の守備範囲は env_files どおりその段を全件、(1)(3)(4) は最初の 1 件)。契約 2 か所(rapid / final の note)を同じ文にし、rapid worker の stderr は note を参照する形にした。3 つの tier md も揃えた"
+    by: "generator"
+  - id: R-005
+    resolution: "fixed: runner / worker の tier md に検査の順と追加した error 行を書き、BDD を runner 2 件・worker 2 件足した"
+    by: "generator"
+  - id: R-006
+    resolution: "fixed: 3 コマンドの stderr と tier md に error: config file is not readable path: ...(2)を足した"
+    by: "generator"
+  - id: R-007
+    resolution: "fixed: rapid / final の未知キーは検査せず warn も出さない、他の読み手のキーは未知キーではないと契約の note と spec-decision-030 に書いた(確認推奨項目として返す)"
+    by: "generator"
+  - id: R-008
+    resolution: "fixed: ui-design.md に正の整数のキーの値違反の定型文と hint、読み取り不可の定型文を足し、enum 外(path なし)との違いを書いた"
+    by: "generator"
+  - id: R-009
+    resolution: "fixed: 確報 runner の spec.md の alt と、確報クロスチェック結果を確認する tier md の表を揃えた"
+    by: "generator"
+  - id: R-010
+    resolution: "fixed: Given に RELAY_GATE_NOW / TZ=UTC と終了コード 0 のスタブを足し、Then を lease_until の絶対値と、設定エラーの行が無いことの検証に限定した"
+    by: "generator"

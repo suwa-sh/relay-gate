@@ -1,0 +1,31 @@
+uc: "クロスチェックのジョブマップと比較定義を定義する"
+business: "適用構成業務"
+buc: "適用構成定義フロー"
+bounded_context_id: "BC-005"
+aggregate_id: "AG-005"
+
+models:
+  - name: "ValidateRapidCrosscheckArgs"
+    tier: "tier-facade"
+    layer: "presentation"
+    type: "request"
+    rdra_info: "速報クロスチェック設定"
+  - name: "ValidateRapidCrosscheckCommand"
+    tier: "tier-facade"
+    layer: "usecase"
+    type: "query"
+    rdra_info: "速報クロスチェック設定"
+  - name: "LaunchCommandRules"
+    tier: "tier-facade"
+    layer: "domain"
+    type: "value-object"
+    rdra_info: "比較定義"
+  - name: "RapidCrosscheckEnvRecord"
+    tier: "tier-facade"
+    layer: "repository"
+    type: "record"
+    rdra_info: "速報クロスチェック設定"
+
+tables: []
+kvs: []
+object_storage: []

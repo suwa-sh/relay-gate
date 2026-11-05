@@ -1,0 +1,21 @@
+feedback request lineage (requirements stage)
+
+feedback_request_id: 20261101_mail_removal_housekeeping
+input_sha256: 7be2e54314163ff4cae802f01005fe771da312621c06ff123a43b09f562afb11
+stage_packet: docs/pipeline/feedback-runs/20261101_mail_removal_housekeeping/stage-packets/requirements.md
+request_ids: CR-e4ea8aaa-001, CR-e4ea8aaa-002
+direct_work_unit_ids: CR-e4ea8aaa-001#1, CR-e4ea8aaa-002#1
+causal_work_unit_ids: CR-e4ea8aaa-001#1, CR-e4ea8aaa-002#1
+
+work unit → USDM / RDRA 反映先(CR 本文は packet を正本とし、ここには複製しない)
+
+- CR-e4ea8aaa-001#1 (mail-removal-job-exit-notification): メール送信をやめ、ハング検知の異常をハング検知ジョブ自身の終了結果(異常なし 0 / 注意は警告終了 / 異常は失敗)と標準エラーの 1 件 1 行で知らせる。
+  - USDM: REQ-008 の要求・理由、SPEC-008-03(通知手段・受け入れ基準 3)、SPEC-008-06(メール 3 項目の削除)、SPEC-008-07 新設(終了コードと標準エラー、通知済みの再通知抑止、RAPID_CROSSCHECK_MODE=off の通知済みの印、保存失敗時は次回も知らせる)。REQ-012 の要求・理由と SPEC-012-01(提示は CLI の標準出力・標準エラー・終了コードだけ)。
+  - RDRA: 外部システム「メール通知」・情報「通知メール」・条件「CLI とメールによる提示」を削除、条件「CLI による提示」を追加。UC「background 異常の通知メールを受け取る」を「ハング検知ジョブの異常終了を確認する」へ置き換え。情報 ハング検知定期ジョブ設定・監視記録、状態 監視状態、条件 通知レベルの判定・設定所有区分、バリエーション 通知レベル・設定所有区分、アクター 運用者、外部システム ジョブスケジューラ、システム概要を変更。
+  - 終了コードの具体値、印の置き場所とファイル名は仕様(CLI 契約)で確定する。
+- CR-e4ea8aaa-002#1 (housekeeping-retention-deletion): 保持日数(既定 90 日)を過ぎた終了済みの実行の成果物・管理 DB の行・通知済みの印と、終端した確報比較依頼を削除するハウスキープ(1 日 1 回の定期ジョブ)を新設する。
+  - USDM: REQ-014 新設(SPEC-014-01〜07: 起動と保持日数の設定、削除の単位、終端の判定、経過日数の基準、削除順序と途中失敗からの回復、出力、ハウスキープ専用 DB ロール)。
+  - RDRA: 業務「ハウスキープ業務」/ BUC「ハウスキープフロー」(UC 2 件)、情報「ハウスキープ設定」、条件「ハウスキープの削除判定」「ハウスキープの削除順序と回復」を追加。バリエーション ジョブスケジューラ起動ジョブ種別・設定所有区分、アクター 運用者・基盤適用設計者、外部システム ジョブスケジューラ、システム概要を変更。
+  - 設定のファイル名・キー名・終了コード・接続する管理 DB・削除待ちの置き場・専用 DB ロール名は仕様(CLI 契約・設定契約)で確定する。
+
+方針資料との照合: tmp/RelayGateのしくみ.md(housekeep.sh 節、ハング検知とbackground側リラン節の通知の記述)と tmp/RelayGateの利用イメージ.md(background 実行の運用 › 監視・ハウスキープ)に一致する。

@@ -1,0 +1,39 @@
+uc: "background 実行の経過時間と終了状態を判定する"
+business: "実行監視業務"
+buc: "background 実行監視フロー"
+paths: []
+x_cli_commands:
+  - name: "hang-detector.sh"
+    tier: "tier-ops"
+    role: "defines"
+    synopsis: "hang-detector.sh [--verbose] [--help]"
+    invoked_by: "ジョブスケジューラ(ハング検知定期ジョブ、5 分ごと)"
+    args: []
+    options:
+      - name: "--verbose"
+        type: "boolean"
+        required: false
+        description: "対象ごとの info: judged ... を stderr にも出す"
+      - name: "--help"
+        type: "boolean"
+        required: false
+        description: "usage を stdout に出して終了コード 0"
+    stdin: "なし"
+    stdout: "出力しない(0 行)。判定結果は実行ログ hang-detector.sh.log にのみ残す"
+    stderr: "alert: level=<warning|error> kind=<hang-suspected|background-exec-error|rapid-crosscheck-error> run_id=<run_id> role=<blue|green|rapid-crosscheck> job_id=<job_id> elapsed_minutes=<n>(その回に新たに知らせる異常 1 件につき 1 行。run_id 昇順 → role 順。出す条件は UC「ハング疑い・実行エラー・比較異常を通知する」)/ error: unknown option option=...(2)/ error: unexpected argument value=...(2)/ error: config file not found path: ...(2)/ error: option required option=HANG_DB_CONN_REF path: ...(2)/ error: config file is not readable path: ...(2。feature-flag.env が読めない)/ error: artifact root not found path: ...(2)/ error: management db connection failed conn_ref=...(6)/ error: management db query failed ...(6)/ error: artifact root is not readable path: ...(6)/ error: monitor record save failed run_id=... role=...(6)/ error: notified mark save failed run_id=... role=... path: ...(6)/ warn: execution-spec missing run_id=... path: ...(当該 run は判定対象外で継続)/ warn: started-at is invalid run_id=... role=... value=...(当該 role は判定せず継続)/ warn: execution-spec invalid run_id=... key=...(当該 role は判定せず継続)。--verbose 時は info: judged run_id=... role=... judgement=NOT_TARGET|COMPLETED|EXEC_ERROR|MONITORING|HANG_SUSPECTED|COMPARE_ERROR elapsed_minutes=... limit_minutes=...(hang_judgement 6 値)"
+    exit_codes:
+      - code: 0
+        meaning: "その回の見回りで新たに知らせる異常が無く、走査・判定・記録がすべて成功した(通知済みの異常が続いていても 0)"
+      - code: 3
+        meaning: "新たに知らせる異常がハング疑い(warning)だけ。確報の比較 NG と同じく、ジョブステータスが警告終了になる値"
+      - code: 6
+        meaning: "background 実行エラーまたは速報クロスチェック異常(error)を新たに 1 件以上知らせた。または自身の実行エラー(RAPID_CROSSCHECK_MODE が off 以外で管理 DB 接続・SELECT 失敗、成果物ルート読み取り失敗、監視記録の保存失敗、通知済みの印の保存失敗)。走査した場合の優先順位は 6 > 3 > 0"
+      - code: 2
+        meaning: "走査前の入力・設定エラー(未知のオプション・余分な引数、hang-detector.env 不在、RAPID_CROSSCHECK_MODE が off 以外で HANG_DB_CONN_REF 欠落、feature flag 設定が読めない、RELAY_GATE_ARTIFACT_ROOT が無い)。走査しない"
+async_events:
+  - name: "rapid-crosscheck-requests"
+    channel: "rapid-crosscheck-requests"
+    direction: "subscribe"
+    message: "RapidCrosscheckRequestMessage"
+    summary: "RAPID_CROSSCHECK_MODE が off 以外(foreground / background)のとき未終端・未判定の速報比較依頼(未終端の監視記録がある ABORTED を含む)を SELECT して異常判定する(状態は変更しない。参照のみ)。slot 実行の状態は成果物ファイル(exitcode.txt / aborted.txt)から導出し slot_executions は読まない"
+schemas: []

@@ -34,8 +34,8 @@
 
 | 含まれないもの | 確認手段 |
 |---|---|
-| background slot の stdout / stderr / 終了コード | `facade/<run_id>/<bg_role>/` の 3 ファイル、hang-detector の error メール(`background-exec-error`) |
-| 速報クロスチェックの状態・比較結果・exitcode | `rapid-crosscheck-result.sh --run-id <run_id>`、hang-detector の error メール(`rapid-crosscheck-error`) |
+| background slot の stdout / stderr / 終了コード | `facade/<run_id>/<bg_role>/` の 3 ファイル、ハング検知ジョブの終了コード 6 と alert 行(`kind=background-exec-error`) |
+| 速報クロスチェックの状態・比較結果・exitcode | `rapid-crosscheck-result.sh --run-id <run_id>`、ハング検知ジョブの終了コード 6 と alert 行(`kind=rapid-crosscheck-error`) |
 | run_id | 実行ログ `facade.sh.log`(JOB_ID と起動時刻で検索)。応答には出さない(無加工中継のため) |
 | 並行稼働実行の状態(STARTED / RUNNING / COMPLETED / ABORTED) | relay-gate 内部のジョブキュー兼管理 DB `parallel_runs`(RAPID_CROSSCHECK_MODE が off 以外のとき)、`run-lineage.sh --run-id` |
 | relay-gate の info / warn | 実行ログ |

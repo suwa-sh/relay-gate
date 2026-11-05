@@ -1,0 +1,7 @@
+feedback request 20261105_external_review_round2(確報クロスチェックの設定ファイルを、置き場ごとに必要な中身だけ配る)に基づくインフラ設計の差分更新。上流 latest は変更なし(trigger_event: infra:20261104_101000_feedback_rapid_env_deploy_check)。config ロールの final-crosscheck.env の配置を segment ごとの 2 タスクに分け、実行ホストセグメントには files/final-crosscheck-runner.env(FINAL_DB_CONN_REF と runner の任意キー。FINAL_COMPARE_COMMAND は配らない)を、DB セグメントには files/final-crosscheck-worker.env(FINAL_DB_CONN_REF・FINAL_COMPARE_COMMAND と worker の任意キー)を配置する。配置先はどちらも /etc/relay-gate/final-crosscheck.env。CLI 契約(各読み手は自分のホストのファイルだけを読み、比較ツール起動コマンドは worker 側のファイルだけが持つ。2026-11-04 利用者決定)に揃え、MCL 出力・適合性 notes・MCL 入力・inventory 例・README・ターゲットアーキテクチャ図の該当記述を置き場ごとに書き分けた(差分更新。MCL 全面再実行なし)。
+- feedback_request_id: 20261105_external_review_round2
+- input_sha256: 1f98f4040fb856f2d726e8061e59220048989d38fa4f3bbebf6bd54c6aa45eed
+- request_ids: CR-e3b7a915-002
+- direct_work_unit_ids: CR-e3b7a915-002#1
+- causal_work_unit_ids: CR-e3b7a915-002#1
+- packet: docs/pipeline/feedback-runs/20261105_external_review_round2/stage-packets/infrastructure.md

@@ -6,8 +6,8 @@ info:
   description: |-
     relay-gate の非同期連携を契約化する(_inference.md 採用値 #4)。
     メッセージブローカーは無く、実体は (1) relay-gate 内部のジョブキュー兼管理 DB(RDB)の依頼テーブルを poll / claim / lease で回す RDB ジョブキュー、
-    (2) slot runner から速報クロスチェック runner(feature flag の RAPID_CROSSCHECK_RUNNER で解決する実体)への同期プロセス起動による完了通知、
-    (3) hang-detector から OS メールコマンドで送る通知メール、の 3 種である。
+    (2) slot runner から速報クロスチェック runner(feature flag の RAPID_CROSSCHECK_RUNNER で解決する実体)への同期プロセス起動による完了通知、の 2 種である。
+    ハング検知の通知は hang-detector.sh 自身の終了コードと標準エラーの alert 行(CLI の出力)で行い、非同期メッセージとしては扱わない(cli-command-contract.yaml shared_rules.hang_alert)。
     CLI コマンド契約は cli-command-contract.yaml を正本とする。エアーギャップ環境のため外部 SaaS・ネットワークブローカーは使わない。
   contact:
     name: "relay-gate"
@@ -23,11 +23,6 @@ servers:
     host: "localhost"
     protocol: "process"
     description: "同一ホスト上の同期プロセス起動(slot runner → RAPID_CROSSCHECK_RUNNER <role>-completed。実体パスは facade / background-rerun が環境変数 RAPID_CROSSCHECK_RUNNER で runner へ渡す)。RAPID_CROSSCHECK_MODE が off 以外(foreground / background)のときのみ"
-  mail:
-    host: "placeholder"
-    protocol: "smtp"
-    description: "OS 標準のメール送信コマンド(ハング検知定期ジョブ設定 hang-detector.env の ALERT_MAIL_CMD。mail / mailx / sendmail)経由。宛先は ALERT_MAIL_TO、件名プレフィックスは ALERT_SUBJECT_PREFIX(既定 [relay-gate])"
-
 channels:
   slot-completed:
     address: "rapid-crosscheck-runner.sh {role}-completed"
@@ -88,26 +83,6 @@ channels:
     messages:
       FinalCrosscheckRequestMessage:
         $ref: "#/components/messages/FinalCrosscheckRequestMessage"
-  hang-alert-mail:
-    address: "{ALERT_MAIL_TO}"
-    title: "ハング検知通知メール"
-    summary: "hang-detector.sh が warning / error の通知メールを運用者へ送る。同じ run_id + role + kind は 1 回だけ"
-    description: |-
-      件名: {ALERT_SUBJECT_PREFIX}[{level}] {kind} run_id={run_id} job_id={job_id} role={role}(ALERT_SUBJECT_PREFIX は hang-detector.env の件名プレフィックス。既定 [relay-gate])
-      本文: text/plain; charset=UTF-8、1 行 1 事実(key=value / key: value)。80 桁制限は 1〜13 行目のみ(11 行目 artifact_dir は例外。折り返さない)。行順 1〜12 は
-      kind / level / run_id / job_id / role / started_at / elapsed_minutes / hang_detect_limit_minutes / exit_code / request_status / artifact_dir / detected_at。
-      13 行目は空行、14 行目は recommended_action(英語の定型文。折り返さず 1 行、80 桁超可)。15 行目以降なし。HTML・添付なし。
-      冪等性: monitor_records の monitor_status(6 値: NOT_MONITORED / MONITORING / HANG_SUSPECTED_NOTIFIED / EXEC_ERROR_NOTIFIED / COMPARE_ERROR_NOTIFIED / COMPLETED)の遷移有無で判定し 1 回だけ送る(alerted_at は送信成功の記録)。送信失敗時は alerted_at を更新せず終了コード 6(次回の定期実行で再送)。
-      hang_judgement が COMPLETED(exitcode.txt が 0、または aborted.txt / ABORTED による中止済み)の対象は通知せず監視記録を終端する。
-    servers:
-      - $ref: "#/servers/mail"
-    parameters:
-      ALERT_MAIL_TO:
-        description: "ハング検知定期ジョブ設定(hang-detector.env)の宛先 ALERT_MAIL_TO(カンマ区切り可)"
-    messages:
-      HangAlertMail:
-        $ref: "#/components/messages/HangAlertMail"
-
 operations:
   # slot-completed
   execute_impl_and_publish_runner_result_send:
@@ -219,32 +194,6 @@ operations:
     messages:
       - $ref: "#/channels/final-crosscheck-requests/messages/FinalCrosscheckRequestMessage"
 
-  # hang-alert-mail
-  notify_hang_exec_error_compare_error_send:
-    action: "send"
-    channel:
-      $ref: "#/channels/hang-alert-mail"
-    summary: "UC: ハング疑い・実行エラー・比較異常を通知する(tier-ops hang-detector)"
-    description: "hang-suspected(warning)/ background-exec-error(error)/ rapid-crosscheck-error(error)を OS メール送信コマンドで運用者へ送る。同じ run_id + role + kind は 1 回だけ"
-    messages:
-      - $ref: "#/channels/hang-alert-mail/messages/HangAlertMail"
-  receive_background_alert_mail_receive:
-    action: "receive"
-    channel:
-      $ref: "#/channels/hang-alert-mail"
-    summary: "UC: background 異常の通知メールを受け取る(運用者)"
-    description: "件名の level / kind / run_id と本文の recommended_action で静観 / 中止(abort-*)/ リラン(background-rerun.sh)/ 原因調査(rapid-crosscheck-result.sh)を判断する"
-    messages:
-      - $ref: "#/channels/hang-alert-mail/messages/HangAlertMail"
-  run_business_job_in_switched_mode_receive:
-    action: "receive"
-    channel:
-      $ref: "#/channels/hang-alert-mail"
-    summary: "UC: 切り替えた運用モードで業務ジョブを実行する(運用者)"
-    description: "並行稼働系の運用モードで background slot / 速報の異常メールを受け取る(publish 側は tier-ops の hang-detector)"
-    messages:
-      - $ref: "#/channels/hang-alert-mail/messages/HangAlertMail"
-
 components:
   messages:
     SlotCompletedNotice:
@@ -300,39 +249,11 @@ components:
             final_crosscheck_id: "20260830T210000-final-7b2c9e1f"
             status: "REQUESTED"
             requested_at: "2026-08-30T21:00:00"
-    HangAlertMail:
-      name: "HangAlertMail"
-      title: "ハング検知通知メール"
-      summary: "hang-detector.sh が送る warning / error メール(件名 + 本文 12 キー + recommended_action)"
-      contentType: "text/plain; charset=UTF-8"
-      headers:
-        $ref: "#/components/schemas/EventHeaders"
-      payload:
-        $ref: "#/components/schemas/HangAlertMail"
-      examples:
-        - name: "hang-suspected"
-          summary: "green slot のハング疑い(warning)"
-          payload:
-            subject: "[relay-gate][warning] hang-suspected run_id=20260830T113000-JOB001-3f9a1c2e job_id=JOB001 role=green"
-            kind: "hang-suspected"
-            level: "warning"
-            run_id: "20260830T113000-JOB001-3f9a1c2e"
-            job_id: "JOB001"
-            role: "green"
-            started_at: "2026-08-30T11:30:05"
-            elapsed_minutes: 74
-            hang_detect_limit_minutes: 60
-            exit_code: "-"
-            request_status: "-"
-            artifact_dir: "/var/relay-gate/facade/20260830T113000-JOB001-3f9a1c2e/green"
-            detected_at: "2026-08-30T12:45:00"
-            recommended_action: "check the process on the execution host; if it is still running normally, wait. if it is hung, stop the process, then run: abort-green.sh --run-id 20260830T113000-JOB001-3f9a1c2e"
-
   schemas:
     EventHeaders:
       title: "共通ヘッダー"
       type: object
-      description: "全メッセージ共通の追跡情報(実体は CLI 引数 / DB 列 / メール件名に埋め込まれる)"
+      description: "全メッセージ共通の追跡情報(実体は CLI 引数 / DB 列に埋め込まれる)"
       required: [correlationId, timestamp, source]
       properties:
         correlationId:
@@ -356,7 +277,7 @@ components:
         eventType:
           type: string
           description: "イベント種別(チャネル名)"
-          enum: ["slot-completed", "rapid-crosscheck-requests", "final-crosscheck-requests", "hang-alert-mail"]
+          enum: ["slot-completed", "rapid-crosscheck-requests", "final-crosscheck-requests"]
         version:
           type: string
           description: "メッセージスキーマバージョン"
@@ -501,75 +422,3 @@ components:
         error_summary:
           type: string
           description: "起動失敗時の要約(例 launch failed)。比較ツール由来の失敗では null"
-
-    HangAlertMail:
-      title: "ハング検知通知メール"
-      type: object
-      description: "件名と本文 12 キー + recommended_action(_cross-cutting/ux-ui/ui-design.md 通知メール規約)。本文の値が無い行は `-`"
-      required:
-        - subject
-        - kind
-        - level
-        - run_id
-        - job_id
-        - role
-        - started_at
-        - elapsed_minutes
-        - hang_detect_limit_minutes
-        - exit_code
-        - request_status
-        - artifact_dir
-        - detected_at
-        - recommended_action
-      properties:
-        subject:
-          type: string
-          description: "件名。{ALERT_SUBJECT_PREFIX}[{level}] {kind} run_id={run_id} job_id={job_id} role={role}(プレフィックスは hang-detector.env の ALERT_SUBJECT_PREFIX。既定 [relay-gate])"
-        kind:
-          type: string
-          description: "通知種別(本文 1 行目。件名と同値)"
-          enum: ["hang-suspected", "background-exec-error", "rapid-crosscheck-error"]
-        level:
-          type: string
-          description: "通知レベル(本文 2 行目。hang-suspected は warning、他は error)"
-          enum: ["warning", "error"]
-        run_id:
-          type: string
-          description: "本文 3 行目。監視対象の run_id"
-        job_id:
-          type: string
-          description: "本文 4 行目"
-        role:
-          type: string
-          description: "本文 5 行目。監視対象 role"
-          enum: ["blue", "green", "rapid-crosscheck"]
-        started_at:
-          type: string
-          pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}$'
-          description: "本文 6 行目。started-at.txt(UTC 値をローカルへ変換して載せる)または依頼の started_at。ローカル ISO 8601、指示子なし"
-        elapsed_minutes:
-          type: integer
-          description: "本文 7 行目。判定時点の経過時間(分)"
-          minimum: 0
-        hang_detect_limit_minutes:
-          type: integer
-          description: "本文 8 行目。execution-spec.json の slots.<role>.hang_detect_limit_minutes。依頼は RAPID_HANG_DETECT_LIMIT_MINUTES"
-          minimum: 0
-        exit_code:
-          type: string
-          description: "本文 9 行目。整数または `-`(hang-suspected は `-`)"
-          pattern: "^([0-9]{1,3}|-)$"
-        request_status:
-          type: string
-          description: "本文 10 行目。依頼状態または `-`(rapid-crosscheck-error のみ値あり)"
-          enum: ["REQUESTED", "CLAIMED", "RUNNING", "SUCCEEDED", "FAILED", "ABORTED", "-"]
-        artifact_dir:
-          type: string
-          description: "本文 11 行目。成果物ディレクトリの絶対パス(`key: value` 形式)。80 桁制限の例外(パスが長くても折り返さない)"
-        detected_at:
-          type: string
-          pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}$'
-          description: "本文 12 行目。hang-detector の判定日時(ローカル時刻)。monitor_records では judged_at 列に保存する(canonical C2)"
-        recommended_action:
-          type: string
-          description: "本文 14 行目(1 行。折り返さず 80 桁超可。15 行目以降なし)。通知種別ごとの英語定型文(hang-suspected: abort-{role}.sh の案内 / background-exec-error: background-rerun.sh の案内 / rapid-crosscheck-error: rapid-crosscheck-result.sh の案内)"

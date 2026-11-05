@@ -1,14 +1,14 @@
 version: "1.0"
-event_id: "20261101_105000_feedback_impl_feedback_dcd8234d"
-created_at: "2026-11-01T10:50:00Z"
-source: "Spec 差分更新(design 無しモード。2026-11-01 の実装フィードバック)。CR-dcd8234d-010(spec 直接所有): CLI 契約の 2 か所(shared_rules.compare_command_argv.split と config_input_rules.env_files)の env 値の引用符の外し方を同じ規則で書いた(先頭の 1 文字が \" か ' なら外し、それとは別に末尾の 1 文字が \" か ' なら外す。種類の一致・対は求めない。例 \"abc\" → abc / \"abc → abc / abc' → abc / \"abc' → abc)。env_files は委譲をやめて規則そのものを書き、UC「feature flag を設定する」の tier-facade.md は契約へ参照させ仮採用を外した。実装は変えない。CR-dcd8234d-009(上流 USDM 更新済みの追従): 速報の起動コマンドの検証 3 点(コマンド部分 / {job_id} / {params} は引数 1 つ全体)に揃え、UC「クロスチェックのジョブマップと比較定義を定義する」の _api-summary.yaml の stderr と終了コード 2 の理由に {params} の位置違反を追加、spec.md / tier-facade.md / CLI 契約の「引数部分の内容は検査しない」を「{job_id} の有無と {params} の位置のほかは」に改め、受け入れ基準 10(引数部分の任意文字列)と 11(クロスチェックジョブマップ・対象カタログの検証種別は無い)の BDD を追加、基準 12({params} の位置違反)は既存 BDD で覆う。spec-event usdm / usdm-acceptance-matrix / uc-dependencies を追従。判断は decisions/spec-decision-019"
+event_id: "20261105_112000_feedback_single_management_db"
+created_at: "2026-11-05T11:20:00+09:00"
+source: "Spec 差分更新(design 無しモード。2026-11-05 の管理 DB を 1 つとする前提の明記)。CR-f4c8b261-001(infra 直接所有。spec は保守的 closure): インフラ設計が、管理 DB は 1 つで、すべての接続参照名(RAPID_DB_CONN_REF、実行ホストと DB セグメントそれぞれの FINAL_DB_CONN_REF、HANG_DB_CONN_REF、HOUSEKEEP_DB_CONN_REF(専用 DB ロール housekeep_del))が同じ 1 つの管理 DB に解決されることを前提として書いたことに追従した。CLI 契約の conventions.credentials に、単一の管理 DB の前提、条件は参照名の文字列ではなく解決先が同じこと(確報 runner が登録した依頼を確報 worker が同じキューから取得するため)、解決先が同じことは導入する側が確かめること、構築時の検査は設定ファイルの存在確認だけで relay-gate のコマンドも解決先を検査しないことを書いた。config_files の final-crosscheck.env の note と 4 つの参照名のキー説明、6 UC の tier md の設定キー表(ハウスキープ判定 UC はキー表の直下の説明)から参照した。新しい検査・error 文言・終了コード・BDD は足さない(spec-decision-032)"
 design_available: false
-previous_event_ref: "20261027_055000_feedback_impl_feedback_dcd8234d"
+previous_event_ref: "20261105_092000_feedback_external_review_round2"
 feedback_request:
-  feedback_request_id: "20261027_091000_impl_feedback_dcd8234d"
-  input_sha256: "37b8b54d7a4a8b1a978e389924c4b6e3ee9a1d276823a9d877f10fd01b866ca8"
-  request_ids: ["CR-dcd8234d-009","CR-dcd8234d-010"]
-  work_unit_ids: ["CR-dcd8234d-009#1","CR-dcd8234d-010#1"]
+  feedback_request_id: "20261105_single_management_db"
+  input_sha256: "97bb80ca208301540a11760f416c348f73ea0c1898d9535a80c5a8f013df194a"
+  request_ids: ["CR-f4c8b261-001"]
+  work_unit_ids: ["CR-f4c8b261-001#1"]
 
 use_cases:
   - business: "クロスチェック業務"
@@ -73,7 +73,7 @@ use_cases:
       - req_id: "REQ-006"
         spec_id: "SPEC-006-01"
         scenarios:
-          - "確報依頼を登録して SUCCEEDED まで待機する(SPEC-006-01)"
+          - "引数なしで確報依頼を登録して SUCCEEDED まで待機する(SPEC-006-01)"
       - req_id: "REQ-006"
         spec_id: "SPEC-006-04"
         scenarios:
@@ -81,7 +81,7 @@ use_cases:
       - req_id: "REQ-011"
         spec_id: "SPEC-011-03"
         scenarios:
-          - "確報依頼を登録して SUCCEEDED まで待機する(SPEC-006-01)"
+          - "確報依頼の列は識別子・状態・時刻・結果だけである(SPEC-011-03)"
   - business: "クロスチェック業務"
     buc: "確報クロスチェックフロー"
     uc: "比較ツールで日次全量比較を実行して結果を保存する"
@@ -282,29 +282,36 @@ use_cases:
           - "後に完了した側の通知で依頼が 1 件作成される(SPEC-005-02)"
   - business: "実行監視業務"
     buc: "background 実行監視フロー"
-    uc: "background 異常の通知メールを受け取る"
+    uc: "ハング検知ジョブの異常終了を確認する"
     files:
       - spec.md
       - tier-ops.md
     api_count: 0
-    async_event_count: 1
+    async_event_count: 0
     usdm:
       - req_id: "REQ-012"
         spec_id: "SPEC-012-01"
         scenarios:
-          - "warning メールを受け取って静観する(SPEC-012-01)"
+          - "スクリプトの結果を標準出力・標準エラー・終了コードで判定できる(SPEC-012-01)"
+          - "ジョブスケジューラで警告終了・失敗と warning・error の行から異常を判定できる(SPEC-012-01)"
+          - "設定ファイル一式に CLI の出力以外で知らせる設定項目は無い(SPEC-012-01)"
+      - req_id: "REQ-008"
+        spec_id: "SPEC-008-07"
+        scenarios:
+          - "ジョブスケジューラで警告終了・失敗と warning・error の行から異常を判定できる(SPEC-012-01)"
+          - "ハング疑いの警告終了を受け取って静観する(SPEC-008-04)"
       - req_id: "REQ-008"
         spec_id: "SPEC-008-04"
         scenarios:
-          - "warning メールを受け取って静観する(SPEC-012-01)"
+          - "ハング疑いの警告終了を受け取って静観する(SPEC-008-04)"
       - req_id: "REQ-008"
         spec_id: "SPEC-008-01"
         scenarios:
-          - "error メールを受け取ってリランする(SPEC-008-01)"
+          - "実行エラーの失敗を受け取ってリランする(SPEC-008-01)"
       - req_id: "REQ-008"
         spec_id: "SPEC-008-02"
         scenarios:
-          - "速報クロスチェック異常メールを受け取って原因調査する(SPEC-008-02)"
+          - "速報クロスチェック異常の失敗を受け取って原因調査する(SPEC-008-02)"
   - business: "実行監視業務"
     buc: "background 実行監視フロー"
     uc: "background 実行の経過時間と終了状態を判定する"
@@ -331,6 +338,7 @@ use_cases:
         scenarios:
           - "off では管理 DB なしで成果物だけを走査する(SPEC-008-03)"
           - "ハング疑い通知後に中止された slot 実行を終端する(SPEC-008-03)"
+          - "ハング疑い通知後の速報比較依頼も再判定する(SPEC-008-02)"
       - req_id: "REQ-010"
         spec_id: "SPEC-010-01"
         scenarios:
@@ -366,21 +374,22 @@ use_cases:
       - spec.md
       - tier-ops.md
     api_count: 0
-    async_event_count: 2
+    async_event_count: 0
     usdm:
       - req_id: "REQ-008"
         spec_id: "SPEC-008-01"
         scenarios:
-          - "ハング疑いを warning メールで通知する(SPEC-008-01)"
-          - "実行エラーを error メールで通知する(SPEC-008-01)"
+          - "ハング疑いだけなら対象ごとに warning の行を出して警告終了する(SPEC-008-07)"
+          - "実行エラーや比較異常を新たに見つけたら error の行を出して失敗で終わる(SPEC-008-07)"
       - req_id: "REQ-008"
         spec_id: "SPEC-008-02"
         scenarios:
-          - "速報比較依頼の FAILED を error メールで通知する(SPEC-008-02)"
+          - "速報比較依頼の FAILED を error の行で知らせる(SPEC-008-02)"
       - req_id: "REQ-008"
         spec_id: "SPEC-008-03"
         scenarios:
-          - "ハング疑い通知後の速報比較依頼の比較異常は別種別として 1 回送る(SPEC-008-03)"
+          - "ハング疑い通知後に比較異常になった速報比較依頼を error の行で知らせる(SPEC-008-03)"
+          - "off ではハング疑い通知後に正常終了した対象の印が COMPLETED になる(SPEC-008-03)"
       - req_id: "REQ-008"
         spec_id: "SPEC-008-04"
         scenarios:
@@ -388,11 +397,27 @@ use_cases:
       - req_id: "REQ-008"
         spec_id: "SPEC-008-06"
         scenarios:
-          - "ハング検知定期ジョブ設定の宛先と送信コマンドで送る(SPEC-008-06)"
+          - "ハング検知定期ジョブ設定は管理 DB 接続参照名と監視の調整値だけを持つ(SPEC-008-06)"
+      - req_id: "REQ-008"
+        spec_id: "SPEC-008-07"
+        scenarios:
+          - "新たな異常が無ければ終了コード 0 で alert 行を出さない(SPEC-008-07)"
+          - "ハング疑いだけなら対象ごとに warning の行を出して警告終了する(SPEC-008-07)"
+          - "実行エラーや比較異常を新たに見つけたら error の行を出して失敗で終わる(SPEC-008-07)"
+          - "ハング疑いと実行エラーを同じ回に見つけたら失敗で終わる(SPEC-008-07)"
+          - "alert 行に対象・段階・経過時間が含まれる(SPEC-008-07)"
+          - "管理 DB を使う設定では通知済みの異常を 2 回目に知らせない(SPEC-008-07)"
+          - "off では通知済みの異常を 2 回目に知らせない(SPEC-008-07)"
+          - "off では通知済みの印を残し Runner Result の契約ファイルを変えない(SPEC-008-07)"
+          - "監視記録の保存に失敗した異常は次の見回りで再び知らせる(SPEC-008-07)"
+          - "通知済みの印の保存に失敗した異常は次の見回りで再び知らせる(SPEC-008-07)"
+          - "管理 DB に接続できない回は通知済みの異常を再び知らせない(SPEC-008-07)"
+          - "off で通知済みの印が不正・読めない対象は error 行を出して監視中として判定し印を書き直す(SPEC-008-07)"
+          - "off で印の不正と保存失敗が同じ対象に重なったときは 1 対象の中で決まった順に出す(SPEC-008-07)"
       - req_id: "REQ-012"
         spec_id: "SPEC-012-01"
         scenarios:
-          - "ハング疑いを warning メールで通知する(SPEC-008-01)"
+          - "alert 行に対象・段階・経過時間が含まれる(SPEC-008-07)"
   - business: "実行監視業務"
     buc: "background 実行監視フロー"
     uc: "監視記録を保存する"
@@ -406,7 +431,7 @@ use_cases:
         spec_id: "SPEC-008-03"
         scenarios:
           - "通知後に正常終了した実行の警告時経過時間を残す(SPEC-008-03)"
-          - "off では実行ログにのみ残す(SPEC-008-03)"
+          - "off では判定結果を実行ログに残し通知済み状態を印で持つ(SPEC-008-03)"
           - "通知後に中止された slot 実行を中止済みで終端する(SPEC-008-03)"
       - req_id: "REQ-008"
         spec_id: "SPEC-008-04"
@@ -908,7 +933,7 @@ use_cases:
       - spec.md
       - tier-facade.md
     api_count: 0
-    async_event_count: 1
+    async_event_count: 0
     usdm:
       - req_id: "REQ-001"
         spec_id: "SPEC-001-01"
@@ -933,16 +958,100 @@ use_cases:
         spec_id: "SPEC-013-01"
         scenarios:
           - "ジョブ定義を変えずに並行稼働から単独本番へ切り替える(SPEC-001-03)"
+  - business: "ハウスキープ業務"
+    buc: "ハウスキープフロー"
+    uc: "保持日数を過ぎた終了済みの実行と確報比較依頼を判定する"
+    files:
+      - spec.md
+      - tier-facade.md
+      - tier-ops.md
+    api_count: 0
+    async_event_count: 0
+    usdm:
+      - req_id: "REQ-014"
+        spec_id: "SPEC-014-01"
+        scenarios:
+          - "保持日数を指定しないと 90 日を過ぎた終了済みの実行だけを削除する(SPEC-014-01)"
+          - "保持日数が正の整数でない設定は設定検証で拒否する(SPEC-014-01)"
+          - "業務ジョブの起動では期限切れの実行を削除しない(SPEC-014-01)"
+          - "ハウスキープ設定の所有者は基盤適用設計者である(SPEC-014-01)"
+      - req_id: "REQ-014"
+        spec_id: "SPEC-014-02"
+        scenarios:
+          - "すべて終端して保持日数を過ぎた実行は成果物・管理 DB の行・通知済みの印がすべて無くなる(SPEC-014-02)"
+          - "すべて終端しても保持日数以内の実行は残る(SPEC-014-02)"
+          - "リラン先が保持日数以内ならリラン元も残る(SPEC-014-02)"
+          - "リランの親子すべてが保持日数を過ぎたら親子すべてが無くなる(SPEC-014-02)"
+      - req_id: "REQ-014"
+        spec_id: "SPEC-014-03"
+        scenarios:
+          - "background slot が RUNNING の実行は残る(SPEC-014-03)"
+          - "速報比較依頼が終わっていない実行は残る(SPEC-014-03)"
+          - "off で起動対象の slot がすべて終了し保持日数を過ぎた実行は成果物と印が無くなる(SPEC-014-03)"
+          - "off で起動対象の slot がすべて終了しても保持日数以内の実行は残る(SPEC-014-03)"
+          - "off で終了ファイルが無い slot がある実行は残る(SPEC-014-03)"
+          - "mode が off の slot は判定に含めない(SPEC-014-03)"
+          - "execution-spec.json か起動対象の slot のディレクトリが無い実行は warn を出して残る(SPEC-014-03)"
+          - "速報比較依頼だけのリランを含む親子が終端して保持日数を過ぎたら無くなる(SPEC-014-03)"
+          - "速報比較依頼だけのリランの依頼が RUNNING なら親子は残る(SPEC-014-03)"
+      - req_id: "REQ-014"
+        spec_id: "SPEC-014-04"
+        scenarios:
+          - "最も遅い終了日時が保持日数以内なら開始日時が古くても残る(SPEC-014-04)"
+          - "確報比較依頼は completed_at から保持日数を過ぎたものだけ無くなる(SPEC-014-04)"
+          - "終わっていない確報比較依頼は登録から日数が経っても残る(SPEC-014-04)"
+          - "off でも確報クロスチェックを使う設置で接続参照名があれば保持日数を過ぎた確報比較依頼は無くなる(SPEC-014-04)"
+      - req_id: "REQ-014"
+        spec_id: "SPEC-014-07"
+        scenarios:
+          - "off でも確報クロスチェックを使う設置で接続参照名が無い・空なら設定エラーで何も削除しない(SPEC-014-07)"
+          - "off 以外で接続参照名が無い・空なら設定エラーで何も削除しない(SPEC-014-07)"
+      - req_id: "REQ-014"
+        spec_id: "SPEC-014-08"
+        scenarios:
+          - "管理 DB に接続しない設定では警告を 1 行出し確報比較依頼と管理 DB の行を削除しない(SPEC-014-08)"
+          - "管理 DB に接続しない設定では off 以外の期間に作られた実行を warn を出して残す(SPEC-014-08)"
+          - "管理 DB に接続しない設定でも off の期間に作られた実行は成果物だけで判定して消す(SPEC-014-08)"
+          - "管理 DB に接続しない設定の warn は終了コードを変えない(SPEC-014-08)"
+  - business: "ハウスキープ業務"
+    buc: "ハウスキープフロー"
+    uc: "成果物と管理 DB の履歴を削除する"
+    files:
+      - spec.md
+      - tier-ops.md
+    api_count: 0
+    async_event_count: 0
+    usdm:
+      - req_id: "REQ-014"
+        spec_id: "SPEC-014-05"
+        scenarios:
+          - "前回置き場へ移したあとに失敗した成果物と管理 DB の行を次の実行で削除する(SPEC-014-05)"
+          - "前回管理 DB の行の削除に失敗した単位を次の実行で削除する(SPEC-014-05)"
+          - "削除し終えた直後にもう一度実行すると削除件数 0 で終わる(SPEC-014-05)"
+          - "成果物が消えて管理 DB の行が残った実行の blue・green リランは execution-spec not found で終わる(SPEC-014-05)"
+      - req_id: "REQ-014"
+        spec_id: "SPEC-014-06"
+        scenarios:
+          - "削除が成功すると削除件数を stdout に出して終了コード 0 で終わる(SPEC-014-06)"
+          - "置き場へ移したあとに削除が失敗すると stderr に出して非 0 で終わる(SPEC-014-06)"
+          - "管理 DB の行の削除が失敗すると stderr に出して非 0 で終わる(SPEC-014-06)"
+      - req_id: "REQ-014"
+        spec_id: "SPEC-014-07"
+        scenarios:
+          - "ハウスキープ専用 DB ロールは対象 6 テーブルの SELECT と DELETE だけを持つ(SPEC-014-07)"
+          - "業務用と参照用の DB ロールは DELETE 権限を持たない(SPEC-014-07)"
+          - "ハウスキープ設定は認証情報の値を含まず接続参照名だけを持つ(SPEC-014-07)"
+
 cross_cutting:
   ux_design:
-    user_flows: 4
+    user_flows: 5
     ia_pages: 18
     psychology_principles: 8
   ui_design:
     layout_patterns: 0
     responsive_breakpoints: 0
     component_guidelines: 0
-    output_conventions: "cli(stdout/stderr の key=value・TSV、終了コード 0/2/3/6、実行ログ行形式、通知メール規約)"
+    output_conventions: "cli(stdout/stderr の key=value・TSV、終了コード 0/2/3/6、実行ログ行形式、ハング検知の通知出力(alert 行と終了コード 0/3/6)、ハウスキープの出力)"
   data_visualization:
     target_screens: 3
     chart_types: 0
@@ -950,7 +1059,7 @@ cross_cutting:
     api_count: 0
     note: "HTTP API なし。openapi.yaml はバリデータ互換スタブ。CLI コマンド契約の正本は _cross-cutting/api/cli-command-contract.yaml"
   asyncapi:
-    async_event_count: 4
+    async_event_count: 3
   cli_command_contract:
     file: "_cross-cutting/api/cli-command-contract.yaml"
   datastore:
@@ -963,18 +1072,82 @@ cross_cutting:
     - "_cross-cutting/rdra-feedback.md"
 
 stats:
-  total_ucs: 32
+  total_ucs: 34
   total_apis: 0
-  total_async_events: 4
-  businesses: 5
-  bucs: 7
+  total_async_events: 3
+  businesses: 6
+  bucs: 8
 
 review:
-  method: "差分更新(CR-dcd8234d-010: CLI 契約 2 か所の引用符の外し方の統一 / CR-dcd8234d-009: 速報の起動コマンドの検証 3 点への追従)の Step6.5 反証レビュー: 生成とは別コンテキストのサブエージェント(fresh context。修正禁止)が観点 4(検証 3 点の記述一致 / 受け入れ基準 10・11・12 と BDD・usdm[] の対応 / 引用符規則の 2 か所一致 / ID 混入)。修正はオーケストレータ、修正後に機械検証(validateAllYaml / validateSpecEvent / validateApiSummary / validateSpecProse)。記録は events 側 _review/ のみ、latest へはコピーしない"
-  rounds: 2
+  method: "差分更新(2026-11-05 の管理 DB を 1 つとする前提の明記)の Step6.5 反証レビュー: 生成とは別コンテキストのサブエージェント(修正禁止)が差分ファイルと差分外の参照名の記述で round 1 を実施。修正はオーケストレータが行い、機械検証を再実行"
+  rounds: 1
   converged: true
-  final_state: "blocker 0 / 未解決 major 0(2 ラウンドで収束)。round 1: major 4 / minor 3。R-001(基準 6〜9 の usdm ひもづけ不足)・R-002(error 行の行数を Then で判定していない)・R-003(基準 11 のシナリオが判定不能)・R-005〜R-007 を fixed、R-004(値の前後の空白の扱い)は変更要求の範囲外として deferred し確認推奨項目へ。round 2: minor 4。R-003 残り(基準 11 前半の BDD 対象外の注記)と R-009(確報 UC のひもづけの絞り込み)を fixed、R-008(tier BDD の行数表現)と R-010(実行権限なしのシナリオ)は deferred"
+  final_state: "blocker 0 / 未解決 major 0(1 ラウンドで収束)。round 1: minor 1(fixed。文言の追加だけのため再レビューなし)。実装可能性は変更した UC すべて ready(_review/implementation-readiness.md)"
   history:
+    - round: 1
+      event: "20261105_112000_feedback_single_management_db"
+      findings: "minor 1(R-001。fixed)"
+      resolution: "_review/round-1.yaml の resolved(blocker 0 / 未解決 major 0 で収束)"
+    - round: 1
+      event: "20261105_092000_feedback_external_review_round2"
+      findings: "major 1 / minor 4(R-1〜R-5。すべて fixed)"
+      resolution: "_review/round-1.yaml の resolved"
+    - round: 2
+      event: "20261105_092000_feedback_external_review_round2"
+      findings: "minor 3(R-6〜R-8。すべて fixed)"
+      resolution: "_review/round-2.yaml の resolved"
+    - round: 3
+      event: "20261105_092000_feedback_external_review_round2"
+      findings: "検証パス: minor 2(R-9 / R-10。fixed)"
+      resolution: "_review/round-3.yaml の resolved(blocker 0 / 未解決 major 0 で収束)"
+    - round: 1
+      event: "20261104_092000_feedback_external_review_fixes"
+      findings: "major 1 / minor 6(R-001〜R-007。すべて fixed)"
+      resolution: "_review/round-1.yaml の resolved"
+    - round: 2
+      event: "20261104_092000_feedback_external_review_fixes"
+      findings: "major 1 / minor 1(R-008 / R-009。fixed)"
+      resolution: "_review/round-2.yaml の resolved"
+    - round: 3
+      event: "20261104_092000_feedback_external_review_fixes"
+      findings: "検証パス: 指摘 0"
+      resolution: "_review/round-3.yaml(blocker 0 / 未解決 major 0 で収束)"
+    - round: 1
+      event: "20261103_151000_feedback_env_duplicate_key"
+      findings: "major 4 / minor 3(R-001〜R-007。すべて fixed)"
+      resolution: "_review/round-1.yaml の resolved"
+    - round: 2
+      event: "20261103_151000_feedback_env_duplicate_key"
+      findings: "minor 2(R-008 / R-009。fixed)"
+      resolution: "_review/round-2.yaml の resolved"
+    - round: 3
+      event: "20261103_151000_feedback_env_duplicate_key"
+      findings: "検証パス: minor 1(R-010。fixed)"
+      resolution: "_review/round-3.yaml の resolved(blocker 0 / 未解決 major 0 で収束)"
+    - round: 1
+      event: "20261103_135000_feedback_housekeeping_db_required"
+      findings: "major 1 / minor 6(R-001〜R-007。R-002 deferred、他 fixed)"
+      resolution: "_review/round-1.yaml の resolved"
+    - round: 2
+      event: "20261103_135000_feedback_housekeeping_db_required"
+      findings: "minor 1(R-008。fixed)"
+      resolution: "_review/round-2.yaml の resolved(blocker 0 / 未解決 major 0 で収束)"
+    - round: 1
+      event: "20261103_085000_feedback_housekeeping_followups"
+      findings: "major 1 / minor 4(R-001〜R-005。全件 fixed)"
+      resolution: "_review/round-1.yaml の resolved"
+    - round: 2
+      event: "20261103_085000_feedback_housekeeping_followups"
+      findings: "minor 3(R-006〜R-008。全件 fixed)"
+      resolution: "_review/round-2.yaml の resolved(blocker 0 / 未解決 major 0 で収束)"
+    - round: 1
+      event: "20261101_125000_feedback_mail_removal_housekeeping"
+      findings: "major 5 / minor 9(R-001〜R-014。R-013 deferred、他 fixed)"
+      resolution: "_review/round-1.yaml の resolved"
+    - round: 2
+      event: "20261101_125000_feedback_mail_removal_housekeeping"
+      findings: "minor 8(R-003 / R-006 / R-011 / R-013 の残り、R-015〜R-018。R-013 deferred、他 fixed)"
+      resolution: "_review/round-2.yaml の resolved(blocker 0 / 未解決 major 0 で収束)"
     - round: 1
       event: "20261101_105000_feedback_impl_feedback_dcd8234d"
       findings: "major 4 / minor 3(R-001〜R-007。R-004 deferred、他 fixed)"

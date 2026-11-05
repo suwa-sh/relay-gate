@@ -2,7 +2,7 @@ version: "1.0"
 datastore: "rdb"
 
 # relay-gate 管理 DB(ジョブキュー兼管理 DB)のデータストアレイアウト。
-# 全 32 UC の _model-summary.yaml の tables を統合し、情報.tsv の属性と arch E-013〜E-021 で列を補完した。
+# 全 34 UC の _model-summary.yaml の tables を統合し、情報.tsv の属性と arch E-013〜E-021 で列を補完した。
 # 型は抽象型(string / integer / text / datetime / date / boolean)。DDL には変換しない。
 # 正規化: 第 3 正規形、履歴テーブルなし(_inference.md 採用値 #3)。状態値は _inference.md 採用値 #11 の英字コード。
 # 列挙列の値集合は各 columns[].enum を正本とする(状態列は RDRA 状態.tsv の状態名の英字コード、区分列はバリエーション.tsv の値)。
@@ -13,11 +13,13 @@ _review_notes:
   - "正規化方針: 3NF・履歴テーブルなし(採用値 #3)。event_snapshot 型のエンティティは status 列 + *_at 列で表現し、状態履歴テーブル(*_status_events)は持たない。実行履歴・監査の正本はジョブスケジューラのため"
   - "速報側(rapid_runs / rapid_crosscheck_requests)と確報側(final_crosscheck_requests)はデータモデルを分離し、テーブル間 FK を張らない(arch 制約「速報側と確報側のデータモデルを分離する」)"
   - "比較ツール実行結果(E-020)は独立テーブルにせず、依頼レコード(rapid / final)の stdout / stderr / exit_code / error_summary 列で保持する(情報.tsv の依頼定義どおり。採用値 #3)"
-  - "完了通知(E-015)・通知メール(E-022)・リラン指示(E-023)・中止指示(E-024)・実行ログ(E-025)は永続化しない。完了通知は rapid_runs の {slot}_status / {slot}_completed_at に集約され、通知メールは monitor_records の alerted_at 等に結果だけ残る。リラン・中止は対象テーブルの状態更新で表現する"
+  - "完了通知(E-015)・リラン指示(E-023)・中止指示(E-024)・実行ログ(E-025)は永続化しない。完了通知は rapid_runs の {slot}_status / {slot}_completed_at に集約される。ハング検知の通知は hang-detector.sh の終了コードと標準エラーの alert 行で行い、通知した事実は monitor_records の monitor_status / alerted_at 等に残る。リラン・中止は対象テーブルの状態更新で表現する"
   - "設定系(feature flag / slot runner 割当 / slot ジョブマップ / ハング検知上限設定 / 比較定義(速報・確報の比較ツール起動コマンド各 1 行。rapid-crosscheck.env / final-crosscheck.env)/ 適用構成文書)はファイル(env + CSV)で所有し RDB に持たない(採用値 #5)。execution-spec / Runner Result もファイル。RDB は実行管理レコード 6 テーブルのみ(comparison_results 廃止により 7 → 6)"
   - "FK 検討: monitor_records.run_id は parallel_runs へ FK を張らない。RAPID_CROSSCHECK_MODE=off では parallel_runs が存在しないまま background slot を監視するため(採用値 #7 / #8)。同じ理由で monitor_records は job_id 列を自前で持つ(canonical C2)"
   - "FK 検討: parallel_runs.parent_run_id は parallel_runs.run_id への自己参照 FK(nullable)。リラン系譜を数珠つなぎに辿るため"
-  - "on_delete はすべて RESTRICT。運用中に管理レコードを削除する UC は無く、誤削除で系譜・依頼レコードが失われるのを防ぐ"
+  - "on_delete はすべて RESTRICT。管理レコードを削除するのはハウスキープ(UC『成果物と管理 DB の履歴を削除する』)だけで、実行の単位(リランの親子)ごとに子テーブル(monitor_records → rapid_crosscheck_requests → rapid_runs → slot_executions)を先に、parallel_runs を子孫から順に 1 トランザクションで削除して RESTRICT を満たす(cli-command-contract.yaml shared_rules.housekeep_rules)。CASCADE にしない理由: ハウスキープ以外の誤削除で系譜・依頼レコードが連鎖して失われるのを防ぐため"
+  - "ハウスキープの列・インデックス検討(追加なし): 削除判定に使う列は既存の status と completed_at(parallel_runs / slot_executions / rapid_crosscheck_requests / final_crosscheck_requests)と parent_run_id だけで足りる。housekeep.sh は 1 日 1 回、保持日数分(既定 90 日)の行を対象に parallel_runs 全行からリランの親子の単位を組み立てるため全件読みになり、completed_at の単独インデックスは効かない。子テーブルの run_id 検索は主キー(先頭列 run_id)で賄い、系譜は既存の idx_parallel_runs_parent_run_id、確報比較依頼は既存の idx_final_crosscheck_requests_status_requested_at の status 先頭列で賄う"
+  - "DB ロール: 行の削除はハウスキープ専用 DB ロール housekeep_del だけに許し、業務用ロール app_rw(SELECT / INSERT / UPDATE)と参照用ロール ops_ro(SELECT)に DELETE を足さない(db_roles。ロールの作成と権限付与はインフラ構築の責務)"
   - "ユニーク制約: rapid_crosscheck_requests は run_id が主キーのため追加のユニーク制約は不要(1 run_id に 1 依頼)。条件付き INSERT(NOT EXISTS)と主キー違反の両方で重複を防ぐ"
   - "ユニーク制約: rapid_runs は run_id が主キーのため追加のユニーク制約は不要(parallel_runs と 1:1)"
   - "ユニーク制約: slot_executions は (run_id, slot) を主キーにする(1 run に blue / green 各 1 件)。サロゲートキーは持たない"
@@ -121,6 +123,10 @@ tables:
         operations: ["UPDATE"]
       - uc: "比較ツールでジョブ単位比較を実行して結果を登録する"
         operations: ["SELECT", "UPDATE"]
+      - uc: "保持日数を過ぎた終了済みの実行と確報比較依頼を判定する"
+        operations: ["SELECT"]
+      - uc: "成果物と管理 DB の履歴を削除する"
+        operations: ["DELETE"]
 
   - name: "slot_executions"
     rdra_info: "slot 実行"
@@ -190,6 +196,10 @@ tables:
         operations: ["SELECT"]
       - uc: "両系成功時に速報比較依頼を作成する"
         operations: ["SELECT"]
+      - uc: "保持日数を過ぎた終了済みの実行と確報比較依頼を判定する"
+        operations: ["SELECT"]
+      - uc: "成果物と管理 DB の履歴を削除する"
+        operations: ["DELETE"]
 
   # ---------------------------------------------------------------
   # 速報クロスチェック管理
@@ -246,6 +256,8 @@ tables:
         operations: ["SELECT"]
       - uc: "速報比較依頼だけを新規作成する"
         operations: ["SELECT", "INSERT"]
+      - uc: "成果物と管理 DB の履歴を削除する"
+        operations: ["DELETE"]
 
   - name: "rapid_crosscheck_requests"
     rdra_info: "速報比較依頼(rapid_crosscheck_request)"
@@ -354,6 +366,10 @@ tables:
         operations: ["SELECT"]
       - uc: "実行を ABORTED へ遷移させる"
         operations: ["UPDATE"]
+      - uc: "保持日数を過ぎた終了済みの実行と確報比較依頼を判定する"
+        operations: ["SELECT"]
+      - uc: "成果物と管理 DB の履歴を削除する"
+        operations: ["DELETE"]
 
   # ---------------------------------------------------------------
   # 確報クロスチェック管理(速報側と分離。FK を張らない)
@@ -435,6 +451,10 @@ tables:
         operations: ["SELECT"]
       - uc: "実行を ABORTED へ遷移させる"
         operations: ["UPDATE"]
+      - uc: "保持日数を過ぎた終了済みの実行と確報比較依頼を判定する"
+        operations: ["SELECT"]
+      - uc: "成果物と管理 DB の履歴を削除する"
+        operations: ["DELETE"]
 
   # ---------------------------------------------------------------
   # 実行監視管理(parallel_runs への FK を張らない。off モードでも記録できるようにするため)
@@ -456,7 +476,7 @@ tables:
         type: "string"
         nullable: false
         enum: ["background_slot", "rapid_request"]
-        description: "監視対象種別(情報「監視記録」の属性「監視対象種別」の英字コード。取りうる値は enum)。background_slot は background slot 実行、rapid_request は速報比較依頼。role から一意に導出できる(blue / green → background_slot、rapid-crosscheck → rapid_request)ため 3NF 上は role への推移従属だが、情報.tsv の属性「監視対象種別」を写し、傾向集計・通知メールでの可読性のため非正規化して保持する(hang-detector が role と同時に書き込み、以後変更しない)"
+        description: "監視対象種別(情報「監視記録」の属性「監視対象種別」の英字コード。取りうる値は enum)。background_slot は background slot 実行、rapid_request は速報比較依頼。role から一意に導出できる(blue / green → background_slot、rapid-crosscheck → rapid_request)ため 3NF 上は role への推移従属だが、情報.tsv の属性「監視対象種別」を写し、傾向集計と alert 行の確認での可読性のため非正規化して保持する(hang-detector が role と同時に書き込み、以後変更しない)"
       - name: "job_id"
         type: "string"
         nullable: false
@@ -481,11 +501,11 @@ tables:
       - name: "hang_suspected_at"
         type: "datetime"
         nullable: true
-        description: "ハング疑い通知(hang-suspected)の送信成功日時(ローカル時刻。MONITORING → HANG_SUSPECTED_NOTIFIED へ遷移した時刻。UC『監視記録を保存する』の計算ルールと同じ)。UPSERT では NULL で上書きしない。未通知は NULL。情報.tsv: hang_suspected_at"
+        description: "ハング疑い(kind=hang-suspected)の alert 行を出した日時(ローカル時刻。MONITORING → HANG_SUSPECTED_NOTIFIED へ遷移した時刻。UC『監視記録を保存する』の計算ルールと同じ)。UPSERT では NULL で上書きしない。未通知は NULL。情報.tsv: hang_suspected_at"
       - name: "alerted_at"
         type: "datetime"
         nullable: true
-        description: "最新の通知メールの送信成功日時(ローカル時刻)。送信成功時のみ更新(送信失敗では更新せず次回再送)。送信要否の冪等判定は monitor_status の遷移有無で行い、本列は記録用。未通知は NULL。情報.tsv: alerted_at"
+        description: "最新の通知(hang-detector.sh が alert 行を出した)日時(ローカル時刻。判定時刻)。alert 行を出した回の監視記録の UPSERT で更新する。UPSERT に失敗した場合は monitor_status も変わらないため、次回同じ異常を再び知らせる。再通知の要否は monitor_status の遷移有無で判定し、本列は記録用。未通知は NULL。情報.tsv: alerted_at"
       - name: "elapsed_minutes_at_alert"
         type: "integer"
         nullable: true
@@ -518,6 +538,23 @@ tables:
         operations: ["INSERT", "UPDATE"]
       - uc: "hang_detect_limit_minutes をジョブごとに調整する"
         operations: ["SELECT"]
+      - uc: "成果物と管理 DB の履歴を削除する"
+        operations: ["DELETE"]
+
+db_roles:
+  - name: "app_rw"
+    purpose: "業務用接続ロール(facade / slot runner / 速報・確報の runner と worker / hang-detector / background-rerun / abort-*)"
+    privileges: "6 テーブルへの SELECT / INSERT / UPDATE。DELETE は与えない"
+    conn_refs: ["RAPID_DB_CONN_REF", "HANG_DB_CONN_REF", "FINAL_DB_CONN_REF"]
+  - name: "ops_ro"
+    purpose: "参照用ロール(運用者の参照系コマンドと調査)"
+    privileges: "6 テーブルへの SELECT だけ"
+    conn_refs: []
+  - name: "housekeep_del"
+    purpose: "ハウスキープ専用ロール。保持日数を過ぎた終了済みの実行の単位と確報比較依頼の行を削除する housekeep.sh だけが使う"
+    privileges: "6 テーブル(parallel_runs / slot_executions / rapid_runs / rapid_crosscheck_requests / final_crosscheck_requests / monitor_records)への SELECT と DELETE だけ。INSERT / UPDATE / TRUNCATE とスキーマ変更は与えない(SELECT ... FOR UPDATE も使わない)"
+    conn_refs: ["HOUSEKEEP_DB_CONN_REF"]
+    note: "ロールの作成と権限付与はインフラ構築(PostgreSQL 構築ロール)の責務。本節は仕様側の正本として名前と権限だけを定める"
 
 er_diagram: |
   erDiagram

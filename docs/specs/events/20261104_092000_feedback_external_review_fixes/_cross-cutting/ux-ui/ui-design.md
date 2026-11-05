@@ -1,0 +1,361 @@
+# 出力規約(UI 画面を持たないプロダクト)
+
+> design 無しモード(`design_available: false`、`interface_kind: cli`)。
+> 本ファイルは全 UC の tier md が参照する **CLI 出力・終了コード・状態文字列・ハング検知の通知出力の正本**である。
+> 個々のコマンドの引数・出力・終了コードの定義は `_cross-cutting/api/cli-command-contract.yaml` に置き、本ファイルは横断規約だけを書く。
+
+## 適用範囲と適用外(無加工中継)
+
+| 経路 | 規約の適用 | 理由 |
+|---|---|---|
+| 全コマンドの自身の出力(検証エラー・参照結果・info / warn / error) | 適用 | relay-gate が生成する出力 |
+| `facade.sh` の foreground 中継(`<role>/stdout.log` → stdout、`<role>/stderr.log` → stderr、`<role>/exitcode.txt` → 終了コード) | **適用外(無加工)** | ジョブスケジューラ応答の決定(条件)。装飾・プレフィックス・追記を一切付けない |
+| `final-crosscheck-runner.sh` の確報中継(依頼に保存された `stdout` → stdout、`stderr` → stderr、`exit_code` → 終了コード) | **適用外(無加工)** | 確報結果の中継制約(条件)。依頼の状態名や集計結果を追記しない |
+
+- 中継経路でも、中継に至る**前**の relay-gate 自身のエラー(設定検証 NG・run_id 発行失敗・polling 上限超過など)は本規約に従い stderr + 終了コード 2 / 3 / 6 で返す
+- 中継経路で relay-gate 自身の info / warn を出す必要がある場合は stderr ではなく実行ログファイルに出す(stdout / stderr を汚さない。arch CLP-002)
+
+## 出力チャネル
+
+| チャネル | 用途 | 例 |
+|---------|------|---|
+| stdout | 正常な結果・データ(パイプ可能)。`key=value` の 1 行 1 事実、または TSV(ヘッダー行あり) | `run_id=20260830T113000-JOB001-3f9a1c2e`<br>`status=SUCCEEDED` |
+| stderr | エラー・警告・診断メッセージ。`error:` / `warn:` / `info:` 接頭辞。例外: hang-detector の通知は `alert:` 接頭辞の 1 件 1 行(下記「ハング検知の通知出力」) | `error: job_id=JOB001 not found in job map slot=green map=/etc/relay-gate/green-job-map.csv` |
+| 終了コード | 結果の分類(下記) | `2` |
+| 実行ログファイル | 各スクリプトの run_id 付き実行ログ(stdout / stderr を汚さない) | `facade.sh 20260830T113000-JOB001-3f9a1c2e 2026-08-30T11:30:00 INFO slot started slot=green mode=background pid=12345` |
+| 成果物ファイル | Runner Result Contract(`started-at.txt` / `stdout.log` / `stderr.log` / `exitcode.txt` / `execution-spec.json`。中止時のみ `aborted.txt`。writer は abort-blue.sh / abort-green.sh) | `facade/20260830T113000-JOB001-3f9a1c2e/green/exitcode.txt` |
+
+- 対話プロンプト(abort-*)は stderr に出す(stdout をパイプしても混ざらない)
+- 進捗表示は行わない(非 TTY 起動が主経路。NFR B.2.1.1 の 10 秒以内で完了する CLI が対象)
+- 運用者への通知は CLI の出力(終了コードと標準エラー)だけで行い、ジョブスケジューラの既存のジョブ監視・障害通知で届ける。relay-gate は CLI の出力以外の通知送信手段を持たない
+
+## 終了コード規約
+
+_inference.md 採用値 #2(共通 4 分類)。
+
+| コード | 分類 | 条件 |
+|-------|------|------|
+| 0 | 成功 | 処理が完了した。参照系は対象が見つかり出力できた |
+| 2 | 入力・引数・設定検証エラー | 引数不足・不正な値・未知のオプション、feature flag / ジョブマップ / 比較ツール起動コマンド設定の検証 NG(foreground × foreground、必須キー欠落、enum 外の値、runner 実体なし・実行不可、CSV クォート不正、`fixed_params` の JSON 配列不正、host / user の片方だけ空、比較ツール起動コマンドが絶対パスでない・実行不可・速報の `{job_id}` 欠落 等)、非対話で `--yes` なし、環境変数の未設定、読んだ設定ファイルの入力の守備範囲の違反(NUL / UTF-8 / BOM / CR、env の invalid line・同じキーの重複を含む。設定ファイルを読む全コマンドに共通で、各コマンドの終了コードの条件に列挙が無くても 2。runner IF は exitcode.txt=2。契約 `conventions.exit_codes` / `config_input_rules`) |
+| 3 | 業務エラー | 事前検証 NG(rerun: 元の mode が foreground / off、元の実行が RUNNING(`exitcode.txt` も `aborted.txt` も無い)、role 未対応)、中止不可(abort: 対象が background かつ RUNNING でない / 速報比較依頼が REQUESTED・CLAIMED・RUNNING のいずれでもない(終端状態)/ 確報比較依頼が RUNNING でない)、停止確認 `no`、参照系で対象 run_id が存在しない、hang-detector が新たに知らせる異常がハング疑いだけ(警告終了)、RAPID_CROSSCHECK_MODE=off で管理 DB を使わない構成での速報系・参照系の拒否(`abort-rapid-crosscheck.sh` / `rapid-crosscheck-result.sh` / `run-lineage.sh` / `hang-detect-trend.sh`。`abort-blue.sh` / `abort-green.sh` は off でも `aborted.txt` で中止が成立するため該当しない) |
+| 6 | 実行エラー | SSH 接続・実行失敗、管理 DB 接続・SQL 失敗、比較ツールの起動失敗、成果物ファイルの書き込み・移動・削除の失敗、polling 上限超過、内部エラー(想定外の例外)。hang-detector が background 実行エラー・速報クロスチェック異常を新たに知らせた場合も 6 |
+
+- `1` は使わない(`set -euo pipefail` による予期しない終了を `1` として区別できるようにするため。`1` を観測したら内部バグとして扱う)
+- 中継系(`facade.sh` foreground / `final-crosscheck-runner.sh`)は保存済み exitcode を**そのまま**返す(上表を適用しない)
+- hang-detector は終了コードそのものが通知になる(0 = 新たな異常なし、3 = ハング疑いだけ、6 = エラーあり。下記「ハング検知の通知出力」)
+- worker(`rapid-crosscheck-worker.sh` / `final-crosscheck-worker.sh`)は比較ツールの終了コードを依頼レコードに保存するだけで、worker 自身の終了コードには反映しない(`--once` で依頼を 1 件処理できたら 0、依頼が無くても 0、claim / DB / 比較ツール起動に失敗したら 6)
+
+### 比較ツール終了コード契約との対応
+
+| 比較ツールの終了コード | 意味 | 依頼状態 | 確報 runner がジョブスケジューラへ返す終了コード | 速報での扱い |
+|---|---|---|---|---|
+| `0` | 比較 OK | SUCCEEDED | `0`(無加工中継) | 通知なし |
+| `3` | 比較 NG(警告終了) | FAILED | `3`(無加工中継) | hang-detector が `kind=rapid-crosscheck-error` の alert 行を出し終了コード 6 |
+| `6` | 実行エラー(エラー終了) | FAILED | `6`(無加工中継) | 同上 |
+| その他の非 0 | 比較ツール実装の契約に従う | FAILED | その値(無加工中継) | 同上 |
+
+- 速報・確報とも比較ツールの終了コード(0 / 3 / 6 / その他)と stdout / stderr は依頼レコード(`rapid_crosscheck_requests` / `final_crosscheck_requests`)の列に保存する。別レコードや成果物ファイルは作らない
+
+- relay-gate の 4 分類(0 / 2 / 3 / 6)は比較ツール契約(0 / 3 / 6)と値の意味を揃えている(3 = 業務上の NG、6 = 実行失敗)。運用者は同じ読み方で判断できる
+- 比較ツールを差し替えた場合、終了コードの値と意味はその実装の契約に従う(方針資料)。relay-gate は値を変換しない
+
+## 出力フォーマット
+
+- **既定**: plain。1 行 1 事実。`key=value`(値に空白を含まない場合)または `key: value`(値に空白・パスを含む場合。`:` の後に半角空白 1 つ)。キーは snake_case 英字。出力順はコマンドごとに固定し、`cli-command-contract.yaml` に記載する
+- **表形式**: 複数行の参照系(`run-lineage.sh` / `hang-detect-trend.sh`)は **TSV**(タブ区切り、1 行目はヘッダー行、列名は snake_case)。値にタブ・改行を含めない(含む場合は下記「制御文字の表記」の可視表記 `\t` / `\n` へ置き換える。旧規則の「半角空白へ置換」は使わない)。列定義は `data-visualization.md` を正本とする。`rapid-crosscheck-result.sh` は TSV を出さず、依頼レコードの固定行 + `--show-output` 本文だけを出す(下記「出力例」)
+- **制御文字の表記**(全コマンドの stdout / stderr、実行ログに共通。任意入力 = 設定ファイルのセルの値・列名・キー名・パス・コマンド引数を出力するときの規則。利用者決定 2026-09-22):
+  - 置き換える文字の範囲: C0 制御文字(U+0001〜U+001F)、DEL(U+007F)、UTF-8 で符号化した C1 制御文字(U+0080〜U+009F。バイト列 `C2 80`〜`C2 9F`)。U+0000(NUL)は設定ファイルの形式違反として読み込み時に拒否されるため出力に現れない
+  - 置き換え後の表記: 改行(U+000A)は `\n`、タブ(U+0009)は `\t`、それ以外は `\u00XX`(16 進小文字 4 桁。例: ESC は `\u001b`、CR は `\u000d`、U+009B は `\u009b`)
+  - バックスラッシュ(`\`)は置き換えない。理由: 制御文字を含まない値の出力を 1 バイトも変えないため。方針資料のジョブマップ例の Windows パス `G:\scripts` はそのまま `G:\scripts` と表示される。生のタブと 2 文字の `\t` を表示上区別できないことは許容する
+  - 制御文字以外のバイトは変えない。UTF-8 として不正なバイトを含む引数(パスなど。設定ファイルの中身は形式違反として拒否されるが、コマンド引数のパスは拒否しない)もそのまま出す
+  - `key=value` と `key: value` の選択は置き換え前の元の値で判定する(元の値に空白・パスを含めば `key: value`)。置き換えでタブが `\t` になり空白が消えても `key: value` のまま
+  - 例外: `--verbose` の fixed_params の JSON 配列表記は JSON の文字列規則を優先する(`"` → `\"`、`\` → `\\`、制御文字は同じ `\n` / `\t` / `\u00XX`)。JSON 表記の中だけバックスラッシュがエスケープされる
+  - 正本は本節。`cli-command-contract.yaml` の `conventions.output_format.control_chars` は本節の要約と参照。先行機能「feature flag を設定する」の stderr(`error: invalid value key=... value=...` / `warn: unknown key key=...`)を含む既存の全コマンドに適用する
+- **JSON**: 採用しない(`--format json` は将来拡張としても採用しない。jq 非依存を維持するため)
+- **TTY 判定・色**: 行わない。ANSI エスケープを出さない。`--no-color` / `NO_COLOR` は不要(常に無色)
+- **日時**: ホストのローカルタイムゾーン(プロセスの `TZ` 環境変数に従う)、ISO 8601 秒精度、タイムゾーン指示子なし(`2026-08-30T11:30:00`)。run_id の時刻部と同じ時刻軸。UTC や `Z` 付き・オフセット表記は使わない(利用者決定 2026-09-07。arch CLP-002 / CTP-003)。例外: `started-at.txt` / `aborted.txt` の中身は UTC `Z` 付き(Runner Result Contract。表示・DB 転記時はローカルへ変換する)。`RELAY_GATE_NOW` は UTC `Z` 付きで受け取りローカルへ変換する。経過時間は分単位の整数(`elapsed_minutes=75`)。経過時間・lease 失効・走査窓(`--since`)の判定は epoch 秒で計算し、表記の比較では行わない。DST のあるタイムゾーンでは切替前後の表記が一意でないことを許容する。UTC → ローカルの変換は 1 箇所の共通関数に置き、全スクリプトが同じ変換を使う
+- **run_id**: `{ローカル yyyymmddThhmmss}-{job_id}-{8 桁 hex 乱数}`(例: `20260830T113000-JOB001-3f9a1c2e`。利用者決定 2026-09-05)。時刻部はホストのローカルタイムゾーン(プロセスの `TZ` 環境変数に従う)で、タイムゾーン指示子(`Z` / オフセット)は付けない。`RELAY_GATE_NOW` 設定時はその UTC 値をローカルタイムゾーンへ変換した値になる(BDD の例示値は `TZ=UTC` 前提)。`final_crosscheck_id` も同じ形式(`{ローカル yyyymmddThhmmss}-final-{8 桁 hex}`)。RAPID_CROSSCHECK_MODE によらず facade が常に発行し、成果物ディレクトリ名と管理 DB の `run_id` は同じ値。job_id は英数字・`_`・`-` のみ許可する(区切り文字 `-` と衝突しないよう、run_id の解析は先頭 16 文字と末尾 8 文字で行う)。実行ログ・`*_at` 列・stdout・stderr の日時も同じローカルタイムゾーン(指示子なし)で表す(上記「日時」)
+- **空値**: `key=`(値なし)ではなく `key=-` で出す(TSV も同様に `-`)。null / 空文字を区別しない
+- **真偽値**: `true` / `false`
+- **パス・URI**: 絶対パスまたは URI をそのまま出す(クォートしない。制御文字だけは上記「制御文字の表記」で置き換える。設定ファイルの値としてのパス(ジョブマップの work_dir / script)は Windows 形式・相対パスも値のまま出す)
+- **ページング / 件数制限**: `--limit N`(既定 100)。`run-lineage.sh` は系譜の深さで打ち切らない(元の実行まで全件)。上限超過時は stderr に `warn: output truncated limit=100` を出す
+- **stdout の末尾**: 改行で終える。成功時に何も出力しない場合は 0 行(空行を出さない)
+
+### 出力例
+
+```text
+$ rapid-crosscheck-result.sh --run-id 20260830T113000-JOB001-3f9a1c2e
+run_id=20260830T113000-JOB001-3f9a1c2e
+job_id=JOB001
+request_status=FAILED
+blue_status=SUCCEEDED
+green_status=SUCCEEDED
+exit_code=3
+worker_id=worker-01
+requested_at=2026-08-30T11:45:10
+completed_at=2026-08-30T11:47:02
+```
+
+(固定順 9 行のみ。速報比較の結果は依頼レコードの `exit_code` と、`--show-output` 指定時に末尾へ出す比較ツールの stdout / stderr 本文で読む。別レコードの一覧は出さない)
+
+```text
+$ rapid-crosscheck-result.sh --run-id 20260830T113000-JOB001-3f9a1c2e --show-output
+run_id=20260830T113000-JOB001-3f9a1c2e
+job_id=JOB001
+request_status=FAILED
+blue_status=SUCCEEDED
+green_status=SUCCEEDED
+exit_code=3
+worker_id=worker-01
+requested_at=2026-08-30T11:45:10
+completed_at=2026-08-30T11:47:02
+
+--- stdout ---
+(依頼に保存された比較ツールの stdout 本文をバイト列のまま出す)
+--- stderr ---
+(同じく stderr 本文)
+```
+
+```text
+$ abort-green.sh --run-id 20260830T113000-JOB001-3f9a1c2e
+run_id=20260830T113000-JOB001-3f9a1c2e
+job_id=JOB001
+role=green
+mode=background
+status=RUNNING
+pid=12345
+started_at=2026-08-30T11:30:05
+artifact_dir: /var/relay-gate/facade/20260830T113000-JOB001-3f9a1c2e/green
+対象ジョブのプロセスは強制終了してありますか？ [yes/no]: yes
+status=ABORTED
+aborted_at=2026-08-30T12:40:00
+```
+
+(現在状態の 8 行と `status=ABORTED` 以降は stdout、プロンプト行は stderr)
+
+- `abort-blue.sh` / `abort-green.sh` の現在状態(`status`)は成果物ファイルから導出する(条件「slot 実行の状態導出規則」。下記「状態表示」)。`mode` は `execution-spec.json` の `slots.<role>.mode`
+- `yes` のとき `aborted.txt` を `.tmp` → `mv` で公開し、RAPID_CROSSCHECK_MODE が off 以外なら加えて管理 DB(`slot_executions` / `parallel_runs`)を条件付き UPDATE で ABORTED にする。同じ run に REQUESTED で未着手の速報比較依頼があればそれも ABORTED にする(`rapid_crosscheck_requests` を `WHERE run_id=? AND status='REQUESTED'` で条件付き UPDATE。0 件は正常。両系の完了通知で依頼が作成された直後に slot を中止した場合の競合窓を塞ぐ保険で、dispatcher 側の中止済み run 判定と併用する。CLAIMED / RUNNING の依頼は変更せず、REQUESTED / CLAIMED / RUNNING の明示中止は `abort-rapid-crosscheck.sh`(`status IN` の条件付き UPDATE)で行う。stdout には依頼の状態を出さず、実行ログに `INFO rapid request aborted run_id=... from=REQUESTED to=ABORTED operator=... answer=yes` を残す。条件「slot 中止可否判定」)。off では管理 DB に触れず `aborted.txt` だけで完了する(終了コード 0。stdout の出力順は上と同じ)
+- `started_at=` / `aborted_at=` は `started-at.txt` / `aborted.txt` の UTC 値をローカルタイムゾーンへ変換した同時刻(指示子なし。上記「出力フォーマット」の日時)
+- 管理 DB の UPDATE が 0 件(既に終端・中止済み): 実行ログに `WARN management db not updated ...` を残し終了コード 0。接続・SQL 失敗: `error: management db update failed ...` + `hint: rerun abort-<role>.sh --run-id ... to reapply`、終了コード 6(`aborted.txt` は公開済みのまま残す)
+- 再適用(冪等): `aborted.txt` が既にあり、off 以外で管理 DB がまだ RUNNING(または parallel_run が STARTED / RUNNING)なら、確認の後に管理 DB だけ更新し、stdout `status=ABORTED`、stderr `warn: aborted.txt already published; management db updated`、終了コード 0。管理 DB も更新済み(または off)なら `error: run is not abortable ... status=ABORTED`、終了コード 3
+
+```text
+$ validate-config.sh --feature-flag /etc/relay-gate/feature-flag.env
+config_path: /etc/relay-gate/feature-flag.env
+blue_mode=foreground
+green_mode=background
+blue_impl=v1.4.2
+green_impl=v2.0.0
+blue_runner: /opt/relay-gate/runners/blue-runner.sh
+green_runner: /opt/relay-gate/runners/green-runner.sh
+rapid_crosscheck_mode=background
+rapid_crosscheck_runner: /opt/relay-gate/rapid-crosscheck-runner.sh
+rapid_crosscheck_worker: /opt/relay-gate/rapid-crosscheck-worker.sh
+operation_mode=parallel
+blue_job_map: /etc/relay-gate/blue-job-map.csv
+green_job_map: /etc/relay-gate/green-job-map.csv
+blue_runner_if_version=1
+green_runner_if_version=1
+```
+
+(`validate-config.sh --feature-flag` の stdout キー順は上の 15 行で固定。`config_version` / `impl_version` は出さない。off の slot は `<slot>_impl` / `<slot>_runner` / `<slot>_job_map` / `<slot>_runner_if_version` が `-`。`--job-map` の stdout は `map_version` を任意とし、列が無ければ `map_version=-`。`operation_mode` の値は英字コード。導出は `cli-command-contract.yaml` `validate-config.sh` / `config_files.feature-flag.env.derived` が正本。facade.sh の実行ログ `operation_mode=` も同じ英字コードを出す)
+
+`operation_mode` の英字コードと RDRA バリエーション「運用モード」の日本語名の対応:
+
+| コード | 運用モード(日本語名) | blue_mode / green_mode / rapid_crosscheck_mode |
+|---|---|---|
+| `parallel` | 並行稼働 | foreground / background / background |
+| `green_only` | 新実装の単独本番 | off / foreground / off |
+| `next_gen_parallel` | 次世代実装との並行稼働 | background / foreground / background |
+| `custom` | その他 | 上記以外の組合せ |
+
+```text
+$ background-rerun.sh --source-run-id 20260830T113000-JOB001-3f9a1c2e --role green
+error: source run is not rerunnable run_id=20260830T113000-JOB001-3f9a1c2e role=green status=RUNNING
+hint: abort the run with abort-green.sh --run-id 20260830T113000-JOB001-3f9a1c2e before rerun
+$ echo $?
+3
+```
+
+## メッセージ表現規約
+
+- **エラー**: stderr に `error: {原因}` を 1 行。原因は具体値(run_id / job_id / slot / role / 状態名 / ファイルパス / 設定キー)を `key=value` で末尾に含める。続けて `hint: {対処}` を 1 行(対処が明確な場合のみ)。エラーは 1 回だけ出す(arch CLR-001。多重ログ禁止)。例外は次の 3 つ(契約 `conventions.output_format.stderr`)
+  - 設定ファイルの入力の守備範囲の違反は全コマンド共通で、該当行ごとに 1 行を出す(バイト・改行の違反は 1 行 1 種類 1 行、duplicate key は重複したキーごとに 1 行)。報告の順は契約 `config_input_rules.byte_checks`(バイト・改行。CSV・env 共通)と `config_input_rules.env_files`(env の検査の段)に従う(下記「設定ファイルの入力の守備範囲の定型文」)
+  - `hang-detector.sh` は対象ごとの失敗、つまり保存失敗(`error: monitor record save failed ...` / `error: notified mark save failed ...`)と通知済みの印の不正(`error: notified mark invalid ...`)を、1 対象 1 行で複数出してよい(下記「ハング検知の通知出力」)
+  - `housekeep.sh` は単位ごと・エントリごとの失敗を 1 件 1 行で出す(下記「ハウスキープの出力」)
+- **警告**: `warn: {内容} key=value...`。処理は継続する
+- **情報**: `info: {内容} key=value...`。既定では出さず、`--verbose` 指定時のみ出す。例外として速報結果参照の `info: rapid result is for investigation only; use final crosscheck for release decision` は常に出す
+- **文法**: 英語、小文字始まり、句点なし、現在形。動詞は `not found` / `is not` / `failed` / `required` / `rejected` を優先し語彙を絞る
+- **必須オプション欠落の定型文**(全コマンド共通): `error: option required option=--xxx`(`key=value` 規約に従う。`missing option` は使わない)。終了コード 2
+- **管理 DB 障害の定型文**(速報・確報・監視・運用系で共通): 接続失敗は `error: management db connection failed ... conn_ref=...`、SELECT 失敗は `error: management db query failed ...`、INSERT / UPDATE 失敗は `error: management db insert failed table=... ...` / `error: management db update failed ...`(いずれも終了コード 6。「unavailable」系の旧文言は使わない)。管理 DB を使わない構成での拒否は終了コード 3 で、速報系は `error: management db is not configured (RAPID_CROSSCHECK_MODE=off) ...`、確報系(abort-final-crosscheck.sh)は `error: management db is not configured run_id=...`(final-crosscheck.env / FINAL_DB_CONN_REF の有無だけで判定。off 付記なし)(例外 2 つ: `rapid-crosscheck-result.sh` は `error: rapid crosscheck is off; no management db to query mode=off`、`rapid-crosscheck-worker.sh` は `error: management db is not configured mode=off`)。`abort-blue.sh` / `abort-green.sh` は off で拒否しない(`aborted.txt` を正本として中止が成立する。上記「出力例」)。管理 DB は relay-gate 内部のデータストア(ジョブキュー兼管理 DB)であり、外部システムではない
+- **設定ファイル不在・必須キー欠落の定型文**(全コマンド共通): `error: config file not found path: ...` / `error: option required option=<KEY> path: ...`(終了コード 2。runner IF は exitcode.txt=2)
+- **feature flag 検証の定型文**(`validate-config.sh --feature-flag` / `facade.sh` / `background-rerun.sh` 共通。`cli-command-contract.yaml` `config_files.feature-flag.env.error_messages` と同文):
+  - 必須キー欠落・空: `error: option required option=<KEY> path: ...`
+  - enum 外の値(`BLUE_MODE` / `GREEN_MODE` / `RAPID_CROSSCHECK_MODE` は foreground / background / off): `error: invalid value key=<KEY> value=...`。続けて `hint: use foreground, background or off` を 1 行出す
+  - 絶対パスでない: `error: path is not absolute key=<KEY> path=...`
+  - 実体が無い / 実行不可: `error: file not executable key=<KEY> path=...`
+  - foreground が 1 slot ちょうどでない: `error: foreground slot must be exactly one blue_mode=... green_mode=...`
+  - 未知キー(9 キー以外): `warn: unknown key key=<KEY> path: ...`(処理は継続)
+  - いずれのエラーも終了コード 2
+- **設定ファイルの入力の守備範囲の定型文**(全設定ファイル・全読み手共通。正本は `cli-command-contract.yaml` の `config_input_rules`。原則「形式(UTF-8 / LF / ヘッダー)から外れた入力は拒否する」。例外は最終行の改行なしとデータ行 0 件の受理):
+  - NUL バイト: `error: nul byte is not allowed line=N path: ...`
+  - UTF-8 として不正なバイト列(コメント行を含む): `error: encoding is not utf-8 line=N path: ...`
+  - BOM: `error: byte order mark is not allowed line=1 path: ...`
+  - CR(CRLF を含む): `error: carriage return is not allowed line=N path: ...` + `hint: use LF line endings`
+  - バイト・改行の違反(上の 4 種類)の報告の順(CSV・env 共通。契約 `config_input_rules.byte_checks`): ファイル内の全件を物理行番号の昇順に出す。同じ行に種類の違う違反があれば NUL → UTF-8 → BOM → CR の順に 1 種類 1 行。hint は最後の CR の error 行の次に 1 回だけ。違反が 1 件でもあればここで止め、以降の検査(CSV のヘッダー・行、env の invalid line・duplicate key・キーごとの検査)はしない。`validate-config.sh` の `violations=` はここで出した error 行の数(hint を数えない)。例: `error: byte order mark is not allowed line=1 path: ff.env` / `error: carriage return is not allowed line=1 path: ff.env` / `error: nul byte is not allowed line=2 path: ff.env` / `error: encoding is not utf-8 line=2 path: ff.env` / `error: carriage return is not allowed line=2 path: ff.env` / `error: carriage return is not allowed line=3 path: ff.env` / `hint: use LF line endings` / `error: nul byte is not allowed line=4 path: ff.env`(violations=7)
+  - ヘッダー列名の重複(CSV): `error: duplicate column column=<name> path: ...`
+  - `=` を含まない行(空白だけの行を含む)と、キーの前後の空白を除いた結果キーが空になる行(` =abc` / `=abc` / ` = `)(env。全 env 設定ファイル共通。契約 `config_input_rules.env_files`): `error: invalid line line=N path: ...`
+  - 同じキーが 2 行以上ある env(全 env 設定ファイル・全読み手共通。契約 `config_input_rules.env_files`): `error: duplicate key key=<KEY> lines=<n1,n2,...> path: ...`。キーの前後の空白を除いて大文字小文字を区別した完全一致で判定し(`BLUE_MODE` と ` BLUE_MODE ` は同じキー、`blue_mode` は別のキー)、値が同じ行・値が空の行・未知キーの行も数える。`lines=` は初出行を含む全行番号を出現順に並べ、重複したキーごとに 1 行。そのファイルの値は使わない(後の行の値も使わない)
+  - env の報告の順: バイト・改行の違反があればそれだけを(上の報告の順で全件)出して止める。無ければ invalid line(行番号の昇順)→ duplicate key(重複したキーの初出行の昇順)を全件出し、どちらかが 1 件でもあればキーごとの検査(必須キー・enum・パスなど)と未知キーの warn は行わない。例: `error: invalid line line=3 path: ff.env` / `error: duplicate key key=BLUE_MODE lines=1,4 path: ff.env` / `error: duplicate key key=GREEN_MODE lines=2,5 path: ff.env`
+  - env のコメント行(全 env 設定ファイル共通。契約 `config_input_rules.env_files`): 行の前後の空白(半角空白とタブ)を除いた結果が `#` で始まる行は、字下げしていてもコメント行として読み飛ばし、何も出さない(例: `# x` / `  # x` / タブ + `# x`)。`KEY=#abc` はコメント行ではなく値 `#abc`。CSV(ジョブマップ)のコメント行は行頭 `#` の行のまま
+  - いずれも終了コード 2(runner IF は exitcode.txt=2)。行番号は物理行番号、`path:` は利用者が指定したパス(一時ファイルのパスは出さない)
+  - 検証器の内部障害(補助コマンドの失敗 / 入力の複製の失敗): `error: internal command failed commands=<name,...> path: ...` / `error: config snapshot failed path: ...` + `hint: check TMPDIR is writable`。終了コード 6(runner IF は exitcode.txt=6)。stdout は出さず、検証 OK も違反も返さない
+- **ジョブマップ検証の定型文**(`validate-config.sh --job-map` / slot runner 共通。CSV。列はヘッダー名で対応付ける):
+  - 必須列(`job_id` / `work_dir` / `script` / `fixed_params` / `hang_detect_limit_minutes`)の欠落、または `host` / `user` の片方だけ: `error: job map header mismatch missing=<col,...> path: ...`
+  - CSV クォート不正: `error: csv quote is invalid line=N path: ...`
+  - 値の違反: `error: <column> is <reason> line=N job_id=... value=...`(例: `error: user is empty ...`(host のみ値あり)/ `error: work_dir is empty ...` / `error: fixed_params is not a json array of strings ...`)。`work_dir` / `script` は空でなければ受理し、パスの形式(絶対 / 相対 / Windows 形式)は検査しない(旧 `is not absolute` は使わない)
+  - 未知列(`impl_version` を含む): `warn: unknown column column=<name> path: ...`
+  - `value=` / `column=` に出す任意入力は上記「制御文字の表記」で置き換える
+  - いずれのエラーも終了コード 2(runner IF は exitcode.txt=2)
+- **完了通知失敗の実行ログ**(条件「完了通知失敗の扱い」): slot runner は `WARN completion notice failed run_id=... role=... runner=<RAPID_CROSSCHECK_RUNNER> exit_code=...` を実行ログに残し、Runner Result と終了コードは実装スクリプトの exitcode のまま。自動検知はしない。復旧は運用者が `RAPID_CROSSCHECK_RUNNER` を同一引数で再実行する(冪等・先勝ち)
+- **多言語**: メッセージ・キー・ログは英語(arch CTR-005)。日本語は運用者向け対話プロンプトのみ
+- **対話プロンプト**(abort-* 共通、stderr へ出力、改行せず入力待ち):
+  - `対象ジョブのプロセスは強制終了してありますか？ [yes/no]: `
+  - `yes`(小文字完全一致)のみ肯定。`y` / `YES` / 空 Enter は `no` 扱い(意図的な壁)
+  - `no` または `yes` 以外: stdout に `status={現在状態}`(変更なし)、stderr に `info: aborted by operator; status not changed`、終了コード 3
+  - 非 TTY(stdin がパイプ / リダイレクト)で `--yes` なし: `error: interactive confirmation required (use --yes for non-interactive)`、終了コード 2
+- **実行ログファイル**(arch CLP-002 / CTP-003):
+  - 形式: `{script} {run_id} {ローカル日時} {LEVEL} {message}`(半角空白区切り。message 内の `key=value` は自由)
+  - 例: `abort-green.sh 20260830T113000-JOB001-3f9a1c2e 2026-08-30T12:40:00 INFO status changed from=RUNNING to=ABORTED operator=ops01 answer=yes`
+  - LEVEL: `DEBUG` / `INFO` / `WARN` / `ERROR`
+  - run_id が未確定の段階(引数検証前など)は `-` を置く
+  - 出力先: `RELAY_GATE_LOG_DIR/{script}.log`(1 スクリプト 1 ファイル、追記。relay-gate は実行ログを整理しない(設置環境の logrotate に任せ、3 ヶ月保管する。arch CTR-006)。実行ログはハウスキープの対象外)
+  - 中止・リランの運用操作は指示者(`operator=` に OS ユーザー名)と応答(`answer=`)を必ず含める(NFR E.7.1.1)
+  - gateway 層の外部呼び出しは開始・終了・所要時間・成否を記録する(`INFO ssh exec started run_id=... role=... host=... user=... work_dir=... script=...` / `INFO ssh exec finished run_id=... role=... exit_code=N`。ローカル実行(host / user が null)は `INFO local exec started run_id=... role=... work_dir=... script=...` / `INFO local exec finished run_id=... role=... exit_code=N`)
+
+## 状態表示
+
+状態モデルの値は状態.tsv の値をそのまま英字コードにする(_inference.md 採用値 #11)。stdout / stderr / ログでは英字コードだけを出す。日本語名は文書上の対応表としてのみ使う。
+
+| 状態モデル | 表示文字列(英字コード) | 日本語名 | 補足 |
+|-----------|----------|------|------|
+| 並行稼働実行(parallel_run) `status` | `STARTED` / `RUNNING` / `COMPLETED` / `ABORTED` | 開始 / 実行中 / 完了 / 中止 | RAPID_CROSSCHECK_MODE=off では parallel_run を作成しないため `-` を出す |
+| slot 実行 `status` | `RUNNING` / `SUCCEEDED` / `FAILED` / `ABORTED` | 実行中 / 成功 / 失敗 / 中止 | 成果物ファイルが正本(条件「slot 実行の状態導出規則」): `exitcode.txt` があれば 0=SUCCEEDED / 非 0=FAILED、無く `aborted.txt` があれば ABORTED、どちらも無ければ RUNNING。両方あるときは `exitcode.txt` を優先する。off 以外では同条件の管理 DB 側の規則に従い、管理 DB `slot_executions.status` に `aborted.txt` / `exitcode.txt` の公開時点の状態を条件付き UPDATE(WHERE status='RUNNING')で一度だけ書く(abort-blue / abort-green が ABORTED にした後に実装が走り切って `exitcode.txt` を公開した経路だけ、導出値と異なり ABORTED のまま残る。再同期しない。正本: `rdb-schema.yaml` slot_executions.status) |
+| slot 実行モード `mode` | `foreground` / `background` / `off` | 前景 / 背景 / 停止 | feature flag の値をそのまま小文字で出す |
+| クロスチェック依頼(速報・確報共通)`status` | `REQUESTED` / `CLAIMED` / `RUNNING` / `SUCCEEDED` / `FAILED` / `ABORTED` | 依頼済み / 取得済み / 実行中 / 成功 / 失敗 / 中止 | 終端状態は SUCCEEDED / FAILED / ABORTED |
+| 速報実行の完了状況(rapid_run)`completion` | `PENDING` / `ONE_COMPLETED` / `BOTH_SUCCEEDED` / `ANY_FAILED` / `REQUEST_CREATED` | 両系未完了 / 片系完了 / 両系成功 / いずれか失敗 / 比較依頼作成済み | `blue_status` / `green_status` と併記する |
+| 監視状態 `monitor_status` | `NOT_MONITORED` / `MONITORING` / `HANG_SUSPECTED_NOTIFIED` / `EXEC_ERROR_NOTIFIED` / `COMPARE_ERROR_NOTIFIED` / `COMPLETED` | 監視対象外 / 監視中 / ハング疑い通知済み / 実行エラー通知済み / 比較異常通知済み / 正常終了 | 状態.tsv とバリエーション「監視状態」は同じ 6 値(利用者決定 2026-09-05)。「通知後正常終了」は遷移 HANG_SUSPECTED_NOTIFIED → COMPLETED の別名。遷移: MONITORING → COMPLETED(exitcode 0、または監視対象が ABORTED で中止済み終端)、HANG_SUSPECTED_NOTIFIED → EXEC_ERROR_NOTIFIED / COMPARE_ERROR_NOTIFIED / COMPLETED |
+| 通知レベル | `warning` / `error` | 警告 / 異常 | 小文字。hang-detector の alert 行の `level=` |
+| 通知種別 | `hang-suspected` / `background-exec-error` / `rapid-crosscheck-error` | ハング疑い / background 実行エラー / 速報クロスチェック異常 | kebab-case。hang-detector の alert 行の `kind=` |
+| ハング検知判定結果 | `NOT_TARGET` / `COMPLETED` / `MONITORING` / `HANG_SUSPECTED` / `EXEC_ERROR` / `COMPARE_ERROR` | 監視対象外 / 正常終了(中止済み対象の終端を含む) / 継続監視 / ハング疑い / background 実行エラー / 速報クロスチェック異常(比較 NG・FAILED) | hang-detector の `--verbose` 出力とログにのみ現れる(`cli-command-contract.yaml` `shared_rules.state_codes.hang_judgement` と同じ 6 値)。監視状態への対応は NOT_TARGET → NOT_MONITORED、COMPLETED → COMPLETED、MONITORING → MONITORING、HANG_SUSPECTED → HANG_SUSPECTED_NOTIFIED、EXEC_ERROR → EXEC_ERROR_NOTIFIED、COMPARE_ERROR → COMPARE_ERROR_NOTIFIED |
+| 実装スロット / run role | `blue` / `green` / `rapid-crosscheck` / `final-crosscheck` | — | 小文字。`--role` の引数値と同じ |
+| 停止確認応答 | `yes` / `no` | — | ログの `answer=` に記録 |
+
+- 色・記号は使わない。状態は文字列だけで伝える
+- 状態の遷移を表示する場合は `from={旧} to={新}` の形式にする
+
+## ハング検知の通知出力
+
+ハング検知は、その回の見回りで新たに見つけた background 異常を、`hang-detector.sh` 自身の終了コードと標準エラーの alert 行で知らせる。運用者へはジョブスケジューラの既存のジョブ監視・障害通知で届く。relay-gate は CLI の出力以外の通知送信手段を持たない(RDRA 条件「CLI による提示」「通知レベルの判定」)。書式の正本は `cli-command-contract.yaml` の `shared_rules.hang_alert`。
+
+```mermaid
+flowchart LR
+  J[hang-detector.sh<br/>5 分ごとの定期ジョブ] -->|新たな異常なし| E0[終了コード 0]
+  J -->|ハング疑いだけ| E3[終了コード 3<br/>警告終了]
+  J -->|実行エラー・比較異常あり<br/>または自身の実行エラー| E6[終了コード 6<br/>失敗]
+  J -->|1 件 1 行| ST[標準エラーの alert 行]
+  E3 --> S[ジョブスケジューラの<br/>ジョブ監視・障害通知]
+  E6 --> S
+  S --> O[運用者]
+  ST --> O
+```
+
+### 終了コード
+
+| 終了コード | ジョブステータス | 条件 |
+|---|---|---|
+| `0` | 正常終了 | 新たに知らせる異常が無い(通知済みの異常だけが残っている場合も 0) |
+| `3` | 警告終了 | 新たに知らせる異常がハング疑い(`level=warning`)だけ。確報の比較 NG=3 と同じ読み方 |
+| `6` | 失敗 | background 実行エラー・速報クロスチェック異常(`level=error`)を新たに 1 件以上知らせた、または hang-detector 自身の実行エラー(管理 DB に接続・SELECT できない、印の置き場を読めない、成果物ルート読み取り失敗、監視記録・通知済みの印の保存失敗、通知済みの印の不正) |
+| `2` | 失敗 | 走査前の入力・設定エラー(何も走査しない) |
+
+- 同じ回にハング疑いとエラーの両方を見つけたら `6`(優先順位 6 > 3 > 0)
+
+### alert 行
+
+- 書式: `alert: level=<warning|error> kind=<通知種別> run_id=<run_id> role=<role> job_id=<job_id> elapsed_minutes=<n>`
+- 1 件 1 行。並び順は run_id 昇順 → role(`blue`、`green`、`rapid-crosscheck`)
+- `error:` / `warn:` / `info:` とは別の接頭辞 `alert:` を使う(出力チャネルの「stderr」の例外)。値は `key=value` 形式で、制御文字の表記の規則を適用する
+- 例:
+  - `alert: level=warning kind=hang-suspected run_id=20260830T113000-JOB001-3f9a1c2e role=green job_id=JOB001 elapsed_minutes=75`
+  - `alert: level=error kind=rapid-crosscheck-error run_id=20260830T113000-JOB001-3f9a1c2e role=rapid-crosscheck job_id=JOB001 elapsed_minutes=12`
+
+| 通知種別 `kind` | `level` | 運用者の推奨対処(UC「ハング検知ジョブの異常終了を確認する」) |
+|---|---|---|
+| `hang-suspected` | warning | 実行ホストのプロセスを確認する。正常に動いていれば静観する。ハングしていればプロセスを停止してから `abort-{role}.sh --run-id {run_id}` を実行する |
+| `background-exec-error` | error | `facade/{run_id}/{role}/stderr.log` を確認し、原因を取り除いてから background リラン専用ジョブ(`background-rerun.sh --source-run-id {run_id} --role {role}`)を実行する |
+| `rapid-crosscheck-error` | error | `rapid-crosscheck-result.sh --run-id {run_id}` で比較結果を確認する。この結果は調査用で、ジョブスケジューラへの応答には影響しない |
+
+### 再通知しない規則
+
+- 通知済みの異常は次回以降の見回りで再び知らせない。判定は監視状態の遷移規則を使う(判定結果に対応する監視状態が現在の通知済み状態と同じ、または現在の通知済み状態が終端なら出さない)。ハング疑いを知らせたあとで実行エラー・比較異常へ変わった場合は、別の種別として 1 回だけ知らせる
+- 現在の通知済み状態は、管理 DB を使う設定(RAPID_CROSSCHECK_MODE が off 以外)では監視記録の `monitor_status`、RAPID_CROSSCHECK_MODE=off では成果物ルート配下の通知済みの印(`$RELAY_GATE_ARTIFACT_ROOT/hang-detector-notified/<run_id>.<role>`。内容は通知済み状態の英字コード 1 行)
+- alert 行を出したあとで監視記録または印の保存に失敗した場合は、終了コード 6 で終え、その異常を次回も知らせる(知らせ漏れより重複を選ぶ)
+- 管理 DB を使う設定で管理 DB に接続・SELECT できない回は、現在の通知済み状態を読めないため alert 行を出さない。`error: management db connection failed conn_ref=...`(SELECT の失敗は `error: management db query failed ...`)の 1 行だけを出して終了コード 6 で終え、成果物の走査もしない。異常は通知済みにならないので、管理 DB に接続できた最初の回に通常の規則で一度だけ知らせる(契約 `shared_rules.hang_alert.db_unavailable`)
+- RAPID_CROSSCHECK_MODE=off で、窓内の対象の通知済みの印の内容が規定の値(英字コード 1 つ + LF)でない、または読めない場合は、対象ごとに `error: notified mark invalid run_id=... role=... path: ...` を 1 行出し、その対象を印が無いもの(監視中)として判定する。alert 行を出した対象と、判定が正常終了・中止済みの対象は印を規定の手順で書き直す。終了コードは 6 で、他の対象の判定は続ける(契約 `shared_rules.hang_alert.notified_mark.invalid`)
+- 対象ごとの行は run_id 昇順 → role(`blue`、`green`、`rapid-crosscheck`)の順に出し、1 つの対象の中は「印の不正の error 行 → alert 行(または `--verbose` の `info: alert skipped` 行)→ 保存失敗の error 行」の順。走査中の warn 行・`error: artifact root is not readable` 行・`--verbose` の `info: judged` 行は対象ごとの行より前。印の置き場を読めない回は `error: notified mark dir is not readable path: ...` の 1 行だけで終了コード 6(走査しない)。対象ごとの error 行は 1 対象 1 行で複数出してよい(エラーは 1 回だけの規則の例外)
+- 知らせない終端: `exitcode.txt` が無く `aborted.txt` がある監視対象(中止済み)と、ABORTED の速報比較依頼は判定 `COMPLETED` として監視記録を終端し、alert 行を出さない。完了通知の送信失敗は監視対象外(条件「完了通知失敗の扱い」)
+- 経過時間の傾向の確認は、ハング検知ジョブの出力(alert 行・実行ログ)と監視記録(`hang-detect-trend.sh`)で行う
+
+## ハウスキープの出力
+
+`housekeep.sh`(1 日 1 回の定期ジョブ)は、削除した件数を標準出力に固定順の `key=value` で出し、失敗を標準エラーに `error:` で 1 件 1 行出して終了コード 6 で終える。失敗の行は処理した順に出す。削除待ちの置き場の残りと孤立した印は名前の昇順(バイト順)、実行の単位は root_run_id の昇順に処理する(契約 `shared_rules.housekeep_rules.processing_sequence`)。判定できずに残した実行は `warn:` で知らせる(終了コードは変えない)。出力・終了コードの正本は `cli-command-contract.yaml` の `housekeep.sh`。
+
+| 終了コード | 条件 |
+|---|---|
+| `0` | 失敗なく終えた(削除件数 0 を含む) |
+| `2` | 走査前の入力・設定エラー(保持日数が正の整数でない、接続参照名の欠落など。何も削除しない) |
+| `6` | 管理 DB の接続・削除の失敗、成果物の移動・削除の失敗が 1 件以上(削除できたものは削除済み。次回の実行で残りを削除する) |
+
+- stdout の例: `retention_days=90` / `cutoff=2026-06-02T03:00:00` / `purged_pending_entries=0` / `deleted_run_units=12` / `deleted_runs=14` / `deleted_final_crosscheck_requests=3` / `deleted_orphan_marks=0` / `kept_units=2`(1 行 1 事実)
+
+## 共通オプション・環境変数
+
+### 共通オプション
+
+| オプション | 対象コマンド | 動作 |
+|---|---|---|
+| `--help` | 全コマンド | 使い方を stdout に出して終了コード 0。1 行目に `usage: {script} ...`、以降に引数・オプション・終了コードの一覧 |
+| `--yes` | `abort-blue.sh` / `abort-green.sh` / `abort-rapid-crosscheck.sh` / `abort-final-crosscheck.sh` | 停止確認プロンプトを省略して `yes` とみなす。ジョブスケジューラからの非対話起動用。ログに `answer=yes(--yes)` と記録する |
+| `--once` | `rapid-crosscheck-worker.sh` / `final-crosscheck-worker.sh` | 1 回だけ poll / claim / 実行して終了する(定期ジョブ運転用。NFR A.1.1.1 計画停止への配慮) |
+| `--verbose` | 全コマンド | `info:` を stderr に出す。中継系では実行ログにのみ出す |
+| `--limit N` | 参照系(`rapid-crosscheck-result.sh` / `run-lineage.sh` / `hang-detect-trend.sh`) | 出力行数の上限(既定 100) |
+| `--show-output` | `rapid-crosscheck-result.sh` | 比較ツールの stdout / stderr 本文を末尾に出す(段階的開示) |
+
+- オプションは `--kebab-case`。値は `--key value` 形式(`--key=value` は受け付けない。bash の `case` で単純に解析するため)
+- 未知のオプションは `error: unknown option option=--foo`、終了コード 2
+- 短縮形(`-h` 等)は提供しない
+
+### 環境変数(環境変数名と既定値は仮採用。todo)
+
+| 環境変数 | 用途 | 既定値 | 備考 |
+|---|---|---|---|
+| `RELAY_GATE_HOME` | relay-gate の配置ディレクトリ(スクリプトの所在) | スクリプト自身のディレクトリ(`$(dirname "$0")`) | 設定・成果物・ログの既定パスの解決に使う。slot runner と速報クロスチェック runner / worker の実体は feature flag(`BLUE_RUNNER` / `GREEN_RUNNER` / `RAPID_CROSSCHECK_RUNNER` / `RAPID_CROSSCHECK_WORKER`)で解決する(固定パス解決はしない) |
+| `RELAY_GATE_CONFIG_DIR` | 設定ファイル置き場(`feature-flag.env`、`blue-job-map.csv` / `green-job-map.csv`、`rapid-crosscheck.env` / `hang-detector.env` / `final-crosscheck.env` / `housekeep.env`) | `$RELAY_GATE_HOME/config` | 未設定かつ既定パスが無い場合は終了コード 2 |
+| `RELAY_GATE_ARTIFACT_ROOT` | 成果物ルート。`$RELAY_GATE_ARTIFACT_ROOT/facade/<run_id>/` に Runner Result を置く。同じ成果物ルート直下に通知済みの印の置き場 `hang-detector-notified/` と削除待ちの置き場 `housekeep-pending/` を置く | `$RELAY_GATE_HOME/var` | 書き込み不可は終了コード 6 |
+| `RELAY_GATE_LOG_DIR` | 実行ログの出力先(`{script}.log`) | `$RELAY_GATE_HOME/log` | 書き込み不可は stderr に `warn:` を出して処理は継続する |
+| `RELAY_GATE_NOW` | テスト専用の現在時刻注入(UTC ISO 8601 秒精度、`Z` 付き。例 `2026-08-30T12:45:00Z`)。設定時は全スクリプトの時刻取得(経過時間・`*_at` 列・`started-at.txt`・`aborted.txt`・`judged_at`・housekeep の cutoff)がこの値になる。`started-at.txt` / `aborted.txt` の中身はこの UTC 値のまま。run_id / final_crosscheck_id の時刻部・実行ログ・`*_at` 列・stdout の日時はこの UTC 値をプロセスのローカルタイムゾーン(`TZ`)へ変換した値(BDD の例示値は `TZ=UTC` 前提。`RELAY_GATE_NOW=2026-08-30T11:30:00Z` → run_id `20260830T113000`、ログ・stdout `2026-08-30T11:30:00`) | 未設定(実時刻) | 本番では設定しない。形式不正は終了コード 2。facade / background-rerun は runner にも引き継ぐ。run_id の乱数部は注入せず、テストでは形式パターンで照合する(`cli-command-contract.yaml` `environment_variables` / `shared_rules.run_id.test_verification`) |
+
+- 管理 DB の接続参照名・lease / poll / polling 上限の設定キーは `cli-command-contract.yaml` の `config_files`(`rapid-crosscheck.env` / `hang-detector.env` / `final-crosscheck.env` / `housekeep.env`)で定義する(本ファイルの範囲外)
+- slot runner は `feature-flag.env` を自分で読まない。`facade.sh` / `background-rerun.sh` が読み、runner へ環境変数で渡す: 上記 4 つ(`RELAY_GATE_CONFIG_DIR` / `RELAY_GATE_ARTIFACT_ROOT` / `RELAY_GATE_LOG_DIR`)と `RAPID_CROSSCHECK_MODE`、off 以外のとき `RAPID_CROSSCHECK_RUNNER`(完了通知の送信先実体)、通常起動では自 slot の `BLUE_IMPL` / `GREEN_IMPL`(runner が `execution-spec.json` の `slots.<role>.impl_version` に転記。復元起動 `--execution-spec` では渡さない)
+- 認証情報(SSH 鍵パス・DB パスワード)は環境変数の値として扱わず、参照名のみを設定に置く(arch CTP-002)
+
+## アクセシビリティ・運用配慮
+
+- 色だけで意味を伝えない(色を使わない)。重要度は `error:` / `warn:` / `info:` の接頭辞と、hang-detector の alert 行の `level=warning` / `level=error` と終了コード(3 / 6)で伝える
+- スクリーンリーダー向けに 1 行 1 事実、キー名は固定順。TSV はヘッダー行必須、列数 8 以内
+- 罫線・アスキーアート・絵文字・全角記号を出力しない(対話プロンプトの日本語文言を除く)
+- ログ・監査との整合: stdout に出した状態値と実行ログ・管理レコードの状態値は同じ英字コードを使う。中止・リランは指示者と応答を実行ログに残す(NFR E.7.1.1)。監査の正本はジョブスケジューラであり、relay-gate のログは 3 ヶ月保管(NFR C.6.1.1)の障害調査・警告傾向確認用
+- 出力は `grep` / `cut -f` / `awk -F'\t'` で処理できる。JSON・YAML パーサや jq を要求しない(エアーギャップ・bash 単独)
+- 大量出力(worker の常駐ログなど)は stdout ではなく実行ログファイルへ出す。stdout は 1 回の起動で人が読める分量(数十行)に収める
+- 長時間処理(final runner の polling 最大 8 時間)は進捗を stdout / stderr に出さず、実行ログに `INFO polling final_crosscheck_id=... status=RUNNING elapsed_minutes=...` を poll 間隔ごとに残す(キー名は `cli-command-contract.yaml` `final-crosscheck-runner.sh.stderr` と同じ)

@@ -1,4 +1,4 @@
-# digest of nfr/latest/nfr-grade.yaml section categories[id=E] (L720-991); source_sha256: 0283ce5aa1c4ada1b8836ec191174c23e526e329f29bc266dcc8d2137ea3accf
+# digest of nfr/latest/nfr-grade.yaml section categories[id=E] (L720-991); source_sha256: 71b7a2b971a9c5b57f2bbe1cfc360f3662d928ea9bb4be34af9396d49d74ac37
 # 派生物。正本は nfr-grade.yaml。編集しない
   - id: "E"
     name: "セキュリティ"
@@ -87,8 +87,8 @@
                 important: true
                 grade: 1
                 grade_description: "OS アカウントと SSH 鍵による認証。認証情報(SSH・管理 DB 接続)は値を保存せず参照名で管理"
-                reason: "実行先ホストへは実行ユーザーで SSH 接続し、execution-spec.json には認証情報の参照名のみを保存し、管理 DB への接続も速報クロスチェック設定の接続参照名(RAPID_DB_CONN_REF)で解決して値を置かない設計のため"
-                source_model: "外部システム: リモート実行ホスト(SSH) / 条件: 認証情報の非保存 / 情報: 速報クロスチェック設定"
+                reason: "実行先ホストへは実行ユーザーで SSH 接続し、execution-spec.json には認証情報の参照名のみを保存し、管理 DB への接続も接続参照名(速報クロスチェック設定の RAPID_DB_CONN_REF、ハング検知定期ジョブ設定の HANG_DB_CONN_REF、ハウスキープ設定のハウスキープ専用 DB ロールの接続参照名)で解決して値を置かない設計のため"
+                source_model: "外部システム: リモート実行ホスト(SSH) / 条件: 認証情報の非保存 / 情報: 速報クロスチェック設定、ハング検知定期ジョブ設定、ハウスキープ設定"
                 confidence: "high"
           - id: "E.5.2"
             name: "アクセス制御"
@@ -98,9 +98,9 @@
                 name: "アクセス制御"
                 important: true
                 grade: 1
-                grade_description: "ユーザ単位の制御(ジョブマップの user 列で解決する実行ユーザーと OS 権限。ローカル実行の slot では host / user を省略でき起動ユーザーの権限で実行)"
-                reason: "ジョブマップ(CSV)が job_id ごとに host / user 列で実行先と実行ユーザーを解決し、OS 権限で制御するため。ロール概念は RDRA に無い"
-                source_model: "情報: ジョブマップ(host / user 列) / 条件: ジョブマップ解決条件"
+                grade_description: "ユーザ単位の制御(ジョブマップの user 列で解決する実行ユーザーと OS 権限。ローカル実行の slot では host / user を省略でき起動ユーザーの権限で実行)。管理 DB は接続ロールで権限を分け、管理 DB の行の削除はハウスキープ専用の DB ロール(対象 6 テーブルの SELECT と DELETE だけ)に限り、業務用接続ロールには DELETE を与えない"
+                reason: "ジョブマップ(CSV)が job_id ごとに host / user 列で実行先と実行ユーザーを解決し、OS 権限で制御するため。利用者を区別するロール概念は RDRA に無いが、管理 DB の行の削除権限は条件「ハウスキープの削除順序と回復」によりハウスキープ専用の DB ロールへ分離する(方針資料: 削除権限だけを足したハウスキープ専用の DB ロール)"
+                source_model: "情報: ジョブマップ(host / user 列)、ハウスキープ設定 / 条件: ジョブマップ解決条件 / 条件: ハウスキープの削除順序と回復"
                 confidence: "high"
           - id: "E.5.3"
             name: "利用制限"
@@ -160,9 +160,9 @@
                 name: "監査ログ"
                 important: true
                 grade: 2
-                grade_description: "運用操作(中止・リラン)と状態遷移を run_id 付きの実行ログ・管理レコードで記録。監査の正本はジョブスケジューラ"
-                reason: "中止指示に指示者と応答を記録し、実行ログに run_id を残す設計だが、監査はジョブスケジューラの責務と定義されているため"
-                source_model: "情報: 中止指示、実行ログ / 条件: 実行履歴はジョブスケジューラの責務"
+                grade_description: "運用操作(中止・リラン)と状態遷移を run_id 付きの実行ログ・管理レコードで記録。監査の正本はジョブスケジューラ。relay-gate 側の管理レコードと成果物はハウスキープの保持日数(既定 90 日)を過ぎた終了済みの実行から削除されるため、それより長い期間の追跡はジョブスケジューラの実行履歴で行う"
+                reason: "中止指示に指示者と応答を記録し、実行ログに run_id を残す設計だが、監査はジョブスケジューラの責務と定義されているため。ハウスキープが保持日数を過ぎた管理レコードと成果物を削除するため、relay-gate 側の記録は保持日数内の追跡用に限られる"
+                source_model: "情報: 中止指示、実行ログ / 条件: 実行履歴はジョブスケジューラの責務 / 条件: ハウスキープの削除判定"
                 confidence: "medium"
           - id: "E.7.2"
             name: "不正監視"
@@ -243,7 +243,7 @@
                 grade: 0
                 grade_description: "WAFなし"
                 reason: "UI 画面や HTTP API を持たず CLI と定期ジョブのみのため対象外"
-                source_model: "条件: CLI とメールによる提示 / システム概要(interface_kind: cli)"
+                source_model: "条件: CLI による提示 / システム概要(interface_kind: cli)"
                 confidence: "high"
           - id: "E.10.2"
             name: "Webアプリケーション対策"

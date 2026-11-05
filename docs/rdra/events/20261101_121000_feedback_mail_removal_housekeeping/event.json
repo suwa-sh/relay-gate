@@ -1,0 +1,56 @@
+{
+  "schema_version": "distillery.rdra-feedback-event/v1",
+  "event_id": "20261101_121000_feedback_mail_removal_housekeeping",
+  "created_at": "2026-11-01T12:10:00Z",
+  "stage": "requirements",
+  "feedback_request": {
+    "feedback_request_id": "20261101_mail_removal_housekeeping",
+    "input_sha256": "7be2e54314163ff4cae802f01005fe771da312621c06ff123a43b09f562afb11",
+    "request_ids": [
+      "CR-e4ea8aaa-001",
+      "CR-e4ea8aaa-002"
+    ],
+    "work_unit_ids": [
+      "CR-e4ea8aaa-001#1",
+      "CR-e4ea8aaa-002#1"
+    ]
+  },
+  "members": [
+    {
+      "path": "rdra/events/20261101_121000_feedback_mail_removal_housekeeping/BUC.tsv",
+      "sha256": "6e19b923269e375800ec4c564787d6e320e8fe996266ceda0e53a84cad24f783"
+    },
+    {
+      "path": "rdra/events/20261101_121000_feedback_mail_removal_housekeeping/_changes.md",
+      "sha256": "2ab0d47ab1faad5fb36f22110a548f337299f659267333b5dc8c4172d12bc901"
+    },
+    {
+      "path": "rdra/events/20261101_121000_feedback_mail_removal_housekeeping/アクター.tsv",
+      "sha256": "97d3fc5cb3b2cc22a5b46a6f179aa8f1986e7783dbae22f899843078f121c07d"
+    },
+    {
+      "path": "rdra/events/20261101_121000_feedback_mail_removal_housekeeping/システム概要.json",
+      "sha256": "5accdd3cacd6e7085b0bd6e6e5960dc2021daf86f5836689ecaca8479666f052"
+    },
+    {
+      "path": "rdra/events/20261101_121000_feedback_mail_removal_housekeeping/バリエーション.tsv",
+      "sha256": "9a4fb9c44aee8a2eda856f0215dc2ae8b8d8d2ebb4bdb7c0a91cbef9beddd385"
+    },
+    {
+      "path": "rdra/events/20261101_121000_feedback_mail_removal_housekeeping/外部システム.tsv",
+      "sha256": "c8bd168df31485281419005343f57e1247068555b02b3933a344a424276a24ca"
+    },
+    {
+      "path": "rdra/events/20261101_121000_feedback_mail_removal_housekeeping/情報.tsv",
+      "sha256": "a8ecc03bb7d156c78b510e453b4d6c4e639e19a3aa72ef7bc68305a4d2fa45dc"
+    },
+    {
+      "path": "rdra/events/20261101_121000_feedback_mail_removal_housekeeping/条件.tsv",
+      "sha256": "1b2eb43a429f922222b4084bdfc32eac3b4e96ca68c7dfaaa941da2f64e2e8a8"
+    },
+    {
+      "path": "rdra/events/20261101_121000_feedback_mail_removal_housekeeping/状態.tsv",
+      "sha256": "90e7a4904dfdaec1d39ac53d691ea8e22a2cef3c8b76ff073eb07fbf49e52e72"
+    }
+  ]
+}

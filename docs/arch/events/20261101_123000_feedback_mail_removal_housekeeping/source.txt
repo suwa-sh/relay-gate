@@ -1,0 +1,9 @@
+メール通知の廃止とハウスキープ新設(2026-11-01 の前段 requirements / NFR 更新)への追従。ハング検知の異常通知をハング検知ジョブ自身の終了結果(警告終了 / 失敗)と標準エラーに改め、メール送信アダプタ・メール設定項目・通知メールのエンティティを除いた。ハウスキープ定期ジョブ(housekeep.sh)を tier-ops に置き、独立したハウスキープコンテキスト(SD-005 / BC-006)、ハウスキープ設定のエンティティ(E-028)、削除判定・削除順序と回復・専用 DB ロールの方針(SP-027 / SP-028 / CTR-008)を追加し、CTR-006 の手動削除前提を自動削除へ改めた。
+trigger_event: usdm:20261101_121000_feedback_mail_removal_housekeeping, rdra:20261101_121000_feedback_mail_removal_housekeeping, nfr:20261101_122000_feedback_mail_removal_housekeeping
+
+feedback_request_id: 20261101_mail_removal_housekeeping
+input_sha256: 7be2e54314163ff4cae802f01005fe771da312621c06ff123a43b09f562afb11
+request_ids: CR-e4ea8aaa-001, CR-e4ea8aaa-002
+direct_work_unit_ids: (none)
+causal_work_unit_ids: CR-e4ea8aaa-001#1, CR-e4ea8aaa-002#1
+stage_packet: docs/pipeline/feedback-runs/20261101_mail_removal_housekeeping/stage-packets/architecture.md

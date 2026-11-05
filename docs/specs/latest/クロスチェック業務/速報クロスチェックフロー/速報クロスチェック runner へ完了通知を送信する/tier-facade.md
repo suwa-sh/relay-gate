@@ -35,7 +35,7 @@ slot runner(`$BLUE_RUNNER` / `$GREEN_RUNNER`)の usecase `publish_runner_result`
 
 ## UC ロジック
 
-- **設定ファイルの読み込み(共通規約の参照)**: 読む設定ファイル(env / CSV)の入力の守備範囲は CLI 契約 `config_input_rules` に従う(形式(UTF-8 / LF)から外れた NUL バイト・不正な文字コード・BOM・CR は契約と同文の error 行で拒否して終了コード 2、読み込みは 1 時点の内容だけで判定、補助コマンドの失敗は終了コード 6。値は本 tier に複写しない。判定する BDD は UC「slot ごとのジョブマップを定義する」に置く)。stdout / stderr / 実行ログ / メール本文に出す任意入力の制御文字は `ui-design.md`「制御文字の表記」の可視表記にする。bash の最低版は 5.0(契約 `conventions.runtime_prerequisites`)
+- **設定ファイルの読み込み(共通規約の参照)**: 読む設定ファイル(env / CSV)の入力の守備範囲は CLI 契約 `config_input_rules` に従う(形式(UTF-8 / LF)から外れた NUL バイト・不正な文字コード・BOM・CR と、env の invalid line・同じキーが 2 行以上ある設定(`error: duplicate key key=<KEY> lines=<n1,n2,...> path: ...`。どちらの行の値も使わない。報告の順は `config_input_rules.env_files`)は契約と同文の error 行で拒否して終了コード 2、読み込みは 1 時点の内容だけで判定、補助コマンドの失敗は終了コード 6。値は本 tier に複写しない。判定する BDD は UC「slot ごとのジョブマップを定義する」に置く)。stdout / stderr / 実行ログに出す任意入力の制御文字は `ui-design.md`「制御文字の表記」の可視表記にする。bash の最低版は 5.0(契約 `conventions.runtime_prerequisites`)
 - **バリデーション**: 環境変数 `RAPID_CROSSCHECK_MODE` は foreground / background / off のみ(feature-flag.env の検証は facade / background-rerun の起動時に行い、列挙外は終了コード 2。UC「feature flag を設定する」)。判定は「off か off 以外か」だけで、foreground と background を区別しない。`RAPID_CROSSCHECK_RUNNER` の存在・実行可能性も同じ検証で確認済み。runner 起動後に `RAPID_CROSSCHECK_RUNNER` を起動できなかった場合は通知失敗として扱い、WARN を残して Runner Result は変えない(条件「完了通知失敗の扱い」)
 - **確認プロンプト**: なし
 - **冪等性**: 通知は 1 回だけ送る。受信側の条件付き UPDATE(先勝ち。既に値があれば更新せず 0)で二重通知・運用者の手動再実行は無害

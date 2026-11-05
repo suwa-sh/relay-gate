@@ -1,0 +1,123 @@
+schema_version: "1.0"
+artifact_type: "product_input"
+skill_type: "product"
+artifact_id: "product-relay-gate-input"
+title: "relay-gate 並行稼働実行基盤 ワークロード入力"
+status: "draft"
+generated_at: "2026-09-07T12:40:00"
+source_refs:
+  - "arch-design:20260907_122000_feedback_abort_consistency"
+  - "nfr-grade:20260907_120000_feedback_abort_consistency"
+decision_refs: []
+inputs_ref:
+  - "foundation-context"
+  - "shared-platform-context"
+
+workload:
+  name: "relay-gate 並行稼働実行基盤"
+  description: >-
+    既存実装(blue)と新実装(green)をジョブスケジューラの同一ジョブ定義から並行稼働させ、
+    クロスチェックで整合性を検証しながら段階的に切り替えるための feature flag 付き
+    ストラングラーファサード型の実行基盤。facade / slot runner / 速報・確報クロスチェック
+    (runner + worker)/ ハング検知 / ハウスキープ / リラン・中止 CLI のシェルスクリプト群と、
+    ジョブキュー兼管理 DB(RDB)、成果物・設定・実行ログのファイル共有で構成する。
+    運用者への異常の通知はハング検知ジョブ自身の終了結果と標準エラーで行い、ジョブスケジューラの
+    障害通知で届ける。メール等の通知送信手段と UI 画面・HTTP API は持たない。
+  target_clouds:
+    - "onprem"
+  deployment_constraints:
+    - "エアーギャップ環境のオンプレミス Linux。実行時にインターネット接続・外部 SaaS を要求しない"
+    - "構成要素はシェルスクリプト実行ホスト(複数、SSH 到達)+ RDB + ファイル共有のみ(メール中継などの通知送信経路は持たない)"
+    - "facade / runner はジョブスケジューラの実行ホスト上で動作する。確報 worker は DB セグメント上で動作する"
+    - "管理 DB は RDB 1 種・単一インスタンス。速報側と確報側のテーブルを分離する。MQ は導入しない"
+    - "成果物に案件固有名を記載しない(中立表現)"
+
+# ワークロード特性(arch-design.yaml + nfr-grade.yaml からの変換。根拠は _inference.md)
+workload_type: "batch"
+
+availability_target:
+  sla: "99%"
+  failover: "manual"
+  notes: "ほぼ終日稼働・1 時間程度の計画停止のみ許容(A.1.1.1 Lv3 / A.1.1.3 Lv2)。管理 DB は単一構成で部品冗長化(A.2.1.1 Lv2。2026-09-05 に利用者が適用側で上書き可能な既定値として確定)に留める(CTP-006)"
+
+latency_sensitivity:
+  category: "batch"
+  target_p99: "none"
+  notes: "API の p99 要件は無い。facade の起動・中継と中止 / リラン CLI の応答は 10 秒以内、日次確報は夜間バッチウィンドウ 8 時間以内を目標にする(CTP-007 / B.2.1.1 Lv2 / B.2.2.1 Lv2)"
+
+data_sensitivity:
+  classification: "internal"
+  pii: false
+  encryption: "in_transit_only"
+  compliance: []
+  data_residency: "on_premises_air_gapped"
+  notes: "扱うデータは設定・実行管理レコード・Runner Result・実行ログ。個人情報属性は無い。暗号化は SSH 経路のみ(E.6.1.1 Lv0 / E.6.1.2 Lv1)"
+
+traffic_pattern:
+  type: "scheduled"
+  baseline_rps: 1
+  spike_multiplier: 3
+  notes: "ジョブスケジューラの夜間バッチ・日次確報・5 分ごとのハング検知定期ジョブ・1 日 1 回のハウスキープ定期ジョブが起動源。管理 DB 書き込みは 〜10 TPS(CTP-007)"
+
+consistency_needs:
+  type: "strong"
+  notes: "run_id 主キーの一意作成と worker の claim / lease 排他を RDB のトランザクションで保証する(CTP-004)"
+
+recovery_target:
+  rpo: "4h"
+  rto: "12h"
+  backup: "daily"
+  notes: "NFR A.4.1.1 / A.4.1.2 Lv2 の範囲内で、tier-datastore ポリシー「日次フル+差分バックアップ、数時間以内の RPO、半日以内の RTO」を採用。遠隔地 DR・業務継続の代替手段は持たない(A.3.1.1 / A.3.1.2 Lv0。2026-09-05 に利用者が適用側で上書き可能な既定値として確定)"
+
+observability_needs:
+  metrics:
+    - "cpu"
+    - "memory"
+    - "disk"
+    - "network"
+    - "latency"
+    - "error_rate"
+    - "throughput"
+  logs:
+    - "diagnostic"
+    - "audit"
+  sli:
+    - "availability"
+    - "latency"
+    - "error_rate"
+    - "throughput"
+  alerting:
+    - "health_check"
+    - "error_rate"
+  notes: "監視は hang-detector(ジョブスケジューラの定期ジョブ)による通知のみ。その回に新たに見つけた異常を標準エラーに 1 件 1 行で出し、異常なしは正常終了、ハング疑い(warning)だけなら警告終了、background 実行エラー / 速報クロスチェック異常(error)が 1 件でもあれば失敗で終える。運用者へはジョブスケジューラの既存のジョブ監視・障害通知で届く(relay-gate はメール等の通知送信手段を持たない)。通知済みの異常は再通知せず(RAPID_CROSSCHECK_MODE=off では成果物ルート配下の通知済みの印で判定)、保存に失敗した異常は次回も知らせる。完了通知の送信失敗は自動検知の対象外。中止済み run(並行稼働実行が ABORTED、または完了通知の対象 slot の slot 実行が ABORTED(aborted.txt 公開済み)のいずれか)で速報クロスチェック runner が比較依頼を作成しなかった事実、および worker が claim 後の RUNNING への条件付き UPDATE が 0 件(abort-rapid-crosscheck で ABORTED 済み)で比較を開始しなかった事実は実行ログにのみ残り、ハング検知の通知対象ではない。運用者は速報比較依頼を REQUESTED / CLAIMED / RUNNING のいずれでも abort-rapid-crosscheck で中止できる(確報比較依頼は RUNNING のみ)。監査の正本はジョブスケジューラ、基盤ログは 3 ヶ月保管(C.6.1.1 Lv2。2026-09-05 に利用者が既定値として確定)。保持日数(既定 90 日)を過ぎた終了済みの実行の成果物と管理 DB の行はハウスキープ定期ジョブ(1 日 1 回)が削除するため、それより長い追跡はジョブスケジューラの実行履歴で行う"
+
+cost_posture:
+  strategy: "cost_optimized"
+  notes: "既存のジョブスケジューラ実行ホスト・DB ホストへ相乗りし、追加ホスト・ライセンスを最小化する"
+
+# データストア / 外部依存要素(arch data_architecture.storage_mapping から抽出)
+elements:
+  - id: "management_db"
+    category: "database"
+    description: "ジョブキュー兼管理 DB。リレーショナル・強整合性・単一インスタンス。速報側と確報側のテーブルを分離。接続ロールを分け、業務用ロールは DELETE を持たず、保持日数を過ぎた終端済みの行の削除はハウスキープ専用ロール(6 テーブルへの SELECT / DELETE のみ)だけが 1 トランザクションで行う。量は保持日数分で頭打ちになる。管理 DB を使う設置(RAPID_CROSSCHECK_MODE が off 以外、または確報クロスチェックを使う設置)でハウスキープ設定の接続参照名が無い・空なら、ハウスキープは設定エラーで何も削除せずに終わる(行が削除されないまま増え続ける状態にはならない)。管理 DB に接続しないのは管理 DB を一切使わない設置(RAPID_CROSSCHECK_MODE=off で確報クロスチェック worker の設定が無く、ハウスキープ設定の接続参照名が無い・空)だけで、この設置では管理 DB の行は新たに増えないが、off 以外の期間に作られた実行の行が残る"
+    entity_refs: ["E-013", "E-014", "E-015", "E-016", "E-017", "E-019", "E-020", "E-021", "E-023", "E-024"]
+  - id: "artifact_store"
+    category: "storage"
+    description: "成果物ディレクトリ(facade/<run_id>/ の Runner Result: started-at.txt / stdout.log / stderr.log / exitcode.txt / aborted.txt(中止時のみ)と execution-spec.json)。POSIX ファイルシステム。一時ファイル → リネームの原子的確定が必要。slot 実行の状態は exitcode.txt / aborted.txt の有無と値から導出する(ファイル正本)。成果物ルート配下に、RAPID_CROSSCHECK_MODE=off 時のハング検知の通知済みの印と、ハウスキープの削除待ちの置き場(場所とファイル名は仕様で確定)を置く。置き場への移動は同一ファイルシステム内の rename で行う。量は保持日数(既定 90 日)分で頭打ちになる"
+    entity_refs: ["E-009", "E-010", "E-011", "E-014"]
+  - id: "config_store"
+    category: "storage"
+    description: "設定ファイル(feature flag: env 形式 9 キー / ジョブマップ: CSV 形式(<role>-job-map.csv)/ ハング検知定期ジョブ設定: env 形式(管理 DB 接続参照名と、ハング疑い上限・走査窓の任意の運用チューニング値 2 キーを持ち得る。接続参照名は RAPID_CROSSCHECK_MODE が off 以外のときだけ必須)/ ハウスキープ設定(保持日数。既定 90 日と、ハウスキープ専用 DB ロールの接続参照名。接続参照名は RAPID_CROSSCHECK_MODE が off 以外、または確報クロスチェックを使う設置では必須で、無い・空なら設定エラーで何も削除しない。省略・空にできるのは管理 DB を一切使わない設置だけで、そのときハウスキープは管理 DB に接続しない。ファイル名・キー名は仕様で確定)/ 速報クロスチェック設定: env 形式 rapid-crosscheck.env(RAPID_DB_CONN_REF / RAPID_LEASE_SEC / RAPID_POLL_INTERVAL_SEC と速報比較ツールの起動コマンド 1 行。速報有効時に facade・slot runner・速報クロスチェック runner・速報 worker が起動のたびに読む。off では不要)/ 確報クロスチェック worker 設定: env 形式 final-crosscheck.env(確報 worker の DB 接続参照と確報比較ツールの起動コマンド 1 行。確報 worker が起動のたびに読む)/ 適用文書)。比較対象の定義は比較ツール側が持ち、relay-gate はジョブ ID ごとの比較定義 CSV・対象カタログを持たない。適用側が版管理して配置。設定版は持たず、マップ版はジョブマップ側の任意列とする。認証情報は参照名のみで値を置かない"
+    entity_refs: ["E-001", "E-002", "E-003", "E-004", "E-005", "E-006", "E-026", "E-027", "E-028"]
+  - id: "execution_log_store"
+    category: "storage"
+    description: "各スクリプトの実行ログファイル。3 ヶ月保管。行の日時はホストのローカルタイムゾーン(ISO 8601 秒精度、タイムゾーン指示子なし)で run_id の時刻部と同じ時刻軸。UTC への統一はしない"
+    entity_refs: ["E-012", "E-025"]
+  - id: "script_runtime_hosts"
+    category: "compute"
+    description: "ジョブスケジューラ実行ホスト(facade / runner / rapid worker / ops CLI)、DB セグメントの確報 worker ホスト、SSH 到達可能な実装スクリプト実行ホスト"
+    entity_refs: []
+  - id: "job_scheduler_integration"
+    category: "external_integration"
+    description: "ジョブ定義から facade / final-crosscheck-runner / hang-detector / housekeep / background-rerun を起動する既存のジョブスケジューラ。実行履歴・監査の正本。hang-detector の終了結果(正常終了 / 警告終了 / 失敗)を判定し、既存の障害通知で運用者へ届ける唯一の通知経路"
+    entity_refs: ["E-009", "E-012"]

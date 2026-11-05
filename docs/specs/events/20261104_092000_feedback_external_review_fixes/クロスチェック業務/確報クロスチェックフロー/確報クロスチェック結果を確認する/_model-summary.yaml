@@ -1,0 +1,22 @@
+uc: "確報クロスチェック結果を確認する"
+business: "クロスチェック業務"
+buc: "確報クロスチェックフロー"
+
+bounded_context_id: "BC-003"
+
+models:
+  - name: "RelayOutput"
+    tier: "tier-final-crosscheck"
+    layer: "presentation"
+    type: "view-model"
+    rdra_info: "ジョブスケジューラ応答"
+  - name: "StoredResult"
+    tier: "tier-final-crosscheck"
+    layer: "domain"
+    type: "value-object"
+    rdra_info: "比較ツール実行結果"
+
+tables: []
+
+kvs: []
+object_storage: []

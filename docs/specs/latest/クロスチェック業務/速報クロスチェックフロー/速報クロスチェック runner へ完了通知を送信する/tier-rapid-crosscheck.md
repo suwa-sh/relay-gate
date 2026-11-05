@@ -25,7 +25,7 @@
 - **設定ファイル**: `$RELAY_GATE_CONFIG_DIR/rapid-crosscheck.env`(情報「速報クロスチェック設定」。所有者は基盤適用設計者(設定所有区分)。契約 `cli-command-contract.yaml` の config_files が正。キー定義は UC「速報比較依頼を claim する」tier-rapid-crosscheck.md「設定ファイル」)
   | キー | 必須 | 説明 |
   |---|---|---|
-  | `RAPID_DB_CONN_REF` | Yes | 速報管理 DB 接続情報の参照名(情報「速報クロスチェック設定」の属性「管理 DB 接続参照名」。値は置かず参照名のみ)。本コマンドは RAPID_CROSSCHECK_MODE が off 以外のときだけ起動されるため常に必須。`RAPID_LEASE_SEC` / `RAPID_POLL_INTERVAL_SEC` は本コマンドでは使わない |
+  | `RAPID_DB_CONN_REF` | Yes | 管理 DB 接続情報の参照名(情報「速報クロスチェック設定」の属性「管理 DB 接続参照名」。値は置かず参照名のみ)。解決先は他の管理 DB 接続参照名と同じ 1 つの管理 DB(参照名の文字列は違ってよい。解決先が同じことは導入する側が確かめ、relay-gate は検査しない。CLI 契約 `conventions.credentials`)。本コマンドは RAPID_CROSSCHECK_MODE が off 以外のときだけ起動されるため常に必須。`RAPID_LEASE_SEC` / `RAPID_POLL_INTERVAL_SEC` は本コマンドでは使わない |
   - ファイル不在は `error: config file not found path: <path>`、`RAPID_DB_CONN_REF` 欠落は `error: option required option=RAPID_DB_CONN_REF path: <path>` で終了コード 2(ui-design.md の全コマンド共通定型文。管理 DB へは接続しない)。本コマンドは feature-flag.env を読まない(off では slot runner が起動しない)
 
 ## 出力契約
@@ -43,7 +43,7 @@
 
 ## UC ロジック
 
-- **設定ファイルの読み込み(共通規約の参照)**: 読む設定ファイル(env / CSV)の入力の守備範囲は CLI 契約 `config_input_rules` に従う(形式(UTF-8 / LF)から外れた NUL バイト・不正な文字コード・BOM・CR は契約と同文の error 行で拒否して終了コード 2、読み込みは 1 時点の内容だけで判定、補助コマンドの失敗は終了コード 6。値は本 tier に複写しない。判定する BDD は UC「slot ごとのジョブマップを定義する」に置く)。stdout / stderr / 実行ログ / メール本文に出す任意入力の制御文字は `ui-design.md`「制御文字の表記」の可視表記にする。bash の最低版は 5.0(契約 `conventions.runtime_prerequisites`)
+- **設定ファイルの読み込み(共通規約の参照)**: 読む設定ファイル(env / CSV)の入力の守備範囲は CLI 契約 `config_input_rules` に従う(形式(UTF-8 / LF)から外れた NUL バイト・不正な文字コード・BOM・CR と、env の invalid line・同じキーが 2 行以上ある設定(`error: duplicate key key=<KEY> lines=<n1,n2,...> path: ...`。どちらの行の値も使わない。報告の順は `config_input_rules.env_files`)は契約と同文の error 行で拒否して終了コード 2、読み込みは 1 時点の内容だけで判定、補助コマンドの失敗は終了コード 6。値は本 tier に複写しない。判定する BDD は UC「slot ごとのジョブマップを定義する」に置く)。stdout / stderr / 実行ログに出す任意入力の制御文字は `ui-design.md`「制御文字の表記」の可視表記にする。bash の最低版は 5.0(契約 `conventions.runtime_prerequisites`)
 - **バリデーション**: presentation で上表の形式検証(サブコマンド・run_id・job_id・exit_code。成果物のファイルパスは受け取らない)
 - **確認プロンプト**: なし
 - **冪等性(先勝ち。契約 idempotency と同じ)**: `UPDATE rapid_runs SET blue_status=?, blue_completed_at=? WHERE run_id=? AND blue_status IS NULL`。同一 run_id + role の 2 回目以降の通知は更新 0 行となり、既存値を変更せず終了コード 0(stderr には何も出さず、実行ログに `INFO completion already registered` を残す)。通知値が既存値と異なっても既存値を保持する(同一 run の同一 role が異なる結果で通知されることは Runner Result Contract 上あり得ない)。運用者が通知失敗の復旧として同じ引数で再実行する場合もこの規則で安全

@@ -25,13 +25,15 @@
 
 | キー | 型 | 必須 | 既定値 | 検証ルール |
 |------|---|------|-------|-----------|
-| `FINAL_COMPARE_COMMAND` | string | Yes | — | 確報の比較ツール起動コマンド 1 行(プレースホルダ無し)。worker が使う(本 UC では読まない)。検証は UC「比較ツールで日次全量比較を実行して結果を保存する」の `validate-config.sh --final-crosscheck` が所有する |
-| `FINAL_POLL_INTERVAL_SEC` | integer | No | 60 | 1 以上の整数 |
-| `FINAL_POLL_LIMIT_SEC` | integer | No | 28800(8 時間) | 1 以上の整数(cli-command-contract.yaml `integer(>=1)`。`FINAL_POLL_INTERVAL_SEC` より小さい値は最初の polling で上限超過となるが、検証エラーにはしない) |
-| `FINAL_WORKER_POLL_INTERVAL_SEC` | integer | No | 30 | worker が使う(本 UC では読まない) |
-| `FINAL_LEASE_MINUTES` | integer | No | 10 | worker が使う(本 UC では読まない) |
-| `FINAL_DB_CONN_REF` | string | Yes | — | 管理 DB 接続情報の参照名(値は置かない。CTP-002)。解決方法は `_cross-cutting/datastore/` に従う |
+| `FINAL_COMPARE_COMMAND` | string | Yes(worker) | — | 確報の比較ツール起動コマンド 1 行(プレースホルダ無し)。worker が使い、DB セグメントの置き場のファイルにだけ置く(本 UC では読まず、欠落も検査しない)。検証は UC「比較ツールで日次全量比較を実行して結果を保存する」の `validate-config.sh --final-crosscheck` が所有する |
+| `FINAL_POLL_INTERVAL_SEC` | integer | No | 60 | 正の整数(`^[1-9][0-9]{0,8}$`。違反は `error: invalid value key=FINAL_POLL_INTERVAL_SEC value=... path: ...` + `hint: use a positive integer` で終了コード 2) |
+| `FINAL_POLL_LIMIT_SEC` | integer | No | 28800(8 時間) | 正の整数(`^[1-9][0-9]{0,8}$`。違反は `error: invalid value key=FINAL_POLL_LIMIT_SEC value=... path: ...` + `hint: use a positive integer` で終了コード 2)(cli-command-contract.yaml `integer(>=1)`。`FINAL_POLL_INTERVAL_SEC` より小さい値は最初の polling で上限超過となるが、検証エラーにはしない) |
+| `FINAL_WORKER_POLL_INTERVAL_SEC` | integer | No | 30 | worker が使う(本 UC では読まず、値も検査しない) |
+| `FINAL_LEASE_MINUTES` | integer | No | 10 | worker が使う(本 UC では読まず、値も検査しない) |
+| `FINAL_DB_CONN_REF` | string | Yes | — | 管理 DB 接続情報の参照名(値は置かない。CTP-002)。参照名から接続情報への解決は適用側の運用手順に委ねる。実行ホストの置き場の値は、確報 worker が読む DB セグメントの置き場の値と同じ 1 つの管理 DB に解決されること(この runner が登録した依頼を worker が同じキューから取得するため)。解決先は他の管理 DB 接続参照名と同じ 1 つの管理 DB(参照名の文字列は違ってよい。解決先が同じことは導入する側が確かめ、relay-gate は検査しない。CLI 契約 `conventions.credentials`) |
 
+- 起動時の検査の順(契約 `config_files.final-crosscheck.env` note): (1) ファイルの存在(不在は `error: config file not found path: ...`)・読み取り(読めないときは `error: config file is not readable path: ...`)→ (2) 入力の守備範囲(契約 `config_input_rules.env_files` の (i)(ii)。違反があればその段の error 行を全件出して止める)→ (3) 必須キー `FINAL_DB_CONN_REF` の欠落・空 → (4) `FINAL_POLL_INTERVAL_SEC` → `FINAL_POLL_LIMIT_SEC` の値。(1)(3)(4) は最初の違反の error 行(と hint)1 件だけを出して止める。どの段でも終了コード 2 で、管理 DB には接続せず依頼を登録しない。未知キーは warn を出さない(validate-config.sh は出す)
+- runner が読むのは、実行ホストの置き場に構築手順が配置したファイル(worker のファイルとは別。契約 `config_files.final-crosscheck.env` note)。このファイルが持つのは `FINAL_DB_CONN_REF`(必須)と `FINAL_POLL_INTERVAL_SEC` / `FINAL_POLL_LIMIT_SEC`(任意)だけで、上の表の worker が使うキー(`FINAL_COMPARE_COMMAND` / `FINAL_WORKER_POLL_INTERVAL_SEC` / `FINAL_LEASE_MINUTES`)は DB セグメントの置き場のファイルにだけ置く。worker のキーが実行ホストのファイルに残っていても runner は読まず、エラーにも warn にもしない
 - 本 UC は比較対象の設定ファイル(対象カタログ・ジョブ ID ごとの比較定義)を読まない。比較対象は比較ツール側が定義する(適用側で定義する事項)
 
 ## 出力契約
@@ -41,19 +43,20 @@
 - **終了コード**(中継に至る前):
   | コード | 意味 | 条件 |
   |-------|------|------|
-  | 2 | 入力・設定検証エラー | 未知のオプション、業務上の引数が渡された、`final-crosscheck.env` 不在または必須キー欠落 |
+  | 2 | 入力・設定検証エラー | 未知のオプション、業務上の引数が渡された、`final-crosscheck.env` 不在・読み取り不可・入力の守備範囲の違反、`FINAL_DB_CONN_REF` の欠落・空、`FINAL_POLL_INTERVAL_SEC` / `FINAL_POLL_LIMIT_SEC` が正の整数でない |
   | 6 | 実行エラー | 管理 DB 接続・INSERT・SELECT 失敗、polling 上限超過(`FINAL_POLL_LIMIT_SEC`)、内部エラー |
   | 保存済み exit_code | 無加工中継 | 終端状態到達後(UC「保存済みの確報結果をジョブスケジューラへ返す」) |
 
 - エラーメッセージ(1 回だけ出す。CLR-003):
   - `error: unknown option option=--business-date`(業務上の引数・未知のオプション。終了コード 2)
-  - `error: config file not found path: /etc/relay-gate/final-crosscheck.env` / `error: option required option=FINAL_DB_CONN_REF path: /etc/relay-gate/final-crosscheck.env`(終了コード 2)
+  - `error: config file not found path: /etc/relay-gate/final-crosscheck.env` / `error: config file is not readable path: /etc/relay-gate/final-crosscheck.env` / `error: option required option=FINAL_DB_CONN_REF path: /etc/relay-gate/final-crosscheck.env`(終了コード 2)
+  - `error: invalid value key=FINAL_POLL_INTERVAL_SEC|FINAL_POLL_LIMIT_SEC value=... path: /etc/relay-gate/final-crosscheck.env` + `hint: use a positive integer`(終了コード 2)
   - `error: management db query failed final_crosscheck_id=...`(終了コード 6)
   - `error: polling limit exceeded final_crosscheck_id=... status=... limit_sec=28800`(status は超過時点の依頼 status。実行ログ `INFO polling ...` にも残す)+ `hint: the request is left unchanged; check final-crosscheck-worker.sh, then abort with abort-final-crosscheck.sh --run-id ... if needed`(終了コード 6)
 
 ## UC ロジック
 
-- **設定ファイルの読み込み(共通規約の参照)**: 読む設定ファイル(env)の入力の守備範囲は CLI 契約 `config_input_rules` に従う(形式(UTF-8 / LF)から外れた NUL バイト・不正な文字コード・BOM・CR は契約と同文の error 行で拒否して終了コード 2、読み込みは 1 時点の内容だけで判定、補助コマンドの失敗は終了コード 6。値は本 tier に複写しない)。stdout / stderr / 実行ログに出す任意入力の制御文字は `ui-design.md`「制御文字の表記」の可視表記にする。bash の最低版は 5.0(契約 `conventions.runtime_prerequisites`)
+- **設定ファイルの読み込み(共通規約の参照)**: 読む設定ファイル(env)の入力の守備範囲は CLI 契約 `config_input_rules` に従う(形式(UTF-8 / LF)から外れた NUL バイト・不正な文字コード・BOM・CR と、env の invalid line・同じキーが 2 行以上ある設定(`error: duplicate key key=<KEY> lines=<n1,n2,...> path: ...`。どちらの行の値も使わない。報告の順は `config_input_rules.env_files`)は契約と同文の error 行で拒否して終了コード 2、読み込みは 1 時点の内容だけで判定、補助コマンドの失敗は終了コード 6。値は本 tier に複写しない)。stdout / stderr / 実行ログに出す任意入力の制御文字は `ui-design.md`「制御文字の表記」の可視表記にする。bash の最低版は 5.0(契約 `conventions.runtime_prerequisites`)
 - **バリデーション**: 受け付けるのは `--verbose` / `--help` のみ。業務上の引数・未知のオプションは終了コード 2。feature flag ファイルは読まない(確報クロスチェック非起動)
 - **確認プロンプト**: なし
 - **冪等性**: 起動のたびに新しい final_crosscheck_id で依頼を 1 件登録する(複数回起動すれば依頼は複数件になる。再実行はジョブスケジューラの正規ジョブで行う前提)。polling 中は状態を UPDATE しない
@@ -102,6 +105,8 @@
 
 ## ティア完了条件(BDD)
 
+以下のシナリオは、Given で設定ファイルの内容を書き切っていない限り(「〜の行だけ」と書いていない限り)、final-crosscheck.env に `FINAL_DB_CONN_REF=relaygate-db` がある前提とする。
+
 ```gherkin
 Feature: 確報比較依頼を登録して終端状態まで待機する - 確報クロスチェックティア
 
@@ -114,7 +119,7 @@ Feature: 確報比較依頼を登録して終端状態まで待機する - 確�
     And 終了コード 0 で stdout に "all targets matched" が出る
 
   Scenario: polling 上限超過で終了コード 6
-    Given final-crosscheck.env に FINAL_POLL_INTERVAL_SEC=1 FINAL_POLL_LIMIT_SEC=2 がある
+    Given final-crosscheck.env に FINAL_DB_CONN_REF=relaygate-db FINAL_POLL_INTERVAL_SEC=1 FINAL_POLL_LIMIT_SEC=2 がある
     And worker が稼働していない
     When `final-crosscheck-runner.sh` を業務上の引数なしで実行する
     Then 終了コード 6 で stderr に "error: polling limit exceeded" と "hint: the request is left unchanged" が出る
@@ -124,6 +129,19 @@ Feature: 確報比較依頼を登録して終端状態まで待機する - 確�
     When `final-crosscheck-runner.sh --catalog-version v3` を実行する
     Then 終了コード 2 で stderr に "error: unknown option option=--catalog-version" が出る
     And final_crosscheck_requests に行は追加されない
+
+  Scenario: worker だけが使うキーが無い・不正でも runner は止まらない
+    Given RELAY_GATE_CONFIG_DIR/final-crosscheck.env が FINAL_DB_CONN_REF=relaygate-db、FINAL_POLL_INTERVAL_SEC=1、FINAL_POLL_LIMIT_SEC=10、FINAL_LEASE_MINUTES=abc の 4 行だけで、FINAL_COMPARE_COMMAND の行は無い
+    And 別プロセスが 3 秒後に該当依頼を status=SUCCEEDED exit_code=0 stdout="all targets matched" stderr="" に更新する
+    When `final-crosscheck-runner.sh` を業務上の引数なしで実行する
+    Then final_crosscheck_requests に status=REQUESTED の行が INSERT され、終了コード 0 で stdout に "all targets matched" が出る
+    And stderr に `error: option required` / `error: invalid value` で始まる行は無い
+
+  Scenario: polling 上限が正の整数でない
+    Given RELAY_GATE_CONFIG_DIR/final-crosscheck.env に FINAL_DB_CONN_REF=relaygate-db、FINAL_POLL_LIMIT_SEC=0 の行がある
+    When `final-crosscheck-runner.sh` を業務上の引数なしで実行する
+    Then 終了コード 2 で stderr は `error: invalid value key=FINAL_POLL_LIMIT_SEC value=0 path: $RELAY_GATE_CONFIG_DIR/final-crosscheck.env` と `hint: use a positive integer` の 2 行だけである
+    And 管理 DB へは接続せず、final_crosscheck_requests に行は追加されない
 
   Scenario: 管理 DB に接続できない
     Given FINAL_DB_CONN_REF が解決できない接続先を指す

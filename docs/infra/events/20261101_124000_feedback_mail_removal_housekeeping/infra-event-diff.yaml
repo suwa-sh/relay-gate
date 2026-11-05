@@ -1,0 +1,97 @@
+meta:
+  event_id: "20261101_124000_feedback_mail_removal_housekeeping"
+  trigger_event: "usdm:20261101_121000_feedback_mail_removal_housekeeping, rdra:20261101_121000_feedback_mail_removal_housekeeping, nfr:20261101_122000_feedback_mail_removal_housekeeping, arch:20261101_123000_feedback_mail_removal_housekeeping"
+  created_at: "2026-11-01T12:40:00Z"
+  mode: "differential"
+  mcl_rerun: "skipped_targeted_update"
+  mcl_rerun_reason: "translation(workload_type / availability_tier / latency / data_classification / traffic / consistency / cost_posture / target_clouds)は無変更。上流の変更は、メール通知の廃止(異常はハング検知ジョブ自身の終了結果と標準エラーでジョブスケジューラの障害通知へ)と、ハウスキープ定期ジョブ(tier-ops の housekeep.sh、保持日数 既定 90 日、削除待ちの置き場への rename、専用 DB ロール)の新設で、ティア数・配置セグメント・ストレージ種別・復旧目標は変わらない。MCL 出力のうちメール通知の canonical element・マッピング・実装コンポーネント・IaC ロールの削除と、管理 DB ロール・成果物・設定・ジョブスケジューラ連携・監視・コスト・適合性への追記を、該当箇所の差分更新で行った(MCL product-design の全量再実行は行わない)"
+feedback_request:
+  feedback_request_id: "20261101_mail_removal_housekeeping"
+  input_sha256: "7be2e54314163ff4cae802f01005fe771da312621c06ff123a43b09f562afb11"
+  request_ids: ["CR-e4ea8aaa-001","CR-e4ea8aaa-002"]
+  work_unit_ids: ["CR-e4ea8aaa-001#1","CR-e4ea8aaa-002#1"]
+changes:
+  event_id: "20261101_124000_feedback_mail_removal_housekeeping"
+  created_at: "2026-11-01T12:40:00Z"
+  source: "feedback request 20261101_mail_removal_housekeeping(メール通知の廃止とハウスキープの新設。USDM / RDRA / NFR / arch 差分)に基づくインフラ設計の差分更新"
+  arch_event_ref: "20261101_123000_feedback_mail_removal_housekeeping"
+  nfr_event_ref: "20261101_122000_feedback_mail_removal_housekeeping"
+  translation:
+    unchanged: true
+  mcl_execution:
+    status: "completed"
+    completed_at: "2026-11-01T12:40:00Z"
+    outputs_updated:
+      - path: "docs/mcl/product/input/product-input.yaml"
+        change: "workload の説明と deployment_constraints から組織内 SMTP を外し、通知をハング検知ジョブの終了結果とジョブスケジューラの障害通知へ改めた。observability notes を終了結果(正常終了 / 警告終了 / 失敗)・標準エラー 1 件 1 行・通知済みの除外へ改め、保持日数による削除を追記。elements から mail_notification を削除し、execution_log_store の entity_refs から E-022 を除去、config_store にハウスキープ設定(E-028)、management_db に専用ロール、artifact_store に通知済みの印と削除待ちの置き場、job_scheduler_integration に housekeep と唯一の通知経路を追記。product-input.yaml(イベント直下のコピー)も同一内容"
+        work_units: ["CR-e4ea8aaa-001#1","CR-e4ea8aaa-002#1"]
+      - path: "docs/mcl/product/output/product-workload-model.yaml"
+        change: "canonical element product.messaging.mail_notification(REQ-MAIL-001 / 002)を削除し、script_runtime_hosts の依存をジョブスケジューラ連携へ差し替え、メール送信コマンドの前提を外した。alerting_channel をジョブスケジューラの障害通知へ、ハング検知定期ジョブ設定を HANG_DB_CONN_REF だけへ改めた。REQ-DB-007(業務用ロールに DELETE なし、ハウスキープ専用ロール)・REQ-ART-004(削除待ちの置き場と通知済みの印)・REQ-SCH-003(終了結果による通知)を追加し、REQ-SCH-002 に housekeep と systemd timer / cron を使わない理由、管理 DB と成果物に保持日数での容量の頭打ちを追記。decision_refs から product-decision-004 を外した"
+        work_units: ["CR-e4ea8aaa-001#1","CR-e4ea8aaa-002#1"]
+      - path: "docs/mcl/product/output/product-mapping-onprem.yaml"
+        change: "mail_notification のマッピング(Postfix)を削除。管理 DB のロールに housekeep_del(6 テーブルへの SELECT / DELETE のみ)を加え app_rw は DELETE なしと明記、housekeep の接続参照と 1 トランザクション削除を追記。成果物に通知済みの印・削除待ちの置き場(同じファイルシステム)と容量の頭打ちを追記し、gap の削除手段を cron からハウスキープ定期ジョブへ改めた。hang-detector / housekeep をジョブスケジューラの定期ジョブに登録(systemd timer / cron に載せない)。ジョブスケジューラ連携に障害通知・ハウスキープジョブ・警告終了の gap(fidelity partial)を追加。fallback 監視を cron メールからジョブスケジューラの定期ジョブと障害通知へ。decision_refs から product-decision-004 を外した"
+        work_units: ["CR-e4ea8aaa-001#1","CR-e4ea8aaa-002#1"]
+      - path: "docs/mcl/product/output/product-impl-onprem.yaml"
+        change: "impl.messaging.mail_relay と execution_hosts の依存を削除。relay-gate-hang-detector.timer を削除し、hang-detector / housekeep はスクリプト配置だけでジョブスケジューラの定期ジョブから起動すると定め、timer / cron 登録が無いことの検証規則を追加。管理 DB に housekeep_del ロール・housekeep_delete・接続参照を追加し、app_rw の権限を DELETE なしに改め、検証規則を『app_rw と ops_ro に DELETE が無い』『housekeep_del は 6 テーブルへの SELECT / DELETE だけ』に置き換えた。成果物に notified_marks / housekeep_staging / capacity と同一ファイルシステムの検証規則、設定に hang-detector.env(HANG_DB_CONN_REF だけ)とハウスキープ設定の配置・検証規則、ジョブスケジューラ連携にハウスキープ定期ジョブ・警告終了・alerting と登録の検証規則を追加。fallback 監視をジョブスケジューラの定期ジョブへ"
+        work_units: ["CR-e4ea8aaa-001#1","CR-e4ea8aaa-002#1"]
+      - path: "docs/mcl/product/output/product-observability.yaml"
+        change: "alert-health-check / alert-error-rate の channel をメールからジョブスケジューラの障害通知(hang-detector の警告終了 / 失敗、詳細は標準エラー)へ改め、通知済みの除外を追記。alert-backup-failure を既存監視へ、日次メールサマリーをジョブスケジューラの既存監視へ改めた。metrics に housekeep_deleted_units、alerting に alert-housekeep-failure を追加し、escalation を障害通知起点へ"
+        work_units: ["CR-e4ea8aaa-001#1","CR-e4ea8aaa-002#1"]
+      - path: "docs/mcl/product/output/product-cost-hints.yaml"
+        change: "storage_tiering を、成果物と管理 DB の行は保持日数(既定 90 日)を過ぎた分をハウスキープが毎日削除し容量が保持日数で頭打ちになる内容へ改め、追加しないミドルウェアにメール中継を明記"
+        work_units: ["CR-e4ea8aaa-001#1","CR-e4ea8aaa-002#1"]
+      - path: "docs/cloud-context/decisions/product/product-decision-004.yaml"
+        change: "メール通知の MTA 選定を status superseded にし、失効理由(2026-11-01 のメール通知廃止)を superseded_note に追記。判断記録として保持"
+        work_units: ["CR-e4ea8aaa-001#1"]
+      - path: "docs/cloud-context/decisions/product/product-decision-005.yaml"
+        change: "既存監視が無い場合の代替を cron メールから、sar / df の閾値検査をジョブスケジューラの定期ジョブにして障害通知で届ける方式へ改めた"
+        work_units: ["CR-e4ea8aaa-001#1"]
+      - path: "docs/cloud-context/conformance/product/product-conformance-onprem.yaml"
+        change: "REQ-MAIL-001 / 002 を削除し、REQ-DB-007 / REQ-ART-004(conformant)と REQ-SCH-003(partial)を追加。REQ-SCH-002 の根拠を timer からジョブスケジューラへ、REQ-DB-005 にロール 3 種、設定の notes にハウスキープ設定、REQ-OPS-002 の fallback を改めた。summary を実数(26 要件: conformant 22 / partial 4)に直した(従来の 20 / 5 は集計誤り)"
+        work_units: ["CR-e4ea8aaa-001#1","CR-e4ea8aaa-002#1"]
+      - path: "docs/cloud-context/generated-md/product/relay-gate-target-architecture.md"
+        change: "Postfix ノードと SMTP の辺を削除し、hang-detector / housekeep をジョブスケジューラの定期起動に改め、hang-detector → ジョブスケジューラ(終了結果と標準エラー)とジョブスケジューラ → 運用者(障害通知)、housekeep → 成果物・管理 DB・設定の辺を追加。デプロイメント図の Postfix をジョブスケジューラへ置き換え、適合性サマリを 26 要件に更新(md-mermaid-lint PASS)"
+        work_units: ["CR-e4ea8aaa-001#1","CR-e4ea8aaa-002#1"]
+      - path: "infra/product/onprem/ansible/site.yml"
+        change: "実行ホストセグメントのロールから relay-gate-mail を削除"
+        work_units: ["CR-e4ea8aaa-001#1"]
+      - path: "infra/product/onprem/ansible/roles/relay-gate-runtime/tasks/main.yml"
+        change: "hang-detector timer の配置を削除し、削除待ちの置き場の作成・成果物ルートと同じファイルシステムであることの検査・hang-detector / housekeep が systemd timer と crontab に無いことの検査を追加(置き場のパスは仕様で確定するため変数 relay_gate_housekeep_staging_dir)"
+        work_units: ["CR-e4ea8aaa-001#1","CR-e4ea8aaa-002#1"]
+      - path: "infra/product/onprem/ansible/roles/relay-gate-runtime/handlers/main.yml"
+        change: "hang-detector timer を有効化する handler を削除"
+        work_units: ["CR-e4ea8aaa-001#1"]
+      - path: "infra/product/onprem/ansible/roles/relay-gate-postgresql/tasks/main.yml"
+        change: "app_rw の説明を DELETE なしに改め、housekeep_del ロールの作成・6 テーブルへの SELECT / DELETE 付与(対象は変数 relay_gate_housekeep_tables)・app_rw / ops_ro に DELETE が無いことの検査を追加"
+        work_units: ["CR-e4ea8aaa-002#1"]
+      - path: "infra/product/onprem/ansible/roles/relay-gate-config/tasks/main.yml"
+        change: "hang-detector.env が HANG_DB_CONN_REF だけを持つことの検査と、ハウスキープ設定の配置・非空検査を追加(ファイル名は仕様で確定するため変数 relay_gate_housekeep_config_file)"
+        work_units: ["CR-e4ea8aaa-001#1","CR-e4ea8aaa-002#1"]
+      - path: "infra/product/onprem/ansible/roles/relay-gate-backup/tasks/main.yml"
+        change: "fallback 監視の cron(mail コマンドで送信)を削除し、閾値検査スクリプトの配置だけにした(起動はジョブスケジューラの定期ジョブ)"
+        work_units: ["CR-e4ea8aaa-001#1"]
+      - path: "infra/product/onprem/ansible/inventory.ini.example"
+        change: "ハウスキープ設定のファイル名・削除待ちの置き場・housekeep_del の付与対象テーブルの変数の記入例を追加"
+        work_units: ["CR-e4ea8aaa-002#1"]
+      - path: "infra/product/onprem/README.md"
+        change: "ansible の構成から Postfix を外し、適用順序にジョブスケジューラへのハング検知・ハウスキープ定期ジョブの登録を追加"
+        work_units: ["CR-e4ea8aaa-001#1","CR-e4ea8aaa-002#1"]
+      - path: "infra/product/onprem/terraform/main.tf"
+        change: "セグメント間の許可ポートの説明から SMTP を外した"
+        work_units: ["CR-e4ea8aaa-001#1"]
+      - path: "infra/product/onprem/terraform/variables.tf"
+        change: "allowed_ports の既定値から 25(SMTP)を外し [22, 5432] にした"
+        work_units: ["CR-e4ea8aaa-001#1"]
+    outputs_removed:
+      - path: "infra/product/onprem/ansible/roles/relay-gate-mail/tasks/main.yml"
+        reason: "メール通知の廃止(Postfix を構成しない)"
+        work_units: ["CR-e4ea8aaa-001#1"]
+      - path: "infra/product/onprem/ansible/roles/relay-gate-mail/handlers/main.yml"
+        reason: "メール通知の廃止(Postfix を構成しない)"
+        work_units: ["CR-e4ea8aaa-001#1"]
+  arch_feedback:
+    status: "no_new_feedback"
+    reason: "本イベントの差分は、上流(arch-decision-022 / 023、CTP-001 / 002 / 009 / 010、CTR-006 / 007 / 008)で確定した内容をインフラ設計へ追従させたものだけである。hang-detector の systemd timer をジョブスケジューラの定期ジョブへ改めた点も、arch の tier-ops(hang-detector はジョブスケジューラの定期ジョブ)に infra を合わせたもので、arch に戻す新しい知見ではない。本 stage は feedback controller の指示により Phase4(arch フィードバック)を実行しないため、arch root の latest・新規 arch event は作成しない"
+  writeback_check:
+    result: "not_required"
+    reason: "arch 差分はメール送信アダプタ・外部システム・エンティティの削除と、tier-ops 内のハウスキープ追加で、ティア数・認証認可方式(接続ロールの追加のみ)・DR 方針・storage_type を変えていない。外部連携はメール通知が減っただけで consistency / compliance に影響しない。translation の各フィールドは不変のため product-input の再生成(translation のやり直し)と Step2 の全量再実行は不要"

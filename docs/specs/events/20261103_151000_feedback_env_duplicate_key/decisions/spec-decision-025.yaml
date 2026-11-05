@@ -1,0 +1,26 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "specification"
+artifact_id: "spec-decision-025"
+title: "実行ログの整理は relay-gate が行わず、設置環境の logrotate に任せる(CLI 契約と出力規約の手作業のローテーションの記述を改める)"
+status: "approved"
+generated_at: "2026-11-03T08:50:00Z"
+context: |
+  - CLI 契約の実行ログの出力先、housekeep.sh の注記、出力規約(ui-design.md)の実行ログファイルの節は、実行ログのローテーションを「手動」と書いていた。
+  - インフラ設計は、設置環境の OS 標準の logrotate(日次・90 世代・圧縮)で実行ログを 3 か月保管する構成をすでに配置している。
+  - 2026-11-03 にアーキテクチャ設計の横断ルール CTR-006 が「relay-gate は実行ログを整理しない。設置環境の OS 標準のログ整理(logrotate)で 3 か月保管する」に改められた(利用者確認済み)。
+decision: |
+  1. CLI 契約 conventions.execution_log.path、housekeep.sh の注記、出力規約の実行ログファイルの出力先を、「relay-gate は実行ログを整理しない(設置環境の logrotate に任せる。arch CTR-006)」趣旨に改める。
+  2. 実行ログの保管期間 3 か月(NFR C.6.1.1)と、実行ログをハウスキープの対象にしない規則は変えない。
+  3. 1 スクリプト 1 ファイル・追記の書き方は変えない。logrotate の設定(世代数・圧縮など)はインフラ設計の正本に任せ、仕様に複写しない。
+consequences:
+  positive:
+    - "実装者と運用者が、logrotate の設定と別に手作業の整理手順を作らずに済む"
+    - "仕様・アーキテクチャ設計・インフラ設計の実行ログの整理方法が一致する"
+  negative:
+    - "設置環境に logrotate の設定が無い場合、実行ログは増え続ける(インフラ設計の構築手順で配置する前提)"
+alternatives_considered:
+  - name: "housekeep.sh で実行ログも整理する"
+    reason_rejected: "実行ログをハウスキープの対象にしない規則を利用者が維持すると決めており、OS 標準の機能と同じ仕組みを重ねて持つことになる"
+  - name: "「手動」の記述を残し、logrotate を任意の手段として併記する"
+    reason_rejected: "手作業の整理手順を作る読み手が残り、アーキテクチャ設計 CTR-006 と食い違う"

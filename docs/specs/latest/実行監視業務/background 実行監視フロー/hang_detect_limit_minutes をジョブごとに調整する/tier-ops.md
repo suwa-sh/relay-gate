@@ -55,7 +55,7 @@ JOB001	green	3	2	2	82	82	60
 - **確認プロンプト**: なし(参照系)
 - **冪等性**: 読み取りのみ。同じ入力・同じ DB 内容で同じ出力
 - **集計(usecase / repository)**:
-  1. `RELAY_GATE_CONFIG_DIR` の feature flag を読み `RAPID_CROSSCHECK_MODE=off` なら終了コード 3(監視記録が実行ログにしか無いため)
+  1. `RELAY_GATE_CONFIG_DIR` の feature flag を読み `RAPID_CROSSCHECK_MODE=off` なら終了コード 3(off では管理 DB に監視記録が無く、判定結果は実行ログに、通知済み状態は通知済みの印にだけ残るため)
   2. `monitor_records.job_id` 列を集計キーに使う(parallel_runs とは JOIN しない。C2)
   3. `monitor_status <> 'NOT_MONITORED' AND judged_at >= since` で絞り、job_id × role で集計する(計算式は spec.md「計算ルール一覧」)
   4. `current_limit_minutes` は job_id × role で集計期間内の `monitor_records.judged_at` が最大の行の `hang_detect_limit_minutes`(data-visualization.md 2. の列定義に従う)
@@ -66,7 +66,7 @@ JOB001	green	3	2	2	82	82	60
 
 ## 調整運用(手順)
 
-1. `hang-detect-trend.sh --job-id {JOB_ID}` で `last_elapsed_minutes_at_alert` と `current_limit_minutes` を比較する
+1. `hang-detect-trend.sh --job-id {JOB_ID}` で `last_elapsed_minutes_at_alert` と `current_limit_minutes` を比較する(個々の警告はハング検知ジョブの alert 行の elapsed_minutes でも確認できる)
 2. `completed_after_alert_count` が増えなくなった(正常終了パターンの警告が出そろった)時点で、`last_elapsed_minutes_at_alert` を基準に該当 slot のジョブマップ(CSV)の `hang_detect_limit_minutes` を編集する(tier-facade.md 参照)
 3. 調整日時と調整根拠(`last_elapsed_minutes_at_alert`)を適用構成文書の「運用者の調整記録」に残す(ジョブマップの列・監視記録には持たない)
 4. foreground role は 0 のままにする(検知対象外)
@@ -86,8 +86,8 @@ JOB001	green	3	2	2	82	82	60
 | started_at | datetime | 監視対象の開始時刻(ローカル時刻。指示子なし)。background slot は started-at.txt の UTC 値をローカル時刻へ変換した値、速報比較依頼(role=rapid-crosscheck)は依頼の started_at(未開始は requested_at) | 追加 |
 | elapsed_minutes | integer | 判定時点の経過時間(分) | 追加 |
 | hang_detect_limit_minutes | integer | 判定に使った上限(分)。background slot は execution-spec.json の slots.<role>.hang_detect_limit_minutes、速報比較依頼は hang-detector.env の RAPID_HANG_DETECT_LIMIT_MINUTES(既定 60)を転記 | 追加 |
-| hang_suspected_at | datetime | ハング疑い通知(hang-suspected)の送信成功日時(MONITORING → HANG_SUSPECTED_NOTIFIED の時刻。未通知は NULL) | 追加 |
-| alerted_at | datetime | 通知日時(NULL 可) | 追加 |
+| hang_suspected_at | datetime | ハング疑い(kind=hang-suspected)の alert 行を出した回の判定時刻(MONITORING → HANG_SUSPECTED_NOTIFIED の時刻。未通知は NULL) | 追加 |
+| alerted_at | datetime | 最後に alert 行を出した回の判定時刻(NULL 可) | 追加 |
 | elapsed_minutes_at_alert | integer | 警告時の経過時間(NULL 可) | 追加 |
 | judged_at | datetime | 最終判定日時 | 追加 |
 
@@ -104,7 +104,7 @@ JOB001	green	3	2	2	82	82	60
 - 調整基準は「最後の警告の経過時間」(`last_elapsed_minutes_at_alert`)。正常終了パターンの警告が出そろってから調整する
 - 上限の正本は該当 slot のジョブマップ(条件「設定所有区分」)。`hang-detect-trend.sh` は RDB・ジョブマップ・execution-spec.json を変更しない。調整記録(調整日時・調整根拠)の正本は適用構成文書
 - 変更は次回以降の run の execution-spec.json にのみ反映される(条件「実行設定の確定条件」)
-- RAPID_CROSSCHECK_MODE=off では監視記録が実行ログのみのため集計できない(採用値 #8。運用ガイドの grep 手順に委ねる)。C2 の `job_id` 列は off 以外のときの集計を parallel_runs 非依存にするためのもので、off 時の終了コード 3 は変わらない
+- RAPID_CROSSCHECK_MODE=off では管理 DB に監視記録が無いため集計できない(採用値 #8)。off の経過時間の傾向は、ハング検知ジョブの alert 行の elapsed_minutes と実行ログ `hang-detector.sh.log` の `INFO monitor record` 行で確認する(運用ガイドの grep 手順)。C2 の `job_id` 列は off 以外のときの集計を parallel_runs 非依存にするためのもので、off 時の終了コード 3 は変わらない
 
 ## ティア完了条件(BDD)
 

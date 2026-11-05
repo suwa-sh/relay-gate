@@ -1,4 +1,4 @@
-# digest of arch/latest/arch-design.yaml section app_architecture (L710-1111); source_sha256: 42ba88928ec088c26d15ebb64f90299d73f7cad0cffa5f6576a96a470ae3a419
+# digest of arch/latest/arch-design.yaml section app_architecture (L818-1231); source_sha256: 6ee48d9e90d09b186d8d085a0ac0c64adb0a637559321a753c0612124f5da27d
 # 派生物。正本は arch-design.yaml。編集しない
 app_architecture:
   tier_layers:
@@ -96,7 +96,7 @@ app_architecture:
           confidence: "default"
         - id: "CLP-002"
           name: "実行ログの出力方針"
-          description: "usecase 層が run_id 付きの実行ログ(スクリプト名 / run_id / 日時 / レベル / メッセージ)をファイルへ出力する集約ポイントとする。gateway は外部呼び出し(SSH / RDB / 比較ツール / メール)の開始・終了・所要時間・成否を記録し、失敗は技術例外として非 0 で返す。domain 層はログを出さない。ログ出力先は stdout / stderr を汚さない専用ファイルとする。ログの日時はホストのローカルタイムゾーン(プロセスの TZ 環境変数に従う)で ISO 8601 秒精度、タイムゾーン指示子(Z / オフセット)なしとし、run_id の時刻部と同じ時刻軸にそろえる。UTC への統一は行わない。管理 DB の *_at 列は RDB のタイムスタンプ型に委ね、CLI が stdout に表示する日時もローカル時刻で出す。テスト用の時刻注入(RELAY_GATE_NOW)は UTC の Z 付きで受け付け、内部でローカル時刻へ変換してから使う。この方針は全ティアの実行ログ方針に共通し(CLP-004 / CLP-006 が参照)、tier-ops の運用操作記録(CLP-008)も同じ日時規則に従う"
+          description: "usecase 層が run_id 付きの実行ログ(スクリプト名 / run_id / 日時 / レベル / メッセージ)をファイルへ出力する集約ポイントとする。gateway は外部呼び出し(SSH / RDB / 比較ツール)の開始・終了・所要時間・成否を記録し、失敗は技術例外として非 0 で返す。domain 層はログを出さない。ログ出力先は stdout / stderr を汚さない専用ファイルとする。ログの日時はホストのローカルタイムゾーン(プロセスの TZ 環境変数に従う)で ISO 8601 秒精度、タイムゾーン指示子(Z / オフセット)なしとし、run_id の時刻部と同じ時刻軸にそろえる。UTC への統一は行わない。管理 DB の *_at 列は RDB のタイムスタンプ型に委ね、CLI が stdout に表示する日時もローカル時刻で出す。テスト用の時刻注入(RELAY_GATE_NOW)は UTC の Z 付きで受け付け、内部でローカル時刻へ変換してから使う。この方針は全ティアの実行ログ方針に共通し(CLP-004 / CLP-006 が参照)、tier-ops の運用操作記録(CLP-008)も同じ日時規則に従う"
           reason: "利用者指定: run_id の時刻部(ローカルタイムゾーン)と実行ログの日時を同じ時刻軸にそろえ、障害調査で運用者が時差を読み替えずに突き合わせられるようにする。NFR C.6.1.1(ログ保管)・C.3.1.1(自動記録)・E.7.1.1(監査)への対応"
           source_model: "情報: 実行ログ, 並行稼働実行(parallel_run), NFR C.6.1.1, NFR C.3.1.1, NFR E.7.1.1"
           confidence: "high"
@@ -306,7 +306,7 @@ app_architecture:
       layers:
         - id: "L-ops-presentation"
           name: "プレゼンテーション層(CLI エントリ)"
-          responsibility: "hang-detector / background-rerun(--source-run-id, --role) / abort-*(--run-id)の引数検証、現在状態の表示、停止確認の対話プロンプト、終了コードの決定"
+          responsibility: "hang-detector / housekeep / background-rerun(--source-run-id, --role) / abort-*(--run-id)の引数検証、現在状態の表示、停止確認の対話プロンプト、終了コードの決定(hang-detector はその回に新たに見つけた異常の段階から正常終了 / 警告終了 / 失敗を決め、異常を標準エラーに 1 件 1 行で出す。housekeep は削除件数を標準出力に、失敗を標準エラーに出し、失敗があれば非 0 で終える)"
           allowed_dependencies:
             - "L-ops-usecase"
           policies:
@@ -319,17 +319,23 @@ app_architecture:
           rules: []
         - id: "L-ops-usecase"
           name: "ユースケース層"
-          responsibility: "監視走査 → 判定 → 監視記録保存 → 通知(hang-detector)、事前検証 → execution-spec 復元 → 新 run 作成 → background slot / 比較依頼の起動(background-rerun)、可否判定 → 停止確認 → 状態更新(abort-*。abort-blue / abort-green は slot・並行稼働実行に加えて対象 run の未着手の速報比較依頼の ABORTED 化(競合窓の保険)を含む。abort-rapid-crosscheck は REQUESTED / CLAIMED / RUNNING の速報比較依頼、abort-final-crosscheck は RUNNING の確報比較依頼を中止する)のフロー制御"
+          responsibility: "監視走査 → 判定 → 新たな異常の抽出(通知済みの除外)→ 監視記録または通知済みの印の保存 → 終了結果と標準エラーでの通知(hang-detector)、ハウスキープ設定の検査(設定エラーなら何も削除せず終了)→ 削除待ちの置き場の残りの無条件削除 → 成果物ルートと管理 DB の走査 → 削除の単位の組み立てと削除判定 → 単位ごとに成果物の置き場への移動と削除 → 管理 DB の行の 1 トランザクション削除 → 件数集計(housekeep)、事前検証 → execution-spec 復元 → 新 run 作成 → background slot / 比較依頼の起動(background-rerun)、可否判定 → 停止確認 → 状態更新(abort-*。abort-blue / abort-green は slot・並行稼働実行に加えて対象 run の未着手の速報比較依頼の ABORTED 化(競合窓の保険)を含む。abort-rapid-crosscheck は REQUESTED / CLAIMED / RUNNING の速報比較依頼、abort-final-crosscheck は RUNNING の確報比較依頼を中止する)のフロー制御"
           allowed_dependencies:
             - "L-ops-domain"
             - "L-ops-repository"
           policies:
             - id: "LP-017"
               name: "監視は通知のみ"
-              description: "hang-detector の usecase は状態更新・プロセス停止・依頼作成を呼ばない。監視記録の保存とメール送信だけを行う"
-              reason: "条件「監視は通知のみ」「警告傾向の記録」への対応"
-              source_model: "条件: 監視は通知のみ, 警告傾向の記録, 状態: 監視状態"
+              description: "hang-detector の usecase は状態更新・プロセス停止・依頼作成を呼ばない。監視記録(RAPID_CROSSCHECK_MODE=off では通知済みの印)の保存と、その回に新たに見つけた異常の presentation への受け渡し(標準エラーの行と終了結果の段階)だけを行う。通知済みの異常は渡さず、保存に失敗した異常は通知済みにしない(次回も通知する)"
+              reason: "条件「監視は通知のみ」「通知レベルの判定」「警告傾向の記録」への対応。メール送信は 2026-11-01 に廃止"
+              source_model: "条件: 監視は通知のみ, 通知レベルの判定, 警告傾向の記録, 状態: 監視状態"
               confidence: "high"
+            - id: "LP-025"
+              name: "ハウスキープは削除だけを行う"
+              description: "housekeep の usecase は状態更新・依頼作成・プロセス停止を呼ばない。最初にハウスキープ設定を検査し(RAPID_CROSSCHECK_MODE が off 以外、または確報クロスチェック worker の設定がある設置で接続参照名が無い・空なら設定エラー)、設定エラーなら削除待ちの置き場を含めて何も削除せずに非 0 で終える。設定が正しければ削除待ちの置き場の残りを無条件に削除したあと、削除の単位ごとに成果物(成果物ディレクトリと通知済みの印)を置き場へ移して削除し、そのあと管理 DB の行を 1 トランザクションで削除する順序を守る。失敗は標準エラーに出して非 0 で終える(失敗後に残りの単位の処理を続けるかは仕様で確定する)"
+              reason: "条件「ハウスキープの削除順序と回復」への対応。途中失敗でも次回の実行で残りを削除できる冪等な構成にするため"
+              source_model: "条件: ハウスキープの削除順序と回復, ハウスキープの削除判定, BUC: ハウスキープフロー"
+              confidence: "medium"
             - id: "LP-018"
               name: "リランの復元元の固定"
               description: "background-rerun の usecase は最新ジョブマップの repository を呼ばず、元 run の execution-spec.json からのみ実行設定を復元し、新 run_id の parallel_run に parent_run_id を設定する"
@@ -339,40 +345,46 @@ app_architecture:
           rules: []
         - id: "L-ops-domain"
           name: "ドメイン層"
-          responsibility: "slot 実行の状態導出(exitcode.txt / aborted.txt の有無・値)、ハング検知判定表(導出状態 × 経過時間と上限)、速報比較依頼の異常判定表、通知レベル対応表、監視状態の遷移(6 値。通知後・中止後の終端を含む)、リラン事前検証表(role × 元 mode × 導出状態)、中止可否判定表(slot は mode × 導出状態、比較依頼はクロスチェック種別 × 依頼状態(速報は REQUESTED / CLAIMED / RUNNING、確報は RUNNING のみ)。abort-blue / abort-green が併せて中止する速報比較依頼の状態条件(REQUESTED で未着手のみ)を含む)、復旧手段の選択表"
+          responsibility: "slot 実行の状態導出(exitcode.txt / aborted.txt の有無・値)、ハング検知判定表(導出状態 × 経過時間と上限)、速報比較依頼の異常判定表、通知レベル対応表、監視状態の遷移(6 値。通知後・中止後の終端を含む)、リラン事前検証表(role × 元 mode × 導出状態)、中止可否判定表(slot は mode × 導出状態、比較依頼はクロスチェック種別 × 依頼状態(速報は REQUESTED / CLAIMED / RUNNING、確報は RUNNING のみ)。abort-blue / abort-green が併せて中止する速報比較依頼の状態条件(REQUESTED で未着手のみ)を含む)、復旧手段の選択表、ハング検知ジョブの終了結果の決定表(その回の新たな異常の段階 → 正常終了 / 警告終了 / 失敗)、ハウスキープの削除判定表(削除の単位の構成要素の終端判定 × 最も遅い終了日時と保持日数。管理 DB あり / RAPID_CROSSCHECK_MODE=off の成果物だけ / 速報比較依頼だけのリラン run / 確報比較依頼の各判定)"
           allowed_dependencies: []
           policies:
             - id: "LP-019"
               name: "判定表をドメインに集約"
-              description: "slot 実行の状態導出・ハング検知判定・対象除外・異常判定・通知レベル・監視状態の遷移(ハング疑い通知済み → 正常終了 / 実行エラー通知済み / 比較異常通知済み、監視中・ハング疑い通知済み → 正常終了(中止済み))・リラン事前検証・中止可否(slot 実行モード × 導出状態、およびクロスチェック種別 × 依頼状態。速報比較依頼は REQUESTED / CLAIMED / RUNNING、確報比較依頼は RUNNING のみ中止可)・復旧手段の各判定表を純粋関数として実装し、テスト可能にする"
-              reason: "条件「slot 実行の状態導出規則」「ハング検知判定」「ハング検知対象の除外」「速報比較依頼の異常判定」「通知レベルの判定」「リラン事前検証」「slot 中止可否判定」「依頼中止可否判定」(縦軸クロスチェック種別 × 横軸依頼状態の判定表)「復旧手段の選択」と状態モデル「監視状態」「クロスチェック依頼」(REQUESTED / CLAIMED / RUNNING → ABORTED)、バリエーション「中止対象種別」への対応"
-              source_model: "条件: slot 実行の状態導出規則, ハング検知判定, ハング検知対象の除外, 速報比較依頼の異常判定, 通知レベルの判定, リラン事前検証, slot 中止可否判定, 依頼中止可否判定, 復旧手段の選択, 状態: 監視状態, クロスチェック依頼, バリエーション: ハング検知判定結果, 監視状態, 中止対象種別, クロスチェック依頼状態"
+              description: "slot 実行の状態導出・ハング検知判定・対象除外・異常判定・通知レベル・監視状態の遷移(ハング疑い通知済み → 正常終了 / 実行エラー通知済み / 比較異常通知済み、監視中・ハング疑い通知済み → 正常終了(中止済み))・リラン事前検証・中止可否(slot 実行モード × 導出状態、およびクロスチェック種別 × 依頼状態。速報比較依頼は REQUESTED / CLAIMED / RUNNING、確報比較依頼は RUNNING のみ中止可)・復旧手段・ハング検知ジョブの終了結果・ハウスキープの削除判定の各判定表を純粋関数として実装し、テスト可能にする(現在時刻と保持日数は引数で受け取る)"
+              reason: "条件「slot 実行の状態導出規則」「ハング検知判定」「ハング検知対象の除外」「速報比較依頼の異常判定」「通知レベルの判定」「リラン事前検証」「slot 中止可否判定」「依頼中止可否判定」(縦軸クロスチェック種別 × 横軸依頼状態の判定表)「復旧手段の選択」「ハウスキープの削除判定」と状態モデル「監視状態」「クロスチェック依頼」(REQUESTED / CLAIMED / RUNNING → ABORTED)、バリエーション「中止対象種別」への対応"
+              source_model: "条件: slot 実行の状態導出規則, ハング検知判定, ハング検知対象の除外, 速報比較依頼の異常判定, 通知レベルの判定, リラン事前検証, slot 中止可否判定, 依頼中止可否判定, 復旧手段の選択, ハウスキープの削除判定, 状態: 監視状態, クロスチェック依頼, バリエーション: ハング検知判定結果, 監視状態, 中止対象種別, クロスチェック依頼状態"
               confidence: "high"
           rules: []
         - id: "L-ops-repository"
           name: "リポジトリ層"
-          responsibility: "監視記録(管理 DB)、slot 実行・parallel_run・比較依頼の状態(管理 DB)、Runner Result / execution-spec.json / aborted.txt(成果物ディレクトリ)、ハング検知上限設定(execution-spec 経由)、ハング検知定期ジョブ設定(env 形式の設定ファイル)の読み書き"
+          responsibility: "監視記録(管理 DB)、通知済みの印(RAPID_CROSSCHECK_MODE=off。成果物ルート配下)、slot 実行・parallel_run・比較依頼の状態(管理 DB)、Runner Result / execution-spec.json / aborted.txt(成果物ディレクトリ)、ハング検知上限設定(execution-spec 経由)、ハング検知定期ジョブ設定(env 形式の設定ファイル)、ハウスキープ設定(保持日数と専用 DB ロールの接続参照名)の読み書き。ハウスキープ用に、削除の単位の構成要素(管理 DB の行と成果物の終了日時)の列挙、削除待ちの置き場への移動と削除、削除の単位の管理 DB の行の削除を提供する"
           allowed_dependencies:
             - "L-ops-domain"
             - "L-ops-gateway"
           policies:
             - id: "LP-020"
               name: "管理 DB なしでの監視・中止・リラン"
-              description: "RAPID_CROSSCHECK_MODE=off のとき repository は管理 DB に接続せず、成果物ディレクトリの走査だけで監視対象を列挙し、slot 実行の状態は exitcode.txt / aborted.txt から導出する。abort-blue / abort-green の中止は aborted.txt の書き込みだけで成立し、background-rerun も成果物ファイルだけで事前検証する"
-              reason: "条件「ハング検知判定」「slot 実行の状態導出規則」と方針資料「off の場合も slot 成果物だけで監視・中止・リラン」への対応"
-              source_model: "条件: ハング検知判定, 速報クロスチェック有効判定, slot 実行の状態導出規則, 情報: 監視記録, ハング検知上限設定, Runner Result"
+              description: "RAPID_CROSSCHECK_MODE=off のとき repository は管理 DB に接続せず、成果物ディレクトリの走査だけで監視対象を列挙し、slot 実行の状態は exitcode.txt / aborted.txt から導出する。通知済みかどうかは監視記録の代わりに成果物ルート配下の通知済みの印(Runner Result の契約ファイルとは別のファイル。一時ファイル → リネームで書く。置き場所とファイル名は仕様で確定)で判定する。abort-blue / abort-green の中止は aborted.txt の書き込みだけで成立し、background-rerun も成果物ファイルだけで事前検証する。housekeep も管理 DB の行が無い実行を成果物だけ(execution-spec.json で起動対象の slot の終了ファイル)で判定して削除する"
+              reason: "条件「ハング検知判定」「通知レベルの判定」「slot 実行の状態導出規則」「ハウスキープの削除判定」と方針資料「off の場合も slot 成果物だけで監視・中止・リラン」「off では成果物ルート配下へ通知済みの印をファイルで残して判定する」への対応"
+              source_model: "条件: ハング検知判定, 通知レベルの判定, 速報クロスチェック有効判定, slot 実行の状態導出規則, ハウスキープの削除判定, 情報: 監視記録, ハング検知上限設定, Runner Result, 実行設定(execution-spec)"
               confidence: "high"
           rules: []
         - id: "L-ops-gateway"
           name: "ゲートウェイ層"
-          responsibility: "メール送信アダプタ(ハング検知定期ジョブ設定の送信コマンド・宛先・件名プレフィックスを使う OS 標準コマンド呼び出し。warning / error)、RDB クライアントアダプタ(条件付き UPDATE による ABORTED 遷移)、ファイルシステム走査・書き込みアダプタ(aborted.txt の一時ファイル → リネーム出力を含む)、slot runner / 速報クロスチェック runner 起動アダプタ(リラン)"
+          responsibility: "RDB クライアントアダプタ(業務用ロールの接続による条件付き UPDATE での ABORTED 遷移・監視記録の保存)、ハウスキープ用 RDB クライアントアダプタ(ハウスキープ設定の接続参照名で解決する専用 DB ロールの接続。削除の単位の行を 1 トランザクションで DELETE)、ファイルシステム走査・書き込みアダプタ(aborted.txt と通知済みの印の一時ファイル → リネーム出力を含む)、ファイルシステム移動・削除アダプタ(削除待ちの置き場への同一ファイルシステム内 rename と置き場からの削除)、slot runner / 速報クロスチェック runner 起動アダプタ(リラン)"
           allowed_dependencies: []
           policies:
             - id: "LP-021"
               name: "条件付き状態更新と aborted.txt の原子的書き込み"
               description: "slot の中止は aborted.txt を一時ファイルへ書いて確定名へリネームすることを正本とし、既に exitcode.txt または aborted.txt があれば書かずにエラーを返す。管理 DB の ABORTED への更新(off 以外)は WHERE 句で現在状態(slot 実行は RUNNING かつ background、並行稼働実行は STARTED または RUNNING)を条件にし、競合時は更新件数 0 をエラーとして返す。abort-blue / abort-green が併せて行う速報比較依頼の ABORTED 更新は WHERE status = REQUESTED(worker_id 未設定)を条件にし、該当なし(依頼が無い、または既に CLAIMED / RUNNING 以降)は更新件数 0 を正常として扱い、その依頼には触れない(競合窓の保険であり、dispatcher 側の中止済み run 判定と併用する)。abort-rapid-crosscheck の ABORTED 更新は WHERE status IN ('REQUESTED', 'CLAIMED', 'RUNNING') を条件にし、更新件数 0(終端済み)はエラーとして返す。abort-final-crosscheck は WHERE status = RUNNING を条件にする"
               reason: "条件「slot 中止可否判定」「依頼中止可否判定」(CLAIMED 中止時の競合規則: status IN 条件の条件付き UPDATE)「slot 実行の状態導出規則」「成果物公開判定」と状態モデル「クロスチェック依頼」(REQUESTED / CLAIMED / RUNNING → ABORTED)への対応。二重実行と worker の claim との競合を DB のトランザクションで防ぐため"
-              source_model: "条件: slot 中止可否判定, 依頼中止可否判定, slot 実行の状態導出規則, 成果物公開判定, claim 排他, 状態: クロスチェック依頼, システム概要: ジョブキュー兼管理 DB(内部データストア), 外部システム: メール通知, 情報: ハング検知定期ジョブ設定, 速報比較依頼(rapid_crosscheck_request)"
+              source_model: "条件: slot 中止可否判定, 依頼中止可否判定, slot 実行の状態導出規則, 成果物公開判定, claim 排他, 状態: クロスチェック依頼, システム概要: ジョブキュー兼管理 DB(内部データストア), 情報: ハング検知定期ジョブ設定, 速報比較依頼(rapid_crosscheck_request)"
+              confidence: "high"
+            - id: "LP-026"
+              name: "削除待ちの置き場への rename と専用ロールでの 1 トランザクション削除"
+              description: "成果物の削除は、削除対象の成果物ディレクトリ(と通知済みの印)を成果物ルート配下の削除待ちの置き場へ同じファイルシステム内の 1 回の rename で移してから削除する。既に無いファイルは削除済みとして扱いエラーにしない。管理 DB の行の削除はハウスキープ専用 DB ロールの接続だけで行い、1 つの削除の単位の行(並行稼働実行・slot 実行・速報実行・速報比較依頼・監視記録、または確報比較依頼)を 1 トランザクションで DELETE する。業務用ロールのアダプタには DELETE を実装しない"
+              reason: "条件「ハウスキープの削除順序と回復」への対応。rename で削除対象の確定を原子的にし、DB の行を単位ごとに原子的に消すことで、途中失敗後の再実行で同じ結果になる"
+              source_model: "条件: ハウスキープの削除順序と回復, 情報: ハウスキープ設定, システム概要: ジョブキュー兼管理 DB(内部データストア)"
               confidence: "high"
           rules: []
       cross_layer_policies:
@@ -384,9 +396,9 @@ app_architecture:
           confidence: "default"
         - id: "CLP-008"
           name: "運用操作の記録"
-          description: "中止・リランの運用操作は指示者(実行ユーザー)・応答・対象 run_id・role を実行ログに残し、監視記録には monitor_status(6 値)/ hang_suspected_at / alerted_at / 警告時経過時間を残す。hang_detect_limit_minutes の調整記録は監視記録ではなく適用構成文書に残す"
-          reason: "条件「警告傾向の記録」と NFR E.7.1.1(監査ログ)・C.3.1.1(自動記録)への対応"
-          source_model: "条件: 警告傾向の記録, 情報: 実行ログ, 監視記録, NFR E.7.1.1, NFR C.3.1.1, NFR C.6.1.1"
+          description: "中止・リランの運用操作は指示者(実行ユーザー)・応答・対象 run_id・role を実行ログに残し、監視記録には monitor_status(6 値)/ hang_suspected_at / alerted_at / 警告時経過時間を残す。hang_detect_limit_minutes の調整記録は監視記録ではなく適用構成文書に残す。ハング検知が通知した異常(対象・段階・経過時間)と、ハウスキープが削除した単位(run_id または確報比較依頼の ID)・件数・失敗も実行ログに残す"
+          reason: "条件「警告傾向の記録」「ハウスキープの削除順序と回復」と NFR E.7.1.1(監査ログ)・C.3.1.1(自動記録)への対応"
+          source_model: "条件: 警告傾向の記録, ハウスキープの削除順序と回復, 情報: 実行ログ, 監視記録, NFR E.7.1.1, NFR C.3.1.1, NFR C.6.1.1"
           confidence: "high"
       cross_layer_rules:
         - id: "CLR-004"
@@ -397,8 +409,8 @@ app_architecture:
           confidence: "default"
       diagram_mermaid: |
         graph TD
-          P[presentation: hang-detector / background-rerun / abort-* CLI] --> U[usecase: 監視・リラン・中止フロー]
-          U --> D[domain: 判定表・監視状態遷移]
-          U --> R[repository: 監視記録 / 状態 / 成果物 / execution-spec]
+          P[presentation: hang-detector / housekeep / background-rerun / abort-* CLI] --> U[usecase: 監視・ハウスキープ・リラン・中止フロー]
+          U --> D[domain: 判定表・監視状態遷移・削除判定]
+          U --> R[repository: 監視記録 / 通知済みの印 / 状態 / 成果物 / execution-spec / 設定]
           R --> D
-          R --> G[gateway: メール / RDB / filesystem / runner 起動]
+          R --> G[gateway: RDB 業務用 / RDB ハウスキープ専用 / filesystem / runner 起動]

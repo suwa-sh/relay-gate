@@ -1,0 +1,9 @@
+ハウスキープ設定の管理 DB 接続参照名の必須化(2026-11-03 の前段 requirements / NFR 更新)への追従。接続参照名を RAPID_CROSSCHECK_MODE が off 以外の設置と確報クロスチェックを使う設置では必須とし、必須なのに無い・空なら設定エラーで何も削除しない(設定の検査を最初に行う)。管理 DB に接続しない振る舞いを管理 DB を一切使わない設置に絞った(SP-027 / SP-028 / tier-ops usecase / BC-005 の語 / BC-006 の語 / CM-013 / E-028、arch-decision-026)。
+trigger_event: usdm:20261103_131000_feedback_housekeeping_db_required, rdra:20261103_131000_feedback_housekeeping_db_required, nfr:20261103_132000_feedback_housekeeping_db_required
+
+feedback_request_id: 20261103_housekeeping_db_required
+input_sha256: 94cde505fc6dda4705b1bb75134beaf9a85a7af65d7c90f1e786112e8b1031e7
+request_ids: CR-9d2e6c41-001
+direct_work_unit_ids: (none)
+causal_work_unit_ids: CR-9d2e6c41-001#1
+stage_packet: docs/pipeline/feedback-runs/20261103_housekeeping_db_required/stage-packets/architecture.md

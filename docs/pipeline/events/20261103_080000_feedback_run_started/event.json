@@ -1,0 +1,21 @@
+{
+  "event_id": "20261103_080000_feedback_run_started",
+  "type": "feedback_run_started",
+  "run_id": "feedback-20261103_housekeeping_followups-20261103_075954-73969",
+  "attempt": 1,
+  "created_at": "2026-11-02T23:00:02.709Z",
+  "feedback_request": {
+    "feedback_request_id": "20261103_housekeeping_followups",
+    "input_sha256": "7a81f28ce6fef4c2f70e2839d657a3f8e8480671bd846b460edab3d22b3ba775",
+    "request_ids": [
+      "CR-f3b8a1d0-001",
+      "CR-f3b8a1d0-002",
+      "CR-f3b8a1d0-003"
+    ],
+    "work_unit_ids": [
+      "CR-f3b8a1d0-001#1",
+      "CR-f3b8a1d0-002#1",
+      "CR-f3b8a1d0-003#1"
+    ]
+  }
+}

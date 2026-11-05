@@ -238,7 +238,7 @@ Feature: 速報クロスチェック runner へ完了通知を送信する
   Scenario: 通知失敗はハング検知で自動検知されない(SPEC-005-01)
     Given run_id=20260830T113000-JOB001-3f9a1c2e の green(background)の完了通知が終了コード 6 で失敗し、rapid_runs.green_status が NULL、facade/20260830T113000-JOB001-3f9a1c2e/green/exitcode.txt が `0` である
     When ジョブスケジューラが hang-detector.sh を起動する
-    Then green の監視対象は exitcode.txt=0 により正常終了と判定され、通知失敗を理由にした通知メールは送られない(条件「完了通知失敗の扱い」: 自動検知しない。復旧は運用者の同一引数再実行)
+    Then green の監視対象は exitcode.txt=0 により正常終了と判定され、通知失敗を理由にした alert 行は出ない(条件「完了通知失敗の扱い」: 自動検知しない。復旧は運用者の同一引数再実行)
 ```
 
 ## ティア別仕様

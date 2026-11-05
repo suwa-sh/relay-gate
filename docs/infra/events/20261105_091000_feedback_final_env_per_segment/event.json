@@ -1,0 +1,92 @@
+{
+  "schema_version": "distillery.infra-feedback-event/v1",
+  "event_id": "20261105_091000_feedback_final_env_per_segment",
+  "created_at": "2026-11-05T09:10:00+09:00",
+  "stage": "infrastructure",
+  "trigger_event": "infra:20261104_101000_feedback_rapid_env_deploy_check",
+  "previous_event_ref": "20261104_101000_feedback_rapid_env_deploy_check",
+  "feedback_request": {
+    "feedback_request_id": "20261105_external_review_round2",
+    "input_sha256": "1f98f4040fb856f2d726e8061e59220048989d38fa4f3bbebf6bd54c6aa45eed",
+    "request_ids": [
+      "CR-e3b7a915-002"
+    ],
+    "work_unit_ids": [
+      "CR-e3b7a915-002#1"
+    ]
+  },
+  "members": [
+    {
+      "path": "infra/events/20261105_091000_feedback_final_env_per_segment/_changes.md",
+      "sha256": "431cdff5fc6ebe2cffa9d74a2c265fd06f3ed90924a36d28d9878ba073083afd"
+    },
+    {
+      "path": "infra/events/20261105_091000_feedback_final_env_per_segment/_inference.md",
+      "sha256": "e580866edd09eaa1d49b62f8a5510be60facfc045dcc48bdd6885f290d177818"
+    },
+    {
+      "path": "infra/events/20261105_091000_feedback_final_env_per_segment/docs/cloud-context/conformance/product/product-conformance-onprem.yaml",
+      "sha256": "70cfe992ee75d8de2149f1e05802d92494ef3b2ea580e9cacfb31c81a177fbe1"
+    },
+    {
+      "path": "infra/events/20261105_091000_feedback_final_env_per_segment/docs/cloud-context/generated-md/product/relay-gate-target-architecture.md",
+      "sha256": "12eb0b577f13c144e44734fc35a6d6540adb00e9673eaffd96ab1aa6c6ba37ee"
+    },
+    {
+      "path": "infra/events/20261105_091000_feedback_final_env_per_segment/docs/mcl/foundation/output/foundation-context.yaml",
+      "sha256": "c84abbadb97865417580f462cff4da1b97e97ee4419c8ece591959b376c5d770"
+    },
+    {
+      "path": "infra/events/20261105_091000_feedback_final_env_per_segment/docs/mcl/product/input/product-input.yaml",
+      "sha256": "2437950cee0aca37ddd7f10ef6c4aaf83268bec31e2ad3165ecdf5828493ef37"
+    },
+    {
+      "path": "infra/events/20261105_091000_feedback_final_env_per_segment/docs/mcl/product/output/product-impl-onprem.yaml",
+      "sha256": "07f924e1e02d2a4468df44b7ceda9be39d49e73aae0188b732a6f7b3f1ff174d"
+    },
+    {
+      "path": "infra/events/20261105_091000_feedback_final_env_per_segment/docs/mcl/product/output/product-mapping-onprem.yaml",
+      "sha256": "5012d7f477769ea0869432eb07a84a809a4c4c928575ebd8dabf0226d4869ea5"
+    },
+    {
+      "path": "infra/events/20261105_091000_feedback_final_env_per_segment/docs/mcl/product/output/product-workload-model.yaml",
+      "sha256": "087e2644f24daf6d45cbd70cc0b507866e0b89e9c1fb282f08f77e403e38747a"
+    },
+    {
+      "path": "infra/events/20261105_091000_feedback_final_env_per_segment/docs/mcl/shared-platform/output/shared-platform-context.yaml",
+      "sha256": "c5cba4bb88bbc4f06aa3f38784b06ea9eb65b1c250b8c2c0f731d8ce08fdb6ef"
+    },
+    {
+      "path": "infra/events/20261105_091000_feedback_final_env_per_segment/infra-event-diff.yaml",
+      "sha256": "bc729d3dea4ff2a2749cc530a5931cd5b8596009761f14854e06bb8165a70540"
+    },
+    {
+      "path": "infra/events/20261105_091000_feedback_final_env_per_segment/infra-event.md",
+      "sha256": "9d865ff619671027e8c0ea2aafae7bbba7c23f3c77ca2ff84570cec5118ee39a"
+    },
+    {
+      "path": "infra/events/20261105_091000_feedback_final_env_per_segment/infra-event.yaml",
+      "sha256": "bc8081f4b4d2dd3f04b4f49b8222877e313f90e7ff5a4a4ad7cb06f219dd6911"
+    },
+    {
+      "path": "infra/events/20261105_091000_feedback_final_env_per_segment/infra/product/onprem/README.md",
+      "sha256": "5d5edd6b93102c408aebf80f4ab53b3645733fb84bb183306719eb43a6697625"
+    },
+    {
+      "path": "infra/events/20261105_091000_feedback_final_env_per_segment/infra/product/onprem/ansible/inventory.ini.example",
+      "sha256": "462033a5e4eb95ca0e97491465217d7287a0701311ade93f83a26c5571b0accb"
+    },
+    {
+      "path": "infra/events/20261105_091000_feedback_final_env_per_segment/infra/product/onprem/ansible/roles/relay-gate-config/tasks/main.yml",
+      "sha256": "f46bea48250d02a741f7be98f58b8dab73d8ee1e66c0cb6ab809d711e1f098a7"
+    },
+    {
+      "path": "infra/events/20261105_091000_feedback_final_env_per_segment/product-input.yaml",
+      "sha256": "2437950cee0aca37ddd7f10ef6c4aaf83268bec31e2ad3165ecdf5828493ef37"
+    },
+    {
+      "path": "infra/events/20261105_091000_feedback_final_env_per_segment/source.txt",
+      "sha256": "c1b26aded87af5cb1ce87b796026dccd1576103bcb9c234c2cc5b8468299a559"
+    }
+  ]
+}

@@ -24,7 +24,7 @@ feature flag 設定(env)の 9 キー定義・検証ルールを **設定契約**
 ## 設定契約(feature flag env)
 
 - **所在**: `$RELAY_GATE_CONFIG_DIR/feature-flag.env`(facade.sh が起動のたびに読む。仮採用: _inference.md #5)
-- **形式**: 1 行 1 キー `KEY=value`。`#` 始まりはコメント、空行は無視。値のクォートは不要(クォートは値の一部とみなさない。先頭末尾の引用符の外し方は CLI 契約 `config_input_rules.env_files` の規則に従う: 先頭と末尾を別々に 1 文字ずつ外し、種類の一致や対は求めない)。シェル変数展開・コマンド置換は行わない(`source` しない。`grep` / `cut` で読む)。文字コード UTF-8、改行 LF。形式から外れた入力(NUL バイト・UTF-8 として不正なバイト列・BOM・CR・`=` を含まない行)の拒否(終了コード 2。文言は契約と同文)、読み込みは 1 時点の内容だけで判定する保証、補助コマンドの失敗(終了コード 6)は CLI 契約 `config_input_rules`(`env_files`)に従う(値は複写しない)。CR を黙って落として受理しない
+- **形式**: 1 行 1 キー `KEY=value`。行の前後の空白(半角空白とタブ)を除いた結果が `#` で始まる行はコメント(字下げしたコメント行を含む。`KEY=#abc` はコメントではなく値 `#abc`)、0 バイトの空行は無視。コメント行の定義は CLI 契約 `config_input_rules.env_files` に従う。値のクォートは不要。キーと値の分け方、キー・値の前後の空白の除き方、値の先頭末尾の引用符の外し方は、この順序を含めて CLI 契約 `config_input_rules.env_files` の規則に従う。シェル変数展開・コマンド置換は行わない(`source` しない。`grep` / `cut` で読む)。文字コード UTF-8、改行 LF。形式から外れた入力(NUL バイト・UTF-8 として不正なバイト列・BOM・CR・`=` を含まない行・キーの前後の空白を除いた結果キーが空になる行・同じキーが 2 行以上ある設定)の拒否(終了コード 2。文言は契約と同文。同じキーの重複は `error: duplicate key key=<KEY> lines=<n1,n2,...> path: <path>` で、どちらの行の値も使わない)、読み込みは 1 時点の内容だけで判定する保証、補助コマンドの失敗(終了コード 6)は CLI 契約 `config_input_rules`(`env_files`)に従う(値は複写しない)。CR を黙って落として受理しない
 - **設定所有区分**: feature flag が所有するのは下表の 9 キーのみ(元の方針資料の設定契約と同じ)。設定版は持たない
 
 | キー | 型 | 必須 | 値 | 検証 | 説明 |
@@ -85,7 +85,7 @@ feature flag 設定(env)の 9 キー定義・検証ルールを **設定契約**
 
 ## UC ロジック
 
-- **バリデーション**: 上記の設定契約。違反は全件収集してから報告する(1 件目で止めない)。runner `--help` の問い合わせ規則(待機上限・実行順・未応答判定)は契約 `validate-config.sh` の `runner_help_probe` に従う
+- **バリデーション**: 上記の設定契約。違反は全件収集してから報告する(1 件目で止めない)。ただし検査の段は CLI 契約 `config_input_rules.env_files` に従う: (1) バイト・改行(NUL / UTF-8 / BOM / CR)の違反があればそれだけを報告して止める(ファイル内の全件を行番号の昇順に、同じ行は NUL → UTF-8 → BOM → CR の順に 1 種類 1 行。hint は最後の CR の error 行の次に 1 回。CLI 契約 `config_input_rules.byte_checks`)→ (2) invalid line(行番号の昇順)と同じキーの重複(重複したキーの初出行の昇順)を全件報告し、1 件でもあれば値を使わず (3) を行わない → (3) 上表のキーごとの検査・組合せ検証・未知キーの warn。runner `--help` の問い合わせ規則(待機上限・実行順・未応答判定)は契約 `validate-config.sh` の `runner_help_probe` に従う
 - **確認プロンプト**: なし
 - **冪等性**: 読み取り専用。何度実行しても同じ結果
 - **エラーハンドリング**: ファイル読み込み失敗は `error: config file not found path: <path>`、終了コード 2。runner `--help` 問い合わせの準備失敗は終了コード 6(上表)
@@ -164,11 +164,68 @@ Feature: feature flag を設定する - facade / slot runner ティア
     When `validate-config.sh --feature-flag ff.env` を実行する
     Then 終了コード 2 で stderr に "error: carriage return is not allowed line=1 path: ff.env" と "hint: use LF line endings" が出る(契約 config_input_rules。CR を黙って落として受理しない)
 
+  Scenario: validate-config_sh_feature-flag はバイト・改行の違反を全件出してキーの検査をしない
+    Given ff.env の 1 行目が "BLUE_MODE=foreground" + CR + LF、2 行目が UTF-8 として不正なバイト列を含むコメント行、3 行目が "GREEN_MODE=sideways"(列挙外)+ CR + LF である
+    When `validate-config.sh --feature-flag ff.env` を実行する
+    Then 終了コード 2 で stdout は 0 行、stderr は "error: carriage return is not allowed line=1 path: ff.env" / "error: encoding is not utf-8 line=2 path: ff.env" / "error: carriage return is not allowed line=3 path: ff.env" / "hint: use LF line endings" の 4 行がこの順に出る
+    And stderr に "invalid value" / "option required" を含む行は出ない(バイト・改行の違反で止める)
+
   Scenario: validate-config_sh_feature-flag は FINAL_ で始まるキーを未知キーではなく終了コード 2 で拒否する
     Given 有効な並行稼働設定に加えて FINAL_DB_CONN_REF=final-db と FINAL_CROSSCHECK_MODE=background を書く
     When `validate-config.sh --feature-flag ff.env` を実行する
     Then 終了コード 2 で stderr に "error: final crosscheck key is not allowed key=FINAL_DB_CONN_REF" と "error: final crosscheck key is not allowed key=FINAL_CROSSCHECK_MODE" の両方が出る
     And stderr に "warn: unknown key" で始まる行は出ない
+
+  Scenario Outline: validate-config_sh_feature-flag はキーが空の行と KEY=VALUE でない行を invalid line で拒否する
+    Given 有効な並行稼働設定の 1 行目の後に <line> の 1 行を挿入した ff.env がある(<SP> は半角空白 1 個に置き換えて書き込む)
+    When `validate-config.sh --feature-flag ff.env` を実行する
+    Then 終了コード 2 で stderr に "error: invalid line line=2 path: ff.env" が出る(契約 config_input_rules.env_files。読み飛ばさない)
+
+    Examples:
+      | line          | note                  |
+      | <SP>=abc      | キーが空              |
+      | =abc          | キーが空              |
+      | <SP>=<SP>     | キーも値も空白だけ    |
+      | BLUE_MODE     | = が無い              |
+      | <SP><SP>      | 空白だけの行          |
+
+  Scenario Outline: validate-config_sh_feature-flag は前後の空白を除いて # で始まる行をコメントとして読み飛ばす
+    Given 有効な並行稼働設定の 1 行目の後に <line> の 1 行を挿入した ff.env がある(<SP> は半角空白 1 個、<TAB> はタブ 1 個に置き換えて書き込む)
+    When `validate-config.sh --feature-flag ff.env` を実行する
+    Then 終了コード 0 で、stderr に "error:" と "warn: unknown key" で始まる行は出ない(契約 config_input_rules.env_files)
+
+    Examples:
+      | line                      | note                           |
+      | # x                       | 行頭の #                        |
+      | <SP><SP># x               | 半角空白で字下げした #           |
+      | <TAB># x                  | タブで字下げした #               |
+      | <SP># BLUE_MODE=off       | = を含む字下げしたコメント行     |
+
+  Scenario: validate-config_sh_feature-flag は値の先頭の # をコメントにしない
+    Given 有効な並行稼働設定の BLUE_IMPL の行を `BLUE_IMPL=#v1` に置き換えた ff.env がある
+    When `validate-config.sh --feature-flag ff.env` を実行する
+    Then 終了コード 0 で stdout に blue_impl=#v1 が出る(値の先頭の # はコメントにしない)
+
+  Scenario Outline: validate-config_sh_feature-flag は同じキーが 2 行以上ある設定を duplicate key で拒否する
+    Given 有効な並行稼働設定(1 行目が BLUE_MODE=foreground)の 1 行目の後に <lines> を挿入した ff.env がある(<lines> の「 と 」は行の区切りで、区切った各行をこの順に 2 行目から 1 行ずつ挿入する。<SP> は半角空白 1 個に置き換えて書き込む)
+    When `validate-config.sh --feature-flag ff.env` を実行する
+    Then 終了コード 2 で stderr の error 行は <errors> だけで、この順に出る(契約 config_input_rules.env_files)
+    And stdout は 0 行で、stderr に "error: option required" / "error: invalid value" / "warn: unknown key" で始まる行は出ない(値を使わず、キーごとの検査を行わない)
+
+    Examples:
+      | lines                                   | errors                                                                                                   | note                     |
+      | BLUE_MODE=foreground                    | "error: duplicate key key=BLUE_MODE lines=1,2 path: ff.env"                                               | 値が同じでも重複         |
+      | <SP>BLUE_MODE<SP>=off                   | "error: duplicate key key=BLUE_MODE lines=1,2 path: ff.env"                                               | キーの前後の空白は除く   |
+      | BLUE_MODE=                              | "error: duplicate key key=BLUE_MODE lines=1,2 path: ff.env"                                               | 値が空の行も数える       |
+      | CONFIG_VERSION=a と CONFIG_VERSION=b    | "error: duplicate key key=CONFIG_VERSION lines=2,3 path: ff.env"                                          | 未知キーも数える         |
+      | BLUE_MODE=off と BLUE_MODE=background   | "error: duplicate key key=BLUE_MODE lines=1,2,3 path: ff.env"                                             | 3 行は初出行から全部     |
+      | BLUE_MODE と BLUE_MODE=off              | "error: invalid line line=2 path: ff.env" と "error: duplicate key key=BLUE_MODE lines=1,3 path: ff.env" | invalid line が先        |
+
+  Scenario: validate-config_sh_feature-flag は大文字小文字の違うキーを重複にしない
+    Given 有効な並行稼働設定に加えて blue_mode=off を書く
+    When `validate-config.sh --feature-flag ff.env` を実行する
+    Then 終了コード 0 で stderr に "warn: unknown key key=blue_mode path: ff.env" が出て、"error: duplicate key" で始まる行は出ない(キーの比較は大文字小文字を区別した完全一致)
+    And stdout の 2 行目は "blue_mode=foreground" である
 
   Scenario: validate-config_sh_feature-flag はファイルが無ければ終了コード 2 を返す
     When `validate-config.sh --feature-flag /nonexistent.env` を実行する

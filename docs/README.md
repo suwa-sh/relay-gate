@@ -1,20 +1,20 @@
 # relay-gate 並行稼働実行基盤
 
-> 既存実装(blue)と新実装(green)をジョブスケジューラの同一ジョブ定義から並行稼働させ、クロスチェックで整合性を検証しながら段階的に切り替えるための feature flag 付きストラングラーファサード型の実行基盤。facade が feature flag(BLUE_MODE / GREEN_MODE / RAPID_CROSSCHECK_MODE / BLUE_IMPL / GREEN_IMPL / BLUE_RUNNER / GREEN_RUNNER / RAPID_CROSSCHECK_RUNNER / RAPID_CROSSCHECK_WORKER)で slot ごとの実行モード(foreground / background / off)を選択し、background slot を先に起動してから foreground の Runner Result(stdout.log / stderr.log / exitcode.txt)だけをジョブスケジューラへ中継する。slot runner がジョブマップで JOB_ID から実行先を解決し execution-spec.json として確定保存する。速報クロスチェックはジョブ実行ごとに blue / green の完了結果を非同期に比較し、確報クロスチェックは別ジョブ定義から全テーブル・全ファイルの日次全量比較を行って stdout・stderr・exitcode をジョブスケジューラへ返す。ハング検知の定期ジョブが background 実行の異常を運用者へメール通知し、運用者は中止スクリプトで停止確認済みの実行を ABORTED にしてから background 側リランで元の execution-spec.json から再実行する。シェルスクリプトと relay-gate 内部のデータストアである RDB(ジョブキュー兼管理 DB。外部システムではなく relay-gate の構成要素)で構成し、実装固有のホスト配置(リモート実行ホストへの SSH 接続など)は適用側の関心事として slot の runner に閉じ込め、UI 画面を持たず CLI と定期ジョブだけで動作する。
+> 既存実装(blue)と新実装(green)をジョブスケジューラの同一ジョブ定義から並行稼働させ、クロスチェックで整合性を検証しながら段階的に切り替えるための feature flag 付きストラングラーファサード型の実行基盤。facade が feature flag(BLUE_MODE / GREEN_MODE / RAPID_CROSSCHECK_MODE / BLUE_IMPL / GREEN_IMPL / BLUE_RUNNER / GREEN_RUNNER / RAPID_CROSSCHECK_RUNNER / RAPID_CROSSCHECK_WORKER)で slot ごとの実行モード(foreground / background / off)を選択し、background slot を先に起動してから foreground の Runner Result(stdout.log / stderr.log / exitcode.txt)だけをジョブスケジューラへ中継する。slot runner がジョブマップで JOB_ID から実行先を解決し execution-spec.json として確定保存する。速報クロスチェックはジョブ実行ごとに blue / green の完了結果を非同期に比較し、確報クロスチェックは別ジョブ定義から全テーブル・全ファイルの日次全量比較を行って stdout・stderr・exitcode をジョブスケジューラへ返す。ハング検知の定期ジョブが background 実行の異常を自身の終了結果(警告終了 / 失敗)と標準エラーで運用者へ知らせ、運用者は中止スクリプトで停止確認済みの実行を ABORTED にしてから background 側リランで元の execution-spec.json から再実行する。ハウスキープの定期ジョブが、保持日数を過ぎた終了済みの実行の成果物と管理 DB の履歴、終端した確報比較依頼を削除する。シェルスクリプトと relay-gate 内部のデータストアである RDB(ジョブキュー兼管理 DB。外部システムではなく relay-gate の構成要素)で構成し、実装固有のホスト配置(リモート実行ホストへの SSH 接続など)は適用側の関心事として slot の runner に閉じ込め、UI 画面を持たず CLI と定期ジョブだけで動作する。
 
-**最終更新**: 2026-11-01 10:50:00 feedback impl feedback dcd8234d (specs)
+**最終更新**: 2026-11-05 11:20:00 feedback single management db (specs)
 
 ## 成果物一覧
 
 | ドメイン | 最新 | イベント数 |
 |---------|------|-----------:|
-| [USDM（要求分解）](#usdm要求分解) | [usdm/latest/](usdm/latest/) | 8 |
-| [RDRA（要件定義）](#rdra要件定義) | [rdra/latest/](rdra/latest/) | 8 |
-| [NFR（非機能要求）](#nfr非機能要求) | [nfr/latest/](nfr/latest/) | 8 |
-| [Arch（アーキテクチャ）](#archアーキテクチャ) | [arch/latest/](arch/latest/) | 9 |
-| [Infra（インフラ設計）](#infraインフラ設計) | [infra/latest/](infra/latest/) | 8 |
+| [USDM（要求分解）](#usdm要求分解) | [usdm/latest/](usdm/latest/) | 11 |
+| [RDRA（要件定義）](#rdra要件定義) | [rdra/latest/](rdra/latest/) | 11 |
+| [NFR（非機能要求）](#nfr非機能要求) | [nfr/latest/](nfr/latest/) | 11 |
+| [Arch（アーキテクチャ）](#archアーキテクチャ) | [arch/latest/](arch/latest/) | 12 |
+| [Infra（インフラ設計）](#infraインフラ設計) | [infra/latest/](infra/latest/) | 15 |
 | [Design（デザイン）](#designデザイン) | - | 0 |
-| [Specs（詳細仕様）](#specs詳細仕様) | [specs/latest/](specs/latest/) | 13 |
+| [Specs（詳細仕様）](#specs詳細仕様) | [specs/latest/](specs/latest/) | 21 |
 
 ## USDM（要求分解）
 
@@ -25,8 +25,8 @@
 
 | 項目 | 値 |
 |------|-----|
-| 要求数 | 13 |
-| 仕様数 | 50 |
+| 要求数 | 14 |
+| 仕様数 | 59 |
 
 ## RDRA（要件定義）
 
@@ -47,14 +47,14 @@
 | 項目 | 値 |
 |------|-----|
 | アクター | 2 |
-| 外部システム | 6 |
+| 外部システム | 5 |
 | 情報 | 24 |
 | 状態モデル | 5 |
-| 条件 | 47 |
+| 条件 | 49 |
 | バリエーション | 21 |
-| 業務 | 5 |
-| BUC | 7 |
-| UC | 32 |
+| 業務 | 6 |
+| BUC | 8 |
+| UC | 34 |
 
 ### 外部ツール連携
 
@@ -74,7 +74,6 @@ graph TB
   SYS --> 現行実装_blue_(["現行実装 blue "]):::external
   SYS --> 新実装_green_(["新実装 green "]):::external
   SYS --> 比較ツール(["比較ツール"]):::external
-  SYS --> メール通知(["メール通知"]):::external
   SYS --> リモート実行ホスト_SSH_(["リモート実行ホスト SSH "]):::external
   classDef actor fill:#2563EB,color:#fff,stroke:none
   classDef external fill:#6B7280,color:#fff,stroke:none
@@ -103,12 +102,12 @@ graph TB
 
 | 項目 | 値 |
 |------|-----|
-| 言語 | bash(シェルスクリプト。facade / runner / worker / 監視 / 復旧の全スクリプト), SQL(管理 DB のジョブキュー操作。RDB クライアント CLI 経由), JavaScript(CommonJS。BDD の step 定義のみ。実行時には使用しない) |
-| サブドメイン | 4 |
-| Bounded Context | 5 |
-| コンテキストマップ関係 | 8 |
+| 言語 | bash(シェルスクリプト。facade / runner / worker / 監視 / 復旧 / ハウスキープの全スクリプト), SQL(管理 DB のジョブキュー操作。RDB クライアント CLI 経由), JavaScript(CommonJS。BDD の step 定義のみ。実行時には使用しない) |
+| サブドメイン | 5 |
+| Bounded Context | 6 |
+| コンテキストマップ関係 | 13 |
 | ティア | 5 |
-| ポリシー | 26 |
+| ポリシー | 28 |
 | ルール | 6 |
 | エンティティ | 24 |
 
@@ -121,6 +120,7 @@ BC1["並行稼働実行コンテキスト"]
 BC2["速報クロスチェックコンテキスト"]
 BC3["確報クロスチェックコンテキスト"]
 BC4["実行監視・復旧コンテキスト"]
+BC6["ハウスキープコンテキスト"]
 BC1 -->|Conformist| BC5
 BC2 -->|Conformist| BC5
 BC3 -->|Conformist| BC5
@@ -129,6 +129,11 @@ BC2 <-->|Shared Kernel| BC3
 BC4 -->|Conformist| BC1
 BC4 -->|Conformist| BC2
 BC4 -->|Conformist| BC3
+BC6 -->|Conformist| BC1
+BC6 -->|Conformist| BC2
+BC6 -->|Conformist| BC3
+BC6 -->|Conformist| BC4
+BC6 -->|Conformist| BC5
 ```
 
 ### コンテナ図（システム構成）
@@ -137,7 +142,7 @@ BC4 -->|Conformist| BC3
 graph TD
 SCHED[ジョブスケジューラ] -->|JOB_ID PARAM...| FACADE[tier-facade<br/>facade.sh + blue/green runner]
 SCHED -->|別ジョブ定義| FINAL[tier-final-crosscheck<br/>runner + worker]
-SCHED -->|定期ジョブ / 専用ジョブ| OPS[tier-ops<br/>hang-detector / background-rerun / abort-*]
+SCHED -->|定期ジョブ / 専用ジョブ| OPS[tier-ops<br/>hang-detector / housekeep / background-rerun / abort-*]
 OPERATOR[運用者] -->|直接起動| OPS
 FACADE -->|SSH| IMPL[現行実装 blue / 新実装 green]
 FACADE -->|blue-completed / green-completed| RAPID[tier-rapid-crosscheck<br/>dispatcher + worker]
@@ -147,9 +152,10 @@ FINAL --> DS
 OPS --> DS
 RAPID -->|ジョブ単位比較| CMP[比較ツール]
 FINAL -->|全量比較| CMP
-OPS -->|warning / error| MAIL[メール通知]
 FACADE -->|stdout / stderr / exitcode| SCHED
 FINAL -->|stdout / stderr / exitcode| SCHED
+OPS -->|stdout / stderr / exitcode<br/>ハング検知の警告終了・失敗<br/>ハウスキープの削除件数・失敗| SCHED
+SCHED -->|障害通知| OPERATOR
 ```
 
 ### コンポーネント図（レイヤー依存）
@@ -191,11 +197,11 @@ R --> G[gateway: RDB / 比較ツール]
 
 ```mermaid
 graph TD
-P[presentation: hang-detector / background-rerun / abort-* CLI] --> U[usecase: 監視・リラン・中止フロー]
-U --> D[domain: 判定表・監視状態遷移]
-U --> R[repository: 監視記録 / 状態 / 成果物 / execution-spec]
+P[presentation: hang-detector / housekeep / background-rerun / abort-* CLI] --> U[usecase: 監視・ハウスキープ・リラン・中止フロー]
+U --> D[domain: 判定表・監視状態遷移・削除判定]
+U --> R[repository: 監視記録 / 通知済みの印 / 状態 / 成果物 / execution-spec / 設定]
 R --> D
-R --> G[gateway: メール / RDB / filesystem / runner 起動]
+R --> G[gateway: RDB 業務用 / RDB ハウスキープ専用 / filesystem / runner 起動]
 ```
 
 ## Infra（インフラ設計）
@@ -222,8 +228,8 @@ design ステージは pipeline-config の `skip_steps` で skip されている
 
 | 項目 | 値 |
 |------|-----|
-| UC | 32 |
-| 非同期イベント | 4 |
+| UC | 34 |
+| 非同期イベント | 3 |
 
 ### 横断設計
 
@@ -270,7 +276,7 @@ design ステージは pipeline-config の `skip_steps` で skip されている
 
 **background 実行監視フロー**
 
-- [background 異常の通知メールを受け取る](specs/latest/実行監視業務/background 実行監視フロー/background 異常の通知メールを受け取る/spec.md)
+- [ハング検知ジョブの異常終了を確認する](specs/latest/実行監視業務/background 実行監視フロー/ハング検知ジョブの異常終了を確認する/spec.md)
 - [background 実行の経過時間と終了状態を判定する](specs/latest/実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/spec.md)
 - [ハング疑い・実行エラー・比較異常を通知する](specs/latest/実行監視業務/background 実行監視フロー/ハング疑い・実行エラー・比較異常を通知する/spec.md)
 - [監視記録を保存する](specs/latest/実行監視業務/background 実行監視フロー/監視記録を保存する/spec.md)
@@ -300,17 +306,24 @@ design ステージは pipeline-config の `skip_steps` で skip されている
 - [slot ごとのジョブマップを定義する](specs/latest/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/spec.md)
 - [クロスチェックのジョブマップと比較定義を定義する](specs/latest/適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/spec.md)
 
-> 5 業務 / 7 BUC / 32 UC
+### ハウスキープ業務
+
+**ハウスキープフロー**
+
+- [保持日数を過ぎた終了済みの実行と確報比較依頼を判定する](specs/latest/ハウスキープ業務/ハウスキープフロー/保持日数を過ぎた終了済みの実行と確報比較依頼を判定する/spec.md)
+- [成果物と管理 DB の履歴を削除する](specs/latest/ハウスキープ業務/ハウスキープフロー/成果物と管理 DB の履歴を削除する/spec.md)
+
+> 6 業務 / 8 BUC / 34 UC
 
 ## ADRs（設計判断記録）
 
-全45件。ドメイン別の一覧から個別の判断記録を参照できます。
+全63件。ドメイン別の一覧から個別の判断記録を参照できます。
 
 | ドメイン | 件数 | 一覧 |
 |---------|-----:|------|
-| Arch | 21 | [判断記録を開く](_indexes/adrs/arch.md) |
+| Arch | 26 | [判断記録を開く](_indexes/adrs/arch.md) |
 | Infra | 5 | [判断記録を開く](_indexes/adrs/infra.md) |
-| Specs | 19 | [判断記録を開く](_indexes/adrs/specs.md) |
+| Specs | 32 | [判断記録を開く](_indexes/adrs/specs.md) |
 
 ## Pipeline feedback runs
 
@@ -331,19 +344,27 @@ distillery-impl が公開した feedback-request Markdown を `dist-pipeline` �
 | 20261010_104636_impl_feedback_dcd8234d | completed | 4 | 4 | 0 | 0 | requirements → quality_attributes → architecture → infrastructure → spec | [feedback-runs/](pipeline/feedback-runs/20261010_104636_impl_feedback_dcd8234d) |
 | 20261027_053600_impl_feedback_dcd8234d | completed | 1 | 1 | 0 | 0 | spec | [feedback-runs/](pipeline/feedback-runs/20261027_053600_impl_feedback_dcd8234d) |
 | 20261027_091000_impl_feedback_dcd8234d | completed | 2 | 2 | 0 | 0 | requirements → quality_attributes → architecture → infrastructure → spec | [feedback-runs/](pipeline/feedback-runs/20261027_091000_impl_feedback_dcd8234d) |
+| 20261101_mail_removal_housekeeping | completed | 3 | 3 | 0 | 0 | requirements → quality_attributes → architecture → infrastructure → spec | [feedback-runs/](pipeline/feedback-runs/20261101_mail_removal_housekeeping) |
+| 20261103_env_duplicate_key | completed | 1 | 1 | 0 | 0 | spec | [feedback-runs/](pipeline/feedback-runs/20261103_env_duplicate_key) |
+| 20261103_housekeeping_db_required | completed | 2 | 2 | 0 | 0 | requirements → quality_attributes → architecture → infrastructure → spec | [feedback-runs/](pipeline/feedback-runs/20261103_housekeeping_db_required) |
+| 20261103_housekeeping_followups | completed | 3 | 3 | 0 | 0 | requirements → quality_attributes → architecture → infrastructure → spec | [feedback-runs/](pipeline/feedback-runs/20261103_housekeeping_followups) |
+| 20261104_external_review_fixes | completed | 4 | 4 | 0 | 0 | infrastructure → spec | [feedback-runs/](pipeline/feedback-runs/20261104_external_review_fixes) |
+| 20261104_rapid_env_deploy_check | completed | 1 | 1 | 0 | 0 | infrastructure → spec | [feedback-runs/](pipeline/feedback-runs/20261104_rapid_env_deploy_check) |
+| 20261105_external_review_round2 | completed | 2 | 2 | 0 | 0 | infrastructure → spec | [feedback-runs/](pipeline/feedback-runs/20261105_external_review_round2) |
+| 20261105_single_management_db | completed | 1 | 1 | 0 | 0 | infrastructure → spec | [feedback-runs/](pipeline/feedback-runs/20261105_single_management_db) |
 
 ## イベント履歴
 
-全54件。ドメイン別の履歴から個別のイベントを参照できます。
+全81件。ドメイン別の履歴から個別のイベントを参照できます。
 
 | ドメイン | 件数 | 履歴 |
 |---------|-----:|------|
-| USDM（要求分解） | 8 | [履歴を開く](_indexes/events/usdm.md) |
-| RDRA（要件定義） | 8 | [履歴を開く](_indexes/events/rdra.md) |
-| NFR（非機能要求） | 8 | [履歴を開く](_indexes/events/nfr.md) |
-| Arch（アーキテクチャ） | 9 | [履歴を開く](_indexes/events/arch.md) |
-| Infra（インフラ設計） | 8 | [履歴を開く](_indexes/events/infra.md) |
-| Specs（詳細仕様） | 13 | [履歴を開く](_indexes/events/specs.md) |
+| USDM（要求分解） | 11 | [履歴を開く](_indexes/events/usdm.md) |
+| RDRA（要件定義） | 11 | [履歴を開く](_indexes/events/rdra.md) |
+| NFR（非機能要求） | 11 | [履歴を開く](_indexes/events/nfr.md) |
+| Arch（アーキテクチャ） | 12 | [履歴を開く](_indexes/events/arch.md) |
+| Infra（インフラ設計） | 15 | [履歴を開く](_indexes/events/infra.md) |
+| Specs（詳細仕様） | 21 | [履歴を開く](_indexes/events/specs.md) |
 
 ---
 

@@ -67,9 +67,9 @@ sequenceDiagram
   P->>U: RegisterAndWaitCommand
   U->>R: final-crosscheck.env を読む(polling 間隔・上限・DB 接続参照名)
   R->>FS: final-crosscheck.env
-  alt final-crosscheck.env 不在 / FINAL_DB_CONN_REF 欠落
+  alt 設定検証 NG(不在・読み取り不可・入力の守備範囲の違反・FINAL_DB_CONN_REF の欠落・空・FINAL_POLL_INTERVAL_SEC / FINAL_POLL_LIMIT_SEC の値の不正。検査の順は tier-final-crosscheck.md)
     U-->>P: 設定検証 NG
-    P-->>Sched: stderr error: config file not found ... / error: option required option=FINAL_DB_CONN_REF ..., 終了コード 2
+    P-->>Sched: stderr error: config file not found ... / error: option required option=FINAL_DB_CONN_REF ... / error: invalid value key=FINAL_POLL_... ...(+ hint)など, 終了コード 2
   end
   U->>U: final_crosscheck_id を発行
   U->>R: 依頼を REQUESTED で登録
@@ -131,7 +131,7 @@ sequenceDiagram
 
 | 状態モデル | 遷移元 | 遷移先 | トリガー | 事前条件 | 事後処理 | 適用 tier |
 |-----------|--------|--------|---------|---------|---------|----------|
-| クロスチェック依頼 | `[*]` | REQUESTED | `final-crosscheck-runner.sh` の依頼登録 | 実行補助オプション検証 OK、final-crosscheck.env が読める | 実行ログに `request registered`、60 秒間隔の polling 開始 | tier-final-crosscheck |
+| クロスチェック依頼 | `[*]` | REQUESTED | `final-crosscheck-runner.sh` の依頼登録 | 実行補助オプション検証 OK、final-crosscheck.env の設定検証 OK(検査の順は tier-final-crosscheck.md) | 実行ログに `request registered`、60 秒間隔の polling 開始 | tier-final-crosscheck |
 
 ## 関連 RDRA モデル
 

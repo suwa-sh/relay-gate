@@ -23,7 +23,7 @@ x_cli_commands:
     stderr: "待機中は relay-gate 自身のエラーのみ(error: / hint:)。終端到達後は依頼に保存された stderr をバイト列のまま無加工で出す(UC「保存済みの確報結果をジョブスケジューラへ返す」)。待機中の進捗は実行ログにのみ残す"
     exit_codes:
       - code: 2
-        meaning: "引数・設定検証エラー(未知のオプション・業務上の引数 error: unknown option option=--xxx、final-crosscheck.env 不在または FINAL_DB_CONN_REF 欠落)"
+        meaning: "引数・設定検証エラー(未知のオプション・業務上の引数 error: unknown option option=--xxx、final-crosscheck.env 不在・読み取り不可・入力の守備範囲の違反、FINAL_DB_CONN_REF の欠落・空、FINAL_POLL_INTERVAL_SEC / FINAL_POLL_LIMIT_SEC が正の整数でない(error: invalid value key=... value=... path: ... + hint: use a positive integer)。FINAL_COMPARE_COMMAND など worker だけが使うキーは検査しない。検査の順は契約 config_files.final-crosscheck.env note)"
       - code: 6
         meaning: "実行エラー(管理 DB 接続・INSERT・SELECT 失敗、polling 上限 FINAL_POLL_LIMIT_SEC 超過。依頼は変更しない)。終端到達後は上記 4 分類を適用せず、依頼に保存された exit_code をそのまま返す(無加工中継)"
 async_events:

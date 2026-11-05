@@ -1,24 +1,22 @@
-Spec 差分更新(design 無しモード): 2026-11-01 の実装フィードバック(dist-pipeline feedback mode Step6)。
+Spec 差分更新(design 無しモード): 2026-11-05 の管理 DB を 1 つとする前提の明記(dist-pipeline feedback mode Step6)。上流 latest(usdm / rdra / nfr / arch)は変更なし。infra latest は同じ run の infra イベント 20261105_111000_feedback_single_management_db(管理 DB の接続先の参照名が同じ管理 DB に解決されることを、構築の前提として書く)で更新済み。
 
-CR-dcd8234d-010(spec 直接所有): CLI 契約の 2 か所(shared_rules.compare_command_argv.split / config_input_rules.env_files)の env 値の引用符の外し方を同じ規則で書く。
-
-- 規則: 先頭の 1 文字が " か ' なら外し、それとは別に(先頭を外した後の)末尾の 1 文字が " か ' なら外す。先頭と末尾の種類の一致や対は求めない。例 "abc" → abc / "abc → abc / abc' → abc / "abc' → abc。
-- env_files は UC「feature flag を設定する」への委譲をやめて規則そのものを書いた。feature flag UC の tier-facade.md は契約 env_files へ参照させ「仮採用」を外した。
-- 実装は変えない(facade の feature_flag_config_unquote / rapid_crosscheck_env_unquote と同じ規則)。
-
-CR-dcd8234d-009(因果。上流 USDM SPEC-004-04 は更新済み): 速報の起動コマンドの検証を 3 点に揃える。
-
-- UC「クロスチェックのジョブマップと比較定義を定義する」の _api-summary.yaml の stderr と終了コード 2 の理由に {params} の位置違反を追加(終了コード 6 も tier-facade.md に合わせて追加)。
-- spec.md / tier-facade.md / CLI 契約(config_files の RAPID_COMPARE_COMMAND)の「引数部分の内容は検査しない」を「{job_id} の有無と {params} の位置のほかは」に改めた。
-- BDD: 受け入れ基準 10(引数部分の任意文字列。{params} を一部に含まず {job_id} を含む)と 11(クロスチェックジョブマップ・対象カタログの検証種別は無い)のシナリオを追加。基準 12 は既存「{params} が引数全体でない位置にある」で覆う。
-- spec-event.yaml usdm[] / usdm-acceptance-matrix.md / uc-dependencies.md を追従。判断は decisions/spec-decision-019。
+CR-f4c8b261-001(infra 直接所有。spec は保守的 closure。利用者承認済みの直し方): 管理 DB の接続先の参照名が同じ管理 DB に解決されることを、CLI 契約にも前提として書く。
+- 問題: 確報クロスチェックの設定ファイルは実行ホスト(確報 runner)と DB セグメント(確報 worker)に別の元ファイルで配る。2 つのファイルの FINAL_DB_CONN_REF が別の DB に解決されると、設定の検査をすべて通っても worker は runner の依頼を取得できず、確報ジョブが完了しない。CLI 契約 conventions.credentials は参照名を列挙し、解決を適用側の運用手順に委ねるとだけ書いており、すべての参照名が同じ 1 つの管理 DB に解決されるという前提が無かった。
+- 書いた前提(契約 conventions.credentials):
+  - 管理 DB は 1 つで、すべての管理 DB 接続参照名(RAPID_DB_CONN_REF、実行ホストと DB セグメントそれぞれの FINAL_DB_CONN_REF、HANG_DB_CONN_REF、HOUSEKEEP_DB_CONN_REF)は同じ 1 つの管理 DB に解決される。
+  - 理由: 確報 runner が登録した確報比較依頼を、確報 worker が同じキューから取得するため。
+  - 条件は参照名の文字列が同じことではなく、解決先(接続先の DB)が同じこと。HOUSEKEEP_DB_CONN_REF は専用 DB ロール housekeep_del で業務用ロールとは別のロールを指すが、解決先の DB は同じ。
+  - 解決先が同じことは導入する側が確かめる。構築手順の配置時の検査は設定ファイルの存在確認だけで、relay-gate のコマンド(validate-config.sh と各読み手の起動時の検査)も解決先を検査しない。
+- 揃えた箇所: 契約 config_files の final-crosscheck.env の note と FINAL_DB_CONN_REF、rapid-crosscheck.env の RAPID_DB_CONN_REF、hang-detector.env の HANG_DB_CONN_REF、housekeep.env の HOUSEKEEP_DB_CONN_REF。6 UC の tier md の設定キー表(速報比較依頼を claim する / 速報クロスチェック runner へ完了通知を送信する / 確報比較依頼を登録して終端状態まで待機する / 確報比較依頼を claim する / background 実行の経過時間と終了状態を判定する / 保持日数を過ぎた終了済みの実行と確報比較依頼を判定する(キー表の直下の説明))。
+- 足さないもの: 新しい検査・error 文言・終了コード・BDD(relay-gate は解決先を検査しないため)。
+- 判断は decisions/spec-decision-032。
 
 feedback request:
-- feedback_request_id: 20261027_091000_impl_feedback_dcd8234d
-- input_sha256: 37b8b54d7a4a8b1a978e389924c4b6e3ee9a1d276823a9d877f10fd01b866ca8
-- request_ids: CR-dcd8234d-009, CR-dcd8234d-010
-- direct_work_unit_ids: CR-dcd8234d-010#1
-- causal_work_unit_ids: CR-dcd8234d-009#1, CR-dcd8234d-010#1
-- stage packet: docs/pipeline/feedback-runs/20261027_091000_impl_feedback_dcd8234d/stage-packets/spec.md
+- feedback_request_id: 20261105_single_management_db
+- input_sha256: 97bb80ca208301540a11760f416c348f73ea0c1898d9535a80c5a8f013df194a
+- request_ids: CR-f4c8b261-001
+- direct_work_unit_ids: (なし)
+- causal_work_unit_ids: CR-f4c8b261-001#1
+- stage packet: docs/pipeline/feedback-runs/20261105_single_management_db/stage-packets/spec.md
 
-trigger_event: usdm:20261101_101000_feedback_impl_feedback_dcd8234d, arch:20261101_103000_feedback_impl_feedback_dcd8234d, infra:20261101_104000_feedback_impl_feedback_dcd8234d(rdra / nfr は no-change)
+trigger_event: infra:20261105_111000_feedback_single_management_db(他の上流 latest は変更なし)

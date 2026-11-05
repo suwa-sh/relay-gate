@@ -1,0 +1,21 @@
+round: 2
+findings:
+  - id: R-008
+    viewpoint: 4
+    severity: minor
+    target: "_cross-cutting/ux-ui/ui-design.md"
+    claim: "R-004 の修正で契約 conventions.exit_codes の 2 に『読んだ設定ファイルの入力の守備範囲の違反(invalid line・同じキーの重複を含む)は、設定ファイルを読む全コマンドに共通で、各コマンドの exit_codes の condition に列挙が無くても 2』を加えたが、終了コードの横断規約の正本である ui-design.md の「終了コード規約」の表の 2 の行は変わっていない。正本と転記の内容がずれた。"
+    evidence: "契約の冒頭コメントは『横断規約(終了コード・出力形式・環境変数)の説明は _cross-cutting/ux-ui/ui-design.md を正とし、本ファイルはそれを機械可読に転記する』。ui-design.md の冒頭も『CLI 出力・終了コード…の正本』とする。ui-design.md「終了コード規約」の 2 の条件は『引数不足・不正な値・未知のオプション、feature flag / ジョブマップ / 比較ツール起動コマンド設定の検証 NG(…)、非対話で --yes なし、環境変数の未設定』のままで、入力の守備範囲の違反と『各コマンドの condition に列挙が無くても 2』という優先の規則が無い。同じファイルの「設定ファイルの入力の守備範囲の定型文」には『いずれも終了コード 2(全設定ファイル・全読み手共通)』とあるため意味は矛盾しないが、各コマンドの condition より共通規則を優先するという判断は転記側の契約にしか無い。"
+    suggested_fix: "ui-design.md「終了コード規約」の 2 の条件に、契約 conventions.exit_codes の 2 と同じ文(読んだ設定ファイルの入力の守備範囲の違反。env の invalid line・同じキーの重複を含む。設定ファイルを読む全コマンドに共通で、各コマンドの condition に列挙が無くても 2。runner は exitcode.txt=2)を加える。"
+  - id: R-009
+    viewpoint: 5
+    severity: minor
+    target: "適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md"
+    claim: "追加した Scenario Outline『同じキーが 2 行以上ある設定を duplicate key で拒否する』の <lines> 列は、複数行を『 と 』でつないで 1 セルに書いているが、Given の文にその区切りの規則が無い。区切りと読まなければ 1 行の挿入になり、期待値が変わる。"
+    evidence: "Given は『1 行目の後に <lines> を挿入した ff.env がある(<SP> は半角空白 1 個に置き換えて書き込む。挿入した行は 2 行目から順に並ぶ)』で、<SP> の置き換えは定義しているが『 と 』を行の区切りとして扱うことは書いていない。例『BLUE_MODE と BLUE_MODE=off』を 1 行として挿入すると、キーは `BLUE_MODE と BLUE_MODE`(前後の空白を除いた結果)で invalid line にも重複にもならず、期待値『error: invalid line line=2 …』と『error: duplicate key key=BLUE_MODE lines=1,3 …』が成り立たない。『CONFIG_VERSION=a と CONFIG_VERSION=b』『BLUE_MODE=off と BLUE_MODE=background』も同じ(値 `a と CONFIG_VERSION=b` の 1 行と読める)。step 定義の作り方で結果が変わり、ティア完了条件として一意に実行できない。"
+    suggested_fix: "Given に『<lines> の「 と 」は行の区切りとし、区切った各行をこの順に 2 行目から挿入する』を加える(または <line1> / <line2> の列に分ける)。"
+resolved:
+  - id: R-008
+    resolution: "fixed: ui-design.md の終了コード規約の 2 に、契約 conventions.exit_codes の 2 と同じ入力の守備範囲の違反の規則(全コマンド共通、各コマンドの条件に列挙が無くても 2)を加えた"
+  - id: R-009
+    resolution: "fixed: Given に「<lines> の『 と 』は行の区切りで、区切った各行をこの順に 2 行目から 1 行ずつ挿入する」を加えた"

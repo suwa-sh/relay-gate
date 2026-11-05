@@ -1,0 +1,53 @@
+round: 1
+findings:
+  - id: R-001
+    viewpoint: 4
+    severity: major
+    target: "_cross-cutting/api/cli-command-contract.yaml"
+    claim: "管理 DB に接続しないときの rapid_crosscheck_mode の扱いについて、契約(判定規則の正本)と判定 UC の tier-ops.md が食い違っている。契約の文面どおりに読むと、キーが無い・値が不正な execution-spec.json は rapid crosscheck mode の warn に当たる。UC はこれを execution-spec invalid の warn としている。B-08 を slot artifact missing より先に判定する順序も、UC にしか書かれていない。"
+    evidence: "契約 shared_rules.housekeep_rules.member_source は「execution-spec.json の rapid_crosscheck_mode が off でない実行」を判定できないものとして残し、`warn: run kept rapid crosscheck mode run_id=... mode=...` を出すと書いている。キーが無い場合や未知の値も「off でない」に含まれる。一方、commands.housekeep.sh.stderr の warn 一覧は `mode=<foreground|background>` に限っており、execution-spec invalid の行には条件が書かれていない。finished_artifact も rapid_crosscheck_mode に触れていない。判定 UC の tier-ops.md(成果物だけの判定表の順 2 と順 3、判定の継続の warn 表)は、キーが無い・foreground / background / off のどれでもない場合を execution-spec invalid とし、順 3 を順 4〜6 より優先すると定めている。spec-decision-024 の決定 5 も、この端の扱いを「契約に無い端の扱いを UC で決める」として UC だけに置いた。契約の housekeep.sh notes は「判定と削除の規則の正本は shared_rules.housekeep_rules」と書いているため、契約から実装やテストを起こす人は別の warn を選び得る。"
+    suggested_fix: "契約の member_source(または finished_artifact)を書き換える。「off でない」を「foreground / background」に改め、次の 2 点を足す。(a) 管理 DB に接続しないとき、rapid_crosscheck_mode が無い、または foreground / background / off のどれでもない execution-spec.json は `warn: run kept execution-spec invalid` で残す。(b) 管理 DB に接続しないとき、この判定は slot のディレクトリと終了ファイルの確認より先に行う。あわせて stderr 一覧の execution-spec invalid の行に、この条件を添える。"
+  - id: R-002
+    viewpoint: 4
+    severity: minor
+    target: "ハウスキープ業務/ハウスキープフロー/保持日数を過ぎた終了済みの実行と確報比較依頼を判定する/spec.md"
+    claim: "spec.md のシーケンスにある B-04 の条件が、tier-ops.md の判定順より狭い。そのため、どちらの warn が先に当たるかが文書によって変わる。"
+    evidence: "spec.md のシーケンスでは、B-04 は「execution-spec.json が無い・読めない」だけで、その次に B-08 が来る。tier-ops.md の判定表の順 2 には、`slots` に role が無い、`parent_run_id` が不正、(管理 DB に接続しないとき)rapid_crosscheck_mode が不正、も含まれ、順 3 の B-08 より先に判定する。例として、rapid_crosscheck_mode=background で slots が空の execution-spec.json を考える。spec.md のシーケンスに従えば rapid crosscheck mode の warn になり、tier-ops.md に従えば execution-spec invalid の warn になる。"
+    suggested_fix: "シーケンスの B-04 の条件を「execution-spec.json が無い・読めない・不正(slots が空 / parent_run_id 不正 / 管理 DB に接続しないときの rapid_crosscheck_mode 不正)」に改め、tier-ops.md の順 1〜2 と同じ範囲にする。分岐条件の表の B-04 の行にも同じ範囲を書く。"
+  - id: R-003
+    viewpoint: 5
+    severity: minor
+    target: "ハウスキープ業務/ハウスキープフロー/保持日数を過ぎた終了済みの実行と確報比較依頼を判定する/spec.md"
+    claim: "シナリオ「管理 DB に接続しない設定の warn は終了コードを変えない(SPEC-014-08)」の例示値が矛盾している。終了ファイルの更新時刻が、run_id の起動時刻より前になっている。"
+    evidence: "run_id=20260830T130000-JOB002-9a8b7c6d は 2026-08-30T13:00:00 に起動しているのに、終了ファイルの最も遅い更新時刻は 2026-08-30T11:50:00 になっている。ほかのシナリオでは、同じ run_id の completed_at の最大は 2026-08-30T13:10:00 である。判定は run_id の時刻を使わないので結果は変わらない。ただ、テストデータを作る人が値の意図(cutoff より前の時刻でも B-08 で残ることを示す)を読み違えるおそれがある。"
+    suggested_fix: "foreground の実行には、起動時刻が終了時刻より前になる run_id を使う(例: 2026-08-30T11:30:00 起動の別の run_id)。そのうえで「cutoff を過ぎていても rapid crosscheck mode により残る」意図が分かるようにする。"
+  - id: R-004
+    viewpoint: 5
+    severity: minor
+    target: "ハウスキープ業務/ハウスキープフロー/保持日数を過ぎた終了済みの実行と確報比較依頼を判定する/spec.md"
+    claim: "SPEC-014-08 の受け入れ基準 1「その確報比較依頼と管理 DB の行は残り」に対して、シナリオは確報比較依頼の行しか確認していない。Then の「管理 DB には接続せず」も、確かめ方が決まっていない。"
+    evidence: "シナリオ「管理 DB に接続しない設定では警告を 1 行出し確報比較依頼と管理 DB の行を削除しない(SPEC-014-08)」の Given にあるのは、final_crosscheck_requests の 1 行だけである。保持日数を過ぎて終端した実行の parallel_runs / slot_executions などの行は置かれていない。そのため「管理 DB の行は残る」を確かめられない。「管理 DB には接続せず」をどう観測するか(housekeep_del のセッションの有無、接続ログなど)は、spec.md にも tier-ops.md にも書かれていない。ATDD を書く人は、Then の確かめ方を自分で決めることになる。"
+    suggested_fix: "Given に、保持日数を過ぎて終端した実行の parallel_runs / slot_executions の行(rapid_crosscheck_mode が background の run ディレクトリ付き)を加える。Then では、その行が残ることも確かめる。「接続しない」の観測方法を 1 つに決めて書く(例: 実行中と実行後に housekeep_del ロールのセッションが 0 件である)。決めないなら、行が残ることの確認だけにする。"
+  - id: R-005
+    viewpoint: 5
+    severity: minor
+    target: "適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md"
+    claim: "追加した Scenario Outline の Examples の値が、ファイルに書き込む文字列そのものになっていない。そのため、テストに入れる 1 行が一意に決まらない。"
+    evidence: "line 列のセルは「` =abc`(キーが空)」「` = `(キーも値も空白だけ)」「半角空白 2 個だけ」のように、バッククォート、括弧書きの注釈、自然文を含んでいる。Gherkin の表のセルは前後の空白が除かれるので、先頭の空白に意味がある ` =abc` や、空白だけの行をセルの値として素直に渡すことができない。step 定義を書く人は、注釈を外すことと空白を元に戻すことを自分で決めることになる。"
+    suggested_fix: "書き込む行と説明を別の列に分ける。空白は明示の記号で表し、step 定義で元の文字に戻す規則を書き添える(例: `<SP>` は半角空白 1 個)。例: | line | note | で `<SP>=abc` / `=abc` / `<SP>=<SP>` / `BLUE_MODE` / `<SP><SP>`。"
+resolved:
+  - id: R-001
+    resolution: fixed
+    note: "契約 member_source に「off でない = foreground / background」、判定の順(slot の確認より先)、rapid_crosscheck_mode が無い・不正なら execution-spec invalid(管理 DB に接続しないとき)を書き足し、stderr 一覧の execution-spec invalid の行に条件を添えた。spec-decision-024 の決定 5 を更新"
+  - id: R-002
+    resolution: fixed
+    note: "シーケンスの B-04 を tier-ops の順 1・2 と同じ範囲にし、分岐条件の表の B-04 に範囲と判定の順を書いた"
+  - id: R-003
+    resolution: fixed
+    note: "foreground の実行の run_id を 20260830T113000-JOB002-9a8b7c6d にし、cutoff より前でも B-08 で残る意図を注記した"
+  - id: R-004
+    resolution: fixed
+    note: "Given に終端済みで保持日数を過ぎた実行の管理 DB の行(rapid_crosscheck_mode=background の run ディレクトリ付き)を加え、Then で行と成果物が残ることを確かめる形にした。「管理 DB には接続しない」の確かめ方(housekeep_del の接続が 1 件も記録されない)を spec.md の E2E 完了条件の冒頭と tier-ops.md に書いた"
+  - id: R-005
+    resolution: fixed
+    note: "Examples を line / note の 2 列に分け、<SP> を半角空白 1 個に置き換える規則を Given に書いた"

@@ -31,7 +31,7 @@ graph LR
 | レイヤー | データモデル | 変換内容 |
 |---------|------------|---------|
 | presentation | ValidateRapidCrosscheckArgs | 引数のパスをそのまま使う(`--rapid-crosscheck <path>` は値必須。既定パスによる補完はしない) |
-| usecase | ValidateRapidCrosscheckCommand | env を読み、`RAPID_COMPARE_COMMAND` に domain ルールを適用し、違反を全件収集 |
+| usecase | ValidateRapidCrosscheckCommand | env を読み、入力の守備範囲の違反(バイト・改行(全件を行番号の昇順、同じ行は NUL → UTF-8 → BOM → CR の順)、invalid line、同じキーの重複)があればそれを報告してルールを適用しない(CLI 契約 `config_input_rules.env_files` の検査の段)。違反が無ければ `RAPID_COMPARE_COMMAND` に domain ルールを適用し、違反を全件収集 |
 | domain | LaunchCommandRules | 純粋関数の検証表(下記「設定契約」)。検査対象はコマンド部分(先頭の語)・`{job_id}` の有無・`{params}` の位置の 3 点だけ |
 | repository | RapidCrosscheckEnvRecord | env 読み取り(KEY=VALUE。入力の守備範囲は CLI 契約 `config_input_rules`)。RDB には触れない |
 | 出力 | stdout `key=value`、stderr `error:` 行(違反ごと) | 終了コード 0 / 2 / 6(検証器の内部障害。CLI 契約 `config_input_rules.internal_failure`) |

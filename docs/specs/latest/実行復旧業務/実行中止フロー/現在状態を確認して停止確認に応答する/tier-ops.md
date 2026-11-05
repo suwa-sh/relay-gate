@@ -54,8 +54,8 @@
   | コード | 意味 | 条件 |
   |-------|------|------|
   | 0 | 成功 | yes 応答後に後半の状態更新が完了した(abort-blue / abort-green: RAPID_CROSSCHECK_MODE が off 以外なら加えて `rapid_crosscheck_requests` を条件付き UPDATE(`WHERE run_id=? AND status='REQUESTED'`)で ABORTED(completed_at=now)にする。0 件は正常(依頼が無い、または CLAIMED / RUNNING / 終端済み)。競合窓の保険で dispatcher 側の中止済み run 判定と併用。CLAIMED / RUNNING の依頼は変更しない。abort-rapid-crosscheck: REQUESTED / CLAIMED / RUNNING の速報比較依頼を status IN 条件付き UPDATE で ABORTED。abort-final-crosscheck: RUNNING のみ。詳細は後半 UC) |
-  | 2 | 入力エラー | `--run-id` 欠落・形式不正、未知のオプション、非 TTY で `--yes` なし |
-  | 3 | 業務エラー | 対象が存在しない(slot 系: `error: run not found run_id=... role=...`(`facade/<run_id>/execution-spec.json` が無い)。依頼系: `error: request not found run_id=...`(依頼レコードが無い))、応答が yes 以外(状態不変)、RAPID_CROSSCHECK_MODE=off で abort-rapid-crosscheck(依頼レコードが管理 DB にしか無い。`error: management db is not configured (RAPID_CROSSCHECK_MODE=off) run_id=...`)、`final-crosscheck.env` / FINAL_DB_CONN_REF が無い(abort-final-crosscheck のみ。`error: management db is not configured run_id=...`) |
+  | 2 | 入力エラー | `--run-id` 欠落・形式不正、未知のオプション、非 TTY で `--yes` なし、読んだ設定ファイルの入力の守備範囲の違反(invalid line・同じキーの重複を含む。契約 `config_input_rules.env_files`。abort-final-crosscheck の final-crosscheck.env では管理 DB なし(3)の判定より先に検査し、FINAL_DB_CONN_REF の重複も 3 ではなく 2) |
+  | 3 | 業務エラー | 対象が存在しない(slot 系: `error: run not found run_id=... role=...`(`facade/<run_id>/execution-spec.json` が無い)。依頼系: `error: request not found run_id=...`(依頼レコードが無い))、応答が yes 以外(状態不変)、RAPID_CROSSCHECK_MODE=off で abort-rapid-crosscheck(依頼レコードが管理 DB にしか無い。`error: management db is not configured (RAPID_CROSSCHECK_MODE=off) run_id=...`)、`final-crosscheck.env` が無い、または FINAL_DB_CONN_REF が欠落(キーが無い、または値が空)(abort-final-crosscheck のみ。`error: management db is not configured run_id=...`) |
   | 6 | 実行エラー | 成果物ファイルの読み取り失敗(存在するが読めない / execution-spec.json が JSON 不正)、管理 DB 接続・SQL 失敗 |
 
 ## UC ロジック
@@ -69,7 +69,7 @@
 - **現在状態の出典(スクリプトごとに異なる)**:
   - abort-blue / abort-green: 成果物ファイルが正本。`facade/<run_id>/execution-spec.json`(無ければ `error: run not found run_id=... role=...` で 3)→ `slots.<role>` 節(無ければ mode=off)→ `facade/<run_id>/<role>/started-at.txt` / `exitcode.txt` / `aborted.txt` の有無と値(条件「slot 実行の状態導出規則」)。`RELAY_GATE_CONFIG_DIR/feature-flag.env` の `RAPID_CROSSCHECK_MODE` が off 以外なら `slot_executions(run_id, slot)` の `pid` を表示に補う(行が無くても 3 にしない。`pid=-`)。off では管理 DB に接続しない
   - abort-rapid-crosscheck: `RAPID_CROSSCHECK_MODE` を参照し、off では依頼レコードが存在しないため管理 DB 接続前に `error: management db is not configured (RAPID_CROSSCHECK_MODE=off) run_id=...`、終了コード 3。off 以外は `rapid_crosscheck_requests(run_id)` を読む
-  - abort-final-crosscheck: **`RAPID_CROSSCHECK_MODE` を参照しない**(確報クロスチェックは速報モードに依存しない。方針資料の設定契約・契約 `config_files.final-crosscheck.env.readers`)。管理 DB 有無は `final-crosscheck.env` の `FINAL_DB_CONN_REF` のみで判定し、ファイルまたはキーが無ければ管理 DB 接続前に `error: management db is not configured run_id=...`(`(RAPID_CROSSCHECK_MODE=off)` の付記なし)、終了コード 3。RAPID_CROSSCHECK_MODE=off の環境でも `final-crosscheck.env` があれば通常どおり動作する
+  - abort-final-crosscheck: **`RAPID_CROSSCHECK_MODE` を参照しない**(確報クロスチェックは速報モードに依存しない。方針資料の設定契約・契約 `config_files.final-crosscheck.env.readers`)。管理 DB 有無は `final-crosscheck.env` の `FINAL_DB_CONN_REF` のみで判定し、ファイルが無いか、キーが無いか、値(env 解析後)が空ならば(housekeep.sh が確報クロスチェックを使う設置かを判定する規則と同じ。契約 `shared_rules.housekeep_rules.db_requirement`)管理 DB 接続前に `error: management db is not configured run_id=...`(`(RAPID_CROSSCHECK_MODE=off)` の付記なし)、終了コード 3。RAPID_CROSSCHECK_MODE=off の環境でも `final-crosscheck.env` があれば通常どおり動作する
 
 ## データモデル変更
 
@@ -90,7 +90,7 @@
 - 現在状態を表示した後に対話確認し、yes 以外は状態を変更せず終了する(条件「停止確認応答」)
 - slot 実行の現在状態は成果物のファイル正本から導出する(条件「slot 実行の状態導出規則」)。RAPID_CROSSCHECK_MODE=off でも表示できる
 - スクリプト自身はプロセス・Pod・SSH 接続先の処理を停止しない。停止は運用者が行う
-- プロンプトは stderr、現在状態は stdout(条件「CLI とメールによる提示」、ui-design.md)
+- プロンプトは stderr、現在状態は stdout(条件「CLI による提示」、ui-design.md)
 - 中止操作は指示者(OS ユーザー名)と応答を実行ログに残す(arch CLP-008、NFR E.7.1.1)
 - 引数値は `--key value` 形式のみ。未知オプションは終了コード 2
 
@@ -135,6 +135,16 @@ Feature: 現在状態を確認して停止確認に応答する - 実行監視�
     Given RAPID_CROSSCHECK_MODE=background で final-crosscheck.env が存在しない
     When `abort-final-crosscheck.sh --run-id 20260830T020000-final-1a2b3c4d --yes` を実行する
     Then 終了コード 3 で stderr の 1 行目が `error: management db is not configured run_id=20260830T020000-final-1a2b3c4d` で、管理 DB への接続は行われない
+
+  Scenario: abort-final-crosscheck.sh は FINAL_DB_CONN_REF の値が空なら終了コード 3
+    Given RAPID_CROSSCHECK_MODE=background で final-crosscheck.env に `FINAL_DB_CONN_REF=` の行だけがある
+    When `abort-final-crosscheck.sh --run-id 20260830T020000-final-1a2b3c4d --yes` を実行する
+    Then 終了コード 3 で stderr の 1 行目が `error: management db is not configured run_id=20260830T020000-final-1a2b3c4d` で、管理 DB への接続は行われない
+
+  Scenario: abort-final-crosscheck.sh は FINAL_DB_CONN_REF が 2 行あれば管理 DB なしではなく終了コード 2
+    Given final-crosscheck.env の 1 行目が FINAL_DB_CONN_REF=relay_gate_final、2 行目が FINAL_DB_CONN_REF=relay_gate_final2 である
+    When `abort-final-crosscheck.sh --run-id 20260830T020000-final-1a2b3c4d --yes` を実行する
+    Then 終了コード 2 で stderr の error 行は `error: duplicate key key=FINAL_DB_CONN_REF lines=1,2 path: <final-crosscheck.env のパス>` の 1 行だけで、`error: management db is not configured` は出ず、管理 DB への接続は行われない(契約 config_input_rules.env_files)
 
   Scenario: abort-rapid-crosscheck.sh は RAPID_CROSSCHECK_MODE=off では終了コード 3
     Given RAPID_CROSSCHECK_MODE=off である

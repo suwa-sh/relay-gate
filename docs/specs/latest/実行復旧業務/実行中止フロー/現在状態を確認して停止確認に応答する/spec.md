@@ -2,7 +2,7 @@
 
 ## 概要
 
-運用者が通知メールやジョブスケジューラの実行結果から中止対象の run_id を特定し、`abort-blue.sh` / `abort-green.sh` / `abort-rapid-crosscheck.sh` / `abort-final-crosscheck.sh` を `--run-id` 付きで起動する。スクリプトは対象の現在状態を plain 形式で表示し、「対象ジョブのプロセスは強制終了してありますか？ [yes/no]」を stdin から読む。slot 系(abort-blue / abort-green)の現在状態は成果物ファイルから導出する(mode は `execution-spec.json` の `slots.<role>.mode`、status は条件「slot 実行の状態導出規則」: exitcode.txt があれば SUCCEEDED / FAILED、無く aborted.txt があれば ABORTED、どちらも無ければ RUNNING、started-at.txt が無ければ未起動)。RAPID_CROSSCHECK_MODE が off 以外なら管理 DB の `slot_executions` から PID を補う。依頼系(abort-rapid-crosscheck / abort-final-crosscheck)の現在状態は管理 DB の依頼レコード(status / worker_id / lease_until)から取る。運用者はプロセス・Pod・SSH 接続先の処理を自身で強制終了したことを確認して `yes` または yes 以外で応答する。本 UC は 4 スクリプト共通の前半(状態表示と対話確認)であり、`yes` 以降の状態更新は UC「実行を ABORTED へ遷移させる」が担う。
+運用者がハング検知ジョブの標準エラーの alert 行・監視記録やジョブスケジューラの実行結果から中止対象の run_id を特定し、`abort-blue.sh` / `abort-green.sh` / `abort-rapid-crosscheck.sh` / `abort-final-crosscheck.sh` を `--run-id` 付きで起動する。スクリプトは対象の現在状態を plain 形式で表示し、「対象ジョブのプロセスは強制終了してありますか？ [yes/no]」を stdin から読む。slot 系(abort-blue / abort-green)の現在状態は成果物ファイルから導出する(mode は `execution-spec.json` の `slots.<role>.mode`、status は条件「slot 実行の状態導出規則」: exitcode.txt があれば SUCCEEDED / FAILED、無く aborted.txt があれば ABORTED、どちらも無ければ RUNNING、started-at.txt が無ければ未起動)。RAPID_CROSSCHECK_MODE が off 以外なら管理 DB の `slot_executions` から PID を補う。依頼系(abort-rapid-crosscheck / abort-final-crosscheck)の現在状態は管理 DB の依頼レコード(status / worker_id / lease_until)から取る。運用者はプロセス・Pod・SSH 接続先の処理を自身で強制終了したことを確認して `yes` または yes 以外で応答する。本 UC は 4 スクリプト共通の前半(状態表示と対話確認)であり、`yes` 以降の状態更新は UC「実行を ABORTED へ遷移させる」が担う。
 
 ## データフロー
 
@@ -49,7 +49,7 @@ graph LR
 ```mermaid
 sequenceDiagram
   actor Ops as 運用者
-  participant Sched as ジョブスケジューラ / 通知メール
+  participant Sched as ジョブスケジューラ(ハング検知ジョブを含む)
   box rgb(240,255,240) tier-ops
     participant Pres as presentation
     participant UC as usecase
@@ -60,7 +60,7 @@ sequenceDiagram
   participant FS as FS(成果物ディレクトリ)
   participant DB as 管理 DB(RDB)
 
-  Sched-->>Ops: 通知メール(run_id / job_id / role)または実行結果
+  Sched-->>Ops: ハング検知ジョブの異常終了と alert 行(run_id / role / job_id)または実行結果
   Ops->>Pres: abort-green.sh --run-id 20260830T113000-JOB001-3f9a1c2e
   Pres->>Pres: 引数検証(run_id 必須・形式 / 未知オプション → 2)
   Pres->>Pres: stdin が非 TTY かつ --yes なし → error: interactive confirmation required (use --yes for non-interactive) / 終了コード 2
@@ -92,7 +92,10 @@ sequenceDiagram
       DB-->>GW: 行(または 0 行 → error: request not found run_id=... / 3)
     end
   else abort-final-crosscheck(RAPID_CROSSCHECK_MODE は参照しない)
-    alt final-crosscheck.env / FINAL_DB_CONN_REF なし
+    alt final-crosscheck.env の入力の守備範囲の違反(invalid line・同じキーの重複など。config_input_rules.env_files)
+      UC-->>Pres: 入力エラー
+      Pres-->>Ops: stderr error 行(例 error: duplicate key key=FINAL_DB_CONN_REF lines=1,2 path: ...)/ 終了コード 2
+    else final-crosscheck.env が無い、または FINAL_DB_CONN_REF が欠落(キーが無い・値が空)
       UC-->>Pres: 業務エラー
       Pres-->>Ops: stderr error: management db is not configured run_id=... / 終了コード 3
     else あり
@@ -142,9 +145,9 @@ sequenceDiagram
 | 条件名 | 判定ルール | 適用 tier | 適用箇所 | BDD Scenario |
 |--------|----------|----------|---------|-------------|
 | 停止確認応答 | 現在状態を表示した後に「対象ジョブのプロセスは強制終了してありますか？ [yes/no]」を stderr へ出し stdin を 1 行読む。`yes`(完全一致)のみ肯定。それ以外は状態を変更せず終了コード 3。`--yes` は `yes` とみなしプロンプトを省略する。非 TTY で `--yes` なしは終了コード 2 | tier-ops | 4 スクリプト共通 presentation(`confirm_stop`)/ domain(`is_affirmative`) | no と答えると状態は変わらない / 非 TTY で --yes なし |
-| CLI とメールによる提示 | 現在状態は stdout に `key=value` 固定順で出し、プロンプトは stderr に出す(stdout をパイプしても混ざらない)。UI 画面は提供しない | tier-ops | 4 スクリプト共通 presentation | 現在状態を表示して yes と答える |
+| CLI による提示 | 現在状態は stdout に `key=value` 固定順で出し、プロンプトは stderr に出す(stdout をパイプしても混ざらない)。UI 画面は提供しない | tier-ops | 4 スクリプト共通 presentation | 現在状態を表示して yes と答える |
 | slot 実行の状態導出規則 | slot 系の現在状態は成果物ファイルから導出する: `exitcode.txt` があれば 0 = SUCCEEDED / 非 0 = FAILED、無く `aborted.txt` があれば ABORTED、どちらも無ければ RUNNING。`started-at.txt` が無ければ未起動(`status=-`)。両方あるときは exitcode.txt を優先する | tier-ops | repository `resolve_slot_state` / domain `AbortTargetState` | RAPID_CROSSCHECK_MODE=off でも成果物ファイルから現在状態を表示する / aborted.txt がある slot は ABORTED と表示する |
-| 速報クロスチェック有効判定 | abort-blue / abort-green は RAPID_CROSSCHECK_MODE によらず成果物ファイルから現在状態を表示する(off 以外は `slot_executions.pid` を補う。off は `pid=-`)。abort-rapid-crosscheck は依頼レコードが管理 DB にしか無いため、off では管理 DB 接続前に `error: management db is not configured (RAPID_CROSSCHECK_MODE=off) run_id=...` で終了コード 3。abort-final-crosscheck は RAPID_CROSSCHECK_MODE を参照せず、`final-crosscheck.env` の FINAL_DB_CONN_REF の有無だけで管理 DB 有無を判定する(無ければ `error: management db is not configured run_id=...` で 3) | tier-ops | abort-blue.sh / abort-green.sh の pid 補完判定、abort-rapid-crosscheck.sh の管理 DB 接続前判定(abort-final-crosscheck.sh は final-crosscheck.env の読み取り) | RAPID_CROSSCHECK_MODE=off でも成果物ファイルから現在状態を表示する / off では速報比較依頼を中止できない / 確報の中止は速報モードに依存しない |
+| 速報クロスチェック有効判定 | abort-blue / abort-green は RAPID_CROSSCHECK_MODE によらず成果物ファイルから現在状態を表示する(off 以外は `slot_executions.pid` を補う。off は `pid=-`)。abort-rapid-crosscheck は依頼レコードが管理 DB にしか無いため、off では管理 DB 接続前に `error: management db is not configured (RAPID_CROSSCHECK_MODE=off) run_id=...` で終了コード 3。abort-final-crosscheck は RAPID_CROSSCHECK_MODE を参照せず、`final-crosscheck.env` の FINAL_DB_CONN_REF の有無だけで管理 DB 有無を判定する(ファイルが無い、またはキーが無い・値が空なら `error: management db is not configured run_id=...` で 3。housekeep.sh が確報クロスチェックを使う設置かを判定する規則と同じ) | tier-ops | abort-blue.sh / abort-green.sh の pid 補完判定、abort-rapid-crosscheck.sh の管理 DB 接続前判定(abort-final-crosscheck.sh は final-crosscheck.env の読み取り) | RAPID_CROSSCHECK_MODE=off でも成果物ファイルから現在状態を表示する / off では速報比較依頼を中止できない / 確報の中止は速報モードに依存しない |
 
 ## 計算ルール一覧
 
@@ -173,14 +176,14 @@ sequenceDiagram
 | 情報 | Runner Result | started-at.txt / exitcode.txt / aborted.txt の有無と値が slot 実行の状態の導出元(spec 参照。BUC.tsv 上の紐づけは後半 UC) |
 | 情報 | 速報比較依頼(rapid_crosscheck_request) | abort-rapid-crosscheck が表示する現在状態(status / worker_id / lease_until) |
 | 情報 | 確報比較依頼(final_crosscheck_request) | abort-final-crosscheck が表示する現在状態 |
-| 情報 | 通知メール | 中止対象 run_id の特定元 |
+| 情報 | 監視記録 | 中止対象 run_id の特定元(ハング検知ジョブの alert 行と同じ対象・段階が残る) |
 | 条件 | 停止確認応答 | yes のときだけ後半へ進む |
-| 条件 | CLI とメールによる提示 | stdout / stderr / 終了コードで提示 |
+| 条件 | CLI による提示 | stdout / stderr / 終了コードで提示 |
 | 条件 | slot 実行の状態導出規則 | slot 系の現在状態の導出(spec 参照。BUC.tsv 上の紐づけは後半 UC) |
 | 条件 | 速報クロスチェック有効判定 | off では slot 系は成果物ファイルだけで表示し、abort-rapid-crosscheck は管理 DB が無く終了コード 3(abort-final-crosscheck は対象外) |
 | バリエーション | 速報クロスチェックモード | foreground / background は pid を管理 DB から補い、off は成果物ファイルだけで表示する |
 | 画面 | abort 現在状態確認出力(→ CLI 出力: 4 スクリプトの stdout `key=value` と stderr プロンプト) | 運用者が読む出力 |
-| イベント | 中止対象 run_id の特定 | 外部システム: ジョブスケジューラ(実行結果)/ 通知メール |
+| イベント | 中止対象 run_id の特定 | 外部システム: ジョブスケジューラ(実行結果、ハング検知ジョブの警告終了・失敗) |
 | イベント | 実行先ホストのプロセス停止確認 | 外部システム: リモート実行ホスト(SSH)。運用者が自身で行う(スクリプトは停止しない) |
 | 外部システム | ジョブスケジューラ | run_id の特定元(実行結果・実行履歴) |
 | 外部システム | リモート実行ホスト(SSH) | 運用者がプロセスを強制終了する対象 |

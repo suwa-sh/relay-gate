@@ -1,0 +1,74 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "specification"
+artifact_id: "spec-decision-030"
+title: "速報・確報の設定ファイルの中身の検査を CLI 契約が持ち、読み手ごとに自分が使うキーだけを検査する。各ホストの設定ファイルは構築手順が配置する前提を明記する"
+status: "approved"
+generated_at: "2026-11-04T10:20:00Z"
+context: |
+  - 2026-11-04 に、構築手順の配置時の検査が CLI 契約より厳しく、正当な設定で構築が失敗する指摘があった。
+    インフラ設計は、速報クロスチェック設定・確報クロスチェック worker 設定の配置時の検査をファイルの存在確認だけにし、
+    中身の検査を CLI 契約(validate-config.sh と各読み手の起動時の検査)に任せた。
+  - 同じ日に利用者が次を決めた。
+    - 確報クロスチェックを使うかは構築の変数で決める。使わない設置では、実行ホストと DB セグメントのどちらにも final-crosscheck.env を置かない。
+    - 確報 worker は DB セグメントで動き、自分の置き場の final-crosscheck.env を読む。
+    - 全ホストが構築手順で同じようにデプロイされていることを前提にする。relay-gate の処理の中から設定ファイルは配らない。
+      比較コマンドは worker 側の final-crosscheck.env にだけ持ち、依頼レコードでは渡さない。変えたら構築手順で配り直す。
+  - CLI 契約を横断して確かめた結果、次の穴があった。
+    - 任意キー RAPID_LEASE_SEC / RAPID_POLL_INTERVAL_SEC / FINAL_POLL_INTERVAL_SEC / FINAL_POLL_LIMIT_SEC / FINAL_LEASE_MINUTES /
+      FINAL_WORKER_POLL_INTERVAL_SEC は integer(>=1) とだけ書かれ、値が不正なときの error 行と hint が無かった
+      (速報 worker の終了コード 2 の条件は「RAPID_* env 不正」とだけ書いていた)。インフラ設計は値の検査を CLI 契約に任せたため、出力を決める必要がある。
+    - final-crosscheck.env のキー表は FINAL_COMPARE_COMMAND を無条件に必須としていた。一方、runner の tier md は「本 UC では読まない」と書いていた。
+      runner が FINAL_COMPARE_COMMAND の欠落で止まるのかを、読み手が決められなかった。
+    - 各ホストの設定ファイルを誰が置くか、validate-config.sh --final-crosscheck をどのホストで実行するかが書かれていなかった。
+    - 速報 worker・確報 worker の stderr の一覧に、比較ツール起動コマンドの欠落の error 行が無かった
+      (終了コード 2 の条件の「必須キー欠落」には含まれていた)。
+decision: |
+  1. 任意の整数キーの値の検査を CLI 契約に書く。キーがあれば値は正の整数 `^[1-9][0-9]{0,8}$` とする。違反は
+     `error: invalid value key=<KEY> value=... path: ...` に続けて `hint: use a positive integer` を出し、終了コード 2 とする
+     (ハウスキープの保持日数・ハング検知の上限と同じ形式)。
+     検査はそのキーを使う読み手が起動時に行う。速報の 2 キーは rapid-crosscheck-worker.sh、FINAL_POLL_* は final-crosscheck-runner.sh、
+     FINAL_LEASE_MINUTES / FINAL_WORKER_POLL_INTERVAL_SEC は final-crosscheck-worker.sh が検査する。
+     validate-config.sh --rapid-crosscheck / --final-crosscheck の検証範囲は変えず、比較ツール起動コマンドだけを見る。
+  2. 読み手は、自分が使うキーだけを必須の判定と値の検査の対象にする。
+     - runner の必須キーは FINAL_DB_CONN_REF だけとする。
+     - 確報 worker の必須キーは FINAL_DB_CONN_REF と FINAL_COMPARE_COMMAND とする。
+     - 同じキーの重複は、従来どおりファイル全体の全キーで判定する。
+     - 起動時の検査は次の順に行う。どの段で止まっても終了コード 2 で、管理 DB には接続しない。
+       1. ファイルの存在(`error: config file not found path: ...`)・読み取り(`error: config file is not readable path: ...`)
+       2. 入力の守備範囲(config_input_rules.env_files の (i)(ii))。違反があれば、その段の error 行を env_files の規則どおり全件出して止める
+       3. 必須キーの欠落・空(キー表の順)
+       4. 任意キーの値(キー表の順)
+       1・3・4 の段は、最初の違反の error 行(と hint)1 件だけを出して止める。
+     - rapid-crosscheck.env / final-crosscheck.env の未知キーは、実行時の読み手では検査せず warn も出さない(validate-config.sh の検証種別は既存の規約どおり warn: unknown key を出す)。読み手条件つきの必須は RAPID_COMPARE_COMMAND にも同じく当てる(速報 worker と validate-config.sh --rapid-crosscheck だけが必須とする)。他の読み手が使うキーは未知キーではなく、値を検査しないだけとする。
+  3. config_files.final-crosscheck.env に、配置の前提を note として書く。
+     - 各読み手は自分のホストの置き場のファイルだけを読む。
+     - どちらの置き場のファイルも構築手順が配置する。relay-gate の処理の中からは配らない。
+     - 比較ツール起動コマンドは worker 側のファイルにだけ持ち、確報比較依頼には載せない。変えるときは構築手順で配り直す。
+     - validate-config.sh --final-crosscheck は、worker が動くホストで worker の置き場のファイルに対して実行する。
+     on_missing にも書く。ファイルが無い、または FINAL_DB_CONN_REF が無い・空の設置を「確報クロスチェックを使わない設置」とする。
+     この扱いは既存の abort-final-crosscheck.sh / housekeep.sh の判定と同じで、規則は変えない。
+     確報 worker の notes にも同じ前提を 1 行で書く。
+  4. 速報クロスチェック設定にも、配置時の検査は存在確認だけで中身の検査はこの契約が持つことを note として書く。
+     任意キーを省いた設定と、行の前後の空白・値を囲む引用符を含む設定を受理することも書く。
+     速報 worker の UC(速報比較依頼を claim する)に BDD を 2 件足す(lease 期間の値の不正 / 任意キーの省略と空白・引用符の受理)。
+  5. 実装との差分(2026-11-04 時点。実装を契約に合わせる対象として記録する)
+     - validate-config.sh --rapid-crosscheck(facade/src/usecase/validate_rapid_crosscheck.sh)は、RAPID_COMPARE_COMMAND 以外のキーに warn を出さない。
+       契約は、キー表に無いキーに warn: unknown key を出して継続する(RAPID_DB_CONN_REF / RAPID_LEASE_SEC / RAPID_POLL_INTERVAL_SEC には出さない)。
+     - validate-config.sh --final-crosscheck、rapid-crosscheck-worker.sh、final-crosscheck-runner.sh、final-crosscheck-worker.sh は未実装。
+     - ATDD features/atdd/SPEC-005-06.feature の 1 件目の Scenario(Given 速報クロスチェック設定に管理 DB 接続参照名・lease 期間・poll 間隔が定義されている)は、
+       速報 worker の起動に RAPID_COMPARE_COMMAND が要るため、step 定義の設定にも起動コマンドを含める必要がある。
+consequences:
+  positive:
+    - "構築手順の存在確認と CLI 契約の中身の検査の境界が 1 か所で読める。正当な設定が構築で落ちず、不正な値は読み手の起動時に決まった文言で止まる"
+    - "runner と worker が別ホストで別のファイルを読むこと、コマンドを変えたら配り直すことが契約から読める。runner の置き場の FINAL_COMPARE_COMMAND の有無で runner が止まらないことも決まる"
+  negative:
+    - "整数キーの値の不正は validate-config.sh では見つからず、worker / runner の起動時に初めて見つかる(validate-config.sh の検証範囲は比較ツール起動コマンドに限ったまま)"
+    - "実装は、速報 worker・確報 runner・確報 worker の起動時の検査に、値の検査と検査の順を合わせる必要がある"
+alternatives_considered:
+  - name: "validate-config.sh --rapid-crosscheck / --final-crosscheck でも整数キーの値を検証する"
+    reason_rejected: "検証種別は比較ツール起動コマンドの検証として決めた(spec-decision-017)。stdout の固定行と violations の意味が変わる。値を使うのは worker / runner だけで、起動時の検査で決まった文言で止まるため、今回は検証範囲を広げない"
+  - name: "値が不正なら既定値で動く(警告だけ出す)"
+    reason_rejected: "lease 期間や polling 上限を誤った値のまま黙って既定値に置き換えると、運用者が意図した調整が効かない。ハウスキープの保持日数・ハング検知の上限と扱いが揃わない"
+  - name: "runner と worker で同じファイルを共有する前提にする"
+    reason_rejected: "runner と worker は別ネットワークセグメントで動き、互いのファイルを読めない。relay-gate の処理の中から設定ファイルを配らない利用者方針(2026-11-04)とも合わない"

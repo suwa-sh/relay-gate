@@ -1,0 +1,525 @@
+{
+  "schema_version": "distillery.feedback-routing/v1",
+  "feedback_request_id": "20261104_external_review_fixes",
+  "input_sha256": "6b4cf1b4db9a1e0d2ad050d265c7c2b77928832af091ac20b2657e61aea0dc13",
+  "policy": "interactive",
+  "routing_basis": {
+    "ownership_catalog_version": "1.0.0",
+    "ownership_catalog_sha256": "801750c2abe99945a3de9387b82339b2bc96ccb2da564f9923cc0e9b76a2bd39",
+    "routing_policy_version": "1.1.0",
+    "routing_policy_sha256": "3873275bf4adb3d9d7b7c41c22c9463d054a3614df7bbcab7514f0c1e23e166e",
+    "prompt_schema_sha256": "bf7c7f34d7a2fc5976ccd2589a454172a4630e1448c509966b620f88029732c4",
+    "stage_packet_renderer_version": "1",
+    "skipped_stages": [
+      "design_system",
+      "spec_stories"
+    ],
+    "repository_head": "38cf3f4a5dff8f47c581ab984ab8c37805c44e20",
+    "latest_domain_event_ids": {
+      "requirements": {
+        "rdra/events": "20261103_131000_feedback_housekeeping_db_required",
+        "usdm/events": "20261103_131000_feedback_housekeeping_db_required"
+      },
+      "quality_attributes": {
+        "nfr/events": "20261103_132000_feedback_housekeeping_db_required"
+      },
+      "architecture": {
+        "arch/events": "20261103_133000_feedback_housekeeping_db_required"
+      },
+      "infrastructure": {
+        "infra/events": "20261103_134000_feedback_housekeeping_db_required"
+      },
+      "design_system": {
+        "design/events": null
+      },
+      "spec": {
+        "specs/events": "20261103_151000_feedback_env_duplicate_key"
+      },
+      "spec_stories": {
+        "design/events": null
+      }
+    },
+    "domain_event_root_snapshots": {
+      "rdra/events": {
+        "head_event_id": "20261103_131000_feedback_housekeeping_db_required",
+        "head_event_sha256": "3e511fca6a1fea0c55efdc3a33fb8b8e7e5ca12899627a7b14221d326de9fb7d",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency",
+          "20260908_011000_feedback_slot_status_wording",
+          "20260921_084000_feedback_impl_feedback_eff24f55",
+          "20261010_200000_feedback_impl_feedback_dcd8234d",
+          "20261101_101000_feedback_impl_feedback_dcd8234d",
+          "20261101_121000_feedback_mail_removal_housekeeping",
+          "20261103_081000_feedback_housekeeping_followups",
+          "20261103_131000_feedback_housekeeping_db_required"
+        ],
+        "event_set_sha256": "608c77661bedd39000b6f1c22dbe8e3c3d8b2c0c35359df2261b25a55aa9346f",
+        "latest_tree_sha256": "b4b4296ae1547f95cba62b54d1140692a16a05e72e184aa44fa8f8f35854b577"
+      },
+      "usdm/events": {
+        "head_event_id": "20261103_131000_feedback_housekeeping_db_required",
+        "head_event_sha256": "d5b9cc924c01032584134b561a0c833b5fa9262f0abafa9e664900b0171d8574",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency",
+          "20260908_011000_feedback_slot_status_wording",
+          "20260921_084000_feedback_impl_feedback_eff24f55",
+          "20261010_200000_feedback_impl_feedback_dcd8234d",
+          "20261101_101000_feedback_impl_feedback_dcd8234d",
+          "20261101_121000_feedback_mail_removal_housekeeping",
+          "20261103_081000_feedback_housekeeping_followups",
+          "20261103_131000_feedback_housekeeping_db_required"
+        ],
+        "event_set_sha256": "608c77661bedd39000b6f1c22dbe8e3c3d8b2c0c35359df2261b25a55aa9346f",
+        "latest_tree_sha256": "48b132d17198156a3da6feef7fd725090592abd41d7e50bd23229b210888d358"
+      },
+      "nfr/events": {
+        "head_event_id": "20261103_132000_feedback_housekeeping_db_required",
+        "head_event_sha256": "6bbbe5e66291b046be72435e6b0de99b04929d96288be66f8f1dcd61a07e7fd7",
+        "event_ids": [
+          "20260830_183726_initial_nfr",
+          "20260905_085000_feedback_todo_resolution",
+          "20260907_013000_feedback_todo_followup",
+          "20260907_120000_feedback_abort_consistency",
+          "20260908_013000_feedback_slot_status_wording",
+          "20260921_090000_feedback_impl_feedback_eff24f55",
+          "20261010_201000_feedback_impl_feedback_dcd8234d",
+          "20261101_102000_feedback_impl_feedback_dcd8234d",
+          "20261101_122000_feedback_mail_removal_housekeeping",
+          "20261103_082000_feedback_housekeeping_followups",
+          "20261103_132000_feedback_housekeeping_db_required"
+        ],
+        "event_set_sha256": "033e74beac16867152af31decca75c10fb3439ecd768ae55c5cf0778533a2bd3",
+        "latest_tree_sha256": "2a22da3a3dbbbf4514a30670646ea4b250a66cf132ec4a57790132c4696b3131"
+      },
+      "arch/events": {
+        "head_event_id": "20261103_133000_feedback_housekeeping_db_required",
+        "head_event_sha256": "53fc4d04b355fbbc82dbbe05c4a854eabecdcef60c67dc512c95f20627d36637",
+        "event_ids": [
+          "20260830_184457_initial_arch",
+          "20260830_202427_arch_infra_feedback_20260830_190412_infra_product_design",
+          "20260905_091000_feedback_todo_resolution",
+          "20260907_015000_feedback_todo_followup",
+          "20260907_122000_feedback_abort_consistency",
+          "20260908_015000_feedback_slot_status_wording",
+          "20260921_092000_feedback_impl_feedback_eff24f55",
+          "20261010_202000_feedback_impl_feedback_dcd8234d",
+          "20261101_103000_feedback_impl_feedback_dcd8234d",
+          "20261101_123000_feedback_mail_removal_housekeeping",
+          "20261103_083000_feedback_housekeeping_followups",
+          "20261103_133000_feedback_housekeeping_db_required"
+        ],
+        "event_set_sha256": "f38dfba1b314fde01ff25cecad44573f1367c9b9a3941c5ee2f7e9598487f899",
+        "latest_tree_sha256": "5e00d5989382518efa1cf9387b0f8c2f14b9010ef51ec8d110cb748c20355bfc"
+      },
+      "infra/events": {
+        "head_event_id": "20261103_134000_feedback_housekeeping_db_required",
+        "head_event_sha256": "7cba5349536e05124cd37be533db1d462f942f776414abbf217a299aa9b51bc8",
+        "event_ids": [
+          "20260830_190412_infra_product_design",
+          "20260905_093000_feedback_todo_resolution",
+          "20260907_021000_feedback_todo_followup",
+          "20260907_124000_feedback_abort_consistency",
+          "20260908_021000_feedback_slot_status_wording",
+          "20260921_094000_feedback_impl_feedback_eff24f55",
+          "20261010_203000_feedback_impl_feedback_dcd8234d",
+          "20261101_104000_feedback_impl_feedback_dcd8234d",
+          "20261101_124000_feedback_mail_removal_housekeeping",
+          "20261103_084000_feedback_housekeeping_followups",
+          "20261103_134000_feedback_housekeeping_db_required"
+        ],
+        "event_set_sha256": "9e66fe9b0bc898b2010dad113928f8388fd841d79e337b8849ebbcfc3ee6f352",
+        "latest_tree_sha256": "c7d365c501145aff47b344a17f727290d0a72b9253848bab532ff959a881f6dd"
+      },
+      "design/events": {
+        "head_event_id": null,
+        "head_event_sha256": null,
+        "event_ids": [],
+        "event_set_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "latest_tree_sha256": null
+      },
+      "specs/events": {
+        "head_event_id": "20261103_151000_feedback_env_duplicate_key",
+        "head_event_sha256": "c4245b2d5dbf82bdf2bc06a38d174ebc775b4ff5d642ec5b45272058b2251da0",
+        "event_ids": [
+          "20260830_202851_spec_generation",
+          "20260905_100000_feedback_todo_resolution",
+          "20260907_024000_feedback_todo_followup",
+          "20260907_131000_feedback_abort_consistency",
+          "20260908_024000_feedback_slot_status_wording",
+          "20260908_062000_feedback_spec_machine_readable",
+          "20260917_050000_feedback_impl_feedback_fd678b04",
+          "20260917_100000_feedback_impl_feedback_fd678b04_cycle2",
+          "20260921_100000_feedback_impl_feedback_eff24f55",
+          "20260923_112000_feedback_impl_feedback_eff24f55_cycle2",
+          "20261010_204000_feedback_impl_feedback_dcd8234d",
+          "20261027_055000_feedback_impl_feedback_dcd8234d",
+          "20261101_105000_feedback_impl_feedback_dcd8234d",
+          "20261101_125000_feedback_mail_removal_housekeeping",
+          "20261103_085000_feedback_housekeeping_followups",
+          "20261103_135000_feedback_housekeeping_db_required",
+          "20261103_151000_feedback_env_duplicate_key"
+        ],
+        "event_set_sha256": "7de39f62bceb274ec69a14eb5b25d6fc29b03f4e016f20ba87fc6193a9625e61",
+        "latest_tree_sha256": "c5095553f490a8ae7a274f620f5acd2ef094cc2f7007ee989d680393469fee22"
+      }
+    }
+  },
+  "state": "resolved",
+  "requests": [
+    {
+      "request_id": "CR-c5e19a72-001",
+      "source": {
+        "byte_span": [
+          503,
+          3832
+        ],
+        "slice_sha256": "5f6ea926cbb0ae242210c097a7221b9bcc0963e71ce51ad7b259a3a81d6e88c7"
+      },
+      "decision_state": "resolved",
+      "reason": "CLI 契約 hang-detector.sh の renotification / notified_mark と横断 stderr 規約を改める要求(管理 DB 接続不能時は alert を出さず接続エラーと 6 だけ、印の不正・読取失敗の扱い、対象ごとの error 行の例外)。spec 成果物の変更で、USDM SPEC-008-07 の要求文(通知済みは再通知しない・保存失敗は次回も知らせる)は変わらないため文脈参照とする",
+      "evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-008"
+        },
+        {
+          "kind": "related_id",
+          "value": "SPEC-008-07 (USDM specification id under REQ-008)"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/_cross-cutting/ux-ui/ui-design.md"
+        },
+        {
+          "kind": "request_text",
+          "value": "off 以外で管理 DB に接続できない回は、alert 行を出さない"
+        }
+      ],
+      "deterministic_ownership_evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-008",
+          "rule": "REQ-",
+          "stage": "requirements"
+        },
+        {
+          "kind": "related_id_prefix",
+          "value": "SPEC-008-07",
+          "rule": "SPEC-",
+          "stage": "spec"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml",
+          "rule": "(^|/)specs?(/|$)",
+          "stage": "spec"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/_cross-cutting/ux-ui/ui-design.md",
+          "rule": "(^|/)specs?(/|$)",
+          "stage": "spec"
+        }
+      ],
+      "confidence": "high",
+      "ambiguity_kind": null,
+      "stop_flags": [],
+      "candidates": [],
+      "resolution": {
+        "status": "not_required"
+      },
+      "work_units": [
+        {
+          "request_id": "CR-c5e19a72-001",
+          "constraint_key": "hang-detector-renotification-gaps",
+          "direct_stage": "spec",
+          "reason": "CLI 契約 hang-detector.sh の renotification / notified_mark と横断 stderr 規約を改める要求(管理 DB 接続不能時は alert を出さず接続エラーと 6 だけ、印の不正・読取失敗の扱い、対象ごとの error 行の例外)。spec 成果物の変更で、USDM SPEC-008-07 の要求文(通知済みは再通知しない・保存失敗は次回も知らせる)は変わらないため文脈参照とする",
+          "evidence": [
+            {
+              "kind": "related_id_prefix",
+              "value": "REQ-008"
+            },
+            {
+              "kind": "related_id",
+              "value": "SPEC-008-07 (USDM specification id under REQ-008)"
+            },
+            {
+              "kind": "related_path_pattern",
+              "value": "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml"
+            },
+            {
+              "kind": "related_path_pattern",
+              "value": "docs/specs/latest/_cross-cutting/ux-ui/ui-design.md"
+            },
+            {
+              "kind": "request_text",
+              "value": "off 以外で管理 DB に接続できない回は、alert 行を出さない"
+            }
+          ],
+          "id": "CR-c5e19a72-001#1",
+          "required_closure_stages": [
+            "spec"
+          ]
+        }
+      ]
+    },
+    {
+      "request_id": "CR-c5e19a72-002",
+      "source": {
+        "byte_span": [
+          3832,
+          5301
+        ],
+        "slice_sha256": "d2748ae69acfba29cd82a02195dc6171c43a24bffa722d595364f10027919b05"
+      },
+      "decision_state": "resolved",
+      "reason": "インフラの Ansible ロール relay-gate-config の hang-detector.env 配置時検査を、ファイルの存在確認だけにする要求。infra 成果物の変更で、中身の検査は CLI 契約(validate-config.sh)が所有する。spec は保守的 closure で追従確認する",
+      "evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-008"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/infra/latest/infra/product/onprem/ansible/roles/relay-gate-config/tasks/main.yml"
+        },
+        {
+          "kind": "request_text",
+          "value": "配置時の検査はファイルがあることの確認だけにする"
+        }
+      ],
+      "deterministic_ownership_evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-008",
+          "rule": "REQ-",
+          "stage": "requirements"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/infra/latest/infra/product/onprem/ansible/roles/relay-gate-config/tasks/main.yml",
+          "rule": "(^|/)infra(/|$)",
+          "stage": "infrastructure"
+        }
+      ],
+      "confidence": "high",
+      "ambiguity_kind": null,
+      "stop_flags": [],
+      "candidates": [],
+      "resolution": {
+        "status": "not_required"
+      },
+      "work_units": [
+        {
+          "request_id": "CR-c5e19a72-002",
+          "constraint_key": "hang-detector-env-deploy-check",
+          "direct_stage": "infrastructure",
+          "reason": "インフラの Ansible ロール relay-gate-config の hang-detector.env 配置時検査を、ファイルの存在確認だけにする要求。infra 成果物の変更で、中身の検査は CLI 契約(validate-config.sh)が所有する。spec は保守的 closure で追従確認する",
+          "evidence": [
+            {
+              "kind": "related_id_prefix",
+              "value": "REQ-008"
+            },
+            {
+              "kind": "related_path_pattern",
+              "value": "docs/infra/latest/infra/product/onprem/ansible/roles/relay-gate-config/tasks/main.yml"
+            },
+            {
+              "kind": "request_text",
+              "value": "配置時の検査はファイルがあることの確認だけにする"
+            }
+          ],
+          "id": "CR-c5e19a72-002#1",
+          "required_closure_stages": [
+            "infrastructure",
+            "spec"
+          ]
+        }
+      ]
+    },
+    {
+      "request_id": "CR-c5e19a72-003",
+      "source": {
+        "byte_span": [
+          5301,
+          7284
+        ],
+        "slice_sha256": "5df9f558327e3bee3b630b69b01635dbc64c570c6b1b26bb9f5088faa1b8fe27"
+      },
+      "decision_state": "resolved",
+      "reason": "CLI 契約 shared_rules.housekeep_rules.member_source の判定手順の適用範囲(成果物で判定する実行だけ)と、削除待ちの置き場の処理順(名前の昇順)を定める要求。spec 成果物の変更で、USDM SPEC-014-05 は変わらず、仕様をそれに一致させる",
+      "evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-014"
+        },
+        {
+          "kind": "related_id",
+          "value": "SPEC-014-05 (USDM specification id under REQ-014)"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml"
+        },
+        {
+          "kind": "request_text",
+          "value": "member_source の判定の順 (1)〜(3) は、成果物だけで判定する実行に適用すると明記する"
+        }
+      ],
+      "deterministic_ownership_evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-014",
+          "rule": "REQ-",
+          "stage": "requirements"
+        },
+        {
+          "kind": "related_id_prefix",
+          "value": "SPEC-014-05",
+          "rule": "SPEC-",
+          "stage": "spec"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml",
+          "rule": "(^|/)specs?(/|$)",
+          "stage": "spec"
+        }
+      ],
+      "confidence": "high",
+      "ambiguity_kind": null,
+      "stop_flags": [],
+      "candidates": [],
+      "resolution": {
+        "status": "not_required"
+      },
+      "work_units": [
+        {
+          "request_id": "CR-c5e19a72-003",
+          "constraint_key": "housekeep-member-source-and-pending-order",
+          "direct_stage": "spec",
+          "reason": "CLI 契約 shared_rules.housekeep_rules.member_source の判定手順の適用範囲(成果物で判定する実行だけ)と、削除待ちの置き場の処理順(名前の昇順)を定める要求。spec 成果物の変更で、USDM SPEC-014-05 は変わらず、仕様をそれに一致させる",
+          "evidence": [
+            {
+              "kind": "related_id_prefix",
+              "value": "REQ-014"
+            },
+            {
+              "kind": "related_id",
+              "value": "SPEC-014-05 (USDM specification id under REQ-014)"
+            },
+            {
+              "kind": "related_path_pattern",
+              "value": "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml"
+            },
+            {
+              "kind": "request_text",
+              "value": "member_source の判定の順 (1)〜(3) は、成果物だけで判定する実行に適用すると明記する"
+            }
+          ],
+          "id": "CR-c5e19a72-003#1",
+          "required_closure_stages": [
+            "spec"
+          ]
+        }
+      ]
+    },
+    {
+      "request_id": "CR-c5e19a72-004",
+      "source": {
+        "byte_span": [
+          7284,
+          8862
+        ],
+        "slice_sha256": "7dae891b60470abc29ea773ef29101dbdb8572998a8ff14cad933eace5d3c9a2"
+      },
+      "decision_state": "resolved",
+      "reason": "CLI 契約 config_input_rules の文字・改行の違反(NUL / UTF-8 / BOM / CR)が複数あるときの報告(全件・行番号昇順・同じ行は表の順)を定める要求。spec 成果物の変更で、USDM SPEC-004-04 は行の形式を持たないため文脈参照とする",
+      "evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-004"
+        },
+        {
+          "kind": "related_id",
+          "value": "SPEC-004-04 (USDM specification id under REQ-004)"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml"
+        },
+        {
+          "kind": "request_text",
+          "value": "第 1 段(バイト・改行の検査)の違反は、ファイル内の全件を行番号の昇順で出す"
+        }
+      ],
+      "deterministic_ownership_evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-004",
+          "rule": "REQ-",
+          "stage": "requirements"
+        },
+        {
+          "kind": "related_id_prefix",
+          "value": "SPEC-004-04",
+          "rule": "SPEC-",
+          "stage": "spec"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml",
+          "rule": "(^|/)specs?(/|$)",
+          "stage": "spec"
+        }
+      ],
+      "confidence": "high",
+      "ambiguity_kind": null,
+      "stop_flags": [],
+      "candidates": [],
+      "resolution": {
+        "status": "not_required"
+      },
+      "work_units": [
+        {
+          "request_id": "CR-c5e19a72-004",
+          "constraint_key": "byte-violation-report-order",
+          "direct_stage": "spec",
+          "reason": "CLI 契約 config_input_rules の文字・改行の違反(NUL / UTF-8 / BOM / CR)が複数あるときの報告(全件・行番号昇順・同じ行は表の順)を定める要求。spec 成果物の変更で、USDM SPEC-004-04 は行の形式を持たないため文脈参照とする",
+          "evidence": [
+            {
+              "kind": "related_id_prefix",
+              "value": "REQ-004"
+            },
+            {
+              "kind": "related_id",
+              "value": "SPEC-004-04 (USDM specification id under REQ-004)"
+            },
+            {
+              "kind": "related_path_pattern",
+              "value": "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml"
+            },
+            {
+              "kind": "request_text",
+              "value": "第 1 段(バイト・改行の検査)の違反は、ファイル内の全件を行番号の昇順で出す"
+            }
+          ],
+          "id": "CR-c5e19a72-004#1",
+          "required_closure_stages": [
+            "spec"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,5 +1,7 @@
 ---
-# relay-gate-runtime: 実行ホストの systemd service/timer と成果物ディレクトリを構成する
+# relay-gate-runtime: 実行ホストの systemd service(常駐 worker)と成果物ディレクトリを構成する
+# hang-detector / housekeep はジョブスケジューラの定期ジョブとして起動する(終了結果が障害通知に乗る唯一の通知経路)。
+# ここでは systemd timer / cron に登録しない。ジョブスケジューラへの登録手順は運用手順書に記載する。
 # 対応: product-impl-onprem.yaml#impl.compute.execution_hosts, impl.storage.artifact_store, impl.storage.execution_log_store
 
 - name: 成果物ディレクトリ(RAID1ボリューム上)を作成する
@@ -29,13 +31,30 @@
   when: (item == 'rapid' and segment == 'execution') or (item == 'final-crosscheck' and segment == 'db')
   notify: reload systemd and restart relay-gate worker
 
-- name: ハング検知timer(5分ごと、実行ホストセグメントのみ)を配置する
-  ansible.builtin.template:
-    src: relay-gate-hang-detector.timer.j2
-    dest: /etc/systemd/system/relay-gate-hang-detector.timer
-    mode: "0644"
-  when: segment == 'execution'
-  notify: reload systemd and enable hang-detector timer
+# ハウスキープの削除待ちの置き場は成果物ルートと同じファイルシステムに置く(rename(2) で移すため)。
+# 置き場は CLI 契約(artifact_root_entries)で成果物ルート直下の housekeep-pending/ と決まっている(この構成では /var/lib/relay-gate/housekeep-pending)。
+# 適用側の変数 relay_gate_housekeep_staging_dir にそのパスを設定する。
+- name: ハウスキープの削除待ちの置き場を作成する(成果物ルート配下。実行ホストセグメントのみ)
+  ansible.builtin.file:
+    path: "{{ relay_gate_housekeep_staging_dir }}"
+    state: directory
+    owner: relay-gate
+    group: relay-gate
+    mode: "0750"
+  when: segment == 'execution' and relay_gate_housekeep_staging_dir is defined
+
+- name: 削除待ちの置き場が成果物ルートと同じファイルシステムにあることを検査する
+  ansible.builtin.shell: "test \"$(stat -c %d /var/lib/relay-gate/facade)\" = \"$(stat -c %d {{ relay_gate_housekeep_staging_dir }})\""
+  changed_when: false
+  when: segment == 'execution' and relay_gate_housekeep_staging_dir is defined
+
+- name: hang-detector / housekeep がホストの systemd timer に登録されていないことを検査する
+  ansible.builtin.shell: "! systemctl list-timers --all --no-legend | grep -E 'relay-gate-(hang-detector|housekeep)'"
+  changed_when: false
+
+- name: hang-detector / housekeep がホストの crontab に登録されていないことを検査する
+  ansible.builtin.shell: "! cat /etc/crontab /etc/cron.d/* /var/spool/cron/* /var/spool/cron/crontabs/* 2>/dev/null | grep -E '(hang-detector|housekeep)'"
+  changed_when: false
 
 - name: SSH known_hosts を事前配布する
   ansible.builtin.copy:

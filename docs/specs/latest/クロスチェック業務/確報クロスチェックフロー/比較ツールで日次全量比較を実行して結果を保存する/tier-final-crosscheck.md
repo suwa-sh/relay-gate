@@ -21,7 +21,7 @@
 
 #### 設定契約
 
-- `final-crosscheck.env`(`RELAY_GATE_CONFIG_DIR/final-crosscheck.env`、KEY=VALUE、行頭 `#` はコメント行)の `FINAL_COMPARE_COMMAND`: 確報の比較ツール起動コマンド 1 行の文字列(プレースホルダ無し)。worker はこれを shared_rules.compare_command_argv に従って空白区切りで引数の並びに分け(置換なし)、その並びをそのまま渡して起動する(文字列をシェルに解釈させない)
+- `final-crosscheck.env`(`RELAY_GATE_CONFIG_DIR/final-crosscheck.env`、KEY=VALUE。前後の空白を除いて `#` で始まる行はコメント行。同じキーが 2 行以上あれば設定エラー `error: duplicate key key=<KEY> lines=<n1,n2,...> path: ...`(2)でどちらの値も使わない。定義と報告の順は CLI 契約 config_input_rules.env_files)の `FINAL_COMPARE_COMMAND`: 確報の比較ツール起動コマンド 1 行の文字列(プレースホルダ無し)。worker はこれを shared_rules.compare_command_argv に従って空白区切りで引数の並びに分け(置換なし)、その並びをそのまま渡して起動する(文字列をシェルに解釈させない)
   - `FINAL_COMPARE_COMMAND` のコマンド部分(先頭の語)は絶対パスで実行可能ファイルであること(検証は `validate-config.sh --final-crosscheck` が行う。本 worker は起動失敗を実行時に検出して FAILED にする)
 - 比較対象(テーブル・ファイル)の一覧やジョブ ID ごとの比較定義は relay-gate の設定に持たない。worker は依頼レコード(final_crosscheck_requests)と final-crosscheck.env 以外の入力を読まない(適用側が比較ツール側で比較対象を定義する)
 
@@ -29,12 +29,15 @@
 
 - 検証本体の所有 tier は tier-facade(validate-config.sh。arch CTR-007。契約の正本は `_cross-cutting/api/cli-command-contract.yaml` の `validate-config.sh`)。本 UC は確報の起動コマンドの検証種別 `--final-crosscheck` を所有する
 - **書式**: `validate-config.sh --final-crosscheck <path>`(値必須。既定パス `$RELAY_GATE_CONFIG_DIR/final-crosscheck.env` を使う場合も明示的に渡す)
+- **実行する場所**: DB セグメント(worker が動くホスト)で、DB セグメントの置き場のファイルを検証する。実行ホストの置き場のファイルは runner 用の中身(FINAL_DB_CONN_REF と FINAL_POLL_INTERVAL_SEC / FINAL_POLL_LIMIT_SEC)だけで `FINAL_COMPARE_COMMAND` を置かないため、検証の対象にしない(渡すと `error: option required option=FINAL_COMPARE_COMMAND path: ...` で 2 になる。契約 `config_files.final-crosscheck.env` note)
 - **検証内容**: `FINAL_COMPARE_COMMAND` のコマンド部分(先頭の語)が絶対パスで、存在し、実行可能であること。検証はコマンド部分だけに行い、引数部分の内容は検査しない。確報はプレースホルダ無しのため `{job_id}` の検査はしない
-- **stdout(固定順)**: `config=final-crosscheck` / `path: <path>` / `command_path: <FINAL_COMPARE_COMMAND の先頭の語>` / `status=valid|invalid` / `violations=N`(invalid 時)
+- **stdout(固定順)**: `config=final-crosscheck` / `path: <path>` / `command_path: <FINAL_COMPARE_COMMAND の先頭の語>` / `status=valid|invalid` / `violations=N`(invalid 時)。入力の守備範囲の違反で値を使わないときは `command_path: -`(CLI 契約 `config_input_rules.env_files`)
 - **違反文言(終了コード 2)**:
+  - 入力の守備範囲の違反(NUL / UTF-8 / BOM / CR / invalid line / 同じキーの重複 `error: duplicate key key=<KEY> lines=<n1,n2,...> path: ...`): CLI 契約 `config_input_rules.env_files` の文言と報告の順(NUL / UTF-8 / BOM / CR はファイル内の全件を行番号の昇順、同じ行は NUL → UTF-8 → BOM → CR の順、hint は最後の CR の error 行の次に 1 回。`config_input_rules.byte_checks`)。この違反があるときは以下の検証を行わない
   - 必須キー欠落・空: `error: option required option=FINAL_COMPARE_COMMAND path: ...`
   - コマンド部分が絶対パスでない: `error: path is not absolute key=FINAL_COMPARE_COMMAND path=...`
   - コマンド部分が存在しない・実行不可: `error: file not executable key=FINAL_COMPARE_COMMAND path=...`
+- **警告(継続)**: キー表(契約 config_files.final-crosscheck.env の keys)に無いキーは `warn: unknown key key=<KEY> path: ...` を出して継続する(終了コード・violations に数えない。他の読み手が使うキーは未知キーではない。契約 config_files.final-crosscheck.env note)
 
 ## 出力契約
 
@@ -57,7 +60,7 @@
 - **冪等性**: RUNNING 遷移は `WHERE status='CLAIMED' AND worker_id=?` の条件付き UPDATE。更新件数 0(lease 失効で別 worker に回収済み。abort-final-crosscheck.sh は RUNNING のみ中止できるため CLAIMED が ABORTED になる経路は無い)なら比較ツールを起動せず `WARN request not claimable status changed` を残して終了コード 0。終端遷移は `WHERE status='RUNNING'`。更新件数 0(比較中に abort-final-crosscheck.sh で ABORTED)は中止済みとみなし、`WARN request already terminal final_crosscheck_id=... status=ABORTED` を残して終了コード 0(依頼は変更しない)
 - **比較ツールの起動**: cli-command-contract.yaml external_interfaces「比較ツール(確報)」と shared_rules.compare_command_argv のとおり `FINAL_COMPARE_COMMAND`(1 行、プレースホルダ無し)を空白区切りで引数の並びに分け(クォート・`$`・`;` 等のシェル記法は解釈しない)、その並びをそのまま渡して起動する(`"${argv[@]}"` 相当。`eval` / `bash -c` / `sh -c` / 引用符なし展開を使わない)。worker は固定オプション・ファイルパスを追記しない(比較対象は比較ツール側が定義する)。比較ツールの stdout / stderr を受け取り、exit_code は `$?`。受け取った stdout / stderr / exit_code は依頼レコードの列へ保存する(ファイルへは保存しない)
 - **エラーハンドリング**: 比較ツールの非 0 は例外ではなく結果(CLR-003)。起動失敗・DB 失敗は `error:` 1 回 + 終了コード 6。DB の終端 UPDATE に失敗した場合、依頼は RUNNING のまま残る(`abort-final-crosscheck.sh` で整理し正規ジョブを再実行)
-- **クラッシュ耐性**: RUNNING 遷移後に worker が落ちると依頼は RUNNING のまま残り、lease 回収の対象外(started_at あり)。hang-detector は確報依頼を走査しない(cli-command-contract.yaml `hang-detector.sh` / asyncapi.yaml `hang-alert-mail` の監視対象は background slot と速報比較依頼のみ。方針資料 C2 図の HangDetector → FinalQueue 破線とは差異があり、確報依頼のハング監視は runner の polling 上限で代替する仮採用として rdra-feedback で記録する)ため、runner の polling 上限超過(終了コード 6)で運用者に伝わる
+- **クラッシュ耐性**: RUNNING 遷移後に worker が落ちると依頼は RUNNING のまま残り、lease 回収の対象外(started_at あり)。hang-detector は確報依頼を走査しない(cli-command-contract.yaml `hang-detector.sh` の監視対象は background slot と速報比較依頼のみ。方針資料 C2 図の HangDetector → FinalQueue 破線とは差異があり、確報依頼のハング監視は runner の polling 上限で代替する仮採用として rdra-feedback で記録する)ため、runner の polling 上限超過(終了コード 6)で運用者に伝わる
 - **速報と確報のモデル分離**: 確報の結果は依頼レコードの stdout / stderr / exit_code 列だけで保持する(速報・確報とも比較結果の独立テーブルは持たない)
 
 ## イベント処理仕様

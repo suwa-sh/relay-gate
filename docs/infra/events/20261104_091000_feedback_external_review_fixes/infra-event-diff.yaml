@@ -1,0 +1,63 @@
+meta:
+  event_id: "20261104_091000_feedback_external_review_fixes"
+  trigger_event: "infra:20261103_134000_feedback_housekeeping_db_required"
+  created_at: "2026-11-04T09:10:00Z"
+  mode: "differential"
+  mcl_rerun: "skipped_targeted_update"
+  mcl_rerun_reason: "上流(USDM / RDRA / NFR / arch)の latest は変更なし。translation(workload_type / availability_tier / latency / data_classification / traffic / consistency / cost_posture / target_clouds)も無変更。変更はインフラ成果物の中だけで、構築手順(config ロール)のハング検知定期ジョブ設定の配置時検査が CLI 契約より厳しく、正当な設定で構築が失敗する誤りを直すもの。MCL 出力の該当記述を差分更新した(MCL product-design の全量再実行は行わない)"
+feedback_request:
+  feedback_request_id: "20261104_external_review_fixes"
+  input_sha256: "6b4cf1b4db9a1e0d2ad050d265c7c2b77928832af091ac20b2657e61aea0dc13"
+  request_ids: ["CR-c5e19a72-002"]
+  work_unit_ids: ["CR-c5e19a72-002#1"]
+direct_work_unit_ids: ["CR-c5e19a72-002#1"]
+stage_packet: "docs/pipeline/feedback-runs/20261104_external_review_fixes/stage-packets/infrastructure.md"
+changes:
+  event_id: "20261104_091000_feedback_external_review_fixes"
+  created_at: "2026-11-04T09:10:00Z"
+  source: "外部レビューの指摘(2026-11-04)に基づくインフラ設計の差分更新: 構築手順のハング検知定期ジョブ設定の検査を CLI 契約に合わせ、配置時はファイルの存在確認だけにする"
+  arch_event_ref: "20261103_133000_feedback_housekeeping_db_required"
+  nfr_event_ref: "20261103_132000_feedback_housekeeping_db_required"
+  translation:
+    unchanged: true
+  mcl_execution:
+    status: "completed"
+    completed_at: "2026-11-04T09:10:00Z"
+    outputs_updated:
+      - path: "infra/product/onprem/ansible/roles/relay-gate-config/tasks/main.yml"
+        change: "「ハング検知定期ジョブ設定が HANG_DB_CONN_REF だけを持つことを検査する」タスク(HANG_DB_CONN_REF の行を必須とし、それ以外の非コメント行を拒否する grep)を「ハング検知定期ジョブ設定が存在することを検査する」(test -f /etc/relay-gate/hang-detector.env)に改めた。中身の検査(キーの定義 HANG_DB_CONN_REF / 任意キー RAPID_HANG_DETECT_LIMIT_MINUTES / HANG_SCAN_WINDOW_HOURS、HANG_DB_CONN_REF の必須判定は RAPID_CROSSCHECK_MODE が off 以外のときだけ、行の形)は CLI 契約が所有し hang-detector.sh が起動時に行う旨をコメントに書いた。配置タスク名の「HANG_DB_CONN_REF だけ」を 3 キーを持ち得る旨に直した"
+        work_units: ["CR-c5e19a72-002#1"]
+      - path: "docs/mcl/product/output/product-impl-onprem.yaml"
+        change: "config_store の contents の hang-detector.env を「HANG_DB_CONN_REF だけ」から 3 キーを持ち得る(HANG_DB_CONN_REF は off 以外のときだけ必須)に直した。検証規則「hang-detector.env が HANG_DB_CONN_REF だけを持つこと」を「hang-detector.env が存在すること(配置時はファイルの存在確認だけ)」に改め、中身の検査の所有者を CLI 契約(hang-detector.sh の起動時検査。validate-config.sh には検証種別が無い)と書いた"
+        work_units: ["CR-c5e19a72-002#1"]
+      - path: "docs/mcl/product/output/product-mapping-onprem.yaml"
+        change: "config_store の notes の hang-detector.env を 3 キーを持ち得る(HANG_DB_CONN_REF は off 以外のときだけ必須)に直した"
+        work_units: ["CR-c5e19a72-002#1"]
+      - path: "docs/mcl/product/output/product-workload-model.yaml"
+        change: "config_store の説明のハング検知定期ジョブ設定を 3 キーを持ち得る(HANG_DB_CONN_REF は off 以外のときだけ必須)に直した"
+        work_units: ["CR-c5e19a72-002#1"]
+      - path: "docs/cloud-context/conformance/product/product-conformance-onprem.yaml"
+        change: "設定の要件の notes の hang-detector.env を 3 キーを持ち得る(HANG_DB_CONN_REF は off 以外のときだけ必須)に直した(判定は不変)"
+        work_units: ["CR-c5e19a72-002#1"]
+      - path: "docs/mcl/product/input/product-input.yaml"
+        change: "config_store の説明のハング検知定期ジョブ設定を「管理 DB 接続参照名だけを持つ」から、任意の運用チューニング値 2 キーを持ち得て接続参照名は off 以外のときだけ必須、に直した(translation のフィールドは不変)。product-input.yaml(イベント直下のコピー)も同一内容"
+        work_units: ["CR-c5e19a72-002#1"]
+    outputs_verified_unchanged:
+      - path: "docs/mcl/product/output/product-observability.yaml / product-cost-hints.yaml"
+        reason: "ハング検知定期ジョブ設定のキー構成を書いていない。ハング検知の通知経路(終了コードと標準エラー)は変わらない"
+        work_units: ["CR-c5e19a72-002#1"]
+      - path: "docs/cloud-context/generated-md/product/relay-gate-target-architecture.md"
+        reason: "設定ノードはファイル名の列挙だけで、キー構成を書いていない"
+        work_units: ["CR-c5e19a72-002#1"]
+      - path: "infra/product/onprem/README.md / ansible/inventory.ini.example / ansible/site.yml"
+        reason: "hang-detector.env のキー構成や HANG_DB_CONN_REF の必須を書いていない。latest に files/(設定の例)は無い"
+        work_units: ["CR-c5e19a72-002#1"]
+      - path: "docs/mcl/product/output/product-impl-onprem.yaml(認証情報の平文検査・接続参照名の解決)"
+        reason: "HANG_DB_CONN_REF が参照名であること、hang-detector が HANG_DB_CONN_REF で接続先を解決することは CLI 契約と一致している"
+        work_units: ["CR-c5e19a72-002#1"]
+  arch_feedback:
+    status: "no_new_feedback"
+    reason: "変更は構築手順の配置時検査を CLI 契約に合わせただけで、ティア・依存ルール・方針に関わる新しい知見は無い。本 stage は feedback controller の指示により Phase4 で arch を更新しない"
+  writeback_check:
+    result: "not_required"
+    reason: "arch の変更が無く、translation の各フィールドも不変のため product-input の再生成(translation のやり直し)と Step2 の全量再実行は不要"

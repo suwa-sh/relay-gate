@@ -2,11 +2,11 @@
 
 | 項目 | 値 |
 |------|-----|
-| イベント ID | 20261101_104000_feedback_impl_feedback_dcd8234d |
-| 作成日時 | 2026-11-01T10:40:00Z |
-| ソース | feedback request 20261027_091000_impl_feedback_dcd8234d(速報の起動コマンドに対する設定検証を 2 点から 3 点へ。USDM / arch 差分)に基づくインフラ設計の差分更新 |
-| Arch 参照 | 20261101_103000_feedback_impl_feedback_dcd8234d |
-| NFR 参照 | 20261010_201000_feedback_impl_feedback_dcd8234d |
+| イベント ID | 20261105_111000_feedback_single_management_db |
+| 作成日時 | 2026-11-05T11:10:00+09:00 |
+| ソース | 管理 DB の接続先の指摘(2026-11-05)に基づくインフラ設計の差分更新: 管理 DB は 1 つで、すべての接続先の参照名(RAPID_DB_CONN_REF、実行ホストと DB セグメントそれぞれの FINAL_DB_CONN_REF、HANG_DB_CONN_REF、HOUSEKEEP_DB_CONN_REF)が同じ 1 つの管理 DB に解決されることを前提として書く。条件は参照名の文字列ではなく解決先の DB が同じこと。構築時の検査は存在確認のままで、解決先が同じことは導入する側が確かめる |
+| Arch 参照 | 20261103_133000_feedback_housekeeping_db_required |
+| NFR 参照 | 20261103_132000_feedback_housekeeping_db_required |
 
 ## 変換サマリ
 

@@ -4,14 +4,14 @@
 
 | 項目 | 内容 |
 |------|------|
-| Event ID | 20261101_105000_feedback_impl_feedback_dcd8234d |
-| Created At | 2026-11-01T10:50:00Z |
-| Source | Spec 差分更新(design 無しモード。2026-11-01 の実装フィードバック)。CR-dcd8234d-010(spec 直接所有): CLI 契約の 2 か所(shared_rules.compare_command_argv.split と config_input_rules.env_files)の env 値の引用符の外し方を同じ規則で書いた(先頭の 1 文字が \" か ' なら外し、それとは別に末尾の 1 文字が \" か ' なら外す。種類の一致・対は求めない。例 \"abc\" → abc / \"abc → abc / abc' → abc / \"abc' → abc)。env_files は委譲をやめて規則そのものを書き、UC「feature flag を設定する」の tier-facade.md は契約へ参照させ仮採用を外した。実装は変えない。CR-dcd8234d-009(上流 USDM 更新済みの追従): 速報の起動コマンドの検証 3 点(コマンド部分 / {job_id} / {params} は引数 1 つ全体)に揃え、UC「クロスチェックのジョブマップと比較定義を定義する」の _api-summary.yaml の stderr と終了コード 2 の理由に {params} の位置違反を追加、spec.md / tier-facade.md / CLI 契約の「引数部分の内容は検査しない」を「{job_id} の有無と {params} の位置のほかは」に改め、受け入れ基準 10(引数部分の任意文字列)と 11(クロスチェックジョブマップ・対象カタログの検証種別は無い)の BDD を追加、基準 12({params} の位置違反)は既存 BDD で覆う。spec-event usdm / usdm-acceptance-matrix / uc-dependencies を追従。判断は decisions/spec-decision-019 |
-| UC 総数 | 32 |
+| Event ID | 20261105_112000_feedback_single_management_db |
+| Created At | 2026-11-05T11:20:00+09:00 |
+| Source | Spec 差分更新(design 無しモード。2026-11-05 の管理 DB を 1 つとする前提の明記)。CR-f4c8b261-001(infra 直接所有。spec は保守的 closure): インフラ設計が、管理 DB は 1 つで、すべての接続参照名(RAPID_DB_CONN_REF、実行ホストと DB セグメントそれぞれの FINAL_DB_CONN_REF、HANG_DB_CONN_REF、HOUSEKEEP_DB_CONN_REF(専用 DB ロール housekeep_del))が同じ 1 つの管理 DB に解決されることを前提として書いたことに追従した。CLI 契約の conventions.credentials に、単一の管理 DB の前提、条件は参照名の文字列ではなく解決先が同じこと(確報 runner が登録した依頼を確報 worker が同じキューから取得するため)、解決先が同じことは導入する側が確かめること、構築時の検査は設定ファイルの存在確認だけで relay-gate のコマンドも解決先を検査しないことを書いた。config_files の final-crosscheck.env の note と 4 つの参照名のキー説明、6 UC の tier md の設定キー表(ハウスキープ判定 UC はキー表の直下の説明)から参照した。新しい検査・error 文言・終了コード・BDD は足さない(spec-decision-032) |
+| UC 総数 | 34 |
 | API 総数 | 0 |
-| 非同期イベント総数 | 4 |
-| 業務数 | 5 |
-| BUC 数 | 7 |
+| 非同期イベント総数 | 3 |
+| 業務数 | 6 |
+| BUC 数 | 8 |
 
 ## UC 一覧
 
@@ -27,7 +27,7 @@
 | クロスチェック業務 | 速報クロスチェックフロー | 速報比較結果を参照する | 0 | - | - |
 | クロスチェック業務 | 速報クロスチェックフロー | 比較ツールでジョブ単位比較を実行して結果を登録する | 0 | - | - |
 | クロスチェック業務 | 速報クロスチェックフロー | 両系成功時に速報比較依頼を作成する | 0 | - | - |
-| 実行監視業務 | background 実行監視フロー | background 異常の通知メールを受け取る | 0 | - | - |
+| 実行監視業務 | background 実行監視フロー | ハング検知ジョブの異常終了を確認する | 0 | - | - |
 | 実行監視業務 | background 実行監視フロー | background 実行の経過時間と終了状態を判定する | 0 | - | - |
 | 実行監視業務 | background 実行監視フロー | hang_detect_limit_minutes をジョブごとに調整する | 0 | - | - |
 | 実行監視業務 | background 実行監視フロー | ハング疑い・実行エラー・比較異常を通知する | 0 | - | - |
@@ -49,6 +49,8 @@
 | 適用構成業務 | 適用構成定義フロー | slot ごとのジョブマップを定義する | 0 | - | - |
 | 適用構成業務 | 適用構成定義フロー | クロスチェックのジョブマップと比較定義を定義する | 0 | - | - |
 | 適用構成業務 | 適用構成定義フロー | 切り替えた運用モードで業務ジョブを実行する | 0 | - | - |
+| ハウスキープ業務 | ハウスキープフロー | 保持日数を過ぎた終了済みの実行と確報比較依頼を判定する | 0 | - | - |
+| ハウスキープ業務 | ハウスキープフロー | 成果物と管理 DB の履歴を削除する | 0 | - | - |
 
 ## UC ファイル構成
 
@@ -74,7 +76,7 @@
 
 #### background 実行監視フロー
 
-- **background 異常の通知メールを受け取る**: spec.md, tier-ops.md
+- **ハング検知ジョブの異常終了を確認する**: spec.md, tier-ops.md
 - **background 実行の経過時間と終了状態を判定する**: spec.md, tier-ops.md
 - **hang_detect_limit_minutes をジョブごとに調整する**: spec.md, tier-facade.md, tier-ops.md
 - **ハング疑い・実行エラー・比較異常を通知する**: spec.md, tier-ops.md
@@ -115,11 +117,18 @@
 - **クロスチェックのジョブマップと比較定義を定義する**: spec.md, tier-facade.md
 - **切り替えた運用モードで業務ジョブを実行する**: spec.md, tier-facade.md
 
+### ハウスキープ業務
+
+#### ハウスキープフロー
+
+- **保持日数を過ぎた終了済みの実行と確報比較依頼を判定する**: spec.md, tier-facade.md, tier-ops.md
+- **成果物と管理 DB の履歴を削除する**: spec.md, tier-ops.md
+
 ## 全体横断仕様
 
 ### UX Design
 
-- User Flows: 4
+- User Flows: 5
 - IA Pages: 18
 - Psychology Principles: 8
 

@@ -1,0 +1,334 @@
+{
+  "event_id": "20261103_085000_feedback_stage_spec",
+  "type": "feedback_stage_completed",
+  "run_id": "feedback-20261103_housekeeping_followups-20261103_075954-73969",
+  "attempt": 1,
+  "created_at": "2026-11-03T08:50:00Z",
+  "stage": "spec",
+  "direct_work_unit_ids": [
+    "CR-f3b8a1d0-002#1"
+  ],
+  "causal_work_unit_ids": [
+    "CR-f3b8a1d0-001#1",
+    "CR-f3b8a1d0-002#1",
+    "CR-f3b8a1d0-003#1"
+  ],
+  "work_unit_results": [
+    {
+      "work_unit_id": "CR-f3b8a1d0-002#1",
+      "disposition": "applied",
+      "reason": "CLI 契約 config_input_rules.env_files の順序つき規則の手順 (2) に、キーの前後の空白を除いた結果キーが空になる行は `error: invalid line line=N path: ...`(終了コード 2)とし (3) 以降へ進まない規則と例(` =abc` / `=abc` / ` = ` はいずれも invalid line)を加え、全 env 設定ファイル(feature-flag.env / rapid-crosscheck.env / hang-detector.env / final-crosscheck.env / housekeep.env)共通とした。shared_rules.compare_command_argv.split の再掲と config_input_rules の空白だけの行の項にも同じ規則を反映し、出力規約 ui-design.md の検証定型文、UC「feature flag を設定する」の tier-facade.md(形式の節と、キーが空の行・= の無い行・空白だけの行を invalid line で拒否する BDD)、判定 UC の tier-facade.md の入力の守備範囲を揃えた。実装は変えず、feature_flag_config.sh の差分(キーが空の行の読み飛ばし / = の無い行をキーだけの行として扱う / 空白だけの行の読み飛ばし)を実装を契約に合わせる対象として記録し、rapid_crosscheck_env.sh は契約どおりと確認した。docs/todo.md の DIST-031 を closed にした。判断は spec-decision-023",
+      "artifact_refs": [
+        "specs/events/20261103_085000_feedback_housekeeping_followups/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20261103_085000_feedback_housekeeping_followups/_cross-cutting/ux-ui/ui-design.md",
+        "specs/events/20261103_085000_feedback_housekeeping_followups/適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md",
+        "specs/events/20261103_085000_feedback_housekeeping_followups/ハウスキープ業務/ハウスキープフロー/保持日数を過ぎた終了済みの実行と確報比較依頼を判定する/tier-facade.md",
+        "specs/events/20261103_085000_feedback_housekeeping_followups/decisions/spec-decision-023.yaml",
+        "specs/events/20261103_085000_feedback_housekeeping_followups/spec-event.yaml"
+      ]
+    }
+  ],
+  "reconciliation_results": [
+    {
+      "work_unit_id": "CR-f3b8a1d0-001#1",
+      "status": "changed",
+      "reason": "上流の要求 SPEC-014-08 の新設と SPEC-014-03 / 04 の受け入れ基準の条件の追加に追従した。CLI 契約の housekeep.sh の振る舞い(member_source の規則、warn の文言、HOUSEKEEP_DB_CONN_REF が無いときの手順 2)は変えず、member_source に判定の順(形式の検査 → rapid crosscheck mode → slot の確認)と、管理 DB に接続しないとき rapid_crosscheck_mode が無い・不正な execution-spec.json を execution-spec invalid で残す端の扱いを書き足した。判定 UC の spec.md に分岐 B-08 と SPEC-014-08 の受け入れ基準 4 件の BDD を加え、確報比較依頼の warn のシナリオを SPEC-014-08 へ付け替え、成果物だけで判定するシナリオに rapid_crosscheck_mode が off であることを、確報比較依頼を消すシナリオに管理 DB に接続する設定を書いた。tier-ops.md の判定表と warn の表、削除 UC の tier BDD、spec-event.yaml の use_cases[].usdm、usdm-acceptance-matrix.md(REQ 14 / SPEC 59 / 受け入れ条件 187)、traceability-matrix.md を揃えた。判断は spec-decision-024",
+      "artifact_refs": [
+        "specs/events/20261103_085000_feedback_housekeeping_followups/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20261103_085000_feedback_housekeeping_followups/ハウスキープ業務/ハウスキープフロー/保持日数を過ぎた終了済みの実行と確報比較依頼を判定する/spec.md",
+        "specs/events/20261103_085000_feedback_housekeeping_followups/ハウスキープ業務/ハウスキープフロー/保持日数を過ぎた終了済みの実行と確報比較依頼を判定する/tier-ops.md",
+        "specs/events/20261103_085000_feedback_housekeeping_followups/ハウスキープ業務/ハウスキープフロー/成果物と管理 DB の履歴を削除する/tier-ops.md",
+        "specs/events/20261103_085000_feedback_housekeeping_followups/_cross-cutting/usdm-acceptance-matrix.md",
+        "specs/events/20261103_085000_feedback_housekeeping_followups/_cross-cutting/traceability-matrix.md",
+        "specs/events/20261103_085000_feedback_housekeeping_followups/decisions/spec-decision-024.yaml",
+        "specs/events/20261103_085000_feedback_housekeeping_followups/spec-event.yaml"
+      ]
+    },
+    {
+      "work_unit_id": "CR-f3b8a1d0-002#1",
+      "status": "changed",
+      "reason": "CLI 契約 config_input_rules.env_files の順序つき規則の手順 (2) に、キーの前後の空白を除いた結果キーが空になる行は `error: invalid line line=N path: ...`(終了コード 2)とし (3) 以降へ進まない規則と例(` =abc` / `=abc` / ` = ` はいずれも invalid line)を加え、全 env 設定ファイル(feature-flag.env / rapid-crosscheck.env / hang-detector.env / final-crosscheck.env / housekeep.env)共通とした。shared_rules.compare_command_argv.split の再掲と config_input_rules の空白だけの行の項にも同じ規則を反映し、出力規約 ui-design.md の検証定型文、UC「feature flag を設定する」の tier-facade.md(形式の節と、キーが空の行・= の無い行・空白だけの行を invalid line で拒否する BDD)、判定 UC の tier-facade.md の入力の守備範囲を揃えた。実装は変えず、feature_flag_config.sh の差分(キーが空の行の読み飛ばし / = の無い行をキーだけの行として扱う / 空白だけの行の読み飛ばし)を実装を契約に合わせる対象として記録し、rapid_crosscheck_env.sh は契約どおりと確認した。docs/todo.md の DIST-031 を closed にした。判断は spec-decision-023",
+      "artifact_refs": [
+        "specs/events/20261103_085000_feedback_housekeeping_followups/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20261103_085000_feedback_housekeeping_followups/_cross-cutting/ux-ui/ui-design.md",
+        "specs/events/20261103_085000_feedback_housekeeping_followups/適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md",
+        "specs/events/20261103_085000_feedback_housekeeping_followups/ハウスキープ業務/ハウスキープフロー/保持日数を過ぎた終了済みの実行と確報比較依頼を判定する/tier-facade.md",
+        "specs/events/20261103_085000_feedback_housekeeping_followups/decisions/spec-decision-023.yaml",
+        "specs/events/20261103_085000_feedback_housekeeping_followups/spec-event.yaml"
+      ]
+    },
+    {
+      "work_unit_id": "CR-f3b8a1d0-003#1",
+      "status": "changed",
+      "reason": "上流の arch CTR-006 の改訂に追従した。CLI 契約 conventions.execution_log.path、housekeep.sh の注記、出力規約 ui-design.md の実行ログファイルの出力先にあった手作業のローテーションの記述を、relay-gate は実行ログを整理せず設置環境の logrotate に任せる(arch CTR-006)趣旨に改めた。保管期間 3 か月(NFR C.6.1.1)と、実行ログをハウスキープの対象にしない規則は変えていない。判断は spec-decision-025",
+      "artifact_refs": [
+        "specs/events/20261103_085000_feedback_housekeeping_followups/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20261103_085000_feedback_housekeeping_followups/_cross-cutting/ux-ui/ui-design.md",
+        "specs/events/20261103_085000_feedback_housekeeping_followups/decisions/spec-decision-025.yaml",
+        "specs/events/20261103_085000_feedback_housekeeping_followups/spec-event.yaml"
+      ]
+    }
+  ],
+  "work_unit_evidence_refs": [
+    {
+      "work_unit_id": "CR-f3b8a1d0-001#1",
+      "path": "specs/events/20261103_085000_feedback_housekeeping_followups/_cross-cutting/api/cli-command-contract.yaml",
+      "sha256": "2838fb4e4c2dfedbcc94de70a4ec4b648e9ef8d0bf35ba6d201de9eddb81e0f4"
+    },
+    {
+      "work_unit_id": "CR-f3b8a1d0-001#1",
+      "path": "specs/events/20261103_085000_feedback_housekeeping_followups/ハウスキープ業務/ハウスキープフロー/保持日数を過ぎた終了済みの実行と確報比較依頼を判定する/spec.md",
+      "sha256": "8044398cc476e0df4f75ebdbf8490c3b8efe47abe9fd22ac50163f1a24a85078"
+    },
+    {
+      "work_unit_id": "CR-f3b8a1d0-001#1",
+      "path": "specs/events/20261103_085000_feedback_housekeeping_followups/ハウスキープ業務/ハウスキープフロー/保持日数を過ぎた終了済みの実行と確報比較依頼を判定する/tier-ops.md",
+      "sha256": "da7bd7f5eed06652f893f4b0ace1607b106259e5f8d7a550d36465b56244d211"
+    },
+    {
+      "work_unit_id": "CR-f3b8a1d0-001#1",
+      "path": "specs/events/20261103_085000_feedback_housekeeping_followups/ハウスキープ業務/ハウスキープフロー/成果物と管理 DB の履歴を削除する/tier-ops.md",
+      "sha256": "b49fa66519af34d246f0e971887eb590ef4dfbf7f4bc39cb83c8f09f2d425f10"
+    },
+    {
+      "work_unit_id": "CR-f3b8a1d0-001#1",
+      "path": "specs/events/20261103_085000_feedback_housekeeping_followups/_cross-cutting/usdm-acceptance-matrix.md",
+      "sha256": "21094613f5ec95dc07dab72dd1bc067d7d578ec63464c9ce5d4418b544e54129"
+    },
+    {
+      "work_unit_id": "CR-f3b8a1d0-001#1",
+      "path": "specs/events/20261103_085000_feedback_housekeeping_followups/_cross-cutting/traceability-matrix.md",
+      "sha256": "5346608cfd62549d52cf42f09298283283a5599b18b0d53888df0b0e87e69c42"
+    },
+    {
+      "work_unit_id": "CR-f3b8a1d0-001#1",
+      "path": "specs/events/20261103_085000_feedback_housekeeping_followups/decisions/spec-decision-024.yaml",
+      "sha256": "8eed9569f695e6b22f4c7cb2e23d14eb039c447fc9e9c0fbfd2a300dd1b5fdc4"
+    },
+    {
+      "work_unit_id": "CR-f3b8a1d0-001#1",
+      "path": "specs/events/20261103_085000_feedback_housekeeping_followups/spec-event.yaml",
+      "sha256": "85768baad281d5e82539f7522d80140fa48e9b68ab1e62f955166f7e27795ae0"
+    },
+    {
+      "work_unit_id": "CR-f3b8a1d0-002#1",
+      "path": "specs/events/20261103_085000_feedback_housekeeping_followups/_cross-cutting/api/cli-command-contract.yaml",
+      "sha256": "2838fb4e4c2dfedbcc94de70a4ec4b648e9ef8d0bf35ba6d201de9eddb81e0f4"
+    },
+    {
+      "work_unit_id": "CR-f3b8a1d0-002#1",
+      "path": "specs/events/20261103_085000_feedback_housekeeping_followups/_cross-cutting/ux-ui/ui-design.md",
+      "sha256": "239212a63f79f5d4cae0e680c2c076f30b83bed62ff2acaaf50808e1a42f9af4"
+    },
+    {
+      "work_unit_id": "CR-f3b8a1d0-002#1",
+      "path": "specs/events/20261103_085000_feedback_housekeeping_followups/適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md",
+      "sha256": "8bcdda539fe7f9c4e474d3900b3622b5269dae5cced8087d6f7806827e6cddac"
+    },
+    {
+      "work_unit_id": "CR-f3b8a1d0-002#1",
+      "path": "specs/events/20261103_085000_feedback_housekeeping_followups/ハウスキープ業務/ハウスキープフロー/保持日数を過ぎた終了済みの実行と確報比較依頼を判定する/tier-facade.md",
+      "sha256": "3b1165af72321bc9a79b93e3227b242a1df184dc92f3a1f71e176685ae826170"
+    },
+    {
+      "work_unit_id": "CR-f3b8a1d0-002#1",
+      "path": "specs/events/20261103_085000_feedback_housekeeping_followups/decisions/spec-decision-023.yaml",
+      "sha256": "11c8c19ca6f75433497fc8393902dda220e73e72c15925d06958306bb16fe7dd"
+    },
+    {
+      "work_unit_id": "CR-f3b8a1d0-002#1",
+      "path": "specs/events/20261103_085000_feedback_housekeeping_followups/spec-event.yaml",
+      "sha256": "85768baad281d5e82539f7522d80140fa48e9b68ab1e62f955166f7e27795ae0"
+    },
+    {
+      "work_unit_id": "CR-f3b8a1d0-003#1",
+      "path": "specs/events/20261103_085000_feedback_housekeeping_followups/_cross-cutting/api/cli-command-contract.yaml",
+      "sha256": "2838fb4e4c2dfedbcc94de70a4ec4b648e9ef8d0bf35ba6d201de9eddb81e0f4"
+    },
+    {
+      "work_unit_id": "CR-f3b8a1d0-003#1",
+      "path": "specs/events/20261103_085000_feedback_housekeeping_followups/_cross-cutting/ux-ui/ui-design.md",
+      "sha256": "239212a63f79f5d4cae0e680c2c076f30b83bed62ff2acaaf50808e1a42f9af4"
+    },
+    {
+      "work_unit_id": "CR-f3b8a1d0-003#1",
+      "path": "specs/events/20261103_085000_feedback_housekeeping_followups/decisions/spec-decision-025.yaml",
+      "sha256": "ab17b3dc7d9e51eec4a77292c6a694c3f9f9bda86df8ad46315bad70e2fde214"
+    },
+    {
+      "work_unit_id": "CR-f3b8a1d0-003#1",
+      "path": "specs/events/20261103_085000_feedback_housekeeping_followups/spec-event.yaml",
+      "sha256": "85768baad281d5e82539f7522d80140fa48e9b68ab1e62f955166f7e27795ae0"
+    }
+  ],
+  "domain_event_refs": [
+    {
+      "path": "specs/events/20261103_085000_feedback_housekeeping_followups/spec-event.yaml",
+      "sha256": "85768baad281d5e82539f7522d80140fa48e9b68ab1e62f955166f7e27795ae0"
+    }
+  ],
+  "feedback_request": {
+    "feedback_request_id": "20261103_housekeeping_followups",
+    "input_sha256": "7a81f28ce6fef4c2f70e2839d657a3f8e8480671bd846b460edab3d22b3ba775",
+    "request_ids": [
+      "CR-f3b8a1d0-001",
+      "CR-f3b8a1d0-002",
+      "CR-f3b8a1d0-003"
+    ],
+    "work_unit_ids": [
+      "CR-f3b8a1d0-001#1",
+      "CR-f3b8a1d0-002#1",
+      "CR-f3b8a1d0-003#1"
+    ]
+  },
+  "post_execution_basis": {
+    "repository_head": "38cf3f4a5dff8f47c581ab984ab8c37805c44e20",
+    "latest_domain_event_ids": {
+      "requirements": {
+        "rdra/events": "20261103_081000_feedback_housekeeping_followups",
+        "usdm/events": "20261103_081000_feedback_housekeeping_followups"
+      },
+      "quality_attributes": {
+        "nfr/events": "20261103_082000_feedback_housekeeping_followups"
+      },
+      "architecture": {
+        "arch/events": "20261103_083000_feedback_housekeeping_followups"
+      },
+      "infrastructure": {
+        "infra/events": "20261103_084000_feedback_housekeeping_followups"
+      },
+      "design_system": {
+        "design/events": null
+      },
+      "spec": {
+        "specs/events": "20261103_085000_feedback_housekeeping_followups"
+      },
+      "spec_stories": {
+        "design/events": null
+      }
+    },
+    "domain_event_root_snapshots": {
+      "rdra/events": {
+        "head_event_id": "20261103_081000_feedback_housekeeping_followups",
+        "head_event_sha256": "5c292cfd7f3ae05068a1fba3cc37098b3fbc31880a3ebeda6f3881ee99f46442",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency",
+          "20260908_011000_feedback_slot_status_wording",
+          "20260921_084000_feedback_impl_feedback_eff24f55",
+          "20261010_200000_feedback_impl_feedback_dcd8234d",
+          "20261101_101000_feedback_impl_feedback_dcd8234d",
+          "20261101_121000_feedback_mail_removal_housekeeping",
+          "20261103_081000_feedback_housekeeping_followups"
+        ],
+        "event_set_sha256": "6ece683c0525b650b36a8856c94719b4f13f095108115aa0a2f624d9f34237ca",
+        "latest_tree_sha256": "e305724ea6a27f45984cd73b0637ac1ff574a892344d4f6da9cc6ec208b52dc3"
+      },
+      "usdm/events": {
+        "head_event_id": "20261103_081000_feedback_housekeeping_followups",
+        "head_event_sha256": "9f58f03307f038bb3a33c4047ce606c7062600211a6ab53831d965be6f5bd6c7",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency",
+          "20260908_011000_feedback_slot_status_wording",
+          "20260921_084000_feedback_impl_feedback_eff24f55",
+          "20261010_200000_feedback_impl_feedback_dcd8234d",
+          "20261101_101000_feedback_impl_feedback_dcd8234d",
+          "20261101_121000_feedback_mail_removal_housekeeping",
+          "20261103_081000_feedback_housekeeping_followups"
+        ],
+        "event_set_sha256": "6ece683c0525b650b36a8856c94719b4f13f095108115aa0a2f624d9f34237ca",
+        "latest_tree_sha256": "13d7fd0352ecd988188922cc7f63fa4d3adb9a00cdca728eb45c3dacc7c187cc"
+      },
+      "nfr/events": {
+        "head_event_id": "20261103_082000_feedback_housekeeping_followups",
+        "head_event_sha256": "9f5993bfe6162ead2dbb7c01c8469a99903f9766d15afebadb88664d66e11cf4",
+        "event_ids": [
+          "20260830_183726_initial_nfr",
+          "20260905_085000_feedback_todo_resolution",
+          "20260907_013000_feedback_todo_followup",
+          "20260907_120000_feedback_abort_consistency",
+          "20260908_013000_feedback_slot_status_wording",
+          "20260921_090000_feedback_impl_feedback_eff24f55",
+          "20261010_201000_feedback_impl_feedback_dcd8234d",
+          "20261101_102000_feedback_impl_feedback_dcd8234d",
+          "20261101_122000_feedback_mail_removal_housekeeping",
+          "20261103_082000_feedback_housekeeping_followups"
+        ],
+        "event_set_sha256": "e02a3cfa4e83a3ee739f5c8b3d6e567f041103be07cab54ec2fbdbd2322cae8e",
+        "latest_tree_sha256": "b00bb32e2b0e4b60700f3011f501b23e25563c3254ab590e100082636f3de763"
+      },
+      "arch/events": {
+        "head_event_id": "20261103_083000_feedback_housekeeping_followups",
+        "head_event_sha256": "f9dd9f8657f03e99c64c5a76108ac6a12eb5f917461adf415a1aec31a6b9837b",
+        "event_ids": [
+          "20260830_184457_initial_arch",
+          "20260830_202427_arch_infra_feedback_20260830_190412_infra_product_design",
+          "20260905_091000_feedback_todo_resolution",
+          "20260907_015000_feedback_todo_followup",
+          "20260907_122000_feedback_abort_consistency",
+          "20260908_015000_feedback_slot_status_wording",
+          "20260921_092000_feedback_impl_feedback_eff24f55",
+          "20261010_202000_feedback_impl_feedback_dcd8234d",
+          "20261101_103000_feedback_impl_feedback_dcd8234d",
+          "20261101_123000_feedback_mail_removal_housekeeping",
+          "20261103_083000_feedback_housekeeping_followups"
+        ],
+        "event_set_sha256": "ba8e9c6c605cd5d157bbce221ea07c1d7defd5e40f1d4f4e58748b18ebfa09c3",
+        "latest_tree_sha256": "5b8f5259388c17804383a1c2dd4512cce6b1820ef2761d4c6c7f5f741a02c072"
+      },
+      "infra/events": {
+        "head_event_id": "20261103_084000_feedback_housekeeping_followups",
+        "head_event_sha256": "7f2e5932ff83cc01f143918383b0ed5787b23497cb51bd435d36e1d2d154d262",
+        "event_ids": [
+          "20260830_190412_infra_product_design",
+          "20260905_093000_feedback_todo_resolution",
+          "20260907_021000_feedback_todo_followup",
+          "20260907_124000_feedback_abort_consistency",
+          "20260908_021000_feedback_slot_status_wording",
+          "20260921_094000_feedback_impl_feedback_eff24f55",
+          "20261010_203000_feedback_impl_feedback_dcd8234d",
+          "20261101_104000_feedback_impl_feedback_dcd8234d",
+          "20261101_124000_feedback_mail_removal_housekeeping",
+          "20261103_084000_feedback_housekeeping_followups"
+        ],
+        "event_set_sha256": "92c16746a184d064f0e98f657ad96888f852af9291cc08160c7a7e09522d6d3f",
+        "latest_tree_sha256": "e247f47fe00c1983bcd0b74e9807496a1b55e0fda78dfb934d5153e411389b91"
+      },
+      "design/events": {
+        "head_event_id": null,
+        "head_event_sha256": null,
+        "event_ids": [],
+        "event_set_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "latest_tree_sha256": null
+      },
+      "specs/events": {
+        "head_event_id": "20261103_085000_feedback_housekeeping_followups",
+        "head_event_sha256": "5f510f1df00bd29dfa2289277b0c115ad39deb091be82b20b06526e8f6c89013",
+        "event_ids": [
+          "20260830_202851_spec_generation",
+          "20260905_100000_feedback_todo_resolution",
+          "20260907_024000_feedback_todo_followup",
+          "20260907_131000_feedback_abort_consistency",
+          "20260908_024000_feedback_slot_status_wording",
+          "20260908_062000_feedback_spec_machine_readable",
+          "20260917_050000_feedback_impl_feedback_fd678b04",
+          "20260917_100000_feedback_impl_feedback_fd678b04_cycle2",
+          "20260921_100000_feedback_impl_feedback_eff24f55",
+          "20260923_112000_feedback_impl_feedback_eff24f55_cycle2",
+          "20261010_204000_feedback_impl_feedback_dcd8234d",
+          "20261027_055000_feedback_impl_feedback_dcd8234d",
+          "20261101_105000_feedback_impl_feedback_dcd8234d",
+          "20261101_125000_feedback_mail_removal_housekeeping",
+          "20261103_085000_feedback_housekeeping_followups"
+        ],
+        "event_set_sha256": "b168089c178b4ca87b4a76e16f375a1a9806d7bb4d4b90185b183a9b495bf438",
+        "latest_tree_sha256": "d006b3d0131551d6afc77d805a8b55b19ab6431b271f63f2ed052944a4549e43"
+      }
+    }
+  }
+}

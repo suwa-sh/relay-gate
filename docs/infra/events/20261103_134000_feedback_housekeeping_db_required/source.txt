@@ -1,0 +1,6 @@
+feedback request 20261103_housekeeping_db_required(管理 DB を使う機能が 1 つでもあれば、ハウスキープの管理 DB 接続参照名を必須にする)に基づくインフラ設計の差分追従。前段イベント usdm:20261103_131000_feedback_housekeeping_db_required, rdra:20261103_131000_feedback_housekeeping_db_required, nfr:20261103_132000_feedback_housekeeping_db_required, arch:20261103_133000_feedback_housekeeping_db_required の変更を MCL 入力・MCL 出力・適合性レポート・ターゲットアーキテクチャ図・config ロールのコメントへ反映した(差分更新。MCL 全面再実行なし)。
+- input_sha256: 94cde505fc6dda4705b1bb75134beaf9a85a7af65d7c90f1e786112e8b1031e7
+- request_ids: CR-9d2e6c41-001
+- direct_work_unit_ids: (なし)
+- causal_work_unit_ids: CR-9d2e6c41-001#1
+- packet: docs/pipeline/feedback-runs/20261103_housekeeping_db_required/stage-packets/infrastructure.md

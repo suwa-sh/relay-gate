@@ -1,0 +1,64 @@
+meta:
+  event_id: "20261103_134000_feedback_housekeeping_db_required"
+  trigger_event: "usdm:20261103_131000_feedback_housekeeping_db_required, rdra:20261103_131000_feedback_housekeeping_db_required, nfr:20261103_132000_feedback_housekeeping_db_required, arch:20261103_133000_feedback_housekeeping_db_required"
+  created_at: "2026-11-03T13:40:00Z"
+  mode: "differential"
+  mcl_rerun: "skipped_targeted_update"
+  mcl_rerun_reason: "translation(workload_type / availability_tier / latency / data_classification / traffic / consistency / cost_posture / target_clouds)は無変更。上流の変更は、ハウスキープ設定の管理 DB 接続参照名を、RAPID_CROSSCHECK_MODE が off 以外または確報クロスチェックを使う設置では必須にし(無い・空なら設定エラーで何も削除しない)、省略できるのを管理 DB を一切使わない設置だけに絞ったもので、ティア数・配置セグメント・ストレージ種別・復旧目標は変わらない。前回のイベントで書いた「off では接続参照名を省略でき、そのとき管理 DB の行が増え続ける」趣旨の記述を、MCL 出力の該当箇所で差分更新した(MCL product-design の全量再実行は行わない)"
+feedback_request:
+  feedback_request_id: "20261103_housekeeping_db_required"
+  input_sha256: "94cde505fc6dda4705b1bb75134beaf9a85a7af65d7c90f1e786112e8b1031e7"
+  request_ids: ["CR-9d2e6c41-001"]
+  work_unit_ids: ["CR-9d2e6c41-001#1"]
+changes:
+  event_id: "20261103_134000_feedback_housekeeping_db_required"
+  created_at: "2026-11-03T13:40:00Z"
+  source: "feedback request 20261103_housekeeping_db_required(管理 DB を使う機能が 1 つでもあれば、ハウスキープの管理 DB 接続参照名を必須にする。USDM / RDRA / NFR / arch 差分)に基づくインフラ設計の差分更新"
+  arch_event_ref: "20261103_133000_feedback_housekeeping_db_required"
+  nfr_event_ref: "20261103_132000_feedback_housekeeping_db_required"
+  translation:
+    unchanged: true
+  mcl_execution:
+    status: "completed"
+    completed_at: "2026-11-03T13:40:00Z"
+    outputs_updated:
+      - path: "docs/mcl/product/input/product-input.yaml"
+        change: "management_db の説明を、管理 DB を使う設置で接続参照名が無い・空ならハウスキープは設定エラーで何も削除しない(増え続ける状態にならない)、接続しないのは管理 DB を一切使わない設置だけで、その設置では新たに行は増えないが off 以外の期間の実行の行が残る、に改めた。config_store のハウスキープ設定の接続参照名を、off 以外または確報クロスチェックを使う設置では必須、省略・空は管理 DB を一切使わない設置だけ、に改めた。product-input.yaml(イベント直下のコピー)も同一内容"
+        work_units: ["CR-9d2e6c41-001#1"]
+      - path: "docs/mcl/product/output/product-workload-model.yaml"
+        change: "management_db の容量の頭打ちの constraint から「接続しない設定の間は行と確報比較依頼が増え続ける」を外し、設定エラーで何も削除しないこと、管理 DB を一切使わない設置では新たに増えないが off 以外の期間の実行の行が残ることに改めた。artifact_store の例外の条件を「管理 DB を一切使わない設置」に、config_store のハウスキープ設定の接続参照名を必須の設置と省略できる設置に分けて書き直した"
+        work_units: ["CR-9d2e6c41-001#1"]
+      - path: "docs/mcl/product/output/product-mapping-onprem.yaml"
+        change: "management_db の notes を、off 以外または確報クロスチェックを使う設置で接続参照名が無い・空なら housekeep は設定エラーで何も削除せず非 0 で終わる、接続しないのは管理 DB を一切使わない設置だけ、に改めた。artifact_store の例外の条件と config_store のハウスキープ設定の接続参照名の説明を同じ条件に揃えた"
+        work_units: ["CR-9d2e6c41-001#1"]
+      - path: "docs/mcl/product/output/product-impl-onprem.yaml"
+        change: "housekeep_delete に、設定の検査を置き場の残りの削除を含むすべての削除より先に行い、必須の設置で接続参照名が無い・空なら置き場の中身も含めて何も削除せず非 0 で終わること、off でも確報クロスチェックを使う設置では確報比較依頼を保持日数で削除することを追加し、接続しない条件を管理 DB を一切使わない設置に絞った。connection_resolution、artifact_store capacity、config_store contents を同じ条件に揃えた。ハウスキープ設定の検証規則を『存在すること。保持日数のキーは省略可(既定 90 日)、off 以外または確報クロスチェックを使う設置では接続参照名が空でない値で設定されていること(省略・空を許すのは管理 DB を一切使わない設置だけ。判定は housekeep.sh が起動時に行う)』に改めた"
+        work_units: ["CR-9d2e6c41-001#1"]
+      - path: "docs/mcl/product/output/product-observability.yaml"
+        change: "alert-housekeep-failure の condition に、管理 DB を使う設置で接続参照名が無い・空の設定エラー(非 0 終了)も失敗通知の対象であることを追記し、warn が対象外になる条件を管理 DB を一切使わない設置に改めた"
+        work_units: ["CR-9d2e6c41-001#1"]
+      - path: "docs/mcl/product/output/product-cost-hints.yaml"
+        change: "storage_tiering の「接続しない設定の間は管理 DB の行と確報比較依頼が削除されない」を、管理 DB を使う設置では接続参照名が必須で削除されないまま増え続ける状態にならないこと、管理 DB を一切使わない設置では off 以外の期間に作られた実行の行と成果物が残る分を別に見込むことに改めた(NFR B.3.3.1 と同じ趣旨)"
+        work_units: ["CR-9d2e6c41-001#1"]
+      - path: "docs/cloud-context/conformance/product/product-conformance-onprem.yaml"
+        change: "設定の要件の notes のハウスキープ設定の接続参照名を、必須の設置(無い・空なら設定エラーで何も削除しない)と省略できる設置(管理 DB を一切使わない設置)に分けて書き直した(判定は不変)"
+        work_units: ["CR-9d2e6c41-001#1"]
+      - path: "docs/cloud-context/generated-md/product/relay-gate-target-architecture.md"
+        change: "housekeep → 管理 DB の辺のラベルを「管理 DB を一切使わない設置だけ接続しない」に改めた"
+        work_units: ["CR-9d2e6c41-001#1"]
+      - path: "infra/product/onprem/ansible/roles/relay-gate-config/tasks/main.yml"
+        change: "ハウスキープ設定の検査のコメントの「off では接続参照名も省略・空にできる」を「管理 DB を一切使わない設置では」に改め、必須の設置での接続参照名の検査は housekeep.sh が起動時に行い、配置時にモードや確報設定を判定しないことを追記した。検査タスク(存在検査)は変えない"
+        work_units: ["CR-9d2e6c41-001#1"]
+    outputs_verified_unchanged:
+      - path: "infra/product/onprem/ansible/roles/relay-gate-config/tasks/main.yml(検査タスク)"
+        reason: "ハウスキープ設定の存在検査(空でもよい)は、管理 DB を一切使わない設置で空のファイルが正当になり得るため維持する。モードや確報クロスチェック worker 設定の有無による必須判定を配置時の静的検査に足すと、housekeep.sh の起動時検査と判定の二重管理になるため足さない(前回の判断を維持)"
+        work_units: ["CR-9d2e6c41-001#1"]
+      - path: "infra/product/onprem/ansible/roles/relay-gate-postgresql/tasks/main.yml / inventory.ini.example"
+        reason: "housekeep_del ロールの作成と、キー名・ファイル名を変数で受け取る構成は、接続参照名の必須化の影響を受けない"
+        work_units: ["CR-9d2e6c41-001#1"]
+  arch_feedback:
+    status: "no_new_feedback"
+    reason: "本イベントの差分は、上流(arch-decision-026、SP-027 / SP-028、BC-005 / BC-006、CM-013、E-028)で確定した内容をインフラ設計へ追従させたものだけで、arch に戻す新しい知見は無い。本 stage は feedback controller の指示により Phase4 で arch を更新しない"
+  writeback_check:
+    result: "not_required"
+    reason: "arch 差分は tier-ops 内のハウスキープの規則(接続参照名の必須化と設定エラー時の振る舞い)と E-028 の属性の説明の書き直しで、ティア数・認証認可方式・DR 方針・storage_type・外部連携を変えていない。translation の各フィールドは不変のため product-input の再生成(translation のやり直し)と Step2 の全量再実行は不要"

@@ -29,7 +29,7 @@
   | 0 | 比較 OK(日次整合性 OK) | 比較ツールが 0 で終了し依頼が SUCCEEDED |
   | 3 | 比較 NG(警告終了) | 比較ツールが 3 で終了し依頼が FAILED。差分の原因調査へ |
   | 6 | 実行エラー(エラー終了) | 比較ツールが 6 で終了(依頼 FAILED)、または relay-gate 自身の実行エラー(DB 接続失敗・polling 上限超過・ABORTED で exit_code NULL) |
-  | 2 | 入力・設定検証エラー | ジョブ定義のオプション誤り、final-crosscheck.env 不在・必須キー欠落(中継に至る前) |
+  | 2 | 入力・設定検証エラー | ジョブ定義のオプション誤り、runner の置き場の final-crosscheck.env 不在・FINAL_DB_CONN_REF の欠落・空・FINAL_POLL_INTERVAL_SEC / FINAL_POLL_LIMIT_SEC の値の不正(中継に至る前。FINAL_COMPARE_COMMAND は runner では検査しない) |
   | その他の非 0 | 比較ツール実装の契約に従う | relay-gate は値を変換しない |
 
 - 応答に**含まれないもの**: 依頼の状態名(SUCCEEDED / FAILED / ABORTED)、final_crosscheck_id、差分件数、レポート URI、速報比較の結果、background slot の結果

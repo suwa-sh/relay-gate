@@ -64,12 +64,12 @@ slot runner の presentation(runner IF の引数解析)、usecase(解決フロ�
 | 上限不正 | `error: hang_detect_limit_minutes is not a non-negative integer line=3 job_id=JOB003 value=abc` |
 | host / user の片方だけ空 | `error: user is empty line=2 job_id=JOB004 value=`(host のみ空は `error: host is empty ...`) |
 | script / work_dir が空 | `error: script is empty line=2 job_id=JOB004 value=`(形式は検査しない。`G:\scripts\xxx.bat` / `./beam-batches` も受理して実行先へそのまま渡す) |
-| 形式から外れた入力(守備範囲) | `error: nul byte is not allowed line=2 path: ...` / `error: encoding is not utf-8 line=N path: ...` / `error: byte order mark is not allowed line=1 path: ...` / `error: carriage return is not allowed line=N path: ...`(契約 `config_input_rules` と同文) |
+| 形式から外れた入力(守備範囲) | `error: nul byte is not allowed line=2 path: ...` / `error: encoding is not utf-8 line=N path: ...` / `error: byte order mark is not allowed line=1 path: ...` / `error: carriage return is not allowed line=N path: ...` + `hint: use LF line endings`(契約 `config_input_rules` と同文。ファイル内の全件を行番号の昇順に、同じ行は NUL → UTF-8 → BOM → CR の順に 1 種類 1 行。hint は最後の CR の error 行の次に 1 回。契約 `config_input_rules.byte_checks`) |
 | 必須オプション欠落 | `error: option required option=--job-id`(横断規約の定型文。run_id / role が不明なら成果物は書けないため実行ログにのみ残す) |
 
 ## UC ロジック
 
-- **バリデーション**: (1) runner IF の必須オプション → (2) ジョブマップファイルの存在と読み取り権限 → (3) ヘッダー(必須列 5 の存在、host / user は両方あるか両方無い、未知列は warn)→ (4) CSV セルのクォート整合(1 文字ずつの状態機械)→ (5) job_id 行の存在 → (6) host / user の空は両方同時のみ → (7) `fixed_params` が JSON 配列 → (8) `hang_detect_limit_minutes` が `^[0-9]+$` → (9) script / work_dir が非空(パスの形式は検査しない。Windows 形式・相対パスも受理。利用者決定 2026-09-22: ジョブマップは Windows / Linux 両対応のフルパス / 相対パス指定を受け取れる必要がある)。(2) の直後にバイト点検(NUL / UTF-8 / BOM / CR。契約 `config_input_rules`)を行い、違反は解析せず exitcode.txt=2。JSON 配列の判定・要素抽出は UC「slot ごとのジョブマップを定義する」tier-facade の「JSON 配列の判定」と同じ実装を共有し、bash 単独で行う(契約 `conventions.runtime_prerequisites.external_commands`。jq 非依存。ネストした配列・オブジェクトは非対応で検証エラー)
+- **バリデーション**: (1) runner IF の必須オプション → (2) ジョブマップファイルの存在と読み取り権限 → (3) ヘッダー(必須列 5 の存在、host / user は両方あるか両方無い、未知列は warn)→ (4) CSV セルのクォート整合(1 文字ずつの状態機械)→ (5) job_id 行の存在 → (6) host / user の空は両方同時のみ → (7) `fixed_params` が JSON 配列 → (8) `hang_detect_limit_minutes` が `^[0-9]+$` → (9) script / work_dir が非空(パスの形式は検査しない。Windows 形式・相対パスも受理。利用者決定 2026-09-22: ジョブマップは Windows / Linux 両対応のフルパス / 相対パス指定を受け取れる必要がある)。(2) の直後にバイト点検(NUL / UTF-8 / BOM / CR。契約 `config_input_rules`)を行い、違反は validate-config.sh と同じ順・同じ件数で全件出して(契約 `config_input_rules.byte_checks`)、解析せず exitcode.txt=2。JSON 配列の判定・要素抽出は UC「slot ごとのジョブマップを定義する」tier-facade の「JSON 配列の判定」と同じ実装を共有し、bash 単独で行う(契約 `conventions.runtime_prerequisites.external_commands`。jq 非依存。ネストした配列・オブジェクトは非対応で検証エラー)
 - **確認プロンプト**: なし
 - **冪等性**: 読み取りのみ。同じ入力なら同じ ExecutionTarget を返す。未定義時の 3 ファイルは既存があれば上書きしない(既にこの run の成果物がある = 二重起動。実行ログに WARN)
 - **エラーハンドリング**: 解決失敗は usecase が 1 回だけ実行ログに ERROR を出し、gateway で 3 ファイルを揃えてから終了コード 2 で終了する。3 ファイルの書き込み自体に失敗したら終了コード 6(exitcode.txt が無い状態。ハング検知が上限超過でハング疑いとして拾う)

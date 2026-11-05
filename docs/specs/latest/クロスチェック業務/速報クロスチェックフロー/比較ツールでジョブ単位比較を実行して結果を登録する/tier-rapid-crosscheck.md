@@ -54,7 +54,7 @@ claim UC(`../速報比較依頼を claim する/tier-rapid-crosscheck.md`)と同
 
 | エラー種別 | リトライ | DLQ | 説明 |
 |-----------|---------|-----|------|
-| 比較ツール exit_code 3 / 6 / その他非 0 | No | No | 結果として FAILED を保存。hang-detector が `rapid-crosscheck-error` の error メールを送る。再実行は background-rerun --role rapid-crosscheck |
+| 比較ツール exit_code 3 / 6 / その他非 0 | No | No | 結果として FAILED を保存。hang-detector が標準エラーに `kind=rapid-crosscheck-error` の alert 行(level=error)を出し、終了コード 6 で終わる。再実行は background-rerun --role rapid-crosscheck |
 | 比較ツール起動失敗(exec 不可) | No | No | 依頼 FAILED(exit_code=6, error_summary=launch failed)。別レコード・成果物ファイルは作らない。worker は 6 で終了 |
 | 置換値の形式検査 NG(job_id / run_id / parameters が形式に合わない) | No | No | 比較ツールを起動しない。依頼 FAILED(exit_code=6, error_summary=`invalid request value: <field>`)。stderr `error: compare request value is invalid run_id=... field=...`。worker は 6 で終了 |
 | RUNNING 遷移の条件付き UPDATE 0 行(abort-rapid-crosscheck で ABORTED 済み / lease 失効で回収済み) | No | No | 比較ツールを起動しない。実行ログ WARN(reason=request_aborted / request not owned)、worker は 0 |

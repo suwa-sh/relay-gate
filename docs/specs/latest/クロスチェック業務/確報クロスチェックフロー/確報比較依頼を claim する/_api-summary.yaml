@@ -28,12 +28,12 @@ x_cli_commands:
         description: "usage を stdout に出して終了コード 0"
     stdin: "なし"
     stdout: "出力しない(常駐ログは実行ログ final-crosscheck-worker.sh.log へ)"
-    stderr: "error: / hint:。--verbose 時は info: claimed ... / info: no request to claim ..."
+    stderr: "error: / hint:。設定の検査: error: config file not found path: ... / error: config file is not readable path: ... / error: option required option=FINAL_DB_CONN_REF|FINAL_COMPARE_COMMAND path: ... / error: invalid value key=FINAL_LEASE_MINUTES|FINAL_WORKER_POLL_INTERVAL_SEC value=... path: ... + hint: use a positive integer(いずれも 2。検査の順は契約 config_files.final-crosscheck.env note)。--verbose 時は info: claimed ... / info: no request to claim ..."
     exit_codes:
       - code: 0
         meaning: "1 サイクル完了(claim できた / 依頼が無かった、のどちらも 0)。常駐は SIGTERM で 0"
       - code: 2
-        meaning: "未知のオプション、--worker-id の文字種不正、final-crosscheck.env 不在または必須キー欠落"
+        meaning: "未知のオプション、--worker-id の文字種不正、final-crosscheck.env 不在・読み取り不可・入力の守備範囲の違反、FINAL_DB_CONN_REF / FINAL_COMPARE_COMMAND の欠落・空、FINAL_LEASE_MINUTES / FINAL_WORKER_POLL_INTERVAL_SEC が正の整数でない(FINAL_POLL_INTERVAL_SEC / FINAL_POLL_LIMIT_SEC は検査しない)"
       - code: 6
         meaning: "管理 DB 接続・SQL 失敗、比較ツール起動失敗、内部エラー"
 async_events:

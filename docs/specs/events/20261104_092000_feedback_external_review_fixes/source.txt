@@ -1,0 +1,37 @@
+Spec 差分更新(design 無しモード): 2026-11-04 の外部レビューの指摘(dist-pipeline feedback mode Step6)。上流 latest(usdm / rdra / nfr / arch)は変更なし。infra latest は同じ run の infra イベント(構築手順のハング検知設定の検査をファイルの存在確認だけにした)で更新済み。
+
+CR-c5e19a72-001(spec 直接所有): ハング検知の通知済み判定の穴を埋める。
+
+- RAPID_CROSSCHECK_MODE が off 以外で管理 DB に接続できない回は alert 行を出さない。走査前の設定の検査を通ったあと、成果物を走査する前に管理 DB に接続して monitor_records と rapid_crosscheck_requests を SELECT し、接続失敗は `error: management db connection failed conn_ref=...`、SELECT 失敗は `error: management db query failed ...` の 1 行だけを出して終了コード 6 で終える(warn / info / alert 行を出さず、成果物を走査しない)。異常は通知済みにならないので、接続できた最初の回に通常の規則で一度だけ知らせる。速報比較依頼はその回は判定しない(CLI 契約 shared_rules.hang_alert.db_unavailable)。
+- RAPID_CROSSCHECK_MODE=off の通知済みの印の内容が規定の値(HANG_SUSPECTED_NOTIFIED / EXEC_ERROR_NOTIFIED / COMPLETED のどれか + LF 1 つと完全一致)でない、または読めない窓内の対象は、`error: notified mark invalid run_id=<run_id> role=<role> path: <印の確定名の絶対パス>` を 1 行出し、印が無いもの(MONITORING)として判定する。alert 行を出した対象は S へ、判定が COMPLETED の対象は COMPLETED へ、規定の手順で書き直す。MONITORING / NOT_TARGET は書き換えない。終了コード 6。窓外の run の不正な印は印が無いものとして扱い、走査せず error 行も出さない(shared_rules.hang_alert.notified_mark.invalid / scan_window)。
+- 対象ごとの行の順: 走査の warn 行 → --verbose の info: judged 行 → 対象ごとの行(run_id 昇順(バイト順)→ role の blue, green, rapid-crosscheck 順。1 対象の中は error: notified mark invalid → alert(または info: alert skipped)→ error: monitor record save failed / notified mark save failed)。
+- 横断規約(conventions.output_format.stderr、出力規約 ui-design.md)に、error 行 1 回の例外として hang-detector の対象ごとの保存失敗・印の不正の error 行(1 対象 1 行で複数可)と housekeep の単位ごとの失敗を、既存の入力の守備範囲の例外と並べて書いた。
+- 揃えた UC: background 実行の経過時間と終了状態を判定する / ハング疑い・実行エラー・比較異常を通知する / 監視記録を保存する / ハング検知ジョブの異常終了を確認する(spec.md / tier-ops.md / _api-summary.yaml / BDD)。
+
+- 反証レビューで追加で決めた規則: off で印の置き場 hang-detector-notified/ があるのに読めない回は `error: notified mark dir is not readable path: ...` の 1 行だけで走査せず終了コード 6(走査前の設定の検査のあと、facade/ を列挙する前に検査)。判定しない対象(warn を出した run / role)の印は読まない。印の確定名がディレクトリなど通常のファイルでないときは中へ移さず(mv -T 相当)`error: notified mark save failed ...`(6)。ハウスキープの単位内の手順 3 は失敗しても残りのエントリの削除を続け、失敗したエントリごとに `error: artifact delete failed` を 1 行出し、1 つでも失敗したら管理 DB の行を消さない。
+
+CR-c5e19a72-002(infra 直接所有。spec は保守的 closure): 構築手順のハング検知設定の検査がファイルの存在確認だけになり、中身の検査を CLI 契約に任せたことへの追従。
+
+- CLI 契約に hang-detector.env の値の検査が無かった穴を埋めた: RAPID_HANG_DETECT_LIMIT_MINUTES / HANG_SCAN_WINDOW_HOURS はキーがあれば正の整数 `^[1-9][0-9]{0,8}$`、違反は `error: invalid value key=<KEY> value=... path: ...` + `hint: use a positive integer`(2)。未知キーは `warn: unknown key key=<KEY> path: ...`(継続)。走査前の検査の順(引数 → hang-detector.env → feature-flag.env → hang-detector.env のキー → RELAY_GATE_ARTIFACT_ROOT)と最初の設定エラーで止めること。config_files の hang-detector.env に「中身の検査は hang-detector.sh の起動時(validate-config.sh に検証種別は無い)、配置時の検査はファイルの存在確認だけ」を書いた。
+
+CR-c5e19a72-003(spec 直接所有): ハウスキープの判定手順と置き場の処理順を一意にする。
+
+- shared_rules.housekeep_rules.member_source の判定の順 (1)〜(3) は成果物だけで判定する実行(parallel_runs 行が無い実行)にだけ適用すると明記した。parallel_runs 行がある実行は管理 DB の行だけで判定し、execution-spec.json の有無と形式・slot のディレクトリと終了ファイルを問わず、execution-spec missing / invalid、slot artifact missing の warn も出さない。成果物が無く行だけが残った終了済みの実行は次回に削除される(SPEC-014-05)。
+- shared_rules.housekeep_rules.processing_sequence を加えた: 昇順はすべてバイト順。削除待ちの置き場の直下のエントリは名前の昇順に削除し、`error: pending entry delete failed` もその順。単位内の rename(run_id の昇順 → 印の元の名前の昇順)、置き場からの削除(移した順)、孤立した印(名前の昇順)も決めた。
+- 揃えた UC: 保持日数を過ぎた終了済みの実行と確報比較依頼を判定する / 成果物と管理 DB の履歴を削除する(tier BDD 3 件を追加)。
+
+CR-c5e19a72-004(spec 直接所有): 文字と改行の違反が複数あるときの報告を一意にする。
+
+- CLI 契約 config_input_rules.byte_checks を加えた(CSV・env 共通): 第 1 段(NUL / UTF-8 / BOM / CR)の違反はファイル内の全件を物理行番号の昇順に出し、同じ行は表の順(NUL → UTF-8 → BOM → CR)に 1 種類 1 行。CR の hint は最後の CR の error 行の次に 1 回だけ。違反があれば第 1 段の error 行と hint だけを出して止め、以降の検査をしない。validate-config.sh の violations は第 1 段で出した error 行の数(hint を数えない)。実行時の読み手も同じ順・同じ件数。
+- 揃えた UC: slot ごとのジョブマップを定義する / feature flag を設定する / クロスチェックのジョブマップと比較定義を定義する / ジョブマップで JOB_ID から実行先を解決する / 保持日数を過ぎた終了済みの実行と確報比較依頼を判定する(tier-facade)/ 比較ツールで日次全量比較を実行して結果を保存する(tier BDD 3 件を追加)。
+- 実装は変えない。validate_job_map.sh(と同じ関数を使う validate_rapid_crosscheck.sh)が同じ行を BOM → NUL → UTF-8 → CR の順で出す差分、feature_flag_config.sh が CR を落として第 1 段の検査をしない差分を、実装を契約に合わせる対象として記録した。判断は decisions/spec-decision-029。
+
+feedback request:
+- feedback_request_id: 20261104_external_review_fixes
+- input_sha256: 6b4cf1b4db9a1e0d2ad050d265c7c2b77928832af091ac20b2657e61aea0dc13
+- request_ids: CR-c5e19a72-001, CR-c5e19a72-002, CR-c5e19a72-003, CR-c5e19a72-004
+- direct_work_unit_ids: CR-c5e19a72-001#1, CR-c5e19a72-003#1, CR-c5e19a72-004#1
+- causal_work_unit_ids: CR-c5e19a72-001#1, CR-c5e19a72-002#1, CR-c5e19a72-003#1, CR-c5e19a72-004#1
+- stage packet: docs/pipeline/feedback-runs/20261104_external_review_fixes/stage-packets/spec.md
+
+trigger_event: infra:20261104_091000_feedback_external_review_fixes(他の上流 latest は変更なし)

@@ -1,0 +1,14 @@
+round: 2
+findings:
+  - id: R-008
+    viewpoint: 4
+    severity: minor
+    target: "実行復旧業務/実行中止フロー/現在状態を確認して停止確認に応答する/_api-summary.yaml"
+    claim: "R-001 の修正で、中止 UC の tier-ops.md と spec.md は『final-crosscheck.env が無い、またはキーが無い・値が空なら管理 DB なし(housekeep.sh と同じ規則)』になったが、同じ UC の _api-summary.yaml の abort-final-crosscheck.sh は『FINAL_DB_CONN_REF なし / 有無だけで判定』のままで、値が空の場合を含むことが書かれていない。2026-11-03 の変更で ハウスキープの判定と揃えることが要件になったため、UC の要約だけを読む実装者には『値が空』の扱いが伝わらない(R-007 と同じ種類の要約の取りこぼし)"
+    evidence: "_api-summary.yaml 112 行目の stderr は『final-crosscheck.env / FINAL_DB_CONN_REF の有無だけで判定』、119 行目の終了コード 3 の meaning は『final-crosscheck.env / FINAL_DB_CONN_REF なし』。一方、同 UC の tier-ops.md 58・72 行目と spec.md 95・147 行目、および契約 abort-final-crosscheck.sh の code 3 の condition は『欠落 = キーが無い、または値が空』と書く。BUC の buc-spec.md 135 行目も『FINAL_DB_CONN_REF の有無だけで』のまま"
+    suggested_fix: "_api-summary.yaml の abort-final-crosscheck.sh の stderr と終了コード 3 の meaning を『final-crosscheck.env が無い、または FINAL_DB_CONN_REF が欠落(キーが無い、または値が空。契約 shared_rules.housekeep_rules.db_requirement と同じ規則)』に揃える。buc-spec.md 135 行目の『有無』も同じ言い方にする"
+resolved:
+  - id: R-008
+    resolution: fixed
+    by: orchestrator
+    note: "中止 UC の _api-summary.yaml の abort-final-crosscheck.sh の stderr と終了コード 3 の meaning、BUC の buc-spec.md の業務ルールの行に、ファイルが無い、または FINAL_DB_CONN_REF が欠落(キーが無い、または値が空)なら管理 DB なしで、housekeep.sh の判定と同じ規則であることを書いた"

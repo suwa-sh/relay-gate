@@ -1,0 +1,70 @@
+meta:
+  event_id: "20261103_084000_feedback_housekeeping_followups"
+  trigger_event: "usdm:20261103_081000_feedback_housekeeping_followups, rdra:20261103_081000_feedback_housekeeping_followups, nfr:20261103_082000_feedback_housekeeping_followups, arch:20261103_083000_feedback_housekeeping_followups"
+  created_at: "2026-11-03T08:40:00Z"
+  mode: "differential"
+  mcl_rerun: "skipped_targeted_update"
+  mcl_rerun_reason: "translation(workload_type / availability_tier / latency / data_classification / traffic / consistency / cost_posture / target_clouds)は無変更。上流の変更は、管理 DB に接続しない設定(RAPID_CROSSCHECK_MODE=off でハウスキープ設定の接続参照名が無い・空)のハウスキープの振る舞いの追加と、実行ログの整理を設置環境の logrotate に任せる記述の訂正で、ティア数・配置セグメント・ストレージ種別・復旧目標は変わらない。MCL 出力の該当箇所(管理 DB・成果物・設定・監視・コスト・適合性・構成図)への追記を差分更新で行った(MCL product-design の全量再実行は行わない)"
+feedback_request:
+  feedback_request_id: "20261103_housekeeping_followups"
+  input_sha256: "7a81f28ce6fef4c2f70e2839d657a3f8e8480671bd846b460edab3d22b3ba775"
+  request_ids: ["CR-f3b8a1d0-001","CR-f3b8a1d0-003"]
+  work_unit_ids: ["CR-f3b8a1d0-001#1","CR-f3b8a1d0-003#1"]
+changes:
+  event_id: "20261103_084000_feedback_housekeeping_followups"
+  created_at: "2026-11-03T08:40:00Z"
+  source: "feedback request 20261103_housekeeping_followups(管理 DB に接続しない設定のハウスキープと、実行ログの整理を設置環境の logrotate に任せる追補。USDM / RDRA / NFR / arch 差分)に基づくインフラ設計の差分更新"
+  arch_event_ref: "20261103_083000_feedback_housekeeping_followups"
+  nfr_event_ref: "20261103_082000_feedback_housekeeping_followups"
+  translation:
+    unchanged: true
+  mcl_execution:
+    status: "completed"
+    completed_at: "2026-11-03T08:40:00Z"
+    outputs_updated:
+      - path: "docs/mcl/product/input/product-input.yaml"
+        change: "management_db の説明に、管理 DB に接続しない設定の間はハウスキープが管理 DB の行と確報比較依頼を削除しないため量が頭打ちにならないことを、config_store のハウスキープ設定に RAPID_CROSSCHECK_MODE=off では接続参照名を省略・空にでき、そのとき管理 DB に接続しないことを追記。product-input.yaml(イベント直下のコピー)も同一内容"
+        work_units: ["CR-f3b8a1d0-001#1"]
+      - path: "docs/mcl/product/output/product-workload-model.yaml"
+        change: "management_db と artifact_store の容量の頭打ちの constraint に、管理 DB に接続しない設定の間の例外(管理 DB の行と確報比較依頼が増え続ける、off でない期間に作られた実行の成果物が残る)を追記。config_store のハウスキープ設定に接続参照名を off では省略・空にできることを追記"
+        work_units: ["CR-f3b8a1d0-001#1"]
+      - path: "docs/mcl/product/output/product-mapping-onprem.yaml"
+        change: "management_db の notes に、off で接続参照名が無い・空のとき housekeep は管理 DB に接続せず行と確報比較依頼を削除しないことを、artifact_store の notes に off でない期間に作られた実行の成果物は残ることを、config_store の notes にハウスキープ設定の接続参照名を off では省略・空にできることを追記"
+        work_units: ["CR-f3b8a1d0-001#1"]
+      - path: "docs/mcl/product/output/product-impl-onprem.yaml"
+        change: "housekeep_delete に管理 DB に接続しない設定の振る舞い(行と確報比較依頼を削除しない、起動ごとの warn、off でない期間の実行は単位ごと残して warn、warn は終了コードに影響しない)を、connection_resolution に接続参照名が無い・空なら接続しないことを、artifact_store capacity と config_store contents に同じ例外を追記。ハウスキープ設定の検証規則を『存在すること。保持日数のキーは省略可(既定 90 日)、off 以外では専用 DB ロールの接続参照名のキーを持つ(off では省略・空を許す)』に改めた"
+        work_units: ["CR-f3b8a1d0-001#1"]
+      - path: "docs/mcl/product/output/product-observability.yaml"
+        change: "alert-housekeep-failure の condition に、管理 DB に接続しない設定で出る warn は終了コードに影響しないため対象外と明記"
+        work_units: ["CR-f3b8a1d0-001#1"]
+      - path: "docs/mcl/product/output/product-cost-hints.yaml"
+        change: "storage_tiering に、管理 DB に接続しない設定の間は管理 DB の行と確報比較依頼が削除されず、off でない期間に作られた実行の成果物も残るため、その分を保持日数分の見積もりとは別に見込むことを追記(NFR B.3.3.1 と同じ趣旨)"
+        work_units: ["CR-f3b8a1d0-001#1"]
+      - path: "docs/cloud-context/conformance/product/product-conformance-onprem.yaml"
+        change: "設定の要件の notes に、ハウスキープ設定の接続参照名を off では省略・空にでき、そのとき housekeep は管理 DB に接続しないことを追記(判定は不変)"
+        work_units: ["CR-f3b8a1d0-001#1"]
+      - path: "docs/cloud-context/generated-md/product/relay-gate-target-architecture.md"
+        change: "housekeep → 管理 DB の辺のラベルに、off で接続参照名が無ければ接続しないことを追記"
+        work_units: ["CR-f3b8a1d0-001#1"]
+      - path: "infra/product/onprem/ansible/roles/relay-gate-config/tasks/main.yml"
+        change: "ハウスキープ設定の検査を『空でないこと(test -s)』から『存在すること(test -f。空でもよい)』へ改めた。保持日数のキーは省略でき(既定 90 日)、off では接続参照名も省略・空にできるため、空のファイルも正当な設定になり得る"
+        work_units: ["CR-f3b8a1d0-001#1"]
+      - path: "docs/mcl/foundation/output/foundation-context.yaml"
+        change: "プロジェクトルートの foundation-context(2026-11-03 に SMTP とメール通知の記述を削除済み)からコピーを取り直した"
+        work_units: []
+      - path: "docs/mcl/shared-platform/output/shared-platform-context.yaml"
+        change: "プロジェクトルートの shared-platform-context(2026-11-03 に SMTP の記述を削除済み)からコピーを取り直した"
+        work_units: []
+    outputs_verified_unchanged:
+      - path: "docs/mcl/product/output/product-mapping-onprem.yaml(execution_log_store)/ product-impl-onprem.yaml(execution_log_store)/ product-observability.yaml(logs.retention)/ infra/product/onprem/ansible/roles/relay-gate-runtime/tasks/main.yml(logrotate 配置)"
+        reason: "実行ログは設置環境の logrotate(日次・90 世代・圧縮)で 3 か月保管する記述のままで、手動ローテーションや relay-gate 自身による整理を前提にした記述は無い。arch CTR-006 の改訂(実行ログは relay-gate が整理せず logrotate に任せる)とすでに一致しているため変更しない"
+        work_units: ["CR-f3b8a1d0-003#1"]
+      - path: "infra/product/onprem/ansible/roles/relay-gate-postgresql/tasks/main.yml / inventory.ini.example"
+        reason: "housekeep_del ロールの作成は接続しない設定でも害が無い(使われないだけ)。キー名とファイル名は変数で受け取るため変更不要"
+        work_units: ["CR-f3b8a1d0-001#1"]
+  arch_feedback:
+    status: "no_new_feedback"
+    reason: "本イベントの差分は、上流(arch-decision-024 / 025、CTR-006、SP-027 / SP-028、E-028、BC-005、CM-013)で確定した内容をインフラ設計へ追従させたものだけで、arch に戻す新しい知見は無い。本 stage は feedback controller の指示により Phase4 で arch を更新しない"
+  writeback_check:
+    result: "not_required"
+    reason: "arch 差分は tier-ops 内のハウスキープの規則(管理 DB に接続しない設定)と E-028 の属性の nullable 化、CTR-006 の実行ログの記述の訂正で、ティア数・認証認可方式・DR 方針・storage_type・外部連携を変えていない。translation の各フィールドは不変のため product-input の再生成(translation のやり直し)と Step2 の全量再実行は不要"

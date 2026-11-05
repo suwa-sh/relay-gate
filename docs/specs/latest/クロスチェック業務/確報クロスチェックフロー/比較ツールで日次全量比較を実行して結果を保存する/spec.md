@@ -97,8 +97,8 @@ sequenceDiagram
 
 - **設定**: `final-crosscheck.env` に `FINAL_COMPARE_COMMAND` を 1 行の文字列として置く。確報の起動コマンドにプレースホルダは無い(worker は shared_rules.compare_command_argv で引数の並びに分け、置換せずそのまま argv で起動する)。比較対象(テーブル・ファイル)の一覧やジョブ ID ごとの比較定義は relay-gate の設定に持たず、適用側が比較ツール側で定義する
 - **検証**: `validate-config.sh --final-crosscheck <path>` が `FINAL_COMPARE_COMMAND` を検証する。検証はコマンド部分(先頭の語)だけに行い、引数部分の内容は検査しない。残す検証は 1 点だけ: コマンド部分が絶対パスで、存在し、実行可能であること(確報はプレースホルダ無しのため `{job_id}` の検査はしない)
-- **stdout(固定順)**: `config=final-crosscheck` / `path: <path>` / `command_path: <FINAL_COMPARE_COMMAND の先頭の語>` / `status=valid|invalid` / `violations=N`(invalid 時)
-- **違反文言(終了コード 2)**: コマンド部分が絶対パスでない `error: path is not absolute key=FINAL_COMPARE_COMMAND path=...` / コマンド部分が存在しない・実行不可 `error: file not executable key=FINAL_COMPARE_COMMAND path=...`
+- **stdout(固定順)**: `config=final-crosscheck` / `path: <path>` / `command_path: <FINAL_COMPARE_COMMAND の先頭の語>` / `status=valid|invalid` / `violations=N`(invalid 時)。入力の守備範囲の違反で値を使わないときは `command_path: -`(CLI 契約 `config_input_rules.env_files`)
+- **違反文言(終了コード 2)**: 入力の守備範囲の違反(NUL / UTF-8 / BOM / CR / invalid line / 同じキーの重複 `error: duplicate key key=<KEY> lines=<n1,n2,...> path: ...`。文言と報告の順は CLI 契約 `config_input_rules.env_files`。この違反があるときは下記の検証を行わない)/ コマンド部分が絶対パスでない `error: path is not absolute key=FINAL_COMPARE_COMMAND path=...` / コマンド部分が存在しない・実行不可 `error: file not executable key=FINAL_COMPARE_COMMAND path=...`
 - 検証の所有 tier は tier-facade(validate-config.sh 本体。arch CTR-007)。契約の正本は `_cross-cutting/api/cli-command-contract.yaml` の `validate-config.sh --final-crosscheck`
 
 ## バリエーション一覧

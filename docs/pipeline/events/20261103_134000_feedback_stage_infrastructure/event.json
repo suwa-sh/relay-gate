@@ -1,0 +1,257 @@
+{
+  "event_id": "20261103_134000_feedback_stage_infrastructure",
+  "type": "feedback_stage_completed",
+  "run_id": "feedback-20261103_housekeeping_db_required-20261103_130349-86217",
+  "attempt": 1,
+  "created_at": "2026-11-03T13:40:00Z",
+  "stage": "infrastructure",
+  "direct_work_unit_ids": [],
+  "causal_work_unit_ids": [
+    "CR-9d2e6c41-001#1"
+  ],
+  "work_unit_results": [],
+  "reconciliation_results": [
+    {
+      "work_unit_id": "CR-9d2e6c41-001#1",
+      "status": "changed",
+      "reason": "ハウスキープ設定の管理 DB 接続参照名を、RAPID_CROSSCHECK_MODE が off 以外または確報クロスチェックを使う設置では必須とし(無い・空なら設定エラーで、削除待ちの置き場の中身も含めて何も削除しない)、省略できるのを管理 DB を一切使わない設置だけに絞った上流(USDM / RDRA、NFR B.3.3.1 / F.1.2.1、arch 20261103_133000 の SP-027 / SP-028 / BC-005 / BC-006 / CM-013 / E-028 / arch-decision-026)を受け、前回書いた「off では接続参照名を省略でき、そのとき管理 DB の行と確報比較依頼が増え続ける」趣旨の記述を、MCL 入力・ワークロードモデル・マッピング・実装仕様(ハウスキープ設定の検証規則と削除の段の先頭の設定検査を含む)・監視(設定エラーも失敗通知の対象)・コストヒント・適合性 notes・構成図・config ロールのコメントで新しい条件に揃えた。配置時の静的検査は存在検査のまま維持し、必須判定は housekeep.sh の起動時に任せる。MCL は全面再実行せず差分更新(skipped_targeted_update)。infra-event validate PASS、mermaid lint PASS、latest 更新済み",
+      "artifact_refs": [
+        "infra/events/20261103_134000_feedback_housekeeping_db_required/infra-event-diff.yaml",
+        "infra/events/20261103_134000_feedback_housekeeping_db_required/docs/mcl/product/input/product-input.yaml",
+        "infra/events/20261103_134000_feedback_housekeeping_db_required/docs/mcl/product/output/product-workload-model.yaml",
+        "infra/events/20261103_134000_feedback_housekeeping_db_required/docs/mcl/product/output/product-mapping-onprem.yaml",
+        "infra/events/20261103_134000_feedback_housekeeping_db_required/docs/mcl/product/output/product-impl-onprem.yaml",
+        "infra/events/20261103_134000_feedback_housekeeping_db_required/docs/mcl/product/output/product-observability.yaml",
+        "infra/events/20261103_134000_feedback_housekeeping_db_required/docs/mcl/product/output/product-cost-hints.yaml",
+        "infra/events/20261103_134000_feedback_housekeeping_db_required/docs/cloud-context/conformance/product/product-conformance-onprem.yaml",
+        "infra/events/20261103_134000_feedback_housekeeping_db_required/infra/product/onprem/ansible/roles/relay-gate-config/tasks/main.yml"
+      ]
+    }
+  ],
+  "work_unit_evidence_refs": [
+    {
+      "work_unit_id": "CR-9d2e6c41-001#1",
+      "path": "infra/events/20261103_134000_feedback_housekeeping_db_required/infra-event-diff.yaml",
+      "sha256": "f38f434e1c7c39ceca9fcfb2f5db7127d303a18b9678bb5418a68736e283bbc6"
+    },
+    {
+      "work_unit_id": "CR-9d2e6c41-001#1",
+      "path": "infra/events/20261103_134000_feedback_housekeeping_db_required/docs/mcl/product/input/product-input.yaml",
+      "sha256": "11573a3064d67c384f5ce105117f0af3e40c53c7ea22f41421ed4277d6d976a0"
+    },
+    {
+      "work_unit_id": "CR-9d2e6c41-001#1",
+      "path": "infra/events/20261103_134000_feedback_housekeeping_db_required/docs/mcl/product/output/product-workload-model.yaml",
+      "sha256": "ec91e1f20df789e95bd96723c8ecfe3d42def76fa9f21626a0ebcff10c46221d"
+    },
+    {
+      "work_unit_id": "CR-9d2e6c41-001#1",
+      "path": "infra/events/20261103_134000_feedback_housekeeping_db_required/docs/mcl/product/output/product-mapping-onprem.yaml",
+      "sha256": "c182778227797cde83bb0c238cde79352b3a965862f35daf1dec614c15a2714f"
+    },
+    {
+      "work_unit_id": "CR-9d2e6c41-001#1",
+      "path": "infra/events/20261103_134000_feedback_housekeeping_db_required/docs/mcl/product/output/product-impl-onprem.yaml",
+      "sha256": "e37ee51d5e9d2f78cb5edd5df336fc2dcfc4ce7d158000b9d8f079748d79b2aa"
+    },
+    {
+      "work_unit_id": "CR-9d2e6c41-001#1",
+      "path": "infra/events/20261103_134000_feedback_housekeeping_db_required/docs/mcl/product/output/product-observability.yaml",
+      "sha256": "2639fbeaa68f0c0cc2420a0c66bb54ee8381766d3a6b2b70ba9caa119ea0bf4d"
+    },
+    {
+      "work_unit_id": "CR-9d2e6c41-001#1",
+      "path": "infra/events/20261103_134000_feedback_housekeeping_db_required/docs/mcl/product/output/product-cost-hints.yaml",
+      "sha256": "bf74b5d5cd2db26ed3650cd1780ec6ce4c44b0e271d74135d184d7bcb899f40a"
+    },
+    {
+      "work_unit_id": "CR-9d2e6c41-001#1",
+      "path": "infra/events/20261103_134000_feedback_housekeeping_db_required/docs/cloud-context/conformance/product/product-conformance-onprem.yaml",
+      "sha256": "0d113ce7fd6dcde7f81d4550bfb7864e452c666c41843d16bb1ccd8401ccf1e3"
+    },
+    {
+      "work_unit_id": "CR-9d2e6c41-001#1",
+      "path": "infra/events/20261103_134000_feedback_housekeeping_db_required/infra/product/onprem/ansible/roles/relay-gate-config/tasks/main.yml",
+      "sha256": "67ba4fbb843ec60fc247773c6c7a1e83dd76400b92043b1753e6a361a78b6a9a"
+    }
+  ],
+  "domain_event_refs": [
+    {
+      "path": "infra/events/20261103_134000_feedback_housekeeping_db_required/event.json",
+      "sha256": "dab6bb311028a2900e28adc24a870ed76667cc0695ac33d1e4a9c566d8baaef7"
+    },
+    {
+      "path": "infra/events/20261103_134000_feedback_housekeeping_db_required/infra-event.yaml",
+      "sha256": "a59d9f59ca7d66cb39543cb4889c6258851165519bca0d78b4c09b221133afa9"
+    },
+    {
+      "path": "infra/events/20261103_134000_feedback_housekeeping_db_required/infra-event-diff.yaml",
+      "sha256": "f38f434e1c7c39ceca9fcfb2f5db7127d303a18b9678bb5418a68736e283bbc6"
+    }
+  ],
+  "feedback_request": {
+    "feedback_request_id": "20261103_housekeeping_db_required",
+    "input_sha256": "94cde505fc6dda4705b1bb75134beaf9a85a7af65d7c90f1e786112e8b1031e7",
+    "request_ids": [
+      "CR-9d2e6c41-001"
+    ],
+    "work_unit_ids": [
+      "CR-9d2e6c41-001#1"
+    ]
+  },
+  "post_execution_basis": {
+    "repository_head": "38cf3f4a5dff8f47c581ab984ab8c37805c44e20",
+    "latest_domain_event_ids": {
+      "requirements": {
+        "rdra/events": "20261103_131000_feedback_housekeeping_db_required",
+        "usdm/events": "20261103_131000_feedback_housekeeping_db_required"
+      },
+      "quality_attributes": {
+        "nfr/events": "20261103_132000_feedback_housekeeping_db_required"
+      },
+      "architecture": {
+        "arch/events": "20261103_133000_feedback_housekeeping_db_required"
+      },
+      "infrastructure": {
+        "infra/events": "20261103_134000_feedback_housekeeping_db_required"
+      },
+      "design_system": {
+        "design/events": null
+      },
+      "spec": {
+        "specs/events": "20261103_085000_feedback_housekeeping_followups"
+      },
+      "spec_stories": {
+        "design/events": null
+      }
+    },
+    "domain_event_root_snapshots": {
+      "rdra/events": {
+        "head_event_id": "20261103_131000_feedback_housekeeping_db_required",
+        "head_event_sha256": "3e511fca6a1fea0c55efdc3a33fb8b8e7e5ca12899627a7b14221d326de9fb7d",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency",
+          "20260908_011000_feedback_slot_status_wording",
+          "20260921_084000_feedback_impl_feedback_eff24f55",
+          "20261010_200000_feedback_impl_feedback_dcd8234d",
+          "20261101_101000_feedback_impl_feedback_dcd8234d",
+          "20261101_121000_feedback_mail_removal_housekeeping",
+          "20261103_081000_feedback_housekeeping_followups",
+          "20261103_131000_feedback_housekeeping_db_required"
+        ],
+        "event_set_sha256": "608c77661bedd39000b6f1c22dbe8e3c3d8b2c0c35359df2261b25a55aa9346f",
+        "latest_tree_sha256": "b4b4296ae1547f95cba62b54d1140692a16a05e72e184aa44fa8f8f35854b577"
+      },
+      "usdm/events": {
+        "head_event_id": "20261103_131000_feedback_housekeeping_db_required",
+        "head_event_sha256": "d5b9cc924c01032584134b561a0c833b5fa9262f0abafa9e664900b0171d8574",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency",
+          "20260908_011000_feedback_slot_status_wording",
+          "20260921_084000_feedback_impl_feedback_eff24f55",
+          "20261010_200000_feedback_impl_feedback_dcd8234d",
+          "20261101_101000_feedback_impl_feedback_dcd8234d",
+          "20261101_121000_feedback_mail_removal_housekeeping",
+          "20261103_081000_feedback_housekeeping_followups",
+          "20261103_131000_feedback_housekeeping_db_required"
+        ],
+        "event_set_sha256": "608c77661bedd39000b6f1c22dbe8e3c3d8b2c0c35359df2261b25a55aa9346f",
+        "latest_tree_sha256": "48b132d17198156a3da6feef7fd725090592abd41d7e50bd23229b210888d358"
+      },
+      "nfr/events": {
+        "head_event_id": "20261103_132000_feedback_housekeeping_db_required",
+        "head_event_sha256": "6bbbe5e66291b046be72435e6b0de99b04929d96288be66f8f1dcd61a07e7fd7",
+        "event_ids": [
+          "20260830_183726_initial_nfr",
+          "20260905_085000_feedback_todo_resolution",
+          "20260907_013000_feedback_todo_followup",
+          "20260907_120000_feedback_abort_consistency",
+          "20260908_013000_feedback_slot_status_wording",
+          "20260921_090000_feedback_impl_feedback_eff24f55",
+          "20261010_201000_feedback_impl_feedback_dcd8234d",
+          "20261101_102000_feedback_impl_feedback_dcd8234d",
+          "20261101_122000_feedback_mail_removal_housekeeping",
+          "20261103_082000_feedback_housekeeping_followups",
+          "20261103_132000_feedback_housekeeping_db_required"
+        ],
+        "event_set_sha256": "033e74beac16867152af31decca75c10fb3439ecd768ae55c5cf0778533a2bd3",
+        "latest_tree_sha256": "2a22da3a3dbbbf4514a30670646ea4b250a66cf132ec4a57790132c4696b3131"
+      },
+      "arch/events": {
+        "head_event_id": "20261103_133000_feedback_housekeeping_db_required",
+        "head_event_sha256": "53fc4d04b355fbbc82dbbe05c4a854eabecdcef60c67dc512c95f20627d36637",
+        "event_ids": [
+          "20260830_184457_initial_arch",
+          "20260830_202427_arch_infra_feedback_20260830_190412_infra_product_design",
+          "20260905_091000_feedback_todo_resolution",
+          "20260907_015000_feedback_todo_followup",
+          "20260907_122000_feedback_abort_consistency",
+          "20260908_015000_feedback_slot_status_wording",
+          "20260921_092000_feedback_impl_feedback_eff24f55",
+          "20261010_202000_feedback_impl_feedback_dcd8234d",
+          "20261101_103000_feedback_impl_feedback_dcd8234d",
+          "20261101_123000_feedback_mail_removal_housekeeping",
+          "20261103_083000_feedback_housekeeping_followups",
+          "20261103_133000_feedback_housekeeping_db_required"
+        ],
+        "event_set_sha256": "f38dfba1b314fde01ff25cecad44573f1367c9b9a3941c5ee2f7e9598487f899",
+        "latest_tree_sha256": "5e00d5989382518efa1cf9387b0f8c2f14b9010ef51ec8d110cb748c20355bfc"
+      },
+      "infra/events": {
+        "head_event_id": "20261103_134000_feedback_housekeeping_db_required",
+        "head_event_sha256": "7cba5349536e05124cd37be533db1d462f942f776414abbf217a299aa9b51bc8",
+        "event_ids": [
+          "20260830_190412_infra_product_design",
+          "20260905_093000_feedback_todo_resolution",
+          "20260907_021000_feedback_todo_followup",
+          "20260907_124000_feedback_abort_consistency",
+          "20260908_021000_feedback_slot_status_wording",
+          "20260921_094000_feedback_impl_feedback_eff24f55",
+          "20261010_203000_feedback_impl_feedback_dcd8234d",
+          "20261101_104000_feedback_impl_feedback_dcd8234d",
+          "20261101_124000_feedback_mail_removal_housekeeping",
+          "20261103_084000_feedback_housekeeping_followups",
+          "20261103_134000_feedback_housekeeping_db_required"
+        ],
+        "event_set_sha256": "9e66fe9b0bc898b2010dad113928f8388fd841d79e337b8849ebbcfc3ee6f352",
+        "latest_tree_sha256": "c7d365c501145aff47b344a17f727290d0a72b9253848bab532ff959a881f6dd"
+      },
+      "design/events": {
+        "head_event_id": null,
+        "head_event_sha256": null,
+        "event_ids": [],
+        "event_set_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "latest_tree_sha256": null
+      },
+      "specs/events": {
+        "head_event_id": "20261103_085000_feedback_housekeeping_followups",
+        "head_event_sha256": "5f510f1df00bd29dfa2289277b0c115ad39deb091be82b20b06526e8f6c89013",
+        "event_ids": [
+          "20260830_202851_spec_generation",
+          "20260905_100000_feedback_todo_resolution",
+          "20260907_024000_feedback_todo_followup",
+          "20260907_131000_feedback_abort_consistency",
+          "20260908_024000_feedback_slot_status_wording",
+          "20260908_062000_feedback_spec_machine_readable",
+          "20260917_050000_feedback_impl_feedback_fd678b04",
+          "20260917_100000_feedback_impl_feedback_fd678b04_cycle2",
+          "20260921_100000_feedback_impl_feedback_eff24f55",
+          "20260923_112000_feedback_impl_feedback_eff24f55_cycle2",
+          "20261010_204000_feedback_impl_feedback_dcd8234d",
+          "20261027_055000_feedback_impl_feedback_dcd8234d",
+          "20261101_105000_feedback_impl_feedback_dcd8234d",
+          "20261101_125000_feedback_mail_removal_housekeeping",
+          "20261103_085000_feedback_housekeeping_followups"
+        ],
+        "event_set_sha256": "b168089c178b4ca87b4a76e16f375a1a9806d7bb4d4b90185b183a9b495bf438",
+        "latest_tree_sha256": "d006b3d0131551d6afc77d805a8b55b19ab6431b271f63f2ed052944a4549e43"
+      }
+    }
+  }
+}

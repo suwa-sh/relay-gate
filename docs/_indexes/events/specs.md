@@ -19,3 +19,11 @@
 | 2026-10-10 20:40:00 | [20261010_204000_feedback_impl_feedback_dcd8234d](../../specs/events/20261010_204000_feedback_impl_feedback_dcd8234d) |
 | 2026-10-27 05:50:00 | [20261027_055000_feedback_impl_feedback_dcd8234d](../../specs/events/20261027_055000_feedback_impl_feedback_dcd8234d) |
 | 2026-11-01 10:50:00 | [20261101_105000_feedback_impl_feedback_dcd8234d](../../specs/events/20261101_105000_feedback_impl_feedback_dcd8234d) |
+| 2026-11-01 12:50:00 | [20261101_125000_feedback_mail_removal_housekeeping](../../specs/events/20261101_125000_feedback_mail_removal_housekeeping) |
+| 2026-11-03 08:50:00 | [20261103_085000_feedback_housekeeping_followups](../../specs/events/20261103_085000_feedback_housekeeping_followups) |
+| 2026-11-03 13:50:00 | [20261103_135000_feedback_housekeeping_db_required](../../specs/events/20261103_135000_feedback_housekeeping_db_required) |
+| 2026-11-03 15:10:00 | [20261103_151000_feedback_env_duplicate_key](../../specs/events/20261103_151000_feedback_env_duplicate_key) |
+| 2026-11-04 09:20:00 | [20261104_092000_feedback_external_review_fixes](../../specs/events/20261104_092000_feedback_external_review_fixes) |
+| 2026-11-04 10:20:00 | [20261104_102000_feedback_rapid_env_deploy_check](../../specs/events/20261104_102000_feedback_rapid_env_deploy_check) |
+| 2026-11-05 09:20:00 | [20261105_092000_feedback_external_review_round2](../../specs/events/20261105_092000_feedback_external_review_round2) |
+| 2026-11-05 11:20:00 | [20261105_112000_feedback_single_management_db](../../specs/events/20261105_112000_feedback_single_management_db) |

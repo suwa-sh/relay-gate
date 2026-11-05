@@ -1,0 +1,11 @@
+2026-11-03 のハウスキープ追補(管理 DB に接続しない設定の振る舞い)に基づく NFR 追従更新(グレード値は変更なし)
+trigger_event: rdra:20261103_081000_feedback_housekeeping_followups, usdm:20261103_081000_feedback_housekeeping_followups
+dialogue_policy: interactive(グレード値の変更なし。confidence: low の残件なし)
+mode: 差分更新(nfr-grade-diff.yaml。grade の変更なし、B.3.3.1 / F.1.2.1 の grade_description / reason を更新)
+
+feedback_request_id: 20261103_housekeeping_followups
+input_sha256: 7a81f28ce6fef4c2f70e2839d657a3f8e8480671bd846b460edab3d22b3ba775
+request_ids: CR-f3b8a1d0-001
+direct_work_unit_ids: (none)
+causal_work_unit_ids: CR-f3b8a1d0-001#1
+feedback_packet: docs/pipeline/feedback-runs/20261103_housekeeping_followups/stage-packets/quality_attributes.md

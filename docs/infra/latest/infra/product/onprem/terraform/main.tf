@@ -7,7 +7,7 @@
 # 想定リソース構成:
 #   - execution_host_segment: ジョブスケジューラ実行ホストセグメント(var.execution_host_count 台)
 #   - db_host_segment: 管理DBセグメント(var.db_host_count 台、単一インスタンス構成)
-#   - segment_firewall_rules: セグメント間はSSH/DB/SMTPポートのみ許可(var.allowed_ports)
+#   - segment_firewall_rules: セグメント間はSSH/DBポートのみ許可(var.allowed_ports。メール通知は廃止したためSMTPは許可しない)
 #
 # 例(vSphere provider を使う場合の骨子。値は適用側で埋める):
 #

@@ -1,0 +1,58 @@
+round: 1
+findings:
+  - id: R-1
+    viewpoint: 4
+    severity: major
+    target: "_cross-cutting/api/cli-command-contract.yaml"
+    claim: "RAPID_CROSSCHECK_MODE=off で成果物ルート($RELAY_GATE_ARTIFACT_ROOT)自体が存在するが検索(x)・列挙できない回は、印の置き場 hang-detector-notified/ が『あるのに読めない』のか『無い』のかが仕様から決まらない。このため stderr が『error: notified mark dir is not readable ... の 1 行だけ』と『未知キーの warn 行 → error: artifact root is not readable ...』の 2 通りに割れ、unknown_key_warn の『どの入力・状態の組み合わせでも標準エラーの行数と内容を 1 つに決める』が成り立たない。"
+    evidence: "shared_rules.hang_alert.notified_mark.directory_unreadable は『置き場があるのに列挙・読み取りできない(権限が無い、ディレクトリでない)』と『置き場が無いときは印が 1 つも無いものとして通常どおり続ける』の 2 分岐だけを定める。走査前の検査 (e) は `error: artifact root not found path: ...`(RELAY_GATE_ARTIFACT_ROOT が無い)だけで、ルートが読めない場合は走査前のエラーにしない。成果物ルートに検索権限が無いと置き場の存在確認(stat)は ENOENT ではなく EACCES で失敗し、どちらの分岐か決まらない。off 以外ではこの組み合わせは『DB の SELECT → 未知キーの warn → error: artifact root is not readable』に 1 つに決まるため、問題は off だけ。判定 UC の tier-ops.md の『回の結果 × 未知キーの warn』表と BDD にもこの組み合わせが無い。"
+    suggested_fix: "directory_unreadable に『置き場の存在を確認できない(成果物ルートの権限不足などで stat が ENOENT 以外で失敗する)場合は、あるのに読めないものとして扱う(error 1 行だけ・終了コード 6・未知キーの warn なし)』のように 1 つに決める規則を足す(逆に『無いものとして扱い、facade/ の列挙で error: artifact root is not readable を出す』でもよいが、どちらかに決める)。判定 UC の tier-ops.md の表と BDD(off で成果物ルートが読めず、hang-detector.env に未知キーがある回)を同じ値で追加する。"
+  - id: R-2
+    viewpoint: 5
+    severity: minor
+    target: "実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/tier-ops.md"
+    claim: "追加した BDD『未知のキーの warn は走査を始めるときにファイル内の出現順で、走査中の warn 行より前に出す』は、run が走査の窓(HANG_SCAN_WINDOW_HOURS=72)の内側かどうかを Given で決めていないため、『stderr は次の 3 行』の Then が実行のたびに決まらない。"
+    evidence: "Given は『facade/20260830T113000-JOB002-9a8b7c6d/ に green/started-at.txt があり execution-spec.json が無い』だけで、started-at.txt の中身と RELAY_GATE_NOW が無い。走査手順は started-at.txt が HANG_SCAN_WINDOW_HOURS 以内の run だけを選ぶ(spec.md の『走査範囲』、契約 scan_window)。off で印が無い窓外の run は走査しないため warn: execution-spec missing が出ず、stderr は 2 行になり得る。"
+    suggested_fix: "Given に green/started-at.txt の中身(例: 2026-08-30T11:30:05Z)と RELAY_GATE_NOW(例: 2026-08-30T12:45:00Z)を足し、run が窓内であることを固定する。"
+  - id: R-3
+    viewpoint: 5
+    severity: minor
+    target: "実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/tier-ops.md"
+    claim: "新しい順序の規則のうち、off 以外で管理 DB の SELECT が通った回に未知キーの warn を出すこと、および『未知キーの warn 行 → error: artifact root is not readable』の順を確かめる BDD が無い。追加された 4 件の BDD は、走査した回が off の 1 通り、出さない回が 3 通りだけ。"
+    evidence: "契約 shared_rules.hang_alert.unknown_key_warn は『off 以外は管理 DB への接続と SELECT が通ったあと』に出すとし、order は『未知キーの warn 行 → error: artifact root is not readable → 走査中の warn 行 → --verbose の info: judged 行 → 対象ごとの行』とする。tier-ops.md の BDD の未知キーのシナリオで走査した回は RAPID_CROSSCHECK_MODE=off だけで、artifact root is not readable や alert 行と一緒に出る回は無い。"
+    suggested_fix: "(1) RAPID_CROSSCHECK_MODE=background、DB に接続できる、未知キーあり、ハング疑いの run あり、のとき stderr の 1 行目が warn: unknown key で、その後に alert 行が出るシナリオと、(2) 未知キーありで facade/ を列挙できない回に warn: unknown key → error: artifact root is not readable の順で出るシナリオを足す。"
+  - id: R-4
+    viewpoint: 4
+    severity: minor
+    target: "_cross-cutting/api/cli-command-contract.yaml"
+    claim: "共通規則 config_input_rules.env_files は今も、未知キーの warn を (iii)(キーごとの検査)の段に含めている。hang-detector.sh だけが『走査を始めるときに出し、(iii) で設定エラーになった回は出さない』に変わったのに、共通規則にこの例外への参照が無い。共通規則だけを読む実装者が、(iii) の段で warn を出してしまうおそれがある。"
+    evidence: "env_files: 『(iii) 各設定ファイルの契約のキーごとの検査(必須キーの欠落・空、enum、...)と未知キーの warn』。一方 shared_rules.hang_alert.unknown_key_warn は、出す時点を管理 DB の SELECT のあと、または印の置き場の検査のあととし、走査前の設定エラー(終了コード 2)の回は出さないとする。"
+    suggested_fix: "env_files の (iii) に『未知キーの warn を出す時点と出さない回は、各設定ファイルの契約に従う(hang-detector.env は shared_rules.hang_alert.unknown_key_warn)』の 1 文を足す。"
+  - id: R-5
+    viewpoint: 1
+    severity: minor
+    target: "decisions/spec-decision-031.yaml"
+    claim: "決定記録は、ATDD の features/atdd/SPEC-008-06.feature が現行 USDM の受入基準と食い違っていると認めている(廃止したメール通知のシナリオが残っている)。それなのに、直す時期を『実装フェーズの ATDD を作り直すとき』へ先送りしている。仕様の正本(USDM の SPEC-008-06)とのずれが残ったままになり、ATDD でこの受入基準を選んで実行すると、存在しない振る舞い(メール送信)を検証することになる。"
+    evidence: "spec-decision-031.yaml の『実装との照合』: 『1 件目の Scenario が「設定された送信コマンドで設定された宛先へメールが送られる」のままになっている。…実装フェーズの ATDD を作り直すときに USDM の現行の受け入れ条件から再転写する必要がある』。docs/usdm/latest/requirements.yaml の SPEC-008-06 の受入基準は『通知の宛先・送信コマンド・件名に関する項目は無く、管理 DB 接続参照名がある』(2026-11-01 の還流)。features/atdd/SPEC-008-06.feature の Feature 行と 11 行目は旧仕様のまま。"
+    suggested_fix: "今回の変更の中で features/atdd/SPEC-008-06.feature を USDM の現行の受入基準から再転写する。spec の段階で触れない取り決めなら、実装側の変更要求(issues)として今回のうちに起票し、決定記録から『作り直すときに』という先送りの書き方を外して、起票先を記録する。"
+resolved:
+  - id: R-1
+    resolution: fixed
+    note: "notified_mark.directory_unreadable に、存在確認が ENOENT 以外で失敗したときは『あるのに読めない』と同じ error 1 行だけとする規則を足した。判定 UC の tier-ops.md(走査手順 0・表)、ui-design.md、BDD(off で成果物ルートに検索権限が無い回)を同じ値で追加"
+    by: orchestrator
+  - id: R-2
+    resolution: fixed
+    note: "BDD の Given に started-at.txt の中身と RELAY_GATE_NOW を足し、run を窓内に固定"
+    by: orchestrator
+  - id: R-3
+    resolution: fixed
+    note: "BDD を 2 件追加(background で SELECT のあと warn → alert 行の順、warn → error: artifact root is not readable の順)"
+    by: orchestrator
+  - id: R-4
+    resolution: fixed
+    note: "config_input_rules.env_files の (iii) に、未知キーの warn の時点を各設定ファイルの契約が決めるときはそれに従う旨と hang-detector.env の参照を足した"
+    by: orchestrator
+  - id: R-5
+    resolution: fixed
+    note: "spec の段階は features/ を変更しない取り決めのため、判断記録の先送りの書き方を外し、この差分更新の完了報告で確認推奨項目として返して同じ run の中で実装側に再転写を依頼する、と書き直した"
+    by: orchestrator

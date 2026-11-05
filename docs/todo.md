@@ -362,3 +362,15 @@ RDRA に存在しない要素を追加する前に、ここで合意を得てか
 - **推奨対応**: [ ] requirements スキル再実行で反映 / [ ] 却下 / [ ] 保留
 - **ステータス**: open
 
+## 2026-11-03 dist-spec からの追加提案
+
+### DIST-031: env 形式でキーが空になる行の扱いが未決
+- **発生元**: dist-spec (20261101_125000_feedback_mail_removal_housekeeping)
+- **種別**: Spec確認
+- **提案内容**: CLI 契約 config_input_rules.env_files の順序つき規則で、キーの前後の空白を除いた結果キーが空になる行(例 ` =abc`)を invalid line にするか unknown key にするかが未決。今の実装は feature flag 設定 = 読み飛ばし、速報クロスチェック設定 = 形式違反で異なる。どちらかに揃えるには実装の変更が要るため、2026-11-01 の変更(今の実装と同じ規則を書く)の範囲外として残した。
+- **根拠**: (サブエージェントが記入)
+- **影響範囲**: (サブエージェントが記入)
+- **推奨対応**: 反映
+- **ステータス**: closed
+- **決定(2026-11-03, feedback:20261103_housekeeping_followups)**: invalid line に揃える。CLI 契約 config_input_rules.env_files の順序つき規則に「キーの前後の空白を除いた結果キーが空になる行は `error: invalid line line=N path: ...`(終了コード 2)」と例(` =abc` / `=abc` / ` = `)を書き、全 env 設定ファイル共通とした(compare_command_argv.split の再掲も同時に更新)。feature flag 設定の読み込みの差分(キーが空の行の読み飛ばし、`=` の無い行をキーだけの行として扱う、空白だけの行の読み飛ばし)は実装を契約に合わせる対象として spec-decision-023 に記録(CR-f3b8a1d0-002、spec:20261103_085000_feedback_housekeeping_followups)
+

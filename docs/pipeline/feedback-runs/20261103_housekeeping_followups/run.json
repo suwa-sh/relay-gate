@@ -1,0 +1,168 @@
+{
+  "schema_version": "distillery.feedback-run/v1",
+  "feedback_request_id": "20261103_housekeeping_followups",
+  "input_sha256": "7a81f28ce6fef4c2f70e2839d657a3f8e8480671bd846b460edab3d22b3ba775",
+  "ambiguity_policy": "interactive",
+  "routing_basis": {
+    "ownership_catalog_version": "1.0.0",
+    "ownership_catalog_sha256": "801750c2abe99945a3de9387b82339b2bc96ccb2da564f9923cc0e9b76a2bd39",
+    "routing_policy_version": "1.1.0",
+    "routing_policy_sha256": "3873275bf4adb3d9d7b7c41c22c9463d054a3614df7bbcab7514f0c1e23e166e",
+    "prompt_schema_sha256": "bf7c7f34d7a2fc5976ccd2589a454172a4630e1448c509966b620f88029732c4",
+    "stage_packet_renderer_version": "1",
+    "skipped_stages": [
+      "design_system",
+      "spec_stories"
+    ],
+    "repository_head": "38cf3f4a5dff8f47c581ab984ab8c37805c44e20",
+    "latest_domain_event_ids": {
+      "requirements": {
+        "rdra/events": "20261101_121000_feedback_mail_removal_housekeeping",
+        "usdm/events": "20261101_121000_feedback_mail_removal_housekeeping"
+      },
+      "quality_attributes": {
+        "nfr/events": "20261101_122000_feedback_mail_removal_housekeeping"
+      },
+      "architecture": {
+        "arch/events": "20261101_123000_feedback_mail_removal_housekeeping"
+      },
+      "infrastructure": {
+        "infra/events": "20261101_124000_feedback_mail_removal_housekeeping"
+      },
+      "design_system": {
+        "design/events": null
+      },
+      "spec": {
+        "specs/events": "20261101_125000_feedback_mail_removal_housekeeping"
+      },
+      "spec_stories": {
+        "design/events": null
+      }
+    },
+    "domain_event_root_snapshots": {
+      "rdra/events": {
+        "head_event_id": "20261101_121000_feedback_mail_removal_housekeeping",
+        "head_event_sha256": "594746d311a735679ebfbdd80071587510a2f1010206d650c1f6ad902de304c7",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency",
+          "20260908_011000_feedback_slot_status_wording",
+          "20260921_084000_feedback_impl_feedback_eff24f55",
+          "20261010_200000_feedback_impl_feedback_dcd8234d",
+          "20261101_101000_feedback_impl_feedback_dcd8234d",
+          "20261101_121000_feedback_mail_removal_housekeeping"
+        ],
+        "event_set_sha256": "5795b09bd67792d30ba3d94d0969f0989296918cdd1a290e6b6351e3a0bc18c4",
+        "latest_tree_sha256": "453ee56acfc6d7907100df850a87b1cc2320b740a8714b45e1c09fe08d169603"
+      },
+      "usdm/events": {
+        "head_event_id": "20261101_121000_feedback_mail_removal_housekeeping",
+        "head_event_sha256": "d044f91098762e4f71665ea3e5c74262b93cbbff70af28d685ef8f795137aaea",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency",
+          "20260908_011000_feedback_slot_status_wording",
+          "20260921_084000_feedback_impl_feedback_eff24f55",
+          "20261010_200000_feedback_impl_feedback_dcd8234d",
+          "20261101_101000_feedback_impl_feedback_dcd8234d",
+          "20261101_121000_feedback_mail_removal_housekeeping"
+        ],
+        "event_set_sha256": "5795b09bd67792d30ba3d94d0969f0989296918cdd1a290e6b6351e3a0bc18c4",
+        "latest_tree_sha256": "b0facdbce1d2483fba0dc96579fafe2501105d7192432f48677dc95644da0618"
+      },
+      "nfr/events": {
+        "head_event_id": "20261101_122000_feedback_mail_removal_housekeeping",
+        "head_event_sha256": "a3ead19fd3bcc2c60027240386186bce845bce0be0ca6f5fbec991e462368f41",
+        "event_ids": [
+          "20260830_183726_initial_nfr",
+          "20260905_085000_feedback_todo_resolution",
+          "20260907_013000_feedback_todo_followup",
+          "20260907_120000_feedback_abort_consistency",
+          "20260908_013000_feedback_slot_status_wording",
+          "20260921_090000_feedback_impl_feedback_eff24f55",
+          "20261010_201000_feedback_impl_feedback_dcd8234d",
+          "20261101_102000_feedback_impl_feedback_dcd8234d",
+          "20261101_122000_feedback_mail_removal_housekeeping"
+        ],
+        "event_set_sha256": "f66a9c2023293c6dc3689d89ea445de83001be61958ca752373c69df795c37be",
+        "latest_tree_sha256": "03bc17f634b24562238a48102b36e90a6ee82d3f277978cf6c71686481fe4d24"
+      },
+      "arch/events": {
+        "head_event_id": "20261101_123000_feedback_mail_removal_housekeeping",
+        "head_event_sha256": "cc73fe4c540b1c5ce6f8b59f343e94a99ccc612e852dd84e4cffbb7551edc8b9",
+        "event_ids": [
+          "20260830_184457_initial_arch",
+          "20260830_202427_arch_infra_feedback_20260830_190412_infra_product_design",
+          "20260905_091000_feedback_todo_resolution",
+          "20260907_015000_feedback_todo_followup",
+          "20260907_122000_feedback_abort_consistency",
+          "20260908_015000_feedback_slot_status_wording",
+          "20260921_092000_feedback_impl_feedback_eff24f55",
+          "20261010_202000_feedback_impl_feedback_dcd8234d",
+          "20261101_103000_feedback_impl_feedback_dcd8234d",
+          "20261101_123000_feedback_mail_removal_housekeeping"
+        ],
+        "event_set_sha256": "a0d1748c0a8fee8736b1cd61eadf86161faaa31046c1ec2f96a0d33577c9a46a",
+        "latest_tree_sha256": "39544fc8a4d65a2867e9a380940af474f7f0890ad3340f8c050966e5ce468997"
+      },
+      "infra/events": {
+        "head_event_id": "20261101_124000_feedback_mail_removal_housekeeping",
+        "head_event_sha256": "96a12509202abca09a042690b0654a2c0d3d4480e4fe0fd56f82636cd3dae996",
+        "event_ids": [
+          "20260830_190412_infra_product_design",
+          "20260905_093000_feedback_todo_resolution",
+          "20260907_021000_feedback_todo_followup",
+          "20260907_124000_feedback_abort_consistency",
+          "20260908_021000_feedback_slot_status_wording",
+          "20260921_094000_feedback_impl_feedback_eff24f55",
+          "20261010_203000_feedback_impl_feedback_dcd8234d",
+          "20261101_104000_feedback_impl_feedback_dcd8234d",
+          "20261101_124000_feedback_mail_removal_housekeeping"
+        ],
+        "event_set_sha256": "47d230839bc5a70453729a600a6c0f4f9fa31d076d3bee83fb708e1f0e48c32d",
+        "latest_tree_sha256": "bb9b07449774d3642ef1e2c86eac0b090c08d106323a908ba25a91a83f6fff49"
+      },
+      "design/events": {
+        "head_event_id": null,
+        "head_event_sha256": null,
+        "event_ids": [],
+        "event_set_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "latest_tree_sha256": null
+      },
+      "specs/events": {
+        "head_event_id": "20261101_125000_feedback_mail_removal_housekeeping",
+        "head_event_sha256": "a36cb3172fc4408ddaa21da1184d4b94b098b664157ded1cdeb1d7cf75261ff0",
+        "event_ids": [
+          "20260830_202851_spec_generation",
+          "20260905_100000_feedback_todo_resolution",
+          "20260907_024000_feedback_todo_followup",
+          "20260907_131000_feedback_abort_consistency",
+          "20260908_024000_feedback_slot_status_wording",
+          "20260908_062000_feedback_spec_machine_readable",
+          "20260917_050000_feedback_impl_feedback_fd678b04",
+          "20260917_100000_feedback_impl_feedback_fd678b04_cycle2",
+          "20260921_100000_feedback_impl_feedback_eff24f55",
+          "20260923_112000_feedback_impl_feedback_eff24f55_cycle2",
+          "20261010_204000_feedback_impl_feedback_dcd8234d",
+          "20261027_055000_feedback_impl_feedback_dcd8234d",
+          "20261101_105000_feedback_impl_feedback_dcd8234d",
+          "20261101_125000_feedback_mail_removal_housekeeping"
+        ],
+        "event_set_sha256": "d12647480ea8083b938ede750ba5372410d861b839c7892499c4260712c8d5e8",
+        "latest_tree_sha256": "e4ab211643fc4743770169549ae5d13f9ecb13cc6b7987e57dbeffc4d3261d46"
+      }
+    }
+  },
+  "basis_snapshot": {
+    "ownership_catalog": "ownership-catalog.json",
+    "routing_policy": "routing-policy.json",
+    "prompt_data_policy": "prompt-data-policy.txt"
+  },
+  "stage_packet_renderer_version": "1",
+  "initial_routing_state": "resolved",
+  "execution_state_at_creation": "resolved"
+}

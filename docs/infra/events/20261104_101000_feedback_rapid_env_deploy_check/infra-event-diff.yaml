@@ -1,0 +1,72 @@
+meta:
+  event_id: "20261104_101000_feedback_rapid_env_deploy_check"
+  trigger_event: "infra:20261104_091000_feedback_external_review_fixes"
+  created_at: "2026-11-04T10:10:00Z"
+  mode: "differential"
+  mcl_rerun: "skipped_targeted_update"
+  mcl_rerun_reason: "上流(USDM / RDRA / NFR / arch)の latest は変更なし。translation(workload_type / availability_tier / latency / data_classification / traffic / consistency / cost_posture / target_clouds)も無変更。変更はインフラ成果物の中だけで、構築手順(config ロール)の速報クロスチェック設定・確報クロスチェック worker 設定・認証情報の平文値の配置時検査が CLI 契約より厳しく、正当な設定で構築が失敗する誤りを直すもの(確報の切り替え変数と、認証情報らしい値を警告だけにすることは 2026-11-04 に利用者が決定)。MCL 出力の該当記述を差分更新した(MCL product-design の全量再実行は行わない)"
+feedback_request:
+  feedback_request_id: "20261104_rapid_env_deploy_check"
+  input_sha256: "aaab9c2bbac2b4952afa8c2bf3db4c42cf8b84a4e3b570bfcf15b1d180dda0c2"
+  request_ids: ["CR-d8a2f4b6-001"]
+  work_unit_ids: ["CR-d8a2f4b6-001#1"]
+direct_work_unit_ids: ["CR-d8a2f4b6-001#1"]
+stage_packet: "docs/pipeline/feedback-runs/20261104_rapid_env_deploy_check/stage-packets/infrastructure.md"
+changes:
+  event_id: "20261104_101000_feedback_rapid_env_deploy_check"
+  created_at: "2026-11-04T10:10:00Z"
+  source: "構築手順の速報クロスチェック設定の配置時検査の指摘(2026-11-04)に基づくインフラ設計の差分更新: 速報クロスチェック設定の配置時検査を CLI 契約に合わせてファイルの存在確認だけにし、確報クロスチェック worker 設定は構築の変数で使う設置だけ配置し、認証情報らしい値の検査を警告だけにする"
+  arch_event_ref: "20261103_133000_feedback_housekeeping_db_required"
+  nfr_event_ref: "20261103_132000_feedback_housekeeping_db_required"
+  translation:
+    unchanged: true
+  mcl_execution:
+    status: "completed"
+    completed_at: "2026-11-04T10:10:00Z"
+    outputs_updated:
+      - path: "infra/product/onprem/ansible/roles/relay-gate-config/tasks/main.yml"
+        change: "「速報クロスチェック設定のキー構成を検査する」タスク(RAPID_DB_CONN_REF の行と、RAPID_LEASE_SEC / RAPID_POLL_INTERVAL_SEC が正の整数の行を grep で必須)を「速報クロスチェック設定が存在することを検査する」(test -f /etc/relay-gate/rapid-crosscheck.env。速報有効時のみ)に改め、中身の検査は CLI 契約が所有する(起動コマンドは validate-config.sh --rapid-crosscheck、RAPID_DB_CONN_REF の欠落・空と RAPID_* の値の不正は各読み手の起動時検査、秒の 2 キーは任意で既定 600 / 30)旨をコメントに書いた。配置タスク名を必須 2 つ・任意 2 キーに直した。確報クロスチェック worker 設定の配置と検査を、構築の変数 relay_gate_final_crosscheck_enabled(既定 false。速報の rapid_crosscheck_mode と同じ形)が true のときだけにし、検査を非空確認(test -s)から存在確認(test -f)に改めた。false ではファイルを置かず検査もしない(CLI 契約はファイルが無い・FINAL_DB_CONN_REF が無い・空を確報を使わない設置として扱うため矛盾しない)。「確報は常時有効」のコメントを直した。認証情報の平文値の検査を、一致で失敗する検査から、env のコメント行を除いて一致した行の該当ファイルと行番号を警告するだけ(構築は止めない。行の中身は出さない)に改め、CLI 契約の秘密らしい値は警告して受け付ける方針(2026-09-22)と揃えた旨をコメントに書いた。さらに(2026-11-04 に利用者が決定)、確報の読み手が両セグメントにいるため、config ロールを DB セグメントにも適用し、DB セグメントでは確報クロスチェック worker 設定だけを置くよう、他の設定ファイルの配置と検査に segment == 'execution' を付けた(runtime ロールと同じ書き方)。false では両セグメントから final-crosscheck.env を消す(state: absent)。構築手順をサーバーの状態の正本とし、残ったファイルで housekeep.sh が確報を使う設置と誤判定するのを防ぐためで、「手で消す」記述を改めた。認証情報らしい値の警告は両セグメントで行う(DB セグメントでは確報クロスチェック worker 設定だけが対象)"
+        work_units: ["CR-d8a2f4b6-001#1"]
+      - path: "docs/mcl/product/output/product-impl-onprem.yaml"
+        change: "config_store の contents の rapid-crosscheck.env を必須(RAPID_DB_CONN_REF / RAPID_COMPARE_COMMAND)と任意(RAPID_LEASE_SEC 既定 600 / RAPID_POLL_INTERVAL_SEC 既定 30)に分け、final-crosscheck.env を構築の変数で確報を使う設置だけ配置することを追記した。検証規則「rapid-crosscheck.env が 3 キーと起動コマンドのキーを持ち秒の 2 キーが正の整数」を「存在すること(配置時は存在確認だけ)」に、「final-crosscheck.env がキーを持つ」を「確報を使う設置で存在すること」に改め、中身の検査の所有者を CLI 契約(validate-config.sh と各読み手の起動時検査)と書いた。認証情報の平文検査の規則を、警告だけ(env のコメント行を除く。構築は止めない)に改めた。さらに final-crosscheck.env を両セグメントに置き false では両方から消すこと、検証規則を両セグメントでの存在確認と false で無いことに改め、全ホストが構築手順でデプロイ済みである前提を書いた(2026-11-04 に利用者が決定)"
+        work_units: ["CR-d8a2f4b6-001#1"]
+      - path: "docs/mcl/product/output/product-mapping-onprem.yaml"
+        change: "config_store の configuration_notes の rapid-crosscheck.env を必須 2 つ・任意 2 キーに分け、final-crosscheck.env は構築の変数で確報を使う設置だけ配置すること、配置時の検査は存在確認だけで中身の検査は CLI 契約が所有すること、認証情報らしい値は警告だけで構築を止めないことを追記した。final-crosscheck.env を両セグメントに置き false では両方から消すこと、全ホストが構築手順でデプロイ済みである前提を追記した(2026-11-04 に利用者が決定)"
+        work_units: ["CR-d8a2f4b6-001#1"]
+      - path: "docs/mcl/product/output/product-workload-model.yaml"
+        change: "config_store の説明の速報クロスチェック設定を必須 2 つ・任意 2 キーに分け、確報クロスチェック worker 設定は確報を使う設置だけ配置することを追記した。実行ホストと確報 worker の動くホストの両方に置き、使わない設置では両方から消すことを追記した(2026-11-04 に利用者が決定)"
+        work_units: ["CR-d8a2f4b6-001#1"]
+      - path: "docs/mcl/product/input/product-input.yaml"
+        change: "config_store の説明の速報クロスチェック設定を、必須は接続参照名と起動コマンド、lease 期間・poll 間隔は任意の運用チューニング値(既定 600 / 30 秒)に直し、確報クロスチェック worker 設定は確報を使う設置だけ配置することを追記した(translation のフィールドは不変)。product-input.yaml(イベント直下のコピー)も同一内容。実行ホストと確報 worker の動くホストの両方に置き、使わない設置では両方から消すことも追記した(2026-11-04 に利用者が決定)"
+        work_units: ["CR-d8a2f4b6-001#1"]
+      - path: "docs/cloud-context/conformance/product/product-conformance-onprem.yaml"
+        change: "設定の要件の notes に、final-crosscheck.env は構築の変数で確報を使う設置だけ配置すること、認証情報らしい値は警告だけで構築を止めないことを追記した(判定は不変)。final-crosscheck.env を両セグメントに置き false では両方から消すことを追記した(2026-11-04 に利用者が決定)"
+        work_units: ["CR-d8a2f4b6-001#1"]
+      - path: "infra/product/onprem/ansible/inventory.ini.example"
+        change: "全ホスト共通の変数([all:vars])に relay_gate_final_crosscheck_enabled=false(確報を使うか。既定 false。確報 runner と確報 worker の両方が読むため全ホストで同じ値)を追記した"
+        work_units: ["CR-d8a2f4b6-001#1"]
+      - path: "infra/product/onprem/README.md"
+        change: "前提に、速報・確報の設定ファイルを置くかを inventory の変数(rapid_crosscheck_mode / relay_gate_final_crosscheck_enabled)で決めること、認証情報らしい値は警告だけで構築を止めないことを追記した。全ホスト(確報 worker が動く DB セグメントを含む)が構築手順で同じようにデプロイ済みであること、relay-gate の処理の中から設定ファイルは配らずコマンド変更時は構築手順で配り直すこと、false では両方の置き場から final-crosscheck.env を消すことを追記した(2026-11-04 に利用者が決定)"
+        work_units: ["CR-d8a2f4b6-001#1"]
+      - path: "infra/product/onprem/ansible/site.yml"
+        change: "DB セグメント(relay_gate_db_hosts)にも relay-gate-config を割り当てた。DB セグメントで置くのは確報クロスチェック worker 設定だけ(2026-11-04 に利用者が決定)"
+        work_units: ["CR-d8a2f4b6-001#1"]
+      - path: "docs/cloud-context/generated-md/product/relay-gate-target-architecture.md"
+        change: "ワークロード全体構成図の設定ノードに final-crosscheck.env(確報を使う設置だけ・確報 runner が読む)と、全ホストを構築手順で配ることを追記した。DB セグメントに確報クロスチェック worker 設定のノード(/etc/relay-gate/final-crosscheck.env。確報を使う設置だけ置き、使わない設置では消す。DB セグメントに置く設定はこれだけ)を追加し、確報 worker からの読み取りの辺を描いた(2026-11-04 に利用者が決定)。npx md-mermaid-lint で構文を確認した"
+        work_units: ["CR-d8a2f4b6-001#1"]
+    outputs_verified_unchanged:
+      - path: "docs/mcl/product/output/product-observability.yaml / product-cost-hints.yaml"
+        reason: "速報・確報の設定ファイルのキー構成や配置時検査を書いていない"
+        work_units: ["CR-d8a2f4b6-001#1"]
+      - path: "docs/mcl/product/output/product-impl-onprem.yaml(claim_pattern / connection_resolution / secret_handling)"
+        reason: "lease 期間と poll 間隔の出所が RAPID_LEASE_SEC / RAPID_POLL_INTERVAL_SEC であること、各読み手が RAPID_DB_CONN_REF / FINAL_DB_CONN_REF で接続先を解決すること、参照名だけを置くことは CLI 契約と一致している"
+        work_units: ["CR-d8a2f4b6-001#1"]
+      - path: "infra/product/onprem/ansible/roles/relay-gate-config/tasks/main.yml(ハング検知定期ジョブ設定・ハウスキープ設定・feature flag / ジョブマップの配置)"
+        reason: "ハング検知定期ジョブ設定とハウスキープ設定は既に存在確認だけで CLI 契約と一致している。feature flag / ジョブマップは配置だけで中身の検査をしていない"
+        work_units: ["CR-d8a2f4b6-001#1"]
+  arch_feedback:
+    status: "no_new_feedback"
+    reason: "変更は構築手順の配置時検査を CLI 契約に合わせただけで、ティア・依存ルール・方針に関わる新しい知見は無い。本 stage は feedback controller の指示により Phase4 で arch を更新しない"
+  writeback_check:
+    result: "not_required"
+    reason: "arch の変更が無く、translation の各フィールドも不変のため product-input の再生成(translation のやり直し)と Step2 の全量再実行は不要"

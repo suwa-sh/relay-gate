@@ -14,3 +14,10 @@
 | 2026-09-21 09:40:00 | [20260921_094000_feedback_impl_feedback_eff24f55](../../infra/events/20260921_094000_feedback_impl_feedback_eff24f55) |
 | 2026-10-10 20:30:00 | [20261010_203000_feedback_impl_feedback_dcd8234d](../../infra/events/20261010_203000_feedback_impl_feedback_dcd8234d) |
 | 2026-11-01 10:40:00 | [20261101_104000_feedback_impl_feedback_dcd8234d](../../infra/events/20261101_104000_feedback_impl_feedback_dcd8234d) |
+| 2026-11-01 12:40:00 | [20261101_124000_feedback_mail_removal_housekeeping](../../infra/events/20261101_124000_feedback_mail_removal_housekeeping) |
+| 2026-11-03 08:40:00 | [20261103_084000_feedback_housekeeping_followups](../../infra/events/20261103_084000_feedback_housekeeping_followups) |
+| 2026-11-03 13:40:00 | [20261103_134000_feedback_housekeeping_db_required](../../infra/events/20261103_134000_feedback_housekeeping_db_required) |
+| 2026-11-04 09:10:00 | [20261104_091000_feedback_external_review_fixes](../../infra/events/20261104_091000_feedback_external_review_fixes) |
+| 2026-11-04 10:10:00 | [20261104_101000_feedback_rapid_env_deploy_check](../../infra/events/20261104_101000_feedback_rapid_env_deploy_check) |
+| 2026-11-05 09:10:00 | [20261105_091000_feedback_final_env_per_segment](../../infra/events/20261105_091000_feedback_final_env_per_segment) |
+| 2026-11-05 11:10:00 | [20261105_111000_feedback_single_management_db](../../infra/events/20261105_111000_feedback_single_management_db) |

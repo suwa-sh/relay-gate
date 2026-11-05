@@ -25,12 +25,12 @@ models:
     layer: "presentation"
     type: "record"
     rdra_info: "ジョブスケジューラ応答"
-  - name: "AlertMail"
+  - name: "HangAlertLine"
     tier: "tier-ops"
-    layer: "gateway"
-    type: "record"
-    rdra_info: "通知メール"
-    note: "参照のみ。publish は tier-ops の hang-detector(UC「ハング疑い・実行エラー・比較異常を通知する」)が定義し、facade はメールを送受信しない"
+    layer: "domain"
+    type: "value-object"
+    rdra_info: "監視記録"
+    note: "参照のみ。hang-detector.sh の標準エラーの alert 行と終了コードは tier-ops(UC「ハング疑い・実行エラー・比較異常を通知する」)が定義し、facade は出力しない"
 
 tables: []
 kvs: []

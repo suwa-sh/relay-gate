@@ -3,7 +3,7 @@ artifact_type: "decision_record"
 skill_type: "product"
 artifact_id: "product-decision-004"
 title: "運用者向けメール通知のMTA選定"
-status: "accepted"
+status: "superseded"
 generated_at: "2026-08-30T20:17:49"
 source_refs:
   - "docs/mcl/product/output/product-workload-model.yaml#product.messaging.mail_notification"
@@ -40,3 +40,8 @@ decision:
   affected_elements:
     - "product.messaging.mail_notification"
   review_date: "2027-08-30"
+superseded_note: >-
+  2026-11-01 のメール通知廃止(アーキテクチャ設計 arch-decision-022)により本決定は失効した。relay-gate はメール等の
+  通知送信手段を持たず、ハング検知の異常はハング検知ジョブ自身の終了結果(警告終了 / 失敗)と標準エラーで知らせ、
+  ジョブスケジューラの既存の障害通知で運用者へ届ける。Postfix と relay-gate-mail ロール、canonical element
+  product.messaging.mail_notification は削除済み。本ファイルは当時の判断記録として残す。

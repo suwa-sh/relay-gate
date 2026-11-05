@@ -1,4 +1,4 @@
-# digest of arch/latest/arch-design.yaml section domain_architecture (L21-342); source_sha256: 42ba88928ec088c26d15ebb64f90299d73f7cad0cffa5f6576a96a470ae3a419
+# digest of arch/latest/arch-design.yaml section domain_architecture (L21-430); source_sha256: 6ee48d9e90d09b186d8d085a0ac0c64adb0a637559321a753c0612124f5da27d
 # 派生物。正本は arch-design.yaml。編集しない
 domain_architecture:
   subdomains:
@@ -40,6 +40,15 @@ domain_architecture:
         - "適用構成定義フロー"
       reason: "feature flag・ジョブマップ・比較定義・適用文書の設定契約を保守する業務で、案件ごとの差し替えを支える。設定所有区分の分離が主要関心であり、差別化要因ではない"
       source_model: "BUC: 適用構成定義フロー, アクター: 基盤適用設計者, 条件: 設定所有区分, 適用側で定義する事項"
+      confidence: "medium"
+    - id: "SD-005"
+      name: "実行履歴のハウスキープ"
+      type: "generic"
+      investment_policy: "既存の定石(保持日数による削除・削除待ちの置き場・冪等な再実行)で最小限に実装する。独自の工夫に投資しない"
+      related_buc_ids:
+        - "ハウスキープフロー"
+      reason: "RDRA が独立した業務「ハウスキープ業務」として切り出した(利用者確定)。保持日数を過ぎた終了済みの成果物と管理 DB の行を消す処理はどの実行基盤にも共通する保守機能であり、並行稼働・クロスチェックの差別化に寄与しないため generic とする"
+      source_model: "BUC: ハウスキープフロー, 情報: ハウスキープ設定, 条件: ハウスキープの削除判定, ハウスキープの削除順序と回復, アクター: 運用者"
       confidence: "medium"
   bounded_contexts:
     - id: "BC-001"
@@ -107,7 +116,11 @@ domain_architecture:
       name: "実行監視・復旧コンテキスト"
       ubiquitous_language:
         - term: "ハング疑い"
-          definition: "exitcode.txt が未出力のまま started-at.txt からの経過時間が hang_detect_limit_minutes を超えた background role。warning で通知するが状態は変更しない"
+          definition: "exitcode.txt が未出力のまま started-at.txt からの経過時間が hang_detect_limit_minutes を超えた background role。warning(ハング検知ジョブの警告終了と標準エラーの 1 行)で通知するが状態は変更しない"
+        - term: "ハング検知ジョブの終了結果による通知"
+          definition: "ハング検知ジョブが、その回の見回りで新たに見つけた異常を標準エラーに 1 件 1 行(対象・段階 warning / error・経過時間)で出し、新たな異常が無ければ正常終了、ハング疑いだけなら警告終了、background 実行エラーまたは速報クロスチェック異常が 1 件でもあれば失敗で終えること。運用者へはジョブスケジューラの既存のジョブ監視・障害通知で届く。具体的な終了コードは CLI 契約で確定する"
+        - term: "通知済み"
+          definition: "一度知らせた異常を次回以降の見回りで再び知らせないための判定。管理 DB を使う設定では監視記録の monitor_status の遷移で、RAPID_CROSSCHECK_MODE=off では成果物ルート配下の通知済みの印(Runner Result の契約ファイルとは別のファイル)で判定する。通知の判定後に監視記録または印の保存に失敗した異常は次回も通知する"
         - term: "明示中止"
           definition: "運用者がプロセス停止を自身で確認し、中止スクリプトに yes と答えて ABORTED へ更新すること。中止できる状態は background slot 実行と確報比較依頼が RUNNING のみ、速報比較依頼は REQUESTED / CLAIMED / RUNNING のいずれか(abort-rapid-crosscheck。CLAIMED を放置すると lease 失効で再 claim されるため運用者が止める手段として必要)。slot の中止は成果物ディレクトリへの aborted.txt 書き込みを正本とし、RAPID_CROSSCHECK_MODE が off 以外なら管理 DB の状態も更新する。abort-blue / abort-green は run の中止として、対象 run に REQUESTED で未着手(worker が claim していない)の速報比較依頼があればそれも ABORTED にする。これは両系の完了通知で依頼が作成された直後に slot を中止した場合の競合窓を塞ぐ保険であり、dispatcher 側の中止済み run 判定と併用する(CLAIMED / RUNNING の依頼は abort-rapid-crosscheck の対象)。スクリプトはプロセスを停止しない"
         - term: "background 側リラン"
@@ -115,7 +128,6 @@ domain_architecture:
       related_subdomain_id: "SD-003"
       owned_entity_ids:
         - "E-021"
-        - "E-022"
         - "E-023"
         - "E-024"
       owned_buc_ids:
@@ -124,7 +136,7 @@ domain_architecture:
         - "background 側リランフロー"
       team_ownership: null
       reason: "状態モデル「監視状態」が独立し、hang-detector / background-rerun / abort-* が通常起動の facade から分離された運用スクリプト群として方針資料に定義されているため"
-      source_model: "BUC: background 実行監視フロー, 実行中止フロー, background 側リランフロー, 情報: 監視記録, 通知メール, リラン指示, 中止指示, 状態: 監視状態, クロスチェック依頼, 条件: slot 中止可否判定, 依頼中止可否判定, バリエーション: 中止対象種別, 停止確認応答"
+      source_model: "BUC: background 実行監視フロー, 実行中止フロー, background 側リランフロー, 情報: 監視記録, リラン指示, 中止指示, 状態: 監視状態, クロスチェック依頼, 条件: slot 中止可否判定, 依頼中止可否判定, 通知レベルの判定, CLI による提示, バリエーション: 中止対象種別, 停止確認応答"
       confidence: "medium"
     - id: "BC-005"
       name: "適用構成コンテキスト"
@@ -136,7 +148,9 @@ domain_architecture:
         - term: "速報クロスチェック設定"
           definition: "速報クロスチェック用の env 設定ファイル(rapid-crosscheck.env)。管理 DB 接続参照名(RAPID_DB_CONN_REF。値は置かず参照名のみ)・lease 期間(RAPID_LEASE_SEC)・worker の poll 間隔(RAPID_POLL_INTERVAL_SEC)を保持し、facade・slot runner・速報クロスチェック runner・worker が読む。RAPID_CROSSCHECK_MODE=off では不要。ハング検知定期ジョブ設定と同型だが所有項目と読み手が異なるため別ファイル"
         - term: "設定所有区分"
-          definition: "各設定項目の正本をどこ(feature flag / slot ジョブマップ / ハング検知定期ジョブ設定 / 速報クロスチェック設定(速報の比較ツール起動コマンドを含む)/ 確報クロスチェック worker 設定(確報の比較ツール起動コマンドを含む)/ 適用文書)が所有するかの区分。比較対象は比較ツール側(適用側)が持つ"
+          definition: "各設定項目の正本をどこ(feature flag / slot ジョブマップ / ハング検知定期ジョブ設定(管理 DB 接続参照名)/ ハウスキープ設定(保持日数と管理 DB 接続参照名)/ 速報クロスチェック設定(速報の比較ツール起動コマンドを含む)/ 確報クロスチェック worker 設定(確報の比較ツール起動コマンドを含む)/ 適用文書)が所有するかの区分。比較対象は比較ツール側(適用側)が持つ"
+        - term: "ハウスキープ設定"
+          definition: "ハウスキープ定期ジョブが使う設定。保持日数(正の整数。既定 90 日)と、ハウスキープ専用 DB ロールの管理 DB 接続参照名(値は置かず参照名のみ)を持つ。接続参照名は、RAPID_CROSSCHECK_MODE が off 以外の設置と確報クロスチェックを使う設置(確報クロスチェック worker の設定がある設置)では必須で、無い・空なら設定エラーとしてハウスキープは何も削除せずに終わる。無し・空にできるのは管理 DB を一切使わない設置(off で確報クロスチェック worker の設定が無い設置)だけで、そのときハウスキープは管理 DB に接続せず、確報比較依頼と管理 DB の行を削除しない。ファイル名・キー名と、確報クロスチェック worker の設定があるとみなす判定方法は仕様で確定する。保持日数は設定検証で正の整数であることを検査する"
       related_subdomain_id: "SD-004"
       owned_entity_ids:
         - "E-001"
@@ -147,11 +161,29 @@ domain_architecture:
         - "E-006"
         - "E-026"
         - "E-027"
+        - "E-028"
       owned_buc_ids:
         - "適用構成定義フロー"
       team_ownership: null
-      reason: "基盤適用設計者だけが扱う設定契約の語彙(feature flag / ジョブマップ / 比較定義(比較ツール起動コマンド)/ ハング検知定期ジョブ設定 / 速報クロスチェック設定 / 適用文書)で閉じており、実行系コンテキストは読み取り専用で従うため"
-      source_model: "BUC: 適用構成定義フロー, アクター: 基盤適用設計者, 情報: feature flag 設定, ジョブマップ, 比較定義, ハング検知定期ジョブ設定, 速報クロスチェック設定, 適用構成文書, 条件: 設定所有区分, バリエーション: 設定所有区分"
+      reason: "基盤適用設計者だけが扱う設定契約の語彙(feature flag / ジョブマップ / 比較定義(比較ツール起動コマンド)/ ハング検知定期ジョブ設定 / ハウスキープ設定 / 速報クロスチェック設定 / 適用文書)で閉じており、実行系コンテキストは読み取り専用で従うため"
+      source_model: "BUC: 適用構成定義フロー, アクター: 基盤適用設計者, 情報: feature flag 設定, ジョブマップ, 比較定義, ハング検知定期ジョブ設定, ハウスキープ設定, 速報クロスチェック設定, 適用構成文書, 条件: 設定所有区分, バリエーション: 設定所有区分"
+      confidence: "medium"
+    - id: "BC-006"
+      name: "ハウスキープコンテキスト"
+      ubiquitous_language:
+        - term: "削除の単位"
+          definition: "リランの親子(parent_run_id でつながる実行)をまとめた実行の単位と、確報比較依頼 1 件の 2 種類。実行の単位は単位内のすべての構成要素(並行稼働実行・各 slot・速報比較依頼)が終端し、最も遅い終了日時(管理 DB の行は completed_at、成果物だけの slot は exitcode.txt または aborted.txt の更新時刻。開始日時は使わない)から保持日数を過ぎたときだけ削除対象になる。1 つでも終わっていない構成要素があれば経過日数にかかわらず単位ごと残す"
+        - term: "削除待ちの置き場"
+          definition: "成果物ルート配下に置く、削除対象と判定した成果物の移動先。同じファイルシステム内の 1 回の rename で移してから削除し、置き場に残っているものは判定をやり直さず次回の実行(ハウスキープ設定の検査を通った実行。設定エラーのときは置き場の中身も消さない)で無条件に削除する。置き場の場所は仕様で確定する"
+        - term: "ハウスキープ専用 DB ロール"
+          definition: "管理 DB の行の削除だけに使う DB ロール。対象テーブルの SELECT と DELETE だけを持ち、業務用接続ロールには DELETE を足さない"
+      related_subdomain_id: "SD-005"
+      owned_entity_ids: []
+      owned_buc_ids:
+        - "ハウスキープフロー"
+      team_ownership: null
+      reason: "RDRA がハウスキープ業務を独立した業務として切り出し(利用者確定)、方針資料も C1 にハウスキープを独立要素として置いている。削除の単位・削除待ちの置き場・専用 DB ロールの語彙は他コンテキストに無く、行の削除という他コンテキストの不変条件(監視は通知のみ、中止は状態更新のみ、速報・確報のモデル所有)と相容れない責務を持つため、実行監視・復旧コンテキストへ統合せず独立 BC とする。自前の永続エンティティは持たず、設定(ハウスキープ設定)は適用構成コンテキストが所有する"
+      source_model: "BUC: ハウスキープフロー, 情報: ハウスキープ設定, 並行稼働実行(parallel_run), slot 実行, 速報実行(rapid_run), 速報比較依頼(rapid_crosscheck_request), 確報比較依頼(final_crosscheck_request), 監視記録, Runner Result, 実行設定(execution-spec), 条件: ハウスキープの削除判定, ハウスキープの削除順序と回復, リラン系譜の追跡, 速報クロスチェック有効判定"
       confidence: "medium"
   context_map:
     - id: "CM-001"
@@ -236,6 +268,56 @@ domain_architecture:
       reason: "比較対象は比較ツール側(適用側)が定義し、確報 worker は設定の起動コマンドをそのまま起動すると条件に定められているため"
       source_model: "条件: 適用側で定義する事項, 設定所有区分"
       confidence: "medium"
+    - id: "CM-009"
+      from_bc_id: "BC-006"
+      to_bc_id: "BC-001"
+      pattern: "conformist"
+      direction: "downstream"
+      translator_description: "BC-006(ハウスキープ)は BC-001 の成果物(execution-spec.json / exitcode.txt / aborted.txt とその更新時刻)と parallel_run・slot 実行の状態と completed_at、parent_run_id のリラン系譜をそのまま読み、削除の単位と終了日時を判定する。保持日数を過ぎた単位の成果物ディレクトリを削除待ちの置き場へ移してから削除し、parallel_run・slot 実行の行を削除する。状態は変更しない"
+      integration_events: []
+      reason: "ハウスキープは BC-001 の Runner Result Contract と状態導出規則に従って終端を判定するだけで、契約を変えないため"
+      source_model: "条件: ハウスキープの削除判定, リラン系譜の追跡, slot 実行の状態導出規則, 速報クロスチェック有効判定, 情報: 並行稼働実行(parallel_run), slot 実行, Runner Result, 実行設定(execution-spec)"
+      confidence: "medium"
+    - id: "CM-010"
+      from_bc_id: "BC-006"
+      to_bc_id: "BC-002"
+      pattern: "conformist"
+      direction: "downstream"
+      translator_description: "BC-006 は BC-002 の rapid_run・速報比較依頼の状態と completed_at を読み、実行の単位の構成要素として終端を判定する。単位が削除対象になったときだけ、その run の rapid_run・速報比較依頼の行を実行の単位と同じトランザクションで削除する。REQUESTED / CLAIMED / RUNNING の依頼を含む単位は残す"
+      integration_events: []
+      reason: "速報側のモデルの作成・更新は BC-002 が所有したまま、保持期間を過ぎた終端済みの行の削除だけをハウスキープが担うため(クロスティアルール CTR-008)"
+      source_model: "条件: ハウスキープの削除判定, ハウスキープの削除順序と回復, 状態: クロスチェック依頼, 情報: 速報実行(rapid_run), 速報比較依頼(rapid_crosscheck_request)"
+      confidence: "medium"
+    - id: "CM-011"
+      from_bc_id: "BC-006"
+      to_bc_id: "BC-003"
+      pattern: "conformist"
+      direction: "downstream"
+      translator_description: "BC-006 は確報比較依頼を実行にひも付けず依頼ごとに扱い、終端状態(SUCCEEDED / FAILED / ABORTED)で completed_at から保持日数を過ぎた依頼の行を削除する"
+      integration_events: []
+      reason: "確報比較依頼は run_id を持たないため、条件「ハウスキープの削除判定」が依頼ごとの判定を定めているため"
+      source_model: "条件: ハウスキープの削除判定, 状態: クロスチェック依頼, 情報: 確報比較依頼(final_crosscheck_request)"
+      confidence: "medium"
+    - id: "CM-012"
+      from_bc_id: "BC-006"
+      to_bc_id: "BC-004"
+      pattern: "conformist"
+      direction: "downstream"
+      translator_description: "BC-006 は削除対象になった実行の単位に属する監視記録の行と、RAPID_CROSSCHECK_MODE=off でハング検知が残した通知済みの印を、成果物と同じ順序規則で削除する。監視状態は変更しない"
+      integration_events: []
+      reason: "情報「監視記録」が、監視記録と通知済みの印は保持日数を過ぎた実行の単位とともにハウスキープで削除されると定めているため"
+      source_model: "情報: 監視記録, 条件: ハウスキープの削除順序と回復"
+      confidence: "medium"
+    - id: "CM-013"
+      from_bc_id: "BC-006"
+      to_bc_id: "BC-005"
+      pattern: "conformist"
+      direction: "downstream"
+      translator_description: "BC-006 は BC-005 のハウスキープ設定(保持日数と専用 DB ロールの接続参照名)をそのまま読み、保持日数で削除対象を判定する。あわせて feature flag の RAPID_CROSSCHECK_MODE と、BC-005 の確報クロスチェック worker 設定の有無を判定に使う。off 以外または確報クロスチェック worker の設定がある設置で接続参照名が無い・空なら設定エラーで何も削除せず、管理 DB に接続しないのは off で確報クロスチェック worker の設定が無く接続参照名が無い・空の設置だけとする(SP-027。設定があるとみなす判定方法は仕様で確定する)。削除したくない場合は運用者が定期ジョブを登録しない"
+      integration_events: []
+      reason: "保持日数と接続参照名は基盤適用設計者が所有する設定契約であり、ハウスキープはそれに従うだけのため。接続参照名が必須かどうかは、管理 DB を使う機能(速報クロスチェックと確報クロスチェック)が設置にあるかで決まるため、feature flag と確報クロスチェック worker 設定の有無も読む"
+      source_model: "情報: ハウスキープ設定, 条件: 設定所有区分, ハウスキープの削除判定, バリエーション: 設定所有区分"
+      confidence: "medium"
   aggregate_hypotheses:
     - id: "AG-001"
       bounded_context_id: "BC-001"
@@ -286,14 +368,14 @@ domain_architecture:
     - id: "AG-004"
       bounded_context_id: "BC-004"
       root_entity_id: "E-021"
-      member_entity_ids:
-        - "E-022"
+      member_entity_ids: []
       invariants:
         - "監視は monitor_status / hang_suspected_at / alerted_at を記録し通知するだけ。RUNNING を ABORTED にせず、プロセスを停止せず、新しい実行依頼を作成しない"
         - "hang_detect_limit_minutes が 0 の role と foreground role は検知対象外"
-        - "ハング疑いは warning、background 実行エラーと速報クロスチェック異常は error"
-      note: "仮説。最終確定は dist-spec または ddd-tactical-implementation で行う。リラン指示・中止指示は状態更新の指示であり、集約というより並行稼働実行 / 依頼に対するコマンドとして扱う可能性が高い"
-      source_model: "情報: 監視記録, 通知メール, 状態: 監視状態, 条件: 監視は通知のみ, ハング検知対象の除外, 通知レベルの判定, 警告傾向の記録"
+        - "ハング疑いは warning、background 実行エラーと速報クロスチェック異常は error。その回に新たに見つけた異常だけを標準エラーに 1 件 1 行で出し、ハング検知ジョブを新たな異常なしなら正常終了、warning だけなら警告終了、error が 1 件でもあれば失敗で終える"
+        - "通知済みの異常は監視記録の遷移(RAPID_CROSSCHECK_MODE=off では通知済みの印)で再び通知しない。通知の判定後に保存に失敗した異常は次回も通知する"
+      note: "仮説。最終確定は dist-spec または ddd-tactical-implementation で行う。リラン指示・中止指示は状態更新の指示であり、集約というより並行稼働実行 / 依頼に対するコマンドとして扱う可能性が高い。通知メールのエンティティ廃止(2026-11-01)により監視記録の単独集約となった"
+      source_model: "情報: 監視記録, 状態: 監視状態, 条件: 監視は通知のみ, ハング検知対象の除外, 通知レベルの判定, 警告傾向の記録"
       confidence: "low"
     - id: "AG-005"
       bounded_context_id: "BC-005"
@@ -314,6 +396,7 @@ domain_architecture:
       BC2["速報クロスチェックコンテキスト"]
       BC3["確報クロスチェックコンテキスト"]
       BC4["実行監視・復旧コンテキスト"]
+      BC6["ハウスキープコンテキスト"]
       BC1 -->|Conformist| BC5
       BC2 -->|Conformist| BC5
       BC3 -->|Conformist| BC5
@@ -322,3 +405,8 @@ domain_architecture:
       BC4 -->|Conformist| BC1
       BC4 -->|Conformist| BC2
       BC4 -->|Conformist| BC3
+      BC6 -->|Conformist| BC1
+      BC6 -->|Conformist| BC2
+      BC6 -->|Conformist| BC3
+      BC6 -->|Conformist| BC4
+      BC6 -->|Conformist| BC5

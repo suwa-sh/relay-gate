@@ -88,7 +88,7 @@ sequenceDiagram
 |--------|----------|----------|---------|-------------|
 | 確報結果の中継制約 | 出力するのは依頼の `stdout` / `stderr` / `exit_code` のみ。状態名(SUCCEEDED / FAILED / ABORTED)、difference_count、report_uri、final_crosscheck_id、プレフィックス・装飾を一切付けない。relay-gate 自身の info / warn は実行ログにのみ出す | tier-final-crosscheck | `relay_stored_result`(presentation) | exit_code=3 の FAILED をそのまま返す |
 | 比較ツール終了コードの対応 | 保存済み exit_code の値を変換しない(0 / 3 / 6 / その他の非 0 すべて) | tier-final-crosscheck | `relay_stored_result` | exit_code=3 の FAILED をそのまま返す |
-| CLI とメールによる提示 | 結果は標準出力・標準エラー・終了コードでのみ返す。メール・ファイル・状態名の追加提示をしない | tier-final-crosscheck | `final-crosscheck-runner.sh` | exit_code=0 の SUCCEEDED をそのまま返す |
+| CLI による提示 | 結果は標準出力・標準エラー・終了コードでのみ返す。ファイル・状態名の追加提示や、CLI の出力以外の通知をしない | tier-final-crosscheck | `final-crosscheck-runner.sh` | exit_code=0 の SUCCEEDED をそのまま返す |
 
 ## 計算ルール一覧
 
@@ -116,7 +116,7 @@ sequenceDiagram
 | 状態 | クロスチェック依頼 | 終端状態(SUCCEEDED / FAILED / ABORTED)を読む |
 | 条件 | 確報結果の中継制約 | 3 値以外を返さない |
 | 条件 | 比較ツール終了コードの対応 | 終了コードを変換しない |
-| 条件 | CLI とメールによる提示 | CLI の 3 チャネルで返す |
+| 条件 | CLI による提示 | CLI の 3 チャネルで返す |
 | 画面 | final-crosscheck runner 応答出力(→ CLI 出力) | 無加工の stdout / stderr / 終了コード |
 | イベント | 確報結果の無加工中継 | ジョブスケジューラへの応答 |
 | イベント | 保存済み確報結果の読み出し | 管理 DB からの SELECT |

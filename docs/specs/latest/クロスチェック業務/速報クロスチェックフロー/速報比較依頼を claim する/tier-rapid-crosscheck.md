@@ -25,22 +25,26 @@
   2. off 以外のとき `$RELAY_GATE_CONFIG_DIR/rapid-crosscheck.env`(情報「速報クロスチェック設定」。env 形式。確報の `final-crosscheck.env` / 監視の `hang-detector.env` と同じ流儀だが、所有する項目と読み手が異なるため別ファイル。所有者は基盤適用設計者(設定所有区分)。契約 `cli-command-contract.yaml` の config_files が正)
   | キー | RDRA 属性 | 必須 | 既定 | 説明 |
   |---|---|---|---|---|
-  | `RAPID_DB_CONN_REF` | 管理 DB 接続参照名 | Yes(`RAPID_CROSSCHECK_MODE` が off 以外のとき) | — | 速報管理 DB 接続情報の参照名(認証情報の値は置かず参照名のみ。`HANG_DB_CONN_REF` と同じ参照名を指してよい)。rapid-crosscheck-runner.sh / rapid-crosscheck-worker.sh / rapid-crosscheck-result.sh が読む |
-  | `RAPID_LEASE_SEC` | lease 期間(秒) | No | 600 | claim lease(秒)。lease_until = now + RAPID_LEASE_SEC |
-  | `RAPID_POLL_INTERVAL_SEC` | worker の poll 間隔(秒) | No | 30 | 常駐時の poll 間隔(秒) |
-  - off 以外でファイル不在は `error: config file not found path: <path>`、`RAPID_DB_CONN_REF` 欠落は `error: option required option=RAPID_DB_CONN_REF path: <path>` で終了コード 2(ui-design.md の全コマンド共通定型文。管理 DB へは接続しない)。`management db is not configured` は off(3)専用。整数キーは 1 以上
+  | `RAPID_DB_CONN_REF` | 管理 DB 接続参照名 | Yes(`RAPID_CROSSCHECK_MODE` が off 以外のとき) | — | 管理 DB 接続情報の参照名(認証情報の値は置かず参照名のみ。`HANG_DB_CONN_REF` と同じ参照名を指してよい)。解決先は他の管理 DB 接続参照名と同じ 1 つの管理 DB(参照名の文字列は違ってよい。解決先が同じことは導入する側が確かめ、relay-gate は検査しない。CLI 契約 `conventions.credentials`)。rapid-crosscheck-runner.sh / rapid-crosscheck-worker.sh / rapid-crosscheck-result.sh が読む |
+  | `RAPID_COMPARE_COMMAND` | 速報比較ツール起動コマンド | Yes(`RAPID_CROSSCHECK_MODE` が off 以外のとき。worker が使う) | — | 起動は UC「比較ツールでジョブ単位比較を実行して結果を登録する」。欠落・空は `error: option required option=RAPID_COMPARE_COMMAND path: ...` で終了コード 2 |
+  | `RAPID_LEASE_SEC` | lease 期間(秒) | No | 600 | claim lease(秒)。lease_until = now + RAPID_LEASE_SEC。正の整数(`^[1-9][0-9]{0,8}$`。違反は `error: invalid value key=RAPID_LEASE_SEC value=... path: ...` + `hint: use a positive integer` で終了コード 2) |
+  | `RAPID_POLL_INTERVAL_SEC` | worker の poll 間隔(秒) | No | 30 | 常駐時の poll 間隔(秒)。正の整数(`^[1-9][0-9]{0,8}$`。違反は `error: invalid value key=RAPID_POLL_INTERVAL_SEC value=... path: ...` + `hint: use a positive integer` で終了コード 2) |
+  - off 以外でファイル不在は `error: config file not found path: <path>`、`RAPID_DB_CONN_REF` 欠落は `error: option required option=RAPID_DB_CONN_REF path: <path>` で終了コード 2(ui-design.md の全コマンド共通定型文。管理 DB へは接続しない)。`management db is not configured` は off(3)専用
+  - 起動時の検査の順(契約 `config_files.rapid-crosscheck.env` note): (1) ファイルの存在(不在は `error: config file not found path: ...`)・読み取り(読めないときは `error: config file is not readable path: ...`)→ (2) 入力の守備範囲(契約 `config_input_rules.env_files` の (i)(ii)。違反があればその段の error 行を全件出して止める)→ (3) 必須キー(`RAPID_DB_CONN_REF` → `RAPID_COMPARE_COMMAND`)の欠落・空 → (4) `RAPID_LEASE_SEC` → `RAPID_POLL_INTERVAL_SEC` の値。(1)(3)(4) は最初の違反の error 行(と hint)1 件だけを出して止める。どの段でも終了コード 2 で、管理 DB へは接続しない。未知キーは warn を出さない(validate-config.sh は出す)
+  - 任意キー(`RAPID_LEASE_SEC` / `RAPID_POLL_INTERVAL_SEC`)を省いた設定は既定値で動く。行の前後の空白・値を囲む引用符は契約 `config_input_rules.env_files` の取り出し方で除いてから値を検査する
+  - 構築手順の配置時の検査はファイルがあることの確認だけで、中身の検査はこの起動時の検査と `validate-config.sh --rapid-crosscheck` が持つ(契約 `config_files.rapid-crosscheck.env` note)
 - **環境変数(テスト専用)**: `RELAY_GATE_NOW`(テスト専用環境変数。UTC の Z 付き ISO 8601 で受け取り、内部でローカル時刻へ変換して now として使う。本番では未設定)。lease_until の算出と lease 失効判定に使う。契約 `cli-command-contract.yaml` の environment_variables が正
 
 ## 出力契約
 
 - **stdout**: `--once` で claim できたとき `run_id=` / `job_id=` / `worker_id=` / `lease_until=` の 4 行(続けて比較実行 UC の行)。claim 0 件のとき 0 行。常駐時は stdout に出さず実行ログのみ
-- **stderr**: `error: management db connection failed worker_id=... conn_ref=...`(6)、`error: config file not found path: ...`(2。off 以外で rapid-crosscheck.env 不在)、`error: option required option=RAPID_DB_CONN_REF path: ...`(2)、`error: management db is not configured mode=off`(3)、`error: invalid value key=RAPID_CROSSCHECK_MODE value=...` + 次行 `hint: use foreground, background or off`(2)、`error: unknown option option=...`、`info: no request to claim worker_id=...`(--verbose)
+- **stderr**: `error: management db connection failed worker_id=... conn_ref=...`(6)、`error: config file not found path: ...`(2。off 以外で rapid-crosscheck.env 不在)、`error: config file is not readable path: ...`(2)、`error: option required option=RAPID_DB_CONN_REF path: ...` / `error: option required option=RAPID_COMPARE_COMMAND path: ...`(2)、`error: invalid value key=RAPID_LEASE_SEC|RAPID_POLL_INTERVAL_SEC value=... path: ...` + 次行 `hint: use a positive integer`(2)、`error: management db is not configured mode=off`(3)、`error: invalid value key=RAPID_CROSSCHECK_MODE value=...` + 次行 `hint: use foreground, background or off`(2)、`error: unknown option option=...`、`info: no request to claim worker_id=...`(--verbose)
 - **実行ログ**(`RELAY_GATE_LOG_DIR/rapid-crosscheck-worker.sh.log`): `INFO claimed run_id=... worker_id=... lease_until=...` / `INFO lease expired released count=n` / `DEBUG no request to claim` / `ERROR management db connection failed worker_id=... conn_ref=...`。行形式は `_cross-cutting/ux-ui/ui-design.md` のログ行形式(`{script} {run_id} {ローカル日時} {LEVEL} {message}`)に従い、情報「実行ログ」の属性「出力日時」はこのローカル時刻列に対応する(run_id 未確定の行は `-`)
 - **終了コード**:
   | コード | 意味 | 条件 |
   |-------|------|------|
   | 0 | 成功 | `--once` で 1 件処理できた、または依頼が無かった。常駐時は SIGTERM で 0 |
-  | 2 | 入力エラー | 未知のオプション、`--worker-id` 形式不正、feature-flag.env 不在・`RAPID_CROSSCHECK_MODE` 列挙外(foreground / background / off 以外)、off 以外で rapid-crosscheck.env 不在・`RAPID_DB_CONN_REF` 欠落・整数値不正 |
+  | 2 | 入力エラー | 未知のオプション、`--worker-id` 形式不正、feature-flag.env 不在・`RAPID_CROSSCHECK_MODE` 列挙外(foreground / background / off 以外)、off 以外で rapid-crosscheck.env 不在・読み取り不可・入力の守備範囲の違反・`RAPID_DB_CONN_REF` / `RAPID_COMPARE_COMMAND` の欠落・空・`RAPID_LEASE_SEC` / `RAPID_POLL_INTERVAL_SEC` が正の整数でない |
   | 3 | 業務エラー | `RAPID_CROSSCHECK_MODE=off`(管理 DB が構成されていない。DB に接続せず終了) |
   | 6 | 実行エラー | claim の条件付き UPDATE 失敗、DB 接続失敗(常駐時はリトライ後に継続。下記) |
 
@@ -70,7 +74,7 @@
 
 ## UC ロジック
 
-- **設定ファイルの読み込み(共通規約の参照)**: 読む設定ファイル(env / CSV)の入力の守備範囲は CLI 契約 `config_input_rules` に従う(形式(UTF-8 / LF)から外れた NUL バイト・不正な文字コード・BOM・CR は契約と同文の error 行で拒否して終了コード 2、読み込みは 1 時点の内容だけで判定、補助コマンドの失敗は終了コード 6。値は本 tier に複写しない。判定する BDD は UC「slot ごとのジョブマップを定義する」に置く)。stdout / stderr / 実行ログ / メール本文に出す任意入力の制御文字は `ui-design.md`「制御文字の表記」の可視表記にする。bash の最低版は 5.0(契約 `conventions.runtime_prerequisites`)
+- **設定ファイルの読み込み(共通規約の参照)**: 読む設定ファイル(env / CSV)の入力の守備範囲は CLI 契約 `config_input_rules` に従う(形式(UTF-8 / LF)から外れた NUL バイト・不正な文字コード・BOM・CR と、env の invalid line・同じキーが 2 行以上ある設定(`error: duplicate key key=<KEY> lines=<n1,n2,...> path: ...`。どちらの行の値も使わない。報告の順は `config_input_rules.env_files`)は契約と同文の error 行で拒否して終了コード 2、読み込みは 1 時点の内容だけで判定、補助コマンドの失敗は終了コード 6。値は本 tier に複写しない。判定する BDD は UC「slot ごとのジョブマップを定義する」に置く)。stdout / stderr / 実行ログに出す任意入力の制御文字は `ui-design.md`「制御文字の表記」の可視表記にする。bash の最低版は 5.0(契約 `conventions.runtime_prerequisites`)
 - **バリデーション**: `--worker-id` は英数字・`_`・`-`(64 文字以内)。rapid-crosscheck.env の整数値は 1 以上、`RAPID_DB_CONN_REF` は非空
 - **確認プロンプト**: なし
 - **冪等性**: 同じ worker が `--once` を繰り返しても、各回は「REQUESTED があれば 1 件 claim」。claim 済みの依頼を再 claim しない
@@ -108,6 +112,8 @@
 
 ## ティア完了条件(BDD)
 
+以下のシナリオは、Given で設定ファイルの内容を書いていない限り、feature-flag.env に `RAPID_CROSSCHECK_MODE=background`、rapid-crosscheck.env に `RAPID_DB_CONN_REF=relaygate-db` と `RAPID_COMPARE_COMMAND=/opt/compare/stub-ok.sh {job_id}`(終了コード 0 を返すスタブ)がある前提とする。
+
 ```gherkin
 Feature: 速報比較依頼を claim する - 速報クロスチェックティア
 
@@ -127,7 +133,7 @@ Feature: 速報比較依頼を claim する - 速報クロスチェックティ�
     Then 終了コード 0 で依頼の worker_id は worker-02、lease_until は 2026-08-30T12:06:00 である
 
   Scenario: rapid-crosscheck.env の lease 期間と poll 間隔を使う(SPEC-005-06)
-    Given $RELAY_GATE_CONFIG_DIR/rapid-crosscheck.env に RAPID_DB_CONN_REF=relaygate-db, RAPID_LEASE_SEC=300, RAPID_POLL_INTERVAL_SEC=10 があり、rapid_crosscheck_requests に status=REQUESTED の行が 1 件あり、RELAY_GATE_NOW=2026-08-30T11:45:40Z が設定されている(TZ=UTC 前提)
+    Given $RELAY_GATE_CONFIG_DIR/rapid-crosscheck.env に RAPID_DB_CONN_REF=relaygate-db, RAPID_COMPARE_COMMAND=/opt/compare/stub-ok.sh {job_id}, RAPID_LEASE_SEC=300, RAPID_POLL_INTERVAL_SEC=10 があり、rapid_crosscheck_requests に status=REQUESTED の行が 1 件あり、RELAY_GATE_NOW=2026-08-30T11:45:40Z が設定されている(TZ=UTC 前提)
     When `rapid-crosscheck-worker.sh --once --worker-id worker-01` を実行する
     Then 参照名 relaygate-db で管理 DB に接続し、終了コード 0 で依頼の lease_until は 2026-08-30T11:50:40(now + 300 秒)である
     And 常駐起動時の claim 0 件後の sleep は 10 秒である
@@ -150,6 +156,17 @@ Feature: 速報比較依頼を claim する - 速報クロスチェックティ�
     Given feature-flag.env に RAPID_CROSSCHECK_MODE=background があり、$RELAY_GATE_CONFIG_DIR/rapid-crosscheck.env が存在しない
     When `rapid-crosscheck-worker.sh --once` を実行する
     Then 終了コード 2 で stderr に `error: config file not found path: $RELAY_GATE_CONFIG_DIR/rapid-crosscheck.env` が出て、管理 DB へは接続しない
+
+  Scenario: lease 期間が正の整数でない
+    Given feature-flag.env に RAPID_CROSSCHECK_MODE=background があり、$RELAY_GATE_CONFIG_DIR/rapid-crosscheck.env に RAPID_DB_CONN_REF=relaygate-db、RAPID_COMPARE_COMMAND=/opt/compare/rapid.sh {job_id}、RAPID_LEASE_SEC=0 の行がある
+    When `rapid-crosscheck-worker.sh --once` を実行する
+    Then 終了コード 2 で stderr は `error: invalid value key=RAPID_LEASE_SEC value=0 path: $RELAY_GATE_CONFIG_DIR/rapid-crosscheck.env` と `hint: use a positive integer` の 2 行だけで、管理 DB へは接続しない
+
+  Scenario: 任意キーを省き、空白と引用符を含む設定を受理する
+    Given feature-flag.env に RAPID_CROSSCHECK_MODE=background があり、$RELAY_GATE_CONFIG_DIR/rapid-crosscheck.env が `  RAPID_DB_CONN_REF = "relaygate-db" ` と `RAPID_COMPARE_COMMAND='/opt/compare/stub-ok.sh {job_id}'` の 2 行だけで(/opt/compare/stub-ok.sh は終了コード 0 を返すスタブ)、rapid_crosscheck_requests に status=REQUESTED の行が 1 件あり、RELAY_GATE_NOW=2026-08-30T11:45:40Z が設定されている(TZ=UTC 前提)
+    When `rapid-crosscheck-worker.sh --once --worker-id worker-01` を実行する
+    Then 終了コード 0 で、stderr に `error: config file` / `error: option required` / `error: invalid value` / `error: invalid line` / `error: duplicate key` で始まる行は無い
+    And 管理 DB 接続参照名 relaygate-db で接続して依頼を claim し、stdout の lease_until は 2026-08-30T11:55:40(既定の 600 秒)である
 
   Scenario: RAPID_CROSSCHECK_MODE=off では DB に接続せず 3 で終了する
     Given feature-flag.env に RAPID_CROSSCHECK_MODE=off があり、rapid-crosscheck.env が存在しない

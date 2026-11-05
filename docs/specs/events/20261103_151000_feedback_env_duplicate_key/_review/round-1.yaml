@@ -1,0 +1,66 @@
+round: 1
+findings:
+  - id: R-001
+    viewpoint: 4
+    severity: major
+    target: "_cross-cutting/api/cli-command-contract.yaml"
+    claim: "env の検査の段 (i)(バイト・改行の違反)で止めたときの validate-config.sh --rapid-crosscheck / --final-crosscheck / --housekeep の stdout が一意に決まらない。正本は (ii) で止めたときだけ固定順の行を出すと書き、(i) については書いていない。"
+    evidence: "config_input_rules.env_files の末尾は『--rapid-crosscheck / --final-crosscheck / --housekeep は (ii) で止まったときも固定順の行を出し…』だけで、(i) の stdout に触れていない。一方、UC「保持日数を過ぎた終了済みの実行と確報比較依頼を判定する」の tier-facade.md の出力契約は『stdout(固定順。終了コード 0 と 2 の検証結果で出す。内部障害の 6 では出さない)』で、(i) の終了コード 2 でも出す読み方になる(その場合の violations= が error 行の数か、hint 行を含むかも決まらない)。実装の validate_rapid_crosscheck.sh はバイト・改行の違反で stdout を出さずに 2 を返す。判断記録は『バイト・改行の違反で止める扱い…は新しい契約どおり』とするが、stdout の有無は契約に無いため一致を判定できない。"
+    suggested_fix: "config_input_rules.env_files の stdout の文に (i) で止めたときの扱い(出さない、または (ii) と同じく値の行を `-`・status=invalid・violations=<(i) で出した error 行の数(hint 行を数えない)>で出す)を 1 つに決めて書き、--housekeep の tier-facade.md の『終了コード 0 と 2 の検証結果で出す』をそれに揃える。"
+  - id: R-002
+    viewpoint: 4
+    severity: major
+    target: "_cross-cutting/api/cli-command-contract.yaml"
+    claim: "validate-config.sh の stdout の定義(契約 commands の validate-config.sh.stdout と、各 UC の stdout の記述)が、(ii) で止めたときに command_path / has_job_id_placeholder を `-` にする正本の規則を反映しておらず、正本と矛盾する。"
+    evidence: "契約 validate-config.sh.stdout は『--rapid-crosscheck: … command_path: <RAPID_COMPARE_COMMAND の先頭の語 …>, has_job_id_placeholder=true|false』『--final-crosscheck: … command_path: <FINAL_COMPARE_COMMAND の先頭の語 …>』のままで `-` の値が無い(--housekeep の retention_days は『invalid 時は `-`』とすでに書かれている)。同様に、UC「クロスチェックのジョブマップと比較定義を定義する」の tier-facade.md のコマンド契約の stdout 行と _api-summary.yaml の stdout、UC「比較ツールで日次全量比較を実行して結果を保存する」の spec.md(stdout(固定順))・tier-final-crosscheck.md(validate-config.sh --final-crosscheck の stdout)・_api-summary.yaml の stdout も `has_job_id_placeholder=true|false` / `command_path: <先頭の語>` だけ。新しく加えた BDD(`command_path: -` / `has_job_id_placeholder=-`)はこれらの型の定義と合わない。"
+    suggested_fix: "契約 validate-config.sh.stdout の --rapid-crosscheck / --final-crosscheck に『invalid line・同じキーの重複で止めたときは `-`(config_input_rules.env_files)』を加え、has_job_id_placeholder の値の型を true|false|- にする。上記の各 UC の stdout の記述も同じ表記に揃える。"
+  - id: R-003
+    viewpoint: 4
+    severity: major
+    target: "適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/tier-facade.md"
+    claim: "--rapid-crosscheck と --final-crosscheck の終了コード 2 の条件と stderr の列挙に、invalid line と同じキーの重複が入っていない。同じ表の stderr 行に加えた規則と矛盾する。"
+    evidence: "tier-facade.md のコマンド契約の終了コード行は『2(検証種別オプションの指定数不正・値なし・ファイル不在・必須キー欠落・…・未知のオプション)』のまま。同じ UC の _api-summary.yaml は stderr に duplicate key が無く、exit_codes code 2 の meaning にも入っていない。UC「比較ツールで日次全量比較を実行して結果を保存する」の _api-summary.yaml(validate-config.sh --final-crosscheck)は stderr が 3 文言だけで、code 2 の meaning は『FINAL_COMPARE_COMMAND のコマンド部分が絶対パスでない・存在しない・実行不可、必須キー欠落』だけ。spec.md / tier-final-crosscheck.md の『違反文言(終了コード 2)』も同じ。契約 validate-config.sh.exit_codes code 2 には『env の invalid line・同じキーの重複』が加わっており、UC の側と一致しない。"
+    suggested_fix: "rapid の tier-facade.md の終了コード行と _api-summary.yaml の stderr / code 2、final の spec.md / tier-final-crosscheck.md の validate-config.sh --final-crosscheck の違反文言と _api-summary.yaml の stderr / code 2 に、入力の守備範囲の違反(invalid line・同じキーの重複。文言と報告の順は config_input_rules.env_files)を加える。"
+  - id: R-004
+    viewpoint: 4
+    severity: major
+    target: "_cross-cutting/api/cli-command-contract.yaml"
+    claim: "実行時の読み手の各コマンドの exit_codes に、env の入力の守備範囲の違反(invalid line・同じキーの重複)が入っていない。abort-final-crosscheck.sh では、FINAL_DB_CONN_REF が重複したときに終了コード 2(正本)か 3(管理 DB なし)かが読み手によって分かれ得る。"
+    evidence: "config_input_rules.env_files は『実行時の読み手(facade.sh / background-rerun.sh / 各 worker / hang-detector.sh / housekeep.sh / 運用系コマンドなど)は … 入力・設定エラーの終了コード(2)で終える』とする。しかし abort-final-crosscheck.sh の code 2 は『引数不正 / 非 TTY で --yes なし』だけで、code 3 は『管理 DB なし(final-crosscheck.env 不在または FINAL_DB_CONN_REF 欠落。…)』。重複したファイルは『値を 1 つも使わない』ため、FINAL_DB_CONN_REF が欠落した状態と同じだと読めば 3 になる。housekeep.sh 側は db_requirement に『同じキーの重複も設定エラー』と明記したが、db_requirement が判定を揃えるとした相手の abort-final-crosscheck.sh には書いていない。同じく hang-detector.sh の code 2(『未知のオプション・余分な引数、hang-detector.env 不在、… feature-flag.env が読めない、…』)、rapid-crosscheck-worker.sh の code 2(『… RAPID_* env 不正』)、final-crosscheck-worker.sh の code 2(『… final-crosscheck.env 不在または必須キー欠落』)、hang-detect-trend.sh / run-lineage.sh の code 2 にも入力の守備範囲の違反が無い。"
+    suggested_fix: "abort-final-crosscheck.sh の code 2 に『final-crosscheck.env の入力の守備範囲の違反(invalid line・同じキーの重複を含む。config_input_rules.env_files)』を加え、code 3 の『管理 DB なし』は (ii) を通った後の判定だと書く。env を読む他のコマンドの code 2 の condition にも、読んだ設定ファイルの入力の守備範囲の違反(config_input_rules)を加える。"
+  - id: R-005
+    viewpoint: 4
+    severity: minor
+    target: "適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md"
+    claim: "spec.md のデータフロー表と処理フローが、検査の段(バイト・改行 → invalid line・重複 → キーごとの検査)を表しておらず、『違反を全件収集(最初の 1 件で止めない)』のままになっている。tier-facade.md のバリデーションの段と食い違う。"
+    evidence: "spec.md の usecase 行は『ファイル読み込み → 検証表の全項目を評価 → 違反を全件収集(最初の 1 件で止めない)→ 結果出力』、repository 行は『env 形式(`KEY=value`、`#` コメント、空行)の読み込み』。処理フローの sequenceDiagram には、invalid line・duplicate key で止める分岐が無い。tier-facade.md は『(2) … 1 件でもあれば値を使わず (3) を行わない』に改めた。UC「クロスチェックのジョブマップと比較定義を定義する」の spec.md の usecase 行(『違反を全件収集』)も同じ。"
+    suggested_fix: "両 spec.md の usecase 行に『入力の守備範囲(invalid line・同じキーの重複)の違反があれば、それを全件出してキーごとの検査を行わない(config_input_rules.env_files)』を加え、feature flag の処理フローに、行の構造の違反で止める alt を 1 つ加える。"
+  - id: R-006
+    viewpoint: 4
+    severity: minor
+    target: "_cross-cutting/api/cli-command-contract.yaml"
+    claim: "validate-config.sh.stderr の入力の守備範囲の項の末尾『いずれも同種の行が複数あれば行ごとに 1 行(全件)』が duplicate key にもかかる書き方で、『重複したキーごとに 1 行』と食い違う。"
+    evidence: "同じ項に『env の同じキーの重複 `error: duplicate key …`(2。重複したキーごとに 1 行。…)。いずれも同種の行が複数あれば行ごとに 1 行(全件)』とある。重複した行ごとに 1 行と読むと、3 行の重複は error 3 行になり、正本(1 キー 1 行。lines=1,2,3)と合わない。"
+    suggested_fix: "『いずれも同種の行が複数あれば行ごとに 1 行(全件。duplicate key は重複したキーごとに 1 行)』のように例外を明記する。"
+  - id: R-007
+    viewpoint: 5
+    severity: minor
+    target: "ハウスキープ業務/ハウスキープフロー/保持日数を過ぎた終了済みの実行と確報比較依頼を判定する/tier-ops.md"
+    claim: "『validate-config.sh と実行時の読み手で同じ順・同じ件数』という保証と、読み手が一部のキーだけを読むときもファイル全体で判定する保証を確かめる BDD が無い。加えた BDD は validate-config.sh だけを対象にしている。"
+    evidence: "加えたシナリオは validate-config.sh --feature-flag / --rapid-crosscheck / --housekeep の 3 つの tier-facade.md だけにある。housekeep.sh が final-crosscheck.env の FINAL_DB_CONN_REF 以外のキーの重複で 2 になり何も削除しないこと(tier-ops.md の表に追記した規則)や、facade.sh が feature-flag.env の重複で runner を起動せず 2 になることを確かめるシナリオは無い。判断記録の consequences.positive の『どの env 設定ファイル・どのコマンドでも同じ結果』は、実行時の読み手について検証できない。"
+    suggested_fix: "少なくとも 1 つの実行時の読み手に BDD を加える。例: housekeep.sh の tier-ops.md に『RAPID_CROSSCHECK_MODE=off・HOUSEKEEP_DB_CONN_REF なしで final-crosscheck.env に FINAL_POLL_INTERVAL_SEC が 2 行ある → stderr に duplicate key の 1 行、終了コード 2、stdout なし、置き場の残りも削除しない』。"
+resolved:
+  - id: R-001
+    resolution: "fixed: 契約 config_input_rules.env_files の stdout の文を (i) または (ii) で止めたときに固定順の行を出す(値の行は -、violations は error 行の数で hint を数えない)に改め、--housekeep の tier-facade.md の stdout 表(retention_days / violations)を揃えた"
+  - id: R-002
+    resolution: "fixed: 契約 validate-config.sh.stdout の --rapid-crosscheck(has_job_id_placeholder=true|false|-)/ --final-crosscheck に - の場合を加え、速報 UC の tier-facade.md・_api-summary.yaml、確報 UC の spec.md・tier-final-crosscheck.md・_api-summary.yaml を揃えた"
+  - id: R-003
+    resolution: "fixed: 速報 UC の tier-facade.md の終了コード行・_api-summary.yaml の stderr と code 2、確報 UC の spec.md・tier-final-crosscheck.md の違反文言と _api-summary.yaml の stderr と code 2 に入力の守備範囲の違反を加えた"
+  - id: R-004
+    resolution: "fixed: conventions.exit_codes の 2 に読んだ設定ファイルの入力の守備範囲の違反(全コマンド共通。各コマンドの condition に列挙が無くても 2)を加え、abort-final-crosscheck.sh の 2 に final-crosscheck.env の入力の守備範囲の違反を加え、3 の管理 DB なしの判定はその検査を通った後と明記した"
+  - id: R-005
+    resolution: "fixed: 両 spec.md の usecase 行に検査の段を加え、feature flag の処理フローに行の構造の違反で止める alt を加えた"
+  - id: R-006
+    resolution: "fixed: validate-config.sh.stderr の末尾を『duplicate key だけは重複したキーごとに 1 行』と明記した"
+  - id: R-007
+    resolution: "fixed: tier-ops.md に housekeep.sh が使わない final-crosscheck.env のキーの重複で何も削除せず 2 で終える BDD を加えた"

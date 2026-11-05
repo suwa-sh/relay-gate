@@ -96,12 +96,12 @@ _inference.md「データ可視化対象」の 3 つ。いずれも CLI の TSV 
 
 ## ダッシュボード設計原則
 
-ダッシュボードは新規構築せず、**組織既存監視への統合と運用者向け日次メールサマリー**で代替する(arch CTP-010)。
+ダッシュボードは新規構築せず、**組織既存監視(ジョブスケジューラのジョブ監視・障害通知と実行履歴)への統合**で代替する(arch CTP-010)。relay-gate から集計結果を送る通知は持たない。
 
 ### 情報の階層化
 
-- **全体サマリー**: 日次メールサマリー(arch CTP-010)は本規約の範囲外。採用する場合は件名 `[relay-gate][info] daily-summary date={集計日(ローカル)}`、本文は本ファイル 2. の警告傾向 TSV(`hang-detect-trend.sh --since {前日 00:00:00(ローカル)}` の出力)をそのまま貼る形を推奨する(仕様は未確定。todo。`ui-design.md`「通知メール規約」と同文)
-- **ドリルダウン**: サマリーの run_id を引数にして `rapid-crosscheck-result.sh --run-id` / `run-lineage.sh --run-id` を運用者が手動で実行する(メール本文に実行例を 1 行ずつ書く)
+- **全体サマリー**: 運用者が必要なときに `hang-detect-trend.sh --since {集計開始(ローカル)}` を実行し、本ファイル 2. の警告傾向 TSV を読む(定期送信はしない)。異常の発生はハング検知ジョブの警告終了・失敗がジョブスケジューラの障害通知で届く
+- **ドリルダウン**: alert 行または TSV の run_id を引数にして `rapid-crosscheck-result.sh --run-id` / `run-lineage.sh --run-id` を運用者が手動で実行する
 - **フィルター**: `hang-detect-trend.sh --job-id / --role / --since`、参照系の `--limit`
 
 ### データストーリーテリング

@@ -1,0 +1,69 @@
+meta:
+  event_id: "20261105_111000_feedback_single_management_db"
+  trigger_event: "infra:20261105_091000_feedback_final_env_per_segment"
+  created_at: "2026-11-05T11:10:00+09:00"
+  mode: "differential"
+  mcl_rerun: "skipped_targeted_update"
+  mcl_rerun_reason: "上流(USDM / RDRA / NFR / arch)の latest は変更なし。translation(workload_type / availability_tier / latency / data_classification / traffic / consistency / cost_posture / target_clouds)も無変更。変更はインフラ成果物の記述だけで、管理 DB は 1 つで、すべての接続先の参照名(RAPID_DB_CONN_REF、実行ホストと DB セグメントそれぞれの FINAL_DB_CONN_REF、HANG_DB_CONN_REF、HOUSEKEEP_DB_CONN_REF)が同じ 1 つの管理 DB に解決されるという前提を、構築手順・構築ロールのコメント・インフラ設計に書き足すもの。構築時の検査とタスクは変えない。あわせて、ハウスキープ設定と削除待ちの置き場・通知済みの印に残っていた仮置き表現(「仕様で確定」)を CLI 契約の名前(housekeep.env、配置先 /etc/relay-gate/housekeep.env、HOUSEKEEP_RETENTION_DAYS / HOUSEKEEP_DB_CONN_REF、成果物ルート直下の hang-detector-notified/<run_id>.<role> と housekeep-pending/)に揃えた。MCL 出力の該当記述を差分更新した(MCL product-design の全量再実行は行わない)"
+feedback_request:
+  feedback_request_id: "20261105_single_management_db"
+  input_sha256: "97bb80ca208301540a11760f416c348f73ea0c1898d9535a80c5a8f013df194a"
+  request_ids: ["CR-f4c8b261-001"]
+  work_unit_ids: ["CR-f4c8b261-001#1"]
+direct_work_unit_ids: ["CR-f4c8b261-001#1"]
+stage_packet: "docs/pipeline/feedback-runs/20261105_single_management_db/stage-packets/infrastructure.md"
+changes:
+  event_id: "20261105_111000_feedback_single_management_db"
+  created_at: "2026-11-05T11:10:00+09:00"
+  source: "管理 DB の接続先の指摘(2026-11-05)に基づくインフラ設計の差分更新: 管理 DB は 1 つで、すべての接続先の参照名(RAPID_DB_CONN_REF、実行ホストと DB セグメントそれぞれの FINAL_DB_CONN_REF、HANG_DB_CONN_REF、HOUSEKEEP_DB_CONN_REF)が同じ 1 つの管理 DB に解決されることを前提として書く。条件は参照名の文字列ではなく解決先の DB が同じこと。構築時の検査は存在確認のままで、解決先が同じことは導入する側が確かめる"
+  arch_event_ref: "20261103_133000_feedback_housekeeping_db_required"
+  nfr_event_ref: "20261103_132000_feedback_housekeeping_db_required"
+  translation:
+    unchanged: true
+  mcl_execution:
+    status: "completed"
+    completed_at: "2026-11-05T11:10:00+09:00"
+    outputs_updated:
+      - path: "infra/product/onprem/README.md"
+        change: "前提に、管理 DB は 1 つで、すべての接続先の参照名(rapid-crosscheck.env の RAPID_DB_CONN_REF、実行ホストと DB ホストそれぞれの final-crosscheck.env の FINAL_DB_CONN_REF、hang-detector.env の HANG_DB_CONN_REF、ハウスキープ設定の HOUSEKEEP_DB_CONN_REF)が同じ 1 つの管理 DB に解決されることを追記した。ハウスキープは専用 DB ロール(housekeep_del)で同じ管理 DB に接続すること、条件は参照名の文字列ではなく解決先(接続先の DB)が同じこと、理由(確報 runner が登録した依頼を確報 worker が同じキューから取得するため、別の DB に解決されると設定の検査を通っても確報ジョブが完了しない。速報・ハング検知・ハウスキープも同じ管理 DB の表を読み書きする)、構築時の検査は存在確認だけで解決先が同じことは導入する側が確かめることを書いた。前提の対象の参照名で、ハウスキープ設定のファイル名を housekeep.env と書いた"
+        work_units: ["CR-f4c8b261-001#1"]
+      - path: "infra/product/onprem/ansible/roles/relay-gate-config/tasks/main.yml"
+        change: "冒頭のコメントに、管理 DB は 1 つで、すべての接続先の参照名が同じ 1 つの管理 DB に解決される前提、ハウスキープは専用 DB ロールで同じ管理 DB に接続すること、条件は解決先の DB が同じことで、このロールは解決先を判定しない(導入する側が確かめる)ことを書いた。確報クロスチェック worker 設定のコメントに、2 つの置き場の FINAL_DB_CONN_REF が同じ 1 つの管理 DB に解決されなければならないこと、その理由(確報 runner が登録した依頼を確報 worker が同じキューから取得する。別の DB に解決されると設定の検査を通っても確報ジョブが完了しない)、配置時の検査は存在確認だけで解決先が同じことは導入する側が確かめることを書いた。タスクは変えず、新しい検査タスクは足さない。あわせて、ハウスキープ設定のコメントの「ファイル名・キー名は仕様で確定」を、CLI 契約の housekeep.env(配置先 /etc/relay-gate/housekeep.env)とキー HOUSEKEEP_RETENTION_DAYS(既定 90 日)/ HOUSEKEEP_DB_CONN_REF(専用 DB ロール housekeep_del)に改め、変数 relay_gate_housekeep_config_file の値は housekeep.env にすること、保持日数の検査は validate-config.sh --housekeep が所有することを書いた(変数名とタスクは不変)"
+        work_units: ["CR-f4c8b261-001#1"]
+      - path: "docs/mcl/product/output/product-impl-onprem.yaml"
+        change: "management_db の connection_resolution の冒頭に、管理 DB は 1 つで、すべての接続先の参照名が同じ 1 つの管理 DB に解決される前提(条件は解決先の DB が同じこと)と理由、構築時の検査は存在確認だけで解決先が同じことは導入する側が確かめることを書いた。ハウスキープの参照名を「キー名は仕様で確定」から HOUSEKEEP_DB_CONN_REF(専用 DB ロール housekeep_del で同じ管理 DB に接続する)に改めた。config_store の final-crosscheck.env の存在の検証規則の description に、2 つの置き場の FINAL_DB_CONN_REF は同じ 1 つの管理 DB に解決される前提で、この検証は存在確認だけで解決先は判定せず導入する側が確かめることを追記した(新しい検証規則は足さない)。あわせて、config_store の contents のハウスキープ設定の「ファイル名・キー名は仕様で確定」を housekeep.env(配置先 /etc/relay-gate/housekeep.env)とキー HOUSEKEEP_RETENTION_DAYS / HOUSEKEEP_DB_CONN_REF に、artifact_store の notified_marks と housekeep_staging の「場所(とファイル名)は仕様で確定」を $RELAY_GATE_ARTIFACT_ROOT/hang-detector-notified/(印のファイル名 <run_id>.<role>)と $RELAY_GATE_ARTIFACT_ROOT/housekeep-pending/(この構成では /var/lib/relay-gate 配下)に改めた"
+        work_units: ["CR-f4c8b261-001#1"]
+      - path: "docs/mcl/product/output/product-mapping-onprem.yaml"
+        change: "management_db の configuration_notes の接続参照名の一覧に、確報 runner(と実行ホストの abort-final-crosscheck)の実行ホストの FINAL_DB_CONN_REF、確報 worker の DB セグメントの FINAL_DB_CONN_REF を加え、ハウスキープの参照名を「キー名は仕様で確定」から HOUSEKEEP_DB_CONN_REF(専用 DB ロール housekeep_del で接続する)に改めた。これらの参照名がすべて同じ 1 つの管理 DB に解決される前提(条件は解決先の DB が同じこと)と理由、解決先が同じことは導入する側が確かめることを追記した。あわせて、config_store の configuration_notes のハウスキープ設定の「ファイル名・キー名は仕様で確定」を housekeep.env とキー名に、artifact_store の configuration_notes の置き場の「場所とファイル名は仕様で確定」を hang-detector-notified/<run_id>.<role> と housekeep-pending/ に改めた"
+        work_units: ["CR-f4c8b261-001#1"]
+      - path: "docs/mcl/product/output/product-workload-model.yaml"
+        change: "management_db の説明に、管理 DB は 1 つで、速報・確報(runner と worker)・ハング検知・ハウスキープの接続参照名がすべて同じ 1 つの管理 DB に解決される前提(条件は解決先の DB が同じこと。解決先が同じことは導入する側が確かめる)を追記した。あわせて、config_store の説明のハウスキープ設定の「ファイル名・キー名は仕様で確定」を housekeep.env とキー名に、artifact_store の要件の rationale の「置き場・印の場所とファイル名は仕様で確定する」を成果物ルート直下の hang-detector-notified/<run_id>.<role> と housekeep-pending/ に改めた"
+        work_units: ["CR-f4c8b261-001#1"]
+      - path: "docs/mcl/product/input/product-input.yaml"
+        change: "management_db の説明に、管理 DB は 1 つで、すべての接続参照名が同じ 1 つの管理 DB に解決される前提を追記した(translation のフィールドは不変)。product-input.yaml(イベント直下のコピー)も同一内容。あわせて、artifact_store と config_store の説明のハウスキープの仮置き表現を CLI 契約の名前に揃えた(直下のコピーも同一)"
+        work_units: ["CR-f4c8b261-001#1"]
+      - path: "docs/cloud-context/conformance/product/product-conformance-onprem.yaml"
+        change: "REQ-DB-005 の notes に、すべての接続参照名が同じ 1 つの管理 DB に解決される前提と、構築時の検査は存在確認だけで解決先が同じことは導入する側が確かめることを書いた。REQ-DB-007 の notes の「接続参照名のキー名は仕様で確定する」を、housekeep_del への接続参照名はハウスキープ設定の HOUSEKEEP_DB_CONN_REF で他の接続参照名と同じ 1 つの管理 DB に解決される、に改めた(判定は不変)。あわせて、成果物の要件の notes の「置き場・通知済みの印の場所とファイル名は仕様で確定する」を成果物ルート直下の hang-detector-notified/<run_id>.<role> と housekeep-pending/ に改めた"
+        work_units: ["CR-f4c8b261-001#1"]
+      - path: "docs/cloud-context/generated-md/product/relay-gate-target-architecture.md"
+        change: "ワークロード全体構成図の管理 DB のノードに、管理 DB は 1 つで、すべての接続参照名(RAPID・両ホストの FINAL・HANG・HOUSEKEEP)の解決先であること、解決先が同じことは導入する側が確かめることを書いた。npx md-mermaid-lint で構文を確認した。あわせて、実行ホストの設定ノードのハウスキープ設定を housekeep.env と書いた"
+        work_units: ["CR-f4c8b261-001#1"]
+      - path: "infra/product/onprem/ansible/roles/relay-gate-runtime/tasks/main.yml"
+        change: "削除待ちの置き場のコメントの「置き場の場所は仕様で確定する」を、CLI 契約(artifact_root_entries)で成果物ルート直下の housekeep-pending/ と決まっている(この構成では /var/lib/relay-gate/housekeep-pending)に改め、変数 relay_gate_housekeep_staging_dir にそのパスを設定すると書いた(変数名とタスクは不変)"
+        work_units: ["CR-f4c8b261-001#1"]
+      - path: "infra/product/onprem/ansible/inventory.ini.example"
+        change: "ハウスキープの変数の例の「仕様で確定した値」を、relay_gate_housekeep_config_file=housekeep.env(配置先 /etc/relay-gate/housekeep.env)と relay_gate_housekeep_staging_dir=/var/lib/relay-gate/housekeep-pending(成果物ルート直下の housekeep-pending/)に改めた(変数名は不変。例はコメントのまま)"
+        work_units: ["CR-f4c8b261-001#1"]
+    outputs_verified_unchanged:
+      - path: "infra/product/onprem/ansible/site.yml"
+        reason: "ロールの割り当ては変わらず、新しい検査タスクも足さないため変更不要"
+        work_units: ["CR-f4c8b261-001#1"]
+      - path: "docs/mcl/product/output/product-observability.yaml / product-cost-hints.yaml"
+        reason: "接続参照名の解決先を書いていない"
+        work_units: ["CR-f4c8b261-001#1"]
+  arch_feedback:
+    status: "no_new_feedback"
+    reason: "変更は管理 DB が 1 つであるという既存の構成(単一インスタンス)の前提を構築手順とインフラ設計に明記しただけで、ティア・依存ルール・方針に関わる新しい知見は無い。本 stage は feedback controller の指示により Phase4 で arch を更新しない"
+  writeback_check:
+    result: "not_required"
+    reason: "arch の変更が無く、translation の各フィールドも不変のため product-input の再生成(translation のやり直し)と Step2 の全量再実行は不要"

@@ -1,15 +1,15 @@
 version: "1.0"
-event_id: "20261101_101000_feedback_impl_feedback_dcd8234d"
-created_at: "2026-11-01T10:10:00"
-source: "docs/usdm/events/ を順に適用したスナップショット(既存スナップショットに feedback 20261027_091000_impl_feedback_dcd8234d の増分 20261101_101000_feedback_impl_feedback_dcd8234d を適用。CR-dcd8234d-009 速報の起動コマンドの検証 3 点化を反映)"
+event_id: "20261103_131000_feedback_housekeeping_db_required"
+created_at: "2026-11-03T13:10:00"
+source: "docs/usdm/events/ を順に適用したスナップショット(既存スナップショットに feedback 20261103_housekeeping_db_required の増分 20261103_131000_feedback_housekeeping_db_required を適用。CR-9d2e6c41-001 管理 DB を使う機能が 1 つでもある設置ではハウスキープの管理 DB 接続参照名を必須にし、管理 DB に接続しない振る舞いを管理 DB を一切使わない設置に絞る変更を REQ-014 の仕様文と受け入れ基準へ反映)"
 system_name: "relay-gate 並行稼働実行基盤"
-last_updated: "2026-11-01T10:10:00"
-last_event_id: "20261101_101000_feedback_impl_feedback_dcd8234d"
+last_updated: "2026-11-03T13:10:00"
+last_event_id: "20261103_131000_feedback_housekeeping_db_required"
 feedback_request:
-  feedback_request_id: "20261027_091000_impl_feedback_dcd8234d"
-  input_sha256: "37b8b54d7a4a8b1a978e389924c4b6e3ee9a1d276823a9d877f10fd01b866ca8"
-  request_ids: ["CR-dcd8234d-009"]
-  work_unit_ids: ["CR-dcd8234d-009#1"]
+  feedback_request_id: "20261103_housekeeping_db_required"
+  input_sha256: "94cde505fc6dda4705b1bb75134beaf9a85a7af65d7c90f1e786112e8b1031e7"
+  request_ids: ["CR-9d2e6c41-001"]
+  work_unit_ids: ["CR-9d2e6c41-001#1"]
 
 requirements:
   - id: "REQ-001"
@@ -616,9 +616,13 @@ requirements:
             target: "比較ツール終了コード"
 
   - id: "REQ-008"
-    requirement: "ハング検知が background 実行(background slot と速報比較依頼)を定期監視し、ジョブスケジューラの実行結果に現れない background 異常を運用者へ通知すること"
-    reason: "background slot と速報クロスチェックはジョブスケジューラのジョブステータスに現れないため、ハング・異常終了・比較 NG を別経路で検知して運用者に知らせる必要がある"
+    requirement: "ハング検知が background 実行(background slot と速報比較依頼)を定期監視し、ジョブスケジューラの実行結果に現れない background 異常を、ハング検知ジョブ自身の終了結果と標準エラーで運用者へ知らせること"
+    reason: "background slot と速報クロスチェックはジョブスケジューラのジョブステータスに現れないため、ハング・異常終了・比較 NG を別経路で検知する必要がある。知らせる経路をハング検知ジョブ自身の終了結果にすることで、relay-gate 独自の送信手段を持たずに、ジョブスケジューラの既存のジョブ監視・障害通知で運用者へ届けられる"
     priority: "must"
+    feedback_source:
+      feedback_request_id: "20261101_mail_removal_housekeeping"
+      work_unit_ids:
+        - "CR-e4ea8aaa-001#1"
     specifications:
       - id: "SPEC-008-01"
         specification: "ハング検知スクリプトはジョブスケジューラの定期ジョブ(5 分ごとなど)として起動され、未完了の background role について started-at.txt と execution-spec.json の hang_detect_limit_minutes から経過時間を判定する。exitcode.txt があり終了コード 0 なら対象外、非 0 なら background 実行エラーとして通知、exitcode.txt がなく経過時間が上限以内なら継続監視、上限超過ならハング疑いとして通知する"
@@ -645,17 +649,17 @@ requirements:
             action: "modify"
             target: "background 実行監視"
       - id: "SPEC-008-03"
-        specification: "監視は monitor_status、hang_suspected_at、alerted_at を記録して運用者へ通知する。通知後に正常終了した実行についても警告した経過時間を記録し、通常処理の警告傾向を確認できるようにする。RAPID_CROSSCHECK_MODE=off の場合も slot 成果物だけで監視する。monitor_status の値は監視対象外 / 監視中 / ハング疑い通知済み / 実行エラー通知済み / 比較異常通知済み / 正常終了の 6 値とし、ハング疑い通知後に対象が終端した場合は再判定して比較異常通知済み / 実行エラー通知済み / 正常終了へ遷移する。監視対象が ABORTED になった場合は中止済みとして正常終了で終端する"
+        specification: "監視は monitor_status、hang_suspected_at、alerted_at を記録し、運用者へはハング検知ジョブの終了結果で知らせる(SPEC-008-07)。通知後に正常終了した実行についても警告した経過時間を記録し、通常処理の警告傾向をハング検知ジョブの出力と監視記録で確認できるようにする。RAPID_CROSSCHECK_MODE=off の場合も slot 成果物だけで監視する。monitor_status の値は監視対象外 / 監視中 / ハング疑い通知済み / 実行エラー通知済み / 比較異常通知済み / 正常終了の 6 値とし、ハング疑い通知後に対象が終端した場合は再判定して比較異常通知済み / 実行エラー通知済み / 正常終了へ遷移する。監視対象が ABORTED になった場合は中止済みとして正常終了で終端する"
         acceptance_criteria:
           - "Given ハング疑いを通知した実行がその後正常終了した When 監視記録を確認する Then 警告時の経過時間が記録されている"
           - "Given RAPID_CROSSCHECK_MODE=off When 検知ジョブが実行される Then 管理 DB なしで slot 成果物を走査して監視する"
-          - "Given ハング疑いを通知した速報比較依頼がその後 FAILED または比較 NG になった When 検知ジョブが実行される Then 監視状態は比較異常通知済みへ遷移し error メールが送られる"
+          - "Given ハング疑いを通知した速報比較依頼がその後 FAILED または比較 NG になった When 検知ジョブが実行される Then 監視状態は比較異常通知済みへ遷移し、その依頼の error の行が標準エラーに出て、検知ジョブは失敗を表す終了コードで終わる"
           - "Given ハング疑いを通知した background slot がその後 ABORTED になった When 検知ジョブが実行される Then 監視記録は中止済みとして正常終了で終端し、以後再判定されない"
           - "Given バリエーション「監視状態」と状態モデル「監視状態」 When 値集合を比較する Then 同じ 6 値である"
         feedback_source:
-          feedback_request_id: "20260905_todo_resolution"
+          feedback_request_id: "20261101_mail_removal_housekeeping"
           work_unit_ids:
-            - "CR-c770d8f0-008#1"
+            - "CR-e4ea8aaa-001#1"
         affected_models:
           - type: "information"
             action: "add"
@@ -664,7 +668,7 @@ requirements:
             action: "add"
             target: "監視状態"
           - type: "external_system"
-            action: "add"
+            action: "delete"
             target: "メール通知"
           - type: "state"
             action: "modify"
@@ -707,18 +711,18 @@ requirements:
             action: "modify"
             target: "適用構成文書"
       - id: "SPEC-008-06"
-        specification: "ハング検知定期ジョブの通知先メールアドレス・送信コマンド・件名プレフィックス・管理 DB 接続参照名は、基盤適用設計者が所有するハング検知定期ジョブ設定(hang-detector 用 env 設定ファイル)で定義する。認証情報は値を置かず参照名のみとする。通知 UC はこの設定を入力として通知メールを送る"
+        specification: "ハング検知定期ジョブの管理 DB 接続参照名は、基盤適用設計者が所有するハング検知定期ジョブ設定(hang-detector 用 env 設定ファイル)で定義する。認証情報は値を置かず参照名のみとする。ハング検知定期ジョブ設定は、通知の宛先・送信コマンド・件名など、ハング検知ジョブの終了結果以外の手段で異常を送るための項目を持たない"
         acceptance_criteria:
-          - "Given ハング検知定期ジョブ設定に通知先と送信コマンドが定義されている When 異常を通知する Then 設定された送信コマンドで設定された宛先へメールが送られる"
+          - "Given ハング検知定期ジョブ設定 When 設定項目を確認する Then 通知の宛先・送信コマンド・件名に関する項目は無く、管理 DB 接続参照名がある"
           - "Given 設定所有区分 When ハング検知定期ジョブ設定の所有者を確認する Then 基盤適用設計者である"
           - "Given ハング検知定期ジョブ設定 When 内容を確認する Then 認証情報の値は含まれず管理 DB 接続の参照名だけがある"
         feedback_source:
-          feedback_request_id: "20260905_todo_resolution"
+          feedback_request_id: "20261101_mail_removal_housekeeping"
           work_unit_ids:
-            - "CR-c770d8f0-010#1"
+            - "CR-e4ea8aaa-001#1"
         affected_models:
           - type: "information"
-            action: "add"
+            action: "modify"
             target: "ハング検知定期ジョブ設定"
           - type: "variation"
             action: "modify"
@@ -727,11 +731,49 @@ requirements:
             action: "modify"
             target: "設定所有区分"
           - type: "information"
-            action: "modify"
+            action: "delete"
             target: "通知メール"
           - type: "buc"
             action: "modify"
-            target: "background 実行監視"
+            target: "background 実行監視フロー"
+      - id: "SPEC-008-07"
+        specification: "ハング検知は、その回の見回りで新たに見つけた background 異常を、ハング検知ジョブ自身の終了結果で知らせる。運用者にはジョブスケジューラの既存のジョブ監視・障害通知で届く。見回り・判定・監視記録の保存は SPEC-008-01〜03 のまま続け、自動中止・自動再実行をしない(SPEC-008-04)。新たな異常が無ければ終了コード 0 で終わる。注意(ハング疑い)は警告終了、異常(background 実行エラー・速報クロスチェック異常)は失敗として終了コードで区別し、同じ回に両方を見つけた場合は失敗で終わる。警告終了の値は確報の比較 NG と同じ考え方(ジョブステータスが警告終了になる値)とし、具体的な値は CLI 契約で確定する。見つけた異常は標準エラーに 1 件 1 行で出し、行には対象(run_id と role、または速報比較依頼)、段階(warning / error)、経過時間を含める。通知済みの異常は次回以降の見回りで再び知らせず、その判定は監視記録の遷移規則を使う。RAPID_CROSSCHECK_MODE=off では監視記録の代わりに、ハング検知が成果物ルート配下へ通知済みの印をファイルで残し、同じ規則で判定する。印は Runner Result の契約ファイル(stdout.log / stderr.log / exitcode.txt / execution-spec.json / started-at.txt / aborted.txt)とは別のファイルにし、一時ファイルからのリネームで書く。印の置き場所とファイル名は仕様で確定する。通知の判定が終わったあとで監視記録または印の保存に失敗した場合は、その異常を次回も知らせる(知らせ漏れより重複を選ぶ)。経過時間の傾向の確認は、ハング検知ジョブの出力と監視記録で行う"
+        acceptance_criteria:
+          - "Given 新たな background 異常が無い When ハング検知ジョブが実行される Then 終了コード 0 で終わり、標準エラーに異常の行は出ない"
+          - "Given 新たに見つけた異常がハング疑いだけである When ハング検知ジョブが実行される Then ジョブステータスが警告終了になる終了コードで終わり、標準エラーにハング疑いの対象ごとに warning の行が 1 行ずつ出る"
+          - "Given background 実行エラーまたは速報クロスチェック異常を新たに見つけた When ハング検知ジョブが実行される Then 0 とも警告終了の値とも異なる失敗を表す終了コードで終わり、標準エラーに異常の対象ごとに error の行が 1 行ずつ出る"
+          - "Given 同じ見回りでハング疑いと background 実行エラーを新たに見つけた When ハング検知ジョブが実行される Then 失敗を表す終了コードで終わり、標準エラーに warning の行と error の行がそれぞれ 1 件 1 行で出る"
+          - "Given ハング検知ジョブが標準エラーに出した異常の行 When 行の内容を確認する Then 対象(run_id と role、または速報比較依頼)、段階(warning / error)、経過時間が含まれる"
+          - "Given 管理 DB を使う設定(RAPID_CROSSCHECK_MODE が off 以外)で、前回の見回りで通知した異常の状態がその後変わっていない When 2 回目の見回りでハング検知ジョブが実行される Then 同じ異常の行は標準エラーに出ず、ほかに新たな異常が無ければ終了コード 0 で終わる"
+          - "Given RAPID_CROSSCHECK_MODE=off で、前回の見回りで通知した異常の状態がその後変わっていない When 2 回目の見回りでハング検知ジョブが実行される Then 同じ異常の行は標準エラーに出ず、ほかに新たな異常が無ければ終了コード 0 で終わる"
+          - "Given RAPID_CROSSCHECK_MODE=off で異常を通知した When 成果物ルート配下を確認する Then 通知済みの印が残っており、Runner Result の契約ファイル(stdout.log / stderr.log / exitcode.txt / execution-spec.json / started-at.txt / aborted.txt)の内容は変わっていない"
+          - "Given 異常を通知したが、その回の監視記録(RAPID_CROSSCHECK_MODE=off では通知済みの印)の保存に失敗した When 次の見回りでハング検知ジョブが実行される Then 同じ異常の行が再び標準エラーに出て、その段階に応じた終了コードで終わる"
+        feedback_source:
+          feedback_request_id: "20261101_mail_removal_housekeeping"
+          work_unit_ids:
+            - "CR-e4ea8aaa-001#1"
+        affected_models:
+          - type: "buc"
+            action: "modify"
+            target: "background 実行監視フロー"
+          - type: "condition"
+            action: "modify"
+            target: "通知レベルの判定"
+          - type: "variation"
+            action: "modify"
+            target: "通知レベル"
+          - type: "information"
+            action: "modify"
+            target: "監視記録"
+          - type: "state"
+            action: "modify"
+            target: "監視状態"
+          - type: "external_system"
+            action: "modify"
+            target: "ジョブスケジューラ"
+          - type: "actor"
+            action: "modify"
+            target: "運用者"
 
   - id: "REQ-009"
     requirement: "background 側リランが、ジョブスケジューラの専用ジョブから、完了済みまたは明示中止済みの background slot 実行または速報比較依頼を、元の execution-spec.json を使って新しい run_id で再実行できること"
@@ -1013,19 +1055,34 @@ requirements:
             target: "並行稼働実行(parallel_run)"
 
   - id: "REQ-012"
-    requirement: "relay-gate は UI 画面を持たず、運用者への提示は CLI の標準出力・標準エラー・終了コードと通知メールで行い、実行履歴・監査はジョブスケジューラの責務としてログファイルだけを残すこと"
-    reason: "エアーギャップ環境のオンプレミス Linux でシェルスクリプトと RDB だけで構成し、運用者の既存手段(ジョブスケジューラの実行履歴とメール)に統合するため"
+    requirement: "relay-gate は UI 画面を持たず、運用者への提示は CLI の標準出力・標準エラー・終了コードだけで行い、実行履歴・監査はジョブスケジューラの責務としてログファイルだけを残すこと"
+    reason: "エアーギャップ環境のオンプレミス Linux でシェルスクリプトと RDB だけで構成し、運用者の既存手段(ジョブスケジューラの実行履歴・ジョブ監視・障害通知)に統合するため"
     priority: "must"
+    feedback_source:
+      feedback_request_id: "20261101_mail_removal_housekeeping"
+      work_unit_ids:
+        - "CR-e4ea8aaa-001#1"
     specifications:
       - id: "SPEC-012-01"
-        specification: "すべてのスクリプトは CLI として起動され、結果を標準出力・標準エラー・終了コードで返す。ハング検知の通知は warning / error のメール送信で行い、運用者は静観または対処を判断する"
+        specification: "すべてのスクリプトは CLI として起動され、結果を標準出力・標準エラー・終了コードで返す。ハング検知の通知もハング検知ジョブの終了コードと標準エラーで行い(SPEC-008-07)、運用者はジョブスケジューラの障害通知を受けて静観または対処を判断する。relay-gate は CLI の出力以外の通知送信手段を持たない"
         acceptance_criteria:
           - "Given 任意のスクリプトを起動 When 結果を確認する Then GUI を必要とせず標準出力・標準エラー・終了コードで判定できる"
-          - "Given background 異常を検知 When 通知を確認する Then warning / error のメールが運用者に届く"
+          - "Given background 異常を検知 When ジョブスケジューラでハング検知ジョブの結果を確認する Then 警告終了または失敗のジョブステータスと、標準エラーの warning / error の行で異常を判定できる"
+          - "Given relay-gate の設定ファイル一式 When 通知の宛先・送信コマンドなど CLI の出力以外で運用者へ知らせるための設定項目を探す Then 存在しない"
+        feedback_source:
+          feedback_request_id: "20261101_mail_removal_housekeeping"
+          work_unit_ids:
+            - "CR-e4ea8aaa-001#1"
         affected_models:
           - type: "business_policy"
-            action: "add"
+            action: "delete"
             target: "CLI とメールによる提示"
+          - type: "business_policy"
+            action: "add"
+            target: "CLI による提示"
+          - type: "external_system"
+            action: "delete"
+            target: "メール通知"
       - id: "SPEC-012-02"
         specification: "ジョブの実行履歴・監査はジョブスケジューラの責務とし、relay-gate は Runner Result Contract の成果物と各スクリプトの実行ログをファイルとして残す"
         acceptance_criteria:
@@ -1071,3 +1128,177 @@ requirements:
           - type: "actor"
             action: "modify"
             target: "基盤適用設計者"
+
+  - id: "REQ-014"
+    requirement: "ハウスキープが、ジョブスケジューラの定期ジョブ(1 日 1 回)から起動され、保持日数を過ぎた終了済みの実行の成果物と管理 DB の履歴、および終端した確報比較依頼を自動で削除すること"
+    reason: "実行ごとに成果物ディレクトリと管理 DB の行が増え続け、ファイル領域と管理 DB の容量を圧迫する。手作業での削除は、消してよいもの(終了済みか、リランの親子か)の判断を運用者に負わせるため、終端と経過日数の規則で自動判定して削除する"
+    priority: "must"
+    feedback_source:
+      feedback_request_id: "20261101_mail_removal_housekeeping"
+      work_unit_ids:
+        - "CR-e4ea8aaa-002#1"
+    specifications:
+      - id: "SPEC-014-01"
+        specification: "ハウスキープ専用のスクリプト(housekeep.sh)を追加し、ジョブスケジューラの定期ジョブとして 1 日 1 回起動する想定とする。業務ジョブの起動時には削除しない。保持日数は基盤適用設計者が所有するハウスキープ設定で持ち、既定は 90 日とする。値は正の整数とし、設定検証で検査する。削除したくない場合は定期ジョブを登録しない。設定のファイル名・キー名・終了コード・接続する管理 DB は仕様(CLI 契約・設定契約)で確定する"
+        acceptance_criteria:
+          - "Given ハウスキープ設定で保持日数を指定していない When ハウスキープを実行する Then 最も遅い終了日時から 90 日を過ぎた終了済みの実行は削除され、90 日以内の終了済みの実行は残る"
+          - "Given ハウスキープ設定の保持日数が 0・負の数・整数でない値のいずれかである When 設定検証を実行する Then 非 0 の終了コードで終わり、標準エラーに保持日数の値が不正である旨の行が出る"
+          - "Given 保持日数を過ぎた終了済みの実行がある When 業務ジョブ(facade)を起動する Then その実行の成果物と管理 DB の行は削除されずに残る"
+          - "Given 設定所有区分 When ハウスキープ設定の所有者を確認する Then 基盤適用設計者である"
+        feedback_source:
+          feedback_request_id: "20261101_mail_removal_housekeeping"
+          work_unit_ids:
+            - "CR-e4ea8aaa-002#1"
+        affected_models:
+          - type: "buc"
+            action: "add"
+            target: "ハウスキープフロー"
+          - type: "information"
+            action: "add"
+            target: "ハウスキープ設定"
+          - type: "variation"
+            action: "modify"
+            target: "設定所有区分"
+          - type: "condition"
+            action: "modify"
+            target: "設定所有区分"
+          - type: "variation"
+            action: "modify"
+            target: "ジョブスケジューラ起動ジョブ種別"
+          - type: "external_system"
+            action: "modify"
+            target: "ジョブスケジューラ"
+          - type: "actor"
+            action: "modify"
+            target: "運用者"
+          - type: "actor"
+            action: "modify"
+            target: "基盤適用設計者"
+      - id: "SPEC-014-02"
+        specification: "削除の単位は 2 種類とする。実行の単位は、リランの親子(parent_run_id でつながる実行)をまとめた 1 単位とし、単位内の各実行の成果物ディレクトリ、管理 DB の行(並行稼働実行・slot 実行・速報実行・速報比較依頼・監視記録)、ハング検知が残した通知済みの印を一緒に消す。確報比較依頼の単位は確報比較依頼 1 件とする。リランの親子は、単位内のすべての実行が削除の条件を満たすまで残す"
+        acceptance_criteria:
+          - "Given すべての構成要素が終端し、最も遅い終了日時から保持日数を過ぎた実行 When ハウスキープを実行する Then その実行の成果物ディレクトリ、管理 DB の行(並行稼働実行・slot 実行・速報実行・速報比較依頼・監視記録)、通知済みの印がすべて無くなる"
+          - "Given すべての構成要素が終端し、最も遅い終了日時から保持日数以内の実行 When ハウスキープを実行する Then その実行の成果物と管理 DB の行は残る"
+          - "Given リラン元の実行は保持日数を過ぎたが、parent_run_id でつながるリラン先の実行が保持日数以内である When ハウスキープを実行する Then リラン元とリラン先の成果物と管理 DB の行はどちらも残る"
+          - "Given parent_run_id でつながるリランの親子すべてが終端し、保持日数を過ぎた When ハウスキープを実行する Then 親子すべての成果物と管理 DB の行が無くなる"
+        feedback_source:
+          feedback_request_id: "20261101_mail_removal_housekeeping"
+          work_unit_ids:
+            - "CR-e4ea8aaa-002#1"
+        affected_models:
+          - type: "buc"
+            action: "add"
+            target: "ハウスキープフロー"
+          - type: "business_policy"
+            action: "add"
+            target: "ハウスキープの削除判定"
+          - type: "information"
+            action: "modify"
+            target: "監視記録"
+      - id: "SPEC-014-03"
+        specification: "実行の単位を消す条件は、単位内のすべての構成要素(並行稼働実行、各 slot、速報比較依頼)が終端していることとする。管理 DB を使う設定では、並行稼働実行が COMPLETED / ABORTED、すべての slot 実行が SUCCEEDED / FAILED / ABORTED、すべての速報比較依頼が SUCCEEDED / FAILED / ABORTED であること。RAPID_CROSSCHECK_MODE=off で管理 DB の行が無い実行は成果物だけで判定し、execution-spec.json で起動対象になっている slot(mode が off の slot は含まない)のすべてで、成果物ディレクトリに exitcode.txt または aborted.txt があること。起動対象の slot の成果物ディレクトリが無い場合や execution-spec.json が無い実行は、終わっていないものとして残し、標準エラーに warn を出す。速報比較依頼だけのリランで作られた run は成果物を持たないため、管理 DB の行だけで判定する。1 つでも終わっていない構成要素(RUNNING、CLAIMED、REQUESTED、slot の終了ファイルが無い)があれば、経過日数にかかわらず単位ごと残す。管理 DB に接続しないときの扱いは SPEC-014-08 に従う"
+        acceptance_criteria:
+          - "Given 並行稼働実行は COMPLETED(foreground の中継は終わった)だが background slot が RUNNING のまま、ほかの構成要素の終了日時から保持日数を過ぎた実行 When ハウスキープを実行する Then その実行の成果物と管理 DB の行は残る"
+          - "Given 並行稼働実行は COMPLETED だが速報比較依頼が REQUESTED・CLAIMED・RUNNING のいずれかのまま、ほかの構成要素の終了日時から保持日数を過ぎた実行 When ハウスキープを実行する Then その実行の成果物と管理 DB の行は残る"
+          - "Given RAPID_CROSSCHECK_MODE=off で管理 DB の行が無く、execution-spec.json に記録された速報クロスチェックのモードが off で、execution-spec.json で起動対象のすべての slot の成果物ディレクトリに exitcode.txt または aborted.txt があり、その更新時刻の最も遅いものから保持日数を過ぎた実行 When ハウスキープを実行する Then その実行の成果物ディレクトリと通知済みの印が無くなる"
+          - "Given RAPID_CROSSCHECK_MODE=off で管理 DB の行が無く、起動対象のすべての slot が終了しているが、その最も遅い更新時刻から保持日数以内の実行 When ハウスキープを実行する Then その実行の成果物ディレクトリは残る"
+          - "Given RAPID_CROSSCHECK_MODE=off で管理 DB の行が無く、起動対象の slot のいずれかの成果物ディレクトリに exitcode.txt も aborted.txt も無い実行 When ハウスキープを実行する Then 経過日数にかかわらずその実行の成果物ディレクトリは残る"
+          - "Given 管理 DB の行が無く、execution-spec.json に記録された速報クロスチェックのモードが off で、execution-spec.json で mode が off の slot があり、その slot の成果物ディレクトリが無く、起動対象のほかの slot はすべて終了して保持日数を過ぎた実行 When ハウスキープを実行する Then その実行の成果物ディレクトリは無くなる"
+          - "Given 管理 DB の行が無く、execution-spec.json が無いか、起動対象の slot の成果物ディレクトリが無い成果物ディレクトリ When ハウスキープを実行する Then その成果物ディレクトリは残り、標準エラーに warn の行が出る"
+          - "Given 速報比較依頼だけのリランで作られた run を含むリランの親子で、すべての管理 DB の行が終端し、最も遅い終了日時から保持日数を過ぎた When ハウスキープを実行する Then その run を含む親子すべての管理 DB の行と成果物が無くなる"
+          - "Given 速報比較依頼だけのリランで作られた run の速報比較依頼が RUNNING である When ハウスキープを実行する Then その run とリランの親子の管理 DB の行と成果物は、経過日数にかかわらず残る"
+        feedback_source:
+          feedback_request_id: "20261103_housekeeping_followups"
+          work_unit_ids:
+            - "CR-f3b8a1d0-001#1"
+        affected_models:
+          - type: "business_policy"
+            action: "add"
+            target: "ハウスキープの削除判定"
+      - id: "SPEC-014-04"
+        specification: "経過日数の基準は、単位内の構成要素の終了日時のうち最も遅いものとする。管理 DB の行は completed_at、成果物だけの slot は exitcode.txt または aborted.txt の更新時刻を使い、開始日時は使わない。確報比較依頼は、管理 DB に接続する設定で、終端状態(SUCCEEDED / FAILED / ABORTED)で、completed_at から保持日数を過ぎたものを依頼ごとに消す。RAPID_CROSSCHECK_MODE=off でも、確報クロスチェックを使う設置(確報クロスチェック worker の設定がある設置)ではハウスキープ設定の管理 DB 接続参照名が必須のため(SPEC-014-07)、確報比較依頼は同じ規則で消す(管理 DB に接続しないときは SPEC-014-08 のとおり消さない)"
+        acceptance_criteria:
+          - "Given 開始日時とほかの構成要素の終了日時は保持日数より古いが、最も遅い構成要素の終了日時が保持日数以内の実行 When ハウスキープを実行する Then その実行の成果物と管理 DB の行は残る"
+          - "Given 管理 DB に接続する設定で、終端状態の確報比較依頼のうち、completed_at から保持日数を過ぎた依頼と過ぎていない依頼がある When ハウスキープを実行する Then 過ぎた依頼だけが無くなり、過ぎていない依頼は残る"
+          - "Given REQUESTED・CLAIMED・RUNNING のいずれかの確報比較依頼が、登録から保持日数より長く経っている When ハウスキープを実行する Then その依頼は残る"
+          - "Given RAPID_CROSSCHECK_MODE=off で、確報クロスチェックを使う設置(確報クロスチェック worker の設定がある設置)で、ハウスキープ設定に管理 DB 接続参照名があり、終端状態で completed_at から保持日数を過ぎた確報比較依頼がある When ハウスキープを実行する Then その確報比較依頼は無くなる"
+        feedback_source:
+          feedback_request_id: "20261103_housekeeping_db_required"
+          work_unit_ids:
+            - "CR-9d2e6c41-001#1"
+        affected_models:
+          - type: "business_policy"
+            action: "add"
+            target: "ハウスキープの削除判定"
+          - type: "business_policy"
+            action: "modify"
+            target: "ハウスキープの削除判定"
+      - id: "SPEC-014-05"
+        specification: "削除は何度実行しても結果が同じになるようにする。1 つの単位の中では、成果物(ディレクトリと通知済みの印)を先に処理し、そのあと管理 DB の行を 1 つのトランザクションで消す。成果物は、削除対象と判定したら、まず成果物ルート配下の削除待ちの置き場へ rename で移し(同じファイルシステム内で 1 回の操作)、そのあと置き場から削除する。置き場に残っているものは、判定をやり直さず次回の実行で無条件に削除する。置き場の場所は仕様で確定する。管理 DB の行が残っている間は、次回の走査で同じ単位を再び見つけ、既に無いファイルは削除済みとして扱って続けて管理 DB の行を消す。成果物ルートの走査は管理 DB の有無にかかわらず毎回行い、管理 DB の行が無い成果物ディレクトリは成果物だけの判定規則で扱う。ファイルを消してから管理 DB の行を消すまでの間に期限切れの実行をリランしようとした場合は、リランは元の execution-spec.json が無いことをエラーとして返す(既存のリランの規則のまま)"
+        acceptance_criteria:
+          - "Given 前回のハウスキープが削除対象の成果物を削除待ちの置き場へ移したあとに失敗した When 次のハウスキープを実行する Then 置き場に残っていた成果物と、その単位の管理 DB の行が無くなる"
+          - "Given 前回のハウスキープが成果物を消したあと、その単位の管理 DB の行の削除に失敗した When 次のハウスキープを実行する Then その単位の管理 DB の行が無くなり、ほかに失敗が無ければ終了コード 0 で終わる"
+          - "Given 削除対象を削除し終えたハウスキープの直後 When 同じ状態のままハウスキープをもう一度実行する Then 削除件数 0 を標準出力に出して終了コード 0 で終わり、成果物と管理 DB の行は 1 回目の後と同じである"
+          - "Given 成果物は消えたが管理 DB の行が残っている期限切れの実行 When その実行を background 側リランしようとする Then リランは元の execution-spec.json が無いことを標準エラーに出して非 0 の終了コードで終わる"
+        feedback_source:
+          feedback_request_id: "20261101_mail_removal_housekeeping"
+          work_unit_ids:
+            - "CR-e4ea8aaa-002#1"
+        affected_models:
+          - type: "business_policy"
+            action: "add"
+            target: "ハウスキープの削除順序と回復"
+      - id: "SPEC-014-06"
+        specification: "ハウスキープは削除した件数を標準出力に出し、失敗は標準エラーに出して非 0 で終わる"
+        acceptance_criteria:
+          - "Given 保持日数を過ぎた実行の単位と確報比較依頼がある When ハウスキープが成功する Then 標準出力に削除した件数が出て、終了コード 0 で終わる"
+          - "Given 成果物を削除待ちの置き場へ移したあとに処理が失敗する When ハウスキープが終わる Then 標準エラーに失敗の内容が出て、非 0 の終了コードで終わる"
+          - "Given 管理 DB の行の削除が失敗する When ハウスキープが終わる Then 標準エラーに失敗の内容が出て、非 0 の終了コードで終わる"
+        feedback_source:
+          feedback_request_id: "20261101_mail_removal_housekeeping"
+          work_unit_ids:
+            - "CR-e4ea8aaa-002#1"
+        affected_models:
+          - type: "business_policy"
+            action: "modify"
+            target: "CLI による提示"
+      - id: "SPEC-014-07"
+        specification: "管理 DB の行の削除には、ハウスキープ専用の DB ロールを使う。権限は対象テーブル(parallel_runs / slot_executions / rapid_runs / rapid_crosscheck_requests / final_crosscheck_requests / monitor_records)の SELECT と DELETE だけとし、業務用接続ロールには DELETE を足さない。接続はハング検知と同じく接続参照名で解決し、認証情報の値を設定に置かない。ハウスキープ設定の管理 DB 接続参照名は、管理 DB を使う機能が 1 つでもある設置、すなわち RAPID_CROSSCHECK_MODE が off 以外の設置と、確報クロスチェックを使う設置(確報クロスチェック worker の設定がある設置)では必須とし、無い・空なら設定エラーとして非 0 で終わり、成果物・管理 DB の行・確報比較依頼のいずれも削除しない。省略できるのは、どちらにも当てはまらない設置(管理 DB を一切使わない設置)だけで、そのときの振る舞いは SPEC-014-08 に従う。インフラ実装の正本と PostgreSQL 構築ロールに、このロールの作成と権限付与を加える。ロール名・キー名・確報クロスチェック worker の設定があるとみなす判定方法(既存の確報系コマンドの判定と揃える)・終了コードは仕様で確定する"
+        acceptance_criteria:
+          - "Given 構築済みの管理 DB When ハウスキープ専用の DB ロールの権限を確認する Then 対象 6 テーブル(parallel_runs / slot_executions / rapid_runs / rapid_crosscheck_requests / final_crosscheck_requests / monitor_records)の SELECT と DELETE だけを持つ"
+          - "Given 構築済みの管理 DB When 業務用接続ロールの権限を確認する Then どのテーブルにも DELETE 権限を持たない"
+          - "Given ハウスキープ設定 When 内容を確認する Then 認証情報の値は含まれず管理 DB 接続の参照名だけがある"
+          - "Given RAPID_CROSSCHECK_MODE=off で、確報クロスチェックを使う設置(確報クロスチェック worker の設定がある設置)で、ハウスキープ設定の管理 DB 接続参照名が無い・空で、保持日数を過ぎた成果物だけの実行と終端した確報比較依頼がある When ハウスキープを実行する Then 非 0 の終了コードで終わり、標準エラーに設定エラーの行が出て、成果物・管理 DB の行・確報比較依頼のいずれも削除されずに残る"
+          - "Given RAPID_CROSSCHECK_MODE が off 以外で、ハウスキープ設定の管理 DB 接続参照名が無い・空 When ハウスキープを実行する Then 非 0 の終了コードで終わり、標準エラーに設定エラーの行が出て、成果物・管理 DB の行・確報比較依頼のいずれも削除されずに残る"
+        feedback_source:
+          feedback_request_id: "20261103_housekeeping_db_required"
+          work_unit_ids:
+            - "CR-9d2e6c41-001#1"
+        affected_models:
+          - type: "information"
+            action: "add"
+            target: "ハウスキープ設定"
+          - type: "business_policy"
+            action: "add"
+            target: "ハウスキープの削除順序と回復"
+          - type: "information"
+            action: "modify"
+            target: "ハウスキープ設定"
+          - type: "business_policy"
+            action: "modify"
+            target: "ハウスキープの削除判定"
+      - id: "SPEC-014-08"
+        specification: "管理 DB に接続しないとき(RAPID_CROSSCHECK_MODE=off で、確報クロスチェックを使わない設置(確報クロスチェック worker の設定が無い設置)で、ハウスキープ設定の管理 DB 接続参照名が無い・空)は、ハウスキープは管理 DB に接続せず、確報比較依頼と管理 DB の行を削除しない。起動のたびに、管理 DB の行を削除しないことを示す warn を標準エラーへ 1 行出す。成果物ルートの実行は成果物だけで判定するが、execution-spec.json に記録された速報クロスチェックのモードが off でない実行(off 以外の期間に作られ、管理 DB に終わっていない構成要素があり得る実行)は、判定できないものとして経過日数にかかわらず単位ごと残し、その実行を残したことを示す warn を標準エラーへ出す。off の期間に作られた成果物だけの実行は、SPEC-014-03 と SPEC-014-04 の成果物だけの規則どおりに判定して削除・保持する。これらの warn は終了コードに影響しない。管理 DB に接続しないときは、本 SPEC の規則が SPEC-014-01〜07 より優先する。RAPID_CROSSCHECK_MODE が off 以外の設置や、確報クロスチェックを使う設置で接続参照名が無い・空のときは、本 SPEC の振る舞いにならず SPEC-014-07 の設定エラーになる。warn の文言と設定のキー名は仕様(CLI 契約)で確定する"
+        acceptance_criteria:
+          - "Given 管理 DB に接続しない設定(RAPID_CROSSCHECK_MODE=off で、確報クロスチェック worker の設定が無い設置で、ハウスキープ設定の管理 DB 接続参照名が無い・空)で、終端状態で completed_at から保持日数を過ぎた確報比較依頼がある When ハウスキープを実行する Then その確報比較依頼と管理 DB の行は残り、標準エラーに管理 DB の行を削除しない旨の warn の行が 1 行出る"
+          - "Given 管理 DB に接続しない設定(RAPID_CROSSCHECK_MODE=off で、確報クロスチェック worker の設定が無い設置で、ハウスキープ設定の管理 DB 接続参照名が無い・空)で、execution-spec.json に記録された速報クロスチェックのモードが off でなく、起動対象のすべての slot の成果物ディレクトリに exitcode.txt または aborted.txt があり、その最も遅い更新時刻から保持日数を過ぎた実行 When ハウスキープを実行する Then その実行の単位の成果物ディレクトリは残り、標準エラーにその実行を残した旨の warn の行が出る"
+          - "Given 管理 DB に接続しない設定(RAPID_CROSSCHECK_MODE=off で、確報クロスチェック worker の設定が無い設置で、ハウスキープ設定の管理 DB 接続参照名が無い・空)で、execution-spec.json に記録された速報クロスチェックのモードが off で、起動対象のすべての slot の成果物ディレクトリに exitcode.txt または aborted.txt があり、その最も遅い更新時刻から保持日数を過ぎた実行 When ハウスキープを実行する Then その実行の成果物ディレクトリと通知済みの印が無くなる"
+          - "Given 管理 DB に接続しない設定(RAPID_CROSSCHECK_MODE=off で、確報クロスチェック worker の設定が無い設置で、ハウスキープ設定の管理 DB 接続参照名が無い・空)で、削除の失敗が無い When ハウスキープを実行する Then 標準エラーに warn の行が出ても終了コード 0 で終わる"
+        feedback_source:
+          feedback_request_id: "20261103_housekeeping_db_required"
+          work_unit_ids:
+            - "CR-9d2e6c41-001#1"
+        affected_models:
+          - type: "business_policy"
+            action: "modify"
+            target: "ハウスキープの削除判定"

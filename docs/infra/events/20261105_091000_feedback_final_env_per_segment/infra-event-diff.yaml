@@ -1,0 +1,66 @@
+meta:
+  event_id: "20261105_091000_feedback_final_env_per_segment"
+  trigger_event: "infra:20261104_101000_feedback_rapid_env_deploy_check"
+  created_at: "2026-11-05T09:10:00+09:00"
+  mode: "differential"
+  mcl_rerun: "skipped_targeted_update"
+  mcl_rerun_reason: "上流(USDM / RDRA / NFR / arch)の latest は変更なし。translation(workload_type / availability_tier / latency / data_classification / traffic / consistency / cost_posture / target_clouds)も無変更。変更はインフラ成果物の中だけで、構築手順(config ロール)が確報クロスチェック worker 設定(final-crosscheck.env)を実行ホストセグメントと DB セグメントに同じ内容で配り、確報 runner の置き場にも使わない比較コマンドを置いていた誤りを、CLI 契約(各読み手は自分のホストのファイルだけを読み、比較ツール起動コマンドは worker 側のファイルだけが持つ。2026-11-04 利用者決定)に合わせて置き場ごとに中身を分けるもの。MCL 出力の該当記述を差分更新した(MCL product-design の全量再実行は行わない)"
+feedback_request:
+  feedback_request_id: "20261105_external_review_round2"
+  input_sha256: "1f98f4040fb856f2d726e8061e59220048989d38fa4f3bbebf6bd54c6aa45eed"
+  request_ids: ["CR-e3b7a915-002"]
+  work_unit_ids: ["CR-e3b7a915-002#1"]
+direct_work_unit_ids: ["CR-e3b7a915-002#1"]
+stage_packet: "docs/pipeline/feedback-runs/20261105_external_review_round2/stage-packets/infrastructure.md"
+changes:
+  event_id: "20261105_091000_feedback_final_env_per_segment"
+  created_at: "2026-11-05T09:10:00+09:00"
+  source: "確報クロスチェック設定の配る中身の指摘(2026-11-05)に基づくインフラ設計の差分更新: final-crosscheck.env の配る中身を置き場ごとに分け、実行ホストセグメント(確報 runner)には FINAL_DB_CONN_REF と runner の任意キーだけを、DB セグメント(確報 worker)には FINAL_DB_CONN_REF・FINAL_COMPARE_COMMAND と worker の任意キーを配る"
+  arch_event_ref: "20261103_133000_feedback_housekeeping_db_required"
+  nfr_event_ref: "20261103_132000_feedback_housekeeping_db_required"
+  translation:
+    unchanged: true
+  mcl_execution:
+    status: "completed"
+    completed_at: "2026-11-05T09:10:00+09:00"
+    outputs_updated:
+      - path: "infra/product/onprem/ansible/roles/relay-gate-config/tasks/main.yml"
+        change: "確報クロスチェック worker 設定の配置タスク(両セグメントに files/final-crosscheck.env を同じ内容で配置)を、segment ごとの 2 タスクに分けた。実行ホストセグメント(segment == 'execution')には files/final-crosscheck-runner.env(必須 FINAL_DB_CONN_REF、任意 FINAL_POLL_INTERVAL_SEC / FINAL_POLL_LIMIT_SEC。FINAL_COMPARE_COMMAND は配らない)を、DB セグメント(segment == 'db')には files/final-crosscheck-worker.env(必須 FINAL_DB_CONN_REF / FINAL_COMPARE_COMMAND、任意 FINAL_LEASE_MINUTES / FINAL_WORKER_POLL_INTERVAL_SEC)を、どちらも /etc/relay-gate/final-crosscheck.env に配置する。コメントの「両方の置き場に同じ内容を置く」「必須は FINAL_DB_CONN_REF と FINAL_COMPARE_COMMAND」を置き場ごとの書き分けに改め、実行ホストの読み手(確報 runner / abort-final-crosscheck.sh / housekeep.sh)はいずれも FINAL_DB_CONN_REF だけを使うこと、各読み手は自分のホストのファイルだけを読み自分が使うキーだけを検査すること、validate-config.sh --final-crosscheck は DB セグメントでそのファイルに対して実行することを書いた。変数 relay_gate_final_crosscheck_enabled の扱い(true で両方に配置して test -f、false で両方から state: absent)、配置時は存在確認だけ、認証情報らしい値は警告だけ、は変えない"
+        work_units: ["CR-e3b7a915-002#1"]
+      - path: "docs/mcl/product/output/product-impl-onprem.yaml"
+        change: "config_store の contents の final-crosscheck.env を「両方に同じ内容」から置き場ごとの中身(実行ホストセグメントは FINAL_DB_CONN_REF と runner の任意キーだけで FINAL_COMPARE_COMMAND を配らない、DB セグメントは FINAL_DB_CONN_REF・FINAL_COMPARE_COMMAND と worker の任意キー)に改めた。final-crosscheck.env の検証規則の rule と description を置き場ごとに書き分け、必須キーの検査を「確報 runner / 確報 worker が FINAL_DB_CONN_REF / FINAL_COMPARE_COMMAND を検査」から、実行ホストでは確報 runner が FINAL_DB_CONN_REF と runner の任意キーを、DB セグメントでは確報 worker が FINAL_DB_CONN_REF / FINAL_COMPARE_COMMAND と worker の任意キーを検査する形に、validate-config.sh --final-crosscheck を DB セグメントで実行する形に改めた。management_db の connection_resolution を、確報 runner(と abort-final-crosscheck)は実行ホストのファイル、確報 worker は DB セグメントのファイルの FINAL_DB_CONN_REF で解決する形に書き分け、secret_handling に final-crosscheck.env の FINAL_DB_CONN_REF を加えた"
+        work_units: ["CR-e3b7a915-002#1"]
+      - path: "docs/mcl/product/output/product-mapping-onprem.yaml"
+        change: "config_store の configuration_notes の final-crosscheck.env を「両方に同じ内容」から置き場ごとの中身に改め、各読み手は自分のホストのファイルだけを読むことを追記した"
+        work_units: ["CR-e3b7a915-002#1"]
+      - path: "docs/mcl/product/output/product-workload-model.yaml"
+        change: "config_store の説明の確報クロスチェック worker 設定を、置き場ごとに中身を分け、確報比較ツールの起動コマンドは確報 worker の動くホストの分だけが持つ形に改めた"
+        work_units: ["CR-e3b7a915-002#1"]
+      - path: "docs/mcl/product/input/product-input.yaml"
+        change: "config_store の説明の確報クロスチェック worker 設定を、置き場ごとに中身を分け、実行ホストの分は確報 runner が、起動コマンドを持つ worker のホストの分は確報 worker が読む形に改めた(translation のフィールドは不変)。product-input.yaml(イベント直下のコピー)も同一内容"
+        work_units: ["CR-e3b7a915-002#1"]
+      - path: "docs/cloud-context/conformance/product/product-conformance-onprem.yaml"
+        change: "設定の要件の notes の final-crosscheck.env を「両方に同じ内容」から置き場ごとの中身に改めた(判定は不変)"
+        work_units: ["CR-e3b7a915-002#1"]
+      - path: "infra/product/onprem/ansible/inventory.ini.example"
+        change: "relay_gate_final_crosscheck_enabled のコメントに、実行ホストには files/final-crosscheck-runner.env(FINAL_COMPARE_COMMAND は書かない)、DB ホストには files/final-crosscheck-worker.env を配ることを追記した"
+        work_units: ["CR-e3b7a915-002#1"]
+      - path: "infra/product/onprem/README.md"
+        change: "前提に、final-crosscheck.env は置き場ごとに中身が違い、適用側が final-crosscheck-runner.env(実行ホスト用)と final-crosscheck-worker.env(DB ホスト用)を用意すること、それぞれのキー、validate-config.sh --final-crosscheck は DB ホストで実行することを追記した"
+        work_units: ["CR-e3b7a915-002#1"]
+      - path: "docs/cloud-context/generated-md/product/relay-gate-target-architecture.md"
+        change: "ワークロード全体構成図の設定ノードの final-crosscheck.env を確報 runner 用(FINAL_DB_CONN_REF と runner の任意キーだけ。比較コマンドは置かない)に、DB セグメントの確報クロスチェック worker 設定のノードを確報 worker 用(FINAL_DB_CONN_REF・FINAL_COMPARE_COMMAND と worker の任意キー。比較ツール起動コマンドを持つのはここだけ)に書き分けた。設定ノードは共通のサブグラフから実行ホストセグメントのサブグラフへ移し、実行ホストセグメントだけに配ることを書いた。npx md-mermaid-lint で構文を確認した"
+        work_units: ["CR-e3b7a915-002#1"]
+    outputs_verified_unchanged:
+      - path: "infra/product/onprem/ansible/site.yml"
+        reason: "DB セグメントにも config ロールを割り当て済みで、置き場ごとの配置はロールの中の segment 条件で分けるため変更不要"
+        work_units: ["CR-e3b7a915-002#1"]
+      - path: "docs/mcl/product/output/product-observability.yaml / product-cost-hints.yaml"
+        reason: "確報クロスチェック設定のキー構成や配る中身を書いていない"
+        work_units: ["CR-e3b7a915-002#1"]
+  arch_feedback:
+    status: "no_new_feedback"
+    reason: "変更は構築手順の配る中身を CLI 契約に合わせただけで、ティア・依存ルール・方針に関わる新しい知見は無い。本 stage は feedback controller の指示により Phase4 で arch を更新しない"
+  writeback_check:
+    result: "not_required"
+    reason: "arch の変更が無く、translation の各フィールドも不変のため product-input の再生成(translation のやり直し)と Step2 の全量再実行は不要"
