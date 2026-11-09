@@ -1,0 +1,65 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "specification"
+artifact_id: "spec-decision-009"
+title: "UC の E2E Scenario は自 UC の実装だけで Then を判定できる形にし、他 UC の実行結果は当該 UC の Scenario で覆う。runner --help 問い合わせの規則は validate-config.sh の CLI 契約 runner_help_probe に一元化する"
+status: "approved"
+generated_at: "2026-09-16T20:00:00Z"
+context: |
+  実装フェーズ(distillery-impl。UC fd678b04「feature flag を設定する」)から spec-gap 2 件が還流した(feedback request。2026-09-17 01:41 に実装セッションが発行)。
+  (1) CR-001: UC「feature flag を設定する」の Scenario「ジョブ定義を変えずに feature flag だけで運用モードを切り替える(SPEC-001-03)」は
+  Given だけが自 UC(validate-config.sh --feature-flag)の責務で、When(facade.sh の実行)と Then(green の結果、blue 非起動、管理 DB 非接続)は
+  UC「slot 実行モードを選択して runner を起動する」の責務だった。UC 単位で実装が進む間は未実装の facade.sh を暫定スタブで代替するしかなく、
+  スタブに対する pass が SPEC-001-03 の証跡と誤読されうる。
+  (2) CR-002: runner --help 問い合わせの規則が、コマンドを定義する契約(cli-command-contract.yaml の validate-config.sh)ではなく、
+  検証項目を「追加する」別 UC「slot runner の実体スクリプトを割り当てる」の tier-facade.md に「5 秒でタイムアウト(仮採用)」として置かれていた。
+  実装・検証の双方がこれを参照せず、NFR B.2.1.1(CLI 応答 10 秒以内)から逆算して 4 秒を置いた。5 秒を 2 slot 逐次に適用すると待機だけで
+  10 秒になり NFR を超える。未応答判定の細則(非 0 終了・版行の重複・検証側の一時ファイル障害の区別)も無かった。
+  CR 本文に利用者の希望値(待機上限 4 秒 / 逐次 / TERM → 0.2 秒後 KILL / 準備失敗は終了コード 6)が明記されている。
+decision: |
+  1. UC の E2E 完了条件(BDD)の Scenario は、その UC の実装範囲(定義するコマンド・ライブラリ)の実行結果だけで Then を判定できる形にする。
+     Given だけが自 UC で When / Then が他 UC の実行結果である Scenario は、自 UC で観測できる Then に書き換え、実行側の Then は
+     当該コマンドを定義する UC の Scenario で覆う。両 UC の spec.md「関連 USDM」表の同じ SPEC 行に「※ 検証側 / 実行側」の補足を置き、
+     受け入れ条件が Scenario の組で紐づくことを表から読めるようにする。Scenario 名は変えない(spec-event.yaml の usdm[] と
+     distillery-impl 側の ATDD マッピングを安定させる)。
+  2. 適用した Scenario: UC「feature flag を設定する」の SPEC-001-03(実行側 = UC「slot 実行モードを選択して runner を起動する」の
+     「新実装の単独本番モードでは green だけを起動し管理 DB に触れない(SPEC-001-03)」。同 Scenario に「ジョブ定義は変更していない」前提を追記)、
+     UC「slot ごとのジョブマップを定義する」の SPEC-008-05(実行側 = UC「hang_detect_limit_minutes をジョブごとに調整する」の
+     「調整は実行済み run に影響しない(SPEC-008-05)」とそのティア完了条件)。
+     分離対象外とした UC: 「切り替えた運用モードで業務ジョブを実行する」(UC 自体が運用モード別の facade の振る舞いを E2E で確認する UC。
+     tier-facade は新規コードを持たず契約を読む)、「hang_detect_limit_minutes をジョブごとに調整する」(tier-facade が反映タイミングの契約を
+     定義し、ティア完了条件が facade.sh 起動を含む。契約 commands[facade.sh].used_by_ucs に宣言済み)、「slot runner の実体スクリプトを
+     割り当てる」(Then が検証する runner IF の起動引数・環境変数と Runner Result Contract は自 UC の所有。契約 used_by_ucs に宣言済み)、
+     実装切替業務の runner 内部処理 UC(facade.sh は自 BUC の実行経路)。
+  3. runner --help 問い合わせの規則は cli-command-contract.yaml の commands[validate-config.sh].runner_help_probe を正本にする:
+     1 slot あたりの待機上限 4 秒 / blue → green の逐次 / 上限到達時は runner のプロセスグループへ TERM、0.2 秒後に KILL /
+     「応答しない」= 上限到達・非 0 終了・`runner-if-version=` 行なし・採用行の値が 1 でない / 版行が複数なら最初の 1 行を採用 /
+     未応答は warn + `<slot>_runner_if_version=-` で継続(終了コード 0) / 問い合わせの準備(一時ファイル作成・プロセスグループ起動)の失敗は
+     runner 未応答と区別し `error: runner probe failed slot=... reason=...` で終了コード 6 の即時終了 /
+     1 slot の問い合わせ全体(待機 4 秒 + 停止 0.2 秒 + 回収・起動のオーバーヘッド 0.4 秒以内)を 4.6 秒以内とし、両 slot 未応答の上限
+     2 × 4.6 = 9.2 秒(実測 約 9.1 秒)で NFR B.2.1.1(10 秒)に対し 0.8 秒の余裕。オーバーヘッド 0.4 秒は実測からの導出(仮採用)。
+     UC「slot runner の実体スクリプトを割り当てる」「feature flag を設定する」の tier-facade.md と _api-summary.yaml は契約を参照し、
+     待機上限の値を持たない(「5 秒でタイムアウト(仮採用)」は削除)。validate-config.sh の終了コードに 6 を追加する。
+  4. 非 0 終了を「応答しない」に含める理由: runner IF は `--help` を終了コード 0 で返す契約であり、版行を出しつつ非 0 で終わる runner は
+     契約に従っていない。版の値が 1 でない場合も同じ warn(現行の「runner-if-version=1 を含む」規則の帰結)とし、新しいメッセージを作らない。
+  5. 準備失敗で即時終了する理由: 終了コード 6 は conventions.exit_codes の実行エラー(検証器側の障害)で、検証違反の全件収集(終了コード 2)とは
+     分類が異なる。障害状態で残りの検証を続けても結果を信頼できないため stdout を出さない。
+consequences:
+  positive:
+    - "UC「feature flag を設定する」の全 Scenario が validate-config.sh --feature-flag の終了コード・stdout・stderr だけで判定でき、暫定スタブなしで UC 単位の統合テストが成立する"
+    - "SPEC-001-03 / SPEC-008-05 の受け入れ条件が検証側 UC と実行側 UC の Scenario の組で紐づき、責務境界が spec.md「関連 USDM」表から読める"
+    - "validate-config.sh の契約だけで runner --help 問い合わせを推測なしに実装でき、両 slot 未応答時の応答時間を契約の値から NFR B.2.1.1 以内と計算できる"
+    - "利用者が設定の問題(warn)と検証器の障害(終了コード 6)を区別できる"
+  negative:
+    - "検証側 UC の Scenario 単体では『切り替え後にジョブが green で動く』ことを検証しない。E2E の確認は実行側 UC と UC「切り替えた運用モードで業務ジョブを実行する」に依存する"
+    - "runner_help_probe の準備失敗 Scenario は一時ファイルの作成先(TMPDIR)を書き込み不可にする前提で、実装が mktemp(TMPDIR 準拠)以外の方法で一時ファイルを作る場合はテストの状態作りを変える必要がある"
+    - "分離対象外とした UC(「切り替えた運用モードで業務ジョブを実行する」「hang_detect_limit_minutes をジョブごとに調整する」)の E2E は facade.sh 実装後にしか通らない(契約 used_by_ucs で依存を宣言済み)"
+alternatives_considered:
+  - name: "Scenario を UC「feature flag を設定する」から削除し、実行側 UC の Scenario だけに残す"
+    reason_rejected: "方針資料の受入条件「同じジョブ定義で並行稼働と単独本番を設定だけで切り替えられる」の検証側(設定変更が検証を通過し operation_mode が切り替わる)が USDM 対応から消える。CR は Scenario の意図を弱めないことを要求している"
+  - name: "待機上限 5 秒(仮採用)を維持し、blue / green への問い合わせを並列にする"
+    reason_rejected: "並列化しても上限到達時の停止処理と出力を含めた応答時間の計算が複雑になり、現行実装(逐次 4 秒)と異なる。CR 本文に利用者の希望値(4 秒・逐次)が明記されている"
+  - name: "問い合わせの準備失敗も runner 未応答と同じ warn で継続する"
+    reason_rejected: "利用者が設定の問題と検証器の障害を区別できない(CR の指摘)。実行エラーは conventions.exit_codes の 6 に分類される"
+  - name: "同形 Scenario の走査結果をすべて分離する(UC「切り替えた運用モードで業務ジョブを実行する」「hang_detect_limit_minutes をジョブごとに調整する」を含む)"
+    reason_rejected: "前者は UC 自体が E2E 確認の UC で分離すると UC が空になる。後者は tier-facade が反映タイミングの契約を定義しティア完了条件が facade.sh 起動を含むため、E2E だけ分離すると UC 内で不整合になる。いずれも契約 used_by_ucs に依存を宣言済み"

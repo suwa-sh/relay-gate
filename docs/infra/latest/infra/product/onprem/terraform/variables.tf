@@ -25,7 +25,7 @@ variable "db_host_count" {
 }
 
 variable "allowed_ports" {
-  description = "セグメント間で許可するポート(SSH / DB / SMTP のみ)"
+  description = "セグメント間で許可するポート(SSH / DB のみ)"
   type        = list(number)
-  default     = [22, 5432, 25]
+  default     = [22, 5432]
 }

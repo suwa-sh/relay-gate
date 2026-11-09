@@ -1,0 +1,23 @@
+event_id: 20261010_110908_s9_review_generated_dcd8234d
+type: stage_completed
+uc_id: dcd8234d
+stage: S9
+payload:
+  manifest_sha256: ddcab64014c49e5f65a082b66a7d2c381cefd50c4744ad3457a3a8d5ef9d8289
+  manifest_projection: v2
+  result: pass
+  feedback_review_evidence:
+    feedback_id: 20261010_104636_impl_feedback_dcd8234d
+    draft_sha256: 002fd489b8db4bcf8206ca0788749709e9ffb9ef26d3085a94b64f3e0a2419ff
+    request_count: 5
+  implementation_review_evidence:
+    gate_result: 6/6 pass
+    open_blocker_count: 0
+    open_major_count: 0
+    assumption_evidence_sha256: 18852606ab7ecab128e37bfddf669efbe1d00c8bc647bd5f3dae240e2746018d
+  decision_summary:
+    approval_questions: 1
+    selection_questions: 4
+    assumption_questions: 0
+    answer_template: 機能=A / 要求=公開 / 登録=A / BDD=Given / 列数=A / 前提=一括承認
+created_at: '2026-10-10T11:09:08+09:00'

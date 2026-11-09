@@ -1,0 +1,42 @@
+{
+  "event_id": "20261104_095900_feedback_run_completed",
+  "type": "feedback_run_completed",
+  "run_id": "feedback-20261104_external_review_fixes-20261104_090000-26668",
+  "attempt": 1,
+  "created_at": "2026-11-03T19:53:08.168Z",
+  "result_sha256": "021020ef3980054aa0b3eebad6b1623d04b35c3e6b34ca2ebecd2c41373954c1",
+  "feedback_request": {
+    "feedback_request_id": "20261104_external_review_fixes",
+    "input_sha256": "6b4cf1b4db9a1e0d2ad050d265c7c2b77928832af091ac20b2657e61aea0dc13",
+    "request_ids": [
+      "CR-c5e19a72-001",
+      "CR-c5e19a72-002",
+      "CR-c5e19a72-003",
+      "CR-c5e19a72-004"
+    ],
+    "work_unit_ids": [
+      "CR-c5e19a72-001#1",
+      "CR-c5e19a72-002#1",
+      "CR-c5e19a72-003#1",
+      "CR-c5e19a72-004#1"
+    ]
+  },
+  "work_unit_dispositions": [
+    {
+      "work_unit_id": "CR-c5e19a72-001#1",
+      "disposition": "applied"
+    },
+    {
+      "work_unit_id": "CR-c5e19a72-002#1",
+      "disposition": "applied"
+    },
+    {
+      "work_unit_id": "CR-c5e19a72-003#1",
+      "disposition": "applied"
+    },
+    {
+      "work_unit_id": "CR-c5e19a72-004#1",
+      "disposition": "applied"
+    }
+  ]
+}

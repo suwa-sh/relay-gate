@@ -1,0 +1,44 @@
+round: 2
+# round-1 の R-1〜R-5 の修正を確認した結果:
+# - R-1: notified_mark.directory_unreadable に「存在確認が ENOENT 以外で失敗したら『あるのに読めない』と同じ error 1 行だけ」が入り、
+#   off で成果物ルートに検索権限が無い回の stderr は 1 つに決まった。tier-ops.md(走査手順 0・表・BDD)、ui-design.md と値が一致する。解消。
+# - R-2: BDD の Given に started-at.txt の中身と RELAY_GATE_NOW が入り、run が窓内に固定された。解消。
+# - R-3: background で SELECT のあと warn → alert 行の順、warn → error: artifact root is not readable の順の BDD 2 件が入った。解消。
+# - R-4: config_input_rules.env_files の (iii) に hang-detector.env の例外と参照が入った。解消(feature-flag.env 側の扱いは R-7)。
+# - R-5: features/ を spec の段階で変更しない取り決めの前提で、決定記録から先送りの書き方が外れ、同じ run で実装側へ再転写を依頼する形になった。解消。
+# 以下は修正で影響を受けた箇所に残る、または新たに見つかった指摘。
+findings:
+  - id: R-6
+    viewpoint: 4
+    severity: minor
+    target: "_cross-cutting/api/cli-command-contract.yaml"
+    claim: "R-1 の修正で印の置き場には『無いとみなすのは存在確認が ENOENT で終わったときだけ』の規則が入ったが、走査前の検査 (e) の『RELAY_GATE_ARTIFACT_ROOT が無い』には同じ規則が無い。成果物ルート自体の存在確認が ENOENT 以外で失敗する(親ディレクトリに検索権限が無い)回や、成果物ルートの名前がディレクトリでない(通常のファイル)回に、`error: artifact root not found path: ...`(終了コード 2)になるのか、(e) を通って走査に進むのかが決まらない。走査に進むと、off は `error: notified mark dir is not readable ...`(6)、off 以外は未知キーの warn → `error: artifact root is not readable ...`(6)になり、unknown_key_warn の『どの入力・状態の組み合わせでも標準エラーの行数と内容を 1 つに決める』が成り立たない。"
+    evidence: "commands の hang-detector.sh の stderr は `error: artifact root not found path: ...`(RELAY_GATE_ARTIFACT_ROOT が無い)とだけ書き、exit_codes の 2 も『RELAY_GATE_ARTIFACT_ROOT が無い』だけ。environment_variables の RELAY_GATE_ARTIFACT_ROOT も on_missing は『書き込み不可は終了コード 6』だけで、存在確認の失敗とディレクトリでない場合の扱いが無い。実装で `[ -d ]` を使えばファイルの成果物ルートは not found(2)、`[ -e ]` を使えば走査に進む(6)と割れる。一方 notified_mark.directory_unreadable は ENOENT だけを『無い』とする規則を持つ。判定 UC の tier-ops.md の走査前の検査の順 (e) と BDD にもこの組み合わせが無い。"
+    suggested_fix: "(e) に『無い』の定義を足す。例: 『成果物ルートの存在確認が ENOENT で終わったとき、または存在するがディレクトリでないときは `error: artifact root not found`(2)。ENOENT 以外で存在確認が失敗したとき(親ディレクトリの権限不足など)も同じく not found(2)とする』のように 1 つに決める(逆に走査へ進めて 6 にするのでもよいが、どちらかに決める)。判定 UC の tier-ops.md の (e) と ui-design.md を同じ値で揃え、BDD を 1 件(成果物ルートが通常のファイルの回)足す。"
+  - id: R-7
+    viewpoint: 4
+    severity: minor
+    target: "_cross-cutting/api/cli-command-contract.yaml"
+    claim: "hang-detector.sh は feature-flag.env も読むが、feature-flag.env に未知キーや `FINAL_` で始まるキーがある回に、hang-detector.sh が `warn: unknown key ... path: <feature-flag.env>` や `error: final crosscheck key is not allowed ...`(2)を出すかが決まらない。R-4 の修正で env_files の (iii) は『未知キーの warn を出す時点と出さない回を各設定ファイルの契約が別に決めているときはそれに従う』となったが、feature-flag.env の契約は読み手を区別せず『未知キーは warn』『FINAL_ で始まるキーは違反(2)』としか書いていないため、(iii) に従うと hang-detector.sh もこれらを出すことになる。一方 hang-detector.sh の stderr の列挙と order にはこれらの行が無く、stderr が 1 つに決まらない。"
+    evidence: "config_files の feature-flag.env: readers に『hang-detector.sh(RAPID_CROSSCHECK_MODE のみ)』、validation_rules に『未知キーは warn』、error_messages に『未知キー: `warn: unknown key key=<KEY> path: ...`(継続)』と『確報制御キーあり: `error: final crosscheck key is not allowed key=<KEY>`(2)』。実行時の読み手で未知キーを検査しないことを明記しているのは final-crosscheck.env と rapid-crosscheck.env の note だけ(『実行時の読み手は、未知キー(キー表に無いキー)を検査せず warn も出さない』)。hang-detector.sh の走査前の検査 (c) は『存在・読み取り・入力の守備範囲・RAPID_CROSSCHECK_MODE』で、未知キーと FINAL_ キーの扱いを書いていない。shared_rules.hang_alert.order の stderr 全体の順にも feature-flag.env の warn 行の位置が無い。"
+    suggested_fix: "feature-flag.env の契約に、final / rapid と同じく『RAPID_CROSSCHECK_MODE だけを読む読み手(hang-detector.sh など)は未知キーと FINAL_ で始まるキーを検査せず、warn / error を出さない。検査するのは facade.sh と validate-config.sh --feature-flag』のような 1 文を足し、hang-detector.sh の走査前の検査 (c) からも参照する。判定 UC の tier-ops.md に、feature-flag.env に未知キーがある回の stderr が hang-detector.env 由来の行だけであることを示す BDD を 1 件足す。"
+  - id: R-8
+    viewpoint: 4
+    severity: minor
+    target: "実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/spec.md"
+    claim: "R-1 の修正(印の置き場の存在確認が ENOENT 以外で失敗したときも error 1 行だけで終える)が spec.md のシーケンスに反映されていない。off の分岐の条件が『置き場があるのに列挙・読み取りできない』だけで、成果物ルートの権限不足などで置き場の存在を確認できない回が、この alt に入らず未知キーの warn → background role の列挙へ進むように読める。"
+    evidence: "spec.md のシーケンス: `alt 置き場があるのに列挙・読み取りできない` → `stderr error: notified mark dir is not readable path: ... の 1 行だけ`。同じ UC の tier-ops.md の走査手順 0 と『回の結果 × 未知キーの warn』表は『置き場の存在を確認できない(成果物ルートが読めないときを含む)』を同じ扱いに含めている。契約 notified_mark.directory_unreadable も同じ。"
+    suggested_fix: "spec.md のシーケンスの alt 条件を『置き場があるのに列挙・読み取りできない、または置き場の存在を確認できない(ENOENT 以外の失敗)』に直す。"
+resolved:
+  - id: R-6
+    resolution: fixed
+    note: "走査前の検査 (e) の『無い』を、存在確認が ENOENT で終わったとき・存在確認そのものが失敗したとき・ディレクトリでないときとし、どれも error: artifact root not found(2)に決めた。exit_codes の 2、判定 UC の tier-ops.md(検査の順・終了コード表)、BDD 1 件(成果物ルートが通常のファイル)を揃えた"
+    by: orchestrator
+  - id: R-7
+    resolution: fixed
+    note: "hang-detector.sh は feature-flag.env の存在・読み取り・入力の守備範囲と RAPID_CROSSCHECK_MODE だけを検査し、他のキー・未知キー・FINAL_ で始まるキーは検査しない(warn / error を出さない)と commands の hang-detector.sh と判定 UC の tier-ops.md に書いた。config_input_rules.env_files の (iii) から参照し、BDD を 1 件足した"
+    by: orchestrator
+  - id: R-8
+    resolution: fixed
+    note: "spec.md のシーケンスの alt 条件に『置き場の存在を確認できない(ENOENT 以外の失敗)』を足した"
+    by: orchestrator

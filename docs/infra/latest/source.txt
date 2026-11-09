@@ -1,11 +1,7 @@
-arch-design.yaml からのインフラ設計変換(差分更新。arch 差分 20260907_122000_feedback_abort_consistency および NFR 差分 20260907_120000_feedback_abort_consistency に基づくインフラ設計の再照合)
-trigger_event: arch:20260907_122000_feedback_abort_consistency, nfr:20260907_120000_feedback_abort_consistency
-dialogue_policy: interactive(CR 本文に利用者の決定が明記された事項(2026-09-07 DIST-025 A / DIST-026 A / DIST-027 A)は決定を採用。確認推奨項目は完了報告で返却)
-mode: 差分更新(infra-event-diff.yaml。translation 無変更、MCL 全量再実行はスキップし MCL 出力を対象箇所だけ更新)
-
-feedback_request_id: 20260907_abort_consistency
-input_sha256: 70cda63f92e887e459a3817580e45a840e3ff201065a534085ad113fb8910b81
-request_ids: CR-c770d8f0-016, CR-c770d8f0-017, CR-c770d8f0-018
-direct_work_unit_ids: (none)
-causal_work_unit_ids: CR-c770d8f0-016#1, CR-c770d8f0-017#1, CR-c770d8f0-018#1
-stage_packet: docs/pipeline/feedback-runs/20260907_abort_consistency/stage-packets/infrastructure.md
+feedback request 20261105_single_management_db(管理 DB の接続先の参照名が同じ管理 DB に解決されることを、構築と仕様の前提として書く)に基づくインフラ設計の差分更新。上流 latest は変更なし(trigger_event: infra:20261105_091000_feedback_final_env_per_segment)。管理 DB は 1 つで、すべての接続先の参照名(RAPID_DB_CONN_REF、実行ホストと DB セグメントそれぞれの FINAL_DB_CONN_REF、HANG_DB_CONN_REF、HOUSEKEEP_DB_CONN_REF)が同じ 1 つの管理 DB に解決されることを、構築手順(README)・構築ロール relay-gate-config のコメント・インフラ設計(impl の connection_resolution と確報の存在の検証規則の description、mapping、workload、MCL 入力、適合性 notes、ターゲットアーキテクチャ図)に前提として書いた。条件は参照名の文字列ではなく解決先の DB が同じこと。構築時の検査は存在確認のままで、新しい検査タスクは足さない。あわせて controller の追加指示により、ハウスキープ設定と削除待ちの置き場・通知済みの印に残っていた「仕様で確定」の仮置き表現を CLI 契約の名前(housekeep.env、/etc/relay-gate/housekeep.env、HOUSEKEEP_RETENTION_DAYS / HOUSEKEEP_DB_CONN_REF、hang-detector-notified/<run_id>.<role>、housekeep-pending/)に揃えた(差分更新。MCL 全面再実行なし)。
+- feedback_request_id: 20261105_single_management_db
+- input_sha256: 97bb80ca208301540a11760f416c348f73ea0c1898d9535a80c5a8f013df194a
+- request_ids: CR-f4c8b261-001
+- direct_work_unit_ids: CR-f4c8b261-001#1
+- causal_work_unit_ids: CR-f4c8b261-001#1
+- packet: docs/pipeline/feedback-runs/20261105_single_management_db/stage-packets/infrastructure.md

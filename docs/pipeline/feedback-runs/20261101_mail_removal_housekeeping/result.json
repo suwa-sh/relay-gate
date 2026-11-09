@@ -1,0 +1,187 @@
+{
+  "schema_version": "distillery.feedback-result/v1",
+  "run_id": "feedback-20261101_mail_removal_housekeeping-20261101_121449-27318",
+  "attempt": 1,
+  "feedback_request_id": "20261101_mail_removal_housekeeping",
+  "input_sha256": "7be2e54314163ff4cae802f01005fe771da312621c06ff123a43b09f562afb11",
+  "status": "completed",
+  "stages": [
+    {
+      "stage_id": "requirements",
+      "state": "succeeded",
+      "event_ids": [
+        "20261101_121000_feedback_stage_requirements"
+      ],
+      "direct_work_unit_ids": [
+        "CR-e4ea8aaa-001#1",
+        "CR-e4ea8aaa-002#1"
+      ],
+      "causal_work_unit_ids": [
+        "CR-e4ea8aaa-001#1",
+        "CR-e4ea8aaa-002#1"
+      ]
+    },
+    {
+      "stage_id": "quality_attributes",
+      "state": "succeeded",
+      "event_ids": [
+        "20261101_122000_feedback_stage_quality_attributes"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-e4ea8aaa-001#1",
+        "CR-e4ea8aaa-002#1"
+      ]
+    },
+    {
+      "stage_id": "architecture",
+      "state": "succeeded",
+      "event_ids": [
+        "20261101_123000_feedback_stage_architecture"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-e4ea8aaa-001#1",
+        "CR-e4ea8aaa-002#1"
+      ]
+    },
+    {
+      "stage_id": "infrastructure",
+      "state": "succeeded",
+      "event_ids": [
+        "20261101_124000_feedback_stage_infrastructure"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-e4ea8aaa-001#1",
+        "CR-e4ea8aaa-002#1"
+      ]
+    },
+    {
+      "stage_id": "spec",
+      "state": "succeeded",
+      "event_ids": [
+        "20261101_125000_feedback_stage_spec"
+      ],
+      "direct_work_unit_ids": [
+        "CR-e4ea8aaa-003#1"
+      ],
+      "causal_work_unit_ids": [
+        "CR-e4ea8aaa-001#1",
+        "CR-e4ea8aaa-002#1",
+        "CR-e4ea8aaa-003#1"
+      ]
+    }
+  ],
+  "work_units": [
+    {
+      "work_unit_id": "CR-e4ea8aaa-001#1",
+      "disposition": "applied",
+      "reason": "At least one required closure stage changed its domain artifacts.",
+      "artifact_refs": [
+        "usdm/events/20261101_121000_feedback_mail_removal_housekeeping/requirements.yaml",
+        "rdra/events/20261101_121000_feedback_mail_removal_housekeeping/event.json",
+        "nfr/events/20261101_122000_feedback_mail_removal_housekeeping/nfr-grade-diff.yaml",
+        "nfr/events/20261101_122000_feedback_mail_removal_housekeeping/_changes.md",
+        "arch/events/20261101_123000_feedback_mail_removal_housekeeping/arch-design-diff.yaml",
+        "arch/events/20261101_123000_feedback_mail_removal_housekeeping/decisions/arch-decision-022.yaml",
+        "infra/events/20261101_124000_feedback_mail_removal_housekeeping/infra-event-diff.yaml",
+        "infra/events/20261101_124000_feedback_mail_removal_housekeeping/docs/mcl/product/input/product-input.yaml",
+        "infra/events/20261101_124000_feedback_mail_removal_housekeeping/docs/mcl/product/output/product-workload-model.yaml",
+        "infra/events/20261101_124000_feedback_mail_removal_housekeeping/docs/mcl/product/output/product-mapping-onprem.yaml",
+        "infra/events/20261101_124000_feedback_mail_removal_housekeeping/docs/mcl/product/output/product-impl-onprem.yaml",
+        "infra/events/20261101_124000_feedback_mail_removal_housekeeping/docs/mcl/product/output/product-observability.yaml",
+        "infra/events/20261101_124000_feedback_mail_removal_housekeeping/docs/cloud-context/decisions/product/product-decision-004.yaml",
+        "infra/events/20261101_124000_feedback_mail_removal_housekeeping/docs/cloud-context/conformance/product/product-conformance-onprem.yaml",
+        "infra/events/20261101_124000_feedback_mail_removal_housekeeping/infra/product/onprem/ansible/site.yml",
+        "infra/events/20261101_124000_feedback_mail_removal_housekeeping/infra/product/onprem/ansible/roles/relay-gate-runtime/tasks/main.yml",
+        "infra/events/20261101_124000_feedback_mail_removal_housekeeping/infra/product/onprem/terraform/variables.tf",
+        "specs/events/20261101_125000_feedback_mail_removal_housekeeping/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20261101_125000_feedback_mail_removal_housekeeping/_cross-cutting/api/asyncapi.yaml",
+        "specs/events/20261101_125000_feedback_mail_removal_housekeeping/_cross-cutting/ux-ui/ui-design.md",
+        "specs/events/20261101_125000_feedback_mail_removal_housekeeping/_cross-cutting/ux-ui/ux-design.md",
+        "specs/events/20261101_125000_feedback_mail_removal_housekeeping/_cross-cutting/datastore/rdb-schema.yaml",
+        "specs/events/20261101_125000_feedback_mail_removal_housekeeping/実行監視業務/background 実行監視フロー/ハング検知ジョブの異常終了を確認する/spec.md",
+        "specs/events/20261101_125000_feedback_mail_removal_housekeeping/実行監視業務/background 実行監視フロー/ハング疑い・実行エラー・比較異常を通知する/spec.md",
+        "specs/events/20261101_125000_feedback_mail_removal_housekeeping/実行監視業務/background 実行監視フロー/ハング疑い・実行エラー・比較異常を通知する/tier-ops.md",
+        "specs/events/20261101_125000_feedback_mail_removal_housekeeping/実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/tier-ops.md",
+        "specs/events/20261101_125000_feedback_mail_removal_housekeeping/_cross-cutting/traceability-matrix.md",
+        "specs/events/20261101_125000_feedback_mail_removal_housekeeping/_cross-cutting/usdm-acceptance-matrix.md",
+        "specs/events/20261101_125000_feedback_mail_removal_housekeeping/decisions/spec-decision-020.yaml",
+        "specs/events/20261101_125000_feedback_mail_removal_housekeeping/spec-event.yaml"
+      ]
+    },
+    {
+      "work_unit_id": "CR-e4ea8aaa-002#1",
+      "disposition": "applied",
+      "reason": "At least one required closure stage changed its domain artifacts.",
+      "artifact_refs": [
+        "usdm/events/20261101_121000_feedback_mail_removal_housekeeping/requirements.yaml",
+        "rdra/events/20261101_121000_feedback_mail_removal_housekeeping/event.json",
+        "nfr/events/20261101_122000_feedback_mail_removal_housekeeping/nfr-grade-diff.yaml",
+        "nfr/events/20261101_122000_feedback_mail_removal_housekeeping/_changes.md",
+        "arch/events/20261101_123000_feedback_mail_removal_housekeeping/arch-design-diff.yaml",
+        "arch/events/20261101_123000_feedback_mail_removal_housekeeping/decisions/arch-decision-023.yaml",
+        "infra/events/20261101_124000_feedback_mail_removal_housekeeping/infra-event-diff.yaml",
+        "infra/events/20261101_124000_feedback_mail_removal_housekeeping/docs/mcl/product/input/product-input.yaml",
+        "infra/events/20261101_124000_feedback_mail_removal_housekeeping/docs/mcl/product/output/product-workload-model.yaml",
+        "infra/events/20261101_124000_feedback_mail_removal_housekeeping/docs/mcl/product/output/product-mapping-onprem.yaml",
+        "infra/events/20261101_124000_feedback_mail_removal_housekeeping/docs/mcl/product/output/product-impl-onprem.yaml",
+        "infra/events/20261101_124000_feedback_mail_removal_housekeeping/docs/mcl/product/output/product-cost-hints.yaml",
+        "infra/events/20261101_124000_feedback_mail_removal_housekeeping/docs/cloud-context/conformance/product/product-conformance-onprem.yaml",
+        "infra/events/20261101_124000_feedback_mail_removal_housekeeping/infra/product/onprem/ansible/roles/relay-gate-postgresql/tasks/main.yml",
+        "infra/events/20261101_124000_feedback_mail_removal_housekeeping/infra/product/onprem/ansible/roles/relay-gate-config/tasks/main.yml",
+        "infra/events/20261101_124000_feedback_mail_removal_housekeeping/infra/product/onprem/ansible/roles/relay-gate-runtime/tasks/main.yml",
+        "specs/events/20261101_125000_feedback_mail_removal_housekeeping/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20261101_125000_feedback_mail_removal_housekeeping/_cross-cutting/datastore/rdb-schema.yaml",
+        "specs/events/20261101_125000_feedback_mail_removal_housekeeping/ハウスキープ業務/ハウスキープフロー/buc-spec.md",
+        "specs/events/20261101_125000_feedback_mail_removal_housekeeping/ハウスキープ業務/ハウスキープフロー/保持日数を過ぎた終了済みの実行と確報比較依頼を判定する/spec.md",
+        "specs/events/20261101_125000_feedback_mail_removal_housekeeping/ハウスキープ業務/ハウスキープフロー/保持日数を過ぎた終了済みの実行と確報比較依頼を判定する/tier-ops.md",
+        "specs/events/20261101_125000_feedback_mail_removal_housekeeping/ハウスキープ業務/ハウスキープフロー/保持日数を過ぎた終了済みの実行と確報比較依頼を判定する/tier-facade.md",
+        "specs/events/20261101_125000_feedback_mail_removal_housekeeping/ハウスキープ業務/ハウスキープフロー/成果物と管理 DB の履歴を削除する/spec.md",
+        "specs/events/20261101_125000_feedback_mail_removal_housekeeping/ハウスキープ業務/ハウスキープフロー/成果物と管理 DB の履歴を削除する/tier-ops.md",
+        "specs/events/20261101_125000_feedback_mail_removal_housekeeping/_cross-cutting/uc-dependencies.md",
+        "specs/events/20261101_125000_feedback_mail_removal_housekeeping/decisions/spec-decision-021.yaml",
+        "specs/events/20261101_125000_feedback_mail_removal_housekeeping/spec-event.yaml"
+      ]
+    },
+    {
+      "work_unit_id": "CR-e4ea8aaa-003#1",
+      "disposition": "applied",
+      "reason": "At least one required closure stage changed its domain artifacts.",
+      "artifact_refs": [
+        "specs/events/20261101_125000_feedback_mail_removal_housekeeping/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20261101_125000_feedback_mail_removal_housekeeping/適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md",
+        "specs/events/20261101_125000_feedback_mail_removal_housekeeping/decisions/spec-decision-022.yaml",
+        "specs/events/20261101_125000_feedback_mail_removal_housekeeping/spec-event.yaml"
+      ]
+    }
+  ],
+  "requests": [
+    {
+      "request_id": "CR-e4ea8aaa-001",
+      "work_unit_ids": [
+        "CR-e4ea8aaa-001#1"
+      ],
+      "disposition": "applied",
+      "reason": "At least one work unit was applied and all work units completed successfully."
+    },
+    {
+      "request_id": "CR-e4ea8aaa-002",
+      "work_unit_ids": [
+        "CR-e4ea8aaa-002#1"
+      ],
+      "disposition": "applied",
+      "reason": "At least one work unit was applied and all work units completed successfully."
+    },
+    {
+      "request_id": "CR-e4ea8aaa-003",
+      "work_unit_ids": [
+        "CR-e4ea8aaa-003#1"
+      ],
+      "disposition": "applied",
+      "reason": "At least one work unit was applied and all work units completed successfully."
+    }
+  ],
+  "terminal_event_id": "20261101_125900_feedback_run_completed"
+}

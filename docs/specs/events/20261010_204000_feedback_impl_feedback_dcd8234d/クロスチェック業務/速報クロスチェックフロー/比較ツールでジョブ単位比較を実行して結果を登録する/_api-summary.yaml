@@ -1,0 +1,27 @@
+uc: "比較ツールでジョブ単位比較を実行して結果を登録する"
+business: "クロスチェック業務"
+buc: "速報クロスチェックフロー"
+paths: []
+x_cli_commands:
+  - name: "rapid-crosscheck-worker.sh"
+    tier: "tier-rapid-crosscheck"
+    role: "uses"
+    synopsis: "rapid-crosscheck-worker.sh [--once] [--worker-id <id>] [--verbose] [--help]"
+    invoked_by: "ジョブスケジューラ(定期起動 --once)または常駐プロセス"
+    args: []
+    options: []
+    stdin: "なし"
+    stdout: "claim UC の 4 行に続けて request_status=(SUCCEEDED|FAILED|ABORTED。RUNNING 遷移 0 件のときは再 SELECT した現在の status をそのまま出す。ABORTED 以外(REQUESTED / 他 worker の CLAIMED / RUNNING / 別 worker が終端まで進めた SUCCEEDED / FAILED)は lease 失効で回収済み = WARN request not owned) / exit_code=(整数|-)。起動失敗は request_status=FAILED / exit_code=6。終端 UPDATE 0 件(ABORTED 検出)は request_status=ABORTED / exit_code=-。RUNNING 遷移の条件付き UPDATE(status='CLAIMED' AND worker_id=?)0 行(abort-rapid-crosscheck で ABORTED 済み / lease 失効で回収済み)は比較ツールを起動せず、request_status=<再 SELECT した現在の status> / exit_code=- を出して 0(実行ログ WARN comparison not started ... reason=request_aborted / WARN request not owned ...)。比較結果は依頼レコードの stdout / stderr / exit_code 列に保存するため別レコード・成果物ファイルを作らない"
+    stderr: "error: compare tool launch failed run_id=... command=... / error: management db update failed run_id=..."
+    exit_codes:
+      - code: 0
+        meaning: "依頼を終端状態まで処理した(比較 NG / 実行エラーの 3 / 6 も 0)。RUNNING 遷移の条件付き UPDATE(status='CLAIMED' AND worker_id=?)が 0 件(abort-rapid-crosscheck で ABORTED 済み / lease 失効で回収済み)で比較を開始せず終了した場合も 0"
+      - code: 6
+        meaning: "比較ツールの起動自体に失敗(依頼は FAILED / exit_code=6 / error_summary=launch failed で終端)、DB 更新失敗"
+async_events:
+  - name: "rapid-crosscheck-requests"
+    channel: "rapid-crosscheck-requests"
+    direction: "subscribe"
+    message: "RapidCrosscheckRequestMessage"
+    summary: "claim した依頼を条件付き UPDATE で RUNNING にし(0 件なら abort-rapid-crosscheck で ABORTED 済みとして比較を開始しない)、rapid-crosscheck.env の RAPID_COMPARE_COMMAND のプレースホルダを依頼レコードの値で置換して比較ツールを起動、stdout / stderr / exit_code を依頼レコードの列へ保存して SUCCEEDED / FAILED で終端させる(別レコード・成果物ファイルは作らない)。起動失敗は FAILED / exit_code=6 / error_summary=launch failed。速報比較依頼だけのリラン由来 run(parent_run_id あり・slot_executions 0 件)は依頼終端時に parallel_runs を COMPLETED にする"
+schemas: []

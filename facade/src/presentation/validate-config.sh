@@ -1,13 +1,15 @@
 #!/usr/bin/env bash
 # presentation: validate-config.sh(ValidateConfigRequest)。
-# 書式: validate-config.sh (--feature-flag <path> | --job-map <path> | --crosscheck-job-map <path> | --target-catalog <path>) [--verbose] [--help]
+# 書式: validate-config.sh (--feature-flag <path> | --job-map <path> | --rapid-crosscheck <path> | --final-crosscheck <path>) [--verbose] [--help]
 # 仕様: _cross-cutting/api/cli-command-contract.yaml commands[validate-config.sh](検証種別オプションはちょうど 1 つ)、
 #       _cross-cutting/ux-ui/ui-design.md 共通オプション(`--key value` 形式 / 未知オプションは終了コード 2 / --help)
 # 終了コード: 0 検証 OK / 2 引数不正・ファイルなし・検証違反(入力の守備範囲の違反を含む)/ 6 実行エラー
 #             (runner --help 問い合わせの準備失敗。契約 runner_help_probe.preparation_failure。--job-map の入力の複製の失敗と
 #             補助コマンド tr / sed / sort の失敗。契約 config_input_rules.internal_failure。1 は set -e の予期しない終了として区別する)
 # 検証種別ごとの usecase は `validate_config_<kind>` 関数へ委譲する(--feature-flag は UC「feature flag を設定する」、
-# --job-map は UC「slot ごとのジョブマップを定義する」。他は所有 UC が追加する)
+# --job-map は UC「slot ごとのジョブマップを定義する」、--rapid-crosscheck は UC「クロスチェックのジョブマップと比較定義を定義する」。
+# --final-crosscheck は UC「比較ツールで日次全量比較を実行して結果を保存する」が追加する)。
+# 全検証種別を facade ティア自身の関数で検証し、他ティアのシェルファイルを source しない(arch CTR-007)
 # shellcheck source-path=SCRIPTDIR
 set -euo pipefail
 
@@ -35,17 +37,24 @@ source "$VALIDATE_CONFIG_SRC_DIR/repository/job_map_repo.sh"
 # shellcheck source=../usecase/validate_job_map.sh
 source "$VALIDATE_CONFIG_SRC_DIR/usecase/validate_job_map.sh"
 
-VALIDATE_CONFIG_KIND_OPTIONS="--feature-flag|--job-map|--crosscheck-job-map|--target-catalog"
+# shellcheck source=../domain/launch_command.sh
+source "$VALIDATE_CONFIG_SRC_DIR/domain/launch_command.sh"
+# shellcheck source=../repository/rapid_crosscheck_env.sh
+source "$VALIDATE_CONFIG_SRC_DIR/repository/rapid_crosscheck_env.sh"
+# shellcheck source=../usecase/validate_rapid_crosscheck.sh
+source "$VALIDATE_CONFIG_SRC_DIR/usecase/validate_rapid_crosscheck.sh"
+
+VALIDATE_CONFIG_KIND_OPTIONS="--feature-flag|--job-map|--rapid-crosscheck|--final-crosscheck"
 
 validate_config_usage() {
   cat <<USAGE
-usage: $VALIDATE_CONFIG_SCRIPT_NAME (--feature-flag <path> | --job-map <path> | --crosscheck-job-map <path> | --target-catalog <path>) [--verbose] [--help]
+usage: $VALIDATE_CONFIG_SCRIPT_NAME (--feature-flag <path> | --job-map <path> | --rapid-crosscheck <path> | --final-crosscheck <path>) [--verbose] [--help]
 
 options:
   --feature-flag <path>         validate a feature flag env file (exactly one validation option is required)
   --job-map <path>              validate a slot job map CSV
-  --crosscheck-job-map <path>   validate a crosscheck job map CSV
-  --target-catalog <path>       validate a target catalog CSV
+  --rapid-crosscheck <path>     validate a rapid crosscheck env file (RAPID_COMPARE_COMMAND)
+  --final-crosscheck <path>     validate a final crosscheck env file (FINAL_COMPARE_COMMAND)
   --verbose                     print info: lines to stderr
   --help                        print this usage and exit 0
 
@@ -68,6 +77,12 @@ validate_config_job_map() {
   validate_job_map_query "$path" "$verbose"
 }
 
+# --rapid-crosscheck の usecase 委譲(UC「クロスチェックのジョブマップと比較定義を定義する」)
+validate_config_rapid_crosscheck() {
+  local path="$1" verbose="$2"
+  validate_rapid_crosscheck_command "$path" "$verbose"
+}
+
 validate_config_main() {
   local kinds=() kind="" path="" verbose=false
   while [ $# -gt 0 ]; do
@@ -80,7 +95,7 @@ validate_config_main() {
         verbose=true
         shift
         ;;
-      --feature-flag | --job-map | --crosscheck-job-map | --target-catalog)
+      --feature-flag | --job-map | --rapid-crosscheck | --final-crosscheck)
         if [ $# -lt 2 ] || [[ "$2" == --* ]]; then
           printf '%s\n' "error: option required option=$1" >&2
           return 2

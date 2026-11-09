@@ -1,0 +1,26 @@
+stage: "S5"
+tier: "tier-rapid-crosscheck"
+attempt: 4
+uc_id: "dcd8234d"
+manifest_sha256: "81d5dba283cd5c746d42428fa2713f0e7f2d15891575284e8b93e17b6b2d9f93"
+manifest_projection: "v2"
+result: "pass"
+open_blockers: 0
+open_majors: 0
+assumptions_sha256: "2152be1c987ae1edadecdfc96e05150d78d2bf663d60d78104647d575db9ca8f"
+assumption_verdicts_sha256: "701ff3e95033ea51aee712ca276e5322a394a33bb200a11a18c6eabae90e3e3c"
+assumption_verdicts_summary:
+  consistent: 0
+  spec_absent: 18
+  contradicts: 0
+  unlisted: 0
+gate_reexec:
+  format: "pass"
+  lint: "pass"
+  tdd: "pass"
+  bdd_tier: "pass"
+environment_failures: []
+completed_at: "2026-10-10T01:35:15.923245+00:00"
+completed_by: "dist-impl-verify@0.14.1"
+findings_path: "docs/impl/latest/dcd8234d/stages/attempt-4/S5_verify.tier-rapid-crosscheck.findings.yaml"
+notes: "attempt 3 F-018解消。minor18件は仕様詳細の確認事項として残る。"

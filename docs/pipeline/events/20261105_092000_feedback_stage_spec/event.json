@@ -1,0 +1,329 @@
+{
+  "event_id": "20261105_092000_feedback_stage_spec",
+  "type": "feedback_stage_completed",
+  "run_id": "feedback-20261105_external_review_round2-20261105_090000-91391",
+  "attempt": 1,
+  "created_at": "2026-11-05T09:20:00+09:00",
+  "stage": "spec",
+  "direct_work_unit_ids": [
+    "CR-e3b7a915-001#1"
+  ],
+  "causal_work_unit_ids": [
+    "CR-e3b7a915-001#1",
+    "CR-e3b7a915-002#1"
+  ],
+  "work_unit_results": [
+    {
+      "work_unit_id": "CR-e3b7a915-001#1",
+      "disposition": "applied",
+      "reason": "hang-detector.sh の hang-detector.env の未知キーの warn を、走査を始めるとき(RAPID_CROSSCHECK_MODE が off 以外は管理 DB への接続と SELECT が通ったあと、off は印の置き場の検査が通ったあと・facade/ を列挙する前)に、キー表に無いキーごとにファイル内の出現順(物理行番号の昇順。既存の規定に順が無かったためこの順で確定)で、stderr のどの行(error: artifact root is not readable、走査中の warn 行、info 行、alert 行、対象ごとの error 行)よりも前に出すと決め、契約に shared_rules.hang_alert.unknown_key_warn を新設した。走査前の設定エラー(2。(a)〜(e) のどこで止まっても)、管理 DB に接続・SELECT できない回、印の置き場を読めない回は warn を出さない(後の 2 つは今のとおり error 1 行だけ)。stderr を 1 つに決めるため、off で印の置き場の存在確認そのものが失敗した回も読めない回と同じ扱いにし、成果物ルートが無いの定義(shared_rules.artifact_root_entries.missing_root)と feature-flag.env を一部のキーだけ読む読み手の検査の範囲(config_files の feature-flag.env の reader_scope)を 1 か所で決めた。契約の order / db_unavailable / notified_mark.directory_unreadable / commands の hang-detector.sh と housekeep.sh の stderr・exit_codes / config_files の hang-detector.env の note / config_input_rules.env_files の (iii)、出力規約 ui-design.md、判定 UC(spec.md のシーケンス・tier-ops.md・_api-summary.yaml。tier BDD 9 件追加)、通知 UC の並び順、ハウスキープ判定 UC の tier-ops.md(tier BDD 2 件追加)・_api-summary.yaml を揃えた。USDM SPEC-008-07 の要求文は変えない。hang-detector.sh は未実装で契約と食い違う実装は無い。features/atdd/SPEC-008-06.feature のメール送信の Scenario が USDM の現行の受け入れ条件と違う既存の食い違いを判断記録に書いた。判断は spec-decision-031",
+      "artifact_refs": [
+        "specs/events/20261105_092000_feedback_external_review_round2/spec-event.yaml",
+        "specs/events/20261105_092000_feedback_external_review_round2/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20261105_092000_feedback_external_review_round2/_cross-cutting/ux-ui/ui-design.md",
+        "specs/events/20261105_092000_feedback_external_review_round2/decisions/spec-decision-031.yaml",
+        "specs/events/20261105_092000_feedback_external_review_round2/ハウスキープ業務/ハウスキープフロー/保持日数を過ぎた終了済みの実行と確報比較依頼を判定する/_api-summary.yaml",
+        "specs/events/20261105_092000_feedback_external_review_round2/ハウスキープ業務/ハウスキープフロー/保持日数を過ぎた終了済みの実行と確報比較依頼を判定する/tier-ops.md",
+        "specs/events/20261105_092000_feedback_external_review_round2/実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/_api-summary.yaml",
+        "specs/events/20261105_092000_feedback_external_review_round2/実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/spec.md",
+        "specs/events/20261105_092000_feedback_external_review_round2/実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/tier-ops.md",
+        "specs/events/20261105_092000_feedback_external_review_round2/実行監視業務/background 実行監視フロー/ハング疑い・実行エラー・比較異常を通知する/tier-ops.md"
+      ]
+    }
+  ],
+  "reconciliation_results": [
+    {
+      "work_unit_id": "CR-e3b7a915-001#1",
+      "status": "changed",
+      "reason": "hang-detector.sh の hang-detector.env の未知キーの warn を、走査を始めるとき(RAPID_CROSSCHECK_MODE が off 以外は管理 DB への接続と SELECT が通ったあと、off は印の置き場の検査が通ったあと・facade/ を列挙する前)に、キー表に無いキーごとにファイル内の出現順(物理行番号の昇順。既存の規定に順が無かったためこの順で確定)で、stderr のどの行(error: artifact root is not readable、走査中の warn 行、info 行、alert 行、対象ごとの error 行)よりも前に出すと決め、契約に shared_rules.hang_alert.unknown_key_warn を新設した。走査前の設定エラー(2。(a)〜(e) のどこで止まっても)、管理 DB に接続・SELECT できない回、印の置き場を読めない回は warn を出さない(後の 2 つは今のとおり error 1 行だけ)。stderr を 1 つに決めるため、off で印の置き場の存在確認そのものが失敗した回も読めない回と同じ扱いにし、成果物ルートが無いの定義(shared_rules.artifact_root_entries.missing_root)と feature-flag.env を一部のキーだけ読む読み手の検査の範囲(config_files の feature-flag.env の reader_scope)を 1 か所で決めた。契約の order / db_unavailable / notified_mark.directory_unreadable / commands の hang-detector.sh と housekeep.sh の stderr・exit_codes / config_files の hang-detector.env の note / config_input_rules.env_files の (iii)、出力規約 ui-design.md、判定 UC(spec.md のシーケンス・tier-ops.md・_api-summary.yaml。tier BDD 9 件追加)、通知 UC の並び順、ハウスキープ判定 UC の tier-ops.md(tier BDD 2 件追加)・_api-summary.yaml を揃えた。USDM SPEC-008-07 の要求文は変えない。hang-detector.sh は未実装で契約と食い違う実装は無い。features/atdd/SPEC-008-06.feature のメール送信の Scenario が USDM の現行の受け入れ条件と違う既存の食い違いを判断記録に書いた。判断は spec-decision-031",
+      "artifact_refs": [
+        "specs/events/20261105_092000_feedback_external_review_round2/spec-event.yaml",
+        "specs/events/20261105_092000_feedback_external_review_round2/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20261105_092000_feedback_external_review_round2/_cross-cutting/ux-ui/ui-design.md",
+        "specs/events/20261105_092000_feedback_external_review_round2/decisions/spec-decision-031.yaml",
+        "specs/events/20261105_092000_feedback_external_review_round2/ハウスキープ業務/ハウスキープフロー/保持日数を過ぎた終了済みの実行と確報比較依頼を判定する/_api-summary.yaml",
+        "specs/events/20261105_092000_feedback_external_review_round2/ハウスキープ業務/ハウスキープフロー/保持日数を過ぎた終了済みの実行と確報比較依頼を判定する/tier-ops.md",
+        "specs/events/20261105_092000_feedback_external_review_round2/実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/_api-summary.yaml",
+        "specs/events/20261105_092000_feedback_external_review_round2/実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/spec.md",
+        "specs/events/20261105_092000_feedback_external_review_round2/実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/tier-ops.md",
+        "specs/events/20261105_092000_feedback_external_review_round2/実行監視業務/background 実行監視フロー/ハング疑い・実行エラー・比較異常を通知する/tier-ops.md"
+      ]
+    },
+    {
+      "work_unit_id": "CR-e3b7a915-002#1",
+      "status": "changed",
+      "reason": "構築手順が final-crosscheck.env を置き場ごとに別の中身で配る変更(実行ホスト = FINAL_DB_CONN_REF と FINAL_POLL_INTERVAL_SEC / FINAL_POLL_LIMIT_SEC で FINAL_COMPARE_COMMAND を配らない、DB セグメント = FINAL_DB_CONN_REF / FINAL_COMPARE_COMMAND / FINAL_LEASE_MINUTES / FINAL_WORKER_POLL_INTERVAL_SEC、配置先はどちらも /etc/relay-gate/final-crosscheck.env、validate-config.sh --final-crosscheck は DB セグメントで実行)への追従: 読み手ごとの必須キーと各読み手が自分のホストのファイルだけを読む既存の規則とは矛盾しないことを確認した。そのうえで、契約 config_files.final-crosscheck.env の note の「全ホストが構築手順で同じようにデプロイされている」が中身も同じと読めたため「構築手順でデプロイされている」に直し、置き場ごとの中身、worker のキーが実行ホストのファイルに残っていても runner はエラーにも warn にもしないこと(新しい拒否は足さない)、abort-final-crosscheck.sh と housekeep.sh は動くホストのファイルの FINAL_DB_CONN_REF だけを使うこと、validate-config.sh --final-crosscheck は DB セグメントの置き場のファイルを検証することを書いた。FINAL_COMPARE_COMMAND の required に DB セグメントのファイルにだけ置くことを書き、確報の 3 UC の tier-final-crosscheck.md(登録して待機 / claim / 比較実行)に置き場ごとの中身と validate-config.sh の実行場所を書いた。判断は spec-decision-031",
+      "artifact_refs": [
+        "specs/events/20261105_092000_feedback_external_review_round2/spec-event.yaml",
+        "specs/events/20261105_092000_feedback_external_review_round2/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20261105_092000_feedback_external_review_round2/decisions/spec-decision-031.yaml",
+        "specs/events/20261105_092000_feedback_external_review_round2/クロスチェック業務/確報クロスチェックフロー/比較ツールで日次全量比較を実行して結果を保存する/tier-final-crosscheck.md",
+        "specs/events/20261105_092000_feedback_external_review_round2/クロスチェック業務/確報クロスチェックフロー/確報比較依頼を claim する/tier-final-crosscheck.md",
+        "specs/events/20261105_092000_feedback_external_review_round2/クロスチェック業務/確報クロスチェックフロー/確報比較依頼を登録して終端状態まで待機する/tier-final-crosscheck.md"
+      ]
+    }
+  ],
+  "work_unit_evidence_refs": [
+    {
+      "work_unit_id": "CR-e3b7a915-001#1",
+      "path": "specs/events/20261105_092000_feedback_external_review_round2/spec-event.yaml",
+      "sha256": "0810d8d102264ddf3eaf1d854efb8295e5b3d3754b05789c6fce0fc4c1ce3b6e"
+    },
+    {
+      "work_unit_id": "CR-e3b7a915-001#1",
+      "path": "specs/events/20261105_092000_feedback_external_review_round2/_cross-cutting/api/cli-command-contract.yaml",
+      "sha256": "77d411bbf4e5c2bc5f80e5c4e8a559c9f7842b7f3fbeb117c54f8604bea8b2c8"
+    },
+    {
+      "work_unit_id": "CR-e3b7a915-001#1",
+      "path": "specs/events/20261105_092000_feedback_external_review_round2/_cross-cutting/ux-ui/ui-design.md",
+      "sha256": "978b342feb1f94a25010249203ccd9b8bc3335b9534675a03c906b484953e2ec"
+    },
+    {
+      "work_unit_id": "CR-e3b7a915-001#1",
+      "path": "specs/events/20261105_092000_feedback_external_review_round2/decisions/spec-decision-031.yaml",
+      "sha256": "9371a98adaf47bf0a59aeeb57efc8a8d72cf45d4647baf0193e62ec1e797562d"
+    },
+    {
+      "work_unit_id": "CR-e3b7a915-001#1",
+      "path": "specs/events/20261105_092000_feedback_external_review_round2/ハウスキープ業務/ハウスキープフロー/保持日数を過ぎた終了済みの実行と確報比較依頼を判定する/_api-summary.yaml",
+      "sha256": "7bd945cbeaf0ed54aca59e2ea53d537d5badf5276ceb6dd4ca19c0320a7cf474"
+    },
+    {
+      "work_unit_id": "CR-e3b7a915-001#1",
+      "path": "specs/events/20261105_092000_feedback_external_review_round2/ハウスキープ業務/ハウスキープフロー/保持日数を過ぎた終了済みの実行と確報比較依頼を判定する/tier-ops.md",
+      "sha256": "89398877ade4558319fbf94e8052185666b1d246d21b0439df3bba3b45563635"
+    },
+    {
+      "work_unit_id": "CR-e3b7a915-001#1",
+      "path": "specs/events/20261105_092000_feedback_external_review_round2/実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/_api-summary.yaml",
+      "sha256": "97b4fa21ab0d03e7e840e032c13bc4c1f6403b6cbb3449e127c0062dd6c07921"
+    },
+    {
+      "work_unit_id": "CR-e3b7a915-001#1",
+      "path": "specs/events/20261105_092000_feedback_external_review_round2/実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/spec.md",
+      "sha256": "8804cbd05300c9d09f102231faeb5a13d729c6a63f692b1ff793c3a770706b4c"
+    },
+    {
+      "work_unit_id": "CR-e3b7a915-001#1",
+      "path": "specs/events/20261105_092000_feedback_external_review_round2/実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/tier-ops.md",
+      "sha256": "5cd3f079c8033fb5199164d855f79aaa27ba6c48ca77df8eefb2ce21ef6fb268"
+    },
+    {
+      "work_unit_id": "CR-e3b7a915-001#1",
+      "path": "specs/events/20261105_092000_feedback_external_review_round2/実行監視業務/background 実行監視フロー/ハング疑い・実行エラー・比較異常を通知する/tier-ops.md",
+      "sha256": "26eb7d491bbf2835b9e96fb69ba2e4fd8b7e6d150a7465a0729c2d7465ca517a"
+    },
+    {
+      "work_unit_id": "CR-e3b7a915-002#1",
+      "path": "specs/events/20261105_092000_feedback_external_review_round2/spec-event.yaml",
+      "sha256": "0810d8d102264ddf3eaf1d854efb8295e5b3d3754b05789c6fce0fc4c1ce3b6e"
+    },
+    {
+      "work_unit_id": "CR-e3b7a915-002#1",
+      "path": "specs/events/20261105_092000_feedback_external_review_round2/_cross-cutting/api/cli-command-contract.yaml",
+      "sha256": "77d411bbf4e5c2bc5f80e5c4e8a559c9f7842b7f3fbeb117c54f8604bea8b2c8"
+    },
+    {
+      "work_unit_id": "CR-e3b7a915-002#1",
+      "path": "specs/events/20261105_092000_feedback_external_review_round2/decisions/spec-decision-031.yaml",
+      "sha256": "9371a98adaf47bf0a59aeeb57efc8a8d72cf45d4647baf0193e62ec1e797562d"
+    },
+    {
+      "work_unit_id": "CR-e3b7a915-002#1",
+      "path": "specs/events/20261105_092000_feedback_external_review_round2/クロスチェック業務/確報クロスチェックフロー/比較ツールで日次全量比較を実行して結果を保存する/tier-final-crosscheck.md",
+      "sha256": "cc33ec99fac78bda90399dfc964c58d1f791a097ecdb08a033ef302016cf559c"
+    },
+    {
+      "work_unit_id": "CR-e3b7a915-002#1",
+      "path": "specs/events/20261105_092000_feedback_external_review_round2/クロスチェック業務/確報クロスチェックフロー/確報比較依頼を claim する/tier-final-crosscheck.md",
+      "sha256": "d9a5c1bac8a2c0aa10d7eb944f7e3d0c2f704ba9f3aeb9f18869ed1ff4cbae37"
+    },
+    {
+      "work_unit_id": "CR-e3b7a915-002#1",
+      "path": "specs/events/20261105_092000_feedback_external_review_round2/クロスチェック業務/確報クロスチェックフロー/確報比較依頼を登録して終端状態まで待機する/tier-final-crosscheck.md",
+      "sha256": "a3869dace434e06cce6df1fa04abef54a06e018582bf40416f8be62408ea21d6"
+    }
+  ],
+  "domain_event_refs": [
+    {
+      "path": "specs/events/20261105_092000_feedback_external_review_round2/spec-event.yaml",
+      "sha256": "0810d8d102264ddf3eaf1d854efb8295e5b3d3754b05789c6fce0fc4c1ce3b6e"
+    }
+  ],
+  "feedback_request": {
+    "feedback_request_id": "20261105_external_review_round2",
+    "input_sha256": "1f98f4040fb856f2d726e8061e59220048989d38fa4f3bbebf6bd54c6aa45eed",
+    "request_ids": [
+      "CR-e3b7a915-001",
+      "CR-e3b7a915-002"
+    ],
+    "work_unit_ids": [
+      "CR-e3b7a915-001#1",
+      "CR-e3b7a915-002#1"
+    ]
+  },
+  "post_execution_basis": {
+    "repository_head": "38cf3f4a5dff8f47c581ab984ab8c37805c44e20",
+    "latest_domain_event_ids": {
+      "requirements": {
+        "rdra/events": "20261103_131000_feedback_housekeeping_db_required",
+        "usdm/events": "20261103_131000_feedback_housekeeping_db_required"
+      },
+      "quality_attributes": {
+        "nfr/events": "20261103_132000_feedback_housekeeping_db_required"
+      },
+      "architecture": {
+        "arch/events": "20261103_133000_feedback_housekeeping_db_required"
+      },
+      "infrastructure": {
+        "infra/events": "20261105_091000_feedback_final_env_per_segment"
+      },
+      "design_system": {
+        "design/events": null
+      },
+      "spec": {
+        "specs/events": "20261105_092000_feedback_external_review_round2"
+      },
+      "spec_stories": {
+        "design/events": null
+      }
+    },
+    "domain_event_root_snapshots": {
+      "rdra/events": {
+        "head_event_id": "20261103_131000_feedback_housekeeping_db_required",
+        "head_event_sha256": "3e511fca6a1fea0c55efdc3a33fb8b8e7e5ca12899627a7b14221d326de9fb7d",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency",
+          "20260908_011000_feedback_slot_status_wording",
+          "20260921_084000_feedback_impl_feedback_eff24f55",
+          "20261010_200000_feedback_impl_feedback_dcd8234d",
+          "20261101_101000_feedback_impl_feedback_dcd8234d",
+          "20261101_121000_feedback_mail_removal_housekeeping",
+          "20261103_081000_feedback_housekeeping_followups",
+          "20261103_131000_feedback_housekeeping_db_required"
+        ],
+        "event_set_sha256": "608c77661bedd39000b6f1c22dbe8e3c3d8b2c0c35359df2261b25a55aa9346f",
+        "latest_tree_sha256": "b4b4296ae1547f95cba62b54d1140692a16a05e72e184aa44fa8f8f35854b577"
+      },
+      "usdm/events": {
+        "head_event_id": "20261103_131000_feedback_housekeeping_db_required",
+        "head_event_sha256": "d5b9cc924c01032584134b561a0c833b5fa9262f0abafa9e664900b0171d8574",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency",
+          "20260908_011000_feedback_slot_status_wording",
+          "20260921_084000_feedback_impl_feedback_eff24f55",
+          "20261010_200000_feedback_impl_feedback_dcd8234d",
+          "20261101_101000_feedback_impl_feedback_dcd8234d",
+          "20261101_121000_feedback_mail_removal_housekeeping",
+          "20261103_081000_feedback_housekeeping_followups",
+          "20261103_131000_feedback_housekeeping_db_required"
+        ],
+        "event_set_sha256": "608c77661bedd39000b6f1c22dbe8e3c3d8b2c0c35359df2261b25a55aa9346f",
+        "latest_tree_sha256": "48b132d17198156a3da6feef7fd725090592abd41d7e50bd23229b210888d358"
+      },
+      "nfr/events": {
+        "head_event_id": "20261103_132000_feedback_housekeeping_db_required",
+        "head_event_sha256": "6bbbe5e66291b046be72435e6b0de99b04929d96288be66f8f1dcd61a07e7fd7",
+        "event_ids": [
+          "20260830_183726_initial_nfr",
+          "20260905_085000_feedback_todo_resolution",
+          "20260907_013000_feedback_todo_followup",
+          "20260907_120000_feedback_abort_consistency",
+          "20260908_013000_feedback_slot_status_wording",
+          "20260921_090000_feedback_impl_feedback_eff24f55",
+          "20261010_201000_feedback_impl_feedback_dcd8234d",
+          "20261101_102000_feedback_impl_feedback_dcd8234d",
+          "20261101_122000_feedback_mail_removal_housekeeping",
+          "20261103_082000_feedback_housekeeping_followups",
+          "20261103_132000_feedback_housekeeping_db_required"
+        ],
+        "event_set_sha256": "033e74beac16867152af31decca75c10fb3439ecd768ae55c5cf0778533a2bd3",
+        "latest_tree_sha256": "2a22da3a3dbbbf4514a30670646ea4b250a66cf132ec4a57790132c4696b3131"
+      },
+      "arch/events": {
+        "head_event_id": "20261103_133000_feedback_housekeeping_db_required",
+        "head_event_sha256": "53fc4d04b355fbbc82dbbe05c4a854eabecdcef60c67dc512c95f20627d36637",
+        "event_ids": [
+          "20260830_184457_initial_arch",
+          "20260830_202427_arch_infra_feedback_20260830_190412_infra_product_design",
+          "20260905_091000_feedback_todo_resolution",
+          "20260907_015000_feedback_todo_followup",
+          "20260907_122000_feedback_abort_consistency",
+          "20260908_015000_feedback_slot_status_wording",
+          "20260921_092000_feedback_impl_feedback_eff24f55",
+          "20261010_202000_feedback_impl_feedback_dcd8234d",
+          "20261101_103000_feedback_impl_feedback_dcd8234d",
+          "20261101_123000_feedback_mail_removal_housekeeping",
+          "20261103_083000_feedback_housekeeping_followups",
+          "20261103_133000_feedback_housekeeping_db_required"
+        ],
+        "event_set_sha256": "f38dfba1b314fde01ff25cecad44573f1367c9b9a3941c5ee2f7e9598487f899",
+        "latest_tree_sha256": "5e00d5989382518efa1cf9387b0f8c2f14b9010ef51ec8d110cb748c20355bfc"
+      },
+      "infra/events": {
+        "head_event_id": "20261105_091000_feedback_final_env_per_segment",
+        "head_event_sha256": "298c6207a56151f3ba878086226918714cbe6f5d6c3fbb3c14683970c32f0eb7",
+        "event_ids": [
+          "20260830_190412_infra_product_design",
+          "20260905_093000_feedback_todo_resolution",
+          "20260907_021000_feedback_todo_followup",
+          "20260907_124000_feedback_abort_consistency",
+          "20260908_021000_feedback_slot_status_wording",
+          "20260921_094000_feedback_impl_feedback_eff24f55",
+          "20261010_203000_feedback_impl_feedback_dcd8234d",
+          "20261101_104000_feedback_impl_feedback_dcd8234d",
+          "20261101_124000_feedback_mail_removal_housekeeping",
+          "20261103_084000_feedback_housekeeping_followups",
+          "20261103_134000_feedback_housekeeping_db_required",
+          "20261104_091000_feedback_external_review_fixes",
+          "20261104_101000_feedback_rapid_env_deploy_check",
+          "20261105_091000_feedback_final_env_per_segment"
+        ],
+        "event_set_sha256": "bc43f21d82c43f2d021903ffe9ed2c204777ddbdb5a0b1750af5cca32e28c9e5",
+        "latest_tree_sha256": "206fa1b00976a8eaef726f92c0121a211c897bef6f03a9cfb8626e0004e6a13f"
+      },
+      "design/events": {
+        "head_event_id": null,
+        "head_event_sha256": null,
+        "event_ids": [],
+        "event_set_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "latest_tree_sha256": null
+      },
+      "specs/events": {
+        "head_event_id": "20261105_092000_feedback_external_review_round2",
+        "head_event_sha256": "94a925bac244a32d2d9eaad785de7640e0bed4463503b2f1c05be1336fe7b398",
+        "event_ids": [
+          "20260830_202851_spec_generation",
+          "20260905_100000_feedback_todo_resolution",
+          "20260907_024000_feedback_todo_followup",
+          "20260907_131000_feedback_abort_consistency",
+          "20260908_024000_feedback_slot_status_wording",
+          "20260908_062000_feedback_spec_machine_readable",
+          "20260917_050000_feedback_impl_feedback_fd678b04",
+          "20260917_100000_feedback_impl_feedback_fd678b04_cycle2",
+          "20260921_100000_feedback_impl_feedback_eff24f55",
+          "20260923_112000_feedback_impl_feedback_eff24f55_cycle2",
+          "20261010_204000_feedback_impl_feedback_dcd8234d",
+          "20261027_055000_feedback_impl_feedback_dcd8234d",
+          "20261101_105000_feedback_impl_feedback_dcd8234d",
+          "20261101_125000_feedback_mail_removal_housekeeping",
+          "20261103_085000_feedback_housekeeping_followups",
+          "20261103_135000_feedback_housekeeping_db_required",
+          "20261103_151000_feedback_env_duplicate_key",
+          "20261104_092000_feedback_external_review_fixes",
+          "20261104_102000_feedback_rapid_env_deploy_check",
+          "20261105_092000_feedback_external_review_round2"
+        ],
+        "event_set_sha256": "c4b3396d505b25c8fb3cc6e56a0fc9fa561079c9479040fbae87d970fe316032",
+        "latest_tree_sha256": "2d12c829db55b1464001853a6511d264e8b7f4bd409e6539cfc555625ddc073f"
+      }
+    }
+  }
+}

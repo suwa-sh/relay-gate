@@ -1,0 +1,38 @@
+round: 3
+# round-2 の R-6〜R-8 の修正を確認した結果:
+# - R-6: commands の hang-detector.sh の走査前の検査 (e) に『無い』の定義(ENOENT・存在確認そのものの失敗・ディレクトリでない → どれも
+#   error: artifact root not found(2))が入り、exit_codes の 2 も「存在確認の失敗・ディレクトリでないを含む」になった。判定 UC の tier-ops.md
+#   (検査の順の (e)・終了コード表の 2)と BDD(成果物ルートが通常のファイル → 2 で 1 行だけ、未知キーの warn なし)が同じ値。
+#   (e) を通るのは成果物ルートの stat が成功しディレクトリである回だけになり、成果物ルート自体に検索権限が無い off の回は
+#   notified_mark.directory_unreadable(6)に入る。既存 BDD「off で成果物ルートが読めず印の置き場の存在を確認できない」とも両立する。解消。
+# - R-7: commands の hang-detector.sh の (c) に「feature-flag.env は存在・読み取り・入力の守備範囲と RAPID_CROSSCHECK_MODE だけを検査し、
+#   他のキー・未知キー・FINAL_ で始まるキーは warn も error も出さない」が入り、config_input_rules.env_files の (iii) から参照された。
+#   判定 UC の tier-ops.md にも同じ文と BDD(LEGACY_FLAG / FINAL_CROSSCHECK_MODE があっても stderr 0 行)が入った。
+#   同じキーの重複は「読み手によって結果を変えない」規則のとおり (ii) で検査され、(c) の「入力の守備範囲」に含まれるため矛盾しない。
+#   hang-detector.sh については解消(同じ種類の決まっていない点が他の読み手に残る件は R-9)。
+# - R-8: spec.md のシーケンスの off の alt 条件に「置き場の存在を確認できない(ENOENT 以外の失敗)」が入り、tier-ops.md の表・契約と一致した。解消。
+# 以下は修正で影響を受けた箇所に残る、または新たに見つかった指摘。
+findings:
+  - id: R-9
+    viewpoint: 4
+    severity: minor
+    target: "_cross-cutting/api/cli-command-contract.yaml"
+    claim: "R-7 の修正は feature-flag.env の未知キーと FINAL_ で始まるキーを検査しない読み手を hang-detector.sh だけに限って書いたため、同じく RAPID_CROSSCHECK_MODE だけを読む他の読み手(housekeep.sh、rapid-crosscheck-worker.sh / rapid-crosscheck-result.sh / run-lineage.sh / hang-detect-trend.sh / abort-blue.sh / abort-green.sh / abort-rapid-crosscheck.sh)では、feature-flag.env に未知キーや FINAL_ で始まるキーがある回に warn: unknown key や error: final crosscheck key is not allowed(2)を出すかが決まらないまま残る。config_input_rules.env_files の (iii) は『読み手のコマンドの契約が別に決めているときはそれに従う』とし、決めていなければ feature-flag.env の契約(未知キーは warn、FINAL_ キーは 2)に従うことになるが、これらのコマンドの stderr の列挙にはその行が無い。"
+    evidence: "config_files の feature-flag.env の readers は上記コマンドを『RAPID_CROSSCHECK_MODE のみ』と書く。(iii) の例外として名前が挙がるのは『hang-detector.sh は feature-flag.env の RAPID_CROSSCHECK_MODE だけを検査する(commands の hang-detector.sh)』だけ。housekeep.sh の stderr は `warn: unknown key key=<KEY> path: ...` をどのファイルのものか区別せずに挙げ、`error: final crosscheck key is not allowed` は挙げない。round-2 の R-7 の suggested_fix は feature-flag.env の契約側に『RAPID_CROSSCHECK_MODE だけを読む読み手は検査しない』の 1 文を足す案だった。"
+    suggested_fix: "feature-flag.env の契約(validation_rules か note)に『RAPID_CROSSCHECK_MODE だけを読む読み手(readers で「RAPID_CROSSCHECK_MODE のみ」とあるコマンド)は、存在・読み取り・入力の守備範囲と RAPID_CROSSCHECK_MODE だけを検査し、他のキー・未知キー・FINAL_ で始まるキーには warn も error も出さない。それらを検査するのは facade.sh と validate-config.sh --feature-flag』と 1 か所で決め、(iii) と commands の hang-detector.sh はそこを参照する形に揃える。housekeep.sh の stderr の `warn: unknown key` は housekeep.env のものだと明記する。background-rerun.sh(4 キーを読む)の扱いも同じ文で決める。"
+  - id: R-10
+    viewpoint: 4
+    severity: minor
+    target: "_cross-cutting/api/cli-command-contract.yaml"
+    claim: "R-6 の修正で hang-detector.sh の『RELAY_GATE_ARTIFACT_ROOT が無い』は ENOENT・存在確認の失敗・ディレクトリでないの 3 つに決まったが、同じ文言 `error: artifact root not found path: ...`(2)を同じ (e) の位置で出す housekeep.sh には定義が無い。成果物ルートが通常のファイルの回、housekeep.sh は (e) で 2 になるのか、(e) を通って手順 1 の `error: pending dir create failed ...`(6)になるのかが決まらず、同じ文言の意味がコマンドによって変わる。"
+    evidence: "commands の housekeep.sh の stderr は `error: artifact root not found path: ...`(RELAY_GATE_ARTIFACT_ROOT が無い)、exit_codes の 2 は『RELAY_GATE_ARTIFACT_ROOT が無い』、processing_order の手順 0 は『(e) RELAY_GATE_ARTIFACT_ROOT の存在』だけ。ハウスキープ判定 UC の tier-ops.md の表も『RELAY_GATE_ARTIFACT_ROOT が無い』だけ。hang-detector.sh 側は (e) に『無い』の 3 条件を持つ。"
+    suggested_fix: "『無い』の定義を environment_variables の RELAY_GATE_ARTIFACT_ROOT(on_missing)か shared_rules.artifact_root_entries の 1 か所に置き、hang-detector.sh と housekeep.sh の (e) はそこを参照する。ハウスキープ判定 UC の tier-ops.md の表を同じ値にし、BDD を 1 件(成果物ルートが通常のファイル → 2、何も削除しない)足す。"
+resolved:
+  - id: R-9
+    resolution: fixed
+    note: "config_files の feature-flag.env に reader_scope を足し、facade.sh・background-rerun.sh・validate-config.sh --feature-flag は従来どおり全体を検査し、readers で RAPID_CROSSCHECK_MODE のみの読み手は入力の守備範囲と RAPID_CROSSCHECK_MODE だけを検査して他のキー・未知キー・FINAL_ キーに warn も error も出さないと 1 か所で決めた。config_input_rules.env_files の (iii)、commands の hang-detector.sh、housekeep.sh の stderr の warn: unknown key(housekeep.env のもの)、ハウスキープ判定 UC の tier-ops.md(本文と BDD 1 件)から参照"
+    by: orchestrator
+  - id: R-10
+    resolution: fixed
+    note: "shared_rules.artifact_root_entries.missing_root に『成果物ルートが無い』の定義(存在しない・存在確認の失敗・ディレクトリでない → error: artifact root not found(2))を置き、hang-detector.sh と housekeep.sh の stderr・exit_codes の 2、ハウスキープ判定 UC の tier-ops.md(表と BDD 1 件)から参照"
+    by: orchestrator

@@ -12,3 +12,8 @@
 | 2026-09-07 11:40:00 | [20260907_114000_feedback_abort_consistency](../../rdra/events/20260907_114000_feedback_abort_consistency) |
 | 2026-09-08 01:10:00 | [20260908_011000_feedback_slot_status_wording](../../rdra/events/20260908_011000_feedback_slot_status_wording) |
 | 2026-09-21 08:40:00 | [20260921_084000_feedback_impl_feedback_eff24f55](../../rdra/events/20260921_084000_feedback_impl_feedback_eff24f55) |
+| 2026-10-10 20:00:00 | [20261010_200000_feedback_impl_feedback_dcd8234d](../../rdra/events/20261010_200000_feedback_impl_feedback_dcd8234d) |
+| 2026-11-01 10:10:00 | [20261101_101000_feedback_impl_feedback_dcd8234d](../../rdra/events/20261101_101000_feedback_impl_feedback_dcd8234d) |
+| 2026-11-01 12:10:00 | [20261101_121000_feedback_mail_removal_housekeeping](../../rdra/events/20261101_121000_feedback_mail_removal_housekeeping) |
+| 2026-11-03 08:10:00 | [20261103_081000_feedback_housekeeping_followups](../../rdra/events/20261103_081000_feedback_housekeeping_followups) |
+| 2026-11-03 13:10:00 | [20261103_131000_feedback_housekeeping_db_required](../../rdra/events/20261103_131000_feedback_housekeeping_db_required) |

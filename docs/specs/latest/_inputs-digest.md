@@ -1,10 +1,10 @@
 design_available: false
-event_id: 20260923_112000_feedback_impl_feedback_eff24f55_cycle2
+event_id: 20261105_112000_feedback_single_management_db
 
 # arch ダイジェスト
 
 - 転写元: `docs/arch/latest/arch-design.yaml`
-- source_sha256: `45a30ece498ff31b18cdec055333a172156d453b8d6d4b4f330b716cfc87de04`
+- source_sha256: `6ee48d9e90d09b186d8d085a0ac0c64adb0a637559321a753c0612124f5da27d`
 - 生成: `extractSections.js`（原文転写。要約・言い換えなし）
 
 ## 転写済みセクションのチェックリスト
@@ -24,20 +24,20 @@ event_id: 20260923_112000_feedback_impl_feedback_eff24f55_cycle2
 ```yaml
 technology_context:
   languages:
-    - "bash(シェルスクリプト。facade / runner / worker / 監視 / 復旧の全スクリプト)"
+    - "bash(シェルスクリプト。facade / runner / worker / 監視 / 復旧 / ハウスキープの全スクリプト)"
     - "SQL(管理 DB のジョブキュー操作。RDB クライアント CLI 経由)"
     - "JavaScript(CommonJS。BDD の step 定義のみ。実行時には使用しない)"
   frameworks:
-    - "なし(フレームワーク非採用。bash 標準コマンド + ssh + RDB クライアント CLI + OS のメール送信コマンドで構成)"
+    - "なし(フレームワーク非採用。bash 標準コマンド + ssh + RDB クライアント CLI で構成)"
   constraints:
     - "エアーギャップ環境のオンプレミス Linux。実行時にインターネット接続・外部 SaaS を要求しない"
-    - "UI 画面を持たない。CLI(標準出力・標準エラー・終了コード)と定期ジョブとメール通知だけで動作する。presentation 系 tier(frontend / web / ui)は作らない"
+    - "UI 画面を持たない。CLI(標準出力・標準エラー・終了コード)と定期ジョブだけで動作する。運用者への異常の通知もハング検知ジョブの終了結果と標準エラーで行い、ジョブスケジューラの既存のジョブ監視・障害通知で届ける(CLI の出力以外の通知送信手段は持たない)。presentation 系 tier(frontend / web / ui)は作らない"
     - "HTTP API は無い。IdP / API Gateway / 認可サービスは導入しない(SSH 鍵と OS 権限のみ)"
-    - "方針資料の C2/C3/C4 構成(facade / slot runner / rapid-crosscheck runner・worker / final-crosscheck runner・worker / hang-detector / background-rerun / abort-*)と Runner Result Contract(stdout.log / stderr.log / exitcode.txt + execution-spec.json)を spec 都合で変更しない"
-    - "設定契約(feature flag / slot ジョブマップ / クロスチェックジョブマップ / 適用文書)の設定所有区分を維持する"
+    - "方針資料の C2/C3/C4 構成(facade / slot runner / rapid-crosscheck runner・worker / final-crosscheck runner・worker / hang-detector / housekeep / background-rerun / abort-*)と Runner Result Contract(stdout.log / stderr.log / exitcode.txt + execution-spec.json)を spec 都合で変更しない"
+    - "設定契約(feature flag / slot ジョブマップ / 速報クロスチェック設定 / 確報クロスチェック worker 設定 / ハング検知定期ジョブ設定 / ハウスキープ設定 / 適用文書)の設定所有区分を維持する"
     - "管理 DB は RDB 1 種(ジョブキュー兼管理 DB)。速報側と確報側のデータモデルを分離する"
     - "成果物に特定案件の固有名(製品名・サーバ名・業務名)を記載しない(中立表現)"
-    - "実行履歴・監査の正本はジョブスケジューラ。relay-gate はファイル(成果物・実行ログ)と管理レコードを残すだけ"
+    - "実行履歴・監査の正本はジョブスケジューラ。relay-gate はファイル(成果物・実行ログ)と管理レコードを残すだけ。保持日数(既定 90 日)を過ぎた終了済みの実行の成果物と管理レコードはハウスキープ定期ジョブが削除する"
 ```
 
 ## domain_architecture
@@ -84,6 +84,15 @@ domain_architecture:
       reason: "feature flag・ジョブマップ・比較定義・適用文書の設定契約を保守する業務で、案件ごとの差し替えを支える。設定所有区分の分離が主要関心であり、差別化要因ではない"
       source_model: "BUC: 適用構成定義フロー, アクター: 基盤適用設計者, 条件: 設定所有区分, 適用側で定義する事項"
       confidence: "medium"
+    - id: "SD-005"
+      name: "実行履歴のハウスキープ"
+      type: "generic"
+      investment_policy: "既存の定石(保持日数による削除・削除待ちの置き場・冪等な再実行)で最小限に実装する。独自の工夫に投資しない"
+      related_buc_ids:
+        - "ハウスキープフロー"
+      reason: "RDRA が独立した業務「ハウスキープ業務」として切り出した(利用者確定)。保持日数を過ぎた終了済みの成果物と管理 DB の行を消す処理はどの実行基盤にも共通する保守機能であり、並行稼働・クロスチェックの差別化に寄与しないため generic とする"
+      source_model: "BUC: ハウスキープフロー, 情報: ハウスキープ設定, 条件: ハウスキープの削除判定, ハウスキープの削除順序と回復, アクター: 運用者"
+      confidence: "medium"
   bounded_contexts:
     - id: "BC-001"
       name: "並行稼働実行コンテキスト"
@@ -125,20 +134,17 @@ domain_architecture:
         - "E-015"
         - "E-016"
         - "E-017"
-        - "E-018"
       owned_buc_ids:
         - "速報クロスチェックフロー"
       team_ownership: null
-      reason: "方針資料が「速報と確報の比較規約はそれぞれ別ドメインが所有する」と明示し、rapid_run / rapid_crosscheck_request / comparison_result のモデルが確報側と分離されているため"
-      source_model: "BUC: 速報クロスチェックフロー, 情報: 速報実行(rapid_run), 速報比較依頼(rapid_crosscheck_request), 比較結果(comparison_result), 完了通知, slot 実行, 状態: 速報実行の完了状況, クロスチェック依頼, slot 実行, 条件: 中止済み run の比較依頼作成除外, 依頼中止可否判定"
+      reason: "方針資料が「速報と確報の比較規約はそれぞれ別ドメインが所有する」と明示し、rapid_run / rapid_crosscheck_request のモデルが確報側と分離されているため。比較結果は依頼レコードの stdout / stderr / exit_code で参照し、別レコードは持たない"
+      source_model: "BUC: 速報クロスチェックフロー, 情報: 速報実行(rapid_run), 速報比較依頼(rapid_crosscheck_request), 完了通知, slot 実行, 状態: 速報実行の完了状況, クロスチェック依頼, slot 実行, 条件: 中止済み run の比較依頼作成除外, 依頼中止可否判定"
       confidence: "medium"
     - id: "BC-003"
       name: "確報クロスチェックコンテキスト"
       ubiquitous_language:
         - term: "確報比較依頼"
-          definition: "business_date と対象カタログの版で登録する日次全量比較の依頼。runner が終端状態まで同期 polling し、保存済み stdout / stderr / exitcode だけを中継する"
-        - term: "対象カタログ"
-          definition: "全テーブル・全ファイルを target_type / target_identifier と版で定義する比較対象の一覧。リリース判断の正本となる比較範囲"
+          definition: "業務上の引数なしで登録する日次全量比較の依頼。runner が終端状態まで同期 polling し、保存済み stdout / stderr / exitcode だけを中継する。全量比較の対象は比較ツール側(適用側)が定義し、確報 worker は設定の起動コマンドをそのまま起動する"
       related_subdomain_id: "SD-002"
       owned_entity_ids:
         - "E-019"
@@ -146,14 +152,18 @@ domain_architecture:
       owned_buc_ids:
         - "確報クロスチェックフロー"
       team_ownership: null
-      reason: "条件「速報と確報のモデル分離」により final_crosscheck_request と対象カタログを用い、速報側の rapid_run / rapid_crosscheck_request を作成・変更しないと定義されているため独立 BC とする"
-      source_model: "BUC: 確報クロスチェックフロー, 情報: 確報比較依頼(final_crosscheck_request), 対象カタログ, 比較ツール実行結果, 条件: 速報と確報のモデル分離"
+      reason: "条件「速報と確報のモデル分離」により final_crosscheck_request を用い、速報側の rapid_run / rapid_crosscheck_request を作成・変更しないと定義されているため独立 BC とする"
+      source_model: "BUC: 確報クロスチェックフロー, 情報: 確報比較依頼(final_crosscheck_request), 比較ツール実行結果, 条件: 速報と確報のモデル分離"
       confidence: "medium"
     - id: "BC-004"
       name: "実行監視・復旧コンテキスト"
       ubiquitous_language:
         - term: "ハング疑い"
-          definition: "exitcode.txt が未出力のまま started-at.txt からの経過時間が hang_detect_limit_minutes を超えた background role。warning で通知するが状態は変更しない"
+          definition: "exitcode.txt が未出力のまま started-at.txt からの経過時間が hang_detect_limit_minutes を超えた background role。warning(ハング検知ジョブの警告終了と標準エラーの 1 行)で通知するが状態は変更しない"
+        - term: "ハング検知ジョブの終了結果による通知"
+          definition: "ハング検知ジョブが、その回の見回りで新たに見つけた異常を標準エラーに 1 件 1 行(対象・段階 warning / error・経過時間)で出し、新たな異常が無ければ正常終了、ハング疑いだけなら警告終了、background 実行エラーまたは速報クロスチェック異常が 1 件でもあれば失敗で終えること。運用者へはジョブスケジューラの既存のジョブ監視・障害通知で届く。具体的な終了コードは CLI 契約で確定する"
+        - term: "通知済み"
+          definition: "一度知らせた異常を次回以降の見回りで再び知らせないための判定。管理 DB を使う設定では監視記録の monitor_status の遷移で、RAPID_CROSSCHECK_MODE=off では成果物ルート配下の通知済みの印(Runner Result の契約ファイルとは別のファイル)で判定する。通知の判定後に監視記録または印の保存に失敗した異常は次回も通知する"
         - term: "明示中止"
           definition: "運用者がプロセス停止を自身で確認し、中止スクリプトに yes と答えて ABORTED へ更新すること。中止できる状態は background slot 実行と確報比較依頼が RUNNING のみ、速報比較依頼は REQUESTED / CLAIMED / RUNNING のいずれか(abort-rapid-crosscheck。CLAIMED を放置すると lease 失効で再 claim されるため運用者が止める手段として必要)。slot の中止は成果物ディレクトリへの aborted.txt 書き込みを正本とし、RAPID_CROSSCHECK_MODE が off 以外なら管理 DB の状態も更新する。abort-blue / abort-green は run の中止として、対象 run に REQUESTED で未着手(worker が claim していない)の速報比較依頼があればそれも ABORTED にする。これは両系の完了通知で依頼が作成された直後に slot を中止した場合の競合窓を塞ぐ保険であり、dispatcher 側の中止済み run 判定と併用する(CLAIMED / RUNNING の依頼は abort-rapid-crosscheck の対象)。スクリプトはプロセスを停止しない"
         - term: "background 側リラン"
@@ -161,7 +171,6 @@ domain_architecture:
       related_subdomain_id: "SD-003"
       owned_entity_ids:
         - "E-021"
-        - "E-022"
         - "E-023"
         - "E-024"
       owned_buc_ids:
@@ -170,7 +179,7 @@ domain_architecture:
         - "background 側リランフロー"
       team_ownership: null
       reason: "状態モデル「監視状態」が独立し、hang-detector / background-rerun / abort-* が通常起動の facade から分離された運用スクリプト群として方針資料に定義されているため"
-      source_model: "BUC: background 実行監視フロー, 実行中止フロー, background 側リランフロー, 情報: 監視記録, 通知メール, リラン指示, 中止指示, 状態: 監視状態, クロスチェック依頼, 条件: slot 中止可否判定, 依頼中止可否判定, バリエーション: 中止対象種別, 停止確認応答"
+      source_model: "BUC: background 実行監視フロー, 実行中止フロー, background 側リランフロー, 情報: 監視記録, リラン指示, 中止指示, 状態: 監視状態, クロスチェック依頼, 条件: slot 中止可否判定, 依頼中止可否判定, 通知レベルの判定, CLI による提示, バリエーション: 中止対象種別, 停止確認応答"
       confidence: "medium"
     - id: "BC-005"
       name: "適用構成コンテキスト"
@@ -182,7 +191,9 @@ domain_architecture:
         - term: "速報クロスチェック設定"
           definition: "速報クロスチェック用の env 設定ファイル(rapid-crosscheck.env)。管理 DB 接続参照名(RAPID_DB_CONN_REF。値は置かず参照名のみ)・lease 期間(RAPID_LEASE_SEC)・worker の poll 間隔(RAPID_POLL_INTERVAL_SEC)を保持し、facade・slot runner・速報クロスチェック runner・worker が読む。RAPID_CROSSCHECK_MODE=off では不要。ハング検知定期ジョブ設定と同型だが所有項目と読み手が異なるため別ファイル"
         - term: "設定所有区分"
-          definition: "各設定項目の正本をどこ(feature flag / slot ジョブマップ / クロスチェックジョブマップ / ハング検知定期ジョブ設定 / 速報クロスチェック設定 / 適用文書)が所有するかの区分"
+          definition: "各設定項目の正本をどこ(feature flag / slot ジョブマップ / ハング検知定期ジョブ設定(管理 DB 接続参照名)/ ハウスキープ設定(保持日数と管理 DB 接続参照名)/ 速報クロスチェック設定(速報の比較ツール起動コマンドを含む)/ 確報クロスチェック worker 設定(確報の比較ツール起動コマンドを含む)/ 適用文書)が所有するかの区分。比較対象は比較ツール側(適用側)が持つ"
+        - term: "ハウスキープ設定"
+          definition: "ハウスキープ定期ジョブが使う設定。保持日数(正の整数。既定 90 日)と、ハウスキープ専用 DB ロールの管理 DB 接続参照名(値は置かず参照名のみ)を持つ。接続参照名は、RAPID_CROSSCHECK_MODE が off 以外の設置と確報クロスチェックを使う設置(確報クロスチェック worker の設定がある設置)では必須で、無い・空なら設定エラーとしてハウスキープは何も削除せずに終わる。無し・空にできるのは管理 DB を一切使わない設置(off で確報クロスチェック worker の設定が無い設置)だけで、そのときハウスキープは管理 DB に接続せず、確報比較依頼と管理 DB の行を削除しない。ファイル名・キー名と、確報クロスチェック worker の設定があるとみなす判定方法は仕様で確定する。保持日数は設定検証で正の整数であることを検査する"
       related_subdomain_id: "SD-004"
       owned_entity_ids:
         - "E-001"
@@ -191,15 +202,31 @@ domain_architecture:
         - "E-004"
         - "E-005"
         - "E-006"
-        - "E-007"
-        - "E-008"
         - "E-026"
         - "E-027"
+        - "E-028"
       owned_buc_ids:
         - "適用構成定義フロー"
       team_ownership: null
-      reason: "基盤適用設計者だけが扱う設定契約の語彙(feature flag / ジョブマップ / 比較定義 / ハング検知定期ジョブ設定 / 速報クロスチェック設定 / 適用文書)で閉じており、実行系コンテキストは読み取り専用で従うため"
-      source_model: "BUC: 適用構成定義フロー, アクター: 基盤適用設計者, 情報: feature flag 設定, ジョブマップ, クロスチェックジョブマップ, ハング検知定期ジョブ設定, 速報クロスチェック設定, 適用構成文書, 条件: 設定所有区分, バリエーション: 設定所有区分"
+      reason: "基盤適用設計者だけが扱う設定契約の語彙(feature flag / ジョブマップ / 比較定義(比較ツール起動コマンド)/ ハング検知定期ジョブ設定 / ハウスキープ設定 / 速報クロスチェック設定 / 適用文書)で閉じており、実行系コンテキストは読み取り専用で従うため"
+      source_model: "BUC: 適用構成定義フロー, アクター: 基盤適用設計者, 情報: feature flag 設定, ジョブマップ, 比較定義, ハング検知定期ジョブ設定, ハウスキープ設定, 速報クロスチェック設定, 適用構成文書, 条件: 設定所有区分, バリエーション: 設定所有区分"
+      confidence: "medium"
+    - id: "BC-006"
+      name: "ハウスキープコンテキスト"
+      ubiquitous_language:
+        - term: "削除の単位"
+          definition: "リランの親子(parent_run_id でつながる実行)をまとめた実行の単位と、確報比較依頼 1 件の 2 種類。実行の単位は単位内のすべての構成要素(並行稼働実行・各 slot・速報比較依頼)が終端し、最も遅い終了日時(管理 DB の行は completed_at、成果物だけの slot は exitcode.txt または aborted.txt の更新時刻。開始日時は使わない)から保持日数を過ぎたときだけ削除対象になる。1 つでも終わっていない構成要素があれば経過日数にかかわらず単位ごと残す"
+        - term: "削除待ちの置き場"
+          definition: "成果物ルート配下に置く、削除対象と判定した成果物の移動先。同じファイルシステム内の 1 回の rename で移してから削除し、置き場に残っているものは判定をやり直さず次回の実行(ハウスキープ設定の検査を通った実行。設定エラーのときは置き場の中身も消さない)で無条件に削除する。置き場の場所は仕様で確定する"
+        - term: "ハウスキープ専用 DB ロール"
+          definition: "管理 DB の行の削除だけに使う DB ロール。対象テーブルの SELECT と DELETE だけを持ち、業務用接続ロールには DELETE を足さない"
+      related_subdomain_id: "SD-005"
+      owned_entity_ids: []
+      owned_buc_ids:
+        - "ハウスキープフロー"
+      team_ownership: null
+      reason: "RDRA がハウスキープ業務を独立した業務として切り出し(利用者確定)、方針資料も C1 にハウスキープを独立要素として置いている。削除の単位・削除待ちの置き場・専用 DB ロールの語彙は他コンテキストに無く、行の削除という他コンテキストの不変条件(監視は通知のみ、中止は状態更新のみ、速報・確報のモデル所有)と相容れない責務を持つため、実行監視・復旧コンテキストへ統合せず独立 BC とする。自前の永続エンティティは持たず、設定(ハウスキープ設定)は適用構成コンテキストが所有する"
+      source_model: "BUC: ハウスキープフロー, 情報: ハウスキープ設定, 並行稼働実行(parallel_run), slot 実行, 速報実行(rapid_run), 速報比較依頼(rapid_crosscheck_request), 確報比較依頼(final_crosscheck_request), 監視記録, Runner Result, 実行設定(execution-spec), 条件: ハウスキープの削除判定, ハウスキープの削除順序と回復, リラン系譜の追跡, 速報クロスチェック有効判定"
       confidence: "medium"
   context_map:
     - id: "CM-001"
@@ -269,9 +296,9 @@ domain_architecture:
       to_bc_id: "BC-005"
       pattern: "conformist"
       direction: "downstream"
-      translator_description: "BC-002 は BC-005 のクロスチェックジョブマップ(job_id ごとの比較定義)を読み、比較ツールの起動コマンド・比較対象・オプションをそのまま用いる"
+      translator_description: "BC-002 は BC-005 の速報クロスチェック設定(速報の比較ツール起動コマンド 1 行。{job_id} を含む)を読み、{job_id} を依頼レコードの値で置換して比較ツールを起動する。比較対象は比較ツール側が持つ"
       integration_events: []
-      reason: "比較定義は適用側が job_id ごとに差し替える設定契約であり、速報 worker はそれに従うだけのため"
+      reason: "比較定義(起動コマンド)は適用側が差し替える設定契約であり、速報 worker はそれに従うだけのため"
       source_model: "条件: 比較定義の選択, 設定所有区分"
       confidence: "medium"
     - id: "CM-008"
@@ -279,10 +306,60 @@ domain_architecture:
       to_bc_id: "BC-005"
       pattern: "conformist"
       direction: "downstream"
-      translator_description: "BC-003 は BC-005 の対象カタログ(版付き)を読み、確報比較依頼に版を紐付けて全量比較の範囲を確定する"
+      translator_description: "BC-003 は BC-005 の確報クロスチェック worker 設定(確報の比較ツール起動コマンド 1 行)を読み、業務上の引数なしでそのまま起動する。全量比較の対象は比較ツール側が持つ"
       integration_events: []
-      reason: "比較対象と対象カタログはクロスチェックのジョブマップで適用側が定義すると条件に定められているため"
+      reason: "比較対象は比較ツール側(適用側)が定義し、確報 worker は設定の起動コマンドをそのまま起動すると条件に定められているため"
       source_model: "条件: 適用側で定義する事項, 設定所有区分"
+      confidence: "medium"
+    - id: "CM-009"
+      from_bc_id: "BC-006"
+      to_bc_id: "BC-001"
+      pattern: "conformist"
+      direction: "downstream"
+      translator_description: "BC-006(ハウスキープ)は BC-001 の成果物(execution-spec.json / exitcode.txt / aborted.txt とその更新時刻)と parallel_run・slot 実行の状態と completed_at、parent_run_id のリラン系譜をそのまま読み、削除の単位と終了日時を判定する。保持日数を過ぎた単位の成果物ディレクトリを削除待ちの置き場へ移してから削除し、parallel_run・slot 実行の行を削除する。状態は変更しない"
+      integration_events: []
+      reason: "ハウスキープは BC-001 の Runner Result Contract と状態導出規則に従って終端を判定するだけで、契約を変えないため"
+      source_model: "条件: ハウスキープの削除判定, リラン系譜の追跡, slot 実行の状態導出規則, 速報クロスチェック有効判定, 情報: 並行稼働実行(parallel_run), slot 実行, Runner Result, 実行設定(execution-spec)"
+      confidence: "medium"
+    - id: "CM-010"
+      from_bc_id: "BC-006"
+      to_bc_id: "BC-002"
+      pattern: "conformist"
+      direction: "downstream"
+      translator_description: "BC-006 は BC-002 の rapid_run・速報比較依頼の状態と completed_at を読み、実行の単位の構成要素として終端を判定する。単位が削除対象になったときだけ、その run の rapid_run・速報比較依頼の行を実行の単位と同じトランザクションで削除する。REQUESTED / CLAIMED / RUNNING の依頼を含む単位は残す"
+      integration_events: []
+      reason: "速報側のモデルの作成・更新は BC-002 が所有したまま、保持期間を過ぎた終端済みの行の削除だけをハウスキープが担うため(クロスティアルール CTR-008)"
+      source_model: "条件: ハウスキープの削除判定, ハウスキープの削除順序と回復, 状態: クロスチェック依頼, 情報: 速報実行(rapid_run), 速報比較依頼(rapid_crosscheck_request)"
+      confidence: "medium"
+    - id: "CM-011"
+      from_bc_id: "BC-006"
+      to_bc_id: "BC-003"
+      pattern: "conformist"
+      direction: "downstream"
+      translator_description: "BC-006 は確報比較依頼を実行にひも付けず依頼ごとに扱い、終端状態(SUCCEEDED / FAILED / ABORTED)で completed_at から保持日数を過ぎた依頼の行を削除する"
+      integration_events: []
+      reason: "確報比較依頼は run_id を持たないため、条件「ハウスキープの削除判定」が依頼ごとの判定を定めているため"
+      source_model: "条件: ハウスキープの削除判定, 状態: クロスチェック依頼, 情報: 確報比較依頼(final_crosscheck_request)"
+      confidence: "medium"
+    - id: "CM-012"
+      from_bc_id: "BC-006"
+      to_bc_id: "BC-004"
+      pattern: "conformist"
+      direction: "downstream"
+      translator_description: "BC-006 は削除対象になった実行の単位に属する監視記録の行と、RAPID_CROSSCHECK_MODE=off でハング検知が残した通知済みの印を、成果物と同じ順序規則で削除する。監視状態は変更しない"
+      integration_events: []
+      reason: "情報「監視記録」が、監視記録と通知済みの印は保持日数を過ぎた実行の単位とともにハウスキープで削除されると定めているため"
+      source_model: "情報: 監視記録, 条件: ハウスキープの削除順序と回復"
+      confidence: "medium"
+    - id: "CM-013"
+      from_bc_id: "BC-006"
+      to_bc_id: "BC-005"
+      pattern: "conformist"
+      direction: "downstream"
+      translator_description: "BC-006 は BC-005 のハウスキープ設定(保持日数と専用 DB ロールの接続参照名)をそのまま読み、保持日数で削除対象を判定する。あわせて feature flag の RAPID_CROSSCHECK_MODE と、BC-005 の確報クロスチェック worker 設定の有無を判定に使う。off 以外または確報クロスチェック worker の設定がある設置で接続参照名が無い・空なら設定エラーで何も削除せず、管理 DB に接続しないのは off で確報クロスチェック worker の設定が無く接続参照名が無い・空の設置だけとする(SP-027。設定があるとみなす判定方法は仕様で確定する)。削除したくない場合は運用者が定期ジョブを登録しない"
+      integration_events: []
+      reason: "保持日数と接続参照名は基盤適用設計者が所有する設定契約であり、ハウスキープはそれに従うだけのため。接続参照名が必須かどうかは、管理 DB を使う機能(速報クロスチェックと確報クロスチェック)が設置にあるかで決まるため、feature flag と確報クロスチェック worker 設定の有無も読む"
+      source_model: "情報: ハウスキープ設定, 条件: 設定所有区分, ハウスキープの削除判定, バリエーション: 設定所有区分"
       confidence: "medium"
   aggregate_hypotheses:
     - id: "AG-001"
@@ -308,17 +385,16 @@ domain_architecture:
       member_entity_ids:
         - "E-015"
         - "E-017"
-        - "E-018"
       invariants:
         - "blue と green の両方が成功(exitcode 0)したときに限り速報比較依頼を作成する"
-        - "中止済み run(並行稼働実行が ABORTED、または完了通知の対象 slot の slot 実行が ABORTED(aborted.txt 公開済み))では両系成功でも速報比較依頼を作成しない。完了事実(blue_status / green_status / 成果物 URI)だけを rapid_run に記録し、実行ログに警告を残す。判定材料は parallel_run.status と slot_executions.status"
+        - "中止済み run(並行稼働実行が ABORTED、または完了通知の対象 slot の slot 実行が ABORTED(aborted.txt 公開済み))では両系成功でも速報比較依頼を作成しない。完了事実(blue_status / green_status と終了コード)だけを rapid_run に記録し、実行ログに警告を残す。判定材料は parallel_run.status と slot_executions.status"
         - "1 つの run_id に対する速報比較依頼は完了順にかかわらず 1 件だけ(run_id 主キー)"
         - "claim 中(lease 有効)の依頼は他 worker が取得できない。lease 失効かつ未開始なら REQUESTED に戻す。lease 期間と poll 間隔は速報クロスチェック設定から読む"
         - "REQUESTED で未着手の速報比較依頼は対象 run の abort-blue / abort-green(競合窓の保険)または abort-rapid-crosscheck で ABORTED になる。CLAIMED / RUNNING の依頼は abort-rapid-crosscheck だけが ABORTED にする(確報比較依頼は RUNNING のみ)"
         - "CLAIMED から RUNNING への遷移は status = CLAIMED を条件とする条件付き UPDATE で行い、更新件数が 0 件(ABORTED 済み)なら worker は比較を開始しない"
         - "依頼状態は比較ツールの exitcode に従う(0=SUCCEEDED / 非 0・実行エラー=FAILED)"
       note: "仮説。最終確定は dist-spec または ddd-tactical-implementation で行う。rapid_run と rapid_crosscheck_request を同一集約に置くか(両系成功→依頼作成の原子性)、依頼を別集約にするか(worker の claim 競合)は実装時に再判断する"
-      source_model: "情報: 速報実行(rapid_run), 完了通知, 速報比較依頼(rapid_crosscheck_request), 比較結果(comparison_result), 速報クロスチェック設定, slot 実行, 状態: 速報実行の完了状況, クロスチェック依頼, 並行稼働実行, slot 実行, 条件: 両系成功判定, 中止済み run の比較依頼作成除外, 比較依頼の一意性, claim 排他, lease 失効判定, slot 中止可否判定, 依頼中止可否判定"
+      source_model: "情報: 速報実行(rapid_run), 完了通知, 速報比較依頼(rapid_crosscheck_request), 速報クロスチェック設定, slot 実行, 状態: 速報実行の完了状況, クロスチェック依頼, 並行稼働実行, slot 実行, 条件: 両系成功判定, 中止済み run の比較依頼作成除外, 比較依頼の一意性, claim 排他, lease 失効判定, slot 中止可否判定, 依頼中止可否判定"
       confidence: "low"
     - id: "AG-003"
       bounded_context_id: "BC-003"
@@ -326,7 +402,7 @@ domain_architecture:
       member_entity_ids:
         - "E-020"
       invariants:
-        - "確報比較依頼は business_date と対象カタログの版を持って REQUESTED で登録する"
+        - "確報比較依頼は業務上の引数なしで REQUESTED で登録する。全量比較の対象は比較ツール側が持ち、worker は設定の起動コマンドをそのまま起動する"
         - "ジョブスケジューラへ返すのは保存済みの stdout / stderr / exitcode だけ。状態名や差分件数・レポート URI は返さない"
         - "rapid_run / rapid_crosscheck_request を作成・変更しない"
       note: "仮説。最終確定は dist-spec または ddd-tactical-implementation で行う"
@@ -335,14 +411,14 @@ domain_architecture:
     - id: "AG-004"
       bounded_context_id: "BC-004"
       root_entity_id: "E-021"
-      member_entity_ids:
-        - "E-022"
+      member_entity_ids: []
       invariants:
         - "監視は monitor_status / hang_suspected_at / alerted_at を記録し通知するだけ。RUNNING を ABORTED にせず、プロセスを停止せず、新しい実行依頼を作成しない"
         - "hang_detect_limit_minutes が 0 の role と foreground role は検知対象外"
-        - "ハング疑いは warning、background 実行エラーと速報クロスチェック異常は error"
-      note: "仮説。最終確定は dist-spec または ddd-tactical-implementation で行う。リラン指示・中止指示は状態更新の指示であり、集約というより並行稼働実行 / 依頼に対するコマンドとして扱う可能性が高い"
-      source_model: "情報: 監視記録, 通知メール, 状態: 監視状態, 条件: 監視は通知のみ, ハング検知対象の除外, 通知レベルの判定, 警告傾向の記録"
+        - "ハング疑いは warning、background 実行エラーと速報クロスチェック異常は error。その回に新たに見つけた異常だけを標準エラーに 1 件 1 行で出し、ハング検知ジョブを新たな異常なしなら正常終了、warning だけなら警告終了、error が 1 件でもあれば失敗で終える"
+        - "通知済みの異常は監視記録の遷移(RAPID_CROSSCHECK_MODE=off では通知済みの印)で再び通知しない。通知の判定後に保存に失敗した異常は次回も通知する"
+      note: "仮説。最終確定は dist-spec または ddd-tactical-implementation で行う。リラン指示・中止指示は状態更新の指示であり、集約というより並行稼働実行 / 依頼に対するコマンドとして扱う可能性が高い。通知メールのエンティティ廃止(2026-11-01)により監視記録の単独集約となった"
+      source_model: "情報: 監視記録, 状態: 監視状態, 条件: 監視は通知のみ, ハング検知対象の除外, 通知レベルの判定, 警告傾向の記録"
       confidence: "low"
     - id: "AG-005"
       bounded_context_id: "BC-005"
@@ -363,6 +439,7 @@ domain_architecture:
       BC2["速報クロスチェックコンテキスト"]
       BC3["確報クロスチェックコンテキスト"]
       BC4["実行監視・復旧コンテキスト"]
+      BC6["ハウスキープコンテキスト"]
       BC1 -->|Conformist| BC5
       BC2 -->|Conformist| BC5
       BC3 -->|Conformist| BC5
@@ -371,6 +448,11 @@ domain_architecture:
       BC4 -->|Conformist| BC1
       BC4 -->|Conformist| BC2
       BC4 -->|Conformist| BC3
+      BC6 -->|Conformist| BC1
+      BC6 -->|Conformist| BC2
+      BC6 -->|Conformist| BC3
+      BC6 -->|Conformist| BC4
+      BC6 -->|Conformist| BC5
 ```
 
 ## system_architecture.tiers
@@ -452,12 +534,12 @@ domain_architecture:
       description: "rapid-crosscheck-runner(dispatcher。runner から完了通知を受ける一回ごとの起動スクリプト)と rapid-crosscheck-worker(管理 DB のジョブキューを継続的に poll / claim し、比較ツールでジョブ単位比較を実行して結果を登録する worker)で構成する。管理 DB 接続参照名・lease 期間・worker の poll 間隔は速報クロスチェック設定(rapid-crosscheck.env)から読む"
       technology_candidates:
         - "シェルスクリプト CLI(bash。dispatcher は都度起動、worker は常駐ループまたは定期起動。poll 間隔は速報クロスチェック設定の RAPID_POLL_INTERVAL_SEC)"
-        - "RDB クライアント CLI(ジョブキュー: rapid_run / rapid_crosscheck_request / comparison_result。接続先は速報クロスチェック設定の RAPID_DB_CONN_REF で解決)"
-        - "比較ツール起動アダプタ(job_id ごとの比較定義に従うコマンド実行)"
+        - "RDB クライアント CLI(ジョブキュー: rapid_run / rapid_crosscheck_request。接続先は速報クロスチェック設定の RAPID_DB_CONN_REF で解決)"
+        - "比較ツール起動アダプタ(速報クロスチェック設定の起動コマンドの {job_id} を依頼レコードの値で置換して実行)"
       policies:
         - id: "SP-009"
           name: "両系成功判定と比較依頼の一意作成"
-          description: "dispatcher は完了通知を受けて rapid_run の blue_status / green_status を更新し、blue と green の両方が成功(exitcode 0)で完了したときに限り、完了順にかかわらず run_id を主キーとする速報比較依頼を 1 件だけ REQUESTED で作成する。いずれかが失敗した場合は作成しない。中止済み run(並行稼働実行(parallel_run)が ABORTED、または完了通知の対象 slot の slot 実行が ABORTED(成果物ディレクトリに aborted.txt が公開済み)のいずれか)では、完了通知を受けても両系成功でも依頼を作成せず、完了事実(blue_status / green_status と成果物 URI)だけを rapid_run に記録して実行ログに警告を残す。判定材料は管理 DB の parallel_run.status と slot_executions.status(ファイル正本 aborted.txt のミラー)。並行稼働実行は foreground slot の結果を中継した時点で COMPLETED になるため、foreground 完了後に background slot を abort-blue / abort-green で中止した典型経路は slot 実行 ABORTED の側で除外する。この判断は dispatcher が持ち、slot runner には持たせない。速報有効時(foreground / background)だけに適用する"
+          description: "dispatcher は完了通知を受けて rapid_run の blue_status / green_status を更新し、blue と green の両方が成功(exitcode 0)で完了したときに限り、完了順にかかわらず run_id を主キーとする速報比較依頼を 1 件だけ REQUESTED で作成する。いずれかが失敗した場合は作成しない。中止済み run(並行稼働実行(parallel_run)が ABORTED、または完了通知の対象 slot の slot 実行が ABORTED(成果物ディレクトリに aborted.txt が公開済み)のいずれか)では、完了通知を受けても両系成功でも依頼を作成せず、完了事実(blue_status / green_status と終了コード)だけを rapid_run に記録して実行ログに警告を残す。判定材料は管理 DB の parallel_run.status と slot_executions.status(ファイル正本 aborted.txt のミラー)。並行稼働実行は foreground slot の結果を中継した時点で COMPLETED になるため、foreground 完了後に background slot を abort-blue / abort-green で中止した典型経路は slot 実行 ABORTED の側で除外する。この判断は dispatcher が持ち、slot runner には持たせない。速報有効時(foreground / background)だけに適用する"
           reason: "条件「両系成功判定」「比較依頼の一意性」「中止済み run の比較依頼作成除外」(判定キー: 並行稼働実行 ABORTED または対象 slot の slot 実行 ABORTED)。失敗結果同士や片方失敗の比較と重複作成を防ぎ、中止後に実装が走り切った run の比較を止めるため。並行稼働実行だけを見ると foreground 完了後の background 中止が除外されないため slot 実行の状態も判定材料にする。比較の要否判断を方針資料どおり速報クロスチェック側に閉じ込める"
           source_model: "条件: 両系成功判定, 比較依頼の一意性, 中止済み run の比較依頼作成除外, 状態: 速報実行の完了状況, 並行稼働実行, slot 実行, 情報: 速報実行(rapid_run), 速報比較依頼(rapid_crosscheck_request), 完了通知, slot 実行, 実行ログ, BUC: 速報クロスチェックフロー, NFR C.3.3.1"
           confidence: "high"
@@ -469,20 +551,20 @@ domain_architecture:
           confidence: "high"
         - id: "SP-011"
           name: "比較定義に従うジョブ単位比較と結果登録"
-          description: "claim した worker は依頼を status = CLAIMED を条件とする条件付き UPDATE で RUNNING にし、更新件数が 0 件(abort-rapid-crosscheck で ABORTED 済み)なら比較を開始せず終了する(comparison_result も登録しない)。RUNNING にできたときだけクロスチェックジョブマップ(CSV)の job_id ごとの比較定義に従って比較ツールでジョブ単位比較を実行する。比較ツールの stdout / stderr / exitcode を依頼に保存し、exitcode 0 で SUCCEEDED、非 0(3=比較 NG / 6=実行エラー)または実行エラーで FAILED とする。comparison_result は比較ツールを起動して終了コードを得たときだけ登録し、比較定義なし・起動失敗では登録せず依頼だけを FAILED(exit_code=6 相当、error_summary に理由)で終端する。速報比較依頼だけを新規作成したリラン由来の parallel_run は、依頼が終端状態(SUCCEEDED / FAILED)になった時点で worker が COMPLETED にする"
-          reason: "条件「比較定義の選択」「依頼状態遷移規則」「比較ツール終了コードの対応」「比較結果の登録条件」「依頼中止可否判定」(CLAIMED 中止時の競合規則)と状態モデル「クロスチェック依頼」(CLAIMED → RUNNING は条件付き UPDATE)「並行稼働実行」(リラン由来 run の COMPLETED 到達)。比較実装は外部ツールに委譲し、規約だけを worker に閉じ込める。claim 後に abort-rapid-crosscheck で中止された依頼の比較を開始しないため"
-          source_model: "条件: 比較定義の選択, 依頼状態遷移規則, 比較ツール終了コードの対応, 比較結果の登録条件, 依頼中止可否判定, 外部システム: 比較ツール, 情報: 比較定義, 比較結果(comparison_result), 比較ツール実行結果, 状態: 並行稼働実行, クロスチェック依頼"
+          description: "claim した worker は依頼を status = CLAIMED を条件とする条件付き UPDATE で RUNNING にし、更新件数が 0 件(abort-rapid-crosscheck で ABORTED 済み)なら比較を開始せず終了する。RUNNING にできたときだけ速報クロスチェック設定の比較ツール起動コマンド(1 行。{job_id} を含む)を依頼レコードの値(job_id / parameters / blue_exit_code / green_exit_code)で置換して比較ツールを実行する。比較ツールの stdout / stderr / exitcode を依頼レコードの列へ保存し(別レコード・ファイルには保存しない)、exitcode 0 で SUCCEEDED、非 0(3=比較 NG / 6=実行エラー)または実行エラーで FAILED とする。起動失敗では依頼だけを FAILED(exit_code=6 相当、error_summary に理由)で終端する。速報比較依頼だけを新規作成したリラン由来の parallel_run は、依頼が終端状態(SUCCEEDED / FAILED)になった時点で worker が COMPLETED にする"
+          reason: "条件「比較定義の選択」「依頼状態遷移規則」「比較ツール終了コードの対応」「依頼中止可否判定」(CLAIMED 中止時の競合規則)と状態モデル「クロスチェック依頼」(CLAIMED → RUNNING は条件付き UPDATE)「並行稼働実行」(リラン由来 run の COMPLETED 到達)。比較実装は外部ツールに委譲し、規約だけを worker に閉じ込める。claim 後に abort-rapid-crosscheck で中止された依頼の比較を開始しないため"
+          source_model: "条件: 比較定義の選択, 依頼状態遷移規則, 比較ツール終了コードの対応, 依頼中止可否判定, 外部システム: 比較ツール, 情報: 比較定義, 比較ツール実行結果, 状態: 並行稼働実行, クロスチェック依頼"
           confidence: "high"
         - id: "SP-012"
           name: "速報結果の位置付け(原因調査用)"
-          description: "速報クロスチェックの exitcode や失敗は通常業務ジョブの結果としてジョブスケジューラへ返さない。比較結果(comparison_result)と依頼の stdout / stderr / exitcode は運用者が run_id で参照し、両実装の差分の原因調査に使う。リリース判断の正本には用いない"
+          description: "速報クロスチェックの exitcode や失敗は通常業務ジョブの結果としてジョブスケジューラへ返さない。依頼レコードの stdout / stderr / exit_code は運用者が run_id で参照し、両実装の差分の原因調査に使う。リリース判断の正本には用いない"
           reason: "条件「速報結果の位置付け」。速報は非同期の background 処理であり本番結果に影響させないため"
-          source_model: "条件: 速報結果の位置付け, アクター: 運用者, バリエーション: 比較結果ステータス, クロスチェック種別"
+          source_model: "条件: 速報結果の位置付け, アクター: 運用者, クロスチェック種別"
           confidence: "high"
       rules:
         - id: "SR-003"
           name: "速報側データモデルの所有"
-          description: "rapid_run / rapid_crosscheck_request / comparison_result は速報クロスチェックティアだけが作成・更新する。確報側および facade は参照・作成しない。parallel_run の作成は facade と background-rerun が行い、速報クロスチェックティアはリラン由来 run の COMPLETED 更新だけを行う"
+          description: "rapid_run / rapid_crosscheck_request は速報クロスチェックティアだけが作成・更新する。確報側および facade は参照・作成しない。比較結果は依頼レコードの stdout / stderr / exit_code 列に保存し別レコードは持たない。parallel_run の作成は facade と background-rerun が行い、速報クロスチェックティアはリラン由来 run の COMPLETED 更新だけを行う"
           reason: "方針資料「速報と確報の比較規約はそれぞれ別ドメインが所有する」への対応。管理 DB は relay-gate 内部のジョブキュー兼管理 DB として速報側 / 確報側のテーブルを分離する"
           source_model: "条件: 速報と確報のモデル分離, システム概要: ジョブキュー兼管理 DB(内部データストア), 状態: 並行稼働実行"
           confidence: "high"
@@ -491,14 +573,14 @@ domain_architecture:
       description: "ジョブスケジューラの別ジョブ定義から起動される final-crosscheck-runner(依頼登録 → 終端状態まで同期 polling → 保存済み結果の中継)と、DB セグメントで依頼を poll / claim して全テーブル・全ファイルの日次全量比較を実行する final-crosscheck-worker で構成する"
       technology_candidates:
         - "シェルスクリプト CLI(bash。runner は都度起動、worker は DB セグメント上の常駐ループまたは定期起動)"
-        - "RDB クライアント CLI(ジョブキュー: final_crosscheck_request / 対象カタログ)"
-        - "比較ツール起動アダプタ(対象カタログに基づく全量比較)"
+        - "RDB クライアント CLI(ジョブキュー: final_crosscheck_request)"
+        - "比較ツール起動アダプタ(確報クロスチェック worker 設定の起動コマンドで全量比較。対象は比較ツール側が定義)"
       policies:
         - id: "SP-013"
           name: "確報比較依頼の登録と同期 polling"
-          description: "runner はジョブスケジューラから起動されたとき business_date と対象カタログの版を持つ確報比較依頼を REQUESTED で登録し、SUCCEEDED / FAILED / ABORTED の終端状態になるまで同期 polling する。日次確報は夜間バッチウィンドウ内(8 時間以内)に完了させる"
+          description: "runner はジョブスケジューラから起動されたとき業務上の引数なしで確報比較依頼を REQUESTED で登録し、SUCCEEDED / FAILED / ABORTED の終端状態になるまで同期 polling する。全量比較の対象は比較ツール側(適用側)が持つ。日次確報は夜間バッチウィンドウ内(8 時間以内)に完了させる"
           reason: "条件「確報依頼の登録条件」と NFR B.2.2.1(バッチ処理時間)への対応"
-          source_model: "条件: 確報依頼の登録条件, 情報: 確報比較依頼(final_crosscheck_request), 対象カタログ, 外部システム: ジョブスケジューラ, BUC: 確報クロスチェックフロー, NFR B.2.2.1"
+          source_model: "条件: 確報依頼の登録条件, 情報: 確報比較依頼(final_crosscheck_request), 外部システム: ジョブスケジューラ, BUC: 確報クロスチェックフロー, NFR B.2.2.1"
           confidence: "high"
         - id: "SP-014"
           name: "確報結果の無加工中継"
@@ -508,25 +590,26 @@ domain_architecture:
           confidence: "high"
         - id: "SP-015"
           name: "確報 worker の DB セグメント実行と claim / lease"
-          description: "worker は DB セグメントで管理 DB を poll し、REQUESTED の確報比較依頼を worker_id と lease_until 付きで CLAIMED にし、RUNNING で対象カタログに従う全量比較を実行して stdout / stderr / exitcode を保存する。lease 失効かつ未開始なら REQUESTED に戻す規則は速報と同一とする"
+          description: "worker は DB セグメントで管理 DB を poll し、REQUESTED の確報比較依頼を worker_id と lease_until 付きで CLAIMED にし、RUNNING で確報クロスチェック worker 設定の比較ツール起動コマンドをそのまま起動して全量比較を実行し、stdout / stderr / exitcode を依頼レコードの列へ保存する。全量比較の対象は比較ツール側が持つ。lease 失効かつ未開始なら REQUESTED に戻す規則は速報と同一とする"
           reason: "条件「依頼状態遷移規則」「claim 排他」「lease 失効判定」。DB セグメント経由の配置制約を worker 側に閉じ込めるため"
           source_model: "条件: 依頼状態遷移規則, claim 排他, lease 失効判定, 状態: クロスチェック依頼, 情報: 比較ツール実行結果, 適用構成文書"
           confidence: "high"
       rules:
         - id: "SR-004"
           name: "速報と確報のモデル分離"
-          description: "確報クロスチェックは final_crosscheck_request と対象カタログだけを用い、rapid_run / rapid_crosscheck_request を作成・変更しない。確報の再実行はジョブスケジューラの正規ジョブを直接再実行し、background-rerun を使わない"
+          description: "確報クロスチェックは final_crosscheck_request だけを用い、rapid_run / rapid_crosscheck_request を作成・変更しない。全量比較の対象は比較ツール側(適用側)が持つ。確報の再実行はジョブスケジューラの正規ジョブを直接再実行し、background-rerun を使わない"
           reason: "条件「速報と確報のモデル分離」「復旧手段の選択」への対応"
           source_model: "条件: 速報と確報のモデル分離, 復旧手段の選択, バリエーション: 再実行経路"
           confidence: "high"
     - id: "tier-ops"
       name: "実行監視・復旧ティア"
-      description: "hang-detector(ジョブスケジューラの定期ジョブ)、background-rerun(専用ジョブ)、abort-blue / abort-green / abort-rapid-crosscheck / abort-final-crosscheck(運用者が配置ディレクトリから直接起動する対話 CLI)で構成する。監視は通知のみ、中止は状態更新(slot は aborted.txt の書き込みを正本とする)のみ、リランは execution-spec.json からの復元で行う。通知先・送信コマンド・件名プレフィックス・管理 DB 接続参照名はハング検知定期ジョブ設定から読む"
+      description: "hang-detector(ジョブスケジューラの定期ジョブ)、housekeep(ジョブスケジューラの 1 日 1 回の定期ジョブ)、background-rerun(専用ジョブ)、abort-blue / abort-green / abort-rapid-crosscheck / abort-final-crosscheck(運用者が配置ディレクトリから直接起動する対話 CLI)で構成する。監視は通知のみで、異常はハング検知ジョブ自身の終了結果(警告終了 / 失敗)と標準エラーで知らせ、ジョブスケジューラの既存のジョブ監視・障害通知で運用者へ届ける。中止は状態更新(slot は aborted.txt の書き込みを正本とする)のみ、リランは execution-spec.json からの復元で行う。ハウスキープは保持日数を過ぎた終了済みの実行の単位と確報比較依頼の成果物・管理 DB の行を削除する。ハング検知の管理 DB 接続参照名はハング検知定期ジョブ設定から、ハウスキープの保持日数と専用 DB ロールの接続参照名はハウスキープ設定から読む。ハウスキープは監視・復旧とは別の業務コンテキスト(ハウスキープコンテキスト)だが、ジョブスケジューラの定期ジョブとして facade から分離され、成果物ルートと管理 DB を走査する運用スクリプトという形が hang-detector と同じため、同じティアに置く"
       technology_candidates:
         - "シェルスクリプト CLI(bash。定期ジョブ / 専用ジョブ / 対話 CLI)"
-        - "OS 標準のメール送信コマンド(warning / error 通知。コマンドと宛先はハング検知定期ジョブ設定で指定)"
         - "RDB クライアント CLI(監視記録・状態更新・parallel_run 作成。RAPID_CROSSCHECK_MODE=off では使わない)"
-        - "ファイルシステム走査・書き込み(started-at.txt / exitcode.txt / aborted.txt / execution-spec.json)"
+        - "RDB クライアント CLI(ハウスキープ専用 DB ロールの接続。対象テーブルの SELECT と DELETE だけを使い、削除の単位ごとに 1 トランザクションで行を削除する)"
+        - "ファイルシステム走査・書き込み(started-at.txt / exitcode.txt / aborted.txt / execution-spec.json、通知済みの印の一時ファイル → リネーム出力)"
+        - "ファイルシステムの同一ファイルシステム内 rename と削除(ハウスキープの削除待ちの置き場への移動と、置き場からの削除)"
       policies:
         - id: "SP-016"
           name: "ハング検知判定と対象除外"
@@ -536,15 +619,15 @@ domain_architecture:
           confidence: "high"
         - id: "SP-017"
           name: "速報比較依頼の異常判定"
-          description: "速報比較依頼が FAILED または比較 NG のとき速報クロスチェック異常として通知し、RUNNING のときは状態を変更せずハング疑いとして通知する"
+          description: "速報比較依頼が FAILED または比較 NG のとき速報クロスチェック異常(error)として通知し、RUNNING のときは状態を変更せずハング疑い(warning)として通知する"
           reason: "条件「速報比較依頼の異常判定」。ジョブスケジューラ応答に現れない速報異常を見落とさないため"
           source_model: "条件: 速報比較依頼の異常判定, バリエーション: 速報クロスチェック監視判定"
           confidence: "high"
         - id: "SP-018"
           name: "監視は通知のみ・通知レベル・警告傾向の記録"
-          description: "監視は monitor_status(監視対象外 / 監視中 / ハング疑い通知済み / 実行エラー通知済み / 比較異常通知済み / 正常終了)/ hang_suspected_at / alerted_at を記録して運用者へメール通知するだけとし、RUNNING を ABORTED にせず、プロセスを停止せず、新しい実行依頼を作成しない。ハング疑いは warning、background 実行エラーと速報クロスチェック異常は error で送る。宛先・送信コマンド・件名プレフィックスはハング検知定期ジョブ設定(ALERT_MAIL_TO / ALERT_MAIL_CMD / ALERT_SUBJECT_PREFIX)から読む。通知後に正常終了した実行(通知後正常終了)についても警告時の経過時間を記録し、hang_detect_limit_minutes の調整根拠にする"
-          reason: "条件「監視は通知のみ」「通知レベルの判定」「警告傾向の記録」と情報「ハング検知定期ジョブ設定」。静観か対処かの判断を運用者に委ねるため"
-          source_model: "条件: 監視は通知のみ, 通知レベルの判定, 警告傾向の記録, 外部システム: メール通知, 情報: 通知メール, 監視記録, ハング検知定期ジョブ設定, アクター: 運用者, バリエーション: 監視状態, NFR C.5.1.1, NFR C.3.2.1"
+          description: "監視は monitor_status(監視対象外 / 監視中 / ハング疑い通知済み / 実行エラー通知済み / 比較異常通知済み / 正常終了)/ hang_suspected_at / alerted_at を記録して運用者へ通知するだけとし、RUNNING を ABORTED にせず、プロセスを停止せず、新しい実行依頼を作成しない。通知はハング検知ジョブ自身の終了結果で行う: その回の見回りで新たに見つけた異常を標準エラーに 1 件 1 行(対象・段階 warning / error・経過時間)で出し、新たな異常が無ければ正常終了、ハング疑い(warning)だけなら警告終了、background 実行エラーまたは速報クロスチェック異常(error)が 1 件でもあれば失敗で終える(具体的な終了コードは CLI 契約で確定する)。運用者へはジョブスケジューラの既存のジョブ監視・障害通知で届き、relay-gate はメールなど CLI の出力以外の通知送信手段を持たない。通知済みの異常は監視記録の遷移規則で再び通知せず、RAPID_CROSSCHECK_MODE=off では成果物ルート配下の通知済みの印(Runner Result の契約ファイルとは別のファイル。一時ファイル → リネームで書く。置き場所とファイル名は仕様で確定)で判定する。通知の判定後に監視記録または印の保存に失敗した異常は次回も通知する(取りこぼさない側に倒す)。通知後に正常終了した実行(通知後正常終了)についても警告時の経過時間を記録し、hang_detect_limit_minutes の調整根拠にする"
+          reason: "条件「監視は通知のみ」「通知レベルの判定」「CLI による提示」「警告傾向の記録」。メール通知の廃止(2026-11-01。利用者が失敗の終了条件を確定)により、運用者が既に見ているジョブスケジューラの障害通知へ通知経路を寄せ、静観か対処かの判断を運用者に委ねるため"
+          source_model: "条件: 監視は通知のみ, 通知レベルの判定, CLI による提示, 警告傾向の記録, 外部システム: ジョブスケジューラ, 情報: 監視記録, 実行ログ, アクター: 運用者, バリエーション: 監視状態, NFR C.5.1.1, NFR C.3.2.1, NFR C.3.1.1"
           confidence: "high"
         - id: "SP-019"
           name: "ハング検知上限の調整基準"
@@ -554,7 +637,7 @@ domain_architecture:
           confidence: "high"
         - id: "SP-020"
           name: "background 側リランの事前検証と復元"
-          description: "background-rerun は --source-run-id と --role を受け、元の execution-spec.json とファイル正本の状態(exitcode.txt / aborted.txt)を事前検証し、速報有効時は管理 DB の状態も照合する。--role blue / green は元の slot mode が background のときだけ新しい run_id で再実行し、foreground または off ならエラー終了する。--role rapid-crosscheck は業務ジョブを再実行せず速報比較依頼だけを新規作成する。未対応の role、元の実行が見つからない、元の実行が RUNNING(exitcode.txt も aborted.txt も無い)または中止未確認ならエラー終了する。RAPID_CROSSCHECK_MODE=off でも aborted.txt があれば管理 DB なしで background slot をリランできる。最新のジョブマップは再解決せず、元の execution-spec.json から実行パラメータ・host・user・script・work_dir を復元する。新しい parallel_run の parent_run_id には直前のリラン元 run_id を設定し、background slot のリラン由来 run は runner が終端時に、速報比較依頼だけのリラン由来 run は worker が依頼終端時に COMPLETED にする"
+          description: "background-rerun は --source-run-id と --role を受け、元の execution-spec.json とファイル正本の状態(exitcode.txt / aborted.txt)を事前検証し、速報有効時は管理 DB の状態も照合する。--role blue / green は元の slot mode が background のときだけ新しい run_id で再実行し、foreground または off ならエラー終了する。--role rapid-crosscheck は業務ジョブを再実行せず速報比較依頼だけを新規作成する。未対応の role、元の実行が見つからない、元の実行が RUNNING(exitcode.txt も aborted.txt も無い)または中止未確認ならエラー終了する。RAPID_CROSSCHECK_MODE=off でも aborted.txt があれば管理 DB なしで background slot をリランできる。最新のジョブマップは再解決せず、元の execution-spec.json から実行パラメータ・host・user・script・work_dir を復元する。新しい parallel_run の parent_run_id には直前のリラン元 run_id を設定し、background slot のリラン由来 run は runner が終端時に、速報比較依頼だけのリラン由来 run は worker が依頼終端時に COMPLETED にする。ハウスキープが成果物を消したあと管理 DB の行が残っている期限切れの実行をリランしようとした場合は、元の execution-spec.json が無いことをエラーとして返す"
           reason: "条件「リラン事前検証」「リランの実行設定復元」「リラン系譜の追跡」「slot 実行の状態導出規則」と状態モデル「並行稼働実行」(リラン由来 run の COMPLETED 到達)、NFR A.4.1.1 / A.4.1.2 / A.4.1.3(execution-spec と Runner Result からの復旧。縮退運転 off でも中止・リランが成立)への対応"
           source_model: "条件: リラン事前検証, リランの実行設定復元, リラン系譜の追跡, slot 実行の状態導出規則, 情報: リラン指示, Runner Result, 状態: 並行稼働実行, BUC: background 側リランフロー, NFR A.4.1.1, NFR A.4.1.2, NFR A.4.1.3"
           confidence: "high"
@@ -570,23 +653,35 @@ domain_architecture:
           reason: "条件「slot 中止可否判定」「依頼中止可否判定」(速報比較依頼は REQUESTED / CLAIMED / RUNNING、確報比較依頼は RUNNING のみ。CLAIMED 中止時の競合規則)「停止確認応答」「slot 実行の状態導出規則」と状態モデル「並行稼働実行」(STARTED → ABORTED)「クロスチェック依頼」(REQUESTED / CLAIMED / RUNNING → ABORTED)、バリエーション「中止対象種別」、NFR E.7.1.1(運用操作の記録)・A.4.1.3(縮退運転 off でも中止が成立)・C.3.3.1(手動復旧)への対応。CLAIMED の依頼を運用者が止められず lease 失効後に比較が実行される抜けと、両 slot 完了直後に中止した場合に未着手依頼だけが残る競合窓を塞ぐため"
           source_model: "条件: slot 中止可否判定, 依頼中止可否判定, 停止確認応答, slot 実行の状態導出規則, 中止済み run の比較依頼作成除外, 情報: 中止指示, Runner Result, 速報比較依頼(rapid_crosscheck_request), 確報比較依頼(final_crosscheck_request), BUC: 実行中止フロー, 状態: slot 実行, 並行稼働実行, クロスチェック依頼, バリエーション: 中止対象種別, 停止確認応答, NFR E.7.1.1, NFR A.4.1.3, NFR C.3.3.1"
           confidence: "high"
+        - id: "SP-027"
+          name: "ハウスキープの削除判定"
+          description: "housekeep はジョブスケジューラの定期ジョブ(1 日 1 回)として起動され、ハウスキープ設定の保持日数(正の整数。既定 90 日)を使って、成果物ルートと管理 DB を毎回走査する(成果物ルートの走査は管理 DB の有無にかかわらず毎回行う)。削除の単位はリランの親子(parent_run_id でつながる実行)をまとめた実行の単位と確報比較依頼 1 件の 2 種類とする。実行の単位は、単位内のすべての構成要素(並行稼働実行・各 slot・速報比較依頼)が終端し、構成要素の終了日時のうち最も遅いもの(管理 DB の行は completed_at、成果物だけの slot は exitcode.txt または aborted.txt の更新時刻。開始日時は使わない)から保持日数を過ぎたときだけ削除対象にする。管理 DB を使う設定では並行稼働実行が COMPLETED / ABORTED、すべての slot 実行と速報比較依頼が SUCCEEDED / FAILED / ABORTED であることを終端の条件とする。RAPID_CROSSCHECK_MODE=off で管理 DB の行が無い実行は、execution-spec.json で起動対象の slot(mode が off の slot は含まない)のすべてに exitcode.txt または aborted.txt があることで判定し、起動対象の slot の成果物ディレクトリや execution-spec.json が無い実行は残して標準エラーに warn を出す。速報比較依頼だけのリランで作られた run は管理 DB の行だけで判定する。1 つでも終わっていない構成要素(RUNNING / CLAIMED / REQUESTED、slot の終了ファイルが無い)があれば経過日数にかかわらず単位ごと残す。確報比較依頼は終端状態で completed_at から保持日数を過ぎたものを依頼ごとに削除対象にする(RAPID_CROSSCHECK_MODE=off でも、確報クロスチェックを使う設置(確報クロスチェック worker の設定がある設置)では接続参照名が必須のため同じ規則で削除する)。ハウスキープ設定の管理 DB 接続参照名は、RAPID_CROSSCHECK_MODE が off 以外の設置と確報クロスチェックを使う設置では必須とし、無い・空なら設定エラーとして非 0 で終わり、成果物・管理 DB の行・確報比較依頼のいずれも削除しない(削除待ちの置き場の中身も消さない。この設定の検査を走査と削除より先に行う)。管理 DB に接続しないのは、管理 DB を一切使わない設置(RAPID_CROSSCHECK_MODE=off で、確報クロスチェック worker の設定が無く、ハウスキープ設定の管理 DB 接続参照名が無い・空)だけで、このときは次の段の規則を上記より優先する: 管理 DB に接続せず、確報比較依頼と管理 DB の行を削除せず、起動のたびに管理 DB の行を削除しない旨の warn を標準エラーへ 1 行出す。成果物ルートの実行は成果物だけで判定するが、execution-spec.json に記録された速報クロスチェックのモードが off でない実行(off 以外の期間に作られ、管理 DB に終わっていない構成要素があり得る実行)は判定できないものとして経過日数にかかわらず単位ごと残し、標準エラーに warn を出す。off の期間に作られた成果物だけの実行は上記の成果物だけの規則どおりに判定する。これらの warn は終了コードに影響しない(warn の文言、設定のキー名、確報クロスチェック worker の設定があるとみなす判定方法(既存の確報系コマンドの判定と揃える)、設定エラーの終了コードは仕様で確定する)。業務ジョブ(facade)の起動時には削除しない。判定は純粋関数の判定表として domain 層に置く"
+          reason: "条件「ハウスキープの削除判定」「リラン系譜の追跡」「速報クロスチェック有効判定」「slot 実行の状態導出規則」と情報「ハウスキープ設定」への対応。リラン系譜の途中だけを消してリランの親子関係が壊れることと、終わっていない実行を消すことを防ぎ、成果物と管理 DB の量を保持日数分で頭打ちにする(NFR B.3.3.1 のストレージ拡張性の前提)。管理 DB に接続しない設定でも、off 以外の期間に作られた実行を成果物だけで消して管理 DB 側の終わっていない構成要素を見落とさないようにする(2026-11-03 の要求の受け入れ基準の追加に追従)。管理 DB を使う機能が 1 つでもある設置では接続参照名を必須にし、off で確報クロスチェックを使う設置で確報比較依頼が削除されずに増え続けることを防ぐ(2026-11-03 の接続参照名の必須化に追従。NFR B.3.3.1 / F.1.2.1)"
+          source_model: "条件: ハウスキープの削除判定, リラン系譜の追跡, 速報クロスチェック有効判定, slot 実行の状態導出規則, 情報: ハウスキープ設定, 並行稼働実行(parallel_run), slot 実行, 速報比較依頼(rapid_crosscheck_request), 確報比較依頼(final_crosscheck_request), 実行設定(execution-spec), Runner Result, 状態: 並行稼働実行, slot 実行, クロスチェック依頼, BUC: ハウスキープフロー, 外部システム: ジョブスケジューラ, NFR B.3.3.1, NFR F.1.2.1"
+          confidence: "high"
+        - id: "SP-028"
+          name: "ハウスキープの削除順序と回復"
+          description: "何度実行しても結果が同じになるように削除する。1 つの単位の中では成果物(成果物ディレクトリと通知済みの印)を先に処理し、そのあと管理 DB の行(並行稼働実行・slot 実行・速報実行・速報比較依頼・監視記録、または確報比較依頼)を 1 つのトランザクションで削除する。成果物は削除対象と判定したら、まず成果物ルート配下の削除待ちの置き場へ同じファイルシステム内の 1 回の rename で移してから削除し、置き場に残っているものは判定をやり直さず次回の実行で無条件に削除する(置き場の場所は仕様で確定)。管理 DB の行が残っている間は次回の走査で同じ単位を再び見つけ、既に無いファイルは削除済みとして扱う。管理 DB の行の削除にはハウスキープ設定の接続参照名で解決するハウスキープ専用 DB ロール(対象テーブルの SELECT と DELETE だけ)を使い、業務用接続ロールには DELETE を足さない。削除した件数を標準出力に出し、失敗は標準エラーに出して非 0 で終わる(ジョブスケジューラの障害通知で運用者へ届く)。管理 DB に接続しないとき(SP-027。管理 DB を一切使わない設置だけ)は管理 DB の行の削除の段を行わず、そのことを示す warn は失敗として扱わない。ハウスキープ設定の検査(保持日数と、必須の設置での接続参照名の有無)は削除待ちの置き場の残りの削除を含むすべての削除より先に行い、設定エラーなら置き場の中身も含めて何も削除せずに非 0 で終わる"
+          reason: "条件「ハウスキープの削除順序と回復」と NFR E.5.2.1(ユーザ単位の権限)・C.1.2.1(バックアップ対象)・A.4.1.1(execution-spec と Runner Result からの復旧)への対応。成果物を先に消し DB 行を後に消すことで、途中で失敗しても DB 行が残っている限り次回の走査で再発見でき、削除漏れの成果物が孤立しない。置き場への rename で削除対象の確定と実削除を分け、途中失敗後に判定をやり直さずに済ませる。業務用ロールに DELETE を足さないことで、業務スクリプトの誤りで履歴が消える経路を作らない"
+          source_model: "条件: ハウスキープの削除順序と回復, 情報: ハウスキープ設定, 監視記録, Runner Result, 実行ログ, 並行稼働実行(parallel_run), slot 実行, 速報実行(rapid_run), 速報比較依頼(rapid_crosscheck_request), 確報比較依頼(final_crosscheck_request), BUC: ハウスキープフロー, 条件: CLI による提示, NFR E.5.2.1, NFR C.1.2.1, NFR A.4.1.1, NFR E.7.1.1"
+          confidence: "high"
       rules:
         - id: "SR-005"
-          name: "監視・復旧スクリプトの facade からの分離"
-          description: "hang-detector / background-rerun / abort-* は通常起動の facade から分離し、ジョブスケジューラの別ジョブ定義または運用者の直接起動で動かす。facade の実行経路にこれらの処理を混ぜない"
-          reason: "方針資料「ハング監視と background 側の選択リランは通常起動の facade から分離する」への対応"
-          source_model: "バリエーション: ジョブスケジューラ起動ジョブ種別, 外部システム: ジョブスケジューラ"
+          name: "監視・復旧・ハウスキープのスクリプトの facade からの分離"
+          description: "hang-detector / housekeep / background-rerun / abort-* は通常起動の facade から分離し、ジョブスケジューラの別ジョブ定義(ハング検知定期ジョブ / ハウスキープ定期ジョブ / background リラン専用ジョブ)または運用者の直接起動で動かす。facade の実行経路にこれらの処理を混ぜない。業務ジョブの起動時に成果物や管理 DB の行を削除しない"
+          reason: "方針資料「ハング監視と background 側の選択リランは通常起動の facade から分離する」「ハウスキープは業務ジョブの起動時には削除しない」への対応"
+          source_model: "バリエーション: ジョブスケジューラ起動ジョブ種別, 外部システム: ジョブスケジューラ, BUC: ハウスキープフロー"
           confidence: "high"
     - id: "tier-datastore"
       name: "データストアティア"
-      description: "管理 DB(RDB。relay-gate 内部のジョブキュー兼管理 DB。外部システムではない)、成果物ディレクトリ(facade/<run_id>/ 配下の Runner Result と execution-spec.json)、設定ファイル(feature flag / ジョブマップ / クロスチェックジョブマップ / 対象カタログ / ハング検知定期ジョブ設定 / 速報クロスチェック設定 / 適用文書)、実行ログファイルで構成する"
+      description: "管理 DB(RDB。relay-gate 内部のジョブキュー兼管理 DB。外部システムではない)、成果物ディレクトリ(facade/<run_id>/ 配下の Runner Result と execution-spec.json。成果物ルート配下に RAPID_CROSSCHECK_MODE=off 時のハング検知の通知済みの印とハウスキープの削除待ちの置き場を置く)、設定ファイル(feature flag / ジョブマップ / ハング検知定期ジョブ設定 / ハウスキープ設定 / 速報クロスチェック設定 / 確報クロスチェック worker 設定 / 適用文書)、実行ログファイルで構成する。管理 DB の接続ロールは業務用(行の削除権限なし)とハウスキープ専用(対象テーブルの SELECT と DELETE だけ)に分ける"
       technology_candidates:
-        - "RDB(単一インスタンス。速報側と確報側のテーブルを分離)"
+        - "RDB(単一インスタンス。速報側と確報側のテーブルを分離。接続ロールを業務用とハウスキープ専用に分離)"
         - "ローカル / 共有ファイルシステム(成果物ディレクトリ・設定ファイル・実行ログ)"
       policies:
         - id: "SP-023"
           name: "管理 DB をジョブキューとして使う"
-          description: "MQ を導入せず、管理 DB の依頼レコード(rapid_crosscheck_request / final_crosscheck_request)を worker が poll / claim するジョブキューとして使う。速報側(parallel_run / rapid_run / rapid_crosscheck_request / comparison_result)と確報側(final_crosscheck_request / 対象カタログ)のテーブルを分離し、監視記録もここに保持する"
+          description: "MQ を導入せず、管理 DB の依頼レコード(rapid_crosscheck_request / final_crosscheck_request)を worker が poll / claim するジョブキューとして使う。速報側(parallel_run / rapid_run / rapid_crosscheck_request)と確報側(final_crosscheck_request)のテーブルを分離し、監視記録もここに保持する。比較結果は依頼レコードの stdout / stderr / exit_code 列に保存し別テーブルは持たない"
           reason: "システム概要で管理 DB(RDB)が relay-gate 内部のジョブキュー兼管理 DB と定義され、NFR B.2.1.2(〜10 TPS)の低頻度書き込みで十分なため。エアーギャップ環境で追加ミドルウェアを増やさない"
           source_model: "システム概要: ジョブキュー兼管理 DB(内部データストア), 条件: 速報と確報のモデル分離, claim 排他, NFR B.2.1.2, NFR B.1.1.1, NFR B.1.1.3, NFR A.2.5.1"
           confidence: "high"
@@ -598,9 +693,9 @@ domain_architecture:
           confidence: "high"
         - id: "SP-025"
           name: "設定所有区分に基づく設定ファイル配置"
-          description: "実装スロット・実装版(BLUE_IMPL / GREEN_IMPL)・runner と完了通知先・worker 実体の割当は feature flag(env 形式 9 キー)、実行先とハング検知上限は該当 slot のジョブマップ(CSV)、比較対象と対象カタログはクロスチェックジョブマップ(CSV)、通知先メールアドレス・送信コマンド・件名プレフィックス・管理 DB 接続参照名はハング検知定期ジョブ設定(env 形式)、速報クロスチェックの管理 DB 接続参照名(RAPID_DB_CONN_REF)・lease 期間(RAPID_LEASE_SEC)・worker の poll 間隔(RAPID_POLL_INTERVAL_SEC)は速報クロスチェック設定(env 形式 rapid-crosscheck.env。facade・slot runner・速報クロスチェック runner・worker が読み、RAPID_CROSSCHECK_MODE=off では不要)、外部 IF 方針・ネットワーク制約・ホスト配置・hang_detect_limit_minutes の調整記録は適用文書が所有する。所有者はいずれも基盤適用設計者。接続参照名は値を置かず参照名のみとする。feature flag は設定版を持たず、実装版は BLUE_IMPL / GREEN_IMPL、マップ版はジョブマップ側の任意列 map_version、カタログ版・文書版はそれぞれのファイルが持ち、適用側が版管理する"
+          description: "実装スロット・実装版(BLUE_IMPL / GREEN_IMPL)・runner と完了通知先・worker 実体の割当は feature flag(env 形式 9 キー)、実行先とハング検知上限は該当 slot のジョブマップ(CSV)、速報の比較ツール起動コマンド(1 行。{job_id} を含む)は速報クロスチェック設定、確報の比較ツール起動コマンド(1 行)は確報クロスチェック worker 設定が持ち、比較対象は比較ツール側(適用側)が定義する、ハング検知の管理 DB 接続参照名はハング検知定期ジョブ設定(env 形式。通知の宛先・送信コマンド・件名の項目は持たない)、ハウスキープの保持日数(既定 90 日)とハウスキープ専用 DB ロールの管理 DB 接続参照名はハウスキープ設定(ファイル名・キー名は仕様で確定)、速報クロスチェックの管理 DB 接続参照名(RAPID_DB_CONN_REF)・lease 期間(RAPID_LEASE_SEC)・worker の poll 間隔(RAPID_POLL_INTERVAL_SEC)は速報クロスチェック設定(env 形式 rapid-crosscheck.env。facade・slot runner・速報クロスチェック runner・worker が読み、RAPID_CROSSCHECK_MODE=off では不要)、外部 IF 方針・ネットワーク制約・ホスト配置・hang_detect_limit_minutes の調整記録は適用文書が所有する。所有者はいずれも基盤適用設計者。接続参照名は値を置かず参照名のみとする。feature flag は設定版を持たず、実装版は BLUE_IMPL / GREEN_IMPL、マップ版はジョブマップ側の任意列 map_version、文書版は適用文書が持ち、適用側が版管理する"
           reason: "条件「設定所有区分」「適用側で定義する事項」と元の方針資料の設定契約(9 キー・CSV 列名)への対応。正本を一意に定め、relay-gate のスクリプトを変更せずに案件・世代を切り替えるため"
-          source_model: "条件: 設定所有区分, 適用側で定義する事項, ジョブマップ解決条件, 認証情報の非保存, 情報: feature flag 設定, ジョブマップ, クロスチェックジョブマップ, 対象カタログ, ハング検知定期ジョブ設定, 速報クロスチェック設定, 適用構成文書, バリエーション: 設定所有区分, アクター: 基盤適用設計者, BUC: 適用構成定義フロー, NFR C.2.2.1, NFR C.1.2.2, NFR E.5.1.1"
+          source_model: "条件: 設定所有区分, 適用側で定義する事項, ジョブマップ解決条件, 認証情報の非保存, 情報: feature flag 設定, ジョブマップ, 比較定義, ハング検知定期ジョブ設定, ハウスキープ設定, 速報クロスチェック設定, 適用構成文書, バリエーション: 設定所有区分, アクター: 基盤適用設計者, BUC: 適用構成定義フロー, NFR C.2.2.1, NFR C.1.2.2, NFR E.5.1.1"
           confidence: "high"
         - id: "SP-026"
           name: "バックアップと復旧地点"
@@ -715,7 +810,7 @@ domain_architecture:
           confidence: "default"
         - id: "CLP-002"
           name: "実行ログの出力方針"
-          description: "usecase 層が run_id 付きの実行ログ(スクリプト名 / run_id / 日時 / レベル / メッセージ)をファイルへ出力する集約ポイントとする。gateway は外部呼び出し(SSH / RDB / 比較ツール / メール)の開始・終了・所要時間・成否を記録し、失敗は技術例外として非 0 で返す。domain 層はログを出さない。ログ出力先は stdout / stderr を汚さない専用ファイルとする。ログの日時はホストのローカルタイムゾーン(プロセスの TZ 環境変数に従う)で ISO 8601 秒精度、タイムゾーン指示子(Z / オフセット)なしとし、run_id の時刻部と同じ時刻軸にそろえる。UTC への統一は行わない。管理 DB の *_at 列は RDB のタイムスタンプ型に委ね、CLI が stdout に表示する日時もローカル時刻で出す。テスト用の時刻注入(RELAY_GATE_NOW)は UTC の Z 付きで受け付け、内部でローカル時刻へ変換してから使う。この方針は全ティアの実行ログ方針に共通し(CLP-004 / CLP-006 が参照)、tier-ops の運用操作記録(CLP-008)も同じ日時規則に従う"
+          description: "usecase 層が run_id 付きの実行ログ(スクリプト名 / run_id / 日時 / レベル / メッセージ)をファイルへ出力する集約ポイントとする。gateway は外部呼び出し(SSH / RDB / 比較ツール)の開始・終了・所要時間・成否を記録し、失敗は技術例外として非 0 で返す。domain 層はログを出さない。ログ出力先は stdout / stderr を汚さない専用ファイルとする。ログの日時はホストのローカルタイムゾーン(プロセスの TZ 環境変数に従う)で ISO 8601 秒精度、タイムゾーン指示子(Z / オフセット)なしとし、run_id の時刻部と同じ時刻軸にそろえる。UTC への統一は行わない。管理 DB の *_at 列は RDB のタイムスタンプ型に委ね、CLI が stdout に表示する日時もローカル時刻で出す。テスト用の時刻注入(RELAY_GATE_NOW)は UTC の Z 付きで受け付け、内部でローカル時刻へ変換してから使う。この方針は全ティアの実行ログ方針に共通し(CLP-004 / CLP-006 が参照)、tier-ops の運用操作記録(CLP-008)も同じ日時規則に従う"
           reason: "利用者指定: run_id の時刻部(ローカルタイムゾーン)と実行ログの日時を同じ時刻軸にそろえ、障害調査で運用者が時差を読み替えずに突き合わせられるようにする。NFR C.6.1.1(ログ保管)・C.3.1.1(自動記録)・E.7.1.1(監査)への対応"
           source_model: "情報: 実行ログ, 並行稼働実行(parallel_run), NFR C.6.1.1, NFR C.3.1.1, NFR E.7.1.1"
           confidence: "high"
@@ -743,14 +838,14 @@ domain_architecture:
           policies:
             - id: "LP-008"
               name: "系統ごとの公開 function"
-              description: "完了通知の受け口は blue-completed / green-completed の 2 つに分け、run_id・job_id・終了コード・成果物ディレクトリ(artifact_uri)を受け取る"
+              description: "完了通知の受け口は blue-completed / green-completed の 2 つに分け、run_id・job_id・終了コードを受け取る"
               reason: "条件「完了通知の系統独立」への対応"
               source_model: "条件: 完了通知の系統独立, 情報: 完了通知"
               confidence: "high"
           rules: []
         - id: "L-rapid-usecase"
           name: "ユースケース層"
-          responsibility: "完了通知の登録 → 中止済み run 判定(並行稼働実行と完了通知の対象 slot の slot 実行の状態)→ 両系成功判定 → 比較依頼の一意作成(dispatcher。中止済み run では依頼を作成せず完了事実の記録と警告ログだけ)、poll → claim → RUNNING(条件付き UPDATE。0 件なら比較を開始せず終了)→ 比較実行 → 結果保存 → comparison_result 登録(比較ツールの終了コードを得たときだけ)→ リラン由来 parallel_run の COMPLETED 更新(worker)のフロー制御"
+          responsibility: "完了通知の登録 → 中止済み run 判定(並行稼働実行と完了通知の対象 slot の slot 実行の状態)→ 両系成功判定 → 比較依頼の一意作成(dispatcher。中止済み run では依頼を作成せず完了事実の記録と警告ログだけ)、poll → claim → RUNNING(条件付き UPDATE。0 件なら比較を開始せず終了)→ 起動コマンドの置換 → 比較実行 → 依頼レコードへ stdout / stderr / exit_code 保存 → リラン由来 parallel_run の COMPLETED 更新(worker)のフロー制御"
           allowed_dependencies:
             - "L-rapid-domain"
             - "L-rapid-repository"
@@ -763,13 +858,13 @@ domain_architecture:
               confidence: "high"
             - id: "LP-023"
               name: "中止済み run では依頼を作成しない"
-              description: "dispatcher の usecase は完了通知を登録した後、同じトランザクション内で並行稼働実行(parallel_run.status)と完了通知の対象 slot の slot 実行(slot_executions.status。ファイル正本 aborted.txt のミラー)の状態を読み、いずれかが ABORTED なら中止済み run として両系成功でも速報比較依頼を作成せず、rapid_run の完了事実(blue_status / green_status / 成果物 URI)だけを保存して実行ログに warning を残し、正常終了する。並行稼働実行は foreground 中継完了で COMPLETED になるため、foreground 完了後の background 中止は slot 実行 ABORTED の側で除外される。slot runner に中止判定を持たせない。速報有効時だけの規則で、off では完了通知自体が存在しない"
+              description: "dispatcher の usecase は完了通知を登録した後、同じトランザクション内で並行稼働実行(parallel_run.status)と完了通知の対象 slot の slot 実行(slot_executions.status。ファイル正本 aborted.txt のミラー)の状態を読み、いずれかが ABORTED なら中止済み run として両系成功でも速報比較依頼を作成せず、rapid_run の完了事実(blue_status / green_status と終了コード)だけを保存して実行ログに warning を残し、正常終了する。並行稼働実行は foreground 中継完了で COMPLETED になるため、foreground 完了後の background 中止は slot 実行 ABORTED の側で除外される。slot runner に中止判定を持たせない。速報有効時だけの規則で、off では完了通知自体が存在しない"
               reason: "条件「中止済み run の比較依頼作成除外」(判定キー: 並行稼働実行 ABORTED または対象 slot の slot 実行 ABORTED)への対応。判断主体を速報クロスチェック runner に置き、方針資料の責務分担(blue / green runner は比較依頼を判断しない)を守るため"
               source_model: "条件: 中止済み run の比較依頼作成除外, 両系成功判定, 状態: 並行稼働実行, slot 実行, 速報実行の完了状況, 情報: 速報実行(rapid_run), 完了通知, slot 実行, 実行ログ"
               confidence: "high"
             - id: "LP-024"
               name: "claim 後の比較開始は条件付き UPDATE で判定する"
-              description: "worker の usecase は claim した依頼を比較開始前に status = CLAIMED(かつ自 worker_id)を条件とする条件付き UPDATE で RUNNING にし、更新件数が 0 件(abort-rapid-crosscheck で ABORTED 済み)なら比較ツールを起動せず comparison_result も登録せずに正常終了し、その旨を実行ログに残す。RUNNING にできたときだけ比較を実行する"
+              description: "worker の usecase は claim した依頼を比較開始前に status = CLAIMED(かつ自 worker_id)を条件とする条件付き UPDATE で RUNNING にし、更新件数が 0 件(abort-rapid-crosscheck で ABORTED 済み)なら比較ツールを起動せず正常終了し、その旨を実行ログに残す。RUNNING にできたときだけ比較を実行する"
               reason: "条件「依頼中止可否判定」(CLAIMED の速報比較依頼を中止する際の競合規則)と状態モデル「クロスチェック依頼」(CLAIMED → RUNNING の条件付き UPDATE、CLAIMED → ABORTED)への対応。運用者が worker 停止を確認して中止した依頼を、停止漏れの worker が比較してしまう競合を DB の条件付き UPDATE で閉じるため"
               source_model: "条件: 依頼中止可否判定, 依頼状態遷移規則, claim 排他, 状態: クロスチェック依頼, 情報: 速報比較依頼(rapid_crosscheck_request), 実行ログ"
               confidence: "high"
@@ -788,7 +883,7 @@ domain_architecture:
           rules: []
         - id: "L-rapid-repository"
           name: "リポジトリ層"
-          responsibility: "rapid_run / rapid_crosscheck_request / comparison_result の読み書きと parallel_run・slot 実行(slot_executions)の状態参照(管理 DB)、クロスチェックジョブマップの比較定義の読み取り(設定ファイル)、速報クロスチェック設定(env 形式 rapid-crosscheck.env: RAPID_DB_CONN_REF / RAPID_LEASE_SEC / RAPID_POLL_INTERVAL_SEC)の読み取り"
+          responsibility: "rapid_run / rapid_crosscheck_request の読み書き(比較ツールの stdout / stderr / exit_code は依頼レコードの列に保存)と parallel_run・slot 実行(slot_executions)の状態参照(管理 DB)、速報クロスチェック設定(env 形式 rapid-crosscheck.env: RAPID_DB_CONN_REF / RAPID_LEASE_SEC / RAPID_POLL_INTERVAL_SEC と速報の比較ツール起動コマンド)の読み取り"
           allowed_dependencies:
             - "L-rapid-domain"
             - "L-rapid-gateway"
@@ -801,16 +896,16 @@ domain_architecture:
           policies:
             - id: "LP-011"
               name: "比較ツール呼び出しの分離"
-              description: "比較ツールの起動コマンド・オプションは job_id ごとの比較定義から受け取り、gateway は実行と結果取得だけを行う。ツール固有の終了コード解釈は domain の対応表に委ねる"
+              description: "比較ツールの起動コマンドは速報クロスチェック設定の 1 行({job_id} を含む)を依頼レコードの値で置換して受け取り、gateway は実行と結果取得だけを行う。ツール固有の終了コード解釈は domain の対応表に委ねる"
               reason: "条件「比較定義の選択」への対応。比較ツールを差し替え可能にするため"
-              source_model: "条件: 比較定義の選択, 外部システム: 比較ツール, 情報: 比較定義"
+              source_model: "条件: 比較定義の選択, 外部システム: 比較ツール, 情報: 比較定義, 速報クロスチェック設定"
               confidence: "high"
           rules: []
       cross_layer_policies:
         - id: "CLP-003"
           name: "IF なし(直接依存)"
-          description: "tier-facade と同じく直接依存とし、gateway アダプタの差し替えで製品差異を吸収する"
-          reason: "一般的なベストプラクティスとして適用"
+          description: "tier-facade と同じく直接依存とし、gateway アダプタの差し替えで製品差異を吸収する。これはティア内のレイヤー間依存の規則である。ティア間(本ティアと tier-facade など)のシェル関数の共有・source の規則は CTR-007(ティアは独立プロセス・ティア間のシェル関数共有の規則)に従う。本ティアは tier-facade の validate-config.sh へ検証関数を提供せず、validate-config.sh から source されない(クロスチェック簡素化後、速報の設定検証は facade 単独で完結する)"
+          reason: "一般的なベストプラクティスとして適用。ティア間のシェル関数共有の規則は CTR-007 に集約する"
           source_model: "なし"
           confidence: "default"
         - id: "CLP-004"
@@ -830,14 +925,14 @@ domain_architecture:
         graph TD
           P[presentation: blue-completed / green-completed / worker 起動口] --> U[usecase: dispatcher / worker フロー]
           U --> D[domain: 両系成功判定・依頼ライフサイクル]
-          U --> R[repository: rapid_run / request / comparison_result / 比較定義]
+          U --> R[repository: rapid_run / request / 起動コマンド]
           R --> D
           R --> G[gateway: RDB / 比較ツール]
     - tier_id: "tier-final-crosscheck"
       layers:
         - id: "L-final-presentation"
           name: "プレゼンテーション層(CLI エントリ)"
-          responsibility: "final-crosscheck-runner の起動口(business_date・対象カタログ版の引数検証)と worker の起動口。保存済み stdout / stderr / exitcode の無加工中継と終了コードの決定"
+          responsibility: "final-crosscheck-runner の起動口(業務上の引数なし。未知オプションのみ検証)と worker の起動口。保存済み stdout / stderr / exitcode の無加工中継と終了コードの決定"
           allowed_dependencies:
             - "L-final-usecase"
           policies:
@@ -876,7 +971,7 @@ domain_architecture:
           rules: []
         - id: "L-final-repository"
           name: "リポジトリ層"
-          responsibility: "final_crosscheck_request と対象カタログの読み書き(管理 DB)。速報側のテーブルには触れない"
+          responsibility: "final_crosscheck_request の読み書き(比較ツールの stdout / stderr / exit_code は依頼レコードの列に保存)と確報クロスチェック worker 設定の起動コマンドの読み取り。速報側のテーブルには触れない"
           allowed_dependencies:
             - "L-final-domain"
             - "L-final-gateway"
@@ -884,14 +979,14 @@ domain_architecture:
           rules: []
         - id: "L-final-gateway"
           name: "ゲートウェイ層"
-          responsibility: "RDB クライアントアダプタ(DB セグメントからの poll / claim)、比較ツール起動アダプタ(対象カタログに基づく全テーブル・全ファイル比較)"
+          responsibility: "RDB クライアントアダプタ(DB セグメントからの poll / claim)、比較ツール起動アダプタ(確報クロスチェック worker 設定の起動コマンドで全テーブル・全ファイル比較。対象は比較ツール側が定義)"
           allowed_dependencies: []
           policies:
             - id: "LP-015"
-              name: "対象カタログに基づく全量比較の起動"
-              description: "gateway は対象カタログ(target_type / target_identifier / 比較条件 / business_date の扱い)を比較ツールの入力に変換して起動し、stdout / stderr / exitcode を取得する"
+              name: "確報の比較ツール起動コマンドによる全量比較の起動"
+              description: "gateway は確報クロスチェック worker 設定の比較ツール起動コマンドをそのまま起動し、stdout / stderr / exitcode を取得する。比較対象(テーブル・ファイル)は比較ツール側(適用側)が持つ"
               reason: "条件「適用側で定義する事項」への対応"
-              source_model: "条件: 適用側で定義する事項, 情報: 対象カタログ, 外部システム: 比較ツール"
+              source_model: "条件: 適用側で定義する事項, 情報: 比較定義, 外部システム: 比較ツール"
               confidence: "high"
           rules: []
       cross_layer_policies:
@@ -903,7 +998,7 @@ domain_architecture:
           confidence: "default"
         - id: "CLP-006"
           name: "実行ログの出力方針"
-          description: "tier-facade の CLP-002 と同一。final_crosscheck_id と business_date をログに含める"
+          description: "tier-facade の CLP-002 と同一。final_crosscheck_id をログに含める"
           reason: "NFR C.6.1.1・C.3.1.1 への対応"
           source_model: "情報: 実行ログ, NFR C.6.1.1, NFR C.3.1.1"
           confidence: "medium"
@@ -918,14 +1013,14 @@ domain_architecture:
         graph TD
           P[presentation: final runner / worker 起動口] --> U[usecase: 登録・polling・中継 / 比較実行]
           U --> D[domain: 依頼ライフサイクル・終了コード対応]
-          U --> R[repository: final_crosscheck_request / 対象カタログ]
+          U --> R[repository: final_crosscheck_request / 起動コマンド]
           R --> D
           R --> G[gateway: RDB / 比較ツール]
     - tier_id: "tier-ops"
       layers:
         - id: "L-ops-presentation"
           name: "プレゼンテーション層(CLI エントリ)"
-          responsibility: "hang-detector / background-rerun(--source-run-id, --role) / abort-*(--run-id)の引数検証、現在状態の表示、停止確認の対話プロンプト、終了コードの決定"
+          responsibility: "hang-detector / housekeep / background-rerun(--source-run-id, --role) / abort-*(--run-id)の引数検証、現在状態の表示、停止確認の対話プロンプト、終了コードの決定(hang-detector はその回に新たに見つけた異常の段階から正常終了 / 警告終了 / 失敗を決め、異常を標準エラーに 1 件 1 行で出す。housekeep は削除件数を標準出力に、失敗を標準エラーに出し、失敗があれば非 0 で終える)"
           allowed_dependencies:
             - "L-ops-usecase"
           policies:
@@ -938,17 +1033,23 @@ domain_architecture:
           rules: []
         - id: "L-ops-usecase"
           name: "ユースケース層"
-          responsibility: "監視走査 → 判定 → 監視記録保存 → 通知(hang-detector)、事前検証 → execution-spec 復元 → 新 run 作成 → background slot / 比較依頼の起動(background-rerun)、可否判定 → 停止確認 → 状態更新(abort-*。abort-blue / abort-green は slot・並行稼働実行に加えて対象 run の未着手の速報比較依頼の ABORTED 化(競合窓の保険)を含む。abort-rapid-crosscheck は REQUESTED / CLAIMED / RUNNING の速報比較依頼、abort-final-crosscheck は RUNNING の確報比較依頼を中止する)のフロー制御"
+          responsibility: "監視走査 → 判定 → 新たな異常の抽出(通知済みの除外)→ 監視記録または通知済みの印の保存 → 終了結果と標準エラーでの通知(hang-detector)、ハウスキープ設定の検査(設定エラーなら何も削除せず終了)→ 削除待ちの置き場の残りの無条件削除 → 成果物ルートと管理 DB の走査 → 削除の単位の組み立てと削除判定 → 単位ごとに成果物の置き場への移動と削除 → 管理 DB の行の 1 トランザクション削除 → 件数集計(housekeep)、事前検証 → execution-spec 復元 → 新 run 作成 → background slot / 比較依頼の起動(background-rerun)、可否判定 → 停止確認 → 状態更新(abort-*。abort-blue / abort-green は slot・並行稼働実行に加えて対象 run の未着手の速報比較依頼の ABORTED 化(競合窓の保険)を含む。abort-rapid-crosscheck は REQUESTED / CLAIMED / RUNNING の速報比較依頼、abort-final-crosscheck は RUNNING の確報比較依頼を中止する)のフロー制御"
           allowed_dependencies:
             - "L-ops-domain"
             - "L-ops-repository"
           policies:
             - id: "LP-017"
               name: "監視は通知のみ"
-              description: "hang-detector の usecase は状態更新・プロセス停止・依頼作成を呼ばない。監視記録の保存とメール送信だけを行う"
-              reason: "条件「監視は通知のみ」「警告傾向の記録」への対応"
-              source_model: "条件: 監視は通知のみ, 警告傾向の記録, 状態: 監視状態"
+              description: "hang-detector の usecase は状態更新・プロセス停止・依頼作成を呼ばない。監視記録(RAPID_CROSSCHECK_MODE=off では通知済みの印)の保存と、その回に新たに見つけた異常の presentation への受け渡し(標準エラーの行と終了結果の段階)だけを行う。通知済みの異常は渡さず、保存に失敗した異常は通知済みにしない(次回も通知する)"
+              reason: "条件「監視は通知のみ」「通知レベルの判定」「警告傾向の記録」への対応。メール送信は 2026-11-01 に廃止"
+              source_model: "条件: 監視は通知のみ, 通知レベルの判定, 警告傾向の記録, 状態: 監視状態"
               confidence: "high"
+            - id: "LP-025"
+              name: "ハウスキープは削除だけを行う"
+              description: "housekeep の usecase は状態更新・依頼作成・プロセス停止を呼ばない。最初にハウスキープ設定を検査し(RAPID_CROSSCHECK_MODE が off 以外、または確報クロスチェック worker の設定がある設置で接続参照名が無い・空なら設定エラー)、設定エラーなら削除待ちの置き場を含めて何も削除せずに非 0 で終える。設定が正しければ削除待ちの置き場の残りを無条件に削除したあと、削除の単位ごとに成果物(成果物ディレクトリと通知済みの印)を置き場へ移して削除し、そのあと管理 DB の行を 1 トランザクションで削除する順序を守る。失敗は標準エラーに出して非 0 で終える(失敗後に残りの単位の処理を続けるかは仕様で確定する)"
+              reason: "条件「ハウスキープの削除順序と回復」への対応。途中失敗でも次回の実行で残りを削除できる冪等な構成にするため"
+              source_model: "条件: ハウスキープの削除順序と回復, ハウスキープの削除判定, BUC: ハウスキープフロー"
+              confidence: "medium"
             - id: "LP-018"
               name: "リランの復元元の固定"
               description: "background-rerun の usecase は最新ジョブマップの repository を呼ばず、元 run の execution-spec.json からのみ実行設定を復元し、新 run_id の parallel_run に parent_run_id を設定する"
@@ -958,40 +1059,46 @@ domain_architecture:
           rules: []
         - id: "L-ops-domain"
           name: "ドメイン層"
-          responsibility: "slot 実行の状態導出(exitcode.txt / aborted.txt の有無・値)、ハング検知判定表(導出状態 × 経過時間と上限)、速報比較依頼の異常判定表、通知レベル対応表、監視状態の遷移(6 値。通知後・中止後の終端を含む)、リラン事前検証表(role × 元 mode × 導出状態)、中止可否判定表(slot は mode × 導出状態、比較依頼はクロスチェック種別 × 依頼状態(速報は REQUESTED / CLAIMED / RUNNING、確報は RUNNING のみ)。abort-blue / abort-green が併せて中止する速報比較依頼の状態条件(REQUESTED で未着手のみ)を含む)、復旧手段の選択表"
+          responsibility: "slot 実行の状態導出(exitcode.txt / aborted.txt の有無・値)、ハング検知判定表(導出状態 × 経過時間と上限)、速報比較依頼の異常判定表、通知レベル対応表、監視状態の遷移(6 値。通知後・中止後の終端を含む)、リラン事前検証表(role × 元 mode × 導出状態)、中止可否判定表(slot は mode × 導出状態、比較依頼はクロスチェック種別 × 依頼状態(速報は REQUESTED / CLAIMED / RUNNING、確報は RUNNING のみ)。abort-blue / abort-green が併せて中止する速報比較依頼の状態条件(REQUESTED で未着手のみ)を含む)、復旧手段の選択表、ハング検知ジョブの終了結果の決定表(その回の新たな異常の段階 → 正常終了 / 警告終了 / 失敗)、ハウスキープの削除判定表(削除の単位の構成要素の終端判定 × 最も遅い終了日時と保持日数。管理 DB あり / RAPID_CROSSCHECK_MODE=off の成果物だけ / 速報比較依頼だけのリラン run / 確報比較依頼の各判定)"
           allowed_dependencies: []
           policies:
             - id: "LP-019"
               name: "判定表をドメインに集約"
-              description: "slot 実行の状態導出・ハング検知判定・対象除外・異常判定・通知レベル・監視状態の遷移(ハング疑い通知済み → 正常終了 / 実行エラー通知済み / 比較異常通知済み、監視中・ハング疑い通知済み → 正常終了(中止済み))・リラン事前検証・中止可否(slot 実行モード × 導出状態、およびクロスチェック種別 × 依頼状態。速報比較依頼は REQUESTED / CLAIMED / RUNNING、確報比較依頼は RUNNING のみ中止可)・復旧手段の各判定表を純粋関数として実装し、テスト可能にする"
-              reason: "条件「slot 実行の状態導出規則」「ハング検知判定」「ハング検知対象の除外」「速報比較依頼の異常判定」「通知レベルの判定」「リラン事前検証」「slot 中止可否判定」「依頼中止可否判定」(縦軸クロスチェック種別 × 横軸依頼状態の判定表)「復旧手段の選択」と状態モデル「監視状態」「クロスチェック依頼」(REQUESTED / CLAIMED / RUNNING → ABORTED)、バリエーション「中止対象種別」への対応"
-              source_model: "条件: slot 実行の状態導出規則, ハング検知判定, ハング検知対象の除外, 速報比較依頼の異常判定, 通知レベルの判定, リラン事前検証, slot 中止可否判定, 依頼中止可否判定, 復旧手段の選択, 状態: 監視状態, クロスチェック依頼, バリエーション: ハング検知判定結果, 監視状態, 中止対象種別, クロスチェック依頼状態"
+              description: "slot 実行の状態導出・ハング検知判定・対象除外・異常判定・通知レベル・監視状態の遷移(ハング疑い通知済み → 正常終了 / 実行エラー通知済み / 比較異常通知済み、監視中・ハング疑い通知済み → 正常終了(中止済み))・リラン事前検証・中止可否(slot 実行モード × 導出状態、およびクロスチェック種別 × 依頼状態。速報比較依頼は REQUESTED / CLAIMED / RUNNING、確報比較依頼は RUNNING のみ中止可)・復旧手段・ハング検知ジョブの終了結果・ハウスキープの削除判定の各判定表を純粋関数として実装し、テスト可能にする(現在時刻と保持日数は引数で受け取る)"
+              reason: "条件「slot 実行の状態導出規則」「ハング検知判定」「ハング検知対象の除外」「速報比較依頼の異常判定」「通知レベルの判定」「リラン事前検証」「slot 中止可否判定」「依頼中止可否判定」(縦軸クロスチェック種別 × 横軸依頼状態の判定表)「復旧手段の選択」「ハウスキープの削除判定」と状態モデル「監視状態」「クロスチェック依頼」(REQUESTED / CLAIMED / RUNNING → ABORTED)、バリエーション「中止対象種別」への対応"
+              source_model: "条件: slot 実行の状態導出規則, ハング検知判定, ハング検知対象の除外, 速報比較依頼の異常判定, 通知レベルの判定, リラン事前検証, slot 中止可否判定, 依頼中止可否判定, 復旧手段の選択, ハウスキープの削除判定, 状態: 監視状態, クロスチェック依頼, バリエーション: ハング検知判定結果, 監視状態, 中止対象種別, クロスチェック依頼状態"
               confidence: "high"
           rules: []
         - id: "L-ops-repository"
           name: "リポジトリ層"
-          responsibility: "監視記録(管理 DB)、slot 実行・parallel_run・比較依頼の状態(管理 DB)、Runner Result / execution-spec.json / aborted.txt(成果物ディレクトリ)、ハング検知上限設定(execution-spec 経由)、ハング検知定期ジョブ設定(env 形式の設定ファイル)の読み書き"
+          responsibility: "監視記録(管理 DB)、通知済みの印(RAPID_CROSSCHECK_MODE=off。成果物ルート配下)、slot 実行・parallel_run・比較依頼の状態(管理 DB)、Runner Result / execution-spec.json / aborted.txt(成果物ディレクトリ)、ハング検知上限設定(execution-spec 経由)、ハング検知定期ジョブ設定(env 形式の設定ファイル)、ハウスキープ設定(保持日数と専用 DB ロールの接続参照名)の読み書き。ハウスキープ用に、削除の単位の構成要素(管理 DB の行と成果物の終了日時)の列挙、削除待ちの置き場への移動と削除、削除の単位の管理 DB の行の削除を提供する"
           allowed_dependencies:
             - "L-ops-domain"
             - "L-ops-gateway"
           policies:
             - id: "LP-020"
               name: "管理 DB なしでの監視・中止・リラン"
-              description: "RAPID_CROSSCHECK_MODE=off のとき repository は管理 DB に接続せず、成果物ディレクトリの走査だけで監視対象を列挙し、slot 実行の状態は exitcode.txt / aborted.txt から導出する。abort-blue / abort-green の中止は aborted.txt の書き込みだけで成立し、background-rerun も成果物ファイルだけで事前検証する"
-              reason: "条件「ハング検知判定」「slot 実行の状態導出規則」と方針資料「off の場合も slot 成果物だけで監視・中止・リラン」への対応"
-              source_model: "条件: ハング検知判定, 速報クロスチェック有効判定, slot 実行の状態導出規則, 情報: 監視記録, ハング検知上限設定, Runner Result"
+              description: "RAPID_CROSSCHECK_MODE=off のとき repository は管理 DB に接続せず、成果物ディレクトリの走査だけで監視対象を列挙し、slot 実行の状態は exitcode.txt / aborted.txt から導出する。通知済みかどうかは監視記録の代わりに成果物ルート配下の通知済みの印(Runner Result の契約ファイルとは別のファイル。一時ファイル → リネームで書く。置き場所とファイル名は仕様で確定)で判定する。abort-blue / abort-green の中止は aborted.txt の書き込みだけで成立し、background-rerun も成果物ファイルだけで事前検証する。housekeep も管理 DB の行が無い実行を成果物だけ(execution-spec.json で起動対象の slot の終了ファイル)で判定して削除する"
+              reason: "条件「ハング検知判定」「通知レベルの判定」「slot 実行の状態導出規則」「ハウスキープの削除判定」と方針資料「off の場合も slot 成果物だけで監視・中止・リラン」「off では成果物ルート配下へ通知済みの印をファイルで残して判定する」への対応"
+              source_model: "条件: ハング検知判定, 通知レベルの判定, 速報クロスチェック有効判定, slot 実行の状態導出規則, ハウスキープの削除判定, 情報: 監視記録, ハング検知上限設定, Runner Result, 実行設定(execution-spec)"
               confidence: "high"
           rules: []
         - id: "L-ops-gateway"
           name: "ゲートウェイ層"
-          responsibility: "メール送信アダプタ(ハング検知定期ジョブ設定の送信コマンド・宛先・件名プレフィックスを使う OS 標準コマンド呼び出し。warning / error)、RDB クライアントアダプタ(条件付き UPDATE による ABORTED 遷移)、ファイルシステム走査・書き込みアダプタ(aborted.txt の一時ファイル → リネーム出力を含む)、slot runner / 速報クロスチェック runner 起動アダプタ(リラン)"
+          responsibility: "RDB クライアントアダプタ(業務用ロールの接続による条件付き UPDATE での ABORTED 遷移・監視記録の保存)、ハウスキープ用 RDB クライアントアダプタ(ハウスキープ設定の接続参照名で解決する専用 DB ロールの接続。削除の単位の行を 1 トランザクションで DELETE)、ファイルシステム走査・書き込みアダプタ(aborted.txt と通知済みの印の一時ファイル → リネーム出力を含む)、ファイルシステム移動・削除アダプタ(削除待ちの置き場への同一ファイルシステム内 rename と置き場からの削除)、slot runner / 速報クロスチェック runner 起動アダプタ(リラン)"
           allowed_dependencies: []
           policies:
             - id: "LP-021"
               name: "条件付き状態更新と aborted.txt の原子的書き込み"
               description: "slot の中止は aborted.txt を一時ファイルへ書いて確定名へリネームすることを正本とし、既に exitcode.txt または aborted.txt があれば書かずにエラーを返す。管理 DB の ABORTED への更新(off 以外)は WHERE 句で現在状態(slot 実行は RUNNING かつ background、並行稼働実行は STARTED または RUNNING)を条件にし、競合時は更新件数 0 をエラーとして返す。abort-blue / abort-green が併せて行う速報比較依頼の ABORTED 更新は WHERE status = REQUESTED(worker_id 未設定)を条件にし、該当なし(依頼が無い、または既に CLAIMED / RUNNING 以降)は更新件数 0 を正常として扱い、その依頼には触れない(競合窓の保険であり、dispatcher 側の中止済み run 判定と併用する)。abort-rapid-crosscheck の ABORTED 更新は WHERE status IN ('REQUESTED', 'CLAIMED', 'RUNNING') を条件にし、更新件数 0(終端済み)はエラーとして返す。abort-final-crosscheck は WHERE status = RUNNING を条件にする"
               reason: "条件「slot 中止可否判定」「依頼中止可否判定」(CLAIMED 中止時の競合規則: status IN 条件の条件付き UPDATE)「slot 実行の状態導出規則」「成果物公開判定」と状態モデル「クロスチェック依頼」(REQUESTED / CLAIMED / RUNNING → ABORTED)への対応。二重実行と worker の claim との競合を DB のトランザクションで防ぐため"
-              source_model: "条件: slot 中止可否判定, 依頼中止可否判定, slot 実行の状態導出規則, 成果物公開判定, claim 排他, 状態: クロスチェック依頼, システム概要: ジョブキュー兼管理 DB(内部データストア), 外部システム: メール通知, 情報: ハング検知定期ジョブ設定, 速報比較依頼(rapid_crosscheck_request)"
+              source_model: "条件: slot 中止可否判定, 依頼中止可否判定, slot 実行の状態導出規則, 成果物公開判定, claim 排他, 状態: クロスチェック依頼, システム概要: ジョブキュー兼管理 DB(内部データストア), 情報: ハング検知定期ジョブ設定, 速報比較依頼(rapid_crosscheck_request)"
+              confidence: "high"
+            - id: "LP-026"
+              name: "削除待ちの置き場への rename と専用ロールでの 1 トランザクション削除"
+              description: "成果物の削除は、削除対象の成果物ディレクトリ(と通知済みの印)を成果物ルート配下の削除待ちの置き場へ同じファイルシステム内の 1 回の rename で移してから削除する。既に無いファイルは削除済みとして扱いエラーにしない。管理 DB の行の削除はハウスキープ専用 DB ロールの接続だけで行い、1 つの削除の単位の行(並行稼働実行・slot 実行・速報実行・速報比較依頼・監視記録、または確報比較依頼)を 1 トランザクションで DELETE する。業務用ロールのアダプタには DELETE を実装しない"
+              reason: "条件「ハウスキープの削除順序と回復」への対応。rename で削除対象の確定を原子的にし、DB の行を単位ごとに原子的に消すことで、途中失敗後の再実行で同じ結果になる"
+              source_model: "条件: ハウスキープの削除順序と回復, 情報: ハウスキープ設定, システム概要: ジョブキュー兼管理 DB(内部データストア)"
               confidence: "high"
           rules: []
       cross_layer_policies:
@@ -1003,9 +1110,9 @@ domain_architecture:
           confidence: "default"
         - id: "CLP-008"
           name: "運用操作の記録"
-          description: "中止・リランの運用操作は指示者(実行ユーザー)・応答・対象 run_id・role を実行ログに残し、監視記録には monitor_status(6 値)/ hang_suspected_at / alerted_at / 警告時経過時間を残す。hang_detect_limit_minutes の調整記録は監視記録ではなく適用構成文書に残す"
-          reason: "条件「警告傾向の記録」と NFR E.7.1.1(監査ログ)・C.3.1.1(自動記録)への対応"
-          source_model: "条件: 警告傾向の記録, 情報: 実行ログ, 監視記録, NFR E.7.1.1, NFR C.3.1.1, NFR C.6.1.1"
+          description: "中止・リランの運用操作は指示者(実行ユーザー)・応答・対象 run_id・role を実行ログに残し、監視記録には monitor_status(6 値)/ hang_suspected_at / alerted_at / 警告時経過時間を残す。hang_detect_limit_minutes の調整記録は監視記録ではなく適用構成文書に残す。ハング検知が通知した異常(対象・段階・経過時間)と、ハウスキープが削除した単位(run_id または確報比較依頼の ID)・件数・失敗も実行ログに残す"
+          reason: "条件「警告傾向の記録」「ハウスキープの削除順序と回復」と NFR E.7.1.1(監査ログ)・C.3.1.1(自動記録)への対応"
+          source_model: "条件: 警告傾向の記録, ハウスキープの削除順序と回復, 情報: 実行ログ, 監視記録, NFR E.7.1.1, NFR C.3.1.1, NFR C.6.1.1"
           confidence: "high"
       cross_layer_rules:
         - id: "CLR-004"
@@ -1016,11 +1123,11 @@ domain_architecture:
           confidence: "default"
       diagram_mermaid: |
         graph TD
-          P[presentation: hang-detector / background-rerun / abort-* CLI] --> U[usecase: 監視・リラン・中止フロー]
-          U --> D[domain: 判定表・監視状態遷移]
-          U --> R[repository: 監視記録 / 状態 / 成果物 / execution-spec]
+          P[presentation: hang-detector / housekeep / background-rerun / abort-* CLI] --> U[usecase: 監視・ハウスキープ・リラン・中止フロー]
+          U --> D[domain: 判定表・監視状態遷移・削除判定]
+          U --> R[repository: 監視記録 / 通知済みの印 / 状態 / 成果物 / execution-spec / 設定]
           R --> D
-          R --> G[gateway: メール / RDB / filesystem / runner 起動]
+          R --> G[gateway: RDB 業務用 / RDB ハウスキープ専用 / filesystem / runner 起動]
 ```
 
 ## data_architecture.entities
@@ -1249,9 +1356,9 @@ domain_architecture:
       source_info: "情報: 比較定義"
       model_type: "resource_scd2"
       attributes:
-        - name: "job_id"
+        - name: "crosscheck_type"
           type: "string"
-          description: "JOB_ID"
+          description: "クロスチェック種別(速報 / 確報)"
           nullable: false
           primary_key: true
         - name: "definition_version"
@@ -1259,91 +1366,15 @@ domain_architecture:
           description: "定義版"
           nullable: false
           primary_key: true
-        - name: "comparison_type"
-          type: "string"
-          description: "比較種別"
-          nullable: false
-          primary_key: false
-        - name: "targets"
-          type: "text"
-          description: "比較対象(テーブル・ファイル)"
-          nullable: false
-          primary_key: false
         - name: "tool_command"
           type: "string"
-          description: "比較ツール起動コマンド"
-          nullable: false
-          primary_key: false
-        - name: "tool_options"
-          type: "text"
-          description: "比較オプション"
-          nullable: true
-          primary_key: false
-      relationships:
-        - target_entity: "E-007"
-          type: "N:1"
-          description: "クロスチェックジョブマップに属する"
-    - id: "E-007"
-      name: "クロスチェックジョブマップ"
-      source_info: "情報: クロスチェックジョブマップ"
-      model_type: "resource_scd2"
-      attributes:
-        - name: "map_version"
-          type: "string"
-          description: "マップ版"
-          nullable: false
-          primary_key: true
-        - name: "target_list"
-          type: "text"
-          description: "比較対象一覧"
-          nullable: false
-          primary_key: false
-        - name: "catalog_ref"
-          type: "string"
-          description: "対象カタログ参照(版)"
+          description: "比較ツール起動コマンド(1 行。速報は {job_id} を含む)。比較対象とジョブ ID ごとの比較内容は比較ツール側(適用側)が持つ。速報の起動コマンドは速報クロスチェック設定、確報の起動コマンドは確報クロスチェック worker 設定が所有する"
           nullable: false
           primary_key: false
       relationships:
-        - target_entity: "E-006"
-          type: "1:N"
-          description: "job_id ごとの比較定義を保持する"
-        - target_entity: "E-008"
+        - target_entity: "E-027"
           type: "1:1"
-          description: "確報用の対象カタログを参照する"
-    - id: "E-008"
-      name: "対象カタログ"
-      source_info: "情報: 対象カタログ"
-      model_type: "resource_scd2"
-      attributes:
-        - name: "catalog_version"
-          type: "string"
-          description: "カタログ版"
-          nullable: false
-          primary_key: true
-        - name: "target_type"
-          type: "string"
-          description: "target_type(テーブル / ファイル)"
-          nullable: false
-          primary_key: true
-        - name: "target_identifier"
-          type: "string"
-          description: "target_identifier"
-          nullable: false
-          primary_key: true
-        - name: "comparison_condition"
-          type: "text"
-          description: "比較条件"
-          nullable: true
-          primary_key: false
-        - name: "business_date_handling"
-          type: "string"
-          description: "business_date の扱い"
-          nullable: true
-          primary_key: false
-      relationships:
-        - target_entity: "E-019"
-          type: "1:N"
-          description: "確報比較依頼がカタログ版を紐付ける"
+          description: "速報の比較ツール起動コマンドは速報クロスチェック設定が持つ"
     - id: "E-009"
       name: "ジョブ起動要求"
       source_info: "情報: ジョブ起動要求"
@@ -1692,11 +1723,6 @@ domain_architecture:
           description: "終了コード"
           nullable: false
           primary_key: false
-        - name: "artifact_uri"
-          type: "string"
-          description: "成果物ディレクトリまたは artifact_uri"
-          nullable: false
-          primary_key: false
         - name: "occurred_at"
           type: "datetime"
           description: "完了日時(ホストのローカルタイムゾーン、タイムゾーン指示子なし)"
@@ -1727,16 +1753,6 @@ domain_architecture:
         - name: "green_status"
           type: "string"
           description: "green_status"
-          nullable: true
-          primary_key: false
-        - name: "blue_artifact_uri"
-          type: "string"
-          description: "blue_artifact_uri"
-          nullable: true
-          primary_key: false
-        - name: "green_artifact_uri"
-          type: "string"
-          description: "green_artifact_uri"
           nullable: true
           primary_key: false
         - name: "completion_status"
@@ -1771,6 +1787,21 @@ domain_architecture:
           type: "string"
           description: "JOB_ID"
           nullable: false
+          primary_key: false
+        - name: "parameters"
+          type: "text"
+          description: "parameters(JSON。元 run の job_id とともに比較ツール起動コマンドの {job_id} 置換に使う値)"
+          nullable: true
+          primary_key: false
+        - name: "blue_exit_code"
+          type: "integer"
+          description: "blue slot の終了コード(worker が起動コマンドを置換できるよう依頼レコードに揃える)"
+          nullable: true
+          primary_key: false
+        - name: "green_exit_code"
+          type: "integer"
+          description: "green slot の終了コード(worker が起動コマンドを置換できるよう依頼レコードに揃える)"
+          nullable: true
           primary_key: false
         - name: "status"
           type: "string"
@@ -1811,59 +1842,12 @@ domain_architecture:
         - target_entity: "E-016"
           type: "1:1"
           description: "速報実行から作成される"
-        - target_entity: "E-018"
-          type: "1:N"
-          description: "比較結果を生む"
         - target_entity: "E-006"
           type: "N:1"
-          description: "job_id ごとの比較定義に従う"
+          description: "速報の比較ツール起動コマンド(比較定義)に従い、{job_id} を依頼レコードの値で置換して起動する"
         - target_entity: "E-027"
           type: "N:1"
-          description: "claim の lease 期間と worker の poll 間隔を速報クロスチェック設定から得る"
-    - id: "E-018"
-      name: "比較結果(comparison_result)"
-      source_info: "情報: 比較結果(comparison_result)"
-      model_type: "event"
-      attributes:
-        - name: "comparison_result_id"
-          type: "string"
-          description: "comparison_result_id"
-          nullable: false
-          primary_key: true
-        - name: "run_id"
-          type: "string"
-          description: "run_id"
-          nullable: false
-          primary_key: false
-        - name: "comparison_type"
-          type: "string"
-          description: "comparison_type"
-          nullable: false
-          primary_key: false
-        - name: "status"
-          type: "string"
-          description: "比較 OK / 比較 NG / FAILED"
-          nullable: false
-          primary_key: false
-        - name: "difference_count"
-          type: "integer"
-          description: "difference_count"
-          nullable: true
-          primary_key: false
-        - name: "report_uri"
-          type: "string"
-          description: "report_uri"
-          nullable: true
-          primary_key: false
-        - name: "occurred_at"
-          type: "datetime"
-          description: "compared_at"
-          nullable: false
-          primary_key: false
-      relationships:
-        - target_entity: "E-017"
-          type: "N:1"
-          description: "速報比較依頼に属する"
+          description: "claim の lease 期間と worker の poll 間隔、速報の比較ツール起動コマンドを速報クロスチェック設定から得る"
     - id: "E-019"
       name: "確報比較依頼(final_crosscheck_request)"
       source_info: "情報: 確報比較依頼(final_crosscheck_request)"
@@ -1874,16 +1858,6 @@ domain_architecture:
           description: "final_crosscheck_id"
           nullable: false
           primary_key: true
-        - name: "business_date"
-          type: "date"
-          description: "business_date"
-          nullable: false
-          primary_key: false
-        - name: "catalog_version"
-          type: "string"
-          description: "対象カタログの版"
-          nullable: false
-          primary_key: false
         - name: "status"
           type: "string"
           description: "REQUESTED / CLAIMED / RUNNING / SUCCEEDED / FAILED / ABORTED"
@@ -1920,12 +1894,9 @@ domain_architecture:
           nullable: true
           primary_key: false
       relationships:
-        - target_entity: "E-008"
-          type: "N:1"
-          description: "対象カタログの版を紐付ける"
         - target_entity: "E-020"
           type: "1:1"
-          description: "比較ツール実行結果を保存する"
+          description: "比較ツール実行結果を依頼レコードの列に保存する"
     - id: "E-020"
       name: "比較ツール実行結果"
       source_info: "情報: 比較ツール実行結果"
@@ -1938,7 +1909,7 @@ domain_architecture:
           primary_key: true
         - name: "crosscheck_type"
           type: "string"
-          description: "比較種別(速報 / 確報)"
+          description: "クロスチェック種別(速報 / 確報)。依頼レコード(速報は rapid_crosscheck_request、確報は final_crosscheck_request)の stdout / stderr / exit_code 列として保存し、別レコード・ファイルには保存しない"
           nullable: false
           primary_key: true
         - name: "stdout"
@@ -2035,76 +2006,6 @@ domain_architecture:
         - target_entity: "E-017"
           type: "N:1"
           description: "速報比較依頼を監視する"
-        - target_entity: "E-022"
-          type: "1:N"
-          description: "通知メールを送る"
-    - id: "E-022"
-      name: "通知メール"
-      source_info: "情報: 通知メール"
-      model_type: "event"
-      attributes:
-        - name: "notification_id"
-          type: "string"
-          description: "通知 ID"
-          nullable: false
-          primary_key: true
-        - name: "severity"
-          type: "string"
-          description: "重要度(warning / error)"
-          nullable: false
-          primary_key: false
-        - name: "notification_type"
-          type: "string"
-          description: "通知種別(ハング疑い / background 実行エラー / 速報クロスチェック異常)"
-          nullable: false
-          primary_key: false
-        - name: "run_id"
-          type: "string"
-          description: "run_id"
-          nullable: false
-          primary_key: false
-        - name: "job_id"
-          type: "string"
-          description: "JOB_ID"
-          nullable: false
-          primary_key: false
-        - name: "role"
-          type: "string"
-          description: "role"
-          nullable: false
-          primary_key: false
-        - name: "elapsed_minutes"
-          type: "integer"
-          description: "経過時間"
-          nullable: true
-          primary_key: false
-        - name: "recipient"
-          type: "string"
-          description: "宛先(運用者。ハング検知定期ジョブ設定の通知先メールアドレス)"
-          nullable: false
-          primary_key: false
-        - name: "subject"
-          type: "string"
-          description: "件名(ハング検知定期ジョブ設定の件名プレフィックス + 通知種別 + run_id)"
-          nullable: false
-          primary_key: false
-        - name: "body"
-          type: "text"
-          description: "本文"
-          nullable: false
-          primary_key: false
-        - name: "occurred_at"
-          type: "datetime"
-          description: "送信日時"
-          nullable: false
-          primary_key: false
-      relationships:
-        - target_entity: "E-021"
-          type: "N:1"
-          description: "監視記録から送られる"
-        - target_entity: "E-026"
-          type: "N:1"
-          description: "宛先・送信コマンド・件名プレフィックスの出所"
     - id: "E-023"
       name: "リラン指示"
       source_info: "情報: リラン指示"
@@ -2220,7 +2121,7 @@ domain_architecture:
           primary_key: true
         - name: "script_name"
           type: "string"
-          description: "スクリプト名(facade / runner / クロスチェック runner・worker / ハング検知 / background-rerun / 中止スクリプト)"
+          description: "スクリプト名(facade / runner / クロスチェック runner・worker / ハング検知 / ハウスキープ / background-rerun / 中止スクリプト)"
           nullable: false
           primary_key: false
         - name: "run_id"
@@ -2247,30 +2148,12 @@ domain_architecture:
       source_info: "情報: ハング検知定期ジョブ設定"
       model_type: "resource_mutable"
       attributes:
-        - name: "alert_mail_to"
-          type: "string"
-          description: "通知先メールアドレス(ALERT_MAIL_TO)"
-          nullable: false
-          primary_key: false
-        - name: "alert_mail_cmd"
-          type: "string"
-          description: "送信コマンド(ALERT_MAIL_CMD。OS 標準のメール送信コマンド)"
-          nullable: false
-          primary_key: false
-        - name: "alert_subject_prefix"
-          type: "string"
-          description: "件名プレフィックス(ALERT_SUBJECT_PREFIX)"
-          nullable: false
-          primary_key: false
         - name: "db_conn_ref"
           type: "string"
-          description: "管理 DB 接続参照名(HANG_DB_CONN_REF。認証情報の値は置かず参照名のみ)"
+          description: "管理 DB 接続参照名(HANG_DB_CONN_REF。認証情報の値は置かず参照名のみ。RAPID_CROSSCHECK_MODE=off では使わない)。異常はハング検知ジョブ自身の終了結果と標準エラーで知らせるため、通知の宛先・送信コマンド・件名の項目は持たない"
           nullable: true
           primary_key: false
       relationships:
-        - target_entity: "E-022"
-          type: "1:N"
-          description: "通知メールの宛先・送信コマンド・件名プレフィックスを与える"
         - target_entity: "E-021"
           type: "1:N"
           description: "監視記録の保存先(管理 DB 接続参照名)を与える"
@@ -2294,10 +2177,18 @@ domain_architecture:
           description: "worker が依頼を poll する間隔(秒。RAPID_POLL_INTERVAL_SEC)"
           nullable: false
           primary_key: false
+        - name: "rapid_compare_command"
+          type: "string"
+          description: "速報の比較ツール起動コマンド(1 行。{job_id} を含む必須)。worker が依頼レコードの値で {job_id} を置換して起動する。比較対象とジョブ ID ごとの比較内容は比較ツール側(適用側)が持つ"
+          nullable: false
+          primary_key: false
       relationships:
         - target_entity: "E-017"
           type: "1:N"
-          description: "速報比較依頼の claim の lease 期間と poll 間隔を与える"
+          description: "速報比較依頼の claim の lease 期間と poll 間隔、速報の比較ツール起動コマンドを与える"
+        - target_entity: "E-006"
+          type: "1:1"
+          description: "速報の比較定義(比較ツール起動コマンド)を保持する"
         - target_entity: "E-013"
           type: "1:N"
           description: "facade が parallel_run を作成する管理 DB の接続参照名を与える(速報有効時のみ)"
@@ -2307,12 +2198,40 @@ domain_architecture:
         - target_entity: "E-026"
           type: "1:1"
           description: "ハング検知定期ジョブ設定と同型(env 形式・接続参照名)だが、所有項目と読み手が異なるため別ファイル"
+    - id: "E-028"
+      name: "ハウスキープ設定"
+      source_info: "情報: ハウスキープ設定"
+      model_type: "resource_mutable"
+      attributes:
+        - name: "retention_days"
+          type: "integer"
+          description: "保持日数(正の整数。既定 90 日)。削除の単位の最も遅い終了日時からこの日数を過ぎたものを削除対象にする。正の整数であることを設定検証で検査する。キー名は仕様で確定する"
+          nullable: false
+          primary_key: false
+        - name: "db_conn_ref"
+          type: "string"
+          description: "ハウスキープ専用 DB ロール(対象テーブルの SELECT と DELETE だけ)の管理 DB 接続参照名。認証情報の値は置かず参照名のみ。RAPID_CROSSCHECK_MODE が off 以外の設置と確報クロスチェックを使う設置(確報クロスチェック worker の設定がある設置)では必須で、無い・空なら設定エラーとしてハウスキープは何も削除しない。無し・空にできる(nullable)のは管理 DB を一切使わない設置だけで、そのときハウスキープは管理 DB に接続せず、確報比較依頼と管理 DB の行を削除しない(削除判定は SP-027)。キー名は仕様で確定する"
+          nullable: true
+          primary_key: false
+      relationships:
+        - target_entity: "E-013"
+          type: "1:N"
+          description: "保持日数を過ぎた終了済みの実行の単位(並行稼働実行と、その slot 実行・速報実行・速報比較依頼・監視記録)の削除基準を与える"
+        - target_entity: "E-019"
+          type: "1:N"
+          description: "終端した確報比較依頼の削除基準(保持日数)を与える"
+        - target_entity: "E-011"
+          type: "1:N"
+          description: "成果物(Runner Result と execution-spec.json を含む成果物ディレクトリ)の削除基準を与える"
+        - target_entity: "E-026"
+          type: "1:1"
+          description: "ハング検知定期ジョブ設定と同じく接続参照名だけを持つが、接続するロール(削除権限を持つ専用ロール)と読み手(housekeep)が異なるため別の設定"
 ```
 
 ## 追加転写元: `docs/nfr/latest/nfr-grade.yaml`
 
 - 転写元: `docs/nfr/latest/nfr-grade.yaml`
-- source_sha256: `5a7c72400cfc8c65de278dc284e656a73d60b643a91f69ecfa44688a0824b653`
+- source_sha256: `71b7a2b971a9c5b57f2bbe1cfc360f3662d928ea9bb4be34af9396d49d74ac37`
 - 生成: `extractSections.js`（原文転写。要約・言い換えなし）
 
 ### 転写済みセクションのチェックリスト
@@ -2520,31 +2439,31 @@ domain_architecture:
                 grade: 1
                 grade_description: "〜100"
                 reason: "利用者は運用部門の少人数(運用者・基盤適用設計者)で、CLI と定期ジョブのみのため"
-                source_model: "アクター: 運用者、基盤適用設計者 / 条件: CLI とメールによる提示"
+                source_model: "アクター: 運用者、基盤適用設計者 / 条件: CLI による提示"
                 confidence: "high"
               - id: "B.1.1.2"
                 name: "データ量"
                 important: false
                 grade: 1
-                grade_description: "〜100万件/年(parallel_run・slot 実行・比較依頼・監視記録の管理レコード)。CSV 形式の設定ファイルの共通前提: slot ジョブマップ・クロスチェックジョブマップ・対象カタログは、1 ファイルあたりの想定最大行数をヘッダー行を除いて 5,000 行とする。内容の最悪条件は、全行で任意列を含む全列に値があり、キー列(job_id、対象カタログは target_identifier)が全行一意で、版の列(map_version、カタログ版)の値が全行異なるもの。設定ファイルを読む処理は、行数に比例する時間で処理できる実装を前提とする。機能ごとの仕様・検証は、行数と内容の条件をこの共通前提から引き、機能ごとに再決定しない"
-                reason: "ユーザー指定: 2026-09-21 に利用者が確定。管理レコードは年間 100 万件以内の想定を据え置く。設定ファイルの規模は元の方針資料に記載が無い新規の決定で、1 つのジョブマップに 3,000 ジョブ程度はあり得るという利用者の見立てに余裕を持たせて 5,000 行とした。閾値を機能ごとに考え直さない方針のため、同じ CSV 形式の設定ファイル 3 種に共通の前提として 1 か所に定める。2026-09-21 の実測(現状のジョブマップ検証、最悪条件)は 1,000 行 2.2 秒、2,000 行 6.6 秒、3,000 行 13.8 秒、5,000 行 36 秒で、典型の内容(map_version 全行同一)は 3,000 行 2.5 秒。現状の実装は 5,000 行の最悪条件で性能目標値(B.2.1.1)を超えるため、版の列の集計を行数の 2 乗の比較から行数に比例する処理へ改める実装改善を前提とする"
-                source_model: "情報: 並行稼働実行(parallel_run)、slot 実行、速報比較依頼、監視記録、ジョブマップ、クロスチェックジョブマップ、対象カタログ / 条件: ジョブマップ解決条件"
+                grade_description: "〜100万件/年(parallel_run・slot 実行・比較依頼・監視記録の管理レコード)。CSV 形式の設定ファイルの共通前提: slot ジョブマップは、1 ファイルあたりの想定最大行数をヘッダー行を除いて 5,000 行とする。内容の最悪条件は、全行で任意列を含む全列に値があり、キー列(job_id)が全行一意で、版の列(map_version)の値が全行異なるもの。設定ファイルを読む処理は、行数に比例する時間で処理できる実装を前提とする。機能ごとの仕様・検証は、行数と内容の条件をこの共通前提から引き、機能ごとに再決定しない"
+                reason: "ユーザー指定: 2026-09-21 に利用者が確定。管理レコードは年間 100 万件以内の想定を据え置く。設定ファイルの規模は元の方針資料に記載が無い新規の決定で、1 つのジョブマップに 3,000 ジョブ程度はあり得るという利用者の見立てに余裕を持たせて 5,000 行とした。クロスチェック簡素化(CR-dcd8234d-007)でクロスチェックジョブマップと対象カタログを廃止したため、5,000 行の前提が及ぶ CSV 形式の設定ファイルは slot ジョブマップのみとなった(比較定義は 1 行の起動コマンドで CSV の行構造を持たない)。閾値を機能ごとに考え直さない方針のため、CSV 形式の設定ファイル(slot ジョブマップ)の共通の前提として 1 か所に定める。2026-09-21 の実測(現状のジョブマップ検証、最悪条件)は 1,000 行 2.2 秒、2,000 行 6.6 秒、3,000 行 13.8 秒、5,000 行 36 秒で、典型の内容(map_version 全行同一)は 3,000 行 2.5 秒。現状の実装は 5,000 行の最悪条件で性能目標値(B.2.1.1)を超えるため、版の列の集計を行数の 2 乗の比較から行数に比例する処理へ改める実装改善を前提とする"
+                source_model: "情報: 並行稼働実行(parallel_run)、slot 実行、速報比較依頼、監視記録、ジョブマップ / 条件: ジョブマップ解決条件"
                 confidence: "user"
               - id: "B.1.1.3"
                 name: "オンラインリクエスト件数"
                 important: true
                 grade: 1
-                grade_description: "〜1,000件/日(facade 起動・定期監視・CLI 操作の合計)"
-                reason: "オンライン画面は無く、リクエストに相当するのはジョブスケジューラからの facade 起動と 5 分ごとの監視ジョブのため"
+                grade_description: "〜1,000件/日(facade 起動・定期監視・1 日 1 回のハウスキープ・CLI 操作の合計)"
+                reason: "オンライン画面は無く、リクエストに相当するのはジョブスケジューラからの facade 起動と 5 分ごとの監視ジョブ、1 日 1 回のハウスキープ定期ジョブのため(ハウスキープの追加は 1 日 1 件で件数の桁は変わらない)"
                 source_model: "バリエーション: ジョブスケジューラ起動ジョブ種別"
                 confidence: "medium"
               - id: "B.1.1.4"
                 name: "バッチ処理件数"
                 important: false
                 grade: 2
-                grade_description: "確報は全テーブル・全ファイルの日次全量比較(対象件数は適用側の対象カタログで定義)"
-                reason: "確報クロスチェックが business_date 単位で全テーブル・全ファイルを比較する大量バッチのため"
-                source_model: "BUC: 確報クロスチェックフロー / 情報: 対象カタログ"
+                grade_description: "確報は全テーブル・全ファイルの日次全量比較(対象件数は適用側が比較ツール側で定義)"
+                reason: "確報クロスチェックが業務上の引数なしで起動され、全テーブル・全ファイルを比較する大量バッチのため"
+                source_model: "BUC: 確報クロスチェックフロー / 情報: 確報比較依頼(final_crosscheck_request)"
                 confidence: "medium"
           - id: "B.1.2"
             name: "ピーク時の業務量"
@@ -2579,7 +2498,7 @@ domain_architecture:
                 grade: 2
                 grade_description: "10秒以内(facade のオーバーヘッド・中止/リラン CLI の応答)。CSV 形式の設定ファイルを読む CLI と facade の設定読み込みは、B.1.1.2 の共通前提(1 ファイルあたり想定最大 5,000 行、最悪条件を含め内容によらず)で 10 秒以内に収める"
                 reason: "ユーザー指定: 2026-09-21 に利用者が確定。運用者向けの CLI 操作と facade の起動・中継のオーバーヘッドが対象で、業務ジョブ本体の処理時間は実装側の責務のため。目標を満たす行数と内容の条件は B.1.1.2 の共通前提の 1 か所から引き、内容によらず(最悪条件を含めて)10 秒以内とすることで、性能の合否を機能ごとに再決定せず判定できるようにする"
-                source_model: "条件: facade の責務限定 / 条件: CLI とメールによる提示 / 条件: ジョブマップ解決条件 / 情報: ジョブマップ、クロスチェックジョブマップ、対象カタログ"
+                source_model: "条件: facade の責務限定 / 条件: CLI による提示 / 条件: ジョブマップ解決条件 / 情報: ジョブマップ"
                 confidence: "user"
               - id: "B.2.1.2"
                 name: "スループット"
@@ -2613,9 +2532,9 @@ domain_architecture:
                 name: "バッチ処理量"
                 important: false
                 grade: 1
-                grade_description: "速報はジョブ単位、確報は対象カタログの全テーブル・全ファイル"
-                reason: "比較種別が速報(ジョブ単位比較)と確報(全量比較)に分かれ、対象は適用側が定義するため"
-                source_model: "バリエーション: 比較種別 / 情報: 対象カタログ"
+                grade_description: "速報はジョブ単位、確報は全テーブル・全ファイル(対象は適用側が比較ツール側で定義)"
+                reason: "速報はジョブ単位の比較、確報は全量比較で、対象は適用側が比較ツール側で定義するため"
+                source_model: "情報: 速報比較依頼(rapid_crosscheck_request)、確報比較依頼(final_crosscheck_request)"
                 confidence: "medium"
       - id: "B.3"
         name: "リソース拡張性"
@@ -2652,9 +2571,9 @@ domain_architecture:
                 name: "ストレージ拡張性"
                 important: false
                 grade: 1
-                grade_description: "スケールアップ(成果物ディレクトリ・実行ログの増加に応じて拡張)"
-                reason: "run ごとに成果物ディレクトリと実行ログを蓄積するため、保管期間に応じたストレージ増設が必要"
-                source_model: "情報: Runner Result、実行ログ"
+                grade_description: "スケールアップ(成果物ディレクトリ・実行ログの増加に応じて拡張。成果物ディレクトリと管理 DB の行はハウスキープが保持日数(既定 90 日)を過ぎた終了済みの実行から削除するため、保持日数分の量で頭打ちになる。管理 DB を使う設置(RAPID_CROSSCHECK_MODE が off 以外、または確報クロスチェックを使う設置)ではハウスキープ設定の管理 DB 接続参照名が必須のため、確報比較依頼も保持日数で削除される。管理 DB を一切使わない設置で接続参照名を省略したときだけ、ハウスキープは管理 DB に接続せず、off 以外の期間に作られた実行の管理 DB の行と成果物が残る)"
+                reason: "run ごとに成果物ディレクトリと実行ログを蓄積するが、ハウスキープ定期ジョブ(1 日 1 回)が保持日数を過ぎた終了済みの実行の成果物と管理 DB の行を削除するため、必要容量は保持日数分の実行量で見積もれる。保持日数を延ばす場合や並行稼働で成果物が増える場合はストレージを増設する。終わっていない構成要素を含む実行は経過日数にかかわらず残るため、その分の余裕を見込む。管理 DB を使う設置(RAPID_CROSSCHECK_MODE が off 以外、または確報クロスチェックを使う設置)では、ハウスキープ設定の管理 DB 接続参照名が無い・空なら設定エラーで何も削除せずに終わるため、RAPID_CROSSCHECK_MODE=off でも確報クロスチェックを使う設置では日次で登録される確報比較依頼が保持日数で削除され、増え続けることはない。接続参照名を省略できるのは管理 DB を一切使わない設置だけで、そのときハウスキープは管理 DB に接続せず、off 以外の期間に作られた実行を日数にかかわらず単位ごと残して起動のたびに warn を出す。この設置では管理 DB の行は新たに増えないが、off 以外の期間に作られた実行の管理 DB の行と成果物が残る分を、保持日数分の見積もりとは別に見込む"
+                source_model: "情報: Runner Result、実行ログ、ハウスキープ設定 / 条件: ハウスキープの削除判定"
                 confidence: "medium"
           - id: "B.3.4"
             name: "ネットワーク"
@@ -2775,8 +2694,8 @@ domain_architecture:
                 important: true
                 grade: 1
                 grade_description: "OS アカウントと SSH 鍵による認証。認証情報(SSH・管理 DB 接続)は値を保存せず参照名で管理"
-                reason: "実行先ホストへは実行ユーザーで SSH 接続し、execution-spec.json には認証情報の参照名のみを保存し、管理 DB への接続も速報クロスチェック設定の接続参照名(RAPID_DB_CONN_REF)で解決して値を置かない設計のため"
-                source_model: "外部システム: リモート実行ホスト(SSH) / 条件: 認証情報の非保存 / 情報: 速報クロスチェック設定"
+                reason: "実行先ホストへは実行ユーザーで SSH 接続し、execution-spec.json には認証情報の参照名のみを保存し、管理 DB への接続も接続参照名(速報クロスチェック設定の RAPID_DB_CONN_REF、ハング検知定期ジョブ設定の HANG_DB_CONN_REF、ハウスキープ設定のハウスキープ専用 DB ロールの接続参照名)で解決して値を置かない設計のため"
+                source_model: "外部システム: リモート実行ホスト(SSH) / 条件: 認証情報の非保存 / 情報: 速報クロスチェック設定、ハング検知定期ジョブ設定、ハウスキープ設定"
                 confidence: "high"
           - id: "E.5.2"
             name: "アクセス制御"
@@ -2786,9 +2705,9 @@ domain_architecture:
                 name: "アクセス制御"
                 important: true
                 grade: 1
-                grade_description: "ユーザ単位の制御(ジョブマップの user 列で解決する実行ユーザーと OS 権限。ローカル実行の slot では host / user を省略でき起動ユーザーの権限で実行)"
-                reason: "ジョブマップ(CSV)が job_id ごとに host / user 列で実行先と実行ユーザーを解決し、OS 権限で制御するため。ロール概念は RDRA に無い"
-                source_model: "情報: ジョブマップ(host / user 列) / 条件: ジョブマップ解決条件"
+                grade_description: "ユーザ単位の制御(ジョブマップの user 列で解決する実行ユーザーと OS 権限。ローカル実行の slot では host / user を省略でき起動ユーザーの権限で実行)。管理 DB は接続ロールで権限を分け、管理 DB の行の削除はハウスキープ専用の DB ロール(対象 6 テーブルの SELECT と DELETE だけ)に限り、業務用接続ロールには DELETE を与えない"
+                reason: "ジョブマップ(CSV)が job_id ごとに host / user 列で実行先と実行ユーザーを解決し、OS 権限で制御するため。利用者を区別するロール概念は RDRA に無いが、管理 DB の行の削除権限は条件「ハウスキープの削除順序と回復」によりハウスキープ専用の DB ロールへ分離する(方針資料: 削除権限だけを足したハウスキープ専用の DB ロール)"
+                source_model: "情報: ジョブマップ(host / user 列)、ハウスキープ設定 / 条件: ジョブマップ解決条件 / 条件: ハウスキープの削除順序と回復"
                 confidence: "high"
           - id: "E.5.3"
             name: "利用制限"
@@ -2848,9 +2767,9 @@ domain_architecture:
                 name: "監査ログ"
                 important: true
                 grade: 2
-                grade_description: "運用操作(中止・リラン)と状態遷移を run_id 付きの実行ログ・管理レコードで記録。監査の正本はジョブスケジューラ"
-                reason: "中止指示に指示者と応答を記録し、実行ログに run_id を残す設計だが、監査はジョブスケジューラの責務と定義されているため"
-                source_model: "情報: 中止指示、実行ログ / 条件: 実行履歴はジョブスケジューラの責務"
+                grade_description: "運用操作(中止・リラン)と状態遷移を run_id 付きの実行ログ・管理レコードで記録。監査の正本はジョブスケジューラ。relay-gate 側の管理レコードと成果物はハウスキープの保持日数(既定 90 日)を過ぎた終了済みの実行から削除されるため、それより長い期間の追跡はジョブスケジューラの実行履歴で行う"
+                reason: "中止指示に指示者と応答を記録し、実行ログに run_id を残す設計だが、監査はジョブスケジューラの責務と定義されているため。ハウスキープが保持日数を過ぎた管理レコードと成果物を削除するため、relay-gate 側の記録は保持日数内の追跡用に限られる"
+                source_model: "情報: 中止指示、実行ログ / 条件: 実行履歴はジョブスケジューラの責務 / 条件: ハウスキープの削除判定"
                 confidence: "medium"
           - id: "E.7.2"
             name: "不正監視"
@@ -2931,7 +2850,7 @@ domain_architecture:
                 grade: 0
                 grade_description: "WAFなし"
                 reason: "UI 画面や HTTP API を持たず CLI と定期ジョブのみのため対象外"
-                source_model: "条件: CLI とメールによる提示 / システム概要(interface_kind: cli)"
+                source_model: "条件: CLI による提示 / システム概要(interface_kind: cli)"
                 confidence: "high"
           - id: "E.10.2"
             name: "Webアプリケーション対策"

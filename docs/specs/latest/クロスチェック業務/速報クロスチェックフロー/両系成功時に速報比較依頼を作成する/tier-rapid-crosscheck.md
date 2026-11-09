@@ -8,7 +8,7 @@
 
 ### rapid-crosscheck-runner.sh blue-completed / green-completed(dispatcher 部分)
 
-- **書式**: 受信 UC と同一(`rapid-crosscheck-runner.sh blue-completed|green-completed --run-id --job-id --exit-code --artifact-uri`)
+- **書式**: 受信 UC と同一(`rapid-crosscheck-runner.sh blue-completed|green-completed --run-id --job-id --exit-code`)
 - **アクセス権**: slot runner からの内部呼び出し
 
 #### 引数・オプション
@@ -32,15 +32,15 @@
 
 ## UC ロジック
 
-- **設定ファイルの読み込み(共通規約の参照)**: 読む設定ファイル(env / CSV)の入力の守備範囲は CLI 契約 `config_input_rules` に従う(形式(UTF-8 / LF)から外れた NUL バイト・不正な文字コード・BOM・CR は契約と同文の error 行で拒否して終了コード 2、読み込みは 1 時点の内容だけで判定、補助コマンドの失敗は終了コード 6。値は本 tier に複写しない。判定する BDD は UC「slot ごとのジョブマップを定義する」に置く)。stdout / stderr / 実行ログ / メール本文に出す任意入力の制御文字は `ui-design.md`「制御文字の表記」の可視表記にする。bash の最低版は 5.0(契約 `conventions.runtime_prerequisites`)
+- **設定ファイルの読み込み(共通規約の参照)**: 読む設定ファイル(env / CSV)の入力の守備範囲は CLI 契約 `config_input_rules` に従う(形式(UTF-8 / LF)から外れた NUL バイト・不正な文字コード・BOM・CR と、env の invalid line・同じキーが 2 行以上ある設定(`error: duplicate key key=<KEY> lines=<n1,n2,...> path: ...`。どちらの行の値も使わない。報告の順は `config_input_rules.env_files`)は契約と同文の error 行で拒否して終了コード 2、読み込みは 1 時点の内容だけで判定、補助コマンドの失敗は終了コード 6。値は本 tier に複写しない。判定する BDD は UC「slot ごとのジョブマップを定義する」に置く)。stdout / stderr / 実行ログに出す任意入力の制御文字は `ui-design.md`「制御文字の表記」の可視表記にする。bash の最低版は 5.0(契約 `conventions.runtime_prerequisites`)
 - **バリデーション**: 受信 UC と同じ
 - **確認プロンプト**: なし
 - **冪等性**: 同じ通知を 2 回受けても `INSERT ... WHERE NOT EXISTS` により依頼は 1 件。completion_status は判定表から再計算するため同じ値に収束する。REQUEST_CREATED 以降は再判定しても REQUEST_CREATED を維持する
 - **エラーハンドリング**: トランザクション内の失敗は ROLLBACK し、usecase が 1 回ログ、presentation が 6 を返す。通知元(slot runner)はこの非 0 を Runner Result に反映しない
 - **クラッシュ耐性**: 受信 UC の UPDATE と本 UC の INSERT / UPDATE は同一トランザクション。COMMIT 前に落ちれば自系統列も NULL のまま(通知は届かなかったのと同じ)。COMMIT 後に落ちても stdout が出ないだけで DB は整合。rapid_runs の行ロック(FOR UPDATE)で両通知の同時到着を直列化する
 - **速報と確報のモデル分離**: final_* に触れない
-- **依頼作成と claim の原子性(LP-009)**: `INSERT INTO rapid_crosscheck_requests (run_id, job_id, status, requested_at) SELECT ?, ?, 'REQUESTED', ? WHERE NOT EXISTS (SELECT 1 FROM rapid_crosscheck_requests WHERE run_id = ?)`。主キー制約が最終防壁
-- **中止済み run の比較依頼作成除外(LP-010 / LP-023)**: 処理順はトランザクション内で「rapid_runs の自系統列を更新(先勝ち。受信 UC。rapid_runs は FOR UPDATE で行ロック済み)→ `SELECT job_id, status FROM parallel_runs WHERE run_id = ? FOR UPDATE` を同一トランザクションで読む → `SELECT status FROM slot_executions WHERE run_id = ? AND slot = ?`(slot = 通知元 role。SELECT のみ)を読む → 両系成功判定 → run が中止済み(`parallel_runs.status = 'ABORTED'` **または** 対象 slot の `slot_executions.status = 'ABORTED'`)なら INSERT しない → COMMIT」。並行稼働実行は foreground slot の結果を中継した時点で COMPLETED になるため、foreground 完了後に background slot を abort-blue / abort-green で中止した典型経路は対象 slot の slot 実行 ABORTED の側で除外する。中止済み run で両系成功のとき completion_status は BOTH_SUCCEEDED のまま(REQUEST_CREATED へ進めない)。完了事実(blue_status / green_status / 成果物 URI / 受信日時)は記録して COMMIT する。実行ログと stderr の reason は判定キーで分ける: 並行稼働実行 ABORTED なら `WARN rapid request not created run_id=... reason=parallel_run_aborted` / `warn: rapid request not created run_id=... reason=parallel_run_aborted`、対象 slot の slot 実行 ABORTED なら `WARN rapid request not created run_id=... role=... reason=slot_execution_aborted` / `warn: rapid request not created run_id=... role=... reason=slot_execution_aborted`。いずれも終了コード 0。判断主体は本コマンドで、slot runner は自 slot の中止状態(aborted.txt)を判断せず通常どおり通知する(条件「完了通知の系統独立」)。RAPID_CROSSCHECK_MODE=off では完了通知も依頼も存在しないため速報有効時だけに適用する。中止した run を background-rerun --role rapid-crosscheck でリランした場合は新 run_id(parallel_runs RUNNING、slot_executions 行なし)で依頼が作成される。判定表(縦軸 3 値 × 横軸 3 値。依頼を作成するのは「いずれでもない × 両系成功」だけ):
+- **依頼作成と claim の原子性(LP-009)**: `INSERT INTO rapid_crosscheck_requests (run_id, job_id, parameters, blue_exit_code, green_exit_code, status, requested_at) SELECT ?, ?, ?, 0, 0, 'REQUESTED', ? WHERE NOT EXISTS (SELECT 1 FROM rapid_crosscheck_requests WHERE run_id = ?)`。parameters は同一トランザクションで読んだ parallel_runs.parameters を複製し、blue_exit_code / green_exit_code は両系成功時のみ作成されるためともに 0。主キー制約が最終防壁
+- **中止済み run の比較依頼作成除外(LP-010 / LP-023)**: 処理順はトランザクション内で「rapid_runs の自系統列を更新(先勝ち。受信 UC。rapid_runs は FOR UPDATE で行ロック済み)→ `SELECT job_id, status FROM parallel_runs WHERE run_id = ? FOR UPDATE` を同一トランザクションで読む → `SELECT status FROM slot_executions WHERE run_id = ? AND slot = ?`(slot = 通知元 role。SELECT のみ)を読む → 両系成功判定 → run が中止済み(`parallel_runs.status = 'ABORTED'` **または** 対象 slot の `slot_executions.status = 'ABORTED'`)なら INSERT しない → COMMIT」。並行稼働実行は foreground slot の結果を中継した時点で COMPLETED になるため、foreground 完了後に background slot を abort-blue / abort-green で中止した典型経路は対象 slot の slot 実行 ABORTED の側で除外する。中止済み run で両系成功のとき completion_status は BOTH_SUCCEEDED のまま(REQUEST_CREATED へ進めない)。完了事実(blue_status / green_status / 受信日時)は記録して COMMIT する。実行ログと stderr の reason は判定キーで分ける: 並行稼働実行 ABORTED なら `WARN rapid request not created run_id=... reason=parallel_run_aborted` / `warn: rapid request not created run_id=... reason=parallel_run_aborted`、対象 slot の slot 実行 ABORTED なら `WARN rapid request not created run_id=... role=... reason=slot_execution_aborted` / `warn: rapid request not created run_id=... role=... reason=slot_execution_aborted`。いずれも終了コード 0。判断主体は本コマンドで、slot runner は自 slot の中止状態(aborted.txt)を判断せず通常どおり通知する(条件「完了通知の系統独立」)。RAPID_CROSSCHECK_MODE=off では完了通知も依頼も存在しないため速報有効時だけに適用する。中止した run を background-rerun --role rapid-crosscheck でリランした場合は新 run_id(parallel_runs RUNNING、slot_executions 行なし)で依頼が作成される。判定表(縦軸 3 値 × 横軸 3 値。依頼を作成するのは「いずれでもない × 両系成功」だけ):
 
   | run の中止済み判定 \ 両系成功判定 | 両系成功 | いずれか失敗 | 片系未完了 |
   |---|---|---|---|
@@ -66,7 +66,10 @@
 | カラム | 型 | 説明 | 変更種別 |
 |--------|---|------|---------|
 | run_id | string | 主キー(parallel_runs.run_id への FK。rdb-schema.yaml の foreign_keys が正。rapid_runs とは同値だが FK は張らない)。1 run に 1 件 | 追加 |
-| job_id | string | JOB_ID(比較定義の解決キー) | 追加 |
+| job_id | string | JOB_ID(worker が起動コマンドの `{job_id}` 置換に使う) | 追加 |
+| parameters | text | PARAM... の JSON 配列文字列(引数無しは `[]`)。parallel_runs.parameters を複製する。worker が `{params}` 置換に使う | 追加 |
+| blue_exit_code | integer | blue の完了通知の終了コード。両系成功時のみ作成されるため作成時は `0`。worker が `{blue_exit_code}` 置換に使う | 追加 |
+| green_exit_code | integer | green の完了通知の終了コード。作成時は `0`。worker が `{green_exit_code}` 置換に使う | 追加 |
 | status | string | REQUESTED / CLAIMED / RUNNING / SUCCEEDED / FAILED / ABORTED。作成時 REQUESTED | 追加 |
 | worker_id | string | NULL(claim 時に設定) | 追加 |
 | lease_until | datetime | NULL(claim 時に設定) | 追加 |
@@ -88,6 +91,7 @@
 |--------|---|------|---------|
 | run_id | string | 主キー | 追加(参照) |
 | job_id | string | 依頼の job_id の正本 | 追加(参照) |
+| parameters | text | 依頼の parameters の正本。依頼作成時に JSON 配列文字列のまま複製する | 追加(参照) |
 | status | string | ABORTED なら依頼を作成しない(同一トランザクションで `SELECT ... FOR UPDATE`。abort-blue / abort-green の parallel_runs 無条件行ロック(SELECT 1 ... FOR UPDATE)と直列化) | 追加(参照) |
 
 ### slot_executions(参照)
@@ -118,9 +122,10 @@
 Feature: 両系成功時に速報比較依頼を作成する - 速報クロスチェックティア
 
   Scenario: 両系成功で REQUESTED を 1 件 INSERT する
-    Given parallel_runs に run_id=20260830T113000-JOB001-3f9a1c2e, job_id=JOB001 の行と、rapid_runs に同 run_id, blue_status=SUCCEEDED, green_status=NULL の行がある
-    When `rapid-crosscheck-runner.sh green-completed --run-id 20260830T113000-JOB001-3f9a1c2e --job-id JOB001 --exit-code 0 --artifact-uri file:///var/relay-gate/facade/20260830T113000-JOB001-3f9a1c2e/green` を実行する
+    Given parallel_runs に run_id=20260830T113000-JOB001-3f9a1c2e, job_id=JOB001, parameters=`["--date","2026-08-30"]` の行と、rapid_runs に同 run_id, blue_status=SUCCEEDED, green_status=NULL の行がある
+    When `rapid-crosscheck-runner.sh green-completed --run-id 20260830T113000-JOB001-3f9a1c2e --job-id JOB001 --exit-code 0` を実行する
     Then 終了コード 0 で stdout に `completion_status=REQUEST_CREATED`、`request_status=REQUESTED` が出て、rapid_crosscheck_requests に status=REQUESTED, job_id=JOB001 の行が 1 件ある
+    And その行の parameters は `["--date","2026-08-30"]`、blue_exit_code は `0`、green_exit_code は `0` である
 
   Scenario: 片系完了では依頼を作成しない
     Given parallel_runs に run_id=20260830T113000-JOB001-3f9a1c2e, job_id=JOB001 の行と、rapid_runs に同 run_id, blue_status=NULL, green_status=NULL の行がある
@@ -139,13 +144,13 @@ Feature: 両系成功時に速報比較依頼を作成する - 速報クロス�
 
   Scenario: parallel_runs が ABORTED なら両系成功でも INSERT しない
     Given parallel_runs に run_id=20260830T113000-JOB001-3f9a1c2e, job_id=JOB001, status=ABORTED の行と、rapid_runs に同 run_id, blue_status=SUCCEEDED, green_status=NULL の行があり、rapid_crosscheck_requests に同 run_id の行は無い
-    When `rapid-crosscheck-runner.sh green-completed --run-id 20260830T113000-JOB001-3f9a1c2e --job-id JOB001 --exit-code 0 --artifact-uri file:///var/relay-gate/facade/20260830T113000-JOB001-3f9a1c2e/green` を実行する
+    When `rapid-crosscheck-runner.sh green-completed --run-id 20260830T113000-JOB001-3f9a1c2e --job-id JOB001 --exit-code 0` を実行する
     Then 終了コード 0 で stdout に `completion_status=BOTH_SUCCEEDED`、`request_status=-`、`requested_at=-` が出て、stderr に `warn: rapid request not created run_id=20260830T113000-JOB001-3f9a1c2e reason=parallel_run_aborted` が出る
     And rapid_runs.green_status は SUCCEEDED、completion_status は BOTH_SUCCEEDED で、rapid_crosscheck_requests に行は無く、実行ログに `WARN rapid request not created run_id=20260830T113000-JOB001-3f9a1c2e reason=parallel_run_aborted` が残る
 
   Scenario: parallel_runs が COMPLETED でも対象 slot の slot_executions が ABORTED なら両系成功でも INSERT しない
     Given parallel_runs に run_id=20260830T113000-JOB001-3f9a1c2e, job_id=JOB001, status=COMPLETED の行と、slot_executions に同 run_id の slot=blue status=SUCCEEDED と slot=green status=ABORTED の行と、rapid_runs に同 run_id, blue_status=SUCCEEDED, green_status=NULL の行があり、rapid_crosscheck_requests に同 run_id の行は無い
-    When `rapid-crosscheck-runner.sh green-completed --run-id 20260830T113000-JOB001-3f9a1c2e --job-id JOB001 --exit-code 0 --artifact-uri file:///var/relay-gate/facade/20260830T113000-JOB001-3f9a1c2e/green` を実行する
+    When `rapid-crosscheck-runner.sh green-completed --run-id 20260830T113000-JOB001-3f9a1c2e --job-id JOB001 --exit-code 0` を実行する
     Then 終了コード 0 で stdout に `completion_status=BOTH_SUCCEEDED`、`request_status=-`、`requested_at=-` が出て、stderr に `warn: rapid request not created run_id=20260830T113000-JOB001-3f9a1c2e role=green reason=slot_execution_aborted` が出る
     And rapid_crosscheck_requests に行は無く、rapid_runs.green_status は SUCCEEDED、completion_status は BOTH_SUCCEEDED で、実行ログに `WARN rapid request not created run_id=20260830T113000-JOB001-3f9a1c2e role=green reason=slot_execution_aborted` が残る
 

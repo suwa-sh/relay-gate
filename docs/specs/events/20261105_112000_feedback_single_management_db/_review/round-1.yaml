@@ -1,0 +1,13 @@
+round: 1
+findings:
+  - id: R-001
+    viewpoint: 4
+    severity: minor
+    target: "ハウスキープ業務/ハウスキープフロー/保持日数を過ぎた終了済みの実行と確報比較依頼を判定する/tier-ops.md"
+    claim: "参照名を定義する UC の設定キー表のうち、ハウスキープの HOUSEKEEP_DB_CONN_REF の行だけ、単一の管理 DB の前提(解決先が同じこと・導入する側が確かめ relay-gate は検査しない)への参照が足されていない。他の 5 UC のキー表(RAPID / FINAL 2 か所 / HANG)には足されている。HOUSEKEEP_DB_CONN_REF は別ロール(housekeep_del)で参照名の文字列が違うことが前提のため、4 つの参照名の中で別の DB を指すと読み違えやすい。"
+    evidence: "同 tier-ops.md 45 行目のキー表は `| HOUSEKEEP_DB_CONN_REF | 管理 DB を使う設置で Yes(下の表) | なし | 必須なのに欠落・空は error: option required ... (2) |` のまま。diff -rq で差分ファイルにこの UC は含まれない。spec-decision-032 decision 2 も UC の tier md は 5 UC だけを挙げる。一方、CLI 契約 config_files の housekeep.env HOUSEKEEP_DB_CONN_REF(1595 行目)には『解決先はそれらと同じ 1 つの管理 DB(conventions.credentials)』が足されている。インフラ設計 README の前提も対象の参照名に housekeep.env の HOUSEKEEP_DB_CONN_REF を挙げる。"
+    suggested_fix: "同キー表の HOUSEKEEP_DB_CONN_REF 行に、他 UC と同じ文言『ハウスキープ専用 DB ロール housekeep_del の参照名で業務用ロールとは別のロールを指すが、解決先は他の管理 DB 接続参照名と同じ 1 つの管理 DB(参照名の文字列は違ってよい。解決先が同じことは導入する側が確かめ、relay-gate は検査しない。CLI 契約 conventions.credentials)』を足す。spec-decision-032 の decision 2 の UC 列挙を 6 UC に直す。新しい検査・error 文言・BDD は足さない。"
+resolved:
+  - id: R-001
+    resolution: "fixed: ハウスキープ判定 UC の tier-ops.md のキー表の直下に、HOUSEKEEP_DB_CONN_REF は別ロールを指すが解決先は同じ 1 つの管理 DB であること(導入する側が確かめ、relay-gate は検査しない。CLI 契約 conventions.credentials)を追加。キー表の列は起動時の検査のため、表の外に置いた。spec-decision-032 の UC 列挙を 6 UC に直した。新しい検査・error 文言・BDD は足していない"
+    by: "orchestrator"

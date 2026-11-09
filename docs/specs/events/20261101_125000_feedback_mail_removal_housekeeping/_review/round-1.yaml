@@ -1,0 +1,173 @@
+round: 1
+findings:
+  - id: R-001
+    viewpoint: 5
+    severity: major
+    target: "実行監視業務/background 実行監視フロー/ハング疑い・実行エラー・比較異常を通知する/spec.md"
+    claim: "E2E の共通の前提に置いた run 20260830T114000-JOB002-5e6f7a8b の blue(started-at 11:40:05Z、limit 60)が、終了ファイルを指定しないシナリオでハング疑いとして判定され、alert 行を全件で照合する Then や「終了コード 0」の Then と矛盾する。テストが判定不能(または必ず失敗)になる"
+    evidence: "spec.md:195 の共通の前提で JOB002 の blue を定義し、exitcode.txt の有無は書いていない。spec.md:217-226「実行エラーや比較異常を新たに見つけたら…」は RELAY_GATE_NOW=12:45(blue は 64 分 > 60)で「alert 行は次の 2 行」と全件照合し、blue の warning 行が 3 行目になる。spec.md:247-252「管理 DB を使う設定では通知済みの異常を 2 回目に知らせない」と spec.md:254-259「off では通知済みの異常を 2 回目に知らせない」は 12:50(blue は 69 分)で「alert 行は出ず、終了コード 0」としており、blue のハング疑い(監視記録・印なし)が新たに知らせる異常になる"
+    suggested_fix: "共通の前提の JOB002 blue は「シナリオに記載が無ければ blue/exitcode.txt の中身が 0」と明記するか、JOB002 を使うシナリオ(ハング疑いだけ / 両方を同じ回に見つけた)の Given にだけ置く。全件照合・終了コード 0 の Then を持つシナリオで、対象以外の run が異常にならないことを Given で確定させる"
+  - id: R-002
+    viewpoint: 4
+    severity: major
+    target: "_cross-cutting/api/cli-command-contract.yaml"
+    claim: "HOUSEKEEP_DB_CONN_REF を RAPID_CROSSCHECK_MODE=off では任意にしたため、off で確報クロスチェックを使う構成では確報比較依頼が一切削除されず、REQ-014(終端した確報比較依頼を自動で削除する)を満たさない。しかも何も出力されないため運用者が気づけない"
+    evidence: "契約 internal_datastores.used_when(1257 行)は「確報系は FINAL_DB_CONN_REF で常に使う」。config_files housekeep.env の HOUSEKEEP_DB_CONN_REF(1542-1543 行)は off 以外でだけ必須で、housekeep_rules.final_request(208 行)は「管理 DB に接続しないときは扱わない」。decisions/spec-decision-021.yaml の context も「off でも確報比較依頼の行が増える」と認めている。USDM REQ-014 の requirement と SPEC-014-04 は確報比較依頼の削除を運用モードで限定していない。方針資料「RelayGateのしくみ.md」301 行も確報比較依頼を依頼ごとに削除するとしている"
+    suggested_fix: "HOUSEKEEP_DB_CONN_REF の要否を「RAPID_CROSSCHECK_MODE が off 以外、または final-crosscheck.env がある(確報を使う構成)」に改めるか、少なくとも off で未設定のときは stderr に warn(例: `warn: final crosscheck requests are not handled (HOUSEKEEP_DB_CONN_REF not set)`)を出すと契約・tier-ops・BDD に定める。どちらにするかは spec-decision-021 の判断 2 を更新して記録する"
+  - id: R-003
+    viewpoint: 4
+    severity: major
+    target: "_cross-cutting/api/cli-command-contract.yaml"
+    claim: "housekeep.sh の stderr・判定規則が、契約(正本)と tier-ops.md で一致しない。tier-ops.md にある行と判定規則が契約に無く、実装のドリフトテストで正本が決まらない"
+    evidence: "tier-ops.md(判定 UC)55-82 行と tier-ops.md(削除 UC)55 行には `error: config file is not readable path: ...`、`error: artifact root not found path: ...`、`error: unexpected argument value=...`、`warn: run kept completed_at missing run_id=... table=...`、`error: artifact root is not readable path: $RELAY_GATE_ARTIFACT_ROOT/facade`、`error: pending dir create failed path: ...` がある。契約 commands housekeep.sh の stderr(786-804 行)にはどれも無い。また判定 UC tier-ops.md:147 の「終端状態の行の completed_at が NULL なら判定できない(undeterminable)」は契約 shared_rules.housekeep_rules.finished_db / keep_rule(205・207 行)に無い。契約 exit_codes の 2 の条件(811 行)にある「feature-flag.env が読めない、RELAY_GATE_ARTIFACT_ROOT が無い」に対応する stderr の文言も契約に無い"
+    suggested_fix: "契約 commands housekeep.sh の stderr と exit_codes に tier-ops.md の 6 行を加え、housekeep_rules.finished_db に completed_at が NULL の扱い(判定できないとして単位を残し warn)を書く。tier-ops.md は契約を参照する形に揃える"
+  - id: R-004
+    viewpoint: 4
+    severity: major
+    target: "_cross-cutting/datastore/datastore-schema.md"
+    claim: "datastore-schema.md が今回の変更に追従しておらず、rdb-schema.yaml と矛盾する。メール送信を前提にした列説明が残り、ハウスキープ専用 DB ロールとハウスキープ UC の利用が載っていない"
+    evidence: "datastore-schema.md:320 hang_suspected_at は「送信成功日時」、321 alerted_at は「最新の通知メールの送信成功日時…送信失敗では更新せず次回再送」のまま。rdb-schema.yaml:501-508 は「alert 行を出した日時」に改めている。datastore-schema.md に housekeep / ハウスキープの語は 0 件で、rdb-schema.yaml の db_roles(544-557 行)、各テーブル used_by の「保持日数を過ぎた…判定する」SELECT /「成果物と管理 DB の履歴を削除する」DELETE、_review_notes 20-22 行(RESTRICT のまま削除順序で満たす・ロール)が反映されていない"
+    suggested_fix: "datastore-schema.md を rdb-schema.yaml から再生成するか、hang_suspected_at / alerted_at の説明、各テーブルの利用 UC 表、DB ロール節、外部キーの削除方針を rdb-schema.yaml と同じ内容に更新する"
+  - id: R-005
+    viewpoint: 1
+    severity: major
+    target: "README.md"
+    claim: "イベントの README.md と spec-event.md が前イベントのまま再生成されておらず、改名前の UC 名(メール)とハウスキープ UC の欠落が残る。ナビゲーションから新 UC に辿れず、旧 UC へのリンクは存在しないディレクトリを指す"
+    evidence: "README.md:3 の最新イベントが 20261027_055000_feedback_impl_feedback_dcd8234d。README.md:19 が「background 異常の通知メールを受け取る」へリンクし、README.md:59 は asyncapi を「通知メールの AsyncAPI」、62 は ui-design を「通知メール」を含む規約と説明。spec-event.md:30・77 も旧 UC 名。README.md / spec-event.md ともに「ハウスキープ」は 0 件だが、spec-event.yaml は 34 UC(957・999 行にハウスキープ業務の 2 UC)"
+    suggested_fix: "spec-event.yaml を正として README.md と spec-event.md を生成スクリプトで再生成し、旧 UC 名・通知メールの記述が残らないことを rg で確認する"
+  - id: R-006
+    viewpoint: 4
+    severity: minor
+    target: "_cross-cutting/api/cli-command-contract.yaml"
+    claim: "hang-detector.sh の契約で、管理 DB に接続できない回の再通知の扱いと、終了コード 2 の一部の文言が定義されておらず、tier-ops.md だけに書かれている(正本の契約から結果が決まらない)"
+    evidence: "契約 shared_rules.hang_alert.renotification(190 行)は C を monitor_records から読むとだけ書き、接続失敗時の扱いが無い。判定 UC tier-ops.md:113 と通知 UC tier-ops.md:68 は「接続できない回は全対象を MONITORING 扱いにして alert 行を出し、UPSERT は試みない」と定める。契約 hang-detector.sh の stderr(677-693 行)に `error: unexpected argument value=...`(判定 UC tier-ops.md:45)が無く、exit_codes 2 の条件(700 行)の「feature-flag.env が読めない」「RELAY_GATE_ARTIFACT_ROOT が無い」に対応する文言が契約にも tier-ops にも無い"
+    suggested_fix: "renotification に「off 以外で管理 DB に接続できない回は C を MONITORING とみなして alert 行を出し、監視記録の保存は試みない(終了コード 6)」を加える。stderr に unexpected argument と、2 の条件それぞれの文言(feature flag 設定の不在・読み取り不可、成果物ルートの不在)を加える"
+  - id: R-007
+    viewpoint: 4
+    severity: minor
+    target: "_cross-cutting/api/cli-command-contract.yaml"
+    claim: "RAPID_CROSSCHECK_MODE=off の通知済みの印は、ハング疑いを知らせたあとに対象が正常終了・中止しても HANG_SUSPECTED_NOTIFIED のまま終端しない。窓外でも走査する規則と合わせ、終了済みの run がハウスキープで消えるまで(既定 90 日)毎回走査対象に残り、off と off 以外で監視の終わり方が揃わない"
+    evidence: "契約 hang_alert.notified_mark.content(195 行)は HANG_SUSPECTED_NOTIFIED / EXEC_ERROR_NOTIFIED だけで COMPLETED を書かない。write_rule(196 行)は HANG→EXEC の書き換えだけを定める。scan_window(198 行)と判定 UC tier-ops.md:84 は印が HANG_SUSPECTED_NOTIFIED の run を窓外でも走査する。off 以外では HANG_SUSPECTED_NOTIFIED → COMPLETED で監視記録を終端し窓外の走査から外す(判定 UC spec.md:181・tier-ops.md:83)。deletion(199 行)は hang-detector が印を削除しないとしている"
+    suggested_fix: "印の内容に COMPLETED を加え、HANG_SUSPECTED_NOTIFIED → COMPLETED(通知後正常終了・中止済み)のときも同じ手順で書き換えると定めるか、窓外の走査を「印が HANG_SUSPECTED_NOTIFIED かつ終了ファイルが無い run」に限定する。どちらかを契約・判定 UC・通知 UC に揃え、BDD を 1 本加える"
+  - id: R-008
+    viewpoint: 4
+    severity: minor
+    target: "spec-event.yaml"
+    claim: "UC「ハング疑い・実行エラー・比較異常を通知する」の async_event_count が 1 のままで、メールチャネル削除後の _api-summary.yaml と asyncapi.yaml に合わない"
+    evidence: "spec-event.yaml:377 が async_event_count: 1。同 UC の _api-summary.yaml は async_events: []、asyncapi.yaml の operations(86-196 行)に同 UC の operation は無い。asyncapi.yaml:10 は alert 行を非同期メッセージとして扱わないと明記"
+    suggested_fix: "spec-event.yaml の同 UC の async_event_count を 0 にし、cross_cutting.asyncapi / stats の合計(3)と各 UC の値の和が一致することを確認する"
+  - id: R-009
+    viewpoint: 5
+    severity: minor
+    target: "実行監視業務/background 実行監視フロー/ハング疑い・実行エラー・比較異常を通知する/spec.md"
+    claim: "SPEC-008-06 の受け入れ基準 2(ハング検知定期ジョブ設定の所有者は基盤適用設計者)を判定する Then が無い。所有者は Given に書かれているだけ"
+    evidence: "spec.md:293-297 のシナリオは Given に「基盤適用設計者が所有する」と書き、Then はキーの集合と認証情報だけを確かめる。usdm-acceptance-matrix.md:76 は SPEC-008-06 の 3 基準すべてをこのシナリオ 1 本で covered としている。ハウスキープ側は spec.md(判定 UC):173-176 で所有者を Then で確かめている"
+    suggested_fix: "Then に「CLI 契約 config_files の hang-detector.env の owner が基盤適用設計者(設定所有区分: ハング検知定期ジョブ設定)である」を加えるか、ハウスキープ側と同じ形の所有者のシナリオを 1 本加える"
+  - id: R-010
+    viewpoint: 5
+    severity: minor
+    target: "実行監視業務/background 実行監視フロー/ハング検知ジョブの異常終了を確認する/spec.md"
+    claim: "シナリオ「ハング疑いの警告終了を受け取って静観する」が RAPID_CROSSCHECK_MODE を指定しておらず、off の場合は最後の Then(実行ログに elapsed_minutes_at_alert=74 が残る)が成り立たない"
+    evidence: "spec.md:188-194。off では監視記録を保存せず、通知済みの印の内容は状態コード 1 行だけ(契約 195 行)なので、正常終了した回の実行ログに警告時の経過時間 74 を出す出所が無い。監視記録を保存する tier-ops.md:28・53 も off の記録先は実行ログ行だけとしている"
+    suggested_fix: "Given に RAPID_CROSSCHECK_MODE=background を加える。off でも警告時の経過時間を残す必要があるなら、印か実行ログにその値を持たせる規則を別途定める"
+  - id: R-011
+    viewpoint: 2
+    severity: minor
+    target: "_cross-cutting/uc-dependencies.md"
+    claim: "ハウスキープ UC の依存表が、存在しないシナリオ名を根拠に挙げ、UC-33 が monitor_records を利用するとしている(rdb-schema の used_by と矛盾)"
+    evidence: "uc-dependencies.md:267-272 の根拠列「リランの親子をまとめて全構成要素の終端で判定する」「速報比較依頼が終わっていない実行は残す」「確報比較依頼は依頼ごとに判定する」「通知済みの印も実行の単位とともに消える」「保持日数が正の整数でなければ検証で拒否する」「判定で削除対象になった単位だけを削除する」「成果物が消えた期限切れの実行のリランは execution-spec not found で終わる」は、どの spec.md にも無い。269 行(70 番)は UC-33 の依存を rdb-schema.yaml の monitor_records.used_by としているが、monitor_records.used_by(rdb-schema.yaml:532-542)にあるのは UC-34 の DELETE だけで、UC-33 の spec.md:119 も監視記録を判定に使わないとしている"
+    suggested_fix: "根拠列を実在の Scenario 名(SPEC 接尾辞込み)に置き換え、70 番の依存元を UC-34(削除。monitor_records と通知済みの印)に改める"
+  - id: R-012
+    viewpoint: 4
+    severity: minor
+    target: "実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/tier-ops.md"
+    claim: "判定表にメール通知の頃の記述(通知の exit_code)が残っている。alert 行は exit_code を持たない"
+    evidence: "tier-ops.md:100「EXEC_ERROR(通知の exit_code は `-`。…)」。alert 行の書式(契約 184 行、tier-ops.md:44)に exit_code のキーは無い"
+    suggested_fix: "「通知の exit_code は `-`」を削り、整数でない exitcode.txt でも alert 行は通常の書式で出すことだけを残す"
+  - id: R-013
+    viewpoint: 4
+    severity: minor
+    target: "_cross-cutting/api/cli-command-contract.yaml"
+    claim: "env 形式の取り出し規則で、キーの前後の空白を除いた結果キーが空になる行(例 ` =abc`)の扱いが決まらない。今回の順序つき規則でキーの空白除去を加えたため新たに生じた隙間"
+    evidence: "config_input_rules.env_files(1311 行)は `=` を含まない行を invalid line とし、(2) でキーの前後の空白を除くが、除いた結果が空のキーを invalid line・unknown key のどちらにするかを書いていない"
+    suggested_fix: "キーが空になる行は `error: invalid line line=N path: ...`(2)とする、などの扱いを env_files に 1 文加え、例に 1 件添える"
+  - id: R-014
+    viewpoint: 5
+    severity: minor
+    target: "ハウスキープ業務/ハウスキープフロー/保持日数を過ぎた終了済みの実行と確報比較依頼を判定する/spec.md"
+    claim: "シナリオ「off で起動対象の slot がすべて終了しても保持日数以内の実行は残る」が execution-spec.json の内容を指定しておらず、「保持日数以内だから残る」のか「判定できないから残る」のかを Then で区別できない"
+    evidence: "spec.md:235-238 の Given は blue/exitcode.txt と green/aborted.txt の更新時刻だけを書き、execution-spec.json の slots を書いていない(同 UC の 227-233 行の対になるシナリオは slots に blue と green があると書く)。Then は「残る」だけで、reason や warn の有無を確かめない"
+    suggested_fix: "Given に「execution-spec.json の slots に blue と green がある」を加え、`--verbose` で `info: unit kept root_run_id=20260830T110000-JOB001-3f9a1c2e reason=within_retention` が出て warn 行が出ないことを Then に加える"
+resolved:
+  - id: R-001
+    resolution: fixed
+    by: fixer
+    note: "通知 UC spec.md の共通の前提に、記載が無ければ JOB001 green / JOB002 blue の exitcode.txt は 0 と明記(全件照合・終了コード 0 の Then が対象以外の run で崩れない)"
+  - id: R-002
+    resolution: fixed
+    by: fixer
+    note: "UC 側。ハウスキープ判定 UC の tier-ops.md(設定の警告表・処理の順序・確報比較依頼の判定・tier BDD 1 本)、spec.md(シーケンス・分岐表・BDD 1 本)、_api-summary.yaml に off で接続参照名なしの warn を反映。warn と矛盾する否定の Then 2 か所を「warn: run kept で始まる行」に絞った"
+  - id: R-003
+    resolution: fixed
+    by: fixer
+    note: "UC 側。ハウスキープ判定 UC tier-ops.md に housekeep.env 読み取り不可の行を追加し、接続参照名の条件を「無い・空」に揃えた。completed_at NULL の扱いと削除 UC の文言は契約と一致を確認"
+  - id: R-006
+    resolution: fixed
+    by: fixer
+    note: "UC 側。判定 UC tier-ops.md の終了コード 2 の stderr に feature-flag.env 不在・読み取り不可と artifact root not found を追加し、条件表を契約に揃えた。_api-summary.yaml も追従。接続失敗回の扱いは通知 UC・判定 UC とも契約と一致を確認"
+  - id: R-007
+    resolution: fixed
+    by: fixer
+    note: "通知 UC(印の内容・書く契機・保存失敗・窓外の走査・シーケンス・計算ルール)、判定 UC(走査手順・データモデル・状態遷移)、監視記録 UC、異常終了確認 UC に COMPLETED への書き換えを反映。通知 UC spec.md に off の BDD を 1 本追加(SPEC-008-03)"
+  - id: R-009
+    resolution: fixed
+    by: fixer
+    note: "SPEC-008-06 のシナリオの Then に hang-detector.env の owner が基盤適用設計者であることの確認を追加"
+  - id: R-010
+    resolution: fixed
+    by: fixer
+    note: "異常終了確認 UC の静観シナリオの Given に RAPID_CROSSCHECK_MODE=background を追加"
+  - id: R-012
+    resolution: fixed
+    by: fixer
+    note: "判定 UC tier-ops.md の判定表から通知の exit_code の記述を削除"
+  - id: R-014
+    resolution: fixed
+    by: fixer
+    note: "シナリオの Given に slots の blue と green を追加し、--verbose で reason=within_retention が出て warn: run kept の行が出ないことを Then に追加"
+  - id: R-002
+    resolution: fixed
+    by: orchestrator
+    note: "契約側。off で HOUSEKEEP_DB_CONN_REF が無い・空なら起動のたびに warn を 1 行出す規則を housekeep.sh の stderr と config_files housekeep.env に追加し、spec-decision-021 の判断 2 を更新"
+  - id: R-003
+    resolution: fixed
+    by: orchestrator
+    note: "契約側。housekeep.sh の stderr に読み取り不可・成果物ルート不在・余分な引数・facade 読み取り失敗・置き場作成失敗・completed_at NULL の warn を追加し、housekeep_rules.finished_db に completed_at NULL の扱いを追加"
+  - id: R-004
+    resolution: fixed
+    by: orchestrator
+    note: "datastore-schema.md を generateDatastoreMd.js で rdb-schema.yaml から再生成"
+  - id: R-005
+    resolution: fixed
+    by: orchestrator
+    note: "README.md と spec-event.md を spec-event.yaml とイベントの UC ディレクトリから再生成"
+  - id: R-006
+    resolution: fixed
+    by: orchestrator
+    note: "契約側。hang-detector.sh の stderr に余分な引数・feature-flag.env 不在/読み取り不可・成果物ルート不在を追加し、hang_alert.renotification に管理 DB 接続失敗時の扱いを追加"
+  - id: R-007
+    resolution: fixed
+    by: orchestrator
+    note: "契約側。notified_mark の内容に COMPLETED を加え、書き換え規則と窓外の走査対象を更新。spec-decision-020 を更新"
+  - id: R-008
+    resolution: fixed
+    by: orchestrator
+    note: "spec-event.yaml の通知 UC の async_event_count を 0 に修正"
+  - id: R-011
+    resolution: fixed
+    by: orchestrator
+    note: "uc-dependencies.md の依存表 68〜73 の根拠列を実在の Scenario 名へ置き換え、70 番の依存元を UC-34 に改めた(グラフの辺も UC-34 へ)"
+  - id: R-013
+    resolution: deferred
+    by: orchestrator
+    note: "キーが空になる行の扱いは、今の実装の 2 か所で異なる(feature flag 設定は読み飛ばし、速報クロスチェック設定は形式違反)。今回の変更要求は今の実装と同じ規則を書くことに限られ、どちらかへ揃えると実装の変更が要るため範囲外。確認推奨項目として返す"

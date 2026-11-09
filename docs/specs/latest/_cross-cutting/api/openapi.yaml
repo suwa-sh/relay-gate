@@ -5,7 +5,7 @@ info:
   description: |-
     HTTP API は無い(arch CTP-001、システム概要 interface_kind: cli)。
     本ファイルはバリデータ互換のスタブであり、CLI コマンド契約の正本は cli-command-contract.yaml、
-    非同期イベント(RDB ジョブキュー・完了通知・通知メール)の正本は asyncapi.yaml である。
+    非同期イベント(RDB ジョブキュー・完了通知)の正本は asyncapi.yaml である。ハング検知の通知は CLI の出力(cli-command-contract.yaml)で行う。
   contact:
     name: "relay-gate"
     url: "https://relay-gate.example.com"

@@ -103,7 +103,7 @@ sequenceDiagram
 |--------|----------|----------|---------|-------------|
 | ジョブスケジューラ応答の決定 | 標準出力 = foreground の stdout.log、標準エラー = stderr.log、終了コード = exitcode.txt。バイト単位で同一。background と速報の結果は反映しない。中継完了で並行稼働実行を COMPLETED にする | tier-facade | presentation `relay_*` / usecase `relay_foreground_result` | foreground の 3 ファイルをそのまま中継する(SPEC-002-02) |
 | 速報結果の位置付け | 速報比較の状態・exitcode を応答に混ぜない。速報が失敗しても応答は変わらない | tier-facade | usecase `relay_foreground_result` | 速報クロスチェックが失敗しても応答は変わらない(SPEC-005-05) |
-| CLI とメールによる提示 | 応答は stdout / stderr / 終了コードだけ。UI・追加の連携データは無い | tier-facade | presentation | foreground の 3 ファイルをそのまま中継する |
+| CLI による提示 | 応答は stdout / stderr / 終了コードだけ。UI・追加の連携データは無い | tier-facade | presentation | foreground の 3 ファイルをそのまま中継する |
 | 速報クロスチェック有効判定 | RAPID_CROSSCHECK_MODE が foreground / background のときだけ parallel_runs を更新。off では管理 DB に触れない | tier-facade | usecase `relay_foreground_result` | 中継完了で parallel_run を COMPLETED にする(SPEC-011-01) |
 | Runner Result 完備条件 | exitcode.txt が無ければ中継せず終了コード 6(relay-gate 自身のエラー) | tier-facade | repository `runner_result_repo` | foreground の 3 ファイルが揃わない場合は終了コード 6 |
 
@@ -131,7 +131,7 @@ sequenceDiagram
 | 情報 | ジョブスケジューラ応答 | 中継先(属性: run_id / 標準出力 / 標準エラー / 終了コード。応答は時刻を持たず、実行日時の履歴はジョブスケジューラの責務) |
 | 情報 | 並行稼働実行(parallel_run) | COMPLETED 更新 |
 | 情報 | slot 実行 | foreground slot の特定 |
-| 条件 | ジョブスケジューラ応答の決定 / 速報結果の位置付け / CLI とメールによる提示 / 速報クロスチェック有効判定 / Runner Result 完備条件 | 分岐条件一覧を参照 |
+| 条件 | ジョブスケジューラ応答の決定 / 速報結果の位置付け / CLI による提示 / 速報クロスチェック有効判定 / Runner Result 完備条件 | 分岐条件一覧を参照 |
 | バリエーション | slot 実行モード / Runner Result 成果物種別 / 速報クロスチェックモード(foreground / background / off)/ ジョブスケジューラ起動ジョブ種別 | バリエーション一覧を参照 |
 | 画面 | facade 応答出力(→ CLI 出力) | stdout / stderr / 終了コード |
 | イベント | foreground 結果の無加工中継 | 応答 |

@@ -12,3 +12,8 @@
 | 2026-09-07 12:00:00 | [20260907_120000_feedback_abort_consistency](../../nfr/events/20260907_120000_feedback_abort_consistency) |
 | 2026-09-08 01:30:00 | [20260908_013000_feedback_slot_status_wording](../../nfr/events/20260908_013000_feedback_slot_status_wording) |
 | 2026-09-21 09:00:00 | [20260921_090000_feedback_impl_feedback_eff24f55](../../nfr/events/20260921_090000_feedback_impl_feedback_eff24f55) |
+| 2026-10-10 20:10:00 | [20261010_201000_feedback_impl_feedback_dcd8234d](../../nfr/events/20261010_201000_feedback_impl_feedback_dcd8234d) |
+| 2026-11-01 10:20:00 | [20261101_102000_feedback_impl_feedback_dcd8234d](../../nfr/events/20261101_102000_feedback_impl_feedback_dcd8234d) |
+| 2026-11-01 12:20:00 | [20261101_122000_feedback_mail_removal_housekeeping](../../nfr/events/20261101_122000_feedback_mail_removal_housekeeping) |
+| 2026-11-03 08:20:00 | [20261103_082000_feedback_housekeeping_followups](../../nfr/events/20261103_082000_feedback_housekeeping_followups) |
+| 2026-11-03 13:20:00 | [20261103_132000_feedback_housekeeping_db_required](../../nfr/events/20261103_132000_feedback_housekeeping_db_required) |

@@ -1,0 +1,160 @@
+{
+  "schema_version": "distillery.feedback-result/v1",
+  "run_id": "feedback-20261103_housekeeping_followups-20261103_075954-73969",
+  "attempt": 1,
+  "feedback_request_id": "20261103_housekeeping_followups",
+  "input_sha256": "7a81f28ce6fef4c2f70e2839d657a3f8e8480671bd846b460edab3d22b3ba775",
+  "status": "completed",
+  "stages": [
+    {
+      "stage_id": "requirements",
+      "state": "succeeded",
+      "event_ids": [
+        "20261103_081000_feedback_stage_requirements"
+      ],
+      "direct_work_unit_ids": [
+        "CR-f3b8a1d0-001#1"
+      ],
+      "causal_work_unit_ids": [
+        "CR-f3b8a1d0-001#1"
+      ]
+    },
+    {
+      "stage_id": "quality_attributes",
+      "state": "succeeded",
+      "event_ids": [
+        "20261103_082000_feedback_stage_quality_attributes"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-f3b8a1d0-001#1"
+      ]
+    },
+    {
+      "stage_id": "architecture",
+      "state": "succeeded",
+      "event_ids": [
+        "20261103_083000_feedback_stage_architecture"
+      ],
+      "direct_work_unit_ids": [
+        "CR-f3b8a1d0-003#1"
+      ],
+      "causal_work_unit_ids": [
+        "CR-f3b8a1d0-001#1",
+        "CR-f3b8a1d0-003#1"
+      ]
+    },
+    {
+      "stage_id": "infrastructure",
+      "state": "succeeded",
+      "event_ids": [
+        "20261103_084000_feedback_stage_infrastructure"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-f3b8a1d0-001#1",
+        "CR-f3b8a1d0-003#1"
+      ]
+    },
+    {
+      "stage_id": "spec",
+      "state": "succeeded",
+      "event_ids": [
+        "20261103_085000_feedback_stage_spec"
+      ],
+      "direct_work_unit_ids": [
+        "CR-f3b8a1d0-002#1"
+      ],
+      "causal_work_unit_ids": [
+        "CR-f3b8a1d0-001#1",
+        "CR-f3b8a1d0-002#1",
+        "CR-f3b8a1d0-003#1"
+      ]
+    }
+  ],
+  "work_units": [
+    {
+      "work_unit_id": "CR-f3b8a1d0-001#1",
+      "disposition": "applied",
+      "reason": "At least one required closure stage changed its domain artifacts.",
+      "artifact_refs": [
+        "usdm/events/20261103_081000_feedback_housekeeping_followups/requirements.yaml",
+        "rdra/events/20261103_081000_feedback_housekeeping_followups/event.json",
+        "nfr/events/20261103_082000_feedback_housekeeping_followups/nfr-grade-diff.yaml",
+        "nfr/events/20261103_082000_feedback_housekeeping_followups/_changes.md",
+        "arch/events/20261103_083000_feedback_housekeeping_followups/arch-design-diff.yaml",
+        "arch/events/20261103_083000_feedback_housekeeping_followups/decisions/arch-decision-025.yaml",
+        "infra/events/20261103_084000_feedback_housekeeping_followups/infra-event-diff.yaml",
+        "infra/events/20261103_084000_feedback_housekeeping_followups/docs/mcl/product/input/product-input.yaml",
+        "infra/events/20261103_084000_feedback_housekeeping_followups/docs/mcl/product/output/product-workload-model.yaml",
+        "infra/events/20261103_084000_feedback_housekeeping_followups/docs/mcl/product/output/product-mapping-onprem.yaml",
+        "infra/events/20261103_084000_feedback_housekeeping_followups/docs/mcl/product/output/product-impl-onprem.yaml",
+        "infra/events/20261103_084000_feedback_housekeeping_followups/docs/mcl/product/output/product-observability.yaml",
+        "infra/events/20261103_084000_feedback_housekeeping_followups/docs/mcl/product/output/product-cost-hints.yaml",
+        "infra/events/20261103_084000_feedback_housekeeping_followups/docs/cloud-context/conformance/product/product-conformance-onprem.yaml",
+        "infra/events/20261103_084000_feedback_housekeeping_followups/infra/product/onprem/ansible/roles/relay-gate-config/tasks/main.yml",
+        "specs/events/20261103_085000_feedback_housekeeping_followups/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20261103_085000_feedback_housekeeping_followups/ハウスキープ業務/ハウスキープフロー/保持日数を過ぎた終了済みの実行と確報比較依頼を判定する/spec.md",
+        "specs/events/20261103_085000_feedback_housekeeping_followups/ハウスキープ業務/ハウスキープフロー/保持日数を過ぎた終了済みの実行と確報比較依頼を判定する/tier-ops.md",
+        "specs/events/20261103_085000_feedback_housekeeping_followups/ハウスキープ業務/ハウスキープフロー/成果物と管理 DB の履歴を削除する/tier-ops.md",
+        "specs/events/20261103_085000_feedback_housekeeping_followups/_cross-cutting/usdm-acceptance-matrix.md",
+        "specs/events/20261103_085000_feedback_housekeeping_followups/_cross-cutting/traceability-matrix.md",
+        "specs/events/20261103_085000_feedback_housekeeping_followups/decisions/spec-decision-024.yaml",
+        "specs/events/20261103_085000_feedback_housekeeping_followups/spec-event.yaml"
+      ]
+    },
+    {
+      "work_unit_id": "CR-f3b8a1d0-002#1",
+      "disposition": "applied",
+      "reason": "At least one required closure stage changed its domain artifacts.",
+      "artifact_refs": [
+        "specs/events/20261103_085000_feedback_housekeeping_followups/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20261103_085000_feedback_housekeeping_followups/_cross-cutting/ux-ui/ui-design.md",
+        "specs/events/20261103_085000_feedback_housekeeping_followups/適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md",
+        "specs/events/20261103_085000_feedback_housekeeping_followups/ハウスキープ業務/ハウスキープフロー/保持日数を過ぎた終了済みの実行と確報比較依頼を判定する/tier-facade.md",
+        "specs/events/20261103_085000_feedback_housekeeping_followups/decisions/spec-decision-023.yaml",
+        "specs/events/20261103_085000_feedback_housekeeping_followups/spec-event.yaml"
+      ]
+    },
+    {
+      "work_unit_id": "CR-f3b8a1d0-003#1",
+      "disposition": "applied",
+      "reason": "At least one required closure stage changed its domain artifacts.",
+      "artifact_refs": [
+        "arch/events/20261103_083000_feedback_housekeeping_followups/arch-design-diff.yaml",
+        "arch/events/20261103_083000_feedback_housekeeping_followups/decisions/arch-decision-024.yaml",
+        "specs/events/20261103_085000_feedback_housekeeping_followups/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20261103_085000_feedback_housekeeping_followups/_cross-cutting/ux-ui/ui-design.md",
+        "specs/events/20261103_085000_feedback_housekeeping_followups/decisions/spec-decision-025.yaml",
+        "specs/events/20261103_085000_feedback_housekeeping_followups/spec-event.yaml"
+      ]
+    }
+  ],
+  "requests": [
+    {
+      "request_id": "CR-f3b8a1d0-001",
+      "work_unit_ids": [
+        "CR-f3b8a1d0-001#1"
+      ],
+      "disposition": "applied",
+      "reason": "At least one work unit was applied and all work units completed successfully."
+    },
+    {
+      "request_id": "CR-f3b8a1d0-002",
+      "work_unit_ids": [
+        "CR-f3b8a1d0-002#1"
+      ],
+      "disposition": "applied",
+      "reason": "At least one work unit was applied and all work units completed successfully."
+    },
+    {
+      "request_id": "CR-f3b8a1d0-003",
+      "work_unit_ids": [
+        "CR-f3b8a1d0-003#1"
+      ],
+      "disposition": "applied",
+      "reason": "At least one work unit was applied and all work units completed successfully."
+    }
+  ],
+  "terminal_event_id": "20261103_085900_feedback_run_completed"
+}

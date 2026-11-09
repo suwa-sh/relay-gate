@@ -1,0 +1,27 @@
+Spec 差分更新(design 無しモード): 2026-11-04 の構築手順の配置時検査の指摘への追従(dist-pipeline feedback mode Step6)。上流 latest(usdm / rdra / nfr / arch)は変更なし。infra latest は同じ run の infra イベント(速報・確報の設定ファイルの配置時検査をファイルの存在確認だけにし、確報の設定は構築の変数で使う設置だけ実行ホストと DB セグメントの両方に置く)で更新済み。
+
+CR-d8a2f4b6-001(infra 直接所有。spec は保守的 closure): 構築手順が中身の検査を CLI 契約に任せたことへの追従。
+
+横断で確かめた結果(矛盾なし):
+- 確報を使わない設置 = final-crosscheck.env が無い・FINAL_DB_CONN_REF が無い・空、という扱いは abort-final-crosscheck.sh と shared_rules.housekeep_rules.db_requirement で既に一致している。構築手順が使わない設置で両方の置き場から消すことと矛盾しない。
+- runner と worker はそれぞれ自分の final-crosscheck.env を読む(worker の notes)。rdb-schema.yaml の final_crosscheck_requests に比較コマンドの列は無く、依頼レコードでコマンドを渡さない。
+- 認証情報らしい値を警告だけで受け付ける方針(2026-09-22)は CLI 契約の既存方針で、spec 側の変更は不要。
+
+埋めた穴(利用者方針: 見つけた穴は今回の変更に含める):
+- 任意の整数キー RAPID_LEASE_SEC / RAPID_POLL_INTERVAL_SEC / FINAL_POLL_INTERVAL_SEC / FINAL_POLL_LIMIT_SEC / FINAL_LEASE_MINUTES / FINAL_WORKER_POLL_INTERVAL_SEC の値が不正なときの出力が契約に無かった。インフラ設計がこの検査を CLI 契約に任せたため、キーがあれば正の整数 `^[1-9][0-9]{0,8}$`、違反は `error: invalid value key=<KEY> value=... path: ...` + `hint: use a positive integer`(2)と決めた。検査はそのキーを使う読み手の起動時に行う(速報 worker / 確報 runner / 確報 worker)。validate-config.sh の検証範囲は変えない。
+- final-crosscheck.env のキー表が FINAL_COMPARE_COMMAND を無条件に必須としていた。読み手ごとの必須キーを書いた(runner は FINAL_DB_CONN_REF だけ、確報 worker は FINAL_DB_CONN_REF / FINAL_COMPARE_COMMAND)。起動時の検査の順(存在・読み取り → 入力の守備範囲 → 必須キー → 任意キーの値。最初の違反で止め、管理 DB に接続しない)を決めた。
+- 各ホストの設定ファイルを誰が置くかが書かれていなかった。config_files.final-crosscheck.env の note と確報 worker の notes に、利用者方針(2026-11-04)を書いた: 各読み手は自分のホストの置き場のファイルだけを読み、どちらの置き場も構築手順が配置する。relay-gate の処理の中からは配らない。比較コマンドは worker 側のファイルにだけ持ち、依頼レコードで渡さない。変えたら構築手順で配り直す。validate-config.sh --final-crosscheck は worker のホストで実行する。
+- 速報 worker・確報 worker の stderr の一覧に比較ツール起動コマンドの欠落の error 行を足した(終了コード 2 の条件には含まれていた)。
+- 速報クロスチェック設定にも、配置時の検査は存在確認だけで中身の検査はこの契約が持つこと、任意キーの省略と空白・引用符を含む設定を受理することを note として書いた。
+- 反証レビューで追加で決めた規則: 起動時の検査の順は段ごとに出し方を分ける(入力の守備範囲の段は config_input_rules.env_files どおりその段の error 行を全件、ファイルの存在・読み取り・必須キー・任意キーの値の段は最初の 1 件)。読めないときは error: config file is not readable path: ...(2)。rapid-crosscheck.env / final-crosscheck.env の未知キーは実行時の読み手では検査せず warn も出さない(validate-config.sh は既存の規約どおり warn を出す。他の読み手のキーは未知キーではない)。RAPID_COMPARE_COMMAND の必須は速報 worker と validate-config.sh --rapid-crosscheck に限る。出力規約(ui-design.md)に正の整数の値違反と読み取り不可の定型文を足した。
+- 揃えた UC: 速報比較依頼を claim する(spec.md / tier-rapid-crosscheck.md / _api-summary.yaml。BDD 2 件追加、既存 BDD 2 件の設定に起動コマンドを追加)/ 確報比較依頼を登録して終端状態まで待機する(spec.md / tier-final-crosscheck.md / _api-summary.yaml。BDD 2 件追加)/ 確報比較依頼を claim する(tier-final-crosscheck.md / _api-summary.yaml。BDD 2 件追加)/ 確報クロスチェック結果を確認する(tier-final-crosscheck.md)/ クロスチェックのジョブマップと比較定義を定義する・比較ツールで日次全量比較を実行して結果を保存する(validate-config.sh の未知キーの warn を明記)。出力規約 ui-design.md も揃えた。判断は decisions/spec-decision-030。
+
+feedback request:
+- feedback_request_id: 20261104_rapid_env_deploy_check
+- input_sha256: aaab9c2bbac2b4952afa8c2bf3db4c42cf8b84a4e3b570bfcf15b1d180dda0c2
+- request_ids: CR-d8a2f4b6-001
+- direct_work_unit_ids: (なし)
+- causal_work_unit_ids: CR-d8a2f4b6-001#1
+- stage packet: docs/pipeline/feedback-runs/20261104_rapid_env_deploy_check/stage-packets/spec.md
+
+trigger_event: infra:20261104_101000_feedback_rapid_env_deploy_check(他の上流 latest は変更なし)

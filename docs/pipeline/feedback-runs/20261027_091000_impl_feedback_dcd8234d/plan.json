@@ -1,0 +1,302 @@
+{
+  "schema_version": "distillery.feedback-plan/v1",
+  "feedback_request_id": "20261027_091000_impl_feedback_dcd8234d",
+  "input_sha256": "37b8b54d7a4a8b1a978e389924c4b6e3ee9a1d276823a9d877f10fd01b866ca8",
+  "ambiguity_policy": "interactive",
+  "routing_basis": {
+    "ownership_catalog_version": "1.0.0",
+    "ownership_catalog_sha256": "801750c2abe99945a3de9387b82339b2bc96ccb2da564f9923cc0e9b76a2bd39",
+    "routing_policy_version": "1.1.0",
+    "routing_policy_sha256": "3873275bf4adb3d9d7b7c41c22c9463d054a3614df7bbcab7514f0c1e23e166e",
+    "prompt_schema_sha256": "bf7c7f34d7a2fc5976ccd2589a454172a4630e1448c509966b620f88029732c4",
+    "stage_packet_renderer_version": "1",
+    "skipped_stages": [
+      "design_system",
+      "spec_stories"
+    ],
+    "repository_head": "fd23e411d989d740cb191d08d90b42bf46939b96",
+    "latest_domain_event_ids": {
+      "requirements": {
+        "rdra/events": "20261010_200000_feedback_impl_feedback_dcd8234d",
+        "usdm/events": "20261010_200000_feedback_impl_feedback_dcd8234d"
+      },
+      "quality_attributes": {
+        "nfr/events": "20261010_201000_feedback_impl_feedback_dcd8234d"
+      },
+      "architecture": {
+        "arch/events": "20261010_202000_feedback_impl_feedback_dcd8234d"
+      },
+      "infrastructure": {
+        "infra/events": "20261010_203000_feedback_impl_feedback_dcd8234d"
+      },
+      "design_system": {
+        "design/events": null
+      },
+      "spec": {
+        "specs/events": "20261027_055000_feedback_impl_feedback_dcd8234d"
+      },
+      "spec_stories": {
+        "design/events": null
+      }
+    },
+    "domain_event_root_snapshots": {
+      "rdra/events": {
+        "head_event_id": "20261010_200000_feedback_impl_feedback_dcd8234d",
+        "head_event_sha256": "9a80cc0094748b411ef776b9b336129555da29e7f147697d045eb9160d145bc5",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency",
+          "20260908_011000_feedback_slot_status_wording",
+          "20260921_084000_feedback_impl_feedback_eff24f55",
+          "20261010_200000_feedback_impl_feedback_dcd8234d"
+        ],
+        "event_set_sha256": "614436dc22fc9bbebf353b7ec6b4ff6ca3eb3966bbd810ab461e345123ee69b7",
+        "latest_tree_sha256": "3d0b9856826a0a3c1cdab6ccbd73781e831f171165490e90989415aaa5296114"
+      },
+      "usdm/events": {
+        "head_event_id": "20261010_200000_feedback_impl_feedback_dcd8234d",
+        "head_event_sha256": "f3c0d898c01f28aafb6445107264c0310a5d50774331812624fc89f7401eea7c",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency",
+          "20260908_011000_feedback_slot_status_wording",
+          "20260921_084000_feedback_impl_feedback_eff24f55",
+          "20261010_200000_feedback_impl_feedback_dcd8234d"
+        ],
+        "event_set_sha256": "614436dc22fc9bbebf353b7ec6b4ff6ca3eb3966bbd810ab461e345123ee69b7",
+        "latest_tree_sha256": "ca018d4ac7287eadffb26e3ac124e193a804a4657b85293da9b262953b11e3d7"
+      },
+      "nfr/events": {
+        "head_event_id": "20261010_201000_feedback_impl_feedback_dcd8234d",
+        "head_event_sha256": "fb98a74807d68e02d214f009cb5e2a3929c133c71b217ed5a49cbb24a1e6d379",
+        "event_ids": [
+          "20260830_183726_initial_nfr",
+          "20260905_085000_feedback_todo_resolution",
+          "20260907_013000_feedback_todo_followup",
+          "20260907_120000_feedback_abort_consistency",
+          "20260908_013000_feedback_slot_status_wording",
+          "20260921_090000_feedback_impl_feedback_eff24f55",
+          "20261010_201000_feedback_impl_feedback_dcd8234d"
+        ],
+        "event_set_sha256": "3203f8419d84259aec2a11a113333eaa9dba1d5ea3333195cfcbf1facc6c3aab",
+        "latest_tree_sha256": "24f652e932a342a58ccd87291fa6523e66c6c274a88d3563253c085480e15def"
+      },
+      "arch/events": {
+        "head_event_id": "20261010_202000_feedback_impl_feedback_dcd8234d",
+        "head_event_sha256": "0e77694bbe3cfd58b8332dedf214e3e470dcfd77ce252057acdda86d645a58db",
+        "event_ids": [
+          "20260830_184457_initial_arch",
+          "20260830_202427_arch_infra_feedback_20260830_190412_infra_product_design",
+          "20260905_091000_feedback_todo_resolution",
+          "20260907_015000_feedback_todo_followup",
+          "20260907_122000_feedback_abort_consistency",
+          "20260908_015000_feedback_slot_status_wording",
+          "20260921_092000_feedback_impl_feedback_eff24f55",
+          "20261010_202000_feedback_impl_feedback_dcd8234d"
+        ],
+        "event_set_sha256": "75edbf8442f5d62ca61a13f8ccc3fe17d5ea5a82fdec15d04d3d118a7f5c112a",
+        "latest_tree_sha256": "8a89784f41dfe0ea7192f0210cbfd59a6db43d1dab010f0c52097422275f0c54"
+      },
+      "infra/events": {
+        "head_event_id": "20261010_203000_feedback_impl_feedback_dcd8234d",
+        "head_event_sha256": "2559c70b42979c16ccfc5ba8179fec1108e0c82d16f12f14316ba3b5bf947dd9",
+        "event_ids": [
+          "20260830_190412_infra_product_design",
+          "20260905_093000_feedback_todo_resolution",
+          "20260907_021000_feedback_todo_followup",
+          "20260907_124000_feedback_abort_consistency",
+          "20260908_021000_feedback_slot_status_wording",
+          "20260921_094000_feedback_impl_feedback_eff24f55",
+          "20261010_203000_feedback_impl_feedback_dcd8234d"
+        ],
+        "event_set_sha256": "c56dc85271ed5edc4bfd664153a20f7778d2cc9fd5292baf189f3b90b1b3ddb8",
+        "latest_tree_sha256": "d10377e522e03db8f1afdc88774f27bcbf19df41a6da542350beeff780f308e9"
+      },
+      "design/events": {
+        "head_event_id": null,
+        "head_event_sha256": null,
+        "event_ids": [],
+        "event_set_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "latest_tree_sha256": null
+      },
+      "specs/events": {
+        "head_event_id": "20261027_055000_feedback_impl_feedback_dcd8234d",
+        "head_event_sha256": "f37518145340c2db37991a5fe8e9ca3fe5d6ab71c6dddb1de35c724d27c22aeb",
+        "event_ids": [
+          "20260830_202851_spec_generation",
+          "20260905_100000_feedback_todo_resolution",
+          "20260907_024000_feedback_todo_followup",
+          "20260907_131000_feedback_abort_consistency",
+          "20260908_024000_feedback_slot_status_wording",
+          "20260908_062000_feedback_spec_machine_readable",
+          "20260917_050000_feedback_impl_feedback_fd678b04",
+          "20260917_100000_feedback_impl_feedback_fd678b04_cycle2",
+          "20260921_100000_feedback_impl_feedback_eff24f55",
+          "20260923_112000_feedback_impl_feedback_eff24f55_cycle2",
+          "20261010_204000_feedback_impl_feedback_dcd8234d",
+          "20261027_055000_feedback_impl_feedback_dcd8234d"
+        ],
+        "event_set_sha256": "819eb45cca2ca8a3dd54271ecdd4c98f539d3bda3769645047f4f468a9197b1e",
+        "latest_tree_sha256": "df8d0a743ae04de363a6c417e969aa97391ffae934296d2d2efc15e23c689493"
+      }
+    }
+  },
+  "request_ids": [
+    "CR-dcd8234d-009",
+    "CR-dcd8234d-010"
+  ],
+  "work_units": [
+    {
+      "request_id": "CR-dcd8234d-009",
+      "constraint_key": "rapid-command-validation-three-points",
+      "direct_stage": "requirements",
+      "reason": "速報の起動コマンドに対する設定検証を、USDM SPEC-004-04 の本文(検証 2 点だけ・引数部分は検査しない)と受け入れ基準(-10 の Given と、{params} の位置違反の受け入れ基準 1 件の追加)で 3 点目({params} は引数 1 つ全体)を含む形に改める要求であり、要件正本(USDM)が最上流の所有者。CLI 契約・UC spec.md / tier-facade.md は既に 3 点を記述しており、UC の API 要約(_api-summary.yaml)の stderr と終了コード 2 の理由への追記は下流の spec が保守的 closure で追従する。RDRA の情報・状態・条件は変えない",
+      "evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-004"
+        },
+        {
+          "kind": "related_id",
+          "value": "SPEC-004-04 (USDM specification id under REQ-004)"
+        },
+        {
+          "kind": "related_id",
+          "value": "SPEC-004-04-10 (acceptance criterion of SPEC-004-04)"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/usdm/latest/requirements.yaml"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/spec.md"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/tier-facade.md"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/_api-summary.yaml"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml"
+        },
+        {
+          "kind": "request_text",
+          "value": "要求 SPEC-004-04 の本文に、3 点目として「速報の起動コマンドで {params} を使うなら、引数 1 つ全体がちょうど {params} であること」を加える"
+        },
+        {
+          "kind": "request_text",
+          "value": "この UC の API 要約の stderr と終了コード 2 の理由に、{params} の位置違反を加え、CLI 契約・tier-facade.md と揃える"
+        }
+      ],
+      "id": "CR-dcd8234d-009#1",
+      "required_closure_stages": [
+        "requirements",
+        "quality_attributes",
+        "architecture",
+        "infrastructure",
+        "spec"
+      ]
+    },
+    {
+      "request_id": "CR-dcd8234d-010",
+      "constraint_key": "config-value-quote-stripping-rule",
+      "direct_stage": "spec",
+      "reason": "CLI 契約の 2 か所(shared_rules.compare_command_argv.split と config_input_rules.env_files)の設定値の先頭末尾の引用符の外し方を、同じ規則(先頭と末尾を別々に 1 文字ずつ外し、対の一致は求めない)と例で書く要求であり、spec 成果物(CLI 契約)の変更のみ。USDM SPEC-004-04 / REQ-004 と RDRA は引用符の外し方を持たないため文脈参照とする。実装は変更しない",
+      "evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-004"
+        },
+        {
+          "kind": "related_id",
+          "value": "SPEC-004-04 (USDM specification id under REQ-004)"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml"
+        },
+        {
+          "kind": "request_text",
+          "value": "CLI 契約の 2 か所(起動コマンドを引数ごとに分ける決まりと、env 形式の入力規則)の引用符の外し方を、同じ規則で書く"
+        }
+      ],
+      "id": "CR-dcd8234d-010#1",
+      "required_closure_stages": [
+        "spec"
+      ]
+    }
+  ],
+  "execution_stages": [
+    {
+      "id": "requirements",
+      "steps": [
+        "1"
+      ],
+      "direct_work_unit_ids": [
+        "CR-dcd8234d-009#1"
+      ],
+      "causal_work_unit_ids": [
+        "CR-dcd8234d-009#1"
+      ],
+      "stage_packet": "stage-packets/requirements.md"
+    },
+    {
+      "id": "quality_attributes",
+      "steps": [
+        "2"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-dcd8234d-009#1"
+      ],
+      "stage_packet": "stage-packets/quality_attributes.md"
+    },
+    {
+      "id": "architecture",
+      "steps": [
+        "3"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-dcd8234d-009#1"
+      ],
+      "stage_packet": "stage-packets/architecture.md"
+    },
+    {
+      "id": "infrastructure",
+      "steps": [
+        "4a",
+        "4b"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-dcd8234d-009#1"
+      ],
+      "stage_packet": "stage-packets/infrastructure.md"
+    },
+    {
+      "id": "spec",
+      "steps": [
+        "6"
+      ],
+      "direct_work_unit_ids": [
+        "CR-dcd8234d-010#1"
+      ],
+      "causal_work_unit_ids": [
+        "CR-dcd8234d-009#1",
+        "CR-dcd8234d-010#1"
+      ],
+      "stage_packet": "stage-packets/spec.md"
+    }
+  ],
+  "outside_work_unit_ids": []
+}

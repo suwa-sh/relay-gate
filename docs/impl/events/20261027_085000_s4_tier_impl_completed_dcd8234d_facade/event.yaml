@@ -1,0 +1,16 @@
+event_id: 20261027_085000_s4_tier_impl_completed_dcd8234d_facade
+type: stage_completed
+uc_id: dcd8234d
+stage: S4
+tier: tier-facade
+attempt: 4
+payload:
+  manifest_sha256: 945094d65bb404232b80a8b2e224753f6661edc1fcf8e311aafdea570dd022cd
+  manifest_projection: v2
+  result: pass
+  gates: {format: pass, lint: pass, tdd: pass, bdd_tier: pass}
+  assumptions:
+    count: 12
+    sha256: ca3ac08893cc86ba9b8b3b5b90501874b6b9ba2bf49473727448c953e946a8eb
+  rerun_reason: stale (reflux), not attempt++
+created_at: '2026-10-27T08:50:00+09:00'

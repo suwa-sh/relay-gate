@@ -4,14 +4,14 @@
 
 | 項目 | 内容 |
 |------|------|
-| Event ID | 20260923_112000_feedback_impl_feedback_eff24f55_cycle2 |
-| Created At | 2026-09-23T11:20:00Z |
-| Source | Spec 差分更新: 2026-09-22 の実装フィードバック cycle 2(design 無しモード。実装フェーズ UC eff24f55「slot ごとのジョブマップを定義する」からの spec-gap 2 件)。前イベント 20260921_100000_feedback_impl_feedback_eff24f55 を起点に、CR-006: validate-config.sh の重複報告(duplicate job_id / duplicate target)の lines= を『そのキーが現れた全行の物理行番号を初出行を含めて出現順に並べる。重複したキーごとに error 1 行』に一本化し(要求本文の推奨を採用)、正本を cli-command-contract.yaml の validate-config.sh stderr に置いて、UC「slot ごとのジョブマップを定義する」の列検証表・分岐条件・BDD(lines=2,5 を維持、3 行重複 lines=2,3,4 を追加)と UC「クロスチェックのジョブマップと比較定義を定義する」の検証ルール・BDD(lines=5,6 / lines=2,3)、UC「ジョブマップで JOB_ID から実行先を解決する」の実行ログ WARN を同じ規則にそろえた。CR-007: 参照名 ^[A-Za-z0-9_.-]*$ に合わない credential_ref は / や BEGIN を含むかどうかにかかわらず同じ warn: credential_ref looks like a secret or path line=N job_id=<v> を 1 行出して受理し(利用者が 2026-09-22 のレビューで選択した案 A。拒否しない理由 = 参照名の形式は認証情報ストアの運用に依存)、credential_ref の値を診断行(validate-config.sh の stdout / stderr と slot runner の stderr / 実行ログ)に一切出さない規則を契約 conventions.credentials と columns.credential_ref に明記。受理した値は execution-spec.json へ加工せずに転記されることを契約と UC「execution-spec.json を確定保存する」に明記(同 UC のティア完了条件に Scenario 1 件)。UC 仕様の『仮採用』注記を確定内容に置き換え、値の種類ごとの扱いの表と BDD(E2E に SPEC-004-03 の Scenario 1 件、ティア完了条件に 2 件)を追加。判断は decisions/spec-decision-014 / 015。trigger_event: rdra:20260921_084000_feedback_impl_feedback_eff24f55, arch:20260921_092000_feedback_impl_feedback_eff24f55 |
-| UC 総数 | 32 |
+| Event ID | 20261105_112000_feedback_single_management_db |
+| Created At | 2026-11-05T11:20:00+09:00 |
+| Source | Spec 差分更新(design 無しモード。2026-11-05 の管理 DB を 1 つとする前提の明記)。CR-f4c8b261-001(infra 直接所有。spec は保守的 closure): インフラ設計が、管理 DB は 1 つで、すべての接続参照名(RAPID_DB_CONN_REF、実行ホストと DB セグメントそれぞれの FINAL_DB_CONN_REF、HANG_DB_CONN_REF、HOUSEKEEP_DB_CONN_REF(専用 DB ロール housekeep_del))が同じ 1 つの管理 DB に解決されることを前提として書いたことに追従した。CLI 契約の conventions.credentials に、単一の管理 DB の前提、条件は参照名の文字列ではなく解決先が同じこと(確報 runner が登録した依頼を確報 worker が同じキューから取得するため)、解決先が同じことは導入する側が確かめること、構築時の検査は設定ファイルの存在確認だけで relay-gate のコマンドも解決先を検査しないことを書いた。config_files の final-crosscheck.env の note と 4 つの参照名のキー説明、6 UC の tier md の設定キー表(ハウスキープ判定 UC はキー表の直下の説明)から参照した。新しい検査・error 文言・終了コード・BDD は足さない(spec-decision-032) |
+| UC 総数 | 34 |
 | API 総数 | 0 |
-| 非同期イベント総数 | 4 |
-| 業務数 | 5 |
-| BUC 数 | 7 |
+| 非同期イベント総数 | 3 |
+| 業務数 | 6 |
+| BUC 数 | 8 |
 
 ## UC 一覧
 
@@ -27,7 +27,7 @@
 | クロスチェック業務 | 速報クロスチェックフロー | 速報比較結果を参照する | 0 | - | - |
 | クロスチェック業務 | 速報クロスチェックフロー | 比較ツールでジョブ単位比較を実行して結果を登録する | 0 | - | - |
 | クロスチェック業務 | 速報クロスチェックフロー | 両系成功時に速報比較依頼を作成する | 0 | - | - |
-| 実行監視業務 | background 実行監視フロー | background 異常の通知メールを受け取る | 0 | - | - |
+| 実行監視業務 | background 実行監視フロー | ハング検知ジョブの異常終了を確認する | 0 | - | - |
 | 実行監視業務 | background 実行監視フロー | background 実行の経過時間と終了状態を判定する | 0 | - | - |
 | 実行監視業務 | background 実行監視フロー | hang_detect_limit_minutes をジョブごとに調整する | 0 | - | - |
 | 実行監視業務 | background 実行監視フロー | ハング疑い・実行エラー・比較異常を通知する | 0 | - | - |
@@ -49,6 +49,8 @@
 | 適用構成業務 | 適用構成定義フロー | slot ごとのジョブマップを定義する | 0 | - | - |
 | 適用構成業務 | 適用構成定義フロー | クロスチェックのジョブマップと比較定義を定義する | 0 | - | - |
 | 適用構成業務 | 適用構成定義フロー | 切り替えた運用モードで業務ジョブを実行する | 0 | - | - |
+| ハウスキープ業務 | ハウスキープフロー | 保持日数を過ぎた終了済みの実行と確報比較依頼を判定する | 0 | - | - |
+| ハウスキープ業務 | ハウスキープフロー | 成果物と管理 DB の履歴を削除する | 0 | - | - |
 
 ## UC ファイル構成
 
@@ -74,7 +76,7 @@
 
 #### background 実行監視フロー
 
-- **background 異常の通知メールを受け取る**: spec.md, tier-ops.md
+- **ハング検知ジョブの異常終了を確認する**: spec.md, tier-ops.md
 - **background 実行の経過時間と終了状態を判定する**: spec.md, tier-ops.md
 - **hang_detect_limit_minutes をジョブごとに調整する**: spec.md, tier-facade.md, tier-ops.md
 - **ハング疑い・実行エラー・比較異常を通知する**: spec.md, tier-ops.md
@@ -112,14 +114,21 @@
 - **feature flag を設定する**: spec.md, tier-facade.md
 - **slot runner の実体スクリプトを割り当てる**: spec.md, tier-facade.md
 - **slot ごとのジョブマップを定義する**: spec.md, tier-facade.md
-- **クロスチェックのジョブマップと比較定義を定義する**: spec.md, tier-final-crosscheck.md, tier-rapid-crosscheck.md
+- **クロスチェックのジョブマップと比較定義を定義する**: spec.md, tier-facade.md
 - **切り替えた運用モードで業務ジョブを実行する**: spec.md, tier-facade.md
+
+### ハウスキープ業務
+
+#### ハウスキープフロー
+
+- **保持日数を過ぎた終了済みの実行と確報比較依頼を判定する**: spec.md, tier-facade.md, tier-ops.md
+- **成果物と管理 DB の履歴を削除する**: spec.md, tier-ops.md
 
 ## 全体横断仕様
 
 ### UX Design
 
-- User Flows: 4
+- User Flows: 5
 - IA Pages: 18
 - Psychology Principles: 8
 

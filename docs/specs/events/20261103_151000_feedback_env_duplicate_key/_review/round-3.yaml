@@ -1,0 +1,12 @@
+round: 3
+findings:
+  - id: R-010
+    viewpoint: 4
+    severity: minor
+    target: "_cross-cutting/api/cli-command-contract.yaml"
+    claim: "conventions.output_format.stderr の末尾に加えた例外(と ui-design.md「エラー」の行の同じ例外)は、設定ファイルの入力の守備範囲の違反を『全コマンド共通で、該当行ごとに 1 行を報告の順どおりに出す』とし、順の参照先を config_input_rules(env は config_input_rules.env_files)としている。env は env_files に検査の段と報告の順があるが、CSV(blue-job-map.csv / green-job-map.csv)の報告の順は config_input_rules のどこにも無い。参照先が実在しないため、CSV で複数種別の違反が同時にあるときの出力順を実装が選ぶことになる。"
+    evidence: "output_format.stderr: 『設定ファイルの入力の守備範囲の違反は全コマンド共通で config_input_rules に従い、該当行ごとに 1 行(duplicate key は重複したキーごとに 1 行)を報告の順どおりに出す(env は config_input_rules.env_files)』。ui-design.md「エラー」: 『…を契約 config_input_rules の報告の順どおりに出す』。config_input_rules.rules は話題ごとの表で、種別間の順・段での停止は定義していない。『報告の順』の語が現れるのは validate-config.sh の stderr(env の段の参照)と env_files の (i)〜(iii) だけ。例: CSV の 2 行目に CR、3 行目に NUL、ヘッダーに列名の重複があるとき、行番号順か種別順か、バイト違反で止めるかが決まらない。env_files(正本)とは矛盾しない。"
+    suggested_fix: "例外の『報告の順どおり』を env に限定する(例: 『env は config_input_rules.env_files の報告の順どおり』)か、config_input_rules に CSV の報告の順(例: バイト・改行の違反があればそれだけを行番号の昇順に出して止める 等)を加えて ui-design.md の定型文にも転記する。"
+resolved:
+  - id: R-010
+    resolution: "fixed(by: orchestrator。検証パスの文言修正): 契約 conventions.output_format.stderr と ui-design.md の例外の『報告の順』を env に限定し(config_input_rules.env_files の検査の段)、CSV は今の検査の順(UC「slot ごとのジョブマップを定義する」の tier-facade.md)のままと書いた"

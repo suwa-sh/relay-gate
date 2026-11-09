@@ -10,7 +10,7 @@ _inference.md「データ可視化対象」の 3 つ。いずれも CLI の TSV 
 
 | 出力(RDRA の画面) | コマンド | 指標/データ | 用途 | 表現 |
 |------|------|-----------|------|-----------|
-| rapid-crosscheck 結果参照出力 | `rapid-crosscheck-result.sh --run-id` | run_id 単位の依頼状態・両系の完了結果・comparison_result(status / difference_count / report_uri) | Comparison(blue と green の差分の有無・件数)。原因調査 | `key=value` の要約 + comparison_result の TSV |
+| rapid-crosscheck 結果参照出力 | `rapid-crosscheck-result.sh --run-id` | run_id 単位の依頼状態・両系の完了結果・比較ツールの exit_code / stdout / stderr(依頼レコード) | Comparison(blue と green の差分の有無)。原因調査 | `key=value` の要約 + `--show-output` の本文 |
 | hang-detect 警告傾向出力 | `hang-detect-trend.sh [--job-id JOB_ID] [--role ROLE]` | job_id × role ごとの監視記録(警告回数・最後の警告時経過時間・現在の上限) | Comparison(警告時経過時間 と hang_detect_limit_minutes の差)。上限調整の根拠 | TSV |
 | background-rerun 系譜追跡出力 | `run-lineage.sh --run-id` | 最新 run_id から parent_run_id をたどった run の連鎖(状態・role・開始日時) | Relationship(親子の連鎖)+ Trend(時系列) | TSV(最新 → 元の順) |
 
@@ -32,19 +32,9 @@ _inference.md「データ可視化対象」の 3 つ。いずれも CLI の TSV 
 
 - `parent_run_id` は `run-lineage.sh --run-id` で、`error_summary` / 比較ツール本文は `--show-output` で参照する(要約部には含めない)
 
-comparison_result 部(stdout、TSV。要約部の直後。0 件でもヘッダー行は出す):
+速報比較の結果は別レコードの一覧 TSV を出さない。比較ツールの結果は依頼レコード(`rapid_crosscheck_requests`)の `exit_code`(要約部 6 行目)と、`--show-output` で末尾に出す `stdout` / `stderr` 本文で参照する。
 
-| 列順 | 列名 | 型 | 説明 |
-|---|---|---|---|
-| 1 | `comparison_result_id` | string | 比較結果 ID |
-| 2 | `comparison_type` | string | 比較種別(比較定義の comparison_type) |
-| 3 | `status` | `OK` / `NG` / `FAILED` | 比較結果ステータス |
-| 4 | `difference_count` | integer または `-` | 差分件数(比較ツール stdout の `difference_count=N` 行から転記。行が無ければ `-`。FAILED は通常 `-`) |
-| 5 | `report_uri` | URI または `-` | レポートの所在 |
-| 6 | `compared_at` | ローカル ISO 8601(指示子なし) | 比較日時 |
-
-- ソート順: `compared_at` 昇順、同値は `comparison_result_id` 昇順(SQL は `ORDER BY compared_at ASC, comparison_result_id ASC LIMIT ?`。`cli-command-contract.yaml` `rapid-crosscheck-result.sh.stdout` と同じ)
-- `--show-output` 指定時の構造は本節が正本: TSV の後に空行 1 行 → `--- stdout ---` 行 → 依頼に保存された stdout 本文(バイト列そのまま。NULL は 0 バイト)→ `--- stderr ---` 行 → stderr 本文。区切り行の文字列は `--- stdout ---` / `--- stderr ---` で固定(仮採用ではない)
+- `--show-output` 指定時の構造は本節が正本: 要約部 9 行の後に空行 1 行 → `--- stdout ---` 行 → 依頼に保存された stdout 本文(バイト列そのまま。NULL は 0 バイト)→ `--- stderr ---` 行 → stderr 本文。区切り行の文字列は `--- stdout ---` / `--- stderr ---` で固定(仮採用ではない)
 - stderr に常に `info: rapid result is for investigation only; use final crosscheck for release decision` を出す(条件「速報結果の位置付け」)
 - 対象 run_id の依頼が存在しない: `error: rapid crosscheck request not found run_id=...`、終了コード 3。RAPID_CROSSCHECK_MODE=off で管理 DB が無い: `error: rapid crosscheck is off; no management db to query mode=off`、終了コード 3(文言は `cli-command-contract.yaml` の `rapid-crosscheck-result.sh.stderr` が正。`run-lineage.sh` / `hang-detect-trend.sh` の off 時文言 `management db is not configured (RAPID_CROSSCHECK_MODE=off)` とは別系統)
 
@@ -96,7 +86,7 @@ comparison_result 部(stdout、TSV。要約部の直後。0 件でもヘッダ�
 
 | 観点 | 推奨チャート | 使用場面 |
 |------|-----------|---------|
-| Comparison(比較) | 該当なし(CLI 出力のみ) | 速報比較結果の `status` / `difference_count`、警告傾向の `last_elapsed_minutes_at_alert` と `current_limit_minutes` の隣接列で代替 |
+| Comparison(比較) | 該当なし(CLI 出力のみ) | 速報比較結果の `exit_code`(差分の有無)、警告傾向の `last_elapsed_minutes_at_alert` と `current_limit_minutes` の隣接列で代替 |
 | Composition(構成比) | 該当なし(CLI 出力のみ) | — |
 | Relationship(関連性) | 該当なし(CLI 出力のみ) | リラン系譜の `parent_run_id` 列(連鎖リスト)で代替 |
 | Distribution(分布) | 該当なし(CLI 出力のみ) | 警告傾向の `max_elapsed_minutes_at_alert` / `last_elapsed_minutes_at_alert` の 2 列で代替 |
@@ -106,18 +96,18 @@ comparison_result 部(stdout、TSV。要約部の直後。0 件でもヘッダ�
 
 ## ダッシュボード設計原則
 
-ダッシュボードは新規構築せず、**組織既存監視への統合と運用者向け日次メールサマリー**で代替する(arch CTP-010)。
+ダッシュボードは新規構築せず、**組織既存監視(ジョブスケジューラのジョブ監視・障害通知と実行履歴)への統合**で代替する(arch CTP-010)。relay-gate から集計結果を送る通知は持たない。
 
 ### 情報の階層化
 
-- **全体サマリー**: 日次メールサマリー(arch CTP-010)は本規約の範囲外。採用する場合は件名 `[relay-gate][info] daily-summary date={business_date}`、本文は本ファイル 2. の警告傾向 TSV(`hang-detect-trend.sh --since {前日 00:00:00(ローカル)}` の出力)をそのまま貼る形を推奨する(仕様は未確定。todo。`ui-design.md`「通知メール規約」と同文)
-- **ドリルダウン**: サマリーの run_id を引数にして `rapid-crosscheck-result.sh --run-id` / `run-lineage.sh --run-id` を運用者が手動で実行する(メール本文に実行例を 1 行ずつ書く)
+- **全体サマリー**: 運用者が必要なときに `hang-detect-trend.sh --since {集計開始(ローカル)}` を実行し、本ファイル 2. の警告傾向 TSV を読む(定期送信はしない)。異常の発生はハング検知ジョブの警告終了・失敗がジョブスケジューラの障害通知で届く
+- **ドリルダウン**: alert 行または TSV の run_id を引数にして `rapid-crosscheck-result.sh --run-id` / `run-lineage.sh --run-id` を運用者が手動で実行する
 - **フィルター**: `hang-detect-trend.sh --job-id / --role / --since`、参照系の `--limit`
 
 ### データストーリーテリング
 
 - **ナラティブ**: 「foreground の結果はジョブスケジューラで判定済み。background と速報の異常だけがここに現れる。error は対処、warning は静観候補」
-- **比較軸**: 警告時経過時間 vs 現在の上限(調整余地)、blue vs green(差分件数)、リラン世代 vs 元の実行(復旧の進み)
+- **比較軸**: 警告時経過時間 vs 現在の上限(調整余地)、blue vs green(比較ツールの exit_code)、リラン世代 vs 元の実行(復旧の進み)
 - **アクション**: error → `abort-*` → `background-rerun.sh`。warning → 静観 or `hang-detect-trend.sh` で上限調整。速報 NG → `rapid-crosscheck-result.sh --show-output` で原因調査(リリース判断は確報の結果で行う)
 
 ## 認知負荷への配慮

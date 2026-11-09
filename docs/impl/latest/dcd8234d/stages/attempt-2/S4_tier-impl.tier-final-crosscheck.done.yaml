@@ -1,0 +1,115 @@
+stage: S4
+tier: tier-final-crosscheck
+attempt: 2
+uc_id: dcd8234d
+manifest_sha256: 29b7f16040fdc687588276e46996815ac2dbb10faef246c02ef78d4023412ac3
+manifest_projection: v2
+result: pass
+findings_source: "docs/impl/latest/dcd8234d/stages/attempt-1/S5_verify.tier-final-crosscheck.findings.yaml(verify。ui-review は dispatch なし)"
+findings_resolved:
+  - F-001
+  - F-004
+  - F-009
+  - F-014
+  - F-022
+  - F-023
+  - F-025
+  - F-026
+findings_resolution:
+  - id: F-001
+    severity: blocker
+    fix: "validate_target_catalog_header の一致判定を、カンマで再連結した文字列の比較から『解析済みセル数が列定義の数(5)と等しく、各セルが同じ位置の列名と等しい』の判定に変えた。引用で 1 セル / 4 セルになったヘッダーは header mismatch(終了コード 2)になる。actual= はカンマまたは二重引用符を含むセルを入力と同じクォート規則で囲み、expected= と見分けられる表記にした(AssumptionRecord A-021)"
+    regression_tests:
+      - "test/domain/target_catalog.bats: 1 セル結合 / 先頭 2 列結合の 4 セル / 末尾空列の 6 セル / 二重引用符を含む列名(4 件)"
+      - "test/usecase/validate_target_catalog.bats: ヘッダー行全体が引用された 1 セル → header mismatch・stdout なし(1 件)"
+      - "test/presentation/validate_config_target_catalog.bats: facade/bin/validate-config.sh 経由で 1 セル / 4 セル(2 件)"
+  - id: F-004
+    severity: minor
+    fix: "A-003(violations= は error 行の件数)は契約の復唱のため attempt 2 の前提から外した(excluded_as_explicit に計上)"
+  - id: F-009
+    severity: minor
+    fix: "A-008(duplicate column と header mismatch の両方を出す)は契約の復唱のため前提から外した。実装は変更なし"
+  - id: F-014
+    severity: minor
+    fix: "A-013(任意列の空セル受理)は契約の復唱のため前提から外した。実装は変更なし"
+  - id: F-022
+    severity: minor
+    fix: "A-002 の category を error_handling から data_format に直した"
+  - id: F-023
+    severity: minor
+    fix: "A-006 の category を data_format から error_handling に直した"
+  - id: F-025
+    severity: minor
+    fix: "A-010 の category を input_validation から data_format に直した"
+  - id: F-026
+    severity: minor
+    fix: "A-012 の category を error_handling から data_format に直した"
+findings_not_changed:
+  - ids: "F-002 F-003 F-005 F-006 F-007 F-008 F-010 F-011 F-012 F-013 F-015 F-016 F-017 F-018 F-019 F-020 F-021"
+    reason: "kind: spec_absent(真の前提)の minor。S9 で人間判断を取る対象であり、実装の修正は不要。前提は attempt 2 のファイルに同じ id で保持した(target の行番号だけ更新)"
+  - ids: "F-024"
+    reason: "A-008 の category_mismatch。A-008 自体を F-009 の対応で前提から外したため対象が無い"
+cross_tier_check:
+  config_input_rules: "並走 tier-rapid-crosscheck の blocker(重複ヘッダー列名 / NUL / 不正 UTF-8 / BOM / CR の未適用)と同じ穴が無いことを確認した。本 tier は attempt 1 から job_map_repo_load のバイト点検と validate_target_catalog_header の duplicate column を適用しており、usecase テスト(列名重複 / CRLF / BOM・NUL・UTF-8)が green"
+changes:
+- path: final-crosscheck/src/domain/target_catalog.sh
+  summary: "validate_target_catalog_header の一致判定をセル数 + 位置ごとの列名比較に変更(F-001)。actual= の表記関数 target_catalog_header_cell_shown を追加(カンマ / 二重引用符を含む列名を引用)"
+- path: final-crosscheck/test/domain/target_catalog.bats
+  summary: "ヘッダー検証の回帰テスト 4 件を追加(1 セル結合 / 4 セル / 6 セル / 二重引用符を含む列名)"
+- path: final-crosscheck/test/usecase/validate_target_catalog.bats
+  summary: "ヘッダー行全体が引用された 1 セルのテスト 1 件を追加(header mismatch・stdout なし・hint)"
+- path: final-crosscheck/test/presentation/validate_config_target_catalog.bats
+  summary: "validate-config.sh 経由の回帰テスト 2 件を追加(1 セル / 4 セル)"
+implementation_note: "facade/ と rapid-crosscheck/ には書いていない。attempt-1/ 配下も変更していない。usecase / repository / presentation の実装は attempt 1 のまま"
+gates:
+  format: pass
+  lint: pass
+  tdd: pass
+  bdd_tier: pass
+gate_runs:
+- gate: format
+  cwd: final-crosscheck
+  command: shfmt -d .
+  exit_code: 0
+- gate: lint
+  cwd: final-crosscheck
+  command: find src test -name '*.sh' -exec shellcheck -x {} +
+  exit_code: 0
+- gate: tdd
+  cwd: final-crosscheck
+  command: bats -r test
+  exit_code: 0
+  detail: "57 tests passed, 0 failed(presentation 15 / domain 24 / repository 5 / usecase 13。attempt 1 の 50 件 + 追加 7 件)"
+- gate: bdd_tier
+  cwd: final-crosscheck
+  command: npx cucumber-js --config ../cucumber.cjs features
+  exit_code: 0
+  detail: "4 scenarios passed, 12 steps passed"
+linux_equivalent_check:
+- image: relay-gate-ci:ubuntu24
+  command: "docker run --rm -e LANG=C.UTF-8 -v \"$PWD/..:/work\" -w /work/final-crosscheck relay-gate-ci:ubuntu24 bats -r test"
+  exit_code: 0
+  detail: "57 tests passed, 0 failed。5,000 行(通常 / verbose)のテストも 10 秒以内で pass"
+performance_note: "ヘッダー検証の変更は 1 行分の固定処理で、行数に比例する部分は変えていない(AssumptionRecord A-020 の実装方針は維持)"
+assumptions:
+  path: attempt-2/S4_tier-impl.tier-final-crosscheck.assumptions.yaml
+  count: 18
+  by_category:
+    input_validation: 2
+    data_format: 8
+    error_handling: 7
+    persistence: 0
+    performance: 1
+    security: 0
+  sha256: 91403d5781aa01449a3932210b8bc551fef3285111a09932e1b5dc0b750324b6
+  extraction:
+    candidate_count: 28
+    excluded_as_explicit: 10
+    recorded_count: 18
+  validator: "validateAssumptions.js record → ok: true"
+  diff_from_attempt_1: "A-003 / A-008 / A-013 を復唱として除外(-3)、A-021(actual= の引用表記)を追加(+1)、A-002 / A-006 / A-010 / A-012 の category を Verifier の判定に合わせた。他は同じ id・同じ内容で保持"
+issues:
+  new: []
+  note: "仕様どおりに実装すると動かない事実は新たに見つからなかった"
+completed_at: "2026-10-10T09:20:00+09:00"
+completed_by: dist-impl-implement@0.14.1

@@ -41,7 +41,9 @@ decision:
     追加ミドルウェア無しで満たし、cost_posture: cost_optimizedおよびfoundationの監視基盤非新規導入方針に
     最も適合するため。
   risk_assessment: >-
-    組織に既存のホスト監視が無い場合はsar / df + cronメールで代替する(gap_description記載)。
+    組織に既存のホスト監視が無い場合は sar / df の閾値検査スクリプトをジョブスケジューラの定期ジョブとして登録し、
+    閾値超過を失敗終了としてジョブスケジューラの障害通知で届ける(gap_description記載。2026-11-01 のメール通知廃止で
+    cron メールによる代替をやめた)。
     この場合ダッシュボードが持てないため、運用開始前に組織側の監視有無を確認することをtodoとして残す。
   affected_elements:
     - "product.operations.backup_and_monitoring"

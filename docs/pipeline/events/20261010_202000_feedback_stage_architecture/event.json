@@ -1,0 +1,260 @@
+{
+  "event_id": "20261010_202000_feedback_stage_architecture",
+  "type": "feedback_stage_completed",
+  "run_id": "feedback-20261010_104636_impl_feedback_dcd8234d-20261010_194639-34461",
+  "attempt": 1,
+  "created_at": "2026-10-10T20:20:00Z",
+  "stage": "architecture",
+  "direct_work_unit_ids": [
+    "CR-dcd8234d-001#1",
+    "CR-dcd8234d-003#1"
+  ],
+  "causal_work_unit_ids": [
+    "CR-dcd8234d-007#1",
+    "CR-dcd8234d-001#1",
+    "CR-dcd8234d-002#1",
+    "CR-dcd8234d-003#1"
+  ],
+  "work_unit_results": [
+    {
+      "work_unit_id": "CR-dcd8234d-001#1",
+      "disposition": "applied",
+      "reason": "クロスチェック簡素化で速報の設定検証が env の起動コマンド 1 キーの検証(絶対パスで存在し実行可能・{job_id} を含む)に縮退し CSV クォート解析の共有が不要になったため、validate-config.sh のティア間委譲を無くし facade 単独で設定検証を完結させる案を採用した。ティア間のシェル関数共有・source の規則と、同一プロセスの名前空間の一般規則(ティア固有接頭辞・共有面の限定公開・副作用禁止・再定義禁止)をクロスティアルール CTR-007 として明記し、速報ティアの CLP-003 から参照した。CLI 契約の tier_note / owner_tier の委譲記述の除去と UC ティア仕様の追従は下流 spec の責務",
+      "artifact_refs": [
+        "arch/events/20261010_202000_feedback_impl_feedback_dcd8234d/arch-design-diff.yaml",
+        "arch/events/20261010_202000_feedback_impl_feedback_dcd8234d/decisions/arch-decision-019.yaml"
+      ]
+    },
+    {
+      "work_unit_id": "CR-dcd8234d-003#1",
+      "disposition": "applied",
+      "reason": "同一プロセスに source されるティアの名前空間の規則を CTR-007 に一般規則として追加した(ティア固有接頭辞・facade 共有面の限定公開・検証関数ファイルの副作用禁止・他ティア名の再定義禁止)。委譲撤廃により同一プロセスに source されるティアは facade 1 つになり衝突の主体は消えるが、将来のティア追加に備えた一般規則として残した。CTR-007 と CLP-003 の注記で読める",
+      "artifact_refs": [
+        "arch/events/20261010_202000_feedback_impl_feedback_dcd8234d/arch-design-diff.yaml",
+        "arch/events/20261010_202000_feedback_impl_feedback_dcd8234d/decisions/arch-decision-019.yaml"
+      ]
+    }
+  ],
+  "reconciliation_results": [
+    {
+      "work_unit_id": "CR-dcd8234d-007#1",
+      "status": "changed",
+      "reason": "クロスチェック簡素化(前段 requirements / NFR 更新)へ追従し、arch latest の廃止構造(クロスチェックジョブマップ・対象カタログ・比較結果(comparison_result)・成果物 URI の受け渡し・確報の business_date / カタログ版)への言及を technology_context / domain_architecture / system_architecture / app_architecture / data_architecture から除去した。比較ツール起動コマンドを速報クロスチェック設定・確報クロスチェック worker 設定が持ち比較対象は比較ツール側が定義する構成へ合わせ、エンティティ E-007 / E-008 / E-018 を削除し E-006 / E-015 / E-016 / E-017 / E-019 / E-020 / E-027 を追従。latest / diff ともバリデーション PASS、RDRA/NFR 網羅率 100%",
+      "artifact_refs": [
+        "arch/events/20261010_202000_feedback_impl_feedback_dcd8234d/arch-design-diff.yaml",
+        "arch/events/20261010_202000_feedback_impl_feedback_dcd8234d/decisions/arch-decision-020.yaml"
+      ]
+    },
+    {
+      "work_unit_id": "CR-dcd8234d-001#1",
+      "status": "changed",
+      "reason": "クロスチェック簡素化で速報の設定検証が env の起動コマンド 1 キーの検証(絶対パスで存在し実行可能・{job_id} を含む)に縮退し CSV クォート解析の共有が不要になったため、validate-config.sh のティア間委譲を無くし facade 単独で設定検証を完結させる案を採用した。ティア間のシェル関数共有・source の規則と、同一プロセスの名前空間の一般規則(ティア固有接頭辞・共有面の限定公開・副作用禁止・再定義禁止)をクロスティアルール CTR-007 として明記し、速報ティアの CLP-003 から参照した。CLI 契約の tier_note / owner_tier の委譲記述の除去と UC ティア仕様の追従は下流 spec の責務",
+      "artifact_refs": [
+        "arch/events/20261010_202000_feedback_impl_feedback_dcd8234d/arch-design-diff.yaml",
+        "arch/events/20261010_202000_feedback_impl_feedback_dcd8234d/decisions/arch-decision-019.yaml"
+      ]
+    },
+    {
+      "work_unit_id": "CR-dcd8234d-002#1",
+      "status": "not_impacted",
+      "reason": "arch は受け入れ基準・UC の E2E 完了条件(Then)を記述しないため本 CR は arch に影響しない。UC 仕様の Then から実装構造(同じ CSV クォート解析関数が使われ)を外す書き換えは下流 spec の責務。委譲撤廃(CTR-007)により当該実装構造への依存自体も解消される",
+      "artifact_refs": []
+    },
+    {
+      "work_unit_id": "CR-dcd8234d-003#1",
+      "status": "changed",
+      "reason": "同一プロセスに source されるティアの名前空間の規則を CTR-007 に一般規則として追加した(ティア固有接頭辞・facade 共有面の限定公開・検証関数ファイルの副作用禁止・他ティア名の再定義禁止)。委譲撤廃により同一プロセスに source されるティアは facade 1 つになり衝突の主体は消えるが、将来のティア追加に備えた一般規則として残した。CTR-007 と CLP-003 の注記で読める",
+      "artifact_refs": [
+        "arch/events/20261010_202000_feedback_impl_feedback_dcd8234d/arch-design-diff.yaml",
+        "arch/events/20261010_202000_feedback_impl_feedback_dcd8234d/decisions/arch-decision-019.yaml"
+      ]
+    }
+  ],
+  "work_unit_evidence_refs": [
+    {
+      "work_unit_id": "CR-dcd8234d-007#1",
+      "path": "arch/events/20261010_202000_feedback_impl_feedback_dcd8234d/arch-design-diff.yaml",
+      "sha256": "68ea638dc73b3b53294eae592fc715b8e5497a2dd133a5a6255b4a5cc534daa7"
+    },
+    {
+      "work_unit_id": "CR-dcd8234d-007#1",
+      "path": "arch/events/20261010_202000_feedback_impl_feedback_dcd8234d/decisions/arch-decision-020.yaml",
+      "sha256": "59eafec331f19c238d42d6f72fdaba218d2b12568e7a4893d1835bded00d6460"
+    },
+    {
+      "work_unit_id": "CR-dcd8234d-001#1",
+      "path": "arch/events/20261010_202000_feedback_impl_feedback_dcd8234d/arch-design-diff.yaml",
+      "sha256": "68ea638dc73b3b53294eae592fc715b8e5497a2dd133a5a6255b4a5cc534daa7"
+    },
+    {
+      "work_unit_id": "CR-dcd8234d-001#1",
+      "path": "arch/events/20261010_202000_feedback_impl_feedback_dcd8234d/decisions/arch-decision-019.yaml",
+      "sha256": "2aba62483a5895ad41c6a7bfdebf1cc42a97455f65e1b7e07780508e16d207da"
+    },
+    {
+      "work_unit_id": "CR-dcd8234d-003#1",
+      "path": "arch/events/20261010_202000_feedback_impl_feedback_dcd8234d/arch-design-diff.yaml",
+      "sha256": "68ea638dc73b3b53294eae592fc715b8e5497a2dd133a5a6255b4a5cc534daa7"
+    },
+    {
+      "work_unit_id": "CR-dcd8234d-003#1",
+      "path": "arch/events/20261010_202000_feedback_impl_feedback_dcd8234d/decisions/arch-decision-019.yaml",
+      "sha256": "2aba62483a5895ad41c6a7bfdebf1cc42a97455f65e1b7e07780508e16d207da"
+    }
+  ],
+  "domain_event_refs": [
+    {
+      "path": "arch/events/20261010_202000_feedback_impl_feedback_dcd8234d/event.json",
+      "sha256": "fa1b9f95c9a9dc38eacc7de7b81d311aeb36f6b153f90bfe7b44e5420f2bc275"
+    },
+    {
+      "path": "arch/events/20261010_202000_feedback_impl_feedback_dcd8234d/arch-design-diff.yaml",
+      "sha256": "68ea638dc73b3b53294eae592fc715b8e5497a2dd133a5a6255b4a5cc534daa7"
+    }
+  ],
+  "feedback_request": {
+    "feedback_request_id": "20261010_104636_impl_feedback_dcd8234d",
+    "input_sha256": "d4ddd211752998f5480a51d9dddfa3a58937badd62f72092c9257ed1384448fd",
+    "request_ids": [
+      "CR-dcd8234d-007",
+      "CR-dcd8234d-001",
+      "CR-dcd8234d-002",
+      "CR-dcd8234d-003"
+    ],
+    "work_unit_ids": [
+      "CR-dcd8234d-007#1",
+      "CR-dcd8234d-001#1",
+      "CR-dcd8234d-002#1",
+      "CR-dcd8234d-003#1"
+    ]
+  },
+  "post_execution_basis": {
+    "repository_head": "a36dbc1031d7f25675bb51393810f9377cabf59e",
+    "latest_domain_event_ids": {
+      "requirements": {
+        "rdra/events": "20261010_200000_feedback_impl_feedback_dcd8234d",
+        "usdm/events": "20261010_200000_feedback_impl_feedback_dcd8234d"
+      },
+      "quality_attributes": {
+        "nfr/events": "20261010_201000_feedback_impl_feedback_dcd8234d"
+      },
+      "architecture": {
+        "arch/events": "20261010_202000_feedback_impl_feedback_dcd8234d"
+      },
+      "infrastructure": {
+        "infra/events": "20260921_094000_feedback_impl_feedback_eff24f55"
+      },
+      "design_system": {
+        "design/events": null
+      },
+      "spec": {
+        "specs/events": "20260923_112000_feedback_impl_feedback_eff24f55_cycle2"
+      },
+      "spec_stories": {
+        "design/events": null
+      }
+    },
+    "domain_event_root_snapshots": {
+      "rdra/events": {
+        "head_event_id": "20261010_200000_feedback_impl_feedback_dcd8234d",
+        "head_event_sha256": "9a80cc0094748b411ef776b9b336129555da29e7f147697d045eb9160d145bc5",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency",
+          "20260908_011000_feedback_slot_status_wording",
+          "20260921_084000_feedback_impl_feedback_eff24f55",
+          "20261010_200000_feedback_impl_feedback_dcd8234d"
+        ],
+        "event_set_sha256": "614436dc22fc9bbebf353b7ec6b4ff6ca3eb3966bbd810ab461e345123ee69b7",
+        "latest_tree_sha256": "3d0b9856826a0a3c1cdab6ccbd73781e831f171165490e90989415aaa5296114"
+      },
+      "usdm/events": {
+        "head_event_id": "20261010_200000_feedback_impl_feedback_dcd8234d",
+        "head_event_sha256": "f3c0d898c01f28aafb6445107264c0310a5d50774331812624fc89f7401eea7c",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency",
+          "20260908_011000_feedback_slot_status_wording",
+          "20260921_084000_feedback_impl_feedback_eff24f55",
+          "20261010_200000_feedback_impl_feedback_dcd8234d"
+        ],
+        "event_set_sha256": "614436dc22fc9bbebf353b7ec6b4ff6ca3eb3966bbd810ab461e345123ee69b7",
+        "latest_tree_sha256": "ca018d4ac7287eadffb26e3ac124e193a804a4657b85293da9b262953b11e3d7"
+      },
+      "nfr/events": {
+        "head_event_id": "20261010_201000_feedback_impl_feedback_dcd8234d",
+        "head_event_sha256": "fb98a74807d68e02d214f009cb5e2a3929c133c71b217ed5a49cbb24a1e6d379",
+        "event_ids": [
+          "20260830_183726_initial_nfr",
+          "20260905_085000_feedback_todo_resolution",
+          "20260907_013000_feedback_todo_followup",
+          "20260907_120000_feedback_abort_consistency",
+          "20260908_013000_feedback_slot_status_wording",
+          "20260921_090000_feedback_impl_feedback_eff24f55",
+          "20261010_201000_feedback_impl_feedback_dcd8234d"
+        ],
+        "event_set_sha256": "3203f8419d84259aec2a11a113333eaa9dba1d5ea3333195cfcbf1facc6c3aab",
+        "latest_tree_sha256": "24f652e932a342a58ccd87291fa6523e66c6c274a88d3563253c085480e15def"
+      },
+      "arch/events": {
+        "head_event_id": "20261010_202000_feedback_impl_feedback_dcd8234d",
+        "head_event_sha256": "0e77694bbe3cfd58b8332dedf214e3e470dcfd77ce252057acdda86d645a58db",
+        "event_ids": [
+          "20260830_184457_initial_arch",
+          "20260830_202427_arch_infra_feedback_20260830_190412_infra_product_design",
+          "20260905_091000_feedback_todo_resolution",
+          "20260907_015000_feedback_todo_followup",
+          "20260907_122000_feedback_abort_consistency",
+          "20260908_015000_feedback_slot_status_wording",
+          "20260921_092000_feedback_impl_feedback_eff24f55",
+          "20261010_202000_feedback_impl_feedback_dcd8234d"
+        ],
+        "event_set_sha256": "75edbf8442f5d62ca61a13f8ccc3fe17d5ea5a82fdec15d04d3d118a7f5c112a",
+        "latest_tree_sha256": "8a89784f41dfe0ea7192f0210cbfd59a6db43d1dab010f0c52097422275f0c54"
+      },
+      "infra/events": {
+        "head_event_id": "20260921_094000_feedback_impl_feedback_eff24f55",
+        "head_event_sha256": "4e8aac19d2385f68628db8d2a2e56c897996498309c8d73cb6e18a701a0229ab",
+        "event_ids": [
+          "20260830_190412_infra_product_design",
+          "20260905_093000_feedback_todo_resolution",
+          "20260907_021000_feedback_todo_followup",
+          "20260907_124000_feedback_abort_consistency",
+          "20260908_021000_feedback_slot_status_wording",
+          "20260921_094000_feedback_impl_feedback_eff24f55"
+        ],
+        "event_set_sha256": "83fa5473706346251afed8bdb2d56fdec0a843d1b9b810c1a161faac02d6d9a3",
+        "latest_tree_sha256": "639f743d85b997e1297610b2a7c2db41fd004e74473f96ec6292b601509a6331"
+      },
+      "design/events": {
+        "head_event_id": null,
+        "head_event_sha256": null,
+        "event_ids": [],
+        "event_set_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "latest_tree_sha256": null
+      },
+      "specs/events": {
+        "head_event_id": "20260923_112000_feedback_impl_feedback_eff24f55_cycle2",
+        "head_event_sha256": "733252b1eb4974060d0214f300325fff032e02dc3280d09f4f6b8d3bbb354e7f",
+        "event_ids": [
+          "20260830_202851_spec_generation",
+          "20260905_100000_feedback_todo_resolution",
+          "20260907_024000_feedback_todo_followup",
+          "20260907_131000_feedback_abort_consistency",
+          "20260908_024000_feedback_slot_status_wording",
+          "20260908_062000_feedback_spec_machine_readable",
+          "20260917_050000_feedback_impl_feedback_fd678b04",
+          "20260917_100000_feedback_impl_feedback_fd678b04_cycle2",
+          "20260921_100000_feedback_impl_feedback_eff24f55",
+          "20260923_112000_feedback_impl_feedback_eff24f55_cycle2"
+        ],
+        "event_set_sha256": "911c360cf82cf12de3c8d314c54915af59ec52db248b325427f21adf0422be84",
+        "latest_tree_sha256": "bd19eaf49f9ce40c4d62fee13e8207cca97a117132a86f7e62d8f8cdfa879ae1"
+      }
+    }
+  }
+}

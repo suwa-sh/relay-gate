@@ -1,0 +1,34 @@
+event_id: 20261010_092935_s4_tier_impl_completed_dcd8234d_tier_rapid_crosscheck_a2
+type: stage_completed
+uc_id: dcd8234d
+stage: S4
+tier: tier-rapid-crosscheck
+attempt: 2
+payload:
+  manifest_sha256: 81d5dba283cd5c746d42428fa2713f0e7f2d15891575284e8b93e17b6b2d9f93
+  manifest_projection: v2
+  result: pass
+  gates:
+    format: pass
+    lint: pass
+    tdd: pass
+    bdd_tier: pass
+  tdd_tests: 89
+  bdd_scenarios: 4
+  linux_tdd: pass (relay-gate-ci:ubuntu24, LANG=C.UTF-8)
+  assumptions:
+    count: 17
+    sha256: 33dd85da13bdcaf709ab9c022a48d49ec1fab2a280510926fa6bc240effd81be
+  findings_resolved:
+  - F-001
+  - F-002
+  - F-004
+  - F-010
+  - F-013
+  - F-018
+  - F-021
+  - F-022
+  findings_source: attempt-1/S5_verify.tier-rapid-crosscheck.findings.yaml
+  issues:
+  - docs/impl/latest/dcd8234d/issues/20261010_092630_tier-handler-function-namespace-collision.md
+created_at: '2026-10-10T09:29:35+09:00'

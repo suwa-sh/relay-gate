@@ -1,0 +1,146 @@
+stage: S2
+uc_id: dcd8234d
+manifest_sha256: 1ee2a54f9edf2f70cd38c3806fc87bcc0107b2c9e5f47c43f5add49352f05015
+manifest_projection: v2
+result: pass
+scaffold_mode: initial
+branch_slug: define-crosscheck-job-map-and-comparison-definitions
+attempt: 1
+red_baseline: pass
+red_baseline_note: "4 段すべてが「未実装」を理由に fail する。UC BDD / tier BDD / ATDD は S2 skeleton の not implemented Error(Given で fail し When / Then は skipped)。TDD は facade/bin/validate-config.sh が委譲先未定義で返す 'error: validation kind is not implemented option=--crosscheck-job-map / --target-catalog'(終了コード 6)で fail。パースエラー・設定ミス・undefined step・ambiguous step は 0 件"
+transcription_check:
+  method: "spec.md / tier-rapid-crosscheck.md / tier-final-crosscheck.md の gherkin ブロックを抽出してそのまま feature へ書き出すスクリプトで生成(手入力なし)。先頭に出典コメント 2 行を付与。生成後に feature 本文(3 行目以降)と抽出ブロックの完全一致を node で確認"
+  uc_feature_verbatim: true
+  tier_feature_verbatim: true
+generated:
+  uc_bdd:
+    feature: features/uc/define-crosscheck-job-map-and-comparison-definitions.feature
+    steps: features/uc/steps/define-crosscheck-job-map-and-comparison-definitions.steps.js
+    source: "docs/specs/latest/適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/spec.md#E2E完了条件(BDD)"
+    scenarios: 7
+    scenarios_note: "正常系 3 / 異常系 4 の 2 ブロックを結合"
+    skeleton_steps: 25
+    skeleton_note: "一意な step 文言 25 件(Given 10 / When 5 / Then 10)を feature のリテラル完全一致で定義し、全件 'not implemented (S2 test-scaffold, UC BDD)' を throw する。DocString 付き Given 2 件も文言は同じ。World / Before / After は configure-feature-flags.steps.js の定義を共有(setWorldConstructor を呼ばない)。既存 UC の step 文言との衝突は無い(ambiguous 0 件)"
+    cross_uc_scenarios: 2
+    cross_uc_note: "SPEC-004-01 Scenario の Given(比較ツールのスタブ。外部システム)と SPEC-004-04 Scenario の Then 前半(slot ジョブマップと同じ CSV クォート解析関数が使われる。tier-facade の成果物)。ハーネス注入は不要(fixture 配置と判定の代替で足りる)。詳細は issues の cross-uc-scenarios"
+  atdd:
+    feature: features/atdd/SPEC-004-04.feature
+    steps: features/atdd/steps/define-crosscheck-job-map-and-comparison-definitions.steps.js
+    scenarios:
+      - SPEC-004-04-5
+    tag: "@atdd_SPEC-004-04-5"
+    feature_body_changed: false
+    tag_added: false
+    note: "タグ @atdd_SPEC-004-04-5 は bootstrap P7 生成時点で付与済み。feature 本文は変更していない。step skeleton 3 件(Given / When / Then)を追加。既存 ATDD step との文言衝突は無い"
+  tier_bdd:
+    - tier: tier-rapid-crosscheck
+      feature: rapid-crosscheck/features/define-crosscheck-job-map-and-comparison-definitions.feature
+      steps: rapid-crosscheck/features/steps/define-crosscheck-job-map-and-comparison-definitions.steps.js
+      source: "docs/specs/latest/適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/tier-rapid-crosscheck.md#ティア完了条件(BDD)"
+      scenarios: 4
+      skeleton_steps: 9
+      skeleton_note: "一意な step 文言 9 件(Given 4 / When 1 / Then 4)。本 tier には先行 UC の step ファイルが無いため Before / After は定義していない(S4 で追加する)"
+    - tier: tier-final-crosscheck
+      feature: final-crosscheck/features/define-crosscheck-job-map-and-comparison-definitions.feature
+      steps: final-crosscheck/features/steps/define-crosscheck-job-map-and-comparison-definitions.steps.js
+      source: "docs/specs/latest/適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/tier-final-crosscheck.md#ティア完了条件(BDD)"
+      scenarios: 4
+      skeleton_steps: 9
+      skeleton_note: "一意な step 文言 9 件(Given 4 / When 1 / Then 4)。Before / After は S4 で追加する"
+  tdd:
+    - tier: tier-rapid-crosscheck
+      files:
+        - rapid-crosscheck/test/presentation/validate_config_crosscheck_job_map.bats
+      tests: 4
+      target: "validate-config.sh --crosscheck-job-map(facade/bin/validate-config.sh を実プロセスとして起動。一時ディレクトリの実ファイル)"
+      focus:
+        - "妥当なジョブマップで出力契約の 7 行を固定順に出す(config= / path: / rows= / target_catalog_path: / catalog_version= / exit_code_contract= / status=valid)"
+        - "ファイル不在で config file not found(終了コード 2)"
+        - "exit_code_contract 宣言の欠落で declaration not found(終了コード 2)"
+        - "job_id 重複で初出行を含む lines=5,6(終了コード 2)"
+    - tier: tier-final-crosscheck
+      files:
+        - final-crosscheck/test/presentation/validate_config_target_catalog.bats
+      tests: 4
+      target: "validate-config.sh --target-catalog(facade/bin/validate-config.sh を実プロセスとして起動。一時ディレクトリの実ファイル)"
+      focus:
+        - "妥当なカタログで出力契約の 7 行を固定順に出す(config= / path: / rows= / catalog_versions= / tables= / files= / status=valid)"
+        - "ファイル不在で config file not found(終了コード 2)"
+        - "target_type=view で行番号付き error(終了コード 2)"
+        - "同一版内の対象重複で初出行を含む lines=2,3(終了コード 2)"
+test_runs:
+  - stage: uc_bdd
+    cwd: "."
+    command: "npx cucumber-js --config cucumber.cjs features/uc"
+    exit_code: 1
+    summary: "43 scenarios (7 failed, 36 passed), 168 steps (7 failed, 21 skipped, 140 passed)"
+    fail_reason: not_implemented
+    failed_scope: "define-crosscheck-job-map-and-comparison-definitions.feature の 7 Scenario 全件(S2 skeleton の not implemented Error)。先行 UC の 36 Scenario は全件 pass"
+    undefined_steps: 0
+    ambiguous_steps: 0
+  - stage: tier_bdd
+    tier: tier-rapid-crosscheck
+    cwd: rapid-crosscheck
+    command: "npx cucumber-js --config ../cucumber.cjs features"
+    exit_code: 1
+    summary: "4 scenarios (4 failed), 12 steps (4 failed, 8 skipped)"
+    fail_reason: not_implemented
+    undefined_steps: 0
+    ambiguous_steps: 0
+  - stage: tier_bdd
+    tier: tier-final-crosscheck
+    cwd: final-crosscheck
+    command: "npx cucumber-js --config ../cucumber.cjs features"
+    exit_code: 1
+    summary: "4 scenarios (4 failed), 12 steps (4 failed, 8 skipped)"
+    fail_reason: not_implemented
+    undefined_steps: 0
+    ambiguous_steps: 0
+  - stage: tdd
+    tier: tier-rapid-crosscheck
+    cwd: rapid-crosscheck
+    command: "bats -r test"
+    exit_code: 1
+    summary: "4 tests, 0 ok, 4 not ok"
+    fail_reason: not_implemented
+    fail_detail: "facade/bin/validate-config.sh が 'error: validation kind is not implemented option=--crosscheck-job-map' を返し終了コード 6(期待 0 / 2 と不一致)。委譲先 validate_config_crosscheck_job_map が未定義"
+  - stage: tdd
+    tier: tier-final-crosscheck
+    cwd: final-crosscheck
+    command: "bats -r test"
+    exit_code: 1
+    summary: "4 tests, 0 ok, 4 not ok"
+    fail_reason: not_implemented
+    fail_detail: "facade/bin/validate-config.sh が 'error: validation kind is not implemented option=--target-catalog' を返し終了コード 6(期待 0 / 2 と不一致)。委譲先 validate_config_target_catalog が未定義"
+  - stage: atdd
+    cwd: "."
+    command: "npx cucumber-js --config cucumber.cjs features/atdd --tags '@atdd_SPEC-004-04-5'"
+    exit_code: 1
+    summary: "1 scenario (1 failed), 3 steps (1 failed, 2 skipped)"
+    fail_reason: not_implemented
+    scenario_count_matches_atdd_scenarios: true
+format_check:
+  - tier: tier-rapid-crosscheck
+    command: "shfmt -d ."
+    exit_code: 0
+  - tier: tier-final-crosscheck
+    command: "shfmt -d ."
+    exit_code: 0
+lint:
+  - tier: tier-rapid-crosscheck
+    command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+    exit_code: 0
+    note: "src/ は空、test/ は .bats のみ(対象ファイル 0 件で exit 0)"
+  - tier: tier-final-crosscheck
+    command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+    exit_code: 0
+    note: "src/ は空、test/ は .bats のみ(対象ファイル 0 件で exit 0)"
+dom_snapshot_tests: not_applicable
+dom_snapshot_note: "has_design_system: false。frontend tier が無いため DOM 一致テスト・共通 helper・結線 module は生成しない。矛盾 3 条件の確認対象も無い"
+issues:
+  - docs/impl/latest/dcd8234d/issues/20261010_084142_cross-uc-scenarios.md
+  - docs/impl/latest/dcd8234d/issues/20261010_084142_facade-dispatch-and-csv-parser-outside-tiers.md
+issues_note: "1 件目は UC 横断 Scenario の一覧(責務分担の記録。ハーネス注入は不要)。2 件目は仕様と write-set の不整合: validate-config.sh の委譲先登録(source 行)と CSV クォート解析関数が tier-facade(本 UC の tier 外)にあり、本 UC の write-set だけでは仕様どおりの構成で動かない。S2 の blocker ではないが S3 / S4 の着手前に扱い(write-set 例外 / facade 側の拡張フック / uc-map tiers の追加)を決める必要がある"
+write_set_note: "facade/ 配下・features/atdd/ の feature 本文・docs/specs は変更していない"
+completed_at: '2026-10-10T08:45:00+09:00'
+completed_by: dist-impl-implement@0.14.1

@@ -1,0 +1,47 @@
+{
+  "schema_version": "distillery.arch-feedback-event/v1",
+  "event_id": "20261101_103000_feedback_impl_feedback_dcd8234d",
+  "created_at": "2026-11-01T10:30:00Z",
+  "stage": "architecture",
+  "trigger_event": "usdm:20261101_101000_feedback_impl_feedback_dcd8234d, rdra:20261101_101000_feedback_impl_feedback_dcd8234d, nfr:20261101_102000_feedback_impl_feedback_dcd8234d",
+  "feedback_request": {
+    "feedback_request_id": "20261027_091000_impl_feedback_dcd8234d",
+    "input_sha256": "37b8b54d7a4a8b1a978e389924c4b6e3ee9a1d276823a9d877f10fd01b866ca8",
+    "request_ids": [
+      "CR-dcd8234d-009"
+    ],
+    "work_unit_ids": [
+      "CR-dcd8234d-009#1"
+    ]
+  },
+  "members": [
+    {
+      "path": "arch/events/20261101_103000_feedback_impl_feedback_dcd8234d/_changes.md",
+      "sha256": "53e484cfa96c5a7ec215e98c97eb244242e53b753464ff120cf4e76d408464f4"
+    },
+    {
+      "path": "arch/events/20261101_103000_feedback_impl_feedback_dcd8234d/_inference.md",
+      "sha256": "20eb0605ab83f2f44fc12c34d23d330fe0f5a1679df4068fac5c86e480612665"
+    },
+    {
+      "path": "arch/events/20261101_103000_feedback_impl_feedback_dcd8234d/arch-design-diff.yaml",
+      "sha256": "5c8509156a8d6271e74cdd913bd34af59fd4a1521e3dd9883d9eb18369b60cda"
+    },
+    {
+      "path": "arch/events/20261101_103000_feedback_impl_feedback_dcd8234d/arch-design.md",
+      "sha256": "77f2c65de476fa56defc3d8bc738f75584d95def5df31000ee2a3306ef186f91"
+    },
+    {
+      "path": "arch/events/20261101_103000_feedback_impl_feedback_dcd8234d/coverage-report.md",
+      "sha256": "e68305e4953275e89658cee96c74e21c543531a2d7076b48f483af1b1a9cf0e9"
+    },
+    {
+      "path": "arch/events/20261101_103000_feedback_impl_feedback_dcd8234d/decisions/arch-decision-021.yaml",
+      "sha256": "6dcd300837105de2e0e94229f6382235d64999698b4323998d2d311508d22120"
+    },
+    {
+      "path": "arch/events/20261101_103000_feedback_impl_feedback_dcd8234d/source.txt",
+      "sha256": "68e024ab8d8abc63f7e1fc0e0efaa442b791e3abaf8bea80c337a80ba55cbcf3"
+    }
+  ]
+}

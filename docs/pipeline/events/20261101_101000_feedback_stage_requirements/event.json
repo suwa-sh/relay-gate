@@ -1,0 +1,195 @@
+{
+  "event_id": "20261101_101000_feedback_stage_requirements",
+  "type": "feedback_stage_completed",
+  "run_id": "feedback-20261027_091000_impl_feedback_dcd8234d-20261101_103236-93477",
+  "attempt": 1,
+  "created_at": "2026-11-01T10:10:00Z",
+  "stage": "requirements",
+  "direct_work_unit_ids": [
+    "CR-dcd8234d-009#1"
+  ],
+  "causal_work_unit_ids": [
+    "CR-dcd8234d-009#1"
+  ],
+  "work_unit_results": [
+    {
+      "work_unit_id": "CR-dcd8234d-009#1",
+      "disposition": "applied",
+      "reason": "USDM SPEC-004-04 の specification 本文で、設定検証が起動コマンドに対して行う検証を 2 点から 3 点にした(3 点目: 速報の起動コマンドで {params} を使うなら、引数 1 つ全体がちょうど {params} であること)。「検証はコマンド部分に対して行い、引数部分の内容は検査しない」を「{job_id} の有無と {params} の位置のほかは、引数部分の内容を検査しない」に改めた。受け入れ基準 10 の Given を、仕様で違反になる入力を含まないよう「起動コマンドの引数部分が {params} を引数の一部に含まない任意の文字列で、速報の起動コマンドの場合は {job_id} を含む」に絞り、{params} が引数の一部に含まれる(--args={params})と非 0 の終了コードで終了し stderr に {params} が引数全体でない旨の error 行がキー名と値つきで 1 行出る受け入れ基準を末尾に 1 件追加した。既存の受け入れ基準の順序と番号は変えていない。RDRA の情報・状態・条件・バリエーションは検証項目の個数を持たないため変更していない",
+      "artifact_refs": [
+        "usdm/events/20261101_101000_feedback_impl_feedback_dcd8234d/requirements.yaml"
+      ]
+    }
+  ],
+  "reconciliation_results": [
+    {
+      "work_unit_id": "CR-dcd8234d-009#1",
+      "status": "changed",
+      "reason": "USDM SPEC-004-04 の specification 本文で、設定検証が起動コマンドに対して行う検証を 2 点から 3 点にした(3 点目: 速報の起動コマンドで {params} を使うなら、引数 1 つ全体がちょうど {params} であること)。「検証はコマンド部分に対して行い、引数部分の内容は検査しない」を「{job_id} の有無と {params} の位置のほかは、引数部分の内容を検査しない」に改めた。受け入れ基準 10 の Given を、仕様で違反になる入力を含まないよう「起動コマンドの引数部分が {params} を引数の一部に含まない任意の文字列で、速報の起動コマンドの場合は {job_id} を含む」に絞り、{params} が引数の一部に含まれる(--args={params})と非 0 の終了コードで終了し stderr に {params} が引数全体でない旨の error 行がキー名と値つきで 1 行出る受け入れ基準を末尾に 1 件追加した。既存の受け入れ基準の順序と番号は変えていない。RDRA の情報・状態・条件・バリエーションは検証項目の個数を持たないため変更していない",
+      "artifact_refs": [
+        "usdm/events/20261101_101000_feedback_impl_feedback_dcd8234d/requirements.yaml"
+      ]
+    }
+  ],
+  "work_unit_evidence_refs": [
+    {
+      "work_unit_id": "CR-dcd8234d-009#1",
+      "path": "usdm/events/20261101_101000_feedback_impl_feedback_dcd8234d/requirements.yaml",
+      "sha256": "ef61ba13051743bf698a2ea2bc00f042c531de4486df08f202a8b7091c0ba8c2"
+    }
+  ],
+  "domain_event_refs": [
+    {
+      "path": "rdra/events/20261101_101000_feedback_impl_feedback_dcd8234d/feedback-disposition.json",
+      "sha256": "ecc2a17a714188dac5f006f771cde523ce9fffedfc90b0eb69bc102c32106adb"
+    },
+    {
+      "path": "usdm/events/20261101_101000_feedback_impl_feedback_dcd8234d/requirements.yaml",
+      "sha256": "ef61ba13051743bf698a2ea2bc00f042c531de4486df08f202a8b7091c0ba8c2"
+    }
+  ],
+  "feedback_request": {
+    "feedback_request_id": "20261027_091000_impl_feedback_dcd8234d",
+    "input_sha256": "37b8b54d7a4a8b1a978e389924c4b6e3ee9a1d276823a9d877f10fd01b866ca8",
+    "request_ids": [
+      "CR-dcd8234d-009"
+    ],
+    "work_unit_ids": [
+      "CR-dcd8234d-009#1"
+    ]
+  },
+  "post_execution_basis": {
+    "repository_head": "fd23e411d989d740cb191d08d90b42bf46939b96",
+    "latest_domain_event_ids": {
+      "requirements": {
+        "rdra/events": "20261101_101000_feedback_impl_feedback_dcd8234d",
+        "usdm/events": "20261101_101000_feedback_impl_feedback_dcd8234d"
+      },
+      "quality_attributes": {
+        "nfr/events": "20261010_201000_feedback_impl_feedback_dcd8234d"
+      },
+      "architecture": {
+        "arch/events": "20261010_202000_feedback_impl_feedback_dcd8234d"
+      },
+      "infrastructure": {
+        "infra/events": "20261010_203000_feedback_impl_feedback_dcd8234d"
+      },
+      "design_system": {
+        "design/events": null
+      },
+      "spec": {
+        "specs/events": "20261027_055000_feedback_impl_feedback_dcd8234d"
+      },
+      "spec_stories": {
+        "design/events": null
+      }
+    },
+    "domain_event_root_snapshots": {
+      "rdra/events": {
+        "head_event_id": "20261101_101000_feedback_impl_feedback_dcd8234d",
+        "head_event_sha256": "acc4d4b4e23e2d098893b97014641b9f86ea6466ac56b81f243e29ce2e03f408",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency",
+          "20260908_011000_feedback_slot_status_wording",
+          "20260921_084000_feedback_impl_feedback_eff24f55",
+          "20261010_200000_feedback_impl_feedback_dcd8234d",
+          "20261101_101000_feedback_impl_feedback_dcd8234d"
+        ],
+        "event_set_sha256": "9955712fb043730352242e4123ae142ac78892768f537f491f0954893ca81d9b",
+        "latest_tree_sha256": "3d0b9856826a0a3c1cdab6ccbd73781e831f171165490e90989415aaa5296114"
+      },
+      "usdm/events": {
+        "head_event_id": "20261101_101000_feedback_impl_feedback_dcd8234d",
+        "head_event_sha256": "390e63cbc75fc479087a742c3d3fcc8af7db445893fb9d8c0c59599a3bb54049",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency",
+          "20260908_011000_feedback_slot_status_wording",
+          "20260921_084000_feedback_impl_feedback_eff24f55",
+          "20261010_200000_feedback_impl_feedback_dcd8234d",
+          "20261101_101000_feedback_impl_feedback_dcd8234d"
+        ],
+        "event_set_sha256": "9955712fb043730352242e4123ae142ac78892768f537f491f0954893ca81d9b",
+        "latest_tree_sha256": "8528a44e0c28cc426bc1cc0d4e5cd382ca66c78cf7f5d4a2428c10d7e3a8b9cd"
+      },
+      "nfr/events": {
+        "head_event_id": "20261010_201000_feedback_impl_feedback_dcd8234d",
+        "head_event_sha256": "fb98a74807d68e02d214f009cb5e2a3929c133c71b217ed5a49cbb24a1e6d379",
+        "event_ids": [
+          "20260830_183726_initial_nfr",
+          "20260905_085000_feedback_todo_resolution",
+          "20260907_013000_feedback_todo_followup",
+          "20260907_120000_feedback_abort_consistency",
+          "20260908_013000_feedback_slot_status_wording",
+          "20260921_090000_feedback_impl_feedback_eff24f55",
+          "20261010_201000_feedback_impl_feedback_dcd8234d"
+        ],
+        "event_set_sha256": "3203f8419d84259aec2a11a113333eaa9dba1d5ea3333195cfcbf1facc6c3aab",
+        "latest_tree_sha256": "24f652e932a342a58ccd87291fa6523e66c6c274a88d3563253c085480e15def"
+      },
+      "arch/events": {
+        "head_event_id": "20261010_202000_feedback_impl_feedback_dcd8234d",
+        "head_event_sha256": "0e77694bbe3cfd58b8332dedf214e3e470dcfd77ce252057acdda86d645a58db",
+        "event_ids": [
+          "20260830_184457_initial_arch",
+          "20260830_202427_arch_infra_feedback_20260830_190412_infra_product_design",
+          "20260905_091000_feedback_todo_resolution",
+          "20260907_015000_feedback_todo_followup",
+          "20260907_122000_feedback_abort_consistency",
+          "20260908_015000_feedback_slot_status_wording",
+          "20260921_092000_feedback_impl_feedback_eff24f55",
+          "20261010_202000_feedback_impl_feedback_dcd8234d"
+        ],
+        "event_set_sha256": "75edbf8442f5d62ca61a13f8ccc3fe17d5ea5a82fdec15d04d3d118a7f5c112a",
+        "latest_tree_sha256": "8a89784f41dfe0ea7192f0210cbfd59a6db43d1dab010f0c52097422275f0c54"
+      },
+      "infra/events": {
+        "head_event_id": "20261010_203000_feedback_impl_feedback_dcd8234d",
+        "head_event_sha256": "2559c70b42979c16ccfc5ba8179fec1108e0c82d16f12f14316ba3b5bf947dd9",
+        "event_ids": [
+          "20260830_190412_infra_product_design",
+          "20260905_093000_feedback_todo_resolution",
+          "20260907_021000_feedback_todo_followup",
+          "20260907_124000_feedback_abort_consistency",
+          "20260908_021000_feedback_slot_status_wording",
+          "20260921_094000_feedback_impl_feedback_eff24f55",
+          "20261010_203000_feedback_impl_feedback_dcd8234d"
+        ],
+        "event_set_sha256": "c56dc85271ed5edc4bfd664153a20f7778d2cc9fd5292baf189f3b90b1b3ddb8",
+        "latest_tree_sha256": "d10377e522e03db8f1afdc88774f27bcbf19df41a6da542350beeff780f308e9"
+      },
+      "design/events": {
+        "head_event_id": null,
+        "head_event_sha256": null,
+        "event_ids": [],
+        "event_set_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "latest_tree_sha256": null
+      },
+      "specs/events": {
+        "head_event_id": "20261027_055000_feedback_impl_feedback_dcd8234d",
+        "head_event_sha256": "f37518145340c2db37991a5fe8e9ca3fe5d6ab71c6dddb1de35c724d27c22aeb",
+        "event_ids": [
+          "20260830_202851_spec_generation",
+          "20260905_100000_feedback_todo_resolution",
+          "20260907_024000_feedback_todo_followup",
+          "20260907_131000_feedback_abort_consistency",
+          "20260908_024000_feedback_slot_status_wording",
+          "20260908_062000_feedback_spec_machine_readable",
+          "20260917_050000_feedback_impl_feedback_fd678b04",
+          "20260917_100000_feedback_impl_feedback_fd678b04_cycle2",
+          "20260921_100000_feedback_impl_feedback_eff24f55",
+          "20260923_112000_feedback_impl_feedback_eff24f55_cycle2",
+          "20261010_204000_feedback_impl_feedback_dcd8234d",
+          "20261027_055000_feedback_impl_feedback_dcd8234d"
+        ],
+        "event_set_sha256": "819eb45cca2ca8a3dd54271ecdd4c98f539d3bda3769645047f4f468a9197b1e",
+        "latest_tree_sha256": "df8d0a743ae04de363a6c417e969aa97391ffae934296d2d2efc15e23c689493"
+      }
+    }
+  }
+}

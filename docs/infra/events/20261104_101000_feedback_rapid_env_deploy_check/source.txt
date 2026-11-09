@@ -1,0 +1,6 @@
+feedback request 20261104_rapid_env_deploy_check(構築手順の速報クロスチェック設定の配置時検査を、ファイルの存在確認だけにする)に基づくインフラ設計の差分更新。上流 latest は変更なし(trigger_event: infra:20261104_091000_feedback_external_review_fixes)。config ロールの rapid-crosscheck.env の配置時検査を存在確認だけに改めた。同じロールの final-crosscheck.env は構築の変数 relay_gate_final_crosscheck_enabled(既定 false)で使う設置だけ配置して存在を確認し、認証情報らしい値の検査は警告だけにした。確報の設定は実行ホストと DB セグメントの両方に置き、false では両方から消す(site.yml の DB セグメントにも config ロールを割り当てた)。以上は 2026-11-04 に利用者が推奨案で決定。MCL 出力・適合性 notes・MCL 入力・inventory 例・README の該当記述を CLI 契約に揃えた(差分更新。MCL 全面再実行なし)。
+- input_sha256: aaab9c2bbac2b4952afa8c2bf3db4c42cf8b84a4e3b570bfcf15b1d180dda0c2
+- request_ids: CR-d8a2f4b6-001
+- direct_work_unit_ids: CR-d8a2f4b6-001#1
+- causal_work_unit_ids: CR-d8a2f4b6-001#1
+- packet: docs/pipeline/feedback-runs/20261104_rapid_env_deploy_check/stage-packets/infrastructure.md

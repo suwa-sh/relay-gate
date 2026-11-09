@@ -1,0 +1,53 @@
+{
+  "schema_version": "distillery.arch-feedback-event/v1",
+  "event_id": "20261103_083000_feedback_housekeeping_followups",
+  "created_at": "2026-11-03T08:30:00Z",
+  "stage": "architecture",
+  "trigger_event": "usdm:20261103_081000_feedback_housekeeping_followups, rdra:20261103_081000_feedback_housekeeping_followups, nfr:20261103_082000_feedback_housekeeping_followups",
+  "feedback_request": {
+    "feedback_request_id": "20261103_housekeeping_followups",
+    "input_sha256": "7a81f28ce6fef4c2f70e2839d657a3f8e8480671bd846b460edab3d22b3ba775",
+    "request_ids": [
+      "CR-f3b8a1d0-001",
+      "CR-f3b8a1d0-003"
+    ],
+    "work_unit_ids": [
+      "CR-f3b8a1d0-001#1",
+      "CR-f3b8a1d0-003#1"
+    ]
+  },
+  "members": [
+    {
+      "path": "arch/events/20261103_083000_feedback_housekeeping_followups/_changes.md",
+      "sha256": "fa51089327a8a1c7df63ec5acc91ce1bccdc6dae462d5ab31ae5884a2a6c5ddb"
+    },
+    {
+      "path": "arch/events/20261103_083000_feedback_housekeeping_followups/_inference.md",
+      "sha256": "6ad534164353ac4faa83229ede9379755a23930abaf5e8c9bccd96059c3a1fad"
+    },
+    {
+      "path": "arch/events/20261103_083000_feedback_housekeeping_followups/arch-design-diff.yaml",
+      "sha256": "ee226f4c5ac56d9d6fc03453f7592e1be9a21ff67f65fea9433803318a38ec98"
+    },
+    {
+      "path": "arch/events/20261103_083000_feedback_housekeeping_followups/arch-design.md",
+      "sha256": "261f1a0b33ce1aa3bc558a0a8e50adec0c02c3617b4c14bc4f2b5f4db4fb0c0b"
+    },
+    {
+      "path": "arch/events/20261103_083000_feedback_housekeeping_followups/coverage-report.md",
+      "sha256": "bc563fa151456983d06eab6e519f3ea064a2bd824f80a466b6509c0c5f4b2978"
+    },
+    {
+      "path": "arch/events/20261103_083000_feedback_housekeeping_followups/decisions/arch-decision-024.yaml",
+      "sha256": "366df93835031403c2443939d1d3392fe8955eb71a4e0567912f4011077e9e09"
+    },
+    {
+      "path": "arch/events/20261103_083000_feedback_housekeeping_followups/decisions/arch-decision-025.yaml",
+      "sha256": "f927b039481c4ba0de0fd2712a8b38d6e590ef2f92d6211719983eec09c6d451"
+    },
+    {
+      "path": "arch/events/20261103_083000_feedback_housekeeping_followups/source.txt",
+      "sha256": "9a4e5391a85f10a7af297e7d1bc519708844294b5288ca0424cf1dc561051a14"
+    }
+  ]
+}

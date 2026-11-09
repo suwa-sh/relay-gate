@@ -8,7 +8,6 @@
   roles:
     - relay-gate-runtime
     - relay-gate-config
-    - relay-gate-mail
 
 - name: relay-gate DBセグメントの構成
   hosts: relay_gate_db_hosts
@@ -16,4 +15,5 @@
   roles:
     - relay-gate-postgresql
     - relay-gate-runtime
+    - relay-gate-config
     - relay-gate-backup

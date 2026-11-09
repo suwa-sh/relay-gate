@@ -50,7 +50,7 @@ UC「リラン対象を検証する」の tier-ops.md と同一。
 - **バリデーション**: 前段 UC で済み。復元前に元 spec の必須キー(job_id / params / slots.{role}.host / user / script / work_dir / fixed_params / hang_detect_limit_minutes / impl_version。host / user は null 可)の存在を確認し、欠落は 6(`error: execution-spec is not readable ... missing=...`)
 - **確認プロンプト**: なし
 - **処理順序(usecase。「off 以外」は RAPID_CROSSCHECK_MODE が foreground / background のとき)**:
-  1. 新 run_id を発行(`facade/<run_id>/` が存在すれば乱数を取り直す。最大 3 回。超過は 6)
+  1. 新 run_id を発行(`facade/<run_id>/` が存在すれば乱数を取り直す。最大 3 回。超過は 6)。新 run ディレクトリは `$RELAY_GATE_ARTIFACT_ROOT/facade/` 直下に run_id 形式の名前で作る。成果物ルート直下の `hang-detector-notified/`(通知済みの印)と `housekeep-pending/`(削除待ち)は読まず、書かず、run として扱わない
   2. off 以外: `parallel_runs` INSERT(run_id, parent_run_id=source_run_id, job_id, parameters=元の parameters, execution_spec_uri=新 spec パス, status=STARTED, requested_at=now)
   3. `facade/<run_id>/` と `facade/<run_id>/<role>/` を作成。元 spec を読み `run_id` / `parent_run_id` / `restored_at` を書き換えて(C1) `execution-spec.json.tmp` に書き `mv` で確定(既存があれば上書きしない → 6)
   4. off 以外: runner 起動「前」に `slot_executions` INSERT(run_id, slot=role, mode=background, pid=NULL, artifact_dir, status=RUNNING, started_at=now)。即時に終了する runner の終端 UPDATE(`WHERE status='RUNNING'`)が INSERT より先に走って 0 件になる競合を防ぐ(facade.sh と同じ規則。round-1 F-004)。INSERT 失敗は runner を起動せず 6

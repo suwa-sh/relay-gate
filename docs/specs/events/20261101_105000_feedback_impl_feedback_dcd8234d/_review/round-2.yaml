@@ -1,0 +1,47 @@
+round: 2
+findings:
+  - id: R-003
+    viewpoint: 5
+    severity: minor
+    target: "適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/spec.md(Scenario Outline「クロスチェックジョブマップと対象カタログの検証種別は無い(SPEC-004-04)」と「関連 USDM」表の SPEC-004-04 行)"
+    claim: "受け入れ基準 11 の Then の前半「設定ファイル置き場にクロスチェックジョブマップ CSV・対象カタログ CSV が存在しない」は、修正後も BDD で判定されず、BDD の対象外である旨の注記も無い。それでも関連 USDM 表と usdm-acceptance-matrix は基準 11 を Scenario Outline 1 本で覆ったものとして数えている"
+    evidence: "修正で判定できない And を削除し、検証種別が無いこと(--crosscheck-job-map / --target-catalog で終了コード 2 と unknown option)だけを判定する形にした。Given は逆に「/etc/relay-gate/<file> が存在する」で、置き場にファイルが無いことは見ていない。関連 USDM 表の補足は「受け入れ基準 11 = クロスチェックジョブマップと対象カタログの検証種別は無い」だけで、前半の扱いに触れていない。usdm-acceptance-matrix の SPEC-004-04 行の受け入れ基準要約は「クロスチェックジョブマップ CSV・対象カタログ CSV は存在しない」を covered に含めている"
+    suggested_fix: "関連 USDM 表の SPEC-004-04 行の「※」補足に「基準 11 の前半(置き場にファイルが存在しない)は relay-gate が置き場のファイルを読まない設計(CLI 契約 config_files に該当ファイルが無い)で満たし、BDD は後半(検証種別が無い)だけを判定する」の 1 文を加える。または前半を観測できる Then(該当 CSV を置いても --rapid-crosscheck / --final-crosscheck の stdout と終了コードが変わらない)を加える"
+  - id: R-008
+    viewpoint: 5
+    severity: minor
+    target: "適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/tier-facade.md(ティア完了条件)"
+    claim: "E2E の異常系は「の 1 行だけが error 行として出る」に揃えたが、同じ UC の tier BDD は「が出る」のままで、受け入れ基準 6・7・8・12 が求める「error 行が 1 行」を tier 段で判定しない。E2E と tier の判定がずれている"
+    evidence: "tier-facade.md の Scenario「コマンド部分が実行不可なら 2」「{job_id} が無ければ 2」「{params} が引数全体でない位置にあれば 2」の Then はいずれも「stderr に `error: ...` が出る」。前ラウンド R-002 の修正案は tier BDD も同じ判定に揃えることを含んでいたが、修正メモは spec.md の変更だけを記録している。基準 6(絶対パスでない)に当たる tier シナリオは無い"
+    suggested_fix: "tier-facade.md の異常系 3 件の Then を「stderr の error 行は `error: ...` の 1 行だけである」に揃える。基準 6 に当たる tier シナリオ(先頭の語が絶対パスでない → `error: path is not absolute ...` の 1 行だけ)を加える"
+  - id: R-009
+    viewpoint: 5
+    severity: minor
+    target: "クロスチェック業務/確報クロスチェックフロー/比較ツールで日次全量比較を実行して結果を保存する/spec.md(Scenario「絶対パスでない起動コマンドは invalid になる」「確報の起動コマンドが絶対パスで実行可能なら valid になる」)"
+    claim: "SPEC-004-04 に新しくひもづけた確報側の 2 シナリオが、ひもづけ先の受け入れ基準の Then を字面どおりには判定していない"
+    evidence: "「絶対パスでない起動コマンドは invalid になる」は基準 6 の確報側としてひもづけたが、Then は「stderr に `error: path is not absolute ...` が出る」で、基準 6 の「error 行が 1 行出る」を直接判定しない(stdout の violations=1 から間接に読めるだけ)。「確報の起動コマンドが絶対パスで実行可能なら valid になる」は基準 10 の確報側としてひもづけたが、引数部分は `--full` だけで、基準 10 の Given が例示する「存在しないパスや未知の語」を含まない"
+    suggested_fix: "前者の Then を「stderr の error 行は `error: path is not absolute key=FINAL_COMPARE_COMMAND path=compare-final.sh` の 1 行だけである」にする。後者は引数部分に存在しないパスを加える(例 `/opt/compare/final.sh --full --in /no/such/path`)か、関連 USDM 表の補足から「基準 10 の確報側」を外し、基準 10 は速報側シナリオだけで覆うと書く"
+  - id: R-010
+    viewpoint: 5
+    severity: minor
+    target: "適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/spec.md(Scenario「コマンド部分が実行できない」)/ tier-facade.md(Scenario「コマンド部分が実行不可なら 2」)"
+    claim: "受け入れ基準 7 は「存在しない、または実行可能でない」の 2 つの場合を持つが、ひもづけたシナリオは存在しない場合だけを判定する。ファイルが存在し実行権限が無い場合に同じ `file not executable` 文言・終了コード 2 になることを BDD が保証しない"
+    evidence: "spec.md の Given は「`/opt/compare/missing.sh --job {job_id}` でコマンド部分が存在しない」、tier-facade.md も同じ。実行権限の無い既存ファイルの例はどちらにも無い。CLI 契約は「コマンド部分が存在しない・実行不可」を 1 つの文言にまとめており、2 つの場合で結果が同じであることはテストで確かめる必要がある"
+    suggested_fix: "Scenario「コマンド部分が実行できない」を Scenario Outline にし、存在しない(/opt/compare/missing.sh)と、存在するが実行権限が無い(/opt/compare/noexec.sh、mode 0644)の 2 例で、終了コード 2 と `error: file not executable key=RAPID_COMPARE_COMMAND path=<パス>` の 1 行だけを判定する。Outline にした場合は spec-event.yaml usdm[] と関連 USDM 表の Scenario 名を完全一致で追従させる"
+resolved:
+  - id: R-003
+    resolution: fixed
+    note: "関連 USDM 表に、基準 11 の前半(ファイルが無い)は配布物と CLI 契約 config_files の一覧で確認する BDD 対象外で、BDD は後半(検証種別が無い)を判定する旨を注記"
+    by: orchestrator
+  - id: R-008
+    resolution: deferred
+    note: "minor。tier BDD は E2E の要約で、行数の判定と基準 6 は E2E シナリオが正本として覆う。次の差分更新で揃える"
+    by: orchestrator
+  - id: R-009
+    resolution: fixed
+    note: "確報 UC の SPEC-004-04 のひもづけを基準 9 と基準 6 の確報側に絞り、基準 10 は速報側 UC で判定すると注記。error 行 1 行の判定は既存の violations=1 で読めるため本文は変えない"
+    by: orchestrator
+  - id: R-010
+    resolution: deferred
+    note: "minor。実行権限なしのケースは同じ文言(file not executable)で覆われ、結果を選び直す必要はない。シナリオの追加は次の差分更新に回す"
+    by: orchestrator

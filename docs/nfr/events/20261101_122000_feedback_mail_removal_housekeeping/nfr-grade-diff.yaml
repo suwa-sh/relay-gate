@@ -1,0 +1,226 @@
+version: "1.0"
+event_id: "20261101_122000_feedback_mail_removal_housekeeping"
+created_at: "2026-11-01T12:20:00Z"
+trigger_event: "rdra:20261101_121000_feedback_mail_removal_housekeeping"
+source: "2026-11-01 のメール通知廃止とハウスキープ新設に基づく NFR 追従更新(ハング検知の異常をハング検知ジョブ自身の終了結果とジョブスケジューラの障害通知で知らせる形に改め、メール通知・通知メール・メール設定項目への言及を除く。ハウスキープの保持日数(既定 90 日)と専用 DB ロールをストレージ・バックアップ・認証・アクセス制御・監査の記述に反映する。グレード値は変更なし。trigger_event: rdra:20261101_121000_feedback_mail_removal_housekeeping)"
+mode: "diff"
+feedback_request:
+  feedback_request_id: "20261101_mail_removal_housekeeping"
+  input_sha256: "7be2e54314163ff4cae802f01005fe771da312621c06ff123a43b09f562afb11"
+  request_ids: ["CR-e4ea8aaa-001","CR-e4ea8aaa-002"]
+  work_unit_ids: ["CR-e4ea8aaa-001#1","CR-e4ea8aaa-002#1"]
+direct_work_unit_ids: []
+feedback_packet: "pipeline/feedback-runs/20261101_mail_removal_housekeeping/stage-packets/quality_attributes.md"
+model_system:
+  changed: false
+metrics:
+  - id: "B.1.1.1"
+    name: "同時アクセス数"
+    grade: 1
+    grade_changed: false
+    caused_by: ["CR-e4ea8aaa-001"]
+    grade_description: "〜100"
+    reason: "利用者は運用部門の少人数(運用者・基盤適用設計者)で、CLI と定期ジョブのみのため"
+    source_model: "アクター: 運用者、基盤適用設計者 / 条件: CLI による提示"
+    confidence: "high"
+    before:
+      grade_description: "〜100"
+      reason: "利用者は運用部門の少人数(運用者・基盤適用設計者)で、CLI と定期ジョブのみのため"
+      source_model: "アクター: 運用者、基盤適用設計者 / 条件: CLI とメールによる提示"
+      confidence: "high"
+  - id: "B.1.1.3"
+    name: "オンラインリクエスト件数"
+    grade: 1
+    grade_changed: false
+    caused_by: ["CR-e4ea8aaa-002"]
+    grade_description: "〜1,000件/日(facade 起動・定期監視・1 日 1 回のハウスキープ・CLI 操作の合計)"
+    reason: "オンライン画面は無く、リクエストに相当するのはジョブスケジューラからの facade 起動と 5 分ごとの監視ジョブ、1 日 1 回のハウスキープ定期ジョブのため(ハウスキープの追加は 1 日 1 件で件数の桁は変わらない)"
+    source_model: "バリエーション: ジョブスケジューラ起動ジョブ種別"
+    confidence: "medium"
+    before:
+      grade_description: "〜1,000件/日(facade 起動・定期監視・CLI 操作の合計)"
+      reason: "オンライン画面は無く、リクエストに相当するのはジョブスケジューラからの facade 起動と 5 分ごとの監視ジョブのため"
+      source_model: "バリエーション: ジョブスケジューラ起動ジョブ種別"
+      confidence: "medium"
+  - id: "B.2.1.1"
+    name: "レスポンスタイム"
+    grade: 2
+    grade_changed: false
+    caused_by: ["CR-e4ea8aaa-001"]
+    grade_description: "10秒以内(facade のオーバーヘッド・中止/リラン CLI の応答)。CSV 形式の設定ファイルを読む CLI と facade の設定読み込みは、B.1.1.2 の共通前提(1 ファイルあたり想定最大 5,000 行、最悪条件を含め内容によらず)で 10 秒以内に収める"
+    reason: "ユーザー指定: 2026-09-21 に利用者が確定。運用者向けの CLI 操作と facade の起動・中継のオーバーヘッドが対象で、業務ジョブ本体の処理時間は実装側の責務のため。目標を満たす行数と内容の条件は B.1.1.2 の共通前提の 1 か所から引き、内容によらず(最悪条件を含めて)10 秒以内とすることで、性能の合否を機能ごとに再決定せず判定できるようにする"
+    source_model: "条件: facade の責務限定 / 条件: CLI による提示 / 条件: ジョブマップ解決条件 / 情報: ジョブマップ"
+    confidence: "user"
+    before:
+      grade_description: "10秒以内(facade のオーバーヘッド・中止/リラン CLI の応答)。CSV 形式の設定ファイルを読む CLI と facade の設定読み込みは、B.1.1.2 の共通前提(1 ファイルあたり想定最大 5,000 行、最悪条件を含め内容によらず)で 10 秒以内に収める"
+      reason: "ユーザー指定: 2026-09-21 に利用者が確定。運用者向けの CLI 操作と facade の起動・中継のオーバーヘッドが対象で、業務ジョブ本体の処理時間は実装側の責務のため。目標を満たす行数と内容の条件は B.1.1.2 の共通前提の 1 か所から引き、内容によらず(最悪条件を含めて)10 秒以内とすることで、性能の合否を機能ごとに再決定せず判定できるようにする"
+      source_model: "条件: facade の責務限定 / 条件: CLI とメールによる提示 / 条件: ジョブマップ解決条件 / 情報: ジョブマップ"
+      confidence: "user"
+  - id: "B.3.3.1"
+    name: "ストレージ拡張性"
+    grade: 1
+    grade_changed: false
+    caused_by: ["CR-e4ea8aaa-002"]
+    grade_description: "スケールアップ(成果物ディレクトリ・実行ログの増加に応じて拡張。成果物ディレクトリと管理 DB の行はハウスキープが保持日数(既定 90 日)を過ぎた終了済みの実行から削除するため、保持日数分の量で頭打ちになる)"
+    reason: "run ごとに成果物ディレクトリと実行ログを蓄積するが、ハウスキープ定期ジョブ(1 日 1 回)が保持日数を過ぎた終了済みの実行の成果物と管理 DB の行を削除するため、必要容量は保持日数分の実行量で見積もれる。保持日数を延ばす場合や並行稼働で成果物が増える場合はストレージを増設する。終わっていない構成要素を含む実行は経過日数にかかわらず残るため、その分の余裕を見込む"
+    source_model: "情報: Runner Result、実行ログ、ハウスキープ設定 / 条件: ハウスキープの削除判定"
+    confidence: "medium"
+    before:
+      grade_description: "スケールアップ(成果物ディレクトリ・実行ログの増加に応じて拡張)"
+      reason: "run ごとに成果物ディレクトリと実行ログを蓄積するため、保管期間に応じたストレージ増設が必要"
+      source_model: "情報: Runner Result、実行ログ"
+      confidence: "medium"
+  - id: "C.1.2.2"
+    name: "バックアップ対象"
+    grade: 1
+    grade_changed: false
+    caused_by: ["CR-e4ea8aaa-002"]
+    grade_description: "管理 DB、設定(feature flag / ジョブマップ / 比較定義 / ハング検知定期ジョブ設定 / ハウスキープ設定 / 速報クロスチェック設定 / 確報クロスチェック worker 設定)、適用構成文書(調整記録を含む)、成果物ディレクトリ、実行ログ"
+    reason: "設定所有区分で正本が分散しているため、設定ファイル(ハング検知定期ジョブ設定・ハウスキープ設定・速報クロスチェック設定を含む)と hang_detect_limit_minutes の調整記録を持つ適用構成文書、管理 DB、成果物をすべて対象とする。速報クロスチェック設定・ハング検知定期ジョブ設定・ハウスキープ設定は認証情報の値を持たず接続参照名のみのため、バックアップに秘匿情報は含まれない"
+    source_model: "条件: 設定所有区分 / 情報: ハング検知定期ジョブ設定、ハウスキープ設定、速報クロスチェック設定、適用構成文書、Runner Result、実行ログ"
+    confidence: "high"
+    before:
+      grade_description: "管理 DB、設定(feature flag / ジョブマップ / 比較定義 / ハング検知定期ジョブ設定 / 速報クロスチェック設定 / 確報クロスチェック worker 設定)、適用構成文書(調整記録を含む)、成果物ディレクトリ、実行ログ"
+      reason: "設定所有区分で正本が分散しているため、設定ファイル(ハング検知定期ジョブ設定・速報クロスチェック設定を含む)と hang_detect_limit_minutes の調整記録を持つ適用構成文書、管理 DB、成果物をすべて対象とする。速報クロスチェック設定は認証情報の値を持たず接続参照名のみのため、バックアップに秘匿情報は含まれない"
+      source_model: "条件: 設定所有区分 / 情報: ハング検知定期ジョブ設定、速報クロスチェック設定、適用構成文書、Runner Result、実行ログ"
+      confidence: "high"
+  - id: "C.1.3.2"
+    name: "監視方式"
+    grade: 1
+    grade_changed: false
+    caused_by: ["CR-e4ea8aaa-001"]
+    grade_description: "定期ジョブによるポーリング(成果物ファイルと管理 DB を走査)と、ハング検知ジョブ自身の終了結果(警告終了・失敗)と標準エラーによる通知"
+    reason: "ハング検知は started-at.txt / exitcode.txt / aborted.txt と依頼状態を走査し(aborted.txt がある対象は中止済みとして監視記録を終端)、新たに見つけた異常をハング検知ジョブの終了コード(異常なしは正常終了、ハング疑いだけなら警告終了、実行エラー・比較異常が 1 件でもあれば失敗)と標準エラーの 1 件 1 行で知らせ、ジョブスケジューラの既存のジョブ監視・障害通知で運用者へ届ける設計のため。relay-gate は CLI の出力以外の通知送信手段を持たない"
+    source_model: "情報: 監視記録、Runner Result / 条件: 監視は通知のみ / 条件: 通知レベルの判定 / 条件: CLI による提示 / 条件: slot 実行の状態導出規則"
+    confidence: "high"
+    before:
+      grade_description: "定期ジョブによるポーリング(成果物ファイルと管理 DB を走査)とメール通知"
+      reason: "ハング検知は started-at.txt / exitcode.txt / aborted.txt と依頼状態を走査し(aborted.txt がある対象は中止済みとして監視記録を終端)、warning / error メールで通知する設計のため"
+      source_model: "情報: 監視記録、通知メール、Runner Result / 条件: 監視は通知のみ / 条件: slot 実行の状態導出規則"
+      confidence: "high"
+  - id: "C.3.1.1"
+    name: "障害検知方式"
+    grade: 3
+    grade_changed: false
+    caused_by: ["CR-e4ea8aaa-001"]
+    grade_description: "自動検知+自動通知+自動記録"
+    reason: "ハング検知がハング疑い・実行エラー・比較異常を自動判定し、ハング検知ジョブ自身の終了結果(警告終了・失敗)と標準エラーで知らせてジョブスケジューラの障害通知で運用者へ届け、監視記録(monitor_status / alerted_at。RAPID_CROSSCHECK_MODE=off では成果物ルート配下の通知済みの印)を保存して同じ異常を再び知らせないため。ただし slot runner から速報クロスチェック runner への完了通知の送信失敗は自動検知の対象外で、実行ログの警告を運用者が確認する"
+    source_model: "BUC: background 実行監視フロー / 情報: 監視記録 / 条件: 通知レベルの判定 / 条件: 完了通知失敗の扱い"
+    confidence: "high"
+    before:
+      grade_description: "自動検知+自動通知+自動記録"
+      reason: "ハング検知がハング疑い・実行エラー・比較異常を自動判定し、メールで通知し、監視記録(monitor_status / alerted_at)を保存するため。ただし slot runner から速報クロスチェック runner への完了通知の送信失敗は自動検知の対象外で、実行ログの警告を運用者が確認する"
+      source_model: "BUC: background 実行監視フロー / 情報: 監視記録、通知メール / 条件: 完了通知失敗の扱い"
+      confidence: "high"
+  - id: "C.3.2.1"
+    name: "障害通知方式"
+    grade: 1
+    grade_changed: false
+    caused_by: ["CR-e4ea8aaa-001"]
+    grade_description: "ハング検知ジョブ自身の終了結果で通知する(異常なしは正常終了、ハング疑い(warning)だけなら警告終了、background 実行エラー・速報クロスチェック異常(error)が 1 件でもあれば失敗。標準エラーに 1 件 1 行で対象・段階・経過時間を出す)。運用者へはジョブスケジューラの既存のジョブ監視・障害通知で届く。通知済みの異常は再び知らせず、通知済みの保存に失敗した異常は次回も知らせる。foreground の失敗はジョブスケジューラの実行結果で通知"
+    reason: "通知レベルの判定と CLI による提示の条件に従い、relay-gate は CLI の出力(終了コード・標準エラー)以外の通知送信手段を持たず、運用者への到達はジョブスケジューラの障害通知に委ねるため。ハング検知定期ジョブ設定は管理 DB 接続参照名だけを持ち、通知の宛先・送信コマンドなどの項目を持たない"
+    source_model: "条件: 通知レベルの判定 / 条件: CLI による提示 / 外部システム: ジョブスケジューラ / 情報: 監視記録"
+    confidence: "high"
+    before:
+      grade_description: "運用者へのメール(warning / error)。宛先・送信コマンド・件名プレフィックスはハング検知定期ジョブ設定で指定。foreground の失敗はジョブスケジューラの実行結果で通知"
+      reason: "通知レベルの判定と CLI とメールによる提示の条件に従い、通知先と送信手段は情報「ハング検知定期ジョブ設定」(所有者: 基盤適用設計者)が定めるため"
+      source_model: "条件: 通知レベルの判定 / 条件: CLI とメールによる提示 / 情報: ハング検知定期ジョブ設定"
+      confidence: "high"
+  - id: "C.5.1.1"
+    name: "サポート時間"
+    grade: 1
+    grade_changed: false
+    caused_by: ["CR-e4ea8aaa-001"]
+    grade_description: "営業時間内(9時〜17時)"
+    reason: "ユーザー指定: 2026-09-05 に利用者が既定値として確定(適用先ごとに見直す運用パラメータであり、適用側で上書き可能な既定値)。元の方針資料が「ハング検知ジョブを warning は警告終了、error は異常終了させ、ジョブスケジューラの障害通知で静観してもらう運用」を想定しているため、夜間バッチの異常通知は即時対処を前提とせず、営業時間内のサポートを既定値とする"
+    source_model: "アクター: 運用者 / 外部システム: ジョブスケジューラ / 条件: 監視は通知のみ / 条件: 通知レベルの判定"
+    confidence: "user"
+    before:
+      grade_description: "営業時間内(9時〜17時)"
+      reason: "ユーザー指定: 2026-09-05 に利用者が既定値として確定(適用先ごとに見直す運用パラメータであり、適用側で上書き可能な既定値)。元の方針資料が「warning / error でメールを飛ばし、静観してもらう運用」を想定しているため、夜間バッチの異常メールは即時対処を前提とせず、営業時間内のサポートを既定値とする"
+      source_model: "アクター: 運用者 / 情報: 通知メール / 条件: 監視は通知のみ"
+      confidence: "user"
+  - id: "E.5.1.1"
+    name: "認証方式"
+    grade: 1
+    grade_changed: false
+    caused_by: ["CR-e4ea8aaa-002"]
+    grade_description: "OS アカウントと SSH 鍵による認証。認証情報(SSH・管理 DB 接続)は値を保存せず参照名で管理"
+    reason: "実行先ホストへは実行ユーザーで SSH 接続し、execution-spec.json には認証情報の参照名のみを保存し、管理 DB への接続も接続参照名(速報クロスチェック設定の RAPID_DB_CONN_REF、ハング検知定期ジョブ設定の HANG_DB_CONN_REF、ハウスキープ設定のハウスキープ専用 DB ロールの接続参照名)で解決して値を置かない設計のため"
+    source_model: "外部システム: リモート実行ホスト(SSH) / 条件: 認証情報の非保存 / 情報: 速報クロスチェック設定、ハング検知定期ジョブ設定、ハウスキープ設定"
+    confidence: "high"
+    before:
+      grade_description: "OS アカウントと SSH 鍵による認証。認証情報(SSH・管理 DB 接続)は値を保存せず参照名で管理"
+      reason: "実行先ホストへは実行ユーザーで SSH 接続し、execution-spec.json には認証情報の参照名のみを保存し、管理 DB への接続も速報クロスチェック設定の接続参照名(RAPID_DB_CONN_REF)で解決して値を置かない設計のため"
+      source_model: "外部システム: リモート実行ホスト(SSH) / 条件: 認証情報の非保存 / 情報: 速報クロスチェック設定"
+      confidence: "high"
+  - id: "E.5.2.1"
+    name: "アクセス制御"
+    grade: 1
+    grade_changed: false
+    caused_by: ["CR-e4ea8aaa-002"]
+    grade_description: "ユーザ単位の制御(ジョブマップの user 列で解決する実行ユーザーと OS 権限。ローカル実行の slot では host / user を省略でき起動ユーザーの権限で実行)。管理 DB は接続ロールで権限を分け、管理 DB の行の削除はハウスキープ専用の DB ロール(対象 6 テーブルの SELECT と DELETE だけ)に限り、業務用接続ロールには DELETE を与えない"
+    reason: "ジョブマップ(CSV)が job_id ごとに host / user 列で実行先と実行ユーザーを解決し、OS 権限で制御するため。利用者を区別するロール概念は RDRA に無いが、管理 DB の行の削除権限は条件「ハウスキープの削除順序と回復」によりハウスキープ専用の DB ロールへ分離する(方針資料: 削除権限だけを足したハウスキープ専用の DB ロール)"
+    source_model: "情報: ジョブマップ(host / user 列)、ハウスキープ設定 / 条件: ジョブマップ解決条件 / 条件: ハウスキープの削除順序と回復"
+    confidence: "high"
+    before:
+      grade_description: "ユーザ単位の制御(ジョブマップの user 列で解決する実行ユーザーと OS 権限。ローカル実行の slot では host / user を省略でき起動ユーザーの権限で実行)"
+      reason: "ジョブマップ(CSV)が job_id ごとに host / user 列で実行先と実行ユーザーを解決し、OS 権限で制御するため。ロール概念は RDRA に無い"
+      source_model: "情報: ジョブマップ(host / user 列) / 条件: ジョブマップ解決条件"
+      confidence: "high"
+  - id: "E.7.1.1"
+    name: "監査ログ"
+    grade: 2
+    grade_changed: false
+    caused_by: ["CR-e4ea8aaa-002"]
+    grade_description: "運用操作(中止・リラン)と状態遷移を run_id 付きの実行ログ・管理レコードで記録。監査の正本はジョブスケジューラ。relay-gate 側の管理レコードと成果物はハウスキープの保持日数(既定 90 日)を過ぎた終了済みの実行から削除されるため、それより長い期間の追跡はジョブスケジューラの実行履歴で行う"
+    reason: "中止指示に指示者と応答を記録し、実行ログに run_id を残す設計だが、監査はジョブスケジューラの責務と定義されているため。ハウスキープが保持日数を過ぎた管理レコードと成果物を削除するため、relay-gate 側の記録は保持日数内の追跡用に限られる"
+    source_model: "情報: 中止指示、実行ログ / 条件: 実行履歴はジョブスケジューラの責務 / 条件: ハウスキープの削除判定"
+    confidence: "medium"
+    before:
+      grade_description: "運用操作(中止・リラン)と状態遷移を run_id 付きの実行ログ・管理レコードで記録。監査の正本はジョブスケジューラ"
+      reason: "中止指示に指示者と応答を記録し、実行ログに run_id を残す設計だが、監査はジョブスケジューラの責務と定義されているため"
+      source_model: "情報: 中止指示、実行ログ / 条件: 実行履歴はジョブスケジューラの責務"
+      confidence: "medium"
+  - id: "E.10.1.1"
+    name: "WAF"
+    grade: 0
+    grade_changed: false
+    caused_by: ["CR-e4ea8aaa-001"]
+    grade_description: "WAFなし"
+    reason: "UI 画面や HTTP API を持たず CLI と定期ジョブのみのため対象外"
+    source_model: "条件: CLI による提示 / システム概要(interface_kind: cli)"
+    confidence: "high"
+    before:
+      grade_description: "WAFなし"
+      reason: "UI 画面や HTTP API を持たず CLI と定期ジョブのみのため対象外"
+      source_model: "条件: CLI とメールによる提示 / システム概要(interface_kind: cli)"
+      confidence: "high"
+  - id: "F.1.1.3"
+    name: "対応デバイス"
+    grade: 1
+    grade_changed: false
+    caused_by: ["CR-e4ea8aaa-001"]
+    grade_description: "運用者端末(ターミナル)のみ"
+    reason: "すべてのスクリプトは CLI として起動され、結果と異常の提示も標準出力・標準エラー・終了コードで行うため(運用者への到達はジョブスケジューラのジョブ監視・障害通知)"
+    source_model: "条件: CLI による提示"
+    confidence: "high"
+    before:
+      grade_description: "運用者端末(ターミナル)のみ"
+      reason: "すべてのスクリプトは CLI として起動され、通知はメールで行うため"
+      source_model: "条件: CLI とメールによる提示"
+      confidence: "high"
+  - id: "F.1.2.1"
+    name: "通信プロトコル"
+    grade: 1
+    grade_changed: false
+    caused_by: ["CR-e4ea8aaa-001","CR-e4ea8aaa-002"]
+    grade_description: "SSH(リモート実行)、RDB 接続(relay-gate 内部のジョブキュー兼管理 DB。接続先は速報クロスチェック設定・ハング検知定期ジョブ設定・ハウスキープ設定の接続参照名で解決)。インターネット接続・外部 SaaS は不可。メール送信などの通知送信手段は持たない"
+    reason: "外部システムがジョブスケジューラ・リモート実行ホスト(SSH)で構成され、管理 DB は relay-gate 内部のデータストアで、その接続参照名は速報クロスチェック設定(RAPID_CROSSCHECK_MODE=off では不要)・ハング検知定期ジョブ設定・ハウスキープ設定が持ち、異常の通知は CLI の出力とジョブスケジューラの障害通知で行い、エアーギャップ前提のため"
+    source_model: "外部システム: ジョブスケジューラ、リモート実行ホスト(SSH) / システム概要: ジョブキュー兼管理 DB(relay-gate 内部のデータストア) / 情報: ハング検知定期ジョブ設定、速報クロスチェック設定、ハウスキープ設定"
+    confidence: "high"
+    before:
+      grade_description: "SSH(リモート実行)、RDB 接続(relay-gate 内部のジョブキュー兼管理 DB。接続先は速報クロスチェック設定の接続参照名で解決)、メール送信(ハング検知定期ジョブ設定の送信コマンド)。インターネット接続・外部 SaaS は不可"
+      reason: "外部システムがジョブスケジューラ・リモート実行ホスト(SSH)・メール通知で構成され、管理 DB は relay-gate 内部のデータストアで、その接続参照名は速報クロスチェック設定(RAPID_CROSSCHECK_MODE=off では不要)が持ち、エアーギャップ前提のため"
+      source_model: "外部システム: リモート実行ホスト(SSH)、メール通知 / システム概要: ジョブキュー兼管理 DB(relay-gate 内部のデータストア) / 情報: ハング検知定期ジョブ設定、速報クロスチェック設定"
+      confidence: "high"

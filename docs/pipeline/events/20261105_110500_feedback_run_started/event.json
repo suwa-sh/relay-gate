@@ -1,0 +1,17 @@
+{
+  "event_id": "20261105_110500_feedback_run_started",
+  "type": "feedback_run_started",
+  "run_id": "feedback-20261105_single_management_db-20261105_110000-20592",
+  "attempt": 1,
+  "created_at": "2026-11-04T22:14:26.604Z",
+  "feedback_request": {
+    "feedback_request_id": "20261105_single_management_db",
+    "input_sha256": "97bb80ca208301540a11760f416c348f73ea0c1898d9535a80c5a8f013df194a",
+    "request_ids": [
+      "CR-f4c8b261-001"
+    ],
+    "work_unit_ids": [
+      "CR-f4c8b261-001#1"
+    ]
+  }
+}

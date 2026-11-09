@@ -1,0 +1,73 @@
+---
+# relay-gate-postgresql: 管理DB(PostgreSQL単一インスタンス)を構成する
+# 対応: product-impl-onprem.yaml#impl.database.management_db
+
+- name: PostgreSQL 16をオフラインリポジトリからインストールする
+  ansible.builtin.package:
+    name: postgresql16-server
+    state: present
+
+- name: rapid/finalスキーマを作成する
+  community.postgresql.postgresql_schema:
+    name: "{{ item }}"
+    database: relay_gate
+  loop:
+    - rapid
+    - final
+
+- name: app_rwロールを作成する(rapid/finalへのSELECT/INSERT/UPDATEのみ。DELETEは与えない)
+  community.postgresql.postgresql_user:
+    name: app_rw
+    role_attr_flags: NOSUPERUSER,NOCREATEDB
+
+- name: ops_roロールを作成する(全スキーマSELECT専用)
+  community.postgresql.postgresql_user:
+    name: ops_ro
+    role_attr_flags: NOSUPERUSER,NOCREATEDB,NOCREATEROLE
+
+# 管理 DB の行の削除はハウスキープだけが行う(業務用の app_rw に DELETE を足さない)。
+# 専用ロールには 6 テーブルへの SELECT / DELETE だけを与える。テーブルの所在スキーマは管理 DB スキーマ契約に従う。
+- name: housekeep_delロールを作成する(ハウスキープ専用)
+  community.postgresql.postgresql_user:
+    name: housekeep_del
+    role_attr_flags: NOSUPERUSER,NOCREATEDB,NOCREATEROLE
+
+- name: housekeep_delに6テーブルへのSELECT/DELETEだけを付与する
+  community.postgresql.postgresql_privs:
+    database: relay_gate
+    roles: housekeep_del
+    type: table
+    objs: "{{ item.objs }}"
+    schema: "{{ item.schema }}"
+    privs: SELECT,DELETE
+  loop: "{{ relay_gate_housekeep_tables }}"
+
+- name: app_rwとops_roにDELETE権限が無いことを検査する
+  ansible.builtin.shell: >-
+    test "$(psql -d relay_gate -At -c "SELECT count(*) FROM information_schema.role_table_grants
+    WHERE grantee IN ('app_rw','ops_ro') AND privilege_type = 'DELETE'")" = "0"
+  become_user: postgres
+  changed_when: false
+
+- name: pg_hba.confを実行ホスト/DBセグメントのCIDRに限定する
+  ansible.builtin.template:
+    src: pg_hba.conf.j2
+    dest: /var/lib/pgsql/16/data/pg_hba.conf
+    owner: postgres
+    group: postgres
+    mode: "0600"
+  notify: restart postgresql
+
+- name: WALアーカイブ用ディレクトリを作成する
+  ansible.builtin.file:
+    path: /var/lib/relay-gate/wal-archive
+    state: directory
+    owner: postgres
+    group: postgres
+    mode: "0700"
+
+- name: postgresql.confでarchive_modeを有効化する
+  community.postgresql.postgresql_set:
+    name: archive_mode
+    value: "on"
+  notify: restart postgresql

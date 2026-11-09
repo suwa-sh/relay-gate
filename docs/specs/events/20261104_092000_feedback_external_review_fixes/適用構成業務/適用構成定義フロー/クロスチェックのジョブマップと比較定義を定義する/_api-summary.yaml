@@ -1,0 +1,33 @@
+uc: "クロスチェックのジョブマップと比較定義を定義する"
+business: "適用構成業務"
+buc: "適用構成定義フロー"
+paths: []
+x_cli_commands:
+  - name: "validate-config.sh"
+    tier: "tier-facade"
+    role: "uses"
+    synopsis: "validate-config.sh --rapid-crosscheck <path> [--verbose] [--help]"
+    invoked_by: "基盤適用設計者(直接起動)。validate-config.sh の定義元は UC「feature flag を設定する」(契約 defined_in_uc、tier-facade)。本 UC は検証種別 --rapid-crosscheck(速報クロスチェック設定 rapid-crosscheck.env の RAPID_COMPARE_COMMAND の検証)の検証ルールを定義する。全検証種別の検証ロジックは facade ティアが単独で持つ(arch CTR-007。委譲なし)"
+    args: []
+    options:
+      - name: "--rapid-crosscheck"
+        type: "string"
+        required: false
+        description: "検証する速報クロスチェック設定ファイル(rapid-crosscheck.env)のパス。値必須(既定パス $RELAY_GATE_CONFIG_DIR/rapid-crosscheck.env を使う場合も明示的に渡す)。検証種別オプション(--feature-flag / --job-map / --rapid-crosscheck / --final-crosscheck)のうちちょうど 1 つを指定する(排他。0 個または 2 個以上は終了コード 2)"
+      - name: "--verbose"
+        type: "boolean"
+        required: false
+        default: "false"
+        description: "行ごとの info を stderr に出す"
+    stdin: "なし"
+    stdout: "--rapid-crosscheck: config=rapid-crosscheck / path: ... / command_path: <RAPID_COMPARE_COMMAND の先頭の語> / has_job_id_placeholder=true|false|- / status=valid|invalid / violations=N(invalid 時)。入力の守備範囲の違反で値を使わないときは command_path / has_job_id_placeholder を -(契約 config_input_rules.env_files)"
+    stderr: "契約 validate-config.sh の共通形式: error: config file not found path: ... / error: option required option=RAPID_COMPARE_COMMAND path: ... / error: path is not absolute key=RAPID_COMPARE_COMMAND path=... / error: file not executable key=RAPID_COMPARE_COMMAND path=... / error: placeholder {job_id} is missing key=RAPID_COMPARE_COMMAND value=... / error: placeholder {params} must be a whole argument key=RAPID_COMPARE_COMMAND value=... / 入力の守備範囲の違反(invalid line / error: duplicate key key=<KEY> lines=<n1,n2,...> path: ... など。文言と報告の順は契約 config_input_rules.env_files)"
+    exit_codes:
+      - code: 0
+        meaning: "違反 0 件"
+      - code: 2
+        meaning: "検証種別オプションの指定数不正・値なし・ファイル不在・入力の守備範囲の違反(invalid line・同じキーの重複を含む)・RAPID_COMPARE_COMMAND 欠落・コマンド部分の絶対パス違反・存在しない・実行不可・{job_id} 欠落・{params} が引数 1 つ全体でない位置にある・未知のオプション"
+      - code: 6
+        meaning: "検証器の内部障害(契約 config_input_rules.internal_failure)"
+async_events: []
+schemas: []

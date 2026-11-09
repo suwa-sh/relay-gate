@@ -1,0 +1,91 @@
+round: 2
+findings:
+  - id: R-003
+    viewpoint: 4
+    severity: minor
+    target: "ハウスキープ業務/ハウスキープフロー/保持日数を過ぎた終了済みの実行と確報比較依頼を判定する/_api-summary.yaml"
+    claim: "契約と tier-ops.md は余分な引数と housekeep.env の読み取り不可を終了コード 2 に揃えたが、同じ UC の _api-summary.yaml が追従していない(round-1 の修正の取り残し)"
+    evidence: "契約 commands housekeep.sh の stderr(796 行)に `error: unexpected argument value=...`、exit_codes 2 の condition(819 行)に「余分な引数、housekeep.env 不在・読み取り不可」がある。tier-ops.md の設定エラー表にも「未知のオプション / 余分な引数」がある。_api-summary.yaml:23 の stderr に `error: unexpected argument value=...` が無く、:28 の code 2 の meaning は「未知のオプション、housekeep.env 不在、…」で余分な引数と housekeep.env の読み取り不可が無い"
+    suggested_fix: "_api-summary.yaml の housekeep.sh の stderr に `error: unexpected argument value=...(2)` を加え、code 2 の meaning に「余分な引数」「housekeep.env が読めない」を加える"
+  - id: R-006
+    viewpoint: 4
+    severity: minor
+    target: "_cross-cutting/api/cli-command-contract.yaml"
+    claim: "hang-detector.sh の stderr に `error: unexpected argument value=...` を加えたが、同じ契約の exit_codes 2 の condition に「余分な引数」が無い。tier-ops.md は「オプション以外の引数」を 2 の条件に挙げており、正本の契約だけが欠けている(housekeep.sh の契約は condition に入っている)"
+    evidence: "契約 hang-detector.sh の stderr(683 行)に `error: unexpected argument value=...` がある。exit_codes 2 の condition(702 行)は「未知のオプション、hang-detector.env 不在、…、RELAY_GATE_ARTIFACT_ROOT が無い」で余分な引数が無い。判定 UC tier-ops.md の終了コード表 2 は「未知のオプション、オプション以外の引数、…」。判定 UC _api-summary.yaml の code 2 の meaning にも余分な引数が無い"
+    suggested_fix: "契約 hang-detector.sh の exit_codes 2 の condition に「余分な引数」を加え、判定 UC の _api-summary.yaml の code 2 の meaning も揃える"
+  - id: R-011
+    viewpoint: 2
+    severity: minor
+    target: "_cross-cutting/uc-dependencies.md"
+    claim: "依存表 70 番の根拠列が UC-34 の spec.md に無いシナリオを挙げ、通知済みの印を書く UC(通知 UC)が依存先に入っていない"
+    evidence: "uc-dependencies.md の 70 番は根拠を「UC-34 spec.md『run ディレクトリを移してから印を移す』」とするが、このシナリオは UC-34 の tier-ops.md(ティア完了条件)にあり、spec.md の Scenario(132〜197 行)には無い。依存先は UC-18 / UC-20 だが、印を書くのは UC「ハング疑い・実行エラー・比較異常を通知する」(UC-19。spec.md:50 の NotifiedMarkRepository、契約 hang_alert.notified_mark)で、UC-18 は読むだけ、UC-20 は監視記録だけを書く"
+    suggested_fix: "70 番の根拠列を UC-34 tier-ops.md のシナリオと明記するか、spec.md の実在シナリオ(例: UC-33 spec.md「すべて終端して保持日数を過ぎた実行は成果物・管理 DB の行・通知済みの印がすべて無くなる(SPEC-014-02)」)に置き換える。依存先に UC-19(印の producer)を加える"
+  - id: R-013
+    viewpoint: 4
+    severity: minor
+    target: "_cross-cutting/api/cli-command-contract.yaml"
+    claim: "deferred の理由(今の実装 2 か所で扱いが異なり、揃えると実装変更が要るため今回の変更要求の範囲外)は妥当。ただし未決の隙間が round-1.yaml の resolved にしか記録されておらず、docs/todo.md・feedback など後続が拾う場所に残っていない"
+    evidence: "round-1.yaml resolved R-013 の note は「確認推奨項目として返す」とする。docs/todo.md、本イベントの rdra-feedback.md・usdm-acceptance-matrix.md・decisions に「キーが空になる行」の記述は無い(rg で 0 件)。config_input_rules.env_files(1319 行)は依然として扱いを定めていない"
+    suggested_fix: "docs/todo.md(または次の変更要求の候補一覧)に「env 形式でキーが空になる行(例 ` =abc`)を invalid line にするか unknown key にするか未決。現実装は feature flag 設定 = 読み飛ばし、速報クロスチェック設定 = 形式違反」と記録し、パイプライン完了時の確認推奨項目に載せる"
+  - id: R-015
+    viewpoint: 4
+    severity: minor
+    target: "_cross-cutting/api/cli-command-contract.yaml"
+    claim: "off で HOUSEKEEP_DB_CONN_REF が無いとき、off 以外の期間に作られた実行(parallel_runs 行がある)も成果物だけで判定して run ディレクトリを消す。管理 DB 上で速報比較依頼が終わっていない実行の成果物を消し得るため、spec-decision-021 が接続失敗時に退けた理由(alternatives_considered 2 件目)と矛盾し、SPEC-014-03 の「1 つでも終わっていない構成要素があれば経過日数にかかわらず単位ごと残す」とも合わない"
+    evidence: "契約 housekeep_rules.member_source(205 行)は「行が無い実行(off で作られた実行。管理 DB に接続しないときはすべて)は成果物だけで判定する」。spec-decision-021 の decision 6 は接続失敗時に「行の有無が分からない run ディレクトリを成果物だけで消さないよう」単位の処理を一切しないとし、alternatives_considered は「管理 DB に接続できないときも成果物だけの判定で run ディレクトリを削除する」を「管理 DB で終わっていない構成要素(速報比較依頼など)がある実行の成果物を消してしまう恐れ」で退けている。context は運用モードが期間で変わり、両方の実行が同じ成果物ルートに混在し得るとしている。未設定の warn(housekeep.sh stderr)は管理 DB の行を消さないことは知らせるが、成果物だけで判定することの危険は知らせない"
+    suggested_fix: "どちらかに揃えて spec-decision-021 の判断 2 に記録する: (a) 管理 DB に接続しないときは、execution-spec.json の内容などで off 以外の期間に作られたと分かる実行を判定できないもの(undeterminable)として残す、(b) 混在は運用上起き得るが許容すると明記し、alternatives_considered の退け理由を「接続失敗は一時的なので待てる。未設定は構成の選択」と区別して書く。どちらの場合も UC-33 の tier-ops.md の判定元の表と BDD を揃える"
+  - id: R-016
+    viewpoint: 4
+    severity: minor
+    target: "ハウスキープ業務/ハウスキープフロー/保持日数を過ぎた終了済みの実行と確報比較依頼を判定する/spec.md"
+    claim: "R-002 の修正で加えた `warn: management db is not configured ...` を出す時点が spec.md と tier-ops.md で違い、置き場の削除の error 行との stderr の並び順が決まらない"
+    evidence: "tier-ops.md の処理の順序 2 は「off で接続参照名が無い・空なら、ここで warn を 1 行出す」とし、置き場の残りの削除(4)より前に出す。設定の節も「処理の順序の 2 の後」とする。spec.md のシーケンスは「削除待ちの置き場の残りを削除する」の Note の後の alt B-02 の else で warn を出しており、置き場の削除(`error: pending entry delete failed ...`)より後になる。契約 housekeep.sh の processing_order は warn の時点を定めていない"
+    suggested_fix: "spec.md のシーケンスで warn を設定読込の直後(cutoff の前)へ移すか、tier-ops.md を spec.md の順に合わせる。契約の processing_order か stderr の warn の説明に出す時点を 1 文加える"
+  - id: R-017
+    viewpoint: 4
+    severity: minor
+    target: "_cross-cutting/api/cli-command-contract.yaml"
+    claim: "R-007 の修正で off の窓外の走査を印の中身で決める規則にしたが、config_files hang-detector.env の HANG_SCAN_WINDOW_HOURS と判定 UC tier-ops.md の設定表の説明は「監視記録が未終端の run は窓外でも走査」だけで、off の印の例外が書かれていない"
+    evidence: "契約 hang_alert.notified_mark.scan_window(197 行)は印が HANG_SUSPECTED_NOTIFIED の run を窓外でも走査し、EXEC_ERROR_NOTIFIED / COMPLETED は走査しないとする。config_files hang-detector.env の HANG_SCAN_WINDOW_HOURS の description(1465 行付近)と判定 UC tier-ops.md:29 は「監視記録が未終端の run は窓外でも走査する」だけ。判定 UC の tier-ops.md:84 と spec.md:170 は off の印の規則を書いている"
+    suggested_fix: "HANG_SCAN_WINDOW_HOURS の description と判定 UC tier-ops.md:29 に「off では印の中身が HANG_SUSPECTED_NOTIFIED の run を窓外でも走査する(shared_rules.hang_alert.notified_mark.scan_window)」を加える"
+  - id: R-018
+    viewpoint: 1
+    severity: minor
+    target: "_cross-cutting/usdm-acceptance-matrix.md"
+    claim: "R-002 の修正で加えたシナリオ「off で接続参照名が無ければ警告を出し確報比較依頼と管理 DB の行を削除しない(SPEC-014-04)」は、保持日数を過ぎた終端の確報比較依頼が残ることを確かめる。SPEC-014-04 の受け入れ基準 2(過ぎた依頼だけが無くなる)の例外にあたるのに、受け入れ基準を満たすシナリオとして SPEC-014-04 に紐づき covered に数えられている"
+    evidence: "UC-33 spec.md の関連 USDM 表と spec-event.yaml:1000 は、このシナリオを SPEC-014-04 の scenarios に入れている。usdm-acceptance-matrix.md:97 は SPEC-014-04 の対応シナリオにこれを並べて covered とし、例外であることを書いていない。REQ-014 と SPEC-014-04 は確報比較依頼の削除を運用モードや接続設定で限定していない。限定の根拠は spec-decision-021 の判断 2 だけ"
+    suggested_fix: "usdm-acceptance-matrix.md の SPEC-014-04 の行に「off で HOUSEKEEP_DB_CONN_REF が無い構成では確報比較依頼を削除しない(spec-decision-021 判断 2。warn で知らせる)」を例外として注記する。あわせて上流 USDM の SPEC-014-04 にこの限定を足すかを確認推奨項目として返す"
+resolved:
+  - id: R-003
+    resolution: fixed
+    by: orchestrator
+    note: "判定 UC の _api-summary.yaml の stderr に unexpected argument を加え、終了コード 2 の条件に余分な引数と housekeep.env の読み取り不可を加えた"
+  - id: R-006
+    resolution: fixed
+    by: orchestrator
+    note: "契約 hang-detector.sh の exit_codes 2 と判定 UC の _api-summary.yaml の終了コード 2 に余分な引数を加えた"
+  - id: R-011
+    resolution: fixed
+    by: orchestrator
+    note: "依存表 70 番の依存先を UC-19 / UC-20 にし、根拠を UC-34 tier-ops.md のシナリオと UC-33 spec.md の実在シナリオにした"
+  - id: R-013
+    resolution: deferred
+    by: orchestrator
+    note: "docs/todo.md に記録し(キーが空になる行の扱い)、確認推奨項目として返す"
+  - id: R-015
+    resolution: fixed
+    by: orchestrator
+    note: "案 (a) を採用。管理 DB に接続しないとき、execution-spec.json の rapid_crosscheck_mode が off でない実行は判定できないものとして残し warn を出す規則を契約 member_source・stderr、判定 UC の tier-ops.md・_api-summary.yaml、spec-decision-021 に追加"
+  - id: R-016
+    resolution: fixed
+    by: orchestrator
+    note: "warn を出す時点を接続の判断(契約 processing_order の 2、tier-ops の処理の順序 5)に揃え、spec.md のシーケンスと一致させた"
+  - id: R-017
+    resolution: fixed
+    by: orchestrator
+    note: "契約 HANG_SCAN_WINDOW_HOURS の説明と判定 UC tier-ops.md の設定表に off の印の例外を加えた"
+  - id: R-018
+    resolution: fixed
+    by: orchestrator
+    note: "usdm-acceptance-matrix.md の SPEC-014-04 の行に off で接続参照名が無い構成の例外を注記した。上流 USDM への限定の追加は確認推奨項目として返す"

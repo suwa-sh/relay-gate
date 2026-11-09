@@ -80,7 +80,7 @@ sequenceDiagram
 |----------------|---|---------|----------|---------|
 | run role(成果物ディレクトリ区分) | blue | `slots.blue` 節を blue runner が書く | tier-facade | repository `save_slot_spec_once` |
 | run role(成果物ディレクトリ区分) | green | `slots.green` 節を green runner が書く | tier-facade | repository `save_slot_spec_once` |
-| run role(成果物ディレクトリ区分) | rapid-crosscheck | slot runner は書かない。速報側の hang_detect_limit_minutes はクロスチェックジョブマップから読む | tier-facade | — |
+| run role(成果物ディレクトリ区分) | rapid-crosscheck | slot runner は書かない。速報側の hang_detect_limit_minutes はハング検知定期ジョブ設定(hang-detector.env の RAPID_HANG_DETECT_LIMIT_MINUTES)から読む | tier-facade | — |
 | slot 実行モード | foreground / background | `slots.<role>.mode` に記録 | tier-facade | domain `SlotSpec` |
 | slot 実行モード | off | 節を持たない(runner が起動しないため) | tier-facade | — |
 | ハング検知上限設定 | 60 分(導入時既定) | ジョブマップの値を `slots.<role>.hang_detect_limit_minutes` にそのまま保存 | tier-facade | domain `SlotSpec` |

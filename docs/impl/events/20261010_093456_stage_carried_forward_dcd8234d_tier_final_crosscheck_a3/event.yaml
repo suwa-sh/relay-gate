@@ -1,0 +1,15 @@
+event_id: 20261010_093456_stage_carried_forward_dcd8234d_tier_final_crosscheck_a3
+type: stage_carried_forward
+uc_id: dcd8234d
+stage: S4
+tier: tier-final-crosscheck
+attempt: 3
+payload:
+  from_attempt: 2
+  to_attempt: 3
+  source_done_sha256: d98c41d9f9e3505880fd900e7d89d272d149829a25cf440e8aa6e614c24f9e72
+  assumptions_sha256: 91403d5781aa01449a3932210b8bc551fef3285111a09932e1b5dc0b750324b6
+  manifest_sha256: 29b7f16040fdc687588276e46996815ac2dbb10faef246c02ef78d4023412ac3
+  note: attempt 2 の S4 done と assumptions を attempt 3 へ複製(attempt / assumptions.path
+    を更新)。S5 は carry-forward せず attempt 3 で再検証する
+created_at: '2026-10-10T09:34:56+09:00'

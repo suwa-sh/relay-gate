@@ -1,0 +1,551 @@
+{
+  "event_id": "20261104_092000_feedback_stage_spec",
+  "type": "feedback_stage_completed",
+  "run_id": "feedback-20261104_external_review_fixes-20261104_090000-26668",
+  "attempt": 1,
+  "created_at": "2026-11-04T09:20:00Z",
+  "stage": "spec",
+  "direct_work_unit_ids": [
+    "CR-c5e19a72-001#1",
+    "CR-c5e19a72-003#1",
+    "CR-c5e19a72-004#1"
+  ],
+  "causal_work_unit_ids": [
+    "CR-c5e19a72-001#1",
+    "CR-c5e19a72-002#1",
+    "CR-c5e19a72-003#1",
+    "CR-c5e19a72-004#1"
+  ],
+  "work_unit_results": [
+    {
+      "work_unit_id": "CR-c5e19a72-001#1",
+      "disposition": "applied",
+      "reason": "CLI 契約の hang-detector.sh を改めた: RAPID_CROSSCHECK_MODE が off 以外で管理 DB に接続・SELECT できない回は、走査前の設定の検査のあと成果物を走査する前に検出し、error: management db connection failed conn_ref=...(SELECT は error: management db query failed ...)の 1 行だけを出して alert 行・走査・保存をせず終了コード 6 で終える(異常は通知済みにならず、接続できた最初の回に一度だけ知らせる。shared_rules.hang_alert.db_unavailable)。off の通知済みの印の内容が規定の値(英字コード + LF の完全一致)でない・読めない窓内の判定する対象は error: notified mark invalid run_id=... role=... path: ... を出して MONITORING として判定し、alert 行を出した対象は S へ、判定が COMPLETED の対象は COMPLETED へ書き直し(確定名がディレクトリなら中へ移さず notified mark save failed)、終了コード 6(判定しない対象の印は読まない、窓外の不正な印は印なし、置き場を読めない回は error: notified mark dir is not readable path: ... の 1 行で 6)。対象ごとの行の順(run_id 昇順 → role、1 対象の中は 印の不正 → alert / info: alert skipped → 保存失敗)と、conventions.output_format.stderr と出力規約の error 1 回の例外(hang-detector の対象ごとの error 行、housekeep の単位ごとの失敗)を揃え、判定・通知・記録・異常終了確認の 4 UC と BDD を合わせた。判断は spec-decision-029",
+      "artifact_refs": [
+        "specs/events/20261104_092000_feedback_external_review_fixes/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20261104_092000_feedback_external_review_fixes/_cross-cutting/ux-ui/ui-design.md",
+        "specs/events/20261104_092000_feedback_external_review_fixes/実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/spec.md",
+        "specs/events/20261104_092000_feedback_external_review_fixes/実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/tier-ops.md",
+        "specs/events/20261104_092000_feedback_external_review_fixes/実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/_api-summary.yaml",
+        "specs/events/20261104_092000_feedback_external_review_fixes/実行監視業務/background 実行監視フロー/ハング疑い・実行エラー・比較異常を通知する/spec.md",
+        "specs/events/20261104_092000_feedback_external_review_fixes/実行監視業務/background 実行監視フロー/ハング疑い・実行エラー・比較異常を通知する/tier-ops.md",
+        "specs/events/20261104_092000_feedback_external_review_fixes/実行監視業務/background 実行監視フロー/ハング疑い・実行エラー・比較異常を通知する/_api-summary.yaml",
+        "specs/events/20261104_092000_feedback_external_review_fixes/実行監視業務/background 実行監視フロー/監視記録を保存する/tier-ops.md",
+        "specs/events/20261104_092000_feedback_external_review_fixes/実行監視業務/background 実行監視フロー/ハング検知ジョブの異常終了を確認する/spec.md",
+        "specs/events/20261104_092000_feedback_external_review_fixes/実行監視業務/background 実行監視フロー/ハング検知ジョブの異常終了を確認する/tier-ops.md",
+        "specs/events/20261104_092000_feedback_external_review_fixes/_cross-cutting/usdm-acceptance-matrix.md",
+        "specs/events/20261104_092000_feedback_external_review_fixes/decisions/spec-decision-029.yaml",
+        "specs/events/20261104_092000_feedback_external_review_fixes/spec-event.yaml"
+      ]
+    },
+    {
+      "work_unit_id": "CR-c5e19a72-003#1",
+      "disposition": "applied",
+      "reason": "CLI 契約 shared_rules.housekeep_rules.member_source の判定の順 (1)〜(3) を成果物だけで判定する実行(parallel_runs 行が無い実行)に限定し、parallel_runs 行がある実行は管理 DB の行だけで判定して execution-spec.json の有無と形式・終了ファイルを問わず成果物の warn も出さないと明記した(成果物が無く行だけが残った終了済みの実行は次回に削除。SPEC-014-05)。processing_sequence を加え、昇順はすべてバイト順、削除待ちの置き場の直下のエントリは名前の昇順に削除して error: pending entry delete failed もその順、単位内の rename・置き場からの削除(失敗しても続け、失敗ごとに 1 行)・孤立した印の順も決めた。判定 UC と削除 UC の spec.md・tier-ops.md・_api-summary.yaml、出力規約、tier BDD を揃えた。判断は spec-decision-029",
+      "artifact_refs": [
+        "specs/events/20261104_092000_feedback_external_review_fixes/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20261104_092000_feedback_external_review_fixes/_cross-cutting/ux-ui/ui-design.md",
+        "specs/events/20261104_092000_feedback_external_review_fixes/ハウスキープ業務/ハウスキープフロー/保持日数を過ぎた終了済みの実行と確報比較依頼を判定する/spec.md",
+        "specs/events/20261104_092000_feedback_external_review_fixes/ハウスキープ業務/ハウスキープフロー/保持日数を過ぎた終了済みの実行と確報比較依頼を判定する/tier-ops.md",
+        "specs/events/20261104_092000_feedback_external_review_fixes/ハウスキープ業務/ハウスキープフロー/保持日数を過ぎた終了済みの実行と確報比較依頼を判定する/_api-summary.yaml",
+        "specs/events/20261104_092000_feedback_external_review_fixes/ハウスキープ業務/ハウスキープフロー/成果物と管理 DB の履歴を削除する/spec.md",
+        "specs/events/20261104_092000_feedback_external_review_fixes/ハウスキープ業務/ハウスキープフロー/成果物と管理 DB の履歴を削除する/tier-ops.md",
+        "specs/events/20261104_092000_feedback_external_review_fixes/ハウスキープ業務/ハウスキープフロー/成果物と管理 DB の履歴を削除する/_api-summary.yaml",
+        "specs/events/20261104_092000_feedback_external_review_fixes/decisions/spec-decision-029.yaml",
+        "specs/events/20261104_092000_feedback_external_review_fixes/spec-event.yaml"
+      ]
+    },
+    {
+      "work_unit_id": "CR-c5e19a72-004#1",
+      "disposition": "applied",
+      "reason": "CLI 契約 config_input_rules.byte_checks を加えた(CSV・env の全設定ファイル共通): 第 1 段(NUL / UTF-8 / BOM / CR)の違反はファイル内の全件を物理行番号の昇順に出し、同じ行は表の順(NUL → UTF-8 → BOM → CR)に 1 種類 1 行、CR の hint は最後の CR の error 行の次に 1 回だけ、違反があれば第 1 段の error 行と hint だけを出して以降の検査をせず止め、validate-config.sh の violations は第 1 段で出した error 行の数(hint を数えない)、実行時の読み手も同じ順・同じ件数。env_files・validate-config.sh の stderr・出力規約と、ジョブマップ・feature flag・速報クロスチェック設定・ジョブマップ解決・ハウスキープ設定・確報の比較ツールの UC と tier BDD を揃えた。実装は変えず、validate_job_map.sh(と同じ関数を使う validate_rapid_crosscheck.sh)が同じ行を BOM → NUL → UTF-8 → CR の順で出す差分と、feature_flag_config.sh が CR を落とし validate_feature_flag.sh が第 1 段の検査をしない差分を記録した。判断は spec-decision-029",
+      "artifact_refs": [
+        "specs/events/20261104_092000_feedback_external_review_fixes/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20261104_092000_feedback_external_review_fixes/_cross-cutting/ux-ui/ui-design.md",
+        "specs/events/20261104_092000_feedback_external_review_fixes/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/spec.md",
+        "specs/events/20261104_092000_feedback_external_review_fixes/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/tier-facade.md",
+        "specs/events/20261104_092000_feedback_external_review_fixes/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/_api-summary.yaml",
+        "specs/events/20261104_092000_feedback_external_review_fixes/適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md",
+        "specs/events/20261104_092000_feedback_external_review_fixes/適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md",
+        "specs/events/20261104_092000_feedback_external_review_fixes/適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/spec.md",
+        "specs/events/20261104_092000_feedback_external_review_fixes/適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/tier-facade.md",
+        "specs/events/20261104_092000_feedback_external_review_fixes/実装切替業務/実装切替ジョブ実行フロー/ジョブマップで JOB_ID から実行先を解決する/tier-facade.md",
+        "specs/events/20261104_092000_feedback_external_review_fixes/ハウスキープ業務/ハウスキープフロー/保持日数を過ぎた終了済みの実行と確報比較依頼を判定する/tier-facade.md",
+        "specs/events/20261104_092000_feedback_external_review_fixes/クロスチェック業務/確報クロスチェックフロー/比較ツールで日次全量比較を実行して結果を保存する/tier-final-crosscheck.md",
+        "specs/events/20261104_092000_feedback_external_review_fixes/decisions/spec-decision-029.yaml",
+        "specs/events/20261104_092000_feedback_external_review_fixes/spec-event.yaml"
+      ]
+    }
+  ],
+  "reconciliation_results": [
+    {
+      "work_unit_id": "CR-c5e19a72-001#1",
+      "status": "changed",
+      "reason": "CLI 契約の hang-detector.sh を改めた: RAPID_CROSSCHECK_MODE が off 以外で管理 DB に接続・SELECT できない回は、走査前の設定の検査のあと成果物を走査する前に検出し、error: management db connection failed conn_ref=...(SELECT は error: management db query failed ...)の 1 行だけを出して alert 行・走査・保存をせず終了コード 6 で終える(異常は通知済みにならず、接続できた最初の回に一度だけ知らせる。shared_rules.hang_alert.db_unavailable)。off の通知済みの印の内容が規定の値(英字コード + LF の完全一致)でない・読めない窓内の判定する対象は error: notified mark invalid run_id=... role=... path: ... を出して MONITORING として判定し、alert 行を出した対象は S へ、判定が COMPLETED の対象は COMPLETED へ書き直し(確定名がディレクトリなら中へ移さず notified mark save failed)、終了コード 6(判定しない対象の印は読まない、窓外の不正な印は印なし、置き場を読めない回は error: notified mark dir is not readable path: ... の 1 行で 6)。対象ごとの行の順(run_id 昇順 → role、1 対象の中は 印の不正 → alert / info: alert skipped → 保存失敗)と、conventions.output_format.stderr と出力規約の error 1 回の例外(hang-detector の対象ごとの error 行、housekeep の単位ごとの失敗)を揃え、判定・通知・記録・異常終了確認の 4 UC と BDD を合わせた。判断は spec-decision-029",
+      "artifact_refs": [
+        "specs/events/20261104_092000_feedback_external_review_fixes/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20261104_092000_feedback_external_review_fixes/_cross-cutting/ux-ui/ui-design.md",
+        "specs/events/20261104_092000_feedback_external_review_fixes/実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/spec.md",
+        "specs/events/20261104_092000_feedback_external_review_fixes/実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/tier-ops.md",
+        "specs/events/20261104_092000_feedback_external_review_fixes/実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/_api-summary.yaml",
+        "specs/events/20261104_092000_feedback_external_review_fixes/実行監視業務/background 実行監視フロー/ハング疑い・実行エラー・比較異常を通知する/spec.md",
+        "specs/events/20261104_092000_feedback_external_review_fixes/実行監視業務/background 実行監視フロー/ハング疑い・実行エラー・比較異常を通知する/tier-ops.md",
+        "specs/events/20261104_092000_feedback_external_review_fixes/実行監視業務/background 実行監視フロー/ハング疑い・実行エラー・比較異常を通知する/_api-summary.yaml",
+        "specs/events/20261104_092000_feedback_external_review_fixes/実行監視業務/background 実行監視フロー/監視記録を保存する/tier-ops.md",
+        "specs/events/20261104_092000_feedback_external_review_fixes/実行監視業務/background 実行監視フロー/ハング検知ジョブの異常終了を確認する/spec.md",
+        "specs/events/20261104_092000_feedback_external_review_fixes/実行監視業務/background 実行監視フロー/ハング検知ジョブの異常終了を確認する/tier-ops.md",
+        "specs/events/20261104_092000_feedback_external_review_fixes/_cross-cutting/usdm-acceptance-matrix.md",
+        "specs/events/20261104_092000_feedback_external_review_fixes/decisions/spec-decision-029.yaml",
+        "specs/events/20261104_092000_feedback_external_review_fixes/spec-event.yaml"
+      ]
+    },
+    {
+      "work_unit_id": "CR-c5e19a72-002#1",
+      "status": "changed",
+      "reason": "構築手順の配置時の検査がファイルの存在確認だけになり中身の検査が CLI 契約に任されたため、契約に欠けていた hang-detector.env の値の検査を足した: RAPID_HANG_DETECT_LIMIT_MINUTES / HANG_SCAN_WINDOW_HOURS はキーがあれば正の整数 ^[1-9][0-9]{0,8}$、違反は error: invalid value key=<KEY> value=... path: ... + hint: use a positive integer(2)、未知キーは warn: unknown key、走査前の検査の順(引数 → hang-detector.env → feature-flag.env → hang-detector.env のキー → RELAY_GATE_ARTIFACT_ROOT)で最初の設定エラーで止める。config_files の hang-detector.env に中身の検査は hang-detector.sh の起動時(validate-config.sh に検証種別は無い)と書き、判定 UC の tier-ops.md・_api-summary.yaml と tier BDD を揃えた。判断は spec-decision-029",
+      "artifact_refs": [
+        "specs/events/20261104_092000_feedback_external_review_fixes/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20261104_092000_feedback_external_review_fixes/実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/tier-ops.md",
+        "specs/events/20261104_092000_feedback_external_review_fixes/実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/_api-summary.yaml",
+        "specs/events/20261104_092000_feedback_external_review_fixes/decisions/spec-decision-029.yaml",
+        "specs/events/20261104_092000_feedback_external_review_fixes/spec-event.yaml"
+      ]
+    },
+    {
+      "work_unit_id": "CR-c5e19a72-003#1",
+      "status": "changed",
+      "reason": "CLI 契約 shared_rules.housekeep_rules.member_source の判定の順 (1)〜(3) を成果物だけで判定する実行(parallel_runs 行が無い実行)に限定し、parallel_runs 行がある実行は管理 DB の行だけで判定して execution-spec.json の有無と形式・終了ファイルを問わず成果物の warn も出さないと明記した(成果物が無く行だけが残った終了済みの実行は次回に削除。SPEC-014-05)。processing_sequence を加え、昇順はすべてバイト順、削除待ちの置き場の直下のエントリは名前の昇順に削除して error: pending entry delete failed もその順、単位内の rename・置き場からの削除(失敗しても続け、失敗ごとに 1 行)・孤立した印の順も決めた。判定 UC と削除 UC の spec.md・tier-ops.md・_api-summary.yaml、出力規約、tier BDD を揃えた。判断は spec-decision-029",
+      "artifact_refs": [
+        "specs/events/20261104_092000_feedback_external_review_fixes/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20261104_092000_feedback_external_review_fixes/_cross-cutting/ux-ui/ui-design.md",
+        "specs/events/20261104_092000_feedback_external_review_fixes/ハウスキープ業務/ハウスキープフロー/保持日数を過ぎた終了済みの実行と確報比較依頼を判定する/spec.md",
+        "specs/events/20261104_092000_feedback_external_review_fixes/ハウスキープ業務/ハウスキープフロー/保持日数を過ぎた終了済みの実行と確報比較依頼を判定する/tier-ops.md",
+        "specs/events/20261104_092000_feedback_external_review_fixes/ハウスキープ業務/ハウスキープフロー/保持日数を過ぎた終了済みの実行と確報比較依頼を判定する/_api-summary.yaml",
+        "specs/events/20261104_092000_feedback_external_review_fixes/ハウスキープ業務/ハウスキープフロー/成果物と管理 DB の履歴を削除する/spec.md",
+        "specs/events/20261104_092000_feedback_external_review_fixes/ハウスキープ業務/ハウスキープフロー/成果物と管理 DB の履歴を削除する/tier-ops.md",
+        "specs/events/20261104_092000_feedback_external_review_fixes/ハウスキープ業務/ハウスキープフロー/成果物と管理 DB の履歴を削除する/_api-summary.yaml",
+        "specs/events/20261104_092000_feedback_external_review_fixes/decisions/spec-decision-029.yaml",
+        "specs/events/20261104_092000_feedback_external_review_fixes/spec-event.yaml"
+      ]
+    },
+    {
+      "work_unit_id": "CR-c5e19a72-004#1",
+      "status": "changed",
+      "reason": "CLI 契約 config_input_rules.byte_checks を加えた(CSV・env の全設定ファイル共通): 第 1 段(NUL / UTF-8 / BOM / CR)の違反はファイル内の全件を物理行番号の昇順に出し、同じ行は表の順(NUL → UTF-8 → BOM → CR)に 1 種類 1 行、CR の hint は最後の CR の error 行の次に 1 回だけ、違反があれば第 1 段の error 行と hint だけを出して以降の検査をせず止め、validate-config.sh の violations は第 1 段で出した error 行の数(hint を数えない)、実行時の読み手も同じ順・同じ件数。env_files・validate-config.sh の stderr・出力規約と、ジョブマップ・feature flag・速報クロスチェック設定・ジョブマップ解決・ハウスキープ設定・確報の比較ツールの UC と tier BDD を揃えた。実装は変えず、validate_job_map.sh(と同じ関数を使う validate_rapid_crosscheck.sh)が同じ行を BOM → NUL → UTF-8 → CR の順で出す差分と、feature_flag_config.sh が CR を落とし validate_feature_flag.sh が第 1 段の検査をしない差分を記録した。判断は spec-decision-029",
+      "artifact_refs": [
+        "specs/events/20261104_092000_feedback_external_review_fixes/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20261104_092000_feedback_external_review_fixes/_cross-cutting/ux-ui/ui-design.md",
+        "specs/events/20261104_092000_feedback_external_review_fixes/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/spec.md",
+        "specs/events/20261104_092000_feedback_external_review_fixes/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/tier-facade.md",
+        "specs/events/20261104_092000_feedback_external_review_fixes/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/_api-summary.yaml",
+        "specs/events/20261104_092000_feedback_external_review_fixes/適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md",
+        "specs/events/20261104_092000_feedback_external_review_fixes/適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md",
+        "specs/events/20261104_092000_feedback_external_review_fixes/適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/spec.md",
+        "specs/events/20261104_092000_feedback_external_review_fixes/適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/tier-facade.md",
+        "specs/events/20261104_092000_feedback_external_review_fixes/実装切替業務/実装切替ジョブ実行フロー/ジョブマップで JOB_ID から実行先を解決する/tier-facade.md",
+        "specs/events/20261104_092000_feedback_external_review_fixes/ハウスキープ業務/ハウスキープフロー/保持日数を過ぎた終了済みの実行と確報比較依頼を判定する/tier-facade.md",
+        "specs/events/20261104_092000_feedback_external_review_fixes/クロスチェック業務/確報クロスチェックフロー/比較ツールで日次全量比較を実行して結果を保存する/tier-final-crosscheck.md",
+        "specs/events/20261104_092000_feedback_external_review_fixes/decisions/spec-decision-029.yaml",
+        "specs/events/20261104_092000_feedback_external_review_fixes/spec-event.yaml"
+      ]
+    }
+  ],
+  "work_unit_evidence_refs": [
+    {
+      "work_unit_id": "CR-c5e19a72-001#1",
+      "path": "specs/events/20261104_092000_feedback_external_review_fixes/_cross-cutting/api/cli-command-contract.yaml",
+      "sha256": "bdd5c63bc662282aa17dc925722cabc5d268855cece085daa94323a9a5eef128"
+    },
+    {
+      "work_unit_id": "CR-c5e19a72-001#1",
+      "path": "specs/events/20261104_092000_feedback_external_review_fixes/_cross-cutting/ux-ui/ui-design.md",
+      "sha256": "70cc230aba1bd70c6a261e88d420d0c516848844e2873dcb5b889ea0d97b4e9a"
+    },
+    {
+      "work_unit_id": "CR-c5e19a72-001#1",
+      "path": "specs/events/20261104_092000_feedback_external_review_fixes/実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/spec.md",
+      "sha256": "1e840c2dd565cc2425e8afc6eec81d9ba8b57f8235fcbb880b40267b239185a9"
+    },
+    {
+      "work_unit_id": "CR-c5e19a72-001#1",
+      "path": "specs/events/20261104_092000_feedback_external_review_fixes/実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/tier-ops.md",
+      "sha256": "c1738abb341ddd2922a30b372cb35fc102424749e9c58e2ee391e0361ff6e8ec"
+    },
+    {
+      "work_unit_id": "CR-c5e19a72-001#1",
+      "path": "specs/events/20261104_092000_feedback_external_review_fixes/実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/_api-summary.yaml",
+      "sha256": "ff0daabccfd7ba0c0055acff8ae16ffb6ec1e44cc82278b8f9759eaefcca7bbf"
+    },
+    {
+      "work_unit_id": "CR-c5e19a72-001#1",
+      "path": "specs/events/20261104_092000_feedback_external_review_fixes/実行監視業務/background 実行監視フロー/ハング疑い・実行エラー・比較異常を通知する/spec.md",
+      "sha256": "976df48a32282d5ea5306437f38206d462020ee92d6b7a5458875ee4733b94ab"
+    },
+    {
+      "work_unit_id": "CR-c5e19a72-001#1",
+      "path": "specs/events/20261104_092000_feedback_external_review_fixes/実行監視業務/background 実行監視フロー/ハング疑い・実行エラー・比較異常を通知する/tier-ops.md",
+      "sha256": "9e752f5befcdc3fda1e69e42a4b869d98f6575137d15f979e34d9975281e6f55"
+    },
+    {
+      "work_unit_id": "CR-c5e19a72-001#1",
+      "path": "specs/events/20261104_092000_feedback_external_review_fixes/実行監視業務/background 実行監視フロー/ハング疑い・実行エラー・比較異常を通知する/_api-summary.yaml",
+      "sha256": "1d3d3c80d7f9a8816af3f556b1e9411c0647f5f9ebdd872ce6e0f1957bb1b94a"
+    },
+    {
+      "work_unit_id": "CR-c5e19a72-001#1",
+      "path": "specs/events/20261104_092000_feedback_external_review_fixes/実行監視業務/background 実行監視フロー/監視記録を保存する/tier-ops.md",
+      "sha256": "6ef27dcb92a91d2d408f60dcfd1f5f793c046f80d2ad81f7857d74df1b36c470"
+    },
+    {
+      "work_unit_id": "CR-c5e19a72-001#1",
+      "path": "specs/events/20261104_092000_feedback_external_review_fixes/実行監視業務/background 実行監視フロー/ハング検知ジョブの異常終了を確認する/spec.md",
+      "sha256": "267030d5cef011faabbd357e0fedbd43ff8f681dd26a355fdf58f28b1efbfd6a"
+    },
+    {
+      "work_unit_id": "CR-c5e19a72-001#1",
+      "path": "specs/events/20261104_092000_feedback_external_review_fixes/実行監視業務/background 実行監視フロー/ハング検知ジョブの異常終了を確認する/tier-ops.md",
+      "sha256": "0aec14e50ffbc9ae72ccadd0601465f9f64942c7c3417335335d5b955ba63ad8"
+    },
+    {
+      "work_unit_id": "CR-c5e19a72-001#1",
+      "path": "specs/events/20261104_092000_feedback_external_review_fixes/_cross-cutting/usdm-acceptance-matrix.md",
+      "sha256": "ffb050f3052a1e3d3a3554d5cdff04af14a95704eeda25a56d3a394c3302058a"
+    },
+    {
+      "work_unit_id": "CR-c5e19a72-001#1",
+      "path": "specs/events/20261104_092000_feedback_external_review_fixes/decisions/spec-decision-029.yaml",
+      "sha256": "f1ef2e0148c12a5b402c65ea7b86f4d57235ec28acf57ab3eb479a3f0ab2d304"
+    },
+    {
+      "work_unit_id": "CR-c5e19a72-001#1",
+      "path": "specs/events/20261104_092000_feedback_external_review_fixes/spec-event.yaml",
+      "sha256": "4f0d1343def07bf2e6a295041431f816d83f552eaa9c1509fb24b269c375cac8"
+    },
+    {
+      "work_unit_id": "CR-c5e19a72-002#1",
+      "path": "specs/events/20261104_092000_feedback_external_review_fixes/_cross-cutting/api/cli-command-contract.yaml",
+      "sha256": "bdd5c63bc662282aa17dc925722cabc5d268855cece085daa94323a9a5eef128"
+    },
+    {
+      "work_unit_id": "CR-c5e19a72-002#1",
+      "path": "specs/events/20261104_092000_feedback_external_review_fixes/実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/tier-ops.md",
+      "sha256": "c1738abb341ddd2922a30b372cb35fc102424749e9c58e2ee391e0361ff6e8ec"
+    },
+    {
+      "work_unit_id": "CR-c5e19a72-002#1",
+      "path": "specs/events/20261104_092000_feedback_external_review_fixes/実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/_api-summary.yaml",
+      "sha256": "ff0daabccfd7ba0c0055acff8ae16ffb6ec1e44cc82278b8f9759eaefcca7bbf"
+    },
+    {
+      "work_unit_id": "CR-c5e19a72-002#1",
+      "path": "specs/events/20261104_092000_feedback_external_review_fixes/decisions/spec-decision-029.yaml",
+      "sha256": "f1ef2e0148c12a5b402c65ea7b86f4d57235ec28acf57ab3eb479a3f0ab2d304"
+    },
+    {
+      "work_unit_id": "CR-c5e19a72-002#1",
+      "path": "specs/events/20261104_092000_feedback_external_review_fixes/spec-event.yaml",
+      "sha256": "4f0d1343def07bf2e6a295041431f816d83f552eaa9c1509fb24b269c375cac8"
+    },
+    {
+      "work_unit_id": "CR-c5e19a72-003#1",
+      "path": "specs/events/20261104_092000_feedback_external_review_fixes/_cross-cutting/api/cli-command-contract.yaml",
+      "sha256": "bdd5c63bc662282aa17dc925722cabc5d268855cece085daa94323a9a5eef128"
+    },
+    {
+      "work_unit_id": "CR-c5e19a72-003#1",
+      "path": "specs/events/20261104_092000_feedback_external_review_fixes/_cross-cutting/ux-ui/ui-design.md",
+      "sha256": "70cc230aba1bd70c6a261e88d420d0c516848844e2873dcb5b889ea0d97b4e9a"
+    },
+    {
+      "work_unit_id": "CR-c5e19a72-003#1",
+      "path": "specs/events/20261104_092000_feedback_external_review_fixes/ハウスキープ業務/ハウスキープフロー/保持日数を過ぎた終了済みの実行と確報比較依頼を判定する/spec.md",
+      "sha256": "cd2f4938cac29903b07e7c277be2d5bbbb05699916a680cd286b91acd89c8ad0"
+    },
+    {
+      "work_unit_id": "CR-c5e19a72-003#1",
+      "path": "specs/events/20261104_092000_feedback_external_review_fixes/ハウスキープ業務/ハウスキープフロー/保持日数を過ぎた終了済みの実行と確報比較依頼を判定する/tier-ops.md",
+      "sha256": "886248e310d4004406c999422e2b1a295d24006c9dc1670dda091d7010b36755"
+    },
+    {
+      "work_unit_id": "CR-c5e19a72-003#1",
+      "path": "specs/events/20261104_092000_feedback_external_review_fixes/ハウスキープ業務/ハウスキープフロー/保持日数を過ぎた終了済みの実行と確報比較依頼を判定する/_api-summary.yaml",
+      "sha256": "3c64323b3b4b3717e63a7f31945c78fdd1b2f5b5507c92c7926ba7763dc09b85"
+    },
+    {
+      "work_unit_id": "CR-c5e19a72-003#1",
+      "path": "specs/events/20261104_092000_feedback_external_review_fixes/ハウスキープ業務/ハウスキープフロー/成果物と管理 DB の履歴を削除する/spec.md",
+      "sha256": "abf004b9b60a076e545df1bb4bee7edef543bd23d52ed820535bbfa656ef8855"
+    },
+    {
+      "work_unit_id": "CR-c5e19a72-003#1",
+      "path": "specs/events/20261104_092000_feedback_external_review_fixes/ハウスキープ業務/ハウスキープフロー/成果物と管理 DB の履歴を削除する/tier-ops.md",
+      "sha256": "b585ea9541bbe5aa7bbc0549a706a56cc9ab86083b440e72467b9f89b11a8e29"
+    },
+    {
+      "work_unit_id": "CR-c5e19a72-003#1",
+      "path": "specs/events/20261104_092000_feedback_external_review_fixes/ハウスキープ業務/ハウスキープフロー/成果物と管理 DB の履歴を削除する/_api-summary.yaml",
+      "sha256": "ba5887b918b03fa92273767245365ad3381a4be5c4997b88e06e15dd8bb6ce6e"
+    },
+    {
+      "work_unit_id": "CR-c5e19a72-003#1",
+      "path": "specs/events/20261104_092000_feedback_external_review_fixes/decisions/spec-decision-029.yaml",
+      "sha256": "f1ef2e0148c12a5b402c65ea7b86f4d57235ec28acf57ab3eb479a3f0ab2d304"
+    },
+    {
+      "work_unit_id": "CR-c5e19a72-003#1",
+      "path": "specs/events/20261104_092000_feedback_external_review_fixes/spec-event.yaml",
+      "sha256": "4f0d1343def07bf2e6a295041431f816d83f552eaa9c1509fb24b269c375cac8"
+    },
+    {
+      "work_unit_id": "CR-c5e19a72-004#1",
+      "path": "specs/events/20261104_092000_feedback_external_review_fixes/_cross-cutting/api/cli-command-contract.yaml",
+      "sha256": "bdd5c63bc662282aa17dc925722cabc5d268855cece085daa94323a9a5eef128"
+    },
+    {
+      "work_unit_id": "CR-c5e19a72-004#1",
+      "path": "specs/events/20261104_092000_feedback_external_review_fixes/_cross-cutting/ux-ui/ui-design.md",
+      "sha256": "70cc230aba1bd70c6a261e88d420d0c516848844e2873dcb5b889ea0d97b4e9a"
+    },
+    {
+      "work_unit_id": "CR-c5e19a72-004#1",
+      "path": "specs/events/20261104_092000_feedback_external_review_fixes/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/spec.md",
+      "sha256": "cad69643e88ef0f9bd4d41514f6cfd32ba545df93c4392da8b6bfbb772990d4f"
+    },
+    {
+      "work_unit_id": "CR-c5e19a72-004#1",
+      "path": "specs/events/20261104_092000_feedback_external_review_fixes/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/tier-facade.md",
+      "sha256": "726269db93bbc944c9bd05546e223498c777462be0145b4f421a49960929b69d"
+    },
+    {
+      "work_unit_id": "CR-c5e19a72-004#1",
+      "path": "specs/events/20261104_092000_feedback_external_review_fixes/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/_api-summary.yaml",
+      "sha256": "d9498303c7cb7b00b17a7715471025ca875c544e7ef9ef82a3914b65e6b50c68"
+    },
+    {
+      "work_unit_id": "CR-c5e19a72-004#1",
+      "path": "specs/events/20261104_092000_feedback_external_review_fixes/適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md",
+      "sha256": "6042bf16ad96c5bb1bea19726c864139300cddb4cfbbd47b9063e5d46f435de5"
+    },
+    {
+      "work_unit_id": "CR-c5e19a72-004#1",
+      "path": "specs/events/20261104_092000_feedback_external_review_fixes/適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md",
+      "sha256": "97b717c4ecbcce5d00e72a4c69376edc8a33bbe72e6c6ea5e0bf7152def20767"
+    },
+    {
+      "work_unit_id": "CR-c5e19a72-004#1",
+      "path": "specs/events/20261104_092000_feedback_external_review_fixes/適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/spec.md",
+      "sha256": "3bf87cf639bd093649fed88b97b6475a5de040ad2f5ef231c74ac5afe3482491"
+    },
+    {
+      "work_unit_id": "CR-c5e19a72-004#1",
+      "path": "specs/events/20261104_092000_feedback_external_review_fixes/適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/tier-facade.md",
+      "sha256": "ded390fea991d82fc8fe597038504d917c00d98329417c23fff1a7e4d97c4855"
+    },
+    {
+      "work_unit_id": "CR-c5e19a72-004#1",
+      "path": "specs/events/20261104_092000_feedback_external_review_fixes/実装切替業務/実装切替ジョブ実行フロー/ジョブマップで JOB_ID から実行先を解決する/tier-facade.md",
+      "sha256": "c14947a06b37a53a3939c5591687951e9fa6591f621b747c1452290781b5e6d2"
+    },
+    {
+      "work_unit_id": "CR-c5e19a72-004#1",
+      "path": "specs/events/20261104_092000_feedback_external_review_fixes/ハウスキープ業務/ハウスキープフロー/保持日数を過ぎた終了済みの実行と確報比較依頼を判定する/tier-facade.md",
+      "sha256": "71df798cd990a79eb6b947e233a8446ca19e2e9d14398fcd911e2c5821e6af0c"
+    },
+    {
+      "work_unit_id": "CR-c5e19a72-004#1",
+      "path": "specs/events/20261104_092000_feedback_external_review_fixes/クロスチェック業務/確報クロスチェックフロー/比較ツールで日次全量比較を実行して結果を保存する/tier-final-crosscheck.md",
+      "sha256": "43e58b85b5e80f8e486ae3f9a590465f4bc900449a2cf742036b2c2d3a8f7aeb"
+    },
+    {
+      "work_unit_id": "CR-c5e19a72-004#1",
+      "path": "specs/events/20261104_092000_feedback_external_review_fixes/decisions/spec-decision-029.yaml",
+      "sha256": "f1ef2e0148c12a5b402c65ea7b86f4d57235ec28acf57ab3eb479a3f0ab2d304"
+    },
+    {
+      "work_unit_id": "CR-c5e19a72-004#1",
+      "path": "specs/events/20261104_092000_feedback_external_review_fixes/spec-event.yaml",
+      "sha256": "4f0d1343def07bf2e6a295041431f816d83f552eaa9c1509fb24b269c375cac8"
+    }
+  ],
+  "domain_event_refs": [
+    {
+      "path": "specs/events/20261104_092000_feedback_external_review_fixes/spec-event.yaml",
+      "sha256": "4f0d1343def07bf2e6a295041431f816d83f552eaa9c1509fb24b269c375cac8"
+    }
+  ],
+  "feedback_request": {
+    "feedback_request_id": "20261104_external_review_fixes",
+    "input_sha256": "6b4cf1b4db9a1e0d2ad050d265c7c2b77928832af091ac20b2657e61aea0dc13",
+    "request_ids": [
+      "CR-c5e19a72-001",
+      "CR-c5e19a72-002",
+      "CR-c5e19a72-003",
+      "CR-c5e19a72-004"
+    ],
+    "work_unit_ids": [
+      "CR-c5e19a72-001#1",
+      "CR-c5e19a72-002#1",
+      "CR-c5e19a72-003#1",
+      "CR-c5e19a72-004#1"
+    ]
+  },
+  "post_execution_basis": {
+    "repository_head": "38cf3f4a5dff8f47c581ab984ab8c37805c44e20",
+    "latest_domain_event_ids": {
+      "requirements": {
+        "rdra/events": "20261103_131000_feedback_housekeeping_db_required",
+        "usdm/events": "20261103_131000_feedback_housekeeping_db_required"
+      },
+      "quality_attributes": {
+        "nfr/events": "20261103_132000_feedback_housekeeping_db_required"
+      },
+      "architecture": {
+        "arch/events": "20261103_133000_feedback_housekeeping_db_required"
+      },
+      "infrastructure": {
+        "infra/events": "20261104_091000_feedback_external_review_fixes"
+      },
+      "design_system": {
+        "design/events": null
+      },
+      "spec": {
+        "specs/events": "20261104_092000_feedback_external_review_fixes"
+      },
+      "spec_stories": {
+        "design/events": null
+      }
+    },
+    "domain_event_root_snapshots": {
+      "rdra/events": {
+        "head_event_id": "20261103_131000_feedback_housekeeping_db_required",
+        "head_event_sha256": "3e511fca6a1fea0c55efdc3a33fb8b8e7e5ca12899627a7b14221d326de9fb7d",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency",
+          "20260908_011000_feedback_slot_status_wording",
+          "20260921_084000_feedback_impl_feedback_eff24f55",
+          "20261010_200000_feedback_impl_feedback_dcd8234d",
+          "20261101_101000_feedback_impl_feedback_dcd8234d",
+          "20261101_121000_feedback_mail_removal_housekeeping",
+          "20261103_081000_feedback_housekeeping_followups",
+          "20261103_131000_feedback_housekeeping_db_required"
+        ],
+        "event_set_sha256": "608c77661bedd39000b6f1c22dbe8e3c3d8b2c0c35359df2261b25a55aa9346f",
+        "latest_tree_sha256": "b4b4296ae1547f95cba62b54d1140692a16a05e72e184aa44fa8f8f35854b577"
+      },
+      "usdm/events": {
+        "head_event_id": "20261103_131000_feedback_housekeeping_db_required",
+        "head_event_sha256": "d5b9cc924c01032584134b561a0c833b5fa9262f0abafa9e664900b0171d8574",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency",
+          "20260908_011000_feedback_slot_status_wording",
+          "20260921_084000_feedback_impl_feedback_eff24f55",
+          "20261010_200000_feedback_impl_feedback_dcd8234d",
+          "20261101_101000_feedback_impl_feedback_dcd8234d",
+          "20261101_121000_feedback_mail_removal_housekeeping",
+          "20261103_081000_feedback_housekeeping_followups",
+          "20261103_131000_feedback_housekeeping_db_required"
+        ],
+        "event_set_sha256": "608c77661bedd39000b6f1c22dbe8e3c3d8b2c0c35359df2261b25a55aa9346f",
+        "latest_tree_sha256": "48b132d17198156a3da6feef7fd725090592abd41d7e50bd23229b210888d358"
+      },
+      "nfr/events": {
+        "head_event_id": "20261103_132000_feedback_housekeeping_db_required",
+        "head_event_sha256": "6bbbe5e66291b046be72435e6b0de99b04929d96288be66f8f1dcd61a07e7fd7",
+        "event_ids": [
+          "20260830_183726_initial_nfr",
+          "20260905_085000_feedback_todo_resolution",
+          "20260907_013000_feedback_todo_followup",
+          "20260907_120000_feedback_abort_consistency",
+          "20260908_013000_feedback_slot_status_wording",
+          "20260921_090000_feedback_impl_feedback_eff24f55",
+          "20261010_201000_feedback_impl_feedback_dcd8234d",
+          "20261101_102000_feedback_impl_feedback_dcd8234d",
+          "20261101_122000_feedback_mail_removal_housekeeping",
+          "20261103_082000_feedback_housekeeping_followups",
+          "20261103_132000_feedback_housekeeping_db_required"
+        ],
+        "event_set_sha256": "033e74beac16867152af31decca75c10fb3439ecd768ae55c5cf0778533a2bd3",
+        "latest_tree_sha256": "2a22da3a3dbbbf4514a30670646ea4b250a66cf132ec4a57790132c4696b3131"
+      },
+      "arch/events": {
+        "head_event_id": "20261103_133000_feedback_housekeeping_db_required",
+        "head_event_sha256": "53fc4d04b355fbbc82dbbe05c4a854eabecdcef60c67dc512c95f20627d36637",
+        "event_ids": [
+          "20260830_184457_initial_arch",
+          "20260830_202427_arch_infra_feedback_20260830_190412_infra_product_design",
+          "20260905_091000_feedback_todo_resolution",
+          "20260907_015000_feedback_todo_followup",
+          "20260907_122000_feedback_abort_consistency",
+          "20260908_015000_feedback_slot_status_wording",
+          "20260921_092000_feedback_impl_feedback_eff24f55",
+          "20261010_202000_feedback_impl_feedback_dcd8234d",
+          "20261101_103000_feedback_impl_feedback_dcd8234d",
+          "20261101_123000_feedback_mail_removal_housekeeping",
+          "20261103_083000_feedback_housekeeping_followups",
+          "20261103_133000_feedback_housekeeping_db_required"
+        ],
+        "event_set_sha256": "f38dfba1b314fde01ff25cecad44573f1367c9b9a3941c5ee2f7e9598487f899",
+        "latest_tree_sha256": "5e00d5989382518efa1cf9387b0f8c2f14b9010ef51ec8d110cb748c20355bfc"
+      },
+      "infra/events": {
+        "head_event_id": "20261104_091000_feedback_external_review_fixes",
+        "head_event_sha256": "9fdf2f113424c6c7ad1c293f017bd2b6e9faea7bce18f2d66f212c546644396f",
+        "event_ids": [
+          "20260830_190412_infra_product_design",
+          "20260905_093000_feedback_todo_resolution",
+          "20260907_021000_feedback_todo_followup",
+          "20260907_124000_feedback_abort_consistency",
+          "20260908_021000_feedback_slot_status_wording",
+          "20260921_094000_feedback_impl_feedback_eff24f55",
+          "20261010_203000_feedback_impl_feedback_dcd8234d",
+          "20261101_104000_feedback_impl_feedback_dcd8234d",
+          "20261101_124000_feedback_mail_removal_housekeeping",
+          "20261103_084000_feedback_housekeeping_followups",
+          "20261103_134000_feedback_housekeeping_db_required",
+          "20261104_091000_feedback_external_review_fixes"
+        ],
+        "event_set_sha256": "1725a8fe032c676d2361b2463c0e010a575e5aee40654280dd5e1d667e9f058a",
+        "latest_tree_sha256": "d6bc989c2f3f04a895595da531ed87875cb8c4b44df7b35bd6087c05531eab63"
+      },
+      "design/events": {
+        "head_event_id": null,
+        "head_event_sha256": null,
+        "event_ids": [],
+        "event_set_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "latest_tree_sha256": null
+      },
+      "specs/events": {
+        "head_event_id": "20261104_092000_feedback_external_review_fixes",
+        "head_event_sha256": "20dd89650de2e332e649ced73d36f5e074040c541123207be79fd7361bbc9f49",
+        "event_ids": [
+          "20260830_202851_spec_generation",
+          "20260905_100000_feedback_todo_resolution",
+          "20260907_024000_feedback_todo_followup",
+          "20260907_131000_feedback_abort_consistency",
+          "20260908_024000_feedback_slot_status_wording",
+          "20260908_062000_feedback_spec_machine_readable",
+          "20260917_050000_feedback_impl_feedback_fd678b04",
+          "20260917_100000_feedback_impl_feedback_fd678b04_cycle2",
+          "20260921_100000_feedback_impl_feedback_eff24f55",
+          "20260923_112000_feedback_impl_feedback_eff24f55_cycle2",
+          "20261010_204000_feedback_impl_feedback_dcd8234d",
+          "20261027_055000_feedback_impl_feedback_dcd8234d",
+          "20261101_105000_feedback_impl_feedback_dcd8234d",
+          "20261101_125000_feedback_mail_removal_housekeeping",
+          "20261103_085000_feedback_housekeeping_followups",
+          "20261103_135000_feedback_housekeeping_db_required",
+          "20261103_151000_feedback_env_duplicate_key",
+          "20261104_092000_feedback_external_review_fixes"
+        ],
+        "event_set_sha256": "c4c7d10aa0ff160a2419ce1a2db6c7d8b6d9afde9abc2562e0109e97c2f061e0",
+        "latest_tree_sha256": "1e817a639b5ada41ee7e3da8a3aaaf9c094553c63bb2fba356a0a717e240b77b"
+      }
+    }
+  }
+}

@@ -1,0 +1,45 @@
+round: 3
+# round-2 の R-011〜R-014 は修正を確認した(下記 verified)。再掲なし。
+# 新規は修正の波及で残った取りこぼし 2 件(いずれも minor)。
+verified:
+  - id: R-011
+    note: "契約 RAPID_COMPARE_COMMAND の required が『off でないとき、rapid-crosscheck-worker.sh と validate-config.sh --rapid-crosscheck で Yes(他の読み手は読まず、欠落を検査しない)』になった。rg で速報系の他 UC を確認し、食い違いなし: 完了通知送信(runner tier md L40 / _api-summary L44)・slot 実行(tier-facade.md L47 / L68、_api-summary L38)はいずれも RAPID_DB_CONN_REF の欠落だけを終了コード 2 とする。両系成功時の依頼作成・速報比較依頼だけの新規作成・結果確認は RAPID_COMPARE_COMMAND の必須検査を書いていない。ジョブマップと比較定義の定義(tier-facade.md ルール 1 / _api-summary L24・L29)は validate-config.sh --rapid-crosscheck で欠落を 2 とし、契約と一致。spec-decision-030 L43 と infra _changes L22 も同じ"
+  - id: R-012
+    note: "rapid / final の note と spec-decision-030 が『実行時の読み手は未知キーの warn を出さない、validate-config.sh の検証種別は stderr 規約どおり warn を出す』に揃い、validate-config.sh stderr(L1244 の共通の未知キー warn)と矛盾しない。3 つの tier md の検査の順の文にも『未知キーは warn を出さない(validate-config.sh は出す)』がある"
+  - id: R-013
+    note: "速報 claim tier md L46 と確報 claim tier md の終了コード 2 に読み取り不可・入力の守備範囲の違反が入り、_api-summary / spec.md と一致。確報 claim の設定表に FINAL_COMPARE_COMMAND 行と既定値 60 / 28800 が入った"
+  - id: R-014
+    note: "runner tier md の BDD 冒頭に FINAL_DB_CONN_REF=relaygate-db の前提文、polling 上限超過の Given に FINAL_DB_CONN_REF を明記。spec.md 状態遷移表のガードが『final-crosscheck.env の設定検証 OK(検査の順は tier-final-crosscheck.md)』になった"
+findings:
+  - id: R-015
+    viewpoint: 4
+    severity: minor
+    target: "クロスチェック業務/速報クロスチェックフロー/速報比較依頼を claim する/tier-rapid-crosscheck.md(設定ファイルのキー表), _cross-cutting/api/cli-command-contract.yaml(config_files.rapid-crosscheck.env.on_missing)"
+    claim: "R-013 で確報 claim のキー表には FINAL_COMPARE_COMMAND の行(必須 Yes、欠落時の文言)を足したが、速報 claim のキー表には RAPID_COMPARE_COMMAND の行が無い。同じ tier md の検査の順・終了コード表・BDD 冒頭の前提は RAPID_COMPARE_COMMAND を worker の必須キーとしており、キー表だけを見ると必須キーは RAPID_DB_CONN_REF だけに読める。契約の rapid-crosscheck.env on_missing も『ファイル不在または RAPID_DB_CONN_REF 欠落は終了コード 2(stderr は option=RAPID_DB_CONN_REF)』だけで、worker の RAPID_COMPARE_COMMAND の欠落・空(2)が書かれていない(確報の on_missing は option=<KEY> で両キーを包む)"
+    evidence: |
+      - 速報 claim tier md L26-30 のキー表: RAPID_DB_CONN_REF / RAPID_LEASE_SEC / RAPID_POLL_INTERVAL_SEC の 3 行だけ
+      - 同 tier md L32(検査の順): 「(3) 必須キー(RAPID_DB_CONN_REF → RAPID_COMPARE_COMMAND)の欠落・空」、L46 終了コード 2、BDD 冒頭の前提文に RAPID_COMPARE_COMMAND
+      - 確報 claim tier md のキー表: `FINAL_COMPARE_COMMAND` | string | Yes | — | … 欠落・空は `error: option required option=FINAL_COMPARE_COMMAND path: ...` で終了コード 2
+      - 契約 config_files.rapid-crosscheck.env.on_missing: 「RAPID_CROSSCHECK_MODE が off 以外…でファイル不在または RAPID_DB_CONN_REF 欠落は終了コード 2(… `error: option required option=RAPID_DB_CONN_REF path: ...`)」
+      - 契約 config_files.final-crosscheck.env.on_missing: 「… `error: option required option=<KEY> path: ...`(2)」
+    suggested_fix: "速報 claim tier md のキー表に `RAPID_COMPARE_COMMAND` | 速報比較ツール起動コマンド | Yes(off 以外のとき。worker が使う) | — | 起動は UC『比較ツールでジョブ単位比較を実行して結果を登録する』。欠落・空は `error: option required option=RAPID_COMPARE_COMMAND path: ...` で 2 | の行を足す。契約 on_missing に『rapid-crosscheck-worker.sh は RAPID_COMPARE_COMMAND の欠落・空も 2(option=RAPID_COMPARE_COMMAND)。他の読み手は検査しない』を足す"
+
+  - id: R-016
+    viewpoint: 4
+    severity: minor
+    target: "適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/tier-facade.md(validate-config.sh --rapid-crosscheck の stderr)・_api-summary.yaml, クロスチェック業務/確報クロスチェックフロー/比較ツールで日次全量比較を実行して結果を保存する/tier-final-crosscheck.md・_api-summary.yaml(validate-config.sh --final-crosscheck の stderr)"
+    claim: "R-012 の修正で、validate-config.sh --rapid-crosscheck / --final-crosscheck は rapid-crosscheck.env / final-crosscheck.env の未知キーに `warn: unknown key key=<KEY> path: ...` を出して継続する、と契約 note と spec-decision-030 に明記された。しかし、この 2 つの検証種別を持つ UC の tier md / _api-summary の stderr は『違反ごとに error: 1 行(全件)』だけで、未知キーの warn を書いていない(--housekeep / --feature-flag の UC は warn を明記している)。UC の文書だけを読む実装者は warn を出さない実装にしやすく、契約と食い違う"
+    evidence: |
+      - 契約 config_files.rapid-crosscheck.env note / final-crosscheck.env note: 「validate-config.sh の検証種別は、validate-config.sh の stderr 規約どおり `warn: unknown key key=<KEY> path: ...` を出して継続する」
+      - spec-decision-030 L43: 「validate-config.sh の検証種別は既存の規約どおり warn: unknown key を出す」
+      - ジョブマップと比較定義の定義 tier-facade.md L20 stderr: 「違反ごとに `error:` 1 行(全件)。下記『検証ルール』の違反文言。入力の守備範囲 … に従う」(warn の記載なし)。同 _api-summary.yaml L24 stderr も error 行だけ
+      - 日次全量比較 UC(tier-final-crosscheck.md / _api-summary.yaml)に unknown key / 未知キーの記載なし(rg で 0 件)
+      - 対照: ハウスキープ UC tier-ops.md L46・L86、feature flag UC tier-facade.md L45 は未知キーの warn を明記
+    suggested_fix: "2 つの UC の validate-config.sh の stderr に『キー表に無いキー(他の読み手が使うキーを含まない)は `warn: unknown key key=<KEY> path: ...` を出して継続する(終了コード・violations に数えない。契約 config_files の note)』を足す。必要なら tier BDD に未知キー 1 行で status=valid・warn 1 行のシナリオを 1 件足す"
+resolved:
+  - id: R-015
+    resolution: "fixed: 速報 claim の tier md のキー表に RAPID_COMPARE_COMMAND の行を足し、契約 rapid-crosscheck.env の on_missing に速報 worker の RAPID_COMPARE_COMMAND の欠落・空(2)と他の読み手は検査しないことを足した"
+    by: "generator"
+  - id: R-016
+    resolution: "fixed: validate-config.sh --rapid-crosscheck / --final-crosscheck の 2 UC の tier md と _api-summary.yaml に、キー表に無いキーの warn: unknown key(継続・violations に数えない)を足した"
+    by: "generator"

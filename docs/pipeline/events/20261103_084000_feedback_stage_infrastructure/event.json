@@ -1,0 +1,260 @@
+{
+  "event_id": "20261103_084000_feedback_stage_infrastructure",
+  "type": "feedback_stage_completed",
+  "run_id": "feedback-20261103_housekeeping_followups-20261103_075954-73969",
+  "attempt": 1,
+  "created_at": "2026-11-03T08:40:00Z",
+  "stage": "infrastructure",
+  "direct_work_unit_ids": [],
+  "causal_work_unit_ids": [
+    "CR-f3b8a1d0-001#1",
+    "CR-f3b8a1d0-003#1"
+  ],
+  "work_unit_results": [],
+  "reconciliation_results": [
+    {
+      "work_unit_id": "CR-f3b8a1d0-001#1",
+      "status": "changed",
+      "reason": "管理 DB に接続しない設定(RAPID_CROSSCHECK_MODE=off でハウスキープ設定の接続参照名が無い・空)のハウスキープを定めた上流(USDM SPEC-014-08、NFR B.3.3.1 / F.1.2.1、arch 20261103_083000 の SP-027 / SP-028 / E-028 / arch-decision-025)を受け、インフラ設計のハウスキープ設定の検証規則を「存在すること。保持日数のキーは省略可(既定 90 日)、接続参照名のキーは off 以外で必須(off では省略・空を許す)」に改めて config ロールの非空検査を存在検査へ直し、管理 DB の削除・接続解決・容量の頭打ち・コスト見積もり・失敗通知の対象・適合性 notes・構成図に、接続しない設定では管理 DB の行と確報比較依頼を削除しない例外を追記した。MCL は全面再実行せず差分更新(skipped_targeted_update)。infra-event validate PASS、mermaid lint PASS、latest 更新済み",
+      "artifact_refs": [
+        "infra/events/20261103_084000_feedback_housekeeping_followups/infra-event-diff.yaml",
+        "infra/events/20261103_084000_feedback_housekeeping_followups/docs/mcl/product/input/product-input.yaml",
+        "infra/events/20261103_084000_feedback_housekeeping_followups/docs/mcl/product/output/product-workload-model.yaml",
+        "infra/events/20261103_084000_feedback_housekeeping_followups/docs/mcl/product/output/product-mapping-onprem.yaml",
+        "infra/events/20261103_084000_feedback_housekeeping_followups/docs/mcl/product/output/product-impl-onprem.yaml",
+        "infra/events/20261103_084000_feedback_housekeeping_followups/docs/mcl/product/output/product-observability.yaml",
+        "infra/events/20261103_084000_feedback_housekeeping_followups/docs/mcl/product/output/product-cost-hints.yaml",
+        "infra/events/20261103_084000_feedback_housekeeping_followups/docs/cloud-context/conformance/product/product-conformance-onprem.yaml",
+        "infra/events/20261103_084000_feedback_housekeeping_followups/infra/product/onprem/ansible/roles/relay-gate-config/tasks/main.yml"
+      ]
+    },
+    {
+      "work_unit_id": "CR-f3b8a1d0-003#1",
+      "status": "not_impacted",
+      "reason": "インフラ設計は実行ログを設置環境の logrotate(relay-gate-runtime ロールの /etc/logrotate.d/relay-gate。日次・90 世代・圧縮)で 3 か月保管する記述だけを持ち、実行ログの整理を手動とする記述や logrotate と矛盾する記述は無いことを latest の走査で確認した。arch CTR-006 の改訂(relay-gate は実行ログを整理せず logrotate に任せる)とすでに一致しているため変更しない",
+      "artifact_refs": []
+    }
+  ],
+  "work_unit_evidence_refs": [
+    {
+      "work_unit_id": "CR-f3b8a1d0-001#1",
+      "path": "infra/events/20261103_084000_feedback_housekeeping_followups/infra-event-diff.yaml",
+      "sha256": "8d249d5e0b94963bd85c08ea71216c8e2b2ad86c10e96a13ed38fa31cbee2ae8"
+    },
+    {
+      "work_unit_id": "CR-f3b8a1d0-001#1",
+      "path": "infra/events/20261103_084000_feedback_housekeeping_followups/docs/mcl/product/input/product-input.yaml",
+      "sha256": "4c1f655dc22e01571b781f18ee8eeeb642def4cbbd3365177e98c3ae322cb286"
+    },
+    {
+      "work_unit_id": "CR-f3b8a1d0-001#1",
+      "path": "infra/events/20261103_084000_feedback_housekeeping_followups/docs/mcl/product/output/product-workload-model.yaml",
+      "sha256": "62215d231b285a45c33c14099c437198e5b15e7e50c1cfcd1586b3219d5639ec"
+    },
+    {
+      "work_unit_id": "CR-f3b8a1d0-001#1",
+      "path": "infra/events/20261103_084000_feedback_housekeeping_followups/docs/mcl/product/output/product-mapping-onprem.yaml",
+      "sha256": "1176c3c399290a30990e375bbc8cba633b00c27848cfbe35628f0799e5d781c8"
+    },
+    {
+      "work_unit_id": "CR-f3b8a1d0-001#1",
+      "path": "infra/events/20261103_084000_feedback_housekeeping_followups/docs/mcl/product/output/product-impl-onprem.yaml",
+      "sha256": "07bfd7fb15c85b7765d4af8aef6a21b2dfb23412e1570442aeaa03afe30082ec"
+    },
+    {
+      "work_unit_id": "CR-f3b8a1d0-001#1",
+      "path": "infra/events/20261103_084000_feedback_housekeeping_followups/docs/mcl/product/output/product-observability.yaml",
+      "sha256": "25340c51853a1b51e44d856c400f1da6c99cdd838f16be846bada24bd0dff428"
+    },
+    {
+      "work_unit_id": "CR-f3b8a1d0-001#1",
+      "path": "infra/events/20261103_084000_feedback_housekeeping_followups/docs/mcl/product/output/product-cost-hints.yaml",
+      "sha256": "f12b840e882dc77cb6f55bed27244240e41f2de44266f3177c9d6d2fc5357e1a"
+    },
+    {
+      "work_unit_id": "CR-f3b8a1d0-001#1",
+      "path": "infra/events/20261103_084000_feedback_housekeeping_followups/docs/cloud-context/conformance/product/product-conformance-onprem.yaml",
+      "sha256": "d983714b6e33d9b19abbfa1f350c5e5089742c23ad3324b89c87f47a23fa5a2f"
+    },
+    {
+      "work_unit_id": "CR-f3b8a1d0-001#1",
+      "path": "infra/events/20261103_084000_feedback_housekeeping_followups/infra/product/onprem/ansible/roles/relay-gate-config/tasks/main.yml",
+      "sha256": "1570f9952dd30898c0af23ee6a101341a8bcf20d3b984c11f262f43b938c4ced"
+    }
+  ],
+  "domain_event_refs": [
+    {
+      "path": "infra/events/20261103_084000_feedback_housekeeping_followups/event.json",
+      "sha256": "50c9f944b02454214b3976c841ffa45e043f8f855ba1c71eff7756c4270e390e"
+    },
+    {
+      "path": "infra/events/20261103_084000_feedback_housekeeping_followups/infra-event.yaml",
+      "sha256": "1de73f45104ca9adea5f79894cf0500f43101f5b29ae92ad2c327bbefc03dce9"
+    },
+    {
+      "path": "infra/events/20261103_084000_feedback_housekeeping_followups/infra-event-diff.yaml",
+      "sha256": "8d249d5e0b94963bd85c08ea71216c8e2b2ad86c10e96a13ed38fa31cbee2ae8"
+    }
+  ],
+  "feedback_request": {
+    "feedback_request_id": "20261103_housekeeping_followups",
+    "input_sha256": "7a81f28ce6fef4c2f70e2839d657a3f8e8480671bd846b460edab3d22b3ba775",
+    "request_ids": [
+      "CR-f3b8a1d0-001",
+      "CR-f3b8a1d0-003"
+    ],
+    "work_unit_ids": [
+      "CR-f3b8a1d0-001#1",
+      "CR-f3b8a1d0-003#1"
+    ]
+  },
+  "post_execution_basis": {
+    "repository_head": "38cf3f4a5dff8f47c581ab984ab8c37805c44e20",
+    "latest_domain_event_ids": {
+      "requirements": {
+        "rdra/events": "20261103_081000_feedback_housekeeping_followups",
+        "usdm/events": "20261103_081000_feedback_housekeeping_followups"
+      },
+      "quality_attributes": {
+        "nfr/events": "20261103_082000_feedback_housekeeping_followups"
+      },
+      "architecture": {
+        "arch/events": "20261103_083000_feedback_housekeeping_followups"
+      },
+      "infrastructure": {
+        "infra/events": "20261103_084000_feedback_housekeeping_followups"
+      },
+      "design_system": {
+        "design/events": null
+      },
+      "spec": {
+        "specs/events": "20261101_125000_feedback_mail_removal_housekeeping"
+      },
+      "spec_stories": {
+        "design/events": null
+      }
+    },
+    "domain_event_root_snapshots": {
+      "rdra/events": {
+        "head_event_id": "20261103_081000_feedback_housekeeping_followups",
+        "head_event_sha256": "5c292cfd7f3ae05068a1fba3cc37098b3fbc31880a3ebeda6f3881ee99f46442",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency",
+          "20260908_011000_feedback_slot_status_wording",
+          "20260921_084000_feedback_impl_feedback_eff24f55",
+          "20261010_200000_feedback_impl_feedback_dcd8234d",
+          "20261101_101000_feedback_impl_feedback_dcd8234d",
+          "20261101_121000_feedback_mail_removal_housekeeping",
+          "20261103_081000_feedback_housekeeping_followups"
+        ],
+        "event_set_sha256": "6ece683c0525b650b36a8856c94719b4f13f095108115aa0a2f624d9f34237ca",
+        "latest_tree_sha256": "e305724ea6a27f45984cd73b0637ac1ff574a892344d4f6da9cc6ec208b52dc3"
+      },
+      "usdm/events": {
+        "head_event_id": "20261103_081000_feedback_housekeeping_followups",
+        "head_event_sha256": "9f58f03307f038bb3a33c4047ce606c7062600211a6ab53831d965be6f5bd6c7",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency",
+          "20260908_011000_feedback_slot_status_wording",
+          "20260921_084000_feedback_impl_feedback_eff24f55",
+          "20261010_200000_feedback_impl_feedback_dcd8234d",
+          "20261101_101000_feedback_impl_feedback_dcd8234d",
+          "20261101_121000_feedback_mail_removal_housekeeping",
+          "20261103_081000_feedback_housekeeping_followups"
+        ],
+        "event_set_sha256": "6ece683c0525b650b36a8856c94719b4f13f095108115aa0a2f624d9f34237ca",
+        "latest_tree_sha256": "13d7fd0352ecd988188922cc7f63fa4d3adb9a00cdca728eb45c3dacc7c187cc"
+      },
+      "nfr/events": {
+        "head_event_id": "20261103_082000_feedback_housekeeping_followups",
+        "head_event_sha256": "9f5993bfe6162ead2dbb7c01c8469a99903f9766d15afebadb88664d66e11cf4",
+        "event_ids": [
+          "20260830_183726_initial_nfr",
+          "20260905_085000_feedback_todo_resolution",
+          "20260907_013000_feedback_todo_followup",
+          "20260907_120000_feedback_abort_consistency",
+          "20260908_013000_feedback_slot_status_wording",
+          "20260921_090000_feedback_impl_feedback_eff24f55",
+          "20261010_201000_feedback_impl_feedback_dcd8234d",
+          "20261101_102000_feedback_impl_feedback_dcd8234d",
+          "20261101_122000_feedback_mail_removal_housekeeping",
+          "20261103_082000_feedback_housekeeping_followups"
+        ],
+        "event_set_sha256": "e02a3cfa4e83a3ee739f5c8b3d6e567f041103be07cab54ec2fbdbd2322cae8e",
+        "latest_tree_sha256": "b00bb32e2b0e4b60700f3011f501b23e25563c3254ab590e100082636f3de763"
+      },
+      "arch/events": {
+        "head_event_id": "20261103_083000_feedback_housekeeping_followups",
+        "head_event_sha256": "f9dd9f8657f03e99c64c5a76108ac6a12eb5f917461adf415a1aec31a6b9837b",
+        "event_ids": [
+          "20260830_184457_initial_arch",
+          "20260830_202427_arch_infra_feedback_20260830_190412_infra_product_design",
+          "20260905_091000_feedback_todo_resolution",
+          "20260907_015000_feedback_todo_followup",
+          "20260907_122000_feedback_abort_consistency",
+          "20260908_015000_feedback_slot_status_wording",
+          "20260921_092000_feedback_impl_feedback_eff24f55",
+          "20261010_202000_feedback_impl_feedback_dcd8234d",
+          "20261101_103000_feedback_impl_feedback_dcd8234d",
+          "20261101_123000_feedback_mail_removal_housekeeping",
+          "20261103_083000_feedback_housekeeping_followups"
+        ],
+        "event_set_sha256": "ba8e9c6c605cd5d157bbce221ea07c1d7defd5e40f1d4f4e58748b18ebfa09c3",
+        "latest_tree_sha256": "5b8f5259388c17804383a1c2dd4512cce6b1820ef2761d4c6c7f5f741a02c072"
+      },
+      "infra/events": {
+        "head_event_id": "20261103_084000_feedback_housekeeping_followups",
+        "head_event_sha256": "7f2e5932ff83cc01f143918383b0ed5787b23497cb51bd435d36e1d2d154d262",
+        "event_ids": [
+          "20260830_190412_infra_product_design",
+          "20260905_093000_feedback_todo_resolution",
+          "20260907_021000_feedback_todo_followup",
+          "20260907_124000_feedback_abort_consistency",
+          "20260908_021000_feedback_slot_status_wording",
+          "20260921_094000_feedback_impl_feedback_eff24f55",
+          "20261010_203000_feedback_impl_feedback_dcd8234d",
+          "20261101_104000_feedback_impl_feedback_dcd8234d",
+          "20261101_124000_feedback_mail_removal_housekeeping",
+          "20261103_084000_feedback_housekeeping_followups"
+        ],
+        "event_set_sha256": "92c16746a184d064f0e98f657ad96888f852af9291cc08160c7a7e09522d6d3f",
+        "latest_tree_sha256": "e247f47fe00c1983bcd0b74e9807496a1b55e0fda78dfb934d5153e411389b91"
+      },
+      "design/events": {
+        "head_event_id": null,
+        "head_event_sha256": null,
+        "event_ids": [],
+        "event_set_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "latest_tree_sha256": null
+      },
+      "specs/events": {
+        "head_event_id": "20261101_125000_feedback_mail_removal_housekeeping",
+        "head_event_sha256": "a36cb3172fc4408ddaa21da1184d4b94b098b664157ded1cdeb1d7cf75261ff0",
+        "event_ids": [
+          "20260830_202851_spec_generation",
+          "20260905_100000_feedback_todo_resolution",
+          "20260907_024000_feedback_todo_followup",
+          "20260907_131000_feedback_abort_consistency",
+          "20260908_024000_feedback_slot_status_wording",
+          "20260908_062000_feedback_spec_machine_readable",
+          "20260917_050000_feedback_impl_feedback_fd678b04",
+          "20260917_100000_feedback_impl_feedback_fd678b04_cycle2",
+          "20260921_100000_feedback_impl_feedback_eff24f55",
+          "20260923_112000_feedback_impl_feedback_eff24f55_cycle2",
+          "20261010_204000_feedback_impl_feedback_dcd8234d",
+          "20261027_055000_feedback_impl_feedback_dcd8234d",
+          "20261101_105000_feedback_impl_feedback_dcd8234d",
+          "20261101_125000_feedback_mail_removal_housekeeping"
+        ],
+        "event_set_sha256": "d12647480ea8083b938ede750ba5372410d861b839c7892499c4260712c8d5e8",
+        "latest_tree_sha256": "e4ab211643fc4743770169549ae5d13f9ecb13cc6b7987e57dbeffc4d3261d46"
+      }
+    }
+  }
+}

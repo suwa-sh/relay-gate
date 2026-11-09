@@ -1,0 +1,21 @@
+round: 2
+findings:
+  - id: R-008
+    viewpoint: 4
+    severity: major
+    target: "_cross-cutting/api/cli-command-contract.yaml"
+    claim: "commands の hang-detector.sh の stderr で、R-002 の修正で加えた見出し『印の置き場を読めない回(6。...)』が『走査の途中の実行エラー』の一覧の途中に入った。このため `error: monitor record save failed ...` と `error: notified mark save failed ...` の 2 行が『置き場を読めない回』の見出しの下に並び、同じ見出しの『1 行だけを出し、走査・判定・alert 行・印の書き込みを行わない』と食い違う。契約の正本の中で、置き場を読めない回に保存失敗の行が出るように読める"
+    evidence: "cli-command-contract.yaml 703〜708 行: 『走査の途中の実行エラー(6。他の対象の判定・通知は続ける):』→ artifact root is not readable / notified mark invalid → 『印の置き場を読めない回(6。RAPID_CROSSCHECK_MODE=off。...directory_unreadable):』→ `error: notified mark dir is not readable path: ...` の 1 行だけ... → `error: monitor record save failed ...` → `error: notified mark save failed ...`"
+    suggested_fix: "『印の置き場を読めない回』の見出しと 1 行を『管理 DB に接続・SELECT できない回』の直後(走査の前の段)へ移し、monitor record save failed / notified mark save failed を『走査の途中の実行エラー』の一覧に戻す"
+  - id: R-009
+    viewpoint: 4
+    severity: minor
+    target: "実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/tier-ops.md"
+    claim: "印の置き場を読めない回(notified_mark.directory_unreadable)が、判定 UC の終了コード表・優先順位・走査手順と、_api-summary.yaml の終了コード、異常終了を確認する UC の終了コードの読み方に反映されていない。また、この検査を走査のどの時点で行うか(管理 DB の検査と同じく走査手順 0 か、facade/ を列挙できないときの `error: artifact root is not readable` との前後)が契約にも UC にも無い。置き場と facade/ の両方を読めない回の stderr が 1 行か 2 行か決まらない"
+    evidence: "判定 UC tier-ops.md 49 行は stderr に置き場を読めない回を書いたが、59 行の終了コード 6 の条件と 62 行の優先順位(『off 以外で管理 DB に接続・SELECT できないときは走査せずに 6』だけ)に無い。走査手順は 0(管理 DB)→ 1(列挙)のままで置き場の検査の位置が無い。_api-summary.yaml の code 6 の meaning にも無い(ui-design.md の終了コード表と契約 exit_codes には入っている)。ハング検知ジョブの異常終了を確認する UC の tier-ops.md 31 行の 6 の説明は管理 DB の 1 行だけの場合しか挙げていない。契約 hang_alert.order は artifact root is not readable を『走査の最初』とするだけ"
+    suggested_fix: "契約 directory_unreadable と判定 UC の走査手順に『off のとき、走査手順 1 の前(facade/ を列挙する前)に置き場を検査し、読めなければ 1 行だけで 6』のように位置を書く。判定 UC tier-ops.md の終了コード表・優先順位、_api-summary.yaml の code 6、異常終了を確認する UC の tier-ops.md の 6 の行に『印の置き場を読めない(error 1 行だけ。走査しない)』を足す"
+resolved:
+  - id: R-008
+    resolution: "fixed: 印の置き場を読めない回の見出しと 1 行を、管理 DB に接続・SELECT できない回の直後(走査の前の段)へ移し、保存失敗の 2 行を走査の途中の実行エラーの一覧に戻した。検査の位置(facade/ を列挙する前)と artifact root is not readable を出さないことを書き足した"
+  - id: R-009
+    resolution: "fixed: 契約 directory_unreadable と判定 UC の走査手順 0 に検査の位置(走査前の設定の検査のあと、facade/ を列挙する前)を書き、判定 UC tier-ops の終了コード表・優先順位、_api-summary.yaml の code 6、異常終了を確認する UC の tier-ops の 6 の行に印の置き場を読めない回を足した"

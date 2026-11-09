@@ -14,20 +14,20 @@ x_cli_commands:
         type: "string"
         required: true
         default: ""
-        description: "元 run_id(新 run の parent_run_id。比較対象は元 run の blue / green 成果物)"
+        description: "元 run_id(新 run の parent_run_id。元依頼の job_id / parameters / blue_exit_code / green_exit_code を引き継ぐ)"
       - name: "--role"
         type: "enum"
         required: true
         default: ""
         description: "rapid-crosscheck(本 UC の経路)"
     stdin: "なし"
-    stdout: "固定順: role=rapid-crosscheck, job_id, request_status=REQUESTED, blue_artifact_uri: file://..., green_artifact_uri: file://..., run_id={新 run_id}, parent_run_id={元 run_id}(runner は起動せず、新 run_id の成果物ディレクトリは worker が比較実行時に作る)"
-    stderr: "error: source artifacts not found run_id=... role=rapid-crosscheck missing=... / error: management db insert failed table=... run_id=..."
+    stdout: "固定順: role=rapid-crosscheck, job_id, request_status=REQUESTED, run_id={新 run_id}, parent_run_id={元 run_id}(runner は起動せず、元依頼の job_id / parameters / blue_exit_code / green_exit_code を引き継ぐ。成果物のパスは持たない)"
+    stderr: "error: management db insert failed table=... run_id=..."
     exit_codes:
       - code: 0
         meaning: "依頼を REQUESTED で作成し COMMIT した(業務ジョブは再実行しない)"
       - code: 3
-        meaning: "事前検証 NG / 元 run の成果物 URI が無い"
+        meaning: "事前検証 NG(前段 UC)"
       - code: 6
         meaning: "管理 DB 接続・INSERT・COMMIT 失敗"
   - name: "rapid-crosscheck-worker.sh"

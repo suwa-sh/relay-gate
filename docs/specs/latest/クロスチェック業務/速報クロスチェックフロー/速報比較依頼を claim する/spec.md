@@ -54,7 +54,7 @@ sequenceDiagram
   alt 速報クロスチェック有効判定: off
     Pres-->>Sched: stderr error: management db is not configured mode=off / 終了コード 3(DB に接続しない)
   end
-  Pres->>Pres: rapid-crosscheck.env の RAPID_DB_CONN_REF を読む(不在・欠落は終了コード 2)
+  Pres->>Pres: rapid-crosscheck.env を読んで検査する(不在・読み取り不可・入力の守備範囲の違反・RAPID_DB_CONN_REF / RAPID_COMPARE_COMMAND の欠落・空・RAPID_LEASE_SEC / RAPID_POLL_INTERVAL_SEC の値の不正は終了コード 2。検査の順は tier-rapid-crosscheck.md)
   loop poll(--once なら 1 回)
     Pres->>UC: ClaimNextRequest(worker_id, now)
     UC->>Repo: rapid_request_release_expired(now)
@@ -102,7 +102,7 @@ sequenceDiagram
 | 依頼状態遷移規則 | REQUESTED → CLAIMED(claim)、CLAIMED → REQUESTED(lease 失効)。他の遷移は本 UC で行わない | tier-rapid-crosscheck | claim_next_request | REQUESTED の依頼を claim する |
 | 速報結果の位置付け | worker の処理・終了コードはジョブスケジューラの業務ジョブ応答に影響しない(別プロセス) | tier-rapid-crosscheck | rapid-crosscheck-worker.sh | REQUESTED の依頼を claim する |
 | 速報と確報のモデル分離 | rapid_crosscheck_requests のみを poll / UPDATE する。final_crosscheck_requests は対象外 | tier-rapid-crosscheck | claim_next_request | REQUESTED の依頼を claim する |
-| 速報クロスチェック有効判定 | worker は起動時に feature-flag.env の `RAPID_CROSSCHECK_MODE`(foreground / background / off)を読む。off なら管理 DB に接続せず `error: management db is not configured mode=off` で終了コード 3。off 以外(foreground / background。両値で同じ挙動)なら rapid-crosscheck.env の `RAPID_DB_CONN_REF` で接続する(不在・欠落は終了コード 2) | tier-rapid-crosscheck | rapid-crosscheck-worker.sh(presentation) | RAPID_CROSSCHECK_MODE=off では管理 DB に接続しない |
+| 速報クロスチェック有効判定 | worker は起動時に feature-flag.env の `RAPID_CROSSCHECK_MODE`(foreground / background / off)を読む。off なら管理 DB に接続せず `error: management db is not configured mode=off` で終了コード 3。off 以外(foreground / background。両値で同じ挙動)なら rapid-crosscheck.env の `RAPID_DB_CONN_REF` で接続する(不在・読み取り不可・入力の守備範囲の違反・必須キー `RAPID_DB_CONN_REF` / `RAPID_COMPARE_COMMAND` の欠落・空・`RAPID_LEASE_SEC` / `RAPID_POLL_INTERVAL_SEC` の値の不正は終了コード 2。検査の順は tier-rapid-crosscheck.md) | tier-rapid-crosscheck | rapid-crosscheck-worker.sh(presentation) | RAPID_CROSSCHECK_MODE=off では管理 DB に接続しない |
 
 ## 計算ルール一覧
 
@@ -170,7 +170,7 @@ Feature: 速報比較依頼を claim する
 
   Scenario: 設定された lease 期間と poll 間隔で claim と poll が行われる(SPEC-005-06)
     Given feature flag 設定に RAPID_CROSSCHECK_MODE=background が定義されている
-    And 速報クロスチェック設定 $RELAY_GATE_CONFIG_DIR/rapid-crosscheck.env に `RAPID_DB_CONN_REF=relaygate-db`、`RAPID_LEASE_SEC=300`、`RAPID_POLL_INTERVAL_SEC=10` の行があり、認証情報の値は含まれない
+    And 速報クロスチェック設定 $RELAY_GATE_CONFIG_DIR/rapid-crosscheck.env に `RAPID_DB_CONN_REF=relaygate-db`、`RAPID_COMPARE_COMMAND=/opt/compare/stub-ok.sh {job_id}`(終了コード 0 を返すスタブ)、`RAPID_LEASE_SEC=300`、`RAPID_POLL_INTERVAL_SEC=10` の行があり、認証情報の値は含まれない
     And rapid_crosscheck_requests に run_id=20260830T113000-JOB001-3f9a1c2e, status=REQUESTED の行がある
     And RELAY_GATE_NOW=2026-08-30T11:45:40Z が設定されている(TZ=UTC 前提)
     When `rapid-crosscheck-worker.sh --worker-id worker-01` を常駐起動する

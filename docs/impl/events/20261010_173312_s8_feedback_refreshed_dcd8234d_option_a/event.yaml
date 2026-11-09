@@ -1,0 +1,19 @@
+event_id: 20261010_173312_s8_feedback_refreshed_dcd8234d_option_a
+type: stage_completed
+uc_id: dcd8234d
+stage: S8
+payload:
+  mode: refresh
+  refreshed_at: '2026-10-10T17:28:53+09:00'
+  updated: 4
+  added: 1
+  removed: 0
+  manifest_sha256: ddcab64014c49e5f65a082b66a7d2c381cefd50c4744ad3457a3a8d5ef9d8289
+  manifest_projection: v2
+  feedback_id: 20261010_104636_impl_feedback_dcd8234d
+  draft_sha256: f896078854dd5c6fb6adb9c2daa0b5de781f89acb33f124dc2ae7336533defc9
+  request_count: 6
+  blocker_count: 0
+  trigger: 'review decision option A (final crosscheck: launch only; drop target catalog
+    and business_date)'
+created_at: '2026-10-10T17:33:12+09:00'

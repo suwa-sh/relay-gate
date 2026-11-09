@@ -65,6 +65,8 @@
 
 元実行の特定元(role で分岐):
 - blue / green: `facade/<source_run_id>/execution-spec.json` を必須とする(無ければ `source_not_found`)。`slots.{role}` 節が無ければ mode=off とみなす(契約 execution_spec_rules「mode が off の slot は節を持たない」)
+- blue / green の run ディレクトリとして読むのは `$RELAY_GATE_ARTIFACT_ROOT/facade/` 直下で名前が run_id 形式(`^[0-9]{8}T[0-9]{6}-<job_id>-[0-9a-f]{8}$`)のディレクトリだけで、`--source-run-id` もこの形式で検証済みの値から `facade/<source_run_id>` を組み立てる。成果物ルート直下の `hang-detector-notified/`(通知済みの印)と `housekeep-pending/`(削除待ち)は読まず、run として扱わない
+- ハウスキープで成果物が消えて管理 DB の行だけ残った期限切れの実行を `--role blue|green` で指定すると、execution-spec.json が無いため既存の `error: execution-spec not found run_id=... path: ...`(3。`source_not_found`)で終わる。`--role rapid-crosscheck` は execution-spec.json を読まないため、管理 DB の行が残っている間は事前検証を通り、後続 UC で依頼の再作成に成功する
 - rapid-crosscheck: `rapid_crosscheck_requests(run_id)` を必須とし(無ければ `request_not_found`)、`execution-spec.json` とファイルシステムは読まない。rapid-crosscheck リランで作られた run(`facade/<run_id>/execution-spec.json` を持たない)を再度 `--source-run-id` に指定でき、parent_run_id の数珠つなぎが成立する。後続 UC「速報比較依頼だけを新規作成する」が `rapid_runs` の成果物 URI を読む
 
 元 mode / 元状態の解決(blue / green):

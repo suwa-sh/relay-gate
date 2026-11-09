@@ -109,14 +109,14 @@ x_cli_commands:
         description: "停止確認プロンプトを省略して yes とみなす"
     stdin: "停止確認の応答 1 行(--yes 指定時は読まない)"
     stdout: "現在状態(固定順): run_id, job_id(常に -), role, status, worker_id, lease_until, started_at"
-    stderr: "abort-blue.sh と同じ。管理 DB なしの文言は error: management db is not configured run_id=...(final-crosscheck.env / FINAL_DB_CONN_REF の有無だけで判定。RAPID_CROSSCHECK_MODE は参照しない)"
+    stderr: "abort-blue.sh と同じ。管理 DB なしの文言は error: management db is not configured run_id=...(final-crosscheck.env / FINAL_DB_CONN_REF の有無だけで判定。ファイルが無い、または FINAL_DB_CONN_REF が欠落(キーが無い、または値が空)なら管理 DB なし。housekeep.sh の判定と同じ規則。RAPID_CROSSCHECK_MODE は参照しない。この判定は final-crosscheck.env が入力の守備範囲の検査を通った後に行う)。final-crosscheck.env の入力の守備範囲の違反は config_input_rules の文言(同じキーの重複は error: duplicate key key=<KEY> lines=<n1,n2,...> path: ...)で 2"
     exit_codes:
       - code: 0
         meaning: "yes 応答後に状態更新が完了した"
       - code: 2
-        meaning: "引数不正 / 非 TTY で --yes なし"
+        meaning: "引数不正 / 非 TTY で --yes なし / final-crosscheck.env の入力の守備範囲の違反(invalid line・同じキーの重複を含む。FINAL_DB_CONN_REF 以外のキーの重複も含む)"
       - code: 3
-        meaning: "対象依頼が無い / 応答が yes 以外 / final-crosscheck.env / FINAL_DB_CONN_REF なし / 中止不可"
+        meaning: "対象依頼が無い / 応答が yes 以外 / final-crosscheck.env が無い、または FINAL_DB_CONN_REF が欠落(キーが無い、または値が空。入力の守備範囲の検査を通った後に判定する) / 中止不可"
       - code: 6
         meaning: "管理 DB 接続・SQL 失敗"
 async_events: []

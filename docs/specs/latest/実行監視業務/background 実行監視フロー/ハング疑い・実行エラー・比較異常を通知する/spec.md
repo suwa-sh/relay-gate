@@ -2,7 +2,14 @@
 
 ## 概要
 
-`hang-detector.sh` が UC「background 実行の経過時間と終了状態を判定する」の判定結果に応じて、ハング疑いを warning、background 実行エラーと速報クロスチェック異常を error のメールとして OS のメール送信コマンドで運用者へ送る。宛先・送信コマンド・件名プレフィックスはハング検知定期ジョブ設定(`hang-detector.env` の `ALERT_MAIL_TO` / `ALERT_MAIL_CMD` / `ALERT_SUBJECT_PREFIX`。所有者は基盤適用設計者)から取得する。同じ監視対象(run_id + role)・同じ通知種別のメールは 1 回だけ送る(監視記録の monitor_status が遷移するときだけ送り、送信成功時に alerted_at を更新する)。ハング疑い通知後に対象が終端した場合は再判定し、実行エラー / 比較異常を追加通知するか、正常終了(中止済みを含む)で監視記録を終端する(終端は UC「background 実行の経過時間と終了状態を判定する」)。監視は通知のみで、RUNNING を ABORTED へ変更せず、プロセスを止めず、依頼を作らない。
+`hang-detector.sh` が、UC「background 実行の経過時間と終了状態を判定する」の判定結果のうち、その回の見回りで新たに見つけた異常を、標準エラーの alert 行(1 件 1 行)と自身の終了コードで知らせる。
+ハング疑いだけなら警告終了(3)、background 実行エラーまたは速報クロスチェック異常が 1 件でもあれば失敗(6)、新たな異常が無ければ 0 で終わる。
+運用者にはジョブスケジューラの既存のジョブ監視・障害通知で届く(受け取りは UC「ハング検知ジョブの異常終了を確認する」)。
+通知済みの異常は再び知らせない。判定には、RAPID_CROSSCHECK_MODE が off 以外では監視記録の monitor_status、off では成果物ルート配下の通知済みの印を使う。
+alert 行を出したあとで監視記録または印の保存に失敗した異常は、次の見回りで再び知らせる(知らせ漏れより重複を選ぶ)。
+RAPID_CROSSCHECK_MODE が off 以外で管理 DB に接続・SELECT できない回は、通知済みかどうかを読めないため alert 行を出さない(判定 UC が error 1 行と終了コード 6 で終える)。通知済みの異常を障害のあいだ繰り返し知らせないためで、まだ知らせていない異常は接続できた最初の回に一度だけ知らせる。
+off で通知済みの印の内容が規定の値でない・読めない対象は、対象ごとに error 行を出し、印が無いもの(監視中)として判定する(終了コード 6)。
+監視は通知のみで、RUNNING を ABORTED へ変更せず、プロセスを止めず、依頼を作らない。CLI の出力以外の通知手段は持たない。
 
 ## データフロー
 
@@ -10,248 +17,371 @@
 graph LR
   subgraph OPS["tier-ops"]
     U["usecase\nNotifyCommand"]
-    D["domain\nAlertDecision\n通知レベル対応表 / 監視状態遷移 / 冪等判定"]
-    R["repository\nMonitorRecordRepository / AlertLogRepository"]
-    G1["gateway\nメール送信アダプタ(OS mail コマンド)"]
-    G2["gateway\nRDB クライアントアダプタ"]
+    D["domain\nAlertDecision\n通知レベル対応表 / 再通知しない規則 / 終了コードの決定"]
+    R["repository\nMonitorRecordRepository (off 以外) / NotifiedMarkRepository (off)"]
+    G1["gateway\nRDB クライアントアダプタ"]
+    G2["gateway\nファイルシステムアダプタ"]
     U --> D
     U --> R
+    R --> G1
     R --> G2
-    U --> G1
-  end
-  subgraph CFG["FS(設定ファイル)"]
-    HE[("ハング検知定期ジョブ設定 hang-detector.env\nALERT_MAIL_TO / ALERT_MAIL_CMD / ALERT_SUBJECT_PREFIX")]
   end
   subgraph DB["内部データストア: ジョブキュー兼管理 DB(RDB)"]
-    MR[("monitor_records\nmonitor_status / alerted_at")]
+    MR[("monitor_records\nmonitor_status")]
   end
-  subgraph MAIL["メール通知"]
-    M["通知メール\n件名 {ALERT_SUBJECT_PREFIX}[warning|error] kind run_id job_id role\n本文 key=value + recommended_action"]
+  subgraph ART["FS(成果物ルート)"]
+    NM[("hang-detector-notified/<run_id>.<role>\n通知済みの印")]
   end
-  J["usecase\nHangJudgement (UC 判定)"] -->|"function 呼び出し"| U
-  R -->|"ファイル読み込み"| HE
-  G2 -->|"SQL SELECT monitor_status (off 以外)"| MR
-  G1 -->|"プロセス起動 ALERT_MAIL_CMD"| M
-  U -->|"送信結果 (alerted_at)"| REC["usecase\nRecord (UC 記録)"]
+  subgraph SCHED["ジョブスケジューラ"]
+    JS["ハング検知定期ジョブの\nジョブステータス / 標準エラー"]
+  end
+  J["usecase\nHangJudgement (UC 判定)"] -->|"function 呼び出し(全判定結果)"| U
+  G1 -->|"SQL SELECT monitor_status (off 以外)"| MR
+  G2 -->|"ファイル読み込み / 一時ファイル書き込み → mv (off)"| NM
+  U -->|"標準エラー alert 行 / 終了コード 0・3・6"| JS
+  U -->|"判定結果と alert 行を出した事実 (alerted_at)"| REC["usecase\nRecord (UC 記録)"]
+  JS -->|"既存のジョブ監視・障害通知"| OPR["運用者"]
 ```
 
 | レイヤー | データモデル | 変換内容 |
 |---------|------------|---------|
-| usecase | NotifyCommand(HangJudgement, current monitor_status) | 遷移判定 → メール組み立て → 送信 → 結果を記録 UC へ |
-| domain | AlertDecision(kind, level, next_status, should_send) | 判定結果 → 通知種別 / レベル / 次の監視状態。現在の監視状態が次の状態と同じなら送らない(冪等) |
-| domain | HangAlertMail(subject, body) | ui-design.md「通知メール規約」の件名・本文(件名の先頭は `ALERT_SUBJECT_PREFIX`(既定 `[relay-gate]`)。key 行 12 + 空行 + recommended_action 1 行。80 桁制限は 1〜13 行目のうち 11 行目 artifact_dir を除く行に適用(artifact_dir と 14 行目は折り返さず 80 桁を超えてよい)) |
-| repository | MonitorRecordRepository(off 以外)/ AlertLogRepository(off) | 現在の monitor_status(off 以外)または実行ログ内の送信済み記録(off。仮採用)を読む |
-| repository | ハング検知定期ジョブ設定(hang-detector.env) | `ALERT_MAIL_TO` / `ALERT_MAIL_CMD` / `ALERT_SUBJECT_PREFIX` を読む(認証情報の値は含まない) |
-| gateway | メール送信アダプタ | `ALERT_MAIL_CMD` を宛先 `ALERT_MAIL_TO`・件名付きで起動し本文を stdin で渡す。終了コードで成否を判定 |
+| usecase | NotifyCommand(HangJudgement の一覧、現在の通知済み状態) | 対象を並べ替える → 対象ごとに再通知の要否を決める → alert 行を出す → 記録・印を保存する → 終了コードを決める |
+| domain | AlertDecision(kind, level, next_status, should_alert) | 判定結果 → 通知種別 / 段階 / 次の監視状態。現在の通知済み状態と比べて新たに知らせるかを決める |
+| domain | HangAlertLine(level, kind, run_id, role, job_id, elapsed_minutes) | 標準エラーに出す 1 行 |
+| repository | MonitorRecordRepository(off 以外) | 現在の monitor_status を読む(行が無ければ MONITORING 扱い)。保存は UC「監視記録を保存する」 |
+| repository | NotifiedMarkRepository(off) | 通知済みの印を読む(無ければ MONITORING 扱い。内容が規定の値でない・読めなければ不正として返し、usecase が error 行を出して MONITORING 扱いにする)。alert 行を出した対象の印と、ハング疑いを知らせたあと(または印が不正なとき)に正常終了・中止した対象の COMPLETED への書き換えを、一時ファイル経由で書く |
 
 ## 処理フロー
 
 ```mermaid
 sequenceDiagram
-  actor Ops as 運用者
   box rgb(255,245,230) tier-ops
     participant U as usecase
     participant D as domain
     participant R as repository
-    participant G as gateway
   end
   participant DB as RDB
-  participant Mail as メール通知
-  participant LOG as 実行ログ
+  participant FS as FS(印の置き場)
+  participant ERR as 標準エラー
+  participant Sched as ジョブスケジューラ
 
-  Note over U: UC「background 実行の経過時間と終了状態を判定する」から判定結果を受け取る
-  loop 判定が EXEC_ERROR / HANG_SUSPECTED / COMPARE_ERROR の対象ごと
-    U->>R: 現在の monitor_status を取得
-    alt RAPID_CROSSCHECK_MODE が off 以外(foreground / background)
-      R->>G: SELECT monitor_status FROM monitor_records WHERE run_id=? AND role=?
-      G->>DB: SQL
+  Note over U: UC「background 実行の経過時間と終了状態を判定する」から全判定結果を受け取る(off 以外で管理 DB に接続・SELECT できなかった回は、判定 UC が error 1 行と終了コード 6 で終えるため、この UC は動かず alert 行も出ない)
+  U->>U: 対象を run_id 昇順(バイト順)→ role(blue, green, rapid-crosscheck)の順に並べる
+  loop 対象ごと
+    U->>R: 現在の通知済み状態 C を取得
+    alt RAPID_CROSSCHECK_MODE が off 以外
+      R->>DB: 走査の前に SELECT 済みの monitor_records の monitor_status(行が無ければ MONITORING)
     else off
-      R->>LOG: hang-detector.sh.log から "alert sent run_id=... role=... kind=..." を検索(仮採用)
+      R->>FS: hang-detector-notified/<run_id>.<role> を読む(無ければ MONITORING)
+      opt 印の内容が規定の値(英字コード + LF)でない、または読めない
+        U->>ERR: error: notified mark invalid run_id=... role=... path: ...
+        U-->>U: C=MONITORING として続ける。終了コード 6 を予約
+      end
     end
-    U->>D: decide(judgement, current_status)
-    alt HANG_SUSPECTED かつ現在 MONITORING(または記録なし)
-      D-->>U: kind=hang-suspected level=warning next=HANG_SUSPECTED_NOTIFIED send=true
-    else EXEC_ERROR かつ現在 MONITORING / HANG_SUSPECTED_NOTIFIED(または記録なし)
-      D-->>U: kind=background-exec-error level=error next=EXEC_ERROR_NOTIFIED send=true
-    else COMPARE_ERROR かつ現在 MONITORING / HANG_SUSPECTED_NOTIFIED(または記録なし)
-      D-->>U: kind=rapid-crosscheck-error level=error next=COMPARE_ERROR_NOTIFIED send=true
-    else 現在の状態が next と同じ(通知済み)
-      D-->>U: send=false
-      U->>LOG: INFO alert skipped already notified run_id=... role=... kind=...
-    end
-    alt send=true
-      U->>D: build_mail(judgement, ALERT_SUBJECT_PREFIX)
-      U->>G: メール送信アダプタ
-      G->>Mail: ALERT_MAIL_CMD(件名・宛先 ALERT_MAIL_TO・本文)
-      alt 送信成功(終了コード 0)
-        G->>LOG: INFO mail sent to=... subject=... duration_ms=...
-        U->>LOG: INFO alert sent run_id=... role=... kind=... level=...
-        U->>U: UC「監視記録を保存する」へ(next_status, alerted_at=now, elapsed_minutes_at_alert)
-        Mail-->>Ops: warning / error メール
-      else 送信失敗
-        G->>LOG: ERROR mail send failed exit_code=...
-        U->>U: 監視記録の monitor_status / alerted_at を更新しない(次回再送)
-        U-->>U: 終了コード 6 を予約(他の対象は継続)
+    U->>D: decide(判定結果, C)
+    D-->>U: S(判定結果を監視状態へ写した値)と should_alert
+    alt should_alert(S が *_NOTIFIED で S ≠ C、かつ C が終端でない)
+      U->>ERR: alert: level=... kind=... run_id=... role=... job_id=... elapsed_minutes=...
+      alt off 以外
+        U->>U: UC「監視記録を保存する」へ(monitor_status=S, alerted_at=now)
+        opt UPSERT 失敗
+          U->>ERR: error: monitor record save failed run_id=... role=...
+          U-->>U: 終了コード 6 を予約(次回同じ異常を再び知らせる)
+        end
+      else off
+        U->>R: 印を <run_id>.<role>.tmp に書き mv で確定名へ置き換える
+        R->>FS: ファイル書き込み → mv
+        opt 印の保存失敗
+          U->>ERR: error: notified mark save failed run_id=... role=... path: ...
+          U-->>U: 終了コード 6 を予約(次回同じ異常を再び知らせる)
+        end
+        U->>U: UC「監視記録を保存する」へ(実行ログ)
+      end
+    else 新たに知らせない(通知済み、または異常でない)
+      U->>U: UC「監視記録を保存する」へ(monitor_status は判定結果どおり、または既存を保持)
+      opt off で C が HANG_SUSPECTED_NOTIFIED または印が不正・読めない、判定が COMPLETED(通知後の正常終了・中止済み)
+        U->>R: 印を <run_id>.<role>.tmp に COMPLETED と書き mv で確定名へ置き換える(alert 行は出さない)
+        R->>FS: ファイル書き込み → mv
+        opt 印の保存失敗
+          U->>ERR: error: notified mark save failed run_id=... role=... path: ...
+          U-->>U: 終了コード 6 を予約(印が残るので次回も走査して書き換えをやり直す)
+        end
       end
     end
   end
+  U->>D: 終了コードを決める
+  D-->>U: 実行エラーあり または error を知らせた → 6 / warning だけ → 3 / どちらも無い → 0
+  U-->>Sched: 終了コード
 ```
 
 ## バリエーション一覧
 
 | バリエーション名 | 値 | 処理内容 | 適用 tier | 適用箇所 |
 |----------------|---|---------|----------|---------|
-| 通知レベル | warning | ハング疑い。件名 `{ALERT_SUBJECT_PREFIX}[warning]`(既定 `[relay-gate][warning]`)、本文 `level=warning`。静観候補 | tier-ops | `decide_alert` |
-| 通知レベル | error | background 実行エラー・速報クロスチェック異常。件名 `{ALERT_SUBJECT_PREFIX}[error]`。対処必須 | tier-ops | `decide_alert` |
-| ハング検知判定結果 | ハング疑い | kind=hang-suspected、level=warning | tier-ops | `decide_alert` |
-| ハング検知判定結果 | 実行エラー | kind=background-exec-error、level=error | tier-ops | `decide_alert` |
-| ハング検知判定結果 | 比較異常 | kind=rapid-crosscheck-error、level=error | tier-ops | `decide_alert` |
-| ハング検知判定結果 | 監視対象外 / 正常終了または中止済み / 監視中 | hang_judgement=NOT_TARGET / COMPLETED / MONITORING は通知しない(中止済みは通知せず終端) | tier-ops | `decide_alert` |
-| 速報クロスチェック監視判定 | 速報クロスチェック異常(FAILED / 比較 NG) | kind=rapid-crosscheck-error、level=error | tier-ops | `decide_alert` |
-| 速報クロスチェック監視判定 | ハング疑い(RUNNING 継続) | kind=hang-suspected、level=warning、role=rapid-crosscheck。状態は変更しない | tier-ops | `decide_alert` |
-| 速報クロスチェック監視判定 | 正常 | 通知しない | tier-ops | `decide_alert` |
-| 監視状態 | ハング疑い通知済み / 実行エラー通知済み / 比較異常通知済み(HANG_SUSPECTED_NOTIFIED / EXEC_ERROR_NOTIFIED / COMPARE_ERROR_NOTIFIED) | 同じ種別は再送しない。ハング疑い通知済み → 実行エラー通知済み / 比較異常通知済みは別種別として 1 回送る(状態モデル「監視状態」の 6 値と同じ) | tier-ops | `decide_alert` |
-| run role(成果物ディレクトリ区分) | blue / green / rapid-crosscheck | 件名・本文の `role=`、推奨対処の `abort-{role}.sh` | tier-ops | `build_mail` |
-| 速報クロスチェックモード | foreground / background(off 以外)/ off | 冪等判定の記録元(monitor_records / 実行ログ) | tier-ops | `MonitorRecordRepository` / `AlertLogRepository` |
-| 設定所有区分 | ハング検知定期ジョブ設定 | 宛先・送信コマンド・件名プレフィックスの正本(hang-detector.env)。所有者は基盤適用設計者 | tier-ops | `hang-detector.env` |
+| 通知レベル | warning | ハング疑い。alert 行の `level=warning`。新たに知らせる異常が warning だけなら終了コード 3(警告終了) | tier-ops | `decide_alert` / `decide_exit_code` |
+| 通知レベル | error | background 実行エラー・速報クロスチェック異常。alert 行の `level=error`。1 件でもあれば終了コード 6(失敗) | tier-ops | `decide_alert` / `decide_exit_code` |
+| ハング検知判定結果 | ハング疑い | kind=hang-suspected、level=warning、S=HANG_SUSPECTED_NOTIFIED | tier-ops | `decide_alert` |
+| ハング検知判定結果 | 実行エラー | kind=background-exec-error、level=error、S=EXEC_ERROR_NOTIFIED | tier-ops | `decide_alert` |
+| ハング検知判定結果 | 比較異常 | kind=rapid-crosscheck-error、level=error、S=COMPARE_ERROR_NOTIFIED | tier-ops | `decide_alert` |
+| ハング検知判定結果 | 監視対象外 / 正常終了または中止済み / 監視中 | alert 行を出さない(中止済みは知らせずに終端) | tier-ops | `decide_alert` |
+| 速報クロスチェック監視判定 | 速報クロスチェック異常(FAILED / 比較 NG) | kind=rapid-crosscheck-error、level=error、role=rapid-crosscheck | tier-ops | `decide_alert` |
+| 速報クロスチェック監視判定 | ハング疑い(RUNNING 継続) | kind=hang-suspected、level=warning、role=rapid-crosscheck。依頼の状態は変更しない | tier-ops | `decide_alert` |
+| 速報クロスチェック監視判定 | 正常 | alert 行を出さない | tier-ops | `decide_alert` |
+| 監視状態 | ハング疑い通知済み / 実行エラー通知済み / 比較異常通知済み | 同じ状態の異常は再び知らせない。ハング疑い通知済みからの実行エラー通知済み / 比較異常通知済みは別の異常として 1 回知らせる | tier-ops | `decide_alert` |
+| run role(成果物ディレクトリ区分) | blue / green / rapid-crosscheck | alert 行の `role=`。並び順は blue → green → rapid-crosscheck | tier-ops | `sort_targets` |
+| 速報クロスチェックモード | foreground / background(off 以外) | 通知済み状態の出所は monitor_records | tier-ops | `MonitorRecordRepository` |
+| 速報クロスチェックモード | off | 通知済み状態の出所は成果物ルート配下の通知済みの印(blue / green だけ) | tier-ops | `NotifiedMarkRepository` |
+| 設定所有区分 | ハング検知定期ジョブ設定 | hang-detector.env は管理 DB 接続参照名と監視の調整値だけを持ち、知らせ方の設定項目を持たない。所有者は基盤適用設計者 | tier-ops | `hang-detector.env` |
 
 ## 分岐条件一覧
 
 | 条件名 | 判定ルール | 適用 tier | 適用箇所 | BDD Scenario |
 |--------|----------|----------|---------|-------------|
-| 通知レベルの判定 | ハング疑い → warning、background 実行エラー → error、速報クロスチェック異常 → error。件名 `{ALERT_SUBJECT_PREFIX}[{level}] {kind} run_id={run_id} job_id={job_id} role={role}`(プレフィックス既定 `[relay-gate]`) | tier-ops | `decide_alert`(domain) | ハング疑いを warning メールで通知する / 実行エラーを error メールで通知する |
-| 設定所有区分 | 通知先(ALERT_MAIL_TO)・送信コマンド(ALERT_MAIL_CMD)・件名プレフィックス(ALERT_SUBJECT_PREFIX)・管理 DB 接続参照名(HANG_DB_CONN_REF)はハング検知定期ジョブ設定(hang-detector.env)が所有する。認証情報は値を置かず参照名のみ | tier-ops | `hang-detector.env`(repository) | ハング検知定期ジョブ設定の宛先と送信コマンドで送る(SPEC-008-06) |
-| 速報比較依頼の異常判定 | 依頼 FAILED / 比較 NG → kind=rapid-crosscheck-error(error)。RUNNING で上限超過 → kind=hang-suspected(warning)。依頼の状態は変更しない | tier-ops | `decide_alert` / `build_mail` | 速報比較依頼の FAILED を error メールで通知する |
-| 監視は通知のみ | 送信後も RUNNING を ABORTED にせず、プロセスを停止せず、依頼を作成しない。usecase は abort / rerun の repository を呼ばない | tier-ops | `NotifyCommand`(LP-017) | 通知後も状態は RUNNING のままである |
+| 通知レベルの判定 | その回に新たに知らせる異常が無ければ 0、ハング疑い(warning)だけなら 3、background 実行エラー・速報クロスチェック異常(error)が 1 件でもあれば 6。異常は標準エラーに 1 件 1 行。通知済みの異常は再び知らせず、保存に失敗した異常は次回も知らせる | tier-ops | `decide_alert` / `decide_exit_code`(domain) | 新たな異常が無ければ終了コード 0 で alert 行を出さない(SPEC-008-07) / ハング疑いだけなら対象ごとに warning の行を出して警告終了する(SPEC-008-07) / 実行エラーや比較異常を新たに見つけたら error の行を出して失敗で終わる(SPEC-008-07) / ハング疑いと実行エラーを同じ回に見つけたら失敗で終わる(SPEC-008-07) |
+| CLI による提示 | 知らせ方は終了コードと標準エラーだけ。relay-gate は CLI の出力以外の通知手段を持たない | tier-ops | `NotifyCommand` | alert 行に対象・段階・経過時間が含まれる(SPEC-008-07) |
+| 速報比較依頼の異常判定 | 依頼 FAILED / 比較 NG → kind=rapid-crosscheck-error(error)。RUNNING で上限超過 → kind=hang-suspected(warning)。依頼の状態は変更しない | tier-ops | `decide_alert` | 速報比較依頼の FAILED を error の行で知らせる(SPEC-008-02) |
+| 監視は通知のみ | alert 行を出しても RUNNING を ABORTED にせず、プロセスを停止せず、依頼を作成しない。usecase は abort / rerun の repository を呼ばない | tier-ops | `NotifyCommand`(LP-017) | 通知後も状態は RUNNING のままである(SPEC-008-04) |
+| 設定所有区分 | 管理 DB 接続参照名(HANG_DB_CONN_REF)はハング検知定期ジョブ設定(hang-detector.env。基盤適用設計者)が所有する。認証情報は値を置かず参照名のみ | tier-ops | `hang-detector.env`(repository) | ハング検知定期ジョブ設定は管理 DB 接続参照名と監視の調整値だけを持つ(SPEC-008-06) |
 
 ## 計算ルール一覧
 
 | 計算名 | 入力情報 | 計算式/ロジック | 出力情報 | 適用 tier |
 |--------|---------|---------------|---------|----------|
-| 通知種別・レベル・次状態 | ハング検知判定結果 / 速報クロスチェック監視判定 | HANG_SUSPECTED → (hang-suspected, warning, HANG_SUSPECTED_NOTIFIED) / EXEC_ERROR → (background-exec-error, error, EXEC_ERROR_NOTIFIED) / COMPARE_ERROR → (rapid-crosscheck-error, error, COMPARE_ERROR_NOTIFIED) | 通知メール.重要度 / 通知種別、監視記録.monitor_status | tier-ops |
-| 冪等判定(送信要否) | 現在の monitor_status、次状態 | should_send = (current ≠ next) かつ current ∈ {なし, MONITORING, HANG_SUSPECTED_NOTIFIED(next=EXEC_ERROR_NOTIFIED または COMPARE_ERROR_NOTIFIED のときのみ)}。COMPARE_ERROR_NOTIFIED / EXEC_ERROR_NOTIFIED / COMPLETED / NOT_MONITORED からは送らない | 送信フラグ | tier-ops |
-| 件名 | ALERT_SUBJECT_PREFIX、level、kind、run_id、job_id、role | `{ALERT_SUBJECT_PREFIX}[{level}] {kind} run_id={run_id} job_id={job_id} role={role}`。ALERT_SUBJECT_PREFIX はハング検知定期ジョブ設定の値(未設定なら `[relay-gate]`) | 通知メール.件名 | tier-ops |
-| 本文 | 判定結果、成果物パス、現在時刻 | ui-design.md「通知メール規約」の 12 行(kind / level / run_id / job_id / role / started_at / elapsed_minutes / hang_detect_limit_minutes / exit_code / request_status / artifact_dir / detected_at)+ 空行 + `recommended_action: <定型文>` 1 行(折り返さない。80 桁制限は 1〜13 行目のうち 11 行目 artifact_dir を除く行に適用(artifact_dir と 14 行目は折り返さず 80 桁を超えてよい)) | 通知メール.本文 | tier-ops |
-| detected_at | 現在時刻(ローカル時刻) | now(ホストのローカルタイムゾーンの ISO 8601 秒精度・指示子なし。テスト専用環境変数 `RELAY_GATE_NOW` 設定時はその UTC 値をローカル時刻へ変換した値。判定 UC と同じ now) | 通知メール.detected_at | tier-ops |
-| started_at(本文) | Runner Result.started-at.txt(background slot)/ 速報比較依頼.started_at(未開始は requested_at) | started-at.txt の中身(UTC ISO 8601 Z 付き)はローカル時刻へ変換して載せる。依頼の列はそのまま。いずれもローカル ISO 8601 秒精度・指示子なし(detected_at と同じ時刻軸) | 通知メール.started_at | tier-ops |
-| 通知 ID | run_id、role、kind | `{run_id}:{role}:{kind}`(実行ログ上の識別。仮採用: メールにも DB にも別 ID は持たない) | 通知メール.通知 ID | tier-ops |
+| 通知種別・段階・次状態 S | ハング検知判定結果 | HANG_SUSPECTED → (hang-suspected, warning, HANG_SUSPECTED_NOTIFIED) / EXEC_ERROR → (background-exec-error, error, EXEC_ERROR_NOTIFIED) / COMPARE_ERROR → (rapid-crosscheck-error, error, COMPARE_ERROR_NOTIFIED)。S は CLI 契約 `shared_rules.state_codes.hang_judgement_to_monitor_status` の写像 | alert 行の kind / level、監視記録.monitor_status | tier-ops |
+| 新たに知らせるか | S、現在の通知済み状態 C | S が HANG_SUSPECTED_NOTIFIED / EXEC_ERROR_NOTIFIED / COMPARE_ERROR_NOTIFIED のいずれかで、S ≠ C、かつ C が終端(EXEC_ERROR_NOTIFIED / COMPARE_ERROR_NOTIFIED / COMPLETED / NOT_MONITORED)でないときだけ知らせる。C は off 以外なら monitor_records.monitor_status(行が無ければ MONITORING。管理 DB に接続・SELECT できない回は C を読めないため、判定 UC が走査せずに終える)、off なら印の中身(印が無ければ MONITORING、印が不正・読めなければ error 行を出して MONITORING) | should_alert | tier-ops |
+| alert 行 | 判定結果、S | `alert: level=<warning\|error> kind=<kind> run_id=<run_id> role=<role> job_id=<job_id> elapsed_minutes=<n>`。速報比較依頼は role=rapid-crosscheck。elapsed_minutes は判定 UC が算出した判定時点の経過分 | 標準エラー 1 行 | tier-ops |
+| 並び順 | 対象の run_id、role | run_id 昇順(バイト順)→ role(blue, green, rapid-crosscheck)。1 つの対象の中は 印の不正の error 行 → alert 行(または `--verbose` の info: alert skipped 行)→ 保存失敗の error 行 | stderr の対象ごとの行の順序 | tier-ops |
+| alerted_at | 現在時刻(判定 UC と同じ now) | alert 行を出した回の now(判定時刻)。保存は UC「監視記録を保存する」 | 監視記録.alerted_at | tier-ops |
+| 終了コード | その回の alert 行の段階、実行エラーの有無 | 実行エラー(成果物ルート・監視記録・印の保存の失敗、印の不正)が 1 件以上、または error の alert 行が 1 行以上 → 6。それ以外で warning の alert 行が 1 行以上 → 3。どちらも無い → 0(管理 DB に接続・SELECT できない回は判定 UC が走査せずに 6 で終える) | 終了コード | tier-ops |
+| 印の内容 | S、判定結果、現在の印 C | 規定の値 = 英字コード(HANG_SUSPECTED_NOTIFIED / EXEC_ERROR_NOTIFIED / COMPLETED)1 つ + LF 1 つと完全に一致するバイト列。alert 行を出したときは S の英字コード 1 行 + LF(HANG_SUSPECTED_NOTIFIED / EXEC_ERROR_NOTIFIED。off では速報比較依頼が無いため COMPARE_ERROR_NOTIFIED は出ない)。C が HANG_SUSPECTED_NOTIFIED、または印が不正・読めないときに判定が COMPLETED(正常終了・中止済み)なら、alert 行を出さずに COMPLETED + LF へ書き換えて終端する。印が無い対象の正常終了・中止では印を作らない。印が不正・読めない対象で判定が MONITORING / NOT_TARGET なら書き換えない(次の回も error 行を出す) | 通知済みの印 | tier-ops |
 
 ## 状態遷移一覧
 
 | 状態モデル | 遷移元 | 遷移先 | トリガー | 事前条件 | 事後処理 | 適用 tier |
 |-----------|--------|--------|---------|---------|---------|----------|
-| 監視状態 | 監視中(MONITORING) | ハング疑い通知済み(HANG_SUSPECTED_NOTIFIED) | warning メール送信成功 | exitcode.txt 未出力かつ elapsed > limit(依頼は RUNNING で上限超過) | hang_suspected_at、alerted_at、elapsed_minutes_at_alert を記録(UC「監視記録を保存する」)。実行状態は変更しない | tier-ops |
-| 監視状態 | 監視中(MONITORING) | 実行エラー通知済み(EXEC_ERROR_NOTIFIED) | error メール送信成功 | exitcode.txt が非 0 | alerted_at を記録 | tier-ops |
-| 監視状態 | 監視中(MONITORING) | 比較異常通知済み(COMPARE_ERROR_NOTIFIED) | error メール送信成功 | 速報比較依頼が FAILED または比較 NG | alerted_at を記録 | tier-ops |
-| 監視状態 | ハング疑い通知済み(HANG_SUSPECTED_NOTIFIED) | 実行エラー通知済み(EXEC_ERROR_NOTIFIED) | error メール送信成功(追加通知) | 通知後に exitcode.txt が非 0 で出力された | alerted_at を更新(hang_suspected_at と elapsed_minutes_at_alert は保持) | tier-ops |
-| 監視状態 | ハング疑い通知済み(HANG_SUSPECTED_NOTIFIED) | 比較異常通知済み(COMPARE_ERROR_NOTIFIED) | error メール送信成功(追加通知) | 通知後に速報比較依頼が FAILED(比較 NG(exit_code=3)/ 実行エラー(exit_code=6))で終端した | alerted_at を更新(hang_suspected_at と elapsed_minutes_at_alert は保持) | tier-ops |
+| 監視状態 | 監視中(MONITORING) | ハング疑い通知済み(HANG_SUSPECTED_NOTIFIED) | warning の alert 行を出した | exitcode.txt 未出力かつ elapsed > limit(依頼は RUNNING で上限超過) | hang_suspected_at、alerted_at、elapsed_minutes_at_alert を記録(UC「監視記録を保存する」)。off は印を書く。実行状態は変更しない | tier-ops |
+| 監視状態 | 監視中(MONITORING) | 実行エラー通知済み(EXEC_ERROR_NOTIFIED) | error の alert 行を出した | exitcode.txt が非 0 | alerted_at を記録。off は印を書く | tier-ops |
+| 監視状態 | 監視中(MONITORING) | 比較異常通知済み(COMPARE_ERROR_NOTIFIED) | error の alert 行を出した | 速報比較依頼が FAILED または比較 NG | alerted_at を記録 | tier-ops |
+| 監視状態 | ハング疑い通知済み(HANG_SUSPECTED_NOTIFIED) | 実行エラー通知済み(EXEC_ERROR_NOTIFIED) | error の alert 行を出した(追加の通知) | 通知後に exitcode.txt が非 0 で出力された | alerted_at を更新(hang_suspected_at と elapsed_minutes_at_alert は保持)。off は印を書き換える | tier-ops |
+| 監視状態 | ハング疑い通知済み(HANG_SUSPECTED_NOTIFIED) | 比較異常通知済み(COMPARE_ERROR_NOTIFIED) | error の alert 行を出した(追加の通知) | 通知後に速報比較依頼が FAILED(比較 NG(exit_code=3)/ 実行エラー(exit_code=6))で終端した | alerted_at を更新(hang_suspected_at と elapsed_minutes_at_alert は保持) | tier-ops |
 
-- HANG_SUSPECTED_NOTIFIED → COMPARE_ERROR_NOTIFIED は状態.tsv「監視状態」に定義された遷移(ハング疑い通知後に終端した依頼の比較異常を取りこぼさず、通知済み run が未終端のまま残る欠陥を防ぐ)
-- (`[*]` → NOT_MONITORED / MONITORING、MONITORING → COMPLETED、HANG_SUSPECTED_NOTIFIED → COMPLETED(通知後正常終了・通知後の中止済み)は UC「background 実行の経過時間と終了状態を判定する」に記載)
+- 監視記録または印の保存に失敗した場合、監視状態は遷移しない。次の見回りで同じ異常を再び知らせる
+- `[*]` → NOT_MONITORED / MONITORING、MONITORING → COMPLETED、HANG_SUSPECTED_NOTIFIED → COMPLETED(通知後正常終了・通知後の中止済み)は UC「background 実行の経過時間と終了状態を判定する」の遷移。off で HANG_SUSPECTED_NOTIFIED → COMPLETED になったときは、この UC が印を COMPLETED へ書き換える(alert 行は出さない)。状態遷移の正本は [状態](../../../../../../rdra/latest/状態.tsv) の状態モデル「監視状態」
 
 ## 関連 RDRA モデル
 
 | モデル種別 | 要素名 | 関連 |
 |-----------|--------|------|
 | 業務 | 実行監視業務 | この UC が属する業務 |
-| BUC | background 実行監視フロー | この UC を含む BUC |
-| アクター | 運用者 | メールの受け手 |
-| 情報 | 監視記録 | 冪等判定と遷移先の記録 |
-| 情報 | 通知メール | 送信するメール |
+| BUC | background 実行監視フロー | この UC を含む BUC(アクティビティ: 異常の通知) |
+| アクター | 運用者 | 受益者(ジョブスケジューラの障害通知で受け取る) |
+| 情報 | 監視記録 | 通知済み状態の判定と遷移先の記録(off は通知済みの印) |
 | 情報 | slot 実行 | 通知対象(background) |
 | 情報 | 速報比較依頼(rapid_crosscheck_request) | 通知対象(off 以外) |
-| 情報 | ハング検知定期ジョブ設定 | 入力。通知先 ALERT_MAIL_TO / 送信コマンド ALERT_MAIL_CMD / 件名プレフィックス ALERT_SUBJECT_PREFIX(hang-detector.env。所有者: 基盤適用設計者) |
-| 状態 | 監視状態 | MONITORING → *_NOTIFIED、HANG_SUSPECTED_NOTIFIED → EXEC_ERROR_NOTIFIED / COMPARE_ERROR_NOTIFIED(6 値。状態.tsv の遷移) |
-| バリエーション | 監視状態 | 6 値(監視対象外 / 監視中 / ハング疑い通知済み / 実行エラー通知済み / 比較異常通知済み / 正常終了)。状態モデルと一致 |
-| バリエーション | ハング検知判定結果 / 速報クロスチェック監視判定 / 通知レベル | 判定結果 → 通知種別 / レベルの対応 |
-| バリエーション | 設定所有区分 | ハング検知定期ジョブ設定(所有者: 基盤適用設計者) |
-| 条件 | 通知レベルの判定 | warning / error |
-| 条件 | 速報比較依頼の異常判定 | 依頼の異常通知 |
+| 情報 | ハング検知定期ジョブ設定 | hang-detector.env。管理 DB 接続参照名の出所(所有者: 基盤適用設計者) |
+| 状態 | 監視状態 | MONITORING → *_NOTIFIED、HANG_SUSPECTED_NOTIFIED → EXEC_ERROR_NOTIFIED / COMPARE_ERROR_NOTIFIED |
+| バリエーション | 通知レベル / ハング検知判定結果 / 速報クロスチェック監視判定 | 判定結果 → 通知種別・段階 |
+| バリエーション | 監視状態 | 6 値。状態モデルと一致 |
+| 条件 | 通知レベルの判定 | 終了コード 0 / 3 / 6 と 1 件 1 行の alert 行、再通知しない規則 |
+| 条件 | 速報比較依頼の異常判定 | 依頼の異常の知らせ方 |
 | 条件 | 監視は通知のみ | 状態変更・停止・依頼作成をしない |
-| 条件 | 設定所有区分 | 通知先・送信コマンド・件名プレフィックス・管理 DB 接続参照名の正本 |
-| 画面 | hang-detect 異常通知出力(→ CLI 出力) | 実行ログの `alert sent` / `alert skipped` |
-| イベント | warning / error メールの送信 | OS メールコマンドの起動 |
-| 外部システム | メール通知 | 送信先 |
+| 条件 | CLI による提示 | 知らせ方は CLI の出力だけ |
+| 画面 | hang-detect 異常通知出力(→ CLI 出力) | 標準エラーの alert 行と終了コード |
+| イベント | 警告終了・失敗の終了コードと標準エラーの返却 | ジョブスケジューラへ返す |
+| 外部システム | ジョブスケジューラ | 終了コードと標準エラーの受け手。既存のジョブ監視・障害通知で運用者へ届ける |
 
 ## 関連 USDM
 
 | REQ ID | SPEC ID | 対応 BDD Scenario |
 |--------|---------|------------------|
-| REQ-008 | SPEC-008-01 | ハング疑いを warning メールで通知する(SPEC-008-01) / 実行エラーを error メールで通知する(SPEC-008-01) |
-| REQ-008 | SPEC-008-02 | 速報比較依頼の FAILED を error メールで通知する(SPEC-008-02) |
-| REQ-008 | SPEC-008-03 | ハング疑い通知後の速報比較依頼の比較異常は別種別として 1 回送る(SPEC-008-03) |
+| REQ-008 | SPEC-008-01 | ハング疑いだけなら対象ごとに warning の行を出して警告終了する(SPEC-008-07) / 実行エラーや比較異常を新たに見つけたら error の行を出して失敗で終わる(SPEC-008-07) |
+| REQ-008 | SPEC-008-02 | 速報比較依頼の FAILED を error の行で知らせる(SPEC-008-02) |
+| REQ-008 | SPEC-008-03 | ハング疑い通知後に比較異常になった速報比較依頼を error の行で知らせる(SPEC-008-03) / off ではハング疑い通知後に正常終了した対象の印が COMPLETED になる(SPEC-008-03) |
 | REQ-008 | SPEC-008-04 | 通知後も状態は RUNNING のままである(SPEC-008-04) |
-| REQ-008 | SPEC-008-06 | ハング検知定期ジョブ設定の宛先と送信コマンドで送る(SPEC-008-06) |
-| REQ-012 | SPEC-012-01 | ハング疑いを warning メールで通知する(SPEC-008-01) |
+| REQ-008 | SPEC-008-06 | ハング検知定期ジョブ設定は管理 DB 接続参照名と監視の調整値だけを持つ(SPEC-008-06) |
+| REQ-008 | SPEC-008-07 | 新たな異常が無ければ終了コード 0 で alert 行を出さない(SPEC-008-07) / ハング疑いだけなら対象ごとに warning の行を出して警告終了する(SPEC-008-07) / 実行エラーや比較異常を新たに見つけたら error の行を出して失敗で終わる(SPEC-008-07) / ハング疑いと実行エラーを同じ回に見つけたら失敗で終わる(SPEC-008-07) / alert 行に対象・段階・経過時間が含まれる(SPEC-008-07) / 管理 DB を使う設定では通知済みの異常を 2 回目に知らせない(SPEC-008-07) / off では通知済みの異常を 2 回目に知らせない(SPEC-008-07) / off では通知済みの印を残し Runner Result の契約ファイルを変えない(SPEC-008-07) / 監視記録の保存に失敗した異常は次の見回りで再び知らせる(SPEC-008-07) / 通知済みの印の保存に失敗した異常は次の見回りで再び知らせる(SPEC-008-07) / 管理 DB に接続できない回は通知済みの異常を再び知らせない(SPEC-008-07) / off で通知済みの印が不正・読めない対象は error 行を出して監視中として判定し印を書き直す(SPEC-008-07) / off で印の不正と保存失敗が同じ対象に重なったときは 1 対象の中で決まった順に出す(SPEC-008-07) |
+| REQ-012 | SPEC-012-01 | alert 行に対象・段階・経過時間が含まれる(SPEC-008-07) ※ 知らせ方が終了コードと標準エラーだけであること |
 
 > 機械可読の正本は `spec-event.yaml` の `use_cases[].usdm`(本表と同内容)。「対応 BDD Scenario」列は本 UC の `Scenario:` 名(接尾の SPEC ID を含む完全名)を「 / 」で区切って列挙し、Scenario 名以外の補足は「※」以降に置く。区切りは人が読む用で、Scenario 名自体に「 / 」を含むものがあるため機械分割には使わず、機械照合は `spec-event.yaml` の `scenarios[]` を使う。
 
 ## E2E 完了条件(BDD)
+
+共通の前提: RELAY_GATE_ARTIFACT_ROOT=/var/relay-gate、TZ=UTC。run_id=20260830T113000-JOB001-3f9a1c2e の green は started-at.txt が 2026-08-30T11:30:05Z、execution-spec.json に job_id=JOB001 slots.green.mode=background slots.green.hang_detect_limit_minutes=60 がある。run_id=20260830T114000-JOB002-5e6f7a8b の blue は started-at.txt が 2026-08-30T11:40:05Z、execution-spec.json に job_id=JOB002 slots.blue.mode=background slots.blue.hang_detect_limit_minutes=60 がある。シナリオに exitcode.txt・aborted.txt の有無や中身の記載が無ければ、20260830T113000-JOB001-3f9a1c2e の green/exitcode.txt と 20260830T114000-JOB002-5e6f7a8b の blue/exitcode.txt の中身はどちらも 0 である(正常終了として判定され、異常にならない)。シナリオが「exitcode.txt が無い」「中身が 1」などと書いた場合は、その記載に従う。
 
 ### 正常系
 
 ```gherkin
 Feature: ハング疑い・実行エラー・比較異常を通知する
 
-  Scenario: ハング疑いを warning メールで通知する(SPEC-008-01)
-    Given ハング検知定期ジョブ設定(hang-detector.env)に ALERT_MAIL_TO=ops@example.invalid ALERT_MAIL_CMD=/usr/bin/mail があり ALERT_SUBJECT_PREFIX は未設定(既定 [relay-gate])である
-    And run_id=20260830T113000-JOB001-3f9a1c2e job_id=JOB001 role=green の判定が HANG_SUSPECTED(started_at=2026-08-30T11:30:05 elapsed_minutes=74 hang_detect_limit_minutes=60)で、monitor_records に該当行が無い
-    And RELAY_GATE_ARTIFACT_ROOT=/var/relay-gate、RELAY_GATE_NOW=2026-08-30T12:45:00Z である
-    When hang-detector.sh が通知処理を実行する
-    Then 件名 "[relay-gate][warning] hang-suspected run_id=20260830T113000-JOB001-3f9a1c2e job_id=JOB001 role=green" のメールが ops@example.invalid へ 1 通送られる
-    And 本文の 1〜12 行目は kind=hang-suspected / level=warning / run_id=... / job_id=JOB001 / role=green / started_at=2026-08-30T11:30:05 / elapsed_minutes=74 / hang_detect_limit_minutes=60 / exit_code=- / request_status=- / "artifact_dir: /var/relay-gate/facade/20260830T113000-JOB001-3f9a1c2e/green" / detected_at=2026-08-30T12:45:00 である
-    And 13 行目は空行、14 行目は "recommended_action: check the process on the execution host; if it is still running normally, wait. if it is hung, stop the process, then run: abort-green.sh --run-id 20260830T113000-JOB001-3f9a1c2e" の 1 行で、15 行目は無い(11 行目 artifact_dir を除く 1〜13 行目は 80 桁以内。artifact_dir と 14 行目は折り返さず 80 桁を超えてよい)
+  Scenario: 新たな異常が無ければ終了コード 0 で alert 行を出さない(SPEC-008-07)
+    Given RAPID_CROSSCHECK_MODE=background で、20260830T113000-JOB001-3f9a1c2e の green に exitcode.txt が無く、RELAY_GATE_NOW=2026-08-30T12:00:00Z(上限以内)である
+    And 20260830T114000-JOB002-5e6f7a8b の blue/exitcode.txt の中身が 0 である
+    When ジョブスケジューラが hang-detector.sh を起動する
+    Then stderr に "alert:" で始まる行は 1 行も出ず、終了コード 0 で終了する
 
-  Scenario: 実行エラーを error メールで通知する(SPEC-008-01)
-    Given 同じ run の green/exitcode.txt の中身が 1 で判定が EXEC_ERROR、monitor_records の該当行が monitor_status=MONITORING である
-    When hang-detector.sh が通知処理を実行する
-    Then 件名 "[relay-gate][error] background-exec-error run_id=20260830T113000-JOB001-3f9a1c2e job_id=JOB001 role=green" のメールが 1 通送られ、本文に exit_code=1 と "recommended_action: inspect /var/relay-gate/facade/20260830T113000-JOB001-3f9a1c2e/green/stderr.log; after fixing the cause, run the rerun job: background-rerun.sh --source-run-id 20260830T113000-JOB001-3f9a1c2e --role green" が含まれる
+  Scenario: ハング疑いだけなら対象ごとに warning の行を出して警告終了する(SPEC-008-07)
+    Given RAPID_CROSSCHECK_MODE=background で、monitor_records に 2 つの run の行が無い
+    And 20260830T113000-JOB001-3f9a1c2e の green と 20260830T114000-JOB002-5e6f7a8b の blue に exitcode.txt も aborted.txt も無く、RELAY_GATE_NOW=2026-08-30T12:45:00Z である
+    When ジョブスケジューラが hang-detector.sh を起動する
+    Then stderr の "alert:" で始まる行は次の 2 行で、この順に出る
+      | alert: level=warning kind=hang-suspected run_id=20260830T113000-JOB001-3f9a1c2e role=green job_id=JOB001 elapsed_minutes=74 |
+      | alert: level=warning kind=hang-suspected run_id=20260830T114000-JOB002-5e6f7a8b role=blue job_id=JOB002 elapsed_minutes=64 |
+    And 終了コード 3 で終了し、ジョブスケジューラのジョブステータスは警告終了になる
 
-  Scenario: 速報比較依頼の FAILED を error メールで通知する(SPEC-008-02)
-    Given RAPID_CROSSCHECK_MODE=background で rapid_crosscheck_requests に run_id=20260830T113000-JOB001-3f9a1c2e job_id=JOB001 status=FAILED exit_code=3 の行があり、判定が COMPARE_ERROR である
-    When hang-detector.sh が通知処理を実行する
-    Then 件名 "[relay-gate][error] rapid-crosscheck-error run_id=20260830T113000-JOB001-3f9a1c2e job_id=JOB001 role=rapid-crosscheck" のメールが 1 通送られ、本文に exit_code=3 request_status=FAILED と "recommended_action: inspect the comparison result: rapid-crosscheck-result.sh --run-id 20260830T113000-JOB001-3f9a1c2e; this result is for investigation only and does not affect the scheduler response" が含まれる
+  Scenario: 実行エラーや比較異常を新たに見つけたら error の行を出して失敗で終わる(SPEC-008-07)
+    Given RAPID_CROSSCHECK_MODE=background で、monitor_records に対象の行が無い
+    And 20260830T113000-JOB001-3f9a1c2e の green/exitcode.txt の中身が 1 である
+    And rapid_crosscheck_requests に run_id=20260830T100000-JOB003-9c0d1e2f job_id=JOB003 status=FAILED exit_code=3 started_at=2026-08-30T10:05:00 の行がある
+    And RELAY_GATE_NOW=2026-08-30T12:45:00Z である
+    When ジョブスケジューラが hang-detector.sh を起動する
+    Then stderr の "alert:" で始まる行は次の 2 行で、この順に出る
+      | alert: level=error kind=rapid-crosscheck-error run_id=20260830T100000-JOB003-9c0d1e2f role=rapid-crosscheck job_id=JOB003 elapsed_minutes=160 |
+      | alert: level=error kind=background-exec-error run_id=20260830T113000-JOB001-3f9a1c2e role=green job_id=JOB001 elapsed_minutes=74 |
+    And 0 とも 3 とも異なる終了コード 6 で終了する
 
-  Scenario: 同じ対象に同じ通知を二重送信しない
-    Given monitor_records に run_id=20260830T113000-JOB001-3f9a1c2e role=green monitor_status=HANG_SUSPECTED_NOTIFIED alerted_at=2026-08-30T12:45:00 の行がある
-    And 判定が引き続き HANG_SUSPECTED で、RELAY_GATE_NOW=2026-08-30T12:50:00Z(5 分後)である
-    When hang-detector.sh が通知処理を実行する
-    Then メールは送られず、実行ログに "INFO alert skipped already notified run_id=20260830T113000-JOB001-3f9a1c2e role=green kind=hang-suspected" が残る
+  Scenario: ハング疑いと実行エラーを同じ回に見つけたら失敗で終わる(SPEC-008-07)
+    Given RAPID_CROSSCHECK_MODE=background で、monitor_records に 2 つの run の行が無い
+    And 20260830T113000-JOB001-3f9a1c2e の green に exitcode.txt が無く、20260830T114000-JOB002-5e6f7a8b の blue/exitcode.txt の中身が 1 で、RELAY_GATE_NOW=2026-08-30T12:45:00Z である
+    When ジョブスケジューラが hang-detector.sh を起動する
+    Then stderr の "alert:" で始まる行は次の 2 行で、この順に出る
+      | alert: level=warning kind=hang-suspected run_id=20260830T113000-JOB001-3f9a1c2e role=green job_id=JOB001 elapsed_minutes=74 |
+      | alert: level=error kind=background-exec-error run_id=20260830T114000-JOB002-5e6f7a8b role=blue job_id=JOB002 elapsed_minutes=64 |
+    And 終了コード 6 で終了する
 
-  Scenario: ハング疑い通知後の実行エラーは別種別として 1 回送る
-    Given monitor_records の該当行が monitor_status=HANG_SUSPECTED_NOTIFIED で、green/exitcode.txt が 1 になり判定が EXEC_ERROR である
-    When hang-detector.sh が通知処理を実行する
-    Then 件名が "[relay-gate][error] background-exec-error" で始まるメールが 1 通送られ、monitor_status は EXEC_ERROR_NOTIFIED になる
+  Scenario: alert 行に対象・段階・経過時間が含まれる(SPEC-008-07)
+    Given RAPID_CROSSCHECK_MODE=background で、monitor_records に対象の行が無い
+    And 20260830T113000-JOB001-3f9a1c2e の green に exitcode.txt が無い
+    And rapid_crosscheck_requests に run_id=20260830T100000-JOB003-9c0d1e2f job_id=JOB003 status=RUNNING started_at=2026-08-30T10:05:00 の行があり、hang-detector.env の RAPID_HANG_DETECT_LIMIT_MINUTES=60 である
+    And RELAY_GATE_NOW=2026-08-30T12:45:00Z である
+    When ジョブスケジューラが hang-detector.sh を起動する
+    Then 速報比較依頼の行は "alert: level=warning kind=hang-suspected run_id=20260830T100000-JOB003-9c0d1e2f role=rapid-crosscheck job_id=JOB003 elapsed_minutes=160" である
+    And background slot の行は "alert: level=warning kind=hang-suspected run_id=20260830T113000-JOB001-3f9a1c2e role=green job_id=JOB001 elapsed_minutes=74" である
+    And どちらの行も対象(run_id と role。速報比較依頼は role=rapid-crosscheck)、段階(level)、経過時間(elapsed_minutes)を含み、終了コード 3 で終了する
 
-  Scenario: ハング疑い通知後の速報比較依頼の比較異常は別種別として 1 回送る(SPEC-008-03)
-    Given RAPID_CROSSCHECK_MODE=background で monitor_records に run_id=20260830T113000-JOB001-3f9a1c2e role=rapid-crosscheck monitor_status=HANG_SUSPECTED_NOTIFIED の行がある
-    And rapid_crosscheck_requests の該当行が status=FAILED exit_code=3 になり comparison_results に status=NG の行があり、判定が COMPARE_ERROR である
-    When hang-detector.sh が通知処理を実行する
-    Then 件名が "[relay-gate][error] rapid-crosscheck-error" で始まるメールが 1 通送られ、monitor_status は COMPARE_ERROR_NOTIFIED になる
-    And RELAY_GATE_NOW を 5 分進めて再実行しても rapid-crosscheck-error のメールは送られない
+  Scenario: 管理 DB を使う設定では通知済みの異常を 2 回目に知らせない(SPEC-008-07)
+    Given RAPID_CROSSCHECK_MODE=background で、monitor_records に run_id=20260830T113000-JOB001-3f9a1c2e role=green monitor_status=HANG_SUSPECTED_NOTIFIED alerted_at=2026-08-30T12:45:00 の行がある
+    And green に exitcode.txt が無いままで、RELAY_GATE_NOW=2026-08-30T12:50:00Z(前回の見回りの 5 分後)である
+    When 2 回目の見回りとしてジョブスケジューラが hang-detector.sh を起動する
+    Then stderr に "alert:" で始まる行は出ず、終了コード 0 で終了する
+    And monitor_records の該当行は monitor_status=HANG_SUSPECTED_NOTIFIED alerted_at=2026-08-30T12:45:00 のままである
 
-  Scenario: ハング検知定期ジョブ設定の宛先と送信コマンドで送る(SPEC-008-06)
-    Given 基盤適用設計者が所有するハング検知定期ジョブ設定(hang-detector.env)に ALERT_MAIL_TO=ops-a@example.invalid,ops-b@example.invalid ALERT_MAIL_CMD=/usr/sbin/sendmail ALERT_SUBJECT_PREFIX=[relay-gate-prod] HANG_DB_CONN_REF=relaygate-db がある
-    And hang-detector.env に DB パスワード等の認証情報の値は含まれない(管理 DB 接続は参照名 HANG_DB_CONN_REF だけで指定する)
-    And run_id=20260830T113000-JOB001-3f9a1c2e role=green の判定が HANG_SUSPECTED で monitor_records に該当行が無い
-    When hang-detector.sh が通知処理を実行する
-    Then /usr/sbin/sendmail が起動され、宛先 ops-a@example.invalid と ops-b@example.invalid へ件名 "[relay-gate-prod][warning] hang-suspected run_id=20260830T113000-JOB001-3f9a1c2e job_id=JOB001 role=green" のメールが 1 通送られる
+  Scenario: off では通知済みの異常を 2 回目に知らせない(SPEC-008-07)
+    Given RAPID_CROSSCHECK_MODE=off で、/var/relay-gate/hang-detector-notified/20260830T113000-JOB001-3f9a1c2e.green の中身が "HANG_SUSPECTED_NOTIFIED" + LF である
+    And green に exitcode.txt が無いままで、RELAY_GATE_NOW=2026-08-30T12:50:00Z である
+    When 2 回目の見回りとしてジョブスケジューラが hang-detector.sh を起動する
+    Then stderr に "alert:" で始まる行は出ず、終了コード 0 で終了する
+    And 印の中身は "HANG_SUSPECTED_NOTIFIED" + LF のままである
+
+  Scenario: off では通知済みの印を残し Runner Result の契約ファイルを変えない(SPEC-008-07)
+    Given RAPID_CROSSCHECK_MODE=off で、/var/relay-gate/hang-detector-notified/ に 20260830T113000-JOB001-3f9a1c2e の印が無い
+    And green に exitcode.txt も aborted.txt も無く、RELAY_GATE_NOW=2026-08-30T12:45:00Z である
+    And /var/relay-gate/facade/20260830T113000-JOB001-3f9a1c2e/ 配下の全パスと各ファイルの内容を控えてある(実装プロセスは控えた後に何も書かない)
+    When ジョブスケジューラが hang-detector.sh を起動する
+    Then stderr に "alert: level=warning kind=hang-suspected run_id=20260830T113000-JOB001-3f9a1c2e role=green job_id=JOB001 elapsed_minutes=74" が出て、終了コード 3 で終了する
+    And /var/relay-gate/hang-detector-notified/20260830T113000-JOB001-3f9a1c2e.green があり、中身は "HANG_SUSPECTED_NOTIFIED" + LF の 1 行である
+    And /var/relay-gate/hang-detector-notified/ に ".tmp" で終わるファイルは残っていない
+    And facade/20260830T113000-JOB001-3f9a1c2e/ 配下のパスの集合と各ファイルの内容は控えと一致する(Runner Result の契約ファイル stdout.log / stderr.log / exitcode.txt / execution-spec.json / started-at.txt / aborted.txt は作られも変えられもしない)
+
+  Scenario: off ではハング疑い通知後に正常終了した対象の印が COMPLETED になる(SPEC-008-03)
+    Given RAPID_CROSSCHECK_MODE=off で、/var/relay-gate/hang-detector-notified/20260830T113000-JOB001-3f9a1c2e.green の中身が "HANG_SUSPECTED_NOTIFIED" + LF である
+    And その後 green/exitcode.txt の中身が 0 になり、RELAY_GATE_NOW=2026-08-30T12:55:00Z である
+    When ジョブスケジューラが hang-detector.sh を起動する
+    Then stderr に "alert:" で始まる行は出ず、終了コード 0 で終了する
+    And 印の中身は "COMPLETED" + LF になり、/var/relay-gate/hang-detector-notified/ に ".tmp" で終わるファイルは残っていない
+    When hang-detector.env の HANG_SCAN_WINDOW_HOURS が既定の 72 のまま、RELAY_GATE_NOW=2026-09-02T12:00:00Z(green の started-at.txt から 72 時間を過ぎた時刻)で `hang-detector.sh --verbose` を起動する
+    Then stderr に "info: judged run_id=20260830T113000-JOB001-3f9a1c2e" で始まる行は出ない(印が COMPLETED の run は窓外では走査しない)
+
+  Scenario: 速報比較依頼の FAILED を error の行で知らせる(SPEC-008-02)
+    Given RAPID_CROSSCHECK_MODE=background で、rapid_crosscheck_requests に run_id=20260830T100000-JOB003-9c0d1e2f job_id=JOB003 status=FAILED exit_code=3 started_at=2026-08-30T10:05:00 の行があり、monitor_records に role=rapid-crosscheck の行が無い
+    And RELAY_GATE_NOW=2026-08-30T12:45:00Z である
+    When ジョブスケジューラが hang-detector.sh を起動する
+    Then stderr に "alert: level=error kind=rapid-crosscheck-error run_id=20260830T100000-JOB003-9c0d1e2f role=rapid-crosscheck job_id=JOB003 elapsed_minutes=160" が出て、終了コード 6 で終了する
+    And monitor_records の該当行は monitor_status=COMPARE_ERROR_NOTIFIED alerted_at=2026-08-30T12:45:00 になり、rapid_crosscheck_requests の該当行は status=FAILED のままである
+
+  Scenario: ハング疑い通知後の実行エラーは error の行で追加して知らせる
+    Given RAPID_CROSSCHECK_MODE=background で、monitor_records に run_id=20260830T113000-JOB001-3f9a1c2e role=green monitor_status=HANG_SUSPECTED_NOTIFIED の行がある
+    And green/exitcode.txt の中身が 1 になり、RELAY_GATE_NOW=2026-08-30T12:55:00Z である
+    When ジョブスケジューラが hang-detector.sh を起動する
+    Then stderr に "alert: level=error kind=background-exec-error run_id=20260830T113000-JOB001-3f9a1c2e role=green job_id=JOB001 elapsed_minutes=84" が出て、終了コード 6 で終了する
+    And monitor_status は EXEC_ERROR_NOTIFIED になる
+
+  Scenario: ハング疑い通知後に比較異常になった速報比較依頼を error の行で知らせる(SPEC-008-03)
+    Given RAPID_CROSSCHECK_MODE=background で、monitor_records に run_id=20260830T100000-JOB003-9c0d1e2f role=rapid-crosscheck monitor_status=HANG_SUSPECTED_NOTIFIED の行がある
+    And rapid_crosscheck_requests の該当行が status=FAILED exit_code=3 になり、RELAY_GATE_NOW=2026-08-30T12:45:00Z である
+    When ジョブスケジューラが hang-detector.sh を起動する
+    Then 監視状態は比較異常通知済み(COMPARE_ERROR_NOTIFIED)へ遷移する
+    And stderr に "alert: level=error kind=rapid-crosscheck-error run_id=20260830T100000-JOB003-9c0d1e2f role=rapid-crosscheck job_id=JOB003 elapsed_minutes=160" が出て、終了コード 6 で終了する
+    And RELAY_GATE_NOW を 5 分進めて再実行すると、この依頼の alert 行は出ず、ほかに新たな異常が無ければ終了コード 0 で終了する
+
+  Scenario: ハング検知定期ジョブ設定は管理 DB 接続参照名と監視の調整値だけを持つ(SPEC-008-06)
+    Given 基盤適用設計者が所有するハング検知定期ジョブ設定 /etc/relay-gate/hang-detector.env の内容が "HANG_DB_CONN_REF=relaygate-db" / "RAPID_HANG_DETECT_LIMIT_MINUTES=60" / "HANG_SCAN_WINDOW_HOURS=72" の 3 行である
+    When 設定項目を CLI 契約の config_files(hang-detector.env)と照らして確認する
+    Then 定義されたキーは HANG_DB_CONN_REF / RAPID_HANG_DETECT_LIMIT_MINUTES / HANG_SCAN_WINDOW_HOURS の 3 つだけで、通知の宛先・送信コマンド・件名に関するキーは無い
+    And 管理 DB 接続は参照名 HANG_DB_CONN_REF だけで指定し、DB パスワード等の認証情報の値は含まれない
+    And CLI 契約 config_files の hang-detector.env の owner は基盤適用設計者(設定所有区分: ハング検知定期ジョブ設定)である
 ```
 
 ### 異常系
 
 ```gherkin
-  Scenario: メール送信に失敗したら alerted_at を更新せず終了コード 6 で終了する
-    Given ALERT_MAIL_CMD が終了コード 1 を返す
-    And 判定が HANG_SUSPECTED で monitor_records の該当行が MONITORING である
-    When hang-detector.sh が通知処理を実行する
-    Then hang-detector.sh は終了コード 6 で終了し stderr に "error: mail send failed run_id=20260830T113000-JOB001-3f9a1c2e role=green kind=hang-suspected cmd_exit_code=1" が出る
-    And monitor_records の該当行は monitor_status=MONITORING のままで alerted_at は NULL である(次回の定期実行で再送する)
+  Scenario: 監視記録の保存に失敗した異常は次の見回りで再び知らせる(SPEC-008-07)
+    Given RAPID_CROSSCHECK_MODE=background で、monitor_records に run_id=20260830T113000-JOB001-3f9a1c2e role=green monitor_status=MONITORING の行がある
+    And green に exitcode.txt が無く、RELAY_GATE_NOW=2026-08-30T12:45:00Z で、monitor_records の UPSERT が管理 DB のエラーで失敗する
+    When ジョブスケジューラが hang-detector.sh を起動する
+    Then stderr に "alert: level=warning kind=hang-suspected run_id=20260830T113000-JOB001-3f9a1c2e role=green job_id=JOB001 elapsed_minutes=74" が出て、続けて "error: monitor record save failed run_id=20260830T113000-JOB001-3f9a1c2e role=green" が出て、終了コード 6 で終了する
+    And monitor_records の該当行は monitor_status=MONITORING で alerted_at は NULL のままである
+    When 管理 DB が回復し、RELAY_GATE_NOW=2026-08-30T12:50:00Z で次の見回りの hang-detector.sh を起動する
+    Then stderr に "alert: level=warning kind=hang-suspected run_id=20260830T113000-JOB001-3f9a1c2e role=green job_id=JOB001 elapsed_minutes=79" が再び出て、ハング疑いに応じた終了コード 3 で終了する
+    And monitor_records の該当行は monitor_status=HANG_SUSPECTED_NOTIFIED alerted_at=2026-08-30T12:50:00 になる
+
+  Scenario: 通知済みの印の保存に失敗した異常は次の見回りで再び知らせる(SPEC-008-07)
+    Given RAPID_CROSSCHECK_MODE=off で、/var/relay-gate/hang-detector-notified/ に 20260830T113000-JOB001-3f9a1c2e の印が無く、置き場に書き込めない
+    And green に exitcode.txt が無く、RELAY_GATE_NOW=2026-08-30T12:45:00Z である
+    When ジョブスケジューラが hang-detector.sh を起動する
+    Then stderr に "alert: level=warning kind=hang-suspected run_id=20260830T113000-JOB001-3f9a1c2e role=green job_id=JOB001 elapsed_minutes=74" が出て、続けて "error: notified mark save failed run_id=20260830T113000-JOB001-3f9a1c2e role=green path: /var/relay-gate/hang-detector-notified/20260830T113000-JOB001-3f9a1c2e.green" が出て、終了コード 6 で終了する
+    When 置き場に書き込めるようになり、RELAY_GATE_NOW=2026-08-30T12:50:00Z で次の見回りの hang-detector.sh を起動する
+    Then stderr に "alert: level=warning kind=hang-suspected run_id=20260830T113000-JOB001-3f9a1c2e role=green job_id=JOB001 elapsed_minutes=79" が再び出て、ハング疑いに応じた終了コード 3 で終了する
+    And /var/relay-gate/hang-detector-notified/20260830T113000-JOB001-3f9a1c2e.green の中身は "HANG_SUSPECTED_NOTIFIED" + LF である
+
+  Scenario: 管理 DB に接続できない回は通知済みの異常を再び知らせない(SPEC-008-07)
+    Given RAPID_CROSSCHECK_MODE=background で、hang-detector.env の HANG_DB_CONN_REF=relaygate-db である
+    And monitor_records に run_id=20260830T113000-JOB001-3f9a1c2e role=green monitor_status=HANG_SUSPECTED_NOTIFIED alerted_at=2026-08-30T12:45:00 の行があり、green に exitcode.txt が無いままである
+    And RELAY_GATE_NOW=2026-08-30T12:50:00Z で、管理 DB に接続できない
+    When ジョブスケジューラが hang-detector.sh を起動する
+    Then stderr は "error: management db connection failed conn_ref=relaygate-db" の 1 行だけで、"alert:" で始まる行は出ず、終了コード 6 で終了する
+    When 管理 DB が回復し、RELAY_GATE_NOW=2026-08-30T12:55:00Z で次の見回りの hang-detector.sh を起動する
+    Then stderr に "alert:" で始まる行は出ず、終了コード 0 で終了する
+    And monitor_records の該当行は monitor_status=HANG_SUSPECTED_NOTIFIED alerted_at=2026-08-30T12:45:00 のままである
+
+  Scenario: off で通知済みの印が不正・読めない対象は error 行を出して監視中として判定し印を書き直す(SPEC-008-07)
+    Given RAPID_CROSSCHECK_MODE=off で、/var/relay-gate/hang-detector-notified/20260830T113000-JOB001-3f9a1c2e.green の中身が "MONITORING" + LF(規定の値でない)で、green に exitcode.txt も aborted.txt も無い
+    And 20260830T114000-JOB002-5e6f7a8b の blue は background で started-at.txt が 2026-08-30T11:40:05Z、blue/exitcode.txt の中身が 0 である
+    And /var/relay-gate/hang-detector-notified/20260830T114000-JOB002-5e6f7a8b.blue は hang-detector.sh のプロセスユーザーが読めない(置き場のディレクトリには書き込める)
+    And RELAY_GATE_NOW=2026-08-30T12:45:00Z である
+    When ジョブスケジューラが hang-detector.sh を起動する
+    Then stderr は次の 3 行で、この順に出る
+      | error: notified mark invalid run_id=20260830T113000-JOB001-3f9a1c2e role=green path: /var/relay-gate/hang-detector-notified/20260830T113000-JOB001-3f9a1c2e.green |
+      | alert: level=warning kind=hang-suspected run_id=20260830T113000-JOB001-3f9a1c2e role=green job_id=JOB001 elapsed_minutes=74 |
+      | error: notified mark invalid run_id=20260830T114000-JOB002-5e6f7a8b role=blue path: /var/relay-gate/hang-detector-notified/20260830T114000-JOB002-5e6f7a8b.blue |
+    And 終了コード 6 で終了する
+    And 20260830T113000-JOB001-3f9a1c2e.green の中身は "HANG_SUSPECTED_NOTIFIED" + LF に、20260830T114000-JOB002-5e6f7a8b.blue の中身は "COMPLETED" + LF に書き直され、".tmp" で終わるファイルは残っていない
+    When RELAY_GATE_NOW=2026-08-30T12:50:00Z で次の見回りの hang-detector.sh を起動する
+    Then stderr に "error:" / "alert:" で始まる行は出ず、終了コード 0 で終了する
+
+  Scenario: off で印の不正と保存失敗が同じ対象に重なったときは 1 対象の中で決まった順に出す(SPEC-008-07)
+    Given RAPID_CROSSCHECK_MODE=off で、/var/relay-gate/hang-detector-notified/20260830T113000-JOB001-3f9a1c2e.green の中身が "HANG_SUSPECTED_NOTIFIED"(末尾の LF が無い)で、置き場に書き込めない
+    And green に exitcode.txt も aborted.txt も無く、RELAY_GATE_NOW=2026-08-30T12:45:00Z である
+    When ジョブスケジューラが hang-detector.sh を起動する
+    Then stderr は次の 3 行で、この順に出る
+      | error: notified mark invalid run_id=20260830T113000-JOB001-3f9a1c2e role=green path: /var/relay-gate/hang-detector-notified/20260830T113000-JOB001-3f9a1c2e.green |
+      | alert: level=warning kind=hang-suspected run_id=20260830T113000-JOB001-3f9a1c2e role=green job_id=JOB001 elapsed_minutes=74 |
+      | error: notified mark save failed run_id=20260830T113000-JOB001-3f9a1c2e role=green path: /var/relay-gate/hang-detector-notified/20260830T113000-JOB001-3f9a1c2e.green |
+    And 終了コード 6 で終了し、印の中身は "HANG_SUSPECTED_NOTIFIED"(LF なし)のまま変わらない
 
   Scenario: 通知後も状態は RUNNING のままである(SPEC-008-04)
-    Given RAPID_CROSSCHECK_MODE=background で rapid_crosscheck_requests の run_id=20260830T113000-JOB001-3f9a1c2e が status=RUNNING started_at=2026-08-30T11:40:00、ハング検知定期ジョブ設定(hang-detector.env)の RAPID_HANG_DETECT_LIMIT_MINUTES=60、RELAY_GATE_NOW=2026-08-30T12:45:00Z である
-    When hang-detector.sh が通知処理を実行する
-    Then role=rapid-crosscheck の warning メールが 1 通送られる
+    Given RAPID_CROSSCHECK_MODE=background で rapid_crosscheck_requests の run_id=20260830T100000-JOB003-9c0d1e2f が status=RUNNING started_at=2026-08-30T10:05:00、hang-detector.env の RAPID_HANG_DETECT_LIMIT_MINUTES=60、RELAY_GATE_NOW=2026-08-30T12:45:00Z である
+    When ジョブスケジューラが hang-detector.sh を起動する
+    Then role=rapid-crosscheck の warning の alert 行が 1 行出て、終了コード 3 で終了する
     And rapid_crosscheck_requests の該当行は status=RUNNING のままで、新しい依頼は作成されず、worker プロセスは停止されていない
 ```
 
@@ -262,4 +392,3 @@ Feature: ハング疑い・実行エラー・比較異常を通知する
 ### 統合 API Spec
 
 - [CLI コマンド契約](../../../_cross-cutting/api/cli-command-contract.yaml)(`hang-detector.sh`)
-- [AsyncAPI Spec](../../../_cross-cutting/api/asyncapi.yaml)(`channels.hang-alert-mail` publish)

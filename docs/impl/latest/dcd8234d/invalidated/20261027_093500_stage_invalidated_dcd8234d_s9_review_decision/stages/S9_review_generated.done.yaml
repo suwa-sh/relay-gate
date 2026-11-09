@@ -1,0 +1,144 @@
+stage: "S9"
+uc_id: "dcd8234d"
+manifest_sha256: "945094d65bb404232b80a8b2e224753f6661edc1fcf8e311aafdea570dd022cd"
+manifest_projection: v2
+result: pass
+review_html: "docs/impl/latest/dcd8234d/review/index.html"
+review_html_note: "gitignore 済みの再生成可能な派生ビュー(上書き)。HTML の SHA は証跡に結ばない"
+cycle_note: "仕様還流(クロスチェック簡素化 + 起動コマンドの argv 規則)後のやり直しサイクルの初回生成。担当は tier-facade の validate-config.sh --rapid-crosscheck だけ"
+source_revision: "feature/define-crosscheck-job-map-and-comparison-definitions @ 64d2fc8"
+validator:
+  command: "node validateReviewHtml.js docs/impl/latest/dcd8234d/review/index.html"
+  result: "pass"
+  human_html_review_validate: "python3 validate.py docs/impl/latest/dcd8234d/review/index.html の結果は VALID(警告 0。内部 ID 0 / 長段落 0 / h2 13 に対し svg 7)"
+  visual_check: "headless Chrome で 1440px と 500px を render して目視(ダークモード)。connector の重なり・attach point 共有・非 endpoint node 背面通過・diagonal なし。初回 render で現在地の図が横並びで切れたため全幅に変更、ゾーン見出しのマスクを除去、データフロー図と未確認ノードの文字のはみ出しを短縮して再 render。回答ビルダーは JS で有効化され既定文面 5 行が組み上がることを確認。ライトモードとコピー操作のクリックは目視していない"
+figures:
+  - type: flowchart
+    title: "作業全体の流れと、いまの位置"
+    nodes: 7
+    arrows: 6
+  - type: architecture
+    title: "要求は 2 点、仕様は 3 点で、実装は仕様に従った"
+    nodes: 6
+    arrows: 3
+  - type: architecture
+    title: "処理の段階ごとの前提の件数"
+    nodes: 5
+    arrows: 4
+  - type: architecture
+    title: "検証コマンドの部品と外の境界"
+    nodes: 8
+    arrows: 7
+  - type: flowchart
+    title: "検証コマンドの処理の流れと終了コード"
+    nodes: 8
+    arrows: 7
+  - type: data-flow
+    title: "起動コマンドの値が設計者から検証コマンドを通って結果になるまで"
+    nodes: 5
+    arrows: 4
+  - type: architecture
+    title: "テストの段と、それぞれが確かめた範囲"
+    nodes: 5
+    arrows: 4
+feedback_request_count: 1
+open_blocker_count: 0
+decision_summary:
+  approval_questions: 1
+  selection_questions: 1
+  assumption_questions: 0
+  assumption_attention_questions: 2
+  recommended_choices: 5
+  questions:
+    - id: "機能"
+      question: "この実装(validate-config.sh --rapid-crosscheck)を承認するか"
+      recommended: "A. 承認する"
+      alternatives:
+        - "B. 差し戻す(再現条件と期待結果を補足に書く)"
+    - id: "要求"
+      question: "要求(2 点)と仕様(3 点)の食い違い 1 件を変更要求として公開するか"
+      recommended: "公開(要求と受け入れ基準を仕様の 3 点に揃える。draft どおり)"
+      alternatives:
+        - "書き直し(仕様を要求の 2 点に戻し {params} 位置規則を外す向き)"
+        - "保留(公開しない)"
+    - id: "前提 A-009"
+      question: "片側だけの引用符の外し方(契約 2 か所の書き方の揺れ)を仕様に書いてもらうか"
+      recommended: "却下(仕様変更: 契約の 2 か所を今の実装の規則=先頭と末尾を別々に 1 文字ずつ外す、に揃えて書く。実装は変えない)"
+      alternatives:
+        - "承認(今のまま)"
+        - "却下(仕様変更: 対の引用符を 1 組だけ外す規則に揃え、この検証と feature flag の読み取りも直す)"
+      reason: "速報 worker(別 UC)が契約の 1 組だけを字義どおり実装すると、検証は合格なのに起動で失敗する恐れがある(推測)"
+    - id: "前提 A-012"
+      question: "--final-crosscheck を未実装として終了コード 6 で返す仮の動きを認めるか"
+      recommended: "承認"
+      alternatives:
+        - "却下(実装修正: 未知のオプションとして終了コード 2)"
+        - "却下(仕様変更: 未実装の間の扱いと入口を直す担当を仕様に書く)"
+      note: "所有 UC 256abc3b の uc-map tiers は [tier-final-crosscheck] だけで、検証本体の所有 tier-facade が入っていない(確認済み)。その UC の実装時に facade 変更が write-set 外になる恐れ(推測)を本文に記載"
+    - id: "前提 残り10件"
+      question: "残りの前提 10 件を一括承認するか"
+      recommended: "一括承認"
+      alternatives:
+        - "一部を却下(補足に 前提名:却下(実装修正|仕様変更: …))"
+  answer_template: "機能=A / 要求=公開 / 前提=A-009:却下(仕様変更: 引用符の外し方を契約の 2 か所とも今の実装の規則に揃えて書く) / 前提=A-012:承認 / 前提=残り10件:一括承認"
+  answer_template_examples:
+    - "全件承認: 機能=A / 要求=公開 / 前提=A-009:承認 / 前提=A-012:承認 / 前提=残り10件:一括承認"
+    - "要求を保留: 機能=A / 要求=保留 / 前提=残り10件:一括承認"
+    - "差し戻し: 機能=B(再現条件: … / 期待結果: …)"
+    - "旧表記 機能=A / 相互運用=A / 監査=A も受け付ける(相互運用=A は 要求=公開、監査=A は 前提を全件承認 と同義)"
+  required_answers_note: "回答必須は 機能 と 要求。前提 3 問は未回答なら承認扱い(auto_confirmed)。A-009 は推奨が却下のため、推奨に従う場合は回答に含める必要があると本文に明記"
+assumption_summary:
+  total: 12
+  by_tier:
+    tier-facade: 12
+  required_answer: 0
+  required_ids: []
+  required_note: "全 12 件 spec_absent。category / verified_category は input_validation 8 / data_format 2 / error_handling 2 で security / persistence は 0 件"
+  review_attention_ids:
+    - "tier-facade:A-009"
+    - "tier-facade:A-012"
+  optional_default: "auto_confirmed"
+  verdicts:
+    consistent: 0
+    spec_absent: 12
+    contradicts: 0
+    unlisted: 0
+  unlisted_ids: []
+feedback_review_evidence:
+  feedback_id: "20261027_091000_impl_feedback_dcd8234d"
+  draft_path: "docs/impl/latest/dcd8234d/feedback/draft.md"
+  draft_sha256: "e5e1670d27abb68b2b94307e6cc351c0e6c2e1ffb650265d1127ad5584142d43"
+  request_count: 1
+  blocker_count: 0
+  requests:
+    - id: "CR-dcd8234d-009"
+      severity: "spec-gap"
+      html_title: "速報の起動コマンドの検証項目が、要求(2 点)と仕様(3 点)で食い違っている"
+      decision_key: "要求"
+implementation_review_evidence:
+  gate_result: "6/6 pass"
+  gates:
+    format: "pass (tier-facade)"
+    lint: "pass (tier-facade)"
+    tdd: "pass (373/373 macOS, 373/373 Ubuntu 24.04 container)"
+    bdd_tier: "pass (46/46, this UC 5/5)"
+    uc_bdd: "pass (43/43, this UC 7/7)"
+    atdd: "pass (6/6)"
+  open_blocker_count: 0
+  open_major_count: 0
+  open_minor_count: 13
+  open_minor_note: "F-001..F-012 は前提 12 件(spec_absent)、F-013 は単体テストの 2 回 Act(実装起因、情報のみとして表示)"
+  findings_paths:
+    - "docs/impl/latest/dcd8234d/stages/attempt-4/S5_verify.tier-facade.findings.yaml"
+  assumption_evidence_sha256: "71a22185f7c4f60069dddf6a640165d811ff24b0283674c30168b00dcf9e13d6"
+  assumption_evidence_inputs:
+    - tier: "tier-facade"
+      assumptions_sha256: "ca3ac08893cc86ba9b8b3b5b90501874b6b9ba2bf49473727448c953e946a8eb"
+      assumption_verdicts_sha256: "93d3ba68135195dbeeb35a5efbf844076ba4db328183f7422076ce99152ea881"
+  assumption_evidence_command: "node validateAssumptions.js evidence tier-facade:ca3ac08893cc86ba9b8b3b5b90501874b6b9ba2bf49473727448c953e946a8eb:93d3ba68135195dbeeb35a5efbf844076ba4db328183f7422076ce99152ea881"
+  assumption_evidence_note: "S5 done の 2 つの sha を入力に validateAssumptions.js evidence で算出。manifest_sha256 は引数の値を転記"
+captures: []
+demo_note: "動かし方の出力例は scratchpad の一時ディレクトリで facade/bin/validate-config.sh を 7 通り実行して得た(リポジトリには書いていない。記録済みゲートは再実行していない)"
+write_set_note: "書き込みは review/index.html(gitignore 済み。上書き)と本 done のみ。review-notes.md、feedback/、stages/attempt-*/、仕様、実装、テストは変更していない。git コマンドは check-ignore / rev-parse の読み取りだけ"
+completed_at: "2026-10-27T09:26:44+09:00"
+completed_by: "dist-impl-review@0.14.1"

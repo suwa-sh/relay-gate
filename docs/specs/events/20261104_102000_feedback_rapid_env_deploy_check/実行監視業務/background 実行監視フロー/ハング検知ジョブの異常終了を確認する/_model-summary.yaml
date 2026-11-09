@@ -1,0 +1,22 @@
+uc: "ハング検知ジョブの異常終了を確認する"
+business: "実行監視業務"
+buc: "background 実行監視フロー"
+
+bounded_context_id: "BC-004"
+
+models:
+  - name: "HangAlertLine"
+    tier: "tier-ops"
+    layer: "domain"
+    type: "value-object"
+    rdra_info: "監視記録"
+  - name: "hang-detector.sh.log"
+    tier: "tier-ops"
+    layer: "repository"
+    type: "record"
+    rdra_info: "実行ログ"
+
+tables: []
+
+kvs: []
+object_storage: []

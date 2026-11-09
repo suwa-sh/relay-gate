@@ -1,0 +1,220 @@
+{
+  "event_id": "20261103_131000_feedback_stage_requirements",
+  "type": "feedback_stage_completed",
+  "run_id": "feedback-20261103_housekeeping_db_required-20261103_130349-86217",
+  "attempt": 1,
+  "created_at": "2026-11-03T13:10:00Z",
+  "stage": "requirements",
+  "direct_work_unit_ids": [
+    "CR-9d2e6c41-001#1"
+  ],
+  "causal_work_unit_ids": [
+    "CR-9d2e6c41-001#1"
+  ],
+  "work_unit_results": [
+    {
+      "work_unit_id": "CR-9d2e6c41-001#1",
+      "disposition": "applied",
+      "reason": "管理 DB を使う機能が 1 つでもある設置ではハウスキープ設定の管理 DB 接続参照名を必須にする変更を USDM 増分と RDRA 差分へ反映した。USDM は REQ-014 の SPEC-014-07 に、接続参照名は RAPID_CROSSCHECK_MODE が off 以外の設置と確報クロスチェックを使う設置(確報クロスチェック worker の設定がある設置)では必須で、無い・空なら設定エラーで非 0 終了し成果物・管理 DB の行・確報比較依頼のいずれも削除しないこと、省略できるのは管理 DB を一切使わない設置だけであることを加え、off で確報クロスチェックを使う設置と off 以外の設置で接続参照名が無い・空のときの受け入れ基準を追加した。SPEC-014-08 の管理 DB に接続しないときの条件を off で確報クロスチェック worker の設定が無い設置で接続参照名が無い・空に絞り、受け入れ基準 4 件の前提も揃えた。SPEC-014-04 に off でも確報クロスチェックを使う設置で接続参照名があれば保持日数を過ぎた終端の確報比較依頼が消える受け入れ基準を加え、CR の完了条件 3 項目をすべて受け入れ基準で判定できるようにした。SPEC-014-03 は管理 DB に接続しないときの扱いを SPEC-014-08 への参照だけで持つため変更していない。確報クロスチェック worker の設定があるとみなす判定方法・キー名・ファイル名・終了コードは仕様で確定するとして書いていない。RDRA は情報 ハウスキープ設定と条件 ハウスキープの削除判定の説明を同じ条件に揃えた(新しい要素の追加なし)。lint はエラー 0・警告 0",
+      "artifact_refs": [
+        "usdm/events/20261103_131000_feedback_housekeeping_db_required/requirements.yaml",
+        "rdra/events/20261103_131000_feedback_housekeeping_db_required/event.json"
+      ]
+    }
+  ],
+  "reconciliation_results": [
+    {
+      "work_unit_id": "CR-9d2e6c41-001#1",
+      "status": "changed",
+      "reason": "管理 DB を使う機能が 1 つでもある設置ではハウスキープ設定の管理 DB 接続参照名を必須にする変更を USDM 増分と RDRA 差分へ反映した。USDM は REQ-014 の SPEC-014-07 に、接続参照名は RAPID_CROSSCHECK_MODE が off 以外の設置と確報クロスチェックを使う設置(確報クロスチェック worker の設定がある設置)では必須で、無い・空なら設定エラーで非 0 終了し成果物・管理 DB の行・確報比較依頼のいずれも削除しないこと、省略できるのは管理 DB を一切使わない設置だけであることを加え、off で確報クロスチェックを使う設置と off 以外の設置で接続参照名が無い・空のときの受け入れ基準を追加した。SPEC-014-08 の管理 DB に接続しないときの条件を off で確報クロスチェック worker の設定が無い設置で接続参照名が無い・空に絞り、受け入れ基準 4 件の前提も揃えた。SPEC-014-04 に off でも確報クロスチェックを使う設置で接続参照名があれば保持日数を過ぎた終端の確報比較依頼が消える受け入れ基準を加え、CR の完了条件 3 項目をすべて受け入れ基準で判定できるようにした。SPEC-014-03 は管理 DB に接続しないときの扱いを SPEC-014-08 への参照だけで持つため変更していない。確報クロスチェック worker の設定があるとみなす判定方法・キー名・ファイル名・終了コードは仕様で確定するとして書いていない。RDRA は情報 ハウスキープ設定と条件 ハウスキープの削除判定の説明を同じ条件に揃えた(新しい要素の追加なし)。lint はエラー 0・警告 0",
+      "artifact_refs": [
+        "usdm/events/20261103_131000_feedback_housekeeping_db_required/requirements.yaml",
+        "rdra/events/20261103_131000_feedback_housekeeping_db_required/event.json"
+      ]
+    }
+  ],
+  "work_unit_evidence_refs": [
+    {
+      "work_unit_id": "CR-9d2e6c41-001#1",
+      "path": "usdm/events/20261103_131000_feedback_housekeeping_db_required/requirements.yaml",
+      "sha256": "a9df9ec2f4c2c05016baf76b9cbf2d3fc15c203e20dcd15001b7acd652fe046d"
+    },
+    {
+      "work_unit_id": "CR-9d2e6c41-001#1",
+      "path": "rdra/events/20261103_131000_feedback_housekeeping_db_required/event.json",
+      "sha256": "f48cd94fa3b868cc73c9ff3762023e8279d4fdfd167c1dd57a9f3eaba115a153"
+    }
+  ],
+  "domain_event_refs": [
+    {
+      "path": "rdra/events/20261103_131000_feedback_housekeeping_db_required/event.json",
+      "sha256": "f48cd94fa3b868cc73c9ff3762023e8279d4fdfd167c1dd57a9f3eaba115a153"
+    },
+    {
+      "path": "usdm/events/20261103_131000_feedback_housekeeping_db_required/requirements.yaml",
+      "sha256": "a9df9ec2f4c2c05016baf76b9cbf2d3fc15c203e20dcd15001b7acd652fe046d"
+    }
+  ],
+  "feedback_request": {
+    "feedback_request_id": "20261103_housekeeping_db_required",
+    "input_sha256": "94cde505fc6dda4705b1bb75134beaf9a85a7af65d7c90f1e786112e8b1031e7",
+    "request_ids": [
+      "CR-9d2e6c41-001"
+    ],
+    "work_unit_ids": [
+      "CR-9d2e6c41-001#1"
+    ]
+  },
+  "post_execution_basis": {
+    "repository_head": "38cf3f4a5dff8f47c581ab984ab8c37805c44e20",
+    "latest_domain_event_ids": {
+      "requirements": {
+        "rdra/events": "20261103_131000_feedback_housekeeping_db_required",
+        "usdm/events": "20261103_131000_feedback_housekeeping_db_required"
+      },
+      "quality_attributes": {
+        "nfr/events": "20261103_082000_feedback_housekeeping_followups"
+      },
+      "architecture": {
+        "arch/events": "20261103_083000_feedback_housekeeping_followups"
+      },
+      "infrastructure": {
+        "infra/events": "20261103_084000_feedback_housekeeping_followups"
+      },
+      "design_system": {
+        "design/events": null
+      },
+      "spec": {
+        "specs/events": "20261103_085000_feedback_housekeeping_followups"
+      },
+      "spec_stories": {
+        "design/events": null
+      }
+    },
+    "domain_event_root_snapshots": {
+      "rdra/events": {
+        "head_event_id": "20261103_131000_feedback_housekeeping_db_required",
+        "head_event_sha256": "3e511fca6a1fea0c55efdc3a33fb8b8e7e5ca12899627a7b14221d326de9fb7d",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency",
+          "20260908_011000_feedback_slot_status_wording",
+          "20260921_084000_feedback_impl_feedback_eff24f55",
+          "20261010_200000_feedback_impl_feedback_dcd8234d",
+          "20261101_101000_feedback_impl_feedback_dcd8234d",
+          "20261101_121000_feedback_mail_removal_housekeeping",
+          "20261103_081000_feedback_housekeeping_followups",
+          "20261103_131000_feedback_housekeeping_db_required"
+        ],
+        "event_set_sha256": "608c77661bedd39000b6f1c22dbe8e3c3d8b2c0c35359df2261b25a55aa9346f",
+        "latest_tree_sha256": "b4b4296ae1547f95cba62b54d1140692a16a05e72e184aa44fa8f8f35854b577"
+      },
+      "usdm/events": {
+        "head_event_id": "20261103_131000_feedback_housekeeping_db_required",
+        "head_event_sha256": "d5b9cc924c01032584134b561a0c833b5fa9262f0abafa9e664900b0171d8574",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency",
+          "20260908_011000_feedback_slot_status_wording",
+          "20260921_084000_feedback_impl_feedback_eff24f55",
+          "20261010_200000_feedback_impl_feedback_dcd8234d",
+          "20261101_101000_feedback_impl_feedback_dcd8234d",
+          "20261101_121000_feedback_mail_removal_housekeeping",
+          "20261103_081000_feedback_housekeeping_followups",
+          "20261103_131000_feedback_housekeeping_db_required"
+        ],
+        "event_set_sha256": "608c77661bedd39000b6f1c22dbe8e3c3d8b2c0c35359df2261b25a55aa9346f",
+        "latest_tree_sha256": "48b132d17198156a3da6feef7fd725090592abd41d7e50bd23229b210888d358"
+      },
+      "nfr/events": {
+        "head_event_id": "20261103_082000_feedback_housekeeping_followups",
+        "head_event_sha256": "9f5993bfe6162ead2dbb7c01c8469a99903f9766d15afebadb88664d66e11cf4",
+        "event_ids": [
+          "20260830_183726_initial_nfr",
+          "20260905_085000_feedback_todo_resolution",
+          "20260907_013000_feedback_todo_followup",
+          "20260907_120000_feedback_abort_consistency",
+          "20260908_013000_feedback_slot_status_wording",
+          "20260921_090000_feedback_impl_feedback_eff24f55",
+          "20261010_201000_feedback_impl_feedback_dcd8234d",
+          "20261101_102000_feedback_impl_feedback_dcd8234d",
+          "20261101_122000_feedback_mail_removal_housekeeping",
+          "20261103_082000_feedback_housekeeping_followups"
+        ],
+        "event_set_sha256": "e02a3cfa4e83a3ee739f5c8b3d6e567f041103be07cab54ec2fbdbd2322cae8e",
+        "latest_tree_sha256": "b00bb32e2b0e4b60700f3011f501b23e25563c3254ab590e100082636f3de763"
+      },
+      "arch/events": {
+        "head_event_id": "20261103_083000_feedback_housekeeping_followups",
+        "head_event_sha256": "f9dd9f8657f03e99c64c5a76108ac6a12eb5f917461adf415a1aec31a6b9837b",
+        "event_ids": [
+          "20260830_184457_initial_arch",
+          "20260830_202427_arch_infra_feedback_20260830_190412_infra_product_design",
+          "20260905_091000_feedback_todo_resolution",
+          "20260907_015000_feedback_todo_followup",
+          "20260907_122000_feedback_abort_consistency",
+          "20260908_015000_feedback_slot_status_wording",
+          "20260921_092000_feedback_impl_feedback_eff24f55",
+          "20261010_202000_feedback_impl_feedback_dcd8234d",
+          "20261101_103000_feedback_impl_feedback_dcd8234d",
+          "20261101_123000_feedback_mail_removal_housekeeping",
+          "20261103_083000_feedback_housekeeping_followups"
+        ],
+        "event_set_sha256": "ba8e9c6c605cd5d157bbce221ea07c1d7defd5e40f1d4f4e58748b18ebfa09c3",
+        "latest_tree_sha256": "5b8f5259388c17804383a1c2dd4512cce6b1820ef2761d4c6c7f5f741a02c072"
+      },
+      "infra/events": {
+        "head_event_id": "20261103_084000_feedback_housekeeping_followups",
+        "head_event_sha256": "7f2e5932ff83cc01f143918383b0ed5787b23497cb51bd435d36e1d2d154d262",
+        "event_ids": [
+          "20260830_190412_infra_product_design",
+          "20260905_093000_feedback_todo_resolution",
+          "20260907_021000_feedback_todo_followup",
+          "20260907_124000_feedback_abort_consistency",
+          "20260908_021000_feedback_slot_status_wording",
+          "20260921_094000_feedback_impl_feedback_eff24f55",
+          "20261010_203000_feedback_impl_feedback_dcd8234d",
+          "20261101_104000_feedback_impl_feedback_dcd8234d",
+          "20261101_124000_feedback_mail_removal_housekeeping",
+          "20261103_084000_feedback_housekeeping_followups"
+        ],
+        "event_set_sha256": "92c16746a184d064f0e98f657ad96888f852af9291cc08160c7a7e09522d6d3f",
+        "latest_tree_sha256": "e247f47fe00c1983bcd0b74e9807496a1b55e0fda78dfb934d5153e411389b91"
+      },
+      "design/events": {
+        "head_event_id": null,
+        "head_event_sha256": null,
+        "event_ids": [],
+        "event_set_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "latest_tree_sha256": null
+      },
+      "specs/events": {
+        "head_event_id": "20261103_085000_feedback_housekeeping_followups",
+        "head_event_sha256": "5f510f1df00bd29dfa2289277b0c115ad39deb091be82b20b06526e8f6c89013",
+        "event_ids": [
+          "20260830_202851_spec_generation",
+          "20260905_100000_feedback_todo_resolution",
+          "20260907_024000_feedback_todo_followup",
+          "20260907_131000_feedback_abort_consistency",
+          "20260908_024000_feedback_slot_status_wording",
+          "20260908_062000_feedback_spec_machine_readable",
+          "20260917_050000_feedback_impl_feedback_fd678b04",
+          "20260917_100000_feedback_impl_feedback_fd678b04_cycle2",
+          "20260921_100000_feedback_impl_feedback_eff24f55",
+          "20260923_112000_feedback_impl_feedback_eff24f55_cycle2",
+          "20261010_204000_feedback_impl_feedback_dcd8234d",
+          "20261027_055000_feedback_impl_feedback_dcd8234d",
+          "20261101_105000_feedback_impl_feedback_dcd8234d",
+          "20261101_125000_feedback_mail_removal_housekeeping",
+          "20261103_085000_feedback_housekeeping_followups"
+        ],
+        "event_set_sha256": "b168089c178b4ca87b4a76e16f375a1a9806d7bb4d4b90185b183a9b495bf438",
+        "latest_tree_sha256": "d006b3d0131551d6afc77d805a8b55b19ab6431b271f63f2ed052944a4549e43"
+      }
+    }
+  }
+}

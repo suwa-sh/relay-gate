@@ -1,0 +1,16 @@
+event_id: "20261027_082507_config_confirmed_atdd_mapping_dcd8234d"
+type: config_confirmed
+uc_id: dcd8234d
+stage: "S1"
+payload:
+  confirmed_by: "user"
+  confirmed_via: "tmp/reviews/dcd8234d-resume-config-review.html(テスト=A)+ tmp/reviews/dcd8234d-atdd9-owner-review.html(9番=A(日次全量比較の機能へ回す))"
+  items:
+    - key: "uc_map.use_cases[dcd8234d].atdd_scenarios"
+      before: [SPEC-004-04-5]
+      after: [SPEC-004-04-5, SPEC-004-04-6, SPEC-004-04-7, SPEC-004-04-8, SPEC-004-04-10, SPEC-004-04-11]
+      note: "SPEC-004-04 の受け入れ基準が 5 件から 11 件に増え、5 番の中身が変わった(速報の起動コマンドの検証)。本 UC は速報側(--rapid-crosscheck)の検証だけを担う(spec.md / tier-facade.md)"
+    - key: "uc_map.use_cases[256abc3b].atdd_scenarios"
+      before: [SPEC-006-02-1, SPEC-006-04-1, SPEC-007-01-2, SPEC-011-03-1]
+      after: [SPEC-004-04-9, SPEC-006-02-1, SPEC-006-04-1, SPEC-007-01-2, SPEC-011-03-1]
+      note: "SPEC-004-04-9(確報の起動コマンドはプレースホルダ無しで検証を通る)は、確報の起動コマンドの設定と検証を持つ UC「比較ツールで日次全量比較を実行して結果を保存する」へ割り当てる。同 UC の他のシナリオの中身変更は、同 UC の S1 で見直す"

@@ -66,7 +66,7 @@ sequenceDiagram
 | バリエーション名 | 値 | 処理内容 | 適用 tier | 適用箇所 |
 |----------------|---|---------|----------|---------|
 | slot 実行モード | foreground | この slot の結果だけが応答になる | tier-facade | presentation `relay_*` |
-| slot 実行モード | background | 応答に含まれない。成果物ディレクトリと通知メールで確認 | tier-facade | usecase `relay_foreground_result`(待機・中継対象から除外) |
+| slot 実行モード | background | 応答に含まれない。成果物ディレクトリとハング検知ジョブの異常終了(alert 行)で確認 | tier-facade | usecase `relay_foreground_result`(待機・中継対象から除外) |
 | slot 実行モード | off | 成果物も応答も無い | tier-facade | domain `plan_slot_launch`(起動対象から除外) |
 | 運用モード | 並行稼働 | 応答 = blue の結果 | tier-facade | facade.sh |
 | 運用モード | 新実装の単独本番 | 応答 = green の結果 | tier-facade | facade.sh |
@@ -163,11 +163,11 @@ Feature: 業務ジョブの実行結果を確認する
     Then 終了コードは 0 であり、標準出力・標準エラーに速報の結果は含まれない
     And 速報の結果は rapid-crosscheck-result.sh --run-id <run_id> で別途参照する
 
-  Scenario: background の失敗は応答に現れず通知メールで伝わる
+  Scenario: background の失敗は応答に現れずハング検知ジョブの失敗で伝わる
     Given 並行稼働モードで blue は終了コード 0、green(background)は終了コード 1 で終了した
     When 運用者が実行履歴を確認する
     Then 終了コードは 0 である
-    And green の失敗は hang-detector の error メール(background-exec-error)で運用者に届く
+    And green の失敗は、ハング検知ジョブ(hang-detector.sh)が終了コード 6 で終わり標準エラーに "alert: level=error kind=background-exec-error" で始まる行を出すことで、ジョブスケジューラのジョブ監視・障害通知を通して運用者に届く
 ```
 
 ## ティア別仕様

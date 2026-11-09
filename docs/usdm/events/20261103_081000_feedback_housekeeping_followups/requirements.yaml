@@ -1,0 +1,173 @@
+version: "1.0"
+event_id: "20261103_081000_feedback_housekeeping_followups"
+created_at: "2026-11-03T08:10:00"
+source: "docs/pipeline/feedback-runs/20261103_housekeeping_followups/stage-packets/requirements.md(feedback request 20261103_housekeeping_followups の requirements stage packet。CR-f3b8a1d0-001(管理 DB に接続しないハウスキープの振る舞いを要求の受け入れ基準で判定できるようにする)を USDM 増分として反映)"
+system_name: "relay-gate 並行稼働実行基盤"
+feedback_request:
+  feedback_request_id: "20261103_housekeeping_followups"
+  input_sha256: "7a81f28ce6fef4c2f70e2839d657a3f8e8480671bd846b460edab3d22b3ba775"
+  request_ids: ["CR-f3b8a1d0-001"]
+  work_unit_ids: ["CR-f3b8a1d0-001#1"]
+
+requirements:
+  - id: "REQ-014"
+    requirement: "ハウスキープが、ジョブスケジューラの定期ジョブ(1 日 1 回)から起動され、保持日数を過ぎた終了済みの実行の成果物と管理 DB の履歴、および終端した確報比較依頼を自動で削除すること"
+    reason: "実行ごとに成果物ディレクトリと管理 DB の行が増え続け、ファイル領域と管理 DB の容量を圧迫する。手作業での削除は、消してよいもの(終了済みか、リランの親子か)の判断を運用者に負わせるため、終端と経過日数の規則で自動判定して削除する"
+    priority: "must"
+    feedback_source:
+      feedback_request_id: "20261101_mail_removal_housekeeping"
+      work_unit_ids:
+        - "CR-e4ea8aaa-002#1"
+    specifications:
+      - id: "SPEC-014-01"
+        specification: "ハウスキープ専用のスクリプト(housekeep.sh)を追加し、ジョブスケジューラの定期ジョブとして 1 日 1 回起動する想定とする。業務ジョブの起動時には削除しない。保持日数は基盤適用設計者が所有するハウスキープ設定で持ち、既定は 90 日とする。値は正の整数とし、設定検証で検査する。削除したくない場合は定期ジョブを登録しない。設定のファイル名・キー名・終了コード・接続する管理 DB は仕様(CLI 契約・設定契約)で確定する"
+        acceptance_criteria:
+          - "Given ハウスキープ設定で保持日数を指定していない When ハウスキープを実行する Then 最も遅い終了日時から 90 日を過ぎた終了済みの実行は削除され、90 日以内の終了済みの実行は残る"
+          - "Given ハウスキープ設定の保持日数が 0・負の数・整数でない値のいずれかである When 設定検証を実行する Then 非 0 の終了コードで終わり、標準エラーに保持日数の値が不正である旨の行が出る"
+          - "Given 保持日数を過ぎた終了済みの実行がある When 業務ジョブ(facade)を起動する Then その実行の成果物と管理 DB の行は削除されずに残る"
+          - "Given 設定所有区分 When ハウスキープ設定の所有者を確認する Then 基盤適用設計者である"
+        feedback_source:
+          feedback_request_id: "20261101_mail_removal_housekeeping"
+          work_unit_ids:
+            - "CR-e4ea8aaa-002#1"
+        affected_models:
+          - type: "buc"
+            action: "add"
+            target: "ハウスキープフロー"
+          - type: "information"
+            action: "add"
+            target: "ハウスキープ設定"
+          - type: "variation"
+            action: "modify"
+            target: "設定所有区分"
+          - type: "condition"
+            action: "modify"
+            target: "設定所有区分"
+          - type: "variation"
+            action: "modify"
+            target: "ジョブスケジューラ起動ジョブ種別"
+          - type: "external_system"
+            action: "modify"
+            target: "ジョブスケジューラ"
+          - type: "actor"
+            action: "modify"
+            target: "運用者"
+          - type: "actor"
+            action: "modify"
+            target: "基盤適用設計者"
+      - id: "SPEC-014-02"
+        specification: "削除の単位は 2 種類とする。実行の単位は、リランの親子(parent_run_id でつながる実行)をまとめた 1 単位とし、単位内の各実行の成果物ディレクトリ、管理 DB の行(並行稼働実行・slot 実行・速報実行・速報比較依頼・監視記録)、ハング検知が残した通知済みの印を一緒に消す。確報比較依頼の単位は確報比較依頼 1 件とする。リランの親子は、単位内のすべての実行が削除の条件を満たすまで残す"
+        acceptance_criteria:
+          - "Given すべての構成要素が終端し、最も遅い終了日時から保持日数を過ぎた実行 When ハウスキープを実行する Then その実行の成果物ディレクトリ、管理 DB の行(並行稼働実行・slot 実行・速報実行・速報比較依頼・監視記録)、通知済みの印がすべて無くなる"
+          - "Given すべての構成要素が終端し、最も遅い終了日時から保持日数以内の実行 When ハウスキープを実行する Then その実行の成果物と管理 DB の行は残る"
+          - "Given リラン元の実行は保持日数を過ぎたが、parent_run_id でつながるリラン先の実行が保持日数以内である When ハウスキープを実行する Then リラン元とリラン先の成果物と管理 DB の行はどちらも残る"
+          - "Given parent_run_id でつながるリランの親子すべてが終端し、保持日数を過ぎた When ハウスキープを実行する Then 親子すべての成果物と管理 DB の行が無くなる"
+        feedback_source:
+          feedback_request_id: "20261101_mail_removal_housekeeping"
+          work_unit_ids:
+            - "CR-e4ea8aaa-002#1"
+        affected_models:
+          - type: "buc"
+            action: "add"
+            target: "ハウスキープフロー"
+          - type: "business_policy"
+            action: "add"
+            target: "ハウスキープの削除判定"
+          - type: "information"
+            action: "modify"
+            target: "監視記録"
+      - id: "SPEC-014-03"
+        specification: "実行の単位を消す条件は、単位内のすべての構成要素(並行稼働実行、各 slot、速報比較依頼)が終端していることとする。管理 DB を使う設定では、並行稼働実行が COMPLETED / ABORTED、すべての slot 実行が SUCCEEDED / FAILED / ABORTED、すべての速報比較依頼が SUCCEEDED / FAILED / ABORTED であること。RAPID_CROSSCHECK_MODE=off で管理 DB の行が無い実行は成果物だけで判定し、execution-spec.json で起動対象になっている slot(mode が off の slot は含まない)のすべてで、成果物ディレクトリに exitcode.txt または aborted.txt があること。起動対象の slot の成果物ディレクトリが無い場合や execution-spec.json が無い実行は、終わっていないものとして残し、標準エラーに warn を出す。速報比較依頼だけのリランで作られた run は成果物を持たないため、管理 DB の行だけで判定する。1 つでも終わっていない構成要素(RUNNING、CLAIMED、REQUESTED、slot の終了ファイルが無い)があれば、経過日数にかかわらず単位ごと残す。管理 DB に接続しないときの扱いは SPEC-014-08 に従う"
+        acceptance_criteria:
+          - "Given 並行稼働実行は COMPLETED(foreground の中継は終わった)だが background slot が RUNNING のまま、ほかの構成要素の終了日時から保持日数を過ぎた実行 When ハウスキープを実行する Then その実行の成果物と管理 DB の行は残る"
+          - "Given 並行稼働実行は COMPLETED だが速報比較依頼が REQUESTED・CLAIMED・RUNNING のいずれかのまま、ほかの構成要素の終了日時から保持日数を過ぎた実行 When ハウスキープを実行する Then その実行の成果物と管理 DB の行は残る"
+          - "Given RAPID_CROSSCHECK_MODE=off で管理 DB の行が無く、execution-spec.json に記録された速報クロスチェックのモードが off で、execution-spec.json で起動対象のすべての slot の成果物ディレクトリに exitcode.txt または aborted.txt があり、その更新時刻の最も遅いものから保持日数を過ぎた実行 When ハウスキープを実行する Then その実行の成果物ディレクトリと通知済みの印が無くなる"
+          - "Given RAPID_CROSSCHECK_MODE=off で管理 DB の行が無く、起動対象のすべての slot が終了しているが、その最も遅い更新時刻から保持日数以内の実行 When ハウスキープを実行する Then その実行の成果物ディレクトリは残る"
+          - "Given RAPID_CROSSCHECK_MODE=off で管理 DB の行が無く、起動対象の slot のいずれかの成果物ディレクトリに exitcode.txt も aborted.txt も無い実行 When ハウスキープを実行する Then 経過日数にかかわらずその実行の成果物ディレクトリは残る"
+          - "Given 管理 DB の行が無く、execution-spec.json に記録された速報クロスチェックのモードが off で、execution-spec.json で mode が off の slot があり、その slot の成果物ディレクトリが無く、起動対象のほかの slot はすべて終了して保持日数を過ぎた実行 When ハウスキープを実行する Then その実行の成果物ディレクトリは無くなる"
+          - "Given 管理 DB の行が無く、execution-spec.json が無いか、起動対象の slot の成果物ディレクトリが無い成果物ディレクトリ When ハウスキープを実行する Then その成果物ディレクトリは残り、標準エラーに warn の行が出る"
+          - "Given 速報比較依頼だけのリランで作られた run を含むリランの親子で、すべての管理 DB の行が終端し、最も遅い終了日時から保持日数を過ぎた When ハウスキープを実行する Then その run を含む親子すべての管理 DB の行と成果物が無くなる"
+          - "Given 速報比較依頼だけのリランで作られた run の速報比較依頼が RUNNING である When ハウスキープを実行する Then その run とリランの親子の管理 DB の行と成果物は、経過日数にかかわらず残る"
+        feedback_source:
+          feedback_request_id: "20261103_housekeeping_followups"
+          work_unit_ids:
+            - "CR-f3b8a1d0-001#1"
+        affected_models:
+          - type: "business_policy"
+            action: "add"
+            target: "ハウスキープの削除判定"
+      - id: "SPEC-014-04"
+        specification: "経過日数の基準は、単位内の構成要素の終了日時のうち最も遅いものとする。管理 DB の行は completed_at、成果物だけの slot は exitcode.txt または aborted.txt の更新時刻を使い、開始日時は使わない。確報比較依頼は、管理 DB に接続する設定で、終端状態(SUCCEEDED / FAILED / ABORTED)で、completed_at から保持日数を過ぎたものを依頼ごとに消す(管理 DB に接続しないときは SPEC-014-08 のとおり消さない)"
+        acceptance_criteria:
+          - "Given 開始日時とほかの構成要素の終了日時は保持日数より古いが、最も遅い構成要素の終了日時が保持日数以内の実行 When ハウスキープを実行する Then その実行の成果物と管理 DB の行は残る"
+          - "Given 管理 DB に接続する設定で、終端状態の確報比較依頼のうち、completed_at から保持日数を過ぎた依頼と過ぎていない依頼がある When ハウスキープを実行する Then 過ぎた依頼だけが無くなり、過ぎていない依頼は残る"
+          - "Given REQUESTED・CLAIMED・RUNNING のいずれかの確報比較依頼が、登録から保持日数より長く経っている When ハウスキープを実行する Then その依頼は残る"
+        feedback_source:
+          feedback_request_id: "20261103_housekeeping_followups"
+          work_unit_ids:
+            - "CR-f3b8a1d0-001#1"
+        affected_models:
+          - type: "business_policy"
+            action: "add"
+            target: "ハウスキープの削除判定"
+      - id: "SPEC-014-05"
+        specification: "削除は何度実行しても結果が同じになるようにする。1 つの単位の中では、成果物(ディレクトリと通知済みの印)を先に処理し、そのあと管理 DB の行を 1 つのトランザクションで消す。成果物は、削除対象と判定したら、まず成果物ルート配下の削除待ちの置き場へ rename で移し(同じファイルシステム内で 1 回の操作)、そのあと置き場から削除する。置き場に残っているものは、判定をやり直さず次回の実行で無条件に削除する。置き場の場所は仕様で確定する。管理 DB の行が残っている間は、次回の走査で同じ単位を再び見つけ、既に無いファイルは削除済みとして扱って続けて管理 DB の行を消す。成果物ルートの走査は管理 DB の有無にかかわらず毎回行い、管理 DB の行が無い成果物ディレクトリは成果物だけの判定規則で扱う。ファイルを消してから管理 DB の行を消すまでの間に期限切れの実行をリランしようとした場合は、リランは元の execution-spec.json が無いことをエラーとして返す(既存のリランの規則のまま)"
+        acceptance_criteria:
+          - "Given 前回のハウスキープが削除対象の成果物を削除待ちの置き場へ移したあとに失敗した When 次のハウスキープを実行する Then 置き場に残っていた成果物と、その単位の管理 DB の行が無くなる"
+          - "Given 前回のハウスキープが成果物を消したあと、その単位の管理 DB の行の削除に失敗した When 次のハウスキープを実行する Then その単位の管理 DB の行が無くなり、ほかに失敗が無ければ終了コード 0 で終わる"
+          - "Given 削除対象を削除し終えたハウスキープの直後 When 同じ状態のままハウスキープをもう一度実行する Then 削除件数 0 を標準出力に出して終了コード 0 で終わり、成果物と管理 DB の行は 1 回目の後と同じである"
+          - "Given 成果物は消えたが管理 DB の行が残っている期限切れの実行 When その実行を background 側リランしようとする Then リランは元の execution-spec.json が無いことを標準エラーに出して非 0 の終了コードで終わる"
+        feedback_source:
+          feedback_request_id: "20261101_mail_removal_housekeeping"
+          work_unit_ids:
+            - "CR-e4ea8aaa-002#1"
+        affected_models:
+          - type: "business_policy"
+            action: "add"
+            target: "ハウスキープの削除順序と回復"
+      - id: "SPEC-014-06"
+        specification: "ハウスキープは削除した件数を標準出力に出し、失敗は標準エラーに出して非 0 で終わる"
+        acceptance_criteria:
+          - "Given 保持日数を過ぎた実行の単位と確報比較依頼がある When ハウスキープが成功する Then 標準出力に削除した件数が出て、終了コード 0 で終わる"
+          - "Given 成果物を削除待ちの置き場へ移したあとに処理が失敗する When ハウスキープが終わる Then 標準エラーに失敗の内容が出て、非 0 の終了コードで終わる"
+          - "Given 管理 DB の行の削除が失敗する When ハウスキープが終わる Then 標準エラーに失敗の内容が出て、非 0 の終了コードで終わる"
+        feedback_source:
+          feedback_request_id: "20261101_mail_removal_housekeeping"
+          work_unit_ids:
+            - "CR-e4ea8aaa-002#1"
+        affected_models:
+          - type: "business_policy"
+            action: "modify"
+            target: "CLI による提示"
+      - id: "SPEC-014-07"
+        specification: "管理 DB の行の削除には、ハウスキープ専用の DB ロールを使う。権限は対象テーブル(parallel_runs / slot_executions / rapid_runs / rapid_crosscheck_requests / final_crosscheck_requests / monitor_records)の SELECT と DELETE だけとし、業務用接続ロールには DELETE を足さない。接続はハング検知と同じく接続参照名で解決し、認証情報の値を設定に置かない。インフラ実装の正本と PostgreSQL 構築ロールに、このロールの作成と権限付与を加える。ロール名は仕様で確定する"
+        acceptance_criteria:
+          - "Given 構築済みの管理 DB When ハウスキープ専用の DB ロールの権限を確認する Then 対象 6 テーブル(parallel_runs / slot_executions / rapid_runs / rapid_crosscheck_requests / final_crosscheck_requests / monitor_records)の SELECT と DELETE だけを持つ"
+          - "Given 構築済みの管理 DB When 業務用接続ロールの権限を確認する Then どのテーブルにも DELETE 権限を持たない"
+          - "Given ハウスキープ設定 When 内容を確認する Then 認証情報の値は含まれず管理 DB 接続の参照名だけがある"
+        feedback_source:
+          feedback_request_id: "20261101_mail_removal_housekeeping"
+          work_unit_ids:
+            - "CR-e4ea8aaa-002#1"
+        affected_models:
+          - type: "information"
+            action: "add"
+            target: "ハウスキープ設定"
+          - type: "business_policy"
+            action: "add"
+            target: "ハウスキープの削除順序と回復"
+      - id: "SPEC-014-08"
+        specification: "管理 DB に接続しないとき(RAPID_CROSSCHECK_MODE=off で、ハウスキープ設定の管理 DB 接続参照名が無い・空)は、ハウスキープは管理 DB に接続せず、確報比較依頼と管理 DB の行を削除しない。起動のたびに、管理 DB の行を削除しないことを示す warn を標準エラーへ 1 行出す。成果物ルートの実行は成果物だけで判定するが、execution-spec.json に記録された速報クロスチェックのモードが off でない実行(off 以外の期間に作られ、管理 DB に終わっていない構成要素があり得る実行)は、判定できないものとして経過日数にかかわらず単位ごと残し、その実行を残したことを示す warn を標準エラーへ出す。off の期間に作られた成果物だけの実行は、SPEC-014-03 と SPEC-014-04 の成果物だけの規則どおりに判定して削除・保持する。これらの warn は終了コードに影響しない。管理 DB に接続しないときは、本 SPEC の規則が SPEC-014-01〜07 より優先する。warn の文言と設定のキー名は仕様(CLI 契約)で確定する"
+        acceptance_criteria:
+          - "Given 管理 DB に接続しない設定(RAPID_CROSSCHECK_MODE=off で、ハウスキープ設定の管理 DB 接続参照名が無い・空)で、終端状態で completed_at から保持日数を過ぎた確報比較依頼がある When ハウスキープを実行する Then その確報比較依頼と管理 DB の行は残り、標準エラーに管理 DB の行を削除しない旨の warn の行が 1 行出る"
+          - "Given 管理 DB に接続しない設定(RAPID_CROSSCHECK_MODE=off で、ハウスキープ設定の管理 DB 接続参照名が無い・空)で、execution-spec.json に記録された速報クロスチェックのモードが off でなく、起動対象のすべての slot の成果物ディレクトリに exitcode.txt または aborted.txt があり、その最も遅い更新時刻から保持日数を過ぎた実行 When ハウスキープを実行する Then その実行の単位の成果物ディレクトリは残り、標準エラーにその実行を残した旨の warn の行が出る"
+          - "Given 管理 DB に接続しない設定(RAPID_CROSSCHECK_MODE=off で、ハウスキープ設定の管理 DB 接続参照名が無い・空)で、execution-spec.json に記録された速報クロスチェックのモードが off で、起動対象のすべての slot の成果物ディレクトリに exitcode.txt または aborted.txt があり、その最も遅い更新時刻から保持日数を過ぎた実行 When ハウスキープを実行する Then その実行の成果物ディレクトリと通知済みの印が無くなる"
+          - "Given 管理 DB に接続しない設定(RAPID_CROSSCHECK_MODE=off で、ハウスキープ設定の管理 DB 接続参照名が無い・空)で、削除の失敗が無い When ハウスキープを実行する Then 標準エラーに warn の行が出ても終了コード 0 で終わる"
+        feedback_source:
+          feedback_request_id: "20261103_housekeeping_followups"
+          work_unit_ids:
+            - "CR-f3b8a1d0-001#1"
+        affected_models:
+          - type: "business_policy"
+            action: "modify"
+            target: "ハウスキープの削除判定"

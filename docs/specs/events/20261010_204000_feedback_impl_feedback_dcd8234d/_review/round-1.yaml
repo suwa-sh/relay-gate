@@ -1,0 +1,102 @@
+round: 1
+findings:
+  - id: F-001
+    viewpoint: "①"
+    severity: major
+    target: "_cross-cutting/api/cli-command-contract.yaml:119(ids.final_crosscheck_id.note)"
+    claim: |
+      final_crosscheck_id の note が「成果物ディレクトリ名にも使う(facade/<final_crosscheck_id>/final-crosscheck/)」と、
+      2026-10-10 の実装からの変更要求(クロスチェック簡素化)で廃止した確報 worker の成果物ディレクトリを、
+      否定文でも廃止記録でもなく「今も使う」という能動的な事実として残している。
+    evidence: |
+      spec-decision-016 は「worker 側で成果物ファイルを保存しない。成果物 3 ファイル保存
+      (facade/<run_id>/rapid-crosscheck/、facade/<final_crosscheck_id>/final-crosscheck/)を廃止する」と決めている。
+      同じイベントの確報 worker UC「比較ツールで日次全量比較を実行して結果を保存する」の tier-final-crosscheck.md:121 は
+      BDD Then で「成果物ディレクトリ(facade/<final_crosscheck_id>/)は作成されない」と明記しており、
+      契約 line 119 の能動的記述と正面から矛盾する。CR-dcd8234d-007 の完了条件 1(worker の成果物ファイル保存が
+      仕様・契約に無い。否定文・廃止記録は可)にも反する。
+    suggested_fix: |
+      line 119 の「成果物ディレクトリ名にも使う(facade/<final_crosscheck_id>/final-crosscheck/)」を削除する。
+      final_crosscheck_id の用途は PK(final_crosscheck_requests)と abort-final-crosscheck.sh の --run-id の受け渡しだけにする。
+      成果物ディレクトリに言及する必要があるなら「確報 worker は成果物ディレクトリを作らない(簡素化で廃止)」の廃止記録へ言い換える。
+
+  - id: F-002
+    viewpoint: "①"
+    severity: major
+    target: "実行監視業務/background 実行監視フロー/ハング疑い・実行エラー・比較異常を通知する/tier-ops.md:43(通知メール本文 11 行目 artifact_dir の値規則)"
+    claim: |
+      rapid-crosscheck-error 通知メールの本文 11 行目 artifact_dir の値を「速報比較依頼なら
+      <ARTIFACT_ROOT>/facade/<run_id>/rapid-crosscheck」と、廃止した速報 worker の成果物ディレクトリへ
+      能動的に向けている。速報比較結果は依頼レコードの stdout/stderr/exit_code で参照する構成(簡素化後)なので、
+      この artifact_dir は作成されないディレクトリを運用者に案内する。
+    evidence: |
+      spec-decision-016 で速報 worker の成果物 3 ファイル保存と facade/<run_id>/rapid-crosscheck/ を廃止。
+      速報 worker UC「比較ツールでジョブ単位比較を実行して結果を登録する」spec.md:214 は BDD Then で
+      「facade/<run_id>/rapid-crosscheck/ ディレクトリと started-at.txt は作られない」と明記。
+      一方で本メール規約と asyncapi.yaml HangAlertMail(line 521 required / line 566 artifact_dir)は
+      rapid-crosscheck-error でも artifact_dir を必須項目として出力させ、tier-ops.md:43 がその値を廃止ディレクトリに固定している。
+      recommended_action は rapid-crosscheck-result.sh を正しく案内しており(結果は DB 依頼レコードで見る)、
+      artifact_dir 行だけが旧構成の取り残し。CR-dcd8234d-007 完了条件 1(worker の成果物ファイル保存が無い)に反する。
+    suggested_fix: |
+      rapid-crosscheck-error の本文から artifact_dir 行を外す(background slot = blue/green の通知だけ artifact_dir を持つ)。
+      併せて asyncapi.yaml HangAlertMail の required から artifact_dir を外す(または kind=rapid-crosscheck-error のときは出さない旨を記す)。
+      比較結果の参照先は recommended_action の rapid-crosscheck-result.sh に一本化する。
+      確報(final-crosscheck)は走査対象外なので本メールには現れず、変更不要。
+
+  - id: F-003
+    viewpoint: "④"
+    severity: minor
+    target: "適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/spec.md:47,58,84,85 および tier-facade.md:23(domain 名 compare_command_rules / CompareCommandRules)"
+    claim: |
+      速報の起動コマンド検証ドメインの名前 compare_command_rules / CompareCommandRules が、
+      2026-10-10 の変更要求で廃止語に挙げた token「compare_command」をそのまま含んでいる。
+      否定文・廃止記録ではなく能動的な識別子としての使用で、廃止ドリフト検査(grep ガード)に引っかかり、
+      廃止した CSV 列 compare_command / 廃止した補完文言 "compare_command is not absolute" と紛らわしい。
+    evidence: |
+      廃止語一覧は compare_targets / compare_options / compare_command / comparison_type 等を列挙しており、
+      compare_command は bare token として廃止対象。新ドメインは RAPID_COMPARE_COMMAND の検証を行うもので概念自体は正当だが、
+      名前が廃止 token と同一文字列。契約・schema 側には同名の能動使用は無く(検証 KEY は RAPID_COMPARE_COMMAND を使用)、
+      本ドメイン名だけが廃止 token を温存している。
+    suggested_fix: |
+      ドメイン名を廃止 token を含まない形へ改称する(例: rapid_compare_command_rules / RapidCompareCommandRules、
+      または launch_command_rules)。あるいは廃止語ドリフト検査の対象から当該ドメイン名を明示除外する注記を置く。
+      spec.md の mermaid・表・sequence と tier-facade.md の見出しを揃えて改称する。
+
+  - id: F-004
+    viewpoint: "②"
+    severity: minor
+    target: "クロスチェック業務/確報クロスチェックフロー/比較ツールで日次全量比較を実行して結果を保存する/tier-final-crosscheck.md:28-37 および spec.md:121,237-239"
+    claim: |
+      facade 単独所有である validate-config.sh --final-crosscheck の検証仕様が、確報 worker UC の
+      tier-final-crosscheck.md 内の節として置かれている。変更要求の意図(確報の検証は tier-facade.md の
+      validate-config.sh --final-crosscheck 節として置く)に対し、本 UC には tier-facade.md が無く、
+      spec.md:121 には適用 tier=tier-facade の分岐条件行があるのに参照先 tier ファイルが tier-final-crosscheck.md しかない。
+    evidence: |
+      spec-decision-017 と contract line 1001/1032 は全検証種別の所有 tier を tier-facade に定めている。
+      当該 UC の tier-final-crosscheck.md:30 は「検証本体の所有 tier は tier-facade」と正しく明記し、
+      spec.md:121 の「確報の起動コマンドの検証」行も適用 tier=tier-facade としている(所有の記述は一貫)。
+      ただし物理配置が tier-final-crosscheck.md であり、ティア別仕様リンク(spec.md:237-239)は tier-final-crosscheck.md のみを指す。
+      所有の記述は矛盾しないが、facade 所有の検証規約が final-crosscheck ティア文書に同居しており、
+      どのティアが validate-config.sh を実装するかが読み手に取り違えられやすい。
+    suggested_fix: |
+      当該 UC に tier-facade.md を新設し、validate-config.sh --final-crosscheck 節(書式・検証内容・stdout 固定順・違反文言)を
+      そちらへ移す。tier-final-crosscheck.md には worker の比較実行だけを残し、検証は tier-facade.md への参照にする。
+      spec.md:237-239 のティア別仕様リンクに tier-facade.md を追加する。軽微な構成是正で、所有の記述自体は現状でも一貫している。
+resolved:
+  - id: F-001
+    resolution: fixed
+    by: orchestrator
+    note: "cli-command-contract.yaml の final_crosscheck_id note から成果物ディレクトリ(facade/<final_crosscheck_id>/final-crosscheck/)の言及を削除し、確報 worker は成果物ディレクトリを作らず結果を依頼レコードの stdout/stderr/exit_code 列に保存する旨へ改めた"
+  - id: F-002
+    resolution: fixed
+    by: orchestrator
+    note: "通知 UC tier-ops.md の artifact_dir 規則を、background slot(hang-suspected / background-exec-error)は facade/<run_id>/<role>、速報比較依頼(rapid-crosscheck-error)は成果物ディレクトリを作らないため artifact_dir: - とし結果は rapid-crosscheck-result.sh --show-output で参照、へ改めた。HangAlertMail の artifact_dir フィールドは background slot 向けに存続(速報は -)"
+  - id: F-003
+    resolution: fixed
+    by: orchestrator
+    note: "本 UC の domain モデル名を CompareCommand 系から LaunchCommandRules / launch_command_rules へ改称し、廃止 token compare_command を本 UC から除去した"
+  - id: F-004
+    resolution: deferred
+    by: orchestrator
+    note: "minor。確報の validate-config.sh --final-crosscheck の所有 tier は tier-facade と spec.md / tier-final-crosscheck.md の双方で明記済みで記述は一貫している。物理配置(tier-facade.md への分離)はティア純度の軽微な構成是正であり、spec-event.yaml の files 一覧と再検証の変更を伴うため本サイクルでは見送る。所有の取り違えは本文の明記で防げている"
+

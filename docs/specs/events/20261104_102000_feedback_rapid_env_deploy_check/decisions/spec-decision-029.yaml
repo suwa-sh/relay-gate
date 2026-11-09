@@ -1,0 +1,119 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "specification"
+artifact_id: "spec-decision-029"
+title: "ハング検知は管理 DB に接続できない回に alert 行を出さず、印の不正を対象ごとの error 行で扱う。ハウスキープの判定元と処理の順、設定ファイルのバイト・改行の違反の報告の順を 1 つに決める"
+status: "approved"
+generated_at: "2026-11-04T09:20:00Z"
+context: |
+  - 2026-11-04 の外部レビューが、CLI 契約に次の穴を見つけた。直し方は利用者が承認済み。
+  - ハング検知(hang-detector.sh):
+    - RAPID_CROSSCHECK_MODE が off 以外で管理 DB に接続できない回は、全対象の通知済み状態を MONITORING とみなして alert 行を出すと定めていた(spec-decision-020 の 3)。
+      管理 DB の障害が続くと、通知済みの異常が見回りのたびに届く。方針資料(しくみ)の「通知済みの異常は、次回以降の監視で再び通知しません」に反する。
+    - RAPID_CROSSCHECK_MODE=off の通知済みの印について、内容が規定の値でないとき・読めないときの扱いが無かった。
+    - 横断の stderr 規約は error 行を 1 回だけとし、hang-detector の例外を alert 行についてだけ書いていた。
+      一方、ハング検知の UC は保存失敗を 1 対象 1 行の error で出して次の対象へ続ける。規約と UC が食い違っていた。
+  - ハウスキープ(housekeep.sh):
+    - member_source の判定の順 (1) execution-spec.json の検査 〜 (3) 終了ファイルの確認が、管理 DB に parallel_runs 行がある実行にも適用されるように読めた。
+      成果物を削除したあとで管理 DB の行の削除に失敗した実行は、execution-spec missing で残り続けてしまう。要求 SPEC-014-05(次回にその行を削除する)と合わない。
+    - 削除待ちの置き場の残りを削除する順が無く、複数の削除に失敗したときの error 行の順が実装の列挙順で変わった。
+      孤立した印と、単位内の印の rename・置き場からの削除の順も同じく決まっていなかった。
+  - 設定ファイルの入力の守備範囲(config_input_rules): NUL / UTF-8 / BOM / CR の違反が同じファイルに重なったとき、何を何行どの順に出すかが無かった。
+    stderr と validate-config.sh の violations が実装によって変わり得た。
+  - 構築手順のハング検知設定の検査はインフラ設計で「ファイルがあることの確認だけ」に改められ、中身の検査はこの契約に任された。
+    ところが RAPID_HANG_DETECT_LIMIT_MINUTES / HANG_SCAN_WINDOW_HOURS の「1 以上」は、違反したときの error 行と終了コードが契約に無かった。
+  - 要求(USDM)と RDRA は行の形式・処理の順を持たない。このため仕様(CLI 契約・出力規約・UC)だけを変える。
+decision: |
+  1. 管理 DB に接続できない回(hang-detector.sh。RAPID_CROSSCHECK_MODE が off 以外。shared_rules.hang_alert.db_unavailable):
+     - 走査前の設定の検査を通ったあと、成果物を走査する前に管理 DB に接続する。続けて走査に使う行(monitor_records と、未終端・未判定の rapid_crosscheck_requests)を SELECT する。
+     - 接続に失敗した回は `error: management db connection failed conn_ref=...` だけを出す。SELECT に失敗した回は `error: management db query failed ...` だけを出す。
+     - どちらも成果物の走査・判定・alert 行・監視記録の保存をせず、終了コード 6 で終える。warn / info / alert 行は出さない。
+     - 異常は通知済みにならない。管理 DB に接続できた最初の回に、通常の規則(renotification)で一度だけ知らせる。速報比較依頼はその回は判定しない。
+     - SELECT の失敗も同じ扱いにする。現在の通知済み状態を読めない点が接続失敗と同じで、同じ繰り返し通知が起きるため。
+     - 走査の途中の監視記録の UPSERT 失敗は、従来どおり対象ごとの `error: monitor record save failed ...` で扱う(次回も知らせる)。
+     - spec-decision-020 の 3 のうち「全対象を MONITORING とみなして alert 行を出す」は本判断で置き換える。spec-decision-020 は経緯として残し、書き換えない(同判断の 7 の扱いに揃える)。
+  2. 通知済みの印の不正(RAPID_CROSSCHECK_MODE=off。shared_rules.hang_alert.notified_mark.invalid):
+     - 規定の値 = ファイルの内容のバイト列が、HANG_SUSPECTED_NOTIFIED / EXEC_ERROR_NOTIFIED / COMPLETED のどれか + LF 1 つと完全に一致すること。
+     - 内容が規定の値でないとき、または読めないとき(権限が無い、通常のファイルでない、読み取りの失敗)は、対象ごとに `error: notified mark invalid run_id=<run_id> role=<role> path: <印の確定名の絶対パス>` を 1 行出す。
+       内容の不正と読めないときで文言を分けず、内容は出さない。
+     - その対象は印が無いもの(MONITORING)として判定する(知らせ漏れより重複を選ぶ今の方針)。終了コードは 6 で、他の対象の判定は続ける。
+     - alert 行を出した対象は規定の手順(.tmp に書いて mv)で印を S へ書き直す。
+     - 判定が COMPLETED の対象は、alert 行を出さずに COMPLETED へ書き直す。書き直さないと、正常終了した実行で見回りのたびに error 行と 6 が窓の時間ずっと続くため。
+     - 判定が MONITORING / NOT_TARGET の対象は書き換えない(次の回も error 行を出す)。
+     - 印の確定名がディレクトリなど通常のファイルでないときは、書き直しでその中へ移さず(mv -T 相当)、`error: notified mark save failed ...`(6)とする。
+     - 判定しない対象(warn を出した run / role)の印は読まない(error 行を出さず、書き直さない)。
+     - 印の置き場 hang-detector-notified/ があるのに読めない回は `error: notified mark dir is not readable path: ...` の 1 行だけで、走査せずに 6 で終える(1 と同じ考え方)。
+     - 窓外の run の印が不正なときは印が無いものとして扱い、走査せず、error 行も出さない。
+       印は通知したときにだけ作られるため、その run は少なくとも 1 回知らせてある。印はハウスキープが実行の単位とともに消す。
+  3. stderr の並び順と例外:
+     - hang-detector の対象ごとの行は run_id 昇順(バイト順)→ role の順に出す。
+       1 対象の中は「`error: notified mark invalid` → `alert:`(または `info: alert skipped`)→ `error: monitor record save failed` / `error: notified mark save failed`」の順とする。
+       走査の warn 行と `info: judged` 行は、対象ごとの行より前に出す(shared_rules.hang_alert.order)。
+     - conventions.output_format.stderr と出力規約(ui-design.md)の「エラーは 1 回だけ」の例外を、次の 3 つにそろえて並べる。
+       - 設定ファイルの入力の守備範囲の違反
+       - hang-detector の対象ごとの保存失敗と印の不正の error 行(1 対象 1 行で複数出してよい)
+       - housekeep の単位ごと・エントリごとの失敗
+  4. ハウスキープの判定元(shared_rules.housekeep_rules.member_source):
+     - 判定の順 (1)〜(3) は、成果物だけで判定する実行(parallel_runs 行が無い実行)にだけ適用すると明記する。
+     - parallel_runs 行がある実行は管理 DB の行だけで判定する。run ディレクトリ・execution-spec.json の有無と形式・slot のディレクトリと終了ファイルは判定に使わない。
+       execution-spec missing / invalid、slot artifact missing の warn も出さない。execution-spec.json は、読めた場合だけ単位のつながりに使う。
+     - これにより、成果物が無く parallel_runs 行だけが残った終了済みの実行は、次回の実行で削除される(SPEC-014-05 と一致)。
+     - 判定 UC(保持日数を過ぎた終了済みの実行と確報比較依頼を判定する)の判定元の表・分岐 B-03 / B-04・warn の表と、tier BDD 2 件をそろえる。
+  5. ハウスキープの処理の順(shared_rules.housekeep_rules.processing_sequence):
+     - 名前・run_id・final_crosscheck_id の昇順は、すべてバイト順(LC_ALL=C の比較)とする。
+     - 削除待ちの置き場の直下のエントリは名前の昇順に 1 つずつ削除し、失敗の `error: pending entry delete failed path: ...` もその順に出す。
+     - 同じ考え方で、次の順もここで決める。
+       - 単位内の run ディレクトリの rename: run_id の昇順
+       - 印の rename: 元の名前の昇順
+       - 置き場からの削除: 移した順(失敗しても同じ単位の残りの削除を続け、失敗したエントリごとに 1 行。1 つでも失敗したら管理 DB の行は消さない)
+       - 孤立した印: 名前の昇順
+     - 契約・出力規約・削除 UC(成果物と管理 DB の履歴を削除する)に定め、tier BDD を加える。
+  6. 設定ファイルのバイト・改行の違反の報告(config_input_rules.byte_checks。CSV・env の全設定ファイル共通):
+     - 第 1 段(NUL / UTF-8 / BOM / CR)の違反は、最初の 1 件で止めずに、ファイル内の全件を物理行番号の昇順に出す。
+     - 同じ行に種類の違う違反があれば、表の順(NUL → UTF-8 → BOM → CR)に 1 種類 1 行で出す。同じ行の同じ種類は 1 行にまとめる。
+     - CR の hint は、最後の CR の error 行の次に 1 回だけ出す(今のまま)。
+     - 第 1 段の違反があれば、その error 行と hint だけを出して止め、以降の検査をしない。CSV でも同じ(UC の BDD がすでにこの扱いを前提にしていた)。
+     - validate-config.sh の violations は、第 1 段で出した error 行の数とする(hint を数えない)。
+     - 実行時の読み手も同じ順・同じ件数で出す。
+     - 次の UC の記述と tier BDD をそろえる: slot ごとのジョブマップを定義する / feature flag を設定する / クロスチェックのジョブマップと比較定義を定義する / ジョブマップで JOB_ID から実行先を解決する / ハウスキープ判定の tier-facade / 確報の比較ツール UC。
+  7. ハング検知設定の中身の検査(hang-detector.sh の走査前の検査。構築手順の配置時の検査がファイルの存在確認だけになったことへの追従):
+     - RAPID_HANG_DETECT_LIMIT_MINUTES / HANG_SCAN_WINDOW_HOURS は、キーがあれば正の整数 `^[1-9][0-9]{0,8}$` とする。
+       違反は `error: invalid value key=<KEY> value=... path: ...` + `hint: use a positive integer` で終了コード 2(ハウスキープの保持日数と同じ形式)。
+     - 未知のキーは `warn: unknown key key=<KEY> path: ...` を出して続ける。
+     - 走査前の検査の順は次のとおりとし、最初の設定エラーで止める。
+       (a) 引数 → (b) hang-detector.env(存在・読み取り・入力の守備範囲)→ (c) feature-flag.env(存在・読み取り・入力の守備範囲・RAPID_CROSSCHECK_MODE)
+       → (d) hang-detector.env のキー(HANG_DB_CONN_REF(off 以外)→ RAPID_HANG_DETECT_LIMIT_MINUTES → HANG_SCAN_WINDOW_HOURS)→ (e) RELAY_GATE_ARTIFACT_ROOT
+     - validate-config.sh に hang-detector.env の検証種別は無い。中身の検査は hang-detector.sh の起動時に行うと契約の config_files に書く。
+  8. 実装は変えない(実装を契約に合わせる対象として記録する)。実装との差分:
+     - ジョブマップの検証(facade/src/usecase/validate_job_map.sh の validate_job_map_report_byte_errors)は、バイト・改行の違反を行番号の昇順に全件出す。ただし同じ行の中は BOM → NUL → UTF-8 → CR の順で出す。
+       新しい契約では NUL → UTF-8 → BOM → CR(BOM と NUL・UTF-8 が 1 行目に重なったときだけ順が変わる)。
+       同じ関数を速報クロスチェック設定の検証(facade/src/usecase/validate_rapid_crosscheck.sh)も使うため、同じ差分がある。
+       全件を出すこと・hint の位置・第 1 段で止めることは、新しい契約どおり。
+     - feature flag 設定の読み込み(facade/src/repository/feature_flag_config.sh)は行末の CR を落として読み、バイト・改行の検査をしない。
+       検証(facade/src/usecase/validate_feature_flag.sh)も第 1 段の検査を持たない。新しい契約では第 1 段の違反を全件出して終了コード 2。
+       CR を落とす差分は従来の契約(CR を黙って落として受理しない)とも合っていなかった。
+     - hang-detector.sh と housekeep.sh は未実装(ops/src が空)のため、差分は無い。実装時に本決定の規則で作る。
+consequences:
+  positive:
+    - "管理 DB の障害が続いても、通知済みの異常を繰り返し知らせない。障害そのものは error 行と終了コード 6 で毎回分かる"
+    - "印の不正・読めないとき、保存失敗が複数あるときの stderr・判定・終了コード・印の扱いが 1 つに決まり、横断規約と UC の error 行の規則が食い違わない"
+    - "成果物が無く管理 DB の行だけが残った終了済みの実行が次回に消え、要求 SPEC-014-05 と一致する"
+    - "置き場の残りの削除に複数失敗したときと、バイト・改行の違反が重なったときの stderr の行と順、violations の数が 1 つに決まる"
+    - "インフラが中身の検査を任せたハング検知設定の値の違反が、終了コード 2 と決まった文言で検出される"
+  negative:
+    - "管理 DB に接続できない回は、まだ知らせていない新しい異常もその回には知らせない(接続できた最初の回に知らせる)。障害の間は error 行と終了コード 6 だけが届く"
+    - "印が不正な対象で判定が監視中のあいだは、見回りのたびに error 行と終了コード 6 が出る(対象が終わるか、異常として知らせて書き直されるまで)"
+    - "ジョブマップ・速報クロスチェック設定・feature flag 設定の検証は、実装を契約に合わせるまで一部の入力で契約と一致しない"
+alternatives_considered:
+  - name: "管理 DB に接続できない回も成果物だけで判定し、全対象を MONITORING とみなして alert 行を出す(従来の規則)"
+    reason_rejected: "障害のあいだ通知済みの異常が見回りのたびに届き、方針資料の『通知済みの異常は再び通知しない』に反する"
+  - name: "管理 DB に接続できない回は成果物を走査し、warn / info 行は出すが alert 行だけを出さない"
+    reason_rejected: "その回の判定結果は使われないのに走査の warn 行だけが出て、stderr が error 行 1 行に決まらない。利用者が承認した直し方(error 行だけで 6)と合わない"
+  - name: "印が不正なら、その対象を判定せずに飛ばす(warn で続ける)"
+    reason_rejected: "印が壊れた対象の新しい異常を知らせ漏らす。知らせ漏れより重複を選ぶ今の方針に反する"
+  - name: "窓外の run も、印が不正なら走査する(窓の例外に含める)"
+    reason_rejected: "正常終了した古い run の不正な印が保持日数のあいだ error 行と 6 を出し続ける。その run は印が作られた時点で少なくとも 1 回知らせてある"
+  - name: "置き場の残りを、ディレクトリの列挙順(実装の順)のまま削除する"
+    reason_rejected: "error 行の順が実装・ファイルシステムで変わり、stderr が 1 つに決まらない"
+  - name: "バイト・改行の違反は最初の 1 件だけを出す"
+    reason_rejected: "利用者が直すたびに次の違反が見つかる。既存の CSV の BDD・実装(全件)とも合わない"

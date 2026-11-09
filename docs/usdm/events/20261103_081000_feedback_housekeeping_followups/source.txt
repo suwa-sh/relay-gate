@@ -1,0 +1,18 @@
+feedback request lineage (requirements stage)
+
+feedback_request_id: 20261103_housekeeping_followups
+input_sha256: 7a81f28ce6fef4c2f70e2839d657a3f8e8480671bd846b460edab3d22b3ba775
+stage_packet: docs/pipeline/feedback-runs/20261103_housekeeping_followups/stage-packets/requirements.md
+request_ids: CR-f3b8a1d0-001
+direct_work_unit_ids: CR-f3b8a1d0-001#1
+causal_work_unit_ids: CR-f3b8a1d0-001#1
+
+work unit → USDM / RDRA 反映先(CR 本文は packet を正本とし、ここには複製しない)
+
+- CR-f3b8a1d0-001#1 (housekeeping-no-db-acceptance): 管理 DB に接続しないとき(RAPID_CROSSCHECK_MODE=off でハウスキープ設定の管理 DB 接続参照名が無い・空)のハウスキープの振る舞いを、REQ-014 の仕様文と受け入れ基準で判定できるようにする。
+  - USDM: SPEC-014-08 を新設(管理 DB に接続せず確報比較依頼と管理 DB の行を消さない・起動のたびに warn を 1 行、execution-spec.json に記録された速報クロスチェックのモードが off でない実行は単位ごと残して warn、off の期間に作られた成果物だけの実行は既存規則どおり判定、warn は終了コードに影響しない、管理 DB に接続しないときは本 SPEC が SPEC-014-01〜07 より優先)。CR の完了条件 3 項目を受け入れ基準 1〜3 に対応させた。
+  - USDM: CLI 契約との矛盾を避けるため、SPEC-014-03 の成果物だけで判定して消す受け入れ基準 2 件を「execution-spec.json に記録された速報クロスチェックのモードが off」の実行に限定し、仕様文に SPEC-014-08 への参照を追加。SPEC-014-04 の確報比較依頼の削除を「管理 DB に接続する設定」に限定した。
+  - RDRA: 条件「ハウスキープの削除判定」の説明に、管理 DB に接続しないときの扱いを加えた(新しい要素は追加しない)。
+  - warn の文言・キー名・ファイル名は仕様(CLI 契約の housekeep.sh)で確定済みのため要求には書かない。
+
+方針資料との照合: CLI 契約(housekeep.sh の member_source、手順 2、stderr の warn)の振る舞いを変えず、要求側の表現を揃えた。tmp/RelayGateのしくみ.md の housekeep.sh 節(off は成果物だけで判定)と矛盾しない。

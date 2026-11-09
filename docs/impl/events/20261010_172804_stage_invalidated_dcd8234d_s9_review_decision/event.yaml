@@ -1,0 +1,13 @@
+event_id: 20261010_172804_stage_invalidated_dcd8234d_s9_review_decision
+type: stage_invalidated
+uc_id: dcd8234d
+stage: S9
+payload:
+  reason: review_decision_requires_feedback_refresh
+  targets:
+  - stages/S9_review_generated.done.yaml
+  archived_to: docs/impl/latest/dcd8234d/invalidated/20261010_172804_stage_invalidated_dcd8234d_s9_review_decision/
+  detail: 'S9 レビュー対話でユーザーが仕様選択(案 A: 確報は起動のみ、対象カタログ・business_date を relay-gate から外す)を行ったため、S8
+    refresh で draft を更新し S9 を再生成する。review_approved は未記録'
+  review_notes: docs/impl/latest/dcd8234d/review/review-notes.md
+created_at: '2026-10-10T17:28:04+09:00'

@@ -26,21 +26,26 @@
 
 | キー | 型 | 必須 | 既定値 | 検証ルール |
 |------|---|------|-------|-----------|
-| `FINAL_LEASE_MINUTES` | integer | No | 10 | 1 以上の整数 |
-| `FINAL_WORKER_POLL_INTERVAL_SEC` | integer | No | 30 | 1 以上の整数(常駐時の poll 間隔) |
-| `FINAL_DB_CONN_REF` | string | Yes | — | 管理 DB 接続情報の参照名 |
+| `FINAL_LEASE_MINUTES` | integer | No | 10 | 正の整数(`^[1-9][0-9]{0,8}$`。違反は `error: invalid value key=FINAL_LEASE_MINUTES value=... path: ...` + `hint: use a positive integer` で終了コード 2) |
+| `FINAL_WORKER_POLL_INTERVAL_SEC` | integer | No | 30 | 正の整数(`^[1-9][0-9]{0,8}$`。違反は `error: invalid value key=FINAL_WORKER_POLL_INTERVAL_SEC value=... path: ...` + `hint: use a positive integer` で終了コード 2)(常駐時の poll 間隔) |
+| `FINAL_DB_CONN_REF` | string | Yes | — | 管理 DB 接続情報の参照名。DB セグメントの置き場の値は、確報 runner が読む実行ホストの置き場の値と同じ 1 つの管理 DB に解決されること(runner が登録した依頼をこの worker が同じキューから取得するため)。解決先は他の管理 DB 接続参照名と同じ 1 つの管理 DB(参照名の文字列は違ってよい。解決先が同じことは導入する側が確かめ、relay-gate は検査しない。CLI 契約 `conventions.credentials`)。欠落・空は `error: option required option=FINAL_DB_CONN_REF path: ...` で終了コード 2 |
+| `FINAL_COMPARE_COMMAND` | string | Yes | — | 確報の比較ツール起動コマンド 1 行(起動は UC「比較ツールで日次全量比較を実行して結果を保存する」)。欠落・空は `error: option required option=FINAL_COMPARE_COMMAND path: ...` で終了コード 2 |
+| `FINAL_POLL_INTERVAL_SEC` / `FINAL_POLL_LIMIT_SEC` | integer | No | 60 / 28800 | runner が使う(worker は読まず、値も検査しない) |
+
+- 起動時の検査の順(契約 `config_files.final-crosscheck.env` note): (1) ファイルの存在(不在は `error: config file not found path: ...`)・読み取り(読めないときは `error: config file is not readable path: ...`)→ (2) 入力の守備範囲(契約 `config_input_rules.env_files` の (i)(ii)。違反があればその段の error 行を全件出して止める)→ (3) 必須キー(`FINAL_DB_CONN_REF` → `FINAL_COMPARE_COMMAND`)の欠落・空 → (4) `FINAL_LEASE_MINUTES` → `FINAL_WORKER_POLL_INTERVAL_SEC` の値。(1)(3)(4) は最初の違反の error 行(と hint)1 件だけを出して止める。どの段でも終了コード 2 で、管理 DB には接続しない。未知キーは warn を出さない(validate-config.sh は出す)
+- worker が読むのは、worker が動くホスト(DB セグメント)の置き場に構築手順が配置したファイル(`FINAL_DB_CONN_REF` / `FINAL_COMPARE_COMMAND` と `FINAL_LEASE_MINUTES` / `FINAL_WORKER_POLL_INTERVAL_SEC` を持つ。runner の任意キー `FINAL_POLL_INTERVAL_SEC` / `FINAL_POLL_LIMIT_SEC` は実行ホストの置き場のファイルに置く)。relay-gate は runner 側のファイルを配らず、比較ツール起動コマンドを依頼レコードで渡さない(契約 `config_files.final-crosscheck.env` note)
 
 - 環境変数 `RELAY_GATE_NOW`(テスト専用。cli-command-contract.yaml environment_variables で宣言。ISO 8601 UTC Z 付き。本番未設定): 設定時はその値をホストのローカルタイムゾーンへ変換してシステム時刻の代わりに now として使う。lease_until は管理 DB・実行ログともローカル時刻(指示子なし)で表す。lease_until の算出と lease 失効判定の now は worker がバインド値として SQL に渡す(DB の now() に依存しない)
 
 ## 出力契約
 
 - **stdout**: 既定では何も出さない(常駐ログは実行ログへ。ui-design.md「大量出力」)。`--once` で claim できた場合も stdout には出さず、実行ログに残す
-- **stderr**: `error: ...`(+ `hint:`)。`--verbose` 時は `info: claimed final_crosscheck_id=... worker_id=...` / `info: no request to claim worker_id=...`
+- **stderr**: `error: ...`(+ `hint:`)。設定の検査で出す行は `error: config file not found path: ...` / `error: config file is not readable path: ...` / 入力の守備範囲の行 / `error: option required option=FINAL_DB_CONN_REF|FINAL_COMPARE_COMMAND path: ...` / `error: invalid value key=FINAL_LEASE_MINUTES|FINAL_WORKER_POLL_INTERVAL_SEC value=... path: ...` + 次行 `hint: use a positive integer`(いずれも 2)。`--verbose` 時は `info: claimed final_crosscheck_id=... worker_id=...` / `info: no request to claim worker_id=...`
 - **終了コード**:
   | コード | 意味 | 条件 |
   |-------|------|------|
   | 0 | 成功 | `--once` で 1 サイクル完了(claim できた / 依頼が無かった、のどちらも 0)。常駐は SIGTERM で 0 |
-  | 2 | 入力・設定検証エラー | 未知のオプション、`--worker-id` の文字種不正、`final-crosscheck.env` 不在または必須キー欠落 |
+  | 2 | 入力・設定検証エラー | 未知のオプション、`--worker-id` の文字種不正、`final-crosscheck.env` 不在・読み取り不可・入力の守備範囲の違反、`FINAL_DB_CONN_REF` / `FINAL_COMPARE_COMMAND` の欠落・空、`FINAL_LEASE_MINUTES` / `FINAL_WORKER_POLL_INTERVAL_SEC` が正の整数でない(`FINAL_POLL_INTERVAL_SEC` / `FINAL_POLL_LIMIT_SEC` は runner だけが使うため検査しない) |
   | 6 | 実行エラー | 管理 DB 接続・SQL 失敗(lease 回収・claim の UPDATE)、比較ツール起動失敗(次 UC)、内部エラー |
 
 - 実行ログ(`RELAY_GATE_LOG_DIR/final-crosscheck-worker.sh.log`、run_id 欄は final_crosscheck_id。claim 前は `-`):
@@ -52,7 +57,7 @@
 
 ## UC ロジック
 
-- **設定ファイルの読み込み(共通規約の参照)**: 読む設定ファイル(env / CSV)の入力の守備範囲は CLI 契約 `config_input_rules` に従う(形式(UTF-8 / LF)から外れた NUL バイト・不正な文字コード・BOM・CR は契約と同文の error 行で拒否して終了コード 2、読み込みは 1 時点の内容だけで判定、補助コマンドの失敗は終了コード 6。値は本 tier に複写しない。判定する BDD は UC「slot ごとのジョブマップを定義する」に置く)。stdout / stderr / 実行ログ / メール本文に出す任意入力の制御文字は `ui-design.md`「制御文字の表記」の可視表記にする。bash の最低版は 5.0(契約 `conventions.runtime_prerequisites`)
+- **設定ファイルの読み込み(共通規約の参照)**: 読む設定ファイル(env / CSV)の入力の守備範囲は CLI 契約 `config_input_rules` に従う(形式(UTF-8 / LF)から外れた NUL バイト・不正な文字コード・BOM・CR と、env の invalid line・同じキーが 2 行以上ある設定(`error: duplicate key key=<KEY> lines=<n1,n2,...> path: ...`。どちらの行の値も使わない。報告の順は `config_input_rules.env_files`)は契約と同文の error 行で拒否して終了コード 2、読み込みは 1 時点の内容だけで判定、補助コマンドの失敗は終了コード 6。値は本 tier に複写しない。判定する BDD は UC「slot ごとのジョブマップを定義する」に置く)。stdout / stderr / 実行ログに出す任意入力の制御文字は `ui-design.md`「制御文字の表記」の可視表記にする。bash の最低版は 5.0(契約 `conventions.runtime_prerequisites`)
 - **バリデーション**: `--worker-id` は `^[A-Za-z0-9_-]{1,64}$`(契約どおり `.` は含めない。既定値 `{hostname}-{pid}` はホスト名の `.` を `-` に置換して生成する。仮採用)。`--once` と常駐は排他ではない(`--once` 省略で常駐)
 - **確認プロンプト**: なし
 - **冪等性**: claim は条件付き UPDATE(`WHERE status='REQUESTED'`)で更新件数 1 のときだけ成功するため、同時に複数 worker が動いても 1 依頼は 1 worker だけが取る。lease 回収も `WHERE status='CLAIMED' AND lease_until < now AND started_at IS NULL` で冪等
@@ -106,12 +111,24 @@
 
 ## ティア完了条件(BDD)
 
+以下のシナリオは、Given で設定ファイルの内容を書いていない限り、final-crosscheck.env に `FINAL_DB_CONN_REF=relaygate-db` と `FINAL_COMPARE_COMMAND=/opt/compare/stub-ok.sh`(終了コード 0 を返すスタブ)がある前提とする。
+
 ```gherkin
 Feature: 確報比較依頼を claim する - 確報クロスチェックティア
 
+  Scenario: 比較ツール起動コマンドが無いと起動時に止まる
+    Given final-crosscheck.env に FINAL_DB_CONN_REF=relaygate-db の行だけがある
+    When `final-crosscheck-worker.sh --once` を実行する
+    Then 終了コード 2 で stderr は `error: option required option=FINAL_COMPARE_COMMAND path: $RELAY_GATE_CONFIG_DIR/final-crosscheck.env` の 1 行だけで、管理 DB へは接続しない
+
+  Scenario: lease 期間が正の整数でないと起動時に止まり、runner だけが使うキーは検査しない
+    Given final-crosscheck.env に FINAL_DB_CONN_REF=relaygate-db、FINAL_COMPARE_COMMAND=/opt/compare/stub-ok.sh、FINAL_POLL_LIMIT_SEC=abc、FINAL_LEASE_MINUTES=0 の行がある
+    When `final-crosscheck-worker.sh --once` を実行する
+    Then 終了コード 2 で stderr は `error: invalid value key=FINAL_LEASE_MINUTES value=0 path: $RELAY_GATE_CONFIG_DIR/final-crosscheck.env` と `hint: use a positive integer` の 2 行だけで、FINAL_POLL_LIMIT_SEC を含む行は出ず、管理 DB へは接続しない
+
   Scenario: --once で 1 件 claim して終了コード 0
     Given final_crosscheck_requests に status=REQUESTED の行が 2 件(requested_at=2026-08-30T21:00:00 と 21:05:00)ある
-    And crosscheck-job-map.csv の確報行の compare_command が、起動後に停止シグナルを受けるまで待機するスタブを指す(claim 後の比較実行を止めて途中状態を観測する。--once は claim 後に同一プロセスで比較実行まで進むため、プロセス終了時点の status=CLAIMED は観測できない)
+    And final-crosscheck.env の FINAL_COMPARE_COMMAND が、起動後に停止シグナルを受けるまで待機するスタブを指す(claim 後の比較実行を止めて途中状態を観測する。--once は claim 後に同一プロセスで比較実行まで進むため、プロセス終了時点の status=CLAIMED は観測できない)
     And RELAY_GATE_NOW=2026-08-30T21:00:30Z である
     When `final-crosscheck-worker.sh --once --worker-id final-worker-01` を実行する
     Then スタブが待機している間、requested_at=2026-08-30T21:00:00 の行だけが worker_id=final-worker-01 lease_until=2026-08-30T21:10:30 で status は CLAIMED または RUNNING になり、21:05:00 の行は status=REQUESTED のままである
@@ -124,7 +141,7 @@ Feature: 確報比較依頼を claim する - 確報クロスチェックティ�
 
   Scenario: lease 失効の回収
     Given status=CLAIMED lease_until=2026-08-30T21:10:30 started_at=NULL の行がある
-    And compare_command が停止シグナルを受けるまで待機するスタブを指す
+    And FINAL_COMPARE_COMMAND が停止シグナルを受けるまで待機するスタブを指す
     And RELAY_GATE_NOW=2026-08-30T21:11:00Z である
     When `final-crosscheck-worker.sh --once --worker-id final-worker-02` を実行する
     Then スタブが待機している間、該当行は worker_id=final-worker-02 lease_until=2026-08-30T21:21:00 で status は CLAIMED または RUNNING である

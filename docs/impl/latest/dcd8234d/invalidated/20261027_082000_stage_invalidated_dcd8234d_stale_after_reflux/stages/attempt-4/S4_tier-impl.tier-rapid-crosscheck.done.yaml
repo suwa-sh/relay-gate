@@ -1,0 +1,91 @@
+stage: S4
+tier: tier-rapid-crosscheck
+attempt: 4
+uc_id: dcd8234d
+manifest_sha256: 81d5dba283cd5c746d42428fa2713f0e7f2d15891575284e8b93e17b6b2d9f93
+manifest_projection: v2
+result: pass
+attempt_note: "上限 3 を超えてユーザーが 1 回だけ許可した attempt。attempt 3(commit f85972d)の実装を引き継ぎ、残った blocker F-018 だけを最小の変更で修正した"
+findings_source: "docs/impl/latest/dcd8234d/stages/attempt-3/S5_verify.tier-rapid-crosscheck.findings.yaml"
+findings_resolved:
+  - F-018
+findings_fixes:
+  - id: F-018
+    severity: blocker
+    summary: "参照カタログの空白だけの行(半角空白・タブだけ)を、ヘッダーの列数に関係なく拒否する。従来は列数の比較(expected と actual)だけで判定していたため、1 列ヘッダー(catalog_version だけ)のカタログでは半角空白だけの行が expected=1 / actual=1 で通り status=valid になっていた。解析済みの行が 1 セルで、そのセルが空でなく空白以外を含まないときを空白だけの行とし、既存の共通文言 `error: column count mismatch line=N expected=<ヘッダーの列数> actual=1` と終了コード 2 で拒否してから参照未解決にする(多列カタログの空白行の扱いと同じ文言・終了コード)"
+    root_cause: "crosscheck_target_catalog_report_row_errors が列数不一致の条件 `actual -ne expected` だけで空白行を検出していた(config_input_rules の「空白だけの行は 1 セル」の説明を列数の比較に置き換えていた)"
+    change: "rapid-crosscheck/src/usecase/validate_crosscheck_job_map.sh に crosscheck_csv_row_is_blank(1 セル・非空・半角空白とタブのみ)を追加し、列数不一致の条件に OR で加えた(13 行追加 / 2 行変更。他の分岐・文言・順序は変更なし)"
+    regression_tests:
+      - "test/presentation/validate_config_crosscheck_job_map_rules.bats: 1 列ヘッダー + 半角空白 1 文字の行(Verifier の再現入力)→ 終了コード 2・column count mismatch expected=1 actual=1・参照未解決・violations=2"
+      - "test/presentation/validate_config_crosscheck_job_map_rules.bats: 1 列ヘッダー + タブだけの行 + 半角空白とタブを混ぜた行 → 全件拒否・violations=3"
+      - "test/presentation/validate_config_crosscheck_job_map_rules.bats: 1 列ヘッダー + 該当版の行だけ → 受理して終了コード 0(巻き込み無しの対照)"
+      - "test/usecase/validate_crosscheck_job_map.bats: crosscheck_target_catalog_report_row_errors が 1 列ヘッダーで空白行・タブ行を拒否し、空のセル `\"\"` の行は拒否しないこと"
+    red_confirmed: "新規 4 件のうち 3 件は実装前に fail(not ok 6 / 50 / 51)を確認し、実装後に全件 pass"
+blank_row_hole_check:
+  job_map_body: "ジョブマップ本体は validate_crosscheck_job_map_rows が固定の列数 6(CROSSCHECK_JOB_MAP_COLUMN_COUNT)と比較するため、空白だけの行は常に actual=1 で拒否される。1 列ヘッダーはその前に header mismatch で弾かれる。変更不要"
+  final_crosscheck: "final-crosscheck/src/usecase/validate_target_catalog.sh はヘッダーを契約の 5 列と照合してから列数不一致を判定するため、空白だけの行は常に expected=5 / actual=1 で拒否される(読むだけ。変更していない)"
+minor_findings_handling: "F-001〜F-017(spec_absent の minor 17 件)は attempt 3 と同じ判断を維持し、対象行番号だけを更新した。確実に無害な修正に該当する指摘は無かった(いずれも仕様未定義の判断で、変更すると挙動が変わる)"
+changes:
+  - path: rapid-crosscheck/src/usecase/validate_crosscheck_job_map.sh
+    summary: "crosscheck_csv_row_is_blank を追加。crosscheck_target_catalog_report_row_errors の列数不一致の条件に空白だけの行の判定を加えた"
+  - path: rapid-crosscheck/test/presentation/validate_config_crosscheck_job_map_rules.bats
+    summary: "1 列ヘッダーの参照カタログの回帰テスト 3 件を追加(半角空白 / タブと混在 / 妥当な行だけの対照)。計 51 件"
+  - path: rapid-crosscheck/test/usecase/validate_crosscheck_job_map.bats
+    summary: "crosscheck_target_catalog_report_row_errors の 1 列ヘッダー・空白行の単体テスト 1 件を追加。計 7 件"
+implementation_note: "facade/ と final-crosscheck/ は変更していない。attempt-1〜3 配下と attempt-4/ の final-crosscheck のファイルも変更していない。新規トップレベル名は crosscheck_ 接頭辞(crosscheck_csv_row_is_blank)。final-crosscheck / facade に同名の関数が無いことを grep で確認した。facade の共有関数の再利用は issues/20261010_084142_facade-dispatch-and-csv-parser-outside-tiers.md を根拠にした暫定依存(attempt 3 から変更なし)"
+gates:
+  format: pass
+  lint: pass
+  tdd: pass
+  bdd_tier: pass
+gate_runs:
+  - gate: format
+    cwd: rapid-crosscheck
+    command: "shfmt -d ."
+    exit_code: 0
+  - gate: lint
+    cwd: rapid-crosscheck
+    command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+    exit_code: 0
+  - gate: tdd
+    cwd: rapid-crosscheck
+    command: "bats -r test"
+    exit_code: 0
+    detail: "106 tests, 106 ok, 0 not ok(macOS。attempt 3 の 102 件 + 新規 4 件)"
+  - gate: bdd_tier
+    cwd: rapid-crosscheck
+    command: "npx cucumber-js --config ../cucumber.cjs features"
+    exit_code: 0
+    detail: "4 scenarios (4 passed), 12 steps (12 passed)"
+linux_equivalent_check:
+  command: "docker run --rm -e LANG=C.UTF-8 -v \"$PWD/..:/work\" -w /work/rapid-crosscheck relay-gate-ci:ubuntu24 bats -r test"
+  exit_code: 0
+  detail: "106 tests, 105 ok, 1 skip(root では読み取り権限のテスト 1 件が skip。macOS では pass)"
+performance:
+  note: "ジョブマップ 5,000 行 + 参照先カタログ 5,000 行の validate-config.sh --crosscheck-job-map の所要時間(fixture 生成を除く。独立スクリプトで計測。macOS)。最悪ケースは 1 列ヘッダーのカタログで 4,999 行が空白だけの行(error 5,000 行 + 参照未解決、violations=5000)"
+  macos_seconds_worst_1col_blank: "2.29"
+  macos_seconds_normal_5col: "2.20"
+  threshold_seconds: 10
+assumptions:
+  path: attempt-4/S4_tier-impl.tier-rapid-crosscheck.assumptions.yaml
+  count: 18
+  by_category:
+    input_validation: 10
+    data_format: 3
+    error_handling: 5
+    persistence: 0
+    performance: 0
+    security: 0
+  sha256: 2152be1c987ae1edadecdfc96e05150d78d2bf663d60d78104647d575db9ca8f
+  extraction:
+    candidate_count: 36
+    excluded_as_explicit: 18
+    recorded_count: 18
+  validator: "validateAssumptions.js record → ok: true"
+  changes_from_attempt_3: "A-011 を『空白だけの行はヘッダーの列数に関係なく拒否する』を含む形に書き直し、A-022 に 1 列ヘッダーでも既存文言(expected=1 actual=1)で出すことを追記。A-024(解析後の行から空白だけの行を判定する境界。引用で囲んだ空白だけの値も同じ扱い)を追加。他 16 件は同じ判断で対象行番号のみ更新"
+issues:
+  new: []
+  note: "新規の仕様疑義なし"
+write_set_note: "書き込みは rapid-crosscheck/ 配下 3 ファイルと、docs/impl/latest/dcd8234d/stages/attempt-4/ の本 tier の done / assumptions のみ。facade/ / final-crosscheck/ / attempt-1〜3/ / attempt-4 の final-crosscheck / docs/specs / issues は変更していない"
+completed_at: '2026-10-10T13:05:00+09:00'
+completed_by: dist-impl-implement@0.14.1

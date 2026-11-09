@@ -30,7 +30,7 @@ graph LR
 | レイヤー | データモデル | 変換内容 |
 |---------|------------|---------|
 | presentation | ValidateConfigRequest | `--feature-flag <path>` の引数検証。検証結果を終了コード 0 / 2 へ |
-| usecase | ValidateFeatureFlagQuery | ファイル読み込み → 検証表の全項目を評価 → 違反を全件収集(最初の 1 件で止めない)→ 結果出力 |
+| usecase | ValidateFeatureFlagQuery | ファイル読み込み → 入力の守備範囲の検査(バイト・改行の違反があればそれだけを全件、行番号の昇順・同じ行は NUL → UTF-8 → BOM → CR の順で報告して止める。invalid line・同じキーの重複は全件報告し、1 件でもあれば検証表を評価しない。CLI 契約 `config_input_rules.env_files`)→ 検証表の全項目を評価 → 違反を全件収集(最初の 1 件で止めない)→ 結果出力 |
 | domain | FeatureFlag | 9 キーの列挙・必須・foreground 排他・foreground 存在・実体パス(runner / 速報 runner / worker)の実行可否・運用モード名の導出(純粋関数) |
 | repository | FeatureFlagConfig | env 形式(`KEY=value`、`#` コメント、空行)の読み込み。シェル展開は行わない |
 
@@ -54,6 +54,11 @@ sequenceDiagram
   UC->>Repo: env を読む
   Repo->>FS: 読み込み
   FS-->>Repo: KEY=value 行
+  alt 入力の守備範囲の違反: invalid line または同じキーが 2 行以上(config_input_rules.env_files)
+    Repo-->>UC: 違反 "invalid line line=N"(行番号順)→ "duplicate key key=<KEY> lines=<n1,n2,...>"(初出行順)
+    UC-->>Pres: 値を使わず検証表を評価しない
+    Pres-->>Designer: stderr error 行(全件)/ 終了コード 2
+  end
   Repo->>Dom: FeatureFlag を構築
   UC->>Dom: 検証表を評価
   alt foreground slot 排他: foreground が 2 つ、または 0 個
@@ -103,7 +108,7 @@ sequenceDiagram
 | 条件名 | 判定ルール | 適用 tier | 適用箇所 | BDD Scenario |
 |--------|----------|----------|---------|-------------|
 | foreground slot 排他 | `BLUE_MODE=foreground` かつ `GREEN_MODE=foreground` は検証 NG(終了コード 2)。表: 縦 blue × 横 green で foreground × foreground のみ拒否。foreground が 0 個も同じ文言で NG | tier-facade | domain `validate_feature_flag` | 両 slot foreground の feature flag は検証で拒否される(SPEC-001-02) |
-| 設定所有区分 | feature flag には元資料の 9 キー(実装スロットの mode・実装版・runner、RAPID_CROSSCHECK_MODE と速報 runner / worker 実体)だけを置く。設定版は持たない。実行先・ハング検知上限・比較対象は置かない(ジョブマップ / クロスチェックジョブマップの所有)。9 キー以外の未知キーは `warn:`(拒否しない。ただしキー名が `FINAL_` で始まるキーは未知キーではなく条件「確報クロスチェック非起動」の違反) | tier-facade | domain `validate_feature_flag` | 元資料の 9 キーの feature flag は未知キー警告なしで検証を通過する(SPEC-001-01) |
+| 設定所有区分 | feature flag には元資料の 9 キー(実装スロットの mode・実装版・runner、RAPID_CROSSCHECK_MODE と速報 runner / worker 実体)だけを置く。設定版は持たない。実行先・ハング検知上限・比較ツール起動コマンドは置かない(実行先・ハング検知上限はジョブマップ、速報・確報の比較ツール起動コマンドは速報クロスチェック設定 / 確報クロスチェック worker 設定の所有)。9 キー以外の未知キーは `warn:`(拒否しない。ただしキー名が `FINAL_` で始まるキーは未知キーではなく条件「確報クロスチェック非起動」の違反) | tier-facade | domain `validate_feature_flag` | 元資料の 9 キーの feature flag は未知キー警告なしで検証を通過する(SPEC-001-01) |
 | 速報クロスチェック有効判定 | `RAPID_CROSSCHECK_MODE` は foreground / background / off の 3 値。判定は「off か off 以外か」で行う: off 以外(foreground / background)は runner が完了通知を送信し速報管理 DB へ書き込むため `RAPID_CROSSCHECK_RUNNER` / `RAPID_CROSSCHECK_WORKER` を必須にする。off は完了通知を送信せず速報管理 DB へ接続も書込みもしない(parallel_run も作らない) | tier-facade | domain `validate_feature_flag` | RAPID_CROSSCHECK_MODE の列挙外は拒否される / 速報有効時は速報 runner と worker の実体が必須である(SPEC-005-04) |
 | 確報クロスチェック非起動 | キー名が `FINAL_` で始まるキー(接頭辞判定。キー名の列挙ではない。大文字小文字を区別)が 1 つでもあれば検証 NG(該当キーごとに `error: final crosscheck key is not allowed key=<KEY>`、終了コード 2)。`FINAL_CROSSCHECK_MODE` のような制御キーも、確報クロスチェック設定(final-crosscheck.env)のキー `FINAL_DB_CONN_REF` 等の誤配置も同じ。`FINAL_` で始まるキーは未知キー(warn)にしない。範囲の正本は CLI 契約 `config_files.feature-flag.env.validation_rules` | tier-facade | domain `validate_feature_flag` | 確報の制御キーは拒否される(SPEC-001-01) / FINAL_ で始まる確報設定のキーは未知キーではなく拒否される(SPEC-001-01) |
 
@@ -238,7 +243,7 @@ Feature: feature flag を設定する
 
 ### 統合契約
 
-- [CLI コマンド契約](../../../_cross-cutting/api/cli-command-contract.yaml)(`validate-config.sh --feature-flag` を defines。feature-flag.env の入力の守備範囲(バイト・改行の異常の拒否、1 時点の内容だけで判定、内部障害の終了コード 6)は `config_input_rules`(`env_files`)に従う。bash の最低版は `conventions.runtime_prerequisites`)
+- [CLI コマンド契約](../../../_cross-cutting/api/cli-command-contract.yaml)(`validate-config.sh --feature-flag` を defines。feature-flag.env の入力の守備範囲(バイト・改行の異常の拒否、invalid line と同じキーが 2 行以上ある設定の拒否、1 時点の内容だけで判定、内部障害の終了コード 6)は `config_input_rules`(`env_files`)に従う。bash の最低版は `conventions.runtime_prerequisites`)
 - [出力規約](../../../_cross-cutting/ux-ui/ui-design.md)(stderr の `key=` / `value=` / `path:` に出す任意入力は「制御文字の表記」の可視表記にする。tier-facade.md の出力契約と Scenario「値に含まれる制御文字を可視表記で出力する」)
 - [AsyncAPI Spec](../../../_cross-cutting/api/asyncapi.yaml)(この UC は publish / subscribe しない)
 - 読み手: [slot 実行モードを選択して runner を起動する](../../../実装切替業務/実装切替ジョブ実行フロー/slot%20実行モードを選択して%20runner%20を起動する/spec.md)

@@ -1,0 +1,4 @@
+---
+- name: reload systemd and restart relay-gate worker
+  ansible.builtin.systemd:
+    daemon_reload: true

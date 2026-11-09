@@ -2,7 +2,7 @@
 
 ## 変更概要
 
-`hang-detector.sh` の記録部分を追加する。usecase(判定・送信結果 → MonitorRecord → 保存)、domain(記録の組み立て。警告時経過時間の保持規則)、repository(`monitor_records` の UPSERT / 実行ログ)、gateway(RDB クライアントアダプタ)。コマンド契約は UC「background 実行の経過時間と終了状態を判定する」の tier md を正とし、本ファイルは記録に固有の契約(テーブル定義・UPSERT 規則・off 時のログ形式)を書く。`monitor_records` は tier-ops が所有する唯一の書き込みテーブルであり、`hang-detect-trend.sh`(UC「hang_detect_limit_minutes をジョブごとに調整する」)の集計元になる。
+`hang-detector.sh` の記録部分を追加する。usecase(判定結果・alert 行を出した事実 → MonitorRecord → 保存)、domain(記録の組み立て。警告時経過時間の保持規則)、repository(`monitor_records` の UPSERT / 実行ログ)、gateway(RDB クライアントアダプタ)。コマンド契約は UC「background 実行の経過時間と終了状態を判定する」の tier md を正とし、本ファイルは記録に固有の契約(テーブル定義・UPSERT 規則・off 時のログ形式)を書く。`monitor_records` は tier-ops が所有する唯一の書き込みテーブルであり、`hang-detect-trend.sh`(UC「hang_detect_limit_minutes をジョブごとに調整する」)の集計元になる。
 
 ## コマンド契約
 
@@ -10,7 +10,7 @@
 
 - **書式**: `hang-detector.sh [--verbose]`(UC「background 実行の経過時間と終了状態を判定する」を参照)
 - **アクセス権**: ジョブスケジューラの定期ジョブ。RAPID_CROSSCHECK_MODE が off 以外のとき管理 DB(接続参照名はハング検知定期ジョブ設定の HANG_DB_CONN_REF)の `monitor_records` への INSERT / UPDATE 権限
-- **トリガー**: 同 UC の判定と UC「ハング疑い・実行エラー・比較異常を通知する」の送信結果
+- **トリガー**: 同 UC の判定と UC「ハング疑い・実行エラー・比較異常を通知する」の呼び出し(alert 行を出した対象は alert 行の直後に呼ばれる)
 
 #### 引数・オプション
 
@@ -23,35 +23,37 @@
 ## 出力契約
 
 - **stdout**: 出力しない
-- **stderr**: `error: monitor record save failed run_id=... role=...`(1 対象につき 1 回)
-- **終了コード**: UPSERT 失敗が 1 件でもあれば 6(他の対象は継続)。それ以外は判定 UC / 通知 UC の終了コードに従う
-- **実行ログ**(RAPID_CROSSCHECK_MODE によらず常に追記): `INFO monitor record run_id=... role=... job_id=... target_type=... monitor_status=... started_at=... elapsed_minutes=... limit_minutes=... hang_suspected_at=... alerted_at=... elapsed_minutes_at_alert=... judged_at=...`(NULL は `-`)。off ではこの行が監視記録の唯一の永続化先
+- **stderr**: `error: monitor record save failed run_id=... role=...`(1 対象につき 1 回。alert 行を出した対象ではその alert 行の直後)
+- **終了コード**: UPSERT 失敗が 1 件でもあれば 6(他の対象は継続)。それ以外は判定 UC の終了コード表に従う
+- **実行ログ**(RAPID_CROSSCHECK_MODE によらず常に追記): `INFO monitor record run_id=... role=... job_id=... target_type=... monitor_status=... started_at=... elapsed_minutes=... limit_minutes=... hang_suspected_at=... alerted_at=... elapsed_minutes_at_alert=... judged_at=...`(NULL は `-`)。off ではこの行が判定結果の記録先になり、通知済み状態は成果物ルート配下の通知済みの印で持つ(ハング疑いを知らせたあとで正常終了・中止した対象は、印が COMPLETED に書き換わって終端する。印の契約は UC「ハング疑い・実行エラー・比較異常を通知する」の tier 仕様)
   - ログ行の形式は `_cross-cutting/ux-ui/ui-design.md` のログ行形式(`{script} {run_id} {ローカル出力日時} {LEVEL} {message}`)に従う。情報「実行ログ」の属性「出力日時」はこの ローカル出力日時の列に対応する(judged_at は message 内の値で、出力日時とは別)
 
 ## UC ロジック
 
 - **バリデーション**: なし(入力は同一プロセス内の判定結果)
 - **確認プロンプト**: なし
-- **冪等性**: UPSERT(主キー run_id + role)。同じ判定を繰り返しても行は 1 件で、elapsed_minutes / judged_at が更新されるだけ。hang_suspected_at / alerted_at / elapsed_minutes_at_alert は NULL で上書きしない(`COALESCE(EXCLUDED.x, monitor_records.x)`。alerted_at のみ通知送信成功時は新しい値で上書き)
+- **冪等性**: UPSERT(主キー run_id + role)。同じ判定を繰り返しても行は 1 件で、elapsed_minutes / judged_at が更新されるだけ。hang_suspected_at / alerted_at / elapsed_minutes_at_alert は NULL で上書きしない(`COALESCE(EXCLUDED.x, monitor_records.x)`。alerted_at のみ alert 行を出したときは新しい値で上書き)
 - **記録規則**(domain `build_record`):
   | 入力 | monitor_status | hang_suspected_at | alerted_at | elapsed_minutes_at_alert |
   |---|---|---|---|---|
   | NOT_TARGET(監視対象外) | NOT_MONITORED | 保持 | 保持 | 保持 |
   | COMPLETED(正常終了、または中止済み = exitcode.txt なし・aborted.txt あり / 依頼 ABORTED(abort-blue / abort-green による未着手依頼の中止を含む)) | COMPLETED | 保持 | 保持 | 保持 |
   | MONITORING | MONITORING(既存が *_NOTIFIED なら既存を保持) | 保持 | 保持 | 保持 |
-  | 送信成功: hang-suspected | HANG_SUSPECTED_NOTIFIED | now(既存があれば保持) | now | elapsed(既存があれば保持) |
-  | 送信成功: background-exec-error | EXEC_ERROR_NOTIFIED | 保持 | now | elapsed(既存があれば保持) |
-  | 送信成功: rapid-crosscheck-error | COMPARE_ERROR_NOTIFIED(既存が HANG_SUSPECTED_NOTIFIED でも遷移する) | 保持 | now | elapsed(既存があれば保持) |
-  | 送信失敗 / 送信不要(通知済み) | 既存を保持 | 保持 | 保持 | 保持 |
+  | alert 行を出した: hang-suspected | HANG_SUSPECTED_NOTIFIED | now(既存があれば保持) | now | elapsed(既存があれば保持) |
+  | alert 行を出した: background-exec-error | EXEC_ERROR_NOTIFIED | 保持 | now | elapsed(既存があれば保持) |
+  | alert 行を出した: rapid-crosscheck-error | COMPARE_ERROR_NOTIFIED(既存が HANG_SUSPECTED_NOTIFIED でも遷移する) | 保持 | now | elapsed(既存があれば保持) |
+  | 通知済みで知らせなかった | 既存を保持 | 保持 | 保持 | 保持 |
   - `elapsed_minutes` / `judged_at` / `hang_detect_limit_minutes` / `started_at` は毎回の判定値で更新する
-  - 入力は判定 UC の hang_judgement 6 値(NOT_TARGET / COMPLETED / EXEC_ERROR / MONITORING / HANG_SUSPECTED / COMPARE_ERROR)と通知 UC の送信結果。判定値だけで monitor_status が決まる(括弧書きの区別を要しない)
+  - 入力は判定 UC の hang_judgement 6 値(NOT_TARGET / COMPLETED / EXEC_ERROR / MONITORING / HANG_SUSPECTED / COMPARE_ERROR)と、通知 UC が alert 行を出したかどうか。alert 行を出した対象の monitor_status は判定値だけで決まる(CLI 契約 `shared_rules.state_codes.hang_judgement_to_monitor_status`)
+  - now は alert 行を出した回の判定時刻。hang_suspected_at / alerted_at はこの値を記録する
+  - UPSERT に失敗した場合は行が変わらない(monitor_status も変わらない)ため、通知 UC は次回同じ異常を再び知らせる
   - execution-spec.json が無い run は判定 UC が飛ばすため、この UC に渡されず記録も作らない
   - now は判定 UC と同じ(`RELAY_GATE_NOW` 設定時はその UTC 値をローカル時刻へ変換した値)。日時列(started_at / hang_suspected_at / alerted_at / judged_at)はホストのローカルタイムゾーンの値(ISO 8601 秒精度・指示子なし)を RDB のタイムスタンプ型(タイムゾーンなし)に入れる。started_at は started-at.txt の UTC Z 付きの値をローカル時刻へ変換して転記する
   - MONITORING の入力で既存が *_NOTIFIED の場合(ハング疑い通知後にまだ exitcode.txt が無い)は状態を戻さない
-- **off 時**: 管理 DB に接続しない。実行ログの `INFO monitor record` 行が記録。`hang-detect-trend.sh` は off では終了コード 3(data-visualization.md)
-- **エラーハンドリング**: UPSERT 失敗は `error:` 1 回 + 実行ログ ERROR。他の対象を継続して最後に 6。実行ログの書き込み不可は `warn:` で継続(ui-design.md 環境変数)
-- **クラッシュ耐性**: UPSERT は 1 対象 1 文で原子的。途中終了しても部分更新の行は生じない。通知送信後・記録前の終了は通知 UC の「再送を許容」に従う
-- **監視は通知のみ**: `monitor_records` 以外のテーブルに書かない(LP-017)。`rapid_crosscheck_requests` / `comparison_results` には SELECT しか発行せず(判定 UC)、`slot_executions` / `parallel_runs` には触れない(slot 実行の状態は成果物ファイルから導出する)
+- **off 時**: 管理 DB に接続しない。判定結果は実行ログの `INFO monitor record` 行に残り、通知済み状態は通知 UC が書く通知済みの印で持つ(HANG_SUSPECTED_NOTIFIED → COMPLETED のときも通知 UC が印を書き換える)。`hang-detect-trend.sh` は off では終了コード 3(data-visualization.md)。off で経過時間の傾向を確認するときは、ハング検知ジョブの出力(alert 行の elapsed_minutes)と実行ログの `INFO monitor record` 行を使う
+- **エラーハンドリング**: その回に管理 DB へ接続・SELECT できなかった場合(判定 UC が `error: management db connection failed` / `error: management db query failed` を出した回)は、判定 UC が走査せずに終了コード 6 で終えるため、この UC は動かない(UPSERT も実行ログの `INFO monitor record` 行も無い。契約 `shared_rules.hang_alert.db_unavailable`)。UPSERT 失敗は対象ごとに `error:` 1 行 + 実行ログ ERROR(1 対象 1 行で複数出してよい)。他の対象を継続して最後に 6。実行ログの書き込み不可は `warn:` で継続(ui-design.md 環境変数)
+- **クラッシュ耐性**: UPSERT は 1 対象 1 文で原子的。途中終了しても部分更新の行は生じない。alert 行を出したあと記録前にプロセスが終了した場合は、次回同じ異常を再び知らせる(通知 UC のクラッシュ耐性)
+- **監視は通知のみ**: `monitor_records` 以外のテーブルに書かない(LP-017)。`rapid_crosscheck_requests` には SELECT しか発行せず(判定 UC)、`slot_executions` / `parallel_runs` には触れない(slot 実行の状態は成果物ファイルから導出する)
 
 ## データモデル変更
 
@@ -67,8 +69,8 @@
 | started_at | datetime | 監視対象の開始時刻(ローカル時刻)。background slot は started-at.txt の UTC 値をローカル時刻へ変換した値、速報比較依頼は依頼の started_at(未開始は requested_at) | 追加 |
 | elapsed_minutes | integer | 最新の判定時点の経過時間(分) | 追加 |
 | hang_detect_limit_minutes | integer | background slot は execution-spec.json の slots.<role>.hang_detect_limit_minutes を転記(0 は対象外)、速報比較依頼(role=rapid-crosscheck)は hang-detector.env の RAPID_HANG_DETECT_LIMIT_MINUTES(既定 60)を転記(rdb-schema.yaml の列説明と同じ) | 追加 |
-| hang_suspected_at | datetime | 最初のハング疑い通知の送信成功時刻(NULL 可。判定時刻ではない) | 追加 |
-| alerted_at | datetime | 最後の通知送信時刻(NULL 可) | 追加 |
+| hang_suspected_at | datetime | 最初にハング疑いの alert 行を出した回の判定時刻(NULL 可) | 追加 |
+| alerted_at | datetime | 最後に alert 行を出した回の判定時刻(NULL 可。記録用で、再通知の判定には使わない) | 追加 |
 | elapsed_minutes_at_alert | integer | 最初の警告時の経過時間(NULL 可)。調整根拠 | 追加 |
 | judged_at | datetime | 最新の判定時刻(ローカル時刻。指示子なし) | 追加 |
 
@@ -80,7 +82,7 @@
 
 - 警告傾向の記録: monitor_status / hang_suspected_at / alerted_at を記録。通知後正常終了でも elapsed_minutes_at_alert を保持
 - 監視は通知のみ: monitor_records 以外を変更しない
-- 速報クロスチェック有効判定: off では実行ログのみ(_inference.md #8)。foreground / background(off 以外)では UPSERT + 実行ログ
+- 速報クロスチェック有効判定: off では判定結果を実行ログに残し、通知済み状態は通知済みの印で持つ。foreground / background(off 以外)では UPSERT + 実行ログ
 - 監視状態の値は状態.tsv の英字コード(_inference.md #11)。バリエーション「監視状態」と状態モデル「監視状態」は同じ 6 値(「通知後正常終了」はハング疑い通知済み → 正常終了の遷移の別名)
 
 ## ティア完了条件(BDD)

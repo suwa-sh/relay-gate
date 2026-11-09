@@ -1,0 +1,35 @@
+{
+  "schema_version": "distillery.nfr-feedback-event/v1",
+  "event_id": "20261103_082000_feedback_housekeeping_followups",
+  "created_at": "2026-11-03T08:20:00Z",
+  "stage": "quality_attributes",
+  "trigger_event": "rdra:20261103_081000_feedback_housekeeping_followups",
+  "feedback_request": {
+    "feedback_request_id": "20261103_housekeeping_followups",
+    "input_sha256": "7a81f28ce6fef4c2f70e2839d657a3f8e8480671bd846b460edab3d22b3ba775",
+    "request_ids": [
+      "CR-f3b8a1d0-001"
+    ],
+    "work_unit_ids": [
+      "CR-f3b8a1d0-001#1"
+    ]
+  },
+  "members": [
+    {
+      "path": "nfr/events/20261103_082000_feedback_housekeeping_followups/_changes.md",
+      "sha256": "99ee226d3acc2f3cd28d20554478f6da1a927490fbfd13254833da71e7cdb0bf"
+    },
+    {
+      "path": "nfr/events/20261103_082000_feedback_housekeeping_followups/_inference.md",
+      "sha256": "a58ffd3d17c505da080cac7657d642f32dfad9600edc005d234dbb0b2e084a91"
+    },
+    {
+      "path": "nfr/events/20261103_082000_feedback_housekeeping_followups/nfr-grade-diff.yaml",
+      "sha256": "4bfbba78f2c6cf6f7c896cde8e62c77551e2c2a806c85b8d17cdd5606f3c2729"
+    },
+    {
+      "path": "nfr/events/20261103_082000_feedback_housekeeping_followups/source.txt",
+      "sha256": "8dca2e0d8b6c43646b1eaabc62181b8914312c6394d3f00a98bdefedc70b1361"
+    }
+  ]
+}

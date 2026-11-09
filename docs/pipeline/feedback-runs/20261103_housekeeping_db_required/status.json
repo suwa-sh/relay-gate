@@ -1,0 +1,71 @@
+{
+  "schema_version": "distillery.feedback-run-status/v1",
+  "feedback_request_id": "20261103_housekeeping_db_required",
+  "input_sha256": "94cde505fc6dda4705b1bb75134beaf9a85a7af65d7c90f1e786112e8b1031e7",
+  "ambiguity_policy": "interactive",
+  "state": "completed",
+  "stages": [
+    {
+      "id": "requirements",
+      "state": "completed",
+      "event_ids": [
+        "20261103_131000_feedback_stage_requirements"
+      ],
+      "direct_work_unit_ids": [
+        "CR-9d2e6c41-001#1"
+      ],
+      "causal_work_unit_ids": [
+        "CR-9d2e6c41-001#1"
+      ]
+    },
+    {
+      "id": "quality_attributes",
+      "state": "completed",
+      "event_ids": [
+        "20261103_132000_feedback_stage_quality_attributes"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-9d2e6c41-001#1"
+      ]
+    },
+    {
+      "id": "architecture",
+      "state": "completed",
+      "event_ids": [
+        "20261103_133000_feedback_stage_architecture"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-9d2e6c41-001#1"
+      ]
+    },
+    {
+      "id": "infrastructure",
+      "state": "completed",
+      "event_ids": [
+        "20261103_134000_feedback_stage_infrastructure"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-9d2e6c41-001#1"
+      ]
+    },
+    {
+      "id": "spec",
+      "state": "completed",
+      "event_ids": [
+        "20261103_135000_feedback_stage_spec"
+      ],
+      "direct_work_unit_ids": [
+        "CR-9d2e6c41-002#1"
+      ],
+      "causal_work_unit_ids": [
+        "CR-9d2e6c41-001#1",
+        "CR-9d2e6c41-002#1"
+      ]
+    }
+  ],
+  "run_id": "feedback-20261103_housekeeping_db_required-20261103_130349-86217",
+  "attempt": 1
+}

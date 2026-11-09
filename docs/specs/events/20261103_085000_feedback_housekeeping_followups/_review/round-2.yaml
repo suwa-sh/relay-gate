@@ -1,0 +1,33 @@
+round: 2
+findings:
+  - id: R-006
+    viewpoint: 4
+    severity: minor
+    target: "_cross-cutting/api/cli-command-contract.yaml"
+    claim: "契約の member_source は、rapid crosscheck mode の判定を「execution-spec.json を読めた後」に行うと書いている。しかし「slots に role が無い」「parent_run_id が不正」で不正とする判定と、どちらを先に行うかを書いていない。UC の tier-ops.md は不正の判定を先に行う。契約だけを読んで実装すると、別の warn を出し得る。"
+    evidence: "member_source は「この判定は execution-spec.json を読めた後、slot のディレクトリと終了ファイルの確認より先に行う」と書き、比べる相手を slot のディレクトリと終了ファイルの確認だけにしている。slots が空でも JSON としては読めるので、字面どおりに読むと rapid crosscheck mode の判定が先になる。一方、stderr 一覧の `warn: run kept execution-spec invalid` には「slots に role が無い・parent_run_id が不正」が含まれる。判定 UC の tier-ops.md の判定表は、これを順 2(execution-spec invalid)として、順 3(rapid crosscheck mode)より先に置いている。前回の R-002 で挙げた例(rapid_crosscheck_mode=background で slots が空)では、契約からは rapid crosscheck mode の warn になり、UC からは execution-spec invalid の warn になる。finished_artifact も、判定できない条件を「無い・読めない、または載っている role のディレクトリが無い」とだけ書いている。"
+    suggested_fix: "member_source の判定の順を、tier-ops.md の判定表と同じ範囲で書く。例:「execution-spec.json の形式の検査(読めない・解析できない・slots に role が無い・parent_run_id が不正・(管理 DB に接続しないとき)rapid_crosscheck_mode が無い・不正)で不正なら execution-spec invalid とし、その次にこの判定を行い、slot のディレクトリと終了ファイルの確認はその後に行う」。finished_artifact の判定できない条件にも、形式の不正を足す。"
+  - id: R-007
+    viewpoint: 4
+    severity: minor
+    target: "ハウスキープ業務/ハウスキープフロー/保持日数を過ぎた終了済みの実行と確報比較依頼を判定する/spec.md"
+    claim: "分岐の表の下の文は「B-08 はほかの分岐より優先する」と書いている。しかし同じ表の B-04 の行とシーケンスでは、B-04(execution-spec.json が無い・不正)が B-08 より先になっている。B-08 の成立条件も「off でない」のままで、キーが無い・値が不正の場合も含むように読める。前回の R-001 で契約側を直した表現が、ここには残っている。"
+    evidence: "分岐条件の表の直後に「管理 DB に接続しないとき(B-02 不成立)は、B-08 と確報比較依頼を扱わない規則が、ほかの分岐より優先する」とある。同じ表の B-04 の行は「判定の順は tier-ops の表の順(順 1・2 → B-08 → 順 4)」としており、シーケンスも B-04 の alt を B-08 より先に置いている。B-08 の行の成立条件は「execution-spec.json の rapid_crosscheck_mode が off でない」である。契約(member_source)は「off でない」を foreground / background と定め、キーが無い・値が不正の場合は execution-spec invalid にしている。"
+    suggested_fix: "表の下の文を「B-08 は、slot のディレクトリと終了ファイルによる判定(B-04 のうち role のディレクトリが無い場合、B-06、B-07)より優先する。execution-spec.json が無い・不正(B-04 の前半)はそれより先に判定する」のように直す。B-08 の成立条件(シーケンスと表の両方)を「rapid_crosscheck_mode が foreground / background」に改める。"
+  - id: R-008
+    viewpoint: 4
+    severity: minor
+    target: "ハウスキープ業務/ハウスキープフロー/保持日数を過ぎた終了済みの実行と確報比較依頼を判定する/tier-ops.md"
+    claim: "処理の順序の 5 は「rapid_crosscheck_mode が off でない実行は rapid crosscheck mode の warn で残す」と書いている。同じファイルの判定表の順 2・順 3 と食い違う(キーが無い・値が不正な場合の warn が違う)。この判定を接続の判断の手順に書いているので、成果物の判定(順 1・2)より前に行うようにも読める。"
+    evidence: "処理の順序の 5 には「このとき execution-spec.json の rapid_crosscheck_mode が off でない実行は判定できないものとして残し `warn: run kept rapid crosscheck mode run_id=... mode=...` を出す」とある。一方、成果物だけの判定表では、キーが無い・foreground / background / off のどれでもない場合を順 2(execution-spec invalid)とし、順 3 を「foreground / background」に限っている。判定そのものは手順 7(単位ごとの判定)の中で、表の順に行うものである。"
+    suggested_fix: "手順 5 からこの文を除き、「管理 DB に接続しないときの実行ごとの判定は、成果物だけの判定表の順 2・順 3 による」と参照だけにする。残す場合は「off でない」を「foreground / background」に改め、判定は手順 7 で表の順に行うと書く。"
+resolved:
+  - id: R-006
+    resolution: fixed
+    note: "契約 member_source に判定の順 (1) 形式の検査 → (2) rapid crosscheck mode → (3) slot の確認 を tier-ops の判定表と同じ範囲で書き、finished_artifact の判定できない条件に形式の不正を足した"
+  - id: R-007
+    resolution: fixed
+    note: "B-08 の成立条件をシーケンスと表の両方で foreground / background に改め、表の下の優先の文を slot の判定より優先・execution-spec の不正は先に判定する形に直した"
+  - id: R-008
+    resolution: fixed
+    note: "処理の順序の 5 の判定の文を除き、手順 7 で判定表の順 2・順 3 に行うという参照に改めた"

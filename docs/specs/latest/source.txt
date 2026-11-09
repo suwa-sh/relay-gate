@@ -1,16 +1,22 @@
-Spec 差分更新: feedback 20260922_130000_impl_feedback_eff24f55(cycle 2。design 無しモード。UI 画面なし・CLI と定期ジョブのみ。実装フェーズ UC eff24f55「slot ごとのジョブマップを定義する」からの spec-gap 2 件: CR-006 重複報告の lines= を「初出行を含む全行番号を出現順に」へ一本化し、CLI 契約・列検証表・BDD と対象カタログ / クロスチェックジョブマップの重複報告を同じ規則にそろえた / CR-007 参照名の形式に合わない credential_ref は理由を問わず同じ warn で受理し(案 A。拒否しない理由 = 参照名の形式は認証情報ストアの運用に依存)、credential_ref の値を診断行に一切出さない規則を契約に明記、UC 仕様の「仮採用」注記を確定内容へ置換)
-event_id: 20260923_112000_feedback_impl_feedback_eff24f55_cycle2
-created_at: 2026-09-23T11:20:00Z
-previous_event: 20260921_100000_feedback_impl_feedback_eff24f55
-trigger_event: rdra:20260921_084000_feedback_impl_feedback_eff24f55, arch:20260921_092000_feedback_impl_feedback_eff24f55
-related_event: usdm:20260921_084000_feedback_impl_feedback_eff24f55、nfr:20260921_090000_feedback_impl_feedback_eff24f55、infra:20260921_094000_feedback_impl_feedback_eff24f55(本 run では前段 head は変更なし)
-design_available: false(引数指定。docs/design/latest/ は読まない)
-dialogue_policy: recommended_auto(feedback run は --recommended-auto で開始。CR-007 は利用者が 2026-09-22 のレビューで案 A を選択済み、CR-006 は要求本文の推奨「初出行を含める」を ⭐推奨として採用。確認推奨項目は _inference.md に記録し完了報告で返却)
-feedback_request_id: 20260922_130000_impl_feedback_eff24f55
-input_sha256: 8adc8bc900ebe6eb57209cee7c4ed2c727b1313c462a6052efd720b2f31cb2fa
-request_ids: CR-eff24f55-006, CR-eff24f55-007
-direct_work_unit_ids: CR-eff24f55-006#1, CR-eff24f55-007#1
-causal_work_unit_ids: CR-eff24f55-006#1, CR-eff24f55-007#1
-stage_packet: docs/pipeline/feedback-runs/20260922_130000_impl_feedback_eff24f55/stage-packets/spec.md
-入力の正本: docs/rdra/latest/(20260908_011000。20260921_084000 は no-change)、docs/usdm/latest/(20260921_084000)、docs/nfr/latest/(20260921_090000)、docs/arch/latest/(20260908_015000。20260921_092000 は no-change)、docs/infra/latest/(20260907_124000。20260921_094000 は no-change)、docs/specs/latest/(20260921_100000_feedback_impl_feedback_eff24f55 を差分更新の起点)、方針資料 tmp/RelayGateのしくみ.md / tmp/RelayGateの利用イメージ.md(git 管理外・読み取りのみ)
-変更の正本(作業記録): _review/change-brief.md(D1〜D3)
+Spec 差分更新(design 無しモード): 2026-11-05 の管理 DB を 1 つとする前提の明記(dist-pipeline feedback mode Step6)。上流 latest(usdm / rdra / nfr / arch)は変更なし。infra latest は同じ run の infra イベント 20261105_111000_feedback_single_management_db(管理 DB の接続先の参照名が同じ管理 DB に解決されることを、構築の前提として書く)で更新済み。
+
+CR-f4c8b261-001(infra 直接所有。spec は保守的 closure。利用者承認済みの直し方): 管理 DB の接続先の参照名が同じ管理 DB に解決されることを、CLI 契約にも前提として書く。
+- 問題: 確報クロスチェックの設定ファイルは実行ホスト(確報 runner)と DB セグメント(確報 worker)に別の元ファイルで配る。2 つのファイルの FINAL_DB_CONN_REF が別の DB に解決されると、設定の検査をすべて通っても worker は runner の依頼を取得できず、確報ジョブが完了しない。CLI 契約 conventions.credentials は参照名を列挙し、解決を適用側の運用手順に委ねるとだけ書いており、すべての参照名が同じ 1 つの管理 DB に解決されるという前提が無かった。
+- 書いた前提(契約 conventions.credentials):
+  - 管理 DB は 1 つで、すべての管理 DB 接続参照名(RAPID_DB_CONN_REF、実行ホストと DB セグメントそれぞれの FINAL_DB_CONN_REF、HANG_DB_CONN_REF、HOUSEKEEP_DB_CONN_REF)は同じ 1 つの管理 DB に解決される。
+  - 理由: 確報 runner が登録した確報比較依頼を、確報 worker が同じキューから取得するため。
+  - 条件は参照名の文字列が同じことではなく、解決先(接続先の DB)が同じこと。HOUSEKEEP_DB_CONN_REF は専用 DB ロール housekeep_del で業務用ロールとは別のロールを指すが、解決先の DB は同じ。
+  - 解決先が同じことは導入する側が確かめる。構築手順の配置時の検査は設定ファイルの存在確認だけで、relay-gate のコマンド(validate-config.sh と各読み手の起動時の検査)も解決先を検査しない。
+- 揃えた箇所: 契約 config_files の final-crosscheck.env の note と FINAL_DB_CONN_REF、rapid-crosscheck.env の RAPID_DB_CONN_REF、hang-detector.env の HANG_DB_CONN_REF、housekeep.env の HOUSEKEEP_DB_CONN_REF。6 UC の tier md の設定キー表(速報比較依頼を claim する / 速報クロスチェック runner へ完了通知を送信する / 確報比較依頼を登録して終端状態まで待機する / 確報比較依頼を claim する / background 実行の経過時間と終了状態を判定する / 保持日数を過ぎた終了済みの実行と確報比較依頼を判定する(キー表の直下の説明))。
+- 足さないもの: 新しい検査・error 文言・終了コード・BDD(relay-gate は解決先を検査しないため)。
+- 判断は decisions/spec-decision-032。
+
+feedback request:
+- feedback_request_id: 20261105_single_management_db
+- input_sha256: 97bb80ca208301540a11760f416c348f73ea0c1898d9535a80c5a8f013df194a
+- request_ids: CR-f4c8b261-001
+- direct_work_unit_ids: (なし)
+- causal_work_unit_ids: CR-f4c8b261-001#1
+- stage packet: docs/pipeline/feedback-runs/20261105_single_management_db/stage-packets/spec.md
+
+trigger_event: infra:20261105_111000_feedback_single_management_db(他の上流 latest は変更なし)

@@ -8,7 +8,7 @@
 
 ### final-crosscheck-runner.sh(中継部分)
 
-- **書式**: `final-crosscheck-runner.sh --business-date <YYYY-MM-DD> --catalog-version <ver>`(引数契約は UC「確報比較依頼を登録して終端状態まで待機する」の tier md を正とする)
+- **書式**: `final-crosscheck-runner.sh [--verbose] [--help]`(業務上の引数なし。引数契約は UC「確報比較依頼を登録して終端状態まで待機する」の tier md を正とする)
 - **アクセス権**: ジョブスケジューラの確報クロスチェックジョブ定義
 
 #### 引数・オプション
@@ -61,7 +61,7 @@
 
 - 確報結果の中継制約: 3 値以外の連携データ(状態名・差分件数・レポート URI・final_crosscheck_id)を stdout / stderr に追加しない
 - 比較ツール終了コードの対応: 保存済み exit_code を変換しない。比較ツールを差し替えた場合もその契約の値をそのまま返す
-- CLI とメールによる提示: 確報結果はメール通知しない(hang-detector の対象外)
+- CLI による提示: 確報結果は CLI の 3 チャネルだけで返す(hang-detector の対象外)
 - relay-gate 自身の info / warn は実行ログにのみ出す(CLP-006)
 
 ## ティア完了条件(BDD)

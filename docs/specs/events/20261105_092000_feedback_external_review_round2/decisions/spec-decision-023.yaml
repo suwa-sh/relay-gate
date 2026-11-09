@@ -1,0 +1,40 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "specification"
+artifact_id: "spec-decision-023"
+title: "env 形式の設定で、キーの前後の空白を除いた結果キーが空になる行を、全 env 設定ファイル共通で invalid line(終了コード 2)にする"
+status: "approved"
+generated_at: "2026-11-03T08:50:00Z"
+context: |
+  - CLI 契約の env 形式の入力規則(config_input_rules.env_files)は、キーと値の取り出し方を順序つき規則(最初の = で分ける → キーの前後の空白を除く → 値の前後の空白を除く → 引用符を外す)で定めていた(spec-decision-022)。
+    しかし、キーの前後の空白を除いた結果キーが空になる行(例 ` =abc` / `=abc`)の扱いを書いていなかった。
+  - 同じ形式の行が設定ファイルによって拒否されたり無視されたりしていた。速報クロスチェック設定の読み込みは invalid line で拒否し、feature flag 設定の読み込みは何も出さずに読み飛ばしていた。
+    feature flag 設定では書き損じた行が誰にも知らされずに無視され、意図しない設定で動き得る。
+  - 2026-11-01 の仕様の更新でこの隙間を todo に残し、2026-11-03 に利用者が「不正な行として拒否する」に揃えることを承認した。
+    要求(SPEC-004-04 / REQ-004)と RDRA は行の形式を持たないため、仕様(CLI 契約)だけの変更とする。
+decision: |
+  1. config_input_rules.env_files の順序つき規則の手順 (2) に、「キーの前後の空白を除いた結果キーが空になる行は `error: invalid line line=N path: ...`(終了コード 2)とし、(3) 以降へ進まない」を書き、
+     例(` =abc` / `=abc` / ` = ` はいずれも invalid line)を添える。
+  2. この規則は env 形式の全設定ファイル(feature-flag.env / rapid-crosscheck.env / hang-detector.env / final-crosscheck.env / housekeep.env)に共通とする。
+     shared_rules.compare_command_argv.split の再掲と、config_input_rules の「空白だけの行」の項にも同じ規則を書く。
+  3. `=` を含まない行と空白だけの行を invalid line とする今の契約は変えない。
+  4. 規則を独自に列挙していた箇所を契約と同じ範囲に揃える: 出力規約(ui-design.md)の検証定型文、UC「feature flag を設定する」の tier-facade.md の形式の節、UC「保持日数を過ぎた終了済みの実行と確報比較依頼を判定する」の tier-facade.md の入力の守備範囲の行。
+     UC「feature flag を設定する」の tier-facade.md には、キーが空の行・`=` の無い行・空白だけの行を invalid line で拒否する BDD を加える。
+  5. 実装は変えない(実装を契約に合わせる対象として記録する)。実装との差分:
+     - feature flag 設定の読み込み(facade の repository の feature_flag_config.sh)は、キーが空の行を何も出さずに読み飛ばす。契約では invalid line。
+     - 同じ読み込みは、`=` を含まない行をキーだけ・値が空の行として扱う(未知キーの warn や必須キーの欠落として評価する)。契約では invalid line。
+     - 同じ読み込みは、行全体の前後の空白を先に除くため、空白だけの行を空行として読み飛ばす。契約では invalid line。
+       あわせて、行頭に空白がある `#` 始まりの行もコメントとして読み飛ばす(契約のコメントは行頭 `#`)。
+     - 速報クロスチェック設定の読み込み(facade の repository の rapid_crosscheck_env.sh)は、`=` を含まない行とキーが空の行を invalid line とし、契約どおり。
+consequences:
+  positive:
+    - "同じ形式の行が、どの env 設定ファイルでも同じ結果(invalid line、終了コード 2)になる"
+    - "feature flag 設定の書き損じが、黙って無視されずに設定検証で見つかる"
+  negative:
+    - "feature flag 設定の読み込みは、実装を契約に合わせるまで契約と一致しない(実装の変更が必要)"
+    - "今まで読み飛ばされていた行を含む feature flag 設定は、実装を合わせた後に設定検証で拒否される"
+alternatives_considered:
+  - name: "キーが空の行を未知キーとして warn で続行する"
+    reason_rejected: "キーの無い行は書き損じで、未知キーとして続行すると意図しない設定で動き得る。`=` を含まない行を invalid line とする今の契約とも揃わない"
+  - name: "キーが空の行を空行として読み飛ばす(feature flag 設定の今の実装に合わせる)"
+    reason_rejected: "書き損じが誰にも知らされない。利用者は不正な行として拒否する方に揃えると決めた"

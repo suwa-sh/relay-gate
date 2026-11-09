@@ -14,22 +14,17 @@ models:
     tier: "tier-rapid-crosscheck"
     layer: "usecase"
     type: "query"
-    rdra_info: "比較結果(comparison_result)"
+    rdra_info: "速報比較依頼(rapid_crosscheck_request)"
   - name: "RapidResultView"
     tier: "tier-rapid-crosscheck"
     layer: "domain"
     type: "value-object"
-    rdra_info: "比較結果(comparison_result)"
+    rdra_info: "速報比較依頼(rapid_crosscheck_request)"
   - name: "RapidCrosscheckRequestRecord"
     tier: "tier-rapid-crosscheck"
     layer: "repository"
     type: "record"
     rdra_info: "速報比較依頼(rapid_crosscheck_request)"
-  - name: "ComparisonResultRecord"
-    tier: "tier-rapid-crosscheck"
-    layer: "repository"
-    type: "record"
-    rdra_info: "比較結果(comparison_result)"
   - name: "RapidRunRecord"
     tier: "tier-rapid-crosscheck"
     layer: "repository"
@@ -42,18 +37,8 @@ tables:
     operations:
       - type: "SELECT"
         columns: []
-        where: "run_id = ?"
+        where: "run_id = ?(status / worker_id / exit_code / stdout / stderr / requested_at / completed_at を取得)"
     indexes_needed: []
-  - name: "comparison_results"
-    rdra_info: "比較結果(comparison_result)"
-    operations:
-      - type: "SELECT"
-        columns: []
-        where: "run_id = ? ORDER BY compared_at ASC, comparison_result_id ASC LIMIT ?"
-    indexes_needed:
-      - columns: ["run_id", "compared_at"]
-        reason: "run_id 単位の比較結果一覧を compared_at 順で取得する"
-        access_pattern: "rapid-crosscheck-result.sh の run_id 参照"
   - name: "rapid_runs"
     rdra_info: "速報実行(rapid_run)"
     operations:

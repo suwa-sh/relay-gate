@@ -1,0 +1,391 @@
+{
+  "schema_version": "distillery.feedback-routing/v1",
+  "feedback_request_id": "20261103_housekeeping_db_required",
+  "input_sha256": "94cde505fc6dda4705b1bb75134beaf9a85a7af65d7c90f1e786112e8b1031e7",
+  "policy": "interactive",
+  "routing_basis": {
+    "ownership_catalog_version": "1.0.0",
+    "ownership_catalog_sha256": "801750c2abe99945a3de9387b82339b2bc96ccb2da564f9923cc0e9b76a2bd39",
+    "routing_policy_version": "1.1.0",
+    "routing_policy_sha256": "3873275bf4adb3d9d7b7c41c22c9463d054a3614df7bbcab7514f0c1e23e166e",
+    "prompt_schema_sha256": "bf7c7f34d7a2fc5976ccd2589a454172a4630e1448c509966b620f88029732c4",
+    "stage_packet_renderer_version": "1",
+    "skipped_stages": [
+      "design_system",
+      "spec_stories"
+    ],
+    "repository_head": "38cf3f4a5dff8f47c581ab984ab8c37805c44e20",
+    "latest_domain_event_ids": {
+      "requirements": {
+        "rdra/events": "20261103_081000_feedback_housekeeping_followups",
+        "usdm/events": "20261103_081000_feedback_housekeeping_followups"
+      },
+      "quality_attributes": {
+        "nfr/events": "20261103_082000_feedback_housekeeping_followups"
+      },
+      "architecture": {
+        "arch/events": "20261103_083000_feedback_housekeeping_followups"
+      },
+      "infrastructure": {
+        "infra/events": "20261103_084000_feedback_housekeeping_followups"
+      },
+      "design_system": {
+        "design/events": null
+      },
+      "spec": {
+        "specs/events": "20261103_085000_feedback_housekeeping_followups"
+      },
+      "spec_stories": {
+        "design/events": null
+      }
+    },
+    "domain_event_root_snapshots": {
+      "rdra/events": {
+        "head_event_id": "20261103_081000_feedback_housekeeping_followups",
+        "head_event_sha256": "5c292cfd7f3ae05068a1fba3cc37098b3fbc31880a3ebeda6f3881ee99f46442",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency",
+          "20260908_011000_feedback_slot_status_wording",
+          "20260921_084000_feedback_impl_feedback_eff24f55",
+          "20261010_200000_feedback_impl_feedback_dcd8234d",
+          "20261101_101000_feedback_impl_feedback_dcd8234d",
+          "20261101_121000_feedback_mail_removal_housekeeping",
+          "20261103_081000_feedback_housekeeping_followups"
+        ],
+        "event_set_sha256": "6ece683c0525b650b36a8856c94719b4f13f095108115aa0a2f624d9f34237ca",
+        "latest_tree_sha256": "e305724ea6a27f45984cd73b0637ac1ff574a892344d4f6da9cc6ec208b52dc3"
+      },
+      "usdm/events": {
+        "head_event_id": "20261103_081000_feedback_housekeeping_followups",
+        "head_event_sha256": "9f58f03307f038bb3a33c4047ce606c7062600211a6ab53831d965be6f5bd6c7",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency",
+          "20260908_011000_feedback_slot_status_wording",
+          "20260921_084000_feedback_impl_feedback_eff24f55",
+          "20261010_200000_feedback_impl_feedback_dcd8234d",
+          "20261101_101000_feedback_impl_feedback_dcd8234d",
+          "20261101_121000_feedback_mail_removal_housekeeping",
+          "20261103_081000_feedback_housekeeping_followups"
+        ],
+        "event_set_sha256": "6ece683c0525b650b36a8856c94719b4f13f095108115aa0a2f624d9f34237ca",
+        "latest_tree_sha256": "13d7fd0352ecd988188922cc7f63fa4d3adb9a00cdca728eb45c3dacc7c187cc"
+      },
+      "nfr/events": {
+        "head_event_id": "20261103_082000_feedback_housekeeping_followups",
+        "head_event_sha256": "9f5993bfe6162ead2dbb7c01c8469a99903f9766d15afebadb88664d66e11cf4",
+        "event_ids": [
+          "20260830_183726_initial_nfr",
+          "20260905_085000_feedback_todo_resolution",
+          "20260907_013000_feedback_todo_followup",
+          "20260907_120000_feedback_abort_consistency",
+          "20260908_013000_feedback_slot_status_wording",
+          "20260921_090000_feedback_impl_feedback_eff24f55",
+          "20261010_201000_feedback_impl_feedback_dcd8234d",
+          "20261101_102000_feedback_impl_feedback_dcd8234d",
+          "20261101_122000_feedback_mail_removal_housekeeping",
+          "20261103_082000_feedback_housekeeping_followups"
+        ],
+        "event_set_sha256": "e02a3cfa4e83a3ee739f5c8b3d6e567f041103be07cab54ec2fbdbd2322cae8e",
+        "latest_tree_sha256": "b00bb32e2b0e4b60700f3011f501b23e25563c3254ab590e100082636f3de763"
+      },
+      "arch/events": {
+        "head_event_id": "20261103_083000_feedback_housekeeping_followups",
+        "head_event_sha256": "f9dd9f8657f03e99c64c5a76108ac6a12eb5f917461adf415a1aec31a6b9837b",
+        "event_ids": [
+          "20260830_184457_initial_arch",
+          "20260830_202427_arch_infra_feedback_20260830_190412_infra_product_design",
+          "20260905_091000_feedback_todo_resolution",
+          "20260907_015000_feedback_todo_followup",
+          "20260907_122000_feedback_abort_consistency",
+          "20260908_015000_feedback_slot_status_wording",
+          "20260921_092000_feedback_impl_feedback_eff24f55",
+          "20261010_202000_feedback_impl_feedback_dcd8234d",
+          "20261101_103000_feedback_impl_feedback_dcd8234d",
+          "20261101_123000_feedback_mail_removal_housekeeping",
+          "20261103_083000_feedback_housekeeping_followups"
+        ],
+        "event_set_sha256": "ba8e9c6c605cd5d157bbce221ea07c1d7defd5e40f1d4f4e58748b18ebfa09c3",
+        "latest_tree_sha256": "5b8f5259388c17804383a1c2dd4512cce6b1820ef2761d4c6c7f5f741a02c072"
+      },
+      "infra/events": {
+        "head_event_id": "20261103_084000_feedback_housekeeping_followups",
+        "head_event_sha256": "7f2e5932ff83cc01f143918383b0ed5787b23497cb51bd435d36e1d2d154d262",
+        "event_ids": [
+          "20260830_190412_infra_product_design",
+          "20260905_093000_feedback_todo_resolution",
+          "20260907_021000_feedback_todo_followup",
+          "20260907_124000_feedback_abort_consistency",
+          "20260908_021000_feedback_slot_status_wording",
+          "20260921_094000_feedback_impl_feedback_eff24f55",
+          "20261010_203000_feedback_impl_feedback_dcd8234d",
+          "20261101_104000_feedback_impl_feedback_dcd8234d",
+          "20261101_124000_feedback_mail_removal_housekeeping",
+          "20261103_084000_feedback_housekeeping_followups"
+        ],
+        "event_set_sha256": "92c16746a184d064f0e98f657ad96888f852af9291cc08160c7a7e09522d6d3f",
+        "latest_tree_sha256": "e247f47fe00c1983bcd0b74e9807496a1b55e0fda78dfb934d5153e411389b91"
+      },
+      "design/events": {
+        "head_event_id": null,
+        "head_event_sha256": null,
+        "event_ids": [],
+        "event_set_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "latest_tree_sha256": null
+      },
+      "specs/events": {
+        "head_event_id": "20261103_085000_feedback_housekeeping_followups",
+        "head_event_sha256": "5f510f1df00bd29dfa2289277b0c115ad39deb091be82b20b06526e8f6c89013",
+        "event_ids": [
+          "20260830_202851_spec_generation",
+          "20260905_100000_feedback_todo_resolution",
+          "20260907_024000_feedback_todo_followup",
+          "20260907_131000_feedback_abort_consistency",
+          "20260908_024000_feedback_slot_status_wording",
+          "20260908_062000_feedback_spec_machine_readable",
+          "20260917_050000_feedback_impl_feedback_fd678b04",
+          "20260917_100000_feedback_impl_feedback_fd678b04_cycle2",
+          "20260921_100000_feedback_impl_feedback_eff24f55",
+          "20260923_112000_feedback_impl_feedback_eff24f55_cycle2",
+          "20261010_204000_feedback_impl_feedback_dcd8234d",
+          "20261027_055000_feedback_impl_feedback_dcd8234d",
+          "20261101_105000_feedback_impl_feedback_dcd8234d",
+          "20261101_125000_feedback_mail_removal_housekeeping",
+          "20261103_085000_feedback_housekeeping_followups"
+        ],
+        "event_set_sha256": "b168089c178b4ca87b4a76e16f375a1a9806d7bb4d4b90185b183a9b495bf438",
+        "latest_tree_sha256": "d006b3d0131551d6afc77d805a8b55b19ab6431b271f63f2ed052944a4549e43"
+      }
+    }
+  },
+  "state": "resolved",
+  "requests": [
+    {
+      "request_id": "CR-9d2e6c41-001",
+      "source": {
+        "byte_span": [
+          296,
+          4095
+        ],
+        "slice_sha256": "a23968da819c9a10d46460054285a32ebe59c0ddbdf83cbaedab5d0f66b193dc"
+      },
+      "decision_state": "resolved",
+      "reason": "ハウスキープ設定の管理 DB 接続参照名を、RAPID_CROSSCHECK_MODE が off 以外、または確報クロスチェックを使う設置では必須とし、管理 DB に接続しない振る舞い(SPEC-014-08)を管理 DB を一切使わない設置に絞る要求。USDM SPEC-014-07 / 08 の条件と受け入れ基準の変更なので要件正本が最上流の所有者。RDRA(情報「ハウスキープ設定」・条件「ハウスキープの削除判定」)・NFR・アーキテクチャ(SP-027 / E-028)・インフラ・仕様(CLI 契約 housekeep.sh)は保守的 closure で追従する",
+      "evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-014"
+        },
+        {
+          "kind": "related_id",
+          "value": "SPEC-014-07 (USDM specification id under REQ-014)"
+        },
+        {
+          "kind": "related_id",
+          "value": "SPEC-014-08 (USDM specification id under REQ-014)"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/usdm/latest/requirements.yaml"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/rdra/latest/情報.tsv"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/rdra/latest/条件.tsv"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml"
+        },
+        {
+          "kind": "request_text",
+          "value": "ハウスキープ設定の管理 DB 接続参照名は、次のどちらかに当てはまる設置では必須とする"
+        }
+      ],
+      "deterministic_ownership_evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-014",
+          "rule": "REQ-",
+          "stage": "requirements"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/usdm/latest/requirements.yaml",
+          "rule": "(^|/)usdm(/|$)",
+          "stage": "requirements"
+        },
+        {
+          "kind": "related_id_prefix",
+          "value": "SPEC-014-07",
+          "rule": "SPEC-",
+          "stage": "spec"
+        },
+        {
+          "kind": "related_id_prefix",
+          "value": "SPEC-014-08",
+          "rule": "SPEC-",
+          "stage": "spec"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml",
+          "rule": "(^|/)specs?(/|$)",
+          "stage": "spec"
+        }
+      ],
+      "confidence": "high",
+      "ambiguity_kind": null,
+      "stop_flags": [],
+      "candidates": [],
+      "resolution": {
+        "status": "not_required"
+      },
+      "work_units": [
+        {
+          "request_id": "CR-9d2e6c41-001",
+          "constraint_key": "housekeeping-db-ref-required-when-db-used",
+          "direct_stage": "requirements",
+          "reason": "ハウスキープ設定の管理 DB 接続参照名を、RAPID_CROSSCHECK_MODE が off 以外、または確報クロスチェックを使う設置では必須とし、管理 DB に接続しない振る舞い(SPEC-014-08)を管理 DB を一切使わない設置に絞る要求。USDM SPEC-014-07 / 08 の条件と受け入れ基準の変更なので要件正本が最上流の所有者。RDRA(情報「ハウスキープ設定」・条件「ハウスキープの削除判定」)・NFR・アーキテクチャ(SP-027 / E-028)・インフラ・仕様(CLI 契約 housekeep.sh)は保守的 closure で追従する",
+          "evidence": [
+            {
+              "kind": "related_id_prefix",
+              "value": "REQ-014"
+            },
+            {
+              "kind": "related_id",
+              "value": "SPEC-014-07 (USDM specification id under REQ-014)"
+            },
+            {
+              "kind": "related_id",
+              "value": "SPEC-014-08 (USDM specification id under REQ-014)"
+            },
+            {
+              "kind": "related_path_pattern",
+              "value": "docs/usdm/latest/requirements.yaml"
+            },
+            {
+              "kind": "related_path_pattern",
+              "value": "docs/rdra/latest/情報.tsv"
+            },
+            {
+              "kind": "related_path_pattern",
+              "value": "docs/rdra/latest/条件.tsv"
+            },
+            {
+              "kind": "related_path_pattern",
+              "value": "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml"
+            },
+            {
+              "kind": "request_text",
+              "value": "ハウスキープ設定の管理 DB 接続参照名は、次のどちらかに当てはまる設置では必須とする"
+            }
+          ],
+          "id": "CR-9d2e6c41-001#1",
+          "required_closure_stages": [
+            "requirements",
+            "quality_attributes",
+            "architecture",
+            "infrastructure",
+            "spec"
+          ]
+        }
+      ]
+    },
+    {
+      "request_id": "CR-9d2e6c41-002",
+      "source": {
+        "byte_span": [
+          4095,
+          6700
+        ],
+        "slice_sha256": "ec253ad55822ee58a8b3f77bbf6dc987714c8588445a96fa97422405abc74189"
+      },
+      "decision_state": "resolved",
+      "reason": "CLI 契約 config_input_rules.env_files のコメントの定義を「前後の空白を除いた結果が # で始まる行」に改める要求。spec 成果物(CLI 契約)の変更で、USDM SPEC-004-04 / REQ-004 と RDRA は行の形式を持たないため文脈参照とする。速報クロスチェック設定の読み込みと新しい契約の差分は仕様の判断記録に残す",
+      "evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-004"
+        },
+        {
+          "kind": "related_id",
+          "value": "SPEC-004-04 (USDM specification id under REQ-004)"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml"
+        },
+        {
+          "kind": "request_text",
+          "value": "config_input_rules.env_files のコメントの定義を、「前後の空白(半角空白とタブ)を除いた結果が `#` で始まる行はコメント」に改める"
+        }
+      ],
+      "deterministic_ownership_evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-004",
+          "rule": "REQ-",
+          "stage": "requirements"
+        },
+        {
+          "kind": "related_id_prefix",
+          "value": "SPEC-004-04",
+          "rule": "SPEC-",
+          "stage": "spec"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml",
+          "rule": "(^|/)specs?(/|$)",
+          "stage": "spec"
+        }
+      ],
+      "confidence": "high",
+      "ambiguity_kind": null,
+      "stop_flags": [],
+      "candidates": [],
+      "resolution": {
+        "status": "not_required"
+      },
+      "work_units": [
+        {
+          "request_id": "CR-9d2e6c41-002",
+          "constraint_key": "env-indented-comment-line",
+          "direct_stage": "spec",
+          "reason": "CLI 契約 config_input_rules.env_files のコメントの定義を「前後の空白を除いた結果が # で始まる行」に改める要求。spec 成果物(CLI 契約)の変更で、USDM SPEC-004-04 / REQ-004 と RDRA は行の形式を持たないため文脈参照とする。速報クロスチェック設定の読み込みと新しい契約の差分は仕様の判断記録に残す",
+          "evidence": [
+            {
+              "kind": "related_id_prefix",
+              "value": "REQ-004"
+            },
+            {
+              "kind": "related_id",
+              "value": "SPEC-004-04 (USDM specification id under REQ-004)"
+            },
+            {
+              "kind": "related_path_pattern",
+              "value": "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml"
+            },
+            {
+              "kind": "request_text",
+              "value": "config_input_rules.env_files のコメントの定義を、「前後の空白(半角空白とタブ)を除いた結果が `#` で始まる行はコメント」に改める"
+            }
+          ],
+          "id": "CR-9d2e6c41-002#1",
+          "required_closure_stages": [
+            "spec"
+          ]
+        }
+      ]
+    }
+  ]
+}

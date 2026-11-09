@@ -1,0 +1,53 @@
+{
+  "schema_version": "distillery.arch-feedback-event/v1",
+  "event_id": "20261101_123000_feedback_mail_removal_housekeeping",
+  "created_at": "2026-11-01T12:30:00Z",
+  "stage": "architecture",
+  "trigger_event": "usdm:20261101_121000_feedback_mail_removal_housekeeping, rdra:20261101_121000_feedback_mail_removal_housekeeping, nfr:20261101_122000_feedback_mail_removal_housekeeping",
+  "feedback_request": {
+    "feedback_request_id": "20261101_mail_removal_housekeeping",
+    "input_sha256": "7be2e54314163ff4cae802f01005fe771da312621c06ff123a43b09f562afb11",
+    "request_ids": [
+      "CR-e4ea8aaa-001",
+      "CR-e4ea8aaa-002"
+    ],
+    "work_unit_ids": [
+      "CR-e4ea8aaa-001#1",
+      "CR-e4ea8aaa-002#1"
+    ]
+  },
+  "members": [
+    {
+      "path": "arch/events/20261101_123000_feedback_mail_removal_housekeeping/_changes.md",
+      "sha256": "0013ac7de3d4da842c1deeb60a5e8e4763a1011e08fa2e0555bd2a990a1c8c2e"
+    },
+    {
+      "path": "arch/events/20261101_123000_feedback_mail_removal_housekeeping/_inference.md",
+      "sha256": "da778ae2014d0957f6c68ffea45ef057e4e716478466dcbffd6eee6c7ee21d81"
+    },
+    {
+      "path": "arch/events/20261101_123000_feedback_mail_removal_housekeeping/arch-design-diff.yaml",
+      "sha256": "6ad5754d6b458876038387b8650e0683ebd2bea53741412f6324d5ebe95457ff"
+    },
+    {
+      "path": "arch/events/20261101_123000_feedback_mail_removal_housekeeping/arch-design.md",
+      "sha256": "32d0bf7779b3d81a767b4f4c4af421f31392751503cddf4e701439d69c0be372"
+    },
+    {
+      "path": "arch/events/20261101_123000_feedback_mail_removal_housekeeping/coverage-report.md",
+      "sha256": "9e62df2cd00e49f1cfcfe467df3ced794be2d742287ad6c40a9f8d610b3879cd"
+    },
+    {
+      "path": "arch/events/20261101_123000_feedback_mail_removal_housekeeping/decisions/arch-decision-022.yaml",
+      "sha256": "6525c3be226e6558002755885cd38e91a1276d869e6946869e54d6b6f84e86a1"
+    },
+    {
+      "path": "arch/events/20261101_123000_feedback_mail_removal_housekeeping/decisions/arch-decision-023.yaml",
+      "sha256": "b661db3f02b82755ebcd4013f95f1521717037b32fe4cb55fdec922a5be92ced"
+    },
+    {
+      "path": "arch/events/20261101_123000_feedback_mail_removal_housekeeping/source.txt",
+      "sha256": "c32dc03a70d7adf3c9160b93e3b17df0f6a5b161d6b29dbae15ed786e9f8ea01"
+    }
+  ]
+}

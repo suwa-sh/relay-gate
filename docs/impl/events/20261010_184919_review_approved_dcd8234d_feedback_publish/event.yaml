@@ -1,0 +1,141 @@
+event_id: 20261010_184919_review_approved_dcd8234d_feedback_publish
+type: review_approved
+uc_id: dcd8234d
+stage: S9
+payload:
+  review_evidence_event_id: 20261010_182853_s9_review_generated_dcd8234d_simplification
+  approval_kind: feedback_publish_approval
+  user_answer: 機能=A / 要求=公開 / 登録=A / 前提=一括承認
+  feedback_review_evidence:
+    feedback_id: 20261010_104636_impl_feedback_dcd8234d
+    draft_sha256: d4ddd211752998f5480a51d9dddfa3a58937badd62f72092c9257ed1384448fd
+    request_count: 4
+  implementation_review_evidence:
+    gate_result: 6/6 pass
+    open_blocker_count: 0
+    open_major_count: 0
+    assumption_evidence_sha256: 18852606ab7ecab128e37bfddf669efbe1d00c8bc647bd5f3dae240e2746018d
+  selections:
+    機能: 'A: 現在の到達点を記録として承認(仕様反映後に簡素化後の仕様へ作り直す)'
+    要求: 公開(4 件すべて。主要求 = クロスチェックの簡素化)
+    登録: 'A: 固定パス読み込み(現行実装)'
+    前提: 一括承認(回答必須 0 件。全件 auto_confirmed)
+  assumption_decisions:
+  - tier: tier-final-crosscheck
+    id: A-001
+    decision: auto_confirmed
+  - tier: tier-final-crosscheck
+    id: A-002
+    decision: auto_confirmed
+  - tier: tier-final-crosscheck
+    id: A-004
+    decision: auto_confirmed
+  - tier: tier-final-crosscheck
+    id: A-005
+    decision: auto_confirmed
+  - tier: tier-final-crosscheck
+    id: A-006
+    decision: auto_confirmed
+  - tier: tier-final-crosscheck
+    id: A-007
+    decision: auto_confirmed
+  - tier: tier-final-crosscheck
+    id: A-009
+    decision: auto_confirmed
+  - tier: tier-final-crosscheck
+    id: A-010
+    decision: auto_confirmed
+  - tier: tier-final-crosscheck
+    id: A-011
+    decision: auto_confirmed
+  - tier: tier-final-crosscheck
+    id: A-012
+    decision: auto_confirmed
+  - tier: tier-final-crosscheck
+    id: A-014
+    decision: auto_confirmed
+  - tier: tier-final-crosscheck
+    id: A-015
+    decision: auto_confirmed
+  - tier: tier-final-crosscheck
+    id: A-016
+    decision: auto_confirmed
+  - tier: tier-final-crosscheck
+    id: A-017
+    decision: auto_confirmed
+  - tier: tier-final-crosscheck
+    id: A-018
+    decision: auto_confirmed
+  - tier: tier-final-crosscheck
+    id: A-019
+    decision: auto_confirmed
+  - tier: tier-final-crosscheck
+    id: A-020
+    decision: auto_confirmed
+  - tier: tier-final-crosscheck
+    id: A-021
+    decision: auto_confirmed
+  - tier: tier-rapid-crosscheck
+    id: A-001
+    decision: auto_confirmed
+  - tier: tier-rapid-crosscheck
+    id: A-002
+    decision: auto_confirmed
+  - tier: tier-rapid-crosscheck
+    id: A-003
+    decision: auto_confirmed
+  - tier: tier-rapid-crosscheck
+    id: A-004
+    decision: auto_confirmed
+  - tier: tier-rapid-crosscheck
+    id: A-005
+    decision: auto_confirmed
+  - tier: tier-rapid-crosscheck
+    id: A-008
+    decision: auto_confirmed
+  - tier: tier-rapid-crosscheck
+    id: A-011
+    decision: auto_confirmed
+  - tier: tier-rapid-crosscheck
+    id: A-012
+    decision: auto_confirmed
+  - tier: tier-rapid-crosscheck
+    id: A-013
+    decision: auto_confirmed
+  - tier: tier-rapid-crosscheck
+    id: A-014
+    decision: auto_confirmed
+  - tier: tier-rapid-crosscheck
+    id: A-015
+    decision: auto_confirmed
+  - tier: tier-rapid-crosscheck
+    id: A-016
+    decision: auto_confirmed
+  - tier: tier-rapid-crosscheck
+    id: A-018
+    decision: auto_confirmed
+  - tier: tier-rapid-crosscheck
+    id: A-019
+    decision: auto_confirmed
+  - tier: tier-rapid-crosscheck
+    id: A-021
+    decision: auto_confirmed
+  - tier: tier-rapid-crosscheck
+    id: A-022
+    decision: auto_confirmed
+  - tier: tier-rapid-crosscheck
+    id: A-023
+    decision: auto_confirmed
+  - tier: tier-rapid-crosscheck
+    id: A-024
+    decision: auto_confirmed
+  assumption_hash_recheck:
+    tier-final-crosscheck:
+      assumptions_sha256: 91403d5781aa01449a3932210b8bc551fef3285111a09932e1b5dc0b750324b6
+      assumption_verdicts_sha256: c30d56285d6913139398e84551751fe1d3a046068f7870ac680f4a679c48a458
+    tier-rapid-crosscheck:
+      assumptions_sha256: 2152be1c987ae1edadecdfc96e05150d78d2bf663d60d78104647d575db9ca8f
+      assumption_verdicts_sha256: 701ff3e95033ea51aee712ca276e5322a394a33bb200a11a18c6eabae90e3e3c
+  review_notes: docs/impl/latest/dcd8234d/review/review-notes.md
+  next_state: publishing_feedback
+created_at: '2026-10-10T18:49:19+09:00'

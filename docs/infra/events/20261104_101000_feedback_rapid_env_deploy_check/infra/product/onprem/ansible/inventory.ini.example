@@ -1,0 +1,27 @@
+; relay-gate インベントリ例(適用側の実ホスト名/IPに置き換えて使用する)
+
+[relay_gate_execution_hosts]
+; exec-host-01 ansible_host=10.0.1.11
+
+[relay_gate_db_hosts]
+; db-host-01 ansible_host=10.0.2.11
+
+[relay_gate_execution_hosts:vars]
+segment=execution
+; ハウスキープ設定のファイル名と削除待ちの置き場(成果物ルート配下・同じファイルシステム)。いずれも仕様で確定した値を設定する
+; relay_gate_housekeep_config_file=<仕様で確定したファイル名>
+; relay_gate_housekeep_staging_dir=<仕様で確定した置き場のパス>
+; 速報クロスチェックの有効化(feature-flag.env の RAPID_CROSSCHECK_MODE と同じ値。off なら rapid-crosscheck.env を配置しない)
+rapid_crosscheck_mode=off
+
+[relay_gate_db_hosts:vars]
+segment=db
+; housekeep_del に SELECT / DELETE を付与する 6 テーブル(スキーマは管理 DB スキーマ契約に従う)は
+; group_vars で relay_gate_housekeep_tables(schema / objs の配列)として定義する
+
+[all:vars]
+; 全ホストで同じローカルタイムゾーンにする(実行ログの日時と run_id の時刻軸。値は適用側で決める)
+relay_gate_timezone=Asia/Tokyo
+; 確報クロスチェックを使うか(既定 false)。確報 runner(実行ホスト)と確報 worker(DB ホスト)の両方が読むため全ホストで同じ値にする。
+; true なら両方に final-crosscheck.env を配置して存在を確認し、false なら両方から消す
+relay_gate_final_crosscheck_enabled=false

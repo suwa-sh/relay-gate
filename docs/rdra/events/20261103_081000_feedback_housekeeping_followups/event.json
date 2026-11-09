@@ -1,0 +1,26 @@
+{
+  "schema_version": "distillery.rdra-feedback-event/v1",
+  "event_id": "20261103_081000_feedback_housekeeping_followups",
+  "created_at": "2026-11-03T08:10:00Z",
+  "stage": "requirements",
+  "feedback_request": {
+    "feedback_request_id": "20261103_housekeeping_followups",
+    "input_sha256": "7a81f28ce6fef4c2f70e2839d657a3f8e8480671bd846b460edab3d22b3ba775",
+    "request_ids": [
+      "CR-f3b8a1d0-001"
+    ],
+    "work_unit_ids": [
+      "CR-f3b8a1d0-001#1"
+    ]
+  },
+  "members": [
+    {
+      "path": "rdra/events/20261103_081000_feedback_housekeeping_followups/_changes.md",
+      "sha256": "d4aaadc1859d7412e209218c1eabb73769a01d08521ce2123cd351489e8c3c43"
+    },
+    {
+      "path": "rdra/events/20261103_081000_feedback_housekeeping_followups/条件.tsv",
+      "sha256": "51180bb03a706f4e1650eb5aeec71d6ea270baa6f73717411e30a16d23b10342"
+    }
+  ]
+}

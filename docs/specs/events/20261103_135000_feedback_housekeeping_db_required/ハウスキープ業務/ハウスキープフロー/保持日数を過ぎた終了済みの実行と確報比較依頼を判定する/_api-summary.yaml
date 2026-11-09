@@ -1,0 +1,57 @@
+uc: "保持日数を過ぎた終了済みの実行と確報比較依頼を判定する"
+business: "ハウスキープ業務"
+buc: "ハウスキープフロー"
+paths: []
+x_cli_commands:
+  - name: "housekeep.sh"
+    tier: "tier-ops"
+    role: "defines"
+    synopsis: "housekeep.sh [--verbose] [--help]"
+    invoked_by: "ジョブスケジューラ(ハウスキープ定期ジョブ、1 日 1 回)。業務ジョブ(facade.sh)からは呼ばない"
+    args: []
+    options:
+      - name: "--verbose"
+        type: "boolean"
+        required: false
+        description: "単位ごとの info: unit kept root_run_id=... reason=unfinished|within_retention|undeterminable / info: unit deleted root_run_id=... run_ids=N latest_completed_at=... を stderr にも出す"
+      - name: "--help"
+        type: "boolean"
+        required: false
+        description: "usage を stdout に出して終了コード 0"
+    stdin: "なし"
+    stdout: "固定順の key=value 8 行(retention_days / cutoff / purged_pending_entries / deleted_run_units / deleted_runs / deleted_final_crosscheck_requests / deleted_orphan_marks / kept_units)。終了コード 0 と 6 で出し、2 では出さない。件数の意味は UC「成果物と管理 DB の履歴を削除する」"
+    stderr: "error: config file not found path: ...(2)/ error: config file is not readable path: ...(2)/ error: invalid value key=HOUSEKEEP_RETENTION_DAYS value=... path: ... + hint: use a positive integer(2)/ error: option required option=HOUSEKEEP_DB_CONN_REF path: ...(2。RAPID_CROSSCHECK_MODE が off 以外、または確報クロスチェックを使う設置で欠落・空)/ error: config file is not readable path: $RELAY_GATE_CONFIG_DIR/final-crosscheck.env(2。off で HOUSEKEEP_DB_CONN_REF が無い・空のとき、あるのに読めない)/ 入力の守備範囲の違反(housekeep.env / feature-flag.env と、読んだときの final-crosscheck.env。NUL / UTF-8 / BOM / CR / invalid line。config_input_rules の文言。2)/ error: artifact root not found path: ...(2)/ error: unknown option option=...(2)/ error: unexpected argument value=...(2)/ warn: unknown key key=... path: ... / warn: management db is not configured; database rows are not deleted (HOUSEKEEP_DB_CONN_REF not set)(管理 DB を一切使わない設置 = off で確報クロスチェックを使わない設置で、HOUSEKEEP_DB_CONN_REF が無い・空のとき起動のたびに 1 行。確報比較依頼と管理 DB の行は削除しない)/ warn: run kept execution-spec missing run_id=... path: ... / warn: run kept execution-spec invalid run_id=... path: ... / warn: run kept slot artifact missing run_id=... role=... path: ... / warn: run kept completed_at missing run_id=... table=... / warn: run kept rapid crosscheck mode run_id=... mode=...(管理 DB に接続しないとき、off 以外の期間に作られた実行)/ error: management db connection failed conn_ref=...(6)/ error: management db query failed table=...(6)/ error: artifact root is not readable path: ...(6)"
+    exit_codes:
+      - code: 0
+        meaning: "失敗なく判定と削除を終えた(warn があっても 0)"
+      - code: 2
+        meaning: "走査前の入力・設定エラー(未知のオプション・余分な引数、housekeep.env 不在・読み取り不可、保持日数の不正、管理 DB を使う設置(RAPID_CROSSCHECK_MODE が off 以外、または確報クロスチェックを使う設置)で HOUSEKEEP_DB_CONN_REF 欠落・空、feature-flag.env が読めない、off で HOUSEKEEP_DB_CONN_REF が無い・空のときに final-crosscheck.env があるのに読めない、読んだ設定ファイルの入力の守備範囲の違反(final-crosscheck.env は off で HOUSEKEEP_DB_CONN_REF が無い・空のときだけ読む)、RELAY_GATE_ARTIFACT_ROOT が無い)。削除待ちの置き場の残りを含め何も削除しない"
+      - code: 6
+        meaning: "管理 DB の接続・SELECT 失敗、facade/ の読み取り失敗、または削除の失敗が 1 件以上"
+  - name: "validate-config.sh"
+    tier: "tier-facade"
+    role: "uses"
+    synopsis: "validate-config.sh --housekeep <path> [--verbose] [--help]"
+    invoked_by: "基盤適用設計者 / 運用者(直接起動)。validate-config.sh の定義元は UC「feature flag を設定する」。この UC は検証種別 --housekeep の検証規則を定義する"
+    args: []
+    options:
+      - name: "--housekeep"
+        type: "string"
+        required: false
+        description: "検証する housekeep.env のパス。値必須。検証種別オプション(--feature-flag / --job-map / --rapid-crosscheck / --final-crosscheck / --housekeep)のうちちょうど 1 つを指定する"
+      - name: "--verbose"
+        type: "boolean"
+        required: false
+        description: "補助出力を stderr に出す"
+    stdin: "なし"
+    stdout: "--housekeep: config=housekeep / path: ... / retention_days=<N>(キーが無ければ 90、invalid 時は -)/ status=valid|invalid / violations=N(invalid 時)"
+    stderr: "error: config file not found path: ... / error: config file is not readable path: ... / error: invalid value key=HOUSEKEEP_RETENTION_DAYS value=... path: ... + hint: use a positive integer / warn: unknown key key=... path: ... / 入力の守備範囲の違反は契約 config_input_rules の文言"
+    exit_codes:
+      - code: 0
+        meaning: "違反 0 件"
+      - code: 2
+        meaning: "検証種別オプションの指定数不正・値なし・未知のオプション・ファイル不在・入力の守備範囲の違反・保持日数が正の整数でない"
+      - code: 6
+        meaning: "検証器の内部障害(契約 config_input_rules.internal_failure)"
+async_events: []
+schemas: []

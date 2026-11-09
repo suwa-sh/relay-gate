@@ -1,0 +1,9 @@
+ハウスキープ追補(2026-11-03 の前段 requirements / NFR 更新)への追従。実行ログの整理を手動ローテーションから設置環境の OS 標準のログ整理(logrotate)へ改め(CTR-006、arch-decision-024)、管理 DB に接続しない設定でのハウスキープの振る舞いを削除判定(SP-027 / SP-028)とハウスキープ設定(BC-005 の語、E-028)に反映した(arch-decision-025)。
+trigger_event: usdm:20261103_081000_feedback_housekeeping_followups, rdra:20261103_081000_feedback_housekeeping_followups, nfr:20261103_082000_feedback_housekeeping_followups
+
+feedback_request_id: 20261103_housekeeping_followups
+input_sha256: 7a81f28ce6fef4c2f70e2839d657a3f8e8480671bd846b460edab3d22b3ba775
+request_ids: CR-f3b8a1d0-001, CR-f3b8a1d0-003
+direct_work_unit_ids: CR-f3b8a1d0-003#1
+causal_work_unit_ids: CR-f3b8a1d0-001#1, CR-f3b8a1d0-003#1
+stage_packet: docs/pipeline/feedback-runs/20261103_housekeeping_followups/stage-packets/architecture.md

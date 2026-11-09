@@ -1,0 +1,30 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "specification"
+artifact_id: "spec-decision-017"
+title: "validate-config.sh は facade 単独で全設定ファイルを検証し、起動コマンドの検証はコマンド部分と {job_id} の 2 点だけにする"
+status: "approved"
+generated_at: "2026-10-10T20:40:00Z"
+context: |
+  - 従来仕様は validate-config.sh の検証ロジックをティア間で委譲し(--crosscheck-job-map を速報クロスチェックティア、--target-catalog を確報クロスチェックティアへ)、本体(facade)が他ティアの検証関数ファイルを source していた。開発規約は「契約に無いティア間依存は禁止」と定め、実装では暫定依存で統合テストを通していた。
+  - 2026-10-10 の実装フィードバックで、arch はティア間依存ルールに CTR-007 を追加し、validate-config.sh は facade が全設定ファイルを自身の解析関数で検証し他ティアへ委譲しない(委譲撤廃)と決定した(CR-dcd8234d-001 / CR-dcd8234d-003)。同一プロセスに複数ティアを source する場合の名前空間の一般規則(ティア固有接頭辞・共有面の限定・副作用禁止・再定義禁止)は将来のティア追加に備え CTR-007 に残す。
+  - クロスチェック簡素化(spec-decision-016)で設定が env の起動コマンド 1 行へ縮退し、CSV クォート解析の共有が不要になったため、委譲を残す必然性が消えた。
+  - CR-dcd8234d-002 は、本 UC の E2E 完了条件の Then から実装構造(同じ CSV クォート解析関数を使う)の要求を外し、validate-config.sh の終了コード・stdout・stderr だけで判定できる文言にすることを求めた。
+decision: |
+  1. validate-config.sh の全検証種別の所有 tier を tier-facade にする。CLI 契約の tier_note / options[].owner_tier からティア間委譲の記述を外し、全種別を tier-facade 所有にする。
+  2. 検証種別 --crosscheck-job-map / --target-catalog を廃止し、--rapid-crosscheck(rapid-crosscheck.env の RAPID_COMPARE_COMMAND 検証)/ --final-crosscheck(final-crosscheck.env の FINAL_COMPARE_COMMAND 検証)へ置き換える。検証種別は --feature-flag / --job-map / --rapid-crosscheck / --final-crosscheck の 4 つのうちちょうど 1 つ(排他)。
+  3. 起動コマンドの残す検証は 2 点だけにする: コマンド部分(先頭の語)が絶対パスで存在・実行可能であること、速報の起動コマンドに {job_id} を含むこと(確報はプレースホルダ無しのため {job_id} 検査なし)。検証はコマンド部分だけに行い、引数部分の内容は検査しない。違反文言は feature-flag.env の形式に揃える: `error: path is not absolute key=<KEY> path=...` / `error: file not executable key=<KEY> path=...` / `error: placeholder {job_id} is missing key=<KEY> value=...`。実装が補っていた compare_command is not absolute / compare_targets is not catalog / compare_options is missing {blue} or {green} / comparison definition not found は、対象の列が無くなるため廃止する。
+  4. 本 UC「クロスチェックのジョブマップと比較定義を定義する」を速報の起動コマンド設定と検証だけに縮小し、tier-final-crosscheck.md を削除、tier-rapid-crosscheck.md を tier-facade.md に置換する。確報の起動コマンド設定と検証は UC「比較ツールで日次全量比較を実行して結果を保存する」(worker が読む設定であるため)に置く。
+  5. 本 UC の E2E 完了条件のすべての Then を、validate-config.sh の終了コード・stdout・stderr だけで判定できる文言にする(実装の構造・関数の共有を書かない)。
+consequences:
+  positive:
+    - "開発規約『契約に無いティア間依存の禁止』とティア仕様が矛盾しなくなる(委譲自体が無くなる)"
+    - "facade が全設定ファイルを単独で検証でき、結合面が最小になる。ティアを追加するたびに facade を書き換える必要が無い"
+    - "受け入れ基準が観測できる振る舞いだけになり、step 実装者が毎回判断していた代替判定が不要になる"
+  negative:
+    - "将来、設定検証にティア固有のロジックが必要になった場合は、CTR-007 の名前空間規則に沿って source 併用の構成を新たに契約化する必要がある"
+alternatives_considered:
+  - name: "委譲を残し、共有面の契約(提供側・利用側・関数集合)+ 登録方式 案 A(固定パスを source)+ 名前空間の規則を CTR-007 に追加する"
+    reason_rejected: "簡素化で速報の設定検証が env の起動コマンド 1 キーの検証に縮退し CSV クォート解析の共有が不要になったため、委譲を残す必然性が消えた。arch は委譲撤廃(案 1)を採用した"
+  - name: "名前空間規則を設けず委譲も契約化しない(現状維持)"
+    reason_rejected: "同一プロセスの名前衝突が統合時にだけ現れる(実装で終了コード 6 の内部障害が実際に発生した)。委譲は撤廃するが、将来の source 併用に備えた一般規則を安価な保険として CTR-007 に残す"

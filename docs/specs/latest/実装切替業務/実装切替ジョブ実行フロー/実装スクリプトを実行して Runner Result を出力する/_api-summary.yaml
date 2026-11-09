@@ -29,5 +29,5 @@ async_events:
     channel: "slot-completed"
     direction: "publish"
     message: "SlotCompletedNotice"
-    summary: "3 ファイル確定後、RAPID_CROSSCHECK_MODE が off 以外(foreground / background)のときだけ、環境変数 RAPID_CROSSCHECK_RUNNER が指す速報クロスチェック runner の公開 function(blue-completed / green-completed)へ run_id / job_id / exit_code / artifact_uri を通知する。送信失敗は条件「完了通知失敗の扱い」(WARN のみ、終了コード不変)。契約の定義は UC「速報クロスチェック runner へ完了通知を送信する」"
+    summary: "3 ファイル確定後、RAPID_CROSSCHECK_MODE が off 以外(foreground / background)のときだけ、環境変数 RAPID_CROSSCHECK_RUNNER が指す速報クロスチェック runner の公開 function(blue-completed / green-completed)へ run_id / job_id / exit_code を通知する。送信失敗は条件「完了通知失敗の扱い」(WARN のみ、終了コード不変)。契約の定義は UC「速報クロスチェック runner へ完了通知を送信する」"
 schemas: []

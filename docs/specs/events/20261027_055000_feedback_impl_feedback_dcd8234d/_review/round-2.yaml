@@ -1,0 +1,78 @@
+round: 2
+findings:
+  - id: R-1
+    viewpoint: 4
+    severity: major
+    target: "クロスチェック業務/確報クロスチェックフロー/比較ツールで日次全量比較を実行して結果を保存する/spec.md"
+    claim: >-
+      R-1 は未解消。確報 UC「比較ツールで日次全量比較を実行して結果を保存する」(UC-15)の
+      spec.md「関連 USDM」表に REQ-011 / SPEC-011-03 行が存在しない。
+      一方で spec-event.yaml の同 UC usdm[] には REQ-011 / SPEC-011-03 が残っており
+      (scenario は「exit_code=0 で SUCCEEDED になる(SPEC-006-02)」へ是正済み)、
+      usdm-acceptance-matrix.md も SPEC-011-03 の受け入れを UC-15 で covered としている。
+      spec.md の表注記は「本表は spec-event.yaml の use_cases[].usdm と同内容」と明記するため、
+      三者(spec.md 表 / spec-event.yaml usdm[] / acceptance-matrix)が SPEC-011-03 について
+      一致せず、round-1 の三者不一致が向きを変えて残存している。
+      round-1 の resolved note は「spec.md の関連 USDM 表に REQ-011 / SPEC-011-03 行を追加した」と
+      記録しているが、実ファイルには当該行が無く、記録と実態が食い違う。
+    evidence: >-
+      spec.md:163-168 の関連 USDM 表は REQ-006 / SPEC-006-02・REQ-007 / SPEC-007-01・
+      REQ-007 / SPEC-007-03・REQ-003 / SPEC-003-03 の 4 行のみで REQ-011 / SPEC-011-03 行が無い
+      (git diff 上、旧 stale 行「REQ-011 | SPEC-011-03 | 対象一覧を成果物に記録する(SPEC-011-03)」は
+      削除されたが、是正行は再追加されていない)。
+      spec.md:170 に「機械可読の正本は spec-event.yaml の use_cases[].usdm(本表と同内容)」。
+      spec-event.yaml:113-116 は同 UC に REQ-011 / SPEC-011-03 →
+      scenario「exit_code=0 で SUCCEEDED になる(SPEC-006-02)」を保持。
+      usdm-acceptance-matrix.md:84 / :137 は SPEC-011-03 を UC-15 でも covered とし、
+      UC-15 の受け入れを「確報の起動コマンドをそのまま起動し stdout / stderr / exit_code を
+      依頼レコードへ保存する」と記す。表(spec.md)だけが SPEC-011-03 を欠く。
+    suggested_fix: >-
+      UC-15 の spec.md「関連 USDM」表に行
+      「| REQ-011 | SPEC-011-03 | exit_code=0 で SUCCEEDED になる(SPEC-006-02) |」を追加し、
+      spec-event.yaml usdm[] および usdm-acceptance-matrix.md と三者一致させる
+      (round-1 resolved note が記述した状態に実ファイルを合わせる)。
+      なお scenario 名「exit_code=0 で SUCCEEDED になる(SPEC-006-02)」は spec.md:179 の
+      Scenario: として実在するため、機械照合(spec-event.yaml scenarios[])は成立している。
+  - id: R-2
+    viewpoint: 4
+    severity: minor
+    target: "_cross-cutting/usdm-acceptance-matrix.md"
+    claim: >-
+      簡素化で廃止した「成果物ファイル保存」を指す stale な記述が
+      usdm-acceptance-matrix.md に残っている。REQ-003 / SPEC-003-03 行の UC-15 受け入れ条件が
+      「起動失敗でも 3 ファイルと FAILED を残す」となっており、worker が成果物ファイルを
+      保存しなくなった現仕様(UC-15 spec.md:5「worker 側で成果物ファイルを保存しない」、
+      SPEC-003-03 の実シナリオは「起動失敗でも依頼を FAILED にする(SPEC-003-03)」)と矛盾する。
+    evidence: >-
+      usdm-acceptance-matrix.md:50 の REQ-003 / SPEC-003-03 行で
+      「UC-15: 起動失敗でも 3 ファイルと FAILED を残す」。
+      UC-15 spec.md:168 の関連 USDM は SPEC-003-03 を
+      「起動失敗でも依頼を FAILED にする(SPEC-003-03)」に、
+      spec.md:216 の Scenario も同名に是正済み(3 ファイルの記述は無い)。
+      tier-final-crosscheck.md:49 / :102 / :122 も「worker は成果物ディレクトリ・ファイルを作らない」と明記。
+      マトリクスの UC-15 受け入れ文のみが旧「3 ファイル」挙動を参照する。
+    suggested_fix: >-
+      usdm-acceptance-matrix.md:50 の UC-15 受け入れ文を
+      「UC-15: 起動失敗でも依頼を FAILED にする」等、現 UC-15 の SPEC-003-03 シナリオ名に合わせて是正する
+      (「3 ファイル」= 成果物ファイル保存を指す記述を除去)。
+      あわせて SPEC-003-03(一時ファイル経由の確定リネーム)を成果物ファイルを書かなくなった UC-15 が
+      依然 cover 対象とするのが妥当かを確認する。
+resolved:
+  - id: R-1
+    resolution: already_fixed
+    by: orchestrator
+    note: >-
+      round-2 の R-1 は誤検知。確報 UC spec.md の「関連 USDM」表には REQ-011 / SPEC-011-03 行が
+      169 行目に実在する(「exit_code=0 で SUCCEEDED になる(SPEC-006-02) ※ 比較ツールの stdout / stderr /
+      exit_code を確報比較依頼レコードの結果列へ保存する」)。レビュアーは 163-168 行だけを読み 169 行を見落とした。
+      spec.md 表 / spec-event.yaml usdm[](SPEC-011-03 → 同 scenario)/ usdm-acceptance-matrix.md(UC-15 で covered)は
+      三者一致しており、round-1 R-1 は解消済み。scenario 名は spec.md の正常系 BDD に実在する。
+  - id: R-2
+    resolution: fixed
+    by: orchestrator
+    note: >-
+      usdm-acceptance-matrix.md の REQ-003 / SPEC-003-03 行の UC-15 受け入れ文「起動失敗でも 3 ファイルと
+      FAILED を残す」(簡素化で廃止した成果物ファイル保存を指す stale 記述。前イベント由来)を、現 UC-15 の
+      SPEC-003-03 シナリオに合わせ「起動失敗でも依頼を FAILED にする(exit_code=6 / error_summary=launch failed。
+      worker は成果物ファイルを作らず結果は依頼レコードの列に保持)」へ是正した。
+

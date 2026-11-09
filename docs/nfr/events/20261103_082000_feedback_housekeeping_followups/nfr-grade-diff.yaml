@@ -1,0 +1,44 @@
+version: "1.0"
+event_id: "20261103_082000_feedback_housekeeping_followups"
+created_at: "2026-11-03T08:20:00Z"
+trigger_event: "rdra:20261103_081000_feedback_housekeeping_followups"
+source: "2026-11-03 のハウスキープ追補(管理 DB に接続しない設定のハウスキープは管理 DB の行と確報比較依頼を消さず、off 以外の期間に作られた実行を残して warn を出す)に基づく NFR 追従更新(ストレージ拡張性と通信プロトコルの記述を補う。グレード値は変更なし。trigger_event: rdra:20261103_081000_feedback_housekeeping_followups)"
+mode: "diff"
+feedback_request:
+  feedback_request_id: "20261103_housekeeping_followups"
+  input_sha256: "7a81f28ce6fef4c2f70e2839d657a3f8e8480671bd846b460edab3d22b3ba775"
+  request_ids: ["CR-f3b8a1d0-001"]
+  work_unit_ids: ["CR-f3b8a1d0-001#1"]
+direct_work_unit_ids: []
+feedback_packet: "pipeline/feedback-runs/20261103_housekeeping_followups/stage-packets/quality_attributes.md"
+model_system:
+  changed: false
+metrics:
+  - id: "B.3.3.1"
+    name: "ストレージ拡張性"
+    grade: 1
+    grade_changed: false
+    caused_by: ["CR-f3b8a1d0-001"]
+    grade_description: "スケールアップ(成果物ディレクトリ・実行ログの増加に応じて拡張。成果物ディレクトリと管理 DB の行はハウスキープが保持日数(既定 90 日)を過ぎた終了済みの実行から削除するため、保持日数分の量で頭打ちになる。管理 DB に接続しない設定(RAPID_CROSSCHECK_MODE=off でハウスキープ設定の管理 DB 接続参照名が無い)では管理 DB の行と確報比較依頼を削除せず、off 以外の期間に作られた実行の成果物も残る)"
+    reason: "run ごとに成果物ディレクトリと実行ログを蓄積するが、ハウスキープ定期ジョブ(1 日 1 回)が保持日数を過ぎた終了済みの実行の成果物と管理 DB の行を削除するため、必要容量は保持日数分の実行量で見積もれる。保持日数を延ばす場合や並行稼働で成果物が増える場合はストレージを増設する。終わっていない構成要素を含む実行は経過日数にかかわらず残るため、その分の余裕を見込む。管理 DB に接続しない設定では、ハウスキープは管理 DB の行と確報比較依頼を削除せず、off 以外の期間に作られた実行を日数にかかわらず単位ごと残して起動のたびに warn を出すため、この設定を使う間は管理 DB の行(確報クロスチェックを使う場合に日次で登録される確報比較依頼を含む)が増え続け、off 以外の期間に作られた実行の成果物も残る分を、保持日数分の見積もりとは別に見込む"
+    source_model: "情報: Runner Result、実行ログ、ハウスキープ設定 / 条件: ハウスキープの削除判定"
+    confidence: "medium"
+    before:
+      grade_description: "スケールアップ(成果物ディレクトリ・実行ログの増加に応じて拡張。成果物ディレクトリと管理 DB の行はハウスキープが保持日数(既定 90 日)を過ぎた終了済みの実行から削除するため、保持日数分の量で頭打ちになる)"
+      reason: "run ごとに成果物ディレクトリと実行ログを蓄積するが、ハウスキープ定期ジョブ(1 日 1 回)が保持日数を過ぎた終了済みの実行の成果物と管理 DB の行を削除するため、必要容量は保持日数分の実行量で見積もれる。保持日数を延ばす場合や並行稼働で成果物が増える場合はストレージを増設する。終わっていない構成要素を含む実行は経過日数にかかわらず残るため、その分の余裕を見込む"
+      source_model: "情報: Runner Result、実行ログ、ハウスキープ設定 / 条件: ハウスキープの削除判定"
+      confidence: "medium"
+  - id: "F.1.2.1"
+    name: "通信プロトコル"
+    grade: 1
+    grade_changed: false
+    caused_by: ["CR-f3b8a1d0-001"]
+    grade_description: "SSH(リモート実行)、RDB 接続(relay-gate 内部のジョブキュー兼管理 DB。接続先は速報クロスチェック設定・ハング検知定期ジョブ設定・ハウスキープ設定の接続参照名で解決。RAPID_CROSSCHECK_MODE=off でハウスキープ設定の接続参照名が無いとき、ハウスキープは管理 DB に接続しない)。インターネット接続・外部 SaaS は不可。メール送信などの通知送信手段は持たない"
+    reason: "外部システムがジョブスケジューラ・リモート実行ホスト(SSH)で構成され、管理 DB は relay-gate 内部のデータストアで、その接続参照名は速報クロスチェック設定(RAPID_CROSSCHECK_MODE=off では不要)・ハング検知定期ジョブ設定・ハウスキープ設定(RAPID_CROSSCHECK_MODE=off では省略でき、そのときハウスキープは管理 DB に接続せず管理 DB の行を削除しない)が持ち、異常の通知は CLI の出力とジョブスケジューラの障害通知で行い、エアーギャップ前提のため"
+    source_model: "外部システム: ジョブスケジューラ、リモート実行ホスト(SSH) / システム概要: ジョブキュー兼管理 DB(relay-gate 内部のデータストア) / 情報: ハング検知定期ジョブ設定、速報クロスチェック設定、ハウスキープ設定"
+    confidence: "high"
+    before:
+      grade_description: "SSH(リモート実行)、RDB 接続(relay-gate 内部のジョブキュー兼管理 DB。接続先は速報クロスチェック設定・ハング検知定期ジョブ設定・ハウスキープ設定の接続参照名で解決)。インターネット接続・外部 SaaS は不可。メール送信などの通知送信手段は持たない"
+      reason: "外部システムがジョブスケジューラ・リモート実行ホスト(SSH)で構成され、管理 DB は relay-gate 内部のデータストアで、その接続参照名は速報クロスチェック設定(RAPID_CROSSCHECK_MODE=off では不要)・ハング検知定期ジョブ設定・ハウスキープ設定が持ち、異常の通知は CLI の出力とジョブスケジューラの障害通知で行い、エアーギャップ前提のため"
+      source_model: "外部システム: ジョブスケジューラ、リモート実行ホスト(SSH) / システム概要: ジョブキュー兼管理 DB(relay-gate 内部のデータストア) / 情報: ハング検知定期ジョブ設定、速報クロスチェック設定、ハウスキープ設定"
+      confidence: "high"

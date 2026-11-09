@@ -2,7 +2,7 @@
 
 ## 概要
 
-運用者が `hang-detect-trend.sh` で監視記録(`monitor_records`)の警告傾向を job_id × role ごとに TSV で参照し、正常終了パターンの警告が出そろった時点で slot ジョブマップ(CSV)の `hang_detect_limit_minutes` 列をジョブごとに調整する。導入時は全ジョブ 60 分、foreground role は 0(検知対象外)とする。調整の記録(調整日時・調整根拠となる警告時経過時間)はジョブマップの列に持たず、適用構成文書またはそのコミット履歴に残す。調整は次回以降の run の `execution-spec.json` にのみ反映され、実行済みの run には影響しない。
+運用者が、ハング検知ジョブの出力(alert 行の elapsed_minutes)と監視記録で経過時間の傾向を確認する。`hang-detect-trend.sh` で監視記録(`monitor_records`)の警告傾向を job_id × role ごとに TSV で参照し、正常終了パターンの警告が出そろった時点で slot ジョブマップ(CSV)の `hang_detect_limit_minutes` 列をジョブごとに調整する。導入時は全ジョブ 60 分、foreground role は 0(検知対象外)とする。調整の記録(調整日時・調整根拠となる警告時経過時間)はジョブマップの列に持たず、適用構成文書またはそのコミット履歴に残す。調整は次回以降の run の `execution-spec.json` にのみ反映され、実行済みの run には影響しない。
 
 ## データフロー
 
@@ -114,7 +114,7 @@ sequenceDiagram
 | ハング検知対象の除外 | `hang_detect_limit_minutes = 0` の role と foreground role は監視対象外(`NOT_MONITORED`)。傾向集計の `run_count` から除外する | tier-ops | `hang-detect-trend.sh` の集計 WHERE 句(`monitor_status <> 'NOT_MONITORED'`) | foreground role は傾向に現れない |
 | 設定所有区分 | `hang_detect_limit_minutes` は該当 slot のジョブマップが所有する。運用者はジョブマップを編集し、管理 DB・execution-spec.json を直接編集しない。調整の記録(調整日時・調整根拠となる警告時経過時間)は適用構成文書が所有し、ジョブマップの列には持たない | tier-facade | slot ジョブマップ CSV(`validate-config.sh --job-map` で検証)/ 適用構成文書 | 警告傾向を参照して上限を調整する / 調整の記録を適用構成文書に残す |
 | 実行設定の確定条件 | run 開始時に解決した `hang_detect_limit_minutes` を execution-spec.json に一度だけ保存する。run 開始後のジョブマップ変更は同じ run に影響しない | tier-facade | slot runner の `ExecutionSpecRepository`(一度きり保存) | 調整は実行済み run に影響しない |
-| 速報クロスチェック有効判定 | RAPID_CROSSCHECK_MODE=off では監視記録が実行ログにのみ残るため `hang-detect-trend.sh` は終了コード 3 で終了する(C2 の `job_id` 列は parallel_runs 非依存の集計のためであり、off で管理 DB 自体が無い場合は集計対象が無い) | tier-ops | `hang-detect-trend.sh` の管理 DB 接続前判定 | 管理 DB が無い構成では傾向を出せない |
+| 速報クロスチェック有効判定 | RAPID_CROSSCHECK_MODE=off では管理 DB に監視記録が無い(判定結果は実行ログに、通知済み状態は成果物ルート配下の通知済みの印に残る)ため `hang-detect-trend.sh` は終了コード 3 で終了する(C2 の `job_id` 列は parallel_runs 非依存の集計のためであり、off で管理 DB 自体が無い場合は集計対象が無い)。off の傾向はハング検知ジョブの alert 行の elapsed_minutes と実行ログの `INFO monitor record` 行で確認する | tier-ops | `hang-detect-trend.sh` の管理 DB 接続前判定 | 管理 DB が無い構成では傾向を出せない |
 
 ## 計算ルール一覧
 
@@ -141,7 +141,7 @@ sequenceDiagram
 | 業務 | 実行監視業務 | この UC が属する業務 |
 | BUC | background 実行監視フロー | この UC を含む BUC(アクティビティ: ハング検知上限の調整) |
 | アクター | 運用者 | 警告傾向を参照しジョブマップを調整する(受益者) |
-| 情報 | 監視記録 | 警告時経過時間(elapsed_minutes_at_alert)・alerted_at・monitor_status を集計する |
+| 情報 | 監視記録 | 警告時経過時間(elapsed_minutes_at_alert)・alerted_at(ハング検知ジョブが alert 行を出した時刻)・monitor_status を集計する |
 | 情報 | ハング検知上限設定 | job_id × role ごとの hang_detect_limit_minutes(導入時 60 分、foreground role は 0)。調整日時・調整根拠はこの情報の属性ではなく適用構成文書に置く |
 | 情報 | ジョブマップ | CSV の `hang_detect_limit_minutes` 列を運用者が編集する正本 |
 | 情報 | 実行設定(execution-spec) | 次回以降の run で新しい上限が記録される |

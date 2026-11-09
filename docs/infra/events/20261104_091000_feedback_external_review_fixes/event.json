@@ -1,0 +1,80 @@
+{
+  "schema_version": "distillery.infra-feedback-event/v1",
+  "event_id": "20261104_091000_feedback_external_review_fixes",
+  "created_at": "2026-11-04T09:10:00Z",
+  "stage": "infrastructure",
+  "trigger_event": "infra:20261103_134000_feedback_housekeeping_db_required",
+  "previous_event_ref": "20261103_134000_feedback_housekeeping_db_required",
+  "feedback_request": {
+    "feedback_request_id": "20261104_external_review_fixes",
+    "input_sha256": "6b4cf1b4db9a1e0d2ad050d265c7c2b77928832af091ac20b2657e61aea0dc13",
+    "request_ids": [
+      "CR-c5e19a72-002"
+    ],
+    "work_unit_ids": [
+      "CR-c5e19a72-002#1"
+    ]
+  },
+  "members": [
+    {
+      "path": "infra/events/20261104_091000_feedback_external_review_fixes/_changes.md",
+      "sha256": "ef7d11683e6e0f2632ca66dd16ad9c32bcd552bcc379babdede2a53b8a2747cb"
+    },
+    {
+      "path": "infra/events/20261104_091000_feedback_external_review_fixes/_inference.md",
+      "sha256": "ab44ddcc0fbd1bcbecb1bc25d2770dc998b065cc199222f55afac015c2f9cbd4"
+    },
+    {
+      "path": "infra/events/20261104_091000_feedback_external_review_fixes/docs/cloud-context/conformance/product/product-conformance-onprem.yaml",
+      "sha256": "0fd71027b1e1b219774b838cdd01903040df5848abe5750a3ed573ff0a9510fd"
+    },
+    {
+      "path": "infra/events/20261104_091000_feedback_external_review_fixes/docs/mcl/foundation/output/foundation-context.yaml",
+      "sha256": "c84abbadb97865417580f462cff4da1b97e97ee4419c8ece591959b376c5d770"
+    },
+    {
+      "path": "infra/events/20261104_091000_feedback_external_review_fixes/docs/mcl/product/input/product-input.yaml",
+      "sha256": "c9025287fa0ee60a1c7f1a0103e821c7b33f4dd0c875fa2d2a2c2057970aba93"
+    },
+    {
+      "path": "infra/events/20261104_091000_feedback_external_review_fixes/docs/mcl/product/output/product-impl-onprem.yaml",
+      "sha256": "8dab15cab131dfc0a662fd08cf1a3313169b2302f102cedd6dad479a6e0a7b8c"
+    },
+    {
+      "path": "infra/events/20261104_091000_feedback_external_review_fixes/docs/mcl/product/output/product-mapping-onprem.yaml",
+      "sha256": "8bd72036aa3312e21ada41f89ea4fb5579f5cd3ddfe4347ecb43958609762dce"
+    },
+    {
+      "path": "infra/events/20261104_091000_feedback_external_review_fixes/docs/mcl/product/output/product-workload-model.yaml",
+      "sha256": "1fab6c5abb3d4e397a871df60708da910d7c53dc8e6ab6fd10559bf83e6c4079"
+    },
+    {
+      "path": "infra/events/20261104_091000_feedback_external_review_fixes/docs/mcl/shared-platform/output/shared-platform-context.yaml",
+      "sha256": "c5cba4bb88bbc4f06aa3f38784b06ea9eb65b1c250b8c2c0f731d8ce08fdb6ef"
+    },
+    {
+      "path": "infra/events/20261104_091000_feedback_external_review_fixes/infra-event-diff.yaml",
+      "sha256": "be1903fbfd05f6693ed129b67d00cc30ecebda1894eeaf4ecd14adefe85bd9ae"
+    },
+    {
+      "path": "infra/events/20261104_091000_feedback_external_review_fixes/infra-event.md",
+      "sha256": "0e05930717038d2d08c05cd59cbd9028468f81424fce99cf3f1d407ad939e5b2"
+    },
+    {
+      "path": "infra/events/20261104_091000_feedback_external_review_fixes/infra-event.yaml",
+      "sha256": "6adb51d9e457b016b8cb6d67e8f0007fc0a5ac40ff87cae4b446514b2ca55846"
+    },
+    {
+      "path": "infra/events/20261104_091000_feedback_external_review_fixes/infra/product/onprem/ansible/roles/relay-gate-config/tasks/main.yml",
+      "sha256": "d840d7d0823da06a8e6377c334e7cce01102793167226ff7694f378597a491c5"
+    },
+    {
+      "path": "infra/events/20261104_091000_feedback_external_review_fixes/product-input.yaml",
+      "sha256": "c9025287fa0ee60a1c7f1a0103e821c7b33f4dd0c875fa2d2a2c2057970aba93"
+    },
+    {
+      "path": "infra/events/20261104_091000_feedback_external_review_fixes/source.txt",
+      "sha256": "bfe6649bdbc183e09c72097f4546729c4fab6645a4bcabe46a5e5f70a18bfff7"
+    }
+  ]
+}

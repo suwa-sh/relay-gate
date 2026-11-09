@@ -157,7 +157,7 @@ Feature: 確報比較依頼を claim する
   Scenario: REQUESTED の依頼を claim する(SPEC-006-02)
     Given final_crosscheck_requests に final_crosscheck_id=20260830T210000-final-7b2c9e1f status=REQUESTED requested_at=2026-08-30T21:00:00 の行がある
     And final-crosscheck.env に FINAL_LEASE_MINUTES=10 がある
-    And クロスチェックジョブマップの確報行の compare_command が、起動後に停止シグナルを受けるまで待機するスタブを指す(claim 後の比較実行を止めて CLAIMED → RUNNING の途中状態を観測可能にする)
+    And final-crosscheck.env の FINAL_COMPARE_COMMAND が、起動後に停止シグナルを受けるまで待機するスタブを指す(claim 後の比較実行を止めて CLAIMED → RUNNING の途中状態を観測可能にする)
     And RELAY_GATE_NOW=2026-08-30T21:00:30Z である
     When final-crosscheck-worker.sh --once --worker-id final-worker-01 を実行する
     Then 実行ログに "INFO claimed final_crosscheck_id=20260830T210000-final-7b2c9e1f worker_id=final-worker-01 lease_until=2026-08-30T21:10:30" が残る
@@ -166,7 +166,7 @@ Feature: 確報比較依頼を claim する
 
   Scenario: lease 失効かつ未開始の依頼を再取得できる(SPEC-007-01)
     Given final_crosscheck_requests に status=CLAIMED worker_id=final-worker-01 lease_until=2026-08-30T21:10:30 started_at=NULL の行がある
-    And compare_command が停止シグナルを受けるまで待機するスタブを指す
+    And FINAL_COMPARE_COMMAND が停止シグナルを受けるまで待機するスタブを指す
     And RELAY_GATE_NOW=2026-08-30T21:11:00Z である
     When final-crosscheck-worker.sh --once --worker-id final-worker-02 を実行する
     Then 該当行はいったん REQUESTED に戻された後、スタブが待機している間は worker_id=final-worker-02 lease_until=2026-08-30T21:21:00 で status は CLAIMED または RUNNING である

@@ -2,13 +2,13 @@
 
 ## 概要
 
-運用者が、通知メールやジョブスケジューラの実行結果から中止対象の run_id を特定し、対象のプロセス・Pod・SSH 接続先の処理を自身で強制終了したうえで、中止スクリプト(abort-blue / abort-green / abort-rapid-crosscheck / abort-final-crosscheck)で RUNNING の slot 実行、REQUESTED / CLAIMED / RUNNING の速報比較依頼、または RUNNING の確報比較依頼を ABORTED へ明示的に遷移させる BUC。スクリプトは現在状態を表示して停止確認に yes と応答されたときだけ状態を更新し、自身ではプロセスを停止しない。slot 実行の中止は成果物ディレクトリへの `aborted.txt`(中止日時 1 行)の書き込みを正本とし、RAPID_CROSSCHECK_MODE が off 以外なら管理 DB の状態も ABORTED に更新し、対象 run に REQUESTED で未着手の速報比較依頼があればそれも ABORTED にする(競合窓の保険。dispatcher 側の中止済み run 判定と併用。CLAIMED / RUNNING の依頼は変更せず、明示中止は abort-rapid-crosscheck の status IN 条件付き UPDATE で行う)。off でも成果物ファイルだけで中止が成立し、ABORTED にした background slot 実行と速報比較依頼は background 側リランフローの対象になれる。
+運用者が、ハング検知ジョブの標準エラーの alert 行・監視記録やジョブスケジューラの実行結果から中止対象の run_id を特定し、対象のプロセス・Pod・SSH 接続先の処理を自身で強制終了したうえで、中止スクリプト(abort-blue / abort-green / abort-rapid-crosscheck / abort-final-crosscheck)で RUNNING の slot 実行、REQUESTED / CLAIMED / RUNNING の速報比較依頼、または RUNNING の確報比較依頼を ABORTED へ明示的に遷移させる BUC。スクリプトは現在状態を表示して停止確認に yes と応答されたときだけ状態を更新し、自身ではプロセスを停止しない。slot 実行の中止は成果物ディレクトリへの `aborted.txt`(中止日時 1 行)の書き込みを正本とし、RAPID_CROSSCHECK_MODE が off 以外なら管理 DB の状態も ABORTED に更新し、対象 run に REQUESTED で未着手の速報比較依頼があればそれも ABORTED にする(競合窓の保険。dispatcher 側の中止済み run 判定と併用。CLAIMED / RUNNING の依頼は変更せず、明示中止は abort-rapid-crosscheck の status IN 条件付き UPDATE で行う)。off でも成果物ファイルだけで中止が成立し、ABORTED にした background slot 実行と速報比較依頼は background 側リランフローの対象になれる。
 
 ## 所属 UC 一覧
 
 | UC名 | アクター | 主な操作 | 関連情報 |
 |------|---------|---------|---------|
-| [現在状態を確認して停止確認に応答する](現在状態を確認して停止確認に応答する/spec.md) | 運用者 | 中止スクリプトを `--run-id` 付きで起動し、表示された現在状態(slot 系は成果物ファイルから導出)を見てプロセス停止済みかを yes / yes 以外で応答する | 中止指示、slot 実行、速報比較依頼、確報比較依頼、通知メール |
+| [現在状態を確認して停止確認に応答する](現在状態を確認して停止確認に応答する/spec.md) | 運用者 | 中止スクリプトを `--run-id` 付きで起動し、表示された現在状態(slot 系は成果物ファイルから導出)を見てプロセス停止済みかを yes / yes 以外で応答する | 中止指示、slot 実行、速報比較依頼、確報比較依頼、監視記録 |
 | [実行を ABORTED へ遷移させる](実行を%20ABORTED%20へ遷移させる/spec.md) | 運用者(受益者) | yes 応答時に限り、background かつ RUNNING の slot 実行は `aborted.txt` を書き(off 以外は加えて管理 DB を条件付き UPDATE)、速報比較依頼は REQUESTED / CLAIMED / RUNNING のとき(abort-rapid-crosscheck。`status IN` 条件付き UPDATE)、確報比較依頼は RUNNING のとき(abort-final-crosscheck)条件付き UPDATE で ABORTED にし、並行稼働実行が STARTED / RUNNING なら併せて ABORTED にする(COMPLETED は変更しない)。abort-blue / abort-green は対象 run の REQUESTED(未着手)の速報比較依頼も ABORTED にする(off 以外。0 件で可。競合窓の保険)。CLAIMED を中止すると claim 済み worker は比較を開始しない | 中止指示、slot 実行、速報比較依頼、確報比較依頼、並行稼働実行、実行ログ、Runner Result |
 
 2 UC は 4 つの中止スクリプトの前半(状態表示と対話確認)と後半(状態更新)を構成する。
@@ -22,7 +22,7 @@ BUC 内の UC 間で情報がどう流れるかを示す。情報がどの UC �
 ```mermaid
 graph LR
   subgraph IN["BUC 外(入力)"]
-    MAIL["通知メール\n(background 実行監視フロー)"]
+    ALERT["ハング検知ジョブの alert 行・監視記録\n(background 実行監視フロー)"]
     SCHED["ジョブスケジューラの実行結果"]
     HOST["リモート実行ホスト\n(運用者が自身でプロセス停止)"]
   end
@@ -38,7 +38,7 @@ graph LR
     PR["並行稼働実行"]
   end
   LOG["実行ログ"]
-  MAIL -->|"run_id / role"| CONFIRM
+  ALERT -->|"run_id / role"| CONFIRM
   SCHED -->|"run_id"| CONFIRM
   HOST -.->|"停止済みの確認"| CONFIRM
   RR_ART -->|"現在状態(mode / status を導出)"| CONFIRM
@@ -67,7 +67,7 @@ graph LR
 | Runner Result | R(spec のみ) | U |
 | 速報比較依頼(rapid_crosscheck_request) | R | U |
 | 確報比較依頼(final_crosscheck_request) | R | U |
-| 通知メール | R | - |
+| 監視記録 | R | - |
 | 並行稼働実行(parallel_run) | - | U |
 | 実行ログ | C | C |
 
@@ -132,9 +132,9 @@ BUC 内の複数 UC で共有される条件の一覧。適用 UC は BUC.tsv �
 |--------|----------|--------|
 | 停止確認応答 | 現在状態を表示後に「対象ジョブのプロセスは強制終了してありますか？ [yes/no]」と対話確認し、yes(完全一致)のときだけ状態を ABORTED に更新する。yes 以外は状態を変更せず終了する。スクリプト自身はプロセスを停止しない | 現在状態を確認して停止確認に応答する, 実行を ABORTED へ遷移させる |
 | slot 実行の状態導出規則 | slot 実行の状態は成果物ディレクトリのファイル正本から導出する: exitcode.txt があれば 0 で SUCCEEDED / 非 0 で FAILED、無く aborted.txt があれば ABORTED、どちらも無ければ RUNNING。前半 UC は表示、後半 UC は可否判定と yes 応答直後の再確認に使う | 実行を ABORTED へ遷移させる(spec のみ: 現在状態を確認して停止確認に応答する) |
-| 速報クロスチェック有効判定 | abort-blue / abort-green は RAPID_CROSSCHECK_MODE によらず成果物ファイルで現在状態を表示し aborted.txt で中止を記録する。off 以外なら加えて管理 DB(slot_executions / parallel_runs / REQUESTED の rapid_crosscheck_requests)を ABORTED に更新し、off では管理 DB に触れず aborted.txt だけで終了コード 0。abort-rapid-crosscheck は依頼レコードが管理 DB にしか無いため off では終了コード 3。abort-final-crosscheck は RAPID_CROSSCHECK_MODE を参照せず、final-crosscheck.env の FINAL_DB_CONN_REF の有無だけで管理 DB 有無を判定する | (spec のみ: 現在状態を確認して停止確認に応答する, 実行を ABORTED へ遷移させる) |
+| 速報クロスチェック有効判定 | abort-blue / abort-green は RAPID_CROSSCHECK_MODE によらず成果物ファイルで現在状態を表示し aborted.txt で中止を記録する。off 以外なら加えて管理 DB(slot_executions / parallel_runs / REQUESTED の rapid_crosscheck_requests)を ABORTED に更新し、off では管理 DB に触れず aborted.txt だけで終了コード 0。abort-rapid-crosscheck は依頼レコードが管理 DB にしか無いため off では終了コード 3。abort-final-crosscheck は RAPID_CROSSCHECK_MODE を参照せず、final-crosscheck.env の FINAL_DB_CONN_REF の有無だけで管理 DB 有無を判定する(ファイルが無い、またはキーが無い・値が空なら管理 DB なし。housekeep.sh の判定と同じ規則) | (spec のみ: 現在状態を確認して停止確認に応答する, 実行を ABORTED へ遷移させる) |
 
-BUC.tsv 上で 1 UC のみに紐づく条件(CLI とメールによる提示 / slot 中止可否判定 / 依頼中止可否判定 / 依頼状態遷移規則)は各 UC spec に記載する。slot 中止可否判定は、yes で slot を ABORTED にするとき対象 run の REQUESTED で未着手の速報比較依頼も ABORTED にする(CLAIMED / RUNNING は変更しない)ことを含む(UC「実行を ABORTED へ遷移させる」)。この REQUESTED → ABORTED は競合窓の保険である: 両系の完了通知で速報比較依頼が REQUESTED で作成された直後に運用者が slot を中止した場合の競合窓を塞ぐ。dispatcher 側の中止済み run 判定(速報クロスチェックフローの条件「中止済み run の比較依頼作成除外」。並行稼働実行 ABORTED または完了通知の対象 slot の slot 実行 ABORTED)と併用する。依頼中止可否判定は、速報比較依頼は REQUESTED / CLAIMED / RUNNING のいずれでも abort-rapid-crosscheck(停止確認 yes 後の `status IN` 条件付き UPDATE)で中止でき、確報比較依頼は RUNNING のときだけ abort-final-crosscheck で中止できる判定表(クロスチェック種別 × 依頼状態)。CLAIMED のまま残すと lease 失効で REQUESTED に戻り再 claim されるため、中止済み run の依頼は abort-rapid-crosscheck で止める。CLAIMED を中止すると claim 済み worker は RUNNING への条件付き UPDATE が 0 件になり比較を開始しない(速報クロスチェックフローの UC「比較ツールでジョブ単位比較を実行して結果を登録する」)。
+BUC.tsv 上で 1 UC のみに紐づく条件(CLI による提示 / slot 中止可否判定 / 依頼中止可否判定 / 依頼状態遷移規則)は各 UC spec に記載する。slot 中止可否判定は、yes で slot を ABORTED にするとき対象 run の REQUESTED で未着手の速報比較依頼も ABORTED にする(CLAIMED / RUNNING は変更しない)ことを含む(UC「実行を ABORTED へ遷移させる」)。この REQUESTED → ABORTED は競合窓の保険である: 両系の完了通知で速報比較依頼が REQUESTED で作成された直後に運用者が slot を中止した場合の競合窓を塞ぐ。dispatcher 側の中止済み run 判定(速報クロスチェックフローの条件「中止済み run の比較依頼作成除外」。並行稼働実行 ABORTED または完了通知の対象 slot の slot 実行 ABORTED)と併用する。依頼中止可否判定は、速報比較依頼は REQUESTED / CLAIMED / RUNNING のいずれでも abort-rapid-crosscheck(停止確認 yes 後の `status IN` 条件付き UPDATE)で中止でき、確報比較依頼は RUNNING のときだけ abort-final-crosscheck で中止できる判定表(クロスチェック種別 × 依頼状態)。CLAIMED のまま残すと lease 失効で REQUESTED に戻り再 claim されるため、中止済み run の依頼は abort-rapid-crosscheck で止める。CLAIMED を中止すると claim 済み worker は RUNNING への条件付き UPDATE が 0 件になり比較を開始しない(速報クロスチェックフローの UC「比較ツールでジョブ単位比較を実行して結果を登録する」)。
 
 ## BUC 内共有バリエーション一覧
 

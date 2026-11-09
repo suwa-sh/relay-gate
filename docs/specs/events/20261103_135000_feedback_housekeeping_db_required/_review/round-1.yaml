@@ -1,0 +1,80 @@
+round: 1
+findings:
+  - id: R-001
+    viewpoint: 4
+    severity: major
+    target: "実行復旧業務/実行中止フロー/現在状態を確認して停止確認に応答する/tier-ops.md"
+    claim: "確報系コマンドの「管理 DB なし」の判定が、契約と中止 UC で食い違ったまま残っている。契約(abort-final-crosscheck.sh の終了コード 3)と spec-decision-027 の決定 2 は「欠落 = キーが無い、または値が空」とし、ハウスキープの判定と同じ規則にすると書いた。しかし中止 UC は「ファイルまたはキーが無ければ」3 としか書いておらず、`FINAL_DB_CONN_REF=`(値が空)の扱いが決まらない。2026-11-03 の変更の意図(既存の確報系コマンドと判定を揃える)が、中止 UC を正本として読む実装者には届かない"
+    evidence: "契約 cli-command-contract.yaml の abort-final-crosscheck.sh exit_codes の code 3 には『欠落 = キーが無い、または値が空。housekeep.sh ... も同じ規則』とある。一方、中止 UC の tier-ops.md 72 行目は『管理 DB 有無は final-crosscheck.env の FINAL_DB_CONN_REF のみで判定し、ファイルまたはキーが無ければ ... 終了コード 3』、58 行目は『final-crosscheck.env / FINAL_DB_CONN_REF が無い』。同 UC の spec.md 95 行目(alt final-crosscheck.env / FINAL_DB_CONN_REF なし)と 147 行目も同様で、値が空の場合を書いていない。今回の変更対象にこの UC は含まれていない"
+    suggested_fix: "中止 UC「現在状態を確認して停止確認に応答する」の tier-ops.md(58・72 行目)と spec.md(95・147 行目)に『FINAL_DB_CONN_REF が欠落(キーが無い、または env 解析後の値が空)』と書き、契約 shared_rules.housekeep_rules.db_requirement と同じ規則であることを参照する。BDD に `FINAL_DB_CONN_REF=` の行だけを持つ final-crosscheck.env で abort-final-crosscheck.sh が管理 DB に接続せず終了コード 3 になる Scenario を加える"
+  - id: R-002
+    viewpoint: 4
+    severity: minor
+    target: "_cross-cutting/api/cli-command-contract.yaml"
+    claim: "env 形式の設定に同じキーが複数行あるときの扱いが決まっていない。このため `FINAL_DB_CONN_REF=relay_gate_final` の後に `FINAL_DB_CONN_REF=` がある final-crosscheck.env では、ハウスキープ(確報クロスチェックを使う設置か)と abort-final-crosscheck.sh(管理 DB なしか)の結果が、実装の選び方(先勝ち・後勝ち・エラー)で分かれ得る。今回の変更で、2 つのコマンドが同じ判定を返すことが要件になった"
+    evidence: "config_input_rules.env_files にはコメント行・キーと値の取り出し方の規則はあるが、重複キーの規則が無い(契約内の『重複』の規則は slot ジョブマップの job_id とヘッダー列名だけ)。shared_rules.housekeep_rules.db_requirement は『キーがあり、config_input_rules.env_files で取り出した値が空でない』と書くが、取り出す行が複数ある場合を決めていない"
+    suggested_fix: "config_input_rules.env_files に env 形式の重複キーの扱い(例: 後勝ち、または `error: duplicate key ...`(2))を全 env 設定ファイル共通で定める。仕様を広げたくない場合は、少なくとも db_requirement と abort-final-crosscheck.sh の code 3 に、FINAL_DB_CONN_REF の行が複数あるときにどの行で判定するかを同じ文で書く"
+  - id: R-003
+    viewpoint: 5
+    severity: minor
+    target: "_cross-cutting/api/cli-command-contract.yaml"
+    claim: "housekeep.sh の手順 0(入力と設定の検査)で、複数のエラーが同時にあるときの扱いが決まっていない。検査を最初のエラーで止めるのか、すべてのエラーを出すのかが書かれていない。今回、final-crosscheck.env を読む条件付きの検査が加わったため、stderr の内容が実装によって変わる。例: 保持日数が不正で、さらに off で接続参照名が無く final-crosscheck.env が読めない場合に、final-crosscheck.env の error 行が出るかが決まらない"
+    evidence: "processing_order の手順 0 は『引数、housekeep.env(HOUSEKEEP_RETENTION_DAYS)、feature-flag.env の RAPID_CROSSCHECK_MODE、HOUSEKEEP_DB_CONN_REF の要否(... final-crosscheck.env ...)、RELAY_GATE_ARTIFACT_ROOT の存在』と列挙するが、順序の意味や、最初で止めるかどうかを書いていない。判定 UC の tier-ops.md の処理の順序 2 も『ここまでの失敗は終了コード 2』とだけ書く。BDD はどれも単一のエラーの例である"
+    suggested_fix: "手順 0 の検査の順序と、止め方(最初のエラーで止める、またはすべて出す)を契約に書き、判定 UC の tier-ops.md の処理の順序 2 から参照する。例: 引数 → housekeep.env の読み取りと形式 → 保持日数 → feature-flag.env → 接続参照名の要否(必要なときだけ final-crosscheck.env)→ 成果物ルート、の順に検査し、最初のエラーで止める。複数エラーの BDD を 1 件加える"
+  - id: R-004
+    viewpoint: 5
+    severity: minor
+    target: "ハウスキープ業務/ハウスキープフロー/保持日数を過ぎた終了済みの実行と確報比較依頼を判定する/spec.md"
+    claim: "要求 SPEC-014-07 の受け入れ基準(off 以外で接続参照名が無い・空なら設定エラー)は『空』も含むが、対応する Scenario Outline は『行が無い』だけを確かめている。値が空(`HOUSEKEEP_DB_CONN_REF=`、空白だけの値)のときに設定エラーになることは、off 以外では E2E でも tier-ops の BDD でも確かめていない"
+    evidence: "USDM SPEC-014-07 の受け入れ基準の 5 件目は『RAPID_CROSSCHECK_MODE が off 以外で、ハウスキープ設定の管理 DB 接続参照名が無い・空』。spec.md の Scenario Outline『off 以外で接続参照名が無い・空なら設定エラーで何も削除しない(SPEC-014-07)』の Given は『housekeep.env に HOUSEKEEP_DB_CONN_REF の行が無い』で、Examples は mode(foreground / background)だけ。off で確報クロスチェックを使う設置の Outline は、行が無い場合と `HOUSEKEEP_DB_CONN_REF=` の場合の両方を Examples に持つ"
+    suggested_fix: "off 以外の Outline の Examples に、接続参照名の行の状態(行が無い / `HOUSEKEEP_DB_CONN_REF=` / `HOUSEKEEP_DB_CONN_REF=<SP><SP>`)を加える。または off で確報クロスチェックを使う設置の Outline と同じく conn_ref_line 列を設けて、mode との組み合わせで確かめる"
+  - id: R-005
+    viewpoint: 5
+    severity: minor
+    target: "適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/tier-facade.md"
+    claim: "速報クロスチェック設定で字下げしたコメント行を読み飛ばす Scenario Outline の例 `<SP># RAPID_COMPARE_COMMAND=/bin/false` は、今の実装(契約と異なる)でも通ってしまい、実装の差分を見つけられない。今の実装はこの行をキー `# RAPID_COMPARE_COMMAND` の行として読むが、比較ツール起動コマンドのキーとは一致しない。このため Then(終了コード 0、status=valid、invalid line が出ない)はすべて満たされる"
+    evidence: "facade/src/repository/rapid_crosscheck_env.sh は行頭 `#` だけをコメントとし、`=` を含む行はキーの前後の空白を除いて RAPID_CROSSCHECK_ENV_KEYS に載せる(102 行目)。比較ツール起動コマンドとして読むのは、キーが RAPID_COMPARE_COMMAND と一致する行だけ(104 行目)。spec-decision-026 の決定 6 も『=を含めば(例 `  # A=B`)キー `# A` の行として読んでキーの一覧に載せる』と記録している"
+    suggested_fix: "この例の Then に、コメント行がキーとして読まれていないことを確かめる観測点を加える。例: --verbose で出るキーの一覧(info 行)に `# RAPID_COMPARE_COMMAND` が含まれない。または、コメント行の中の値を、読まれたら検証が失敗する内容にする(例: 2 行目を置かず、1 行目だけを `<SP># RAPID_COMPARE_COMMAND=/opt/compare/compare.sh --job {job_id}` にして、比較ツール起動コマンドの欠落エラーになることを確かめる)"
+  - id: R-006
+    viewpoint: 4
+    severity: minor
+    target: "decisions/spec-decision-026.yaml"
+    claim: "実装との差分の記録が不完全。feature flag 設定の読み込みについては、前後の空白を `[:space:]` で除くこと(垂直タブ・改ページも除く)を記録している。しかし速報クロスチェック設定の読み込みも、キーと値の前後の空白を同じ `[:space:]` で除くことは記録していない。契約の空白は半角空白とタブだけなので、速報クロスチェック設定の読み込みにも同じ差分がある"
+    evidence: "facade/src/repository/rapid_crosscheck_env.sh 125〜126 行目の rapid_crosscheck_env_trim は `${text%%[![:space:]]*}` / `${text##*[![:space:]]}` で前後を除く(feature_flag_config.sh 16〜17 行目と同じ書き方)。spec-decision-026 の決定 6 の速報クロスチェック設定の項はコメントの扱いだけを書く"
+    suggested_fix: "spec-decision-026 の決定 6 の速報クロスチェック設定の項に『キーと値の前後の空白を `[:space:]` で除くため、半角空白とタブ以外の空白類も除く(参考)』を加える。過去の決定に記録済みであれば、その決定を参照する"
+  - id: R-007
+    viewpoint: 4
+    severity: minor
+    target: "ハウスキープ業務/ハウスキープフロー/保持日数を過ぎた終了済みの実行と確報比較依頼を判定する/_api-summary.yaml"
+    claim: "_api-summary.yaml の終了コード 2 の意味に、読んだ設定ファイル(housekeep.env / feature-flag.env / 読んだときの final-crosscheck.env)の入力の守備範囲の違反(NUL / UTF-8 / BOM / CR / invalid line)が含まれていない。契約の exit_codes と tier-ops.md の stderr 表には含まれており、UC の要約だけが欠けている"
+    evidence: "契約の housekeep.sh exit_codes code 2 の condition には『読んだ設定ファイルの入力の守備範囲の違反』がある。tier-ops.md の stderr 表にも『読んだ設定ファイルの入力の守備範囲の違反(NUL / UTF-8 / BOM / CR / invalid line) | 契約 config_input_rules の文言』がある。_api-summary.yaml の code 2 meaning の列挙と stderr の列挙には、この項目が無い"
+    suggested_fix: "_api-summary.yaml の housekeep.sh の code 2 meaning と stderr に『読んだ設定ファイルの入力の守備範囲の違反(config_input_rules の文言。final-crosscheck.env は off で接続参照名が無い・空のときだけ読む)』を加える"
+resolved:
+  - id: R-001
+    resolution: fixed
+    by: orchestrator
+    note: "中止 UC「現在状態を確認して停止確認に応答する」の tier-ops.md(終了コード 3 の表と abort-final-crosscheck の判定の説明)と spec.md(シーケンスの alt と業務ルールの表)に、ファイルが無い、またはキーが無い・値が空なら管理 DB なしとし、housekeep.sh の判定と同じ規則であることを書いた。tier BDD に FINAL_DB_CONN_REF の値が空なら終了コード 3 のシナリオを加えた"
+  - id: R-002
+    resolution: deferred
+    by: orchestrator
+    note: "env 形式の重複キーの扱いは全 env 設定ファイルに共通する新しい規則で、今回の変更要望(接続参照名の要否・字下げしたコメント行)の範囲外。決め方(後勝ち / エラー)は利用者の判断が要るため、確認推奨項目として返す。今回の 2 コマンドの判定は同じ取り出し規則(config_input_rules.env_files)を参照するため、重複キーの規則を決めればそのまま両方に効く"
+  - id: R-003
+    resolution: fixed
+    by: orchestrator
+    note: "契約 housekeep.sh processing_order の手順 0 に検査の順(引数 → housekeep.env → feature-flag.env → 接続参照名の要否(必要なときだけ final-crosscheck.env)→ RELAY_GATE_ARTIFACT_ROOT)と、最初に設定エラーを見つけた段で止めること(conventions.output_format.stderr の error を 1 回だけ)を書き、判定 UC の tier-ops.md の処理の順序 2 にも書いた。複数エラーの tier BDD を 1 件加えた"
+  - id: R-004
+    resolution: fixed
+    by: orchestrator
+    note: "off 以外の Scenario Outline に conn_ref_line 列を設け、行が無い / `HOUSEKEEP_DB_CONN_REF=` / 空白だけの値の例を加えた(Scenario 名は不変)"
+  - id: R-005
+    resolution: fixed
+    by: orchestrator
+    note: "`=` を含む字下げしたコメント行の例を Outline から外し、起動コマンドの行を字下げしてコメントにすると起動コマンドが無い設定(option required)になる別シナリオにした。今の実装との違いは `=` を含まない字下げした行(invalid line になる)の例で検出できる。`=` を含む行の違いは、速報クロスチェック設定の検証が未知キーの warn を持たないため契約の出力では見えないことを spec-decision-026 に記録した"
+  - id: R-006
+    resolution: fixed
+    by: orchestrator
+    note: "spec-decision-026 の決定 6 の速報クロスチェック設定の項に、キーと値の前後の空白を [:space:] で除く差分(参考)を加えた"
+  - id: R-007
+    resolution: fixed
+    by: orchestrator
+    note: "_api-summary.yaml の housekeep.sh の stderr と終了コード 2 の意味に、読んだ設定ファイルの入力の守備範囲の違反を加えた"

@@ -1,0 +1,160 @@
+stage: "S9"
+uc_id: "dcd8234d"
+manifest_sha256: "ddcab64014c49e5f65a082b66a7d2c381cefd50c4744ad3457a3a8d5ef9d8289"
+manifest_projection: v2
+result: pass
+review_html: "docs/impl/latest/dcd8234d/review/index.html"
+review_html_note: "gitignore 済みの再生成可能な派生ビュー。HTML の SHA は証跡に結ばない"
+cycle_note: "初回レビュー。attempt 上限(3)到達後にユーザーが continue_once で許可した attempt 4 で両 tier が独立検証に合格(blocker 0 / major 0 / minor 18 + 18)した時点の成果。仕様は不変。実装中に見つかった仕様の不足・矛盾は変更要求 5 件(blocker 0)。facade 側の handler 登録 hook(commit 4b0be23、本 UC の write-set 外)はオーケストレータの判断として HTML の構成図・部品表・要求 1 に記載した"
+source_revision: "feature/define-crosscheck-job-map-and-comparison-definitions @ 698334e"
+validator:
+  command: "node validateReviewHtml.js docs/impl/latest/dcd8234d/review/index.html"
+  result: "pass"
+  visual_check: "headless Chrome で 図 3 枚を単体 960px、全体を 1440px / 500px で render して目視。390px は Chrome の最小ウィンドウ幅で切れるため 500px で代替(本文はすべて折り返し、横スクロールは table-wrap 内のみ)。図 1 は速報→比較ツールのラベルをノード左辺に近すぎたため短縮して再 render。connector の重なり・attach point 共有・非 endpoint node 背面通過・diagonal なし。label と connector の gap は 8px"
+figures:
+  - type: architecture
+    title: "クロスチェック設定の検証コマンドの構成"
+    nodes: 8
+    arrows: 8
+  - type: flowchart
+    title: "検証コマンドの処理フロー"
+    nodes: 9
+    arrows: 9
+  - type: data-flow
+    title: "設定ファイルのデータの流れ"
+    nodes: 7
+    arrows: 7
+feedback_request_count: 5
+open_blocker_count: 0
+decision_summary:
+  approval_questions: 1
+  selection_questions: 4
+  assumption_questions: 0
+  recommended_choices: 5
+  questions:
+    - id: "機能"
+      question: "実装を承認しますか"
+      recommended: "A. 承認する(squash → push → PR 作成)"
+      alternatives:
+        - "B. 差し戻す(再現条件と期待結果を添える)"
+    - id: "要求"
+      question: "仕様への変更要求 5 件を公開しますか"
+      recommended: "公開(5 件すべて、推奨案どおり)"
+      alternatives:
+        - "公開(除外: 要求 N)"
+        - "保留(実装だけ承認し、公開しない)"
+    - id: "登録"
+      question: "要求 1 の検証関数の登録方式(facade の本体が所有 tier の固定パスを存在時だけ source する案 A / 設定ディレクトリを探索する案 B)"
+      recommended: "A. 固定パス(現在の実装。動作確認済み、探索順序と衝突規則を新たに決めなくてよい)"
+      alternatives:
+        - "B. 探索方式(tier 追加時に facade を変えない。仕様反映後に facade の本体を修正する UC が要る)"
+      note: "review-notes の未決 (a) に対応。確報 A-018 の却下(仕様変更)と同義"
+    - id: "BDD"
+      question: "要求 4 の tier BDD「compare_options にプレースホルダが無い」の Given / Then のどちらを直すか"
+      recommended: "Given. Given を --blue {blue}({green} が無い)にする(片方だけ欠けても違反になる例として情報量が多い)"
+      alternatives:
+        - "Then. Then を value=--fast にする"
+    - id: "列数"
+      question: "要求 5 の参照先カタログの列数不一致の expected の基準(そのカタログのヘッダー行の列数 A / 列定義の 5 列 B)"
+      recommended: "A. ヘッダー行の列数(現在の実装。検証ルール 9 の責務分担を変えない)"
+      alternatives:
+        - "B. 列定義の 5 列(速報側もヘッダー列数を照合。検証ルール 9 の範囲を書き直し、速報側の実装を直す)"
+      note: "独立検証が S9 確認対象と明記した 速報 A-022 と同義。要求 5 の文言 3 件(速報 A-008 / A-016、確報 A-006)は実装どおりの文言を契約に書く案を推奨(選択肢は設けない)"
+  answer_template: "機能=A / 要求=公開 / 登録=A / BDD=Given / 列数=A / 前提=一括承認"
+  answer_template_examples:
+    - "登録を B に: 機能=A / 要求=公開 / 登録=B / BDD=Given / 列数=A / 前提=一括承認"
+    - "BDD を Then に: 機能=A / 要求=公開 / 登録=A / BDD=Then / 列数=A / 前提=一括承認"
+    - "列数を B に: 機能=A / 要求=公開 / 登録=A / BDD=Given / 列数=B / 前提=一括承認"
+    - "要求の一部を外す: 機能=A / 要求=公開(除外: 要求 3) / 登録=A / BDD=Given / 列数=A / 前提=一括承認"
+    - "要求を公開しない: 機能=A / 要求=保留 / 前提=一括承認"
+    - "前提を個別に却下: 機能=A / 要求=公開 / 登録=A / BDD=Given / 列数=A / 前提=一括承認(例外: 速報 A-024:却下(実装修正: 引用で囲んだ空白は受理する))"
+    - "差し戻し: 機能=B(再現条件: … / 期待結果: …)"
+    - "旧表記 機能=A / 相互運用=A / 監査=A も受け付ける(相互運用=A は 要求=公開(推奨案どおり)、監査=A は 前提=一括承認 と同義)"
+  assumption_id_note: "前提 ID は両 tier で番号が重なる(A-001 / A-002 / A-004 / A-005 / A-011 / A-012 / A-014 / A-015 / A-016 / A-018 / A-019 / A-021)ため、回答では 速報 / 確報 を前に付ける"
+assumption_summary:
+  total: 36
+  by_tier:
+    tier-rapid-crosscheck: 18
+    tier-final-crosscheck: 18
+  required_answer: 0
+  required_ids: []
+  required_note: "全 36 件が spec_absent。category / verified_category はすべて input_validation / data_format / error_handling / performance で、security / persistence は 0 件。回答必須 0 件のため 前提=一括承認 をテンプレートにした"
+  review_attention_ids:
+    - "tier-rapid-crosscheck:A-022"
+    - "tier-rapid-crosscheck:A-024"
+    - "tier-final-crosscheck:A-018"
+    - "tier-final-crosscheck:A-019"
+  review_attention_note: "A-022 / A-024 は S8 の review_attention(独立検証が S9 確認対象と明記)。A-018 / A-019 は CR-001 と同じ内容(登録方式・共有面)。4 件を HTML の前提節の先頭に集め、却下の書き方を併記した"
+  optional_default: "auto_confirmed"
+  verdicts:
+    consistent: 0
+    spec_absent: 36
+    contradicts: 0
+    unlisted: 0
+  unlisted_ids: []
+  cr_linked_ids:
+    - "tier-rapid-crosscheck:A-008"
+    - "tier-rapid-crosscheck:A-016"
+    - "tier-rapid-crosscheck:A-022"
+    - "tier-final-crosscheck:A-006"
+    - "tier-final-crosscheck:A-018"
+    - "tier-final-crosscheck:A-019"
+feedback_review_evidence:
+  feedback_id: "20261010_104636_impl_feedback_dcd8234d"
+  draft_path: "docs/impl/latest/dcd8234d/feedback/draft.md"
+  draft_sha256: "002fd489b8db4bcf8206ca0788749709e9ffb9ef26d3085a94b64f3e0a2419ff"
+  request_count: 5
+  blocker_count: 0
+  requests:
+    - id: "CR-dcd8234d-001"
+      severity: "spec-gap"
+      html_title: "検証コマンドの本体と 2 つのクロスチェックティアの関数共有が、ティア間の契約として宣言されていない"
+      decision_key: "登録"
+    - id: "CR-dcd8234d-002"
+      severity: "spec-gap"
+      html_title: "受け入れ基準の Then に「同じ関数を使う」という実装構造の要求が混ざり、テストで判定できない"
+      decision_key: null
+    - id: "CR-dcd8234d-003"
+      severity: "spec-gap"
+      html_title: "同じシェルに読み込まれるティアの関数名・グローバル変数名の名前空間の規則が無い"
+      decision_key: null
+    - id: "CR-dcd8234d-004"
+      severity: "spec-gap"
+      html_title: "ティア仕様の BDD「compare_options にプレースホルダが無い」の Given と Then の値が一致しない"
+      decision_key: "BDD"
+    - id: "CR-dcd8234d-005"
+      severity: "spec-gap"
+      html_title: "実装が補った違反文言 3 件と、参照先カタログの列数不一致の基準が CLI 契約に無い"
+      decision_key: "列数"
+implementation_review_evidence:
+  gate_result: "6/6 pass"
+  gates:
+    format: "pass (tier-rapid-crosscheck / tier-final-crosscheck)"
+    lint: "pass (tier-rapid-crosscheck / tier-final-crosscheck)"
+    tdd: "pass (rapid 106/106 macOS, 105 + 1 skip Ubuntu 24.04; final 57/57 macOS and Ubuntu 24.04)"
+    bdd_tier: "pass (rapid 4/4, final 4/4)"
+    uc_bdd: "pass (43/43, 本 UC 7/7)"
+    atdd: "pass (1/1, @atdd_SPEC-004-04-5)"
+  open_blocker_count: 0
+  open_major_count: 0
+  open_minor_count: 36
+  open_minor_note: "rapid 18 + final 18。すべて assumption_conformance の spec_absent(前提 36 件と 1 対 1)"
+  findings_paths:
+    - "docs/impl/latest/dcd8234d/stages/attempt-4/S5_verify.tier-final-crosscheck.findings.yaml"
+    - "docs/impl/latest/dcd8234d/stages/attempt-4/S5_verify.tier-rapid-crosscheck.findings.yaml"
+  s4_carried_from:
+    tier-final-crosscheck: "attempt-3"
+  assumption_evidence_sha256: "18852606ab7ecab128e37bfddf669efbe1d00c8bc647bd5f3dae240e2746018d"
+  assumption_evidence_inputs:
+    - tier: "tier-final-crosscheck"
+      assumptions_sha256: "91403d5781aa01449a3932210b8bc551fef3285111a09932e1b5dc0b750324b6"
+      assumption_verdicts_sha256: "c30d56285d6913139398e84551751fe1d3a046068f7870ac680f4a679c48a458"
+    - tier: "tier-rapid-crosscheck"
+      assumptions_sha256: "2152be1c987ae1edadecdfc96e05150d78d2bf663d60d78104647d575db9ca8f"
+      assumption_verdicts_sha256: "701ff3e95033ea51aee712ca276e5322a394a33bb200a11a18c6eabae90e3e3c"
+  assumption_evidence_command: "node validateAssumptions.js evidence tier-final-crosscheck:91403d5781aa01449a3932210b8bc551fef3285111a09932e1b5dc0b750324b6:c30d56285d6913139398e84551751fe1d3a046068f7870ac680f4a679c48a458 tier-rapid-crosscheck:2152be1c987ae1edadecdfc96e05150d78d2bf663d60d78104647d575db9ca8f:701ff3e95033ea51aee712ca276e5322a394a33bb200a11a18c6eabae90e3e3c"
+  assumption_evidence_note: "オーケストレータが算出済みの値を転記(再計算していない)"
+captures: []
+write_set_note: "書き込みは docs/impl/latest/dcd8234d/review/index.html(gitignore 済み)と本 done のみ。review-notes.md、feedback/、stages/attempt-*/、仕様、実装、テストは変更していない"
+completed_at: "2026-10-10T11:10:00+09:00"
+completed_by: "dist-impl-review@0.14.1"

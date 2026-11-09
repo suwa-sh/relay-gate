@@ -1,0 +1,37 @@
+{
+  "schema_version": "distillery.nfr-feedback-event/v1",
+  "event_id": "20261010_201000_feedback_impl_feedback_dcd8234d",
+  "created_at": "2026-10-10T20:10:00Z",
+  "stage": "quality_attributes",
+  "trigger_event": "rdra:20261010_200000_feedback_impl_feedback_dcd8234d",
+  "feedback_request": {
+    "feedback_request_id": "20261010_104636_impl_feedback_dcd8234d",
+    "input_sha256": "d4ddd211752998f5480a51d9dddfa3a58937badd62f72092c9257ed1384448fd",
+    "request_ids": [
+      "CR-dcd8234d-007",
+      "CR-dcd8234d-002"
+    ],
+    "work_unit_ids": [
+      "CR-dcd8234d-007#1",
+      "CR-dcd8234d-002#1"
+    ]
+  },
+  "members": [
+    {
+      "path": "nfr/events/20261010_201000_feedback_impl_feedback_dcd8234d/_changes.md",
+      "sha256": "451a6d4cf9a849a4bd497d20d61fcfb96353d31c44a71640cc4f46996df4e235"
+    },
+    {
+      "path": "nfr/events/20261010_201000_feedback_impl_feedback_dcd8234d/_inference.md",
+      "sha256": "cf5f145392d0b55ef1e31f6d46aa61f59c70a6e3fe330fd084ddc8ee9946e563"
+    },
+    {
+      "path": "nfr/events/20261010_201000_feedback_impl_feedback_dcd8234d/nfr-grade-diff.yaml",
+      "sha256": "a0e00109c35a490174c19313fd0e6aef6e811052028f49b34003f050e7823de4"
+    },
+    {
+      "path": "nfr/events/20261010_201000_feedback_impl_feedback_dcd8234d/source.txt",
+      "sha256": "ed09b82d27aabe3cb2a929245997518799ae6e9ab1e6009c95d70cfe25481ad1"
+    }
+  ]
+}

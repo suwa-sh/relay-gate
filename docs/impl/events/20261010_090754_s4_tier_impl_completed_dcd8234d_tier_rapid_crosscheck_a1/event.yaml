@@ -1,0 +1,24 @@
+event_id: 20261010_090754_s4_tier_impl_completed_dcd8234d_tier_rapid_crosscheck_a1
+type: stage_completed
+uc_id: dcd8234d
+stage: S4
+tier: tier-rapid-crosscheck
+attempt: 1
+payload:
+  manifest_sha256: 81d5dba283cd5c746d42428fa2713f0e7f2d15891575284e8b93e17b6b2d9f93
+  manifest_projection: v2
+  result: pass
+  gates:
+    format: pass
+    lint: pass
+    tdd: pass
+    bdd_tier: pass
+  tdd_tests: 66
+  bdd_scenarios: 4
+  linux_tdd: pass (relay-gate-ci:ubuntu24, LANG=C.UTF-8)
+  assumptions:
+    count: 19
+    sha256: 91e47b4440d256ea78d2419b6e51af54fda7887f41e7335cd32f777bddcab94c
+  issues:
+  - docs/impl/latest/dcd8234d/issues/20261010_093000_tier-bdd-placeholder-scenario-given-then-mismatch.md
+created_at: '2026-10-10T09:07:54+09:00'

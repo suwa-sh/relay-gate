@@ -12,23 +12,27 @@ graph TD
   subgraph 実行ホストセグメント
     FACADE[facade / slot runner CLI]
     RAPID[rapid-crosscheck-runner・worker<br/>systemd常駐]
-    HANG[hang-detector<br/>systemd timer 5分ごと]
+    HANG[hang-detector<br/>ジョブスケジューラの定期ジョブ 5分ごと]
+    HK[housekeep<br/>ジョブスケジューラの定期ジョブ 1日1回]
     OPS[ops CLI 中止/リラン]
+    CFG[[設定ファイル配置<br/>/etc/relay-gate 読取専用<br/>feature-flag.env / *.csv / hang-detector.env / housekeep.env / rapid-crosscheck.env<br/>final-crosscheck.env 確報 runner 用 確報を使う設置だけ<br/>FINAL_DB_CONN_REF と runner の任意キーだけ 比較コマンドは置かない<br/>実行ホストセグメントだけに構築手順で配る]]
   end
 
   subgraph DBセグメント
-    DB[(管理DB<br/>PostgreSQL 単一インスタンス<br/>rapid/finalスキーマ)]
+    DB[(管理DB 1 つ<br/>PostgreSQL 単一インスタンス<br/>rapid/finalスキーマ<br/>すべての接続参照名の解決先<br/>RAPID・両ホストの FINAL・HANG・HOUSEKEEP<br/>解決先が同じことは導入する側が確かめる)]
     FINAL[final-crosscheck-worker<br/>systemd常駐]
+    CFGDB[[確報クロスチェック worker 設定 確報 worker 用<br/>/etc/relay-gate/final-crosscheck.env 読取専用<br/>FINAL_DB_CONN_REF・FINAL_COMPARE_COMMAND と worker の任意キー<br/>確報の比較ツール起動コマンドを持つのはここだけ<br/>確報を使う設置だけ置き、使わない設置では消す<br/>DB セグメントに置く設定はこれだけ]]
   end
 
   subgraph 共通
-    ART[[成果物ディレクトリ<br/>RAID1 ローカルディスク<br/>exitcode.txt / aborted.txt が状態の正本]]
+    ART[[成果物ディレクトリ<br/>RAID1 ローカルディスク<br/>exitcode.txt / aborted.txt が状態の正本<br/>通知済みの印と削除待ちの置き場を同じ FS に置く]]
     LOG[[実行ログ領域<br/>logrotate 3ヶ月<br/>日時はホストのローカル TZ]]
-    CFG[[設定ファイル配置<br/>/etc/relay-gate 読取専用<br/>feature-flag.env / *.csv / hang-detector.env / rapid-crosscheck.env]]
-    MAIL[Postfix satellite]
   end
 
   SCHED[組織既存ジョブスケジューラ] -->|同期起動| FACADE
+  SCHED -->|定期起動| HANG
+  SCHED -->|定期起動| HK
+  OPER[運用者]
   FACADE --> ART
   FACADE --> DB
   RAPID -->|中止済み run 判定 parallel_run と slot_executions<br/>CLAIMED から RUNNING は条件付き UPDATE| DB
@@ -36,16 +40,20 @@ graph TD
   HANG --> DB
   HANG --> ART
   HANG --> CFG
-  HANG -->|異常検知| MAIL
+  HANG -->|終了結果 正常・警告・失敗と標準エラー| SCHED
+  SCHED -->|障害通知| OPER
+  HK -->|置き場へ rename して削除| ART
+  HK -->|専用ロール housekeep_del で行を削除<br/>管理 DB を一切使わない設置だけ接続しない| DB
+  HK --> CFG
   OPS -->|abort-rapid-crosscheck は REQUESTED・CLAIMED・RUNNING 依頼を ABORTED<br/>abort-blue・abort-green は未着手依頼を ABORTED 保険| DB
   OPS -->|aborted.txt| ART
   FINAL --> DB
+  FINAL -->|起動のたびに読む 確報比較ツールの起動コマンドと接続参照名| CFGDB
   FACADE --> LOG
   RAPID --> LOG
   FINAL --> LOG
   FACADE --> CFG
   RAPID --> CFG
-  MAIL -->|組織内SMTP中継| SMTP[組織内メール中継]
 ```
 
 ## リクエストフロー図
@@ -85,19 +93,19 @@ graph TD
     OP_COMPUTE[Linux VM/物理サーバ<br/>systemd + cron]
     OP_DB[PostgreSQL 16<br/>セルフホスト]
     OP_STORAGE[ローカルディスク RAID1<br/>NFS v4 任意]
-    OP_MAIL[Postfix satellite]
+    OP_SCHED[組織既存ジョブスケジューラ<br/>定期ジョブと障害通知]
     OP_MON[組織既存監視エージェント<br/>+ cron バックアップ]
   end
 
   OP_COMPUTE --> OP_DB
   OP_COMPUTE --> OP_STORAGE
-  OP_COMPUTE --> OP_MAIL
+  OP_SCHED --> OP_COMPUTE
   OP_DB --> OP_MON
   OP_COMPUTE --> OP_MON
 ```
 
 ## 適合性サマリ
 
-`product-conformance-onprem` (25要件中: conformant 20, partial 5, non_conformant 0) を参照。
-partial評価の5件はいずれも意図した設計判断(手動水平スケール・grepベースログ検索・既存監視統合の前提)であり、
+`product-conformance-onprem` (26要件中: conformant 22, partial 4, non_conformant 0) を参照。
+partial評価の4件はいずれも意図した設計判断(手動水平スケール・grepベースログ検索・既存監視統合の前提・ジョブスケジューラ製品による警告終了の扱い)であり、
 運用開始前確認事項として `docs/todo.md` に記録する。

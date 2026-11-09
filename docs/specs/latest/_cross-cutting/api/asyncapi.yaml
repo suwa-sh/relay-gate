@@ -6,8 +6,8 @@ info:
   description: |-
     relay-gate の非同期連携を契約化する(_inference.md 採用値 #4)。
     メッセージブローカーは無く、実体は (1) relay-gate 内部のジョブキュー兼管理 DB(RDB)の依頼テーブルを poll / claim / lease で回す RDB ジョブキュー、
-    (2) slot runner から速報クロスチェック runner(feature flag の RAPID_CROSSCHECK_RUNNER で解決する実体)への同期プロセス起動による完了通知、
-    (3) hang-detector から OS メールコマンドで送る通知メール、の 3 種である。
+    (2) slot runner から速報クロスチェック runner(feature flag の RAPID_CROSSCHECK_RUNNER で解決する実体)への同期プロセス起動による完了通知、の 2 種である。
+    ハング検知の通知は hang-detector.sh 自身の終了コードと標準エラーの alert 行(CLI の出力)で行い、非同期メッセージとしては扱わない(cli-command-contract.yaml shared_rules.hang_alert)。
     CLI コマンド契約は cli-command-contract.yaml を正本とする。エアーギャップ環境のため外部 SaaS・ネットワークブローカーは使わない。
   contact:
     name: "relay-gate"
@@ -23,18 +23,13 @@ servers:
     host: "localhost"
     protocol: "process"
     description: "同一ホスト上の同期プロセス起動(slot runner → RAPID_CROSSCHECK_RUNNER <role>-completed。実体パスは facade / background-rerun が環境変数 RAPID_CROSSCHECK_RUNNER で runner へ渡す)。RAPID_CROSSCHECK_MODE が off 以外(foreground / background)のときのみ"
-  mail:
-    host: "placeholder"
-    protocol: "smtp"
-    description: "OS 標準のメール送信コマンド(ハング検知定期ジョブ設定 hang-detector.env の ALERT_MAIL_CMD。mail / mailx / sendmail)経由。宛先は ALERT_MAIL_TO、件名プレフィックスは ALERT_SUBJECT_PREFIX(既定 [relay-gate])"
-
 channels:
   slot-completed:
     address: "rapid-crosscheck-runner.sh {role}-completed"
     title: "slot 完了通知"
     summary: "slot runner が Runner Result 3 ファイル(exitcode.txt)公開後に、自系統の公開 function(blue-completed / green-completed)を同期起動して完了結果を送る"
     description: |-
-      実体は CLI 引数(--run-id / --job-id / --exit-code / --artifact-uri)で渡す同期プロセス起動。起動する実体は feature flag の RAPID_CROSSCHECK_RUNNER(runner は環境変数で受け取る)。
+      実体は CLI 引数(--run-id / --job-id / --exit-code)で渡す同期プロセス起動。起動する実体は feature flag の RAPID_CROSSCHECK_RUNNER(runner は環境変数で受け取る)。
       RAPID_CROSSCHECK_MODE=off では publish しない(foreground / background は同じ挙動)。
       条件「完了通知失敗の扱い」: 送信失敗は自動検知しない。slot runner は実行ログに WARN completion notice failed を残し、Runner Result と終了コードは変更しない(exitcode.txt の値をそのまま返す)。
       復旧は運用者が RAPID_CROSSCHECK_RUNNER を同一引数で再実行する(冪等・先勝ちで完了結果は一度だけ登録)。
@@ -59,11 +54,11 @@ channels:
       - receive = worker が RAPID_POLL_INTERVAL_SEC(既定 30 秒)間隔で status=REQUESTED を requested_at 昇順に 1 件、
         条件付き UPDATE(更新件数 1 のみ成功)で CLAIMED(worker_id, lease_until=now+RAPID_LEASE_SEC(既定 600 秒))にする(設定は rapid-crosscheck.env)
       - lease 失効(lease_until < now)かつ未開始(started_at NULL)の CLAIMED は次の poll で REQUESTED に戻す。RUNNING は戻さない
-      - claim 後・比較開始前の CLAIMED → RUNNING は条件付き UPDATE(status='CLAIMED' AND worker_id=?)。0 件(abort-rapid-crosscheck.sh で ABORTED 済み / lease 失効で回収済み)なら比較ツールを起動せず comparison_results も INSERT しない(条件「依頼中止可否判定」)
+      - claim 後・比較開始前の CLAIMED → RUNNING は条件付き UPDATE(status='CLAIMED' AND worker_id=?)。0 件(abort-rapid-crosscheck.sh で ABORTED 済み / lease 失効で回収済み)なら比較ツールを起動せず結果(stdout / stderr / exit_code)を依頼レコードに保存しない(条件「依頼中止可否判定」)
       - 比較実行後に SUCCEEDED / FAILED で終端(exit_code / stdout / stderr / completed_at を保存)。REQUESTED / CLAIMED / RUNNING → ABORTED は abort-rapid-crosscheck.sh(条件付き UPDATE status IN ('REQUESTED','CLAIMED','RUNNING'))、
         REQUESTED → ABORTED(未着手依頼)は abort-blue.sh / abort-green.sh(対象 run の依頼だけ。条件付き UPDATE status='REQUESTED'。0 件は正常。競合窓の保険で dispatcher 側の中止済み run 判定と併用)
       - 日時列(requested_at / lease_until / started_at / completed_at)はホストのローカルタイムゾーン(ISO 8601 秒精度、指示子なし。run_id の時刻部と同じ時刻軸)
-      - 条件「比較結果の登録条件」: 比較ツールを起動して終了コードを得たときだけ comparison_results を登録する。比較定義なし・起動失敗では登録せず依頼だけ FAILED(exit_code=6 相当、error_summary に理由)で終端する
+      - 条件「結果の保存」: worker は RAPID_COMPARE_COMMAND を依頼レコードの値で置換して起動し、結果(stdout / stderr / exit_code)を依頼レコードの列へ保存する。起動失敗(launch failed)では依頼だけ FAILED(exit_code=6、error_summary に理由)で終端する
       - リラン由来(background-rerun.sh --role rapid-crosscheck)の依頼が終端したとき、worker は当該 parallel_run(parent_run_id IS NOT NULL かつ slot_executions 行 0 件)を条件付き UPDATE(status='RUNNING')で COMPLETED にする
       - hang-detector.sh は未終端の依頼を SELECT して異常判定する(参照のみ。状態を変更しない)。ABORTED の依頼は判定 COMPLETED で監視記録を終端し通知しない
     servers:
@@ -88,26 +83,6 @@ channels:
     messages:
       FinalCrosscheckRequestMessage:
         $ref: "#/components/messages/FinalCrosscheckRequestMessage"
-  hang-alert-mail:
-    address: "{ALERT_MAIL_TO}"
-    title: "ハング検知通知メール"
-    summary: "hang-detector.sh が warning / error の通知メールを運用者へ送る。同じ run_id + role + kind は 1 回だけ"
-    description: |-
-      件名: {ALERT_SUBJECT_PREFIX}[{level}] {kind} run_id={run_id} job_id={job_id} role={role}(ALERT_SUBJECT_PREFIX は hang-detector.env の件名プレフィックス。既定 [relay-gate])
-      本文: text/plain; charset=UTF-8、1 行 1 事実(key=value / key: value)。80 桁制限は 1〜13 行目のみ(11 行目 artifact_dir は例外。折り返さない)。行順 1〜12 は
-      kind / level / run_id / job_id / role / started_at / elapsed_minutes / hang_detect_limit_minutes / exit_code / request_status / artifact_dir / detected_at。
-      13 行目は空行、14 行目は recommended_action(英語の定型文。折り返さず 1 行、80 桁超可)。15 行目以降なし。HTML・添付なし。
-      冪等性: monitor_records の monitor_status(6 値: NOT_MONITORED / MONITORING / HANG_SUSPECTED_NOTIFIED / EXEC_ERROR_NOTIFIED / COMPARE_ERROR_NOTIFIED / COMPLETED)の遷移有無で判定し 1 回だけ送る(alerted_at は送信成功の記録)。送信失敗時は alerted_at を更新せず終了コード 6(次回の定期実行で再送)。
-      hang_judgement が COMPLETED(exitcode.txt が 0、または aborted.txt / ABORTED による中止済み)の対象は通知せず監視記録を終端する。
-    servers:
-      - $ref: "#/servers/mail"
-    parameters:
-      ALERT_MAIL_TO:
-        description: "ハング検知定期ジョブ設定(hang-detector.env)の宛先 ALERT_MAIL_TO(カンマ区切り可)"
-    messages:
-      HangAlertMail:
-        $ref: "#/components/messages/HangAlertMail"
-
 operations:
   # slot-completed
   execute_impl_and_publish_runner_result_send:
@@ -115,7 +90,7 @@ operations:
     channel:
       $ref: "#/channels/slot-completed"
     summary: "UC: 実装スクリプトを実行して Runner Result を出力する(tier-facade slot runner)"
-    description: "3 ファイル確定後、RAPID_CROSSCHECK_MODE が off 以外(foreground / background)のときだけ RAPID_CROSSCHECK_RUNNER の自系統の公開 function へ run_id / job_id / exit_code / artifact_uri を通知する。復元起動(execution-spec.json の parent_run_id 非 null)の background slot は exitcode.txt 公開時(終端 UPDATE に続けて)当該 parallel_run を COMPLETED にする"
+    description: "3 ファイル確定後、RAPID_CROSSCHECK_MODE が off 以外(foreground / background)のときだけ RAPID_CROSSCHECK_RUNNER の自系統の公開 function へ run_id / job_id / exit_code を通知する。復元起動(execution-spec.json の parent_run_id 非 null)の background slot は exitcode.txt 公開時(終端 UPDATE に続けて)当該 parallel_run を COMPLETED にする"
     messages:
       - $ref: "#/channels/slot-completed/messages/SlotCompletedNotice"
   send_completion_notice_to_rapid_runner_send:
@@ -165,7 +140,7 @@ operations:
     channel:
       $ref: "#/channels/rapid-crosscheck-requests"
     summary: "UC: 速報比較依頼だけを新規作成する(tier-ops background-rerun --role rapid-crosscheck)"
-    description: "新 run_id(parent_run_id=元 run_id)で rapid_runs と依頼を REQUESTED で INSERT し、比較対象は元 run の blue / green 成果物 URI を使う。業務ジョブは再実行しない(slot_executions 行を作らない)。この parallel_run は依頼が終端した時点で worker が COMPLETED にする"
+    description: "新 run_id(parent_run_id=元 run_id)で rapid_runs と依頼を REQUESTED で INSERT し、依頼の parameters / blue_exit_code / green_exit_code は元の依頼の値を引き継ぐ。業務ジョブは再実行しない(slot_executions 行を作らない)。この parallel_run は依頼が終端した時点で worker が COMPLETED にする"
     messages:
       - $ref: "#/channels/rapid-crosscheck-requests/messages/RapidCrosscheckRequestMessage"
   claim_rapid_request_receive:
@@ -180,8 +155,8 @@ operations:
     action: "receive"
     channel:
       $ref: "#/channels/rapid-crosscheck-requests"
-    summary: "UC: 比較ツールでジョブ単位比較を実行して結果を登録する(tier-rapid-crosscheck worker)"
-    description: "claim した依頼を RUNNING にし、job_id の比較定義で比較ツールを起動、結果を依頼と comparison_results に保存して SUCCEEDED / FAILED で終端させる。comparison_results の登録は条件「比較結果の登録条件」に従う(比較定義なし・起動失敗では登録せず依頼だけ FAILED)。リラン由来 run(parent_run_id IS NOT NULL かつ slot_executions 行 0 件)は終端時に parallel_run を COMPLETED にする"
+    summary: "UC: 比較ツールでジョブ単位比較を実行して結果を保存する(tier-rapid-crosscheck worker)"
+    description: "claim した依頼を RUNNING にし、RAPID_COMPARE_COMMAND を依頼レコードの値(run_id / job_id / parameters / blue_exit_code / green_exit_code)で置換して起動、stdout / stderr / exit_code を依頼レコードの列へ保存して SUCCEEDED / FAILED で終端させる(起動失敗(launch failed)は FAILED / exit_code=6)。リラン由来 run(parent_run_id IS NOT NULL かつ slot_executions 行 0 件)は終端時に parallel_run を COMPLETED にする"
     messages:
       - $ref: "#/channels/rapid-crosscheck-requests/messages/RapidCrosscheckRequestMessage"
   judge_background_elapsed_and_exit_state_receive:
@@ -219,32 +194,6 @@ operations:
     messages:
       - $ref: "#/channels/final-crosscheck-requests/messages/FinalCrosscheckRequestMessage"
 
-  # hang-alert-mail
-  notify_hang_exec_error_compare_error_send:
-    action: "send"
-    channel:
-      $ref: "#/channels/hang-alert-mail"
-    summary: "UC: ハング疑い・実行エラー・比較異常を通知する(tier-ops hang-detector)"
-    description: "hang-suspected(warning)/ background-exec-error(error)/ rapid-crosscheck-error(error)を OS メール送信コマンドで運用者へ送る。同じ run_id + role + kind は 1 回だけ"
-    messages:
-      - $ref: "#/channels/hang-alert-mail/messages/HangAlertMail"
-  receive_background_alert_mail_receive:
-    action: "receive"
-    channel:
-      $ref: "#/channels/hang-alert-mail"
-    summary: "UC: background 異常の通知メールを受け取る(運用者)"
-    description: "件名の level / kind / run_id と本文の recommended_action で静観 / 中止(abort-*)/ リラン(background-rerun.sh)/ 原因調査(rapid-crosscheck-result.sh)を判断する"
-    messages:
-      - $ref: "#/channels/hang-alert-mail/messages/HangAlertMail"
-  run_business_job_in_switched_mode_receive:
-    action: "receive"
-    channel:
-      $ref: "#/channels/hang-alert-mail"
-    summary: "UC: 切り替えた運用モードで業務ジョブを実行する(運用者)"
-    description: "並行稼働系の運用モードで background slot / 速報の異常メールを受け取る(publish 側は tier-ops の hang-detector)"
-    messages:
-      - $ref: "#/channels/hang-alert-mail/messages/HangAlertMail"
-
 components:
   messages:
     SlotCompletedNotice:
@@ -264,7 +213,6 @@ components:
             job_id: "JOB001"
             role: "green"
             exit_code: 0
-            artifact_uri: "file:///var/relay-gate/facade/20260830T113000-JOB001-3f9a1c2e/green"
     RapidCrosscheckRequestMessage:
       name: "RapidCrosscheckRequestMessage"
       title: "速報比較依頼"
@@ -280,6 +228,9 @@ components:
           payload:
             run_id: "20260830T113000-JOB001-3f9a1c2e"
             job_id: "JOB001"
+            parameters: "[]"
+            blue_exit_code: 0
+            green_exit_code: 0
             status: "REQUESTED"
             requested_at: "2026-08-30T11:45:10"
     FinalCrosscheckRequestMessage:
@@ -296,43 +247,13 @@ components:
           summary: "確報ジョブ起動直後の依頼"
           payload:
             final_crosscheck_id: "20260830T210000-final-7b2c9e1f"
-            business_date: "2026-08-30"
-            catalog_version: "v3"
             status: "REQUESTED"
             requested_at: "2026-08-30T21:00:00"
-    HangAlertMail:
-      name: "HangAlertMail"
-      title: "ハング検知通知メール"
-      summary: "hang-detector.sh が送る warning / error メール(件名 + 本文 12 キー + recommended_action)"
-      contentType: "text/plain; charset=UTF-8"
-      headers:
-        $ref: "#/components/schemas/EventHeaders"
-      payload:
-        $ref: "#/components/schemas/HangAlertMail"
-      examples:
-        - name: "hang-suspected"
-          summary: "green slot のハング疑い(warning)"
-          payload:
-            subject: "[relay-gate][warning] hang-suspected run_id=20260830T113000-JOB001-3f9a1c2e job_id=JOB001 role=green"
-            kind: "hang-suspected"
-            level: "warning"
-            run_id: "20260830T113000-JOB001-3f9a1c2e"
-            job_id: "JOB001"
-            role: "green"
-            started_at: "2026-08-30T11:30:05"
-            elapsed_minutes: 74
-            hang_detect_limit_minutes: 60
-            exit_code: "-"
-            request_status: "-"
-            artifact_dir: "/var/relay-gate/facade/20260830T113000-JOB001-3f9a1c2e/green"
-            detected_at: "2026-08-30T12:45:00"
-            recommended_action: "check the process on the execution host; if it is still running normally, wait. if it is hung, stop the process, then run: abort-green.sh --run-id 20260830T113000-JOB001-3f9a1c2e"
-
   schemas:
     EventHeaders:
       title: "共通ヘッダー"
       type: object
-      description: "全メッセージ共通の追跡情報(実体は CLI 引数 / DB 列 / メール件名に埋め込まれる)"
+      description: "全メッセージ共通の追跡情報(実体は CLI 引数 / DB 列に埋め込まれる)"
       required: [correlationId, timestamp, source]
       properties:
         correlationId:
@@ -356,7 +277,7 @@ components:
         eventType:
           type: string
           description: "イベント種別(チャネル名)"
-          enum: ["slot-completed", "rapid-crosscheck-requests", "final-crosscheck-requests", "hang-alert-mail"]
+          enum: ["slot-completed", "rapid-crosscheck-requests", "final-crosscheck-requests"]
         version:
           type: string
           description: "メッセージスキーマバージョン"
@@ -366,7 +287,7 @@ components:
       title: "slot 完了通知ペイロード"
       type: object
       description: "速報クロスチェック runner(RAPID_CROSSCHECK_RUNNER)の <role>-completed の引数と 1:1 に対応する"
-      required: [run_id, job_id, role, exit_code, artifact_uri]
+      required: [run_id, job_id, role, exit_code]
       properties:
         run_id:
           type: string
@@ -385,10 +306,6 @@ components:
           description: "公開済み exitcode.txt の値(0 以上)。0 → SUCCEEDED / 非 0 → FAILED。--exit-code"
           minimum: 0
           maximum: 255
-        artifact_uri:
-          type: string
-          format: uri
-          description: "成果物ディレクトリ URI(file:// 絶対パス)。--artifact-uri"
         completed_at:
           type: string
           pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}$'
@@ -397,8 +314,8 @@ components:
     RapidCrosscheckRequest:
       title: "速報比較依頼(rapid_crosscheck_requests 行)"
       type: object
-      description: "管理 DB の rapid_crosscheck_requests テーブルの列(依頼レコードそのもの)。列定義の正本は _cross-cutting/datastore/rdb-schema.yaml。比較対象の成果物 URI(blue_artifact_uri / green_artifact_uri)は依頼の列ではなく rapid_runs(同じ run_id)を、リラン系譜(parent_run_id)は parallel_runs.parent_run_id を参照する"
-      required: [run_id, job_id, status, requested_at]
+      description: "管理 DB の rapid_crosscheck_requests テーブルの列(依頼レコードそのもの)。列定義の正本は _cross-cutting/datastore/rdb-schema.yaml。worker は RAPID_COMPARE_COMMAND を run_id / job_id / parameters / blue_exit_code / green_exit_code で置換して起動し、結果(stdout / stderr / exit_code)を依頼レコードの列へ保存する。リラン系譜(parent_run_id)は parallel_runs.parent_run_id を参照する"
+      required: [run_id, job_id, parameters, blue_exit_code, green_exit_code, status, requested_at]
       properties:
         run_id:
           type: string
@@ -406,7 +323,20 @@ components:
           pattern: "^[0-9]{8}T[0-9]{6}-[A-Za-z0-9_-]+-[0-9a-f]{8}$"
         job_id:
           type: string
-          description: "業務ジョブ識別子(crosscheck-job-map.csv の比較定義の検索キー)"
+          description: "業務ジョブ識別子(起動コマンドの {job_id} 置換に使う JOB_ID)"
+        parameters:
+          type: string
+          description: "起動コマンドの {params} 置換に使う PARAM... の JSON 配列文字列(引数無しは [])。依頼作成時に parallel_runs.parameters を複製する"
+        blue_exit_code:
+          type: integer
+          description: "起動コマンドの {blue_exit_code} 置換に使う blue の完了通知の終了コード。依頼は両系成功時のみ作成されるため作成時は 0(SUCCEEDED ⟺ 0)"
+          minimum: 0
+          maximum: 255
+        green_exit_code:
+          type: integer
+          description: "起動コマンドの {green_exit_code} 置換に使う green の完了通知の終了コード。依頼は両系成功時のみ作成されるため作成時は 0(SUCCEEDED ⟺ 0)"
+          minimum: 0
+          maximum: 255
         status:
           type: string
           description: "依頼状態。REQUESTED → CLAIMED → RUNNING(条件付き UPDATE。0 件なら比較を開始しない)→ SUCCEEDED / FAILED。REQUESTED / CLAIMED / RUNNING → ABORTED は abort-rapid-crosscheck.sh、REQUESTED → ABORTED(未着手)は abort-blue.sh / abort-green.sh(競合窓の保険)"
@@ -443,25 +373,18 @@ components:
           description: "比較ツールの stderr(text)"
         error_summary:
           type: string
-          description: "FAILED 時の要約(stderr 先頭 1 行、起動失敗の理由、または `comparison definition not found job_id=...`)。SUCCEEDED は null"
+          description: "FAILED 時の要約(stderr 先頭 1 行、または起動失敗(launch failed)の理由)。SUCCEEDED は null"
 
     FinalCrosscheckRequest:
       title: "確報比較依頼(final_crosscheck_requests 行)"
       type: object
       description: "管理 DB の final_crosscheck_requests テーブルの列。列定義の正本は _cross-cutting/datastore/rdb-schema.yaml"
-      required: [final_crosscheck_id, business_date, catalog_version, status, requested_at]
+      required: [final_crosscheck_id, status, requested_at]
       properties:
         final_crosscheck_id:
           type: string
           description: "主キー({ローカル yyyymmddThhmmss}-final-{8 桁 hex}。時刻部はローカルタイムゾーンでタイムゾーン指示子なし)。abort-final-crosscheck.sh の --run-id に渡す値"
           pattern: "^[0-9]{8}T[0-9]{6}-final-[0-9a-f]{8}$"
-        business_date:
-          type: string
-          format: date
-          description: "比較対象の業務日付(YYYY-MM-DD)"
-        catalog_version:
-          type: string
-          description: "対象カタログの版(target-catalog.csv の catalog_version に存在する値)"
         status:
           type: string
           description: "依頼状態。REQUESTED → CLAIMED → RUNNING → SUCCEEDED / FAILED。RUNNING → ABORTED は abort-final-crosscheck.sh(RUNNING のみ。REQUESTED / CLAIMED の確報比較依頼は中止できない)"
@@ -498,76 +421,4 @@ components:
           description: "比較ツールの stderr(バイト列。runner が無加工中継)"
         error_summary:
           type: string
-          description: "起動失敗時の要約(例 no catalog rows catalog_version=...)。比較ツール由来の失敗では null"
-
-    HangAlertMail:
-      title: "ハング検知通知メール"
-      type: object
-      description: "件名と本文 12 キー + recommended_action(_cross-cutting/ux-ui/ui-design.md 通知メール規約)。本文の値が無い行は `-`"
-      required:
-        - subject
-        - kind
-        - level
-        - run_id
-        - job_id
-        - role
-        - started_at
-        - elapsed_minutes
-        - hang_detect_limit_minutes
-        - exit_code
-        - request_status
-        - artifact_dir
-        - detected_at
-        - recommended_action
-      properties:
-        subject:
-          type: string
-          description: "件名。{ALERT_SUBJECT_PREFIX}[{level}] {kind} run_id={run_id} job_id={job_id} role={role}(プレフィックスは hang-detector.env の ALERT_SUBJECT_PREFIX。既定 [relay-gate])"
-        kind:
-          type: string
-          description: "通知種別(本文 1 行目。件名と同値)"
-          enum: ["hang-suspected", "background-exec-error", "rapid-crosscheck-error"]
-        level:
-          type: string
-          description: "通知レベル(本文 2 行目。hang-suspected は warning、他は error)"
-          enum: ["warning", "error"]
-        run_id:
-          type: string
-          description: "本文 3 行目。監視対象の run_id"
-        job_id:
-          type: string
-          description: "本文 4 行目"
-        role:
-          type: string
-          description: "本文 5 行目。監視対象 role"
-          enum: ["blue", "green", "rapid-crosscheck"]
-        started_at:
-          type: string
-          pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}$'
-          description: "本文 6 行目。started-at.txt(UTC 値をローカルへ変換して載せる)または依頼の started_at。ローカル ISO 8601、指示子なし"
-        elapsed_minutes:
-          type: integer
-          description: "本文 7 行目。判定時点の経過時間(分)"
-          minimum: 0
-        hang_detect_limit_minutes:
-          type: integer
-          description: "本文 8 行目。execution-spec.json の slots.<role>.hang_detect_limit_minutes。依頼は RAPID_HANG_DETECT_LIMIT_MINUTES"
-          minimum: 0
-        exit_code:
-          type: string
-          description: "本文 9 行目。整数または `-`(hang-suspected は `-`)"
-          pattern: "^([0-9]{1,3}|-)$"
-        request_status:
-          type: string
-          description: "本文 10 行目。依頼状態または `-`(rapid-crosscheck-error のみ値あり)"
-          enum: ["REQUESTED", "CLAIMED", "RUNNING", "SUCCEEDED", "FAILED", "ABORTED", "-"]
-        artifact_dir:
-          type: string
-          description: "本文 11 行目。成果物ディレクトリの絶対パス(`key: value` 形式)。80 桁制限の例外(パスが長くても折り返さない)"
-        detected_at:
-          type: string
-          pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}$'
-          description: "本文 12 行目。hang-detector の判定日時(ローカル時刻)。monitor_records では judged_at 列に保存する(canonical C2)"
-        recommended_action:
-          type: string
-          description: "本文 14 行目(1 行。折り返さず 80 桁超可。15 行目以降なし)。通知種別ごとの英語定型文(hang-suspected: abort-{role}.sh の案内 / background-exec-error: background-rerun.sh の案内 / rapid-crosscheck-error: rapid-crosscheck-result.sh の案内)"
+          description: "起動失敗時の要約(例 launch failed)。比較ツール由来の失敗では null"

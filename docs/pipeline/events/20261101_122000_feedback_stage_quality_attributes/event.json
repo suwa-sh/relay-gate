@@ -1,0 +1,219 @@
+{
+  "event_id": "20261101_122000_feedback_stage_quality_attributes",
+  "type": "feedback_stage_completed",
+  "run_id": "feedback-20261101_mail_removal_housekeeping-20261101_121449-27318",
+  "attempt": 1,
+  "created_at": "2026-11-01T12:20:00Z",
+  "stage": "quality_attributes",
+  "direct_work_unit_ids": [],
+  "causal_work_unit_ids": [
+    "CR-e4ea8aaa-001#1",
+    "CR-e4ea8aaa-002#1"
+  ],
+  "work_unit_results": [],
+  "reconciliation_results": [
+    {
+      "work_unit_id": "CR-e4ea8aaa-001#1",
+      "status": "changed",
+      "reason": "メール送信の廃止に追従し、NFR グレード表の「メールで通知」をハング検知ジョブ自身の終了結果(異常なしは正常終了、ハング疑いだけなら警告終了、実行エラー・比較異常があれば失敗)と標準エラー 1 件 1 行、ジョブスケジューラの障害通知による到達に置き換えた。条件名を「CLI による提示」へ揃え、外部システム「メール通知」・情報「通知メール」・ハング検知定期ジョブ設定のメール項目への参照を除いた。B.1.1.1 / B.2.1.1 / C.1.3.2 / C.3.1.1 / C.3.2.1 / C.5.1.1 / E.10.1.1 / F.1.1.3 / F.1.2.1 を更新。グレード値はすべて据え置き、利用者確定の B.2.1.1 / C.5.1.1 は判断の本体を維持した。方針資料(利用イメージ 831 / 896 行)と一致することを確認した",
+      "artifact_refs": [
+        "nfr/events/20261101_122000_feedback_mail_removal_housekeeping/nfr-grade-diff.yaml",
+        "nfr/events/20261101_122000_feedback_mail_removal_housekeeping/_changes.md"
+      ]
+    },
+    {
+      "work_unit_id": "CR-e4ea8aaa-002#1",
+      "status": "changed",
+      "reason": "ハウスキープの新設に追従し、保持日数(既定 90 日)を過ぎた終了済みの実行の成果物と管理 DB の行が削除されることを NFR に反映した。B.1.1.3(1 日 1 回の定期ジョブ)、B.3.3.1(必要容量が保持日数分で頭打ち)、C.1.2.2(ハウスキープ設定をバックアップ対象に追加)、E.5.1.1(専用 DB ロールの接続参照名)、E.5.2.1(削除権限をハウスキープ専用 DB ロールへ分離し業務用ロールに DELETE を与えない)、E.7.1.1(relay-gate 側の記録は保持日数内の追跡用)、F.1.2.1(管理 DB の接続参照名の持ち主)を更新。グレード値はすべて据え置き。方針資料(しくみ 289 / 302 / 304 行)と一致することを確認した",
+      "artifact_refs": [
+        "nfr/events/20261101_122000_feedback_mail_removal_housekeeping/nfr-grade-diff.yaml",
+        "nfr/events/20261101_122000_feedback_mail_removal_housekeeping/_changes.md"
+      ]
+    }
+  ],
+  "work_unit_evidence_refs": [
+    {
+      "work_unit_id": "CR-e4ea8aaa-001#1",
+      "path": "nfr/events/20261101_122000_feedback_mail_removal_housekeeping/nfr-grade-diff.yaml",
+      "sha256": "632704dbb11cd0b4a8877dc85de4cbee4ed898afa0ecf3838d639da939555d33"
+    },
+    {
+      "work_unit_id": "CR-e4ea8aaa-001#1",
+      "path": "nfr/events/20261101_122000_feedback_mail_removal_housekeeping/_changes.md",
+      "sha256": "c6a22343eb2d12c23252f9a8b904c6f64455546197f4d31f6ce9a604ec30a3f2"
+    },
+    {
+      "work_unit_id": "CR-e4ea8aaa-002#1",
+      "path": "nfr/events/20261101_122000_feedback_mail_removal_housekeeping/nfr-grade-diff.yaml",
+      "sha256": "632704dbb11cd0b4a8877dc85de4cbee4ed898afa0ecf3838d639da939555d33"
+    },
+    {
+      "work_unit_id": "CR-e4ea8aaa-002#1",
+      "path": "nfr/events/20261101_122000_feedback_mail_removal_housekeeping/_changes.md",
+      "sha256": "c6a22343eb2d12c23252f9a8b904c6f64455546197f4d31f6ce9a604ec30a3f2"
+    }
+  ],
+  "domain_event_refs": [
+    {
+      "path": "nfr/events/20261101_122000_feedback_mail_removal_housekeeping/event.json",
+      "sha256": "b22f72aa9c541d5c573a4e92acd3e3040d31aaca57731a6de10a7317b0dfe138"
+    },
+    {
+      "path": "nfr/events/20261101_122000_feedback_mail_removal_housekeeping/nfr-grade-diff.yaml",
+      "sha256": "632704dbb11cd0b4a8877dc85de4cbee4ed898afa0ecf3838d639da939555d33"
+    }
+  ],
+  "feedback_request": {
+    "feedback_request_id": "20261101_mail_removal_housekeeping",
+    "input_sha256": "7be2e54314163ff4cae802f01005fe771da312621c06ff123a43b09f562afb11",
+    "request_ids": [
+      "CR-e4ea8aaa-001",
+      "CR-e4ea8aaa-002"
+    ],
+    "work_unit_ids": [
+      "CR-e4ea8aaa-001#1",
+      "CR-e4ea8aaa-002#1"
+    ]
+  },
+  "post_execution_basis": {
+    "repository_head": "38cf3f4a5dff8f47c581ab984ab8c37805c44e20",
+    "latest_domain_event_ids": {
+      "requirements": {
+        "rdra/events": "20261101_121000_feedback_mail_removal_housekeeping",
+        "usdm/events": "20261101_121000_feedback_mail_removal_housekeeping"
+      },
+      "quality_attributes": {
+        "nfr/events": "20261101_122000_feedback_mail_removal_housekeeping"
+      },
+      "architecture": {
+        "arch/events": "20261101_103000_feedback_impl_feedback_dcd8234d"
+      },
+      "infrastructure": {
+        "infra/events": "20261101_104000_feedback_impl_feedback_dcd8234d"
+      },
+      "design_system": {
+        "design/events": null
+      },
+      "spec": {
+        "specs/events": "20261101_105000_feedback_impl_feedback_dcd8234d"
+      },
+      "spec_stories": {
+        "design/events": null
+      }
+    },
+    "domain_event_root_snapshots": {
+      "rdra/events": {
+        "head_event_id": "20261101_121000_feedback_mail_removal_housekeeping",
+        "head_event_sha256": "594746d311a735679ebfbdd80071587510a2f1010206d650c1f6ad902de304c7",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency",
+          "20260908_011000_feedback_slot_status_wording",
+          "20260921_084000_feedback_impl_feedback_eff24f55",
+          "20261010_200000_feedback_impl_feedback_dcd8234d",
+          "20261101_101000_feedback_impl_feedback_dcd8234d",
+          "20261101_121000_feedback_mail_removal_housekeeping"
+        ],
+        "event_set_sha256": "5795b09bd67792d30ba3d94d0969f0989296918cdd1a290e6b6351e3a0bc18c4",
+        "latest_tree_sha256": "453ee56acfc6d7907100df850a87b1cc2320b740a8714b45e1c09fe08d169603"
+      },
+      "usdm/events": {
+        "head_event_id": "20261101_121000_feedback_mail_removal_housekeeping",
+        "head_event_sha256": "d044f91098762e4f71665ea3e5c74262b93cbbff70af28d685ef8f795137aaea",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency",
+          "20260908_011000_feedback_slot_status_wording",
+          "20260921_084000_feedback_impl_feedback_eff24f55",
+          "20261010_200000_feedback_impl_feedback_dcd8234d",
+          "20261101_101000_feedback_impl_feedback_dcd8234d",
+          "20261101_121000_feedback_mail_removal_housekeeping"
+        ],
+        "event_set_sha256": "5795b09bd67792d30ba3d94d0969f0989296918cdd1a290e6b6351e3a0bc18c4",
+        "latest_tree_sha256": "b0facdbce1d2483fba0dc96579fafe2501105d7192432f48677dc95644da0618"
+      },
+      "nfr/events": {
+        "head_event_id": "20261101_122000_feedback_mail_removal_housekeeping",
+        "head_event_sha256": "a3ead19fd3bcc2c60027240386186bce845bce0be0ca6f5fbec991e462368f41",
+        "event_ids": [
+          "20260830_183726_initial_nfr",
+          "20260905_085000_feedback_todo_resolution",
+          "20260907_013000_feedback_todo_followup",
+          "20260907_120000_feedback_abort_consistency",
+          "20260908_013000_feedback_slot_status_wording",
+          "20260921_090000_feedback_impl_feedback_eff24f55",
+          "20261010_201000_feedback_impl_feedback_dcd8234d",
+          "20261101_102000_feedback_impl_feedback_dcd8234d",
+          "20261101_122000_feedback_mail_removal_housekeeping"
+        ],
+        "event_set_sha256": "f66a9c2023293c6dc3689d89ea445de83001be61958ca752373c69df795c37be",
+        "latest_tree_sha256": "03bc17f634b24562238a48102b36e90a6ee82d3f277978cf6c71686481fe4d24"
+      },
+      "arch/events": {
+        "head_event_id": "20261101_103000_feedback_impl_feedback_dcd8234d",
+        "head_event_sha256": "d40b85566681f1e5b981fc1004f155f5a2f2943fcd6235883c605e434aca92f0",
+        "event_ids": [
+          "20260830_184457_initial_arch",
+          "20260830_202427_arch_infra_feedback_20260830_190412_infra_product_design",
+          "20260905_091000_feedback_todo_resolution",
+          "20260907_015000_feedback_todo_followup",
+          "20260907_122000_feedback_abort_consistency",
+          "20260908_015000_feedback_slot_status_wording",
+          "20260921_092000_feedback_impl_feedback_eff24f55",
+          "20261010_202000_feedback_impl_feedback_dcd8234d",
+          "20261101_103000_feedback_impl_feedback_dcd8234d"
+        ],
+        "event_set_sha256": "b2be40620ffe257758515ae6ba0b91c78cf73dc5f04eb192bad7dda731961f4b",
+        "latest_tree_sha256": "631a15142491145eaccc5c34cab62abadf79473797a0bd1cd97ba5e7554d0204"
+      },
+      "infra/events": {
+        "head_event_id": "20261101_104000_feedback_impl_feedback_dcd8234d",
+        "head_event_sha256": "4396e5af51cbe6420e00cf57999bddb3b349dd260ff386f142fd475de08a2565",
+        "event_ids": [
+          "20260830_190412_infra_product_design",
+          "20260905_093000_feedback_todo_resolution",
+          "20260907_021000_feedback_todo_followup",
+          "20260907_124000_feedback_abort_consistency",
+          "20260908_021000_feedback_slot_status_wording",
+          "20260921_094000_feedback_impl_feedback_eff24f55",
+          "20261010_203000_feedback_impl_feedback_dcd8234d",
+          "20261101_104000_feedback_impl_feedback_dcd8234d"
+        ],
+        "event_set_sha256": "c59e2ea80c8595cfa4c2263dcaaddcf56b12db9cb03464094e94c213ad84af88",
+        "latest_tree_sha256": "33d8d381256e2a7aadcda81ef676ce002fa5551653568d59b26c9fc6123ce614"
+      },
+      "design/events": {
+        "head_event_id": null,
+        "head_event_sha256": null,
+        "event_ids": [],
+        "event_set_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "latest_tree_sha256": null
+      },
+      "specs/events": {
+        "head_event_id": "20261101_105000_feedback_impl_feedback_dcd8234d",
+        "head_event_sha256": "2bca24366104ab9df45d5bc6fc22e58fe52ac678e80fb7cbd070cfab309ba493",
+        "event_ids": [
+          "20260830_202851_spec_generation",
+          "20260905_100000_feedback_todo_resolution",
+          "20260907_024000_feedback_todo_followup",
+          "20260907_131000_feedback_abort_consistency",
+          "20260908_024000_feedback_slot_status_wording",
+          "20260908_062000_feedback_spec_machine_readable",
+          "20260917_050000_feedback_impl_feedback_fd678b04",
+          "20260917_100000_feedback_impl_feedback_fd678b04_cycle2",
+          "20260921_100000_feedback_impl_feedback_eff24f55",
+          "20260923_112000_feedback_impl_feedback_eff24f55_cycle2",
+          "20261010_204000_feedback_impl_feedback_dcd8234d",
+          "20261027_055000_feedback_impl_feedback_dcd8234d",
+          "20261101_105000_feedback_impl_feedback_dcd8234d"
+        ],
+        "event_set_sha256": "767bba4a6b14cabbc7ae2b80a6359c8feaa6febe789b830a5a37ec2e5ab3b1ab",
+        "latest_tree_sha256": "da762eddf264eec1a9af2a719035172c475b91075abbe65c974607485af31249"
+      }
+    }
+  }
+}

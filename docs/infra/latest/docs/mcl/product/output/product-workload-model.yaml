@@ -14,7 +14,6 @@ decision_refs:
   - "product-decision-001"
   - "product-decision-002"
   - "product-decision-003"
-  - "product-decision-004"
   - "product-decision-005"
 inputs_ref:
   - "foundation-context"
@@ -53,6 +52,7 @@ workload_characteristics:
       - "夜間バッチの業務ジョブ(facade 経由)"
       - "日次確報クロスチェックジョブ"
       - "5 分ごとのハング検知定期ジョブ"
+      - "1 日 1 回のハウスキープ定期ジョブ"
       - "運用者の手動起動(中止 / リラン)"
     db_write_rate: "〜10 TPS(ジョブ起動・完了通知・claim・監視記録)"
   consistency_needs:
@@ -70,7 +70,7 @@ workload_characteristics:
     tracing: "run_id / parent_run_id による相関(分散トレーシング基盤は導入しない)"
     sli: ["availability", "latency", "error_rate", "throughput"]
     alerting: ["health_check", "error_rate"]
-    alerting_channel: "メール通知のみ"
+    alerting_channel: "ジョブスケジューラの既存のジョブ監視・障害通知のみ(hang-detector の終了結果(警告終了 / 失敗)と標準エラー。relay-gate はメール等の通知送信手段を持たない)"
     log_retention: "3 ヶ月"
   cost_posture:
     strategy: "cost_optimized"
@@ -104,20 +104,20 @@ elements:
         priority: "must"
         rationale: "foundation.network.air_gapped"
     constraints:
-      - "OS は Linux。bash・標準コマンド・SSH クライアント・RDB クライアント CLI・メール送信コマンドが利用可能なこと"
+      - "OS は Linux。bash・標準コマンド・SSH クライアント・RDB クライアント CLI が利用可能なこと(メール送信コマンド・MTA は要求しない)"
       - "コンテナ / オーケストレーション基盤は前提にしない"
     dependencies:
       - "product.database.management_db"
       - "product.storage.artifact_store"
       - "product.storage.config_store"
-      - "product.messaging.mail_notification"
+      - "product.integration.job_scheduler"
     source_refs:
       - "docs/mcl/product/input/product-input.yaml#elements.script_runtime_hosts"
 
   - id: "product.database.management_db"
     name: "管理 DB(ジョブキュー兼管理 DB)"
     category: "database"
-    description: "リレーショナル・強整合性の単一インスタンス DB。速報側(並行稼働実行 / slot 実行 / 速報比較依頼 / 比較結果)と確報側(確報比較依頼)のテーブルを分離し、worker の poll / claim / lease によるジョブキューとして使う。速報比較依頼の状態遷移(worker の CLAIMED → RUNNING、abort-rapid-crosscheck による REQUESTED / CLAIMED / RUNNING → ABORTED、abort-blue / abort-green による REQUESTED → ABORTED)は WHERE 句で現在状態を条件にした条件付き UPDATE で行い、更新件数で競合を判定する"
+    description: "リレーショナル・強整合性の単一インスタンス DB。速報側(並行稼働実行 / slot 実行 / 速報比較依頼)と確報側(確報比較依頼)のテーブルを分離し、worker の poll / claim / lease によるジョブキューとして使う。速報比較依頼の状態遷移(worker の CLAIMED → RUNNING、abort-rapid-crosscheck による REQUESTED / CLAIMED / RUNNING → ABORTED、abort-blue / abort-green による REQUESTED → ABORTED)は WHERE 句で現在状態を条件にした条件付き UPDATE で行い、更新件数で競合を判定する。行の削除は保持日数を過ぎた終端済みの削除単位についてハウスキープだけが専用ロールで行う。管理 DB は 1 つで、速報・確報(runner と worker)・ハング検知・ハウスキープの接続参照名はすべて同じ 1 つの管理 DB に解決される前提とする(条件は参照名の文字列ではなく解決先の DB が同じこと。確報 runner が登録した依頼を確報 worker が同じキューから取得するため。解決先が同じことは導入する側が確かめる)"
     requirements:
       - id: "REQ-DB-001"
         description: "行ロック付きトランザクションで claim / lease の排他を実現できる"
@@ -143,9 +143,14 @@ elements:
         description: "WHERE 句で現在状態を条件にした UPDATE の更新件数を CLI クライアントから取得できる"
         priority: "must"
         rationale: "運用者の明示中止(abort-rapid-crosscheck: status IN (REQUESTED, CLAIMED, RUNNING))と worker の比較開始(CLAIMED → RUNNING)の競合を条件付き UPDATE の更新件数(0 件なら比較を開始しない / 終端済みはエラー)で閉じる(SP-011 / SP-022 / LP-021 / LP-024)"
+      - id: "REQ-DB-007"
+        description: "業務用ロールに DELETE を与えず、ハウスキープ専用ロール(6 テーブルへの SELECT / DELETE のみ)だけが削除単位の行を 1 トランザクションで削除できる"
+        priority: "must"
+        rationale: "管理 DB の行と成果物の削除はハウスキープだけが行う(CTR-008 / CTP-002 / SP-028 / LP-026)。業務スクリプトの誤りで履歴が消える経路を作らない"
     constraints:
       - "RDB 1 種のみ。MQ や KVS は導入しない"
       - "単一インスタンス。自動フェイルオーバーは要求しない"
+      - "容量は保持日数(既定 90 日)分の実行管理レコードで頭打ちになる(ハウスキープ定期ジョブが毎日削除する)。管理 DB を使う設置で接続参照名が無い・空ならハウスキープは設定エラーで何も削除せずに終わるため、行が削除されないまま増え続ける状態にはならない。管理 DB を一切使わない設置(RAPID_CROSSCHECK_MODE=off で確報クロスチェック worker の設定が無く、ハウスキープ設定の接続参照名が無い・空)では管理 DB の行は新たに増えないが、off 以外の期間に作られた実行の行が残る"
     dependencies: []
     source_refs:
       - "docs/mcl/product/input/product-input.yaml#elements.management_db"
@@ -168,8 +173,13 @@ elements:
         description: "ミラーリング(RAID1 相当)で保護される"
         priority: "should"
         rationale: "A.2.5.1 ストレージ冗長化 Lv1 + tier-datastore ポリシー"
+      - id: "REQ-ART-004"
+        description: "成果物ルート配下の削除待ちの置き場へ同一ファイルシステム内の rename で移してから削除でき、RAPID_CROSSCHECK_MODE=off 時のハング検知の通知済みの印を一時ファイル → リネームで書ける"
+        priority: "must"
+        rationale: "ハウスキープの削除順序と回復(SP-028 / LP-026)と通知済みの判定(SP-018 / storage_mapping E-021)。印は成果物ルート直下の hang-detector-notified/<run_id>.<role>、置き場は成果物ルート直下の housekeep-pending/(CLI 契約の artifact_root_entries)"
     constraints:
       - "オブジェクトストレージ API は前提にしない(POSIX パス参照)"
+      - "容量は保持日数(既定 90 日)× 1 日あたりの成果物量で頭打ちになる(ハウスキープ定期ジョブが毎日削除する)。ただし管理 DB を一切使わない設置では、速報クロスチェックのモードが off でない期間に作られた実行の成果物が日数にかかわらず残る"
     dependencies: []
     source_refs:
       - "docs/mcl/product/input/product-input.yaml#elements.artifact_store"
@@ -177,18 +187,18 @@ elements:
   - id: "product.storage.config_store"
     name: "設定ファイル配置"
     category: "storage"
-    description: "feature flag(env 形式。BLUE_MODE / GREEN_MODE / RAPID_CROSSCHECK_MODE / BLUE_IMPL / GREEN_IMPL / BLUE_RUNNER / GREEN_RUNNER / RAPID_CROSSCHECK_RUNNER / RAPID_CROSSCHECK_WORKER の 9 キー)/ ジョブマップ・クロスチェックジョブマップ・対象カタログ(CSV 形式。1 行目ヘッダー、セルは二重引用符で囲み内部の二重引用符は二重化)/ ハング検知定期ジョブ設定(env 形式。ALERT_MAIL_TO / ALERT_MAIL_CMD / ALERT_SUBJECT_PREFIX / HANG_DB_CONN_REF)/ 速報クロスチェック設定(env 形式 rapid-crosscheck.env。RAPID_DB_CONN_REF / RAPID_LEASE_SEC / RAPID_POLL_INTERVAL_SEC。速報有効時のみ)/ 適用文書を配置する領域。設定版は持たず、マップ版はジョブマップ側の任意列。適用側が版管理して配置する"
+    description: "feature flag(env 形式。BLUE_MODE / GREEN_MODE / RAPID_CROSSCHECK_MODE / BLUE_IMPL / GREEN_IMPL / BLUE_RUNNER / GREEN_RUNNER / RAPID_CROSSCHECK_RUNNER / RAPID_CROSSCHECK_WORKER の 9 キー)/ ジョブマップ(CSV 形式 <role>-job-map.csv。1 行目ヘッダー、セルは二重引用符で囲み内部の二重引用符は二重化)/ ハング検知定期ジョブ設定(env 形式。HANG_DB_CONN_REF と任意キー RAPID_HANG_DETECT_LIMIT_MINUTES / HANG_SCAN_WINDOW_HOURS の 3 キーを持ち得る。HANG_DB_CONN_REF は RAPID_CROSSCHECK_MODE が off 以外のときだけ必須)/ ハウスキープ設定(保持日数。既定 90 日と、ハウスキープ専用 DB ロールの接続参照名。接続参照名は RAPID_CROSSCHECK_MODE が off 以外、または確報クロスチェックを使う設置では必須で、無い・空なら設定エラーで何も削除しない。省略・空にできるのは管理 DB を一切使わない設置だけで、そのときハウスキープは管理 DB に接続しない。ファイルは housekeep.env(配置先 /etc/relay-gate/housekeep.env)で、保持日数のキーは HOUSEKEEP_RETENTION_DAYS、接続参照名のキーは HOUSEKEEP_DB_CONN_REF)/ 速報クロスチェック設定(env 形式 rapid-crosscheck.env。必須は RAPID_DB_CONN_REF と速報比較ツールの起動コマンド 1 行、任意は RAPID_LEASE_SEC(既定 600)/ RAPID_POLL_INTERVAL_SEC(既定 30)。速報有効時のみ)/ 確報クロスチェック worker 設定(env 形式 final-crosscheck.env。確報を使う設置だけ、実行ホストと確報 worker の動くホストの両方に同じファイル名で置き場ごとに中身を分けて配置し、使わない設置では両方から消す(構築の変数で切り替え。既定は使わない)。実行ホストの分は DB 接続参照と確報 runner の polling の任意キーだけで、確報比較ツールの起動コマンド 1 行と lease・poll 間隔の任意キーは確報 worker の動くホストの分だけが持つ)/ 適用文書を配置する領域。比較対象の定義は比較ツール側が持ち、ジョブ ID ごとの比較定義 CSV・対象カタログは持たない。設定版は持たず、マップ版はジョブマップ側の任意列。適用側が版管理して配置する"
     requirements:
       - id: "REQ-CFG-001"
         description: "facade が起動のたびに読み込め、変更が次回起動から反映される"
         priority: "must"
-        rationale: "feature flag の起動時読み込み。hang-detector も起動のたびにハング検知定期ジョブ設定を読む。速報有効時は facade・slot runner・速報クロスチェック runner・worker も起動のたびに速報クロスチェック設定を読む(RAPID_CROSSCHECK_MODE=off では読まない)"
+        rationale: "feature flag の起動時読み込み。hang-detector も起動のたびにハング検知定期ジョブ設定を、housekeep も起動のたびにハウスキープ設定を読む。速報有効時は facade・slot runner・速報クロスチェック runner・worker も起動のたびに速報クロスチェック設定を読む(RAPID_CROSSCHECK_MODE=off では読まない)"
       - id: "REQ-CFG-002"
         description: "実行ユーザーに読み取り専用で配置し、変更は適用側の配布手順に限る"
         priority: "should"
         rationale: "設定所有区分(tier-datastore)"
     constraints:
-      - "認証情報の値を置かない(参照名のみ。ジョブマップの credential_ref、ハング検知定期ジョブ設定の HANG_DB_CONN_REF、速報クロスチェック設定の RAPID_DB_CONN_REF)"
+      - "認証情報の値を置かない(参照名のみ。ジョブマップの credential_ref、ハング検知定期ジョブ設定の HANG_DB_CONN_REF、ハウスキープ設定の専用 DB ロールの接続参照名、速報クロスチェック設定の RAPID_DB_CONN_REF)"
       - "設定ファイルの正本は適用側の版管理(構成管理リポジトリ)にあり、バックアップ対象(C.1.2.2)は版管理側で満たす"
     dependencies: []
     source_refs:
@@ -217,30 +227,10 @@ elements:
     source_refs:
       - "docs/mcl/product/input/product-input.yaml#elements.execution_log_store"
 
-  - id: "product.messaging.mail_notification"
-    name: "メール通知"
-    category: "messaging"
-    description: "運用者への warning / error 通知。宛先・送信コマンド・件名プレフィックスはハング検知定期ジョブ設定(hang-detector.env)から取得し、ホストのメール送信コマンドから組織内メール中継へ送る"
-    requirements:
-      - id: "REQ-MAIL-001"
-        description: "閉域ネットワーク内のメール中継へ送信できる"
-        priority: "must"
-        rationale: "外部 SaaS を使わない"
-      - id: "REQ-MAIL-002"
-        description: "送信内容を実行ログに残し、送信時刻を監視記録に記録できる"
-        priority: "must"
-        rationale: "E-022 / E-026 の扱い"
-    constraints:
-      - "通知手段はメールのみ。チャット / ページャ連携は導入しない"
-    dependencies:
-      - "product.storage.execution_log_store"
-    source_refs:
-      - "docs/mcl/product/input/product-input.yaml#elements.mail_notification"
-
   - id: "product.integration.job_scheduler"
     name: "ジョブスケジューラ連携"
     category: "external_integration"
-    description: "既存のジョブスケジューラ。業務ジョブ facade / 確報クロスチェックジョブ / ハング検知定期ジョブ / background リラン専用ジョブを起動し、実行履歴・監査の正本となる"
+    description: "既存のジョブスケジューラ。業務ジョブ facade / 確報クロスチェックジョブ / ハング検知定期ジョブ / ハウスキープ定期ジョブ / background リラン専用ジョブを起動し、実行履歴・監査の正本となる。ハング検知ジョブの終了結果を判定して既存の障害通知で運用者へ届ける、運用者への唯一の通知経路でもある"
     requirements:
       - id: "REQ-SCH-001"
         description: "ジョブ定義から任意の CLI を引数付きで同期起動し終了コードで成否を判定できる"
@@ -249,7 +239,11 @@ elements:
       - id: "REQ-SCH-002"
         description: "定期ジョブ(5 分ごと)と日次ジョブを定義できる"
         priority: "must"
-        rationale: "hang-detector / final-crosscheck"
+        rationale: "hang-detector / final-crosscheck / housekeep(1 日 1 回)。定期ジョブはホストの systemd timer / cron ではなくジョブスケジューラに登録する(終了結果が障害通知に乗るため)"
+      - id: "REQ-SCH-003"
+        description: "ハング検知ジョブの終了結果(正常終了 / 警告終了 / 失敗)を判定し、警告終了と失敗を既存の障害通知で運用者へ届け、標準エラーをジョブログとして参照できる"
+        priority: "must"
+        rationale: "メール通知の廃止(2026-11-01)で通知経路をジョブスケジューラへ一本化した(CTP-001 / CTP-009 / SP-018)。具体的な終了コードは CLI 契約で確定する"
     constraints:
       - "relay-gate 側で置き換え・二重管理しない"
     dependencies: []
@@ -259,7 +253,7 @@ elements:
   - id: "product.operations.backup_and_monitoring"
     name: "バックアップと基盤監視"
     category: "operations"
-    description: "管理 DB の日次バックアップ、ログローテーション、ホストリソース監視。基盤固有の監視(ハング検知・異常通知)はワークロード自身の定期ジョブが担う"
+    description: "管理 DB の日次バックアップ、ログローテーション、ホストリソース監視。基盤固有の監視(ハング検知・異常通知)はワークロード自身の定期ジョブが担い、通知はジョブスケジューラの障害通知で届く。保持日数を過ぎた成果物と管理 DB の行の削除はハウスキープ定期ジョブが担う"
     requirements:
       - id: "REQ-OPS-001"
         description: "管理 DB の日次フル + 差分バックアップを自動実行し、復旧手順を文書化する"

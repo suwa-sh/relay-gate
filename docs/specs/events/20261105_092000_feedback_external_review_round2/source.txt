@@ -1,0 +1,29 @@
+Spec 差分更新(design 無しモード): 2026-11-05 の外部レビュー 2 巡目の指摘(dist-pipeline feedback mode Step6)。上流 latest(usdm / rdra / nfr / arch)は変更なし。infra latest は同じ run の infra イベント 20261105_091000_feedback_final_env_per_segment(確報クロスチェックの設定ファイルを置き場ごとに必要な中身だけ配る)で更新済み。
+
+CR-e3b7a915-001(spec 直接所有。利用者承認済みの直し方): hang-detector.sh の未知キーの警告を、走査を始めるときだけ出す。
+- 問題: 契約は走査前の検査の (d) を通ったときに warn: unknown key を出すとしていた。一方、off 以外で管理 DB に接続・SELECT できない回と off で印の置き場を読めない回は error 1 行だけとしていた。両方が同じ回に重なると標準エラーが 1 つに決まらなかった。(e) RELAY_GATE_ARTIFACT_ROOT が無い回も warn と error の両方が出る書き方だった。複数の未知キーの順も決まっていなかった。
+- 決めた規則(契約 shared_rules.hang_alert.unknown_key_warn を新設):
+  - 出す時点は走査を始めるとき。off 以外は管理 DB への接続と SELECT が通ったあと、off は印の置き場の検査が通ったあと(facade/ を列挙する前)。
+  - キー表に無いキーごとに 1 行、ファイル内の出現順(物理行番号の昇順)。既存の規定に順が無かったため、この順で確定した。
+  - stderr の順: 未知キーの warn 行 → error: artifact root is not readable → 走査中の warn 行 → --verbose の info: judged 行 → 対象ごとの行。
+  - 出さない回: 走査前の設定エラー(2。(a)〜(e) のどこで止まっても)、管理 DB に接続・SELECT できない回、印の置き場を読めない回(後の 2 つは今のとおり error 1 行だけ)。
+- 揃えた箇所: 契約(order / unknown_key_warn / db_unavailable / notified_mark.directory_unreadable / commands の hang-detector.sh の stderr / config_files の hang-detector.env の note)、出力規約 ui-design.md「ハング検知の通知出力」、UC「background 実行の経過時間と終了状態を判定する」(spec.md のシーケンス、tier-ops.md の検査の順・出す時点の表・走査手順 0・出力契約・tier BDD 9 件追加、_api-summary.yaml)、UC「ハング疑い・実行エラー・比較異常を通知する」(tier-ops.md の並び順)。
+- 反証レビューで追加で決めた規則(stderr を 1 つに決めるため): off で印の置き場の存在確認そのものが失敗した回(成果物ルートの権限不足など。ENOENT 以外)は「あるのに読めない」と同じ error 1 行だけ。走査前の検査 (e) の「成果物ルートが無い」は ENOENT・存在確認の失敗・ディレクトリでないのどれでも error: artifact root not found(2)。hang-detector.sh は feature-flag.env の RAPID_CROSSCHECK_MODE だけを検査し、他のキー・未知キー・FINAL_ で始まるキーには warn も error も出さない。共通規則 config_input_rules.env_files の (iii) から参照した。
+- 同じ種類の穴を他の読み手でも埋めた: feature-flag.env を RAPID_CROSSCHECK_MODE だけ読む全読み手の検査の範囲を config_files の feature-flag.env の reader_scope に、「成果物ルートが無い」の定義を shared_rules.artifact_root_entries.missing_root に 1 か所で置き、hang-detector.sh と housekeep.sh から参照した。UC「保持日数を過ぎた終了済みの実行と確報比較依頼を判定する」の tier-ops.md(表・本文・tier BDD 2 件追加)も揃えた。
+- 実装との照合: hang-detector.sh は未実装(ops/src/ は空。ops/test/・ops/features/steps/・features/atdd/steps/ に hang-detector の step・テストは無い)。食い違う実装は無い。features/atdd/SPEC-008-06.feature の 1 件目はメール送信のままで、USDM の現行の受け入れ条件と違う(既存の食い違い。判断記録と確認推奨項目に記録)。
+- USDM SPEC-008-07 の要求文は変えない(文脈参照)。
+
+CR-e3b7a915-002(infra 直接所有。spec は保守的 closure): 構築手順が final-crosscheck.env を置き場ごとに別の元ファイル(実行ホスト = files/final-crosscheck-runner.env、DB セグメント = files/final-crosscheck-worker.env。配置先はどちらも /etc/relay-gate/final-crosscheck.env)で配る変更への追従。
+- 横断で確かめた結果: 読み手ごとの必須キー(runner は FINAL_DB_CONN_REF、worker は FINAL_DB_CONN_REF / FINAL_COMPARE_COMMAND)と、各読み手が自分のホストのファイルだけを読む規則は、置き場ごとの中身と矛盾しない。abort-final-crosscheck.sh と housekeep.sh は FINAL_DB_CONN_REF だけを使い、どちらのファイルにもある。
+- 揃えた箇所: 契約の note の「全ホストが構築手順で同じようにデプロイされている」は中身も同じと読めるため「構築手順でデプロイされている」に直し、置き場ごとの中身、worker のキーが実行ホストのファイルに残っていても runner はエラーにも warn にもしないこと、validate-config.sh --final-crosscheck は DB セグメントの置き場のファイルを検証することを書いた。FINAL_COMPARE_COMMAND の required に、DB セグメントのファイルにだけ置くことを書いた。確報の 3 UC の tier-final-crosscheck.md(登録して待機 / claim / 比較実行)に置き場ごとの中身と validate-config.sh の実行場所を書いた。新しい拒否は足さない。
+- 判断は decisions/spec-decision-031(両方の work unit をまとめて記録)。
+
+feedback request:
+- feedback_request_id: 20261105_external_review_round2
+- input_sha256: 1f98f4040fb856f2d726e8061e59220048989d38fa4f3bbebf6bd54c6aa45eed
+- request_ids: CR-e3b7a915-001, CR-e3b7a915-002
+- direct_work_unit_ids: CR-e3b7a915-001#1
+- causal_work_unit_ids: CR-e3b7a915-001#1, CR-e3b7a915-002#1
+- stage packet: docs/pipeline/feedback-runs/20261105_external_review_round2/stage-packets/spec.md
+
+trigger_event: infra:20261105_091000_feedback_final_env_per_segment(他の上流 latest は変更なし)

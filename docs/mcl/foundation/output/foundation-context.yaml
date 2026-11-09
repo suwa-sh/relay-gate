@@ -39,7 +39,7 @@ network_guardrails:
   - id: "foundation.network.air_gapped"
     description: "実行時にインターネット接続・外部 SaaS・クラウドサービスを要求しない"
   - id: "foundation.network.closed_segments"
-    description: "実行ホストセグメントと DB セグメントに分かれた閉域ネットワーク。セグメント間はパケットフィルタリングで SSH / DB ポート / SMTP のみ許可する"
+    description: "実行ホストセグメントと DB セグメントに分かれた閉域ネットワーク。セグメント間はパケットフィルタリングで SSH / DB ポートのみ許可する"
   - id: "foundation.network.ssh_only_remote_exec"
     description: "ホスト間のリモート実行経路は SSH のみ。SSH 以外の経路は暗号化要件を課さない"
 
@@ -49,7 +49,7 @@ policy_guardrails:
   - id: "foundation.policy.neutral_naming"
     description: "成果物に案件固有の製品名・サーバ名・業務名を記載しない(中立表現)"
   - id: "foundation.policy.no_ui_no_http_api"
-    description: "UI 画面・HTTP API・WAF は導入しない。CLI と定期ジョブとメール通知だけで動作する"
+    description: "UI 画面・HTTP API・WAF は導入しない。CLI と定期ジョブだけで動作する。異常はジョブ自身の終了結果でジョブスケジューラへ知らせる"
 
 logging_guardrails:
   - id: "foundation.logging.scheduler_is_audit_source"

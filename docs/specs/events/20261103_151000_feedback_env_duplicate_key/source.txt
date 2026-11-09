@@ -1,0 +1,23 @@
+Spec 差分更新(design 無しモード): 2026-11-03 の env 形式の同じキーの重複(dist-pipeline feedback mode Step6)。上流 latest(usdm / rdra / nfr / arch / infra)は変更なし。
+
+CR-b7c40e19-001(spec 直接所有): env 形式の設定で同じキーが 2 行以上あれば設定エラー(終了コード 2)にする。
+
+- CLI 契約 config_input_rules.env_files に同じキーの重複の規則を加えた。コメント行・0 バイトの空行・invalid line を除いた行で、キーの前後の空白を除いた結果が同じキーになる行が 2 行以上あれば `error: duplicate key key=<KEY> lines=<n1,n2,...> path: ...`(2)。そのファイルの値は使わない(後の行の値も先の行の値も採らない)。
+- キーの比較は大文字小文字を区別した完全一致(`BLUE_MODE` と ` BLUE_MODE ` は同じキー、`blue_mode` は別)。値が同じ行・値が空の行・未知キーの行・読み手が使わないキーの行も数える。判定はファイル全体の全キーで行い、読み手によって結果を変えない。
+- lines= は CSV の重複 job_id と同じ規則(初出行を含む全行番号を出現順、重複したキーごとに 1 行)。
+- 検査の段と報告の順: (i) バイト・改行(NUL / UTF-8 / BOM / CR)で止める → (ii) invalid line(行番号の昇順)→ duplicate key(重複したキーの初出行の昇順)を全件 → (ii) の違反があれば (iii) キーごとの検査と未知キーの warn を行わない。例: `error: invalid line line=3 path: ff.env` / `error: duplicate key key=BLUE_MODE lines=1,4 path: ff.env` / `error: duplicate key key=GREEN_MODE lines=2,5 path: ff.env`。
+- validate-config.sh の stdout: --feature-flag は出さない(今の規則のまま)。--rapid-crosscheck / --final-crosscheck / --housekeep は固定順の行を出し、値から決まる行は `-`、status=invalid、violations=N。実行時の読み手も同じ順・同じ件数で error 行を出し、終了コード 2。
+- 揃えた箇所: compare_command_argv.split、housekeep_rules.db_requirement(final-crosscheck.env の FINAL_DB_CONN_REF 以外のキーの重複も設定エラー)、housekeep.sh の stderr、validate-config.sh の stderr と終了コード 2 の条件、config_input_rules の表、feature-flag.env の validation_rules、出力規約(ui-design.md)、UC「feature flag を設定する」、UC「クロスチェックのジョブマップと比較定義を定義する」、UC「保持日数を過ぎた終了済みの実行と確報比較依頼を判定する」、確報の比較ツール UC、設定を読む各 UC の tier の参照文。
+- 反証レビューで追加で揃えた箇所: conventions.exit_codes の 2(読んだ設定ファイルの入力の守備範囲の違反は全コマンド共通で 2)、conventions.output_format.stderr と出力規約の「エラーは 1 回だけ」の例外(入力の守備範囲の違反は該当行ごとに 1 行)、abort-final-crosscheck.sh の 2 / 3(重複は管理 DB なしではなく 2)と UC「現在状態を確認して停止確認に応答する」、--rapid-crosscheck / --final-crosscheck の stdout の `-`(速報・確報 UC の spec.md / tier / _api-summary.yaml)、ハウスキープ判定 UC の spec.md。
+- tier BDD を追加(feature flag: 値が同じ・キーの前後の空白・値が空・未知キー・3 行・invalid line との同時発生・大文字小文字の違い。速報クロスチェック設定: 起動コマンドが 2 行。ハウスキープ設定: 保持日数が 2 行。housekeep.sh: final-crosscheck.env の使わないキーの重複。abort-final-crosscheck.sh: FINAL_DB_CONN_REF が 2 行)。
+- 実装は変えない。feature_flag_config.sh / rapid_crosscheck_env.sh が後の行の値を使う差分、validate_rapid_crosscheck.sh が invalid line で stdout を出さない差分を、実装を契約に合わせる対象として記録。判断は decisions/spec-decision-028。
+
+feedback request:
+- feedback_request_id: 20261103_env_duplicate_key
+- input_sha256: 5b71b3905f390aa2a260e59320c024d4415fa9cf8cbc574f299c24243f55a1d8
+- request_ids: CR-b7c40e19-001
+- direct_work_unit_ids: CR-b7c40e19-001#1
+- causal_work_unit_ids: CR-b7c40e19-001#1
+- stage packet: docs/pipeline/feedback-runs/20261103_env_duplicate_key/stage-packets/spec.md
+
+trigger_event: specs:20261103_135000_feedback_housekeeping_db_required(上流 latest は変更なし。spec だけを実行)

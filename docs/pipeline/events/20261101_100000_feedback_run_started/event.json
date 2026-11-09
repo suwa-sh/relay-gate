@@ -1,0 +1,19 @@
+{
+  "event_id": "20261101_100000_feedback_run_started",
+  "type": "feedback_run_started",
+  "run_id": "feedback-20261027_091000_impl_feedback_dcd8234d-20261101_103236-93477",
+  "attempt": 1,
+  "created_at": "2026-11-01T01:32:59.273Z",
+  "feedback_request": {
+    "feedback_request_id": "20261027_091000_impl_feedback_dcd8234d",
+    "input_sha256": "37b8b54d7a4a8b1a978e389924c4b6e3ee9a1d276823a9d877f10fd01b866ca8",
+    "request_ids": [
+      "CR-dcd8234d-009",
+      "CR-dcd8234d-010"
+    ],
+    "work_unit_ids": [
+      "CR-dcd8234d-009#1",
+      "CR-dcd8234d-010#1"
+    ]
+  }
+}

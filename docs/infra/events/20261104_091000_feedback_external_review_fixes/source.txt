@@ -1,0 +1,6 @@
+feedback request 20261104_external_review_fixes(外部レビューの指摘。構築手順のハング検知設定の検査を CLI 契約に合わせる)に基づくインフラ設計の差分更新。上流 latest は変更なし(trigger_event: infra:20261103_134000_feedback_housekeeping_db_required)。config ロールの hang-detector.env の配置時検査をファイルの存在確認だけに改め、MCL 出力・適合性レポート・MCL 入力の該当記述を CLI 契約に揃えた(差分更新。MCL 全面再実行なし)。
+- input_sha256: 6b4cf1b4db9a1e0d2ad050d265c7c2b77928832af091ac20b2657e61aea0dc13
+- request_ids: CR-c5e19a72-002
+- direct_work_unit_ids: CR-c5e19a72-002#1
+- causal_work_unit_ids: CR-c5e19a72-002#1
+- packet: docs/pipeline/feedback-runs/20261104_external_review_fixes/stage-packets/infrastructure.md

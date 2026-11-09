@@ -1,0 +1,158 @@
+schema_version: "1.0"
+artifact_type: "vendor_mapping"
+skill_type: "product"
+artifact_id: "product-relay-gate-mapping-onprem"
+title: "relay-gate 並行稼働実行基盤 オンプレミス サービスマッピング"
+status: "draft"
+generated_at: "2026-09-07T12:40:00"
+source_refs:
+  - "docs/cloud-context/sources/onprem/postgresql-high-availability.md"
+  - "docs/mcl/product/output/product-workload-model.yaml"
+decision_refs:
+  - "product-decision-001"
+  - "product-decision-002"
+  - "product-decision-003"
+  - "product-decision-005"
+inputs_ref:
+  - "product-relay-gate-workload-model"
+  - "foundation-context"
+  - "shared-platform-context"
+
+vendor: "onprem"
+canonical_ref: "product-relay-gate-workload-model"
+
+# オンプレ特則: スタック未指定のため capability ごとに OSS / OS 標準機能を具体選定する。
+# 仮想化基盤(vSphere / OpenStack / 物理)は適用側の設置環境に従い、ここでは固定しない。
+
+mappings:
+  - canonical_element_id: "product.compute.script_runtime_hosts"
+    vendor_service: "Linux VM / 物理サーバ(RHEL 系または Debian 系)+ bash 5 + OpenSSH クライアント + cron/systemd timer"
+    vendor_feature: "systemd service(常駐 worker)/ systemd timer または cron(定期起動 worker)/ OpenSSH 公開鍵認証"
+    fidelity: "partial"
+    configuration_notes: >-
+      ジョブスケジューラ実行ホストに facade / slot runner / rapid-crosscheck-runner・worker / ops CLI を配置し、
+      DB セグメントの専用ホストに final-crosscheck-worker を配置する。worker は systemd service として常駐させ、
+      Restart=on-failure で復帰させる。SSH は実行ユーザーごとの鍵ペアを使い、known_hosts を事前配布する。
+      水平スケールは worker ホストを追加して同じ unit を配置する(手動)。
+      hang-detector(5 分ごと)と housekeep(1 日 1 回)はホストの systemd timer / cron に登録せず、ジョブスケジューラの
+      定期ジョブとして登録する(hang-detector の終了結果がジョブスケジューラの障害通知に乗ることが唯一の通知経路のため)。
+    gap_description: "自動スケール・自動復旧(ホスト障害時のフェイルオーバー)はマネージド相当が無く、ホスト追加と再起動は運用手順で行う"
+    alternatives:
+      - "Kubernetes CronJob / Deployment(コンテナ基盤が既にある場合。今回は前提にしない)"
+    source_refs:
+      - "docs/mcl/product/output/product-workload-model.yaml#product.compute.script_runtime_hosts"
+
+  - canonical_element_id: "product.database.management_db"
+    vendor_service: "PostgreSQL 16 セルフホスト(単一インスタンス)"
+    vendor_feature: "SELECT ... FOR UPDATE SKIP LOCKED(claim / lease 排他)/ 条件付き UPDATE のコマンドタグ(UPDATE n)による更新件数取得 / 主キー制約 / psql CLI / pg_basebackup + WAL アーカイブ(PITR)"
+    fidelity: "partial"
+    configuration_notes: >-
+      DB セグメントの単一ホストに配置する。速報側テーブルと確報側テーブルはスキーマを分けて配置する
+      (例: rapid / final)。claim は FOR UPDATE SKIP LOCKED で行い、lease_until を UPDATE する。
+      接続は pg_hba.conf で実行ホストセグメントと DB セグメントの IP 範囲に限定し、
+      ロールは app_rw(runner / worker。SELECT / INSERT / UPDATE のみで DELETE は与えない)、ops_ro(参照)、
+      housekeep_del(ハウスキープ専用。6 テーブルへの SELECT / DELETE のみ)に分ける。facade / slot runner / 速報クロスチェック runner / worker は
+      速報クロスチェック設定の接続参照名(RAPID_DB_CONN_REF)、hang-detector はハング検知定期ジョブ設定の接続参照名
+      (HANG_DB_CONN_REF)、housekeep はハウスキープ設定の接続参照名(キー名は仕様で確定)で接続先と認証情報を解決する
+      (参照名の実体は実行ユーザーの認証情報ファイル等に置く)。housekeep は削除単位ごとに管理 DB の行を 1 トランザクションで削除する。
+      容量は保持日数(既定 90 日)分の行で頭打ちになる。RAPID_CROSSCHECK_MODE=off でハウスキープ設定の接続参照名が無い・空のとき、
+      housekeep は管理 DB に接続せず、管理 DB の行と確報比較依頼を削除しない(その間は行が増え続ける)。
+      速報比較依頼の状態更新は WHERE 句で現在状態を条件にした条件付き UPDATE とし、psql のコマンドタグ(UPDATE n)から
+      更新件数を取る(worker の CLAIMED → RUNNING は 0 件なら比較を開始しない。abort-rapid-crosscheck の
+      status IN (REQUESTED, CLAIMED, RUNNING) → ABORTED は 0 件をエラー。abort-blue / abort-green の REQUESTED → ABORTED は
+      競合窓の保険で 0 件は正常)。いずれも app_rw の UPDATE 権限で足りる。バックアップは日次 pg_basebackup +
+      WAL アーカイブで RPO 4h を満たす。ストリーミングレプリケーション(公式 HA ガイド)は任意の将来拡張とする。
+    gap_description: "マネージド RDB の自動パッチ・自動バックアップ・自動フェイルオーバーは無い。パッチはオフライン持ち込み、バックアップは cron ジョブ、復旧は手順書に従う手動作業"
+    alternatives:
+      - "MySQL / MariaDB(SKIP LOCKED は 8.0 以降で利用可。組織標準がある場合)"
+      - "SQLite(RAPID_CROSSCHECK_MODE=off かつ単一ホスト運用の場合のみ。複数 worker の排他に不向き)"
+    source_refs:
+      - "docs/cloud-context/sources/onprem/postgresql-high-availability.md"
+
+  - canonical_element_id: "product.storage.artifact_store"
+    vendor_service: "NFS v4 共有(ファイルサーバ)または実行ホストのローカルディスク(RAID1)"
+    vendor_feature: "POSIX rename(2) による原子的確定 / NFS v4 の close-to-open 整合性"
+    fidelity: "partial"
+    configuration_notes: >-
+      facade / runner / ops CLI が同一ホスト群で動く場合はローカルディスク(RAID1)で足りる。
+      ハング検知・リラン CLI を別ホストから実行する構成では NFS v4 で同一パスをマウントする。
+      一時ファイルは確定先と同じファイルシステム上に作り rename で確定する(クロスデバイス rename を避ける)。
+      abort-blue / abort-green が書く aborted.txt も同じ規則で確定し、ハング検知・リラン CLI はこのファイルの有無で
+      中止済みを判定する(管理 DB を参照しない)。NFS の場合は同一 export 内で完結させる。
+      成果物ルート配下に、RAPID_CROSSCHECK_MODE=off 時のハング検知の通知済みの印(一時ファイル → リネーム)と、
+      ハウスキープの削除待ちの置き場(場所とファイル名は仕様で確定)を置く。置き場は成果物ルートと同じファイルシステム
+      (NFS の場合は同一 export)に置き、rename(2) で移してから削除する。容量は保持日数(既定 90 日)× 1 日あたりの成果物量で頭打ちになる。
+      管理 DB に接続しない設定の間は、速報クロスチェックのモードが off でない期間に作られた実行の成果物は日数にかかわらず残る。
+    gap_description: "オブジェクトストレージのバージョニング・ライフサイクル管理は無い。保持日数(既定 90 日)を過ぎた終了済みの実行の成果物はハウスキープ定期ジョブ(housekeep.sh。ジョブスケジューラから 1 日 1 回)が削除する"
+    alternatives:
+      - "MinIO(オブジェクトストレージ API 前提に切り替える場合。現行契約は POSIX パス参照のため不採用)"
+    source_refs:
+      - "docs/mcl/product/output/product-workload-model.yaml#product.storage.artifact_store"
+
+  - canonical_element_id: "product.storage.config_store"
+    vendor_service: "実行ホストのローカルディレクトリ(読み取り専用配置)+ 適用側の配布手順(Ansible 等)"
+    vendor_feature: "OS ファイル権限(所有者 = 配布ユーザー、実行ユーザーは読み取りのみ)"
+    fidelity: "exact"
+    configuration_notes: >-
+      /etc/relay-gate/ 相当に feature-flag.env(9 キー)、slot ごとのジョブマップ(<role>-job-map.csv)、
+      hang-detector.env(HANG_DB_CONN_REF だけ)、ハウスキープ設定(保持日数と専用 DB ロールの接続参照名。RAPID_CROSSCHECK_MODE=off では接続参照名を省略・空にできる。ファイル名・キー名は仕様で確定)、
+      rapid-crosscheck.env(速報有効時のみ。
+      RAPID_DB_CONN_REF / RAPID_LEASE_SEC / RAPID_POLL_INTERVAL_SEC と速報比較ツールの起動コマンド 1 行)、
+      final-crosscheck.env(確報 worker の DB 接続参照と確報比較ツールの起動コマンド 1 行)を配置する。
+      比較対象の定義は比較ツール側が持ち、ジョブ ID ごとの比較定義 CSV・対象カタログは配置しない。設定版のファイルは持たず、
+      マップ版はジョブマップ側の任意列で表す。配布は適用側の構成管理ツールで行い、配布後に facade / runner / worker /
+      hang-detector / housekeep が次回起動から読み込む(常駐 worker は再起動で反映)。認証情報は参照名のみ置き、実体は実行ユーザーのホームまたは OS のシークレット領域に置く。
+    gap_description: ""
+    alternatives:
+      - "NFS 共有上の設定ディレクトリ(全ホストで一括反映したい場合)"
+    source_refs:
+      - "docs/mcl/product/output/product-workload-model.yaml#product.storage.config_store"
+
+  - canonical_element_id: "product.storage.execution_log_store"
+    vendor_service: "実行ホストのローカルディスク + logrotate"
+    vendor_feature: "logrotate(daily, rotate 90, compress)/ grep による run_id 検索"
+    fidelity: "exact"
+    configuration_notes: >-
+      /var/log/relay-gate/<script>.log に追記し、logrotate で日次ローテーション・90 世代保持・圧縮する。
+      行形式は「日時 スクリプト名 run_id レベル メッセージ」で固定し、run_id の横断検索を grep で行う。
+      日時はホストのローカルタイムゾーン(ISO 8601 秒精度、指示子なし)で run_id の時刻部と同じ時刻軸とし、
+      実行ホスト・DB セグメントのホストで OS の TZ 設定と時刻同期(組織内 NTP)をそろえる。systemd unit は TZ を上書きしない。
+    gap_description: ""
+    alternatives:
+      - "rsyslog による集約ホストへの転送(組織にログ集約基盤がある場合)"
+    source_refs:
+      - "docs/mcl/product/output/product-workload-model.yaml#product.storage.execution_log_store"
+
+  - canonical_element_id: "product.integration.job_scheduler"
+    vendor_service: "組織既存のジョブスケジューラ(製品固定なし)"
+    vendor_feature: "ジョブ定義(コマンド + 引数)/ 定期・日次スケジュール / 終了コード判定 / 既存のジョブ監視・障害通知"
+    fidelity: "partial"
+    configuration_notes: >-
+      業務ジョブのコマンドを facade.sh JOB_ID [PARAM...] に置き換える。確報クロスチェックジョブ、
+      5 分ごとのハング検知ジョブ、1 日 1 回のハウスキープジョブ、background リラン専用ジョブを追加定義する。
+      ハング検知ジョブの警告終了・失敗はスケジューラの既存の障害通知で運用者へ届け、詳細(対象・段階・経過時間)は
+      ジョブログに残る標準エラーで確認する。業務ジョブの障害と区別できるようジョブ定義名で識別する。
+      ハウスキープジョブの失敗も同じ障害通知で届く(次回の実行で残りを削除できるため即時対応は要さない)。
+      ハウスキープジョブの登録手順は運用手順書に記載し、削除したくない場合は登録しない。
+      実行履歴・監査はスケジューラ側の機能で参照し、relay-gate 側に複製しない。
+    gap_description: "警告終了を失敗と区別して通知できるかはジョブスケジューラ製品の機能に依存する。区別できない場合は警告終了の終了コードを失敗として扱い、標準エラーの段階表示(warning / error)で見分ける運用とする"
+    alternatives:
+      - "cron(スケジューラを持たないテスト環境での代替)"
+    source_refs:
+      - "docs/mcl/product/output/product-workload-model.yaml#product.integration.job_scheduler"
+
+  - canonical_element_id: "product.operations.backup_and_monitoring"
+    vendor_service: "cron(pg_basebackup + WAL アーカイブ、logrotate)+ 組織既存のホスト監視エージェント"
+    vendor_feature: "日次バックアップジョブ / WAL 継続アーカイブ / OS メトリクス収集"
+    fidelity: "partial"
+    configuration_notes: >-
+      DB ホストで日次 pg_basebackup(フル)と archive_command による WAL アーカイブ(差分)を cron で回し、
+      バックアップ先はミラーリングされた別ボリュームに置く。復旧手順(PITR)を文書化しテスト環境で年 1 回演習する。
+      ホストの CPU / メモリ / ディスク / ネットワークは組織既存の監視エージェントに載せ、
+      relay-gate 固有のハング検知・異常通知はワークロード自身の hang-detector が担い、ジョブスケジューラの障害通知で届く。
+    gap_description: "組織既存の監視が無い場合、OS 標準(sar / df)の閾値検査スクリプトをジョブスケジューラの定期ジョブとして登録し、閾値超過を失敗終了としてジョブスケジューラの障害通知で届ける。ダッシュボードは持たない"
+    alternatives:
+      - "Prometheus + Grafana + node_exporter(監視基盤を新規導入する場合。今回は導入しない方針)"
+      - "Zabbix(組織標準がある場合)"
+    source_refs:
+      - "docs/cloud-context/sources/onprem/postgresql-high-availability.md"

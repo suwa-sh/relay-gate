@@ -1,0 +1,82 @@
+{
+  "schema_version": "distillery.feedback-result/v1",
+  "run_id": "feedback-20261104_rapid_env_deploy_check-20261104_100000-27608",
+  "attempt": 1,
+  "feedback_request_id": "20261104_rapid_env_deploy_check",
+  "input_sha256": "aaab9c2bbac2b4952afa8c2bf3db4c42cf8b84a4e3b570bfcf15b1d180dda0c2",
+  "status": "completed",
+  "stages": [
+    {
+      "stage_id": "infrastructure",
+      "state": "succeeded",
+      "event_ids": [
+        "20261104_101000_feedback_stage_infrastructure"
+      ],
+      "direct_work_unit_ids": [
+        "CR-d8a2f4b6-001#1"
+      ],
+      "causal_work_unit_ids": [
+        "CR-d8a2f4b6-001#1"
+      ]
+    },
+    {
+      "stage_id": "spec",
+      "state": "succeeded",
+      "event_ids": [
+        "20261104_102000_feedback_stage_spec"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-d8a2f4b6-001#1"
+      ]
+    }
+  ],
+  "work_units": [
+    {
+      "work_unit_id": "CR-d8a2f4b6-001#1",
+      "disposition": "applied",
+      "reason": "At least one required closure stage changed its domain artifacts.",
+      "artifact_refs": [
+        "infra/events/20261104_101000_feedback_rapid_env_deploy_check/infra-event-diff.yaml",
+        "infra/events/20261104_101000_feedback_rapid_env_deploy_check/infra/product/onprem/ansible/roles/relay-gate-config/tasks/main.yml",
+        "infra/events/20261104_101000_feedback_rapid_env_deploy_check/infra/product/onprem/ansible/inventory.ini.example",
+        "infra/events/20261104_101000_feedback_rapid_env_deploy_check/infra/product/onprem/ansible/site.yml",
+        "infra/events/20261104_101000_feedback_rapid_env_deploy_check/infra/product/onprem/README.md",
+        "infra/events/20261104_101000_feedback_rapid_env_deploy_check/docs/mcl/product/output/product-impl-onprem.yaml",
+        "infra/events/20261104_101000_feedback_rapid_env_deploy_check/docs/mcl/product/output/product-mapping-onprem.yaml",
+        "infra/events/20261104_101000_feedback_rapid_env_deploy_check/docs/mcl/product/output/product-workload-model.yaml",
+        "infra/events/20261104_101000_feedback_rapid_env_deploy_check/docs/cloud-context/conformance/product/product-conformance-onprem.yaml",
+        "infra/events/20261104_101000_feedback_rapid_env_deploy_check/docs/cloud-context/generated-md/product/relay-gate-target-architecture.md",
+        "infra/events/20261104_101000_feedback_rapid_env_deploy_check/docs/mcl/product/input/product-input.yaml",
+        "specs/events/20261104_102000_feedback_rapid_env_deploy_check/spec-event.yaml",
+        "specs/events/20261104_102000_feedback_rapid_env_deploy_check/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20261104_102000_feedback_rapid_env_deploy_check/_cross-cutting/ux-ui/ui-design.md",
+        "specs/events/20261104_102000_feedback_rapid_env_deploy_check/decisions/spec-decision-030.yaml",
+        "specs/events/20261104_102000_feedback_rapid_env_deploy_check/クロスチェック業務/確報クロスチェックフロー/比較ツールで日次全量比較を実行して結果を保存する/_api-summary.yaml",
+        "specs/events/20261104_102000_feedback_rapid_env_deploy_check/クロスチェック業務/確報クロスチェックフロー/比較ツールで日次全量比較を実行して結果を保存する/tier-final-crosscheck.md",
+        "specs/events/20261104_102000_feedback_rapid_env_deploy_check/クロスチェック業務/確報クロスチェックフロー/確報クロスチェック結果を確認する/tier-final-crosscheck.md",
+        "specs/events/20261104_102000_feedback_rapid_env_deploy_check/クロスチェック業務/確報クロスチェックフロー/確報比較依頼を claim する/_api-summary.yaml",
+        "specs/events/20261104_102000_feedback_rapid_env_deploy_check/クロスチェック業務/確報クロスチェックフロー/確報比較依頼を claim する/tier-final-crosscheck.md",
+        "specs/events/20261104_102000_feedback_rapid_env_deploy_check/クロスチェック業務/確報クロスチェックフロー/確報比較依頼を登録して終端状態まで待機する/_api-summary.yaml",
+        "specs/events/20261104_102000_feedback_rapid_env_deploy_check/クロスチェック業務/確報クロスチェックフロー/確報比較依頼を登録して終端状態まで待機する/spec.md",
+        "specs/events/20261104_102000_feedback_rapid_env_deploy_check/クロスチェック業務/確報クロスチェックフロー/確報比較依頼を登録して終端状態まで待機する/tier-final-crosscheck.md",
+        "specs/events/20261104_102000_feedback_rapid_env_deploy_check/クロスチェック業務/速報クロスチェックフロー/速報比較依頼を claim する/_api-summary.yaml",
+        "specs/events/20261104_102000_feedback_rapid_env_deploy_check/クロスチェック業務/速報クロスチェックフロー/速報比較依頼を claim する/spec.md",
+        "specs/events/20261104_102000_feedback_rapid_env_deploy_check/クロスチェック業務/速報クロスチェックフロー/速報比較依頼を claim する/tier-rapid-crosscheck.md",
+        "specs/events/20261104_102000_feedback_rapid_env_deploy_check/適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/_api-summary.yaml",
+        "specs/events/20261104_102000_feedback_rapid_env_deploy_check/適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/tier-facade.md"
+      ]
+    }
+  ],
+  "requests": [
+    {
+      "request_id": "CR-d8a2f4b6-001",
+      "work_unit_ids": [
+        "CR-d8a2f4b6-001#1"
+      ],
+      "disposition": "applied",
+      "reason": "At least one work unit was applied and all work units completed successfully."
+    }
+  ],
+  "terminal_event_id": "20261104_105900_feedback_run_completed"
+}

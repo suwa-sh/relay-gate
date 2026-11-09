@@ -1,0 +1,30 @@
+{
+  "schema_version": "distillery.rdra-feedback-event/v1",
+  "event_id": "20261103_131000_feedback_housekeeping_db_required",
+  "created_at": "2026-11-03T13:10:00Z",
+  "stage": "requirements",
+  "feedback_request": {
+    "feedback_request_id": "20261103_housekeeping_db_required",
+    "input_sha256": "94cde505fc6dda4705b1bb75134beaf9a85a7af65d7c90f1e786112e8b1031e7",
+    "request_ids": [
+      "CR-9d2e6c41-001"
+    ],
+    "work_unit_ids": [
+      "CR-9d2e6c41-001#1"
+    ]
+  },
+  "members": [
+    {
+      "path": "rdra/events/20261103_131000_feedback_housekeeping_db_required/_changes.md",
+      "sha256": "06d57f55df68b7fc3c141d1741ad2e471c3ae9d8f9f8f55b5ba736c6135307ae"
+    },
+    {
+      "path": "rdra/events/20261103_131000_feedback_housekeeping_db_required/情報.tsv",
+      "sha256": "bcfbd1268d7574305d574d619f2477f5756b98e22fb4b3616d85b06ccec990dc"
+    },
+    {
+      "path": "rdra/events/20261103_131000_feedback_housekeeping_db_required/条件.tsv",
+      "sha256": "7efe38cdb92302f28aecef76723f4f8e61ea422b9ada139a1ec2c8fa47b66538"
+    }
+  ]
+}

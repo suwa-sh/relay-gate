@@ -1,0 +1,42 @@
+uc: "業務ジョブの実行結果を確認する"
+business: "実装切替業務"
+buc: "実装切替ジョブ実行フロー"
+paths: []
+x_cli_commands:
+  - name: "facade.sh"
+    tier: "tier-facade"
+    role: "uses"
+    synopsis: "facade.sh JOB_ID [PARAM...]"
+    invoked_by: "ジョブスケジューラ(業務ジョブ定義)。運用者は実行履歴で応答を読む"
+    args:
+      - name: "JOB_ID"
+        type: "string"
+        required: true
+        description: "業務ジョブ識別子"
+      - name: "PARAM..."
+        type: "string[]"
+        required: false
+        description: "追加引数"
+    options:
+      - name: "--help"
+        type: "boolean"
+        required: false
+        default: "false"
+        description: "使い方を stdout に出して終了コード 0"
+      - name: "--verbose"
+        type: "boolean"
+        required: false
+        default: "false"
+        description: "info を実行ログに出す(stderr には出さない)"
+    stdin: "なし"
+    stdout: "foreground 実装の標準出力そのまま。background / 速報 / run_id / relay-gate の info は含まない"
+    stderr: "foreground 実装の標準エラーそのまま。relay-gate 側のエラーのみ error: で始まる"
+    exit_codes:
+      - code: "実装の終了コード(0-255)"
+        meaning: "foreground 実装の結果。運用者は 0 = 成功、非 0 = 失敗と判定する"
+      - code: 2
+        meaning: "relay-gate の設定・引数検証エラー(両 slot foreground / foreground 無し等。実装は未起動)"
+      - code: 6
+        meaning: "relay-gate の実行エラー(成果物ディレクトリを確認)"
+async_events: []
+schemas: []

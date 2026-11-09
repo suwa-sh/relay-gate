@@ -1,0 +1,71 @@
+event_id: 20261027_112730_review_approved_dcd8234d_feedback_publish
+type: review_approved
+uc_id: dcd8234d
+stage: S9
+payload:
+  review_evidence_event_id: 20261027_100325_s9_review_generated_dcd8234d_refresh
+  approval_kind: feedback_publish_approval
+  user_answer: 要求=公開(変更要求 2 件) / 確認=前回の回答どおり
+  prior_user_answer: 機能=A / 要求=公開 / 前提=A-009:却下(仕様変更) / 前提=A-012:承認 / 前提=残り10件:一括承認
+  feedback_review_evidence:
+    feedback_id: 20261027_091000_impl_feedback_dcd8234d
+    draft_sha256: 37b8b54d7a4a8b1a978e389924c4b6e3ee9a1d276823a9d877f10fd01b866ca8
+    request_count: 2
+    blocker_count: 0
+  implementation_review_evidence:
+    gate_result: 6/6 pass
+    open_blocker_count: 0
+    open_major_count: 0
+    assumption_evidence_sha256: 71a22185f7c4f60069dddf6a640165d811ff24b0283674c30168b00dcf9e13d6
+  selections:
+    機能: 'A: この実装を承認する'
+    要求: '公開(変更要求 2 件: CR-dcd8234d-009 / CR-dcd8234d-010)'
+    確認: 前回の回答どおり
+    前提: A-009 却下(仕様変更) / A-012 承認 / 残り 10 件一括承認
+  assumption_decisions:
+  - tier: tier-facade
+    id: A-001
+    decision: approved
+  - tier: tier-facade
+    id: A-002
+    decision: approved
+  - tier: tier-facade
+    id: A-003
+    decision: approved
+  - tier: tier-facade
+    id: A-004
+    decision: approved
+  - tier: tier-facade
+    id: A-005
+    decision: approved
+  - tier: tier-facade
+    id: A-006
+    decision: approved
+  - tier: tier-facade
+    id: A-007
+    decision: approved
+  - tier: tier-facade
+    id: A-008
+    decision: approved
+  - tier: tier-facade
+    id: A-009
+    decision: rejected
+    rejection_kind: spec_change
+    expectation: 引用符の外し方を CLI 契約の 2 か所とも現行実装の規則(先頭と末尾を別々に 1 文字ずつ外す)に揃えて書く
+    feedback_request: CR-dcd8234d-010
+  - tier: tier-facade
+    id: A-010
+    decision: approved
+  - tier: tier-facade
+    id: A-011
+    decision: approved
+  - tier: tier-facade
+    id: A-012
+    decision: approved
+  assumption_hash_recheck:
+    tier-facade:
+      assumptions_sha256: ca3ac08893cc86ba9b8b3b5b90501874b6b9ba2bf49473727448c953e946a8eb
+      assumption_verdicts_sha256: 93d3ba68135195dbeeb35a5efbf844076ba4db328183f7422076ce99152ea881
+  review_notes: docs/impl/latest/dcd8234d/review/review-notes.md
+  next_state: publishing_feedback
+created_at: '2026-10-27T11:27:30+09:00'

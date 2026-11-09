@@ -17,9 +17,12 @@
     path: /etc/relay-gate/monitoring-agent-present
   register: monitoring_agent_marker
 
-- name: fallback監視(sar/df + cronメール)を有効化する(組織既存監視が無い場合のみ)
-  ansible.builtin.cron:
-    name: "relay-gate fallback host monitoring"
-    minute: "*/15"
-    job: "/usr/bin/relay-gate-host-monitor.sh | mail -s 'relay-gate host monitor' ops@example.invalid"
+# 組織既存監視が無い場合の fallback は、sar/df の閾値検査スクリプトを配置するだけにする。
+# 起動はジョブスケジューラの定期ジョブで行い、閾値超過を失敗終了としてジョブスケジューラの障害通知で届ける
+# (メール送信は行わない。登録手順は運用手順書に記載する)。
+- name: fallback監視スクリプト(sar/df の閾値検査)を配置する(組織既存監視が無い場合のみ)
+  ansible.builtin.template:
+    src: relay-gate-host-monitor.sh.j2
+    dest: /usr/bin/relay-gate-host-monitor.sh
+    mode: "0755"
   when: not monitoring_agent_marker.stat.exists

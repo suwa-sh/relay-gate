@@ -2,7 +2,7 @@
 
 ## 概要
 
-速報クロスチェック runner(dispatcher)が完了通知を受けて rapid_run の blue_status / green_status を更新した後、速報実行の完了状況を PENDING → ONE_COMPLETED → BOTH_SUCCEEDED / ANY_FAILED → REQUEST_CREATED へ進める。blue と green の両方が成功(exit_code 0)したときに限り、完了順にかかわらず rapid_crosscheck_requests を run_id 主キーで 1 件だけ REQUESTED で INSERT する。いずれかが失敗した場合は比較依頼を作成せず終了する。run が中止済み(`parallel_runs.status` が ABORTED、**または**完了通知の対象 slot(通知元 role の slot。blue の通知なら slot='blue' の行)の `slot_executions.status` が ABORTED = 対象 slot に aborted.txt が公開済みのミラー)の場合は、両系成功でも速報比較依頼を作成せず、完了事実(blue_status / green_status / 成果物 URI / 受信日時)だけを記録して実行ログに警告を残す(条件「中止済み run の比較依頼作成除外」。判断主体は本 dispatcher で、slot runner は自 slot の中止状態を判断しない。並行稼働実行は foreground slot の結果を中継した時点で COMPLETED になるため、foreground 完了後に background slot を abort-blue / abort-green で中止した run は対象 slot の slot 実行 ABORTED の側で除外される)。判定材料は同一トランザクションで読む: parallel_runs は `FOR UPDATE` で読んで abort-blue / abort-green の parallel_runs 無条件行ロック(SELECT 1 ... FOR UPDATE)と直列化し、対象 slot の slot_executions は SELECT のみで読む。判定と INSERT は 1 トランザクション・条件付き INSERT で行い重複を防ぐ。速報の結果はジョブスケジューラ応答に影響させず、確報側(final_*)には触れない。
+速報クロスチェック runner(dispatcher)が完了通知を受けて rapid_run の blue_status / green_status を更新した後、速報実行の完了状況を PENDING → ONE_COMPLETED → BOTH_SUCCEEDED / ANY_FAILED → REQUEST_CREATED へ進める。blue と green の両方が成功(exit_code 0)したときに限り、完了順にかかわらず rapid_crosscheck_requests を run_id 主キーで 1 件だけ REQUESTED で INSERT する。INSERT 時は worker が起動コマンドのプレースホルダ置換に使う値を依頼レコードへ入れる: `parameters`(parallel_runs.parameters を複製した JSON 配列文字列)/ `blue_exit_code=0` / `green_exit_code=0`(依頼は両系成功時のみ作成されるため作成時はともに 0)。いずれかが失敗した場合は比較依頼を作成せず終了する。run が中止済み(`parallel_runs.status` が ABORTED、**または**完了通知の対象 slot(通知元 role の slot。blue の通知なら slot='blue' の行)の `slot_executions.status` が ABORTED = 対象 slot に aborted.txt が公開済みのミラー)の場合は、両系成功でも速報比較依頼を作成せず、完了事実(blue_status / green_status / 受信日時)だけを記録して実行ログに警告を残す(条件「中止済み run の比較依頼作成除外」。判断主体は本 dispatcher で、slot runner は自 slot の中止状態を判断しない。並行稼働実行は foreground slot の結果を中継した時点で COMPLETED になるため、foreground 完了後に background slot を abort-blue / abort-green で中止した run は対象 slot の slot 実行 ABORTED の側で除外される)。判定材料は同一トランザクションで読む: parallel_runs は `FOR UPDATE` で読んで abort-blue / abort-green の parallel_runs 無条件行ロック(SELECT 1 ... FOR UPDATE)と直列化し、対象 slot の slot_executions は SELECT のみで読む。判定と INSERT は 1 トランザクション・条件付き INSERT で行い重複を防ぐ。速報の結果はジョブスケジューラ応答に影響させず、確報側(final_*)には触れない。
 
 ## データフロー
 
@@ -19,12 +19,12 @@ graph LR
   end
   subgraph DB["内部データストア: ジョブキュー兼管理 DB(RDB)"]
     T_RUN[("rapid_runs\nblue_status, green_status, completion_status")]
-    T_REQ[("rapid_crosscheck_requests\nrun_id PK, job_id, status=REQUESTED, requested_at")]
-    T_PR[("parallel_runs\nrun_id, job_id, status")]
+    T_REQ[("rapid_crosscheck_requests\nrun_id PK, job_id, parameters,\nblue_exit_code=0, green_exit_code=0,\nstatus=REQUESTED, requested_at")]
+    T_PR[("parallel_runs\nrun_id, job_id, parameters, status")]
     T_SE[("slot_executions\nrun_id, slot, status")]
   end
   R_GW -->|"SQL SELECT rapid_runs FOR UPDATE(受信 UC で BEGIN 済みのトランザクション内)"| T_RUN
-  R_GW -->|"SQL SELECT job_id, status ... FOR UPDATE(同一トランザクション。abort と直列化。ABORTED なら INSERT しない)"| T_PR
+  R_GW -->|"SQL SELECT job_id, parameters, status ... FOR UPDATE(同一トランザクション。abort と直列化。ABORTED なら INSERT しない)"| T_PR
   R_GW -->|"SQL SELECT status WHERE run_id AND slot=対象 slot(同一トランザクション。SELECT のみ。ABORTED なら INSERT しない)"| T_SE
   R_GW -->|"SQL INSERT ... WHERE NOT EXISTS(run_id)"| T_REQ
   R_GW -->|"SQL UPDATE completion_status; COMMIT"| T_RUN
@@ -35,9 +35,9 @@ graph LR
 | レイヤー | データモデル | 変換内容 |
 |---------|------------|---------|
 | presentation | SlotCompletedArgs | 受信 UC と同じ起動(完了通知の登録に続けて実行) |
-| usecase | DispatchRapidRequest | 行ロック → parallel_runs.status 参照(FOR UPDATE)→ 対象 slot の slot_executions.status 参照(SELECT のみ)→ 判定 → 条件付き INSERT(中止済み run では行わない)→ completion_status 更新を 1 トランザクションで実行 |
+| usecase | DispatchRapidRequest | 行ロック → parallel_runs.status / parameters 参照(FOR UPDATE)→ 対象 slot の slot_executions.status 参照(SELECT のみ)→ 判定 → 条件付き INSERT(中止済み run では行わない。parameters を複製し blue_exit_code=0 / green_exit_code=0 を入れる)→ completion_status 更新を 1 トランザクションで実行 |
 | domain | CompletionStatus | blue_status × green_status の判定表(下記)で次の完了状況を決める。純粋関数。run の中止済み判定(並行稼働実行 ABORTED / 対象 slot の slot 実行 ABORTED / いずれでもない)との組で依頼作成の可否を決める(判定表は「処理フロー」末尾。arch LP-010) |
-| repository | RapidRunRecord / RapidCrosscheckRequestRecord / ParallelRunRecord / SlotExecutionRecord | rapid_runs の SELECT FOR UPDATE / UPDATE、parallel_runs の SELECT(job_id, status)FOR UPDATE、slot_executions の SELECT(status。対象 slot の行)、rapid_crosscheck_requests の INSERT |
+| repository | RapidRunRecord / RapidCrosscheckRequestRecord / ParallelRunRecord / SlotExecutionRecord | rapid_runs の SELECT FOR UPDATE / UPDATE、parallel_runs の SELECT(job_id, parameters, status)FOR UPDATE、slot_executions の SELECT(status。対象 slot の行)、rapid_crosscheck_requests の INSERT(run_id, job_id, parameters, blue_exit_code, green_exit_code, status, requested_at) |
 | gateway | RDB アダプタ | 受信 UC で BEGIN 済みのトランザクションを継続し、本 UC が COMMIT / ROLLBACK と SQL 実行を行う |
 
 ## 処理フロー
@@ -62,9 +62,9 @@ sequenceDiagram
   GW->>DB: SQL
   DB-->>GW: 行
   UC->>Repo: parallel_run_lock(run_id)
-  Repo->>GW: SELECT job_id, status FROM parallel_runs WHERE run_id=? FOR UPDATE(同一トランザクション。abort-blue / abort-green の parallel_runs 無条件行ロック(SELECT 1 ... FOR UPDATE)と直列化)
+  Repo->>GW: SELECT job_id, parameters, status FROM parallel_runs WHERE run_id=? FOR UPDATE(同一トランザクション。abort-blue / abort-green の parallel_runs 無条件行ロック(SELECT 1 ... FOR UPDATE)と直列化)
   GW->>DB: SQL
-  DB-->>GW: job_id, status
+  DB-->>GW: job_id, parameters, status
   UC->>Repo: slot_execution_status(run_id, slot=通知元 role)
   Repo->>GW: SELECT status FROM slot_executions WHERE run_id=? AND slot=?(同一トランザクション。SELECT のみ。ロックしない)
   GW->>DB: SQL
@@ -77,8 +77,8 @@ sequenceDiagram
       UC->>UC: 実行ログ WARN rapid request not created run_id=... reason=parallel_run_aborted(並行稼働実行 ABORTED)/ WARN rapid request not created run_id=... role=... reason=slot_execution_aborted(対象 slot の slot 実行 ABORTED)。stderr も同じ reason で warn
       UC->>Repo: rapid_run_set_completion(run_id, BOTH_SUCCEEDED)(REQUEST_CREATED へ進めない。依頼は INSERT しない)
     else can_create_request=true(中止済みでない run)
-      UC->>Repo: rapid_request_insert_if_absent(run_id, job_id)
-      Repo->>GW: INSERT INTO rapid_crosscheck_requests(run_id, job_id, status, requested_at) SELECT ?,?,'REQUESTED',now WHERE NOT EXISTS (SELECT 1 FROM rapid_crosscheck_requests WHERE run_id=?)
+      UC->>Repo: rapid_request_insert_if_absent(run_id, job_id, parameters)
+      Repo->>GW: INSERT INTO rapid_crosscheck_requests(run_id, job_id, parameters, blue_exit_code, green_exit_code, status, requested_at) SELECT ?,?,?,0,0,'REQUESTED',now WHERE NOT EXISTS (SELECT 1 FROM rapid_crosscheck_requests WHERE run_id=?)
       GW->>DB: SQL
       DB-->>GW: 挿入行数 1(既存なら 0)
       UC->>Repo: rapid_run_set_completion(run_id, REQUEST_CREATED)
@@ -98,7 +98,7 @@ sequenceDiagram
 
 ### 依頼作成の判定表(条件「両系成功判定」×「中止済み run の比較依頼作成除外」。arch LP-010)
 
-縦軸 = run の中止済み判定(3 値: 並行稼働実行 ABORTED / 対象 slot の slot 実行 ABORTED / いずれでもない)、横軸 = blue_status × green_status の両系成功判定。依頼を作成するのは「いずれでもない × 両系成功」の 1 セルだけ。判定材料は同一トランザクションで読んだ `parallel_runs.status`(FOR UPDATE)と、完了通知の対象 slot(通知元 role の slot)の `slot_executions.status`(SELECT のみ。abort-blue / abort-green が aborted.txt 公開と同一トランザクションで ABORTED に更新済みのミラー)。
+縦軸 = run の中止済み判定(3 値: 並行稼働実行 ABORTED / 対象 slot の slot 実行 ABORTED / いずれでもない)、横軸 = blue_status × green_status の両系成功判定。依頼を作成するのは「いずれでもない × 両系成功」の 1 セルだけ。判定材料は同一トランザクションで読んだ `parallel_runs.status`(FOR UPDATE。同時に parameters も読み、依頼作成時に複製する)と、完了通知の対象 slot(通知元 role の slot)の `slot_executions.status`(SELECT のみ。abort-blue / abort-green が aborted.txt 公開と同一トランザクションで ABORTED に更新済みのミラー)。
 
 | run の中止済み判定 \ 両系成功判定 | 両系成功(SUCCEEDED × SUCCEEDED) | いずれか失敗(どちらかが FAILED) | 片系未完了(どちらかが NULL) |
 |---|---|---|---|
@@ -128,7 +128,7 @@ sequenceDiagram
 | 条件名 | 判定ルール | 適用 tier | 適用箇所 | BDD Scenario |
 |--------|----------|----------|---------|-------------|
 | 両系成功判定 | blue_status × green_status の表: SUCCEEDED × SUCCEEDED → BOTH_SUCCEEDED(依頼作成)。どちらかが FAILED → ANY_FAILED(作成しない)。どちらかが NULL → ONE_COMPLETED(待機)。ただし条件「中止済み run の比較依頼作成除外」に該当する run(並行稼働実行 ABORTED、または対象 slot の slot 実行 ABORTED)は両系成功でも依頼を作成しない | tier-rapid-crosscheck | next_completion_status(domain) | 後に完了した側の通知で依頼が 1 件作成される / blue が失敗なら依頼を作成しない |
-| 中止済み run の比較依頼作成除外 | 同一トランザクション内で読んだ `parallel_runs.status`(`SELECT job_id, status ... FOR UPDATE`)が `ABORTED`、**または**完了通知の対象 slot(通知元 role の slot。blue の通知なら slot='blue' の行)の `slot_executions.status`(`SELECT status ... WHERE run_id = ? AND slot = ?`。SELECT のみ)が `ABORTED`(aborted.txt 公開済みのミラー)なら、両系成功でも rapid_crosscheck_requests を INSERT しない。判定表は縦軸 3 値(並行稼働実行 ABORTED / 対象 slot の slot 実行 ABORTED / いずれでもない)× 横軸両系成功判定で、依頼を作成するのは「いずれでもない × 両系成功」だけ(処理フロー末尾。arch LP-010)。並行稼働実行は foreground slot の結果を中継した時点で COMPLETED になるため、foreground 完了後に background slot を abort-blue / abort-green で中止した典型経路は対象 slot の slot 実行 ABORTED の側で除外する。完了事実(blue_status / green_status / 成果物 URI / 受信日時)は記録し、completion_status は BOTH_SUCCEEDED のまま(REQUEST_CREATED へ進めない)。実行ログは判定キーで分ける: `WARN rapid request not created run_id=... reason=parallel_run_aborted`(並行稼働実行 ABORTED)/ `WARN rapid request not created run_id=... role=... reason=slot_execution_aborted`(対象 slot の slot 実行 ABORTED)。stderr も同様に `warn: rapid request not created run_id=... reason=parallel_run_aborted` / `warn: rapid request not created run_id=... role=... reason=slot_execution_aborted`(継続)。stdout `request_status=-` / `requested_at=-`、終了コード 0。parallel_runs の FOR UPDATE により abort-blue / abort-green の parallel_runs 無条件行ロック(SELECT 1 ... FOR UPDATE)と直列化し、abort が先なら COMMIT 後の ABORTED を読み、dispatcher が先なら abort 側が REQUESTED の依頼を ABORTED にする(競合窓の保険。併用)。判断主体は本 dispatcher で、slot runner は自 slot の中止状態(aborted.txt)を判断せず通常どおり通知する(条件「完了通知の系統独立」)。RAPID_CROSSCHECK_MODE=off では完了通知も依頼も存在しないため速報有効時だけに適用する。中止した run を background-rerun --role rapid-crosscheck でリランした場合は新 run_id(parallel_runs RUNNING、slot_executions 行なし)で依頼が作成される。判定材料の slot_executions.status は条件「slot 実行の状態導出規則」により abort 後に実装が走り切って exitcode.txt を公開しても ABORTED のまま残る(再同期しない) | tier-rapid-crosscheck | next_completion_status(domain)/ dispatch_rapid_request(usecase)/ parallel_run_lock・slot_execution_status(repository) | 並行稼働実行が ABORTED の run では完了通知を受けても依頼を作成しない / ABORTED の run で両系成功になっても依頼を作成せず警告を残す / parallel_runs が COMPLETED で対象 slot の slot 実行が ABORTED の run では完了通知を受けても依頼を作成しない / foreground の blue 完了後に abort-green で中止した green が走り切って完了通知を送っても依頼を作成せず警告を残す / 中止した run のリランでは新しい run_id で依頼が作成される / abort-blue で ABORTED にした slot の実装が走り切って exitcode.txt を公開しても slot_executions.status は ABORTED のままである |
+| 中止済み run の比較依頼作成除外 | 同一トランザクション内で読んだ `parallel_runs.status`(`SELECT job_id, status ... FOR UPDATE`)が `ABORTED`、**または**完了通知の対象 slot(通知元 role の slot。blue の通知なら slot='blue' の行)の `slot_executions.status`(`SELECT status ... WHERE run_id = ? AND slot = ?`。SELECT のみ)が `ABORTED`(aborted.txt 公開済みのミラー)なら、両系成功でも rapid_crosscheck_requests を INSERT しない。判定表は縦軸 3 値(並行稼働実行 ABORTED / 対象 slot の slot 実行 ABORTED / いずれでもない)× 横軸両系成功判定で、依頼を作成するのは「いずれでもない × 両系成功」だけ(処理フロー末尾。arch LP-010)。並行稼働実行は foreground slot の結果を中継した時点で COMPLETED になるため、foreground 完了後に background slot を abort-blue / abort-green で中止した典型経路は対象 slot の slot 実行 ABORTED の側で除外する。完了事実(blue_status / green_status / 受信日時)は記録し、completion_status は BOTH_SUCCEEDED のまま(REQUEST_CREATED へ進めない)。実行ログは判定キーで分ける: `WARN rapid request not created run_id=... reason=parallel_run_aborted`(並行稼働実行 ABORTED)/ `WARN rapid request not created run_id=... role=... reason=slot_execution_aborted`(対象 slot の slot 実行 ABORTED)。stderr も同様に `warn: rapid request not created run_id=... reason=parallel_run_aborted` / `warn: rapid request not created run_id=... role=... reason=slot_execution_aborted`(継続)。stdout `request_status=-` / `requested_at=-`、終了コード 0。parallel_runs の FOR UPDATE により abort-blue / abort-green の parallel_runs 無条件行ロック(SELECT 1 ... FOR UPDATE)と直列化し、abort が先なら COMMIT 後の ABORTED を読み、dispatcher が先なら abort 側が REQUESTED の依頼を ABORTED にする(競合窓の保険。併用)。判断主体は本 dispatcher で、slot runner は自 slot の中止状態(aborted.txt)を判断せず通常どおり通知する(条件「完了通知の系統独立」)。RAPID_CROSSCHECK_MODE=off では完了通知も依頼も存在しないため速報有効時だけに適用する。中止した run を background-rerun --role rapid-crosscheck でリランした場合は新 run_id(parallel_runs RUNNING、slot_executions 行なし)で依頼が作成される。判定材料の slot_executions.status は条件「slot 実行の状態導出規則」により abort 後に実装が走り切って exitcode.txt を公開しても ABORTED のまま残る(再同期しない) | tier-rapid-crosscheck | next_completion_status(domain)/ dispatch_rapid_request(usecase)/ parallel_run_lock・slot_execution_status(repository) | 並行稼働実行が ABORTED の run では完了通知を受けても依頼を作成しない / ABORTED の run で両系成功になっても依頼を作成せず警告を残す / parallel_runs が COMPLETED で対象 slot の slot 実行が ABORTED の run では完了通知を受けても依頼を作成しない / foreground の blue 完了後に abort-green で中止した green が走り切って完了通知を送っても依頼を作成せず警告を残す / 中止した run のリランでは新しい run_id で依頼が作成される / abort-blue で ABORTED にした slot の実装が走り切って exitcode.txt を公開しても slot_executions.status は ABORTED のままである |
 | 比較依頼の一意性 | rapid_crosscheck_requests の主キー run_id と `INSERT ... WHERE NOT EXISTS` により 1 run_id に 1 件。同一トランザクション内で rapid_runs を行ロック(FOR UPDATE)して両通知の同時到着でも 1 件 | tier-rapid-crosscheck | rapid_request_insert_if_absent(repository)/ dispatch_rapid_request(usecase) | green 先行・blue 後続でも依頼は 1 件 |
 | 依頼状態遷移規則 | 依頼は REQUESTED で作成する(以降の遷移は worker) | tier-rapid-crosscheck | rapid_request_insert_if_absent | 後に完了した側の通知で依頼が 1 件作成される |
 | 速報と確報のモデル分離 | rapid_runs / rapid_crosscheck_requests のみ更新。final_crosscheck_requests を作成・変更しない | tier-rapid-crosscheck | dispatch_rapid_request | 後に完了した側の通知で依頼が 1 件作成される |
@@ -142,6 +142,7 @@ sequenceDiagram
 | 完了状況の遷移 | blue_status, green_status(NULL / SUCCEEDED / FAILED), parallel_runs.status, 対象 slot の slot_executions.status | 両方 NULL → PENDING、片方のみ非 NULL かつ SUCCEEDED → ONE_COMPLETED、いずれか FAILED → ANY_FAILED、両方 SUCCEEDED → BOTH_SUCCEEDED、INSERT 成功後 → REQUEST_CREATED(run が中止済み = parallel_runs.status が ABORTED、または対象 slot の slot_executions.status が ABORTED、なら INSERT せず BOTH_SUCCEEDED のまま) | rapid_runs.completion_status | tier-rapid-crosscheck |
 | requested_at | 現在時刻 | ホストのローカルタイムゾーンの ISO 8601 秒精度(タイムゾーン指示子なし。run_id の時刻部と同じ時刻軸) | rapid_crosscheck_requests.requested_at | tier-rapid-crosscheck |
 | job_id の確定 | 通知の `--job-id`、parallel_runs.job_id | parallel_runs.job_id を正とする。通知の値は照合のみで、不一致なら `warn: job_id mismatch run_id=... notified=... recorded=...` を出して parallel_runs の値を採用する | rapid_crosscheck_requests.job_id | tier-rapid-crosscheck |
+| 依頼レコードの起動コマンド置換値 | parallel_runs.parameters | parameters を JSON 配列文字列のまま複製する。blue_exit_code / green_exit_code は両系成功時のみ作成されるためともに 0(SUCCEEDED ⟺ 0)。worker が RAPID_COMPARE_COMMAND の `{params}` / `{blue_exit_code}` / `{green_exit_code}` 置換に使う | rapid_crosscheck_requests.parameters / blue_exit_code / green_exit_code | tier-rapid-crosscheck |
 
 ## 状態遷移一覧
 
@@ -199,18 +200,19 @@ sequenceDiagram
 Feature: 両系成功時に速報比較依頼を作成する
 
   Scenario: 後に完了した側の通知で依頼が 1 件作成される(SPEC-005-02)
-    Given RAPID_CROSSCHECK_MODE=background で parallel_runs に run_id=20260830T113000-JOB001-3f9a1c2e, job_id=JOB001 の行がある(rapid_runs / rapid_crosscheck_requests の FK 先。job_id の正本)
+    Given RAPID_CROSSCHECK_MODE=background で parallel_runs に run_id=20260830T113000-JOB001-3f9a1c2e, job_id=JOB001, parameters=`["--date","2026-08-30"]` の行がある(rapid_runs / rapid_crosscheck_requests の FK 先。job_id / parameters の正本)
     And rapid_runs に run_id=20260830T113000-JOB001-3f9a1c2e, blue_status=SUCCEEDED, green_status=NULL, completion_status=ONE_COMPLETED の行がある
     And rapid_crosscheck_requests に run_id=20260830T113000-JOB001-3f9a1c2e の行が無い
-    When `rapid-crosscheck-runner.sh green-completed --run-id 20260830T113000-JOB001-3f9a1c2e --job-id JOB001 --exit-code 0 --artifact-uri file:///var/relay-gate/facade/20260830T113000-JOB001-3f9a1c2e/green` を実行する
+    When `rapid-crosscheck-runner.sh green-completed --run-id 20260830T113000-JOB001-3f9a1c2e --job-id JOB001 --exit-code 0` を実行する
     Then 終了コードは 0 で stdout に `completion_status=REQUEST_CREATED` と `request_status=REQUESTED` が出る
     And rapid_crosscheck_requests に run_id=20260830T113000-JOB001-3f9a1c2e, job_id=JOB001, status=REQUESTED, requested_at がローカル ISO 8601(タイムゾーン指示子なし)の行がちょうど 1 件ある
+    And その行の parameters は parallel_runs の値 `["--date","2026-08-30"]` と同じで、blue_exit_code は `0`、green_exit_code は `0` である
     And final_crosscheck_requests は変更されない
 
   Scenario: 中止した run のリランでは新しい run_id で依頼が作成される(SPEC-005-02)
     Given parallel_runs に run_id=20260830T113000-JOB001-3f9a1c2e, job_id=JOB001, status=ABORTED の行(運用者が abort-blue / abort-green で中止した run)があり、rapid_crosscheck_requests に同 run_id の行は無い
     And 運用者が background-rerun で中止した run をリランし、parallel_runs に run_id=20260830T150000-JOB001-5e5e5e5e, parent_run_id=20260830T113000-JOB001-3f9a1c2e, job_id=JOB001, status=RUNNING の行と、rapid_runs に同 run_id, blue_status=SUCCEEDED, green_status=NULL, completion_status=ONE_COMPLETED の行がある
-    When `rapid-crosscheck-runner.sh green-completed --run-id 20260830T150000-JOB001-5e5e5e5e --job-id JOB001 --exit-code 0 --artifact-uri file:///var/relay-gate/facade/20260830T150000-JOB001-5e5e5e5e/green` を実行する
+    When `rapid-crosscheck-runner.sh green-completed --run-id 20260830T150000-JOB001-5e5e5e5e --job-id JOB001 --exit-code 0` を実行する
     Then 終了コードは 0 で stdout に `completion_status=REQUEST_CREATED` と `request_status=REQUESTED` が出る
     And rapid_crosscheck_requests に run_id=20260830T150000-JOB001-5e5e5e5e, status=REQUESTED の行が 1 件あり、run_id=20260830T113000-JOB001-3f9a1c2e の行は無いままである
 
@@ -237,29 +239,29 @@ Feature: 両系成功時に速報比較依頼を作成する
 ```gherkin
   Scenario: blue が失敗なら依頼を作成しない(SPEC-005-02)
     Given parallel_runs に run_id=20260830T113000-JOB001-3f9a1c2e, job_id=JOB001 の行と、rapid_runs に同 run_id, blue_status=FAILED, green_status=NULL, completion_status=ANY_FAILED の行がある
-    When `rapid-crosscheck-runner.sh green-completed --run-id 20260830T113000-JOB001-3f9a1c2e --job-id JOB001 --exit-code 0 --artifact-uri file:///var/relay-gate/facade/20260830T113000-JOB001-3f9a1c2e/green` を実行する
+    When `rapid-crosscheck-runner.sh green-completed --run-id 20260830T113000-JOB001-3f9a1c2e --job-id JOB001 --exit-code 0` を実行する
     Then 終了コードは 0 で stdout に `completion_status=ANY_FAILED` と `request_status=-` が出る
     And rapid_crosscheck_requests に run_id=20260830T113000-JOB001-3f9a1c2e の行は無い
     And green の Runner Result(exitcode.txt=`0`)とジョブスケジューラ応答は変わらない
 
   Scenario: 両系とも失敗なら依頼を作成しない
     Given parallel_runs に run_id=20260830T113000-JOB001-3f9a1c2e, job_id=JOB001 の行と、rapid_runs に同 run_id, blue_status=FAILED, green_status=NULL, completion_status=ANY_FAILED の行がある
-    When `rapid-crosscheck-runner.sh green-completed --run-id 20260830T113000-JOB001-3f9a1c2e --job-id JOB001 --exit-code 6 --artifact-uri file:///var/relay-gate/facade/20260830T113000-JOB001-3f9a1c2e/green` を実行する
+    When `rapid-crosscheck-runner.sh green-completed --run-id 20260830T113000-JOB001-3f9a1c2e --job-id JOB001 --exit-code 6` を実行する
     Then 終了コードは 0 で stdout に `completion_status=ANY_FAILED` と `request_status=-` が出る
     And rapid_runs.green_status は `FAILED` になり、rapid_crosscheck_requests に run_id=20260830T113000-JOB001-3f9a1c2e の行は無い
 
   Scenario: 並行稼働実行が ABORTED の run では完了通知を受けても依頼を作成しない(SPEC-005-02)
     Given RAPID_CROSSCHECK_MODE=background で parallel_runs に run_id=20260830T113000-JOB001-3f9a1c2e, job_id=JOB001, status=ABORTED の行がある(運用者が abort-green を実行済み)
     And rapid_runs に同 run_id, blue_status=NULL, green_status=NULL, completion_status=PENDING の行がある
-    When 中止後に走り切った green runner が `rapid-crosscheck-runner.sh green-completed --run-id 20260830T113000-JOB001-3f9a1c2e --job-id JOB001 --exit-code 0 --artifact-uri file:///var/relay-gate/facade/20260830T113000-JOB001-3f9a1c2e/green` を起動する
+    When 中止後に走り切った green runner が `rapid-crosscheck-runner.sh green-completed --run-id 20260830T113000-JOB001-3f9a1c2e --job-id JOB001 --exit-code 0` を起動する
     Then 終了コードは 0 で stdout に `slot_status=SUCCEEDED`、`completion_status=ONE_COMPLETED`、`request_status=-` が出る
-    And rapid_runs.green_status は `SUCCEEDED`、green_artifact_uri は `file:///var/relay-gate/facade/20260830T113000-JOB001-3f9a1c2e/green`、green_completed_at はローカル ISO 8601 の値である(完了事実だけを記録する)
+    And rapid_runs.green_status は `SUCCEEDED`、green_completed_at はローカル ISO 8601 の値である(完了事実だけを記録する)
     And rapid_crosscheck_requests に run_id=20260830T113000-JOB001-3f9a1c2e の行は無い
 
   Scenario: ABORTED の run で両系成功になっても依頼を作成せず警告を残す(SPEC-005-02)
     Given parallel_runs に run_id=20260830T113000-JOB001-3f9a1c2e, job_id=JOB001, status=ABORTED の行がある
     And rapid_runs に同 run_id, blue_status=SUCCEEDED, green_status=NULL, completion_status=ONE_COMPLETED の行があり、rapid_crosscheck_requests に同 run_id の行は無い
-    When `rapid-crosscheck-runner.sh green-completed --run-id 20260830T113000-JOB001-3f9a1c2e --job-id JOB001 --exit-code 0 --artifact-uri file:///var/relay-gate/facade/20260830T113000-JOB001-3f9a1c2e/green` を実行する
+    When `rapid-crosscheck-runner.sh green-completed --run-id 20260830T113000-JOB001-3f9a1c2e --job-id JOB001 --exit-code 0` を実行する
     Then 終了コードは 0 で stdout に `completion_status=BOTH_SUCCEEDED`、`request_status=-`、`requested_at=-` が出る
     And stderr に `warn: rapid request not created run_id=20260830T113000-JOB001-3f9a1c2e reason=parallel_run_aborted` が出る
     And 実行ログ rapid-crosscheck-runner.sh.log に `WARN rapid request not created run_id=20260830T113000-JOB001-3f9a1c2e reason=parallel_run_aborted` が残る
@@ -270,16 +272,16 @@ Feature: 両系成功時に速報比較依頼を作成する
     Given RAPID_CROSSCHECK_MODE=background で parallel_runs に run_id=20260830T113000-JOB001-3f9a1c2e, job_id=JOB001, status=COMPLETED の行がある(foreground の blue が完了し facade が中継済み)
     And slot_executions に同 run_id の slot=blue status=SUCCEEDED と slot=green status=ABORTED の行があり、facade/20260830T113000-JOB001-3f9a1c2e/green/aborted.txt が公開済みである(運用者が abort-green を実行済み)
     And rapid_runs に同 run_id, blue_status=SUCCEEDED, green_status=NULL, completion_status=ONE_COMPLETED の行があり、rapid_crosscheck_requests に同 run_id の行は無い
-    When 後から green の完了通知 `rapid-crosscheck-runner.sh green-completed --run-id 20260830T113000-JOB001-3f9a1c2e --job-id JOB001 --exit-code 0 --artifact-uri file:///var/relay-gate/facade/20260830T113000-JOB001-3f9a1c2e/green` を受ける
+    When 後から green の完了通知 `rapid-crosscheck-runner.sh green-completed --run-id 20260830T113000-JOB001-3f9a1c2e --job-id JOB001 --exit-code 0` を受ける
     Then 終了コードは 0 で stdout に `completion_status=BOTH_SUCCEEDED`、`request_status=-`、`requested_at=-` が出る
-    And rapid_runs.green_status は `SUCCEEDED`、green_artifact_uri と green_completed_at が記録される(完了事実だけを記録する)
+    And rapid_runs.green_status は `SUCCEEDED`、green_completed_at が記録される(完了事実だけを記録する)
     And rapid_crosscheck_requests に run_id=20260830T113000-JOB001-3f9a1c2e の行は無く、parallel_runs の status は COMPLETED のままである
     And stderr に `warn: rapid request not created run_id=20260830T113000-JOB001-3f9a1c2e role=green reason=slot_execution_aborted` が出る
 
   Scenario: foreground の blue 完了後に abort-green で中止した green が走り切って完了通知を送っても依頼を作成せず警告を残す(SPEC-005-02)
     Given RAPID_CROSSCHECK_MODE=background で run_id=20260830T113000-JOB001-3f9a1c2e, job_id=JOB001 の foreground の blue が exitcode.txt=`0` で完了して facade が結果を中継し、parallel_runs の status が COMPLETED、slot_executions(run_id, blue).status=SUCCEEDED、rapid_runs が blue_status=SUCCEEDED, green_status=NULL, completion_status=ONE_COMPLETED である
     And その後、運用者が background の green に `abort-green.sh --run-id 20260830T113000-JOB001-3f9a1c2e` を実行して yes と答え、facade/20260830T113000-JOB001-3f9a1c2e/green/aborted.txt が公開され、slot_executions(run_id, green).status=ABORTED になった(parallel_runs は COMPLETED のまま)
-    When 中止後も green の実装が走り切って exitcode.txt=`0` を公開し、green runner が `rapid-crosscheck-runner.sh green-completed --run-id 20260830T113000-JOB001-3f9a1c2e --job-id JOB001 --exit-code 0 --artifact-uri file:///var/relay-gate/facade/20260830T113000-JOB001-3f9a1c2e/green` を起動する
+    When 中止後も green の実装が走り切って exitcode.txt=`0` を公開し、green runner が `rapid-crosscheck-runner.sh green-completed --run-id 20260830T113000-JOB001-3f9a1c2e --job-id JOB001 --exit-code 0` を起動する
     Then 終了コードは 0 で stdout に `completion_status=BOTH_SUCCEEDED`、`request_status=-`、`requested_at=-` が出て、rapid_crosscheck_requests に同 run_id の行は無い
     And 実行ログ rapid-crosscheck-runner.sh.log に `WARN rapid request not created run_id=20260830T113000-JOB001-3f9a1c2e role=green reason=slot_execution_aborted` が残る
     And rapid_runs.green_status は `SUCCEEDED`、completion_status は `BOTH_SUCCEEDED` のまま(REQUEST_CREATED にならない)で、green の Runner Result(exitcode.txt=`0`)と green runner の終了コードは変わらない
