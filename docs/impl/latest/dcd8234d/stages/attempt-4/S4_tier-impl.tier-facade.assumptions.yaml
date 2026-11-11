@@ -3,115 +3,45 @@ uc_id: "dcd8234d"
 tier: "tier-facade"
 attempt: 4
 extraction:
-  candidate_count: 16
+  candidate_count: 8
   excluded_as_explicit: 4
-  recorded_count: 12
+  recorded_count: 4
 assumptions:
   - id: A-001
-    category: input_validation
-    assumption: "入力の守備範囲の違反(NUL / UTF-8 / BOM / CR)または KEY=VALUE でない行が 1 件でもあれば、それらを全件報告して終了コード 2 で終え、RAPID_COMPARE_COMMAND の検証表(ルール 1〜5)は評価しない"
-    target: "facade/src/usecase/validate_rapid_crosscheck.sh:52"
-    reason: "config_input_rules は形式違反を拒否すると定めるが、形式違反と検証表の違反を同時に報告するか(併記か打ち切りか)の定めが無い。slot ジョブマップの既存実装(バイト点検で打ち切り)に揃えた"
+    category: data_format
+    assumption: "RAPID_COMPARE_COMMAND が無い・空(検証ルール 1 の違反)のとき、stdout は command_path: - と has_job_id_placeholder=false を出す"
+    target: "facade/src/usecase/validate_rapid_crosscheck.sh:131"
+    reason: "stdout で値を - にする場合は入力の守備範囲の違反(バイト・改行、invalid line、同じキーの重複)だけが定められており、検証ルール 1 の違反時の command_path と has_job_id_placeholder の値は書かれていない。先頭の語が無いので command_path は -、{job_id} を含まないので has_job_id_placeholder は false とした"
     confidence: medium
     spec_refs:
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#commands[validate-config.sh].stdout"
       - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#config_input_rules.env_files"
-      - "tier-facade.md#コマンド契約"
+      - "tier-facade.md#コマンド契約(stdout)"
+      - "tier-facade.md#ティア完了条件(字下げしてコメントにした起動コマンドの行は読まない)"
   - id: A-002
-    category: error_handling
-    assumption: "stdout(config= / path: / command_path: / has_job_id_placeholder= / status= / violations=)は検証表を評価したときだけ出し(違反があれば status=invalid と violations=N を付ける)、ファイル不在・読めない・形式違反・内部障害(終了コード 6)のときは stdout を出さない"
-    target: "facade/src/usecase/validate_rapid_crosscheck.sh:79"
-    reason: "stdout の固定順は定義されているが、検証表に到達しない失敗(ファイル不在・形式違反)のときに stdout を出すかの定めが無い(内部障害で stdout を出さないことだけは internal_failure に明示)"
-    confidence: medium
-    spec_refs:
-      - "tier-facade.md#コマンド契約"
-      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#commands[validate-config.sh].stdout"
-  - id: A-003
-    category: data_format
-    assumption: "RAPID_COMPARE_COMMAND が欠落・空のときの stdout は command_path: -(空値表記)/ has_job_id_placeholder=false / status=invalid / violations=1 とする"
-    target: "facade/src/domain/launch_command.sh:74"
-    reason: "ルール 1 違反時の command_path と has_job_id_placeholder の値の定めが無い。空値表記 `-` は ui-design の出力規約(cli_field)に揃えた"
-    confidence: medium
-    spec_refs:
-      - "tier-facade.md#検証ルール(domain: launch_command_rules)"
-      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#commands[validate-config.sh].stdout"
-  - id: A-004
     category: input_validation
-    assumption: "コマンド部分が絶対パスでない(ルール 2 違反)ときは、存在・実行可能(ルール 3)を評価せず path is not absolute の 1 行だけを出す。ルール 4・5 は独立に評価して全件収集する"
-    target: "facade/src/domain/launch_command.sh:86"
-    reason: "検証ルール表は 5 ルールを並べるだけで、ルール 2 と 3 の評価順・排他の定めが無い(spec の BDD は相対パスで stderr 1 行を期待)。feature flag の実体パス検証(欠落 → 絶対パス → 実行可能)の順に揃えた"
-    confidence: high
-    spec_refs:
-      - "tier-facade.md#検証ルール(domain: launch_command_rules)"
-      - "spec.md#E2E 完了条件(BDD)"
-  - id: A-005
-    category: input_validation
-    assumption: "値が空白(スペース・タブ)だけで、compare_command_argv で分けた引数が 0 個になる場合は空とみなし、ルール 1(option required)の違反とする"
-    target: "facade/src/domain/launch_command.sh:75"
-    reason: "ルール 1 は「存在し非空」とだけ定め、空白だけの値の扱い(非空だがコマンド部分が無い)の定めが無い"
-    confidence: high
-    spec_refs:
-      - "tier-facade.md#検証ルール(domain: launch_command_rules)"
-      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#shared_rules.compare_command_argv.split"
-  - id: A-006
-    category: input_validation
-    assumption: "コマンド部分の「存在し実行可能」は、通常ファイルであり(-f)かつ実行権限がある(-x)ことで判定する(ディレクトリは実行不可として拒否する)"
+    assumption: "コマンド部分の「存在し実行可能」は、通常ファイルであり実行権限があることと判定する(ディレクトリは実行権限があっても file not executable とする)"
     target: "facade/src/domain/launch_command.sh:87"
-    reason: "「存在・実行可能」の判定方法の定めが無い。feature flag の実体パス検証(validate_feature_flag_executable_path)と同じ判定に揃えた"
+    reason: "検証ルール 3 は「存在し実行可能」とだけあり、ディレクトリやデバイスファイルの扱いが書かれていない。比較ツールとして起動できるのは通常ファイルだけのため"
     confidence: high
     spec_refs:
-      - "tier-facade.md#検証ルール(domain: launch_command_rules)"
-      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#commands[validate-config.sh].stderr"
-  - id: A-007
-    category: input_validation
-    assumption: "同じキー(RAPID_COMPARE_COMMAND)が複数行にある場合は後の行の値で検証し、重複自体は違反にも警告にもしない"
-    target: "facade/src/repository/rapid_crosscheck_env.sh:108"
-    reason: "env の重複キーの扱いは config_input_rules・config_files のどちらにも定めが無い。feature flag の読み込み(後の行が勝つ)に揃えた"
-    confidence: medium
-    spec_refs:
-      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#config_input_rules.env_files"
-      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#config_files[rapid-crosscheck.env]"
-  - id: A-008
-    category: input_validation
-    assumption: "`=` より前を前後の空白を除いてキーとし、キーが空の行(例 `=value`)は KEY=VALUE でない行として invalid line で拒否する。値は前後の空白を除いてから先頭末尾のクォートを除去する"
-    target: "facade/src/repository/rapid_crosscheck_env.sh:94"
-    reason: "env_files は `=` を含まない行だけを invalid line と定め、キーが空の行とキー・値の前後空白の扱いの定めが無い(値の空白除去は feature flag の読み込みに揃えた)"
-    confidence: medium
-    spec_refs:
-      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#config_input_rules.env_files"
-      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#shared_rules.compare_command_argv.split"
-  - id: A-009
-    category: input_validation
-    assumption: "値の先頭末尾のクォート除去は repository/feature_flag_config.sh の feature_flag_config_unquote と同じ規則(先頭の `\"` / `'` と末尾の `\"` / `'` をそれぞれ 1 文字除去。対になっているかは見ない)で行う(性能のためサブシェルなしの rapid_crosscheck_env_unquote に同じ規則を実装)"
-    target: "facade/src/repository/rapid_crosscheck_env.sh:132"
-    reason: "compare_command_argv.split は「1 組だけ除去」、env_files は「feature flag の設定契約に従う」と書き、対になっていない引用符(例 `\"abc`)の扱いが両者で一意に読めない。同一ティアの既存実装に揃えた"
-    confidence: low
-    spec_refs:
-      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#shared_rules.compare_command_argv.split"
-      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#config_input_rules.env_files"
-  - id: A-010
-    category: input_validation
-    assumption: "RAPID_COMPARE_COMMAND 以外のキー(RAPID_DB_CONN_REF / RAPID_LEASE_SEC / RAPID_POLL_INTERVAL_SEC / 未知キー)は検証せず、未知キーの warn も出さない"
-    target: "facade/src/repository/rapid_crosscheck_env.sh:104"
-    reason: "検証対象は RAPID_COMPARE_COMMAND とだけ書かれ、他キーの検証や未知キー warn(feature flag にはある)の要否の定めが無い"
-    confidence: medium
-    spec_refs:
-      - "tier-facade.md#変更概要"
-      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#config_files[rapid-crosscheck.env].keys"
-  - id: A-011
-    category: data_format
-    assumption: "--verbose のとき、env に現れたキーを出現順に `info: key loaded key=<KEY> path: <path>` で stderr に出す(値は出さない)"
-    target: "facade/src/usecase/validate_rapid_crosscheck.sh:69"
-    reason: "--verbose は「行ごとの info を stderr に出す」とだけあり、--rapid-crosscheck の info 行の文言の定めが無い。feature flag の --verbose の文言に揃えた"
-    confidence: medium
-    spec_refs:
-      - "_api-summary.yaml#x_cli_commands[validate-config.sh].options[--verbose]"
-      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#commands[validate-config.sh].options[--verbose]"
-  - id: A-012
+      - "tier-facade.md#検証ルール(domain: launch_command_rules) ルール 3"
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#commands[validate-config.sh].stderr(比較ツール起動コマンド)"
+  - id: A-003
     category: error_handling
-    assumption: "--final-crosscheck はオプションとして受け付け、所有 UC が実装するまでは `error: validation kind is not implemented option=--final-crosscheck`(終了コード 6)を返す(旧 --crosscheck-job-map / --target-catalog は未知のオプションとして終了コード 2)"
-    target: "facade/src/presentation/validate-config.sh:141"
-    reason: "確報の検証は別 UC の担当という指示(dispatch の可変プロンプト)に基づく。未実装の検証種別の扱いは仕様に定めが無く、既存の presentation の判定(handler 未定義は 6)をそのまま使った"
+    assumption: "バイト点検が数えた行数と行の読み取りで読んだ行数が合わないときは、補助コマンドの想定外の出力として error: internal command failed commands=tr,sed を出し終了コード 6 で終える"
+    target: "facade/src/repository/rapid_crosscheck_env.sh:130"
+    reason: "internal_failure は「補助コマンドの失敗・想定外の出力」を終了コード 6 とするが、行数の不一致のようにどのコマンドが誤ったか特定できない場合の commands= の値は書かれていない。行数を数えたバイト点検で使う tr と sed の名前を出すことにした。契約は commands= に「実際に失敗したコマンド名だけ」を書くと定めており、tr と sed のどちらが想定外の出力をしたか特定できないまま両方を書く点は、この定めと一部食い違い得る(照合の対象として明示する)"
     confidence: medium
     spec_refs:
-      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#commands[validate-config.sh].options[--final-crosscheck]"
-      - "tier-facade.md#コマンド契約"
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#config_input_rules.internal_failure"
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#config_input_rules.snapshot"
+  - id: A-004
+    category: error_handling
+    assumption: "読み込みが成功したあと入力の複製の削除に失敗したときは、読み込み結果を使わず error: internal command failed commands=rm を出し終了コード 6 で終える(複製の工程自体が失敗していたときは config snapshot failed を優先する)"
+    target: "facade/src/repository/rapid_crosscheck_env.sh:67"
+    reason: "snapshot.validate_config は「読み込みを終えたら成功・失敗を問わず削除する」とだけあり、削除の失敗を入力の複製の失敗と補助コマンドの失敗のどちらにするかが書かれていない。複製完了後の工程なので補助コマンドの失敗とした"
+    confidence: medium
+    spec_refs:
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#config_input_rules.snapshot.validate_config"
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#config_input_rules.internal_failure.handling"

@@ -2,31 +2,30 @@ stage: S4
 tier: tier-facade
 attempt: 4
 uc_id: dcd8234d
-manifest_sha256: 945094d65bb404232b80a8b2e224753f6661edc1fcf8e311aafdea570dd022cd
+manifest_sha256: 426b0241023ffc06ae2d22909c4be05e28635272763b00d0eb084f534d74d95d
 manifest_projection: v2
 result: pass
-rerun_reason: "stale 由来の再実行(クロスチェック簡素化の仕様還流で担当が tier-facade だけになった)。findings は渡されていない"
-scope: "validate-config.sh --rapid-crosscheck <path> による rapid-crosscheck.env の RAPID_COMPARE_COMMAND の検証(コマンド部分が絶対パスで存在・実行可能 / {job_id} を含む / {params} は引数 1 つ全体のときだけ)。--final-crosscheck は別 UC の担当で実装しない"
+rerun_reason: "stale 再実行(spec feedback run 20261110_080548 で validate-config.sh --rapid-crosscheck --verbose の info 行の規則が変わった。findings は渡されていない)"
+spec_conformance:
+  code_change_required: false
+  summary: "--verbose の info 行の規則(CLI 契約 config_input_rules.env_files の「validate-config.sh の --verbose の info 行」(a)〜(c)、tier-facade.md のコマンド契約 stderr、spec-decision-033)を実装と突き合わせた。(a) 文言 info: key loaded key=<KEY> path: <path>、コメント行と空行を除く全キー(未知キー・値が空のキー・検査しないキーを含む)、値を出さない、(b) (i)(ii) で止めた回とファイル無し・読めない回・内部障害の回は出さない、(c) info 行すべて → 未知キーの warn 行すべて → 検証表の error 行の順、のいずれも現行実装が満たしていた。コードの動作は変えず、コメントだけを直した"
+  checked_points:
+    - "info 行の対象キーと順: repository の RAPID_CROSSCHECK_ENV_KEYS(コメント行・0 バイトの行・invalid line を除く、出現順・重複なし)"
+    - "出す回: usecase で (i) バイト・改行と (ii) 行の構造の検査で return した後にだけ info を組み立てる"
+    - "段の中の順: notices 配列に info を全件積んでから未知キーの warn を積み、出力後に launch_command_rules の error 行を出す"
+    - "値を出さない・key= / path: は可視表記(cli_field_safe_text)。path: は利用者が指定したパス(shown_path)"
+    - "未知キーの判定表(validate_rapid_crosscheck_is_known_key の RAPID_DB_CONN_REF / RAPID_COMPARE_COMMAND / RAPID_LEASE_SEC / RAPID_POLL_INTERVAL_SEC)が契約 config_files の rapid-crosscheck.env の keys の 4 件と一致する"
+    - "判断記録 spec-decision-033 の決定 6(--rapid-crosscheck の実装は文言・出す回・順のすべてで規則と一致)と食い違いが無い"
+  contract_slice_check: "not_applicable(UC の _api-summary.yaml に schema_version distillery.api-summary/v2 と contract_sha256 が無く、_contract-slice.json も無い。HTTP API・イベントは無く、CLI 契約は契約外の共有仕様として読んだ)"
+  out_of_scope:
+    - "--feature-flag の info 行が同じ規則に未追従であることは既知で、別 UC の再実行で直す(本作業では触っていない)"
+    - "validate-config.sh(presentation)は --housekeep を受け付けず、冒頭コメントと VALIDATE_CONFIG_KIND_OPTIONS も 4 検証種別のまま。--housekeep は UC「保持日数を過ぎた終了済みの実行と確報比較依頼を判定する」の担当で未実装のため、本作業では触っていない"
 changes:
-  - path: facade/src/presentation/validate-config.sh
-    summary: "旧仕様の他ティア handler の source hook(RELAY_GATE_TIERS_DIR と rapid-crosscheck/ / final-crosscheck/ の handler ファイル)と旧オプション --crosscheck-job-map / --target-catalog を撤去。検証種別を --feature-flag / --job-map / --rapid-crosscheck / --final-crosscheck に置き換え、--rapid-crosscheck を facade 自身の usecase へ委譲(arch CTR-007)。--final-crosscheck は handler 未定義のため終了コード 6(所有 UC が追加)"
-  - path: facade/src/domain/launch_command.sh
-    summary: "新規。LaunchCommandRules(compare_command_argv の空白区切り分割と検証ルール 1〜5。違反は全件収集)"
-  - path: facade/src/repository/rapid_crosscheck_env.sh
-    summary: "新規。RapidCrosscheckEnvRecord(入力の複製・バイト点検は job_map_repo の関数を再利用。KEY=VALUE の読み取り、invalid line の行番号記録。行数比例でサブシェルを使わない)"
   - path: facade/src/usecase/validate_rapid_crosscheck.sh
-    summary: "新規。ValidateRapidCrosscheckCommand(ファイル不在・入力の守備範囲・invalid line・検証表・固定順 stdout・内部障害 6)"
-  - path: facade/features/steps/define-crosscheck-job-map-and-comparison-definitions.steps.js
-    summary: "S2 skeleton の step を実装(/opt/compare/ を Scenario の一時ディレクトリ配下へ読み替え、実プロセスで起動)"
-  - path: facade/test/domain/launch_command.bats
-    summary: "新規。domain の単体テスト 10 件"
-  - path: facade/test/usecase/validate_rapid_crosscheck.bats
-    summary: "新規。入力の守備範囲・出力の形・性能(5,000 行 10 秒以内)の単体テスト 15 件"
-  - path: facade/test/presentation/validate_config.bats
-    summary: "旧オプション名を前提にした 2 件を新しい検証種別(--rapid-crosscheck / --final-crosscheck)へ更新"
-s2_targets:
-  - "facade/test/presentation/validate_config_rapid_crosscheck.bats: 7 件 green"
-  - "facade/features/define-crosscheck-job-map-and-comparison-definitions.feature: 5 scenarios green"
+    summary: "(iii) の段のコメントを実際の出力順(info 行すべて → 未知キーの warn 行すべて → 検証表の error 行)と仕様の記述(env_files の info 行 (b)(c))に合わせて直した。冒頭の処理の流れの説明にも --verbose の info 行を加えた"
+  - path: facade/src/repository/rapid_crosscheck_env.sh
+    summary: "値の前後の空白とクォートの除去の根拠を、UC「feature flag を設定する」の設定契約から config_input_rules.env_files の取り出し方 (3)(4)(env 形式の全設定ファイルに共通)へ直した(冒頭のコメントと rapid_crosscheck_env_unquote のコメント)"
+undecided_comment_check: "本 UC の担当範囲(src: rapid_crosscheck_env.sh / validate_rapid_crosscheck.sh / launch_command.sh / validate-config.sh の --rapid-crosscheck 部分、test: validate_rapid_crosscheck.bats / validate_config_rapid_crosscheck.bats / launch_command.bats、features/steps/define-crosscheck-job-map-and-comparison-definitions.steps.js)に「未定」「TODO」「仮置き」「暫定」「仕様に無」「決まっていない」「仮に」のコメントは無く、テスト側の info → warn → error の順の記述は仕様と一致していた"
 gates:
   format: pass
   lint: pass
@@ -45,42 +44,32 @@ gate_runs:
     cwd: facade
     command: "bats -r test"
     exit_code: 0
-    detail: "373 tests, 373 ok, 0 not ok(既存 341 件 + S2 の 7 件 + 新規 25 件。macOS)"
+    detail: "384 tests, 384 ok, 0 not ok(macOS)"
   - gate: bdd_tier
     cwd: facade
     command: "npx cucumber-js --config ../cucumber.cjs features"
     exit_code: 0
-    detail: "46 scenarios (46 passed), 158 steps (158 passed)(既存 41 + 本 UC 5)"
-linux_equivalent_check:
-  command: "docker run --rm -e LANG=C.UTF-8 -v \"$PWD:/work\" -w /work/facade relay-gate-ci:ubuntu24 bats -r test"
-  exit_code: 0
-  detail: "373 tests, 373 ok, skip 0(Ubuntu 24.04 arm64)"
-performance:
-  note: "rapid-crosscheck.env 5,000 行の validate-config.sh --rapid-crosscheck --verbose の所要時間(macOS)。初版はサブシェルの trim で最悪ケース 10.8 秒だったため、行ごとの処理をサブシェルなしに改めた"
-  macos_seconds_other_keys: "0.20"
-  macos_seconds_all_compare_command: "0.48"
-  macos_seconds_unique_keys: "0.34"
-  threshold_seconds: 10
+    detail: "57 scenarios (57 passed), 197 steps (197 passed)。うち本 UC の features/define-crosscheck-job-map-and-comparison-definitions.feature は 16 scenarios (16 passed), 54 steps (54 passed)"
 assumptions:
   path: attempt-4/S4_tier-impl.tier-facade.assumptions.yaml
-  count: 12
+  count: 4
   by_category:
-    input_validation: 8
-    data_format: 2
+    input_validation: 1
+    data_format: 1
     error_handling: 2
     persistence: 0
     performance: 0
     security: 0
-  sha256: ca3ac08893cc86ba9b8b3b5b90501874b6b9ba2bf49473727448c953e946a8eb
+  sha256: b558e9ef4853d073d188c879e14f9c39d78ad47dbda89cdeed86155109025a3d
   extraction:
-    candidate_count: 16
+    candidate_count: 8
     excluded_as_explicit: 4
-    recorded_count: 12
+    recorded_count: 4
   validator: "validateAssumptions.js record → ok: true"
+  excluded_note: "仕様に明示があるため除外: ルール 2 違反時にルール 3 を評価しない(env_files の例 1)/ {job_id} は値全体に含まれるかで判定(検証ルール 4)/ info 行に検査しないキーや値が空のキーも含める(env_files (a))/ 値のクォート除去の規則(env_files 取り出し方 (4))"
 issues:
   new: []
-  note: "新規の仕様疑義なし。USDM SPEC-004-04(2 点)と spec.md / tier-facade.md(3 点)の差は既存の issues/20261027_083600_params-rule-vs-usdm-two-checks.md のとおりで、実装は spec.md / tier-facade.md / CLI 契約の 3 点を正とした"
-namespace_note: "新規トップレベル名は launch_command_* / LAUNCH_COMMAND_*(domain)、rapid_crosscheck_env_* / RAPID_CROSSCHECK_ENV_*(repository)、validate_rapid_crosscheck_* / VALIDATE_RAPID_CROSSCHECK_*(usecase)、validate_config_rapid_crosscheck(presentation)。速報クロスチェック tier の接頭辞 crosscheck_ / CROSSCHECK_ と feature flag の RAPID_COMPARE_COMMAND / RAPID_CROSSCHECK_MODE 等の変数名は使わない。他ティアのシェルファイルは source しない"
-write_set_note: "書き込みは facade/ 配下と attempt-4/ の本 tier の done / assumptions のみ。issues/ への新規起票なし"
-completed_at: '2026-10-27T08:50:00+09:00'
+  note: "新規の仕様疑義なし"
+write_set_note: "書き込みは facade/src 配下の 2 ファイルと、attempt-4/ の本 tier の done / assumptions のみ。テスト・feature・docs/specs・issues は変更していない"
+completed_at: "2026-11-11T08:04:25+09:00"
 completed_by: dist-impl-implement@0.14.1

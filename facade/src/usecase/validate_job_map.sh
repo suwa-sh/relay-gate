@@ -41,7 +41,7 @@ validate_job_map_report_quote_errors() {
 }
 
 # 入力の守備範囲の違反(config_input_rules.rules)を原因ごとの文言で行番号順に全件報告する。
-# 1 行に複数の原因があれば BOM → NUL → 文字コード → CR の順に出す。`hint: use LF line endings` は最後の CR の error 行の次に 1 回。
+# 1 行に複数の原因があれば NUL → 文字コード → BOM → CR の順に出す(config_input_rules.byte_checks.order)。`hint: use LF line endings` は最後の CR の error 行の次に 1 回。
 # 戻り値: 0 … 違反なし / 1 … 違反あり(報告済み)
 # 引数: shown_path
 validate_job_map_report_byte_errors() {
@@ -59,16 +59,16 @@ validate_job_map_report_byte_errors() {
     last_cr="$number"
   done
   for line in ${JOB_MAP_MALFORMED_LINES[@]+"${JOB_MAP_MALFORMED_LINES[@]}"}; do
-    if [ "$JOB_MAP_BOM_LINE" -eq "$line" ]; then
-      job_map_emit "error: byte order mark is not allowed line=$line path: $shown_path"
-      reported=$((reported + 1))
-    fi
     if [ -n "${nul_lines[line]+x}" ]; then
       job_map_emit "error: nul byte is not allowed line=$line path: $shown_path"
       reported=$((reported + 1))
     fi
     if [ -n "${encoding_lines[line]+x}" ]; then
       job_map_emit "error: encoding is not utf-8 line=$line path: $shown_path"
+      reported=$((reported + 1))
+    fi
+    if [ "$JOB_MAP_BOM_LINE" -eq "$line" ]; then
+      job_map_emit "error: byte order mark is not allowed line=$line path: $shown_path"
       reported=$((reported + 1))
     fi
     if [ -n "${cr_lines[line]+x}" ]; then

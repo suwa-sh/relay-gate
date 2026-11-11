@@ -2,7 +2,7 @@
 # 転写: 1 criterion = 1 Scenario。文言は原文のまま(Given / When / Then の区切りで行分割のみ)。bootstrap P7 生成
 Feature: SPEC-008-01 ハング検知スクリプトはジョブスケジューラの定期ジョブ(5 分ごとなど)として起動され、未完了の background role について started-at.txt と execution-spec.json の hang_detect_limit_minutes から経過時間を判定する。exitcode.txt があり終了コード 0 なら対象外、非 0 なら background 実行エラーとして通知、exitcode.txt がなく経過時間が上限以内なら継続監視、上限超過ならハング疑いとして通知する
 
-  REQ-008: ハング検知が background 実行(background slot と速報比較依頼)を定期監視し、ジョブスケジューラの実行結果に現れない background 異常を運用者へ通知すること
+  REQ-008: ハング検知が background 実行(background slot と速報比較依頼)を定期監視し、ジョブスケジューラの実行結果に現れない background 異常を、ハング検知ジョブ自身の終了結果と標準エラーで運用者へ知らせること
 
   @atdd_SPEC-008-01-1
   Scenario: SPEC-008-01-1

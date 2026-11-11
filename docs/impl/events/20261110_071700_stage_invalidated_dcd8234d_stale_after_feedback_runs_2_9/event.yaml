@@ -1,0 +1,21 @@
+event_id: 20261110_071700_stage_invalidated_dcd8234d_stale_after_feedback_runs_2_9
+type: stage_invalidated
+uc_id: dcd8234d
+stage: S1
+payload:
+  reason: stale
+  targets:
+  - stages/S1_uc-init.done.yaml
+  - stages/S2_test-scaffold.done.yaml
+  - stages/S3_contracts.done.yaml
+  - stages/attempt-4/S4_tier-impl.tier-facade.done.yaml
+  - stages/attempt-4/S4_tier-impl.tier-facade.assumptions.yaml
+  - stages/attempt-4/S5_verify.tier-facade.done.yaml
+  - stages/attempt-4/S5_verify.tier-facade.findings.yaml
+  - stages/S6_uc-bdd.done.yaml
+  - stages/S7_atdd.done.yaml
+  - stages/S8_feedback.done.yaml
+  - stages/S9_review_generated.done.yaml
+  archived_to: docs/impl/latest/dcd8234d/invalidated/20261110_071700_stage_invalidated_dcd8234d_stale_after_feedback_runs_2_9/
+  detail: dist-pipeline の feedback run 2〜9(20261101〜20261105。メール通知の廃止、ハウスキープ、設定キーの扱い、外部レビュー指摘、管理 DB は 1 つ)の反映で spec.md / tier-facade.md / _api-summary / 共有仕様 5 件 / nfr / usdm / arch / contracts.lock が変わり、全 done の projection が不一致になった。同一 attempt(4)で S1 からやり直す(attempt++ しない)。S8 の公開済み feedback request 3 本と learnings は履歴として残す
+created_at: '2026-11-10T07:16:20+09:00'

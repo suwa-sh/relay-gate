@@ -12,12 +12,12 @@
 
 | 項目 | 内容 |
 |------|------|
-| コマンド | `validate-config.sh --rapid-crosscheck <path>` |
+| コマンド | `validate-config.sh --rapid-crosscheck <path> [--verbose]` |
 | 所有 tier | tier-facade(全検証種別。arch CTR-007。契約正本 = `_cross-cutting/api/cli-command-contract.yaml` の validate-config.sh) |
-| 引数 | `--rapid-crosscheck <path>`(値必須。既定パス `$RELAY_GATE_CONFIG_DIR/rapid-crosscheck.env` を使う場合も明示的に渡す)。`--feature-flag` / `--job-map` / `--rapid-crosscheck` / `--final-crosscheck` の 4 検証種別のうちちょうど 1 つ(排他) |
+| 引数 | `--rapid-crosscheck <path>`(値必須。既定パス `$RELAY_GATE_CONFIG_DIR/rapid-crosscheck.env` を使う場合も明示的に渡す)。`--feature-flag` / `--job-map` / `--rapid-crosscheck` / `--final-crosscheck` / `--housekeep` の 5 検証種別のうちちょうど 1 つ(排他)。`--verbose`(任意)は補助出力の info 行を stderr に出す |
 | stdin | なし |
 | stdout | 固定順: `config=rapid-crosscheck` / `path: <path>` / `command_path: <RAPID_COMPARE_COMMAND の先頭の語>` / `has_job_id_placeholder=true|false|-` / `status=valid|invalid` / `violations=N`(invalid 時)。入力の守備範囲の違反(バイト・改行、invalid line、同じキーの重複)で値を使わないときは command_path と has_job_id_placeholder を `-` にする(CLI 契約 `config_input_rules.env_files`) |
-| stderr | 違反ごとに `error:` 1 行(全件)。下記「検証ルール」の違反文言。入力の守備範囲(NUL / UTF-8 / BOM / CR の拒否、invalid line、同じキーが 2 行以上ある設定の拒否 `error: duplicate key key=<KEY> lines=<n1,n2,...> path: ...`)と報告の順は CLI 契約 `config_input_rules`(`byte_checks` / `env_files`)に従う。バイト・改行の違反はファイル内の全件を行番号の昇順に、同じ行は NUL → UTF-8 → BOM → CR の順に 1 種類 1 行で出し、hint は最後の CR の error 行の次に 1 回だけ出して止める(violations はこの error 行の数で、hint を数えない)。invalid line・同じキーの重複があるときは下記の検証ルールを行わない。キー表(契約 config_files.rapid-crosscheck.env の keys)に無いキーは `warn: unknown key key=<KEY> path: ...` を出して継続する(終了コード・violations に数えない。他の読み手が使うキーは未知キーではない。契約 config_files.rapid-crosscheck.env note) |
+| stderr | 違反ごとに `error:` 1 行(全件)。下記「検証ルール」の違反文言。入力の守備範囲(NUL / UTF-8 / BOM / CR の拒否、invalid line、同じキーが 2 行以上ある設定の拒否 `error: duplicate key key=<KEY> lines=<n1,n2,...> path: ...`)と報告の順は CLI 契約 `config_input_rules`(`byte_checks` / `env_files`)に従う。バイト・改行の違反はファイル内の全件を行番号の昇順に、同じ行は NUL → UTF-8 → BOM → CR の順に 1 種類 1 行で出し、hint は最後の CR の error 行の次に 1 回だけ出して止める(violations はこの error 行の数で、hint を数えない)。invalid line・同じキーの重複があるときは下記の検証ルールを行わない。キー表(契約 config_files.rapid-crosscheck.env の keys)に無いキーは `warn: unknown key key=<KEY> path: ...` を出して継続する(終了コード・violations に数えない。他の読み手が使うキーは未知キーではない。契約 config_files.rapid-crosscheck.env note)。`--verbose` のときは、キーごとの検査の段(CLI 契約 `config_input_rules.env_files` の (iii))へ進んだ回だけ、読み取ったキーごとに `info: key loaded key=<KEY> path: <path>` を 1 行出す(未知キー・値が空のキーも含み、コメント行は除く。key= と path: は制御文字の可視表記。値は出さない)。この段の中の順は、info 行をすべて(キーがファイルに初めて出た順)→ 未知キーの warn 行をすべて(同じ順)→ 下記「検証ルール」の error 行(表の順)。バイト・改行の検査または行の構造の検査(invalid line・同じキーの重複)で止めた回は info 行を出さず、止めた段の error 行(と hint)だけを出す。info 行と warn 行は終了コード・violations に数えない(正本は CLI 契約 `config_input_rules.env_files` の「validate-config.sh の --verbose の info 行」。`--feature-flag` / `--final-crosscheck` / `--housekeep` も同じ規則) |
 | 終了コード | 0(違反 0 件)/ 2(検証種別オプションの指定数不正・値なし・ファイル不在・入力の守備範囲の違反(NUL / UTF-8 / BOM / CR / invalid line / 同じキーの重複)・必須キー欠落・コマンド部分の絶対パス違反・存在しない・実行不可・`{job_id}` 欠落・`{params}` が引数全体でない位置にある・未知のオプション)/ 6(検証器の内部障害。`config_input_rules.internal_failure`) |
 
 ## 検証ルール(domain: launch_command_rules)
@@ -104,4 +104,35 @@ Feature: tier-facade 速報クロスチェック設定の検証
       | hint: use LF line endings                                 |
       | error: nul byte is not allowed line=4 path: <path>        |
     And stdout は `config=rapid-crosscheck` / `path: <path>` / `command_path: -` / `has_job_id_placeholder=-` / `status=invalid` / `violations=7` の 6 行である(契約 config_input_rules.byte_checks)
+
+  Scenario: --verbose では info 行をすべて出してから未知キーの warn 行、検証ルールの error 行の順に出す
+    Given rapid-crosscheck.env の 1 行目が ZZ=x、2 行目が RAPID_COMPARE_COMMAND=relative、3 行目が AA=x である
+    When validate-config.sh --rapid-crosscheck <path> --verbose を実行する
+    Then 終了コード 2 で stderr は次の 7 行がこの順に出る
+      | info: key loaded key=ZZ path: <path>                                          |
+      | info: key loaded key=RAPID_COMPARE_COMMAND path: <path>                       |
+      | info: key loaded key=AA path: <path>                                          |
+      | warn: unknown key key=ZZ path: <path>                                         |
+      | warn: unknown key key=AA path: <path>                                         |
+      | error: path is not absolute key=RAPID_COMPARE_COMMAND path=relative           |
+      | error: placeholder {job_id} is missing key=RAPID_COMPARE_COMMAND value=relative |
+    And stdout は `config=rapid-crosscheck` / `path: <path>` / `command_path: relative` / `has_job_id_placeholder=false` / `status=invalid` / `violations=2` の 6 行である(info 行と warn 行は violations に数えない。契約 config_input_rules.env_files)
+
+  Scenario: --verbose の info 行は値が空のキーにも出し、値は出さない
+    Given rapid-crosscheck.env の 1 行目がコメント行 # memo、2 行目が RAPID_DB_CONN_REF=、3 行目が RAPID_COMPARE_COMMAND=/opt/compare/compare.sh --job {job_id} である(/opt/compare/compare.sh は実行可能)
+    When validate-config.sh --rapid-crosscheck <path> --verbose を実行する
+    Then 終了コード 0 で stderr は `info: key loaded key=RAPID_DB_CONN_REF path: <path>` / `info: key loaded key=RAPID_COMPARE_COMMAND path: <path>` の 2 行だけである(コメント行の info 行は出ない)
+    And stdout は --verbose を付けないときと同じ `config=rapid-crosscheck` / `path: <path>` / `command_path: /opt/compare/compare.sh` / `has_job_id_placeholder=true` / `status=valid` の 5 行である
+
+  Scenario: 行の構造の検査で止めた回は --verbose でも info 行を出さない
+    Given rapid-crosscheck.env の 1 行目が ZZ=x、2 行目が broken、3 行目が RAPID_COMPARE_COMMAND=/opt/compare/compare.sh --job {job_id} である(/opt/compare/compare.sh は実行可能)
+    When validate-config.sh --rapid-crosscheck <path> --verbose を実行する
+    Then 終了コード 2 で stderr は `error: invalid line line=2 path: <path>` の 1 行だけである(info 行と未知キーの warn 行は出ない。契約 config_input_rules.env_files)
+    And stdout は `config=rapid-crosscheck` / `path: <path>` / `command_path: -` / `has_job_id_placeholder=-` / `status=invalid` / `violations=1` の 6 行である
+
+  Scenario: バイト・改行の検査で止めた回は --verbose でも info 行を出さない
+    Given rapid-crosscheck.env の 1 行目が ZZ=x + CR + LF、2 行目が RAPID_COMPARE_COMMAND=/opt/compare/compare.sh --job {job_id} である
+    When validate-config.sh --rapid-crosscheck <path> --verbose を実行する
+    Then 終了コード 2 で stderr は `error: carriage return is not allowed line=1 path: <path>` / `hint: use LF line endings` の 2 行だけがこの順に出る(info 行は出ない。契約 config_input_rules.byte_checks / env_files)
+    And stdout は `config=rapid-crosscheck` / `path: <path>` / `command_path: -` / `has_job_id_placeholder=-` / `status=invalid` / `violations=1` の 6 行である
 ```

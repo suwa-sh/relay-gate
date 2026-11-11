@@ -1,0 +1,34 @@
+event_id: 20261111_080518_s4_tier_impl_completed_dcd8234d_facade
+type: stage_completed
+uc_id: dcd8234d
+stage: S4
+tier: tier-facade
+attempt: 4
+payload:
+  result: pass
+  gates:
+    format: pass
+    lint: pass
+    tdd: pass
+    bdd_tier: pass
+  assumptions:
+    path: attempt-4/S4_tier-impl.tier-facade.assumptions.yaml
+    count: 4
+    by_category:
+      input_validation: 1
+      data_format: 1
+      error_handling: 2
+      persistence: 0
+      performance: 0
+      security: 0
+    sha256: b558e9ef4853d073d188c879e14f9c39d78ad47dbda89cdeed86155109025a3d
+    extraction:
+      candidate_count: 8
+      excluded_as_explicit: 4
+      recorded_count: 4
+    validator: 'validateAssumptions.js record → ok: true'
+    excluded_note: '仕様に明示があるため除外: ルール 2 違反時にルール 3 を評価しない(env_files の例 1)/ {job_id} は値全体に含まれるかで判定(検証ルール 4)/ info 行に検査しないキーや値が空のキーも含める(env_files (a))/ 値のクォート除去の規則(env_files 取り出し方 (4))'
+  manifest_sha256: 426b0241023ffc06ae2d22909c4be05e28635272763b00d0eb084f534d74d95d
+  manifest_projection: v2
+  note: 'stale re-execution in attempt-4 after feedback run 20261110_080548. no behavior change: the implementation already satisfies the --verbose info line rule (spec-decision-033). comments aligned in validate_rapid_crosscheck.sh and rapid_crosscheck_env.sh'
+created_at: '2026-11-11T08:05:18+09:00'

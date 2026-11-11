@@ -1,6 +1,6 @@
 // ATDD(①)step definition。uc_id=dcd8234d / branch_slug=define-crosscheck-job-map-and-comparison-definitions(S7 atdd で実装)。
-// source: features/atdd/SPEC-004-04.feature(@atdd_SPEC-004-04-5 / @atdd_SPEC-004-04-6 / @atdd_SPEC-004-04-7 / @atdd_SPEC-004-04-8 / @atdd_SPEC-004-04-10 / @atdd_SPEC-004-04-11)
-//   対象は uc-map dcd8234d の atdd_scenarios に列挙された 6 Scenario のみ。同 feature の -1〜-4 は UC eff24f55、
+// source: features/atdd/SPEC-004-04.feature(@atdd_SPEC-004-04-5 / @atdd_SPEC-004-04-6 / @atdd_SPEC-004-04-7 / @atdd_SPEC-004-04-8 / @atdd_SPEC-004-04-10 / @atdd_SPEC-004-04-11 / @atdd_SPEC-004-04-12)
+//   対象は uc-map dcd8234d の atdd_scenarios に列挙された 7 Scenario のみ。同 feature の -1〜-4 は UC eff24f55、
 //   -9(確報の起動コマンド)は別 UC の担当で、ここでは定義しない。
 // step 文言は feature から転写したリテラルを正規表現で完全一致させる(S2 skeleton の方式を踏襲)。
 //
@@ -161,8 +161,11 @@ Then(literal('非 0 の終了コードで終了し、stderr に {job_id} が無�
 });
 
 // --- @atdd_SPEC-004-04-10 ---
-// fixture の引数部分には {params} を含めない(USDM の「2 点だけ」と spec の 3 点目 = {params} の位置規則が食い違うため、
-// 両仕様が一致する範囲で判定する。根拠: docs/impl/latest/dcd8234d/issues/20261027_083600_params-rule-vs-usdm-two-checks.md)
+// USDM SPEC-004-04 の検証は 3 点((1) コマンド部分 / (2) {job_id} / (3) {params} の位置)で、spec・CLI 契約と一致している
+// (feedback run 2〜9 で USDM に (3) が加わり、旧 issue 20261027_083600_params-rule-vs-usdm-two-checks.md の食い違いは解消した)。
+// この基準の Given は「{params} を引数の一部に含まない任意の文字列で、速報の場合は {job_id} を含む」なので、
+// fixture は {params} を引数の一部に含めない。{params} が引数 1 つ全体の場合は位置規則に合うため任意の文字列に含める。
+// {params} を引数の一部に含む場合(違反)は @atdd_SPEC-004-04-12 が扱う。
 
 const ARBITRARY_ARGUMENTS = [
   '',
@@ -171,9 +174,10 @@ const ARBITRARY_ARGUMENTS = [
   '--unknown-flag=1 -zz',
   '"quoted words" \'single\' ; | & * ? $HOME $(whoami) `id`',
   '{run_id} {blue_exit_code} {green_exit_code} {unknown_placeholder}',
+  '{params}',
 ];
 
-Given(literal('起動コマンドの引数部分に任意の文字列(存在しないパスや未知の語を含む)'), function () {
+Given(literal('起動コマンドの引数部分が、{params} を引数の一部に含まない任意の文字列(存在しないパスや未知の語を含む)で、速報の起動コマンドの場合は {job_id} を含む'), function () {
   writeCompareStub(this, SPEC_COMPARE);
   this.argumentGroups = [];
   // コマンド部分が妥当なとき(終了コード 0)と、コマンド部分が絶対パスでないとき(非 0)の両方で、
@@ -203,6 +207,19 @@ Then(literal('引数部分を理由とする error 行は出ず、終了コー�
       cases.forEach((c) => assert.deepEqual(errorLines(c), [], `no error line expected\n${describe(c)}`));
     }
   }
+});
+
+// --- @atdd_SPEC-004-04-12 ---
+// When は @atdd_SPEC-004-04-5 の「validate-config.sh で速報の起動コマンドの設定を検証する」を共有する
+
+Given(literal('速報の起動コマンドの引数の一部に {params} を含む(--args={params})'), function () {
+  // 他の違反を混ぜない(コマンド部分は実行可能、{job_id} を含む)
+  writeCompareStub(this, SPEC_COMPARE);
+  addCase(this, 'params with prefix', `${SPEC_COMPARE} --job {job_id} --args={params}`);
+});
+
+Then(literal('非 0 の終了コードで終了し、stderr に {params} が引数全体でない旨の error 行がキー名と値つきで 1 行出る'), function () {
+  assertSingleViolation(this, { reason: 'placeholder {params} must be a whole argument', field: (c) => `value=${c.command}` });
 });
 
 // --- @atdd_SPEC-004-04-11 ---

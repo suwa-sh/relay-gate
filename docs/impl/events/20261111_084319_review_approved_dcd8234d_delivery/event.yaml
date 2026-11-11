@@ -1,0 +1,36 @@
+event_id: 20261111_084319_review_approved_dcd8234d_delivery
+type: review_approved
+uc_id: dcd8234d
+stage: S9
+payload:
+  approval_kind: delivery_approval
+  review_evidence_event_id: 20261111_083032_s9_review_generated_dcd8234d
+  feedback_review_evidence:
+    feedback_id: null
+    draft_sha256: null
+    request_count: 0
+  implementation_review_evidence:
+    gate_result: 6/6 pass
+    open_blocker_count: 0
+    open_major_count: 0
+    assumption_evidence_sha256: 2ce25d1e631455e18b19ea066adc4f01504acb386371ef3cb1f80e75c01d48f0
+  assumption_decisions:
+  - tier: tier-facade
+    id: A-001
+    decision: auto_confirmed
+    note: restatement of existing rules; optional, unanswered
+  - tier: tier-facade
+    id: A-002
+    decision: auto_confirmed
+    note: same content approved by the user on 2026-10-27 (old id A-006); optional, unanswered
+  - tier: tier-facade
+    id: A-003
+    decision: confirmed
+    note: 'user: approve as is (commands=tr,sed on line count mismatch)'
+  - tier: tier-facade
+    id: A-004
+    decision: confirmed
+    note: 'user: approve as is (commands=rm on delete failure; snapshot failure wins when both fail)'
+  user_answer: 実装=承認します / 前提=新しい 2 件はそのまま承認します
+  confirmed_by: user
+created_at: '2026-11-11T08:43:19+09:00'

@@ -13,11 +13,11 @@ contracts:
   source_read: scope
   input:
     path: docs/specs/latest/_cross-cutting/datastore/rdb-schema.yaml
-    sha256: e3bd8af635cddca433c764b0efa77b05ec2dbfbb91bb08294696aad543356515
+    sha256: bbe77902949f155ada1a352661e41cc16409fa58b4076cde648cb028b5de11ac
   generated:
   - dir: packages/contracts/management-db
     generator: direct-from-yaml
     audience: both
     lang: bash
-    at: '2026-10-27T08:15:22+09:00'
-generated_at: '2026-10-27T08:15:22+09:00'
+    at: '2026-11-10T07:12:00+09:00'
+generated_at: '2026-11-10T07:12:00+09:00'

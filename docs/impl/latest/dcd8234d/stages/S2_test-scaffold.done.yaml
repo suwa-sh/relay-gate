@@ -1,41 +1,58 @@
 stage: S2
 uc_id: dcd8234d
-manifest_sha256: 1be633861c44014ebfcfe9bf065e0d15167bbfe5f89d01553accdef7ba99d19c
+manifest_sha256: ace373d0922c684b7e505c96ccc9d3b2cdbeafbb67dbe071a2e32f92c9399082
 manifest_projection: v2
 result: pass
 scaffold_mode: full
-rerun_reason: "仕様の還流(クロスチェック簡素化 + 起動コマンドの argv 規則)後の初回 S2。uc-map の tiers は [tier-facade] のみ。旧仕様(比較定義 CSV / 対象カタログ)向けの UC BDD feature・step と ATDD step を新仕様で作り直した"
+rerun_reason: "仕様の還流(feedback run 20261110_080548。spec-decision-033)で tier-facade.md / _api-summary.yaml / CLI 契約 config_input_rules.env_files / ui-design.md が変わり全 stage が stale になった後の再生成。tiers 引数は無いが既存実装(facade/src)が残るため、全段 red は成立しない。差分(増えた場面・変わった期待値)だけを追従させた"
 branch_slug: define-crosscheck-job-map-and-comparison-definitions
 red_baseline: pass
-red_baseline_note: "4 段とも本 UC の新規分は未実装を理由に fail する。BDD 3 段は S2 skeleton の not implemented Error、TDD は validate-config.sh が --rapid-crosscheck を未知のオプションとして終了コード 2 を返すことによる assertion failure(旧 hook 由来ではない)。パースエラー・設定ミス・undefined step・ambiguous step は 0 件。他 UC の既存 Scenario・テストは全件 green のまま"
+red_baseline_mode: "diff_only(既存実装あり。dist-impl-implement の scoped 再実行の done 条件に準じる)"
+red_baseline_note: "追加・変更したテストは parse 可能かつ実行可能で、undefined / ambiguous step・パースエラー・設定ミスは 0 件。仕様差分(spec-decision-033)は現行実装(validate_rapid_crosscheck.sh の (iii) の info → warn → error の順と、(i)(ii) で止めた回の早期 return)が既に満たしており、diff-only red の件数は 0 件(red 0 / 追加・変更分の green 10)。テストが空振りでないことは、作業用コピーで実装を壊した変異(info を (i) の前に出す)を当て、行の構造で止めた回の bats 2 件が fail することで確認した(コピーは削除済み)"
+red_green_counts:
+  red: 0
+  green_new_or_changed: 10
+  breakdown:
+    tier_bdd_new_scenarios: {red: 0, green: 4}
+    tdd_new_tests: {red: 0, green: 5}
+    tdd_changed_tests: {red: 0, green: 1}
+scaffold_scope:
+  tiers:
+    - tier-facade
+  uc_feature: untouched
+  atdd: untouched
 transcription_check:
-  method: "spec.md / tier-facade.md の gherkin ブロックをスクリプトで抽出して、そのまま feature へ書き出した(手入力なし)。先頭に出典コメント 2 行を付与"
+  method: "tier-facade.md のティア完了条件(BDD)の gherkin ブロックをスクリプトで抽出し、既存 feature 本文との差分が末尾 4 Scenario の追加だけであることを確認してから、そのまま書き出した(手入力なし)。先頭の出典コメント 2 行は維持(2 行目の再生成理由のみ更新)"
   uc_feature_verbatim: true
+  uc_feature_note: "spec.md は今回の還流で変わっていない(差分は tier-facade.md / _api-summary.yaml / 共有仕様のみ)ため features/uc は再転写しない"
   tier_feature_verbatim: true
   atdd_feature_untouched: true
 generated:
   uc_bdd:
     feature: features/uc/define-crosscheck-job-map-and-comparison-definitions.feature
     steps: features/uc/steps/define-crosscheck-job-map-and-comparison-definitions.steps.js
-    source: "docs/specs/latest/適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/spec.md#E2E完了条件(BDD)"
-    action: regenerated
-    scenarios: 7
-    skeleton_steps: 18
-    skeleton_note: "全 step を feature のリテラル完全一致で定義し、'not implemented (S2 skeleton, UC BDD)' を throw する。DocString 付き step は引数 1 個の関数で受ける。旧仕様の実装済み step は全件削除した"
-    cross_uc_scenarios: 0
+    action: untouched
+    scenarios: 10
   tier_bdd:
     - tier: tier-facade
       feature: facade/features/define-crosscheck-job-map-and-comparison-definitions.feature
       steps: facade/features/steps/define-crosscheck-job-map-and-comparison-definitions.steps.js
-      source: "docs/specs/latest/適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/tier-facade.md#ティア完了条件(BDD)"
-      action: created
-      scenarios: 5
-      skeleton_steps: 11
+      action: regenerated
+      scenarios: 16
+      changes:
+        - "新規: --verbose では info 行をすべて出してから未知キーの warn 行、検証ルールの error 行の順に出す"
+        - "新規: --verbose の info 行は値が空のキーにも出し、値は出さない"
+        - "新規: 行の構造の検査で止めた回は --verbose でも info 行を出さない"
+        - "新規: バイト・改行の検査で止めた回は --verbose でも info 行を出さない"
+      steps_changes:
+        - "Given 4 件と When(--verbose を付けて実行)を追加。When は共通関数 runRapidCrosscheck に寄せた"
+        - "「stderr は次の N 行がこの順に出る」を 8 行固定から行数を引数に取る形へ一般化(既存の 8 行 Scenario と新規の 7 行 Scenario で共有)"
+        - "Then 2 件を追加: stderr がバッククォートで列挙した行と完全一致する、stdout が列挙した 5 行と一致し --verbose なしで再実行した stdout とも一致する"
   atdd:
     feature: features/atdd/SPEC-004-04.feature
     feature_action: untouched
     steps: features/atdd/steps/define-crosscheck-job-map-and-comparison-definitions.steps.js
-    steps_action: regenerated
+    steps_action: untouched
     target_scenarios:
       - SPEC-004-04-5
       - SPEC-004-04-6
@@ -43,60 +60,59 @@ generated:
       - SPEC-004-04-8
       - SPEC-004-04-10
       - SPEC-004-04-11
-    skeleton_steps: 15
-    excluded_note: "SPEC-004-04-9 は別 UC(256abc3b)の担当のため step を定義しない(dry-run で undefined のまま)"
+      - SPEC-004-04-12
+    undefined_steps_in_target: 0
   tdd:
     - tier: tier-facade
       files:
-        - facade/test/presentation/validate_config_rapid_crosscheck.bats
-      added_tests: 7
-      target: "validate-config.sh --rapid-crosscheck(CLI 実プロセス。比較ツールは一時ディレクトリの実行可能スタブ)"
-      focus:
-        - "valid 時の stdout 固定順 5 行(config / path / command_path / has_job_id_placeholder / status)と stderr 空"
-        - "検証ルール 2〜5 の違反文言と終了コード 2(絶対パスでない / 実行不可 / {job_id} 欠落 / {params} が引数の一部)"
-        - "{params} が独立した 1 引数なら valid"
-        - "引数部分の内容(存在しないパス・未知の語・記号)は検査しない"
+        - facade/test/usecase/validate_rapid_crosscheck.bats
+      tests_before: 20
+      tests_after: 25
+      added_tests: 5
+      rewritten_tests: 1
+      removed_tests: 0
+      added:
+        - "validate_rapid_crosscheck_verboseで未知キーと検証違反がある場合_info全件_warn全件_errorの順に出しviolationsはerrorだけを数えること"
+        - "validate_rapid_crosscheck_verboseで値が空のキーとコメント行がある場合_値が空のキーにもinfoを出しコメント行と値は出さないこと"
+        - "validate_rapid_crosscheck_verboseでinvalid lineがある場合_infoとwarnを出さずinvalid lineだけを出すこと"
+        - "validate_rapid_crosscheck_verboseで同じキーが2行ある場合_infoを出さずduplicate keyだけを出すこと"
+        - "validate_rapid_crosscheck_verboseでCR改行がある場合_infoを出さずcarriage returnとhintだけを出すこと"
+      rewritten:
+        - name: "validate_rapid_crosscheck_verboseでキーが@や*の場合_ほかのキーと同じくinfoとunknown keyのwarnを1回ずつ出すこと"
+          note: "旧コメント「info と warn の相対順は仕様に定めが無い」が spec-decision-033 で解消したため、info 全件 → warn 全件の順と stderr 5 行の完全一致を追加"
+red_tests:
+  tier_bdd: []
+  tdd: []
+red_tests_note: "仕様差分は現行実装が既に満たしているため red は 0 件。S4 の再実行ではコードの変更は不要の見込み(仕様の注記とコメントの追従のみ)"
 test_runs:
   - stage: uc_bdd
     cwd: "."
     command: "npx cucumber-js --config cucumber.cjs features/uc"
-    exit_code: 1
-    summary: "43 scenarios (7 failed, 36 passed), 163 steps (7 failed, 16 skipped, 140 passed)"
-    fail_reason: not_implemented
-    failed_scope: "define-crosscheck-job-map-and-comparison-definitions.feature の 7 Scenario 全件(not implemented Error)。configure-feature-flags / define-slot-job-maps の 36 Scenario は全件 pass"
+    exit_code: 0
+    summary: "46 scenarios (46 passed), 177 steps (177 passed)"
     undefined_steps: 0
     ambiguous_steps: 0
   - stage: tier_bdd
     tier: tier-facade
     cwd: facade
     command: "npx cucumber-js --config ../cucumber.cjs features"
-    exit_code: 1
-    summary: "46 scenarios (5 failed, 41 passed), 158 steps (5 failed, 10 skipped, 143 passed)"
-    fail_reason: not_implemented
-    failed_scope: "define-crosscheck-job-map-and-comparison-definitions.feature の 5 Scenario 全件。他 UC の 41 Scenario は全件 pass"
+    exit_code: 0
+    summary: "57 scenarios (57 passed), 197 steps (197 passed)"
+    target_feature_summary: "16 scenarios (16 passed), 54 steps (54 passed)"
     undefined_steps: 0
     ambiguous_steps: 0
   - stage: tdd
     tier: tier-facade
     cwd: facade
     command: "bats -r test"
-    exit_code: 1
-    summary: "348 tests, 341 ok, 7 not ok"
-    fail_reason: not_implemented
-    failed_scope: "validate_config_rapid_crosscheck.bats の 7 件全件。現行の validate-config.sh は --rapid-crosscheck を受け付けず 'error: unknown option option=--rapid-crosscheck' で終了コード 2(未実装)。既存 341 件は全件 ok"
+    exit_code: 0
+    summary: "384 tests, 384 ok, 0 not ok"
   - stage: atdd
     cwd: "."
-    command: "npx cucumber-js --config cucumber.cjs features/atdd --tags '@atdd_SPEC-004-04-5 or @atdd_SPEC-004-04-6 or @atdd_SPEC-004-04-7 or @atdd_SPEC-004-04-8 or @atdd_SPEC-004-04-10 or @atdd_SPEC-004-04-11'"
-    exit_code: 1
-    summary: "6 scenarios (6 failed), 18 steps (6 failed, 12 skipped)"
-    fail_reason: not_implemented
-    selected_count_matches_atdd_scenarios: true
-  - stage: atdd_regression_other_ucs
-    cwd: "."
-    command: "npx cucumber-js --config cucumber.cjs features/atdd --tags '@atdd_SPEC-001-01-4 or @atdd_SPEC-004-04-4 or @atdd_SPEC-008-05-2'"
+    command: "npx cucumber-js --config cucumber.cjs features/atdd --tags '@atdd_SPEC-004-04-5 or @atdd_SPEC-004-04-6 or @atdd_SPEC-004-04-7 or @atdd_SPEC-004-04-8 or @atdd_SPEC-004-04-10 or @atdd_SPEC-004-04-11 or @atdd_SPEC-004-04-12'"
     exit_code: 0
-    summary: "3 scenarios (3 passed), 9 steps (9 passed)"
-    note: "実装済み UC(fd678b04 / eff24f55)の ATDD は引き続き pass。features/atdd 全体の dry-run でも ambiguous は 0 件"
+    summary: "7 scenarios (7 passed), 21 steps (21 passed)"
+    selected_count_matches_atdd_scenarios: true
 format_check:
   tier: tier-facade
   command: "shfmt -d ."
@@ -105,13 +121,16 @@ lint:
   tier: tier-facade
   command: "find src test -name '*.sh' -exec shellcheck -x {} +"
   exit_code: 0
-  extra: "shellcheck -s bash test/presentation/validate_config_rapid_crosscheck.bats も exit 0"
+  extra: "shellcheck -s bash test/usecase/validate_rapid_crosscheck.bats も exit 0"
 dom_snapshot_tests: not_applicable
 dom_snapshot_note: "has_design_system: false。frontend tier が無いため DOM 一致テスト・共通 helper は生成しない。矛盾 3 条件の確認対象も無い"
-old_hook_note: "facade/src/presentation/validate-config.sh に残る旧 hook(rapid-crosscheck / final-crosscheck の handler を source する)は S2 では触れていない。S4 の facade Implementer が --rapid-crosscheck の実装と併せて整理する"
+spec_decisions:
+  - id: spec-decision-033
+    scope: in_scope_partial
+    note: "validate-config.sh --rapid-crosscheck --verbose の info 行(文言・出す回・info → warn → error の順)を tier BDD 4 件・bats 6 件で検証。--feature-flag / --final-crosscheck / --housekeep の同じ規則は他 UC の担当で範囲外(テストは変更していない)"
+other_uc_tests_touched: false
 issues:
-  - docs/impl/latest/dcd8234d/issues/20261027_083500_cross-uc-scenarios.md
-  - docs/impl/latest/dcd8234d/issues/20261027_083600_params-rule-vs-usdm-two-checks.md
-issues_note: "UC 横断 Scenario は 0 件(ハーネス注入不要)。spec-gap 1 件: USDM SPEC-004-04 は検証を 2 点だけとするが spec は {params} の位置規則を加えた 3 点で、ATDD -10 と字面上両立しない。blocker ではなく spec を正として進めた"
-completed_at: '2026-10-27T08:37:00+09:00'
+  - docs/impl/latest/dcd8234d/issues/20261110_073100_cross-uc-scenarios.md
+issues_note: "spec.md は変わっていないため UC 横断 Scenario の一覧(既存 issue)はそのまま有効。ハーネス注入が必要な UC 横断 Scenario は 0 件。新たな仕様の不足・矛盾の起票は無し"
+completed_at: '2026-11-11T08:20:00+09:00'
 completed_by: dist-impl-implement@0.14.1

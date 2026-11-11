@@ -1,0 +1,32 @@
+event_id: 20261110_074628_s4_tier_impl_completed_dcd8234d_facade
+type: stage_completed
+uc_id: dcd8234d
+stage: S4
+tier: tier-facade
+attempt: 4
+payload:
+  result: pass
+  gates:
+    format: pass
+    lint: pass
+    tdd: pass
+    bdd_tier: pass
+  assumptions:
+    path: attempt-4/S4_tier-impl.tier-facade.assumptions.yaml
+    count: 2
+    by_category:
+      input_validation: 0
+      data_format: 1
+      error_handling: 1
+      persistence: 0
+      performance: 0
+      security: 0
+    sha256: f21b6b2077cfb3d2b0628620804c6cdb288a51bf72cfa5e0c968ffe18f18a424
+    extraction:
+      candidate_count: 7
+      excluded_as_explicit: 5
+      recorded_count: 2
+  manifest_sha256: a9251f3bf172a472c8f5eab10d58a8008199e8400411907d728575d98a41f39a
+  manifest_projection: v2
+  note: stale re-execution in attempt-4 after feedback runs 2-9. shared byte-check order in validate_job_map.sh changed per spec (spec-decision-029); completed UC eff24f55 output order changes accordingly
+created_at: '2026-11-10T07:46:28+09:00'

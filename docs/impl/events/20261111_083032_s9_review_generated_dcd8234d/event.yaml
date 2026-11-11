@@ -1,0 +1,57 @@
+event_id: 20261111_083032_s9_review_generated_dcd8234d
+type: stage_completed
+uc_id: dcd8234d
+stage: S9
+payload:
+  feedback_review_evidence:
+    feedback_id: null
+    draft_sha256: null
+    request_count: 0
+  implementation_review_evidence:
+    gate_result: 6/6 pass
+    open_blocker_count: 0
+    open_major_count: 0
+    assumption_evidence_sha256: 2ce25d1e631455e18b19ea066adc4f01504acb386371ef3cb1f80e75c01d48f0
+  decision_summary:
+    approval_questions: 1
+    selection_questions: 0
+    assumption_questions: 0
+    optional_assumption_questions: 1
+    recommended_choices: 2
+    questions:
+    - id: 実装
+      question: 実装を最終承認するか
+      recommended: 承認する
+      alternatives:
+      - 差し戻す(直してほしい点は補足に書く)
+      recommendation_changes_when: 今回変えたこと(テスト追加とコメント修正)や出力例に意図と違う振る舞いがあるとき
+    - id: 前提
+      question: 新しく出た補った前提 2 件(tier-facade A-003 / A-004)をどう扱うか(回答任意。未回答なら承認扱い)
+      recommended: 2 件ともそのまま承認する
+      alternatives:
+      - '個別に決める: 各前提について そのまま承認 / 却下(仕様変更: いまの実装どおりに仕様へ書き足す) / 却下(実装修正)'
+      items:
+      - assumption: tier-facade:A-003
+        html_name: 行数が合わないときのコマンド名
+        recommended: そのまま承認
+        spec_change_reply: '前提(行数が合わないときのコマンド名)=却下(仕様変更: 原因のコマンドを特定できないときは、関わったコマンド名 tr と sed を並べて書く、といまの実装どおりに仕様へ書き足す)'
+        impl_fix_reply: '前提(行数が合わないときのコマンド名)=却下(実装修正: 直し方を補足に書きます)'
+        recommendation_changes_when: 運用の仕組みが commands= を機械的に読み、書かれた名前を失敗した 1 つのコマンドとして扱う(予定がある)とき
+      - assumption: tier-facade:A-004
+        html_name: 複製の削除に失敗したときの表示
+        recommended: そのまま承認
+        spec_change_reply: '前提(複製の削除に失敗したときの表示)=却下(仕様変更: 削除の失敗は commands=rm で終了コード 6、複製の工程も失敗していたら config snapshot failed を優先する、といまの実装どおりに仕様へ書き足す)'
+        impl_fix_reply: '前提(複製の削除に失敗したときの表示)=却下(実装修正: 複製の工程と削除の両方が失敗したときも commands=rm を優先して表示する)'
+        recommendation_changes_when: 一時複製が残ったことを、どの回でも必ず表示で知る必要があるとき
+      recommendation_reason: どちらも環境の異常で検査を続けられない回(終了コード 6)の表示の細部で、通常の検証結果に影響しない。完了済みの slot ジョブマップの検証(共有部分 job_map_repo.sh)も同じ決め方をしている
+    confirmation_items:
+    - --feature-flag の --verbose は新しい info 行の規則に未追従。マージ直後の fd678b04 再実行で直す(2026-11-11 利用者決定)
+    - eff24f55(slot ごとのジョブマップを定義する)も共有部分の変更に合わせてマージ直後に再実行する(利用者決定済み)
+    - --housekeep の検証は未実装で別 UC の担当
+    - 作業ブランチには仕様の書き足しと設定の再確認のコミットも含まれ、1 コミットにまとめる
+    answer_template: 実装=承認します / 前提=新しい 2 件はそのまま承認します
+    answer_template_note: HTML 本文の回答は名前で書く(内部 ID なし)。行数が合わないときのコマンド名 = tier-facade A-003、複製の削除に失敗したときの表示 = tier-facade A-004。validateReviewHtml.js が要求する汎用形 機能=A / 相互運用=A / 監査=A は付録にだけ載せた
+    approval_meaning: '承認は delivery approval。作業ブランチを 1 コミットに squash し、事前許可済みの上書き push(この作業ブランチに限り 1 回)を行い、PR #14 を更新してマージ待ちにする。前提で仕様変更・実装修正を選んだ場合は 1 周遅れる'
+  manifest_sha256: 426b0241023ffc06ae2d22909c4be05e28635272763b00d0eb084f534d74d95d
+  manifest_projection: v2
+created_at: '2026-11-11T08:30:32+09:00'

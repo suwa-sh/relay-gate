@@ -1,0 +1,25 @@
+event_id: 20261111_075931_s2_test_scaffold_completed_dcd8234d
+type: stage_completed
+uc_id: dcd8234d
+stage: S2
+payload:
+  result: pass
+  red_baseline: pass
+  mode: 'full (diff-only red: existing implementation already satisfies the new --verbose info line rule)'
+  red:
+    tier_bdd: 0
+    unit: 0
+    uc_bdd: 0
+    atdd: 0
+  green:
+    tier_bdd: 57
+    unit: 384
+    uc_bdd: 46
+    atdd_this_uc: 7
+  added:
+    tier_bdd_scenarios: 4
+    unit_tests: 5
+    unit_tests_rewritten: 1
+  manifest_sha256: ace373d0922c684b7e505c96ccc9d3b2cdbeafbb67dbe071a2e32f92c9399082
+  manifest_projection: v2
+created_at: '2026-11-11T07:59:31+09:00'

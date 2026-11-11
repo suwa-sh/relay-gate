@@ -1,0 +1,83 @@
+stage: S7
+uc_id: dcd8234d
+manifest_sha256: a9251f3bf172a472c8f5eab10d58a8008199e8400411907d728575d98a41f39a
+manifest_projection: v2
+result: pass
+branch_slug: define-crosscheck-job-map-and-comparison-definitions
+tiers:
+  - tier-facade
+tier_impl_attempt: 4
+rerun: true
+rerun_reason: "仕様の還流(feedback run 2〜9)後の再実行。S6 uc-bdd pass(46 scenarios)を受けて実行した"
+atdd_confirmed: true
+feature: features/atdd/SPEC-004-04.feature
+feature_changed: false
+feature_note: "Scenario 本文・タグとも bootstrap 生成のまま(一意タグ @atdd_SPEC-004-04-1〜12 は付与済みで追加不要)"
+steps: features/atdd/steps/define-crosscheck-job-map-and-comparison-definitions.steps.js
+steps_changed: false
+steps_change_summary: "変更なし。S2 で更新した step 定義のまま 7 Scenario が pass"
+self_check:
+  method: "対象 7 Scenario の Then が期待値を実際に照合しているか(常に pass する空実装が無いか)を読み合わせた"
+  findings:
+    - "-5: 終了コード 0 と error 行 0 件を照合"
+    - "-6 / -7 / -8 / -12: 各ケースで非 0 終了、error 行がちょうど 1 行、その行が違反の文言・key=RAPID_COMPARE_COMMAND・path= または value= を含むことを照合(-6 / -7 / -8 は 2 ケースずつ)"
+    - "-10: 引数部分 7 種を、妥当なコマンド部分(終了コード 0・error 行 0 件)と絶対パスでないコマンド部分(非 0)の 2 群で実行し、群内で終了コードと error 行が引数部分に依存しないことを照合"
+    - "-11: 配布される各 tier の config/ に該当 CSV が無いこと、--help に該当種別が無いこと、--crosscheck-job-map / --target-catalog / --catalog が終了コード 2 の unknown option になることを照合"
+  weak_assertions_remaining: 0
+selection:
+  method: "一意タグの完全一致(cucumber --tags の or 式)。名前の部分一致フィルタは使わない"
+  atdd_scenarios:
+    - SPEC-004-04-5
+    - SPEC-004-04-6
+    - SPEC-004-04-7
+    - SPEC-004-04-8
+    - SPEC-004-04-10
+    - SPEC-004-04-11
+    - SPEC-004-04-12
+  expected_count: 7
+  executed_count: 7
+  executed_tags:
+    - "@atdd_SPEC-004-04-10"
+    - "@atdd_SPEC-004-04-11"
+    - "@atdd_SPEC-004-04-12"
+    - "@atdd_SPEC-004-04-5"
+    - "@atdd_SPEC-004-04-6"
+    - "@atdd_SPEC-004-04-7"
+    - "@atdd_SPEC-004-04-8"
+  executed_tags_source: "cucumber の json formatter 出力から実行 Scenario のタグを抽出"
+  selected_count_matches_atdd_scenarios: true
+  excluded_note: "同 feature の -1〜-4 は UC eff24f55、-9(確報の起動コマンド)は別 UC の担当で対象外"
+run:
+  cwd: "."
+  command: "npx cucumber-js --config cucumber.cjs features/atdd --tags '@atdd_SPEC-004-04-5 or @atdd_SPEC-004-04-6 or @atdd_SPEC-004-04-7 or @atdd_SPEC-004-04-8 or @atdd_SPEC-004-04-10 or @atdd_SPEC-004-04-11 or @atdd_SPEC-004-04-12'"
+  exit_code: 0
+  summary: "7 scenarios (7 passed), 21 steps (21 passed)"
+  scenarios_total: 7
+  scenarios_passed: 7
+  scenarios_failed: 0
+  undefined_steps: 0
+  ambiguous_steps: 0
+ci_selection_check:
+  mechanism: ".github/workflows/ci.yml の atdd job が scripts/ci/atdd-tag-expression.js で tag 式を作る。uc-map の atdd_scenarios を、docs/impl/latest/{uc_id}/status.yaml が state: completed の UC についてだけ集める"
+  current_expression: "@atdd_SPEC-001-01-4 or @atdd_SPEC-004-04-4 or @atdd_SPEC-008-05-2"
+  current_note: "dcd8234d の status.yaml は state: running のため現時点では含まれない。オーケストレータが completed にすると 7 件が自動で加わる"
+  write_set_outside_changes_required: none
+  simulated_after_completion:
+    command: "npx cucumber-js --config cucumber.cjs features/atdd --tags '@atdd_SPEC-001-01-4 or @atdd_SPEC-004-04-10 or @atdd_SPEC-004-04-11 or @atdd_SPEC-004-04-12 or @atdd_SPEC-004-04-4 or @atdd_SPEC-004-04-5 or @atdd_SPEC-004-04-6 or @atdd_SPEC-004-04-7 or @atdd_SPEC-004-04-8 or @atdd_SPEC-008-05-2'"
+    exit_code: 0
+    summary: "10 scenarios (10 passed), 30 steps (30 passed)"
+  dry_run_all:
+    command: "npx cucumber-js --config cucumber.cjs features/atdd --dry-run"
+    summary: "190 scenarios (180 undefined, 10 skipped)"
+    ambiguous_steps: 0
+    note: "undefined は未着手 UC の Scenario。完了済み UC と本 UC の 10 Scenario は step 定義済み"
+harness:
+  sandbox_root: "Scenario ごとの一時ディレクトリを root とし、/etc/relay-gate/rapid-crosscheck.env と /opt/compare/*.sh を root 配下の同じ相対位置に実ファイルで配置。コマンド部分が絶対パスのときだけ root 配下へ写像し、相対パスと引数部分は書き換えない"
+  process: "facade/bin/validate-config.sh を実プロセスとして起動"
+  external_connections: none
+injections: []
+injections_note: "ハーネス注入なし。前提の新規抽出なし"
+issues: []
+issues_note: "新規起票なし。仕様と実装の食い違いは見つからなかった"
+completed_at: '2026-11-10T07:56:52+09:00'
+completed_by: dist-impl-implement@0.14.1

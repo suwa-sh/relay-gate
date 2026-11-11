@@ -3,17 +3,21 @@
 # 仕様: docs/specs/latest/適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/spec.md
 #       「データフロー」repository 行(KEY=VALUE。入力の守備範囲は CLI 契約 config_input_rules)
 #       _cross-cutting/api/cli-command-contract.yaml config_input_rules(env_files / rules / snapshot / internal_failure)
-#   - 1 行 1 キー `KEY=VALUE`。行頭 `#` の行はコメント、空行(0 バイトの行)は無視
+#   - 1 行 1 キー `KEY=VALUE`。前後の空白(半角空白とタブ)を除いて `#` で始まる行はコメント、空行(0 バイトの行)は無視
 #   - `=` を含まない非空・非コメント行(空白だけの行を含む)は形式違反の行として行番号を記録する(文言は usecase)
-#   - 値の先頭末尾のクォート除去は UC「feature flag を設定する」の設定契約に従う(repository/feature_flag_config.sh と同じ規則)
+#   - 同じキーが 2 行以上あれば重複として記録し、そのファイルの値を使わない(config_input_rules.env_files)
+#   - 値の前後の空白と先頭末尾のクォートの除去は config_input_rules.env_files の取り出し方 (3)(4)(env 形式の全設定ファイルに共通。
+#     repository/feature_flag_config.sh と同じ規則)
 #   - `source` しない(シェル変数展開・コマンド置換は行わない)
 #   - 入力は最初に 1 回だけ一時ファイルへ複製し、バイト点検(NUL / UTF-8 / BOM / CR)と行の読み取りは複製だけを読む。
 #     複製・バイト点検は slot ジョブマップと同じ関数(repository/job_map_repo.sh)を使う(同じ規則を二重に実装しない)
 # 読み込み結果(グローバル):
 #   RAPID_CROSSCHECK_ENV_KEYS             … env に現れたキー(出現順・重複なし。--verbose の info に使う)
 #   RAPID_CROSSCHECK_ENV_HAS_COMPARE_COMMAND … RAPID_COMPARE_COMMAND が現れたか(true|false)
-#   RAPID_CROSSCHECK_ENV_COMPARE_COMMAND  … RAPID_COMPARE_COMMAND の値(env 解析後。同じキーが重複したら後の行が勝つ)
+#   RAPID_CROSSCHECK_ENV_COMPARE_COMMAND  … RAPID_COMPARE_COMMAND の値(env 解析後。同じキーの重複があれば空)
 #   RAPID_CROSSCHECK_ENV_INVALID_LINES    … `=` を含まない・キーが空の行の行番号(昇順)
+#   RAPID_CROSSCHECK_ENV_DUPLICATE_KEYS / RAPID_CROSSCHECK_ENV_DUPLICATE_LINES
+#                                         … 重複したキーと、その全出現行(カンマ区切り)。初出行の昇順
 #   JOB_MAP_NUL_LINES / JOB_MAP_ENCODING_LINES / JOB_MAP_CR_LINES / JOB_MAP_BOM_LINE / JOB_MAP_MALFORMED_LINES
 #                                         … バイト点検の結果(job_map_repo_scan_malformed_lines が載せる)
 #   RAPID_CROSSCHECK_ENV_FAILED_COMMANDS  … 補助コマンドの失敗時に、失敗したコマンド名(カンマ区切り)
@@ -24,12 +28,16 @@
 RAPID_CROSSCHECK_ENV_COMPARE_COMMAND_KEY="RAPID_COMPARE_COMMAND"
 RAPID_CROSSCHECK_ENV_STATUS_COMMAND_FAILED=6
 RAPID_CROSSCHECK_ENV_STATUS_SNAPSHOT_FAILED=7
+# env の空白は半角空白とタブだけ(config_input_rules.env_files。垂直タブ・改ページは空白として除かない)
+RAPID_CROSSCHECK_ENV_BLANKS=$' \t'
 
 rapid_crosscheck_env_reset() {
   RAPID_CROSSCHECK_ENV_KEYS=()
   RAPID_CROSSCHECK_ENV_HAS_COMPARE_COMMAND=false
   RAPID_CROSSCHECK_ENV_COMPARE_COMMAND=""
   RAPID_CROSSCHECK_ENV_INVALID_LINES=()
+  RAPID_CROSSCHECK_ENV_DUPLICATE_KEYS=()
+  RAPID_CROSSCHECK_ENV_DUPLICATE_LINES=()
   RAPID_CROSSCHECK_ENV_FAILED_COMMANDS=""
   RAPID_CROSSCHECK_ENV_TRIMMED=""
   RAPID_CROSSCHECK_ENV_UNQUOTED=""
@@ -71,7 +79,8 @@ rapid_crosscheck_env_read() {
 # shellcheck disable=SC2034
 rapid_crosscheck_env_read_snapshot() {
   local snapshot="$1" line line_number=0 key
-  local -A seen_keys=()
+  # キーごとの出現行(カンマ区切り)。添字に接頭辞を付ける(キーが `@` / `*` のとき配列全体の参照と解釈させない)
+  local -A key_lines=()
   if ! job_map_repo_scan_malformed_lines "$snapshot"; then
     RAPID_CROSSCHECK_ENV_FAILED_COMMANDS="$JOB_MAP_REPO_FAILED_COMMANDS"
     return "$RAPID_CROSSCHECK_ENV_STATUS_COMMAND_FAILED"
@@ -83,8 +92,14 @@ rapid_crosscheck_env_read_snapshot() {
   local LC_ALL=C
   while IFS= read -r line || [ -n "$line" ]; do
     line_number=$((line_number + 1))
-    case "$line" in
-      "" | \#*) continue ;;
+    if [ -z "$line" ]; then
+      continue
+    fi
+    # コメント行 = 行の前後の空白(半角空白とタブ)を除いた結果が `#` で始まる行。`=` での分割より先に判定する
+    # (config_input_rules.env_files。空白だけの行は除くと空になりコメント行ではない)
+    rapid_crosscheck_env_trim "$line"
+    case "$RAPID_CROSSCHECK_ENV_TRIMMED" in
+      \#*) continue ;;
     esac
     if [[ "$line" != *=* ]]; then
       RAPID_CROSSCHECK_ENV_INVALID_LINES+=("$line_number")
@@ -96,10 +111,11 @@ rapid_crosscheck_env_read_snapshot() {
       RAPID_CROSSCHECK_ENV_INVALID_LINES+=("$line_number")
       continue
     fi
-    # 添字に接頭辞を付ける(キーが `@` / `*` のとき配列全体の参照と解釈させない)
-    if [ -z "${seen_keys["k:$key"]+x}" ]; then
-      seen_keys["k:$key"]=1
+    if [ -z "${key_lines["k:$key"]+x}" ]; then
+      key_lines["k:$key"]="$line_number"
       RAPID_CROSSCHECK_ENV_KEYS+=("$key")
+    else
+      key_lines["k:$key"]+=",$line_number"
     fi
     if [ "$key" = "$RAPID_CROSSCHECK_ENV_COMPARE_COMMAND_KEY" ]; then
       rapid_crosscheck_env_trim "${line#*=}"
@@ -114,20 +130,34 @@ rapid_crosscheck_env_read_snapshot() {
     RAPID_CROSSCHECK_ENV_FAILED_COMMANDS="tr,sed"
     return "$RAPID_CROSSCHECK_ENV_STATUS_COMMAND_FAILED"
   fi
+  # 同じキーの重複: 重複したキーの初出行の昇順(= キーの出現順)に 1 キー 1 件。重複があればファイルの値を使わない
+  # (config_input_rules.env_files。値が同じ行・値が空の行・未知キーの行も数える)
+  for key in ${RAPID_CROSSCHECK_ENV_KEYS[@]+"${RAPID_CROSSCHECK_ENV_KEYS[@]}"}; do
+    # 出現行が 2 つ以上(カンマを含む)なら重複。算術式で添字を評価させない(キーの文字を式として解釈させないため)
+    if [[ "${key_lines["k:$key"]}" == *,* ]]; then
+      RAPID_CROSSCHECK_ENV_DUPLICATE_KEYS+=("$key")
+      RAPID_CROSSCHECK_ENV_DUPLICATE_LINES+=("${key_lines["k:$key"]}")
+    fi
+  done
+  if [ "${#RAPID_CROSSCHECK_ENV_DUPLICATE_KEYS[@]}" -gt 0 ]; then
+    RAPID_CROSSCHECK_ENV_HAS_COMPARE_COMMAND=false
+    RAPID_CROSSCHECK_ENV_COMPARE_COMMAND=""
+  fi
   return 0
 }
 
-# 先頭末尾の空白を落として RAPID_CROSSCHECK_ENV_TRIMMED に載せる(feature_flag_config_trim と同じ規則。
-# 行数に比例して呼ばれるため、コマンド置換のサブシェルを使わずグローバルで返す)
+# 先頭末尾の空白(半角空白とタブだけ。config_input_rules.env_files)を落として RAPID_CROSSCHECK_ENV_TRIMMED に載せる。
+# 行数に比例して呼ばれるため、コマンド置換のサブシェルを使わずグローバルで返す
 # 引数: text
 rapid_crosscheck_env_trim() {
   local text="$1"
-  text="${text#"${text%%[![:space:]]*}"}"
-  RAPID_CROSSCHECK_ENV_TRIMMED="${text%"${text##*[![:space:]]}"}"
+  text="${text#"${text%%[!"$RAPID_CROSSCHECK_ENV_BLANKS"]*}"}"
+  RAPID_CROSSCHECK_ENV_TRIMMED="${text%"${text##*[!"$RAPID_CROSSCHECK_ENV_BLANKS"]}"}"
 }
 
 # 値の先頭・末尾のクォート(`"` / `'`)を 1 文字ずつ除去して RAPID_CROSSCHECK_ENV_UNQUOTED に載せる
-# (UC「feature flag を設定する」の設定契約。feature_flag_config_unquote と同じ規則をサブシェルなしで行う)
+# (config_input_rules.env_files の取り出し方 (4)。先頭と末尾は別々に判定し、種類の一致や対は求めない。
+# feature_flag_config_unquote と同じ規則をサブシェルなしで行う)
 # 引数: value
 rapid_crosscheck_env_unquote() {
   local value="$1"

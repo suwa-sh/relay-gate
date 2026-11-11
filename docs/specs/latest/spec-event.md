@@ -4,9 +4,9 @@
 
 | 項目 | 内容 |
 |------|------|
-| Event ID | 20261105_112000_feedback_single_management_db |
-| Created At | 2026-11-05T11:20:00+09:00 |
-| Source | Spec 差分更新(design 無しモード。2026-11-05 の管理 DB を 1 つとする前提の明記)。CR-f4c8b261-001(infra 直接所有。spec は保守的 closure): インフラ設計が、管理 DB は 1 つで、すべての接続参照名(RAPID_DB_CONN_REF、実行ホストと DB セグメントそれぞれの FINAL_DB_CONN_REF、HANG_DB_CONN_REF、HOUSEKEEP_DB_CONN_REF(専用 DB ロール housekeep_del))が同じ 1 つの管理 DB に解決されることを前提として書いたことに追従した。CLI 契約の conventions.credentials に、単一の管理 DB の前提、条件は参照名の文字列ではなく解決先が同じこと(確報 runner が登録した依頼を確報 worker が同じキューから取得するため)、解決先が同じことは導入する側が確かめること、構築時の検査は設定ファイルの存在確認だけで relay-gate のコマンドも解決先を検査しないことを書いた。config_files の final-crosscheck.env の note と 4 つの参照名のキー説明、6 UC の tier md の設定キー表(ハウスキープ判定 UC はキー表の直下の説明)から参照した。新しい検査・error 文言・終了コード・BDD は足さない(spec-decision-032) |
+| Event ID | 20261110_153000_feedback_impl_feedback_dcd8234d |
+| Created At | 2026-11-10T15:30:00+09:00 |
+| Source | Spec 差分更新(design 無しモード。2026-11-10 の設定検証の --verbose の info 行の明記)。CR-dcd8234d-011 / CR-dcd8234d-012(spec 直接所有): CLI 契約 config_input_rules.env_files に「validate-config.sh の --verbose の info 行」を足した。文言は読み取ったキーごとに 1 行 info: key loaded key=<KEY> path: <path>(コメント行を除く全キー。値は出さない)、キーごとの検査の段の中の順は info 行をすべて → 未知キーの warn 行をすべて → キーごとの検査の error 行(と hint)、バイト・改行の検査と行の構造の検査で止めた回は info 行を出さない。--feature-flag / --rapid-crosscheck / --final-crosscheck / --housekeep の 4 検証種別に同じ規則を適用し(--feature-flag は 2026-11-11 の利用者決定)、validate-config.sh の --verbose と stderr の補助出力、3 UC の tier md と _api-summary.yaml、出力規約を揃え、tier BDD を 11 場面足した。あわせて 4 UC(slot runner の実体スクリプトを割り当てる / 切り替えた運用モードで業務ジョブを実行する / slot ごとのジョブマップを定義する / feature flag を設定する)の API 要約と UC「feature flag を設定する」の tier-facade.md の検証種別の列挙を契約どおり 5 つに直した(意味は変えない)。--feature-flag の実装は規則に未追従で、該当 UC の実装の再実行で直す。実装は変えない(spec-decision-033) |
 | UC 総数 | 34 |
 | API 総数 | 0 |
 | 非同期イベント総数 | 3 |

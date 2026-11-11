@@ -409,6 +409,24 @@ output_has_line() {
 	[[ "$output" != *"job map header mismatch"* ]]
 }
 
+@test "validate_job_map_query_1行目にBOMとNULと不正なUTF-8とCRが重なる場合_NUL_UTF-8_BOM_CRの順に1種類1行で出しhintを最後に出すこと" {
+	# Arrange(仕様: slot ごとのジョブマップを定義する tier-facade.md のバリデーション (2)、
+	#   config_input_rules.byte_checks.order。同じ行は NUL → UTF-8 → BOM → CR。spec-decision-029 の 6)
+	printf '\357\273\277job_id,work_dir,script,fixed_params,hang_detect_limit_minutes\000\377\r\nJ1,/w,/s,"[]",60\n' >"$MAP"
+
+	# Act
+	run validate_job_map_query "$MAP" false
+
+	# Assert
+	[ "$status" -eq 2 ]
+	[ "${#lines[@]}" -eq 5 ]
+	[ "${lines[0]}" = "error: nul byte is not allowed line=1 path: $MAP" ]
+	[ "${lines[1]}" = "error: encoding is not utf-8 line=1 path: $MAP" ]
+	[ "${lines[2]}" = "error: byte order mark is not allowed line=1 path: $MAP" ]
+	[ "${lines[3]}" = "error: carriage return is not allowed line=1 path: $MAP" ]
+	[ "${lines[4]}" = "hint: use LF line endings" ]
+}
+
 @test "validate_job_map_query_fixed_paramsに不正なUTF-8バイト列がある場合_その行のencoding is not utf-8で2を返しinfo resolvedを出さないこと" {
 	# Arrange(実バイト 0xff。設定契約の文字コードは UTF-8。attempt 3 の独立検証 F-025 の再現入力)
 	{

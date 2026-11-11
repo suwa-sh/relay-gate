@@ -52,3 +52,29 @@
 - ユーザー回答(原文): 要求=公開(変更要求 2 件) / 確認=前回の回答どおり
 - 照合: draft sha256 37b8b54d…・要求 2 件・gate 6/6・open blocker/major 0・前提 evidence 71a22185… が S9 done / event と一致。前提ファイルの hash を validateAssumptions record / verdicts で再計算して一致
 - 意味: 変更要求 2 件(CR-dcd8234d-009 検証 3 点への要求・受け入れ基準の揃え / CR-dcd8234d-010 引用符の外し方の契約記述)の公開許可。delivery approval ではない(仕様反映後に要求 0 件で再レビュー)
+
+## 2026-11-10 承認(要求公開許可。レビュー資料の記録 20261110_082425_s9_review_generated_dcd8234d)
+
+- ユーザー回答(原文): 実装=この到達点を承認します / 仕様=下の例外を除き、4 つの問いすべてを、いまの実装どおりに仕様へ書き足す要求として公開してください(例外の指定なし) / 別機能=案 A: この機能のマージ直後に、2 つの機能をそれぞれ実装ツールで再実行してください / 前提=補った 2 つの前提は、仕様に書き足す内容の回答に従います / 確認=確認だけの 4 点に異論はありません
+- 仕様の選択(4 問とも下書きの推奨案と同じ。下書きの意味変更なし): (1) info 行の文言は `info: key loaded key=<KEY> path: <path>` / (2) 出力順は info をすべて → 未知キーの warn をすべて → error 行 / (3) 適用範囲は env の検査の段を使う検証種別すべて(--rapid-crosscheck / --final-crosscheck / --housekeep) / (4) 途中の段で止めた回は info 行を出さない。仕様へ反映するときは推奨案をそのまま採用する
+- 前提: tier-facade A-001 / A-002 とも承認(confirmed)。いまの実装の挙動を仕様へ書き足す(CR-dcd8234d-011 / 012)。実装コードは変更しない
+- 別機能: 完了済みの fd678b04(feature flag を設定する)と eff24f55(slot ごとのジョブマップを定義する)は、この機能のマージ直後にそれぞれ dist-impl-run で再実行する(案 A)。この作業ブランチには含めない
+- 確認だけの 4 点(異論なし): ATDD の対応づけに SPEC-004-04-12 を追加 / facade/src/usecase/validate_rapid_crosscheck.sh 102 行目付近のコメントが実際の出力順と食い違う(次の実装修正の機会に直す)/ 独立検証の Linux 環境では整形検査と結合テストが未再実行 / 前サイクルの課題 6 件は解消済み
+- 照合: draft sha256 d5c7a17d…・要求 2 件・gate 6/6・open blocker/major 0・前提 evidence 1c194ce3… が S9 done / event と一致。前提ファイルの hash を validateAssumptions record / verdicts で再計算して一致
+- 意味: 変更要求 2 件の公開許可。delivery approval ではない(仕様反映後に要求 0 件で再レビュー)。マージの時期は 2026-11-10 に「同じ作業ブランチで実装を終えてからマージ」「完了時の上書き push は 1 回だけ、この作業ブランチに限って許可」と利用者が決定済み
+
+## 2026-11-11 最終承認(要求 0 件。レビュー資料の記録 20261111_083032_s9_review_generated_dcd8234d)
+
+- ユーザー回答(原文): 実装=承認します / 前提=新しい 2 件はそのまま承認します
+- 前提(tier-facade。4 件): A-001(起動コマンドのキーが無い・空のときの表示。既存規則の言い直し)= auto_confirmed / A-002(「実行可能」は通常ファイルで実行権限があること。2026-10-27 に同じ内容を承認済み)= auto_confirmed / A-003(行数が合わないとき commands=tr,sed を併記)= confirmed / A-004(複製の削除に失敗したときは commands=rm、複製の失敗と重なれば config snapshot failed を表示)= confirmed
+- 2026-11-11 の先行決定(仕様へ反映済み): 切り替え設定(--feature-flag)のお知らせ行も、ほかの 3 種類と同じ規則にそろえる。実装の直しはマージ直後の再実行で行う(spec-decision-033)
+- 照合: 要求 0 件・draft なし・gate 6/6・open blocker/major 0・前提 evidence 2ce25d1e… が S9 done / event と一致。前提ファイルの hash を validateAssumptions record / verdicts で再計算して一致
+- 意味: delivery approval。作業ブランチを 1 コミットにまとめ、2026-11-10 に許可済みの上書き push(この作業ブランチに限り 1 回)で PR #14 を更新する。マージは利用者の指示を待つ
+- マージ後に行うこと(利用者決定済み): fd678b04(feature flag を設定する)と eff24f55(slot ごとのジョブマップを定義する)を dist-impl-run で再実行する。その際に相談する未決事項: 切り替え設定の検証で error 行が 2 行以上出るときの error 行どうしの順(仕様に定めなし。推奨は現行実装の順を仕様にする)
+
+## 2026-11-11 届け方の変更(利用者確認)
+
+- 事実: PR #14 は 2026-11-10 07:22(JST)に利用者のアカウントでマージ済み(main cae8412)。リモートの作業ブランチは削除済み
+- ユーザー回答(原文): 推奨でOK
+- 決定: 残りの 19 コミットを、いまの main の上に 1 コミットでまとめ直し、新しい PR で届ける。上書き push はしない。全テストが通った場合だけ push する。マージは利用者の指示を待つ
+- 記録: 20261111_093303_config_confirmed_dcd8234d_git_delivery_base_head / 20261111_093304_delivery_prepared_dcd8234d_rebased_on_main

@@ -38,3 +38,4 @@
 | 30 | [速報・確報の設定ファイルの中身の検査を CLI 契約が持ち、読み手ごとに自分が使うキーだけを検査する。各ホストの設定ファイルは構築手順が配置する前提を明記する](../../specs/events/20261104_102000_feedback_rapid_env_deploy_check/decisions/spec-decision-030.yaml) | approved |
 | 31 | [hang-detector.sh の未知キーの warn は走査を始めるときに出し、DB 障害・印の置き場の読み取り失敗・設定エラーの回は出さない。確報の設定ファイルは置き場ごとに中身が違うことを契約に明記する](../../specs/events/20261105_092000_feedback_external_review_round2/decisions/spec-decision-031.yaml) | approved |
 | 32 | [管理 DB は 1 つで、すべての管理 DB 接続参照名は同じ管理 DB に解決されることを CLI 契約の前提として書く。解決先は導入する側が確かめ、relay-gate は検査しない](../../specs/events/20261105_112000_feedback_single_management_db/decisions/spec-decision-032.yaml) | approved |
+| 33 | [設定検証の --verbose の info 行の文言・出す回・出力順を CLI 契約の env の検査の段で 1 つに決め、feature flag・速報・確報・ハウスキープの env 形式の 4 検証種別に同じ規則で適用する](../../specs/events/20261110_153000_feedback_impl_feedback_dcd8234d/decisions/spec-decision-033.yaml) | approved |

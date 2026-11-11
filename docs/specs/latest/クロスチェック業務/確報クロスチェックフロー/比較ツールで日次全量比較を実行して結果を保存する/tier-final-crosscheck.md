@@ -28,7 +28,7 @@
 ### validate-config.sh --final-crosscheck(確報の起動コマンドの検証)
 
 - 検証本体の所有 tier は tier-facade(validate-config.sh。arch CTR-007。契約の正本は `_cross-cutting/api/cli-command-contract.yaml` の `validate-config.sh`)。本 UC は確報の起動コマンドの検証種別 `--final-crosscheck` を所有する
-- **書式**: `validate-config.sh --final-crosscheck <path>`(値必須。既定パス `$RELAY_GATE_CONFIG_DIR/final-crosscheck.env` を使う場合も明示的に渡す)
+- **書式**: `validate-config.sh --final-crosscheck <path> [--verbose]`(値必須。既定パス `$RELAY_GATE_CONFIG_DIR/final-crosscheck.env` を使う場合も明示的に渡す)
 - **実行する場所**: DB セグメント(worker が動くホスト)で、DB セグメントの置き場のファイルを検証する。実行ホストの置き場のファイルは runner 用の中身(FINAL_DB_CONN_REF と FINAL_POLL_INTERVAL_SEC / FINAL_POLL_LIMIT_SEC)だけで `FINAL_COMPARE_COMMAND` を置かないため、検証の対象にしない(渡すと `error: option required option=FINAL_COMPARE_COMMAND path: ...` で 2 になる。契約 `config_files.final-crosscheck.env` note)
 - **検証内容**: `FINAL_COMPARE_COMMAND` のコマンド部分(先頭の語)が絶対パスで、存在し、実行可能であること。検証はコマンド部分だけに行い、引数部分の内容は検査しない。確報はプレースホルダ無しのため `{job_id}` の検査はしない
 - **stdout(固定順)**: `config=final-crosscheck` / `path: <path>` / `command_path: <FINAL_COMPARE_COMMAND の先頭の語>` / `status=valid|invalid` / `violations=N`(invalid 時)。入力の守備範囲の違反で値を使わないときは `command_path: -`(CLI 契約 `config_input_rules.env_files`)
@@ -38,6 +38,8 @@
   - コマンド部分が絶対パスでない: `error: path is not absolute key=FINAL_COMPARE_COMMAND path=...`
   - コマンド部分が存在しない・実行不可: `error: file not executable key=FINAL_COMPARE_COMMAND path=...`
 - **警告(継続)**: キー表(契約 config_files.final-crosscheck.env の keys)に無いキーは `warn: unknown key key=<KEY> path: ...` を出して継続する(終了コード・violations に数えない。他の読み手が使うキーは未知キーではない。契約 config_files.final-crosscheck.env note)
+- **補助出力(`--verbose`)**: 読み取ったキーごとに `info: key loaded key=<KEY> path: <path>` を出す(コメント行を除く全キー。未知キー・値が空のキーも含む。値は出さない)。キーごとの検査の段(契約 config_input_rules.env_files の (iii))へ進んだ回だけ出し、バイト・改行の検査または行の構造の検査で止めた回は出さず、その段の error 行(と hint)だけを出す
+- **stderr の行の順**: バイト・改行の検査と行の構造の検査の違反が無ければ、info 行をすべて(`--verbose` のとき。キーがファイルに初めて出た順)→ 未知キーの warn 行をすべて(同じ順)→ 上記の違反文言の error 行の順に出す。info 行と warn 行は終了コード・violations に数えない(正本は CLI 契約 `config_input_rules.env_files` の「validate-config.sh の --verbose の info 行」。`--feature-flag` / `--rapid-crosscheck` / `--housekeep` と同じ規則)
 
 ## 出力契約
 
@@ -164,4 +166,21 @@ Feature: 比較ツールで日次全量比較を実行して結果を保存す�
     When `validate-config.sh --final-crosscheck /etc/relay-gate/final-crosscheck.env` を実行する
     Then 終了コード 2 で stderr に "error: path is not absolute key=FINAL_COMPARE_COMMAND path=compare-final.sh" が出る
     And stdout に "config=final-crosscheck"、"status=invalid"、"violations=1" が出る
+
+  Scenario: --verbose では info 行をすべて出してから未知キーの warn 行、起動コマンドの error 行の順に出す
+    Given final-crosscheck.env の 1 行目が ZZ=x、2 行目が FINAL_DB_CONN_REF=mgmt、3 行目が FINAL_COMPARE_COMMAND=compare-final.sh --full(相対パス)である
+    When `validate-config.sh --final-crosscheck /etc/relay-gate/final-crosscheck.env --verbose` を実行する
+    Then 終了コード 2 で stderr は次の 5 行がこの順に出る(契約 config_input_rules.env_files)
+      | info: key loaded key=ZZ path: /etc/relay-gate/final-crosscheck.env                    |
+      | info: key loaded key=FINAL_DB_CONN_REF path: /etc/relay-gate/final-crosscheck.env     |
+      | info: key loaded key=FINAL_COMPARE_COMMAND path: /etc/relay-gate/final-crosscheck.env |
+      | warn: unknown key key=ZZ path: /etc/relay-gate/final-crosscheck.env                   |
+      | error: path is not absolute key=FINAL_COMPARE_COMMAND path=compare-final.sh           |
+    And stdout に "config=final-crosscheck"、"status=invalid"、"violations=1" が出る
+
+  Scenario: 行の構造の検査で止めた回は --verbose でも info 行を出さない
+    Given final-crosscheck.env の 1 行目が ZZ=x、2 行目が broken、3 行目が FINAL_COMPARE_COMMAND=/opt/compare/final.sh --full である(/opt/compare/final.sh は実行可能)
+    When `validate-config.sh --final-crosscheck /etc/relay-gate/final-crosscheck.env --verbose` を実行する
+    Then 終了コード 2 で stderr は "error: invalid line line=2 path: /etc/relay-gate/final-crosscheck.env" の 1 行だけである(info 行と未知キーの warn 行は出ない。契約 config_input_rules.env_files)
+    And stdout が "config=final-crosscheck" / "path: /etc/relay-gate/final-crosscheck.env" / "command_path: -" / "status=invalid" / "violations=1" の 5 行である
 ```

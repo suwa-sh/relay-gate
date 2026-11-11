@@ -1,0 +1,29 @@
+stage: "S4"
+tier: "tier-facade"
+attempt: 4
+uc_id: "dcd8234d"
+manifest_sha256: "a9251f3bf172a472c8f5eab10d58a8008199e8400411907d728575d98a41f39a"
+manifest_projection: v2
+result: pass
+gates:
+  format: pass
+  lint: pass
+  tdd: pass
+  bdd_tier: pass
+assumptions:
+  path: "attempt-4/S4_tier-impl.tier-facade.assumptions.yaml"
+  count: 2
+  by_category:
+    input_validation: 0
+    data_format: 1
+    error_handling: 1
+    persistence: 0
+    performance: 0
+    security: 0
+  sha256: "f21b6b2077cfb3d2b0628620804c6cdb288a51bf72cfa5e0c968ffe18f18a424"
+  extraction:
+    candidate_count: 7
+    excluded_as_explicit: 5
+    recorded_count: 2
+completed_at: "2026-11-09T22:50:00Z"
+completed_by: "dist-impl-implement@0.14.1"

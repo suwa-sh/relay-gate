@@ -173,6 +173,18 @@
             "SELECT",
             "UPDATE"
           ]
+        },
+        {
+          "uc": "保持日数を過ぎた終了済みの実行と確報比較依頼を判定する",
+          "operations": [
+            "SELECT"
+          ]
+        },
+        {
+          "uc": "成果物と管理 DB の履歴を削除する",
+          "operations": [
+            "DELETE"
+          ]
         }
       ]
     },
@@ -319,6 +331,18 @@
           "operations": [
             "SELECT"
           ]
+        },
+        {
+          "uc": "保持日数を過ぎた終了済みの実行と確報比較依頼を判定する",
+          "operations": [
+            "SELECT"
+          ]
+        },
+        {
+          "uc": "成果物と管理 DB の履歴を削除する",
+          "operations": [
+            "DELETE"
+          ]
         }
       ]
     },
@@ -435,6 +459,12 @@
           "operations": [
             "SELECT",
             "INSERT"
+          ]
+        },
+        {
+          "uc": "成果物と管理 DB の履歴を削除する",
+          "operations": [
+            "DELETE"
           ]
         }
       ]
@@ -648,6 +678,18 @@
           "operations": [
             "UPDATE"
           ]
+        },
+        {
+          "uc": "保持日数を過ぎた終了済みの実行と確報比較依頼を判定する",
+          "operations": [
+            "SELECT"
+          ]
+        },
+        {
+          "uc": "成果物と管理 DB の履歴を削除する",
+          "operations": [
+            "DELETE"
+          ]
         }
       ]
     },
@@ -798,6 +840,18 @@
           "operations": [
             "UPDATE"
           ]
+        },
+        {
+          "uc": "保持日数を過ぎた終了済みの実行と確報比較依頼を判定する",
+          "operations": [
+            "SELECT"
+          ]
+        },
+        {
+          "uc": "成果物と管理 DB の履歴を削除する",
+          "operations": [
+            "DELETE"
+          ]
         }
       ]
     },
@@ -831,7 +885,7 @@
             "background_slot",
             "rapid_request"
           ],
-          "description": "監視対象種別(情報「監視記録」の属性「監視対象種別」の英字コード。取りうる値は enum)。background_slot は background slot 実行、rapid_request は速報比較依頼。role から一意に導出できる(blue / green → background_slot、rapid-crosscheck → rapid_request)ため 3NF 上は role への推移従属だが、情報.tsv の属性「監視対象種別」を写し、傾向集計・通知メールでの可読性のため非正規化して保持する(hang-detector が role と同時に書き込み、以後変更しない)"
+          "description": "監視対象種別(情報「監視記録」の属性「監視対象種別」の英字コード。取りうる値は enum)。background_slot は background slot 実行、rapid_request は速報比較依頼。role から一意に導出できる(blue / green → background_slot、rapid-crosscheck → rapid_request)ため 3NF 上は role への推移従属だが、情報.tsv の属性「監視対象種別」を写し、傾向集計と alert 行の確認での可読性のため非正規化して保持する(hang-detector が role と同時に書き込み、以後変更しない)"
         },
         {
           "name": "job_id",
@@ -875,13 +929,13 @@
           "name": "hang_suspected_at",
           "type": "datetime",
           "nullable": true,
-          "description": "ハング疑い通知(hang-suspected)の送信成功日時(ローカル時刻。MONITORING → HANG_SUSPECTED_NOTIFIED へ遷移した時刻。UC『監視記録を保存する』の計算ルールと同じ)。UPSERT では NULL で上書きしない。未通知は NULL。情報.tsv: hang_suspected_at"
+          "description": "ハング疑い(kind=hang-suspected)の alert 行を出した日時(ローカル時刻。MONITORING → HANG_SUSPECTED_NOTIFIED へ遷移した時刻。UC『監視記録を保存する』の計算ルールと同じ)。UPSERT では NULL で上書きしない。未通知は NULL。情報.tsv: hang_suspected_at"
         },
         {
           "name": "alerted_at",
           "type": "datetime",
           "nullable": true,
-          "description": "最新の通知メールの送信成功日時(ローカル時刻)。送信成功時のみ更新(送信失敗では更新せず次回再送)。送信要否の冪等判定は monitor_status の遷移有無で行い、本列は記録用。未通知は NULL。情報.tsv: alerted_at"
+          "description": "最新の通知(hang-detector.sh が alert 行を出した)日時(ローカル時刻。判定時刻)。alert 行を出した回の監視記録の UPSERT で更新する。UPSERT に失敗した場合は monitor_status も変わらないため、次回同じ異常を再び知らせる。再通知の要否は monitor_status の遷移有無で判定し、本列は記録用。未通知は NULL。情報.tsv: alerted_at"
         },
         {
           "name": "elapsed_minutes_at_alert",
@@ -951,6 +1005,12 @@
           "uc": "hang_detect_limit_minutes をジョブごとに調整する",
           "operations": [
             "SELECT"
+          ]
+        },
+        {
+          "uc": "成果物と管理 DB の履歴を削除する",
+          "operations": [
+            "DELETE"
           ]
         }
       ]

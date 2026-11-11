@@ -42,10 +42,10 @@ x_cli_commands:
       - name: "--verbose"
         type: "boolean"
         required: false
-        description: "補助出力を stderr に出す"
+        description: "読み取ったキーごとに info: key loaded key=<KEY> path: <path> を stderr に出す(キーごとの検査の段(契約 config_input_rules.env_files の (iii))へ進んだ回だけ。文言・出す回・順の正本は契約 config_input_rules.env_files の『validate-config.sh の --verbose の info 行』。終了コード・stdout・violations に影響しない)"
     stdin: "なし"
     stdout: "--housekeep: config=housekeep / path: ... / retention_days=<N>(キーが無ければ 90、invalid 時は -)/ status=valid|invalid / violations=N(invalid 時)"
-    stderr: "error: config file not found path: ... / error: config file is not readable path: ... / error: invalid value key=HOUSEKEEP_RETENTION_DAYS value=... path: ... + hint: use a positive integer / warn: unknown key key=... path: ...(housekeep.env のキー表に無いキー)/ 入力の守備範囲の違反は契約 config_input_rules の文言"
+    stderr: "error: config file not found path: ... / error: config file is not readable path: ... / error: invalid value key=HOUSEKEEP_RETENTION_DAYS value=... path: ... + hint: use a positive integer / warn: unknown key key=... path: ...(housekeep.env のキー表に無いキー)/ 入力の守備範囲の違反は契約 config_input_rules の文言。--verbose のときは info: key loaded key=<KEY> path: <path>(読み取ったキーごと)。行の順は info 行をすべて → 未知キーの warn 行をすべて(どちらもキーがファイルに初めて出た順)→ 保持日数の error 行と hint。バイト・改行の検査または行の構造の検査で止めた回は、その段の error 行(と hint)だけ(契約 config_input_rules.env_files)"
     exit_codes:
       - code: 0
         meaning: "違反 0 件"

@@ -1,0 +1,13 @@
+event_id: 20261111_093303_config_confirmed_dcd8234d_git_delivery_base_head
+type: config_confirmed
+uc_id: dcd8234d
+stage: S9
+payload:
+  confirmed_by: user
+  confirmed_via: '2026-11-11 の利用者回答「推奨でOK」(届け方: いまの本線の上に 1 コミットでまとめ直し、新しい PR で届ける。上書き push はしない。全テストが通った場合だけ push する)'
+  items:
+  - key: status[dcd8234d].git_delivery.base_head
+    before: eee392b767caca105d94e6246ced9577d2443b00
+    after: cae841231a7d8e7c9b76dbbc7fd63c94249cde2e
+    note: 'PR #14 (head a25dddd) was squash-merged into main as cae8412 on 2026-11-09T22:22:28Z and the remote feature branch was deleted. origin/main = a25dddd tree + dependency bump 506f91e (package.json / package-lock.json only). the remaining 19 local commits (a25dddd..HEAD) do not touch those 2 files, so they are squashed onto origin/main as one commit and delivered by a new PR with a normal push (the pre-approved force push is not used)'
+created_at: '2026-11-11T09:33:03+09:00'

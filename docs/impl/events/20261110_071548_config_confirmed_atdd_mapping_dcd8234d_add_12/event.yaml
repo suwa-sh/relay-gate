@@ -1,0 +1,13 @@
+event_id: "20261110_071548_config_confirmed_atdd_mapping_dcd8234d_add_12"
+type: config_confirmed
+uc_id: dcd8234d
+stage: "S1"
+payload:
+  confirmed_by: "orchestrator_mechanical_followup"
+  confirmed_via: "spec-event 20261105_112000_feedback_single_management_db の use_cases[本 UC].usdm(SPEC-004-04 の scenarios に「{params} が引数全体でない位置にある」がある)。利用者には完了前のレビューで提示する"
+  items:
+    - key: "uc_map.use_cases[dcd8234d].atdd_scenarios"
+      before: [SPEC-004-04-5, SPEC-004-04-6, SPEC-004-04-7, SPEC-004-04-8, SPEC-004-04-10, SPEC-004-04-11]
+      after: [SPEC-004-04-5, SPEC-004-04-6, SPEC-004-04-7, SPEC-004-04-8, SPEC-004-04-10, SPEC-004-04-11, SPEC-004-04-12]
+      note: "仕様の還流で SPEC-004-04 に受け入れ基準 12 番(速報の起動コマンドの引数の一部に {params} を含むと error)が加わった。速報の起動コマンドの検証は本 UC だけが担う(spec.md / tier-facade.md)ため本 UC に割り当てる。10 番は Given の文言だけが変わり、割り当ては変えない"
+created_at: "2026-11-10T07:15:48+09:00"

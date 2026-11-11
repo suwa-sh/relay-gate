@@ -1,0 +1,21 @@
+event_id: 20261111_075257_stage_invalidated_dcd8234d_stale_after_feedback_run_verbose_info_line
+type: stage_invalidated
+uc_id: dcd8234d
+stage: S1
+payload:
+  reason: stale
+  targets:
+  - stages/S1_uc-init.done.yaml
+  - stages/S2_test-scaffold.done.yaml
+  - stages/S3_contracts.done.yaml
+  - stages/attempt-4/S4_tier-impl.tier-facade.done.yaml
+  - stages/attempt-4/S4_tier-impl.tier-facade.assumptions.yaml
+  - stages/attempt-4/S5_verify.tier-facade.done.yaml
+  - stages/attempt-4/S5_verify.tier-facade.findings.yaml
+  - stages/S6_uc-bdd.done.yaml
+  - stages/S7_atdd.done.yaml
+  - stages/S8_feedback.done.yaml
+  - stages/S9_review_generated.done.yaml
+  archived_to: docs/impl/latest/dcd8234d/invalidated/20261111_075257_stage_invalidated_dcd8234d_stale_after_feedback_run_verbose_info_line/
+  detail: dist-pipeline の feedback run 20261110_080548_impl_feedback_dcd8234d(--verbose の info 行の文言・出力順・途中で止めた回の扱い。env 形式の 4 検証種別)の反映で tier-facade.md / _api-summary / 共有仕様(cli-command-contract.yaml、ui-design.md)が変わり、全 done の projection が不一致になった。同一 attempt(4)で S1 からやり直す(attempt++ しない)。公開済み feedback request と learnings は履歴として残す
+created_at: '2026-11-11T07:52:57+09:00'

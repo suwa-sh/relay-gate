@@ -15,8 +15,8 @@ feature flag 設定(env)の 9 キー定義・検証ルールを **設定契約**
 
 | 名前 | 型 | 必須 | 既定値 | 説明 |
 |------|---|------|-------|------|
-| --feature-flag | string(パス) | Yes(この検証種別を選ぶ) | なし | 検証する env ファイル。`--job-map` / `--rapid-crosscheck` / `--final-crosscheck` と排他(同時指定は終了コード 2) |
-| --verbose | boolean | No | false | `info:` を stderr に出す(読み込んだキー一覧など) |
+| --feature-flag | string(パス) | Yes(この検証種別を選ぶ) | なし | 検証する env ファイル。`--job-map` / `--rapid-crosscheck` / `--final-crosscheck` / `--housekeep` と排他(同時指定は終了コード 2) |
+| --verbose | boolean | No | false | 読み取ったキーごとに `info: key loaded key=<KEY> path: <path>` を stderr に出す(キーごとの検査の段(契約 config_input_rules.env_files の (iii))へ進んだ回だけ。バイト・改行の検査または行の構造の検査で止めた回は出さない。正本は CLI 契約 `config_input_rules.env_files` の「validate-config.sh の --verbose の info 行」。`--rapid-crosscheck` / `--final-crosscheck` / `--housekeep` と同じ規則) |
 | --help | boolean | No | false | 使い方を stdout に出して終了コード 0 |
 
 - **stdin**: なし
@@ -73,7 +73,7 @@ feature flag 設定(env)の 9 キー定義・検証ルールを **設定契約**
   green_runner_if_version=1
   ```
   (未設定の値は `-`。runner が `--help` に応答しない場合の `<slot>_runner_if_version` も `-`(問い合わせの待機上限・実行順・未応答判定・準備失敗の扱いは契約 `validate-config.sh` の `runner_help_probe` が正)。15 キー固定順は契約 `cli-command-contract.yaml` の `validate-config.sh` stdout が正。末尾 4 行(blue_job_map / green_job_map / blue_runner_if_version / green_runner_if_version)は UC「slot runner の実体スクリプトを割り当てる」が定義する。mode=off の slot は `<slot>_impl` / `<slot>_runner` / `<slot>_job_map` / `<slot>_runner_if_version` を `-` にする。RAPID_CROSSCHECK_MODE=off では rapid_crosscheck_runner / rapid_crosscheck_worker を `-` にする)
-- **stderr**: 違反ごとに `error: ...` 1 行(全件)。`warn:` は未知キー。`hint:` は対処が明確な場合。`key=` / `value=` / `path:` に出す任意入力(キー名・値・パス)は `ui-design.md`「制御文字の表記」の可視表記にする(改行 `\n`、タブ `\t`、その他の制御文字 `\u00XX`。バックスラッシュは置き換えない。例: 値が `on<ESC>` なら `error: invalid value key=BLUE_MODE value=on\u001b`)。生の制御文字はそのまま出さない
+- **stderr**: 違反ごとに `error: ...` 1 行(全件)。`warn:` は未知キー。`hint:` は対処が明確な場合。`--verbose` のときは、キーごとの検査の段(契約 config_input_rules.env_files の (iii))へ進んだ回だけ、読み取ったキーごとに `info: key loaded key=<KEY> path: <path>` を出す(コメント行を除く全キー。未知キー・値が空のキー・`FINAL_` で始まるキーも含む。値は出さない)。行の順は、バイト・改行の検査または行の構造の検査で違反があればその段の error 行(と hint)だけ。無ければ info 行をすべて(キーがファイルに初めて出た順)→ 未知キーの warn 行をすべて(同じ順)→ キーごとの検査の error 行(組合せ検証・`FINAL_` で始まるキー・対応ジョブマップを含む。と hint)→ runner `--help` 問い合わせの `warn: runner does not respond ...` 行。runner の問い合わせの準備失敗(終了コード 6)の回は、その error 行だけを出す(正本は CLI 契約 `config_input_rules.env_files` の「validate-config.sh の --verbose の info 行」)。`key=` / `value=` / `path:` に出す任意入力(キー名・値・パス)は `ui-design.md`「制御文字の表記」の可視表記にする(改行 `\n`、タブ `\t`、その他の制御文字 `\u00XX`。バックスラッシュは置き換えない。例: 値が `on<ESC>` なら `error: invalid value key=BLUE_MODE value=on\u001b`)。生の制御文字はそのまま出さない
 - **実行ログ**(facade.sh が起動のたびに残す行。定義元は UC「slot 実行モードを選択して runner を起動する」): `INFO feature flag loaded blue_mode=... green_mode=... rapid_crosscheck_mode=... blue_impl=... green_impl=... operation_mode=...`。行形式は `_cross-cutting/ux-ui/ui-design.md` のログ行形式 `{script} {run_id} {ローカル出力日時} {LEVEL} {message}` に従う。情報「実行ログ」の属性「出力日時」はこの ローカル時刻列に対応する
 - **終了コード**:
 
@@ -230,4 +230,27 @@ Feature: feature flag を設定する - facade / slot runner ティア
   Scenario: validate-config_sh_feature-flag はファイルが無ければ終了コード 2 を返す
     When `validate-config.sh --feature-flag /nonexistent.env` を実行する
     Then 終了コード 2 で stderr に "error: config file not found path: /nonexistent.env" が出る
+
+  Scenario: validate-config_sh_feature-flag は --verbose で info 行をすべて出してから未知キーの warn 行、キーごとの検査の error 行の順に出す
+    Given ff.env の 1 行目が ZZ=x、2 行目が BLUE_MODE=off、3 行目が GREEN_MODE=off、4 行目が RAPID_CROSSCHECK_MODE=off である
+    When `validate-config.sh --feature-flag ff.env --verbose` を実行する
+    Then 終了コード 2 で stdout は 0 行、stderr は次の 6 行がこの順に出る(契約 config_input_rules.env_files)
+      | info: key loaded key=ZZ path: ff.env                                     |
+      | info: key loaded key=BLUE_MODE path: ff.env                              |
+      | info: key loaded key=GREEN_MODE path: ff.env                             |
+      | info: key loaded key=RAPID_CROSSCHECK_MODE path: ff.env                  |
+      | warn: unknown key key=ZZ path: ff.env                                    |
+      | error: foreground slot must be exactly one blue_mode=off green_mode=off |
+
+  Scenario: validate-config_sh_feature-flag は --verbose でも有効な設定の stdout を変えず info 行を出す
+    Given ff.env の 1 行目がコメント行 # memo、2 行目が BLUE_MODE=off、3 行目が GREEN_MODE=foreground、4 行目が RAPID_CROSSCHECK_MODE=off、5 行目が GREEN_IMPL=green-1.4.0、6 行目が GREEN_RUNNER=<実行可能。--help で runner-if-version=1 を返す> である
+    And RELAY_GATE_CONFIG_DIR に green-job-map.csv がある
+    When `validate-config.sh --feature-flag ff.env --verbose` を実行する
+    Then 終了コード 0 で stderr は info 行 5 行だけで、key= が BLUE_MODE / GREEN_MODE / RAPID_CROSSCHECK_MODE / GREEN_IMPL / GREEN_RUNNER の順に "info: key loaded key=<KEY> path: ff.env" が出る(コメント行の info 行は出ず、値は出さない)
+    And stdout は --verbose を付けないときと同じ 15 行で、11 行目は "operation_mode=green_only" である
+
+  Scenario: validate-config_sh_feature-flag は行の構造の検査で止めた回は --verbose でも info 行を出さない
+    Given ff.env の 1 行目が ZZ=x、2 行目が broken、3 行目が BLUE_MODE=off、4 行目が GREEN_MODE=foreground、5 行目が RAPID_CROSSCHECK_MODE=off である
+    When `validate-config.sh --feature-flag ff.env --verbose` を実行する
+    Then 終了コード 2 で stdout は 0 行、stderr は "error: invalid line line=2 path: ff.env" の 1 行だけである(info 行と未知キーの warn 行は出ない。契約 config_input_rules.env_files)
 ```

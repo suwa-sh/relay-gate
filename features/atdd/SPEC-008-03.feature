@@ -1,8 +1,8 @@
 # source: docs/usdm/latest/requirements.yaml#requirements[REQ-008].specifications[SPEC-008-03].acceptance_criteria
 # 転写: 1 criterion = 1 Scenario。文言は原文のまま(Given / When / Then の区切りで行分割のみ)。bootstrap P7 生成
-Feature: SPEC-008-03 監視は monitor_status、hang_suspected_at、alerted_at を記録して運用者へ通知する。通知後に正常終了した実行についても警告した経過時間を記録し、通常処理の警告傾向を確認できるようにする。RAPID_CROSSCHECK_MODE=off の場合も slot 成果物だけで監視する。monitor_status の値は監視対象外 / 監視中 / ハング疑い通知済み / 実行エラー通知済み / 比較異常通知済み / 正常終了の 6 値とし、ハング疑い通知後に対象が終端した場合は再判定して比較異常通知済み / 実行エラー通知済み / 正常終了へ遷移する。監視対象が ABORTED になった場合は中止済みとして正常終了で終端する
+Feature: SPEC-008-03 監視は monitor_status、hang_suspected_at、alerted_at を記録し、運用者へはハング検知ジョブの終了結果で知らせる(SPEC-008-07)。通知後に正常終了した実行についても警告した経過時間を記録し、通常処理の警告傾向をハング検知ジョブの出力と監視記録で確認できるようにする。RAPID_CROSSCHECK_MODE=off の場合も slot 成果物だけで監視する。monitor_status の値は監視対象外 / 監視中 / ハング疑い通知済み / 実行エラー通知済み / 比較異常通知済み / 正常終了の 6 値とし、ハング疑い通知後に対象が終端した場合は再判定して比較異常通知済み / 実行エラー通知済み / 正常終了へ遷移する。監視対象が ABORTED になった場合は中止済みとして正常終了で終端する
 
-  REQ-008: ハング検知が background 実行(background slot と速報比較依頼)を定期監視し、ジョブスケジューラの実行結果に現れない background 異常を運用者へ通知すること
+  REQ-008: ハング検知が background 実行(background slot と速報比較依頼)を定期監視し、ジョブスケジューラの実行結果に現れない background 異常を、ハング検知ジョブ自身の終了結果と標準エラーで運用者へ知らせること
 
   @atdd_SPEC-008-03-1
   Scenario: SPEC-008-03-1
@@ -20,7 +20,7 @@ Feature: SPEC-008-03 監視は monitor_status、hang_suspected_at、alerted_at �
   Scenario: SPEC-008-03-3
     Given ハング疑いを通知した速報比較依頼がその後 FAILED または比較 NG になった
     When 検知ジョブが実行される
-    Then 監視状態は比較異常通知済みへ遷移し error メールが送られる
+    Then 監視状態は比較異常通知済みへ遷移し、その依頼の error の行が標準エラーに出て、検知ジョブは失敗を表す終了コードで終わる
 
   @atdd_SPEC-008-03-4
   Scenario: SPEC-008-03-4

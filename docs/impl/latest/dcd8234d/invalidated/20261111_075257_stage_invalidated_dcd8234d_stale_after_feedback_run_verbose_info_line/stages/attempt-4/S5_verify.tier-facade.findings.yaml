@@ -1,0 +1,107 @@
+schema_version: "1.0"
+uc_id: "dcd8234d"
+tier: "tier-facade"
+attempt: 4
+verified_at: "2026-11-09T22:51:34.851826+00:00"
+gate_reexec:
+  format: "pass"
+  lint: "pass"
+  tdd: "pass"
+  bdd_tier: "pass"
+viewpoints_checked:
+  spec_conformance:
+    status: "done"
+    note: "対象CLIの引数・固定順stdout・終了コード・検証ルール5項・envの3段・未知キー4種の表を照合。tier Gherkinはコメントを除き完全一致。12展開シナリオを含む全53シナリオ181ステップ成功。API summaryはlegacy CLI形式でv2 slice対象外。model tables/eventsなし、DB操作なし。登録契約management-dbのscopeと生成物を確認。CLI tierのためUI対象外。共有バイト報告順NUL→UTF-8→BOM→CRはslot UCのバリデーションと共通契約にも一致。"
+  readability_maintainability:
+    status: "done"
+    note: "dev-rules 3ファイルを照合。責務はpresentation/usecase/domain/repositoryに分離され、追加テストは実ファイルのArrange/Act/Assert。英語診断と日本語コメント、命名を確認。format/lint成功。"
+  security:
+    status: "done"
+    note: "未知キーを変数化せずk:接頭辞の連想配列で管理。@、*、引用符、バックスラッシュ、コマンド置換を含むキーの重複を実走し副作用なし。比較コマンドも起動されない。制御文字は表示時エスケープ。snapshotはmktempの0600と削除を確認。"
+  performance:
+    status: "done"
+    note: "独立実測5000行: 有効env 0.150秒、未知4999キー0.410秒、同一キー重複0.473秒、全行NUL/不正UTF-8/CRと先頭BOM 0.824秒、invalid line全行0.257秒。slot CSV全9列・一意job_id・全行別map_versionは2.240秒。全ケース10秒以内。入力長無制限の全組合せを保証する測定ではない。"
+  operability:
+    status: "done"
+    note: "利用者指定パスと物理行番号を診断し、error/warn/infoとstdoutを分離。unknown/unused knownキー、空ファイル、最終行改行なし、Cとen_US.UTF-8の境界入力を確認。Linux bash5.2/GNUコマンドでも379件成功。bash5.0そのものの実走は未実施。"
+  fault_tolerance:
+    status: "done"
+    note: "独立注入でtr/sed/rm失敗は終了6・stdoutなし・該当コマンド診断、cat/mv失敗はsnapshot failedとhint・終了6。既存テストでsnapshot差替え、削除、シグナルを確認。NULのみのEOF・サロゲート・Unicode上限超も終了2。DB/外部API呼出しなし。"
+  refactoring:
+    status: "done"
+    note: "バイト走査と診断をslotと共有し、env解析は独立。feature flagの依存経路は共有バイト報告を使用せず、HEAD差分もなく既存テスト成功。既存feature flagの現行仕様未追従は別UCとしてscope_notesに記録。追加の未記載前提候補はなし。"
+  assumption_conformance:
+    status: "done"
+    note: "観点1〜7完了後にid/assumption/targetのみを読み、仕様とS4固定指示で判定を固定してからreason/confidence/spec_refsを参照。2件ともspec_absent、分類一致、未記載候補0件。A-002の段i部分は既定規則、段iiの補助出力の選択が未定義。"
+assumptions_sha256: "f21b6b2077cfb3d2b0628620804c6cdb288a51bf72cfa5e0c968ffe18f18a424"
+assumption_verdicts:
+  - id: "A-001"
+    tier: "tier-facade"
+    assumption: "validate-config.sh --rapid-crosscheck の (iii) の段では、まず --verbose の info 行をすべて(キーの初出の順)、続けて未知キーの warn 行をすべて(キーの初出の順)出し、その後に比較ツール起動コマンドの検証表の error 行を stderr へ出す(info と warn を行ごとに交互にはしない)"
+    target: "facade/src/usecase/validate_rapid_crosscheck.sh:117"
+    category: "data_format"
+    verified_category: "data_format"
+    verdict: "spec_absent"
+    finding_id: "F-001"
+    evidence: "tier-facade.md コマンド契約 stderr、CLI 契約 commands[validate-config.sh].stderr / config_files[rapid-crosscheck.env].note / config_input_rules.env_files は未知キーの warn と段分けを定義するが、段 iii 内の info・warn・error の相対順は定義していない。ZZ=x、RAPID_COMPARE_COMMAND=relative、AA=x を --verbose で実行すると info 3行、warn 2行、error 2行の順、終了コード2。S4固定指示にも相対順の指定はない。"
+  - id: "A-002"
+    tier: "tier-facade"
+    assumption: "--rapid-crosscheck --verbose でも、入力の守備範囲の (i) バイト・改行または (ii) invalid line・同じキーの重複で止めた回は info: key loaded 行を出さない"
+    target: "facade/src/usecase/validate_rapid_crosscheck.sh:98"
+    category: "error_handling"
+    verified_category: "error_handling"
+    verdict: "spec_absent"
+    finding_id: "F-002"
+    evidence: "CLI 契約 config_input_rules.byte_checks.stop は段 i で error と hint だけを出すため、この部分は明示規則に一致する。一方 env_files の段 ii は invalid line→duplicate key と段 iii を実施しないことを定義するが、補助出力 info を段 ii でも抑止するかは明記していない。前提全体のうち段 ii の選択を spec_absent と判定した。ZZ=x、broken、有効な RAPID_COMPARE_COMMAND の3行を --verbose で実行すると invalid line line=2 の1行だけ、終了コード2。バイト違反でも error/hint のみ。S4固定指示に追加規定なし。"
+assumption_verdicts_summary:
+  consistent: 0
+  spec_absent: 2
+  contradicts: 0
+  unlisted: 0
+findings:
+  - id: "F-001"
+    viewpoint: "assumption_conformance"
+    kind: "spec_absent"
+    assumption_id: "A-001"
+    severity: "minor"
+    target: "facade/src/usecase/validate_rapid_crosscheck.sh:117"
+    claim: "段 iii の診断を info 全件→warn 全件→error 全件の順にする選択は仕様に明示されていない。"
+    evidence: "tier-facade.md コマンド契約 stderr、CLI 契約 commands[validate-config.sh].stderr / config_files[rapid-crosscheck.env].note / config_input_rules.env_files は未知キーの warn と段分けを定義するが、段 iii 内の info・warn・error の相対順は定義していない。ZZ=x、RAPID_COMPARE_COMMAND=relative、AA=x を --verbose で実行すると info 3行、warn 2行、error 2行の順、終了コード2。S4固定指示にも相対順の指定はない。"
+    suggested_fix: "S9で現行動作を採用するか確認し、必要なら共有CLI契約へ出力規則を明記する。"
+  - id: "F-002"
+    viewpoint: "assumption_conformance"
+    kind: "spec_absent"
+    assumption_id: "A-002"
+    severity: "minor"
+    target: "facade/src/usecase/validate_rapid_crosscheck.sh:98"
+    claim: "段 ii の構造違反時にも --verbose の info を抑止する選択は仕様に明示されていない。段 i の抑止は契約で定義済み。"
+    evidence: "CLI 契約 config_input_rules.byte_checks.stop は段 i で error と hint だけを出すため、この部分は明示規則に一致する。一方 env_files の段 ii は invalid line→duplicate key と段 iii を実施しないことを定義するが、補助出力 info を段 ii でも抑止するかは明記していない。前提全体のうち段 ii の選択を spec_absent と判定した。ZZ=x、broken、有効な RAPID_COMPARE_COMMAND の3行を --verbose で実行すると invalid line line=2 の1行だけ、終了コード2。バイト違反でも error/hint のみ。S4固定指示に追加規定なし。"
+    suggested_fix: "S9で現行動作を採用するか確認し、必要なら共有CLI契約へ出力規則を明記する。"
+summary:
+  blocker: 0
+  major: 0
+  minor: 2
+scope_notes:
+  - target: "facade/src/repository/feature_flag_config.sh:47"
+    note: "別UCの既存仕様未追従。正常なforeground/off/off設定にBLUE_MODE=foregroundの重複行、空キー行 =x、CR付きコメントをそれぞれ追加しても現行実装は終了0・stdout15行・stderr空。現行env_files契約は終了2を要求する。HEAD差分で当該実装は未変更、rapid loader・共有バイト報告から呼ばれず今回の回帰ではない。対象spec.mdはfeature flagを別UCと明記するため本UCのopen_blockersには含めず、fd678b04の再検証事項として報告する。"
+validation_details:
+  host: "macOS arm64 bash 5.3.15"
+  tdd:
+    passed: 379
+    exit_code: 0
+  bdd_tier:
+    scenarios: 53
+    steps: 181
+    exit_code: 0
+  linux:
+    image: "relay-gate-ci:ubuntu24"
+    platform: "linux arm64"
+    bash: "5.2.21"
+    repository_mount: "read-only"
+    network: "none"
+    tdd_passed: 379
+    tdd_exit_code: 0
+    limitations: "Linux imageにshfmt/nodeがないためLinuxでformat/BDDの再実行は未完了。正規4ゲートはホストで全通過。"
+  environment_probe: "必須コマンド存在、TCP loopback bind成功、一時PostgreSQL initdb/pg_ctl start/stop成功。常設DB接続なし。"
+  s4_gate_match: true
+assumption_verdicts_sha256: "432c6b7b6987bcb38ae7eb6a16600a37d2518f0d4462e56ac3b477bfd073f5bb"

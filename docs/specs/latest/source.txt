@@ -1,22 +1,26 @@
-Spec 差分更新(design 無しモード): 2026-11-05 の管理 DB を 1 つとする前提の明記(dist-pipeline feedback mode Step6)。上流 latest(usdm / rdra / nfr / arch)は変更なし。infra latest は同じ run の infra イベント 20261105_111000_feedback_single_management_db(管理 DB の接続先の参照名が同じ管理 DB に解決されることを、構築の前提として書く)で更新済み。
+Spec 差分更新(design 無しモード): 2026-11-10 の設定検証の --verbose の info 行の文言・出す回・出力順の明記(dist-pipeline feedback mode Step6)。上流 latest(usdm / rdra / nfr / arch / infra)は変更なし。
 
-CR-f4c8b261-001(infra 直接所有。spec は保守的 closure。利用者承認済みの直し方): 管理 DB の接続先の参照名が同じ管理 DB に解決されることを、CLI 契約にも前提として書く。
-- 問題: 確報クロスチェックの設定ファイルは実行ホスト(確報 runner)と DB セグメント(確報 worker)に別の元ファイルで配る。2 つのファイルの FINAL_DB_CONN_REF が別の DB に解決されると、設定の検査をすべて通っても worker は runner の依頼を取得できず、確報ジョブが完了しない。CLI 契約 conventions.credentials は参照名を列挙し、解決を適用側の運用手順に委ねるとだけ書いており、すべての参照名が同じ 1 つの管理 DB に解決されるという前提が無かった。
-- 書いた前提(契約 conventions.credentials):
-  - 管理 DB は 1 つで、すべての管理 DB 接続参照名(RAPID_DB_CONN_REF、実行ホストと DB セグメントそれぞれの FINAL_DB_CONN_REF、HANG_DB_CONN_REF、HOUSEKEEP_DB_CONN_REF)は同じ 1 つの管理 DB に解決される。
-  - 理由: 確報 runner が登録した確報比較依頼を、確報 worker が同じキューから取得するため。
-  - 条件は参照名の文字列が同じことではなく、解決先(接続先の DB)が同じこと。HOUSEKEEP_DB_CONN_REF は専用 DB ロール housekeep_del で業務用ロールとは別のロールを指すが、解決先の DB は同じ。
-  - 解決先が同じことは導入する側が確かめる。構築手順の配置時の検査は設定ファイルの存在確認だけで、relay-gate のコマンド(validate-config.sh と各読み手の起動時の検査)も解決先を検査しない。
-- 揃えた箇所: 契約 config_files の final-crosscheck.env の note と FINAL_DB_CONN_REF、rapid-crosscheck.env の RAPID_DB_CONN_REF、hang-detector.env の HANG_DB_CONN_REF、housekeep.env の HOUSEKEEP_DB_CONN_REF。6 UC の tier md の設定キー表(速報比較依頼を claim する / 速報クロスチェック runner へ完了通知を送信する / 確報比較依頼を登録して終端状態まで待機する / 確報比較依頼を claim する / background 実行の経過時間と終了状態を判定する / 保持日数を過ぎた終了済みの実行と確報比較依頼を判定する(キー表の直下の説明))。
-- 足さないもの: 新しい検査・error 文言・終了コード・BDD(relay-gate は解決先を検査しないため)。
-- 判断は decisions/spec-decision-032。
+CR-dcd8234d-011(spec 直接所有): validate-config.sh の --verbose で出す info 行の文言と、未知キーの warn 行・キーごとの検査の error 行との順を決める。
+- 書いた規則(契約 config_input_rules.env_files の「validate-config.sh の --verbose の info 行」。利用者が 2026-11-10 に確定):
+  - 文言: 読み取ったキーごとに 1 行 `info: key loaded key=<KEY> path: <path>`。コメント行と 0 バイトの空行を除く全行のキー(未知キー・値が空のキー・検査しないキーも含む)。key= と path: は制御文字の可視表記。値は出さない。
+  - 3 段目(キーごとの検査)の中の順: info 行をすべて → 未知キーの warn 行をすべて(どちらもキーがファイルに初めて出た順)→ キーごとの検査の error 行(と hint)。info 行と warn 行は終了コード・violations に数えず、stdout を変えない。
+  - 適用範囲: --feature-flag / --rapid-crosscheck / --final-crosscheck / --housekeep の 4 検証種別に同じ規則を同じ書き方で適用する(2026-11-10 は --feature-flag を除く 3 検証種別で決め、2026-11-11 の利用者決定で --feature-flag を加えた)。
+- 揃えた箇所: 契約 validate-config.sh の --verbose と stderr の補助出力、UC「クロスチェックのジョブマップと比較定義を定義する」の tier-facade.md と _api-summary.yaml(検証種別の数も 5 に直した)、UC「比較ツールで日次全量比較を実行して結果を保存する」の tier-final-crosscheck.md と _api-summary.yaml、UC「保持日数を過ぎた終了済みの実行と確報比較依頼を判定する」の tier-facade.md と _api-summary.yaml、出力規約 ui-design.md。
+- --feature-flag: 2026-11-11 の利用者決定で、同じ規則を適用した(4 検証種別)。契約の --verbose の説明・stderr の補助出力・env_files の規則(例 3)、出力規約、UC「feature flag を設定する」の tier-facade.md(BDD 3 場面)と _api-summary.yaml、ほかの 3 UC の「同じ規則」の列挙を揃えた。いまの実装は未追従(壊れた行でも止まらず info 行を出す。出力順が info → error → warn・error → error)で、該当 UC の実装の再実行で直す。
+
+CR-dcd8234d-012(spec 直接所有): 途中の段で止めた回に --verbose の info 行を出すかどうかを決める。
+- 書いた規則: info 行は 3 段目へ進んだ回だけ出す。1 段目(バイト・改行)と 2 段目(行の構造)で止めた回は出さず、止めた段の error 行(と 1 段目の hint)だけを出す。ファイルが無い・読めない回と内部障害(終了コード 6)の回も出さない。範囲は CR-dcd8234d-011 と同じ検証種別(2026-11-11 からは --feature-flag を含む 4 検証種別)。
+
+tier BDD を追加: 速報(info → warn → error の順、値が空のキーとコメント行、行の構造の検査で止めた回、バイト・改行の検査で止めた回)、確報(info → warn → error の順、行の構造の検査で止めた回)、feature flag(info → warn → error の順、有効な設定で stdout を変えないこと、行の構造の検査で止めた回)、ハウスキープ(info → warn → error と hint の順、同じキーの重複で止めた回)。
+検証種別の数の表記の揃え(意味は変えない): 契約どおり 5 つ(--housekeep を含む)に、slot runner の実体スクリプトを割り当てる / 切り替えた運用モードで業務ジョブを実行する / slot ごとのジョブマップを定義する / feature flag を設定する の _api-summary.yaml と、UC「feature flag を設定する」の tier-facade.md の排他の列挙を直した。
+実装は変えない(--rapid-crosscheck の実装は規則と一致することを実走で確認)。判断は decisions/spec-decision-033。
 
 feedback request:
-- feedback_request_id: 20261105_single_management_db
-- input_sha256: 97bb80ca208301540a11760f416c348f73ea0c1898d9535a80c5a8f013df194a
-- request_ids: CR-f4c8b261-001
-- direct_work_unit_ids: (なし)
-- causal_work_unit_ids: CR-f4c8b261-001#1
-- stage packet: docs/pipeline/feedback-runs/20261105_single_management_db/stage-packets/spec.md
+- feedback_request_id: 20261110_080548_impl_feedback_dcd8234d
+- input_sha256: d5c7a17dcf011fceadfa4ed54bd25731a2916da6fcbc78ad752be42249ca7389
+- request_ids: CR-dcd8234d-011, CR-dcd8234d-012
+- direct_work_unit_ids: CR-dcd8234d-011#1, CR-dcd8234d-012#1
+- causal_work_unit_ids: CR-dcd8234d-011#1, CR-dcd8234d-012#1
+- stage packet: docs/pipeline/feedback-runs/20261110_080548_impl_feedback_dcd8234d/stage-packets/spec.md
 
-trigger_event: infra:20261105_111000_feedback_single_management_db(他の上流 latest は変更なし)
+trigger_event: rdra:20261103_131000_feedback_housekeeping_db_required, arch:20261103_133000_feedback_housekeeping_db_required(上流 latest はその後も変更なし。spec だけを実行)
