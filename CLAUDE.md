@@ -52,7 +52,7 @@
 
 - distillery-impl の `dist-impl-run` で bootstrap(S0)から始める。tier 構成・契約・コマンドは bootstrap で再確定する
 - ATDD(spec の BDD シナリオを先にテスト化)→ TDD(RED → GREEN → REFACTOR)。I/O 境界は実体(一時ディレクトリ・実ファイル・実 DB)でテストする
-- 作業単位ごとに `toolbox:review-refute-loop` で外部レビューし、反証しきれない指摘は必ず修正する
+- 作業単位ごとに `review-refute-loop` で外部レビューし、反証しきれない指摘は必ず修正する
 - 詳細規約は `docs/dev-rules/` を正本とする
 
 ## 実装規約(再開時に適用)
