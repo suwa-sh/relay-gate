@@ -565,3 +565,19 @@ UI 画面が無いため可視化は「出力の集計・表形式」に限る�
 - UC ツリー: 34 UC / 8 BUC / 6 業務で不変。ティア構成も不変。E2E BDD・tier BDD・usdm[]・受け入れ条件の数は不変
 - トレーサビリティ: RDRA は要素の追加・削除なし。網羅率は不変(100%)。rdra-feedback.md への追記は不要(参照名の解決先は RDRA の粒度に無い)
 - 方針資料との照合: `tmp/RelayGateのしくみ.md` は管理 DB を 1 つのジョブキュー兼管理 DB として扱い(確報の依頼の状態は「管理DB内の実行状態」)、矛盾しない。方針資料の用語「速報管理DB」は業務ルールの表現として残し、設定キー表の参照名の説明だけ「管理 DB 接続情報の参照名」に揃えた
+
+## 差分更新履歴(event 20261110_153000_feedback_impl_feedback_dcd8234d)
+
+- 2026-11-10 15:30:00+09:00(event_id: `20261110_153000_feedback_impl_feedback_dcd8234d`)。2026-11-10 の設定検証の --verbose の info 行の文言・出す回・出力順の明記(direct 2 件 = CR-dcd8234d-011#1 / CR-dcd8234d-012#1、causal 2 件)
+- trigger_event: rdra `20261103_131000_feedback_housekeeping_db_required`、arch `20261103_133000_feedback_housekeeping_db_required`(上流 latest はその後も変更なし。spec だけを実行)
+- design 無しモード判定: 引数 `design_available=false`(最優先条件)。`_inputs-digest.md` は extractSections.js で本イベントの event_id で作り直した(arch / nfr の内容は前イベントと同じ)
+- CR-dcd8234d-011#1(spec 直接所有): 契約 config_input_rules.env_files に「validate-config.sh の --verbose の info 行」を足した。文言 `info: key loaded key=<KEY> path: <path>`(読み取ったキーごとに 1 行。値は出さない)、3 段目の中の順(info 行をすべて → 未知キーの warn 行をすべて → キーごとの検査の error 行と hint)、--rapid-crosscheck / --final-crosscheck / --housekeep の 3 検証種別に同じ規則。validate-config.sh の --verbose と stderr の補助出力から参照した
+- CR-dcd8234d-012#1(spec 直接所有): 同じ規則に、1 段目・2 段目で止めた回(と、ファイル不在・内部障害の回)は info 行を出さないことを書いた
+- 揃えた UC: クロスチェックのジョブマップと比較定義を定義する(tier-facade.md・_api-summary.yaml。検証種別の数も 5 に直した)/ 比較ツールで日次全量比較を実行して結果を保存する(tier-final-crosscheck.md・_api-summary.yaml)/ 保持日数を過ぎた終了済みの実行と確報比較依頼を判定する(tier-facade.md・_api-summary.yaml)。出力規約 ui-design.md にも要約を足した
+- tier BDD を 11 場面足した(速報 4、確報 2、ハウスキープ 2、feature flag 3)。反証レビュー round 1 の minor 5 件(--verbose の説明の言い方、段の呼び名の不揃い、止めた回の stdout の判定、確報の止めた回の場面、速報の書式)を直した。E2E BDD・usdm[]・受け入れ条件の数は不変
+- --feature-flag: 確認事項として利用者に返し、2026-11-11 に「ほかの 3 種類と同じ規則にそろえる(実装の直しはマージ直後の再実行)」と決まった。規則の適用対象を 4 検証種別に広げ、UC「feature flag を設定する」の tier-facade.md と _api-summary.yaml を揃え、tier BDD を 3 場面足した。いまの実装は未追従(判断は spec-decision-033)
+- 実装の照合: --rapid-crosscheck の実装(読み取り専用で参照)を実走し、規則の例と BDD の期待値が実際の出力と一致することを確認した。--final-crosscheck / --housekeep は未実装
+- 検証種別の数の表記の揃え(意味は変えない): slot runner の実体スクリプトを割り当てる / 切り替えた運用モードで業務ジョブを実行する / slot ごとのジョブマップを定義する / feature flag を設定する の _api-summary.yaml と、UC「feature flag を設定する」の tier-facade.md の排他の列挙を、契約どおり 5 つ(--housekeep を含む)に直した
+- UC ツリー: 34 UC / 8 BUC / 6 業務で不変。ティア構成も不変
+- トレーサビリティ: RDRA は要素の追加・削除なし。網羅率は不変(100%)。rdra-feedback.md への追記は不要(標準エラーの行の文言・順は RDRA の粒度に無い)
+- 方針資料との照合: `tmp/RelayGateのしくみ.md` は設定検証の補助出力の文言を定めておらず、矛盾しない

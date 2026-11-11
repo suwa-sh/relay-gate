@@ -1,0 +1,26 @@
+{
+  "schema_version": "distillery.feedback-run-status/v1",
+  "feedback_request_id": "20261110_080548_impl_feedback_dcd8234d",
+  "input_sha256": "d5c7a17dcf011fceadfa4ed54bd25731a2916da6fcbc78ad752be42249ca7389",
+  "ambiguity_policy": "recommended_auto",
+  "state": "completed",
+  "stages": [
+    {
+      "id": "spec",
+      "state": "completed",
+      "event_ids": [
+        "20261110_153000_feedback_stage_spec"
+      ],
+      "direct_work_unit_ids": [
+        "CR-dcd8234d-011#1",
+        "CR-dcd8234d-012#1"
+      ],
+      "causal_work_unit_ids": [
+        "CR-dcd8234d-011#1",
+        "CR-dcd8234d-012#1"
+      ]
+    }
+  ],
+  "run_id": "feedback-20261110_080548_impl_feedback_dcd8234d-20261110_152500-20",
+  "attempt": 1
+}

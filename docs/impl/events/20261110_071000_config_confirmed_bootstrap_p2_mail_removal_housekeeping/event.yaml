@@ -1,0 +1,83 @@
+event_id: "20261110_071000_config_confirmed_bootstrap_p2_mail_removal_housekeeping"
+type: config_confirmed
+uc_id: null
+stage: "S0"
+payload:
+  confirmed_by: "mechanical_followup"
+  confirmed_via: "orchestrator dispatch (2026-11-10 bootstrap rerun): differences uniquely determined by spec-event.yaml files[] and _cross-cutting/uc-dependencies.md are applied without user confirmation"
+  derived_from:
+    spec_event: "f03be56c530be8bab254ec3a1086ad9c2b0b6d9d07eae2df13bda10e26aab211"
+    uc_dependencies: "docs/specs/latest/_cross-cutting/uc-dependencies.md (実装順序の推奨 段 11 / 段 13)"
+  items:
+    - key: "uc_map.use_cases[bc6f11a5]"
+      before:
+        uc_id: "bc6f11a5"
+        business: "実行監視業務"
+        buc: "background 実行監視フロー"
+        uc: "background 異常の通知メールを受け取る"
+        uc_english_name: "Receive background alert mail"
+        branch_slug: "receive-background-alert-mail"
+        path: "docs/specs/latest/実行監視業務/background 実行監視フロー/background 異常の通知メールを受け取る"
+        tiers:
+          - tier-ops
+        atdd_scenarios:
+          - SPEC-012-01-2
+        atdd_confirmed: true
+      after: null
+      note: "spec-event.yaml から UC が削除された(feedback run 20261101 のメール送信廃止)。docs/impl/latest/bc6f11a5/ の状態は存在しない"
+    - key: "uc_map.use_cases[507350f0]"
+      before: null
+      after:
+        uc_id: "507350f0"
+        business: "実行監視業務"
+        buc: "background 実行監視フロー"
+        uc: "ハング検知ジョブの異常終了を確認する"
+        path: "docs/specs/latest/実行監視業務/background 実行監視フロー/ハング検知ジョブの異常終了を確認する"
+        tiers:
+          - tier-ops
+        atdd_scenarios: []
+        atdd_confirmed: false
+      note: "uc-dependencies.md の UC-17(段 11 の先頭)。削除した bc6f11a5 と同じ位置に置いた"
+    - key: "uc_map.use_cases[24161a85]"
+      before: null
+      after:
+        uc_id: "24161a85"
+        business: "ハウスキープ業務"
+        buc: "ハウスキープフロー"
+        uc: "保持日数を過ぎた終了済みの実行と確報比較依頼を判定する"
+        path: "docs/specs/latest/ハウスキープ業務/ハウスキープフロー/保持日数を過ぎた終了済みの実行と確報比較依頼を判定する"
+        tiers:
+          - tier-facade
+          - tier-ops
+        atdd_scenarios: []
+        atdd_confirmed: false
+      note: "uc-dependencies.md の UC-33(段 13)。末尾に追加"
+    - key: "uc_map.use_cases[11f3d6b8]"
+      before: null
+      after:
+        uc_id: "11f3d6b8"
+        business: "ハウスキープ業務"
+        buc: "ハウスキープフロー"
+        uc: "成果物と管理 DB の履歴を削除する"
+        path: "docs/specs/latest/ハウスキープ業務/ハウスキープフロー/成果物と管理 DB の履歴を削除する"
+        tiers:
+          - tier-ops
+        atdd_scenarios: []
+        atdd_confirmed: false
+      note: "uc-dependencies.md の UC-34(段 13)。24161a85 の後に追加"
+    - key: "uc_map.use_cases order"
+      before: [fd678b04, eff24f55, dcd8234d, 65b09d93, 09730858, 7c41c7cd, 43850d68, 5ebe8db7, f0147a84, 71e88789, a9a9b816, 052abe8b, fe00211d, 5d9cc326, 23e26223, 256abc3b, 17f1a809, 3b33d088, 27f67672, 4145bcb9, 5031379f, ca5eedc2, e4ea8aaa, 49a194f7, d0977c60, e96c1600, bc6f11a5, 1415f1a7, 9aedf7cc, 8af695ba, 15a5e2db, 24a0fcc4]
+      after: [fd678b04, eff24f55, dcd8234d, 65b09d93, 09730858, 7c41c7cd, 43850d68, 5ebe8db7, f0147a84, 71e88789, a9a9b816, 052abe8b, fe00211d, 5d9cc326, 23e26223, 256abc3b, 17f1a809, 3b33d088, 27f67672, 4145bcb9, 5031379f, ca5eedc2, e4ea8aaa, 49a194f7, d0977c60, e96c1600, 507350f0, 1415f1a7, 9aedf7cc, 8af695ba, 15a5e2db, 24a0fcc4, 24161a85, 11f3d6b8]
+      note: "既存 31 UC の相対順は不変"
+  unchanged:
+    - "impl-config.yaml(tiers / commands / datastore_owner / contracts[] / capabilities すべて不変。contracts_decl 7841f9ba 不変)"
+    - "既存 31 UC の tiers / path / 相対順 / uc_english_name / branch_slug / atdd_scenarios / atdd_confirmed"
+  pending_user_confirmation:
+    - key: "uc_map.use_cases[507350f0].uc_english_name / branch_slug"
+      proposal: "Check hang detector job failure / check-hang-detector-job-failure"
+    - key: "uc_map.use_cases[24161a85].uc_english_name / branch_slug"
+      proposal: "Select expired runs for housekeeping / select-expired-runs-for-housekeeping"
+    - key: "uc_map.use_cases[11f3d6b8].uc_english_name / branch_slug"
+      proposal: "Delete expired artifacts and history / delete-expired-artifacts-and-history"
+    - note: "uc-map には未保存(state-schema.md: ユーザー確認後に保存。欠落時は UC 開始前に確認・保存する)"
+created_at: "2026-11-10T07:10:00+09:00"

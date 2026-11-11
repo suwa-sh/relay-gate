@@ -1,0 +1,26 @@
+Spec 差分更新(design 無しモード): 2026-11-10 の設定検証の --verbose の info 行の文言・出す回・出力順の明記(dist-pipeline feedback mode Step6)。上流 latest(usdm / rdra / nfr / arch / infra)は変更なし。
+
+CR-dcd8234d-011(spec 直接所有): validate-config.sh の --verbose で出す info 行の文言と、未知キーの warn 行・キーごとの検査の error 行との順を決める。
+- 書いた規則(契約 config_input_rules.env_files の「validate-config.sh の --verbose の info 行」。利用者が 2026-11-10 に確定):
+  - 文言: 読み取ったキーごとに 1 行 `info: key loaded key=<KEY> path: <path>`。コメント行と 0 バイトの空行を除く全行のキー(未知キー・値が空のキー・検査しないキーも含む)。key= と path: は制御文字の可視表記。値は出さない。
+  - 3 段目(キーごとの検査)の中の順: info 行をすべて → 未知キーの warn 行をすべて(どちらもキーがファイルに初めて出た順)→ キーごとの検査の error 行(と hint)。info 行と warn 行は終了コード・violations に数えず、stdout を変えない。
+  - 適用範囲: --feature-flag / --rapid-crosscheck / --final-crosscheck / --housekeep の 4 検証種別に同じ規則を同じ書き方で適用する(2026-11-10 は --feature-flag を除く 3 検証種別で決め、2026-11-11 の利用者決定で --feature-flag を加えた)。
+- 揃えた箇所: 契約 validate-config.sh の --verbose と stderr の補助出力、UC「クロスチェックのジョブマップと比較定義を定義する」の tier-facade.md と _api-summary.yaml(検証種別の数も 5 に直した)、UC「比較ツールで日次全量比較を実行して結果を保存する」の tier-final-crosscheck.md と _api-summary.yaml、UC「保持日数を過ぎた終了済みの実行と確報比較依頼を判定する」の tier-facade.md と _api-summary.yaml、出力規約 ui-design.md。
+- --feature-flag: 2026-11-11 の利用者決定で、同じ規則を適用した(4 検証種別)。契約の --verbose の説明・stderr の補助出力・env_files の規則(例 3)、出力規約、UC「feature flag を設定する」の tier-facade.md(BDD 3 場面)と _api-summary.yaml、ほかの 3 UC の「同じ規則」の列挙を揃えた。いまの実装は未追従(壊れた行でも止まらず info 行を出す。出力順が info → error → warn・error → error)で、該当 UC の実装の再実行で直す。
+
+CR-dcd8234d-012(spec 直接所有): 途中の段で止めた回に --verbose の info 行を出すかどうかを決める。
+- 書いた規則: info 行は 3 段目へ進んだ回だけ出す。1 段目(バイト・改行)と 2 段目(行の構造)で止めた回は出さず、止めた段の error 行(と 1 段目の hint)だけを出す。ファイルが無い・読めない回と内部障害(終了コード 6)の回も出さない。範囲は CR-dcd8234d-011 と同じ検証種別(2026-11-11 からは --feature-flag を含む 4 検証種別)。
+
+tier BDD を追加: 速報(info → warn → error の順、値が空のキーとコメント行、行の構造の検査で止めた回、バイト・改行の検査で止めた回)、確報(info → warn → error の順、行の構造の検査で止めた回)、feature flag(info → warn → error の順、有効な設定で stdout を変えないこと、行の構造の検査で止めた回)、ハウスキープ(info → warn → error と hint の順、同じキーの重複で止めた回)。
+検証種別の数の表記の揃え(意味は変えない): 契約どおり 5 つ(--housekeep を含む)に、slot runner の実体スクリプトを割り当てる / 切り替えた運用モードで業務ジョブを実行する / slot ごとのジョブマップを定義する / feature flag を設定する の _api-summary.yaml と、UC「feature flag を設定する」の tier-facade.md の排他の列挙を直した。
+実装は変えない(--rapid-crosscheck の実装は規則と一致することを実走で確認)。判断は decisions/spec-decision-033。
+
+feedback request:
+- feedback_request_id: 20261110_080548_impl_feedback_dcd8234d
+- input_sha256: d5c7a17dcf011fceadfa4ed54bd25731a2916da6fcbc78ad752be42249ca7389
+- request_ids: CR-dcd8234d-011, CR-dcd8234d-012
+- direct_work_unit_ids: CR-dcd8234d-011#1, CR-dcd8234d-012#1
+- causal_work_unit_ids: CR-dcd8234d-011#1, CR-dcd8234d-012#1
+- stage packet: docs/pipeline/feedback-runs/20261110_080548_impl_feedback_dcd8234d/stage-packets/spec.md
+
+trigger_event: rdra:20261103_131000_feedback_housekeeping_db_required, arch:20261103_133000_feedback_housekeeping_db_required(上流 latest はその後も変更なし。spec だけを実行)

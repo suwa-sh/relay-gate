@@ -1,0 +1,69 @@
+stage: S8
+uc_id: "dcd8234d"
+mode: initial
+manifest_sha256: "a9251f3bf172a472c8f5eab10d58a8008199e8400411907d728575d98a41f39a"
+manifest_projection: v2
+result: pass
+status: "published"
+feedback_request:
+  feedback_id: "20261110_080548_impl_feedback_dcd8234d"
+  draft_path: null
+  published_path: "docs/impl/latest/dcd8234d/feedback-requests/20261110_080548_impl_feedback_dcd8234d.md"
+  input_sha256: "d5c7a17dcf011fceadfa4ed54bd25731a2916da6fcbc78ad752be42249ca7389"
+  published_sha256: "d5c7a17dcf011fceadfa4ed54bd25731a2916da6fcbc78ad752be42249ca7389"
+  draft_sha256: "d5c7a17dcf011fceadfa4ed54bd25731a2916da6fcbc78ad752be42249ca7389"
+  supersedes: null
+  review_approved_event_id: "20261110_083307_review_approved_dcd8234d_feedback_publish"
+  review_evidence_event_id: "20261110_082425_s9_review_generated_dcd8234d"
+  publish_started_event_id: "20261110_083455_feedback_request_publish_started_dcd8234d"
+  published_event_id: "20261110_083523_feedback_request_published_dcd8234d"
+  published_at: "2026-11-10T08:35:23+09:00"
+  request_count: 2
+  blocker_count: 0
+  cr_ids:
+    - "CR-dcd8234d-011"
+    - "CR-dcd8234d-012"
+  severity:
+    blocker: 0
+    spec-gap: 2
+    improvement: 0
+  verify: "feedbackRequest.js verify --feedback PASS (2 requests)"
+as_built_summary: "docs/impl/latest/dcd8234d/feedback/as-built-summary.md"
+classification:
+  spec_origin: 2
+  implementation_origin_other_uc: 2
+  environment_origin: 0
+  resolved_past_issues: 6
+  non_spec_issues: 1
+other_uc_rerun_required:
+  - uc_id: "fd678b04"
+    note: "validate-config.sh --feature-flag の env 読み込みが現在の契約に未追従。tier BDD は仕様 17 シナリオに対して 9"
+  - uc_id: "eff24f55"
+    note: "tier BDD に仕様の Scenario 1 件が無い(33 件中 32 件)。共有のバイト検査の出力順の修正で --job-map の出力順が変わった"
+learnings: 4
+proposals:
+  skill: true
+  context: true
+completed_at: "2026-11-10T08:05:48+09:00"
+completed_by: "dist-impl-feedback@0.14.1"
+publish:
+  mode: "publish"
+  published_at: "2026-11-10T08:35:23+09:00"
+  published_path: "docs/impl/latest/dcd8234d/feedback-requests/20261110_080548_impl_feedback_dcd8234d.md"
+  feedback_id: "20261110_080548_impl_feedback_dcd8234d"
+  input_sha256: "d5c7a17dcf011fceadfa4ed54bd25731a2916da6fcbc78ad752be42249ca7389"
+  published_sha256: "d5c7a17dcf011fceadfa4ed54bd25731a2916da6fcbc78ad752be42249ca7389"
+  request_count: 2
+  blocker_count: 0
+  review_approved_event_id: "20261110_083307_review_approved_dcd8234d_feedback_publish"
+  review_evidence_event_id: "20261110_082425_s9_review_generated_dcd8234d"
+  publish_started_event_id: "20261110_083455_feedback_request_publish_started_dcd8234d"
+  published_event_id: "20261110_083523_feedback_request_published_dcd8234d"
+  evidence_check: "approval / S9 event / S9 done の feedback_review_evidence(feedback_id・draft_sha256・request_count 2・blocker_count 0・requests 2 件)が exact 一致。implementation_review_evidence の canonical 4 field(gate 6/6 pass、open blocker 0、open major 0、assumption evidence 1c194ce3…)が 3 者で exact 一致。current evidence への approval は 1 件のみ、最新 S9 event と最新 approval が一致、同 feedback_id の publish event は事前に 0 件。順序は review evidence 082425 → approval 083307 → publish started 083455 → published 083523"
+  assumption_recheck: "validateAssumptions.js record / verdicts を attempt-4 の tier-facade で再実行し、sha256 f21b6b20… と verdicts_sha256 432c6b7b… が S4/S5 done と一致。evidence 再計算 1c194ce3… が S9 evidence と一致。assumption_decisions 2 件(A-001 / A-002、ともに confirmed)は S5 verdicts と 1:1。回答必須(security / persistence)0 件、rejected 0 件"
+  bytes_check: "no-follow で開いた fd から sha256 を取得。UTF-8 / BOM なし / LF / NFC。front matter の feedback_id、CR 2 件、必須 4 節 x 2、severity(spec-gap 2、blocker 0)を確認。feedbackRequest.js verify --feedback PASS(2 requests)を rename 前後で確認"
+  rename_check: "rename 直前に lstat を再実行し dev / inode / size(16777230 / 475861195 / 8194)が検証時と一致。親 component は UC root 内の regular directory で symlink なし、realpath 一致、same filesystem。公開先は未存在。rename 後も同一 inode の regular file で sha256 一致"
+  draft_removed: true
+  next_state: "blocked_on_spec"
+  write_set_note: "書き込みは feedback/draft.md(rename 元)、feedback-requests/(公開先)、本 done、events/ の publish_started / published の 2 件のみ。本文は変更していない。git コマンドは読み取りのみ"
+  published_by: "dist-impl-feedback@0.14.1"

@@ -1,0 +1,176 @@
+stage: S2
+uc_id: dcd8234d
+manifest_sha256: 5db5e3819c02678b6d91faab5205146734d755db1bf7a5089be8076940257b74
+manifest_projection: v2
+result: pass
+scaffold_mode: full
+rerun_reason: "仕様の還流(feedback run 2〜9。2026-11-01〜11-05)で spec.md / tier-facade.md / CLI 契約 / usdm が変わり全 stage が stale になった後の再生成。tiers 引数は無いが既存実装(facade/src)が残るため、全段 red は成立しない。新規・変更分が仕様差分を理由に fail し、変わっていない分が green のままであることを red baseline として確認した"
+branch_slug: define-crosscheck-job-map-and-comparison-definitions
+red_baseline: pass
+red_baseline_mode: "diff_only(既存実装あり。dist-impl-implement の scoped 再実行の done 条件に準じる)"
+red_baseline_note: "新規・変更したテストのうち現行実装と仕様が食い違う分だけが、仕様差分(spec-decision-026 / 028 / 029 / 030 に実装との差分として記録済み)を理由に assertion failure で fail する。パースエラー・設定ミス・undefined step・ambiguous step は 0 件。変わっていない既存テストと、仕様は変わったが現行実装が既に満たす分は green"
+scaffold_scope:
+  tiers:
+    - tier-facade
+  uc_feature: regenerated
+  atdd: untouched
+transcription_check:
+  method: "spec.md の E2E 完了条件(BDD)2 ブロックと tier-facade.md のティア完了条件(BDD)1 ブロックをスクリプトで抽出し、そのまま feature へ書き出した(手入力なし)。先頭に出典コメント 2 行を付与"
+  uc_feature_verbatim: true
+  tier_feature_verbatim: true
+  atdd_feature_untouched: true
+generated:
+  uc_bdd:
+    feature: features/uc/define-crosscheck-job-map-and-comparison-definitions.feature
+    steps: features/uc/steps/define-crosscheck-job-map-and-comparison-definitions.steps.js
+    action: regenerated
+    scenarios: 10
+    changes:
+      - "Scenario 1 に And stderr に error 行は出ない を追加"
+      - "新規 Scenario: 引数部分の内容は検査しない(SPEC-004-04)"
+      - "異常系 4 件の Then を「の 1 行だけが error 行として出る」に変更(error 行がちょうど 1 行で一致することを検証)"
+      - "新規 Scenario Outline: クロスチェックジョブマップと対象カタログの検証種別は無い(SPEC-004-04)(Examples 2 件)"
+  tier_bdd:
+    - tier: tier-facade
+      feature: facade/features/define-crosscheck-job-map-and-comparison-definitions.feature
+      steps: facade/features/steps/define-crosscheck-job-map-and-comparison-definitions.steps.js
+      action: regenerated
+      scenarios: 12
+      changes:
+        - "新規: 引数部分に存在しないパスや未知の語があっても valid"
+        - "新規: 前後の空白を除いて # で始まる行はコメントとして読み飛ばす(Scenario Outline 3 例)"
+        - "新規: 起動コマンドのキーが 2 行あれば 2 でどちらの値も使わない"
+        - "新規: 字下げしてコメントにした起動コマンドの行は読まない"
+        - "新規: バイト・改行の違反は全件を行番号の昇順に出し violations は hint を数えない"
+  atdd:
+    feature: features/atdd/SPEC-004-04.feature
+    feature_action: untouched
+    steps: features/atdd/steps/define-crosscheck-job-map-and-comparison-definitions.steps.js
+    steps_action: updated
+    target_scenarios:
+      - SPEC-004-04-5
+      - SPEC-004-04-6
+      - SPEC-004-04-7
+      - SPEC-004-04-8
+      - SPEC-004-04-10
+      - SPEC-004-04-11
+      - SPEC-004-04-12
+    changes:
+      - "-10 の Given を bootstrap 再生成後の文言に合わせ、任意の引数に {params}(引数 1 つ全体)を追加"
+      - "-12 の Given / Then を追加(When は -5 と共有)"
+      - "USDM と spec の食い違いのコメントを、USDM が 3 点に改まった現在の仕様に合わせて書き直した"
+    undefined_steps_in_target: 0
+    excluded_note: "SPEC-004-04-9 は別 UC(256abc3b)の担当のため step を定義しない"
+  tdd:
+    - tier: tier-facade
+      files:
+        - facade/test/usecase/validate_rapid_crosscheck.bats
+      tests_before: 15
+      tests_after: 20
+      rewritten_tests: 5
+      added_tests: 6
+      removed_tests: 1
+      removed_note: "「同じキーが重複した場合_後の行の値で検証すること」は spec-decision-028(同じキーの重複は設定エラー)と矛盾するため、duplicate key のテストに置き換えた"
+red_tests:
+  tier_bdd:
+    - name: "前後の空白を除いて # で始まる行はコメントとして読み飛ばす(<SP><SP># memo)"
+      reason: "spec-decision-026: 現行実装は字下げした # 行を invalid line にする"
+    - name: "前後の空白を除いて # で始まる行はコメントとして読み飛ばす(<TAB># memo)"
+      reason: "spec-decision-026: 同上"
+    - name: "起動コマンドのキーが 2 行あれば 2 でどちらの値も使わない"
+      reason: "spec-decision-028: 現行実装は後の行の値で検証し終了コード 0"
+    - name: "バイト・改行の違反は全件を行番号の昇順に出し violations は hint を数えない"
+      reason: "spec-decision-028 の 4: 現行実装は第 1 段で止めたとき stdout を出さない(stderr の 8 行は一致)"
+  tdd:
+    - name: "validate_rapid_crosscheck_同じキーが2行ある場合_duplicate keyで終了コード2になりどちらの値も使わないこと"
+      reason: "spec-decision-028"
+    - name: "validate_rapid_crosscheck_invalid lineと前後に空白のある同じキーがある場合_invalid lineの後に重複キーを初出行の昇順で出すこと"
+      reason: "spec-decision-028"
+    - name: "validate_rapid_crosscheck_KEY=VALUEでない行と空白だけの行がある場合_invalid lineを行ごとに出し固定順のstdoutで終了コード2であること"
+      reason: "spec-decision-028 の 4(止めたときの stdout)"
+    - name: "validate_rapid_crosscheck_字下げした#行がある場合_コメント行として読み飛ばし終了コード0であること"
+      reason: "spec-decision-026"
+    - name: "validate_rapid_crosscheck_キー表に無いキーがある場合_unknown keyをwarnで出して継続し終了コード0であること"
+      reason: "spec-decision-030 の 5"
+    - name: "validate_rapid_crosscheck_CRLF改行の場合_carriage returnで拒否しhintを1回出し固定順のstdoutを出すこと"
+      reason: "spec-decision-028 の 4"
+    - name: "validate_rapid_crosscheck_1行目にNULとUTF-8違反とBOMとCRが重なる場合_NUL_UTF-8_BOM_CRの順に1種類1行で出すこと"
+      reason: "spec-decision-029 の 8(順の修正は validate_job_map.sh の共有関数。ジョブマップ UC の出力も変わる)"
+    - name: "validate_rapid_crosscheck_BOMやNULを含む場合_原因ごとの文言で拒否すること"
+      reason: "spec-decision-028 の 4"
+    - name: "validate_rapid_crosscheck_verboseでキーが@や*の場合_ほかのキーと同じくinfoとunknown keyのwarnを1回ずつ出すこと"
+      reason: "spec-decision-030 の 5"
+    - name: "validate_rapid_crosscheck_5000行で未知キーが4999行のenvの場合_10秒以内に検証を終え未知キーを全件warnで出すこと"
+      reason: "spec-decision-030 の 5(10 秒の判定は pass。warn の件数で fail)"
+    - name: "validate_rapid_crosscheck_5000行すべてが同じキーのenvの場合_10秒以内に重複キーを1行で出し終了コード2であること"
+      reason: "spec-decision-028(10 秒の判定は pass。終了コードで fail)"
+green_after_change_note: "仕様は変わったが現行実装が既に満たすため green の新規・変更分: UC BDD の全 10 Scenario(引数部分 / error 行が 1 行だけ / 検証種別が無い Outline を含む)、tier BDD の「引数部分に存在しないパスや未知の語があっても valid」「字下げしてコメントにした起動コマンドの行は読まない」「# memo のコメント行」、ATDD の 7 Scenario 全件(-10 / -12 を含む)"
+test_runs:
+  - stage: uc_bdd
+    cwd: "."
+    command: "npx cucumber-js --config cucumber.cjs features/uc"
+    exit_code: 0
+    summary: "46 scenarios (46 passed), 177 steps (177 passed)"
+    target_feature_summary: "10 scenarios (10 passed), 37 steps (37 passed)"
+    undefined_steps: 0
+    ambiguous_steps: 0
+  - stage: tier_bdd
+    tier: tier-facade
+    cwd: facade
+    command: "npx cucumber-js --config ../cucumber.cjs features"
+    exit_code: 1
+    summary: "53 scenarios (4 failed, 49 passed), 181 steps (4 failed, 1 skipped, 176 passed)"
+    fail_reason: spec_diff_not_yet_implemented
+    failed_scope: "本 UC の feature の 4 Scenario(red_tests.tier_bdd)。本 UC の残り 8 Scenario と他 UC の 41 Scenario は pass"
+    undefined_steps: 0
+    ambiguous_steps: 0
+  - stage: tdd
+    tier: tier-facade
+    cwd: facade
+    command: "bats -r test"
+    exit_code: 1
+    summary: "378 tests, 367 ok, 11 not ok"
+    fail_reason: spec_diff_not_yet_implemented
+    failed_scope: "validate_rapid_crosscheck.bats の 11 件(red_tests.tdd)。各テストは仕様差分の assertion で fail する(パースエラー・設定ミスではない)。他 367 件は ok"
+  - stage: atdd
+    cwd: "."
+    command: "npx cucumber-js --config cucumber.cjs features/atdd --tags '@atdd_SPEC-004-04-5 or @atdd_SPEC-004-04-6 or @atdd_SPEC-004-04-7 or @atdd_SPEC-004-04-8 or @atdd_SPEC-004-04-10 or @atdd_SPEC-004-04-11 or @atdd_SPEC-004-04-12'"
+    exit_code: 0
+    summary: "7 scenarios (7 passed), 21 steps (21 passed)"
+    selected_count_matches_atdd_scenarios: true
+    note: "features/atdd 全体の dry-run で ambiguous は 0 件(undefined は他 UC の未実装 Scenario)"
+format_check:
+  tier: tier-facade
+  command: "shfmt -d ."
+  exit_code: 0
+lint:
+  tier: tier-facade
+  command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+  exit_code: 0
+  extra: "shellcheck -s bash test/usecase/validate_rapid_crosscheck.bats も exit 0"
+dom_snapshot_tests: not_applicable
+dom_snapshot_note: "has_design_system: false。frontend tier が無いため DOM 一致テスト・共通 helper は生成しない。矛盾 3 条件の確認対象も無い"
+spec_decisions:
+  - id: spec-decision-023
+    scope: out_of_scope
+    note: "実装との差分は feature flag 設定の読み込み(feature_flag_config.sh)だけ。速報クロスチェック設定はキーが空の行を既に invalid line にしており、既存テストで確認済み"
+  - id: spec-decision-026
+    scope: in_scope
+    note: "tier BDD のコメント行 Outline と bats の字下げした # 行のテストで red。字下げしてコメントにした起動コマンドの tier BDD は判断記録のとおり外から違いが見えず green"
+  - id: spec-decision-028
+    scope: in_scope
+    note: "同じキーの重複と、止めたときの stdout 固定順 6 行を tier BDD 2 件・bats 7 件で red。feature flag 側は範囲外"
+  - id: spec-decision-029
+    scope: in_scope
+    note: "同じ行のバイト違反の順(NUL → UTF-8 → BOM → CR)を bats 1 件で red。共有関数(validate_job_map.sh)の修正はジョブマップ UC の出力も変える。hang-detector / housekeep / feature flag 側は範囲外"
+  - id: spec-decision-030
+    scope: in_scope_partial
+    note: "validate-config.sh --rapid-crosscheck の未知キーの warn を bats 3 件で red。速報 worker・確報 runner / worker の起動時検査、SPEC-005-06 の step は範囲外"
+  - id: spec-decision-031
+    scope: out_of_scope
+    note: "hang-detector.sh と確報の置き場ごとの中身。tier-facade の本 UC には該当なし"
+issues:
+  - docs/impl/latest/dcd8234d/issues/20261110_073100_cross-uc-scenarios.md
+issues_note: "ハーネス注入が必要な UC 横断 Scenario は 0 件。仕様の不足・矛盾の起票は無し(旧 issue 20261027_083600 の USDM と spec の食い違いは解消)"
+completed_at: '2026-11-10T07:31:07+09:00'
+completed_by: dist-impl-implement@0.14.1

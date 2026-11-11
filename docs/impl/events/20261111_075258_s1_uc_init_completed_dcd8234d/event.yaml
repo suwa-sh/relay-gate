@@ -1,0 +1,38 @@
+event_id: 20261111_075258_s1_uc_init_completed_dcd8234d
+type: stage_completed
+uc_id: dcd8234d
+stage: S1
+payload:
+  result: pass
+  manifest_sha256: ace373d0922c684b7e505c96ccc9d3b2cdbeafbb67dbe071a2e32f92c9399082
+  manifest_projection: v2
+  done:
+    stage: S1
+    uc_id: dcd8234d
+    manifest_sha256: ace373d0922c684b7e505c96ccc9d3b2cdbeafbb67dbe071a2e32f92c9399082
+    manifest_projection: v2
+    result: pass
+    input_preflight:
+      files_exist: true
+      yaml_parse: true
+      gherkin_blocks: 3
+      gherkin_blocks_note: spec.md 2 / tier-facade.md 1
+      tier_ids_in_arch:
+      - tier-facade
+      conditional_inputs_consistent: true
+    lineage_ok: true
+    lineage_note: spec-event 20261110_153000_feedback_impl_feedback_dcd8234d (feedback mode, spec only). usdm latest 20261103_131000, arch latest 20261103_133000 (both older than the spec event, unchanged). consistent
+    atdd_scenarios:
+    - SPEC-004-04-5
+    - SPEC-004-04-6
+    - SPEC-004-04-7
+    - SPEC-004-04-8
+    - SPEC-004-04-10
+    - SPEC-004-04-11
+    - SPEC-004-04-12
+    atdd_mapping: unchanged (usdm unchanged; atdd_confirmed true). all tags exist in features/atdd/SPEC-004-04.feature
+    shared_spec_refs_note: 'direct: spec.md -> cli-command-contract.yaml / asyncapi.yaml; tier-facade.md -> cli-command-contract.yaml. transitive: rdb-schema.yaml / ui-design.md / data-visualization.md. 5 refs (same set; cli-command-contract.yaml and ui-design.md contents changed). _api-summary.yaml is legacy (no _contract-slice.json)'
+    scope_note: 'UC tiers stay [tier-facade]. what to follow: the --verbose info line rule (spec-decision-033) - 4 new tier BDD scenes in tier-facade.md, the comment near facade/src/usecase/validate_rapid_crosscheck.sh line 102. the same rule for --feature-flag / --final-crosscheck / --housekeep belongs to other UCs (not in this UC)'
+    completed_at: '2026-11-11T07:52:57+09:00'
+    completed_by: dist-impl-run@0.14.1
+created_at: '2026-11-11T07:52:57+09:00'

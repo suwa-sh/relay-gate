@@ -1,0 +1,21 @@
+event_id: 20261110_073213_s2_test_scaffold_completed_dcd8234d
+type: stage_completed
+uc_id: dcd8234d
+stage: S2
+payload:
+  result: pass
+  red_baseline: pass
+  mode: 'full (diff-only red: existing implementation remains)'
+  red:
+    tier_bdd: 4
+    unit: 11
+    uc_bdd: 0
+    atdd: 0
+  green:
+    tier_bdd: 49
+    unit: 367
+    uc_bdd: 46
+    atdd_this_uc: 7
+  manifest_sha256: 5db5e3819c02678b6d91faab5205146734d755db1bf7a5089be8076940257b74
+  manifest_projection: v2
+created_at: '2026-11-10T07:32:13+09:00'

@@ -6,11 +6,15 @@
 #   段 7〜8: 速報 claim・全量比較 → ジョブ単位比較・確報中継
 #   段 9: 結果参照 3 件(速報 / 確報 / 停止確認)
 #   段 10: hang-detector 3 段・ABORTED 遷移・リラン事前検証(監視・中止は実行成果物を読む消費者)
-#   段 11: メール受信・上限調整・復元起動・依頼再作成・運用モード実行(復旧系の消費者)
+#   段 11: ハング検知ジョブの異常終了確認・上限調整・復元起動・依頼再作成・運用モード実行(復旧系の消費者)
 #   段 12: 系譜追跡(リランが作る parent_run_id を読む最終消費者)
+#   段 13: ハウスキープ 2 件(全テーブル・成果物・通知済みの印を読んで判定し削除する最終消費者)
 # 同一段の UC は依存が無いため BUC のフロー順を保った。uc_id は state-schema.md の生成式(NFC + canonical JSON + sha256 先頭 8 桁)。
+# 2026-11-10 の追従(events/20261110_071000_config_confirmed_bootstrap_p2_mail_removal_housekeeping): メール受信 UC を削除し、
+#   その位置(段 11 の先頭)に「ハング検知ジョブの異常終了を確認する」を置き、ハウスキープ 2 UC を末尾(段 13)に追加した。
 # has_design_system: false かつ frontend tier 無しのため、ui_screens / ui_screen_resolution はどの UC にも置かない(dist-impl-run S1 規則)。
-# UC→ATDD マッピング(Scenario 単位)は events/20260917_004437_config_confirmed_atdd_mapping_all_ucs の config_confirmed で全 UC 一括確定(atdd_confirmed: true)。
+# UC→ATDD マッピング(Scenario 単位)は events/20260917_004437_config_confirmed_atdd_mapping_all_ucs の config_confirmed で一括確定(atdd_confirmed: true)。
+# 2026-11-10 に追加した 3 UC は atdd_confirmed: false(S1 で確定)。uc_english_name / branch_slug も未確定のため置いていない(UC 開始前に確認・保存する)。
 schema_version: '1.0'
 id_length: 8
 use_cases:
@@ -55,6 +59,7 @@ use_cases:
   - SPEC-004-04-8
   - SPEC-004-04-10
   - SPEC-004-04-11
+  - SPEC-004-04-12
   atdd_confirmed: true
 - uc_id: 65b09d93
   business: 適用構成業務
@@ -443,18 +448,15 @@ use_cases:
   - SPEC-009-03-2
   - SPEC-009-04-1
   atdd_confirmed: true
-- uc_id: bc6f11a5
+- uc_id: 507350f0
   business: 実行監視業務
   buc: background 実行監視フロー
-  uc: background 異常の通知メールを受け取る
-  uc_english_name: Receive background alert mail
-  branch_slug: receive-background-alert-mail
-  path: docs/specs/latest/実行監視業務/background 実行監視フロー/background 異常の通知メールを受け取る
+  uc: ハング検知ジョブの異常終了を確認する
+  path: docs/specs/latest/実行監視業務/background 実行監視フロー/ハング検知ジョブの異常終了を確認する
   tiers:
   - tier-ops
-  atdd_scenarios:
-  - SPEC-012-01-2
-  atdd_confirmed: true
+  atdd_scenarios: []
+  atdd_confirmed: false
 - uc_id: 1415f1a7
   business: 実行監視業務
   buc: background 実行監視フロー
@@ -531,3 +533,22 @@ use_cases:
   atdd_scenarios:
   - SPEC-009-01-2
   atdd_confirmed: true
+- uc_id: 24161a85
+  business: ハウスキープ業務
+  buc: ハウスキープフロー
+  uc: 保持日数を過ぎた終了済みの実行と確報比較依頼を判定する
+  path: docs/specs/latest/ハウスキープ業務/ハウスキープフロー/保持日数を過ぎた終了済みの実行と確報比較依頼を判定する
+  tiers:
+  - tier-facade
+  - tier-ops
+  atdd_scenarios: []
+  atdd_confirmed: false
+- uc_id: 11f3d6b8
+  business: ハウスキープ業務
+  buc: ハウスキープフロー
+  uc: 成果物と管理 DB の履歴を削除する
+  path: docs/specs/latest/ハウスキープ業務/ハウスキープフロー/成果物と管理 DB の履歴を削除する
+  tiers:
+  - tier-ops
+  atdd_scenarios: []
+  atdd_confirmed: false

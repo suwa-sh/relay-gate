@@ -1,0 +1,31 @@
+schema_version: "1.0"
+uc_id: "dcd8234d"
+tier: "tier-facade"
+attempt: 4
+extraction:
+  candidate_count: 7
+  excluded_as_explicit: 5
+  recorded_count: 2
+assumptions:
+  - id: A-001
+    category: data_format
+    assumption: "validate-config.sh --rapid-crosscheck の (iii) の段では、まず --verbose の info 行をすべて(キーの初出の順)、続けて未知キーの warn 行をすべて(キーの初出の順)出し、その後に比較ツール起動コマンドの検証表の error 行を stderr へ出す(info と warn を行ごとに交互にはしない)"
+    target: "facade/src/usecase/validate_rapid_crosscheck.sh:117"
+    reason: "未知キーの warn を出すことは決まっているが、--rapid-crosscheck で warn と error 行・info 行の相対順は契約・tier md に定めが無い(hang-detector.env は物理行番号の昇順と定めるが rapid-crosscheck.env には無い)"
+    confidence: medium
+    spec_refs:
+      - "docs/specs/latest/適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/tier-facade.md#コマンド契約"
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#commands[validate-config.sh].stderr"
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#config_files[rapid-crosscheck.env].note"
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#config_input_rules.env_files"
+  - id: A-002
+    category: error_handling
+    assumption: "--rapid-crosscheck --verbose でも、入力の守備範囲の (i) バイト・改行または (ii) invalid line・同じキーの重複で止めた回は info: key loaded 行を出さない"
+    target: "facade/src/usecase/validate_rapid_crosscheck.sh:98"
+    reason: "env_files は (i)(ii) で止めたとき『その段の error 行(と hint)だけを出す』と定めるが、--verbose の補助出力(info)を同じく抑止するかは明記が無い。値を使わない回に読んだキーを示すのは誤解を招くため出さないことにした"
+    confidence: medium
+    spec_refs:
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#commands[validate-config.sh].options[--verbose]"
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#config_input_rules.byte_checks.stop"
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#config_input_rules.env_files"
+      - "docs/specs/latest/適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/tier-facade.md#コマンド契約"

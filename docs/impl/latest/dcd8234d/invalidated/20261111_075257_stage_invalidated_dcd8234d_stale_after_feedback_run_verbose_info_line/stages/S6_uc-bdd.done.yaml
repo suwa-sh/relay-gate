@@ -1,0 +1,62 @@
+stage: S6
+uc_id: dcd8234d
+manifest_sha256: a9251f3bf172a472c8f5eab10d58a8008199e8400411907d728575d98a41f39a
+manifest_projection: v2
+result: pass
+branch_slug: define-crosscheck-job-map-and-comparison-definitions
+tiers:
+  - tier-facade
+tier_impl_attempt: 4
+rerun: true
+rerun_reason: "仕様の還流(feedback run 2〜9)後の再実行。S2 再生成・S3 契約確認・S4 tier-facade attempt-4 ゲート通過・S5 verify pass(blocker 0)を受けて統合テストを実行した"
+feature: features/uc/define-crosscheck-job-map-and-comparison-definitions.feature
+feature_changed: false
+steps: features/uc/steps/define-crosscheck-job-map-and-comparison-definitions.steps.js
+steps_changed: true
+steps_change_summary: "自己点検による判定の強化 1 件。Scenario Outline(検証種別は無い)の Then で、捕捉した option が When で実際に渡した option と同じであることを追加で検証する(this.abolishedOption)。ほかの step は S2 生成のまま"
+self_check:
+  method: "全 Then の判定が期待値を実際に照合しているか(常に pass する空実装・存在確認だけの判定が無いか)を読み合わせた"
+  findings:
+    - "SPEC-004-01 の Then は stdout の全行を固定順で deepEqual 照合している"
+    - "異常系 4 件の「1 行だけが error 行として出る」は error: で始まる行の配列を [期待の 1 行] と deepEqual 照合している"
+    - "「管理 DB への接続は行われず」は PATH 先頭の psql / pg_isready 記録スタブが呼ばれないこと、「スクリプトは変更されていない」は facade/bin・facade/src の内容とモードのハッシュが前後で同じことで照合している"
+    - "Outline の Then は option を Then の文言から捕捉しており、When の option との一致を見ていなかった。Outline は同じ <option> を When と Then に入れるため現状で取り違えは起きないが、feature の片側だけが書き換わった場合の検出用に一致確認を追加した(実害のある弱点の修正ではなくガード)"
+  weak_assertions_remaining: 0
+source: "docs/specs/latest/適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/spec.md#E2E完了条件(BDD)"
+tier_impl_changed: false
+run:
+  cwd: "."
+  command: "npx cucumber-js --config cucumber.cjs features/uc"
+  exit_code: 0
+  summary: "46 scenarios (46 passed), 177 steps (177 passed)"
+  scenarios_total: 46
+  scenarios_passed: 46
+  scenarios_failed: 0
+  undefined_steps: 0
+  ambiguous_steps: 0
+target_feature_run:
+  command: "npx cucumber-js --config cucumber.cjs features/uc/define-crosscheck-job-map-and-comparison-definitions.feature"
+  exit_code: 0
+  summary: "10 scenarios (10 passed), 37 steps (37 passed)"
+  scenarios_total: 10
+  scenarios_passed: 10
+  scenarios_failed: 0
+preceding_uc_run:
+  features:
+    - features/uc/configure-feature-flags.feature
+    - features/uc/define-slot-job-maps.feature
+  scenarios_total: 36
+  scenarios_passed: 36
+  note: "全体実行 46 件のうち先行 UC(fd678b04 / eff24f55)の 36 件。step 定義は未変更で全件 pass"
+harness:
+  sandbox_root: "Scenario ごとの一時ディレクトリを root とし、feature の絶対パス(/etc/relay-gate/rapid-crosscheck.env, /opt/compare/*.sh)を root 配下の同じ相対位置に実ファイルで配置。起動コマンドのコマンド部分だけを root 配下へ写像し、引数部分は書き換えない。出力照合時に root 接頭辞を除去"
+  process: "facade/bin/validate-config.sh を実プロセスとして起動(--rapid-crosscheck / --crosscheck-job-map / --target-catalog)"
+  external_connections: none
+injections: []
+injections_note: "ハーネス注入なし。UC 横断 Scenario は 0 件(根拠: docs/impl/latest/dcd8234d/issues/20261110_073100_cross-uc-scenarios.md)。前提の新規抽出なし"
+cross_uc_refs:
+  - docs/impl/latest/dcd8234d/issues/20261110_073100_cross-uc-scenarios.md
+issues: []
+issues_note: "新規起票なし。全 Scenario が仕様どおりに通過し、仕様と実装の食い違いは見つからなかった"
+completed_at: '2026-11-10T07:54:30+09:00'
+completed_by: dist-impl-implement@0.14.1

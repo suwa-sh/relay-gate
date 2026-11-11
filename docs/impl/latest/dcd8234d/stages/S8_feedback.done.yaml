@@ -1,125 +1,53 @@
-stage: "S8"
+stage: S8
 uc_id: "dcd8234d"
-manifest_sha256: "945094d65bb404232b80a8b2e224753f6661edc1fcf8e311aafdea570dd022cd"
+mode: initial
+manifest_sha256: "426b0241023ffc06ae2d22909c4be05e28635272763b00d0eb084f534d74d95d"
 manifest_projection: v2
-mode: "refresh"
 result: pass
-status: "published"
-attempt: 4
-attempt_note: "仕様還流 2 件の反映後の再実行(stale 由来のため attempt-4 のまま)。前サイクルの draft と as-built は今サイクルの内容で作り直した。公開済み feedback-requests は変更していない"
-feedback_id: "20261027_091000_impl_feedback_dcd8234d"
-created_at: "2026-10-27T09:10:00+09:00"
-refreshed_at: "2026-10-27T09:55:13+09:00"
-refresh_source: "docs/impl/latest/dcd8234d/review/review-notes.md の「2026-10-27 仕様還流後の再レビュー」節(S9 evidence 20261027_092806_s9_review_generated_dcd8234d)"
-updated: []
-added:
-  - "CR-dcd8234d-010"
-removed: []
-refresh_note: "CR-dcd8234d-009 は bytes を変えていない(追記のみ)。前提 A-009 の spec_change 却下を CR-dcd8234d-010 として追加。A-012 と残り 10 件は承認で要求にしない"
-inputs:
-  issues:
-    - "docs/impl/latest/dcd8234d/issues/20261027_083500_cross-uc-scenarios.md"
-    - "docs/impl/latest/dcd8234d/issues/20261027_083600_params-rule-vs-usdm-two-checks.md"
-  findings:
-    - "docs/impl/latest/dcd8234d/stages/attempt-4/S5_verify.tier-facade.findings.yaml"
-  assumptions:
-    - "docs/impl/latest/dcd8234d/stages/attempt-4/S4_tier-impl.tier-facade.assumptions.yaml"
-  s6_done: "docs/impl/latest/dcd8234d/stages/S6_uc-bdd.done.yaml"
-  s7_done: "docs/impl/latest/dcd8234d/stages/S7_atdd.done.yaml"
-  review_notes: "docs/impl/latest/dcd8234d/review/review-notes.md"
-  ui_review_findings: []
-  ui_review_note: "UI Reviewer は dispatch なし(UI 画面なし)"
-resolution:
-  issues:
-    - path: "docs/impl/latest/dcd8234d/issues/20261027_083600_params-rule-vs-usdm-two-checks.md"
-      verdict: "spec_issue"
-      cr_ids:
-        - "CR-dcd8234d-009"
-      evidence: "要求 SPEC-004-04 の本文(検証は 2 点だけ)と受け入れ基準 -10 が、仕様の {params} 位置規則(3 点目)と両立しない。API 要約にも 3 点目が無い"
-    - path: "docs/impl/latest/dcd8234d/issues/20261027_083500_cross-uc-scenarios.md"
-      verdict: "not_spec_issue"
-      cr_ids: []
-      evidence: "UC 横断 Scenario 0 件の責務分担の記録。確報は別 UC の担当で仕様どおり"
-  previous_cycle_issues_note: "20261010_* の 4 件は公開済み要求 20261010_104636 で回収済みで仕様に反映済み。今サイクルでは要求にしない"
-  findings:
-    spec_issue: 1
-    implementation_issue: 1
-    pending_human_decision: 0
-    approved_by_human: 11
-    note: "F-009(A-009)は人の spec_change 却下で CR-dcd8234d-010。F-001〜F-008 / F-010〜F-012 は人が承認し要求にしない。F-013 はテスト構造の実装起因"
-  assumptions:
-    total: 12
-    spec_absent: 12
-    contradicts: 0
-    approved: 11
-    rejected_spec_change: 1
-    rejected_implementation_change: 0
-    decisions:
-      - id: "A-009"
-        tier: "tier-facade"
-        decision: "rejected"
-        kind: "spec_change"
-        cr_id: "CR-dcd8234d-010"
-      - id: "A-012"
-        tier: "tier-facade"
-        decision: "approved"
-      - id: "A-001..A-008, A-010, A-011"
-        tier: "tier-facade"
-        decision: "approved"
+status: "no_request"
 feedback_request:
-  feedback_id: "20261027_091000_impl_feedback_dcd8234d"
+  feedback_id: null
   draft_path: null
-  published_path: "docs/impl/latest/dcd8234d/feedback-requests/20261027_091000_impl_feedback_dcd8234d.md"
-  input_sha256: "37b8b54d7a4a8b1a978e389924c4b6e3ee9a1d276823a9d877f10fd01b866ca8"
-  published_sha256: "37b8b54d7a4a8b1a978e389924c4b6e3ee9a1d276823a9d877f10fd01b866ca8"
-  supersedes: null
-  review_approved_event_id: "20261027_112730_review_approved_dcd8234d_feedback_publish"
-  review_evidence_event_id: "20261027_100325_s9_review_generated_dcd8234d_refresh"
-  publish_started_event_id: "20261027_113027_feedback_request_publish_started_dcd8234d"
-  published_event_id: "20261027_113048_feedback_request_published_dcd8234d"
-  published_at: "2026-10-27T11:30:48+09:00"
-  request_count: 2
+  request_count: 0
   blocker_count: 0
-  severity:
-    blocker: 0
-    spec-gap: 2
-    improvement: 0
-  cr_ids:
-    - "CR-dcd8234d-009"
-    - "CR-dcd8234d-010"
-  draft_sha256: "37b8b54d7a4a8b1a978e389924c4b6e3ee9a1d276823a9d877f10fd01b866ca8"
-  previous_draft_sha256: "e5e1670d27abb68b2b94307e6cc351c0e6c2e1ffb650265d1127ad5584142d43"
-  verify: "feedbackRequest.js verify --feedback PASS (2 requests)"
+  cr_ids: []
+  note: "仕様起因の要求は 0 件。draft は作らない。人が spec_change で却下した前提は無い(今回サイクルの S9 前)"
 as_built_summary: "docs/impl/latest/dcd8234d/feedback/as-built-summary.md"
+classification:
+  spec_origin: 0
+  implementation_origin_other_uc: 2
+  environment_origin: 0
+  resolved_past_issues: 6
+  non_spec_issues: 1
+  previous_requests_reflected: 2
+assumptions:
+  total: 4
+  consistent_restatement: 1
+  previously_approved: 1
+  awaiting_decision: 2
+  contradicts: 0
+  previously_approved_detail:
+    - current_id: "A-002"
+      prior_id: "A-006"
+      prior_decision: "approved"
+      prior_event: "docs/impl/events/20261027_112730_review_approved_dcd8234d_feedback_publish/event.yaml"
+  awaiting_decision_ids:
+    - "A-003"
+    - "A-004"
+verify_findings:
+  blocker: 0
+  major: 0
+  minor: 4
+other_uc_facts:
+  - uc_id: "fd678b04"
+    note: "validate-config.sh --feature-flag の --verbose が新しい info 行の規則に未追従。マージ直後の再実行で直す(2026-11-11 利用者決定)"
+  - uc_id: "eff24f55"
+    note: "前サイクルで記録した tier BDD の不足と出力順の変化への追従。マージ直後に再実行する"
+  - uc_id: "housekeep"
+    note: "validate-config.sh --housekeep は未実装(担当 UC の実装時に対応)"
 learnings: 1
-learning_files:
-  - "docs/impl/latest/dcd8234d/learnings/20261027_091000_spec-only-reflux-leaves-usdm-acceptance-stale.md"
 proposals:
   skill: true
-  context: true
-proposal_files:
-  - "docs/impl/latest/dcd8234d/learnings/20261027_091000_proposal-skill.md"
-  - "docs/impl/latest/dcd8234d/learnings/20261027_091000_proposal-context.md"
-completed_at: "2026-10-27T09:55:13+09:00"
+  context: false
+completed_at: "2026-11-11T08:16:22+09:00"
 completed_by: "dist-impl-feedback@0.14.1"
-publish:
-  mode: "publish"
-  published_at: "2026-10-27T11:30:48+09:00"
-  published_path: "docs/impl/latest/dcd8234d/feedback-requests/20261027_091000_impl_feedback_dcd8234d.md"
-  feedback_id: "20261027_091000_impl_feedback_dcd8234d"
-  input_sha256: "37b8b54d7a4a8b1a978e389924c4b6e3ee9a1d276823a9d877f10fd01b866ca8"
-  published_sha256: "37b8b54d7a4a8b1a978e389924c4b6e3ee9a1d276823a9d877f10fd01b866ca8"
-  request_count: 2
-  blocker_count: 0
-  review_approved_event_id: "20261027_112730_review_approved_dcd8234d_feedback_publish"
-  review_evidence_event_id: "20261027_100325_s9_review_generated_dcd8234d_refresh"
-  publish_started_event_id: "20261027_113027_feedback_request_publish_started_dcd8234d"
-  published_event_id: "20261027_113048_feedback_request_published_dcd8234d"
-  evidence_check: "approval / S9 event / S9 done の feedback_review_evidence(feedback_id・draft_sha256・request_count 2・blocker_count 0)と implementation_review_evidence の canonical 4 field(gate 6/6 pass、open blocker 0、open major 0、assumption evidence 71a22185…)が exact 一致。current evidence への approval は 1 件のみ、最新 S9 event と最新 approval が一致、同 feedback_id の publish event は事前に 0 件。順序は review evidence 100325 → approval 112730 → publish started 113027 → published 113048"
-  assumption_recheck: "validateAssumptions.js record / verdicts を attempt-4 の tier-facade で再実行し、sha256 ca3ac088… と verdicts_sha256 93d3ba68… が approval の assumption_hash_recheck と一致。evidence 再計算 71a22185… が S9 evidence と一致。assumption_decisions 12 件は S5 verdicts と 1:1、rejected 1 件(A-009)は spec_change"
-  bytes_check: "no-follow で開いた fd から sha256 を取得。UTF-8 / BOM なし / LF / NFC。front matter identity、CR 2 件、必須 4 節 x 2、severity(spec-gap 2、blocker 0)を確認。feedbackRequest.js verify --feedback PASS(2 requests)を rename 前後で確認"
-  rename_check: "rename 直前に lstat を再実行し dev / inode / size(16777233 / 463159772 / 8297)が検証時と一致。親 component は UC root 内の regular directory で symlink なし、realpath 一致、same filesystem。公開先は未存在。rename 後も同一 inode の regular file で sha256 一致"
-  draft_removed: true
-  next_state: "blocked_on_spec"
-  write_set_note: "書き込みは feedback/draft.md(rename 元)、feedback-requests/(公開先)、本 done、events/ の publish_started / published の 2 件のみ。本文は変更していない。git コマンドは読み取りのみ"
-  published_by: "dist-impl-feedback@0.14.1"

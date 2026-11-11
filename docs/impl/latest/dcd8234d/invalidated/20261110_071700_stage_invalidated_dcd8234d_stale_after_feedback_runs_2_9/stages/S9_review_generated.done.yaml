@@ -1,0 +1,152 @@
+stage: "S9"
+uc_id: "dcd8234d"
+manifest_sha256: "945094d65bb404232b80a8b2e224753f6661edc1fcf8e311aafdea570dd022cd"
+manifest_projection: v2
+result: pass
+review_html: "docs/impl/latest/dcd8234d/review/index.html"
+review_html_note: "gitignore 済みの再生成可能な派生ビュー(上書き)。HTML の SHA は証跡に結ばない"
+cycle_note: "前回レビュー(20261027_092806_s9_review_generated_dcd8234d)の回答を S8 refresh で反映した後の再生成。新しい選択肢は増やさず、公開許可と回答どおりかの確認だけを問う"
+source_revision: "feature/define-crosscheck-job-map-and-comparison-definitions @ 27d1b11"
+prior_answer_source: "docs/impl/latest/dcd8234d/review/review-notes.md の「2026-10-27 仕様還流後の再レビュー」節"
+prior_answer: "機能=A / 要求=公開 / 前提=A-009:却下(仕様変更) / 前提=A-012:承認 / 前提=残り10件:一括承認"
+validator:
+  command: "node validateReviewHtml.js docs/impl/latest/dcd8234d/review/index.html"
+  result: "pass"
+  human_html_review_validate: "python3 validate.py の結果は VALID(警告 0。内部 ID 0 / 長段落 0 / h2 14 に対し svg 8)"
+  visual_check: "headless Chrome で 1440px を render して目視(ダークモード)。新規の回答反映図と更新した流れ図・前提図で connector の重なり・attach point 共有・非 endpoint node 背面通過・diagonal なし、label と線の間隔あり。390px 指定の render は headless の最小幅のため右端が切れて見え、図は横スクロール枠に収まることだけ確認。ライトモードとコピー操作のクリックは目視していない"
+figures:
+  - type: flowchart
+    title: "前回の回答から公開までの流れと、いまの位置"
+    nodes: 7
+    arrows: 6
+  - type: architecture
+    title: "前回の 5 つの回答と、その行き先"
+    nodes: 9
+    arrows: 5
+  - type: architecture
+    title: "要求は 2 点、仕様は 3 点で、実装は仕様に従った"
+    nodes: 6
+    arrows: 3
+  - type: architecture
+    title: "処理の段階ごとの前提の件数と、回答の結果"
+    nodes: 5
+    arrows: 4
+  - type: architecture
+    title: "検証コマンドの部品と外の境界"
+    nodes: 8
+    arrows: 7
+  - type: flowchart
+    title: "検証コマンドの処理の流れと終了コード"
+    nodes: 8
+    arrows: 7
+  - type: data-flow
+    title: "起動コマンドの値が設計者から検証コマンドを通って結果になるまで"
+    nodes: 5
+    arrows: 4
+  - type: architecture
+    title: "テストの段と、それぞれが確かめた範囲"
+    nodes: 5
+    arrows: 4
+feedback_request_count: 2
+open_blocker_count: 0
+decision_summary:
+  approval_questions: 1
+  selection_questions: 0
+  assumption_questions: 0
+  confirmation_questions: 1
+  recommended_choices: 2
+  questions:
+    - id: "要求"
+      question: "更新した変更要求 2 件を公開してよいか"
+      recommended: "公開(変更要求 2 件)"
+      alternatives:
+        - "書き直し(直す点は補足に書く)"
+    - id: "確認"
+      question: "回答の反映が前回の回答どおりか"
+      recommended: "前回の回答どおり"
+      alternatives:
+        - "違う点あり(補足に書く)"
+  answered_decisions:
+    - id: "機能"
+      answer: "A(承認)"
+      reflected_as: "実装・テストは変更なし"
+    - id: "要求"
+      answer: "公開"
+      reflected_as: "CR-dcd8234d-009(bytes 不変)"
+    - id: "前提 A-009"
+      answer: "却下(仕様変更)"
+      reflected_as: "CR-dcd8234d-010(追加)"
+    - id: "前提 A-012"
+      answer: "承認"
+      reflected_as: "承認済みとして表示"
+    - id: "前提 残り10件"
+      answer: "一括承認"
+      reflected_as: "承認済みとして表示"
+  answer_template: "要求=公開(変更要求 2 件) / 確認=前回の回答どおり"
+  answer_template_examples:
+    - "書き直し: 要求=書き直し(直す点: …) / 確認=前回の回答どおり"
+    - "回答の訂正: 要求=書き直し / 確認=違う点あり(違う点: …)"
+    - "旧表記 機能=A / 相互運用=A / 監査=A も受け付ける(要求=公開 と 確認=前回の回答どおり の両方と同義)"
+  required_answers_note: "回答必須は 要求 と 確認 の 2 行。前回の 5 判断は回答済みで選び直しを求めない"
+assumption_summary:
+  total: 12
+  by_tier:
+    tier-facade: 12
+  required_answer: 0
+  required_ids: []
+  required_note: "全 12 件 spec_absent。security / persistence は 0 件"
+  decided:
+    approved: 11
+    rejected_spec_change: 1
+    rejected_implementation_change: 0
+    rejected_ids:
+      - "tier-facade:A-009"
+  verdicts:
+    consistent: 0
+    spec_absent: 12
+    contradicts: 0
+    unlisted: 0
+  unlisted_ids: []
+feedback_review_evidence:
+  feedback_id: "20261027_091000_impl_feedback_dcd8234d"
+  draft_path: "docs/impl/latest/dcd8234d/feedback/draft.md"
+  draft_sha256: "37b8b54d7a4a8b1a978e389924c4b6e3ee9a1d276823a9d877f10fd01b866ca8"
+  request_count: 2
+  blocker_count: 0
+  requests:
+    - id: "CR-dcd8234d-009"
+      severity: "spec-gap"
+      html_title: "速報の起動コマンドの検証項目が、要求(2 点)と仕様(3 点)で食い違っている"
+      decision_key: "要求"
+      source_answer: "要求=公開"
+    - id: "CR-dcd8234d-010"
+      severity: "spec-gap"
+      html_title: "設定値の先頭末尾の引用符の外し方が、CLI 契約の 2 か所で別の書き方になっている"
+      decision_key: "要求"
+      source_answer: "前提=A-009:却下(仕様変更)"
+implementation_review_evidence:
+  gate_result: "6/6 pass"
+  gates:
+    format: "pass (tier-facade)"
+    lint: "pass (tier-facade)"
+    tdd: "pass (373/373)"
+    bdd_tier: "pass (46/46, this UC 5/5)"
+    uc_bdd: "pass (43/43, this UC 7/7)"
+    atdd: "pass (6/6)"
+  open_blocker_count: 0
+  open_major_count: 0
+  open_minor_count: 13
+  open_minor_note: "F-001..F-012 は前提 12 件(人の回答で 11 承認、1 件 spec_change 却下)、F-013 は単体テストの 2 回 Act(実装起因、情報のみ)"
+  findings_paths:
+    - "docs/impl/latest/dcd8234d/stages/attempt-4/S5_verify.tier-facade.findings.yaml"
+  assumption_evidence_sha256: "71a22185f7c4f60069dddf6a640165d811ff24b0283674c30168b00dcf9e13d6"
+  assumption_evidence_inputs:
+    - tier: "tier-facade"
+      assumptions_sha256: "ca3ac08893cc86ba9b8b3b5b90501874b6b9ba2bf49473727448c953e946a8eb"
+      assumption_verdicts_sha256: "93d3ba68135195dbeeb35a5efbf844076ba4db328183f7422076ce99152ea881"
+  assumption_evidence_command: "node validateAssumptions.js evidence tier-facade:ca3ac08893cc86ba9b8b3b5b90501874b6b9ba2bf49473727448c953e946a8eb:93d3ba68135195dbeeb35a5efbf844076ba4db328183f7422076ce99152ea881"
+captures: []
+demo_note: "動かし方の出力例は前回生成時に scratchpad で実行した結果を再掲(実装は不変。記録済みゲートは再実行していない)"
+write_set_note: "書き込みは review/index.html(gitignore 済み。上書き)と本 done のみ。git は check-ignore / rev-parse の読み取りだけ"
+completed_at: "2026-10-27T10:02:21+09:00"
+completed_by: "dist-impl-review@0.14.1"

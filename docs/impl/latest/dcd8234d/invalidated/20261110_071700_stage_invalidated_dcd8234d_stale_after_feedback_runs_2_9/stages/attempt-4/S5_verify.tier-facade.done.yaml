@@ -1,0 +1,68 @@
+stage: "S5"
+tier: "tier-facade"
+attempt: 4
+uc_id: "dcd8234d"
+manifest_sha256: "945094d65bb404232b80a8b2e224753f6661edc1fcf8e311aafdea570dd022cd"
+manifest_projection: "v2"
+result: "pass"
+open_blockers: 0
+gate_reexec:
+  format: "pass"
+  lint: "pass"
+  tdd: "pass"
+  bdd_tier: "pass"
+summary:
+  blocker: 0
+  major: 0
+  minor: 13
+findings_path: "docs/impl/latest/dcd8234d/stages/attempt-4/S5_verify.tier-facade.findings.yaml"
+finding_summaries:
+  - id: "F-001"
+    severity: "minor"
+    summary: "形式違反時に検証表の評価を打ち切る優先順位が仕様で未確定。"
+  - id: "F-002"
+    severity: "minor"
+    summary: "ファイル不在・形式違反時に stdout を出さない方針が仕様で未確定。内部障害時の stdout 抑止は契約どおり。"
+  - id: "F-003"
+    severity: "minor"
+    summary: "必須キー欠落・空値時の command_path とプレースホルダ判定・違反件数の組合せが仕様で未確定。"
+  - id: "F-004"
+    severity: "minor"
+    summary: "相対パス時に存在・実行可能チェックを省略する評価順が仕様で未確定。"
+  - id: "F-005"
+    severity: "minor"
+    summary: "空白だけの値を必須キー空値として扱う診断が仕様で未確定。"
+  - id: "F-006"
+    severity: "minor"
+    summary: "実行可能の判定を通常ファイルかつ実行権限に限定する方法が仕様で未確定。"
+  - id: "F-007"
+    severity: "minor"
+    summary: "重複キーを後勝ちとし、重複の警告を出さない規則が仕様で未確定。"
+  - id: "F-008"
+    severity: "minor"
+    summary: "キーと値の空白除去、および空キー拒否の詳細が仕様で未確定。"
+  - id: "F-009"
+    severity: "minor"
+    summary: "片側だけ・不対応の引用符も独立に除去する解釈が共有契約から一意に定まらない。"
+  - id: "F-010"
+    severity: "minor"
+    summary: "未知キーを含む RAPID_COMPARE_COMMAND 以外のキーの扱いと警告省略が仕様で未確定。"
+  - id: "F-011"
+    severity: "minor"
+    summary: "速報設定の verbose 出力文言とキー一覧の表示方法が仕様で未確定。"
+  - id: "F-012"
+    severity: "minor"
+    summary: "別UC担当の確報検証が未実装である間に終了コード6を返す暫定動作が仕様で未確定。"
+  - id: "F-013"
+    severity: "minor"
+    summary: "同じ検証関数を2回実行し、1回目の戻り値と2回目のグローバル状態を組み合わせて検証している。"
+assumptions_sha256: "ca3ac08893cc86ba9b8b3b5b90501874b6b9ba2bf49473727448c953e946a8eb"
+assumption_verdicts_sha256: "93d3ba68135195dbeeb35a5efbf844076ba4db328183f7422076ce99152ea881"
+assumption_verdicts_summary:
+  consistent: 0
+  spec_absent: 12
+  contradicts: 0
+  unlisted: 0
+environment_failures: []
+completed_at: "2026-10-26T23:57:39.035098+00:00"
+completed_by: "dist-impl-verify@0.14.1"

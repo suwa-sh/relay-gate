@@ -13,12 +13,12 @@ x_cli_commands:
       - name: "--feature-flag"
         type: "string"
         required: false
-        description: "検証する feature flag env ファイルのパス。検証種別オプション(--feature-flag / --job-map / --rapid-crosscheck / --final-crosscheck)のうちちょうど 1 つを指定する(排他。0 個または 2 個以上は終了コード 2)"
+        description: "検証する feature flag env ファイルのパス。検証種別オプション(--feature-flag / --job-map / --rapid-crosscheck / --final-crosscheck / --housekeep)のうちちょうど 1 つを指定する(排他。0 個または 2 個以上は終了コード 2)"
       - name: "--verbose"
         type: "boolean"
         required: false
         default: "false"
-        description: "info を stderr に出す"
+        description: "読み取ったキーごとに info: key loaded key=<KEY> path: <path> を stderr に出す(キーごとの検査の段(契約 config_input_rules.env_files の (iii))へ進んだ回だけ。文言・出す回・順の正本は契約 config_input_rules.env_files の『validate-config.sh の --verbose の info 行』。終了コード・stdout に影響しない)"
       - name: "--help"
         type: "boolean"
         required: false
@@ -26,7 +26,7 @@ x_cli_commands:
         description: "使い方を stdout に出して終了コード 0"
     stdin: "なし"
     stdout: "検証 OK 時に固定順 15 キー: config_path, blue_mode, green_mode, blue_impl, green_impl, blue_runner, green_runner, rapid_crosscheck_mode, rapid_crosscheck_runner, rapid_crosscheck_worker, operation_mode, blue_job_map, green_job_map, blue_runner_if_version, green_runner_if_version(末尾 4 キーは UC「slot runner の実体スクリプトを割り当てる」が定義。未設定・off・--help 未応答は -)"
-    stderr: "違反ごとに error: 1 行(全件。ファイル不在は error: config file not found path: ...、必須キー欠落・空は error: option required option=<KEY> path: ...、enum 外は error: invalid value key=<KEY> value=...、絶対パスでないは error: path is not absolute key=<KEY> path=...、実体なし・実行不可は error: file not executable key=<KEY> path=...、foreground 重複・無しは error: foreground slot must be exactly one blue_mode=... green_mode=...、確報制御キー(キー名が FINAL_ で始まるキー。範囲は契約 config_files.feature-flag.env.validation_rules)は該当キーごとに error: final crosscheck key is not allowed key=...)。9 キー以外で FINAL_ で始まらない未知キーは warn: unknown key key=<KEY> path: ...。対処が明確なら hint:。同じキーが 2 行以上あれば重複したキーごとに error: duplicate key key=<KEY> lines=<n1,n2,...> path: ...(invalid line の後に出し、どちらかがあればキーごとの検査と未知キーの warn を行わない。契約 config_input_rules.env_files)"
+    stderr: "違反ごとに error: 1 行(全件。ファイル不在は error: config file not found path: ...、必須キー欠落・空は error: option required option=<KEY> path: ...、enum 外は error: invalid value key=<KEY> value=...、絶対パスでないは error: path is not absolute key=<KEY> path=...、実体なし・実行不可は error: file not executable key=<KEY> path=...、foreground 重複・無しは error: foreground slot must be exactly one blue_mode=... green_mode=...、確報制御キー(キー名が FINAL_ で始まるキー。範囲は契約 config_files.feature-flag.env.validation_rules)は該当キーごとに error: final crosscheck key is not allowed key=...)。9 キー以外で FINAL_ で始まらない未知キーは warn: unknown key key=<KEY> path: ...。対処が明確なら hint:。同じキーが 2 行以上あれば重複したキーごとに error: duplicate key key=<KEY> lines=<n1,n2,...> path: ...(invalid line の後に出し、どちらかがあればキーごとの検査と未知キーの warn を行わない。契約 config_input_rules.env_files)。--verbose のときは、キーごとの検査の段(契約 config_input_rules.env_files の (iii))へ進んだ回だけ、読み取ったキーごとに info: key loaded key=<KEY> path: <path> を出す(コメント行を除く全キー。値は出さない)。この段の中の順は info 行をすべて → 未知キーの warn 行をすべて(どちらもキーがファイルに初めて出た順)→ キーごとの検査の error 行(と hint)→ runner の --help 問い合わせの warn 行。バイト・改行の検査または行の構造の検査で止めた回と、runner の問い合わせの準備失敗(6)の回は info 行を出さない(正本は契約 config_input_rules.env_files の『validate-config.sh の --verbose の info 行』)"
     exit_codes:
       - code: 0
         meaning: "検証 OK"

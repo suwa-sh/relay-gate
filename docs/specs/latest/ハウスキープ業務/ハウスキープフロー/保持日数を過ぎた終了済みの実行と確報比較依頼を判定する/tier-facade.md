@@ -20,7 +20,7 @@ facade ティアは自身の解析関数で検証し、他ティアのシェル�
 | 名前 | 型 | 必須 | 既定値 | 説明 |
 |------|---|------|-------|------|
 | `--housekeep` | string | Yes(検証種別のうちちょうど 1 つ) | なし | 検証する housekeep.env のパス。値必須。既定パス `$RELAY_GATE_CONFIG_DIR/housekeep.env` を使う場合も明示的に渡す |
-| `--verbose` | boolean | No | false | 補助出力を stderr に出す(この検証種別に固有の補助出力は無い) |
+| `--verbose` | boolean | No | false | 読み取ったキーごとに `info: key loaded key=<KEY> path: <path>` を stderr に出す(キーごとの検査の段(契約 config_input_rules.env_files の (iii))へ進んだ回だけ。バイト・改行の検査または行の構造の検査で止めた回は出さない。正本は CLI 契約 `config_input_rules.env_files` の「validate-config.sh の --verbose の info 行」。`--feature-flag` / `--rapid-crosscheck` / `--final-crosscheck` と同じ規則) |
 
 - 検証種別オプション `--feature-flag` / `--job-map` / `--rapid-crosscheck` / `--final-crosscheck` / `--housekeep` は排他。0 個または 2 個以上は終了コード 2
 - **stdin**: なし
@@ -45,8 +45,10 @@ facade ティアは自身の解析関数で検証し、他ティアのシェル�
 | 入力の守備範囲の違反(NUL / UTF-8 / BOM / CR / `=` を含まない行 / キーの前後の空白を除いた結果キーが空になる行 / 同じキーが 2 行以上ある) | 契約 `config_input_rules` と同じ文言(同じキーの重複は `error: duplicate key key=<KEY> lines=<n1,n2,...> path: ...`)。報告の順と、この違反があるときは保持日数の検査と未知キーの warn を行わないことは契約 `config_input_rules.env_files` に従う。NUL / UTF-8 / BOM / CR はファイル内の全件を行番号の昇順に、同じ行は NUL → UTF-8 → BOM → CR の順に 1 種類 1 行で出し、hint は最後の CR の error 行の次に 1 回だけ(契約 `config_input_rules.byte_checks`。violations はこの error 行の数) | 2 |
 | 保持日数が `^[1-9][0-9]{0,8}$` に合わない | `error: invalid value key=HOUSEKEEP_RETENTION_DAYS value=<値> path: <path>` + `hint: use a positive integer` | 2 |
 | 未知キー | `warn: unknown key key=<KEY> path: <path>` | 影響しない |
+| `--verbose` の補助出力 | 読み取ったキーごとに `info: key loaded key=<KEY> path: <path>`(コメント行を除く全キー。未知キー・値が空のキーも含む。値は出さない) | 影響しない |
 | 検証器の内部障害 | 契約 `config_input_rules.internal_failure` と同じ文言 | 6 |
 
+- stderr の行の順: バイト・改行の検査または行の構造の検査で違反があれば、その段の error 行(と hint)だけを出して止める(info 行・未知キーの warn 行・保持日数の error 行は出さない)。無ければ、info 行をすべて(`--verbose` のとき。キーがファイルに初めて出た順)→ 未知キーの warn 行をすべて(同じ順)→ 保持日数の error 行と hint の順に出す(正本は CLI 契約 `config_input_rules.env_files` の「validate-config.sh の --verbose の info 行」)
 - 値の比較は、契約 `config_input_rules.env_files` の規則で前後の空白と引用符を外した後の値で行う。stderr の `value=` にも外した後の値を出す
 - `value=` の任意入力は契約 `conventions.output_format.control_chars` の可視表記にする
 
@@ -130,4 +132,21 @@ Feature: 保持日数を過ぎた終了済みの実行と確報比較依頼を�
     Given /etc/relay-gate/housekeep.env が無い
     When `validate-config.sh --housekeep /etc/relay-gate/housekeep.env` を実行する
     Then 終了コード 2 で stderr に "error: config file not found path: /etc/relay-gate/housekeep.env" が出る
+
+  Scenario: --verbose では info 行をすべて出してから未知キーの warn 行、保持日数の error 行と hint の順に出す
+    Given housekeep.env の 1 行目が ZZ=x、2 行目が HOUSEKEEP_RETENTION_DAYS=0 である
+    When `validate-config.sh --housekeep /etc/relay-gate/housekeep.env --verbose` を実行する
+    Then 終了コード 2 で stderr は次の 5 行がこの順に出る(契約 config_input_rules.env_files)
+      | info: key loaded key=ZZ path: /etc/relay-gate/housekeep.env                                    |
+      | info: key loaded key=HOUSEKEEP_RETENTION_DAYS path: /etc/relay-gate/housekeep.env              |
+      | warn: unknown key key=ZZ path: /etc/relay-gate/housekeep.env                                   |
+      | error: invalid value key=HOUSEKEEP_RETENTION_DAYS value=0 path: /etc/relay-gate/housekeep.env  |
+      | hint: use a positive integer                                                                   |
+    And stdout が "config=housekeep" / "path: /etc/relay-gate/housekeep.env" / "retention_days=-" / "status=invalid" / "violations=1" の 5 行である
+
+  Scenario: 同じキーの重複で止めた回は --verbose でも info 行を出さない
+    Given housekeep.env の 1 行目が HOUSEKEEP_RETENTION_DAYS=30、2 行目が HOUSEKEEP_RETENTION_DAYS=30 である
+    When `validate-config.sh --housekeep /etc/relay-gate/housekeep.env --verbose` を実行する
+    Then 終了コード 2 で stderr は "error: duplicate key key=HOUSEKEEP_RETENTION_DAYS lines=1,2 path: /etc/relay-gate/housekeep.env" の 1 行だけである(info 行は出ない)
+    And stdout が "config=housekeep" / "path: /etc/relay-gate/housekeep.env" / "retention_days=-" / "status=invalid" / "violations=1" の 5 行である
 ```

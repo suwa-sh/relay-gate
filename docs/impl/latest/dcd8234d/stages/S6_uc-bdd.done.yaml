@@ -1,35 +1,40 @@
 stage: S6
 uc_id: dcd8234d
-manifest_sha256: 945094d65bb404232b80a8b2e224753f6661edc1fcf8e311aafdea570dd022cd
+manifest_sha256: 426b0241023ffc06ae2d22909c4be05e28635272763b00d0eb084f534d74d95d
 manifest_projection: v2
 result: pass
 branch_slug: define-crosscheck-job-map-and-comparison-definitions
 tiers:
   - tier-facade
 tier_impl_attempt: 4
+rerun: true
+rerun_reason: "仕様の還流(feedback run 20261110_080548。spec-decision-033: --verbose の info 行の規則)後の stale 再実行。変更は tier-facade.md / _api-summary.yaml / 共有仕様(CLI 契約・ui-design.md)だけで、UC BDD の出典 spec.md は前回 pass(b0103f1)から変わっていない"
 feature: features/uc/define-crosscheck-job-map-and-comparison-definitions.feature
 feature_changed: false
 steps: features/uc/steps/define-crosscheck-job-map-and-comparison-definitions.steps.js
-steps_changed: true
-steps_change_summary: "S2 skeleton(全 step が not implemented)を実装に置き換えた。step 文言は feature の完全一致のまま。World / Before / After は features/uc/steps/configure-feature-flags.steps.js の定義を共有し、他 UC の step 定義には触れていない"
+steps_changed: false
+consistency_check:
+  method: "git diff b0103f1..HEAD で spec.md・features/uc・steps に差分が無いことを確認。feature / steps に --verbose・info 行への依存が無いことを grep で確認(今回の仕様差分の影響を受けない)"
+  spec_md_changed_since_last_pass: false
+  feature_rewrite_needed: false
 source: "docs/specs/latest/適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/spec.md#E2E完了条件(BDD)"
 tier_impl_changed: false
 run:
   cwd: "."
   command: "npx cucumber-js --config cucumber.cjs features/uc"
   exit_code: 0
-  summary: "43 scenarios (43 passed), 163 steps (163 passed)"
-  scenarios_total: 43
-  scenarios_passed: 43
+  summary: "46 scenarios (46 passed), 177 steps (177 passed)"
+  scenarios_total: 46
+  scenarios_passed: 46
   scenarios_failed: 0
   undefined_steps: 0
   ambiguous_steps: 0
 target_feature_run:
   command: "npx cucumber-js --config cucumber.cjs features/uc/define-crosscheck-job-map-and-comparison-definitions.feature"
   exit_code: 0
-  summary: "7 scenarios (7 passed), 23 steps (23 passed)"
-  scenarios_total: 7
-  scenarios_passed: 7
+  summary: "10 scenarios (10 passed), 37 steps (37 passed)"
+  scenarios_total: 10
+  scenarios_passed: 10
   scenarios_failed: 0
 preceding_uc_run:
   features:
@@ -37,18 +42,15 @@ preceding_uc_run:
     - features/uc/define-slot-job-maps.feature
   scenarios_total: 36
   scenarios_passed: 36
-  note: "全体実行 43 件のうち先行 UC(fd678b04 / eff24f55)の 36 件。両 UC の step 定義は未変更で全件 pass"
+  note: "全体実行 46 件のうち先行 UC(fd678b04 / eff24f55)の 36 件。step 定義は未変更で全件 pass"
 harness:
-  sandbox_root: "Scenario ごとの一時ディレクトリを root とし、仕様の絶対パス(/etc/relay-gate/rapid-crosscheck.env, /opt/compare/*.sh)を root 配下の同じ相対位置に実ファイルで配置。RAPID_COMPARE_COMMAND のコマンド部分は絶対パスのときだけ root 配下へ写像し、相対パスと引数部分は書き換えない。出力照合時に root 接頭辞を除去"
-  process: "facade/bin/validate-config.sh を実プロセスとして起動(--rapid-crosscheck <path>)"
-  no_db_check: "PATH の先頭に psql / pg_isready の記録スタブを置き、呼ばれていないことを確認"
-  no_script_change_check: "facade/bin と facade/src の全ファイルの内容とモードの SHA-256 が実行前後で一致することを確認"
+  process: "facade/bin/validate-config.sh を実プロセスとして起動(Scenario ごとの一時ディレクトリを root に実ファイルを配置)"
   external_connections: none
 injections: []
-injections_note: "ハーネス注入なし。前提の新規抽出なし"
+injections_note: "ハーネス注入なし。UC 横断 Scenario は 0 件(根拠: docs/impl/latest/dcd8234d/issues/20261110_073100_cross-uc-scenarios.md)。前提の新規抽出なし"
 cross_uc_refs:
-  - docs/impl/latest/dcd8234d/issues/20261027_083500_cross-uc-scenarios.md
+  - docs/impl/latest/dcd8234d/issues/20261110_073100_cross-uc-scenarios.md
 issues: []
-issues_note: "新規起票なし。7 Scenario は spec.md / tier-facade.md どおりに通過した。USDM(2 点)と spec(3 点)の食い違いは S2 起票済み(docs/impl/latest/dcd8234d/issues/20261027_083600_params-rule-vs-usdm-two-checks.md)で、UC BDD は spec を正として判定した"
-completed_at: "2026-10-27T09:02:00+09:00"
+issues_note: "新規起票なし。全 Scenario が仕様どおりに通過した"
+completed_at: '2026-11-11T09:00:00+09:00'
 completed_by: dist-impl-implement@0.14.1

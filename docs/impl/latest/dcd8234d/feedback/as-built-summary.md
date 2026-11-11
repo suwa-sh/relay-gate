@@ -1,50 +1,74 @@
-# as-built summary(dcd8234d クロスチェックのジョブマップと比較定義を定義する / 仕様還流後の再実行)
+# as-built summary(dcd8234d クロスチェックのジョブマップと比較定義を定義する / `--verbose` の info 行の規則の還流後の再実装)
 
-- 対象: `validate-config.sh --rapid-crosscheck`(速報の起動コマンド `RAPID_COMPARE_COMMAND` の設定検証。tier-facade)
-- 位置づけ: 2 件の仕様還流(2026-10-10 のクロスチェック簡素化、2026-10-27 の起動コマンドを引数ごとに分ける決まり)の反映後に、attempt-4 のまま再実行した結果の記録。前サイクル(旧 2 tier 構成)の as-built と draft は本ファイルと新しい draft で置き換えた
-- 結論: **仕様起因の要求 2 件**(spec-gap 2 / blocker 0)。draft は `docs/impl/latest/dcd8234d/feedback/draft.md`
-- 2026-10-27 refresh: 人のレビューで前提 A-009 が仕様変更として却下されたため、要求 CR-dcd8234d-010 を追加した。CR-dcd8234d-009 は変更していない
+- 対象: `validate-config.sh --rapid-crosscheck`(速報の起動コマンド `RAPID_COMPARE_COMMAND` の設定検証。tier-facade のみ)
+- 位置づけ: 前回公開した変更要求(`feedback-requests/20261110_080548_impl_feedback_dcd8234d.md`。info 行の文言・出力順・途中の段で止めた回の扱い)が仕様へ反映された後(spec-decision-033、CLI 契約 `config_input_rules.env_files`、tier-facade.md)の再実装サイクルの記録。前サイクルの本ファイルは今回の内容で置き換えた
+- 結論: **仕様起因の要求は 0 件**(blocker 0)。draft は作っていない
+- 今回新しく出た「仕様に書かれていない前提」2 件(A-003 / A-004)は、人の判断がまだ無い。レビューで利用者が「仕様を変える」と判断した場合だけ、同じサイクルの中で要求に加える(3 章)
 - 本ファイルは dist-pipeline への入力ではない
 
 ## 根拠にした入力
 
 | 入力 | 内容 |
 |---|---|
-| `issues/20261027_083500_cross-uc-scenarios.md` | UC 横断 Scenario 0 件の記録(責務分担の記録で仕様疑義ではない) |
-| `issues/20261027_083600_params-rule-vs-usdm-two-checks.md` | 検証項目が要求 2 点・仕様 3 点で食い違う(仕様疑義) |
-| `stages/attempt-4/S5_verify.tier-facade.findings.yaml` | blocker 0 / major 0 / minor 13 |
-| `stages/attempt-4/S4_tier-impl.tier-facade.assumptions.yaml` | 実装者が補った前提 12 件(独立検証の判定はすべて「仕様に記載なし」) |
-| `stages/S6_uc-bdd.done.yaml` / `S7_atdd.done.yaml` | UC BDD 7 件・受け入れ 6 件 pass。新規 issue 0 件 |
-| `review/review-notes.md` | 「2026-10-27 仕様還流後の再レビュー」節: 機能は承認、要求 CR-dcd8234d-009 は公開、前提 A-009 は仕様変更として却下、A-012 と残り 10 件は承認 |
+| `issues/` 7 本 | 過去サイクルの 7 本だけ。今回サイクルの新規起票は無い |
+| `stages/attempt-4/S4_tier-impl.tier-facade.assumptions.yaml` | 実装者が補った前提 4 件(候補 8 件のうち 4 件は仕様に明記ありとして除外) |
+| `stages/attempt-4/S5_verify.tier-facade.findings.yaml` | blocker 0 / major 0 / minor 4。前提の判定は仕様どおり 1 / 仕様に記載なし 3 / 矛盾 0 |
+| `stages/S6_uc-bdd.done.yaml` / `S7_atdd.done.yaml` | UC BDD 46/46、受け入れテスト 7/7 pass。どちらも新規 issue 0 件 |
+| `review/review-notes.md` | 最終記録は 2026-11-10。今回サイクルの前提について人の判断はまだ無い |
+| `docs/impl/events/20261027_112730_review_approved_dcd8234d_feedback_publish/event.yaml` | 2026-10-27 の前提の承認記録(A-006 = 今回の A-002 と同じ内容が approved) |
+| `git show --stat` 0a022fd / ddfe67f / 919a798 | 下記 1 章の実装事実 |
 
-## 1. 全体の状態
+## 1. 今回の実装事実
 
 ```mermaid
 flowchart LR
-  R1[仕様還流 2 件<br/>反映済み] --> S2[テスト骨格<br/>issue 2 件起票]
-  S2 --> S4[tier-facade 実装<br/>4 ゲート pass]
-  S4 --> S5[独立検証<br/>blocker 0 / major 0 / minor 13]
-  S5 --> S67[UC BDD 7 / 受け入れ 6<br/>pass]
-  S67 --> FB[要求 2 件<br/>spec-gap]
+  R[仕様の還流<br/>info 行の規則] --> S1[UC 初期化<br/>完了済み段を再実行へ]
+  S1 --> S2[テストを規則に合わせる<br/>BDD 4 場面・bats 5 件]
+  S2 --> S4[tier-facade<br/>コメントだけ修正]
+  S4 --> S5[独立検証<br/>blocker 0 / major 0 / minor 4]
+  S5 --> S67[UC BDD 46/46<br/>受け入れ 7/7]
+  S67 --> FB[要求 0 件]
 ```
 
-| 項目 | 値 |
-|---|---|
-| ゲート(format / lint / tdd / bdd_tier) | すべて pass(bats 373 件、tier BDD 46 シナリオ) |
-| UC BDD | この UC の 7 シナリオ pass(全体 43) |
-| 受け入れテスト | SPEC-004-04-5 / -6 / -7 / -8 / -10 / -11 の 6 件 pass。-10 は `{params}` を引数に含めない値だけで判定 |
-| 独立検証 | blocker 0 / major 0 / minor 13(前提 12 件 + テスト構造 1 件) |
-| 管理 DB | この UC は DB に触れない |
+| 項目 | 値 | 根拠 |
+|---|---|---|
+| 変更したソース | `facade/src/usecase/validate_rapid_crosscheck.sh`(7 行)、`facade/src/repository/rapid_crosscheck_env.sh`(6 行)。どちらもコメントだけで、動作は変えていない | commit 919a798、S5 readability の note |
+| 追加したテスト | tier BDD に 4 場面(stderr の行の並びを完全一致で判定)、bats に 5 件(行数と各行の文言・位置を判定) | commit ddfe67f |
+| ゲート | format / lint / tdd / bdd_tier すべて pass。bats 384 件、tier BDD 57 シナリオ・197 ステップ | `S5_verify.tier-facade.findings.yaml` verification_evidence |
+| Linux での確認 | ubuntu24 / bash 5.2.21 / GNU sed 4.9 / coreutils 9.4 で対象 42 件 pass(全ゲートの再実行ではない) | 同上 |
+| `--verbose` の有無による違い | 14 入力 × 2 ロケール × verbose 有無の 56 実行で、stdout と終了コードは不変、stderr は info 行が増えるだけ | S5 operability の note |
+| 補助コマンドの失敗 | tr / sed / cat / mv / mktemp / rm を失敗させた 6 種類すべてで終了コード 6、stdout なし、info / warn なし | S5 fault_tolerance の note |
+| UC BDD | 全体 46 シナリオ pass(この UC 10 件、先行 UC 36 件) | `stages/S6_uc-bdd.done.yaml` |
+| 受け入れテスト | 7 件 pass | `stages/S7_atdd.done.yaml` |
+| 性能(5,000 行、verbose 有効) | 0.472〜1.186 秒。共通前提の 10 秒以内 | S5 performance の note |
+| 管理 DB | この UC は DB に触れない | 同上 |
+
+前回のレビューで「次の実装修正の機会に直す」とした `validate_rapid_crosscheck.sh` 102 行目付近のコメントは、今回直った。いまのコメントは「info 行すべて → 未知キーの warn 行すべて → 検証表の error 行」で、実際の出力順と一致する。
 
 ## 2. 原因の分類
 
 | 入力 | 分類 | 扱い | 理由 |
 |---|---|---|---|
-| 検証項目が要求 2 点・仕様 3 点(issue 083600) | 仕様起因 | 要求 CR-dcd8234d-009 | 要求 SPEC-004-04 の本文と受け入れ基準 -10 が、仕様(CLI 契約・spec.md・tier-facade.md)の `{params}` 位置規則と両立しない。API 要約にも 3 点目が無い。実装では解消できない |
-| UC 横断 Scenario 0 件(issue 083500) | 該当なし | 要求にしない | 責務分担の記録。確報の起動コマンド(SPEC-004-04-9)は別 UC の担当で、仕様どおり |
-| F-009(前提 A-009、引用符の外し方) | 仕様起因 | 要求 CR-dcd8234d-010 | 人が仕様変更として却下。CLI 契約の 2 か所の引用符の外し方を、今の実装の規則(先頭と末尾を別々に 1 文字ずつ外す。対の一致は求めない)に揃えて書く。実装は変更しない |
-| F-001〜F-008 / F-010〜F-012(前提 11 件、仕様に記載なし) | 該当なし | 要求にしない | 人が承認(A-012 と残り 10 件)。仕様と矛盾する前提は 0 件 |
-| F-013(単体テストで同じ関数を 2 回実行) | 実装起因 | 次の実装で直す | テスト規約(1 テスト 1 呼び出し)からの逸脱。仕様の問題ではない |
+| 前提 A-001(空・欠落時の stdout は `command_path: -` / `has_job_id_placeholder=false`) | 仕様どおり | 要求にしない | 独立検証の判定は「仕様どおり(既存規則の組み合わせの言い直し)」 |
+| 前提 A-002(「実行可能」は通常ファイルかつ実行権限) | 承認済み | 要求にしない | 2026-10-27 に同じ内容(当時の A-006)を利用者が承認済み。番号が振り直されただけで内容は同じ |
+| 前提 A-003(行数の不一致時に `commands=tr,sed`) | 判断待ち | いまは要求にしない | 人の判断が無い。レビューで利用者が決める(3 章) |
+| 前提 A-004(複製の削除の失敗は `commands=rm`、両方失敗なら複製の失敗を優先) | 判断待ち | いまは要求にしない | 同上 |
+| 前回公開した要求 2 件(info 行の文言・順・止めた回) | 反映済み | 再び要求にしない | spec-decision-033 と CLI 契約 `config_input_rules.env_files` の「validate-config.sh の --verbose の info 行」(a)〜(d) に入った |
+| 他 UC の未追従(4 章) | 実装起因(他 UC) | 要求にしない | 仕様は決まっている。各 UC の再実行で直す |
+
+前提の判定で「仕様と矛盾する」ものは 0 件、記録漏れの前提も 0 件。
+
+### 過去サイクルの issue 7 本(すべて解消済み、または扱いが決まっている。要求にしない)
+
+| issue | 判断 | 根拠 |
+|---|---|---|
+| 20261010_084142_cross-uc-scenarios | 解消済み | 対象の Scenario(比較定義 CSV・対象カタログ)が仕様から無くなった。spec.md は旧検証種別を未知のオプションとして拒否する |
+| 20261010_084142_facade-dispatch-and-csv-parser-outside-tiers | 解消済み | CLI 契約 validate-config.sh の tier_note が「tier-facade が全設定ファイルを自身の解析関数で検証し、他ティアを source しない」と定め、この UC の tier も tier-facade だけになった |
+| 20261010_092630_tier-handler-function-namespace-collision | 解消済み | arch-design.yaml の CTR-007 が名前空間の一般規則を定めた。同じシェルに複数ティアを source する構成も無くなった |
+| 20261010_093000_tier-bdd-placeholder-scenario-given-then-mismatch | 解消済み | `compare_options` 列と `{blue}` / `{green}` が仕様から無くなった |
+| 20261027_083500_cross-uc-scenarios | 置き換え済み | 20261110_073100 に置き換わった |
+| 20261027_083600_params-rule-vs-usdm-two-checks | 解消済み | USDM の SPEC-004-04 が検証 3 点に改まり、`_api-summary.yaml` にも反映済み |
+| 20261110_073100_cross-uc-scenarios | 該当なし | 責務分担の記録。UC BDD のハーネス注入 0 件(S6 done が参照) |
 
 ## 3. 実装の到達点(仕様どおり / 不足 / 矛盾)
 
@@ -52,43 +76,35 @@ flowchart LR
 
 | 区分 | 項目 | 状態 |
 |---|---|---|
-| 仕様どおり | 検証ルール 1〜5(必須キー / 絶対パス / 実行可能 / `{job_id}` / `{params}` の位置)と違反文言 | 実装済み |
-| 仕様どおり | stdout の固定順(config= / path: / command_path: / has_job_id_placeholder= / status= / violations=) | 実装済み |
-| 仕様どおり | 終了コード 0 / 2 / 6、内部障害時は stdout を出さない | 実装済み |
-| 仕様どおり | 旧検証種別(`--crosscheck-job-map` / `--target-catalog`)の廃止(未知のオプションとして終了コード 2) | 実装済み |
-| 仕様どおり | 入力をシェルとして解釈しない(記号・`$(...)` を文字のまま扱う) | 実装済み(独立検証で比較ツールが実行されないことを確認) |
-| 矛盾 | 要求 SPEC-004-04 の「2 点だけ・引数部分は検査しない」と仕様の `{params}` 位置規則 | 仕様側に合わせた。要求 CR-dcd8234d-009 |
-| 不足 | この UC の API 要約に `{params}` 位置違反の文言・終了コード 2 の理由が無い | CLI 契約・tier-facade.md に合わせた。要求 CR-dcd8234d-009 |
-| 不足 | 前提 12 件(第 4 節)の細部 | 既存の実装(feature flag 設定の読み込み・検証)に揃えて補った。A-009 の引用符の外し方は要求 CR-dcd8234d-010 で仕様に明記する |
-| 範囲外 | `--final-crosscheck`(確報の起動コマンド) | 別 UC の担当。所有 UC の実装までは終了コード 6(前提 A-012) |
+| 仕様どおり | 検証ルール 5 点と違反文言、stdout の固定順 | 実装済み |
+| 仕様どおり | env の検査の段(バイト・改行 → 行の構造 → キーごとの検査)、途中で止めた回の stdout | 実装済み |
+| 仕様どおり | `--verbose` の info 行の文言・出す回・段の中の順(spec-decision-033) | 実装済み(テストを追加) |
+| 仕様どおり | 入力の一時複製(0600、終了時に削除)、補助コマンド失敗時の終了コード 6 と stdout なし | 実装済み |
+| 不足(判断待ち) | 原因のコマンドを特定できない行数の不一致時の `commands=` の値 | 実装が補った(A-003) |
+| 不足(判断待ち) | 複製の工程と複製の削除が両方失敗したときの診断の優先 | 実装が補った(A-004) |
+| 矛盾 | なし | - |
 
-## 4. 実装者が補った前提の一覧
+### 実装者が補った前提
 
-独立検証の判定は 12 件すべて「仕様に記載なし」(矛盾 0 / 一覧外 0)。人の判断は承認 11 件、仕様変更として却下 1 件(A-009)。
+| id | カテゴリ | 前提 | 独立検証の判定 | 人の判断 |
+|---|---|---|---|---|
+| A-001 | data_format | `RAPID_COMPARE_COMMAND` が無い・空のとき、stdout は `command_path: -` と `has_job_id_placeholder=false` | 仕様どおり(F-001、minor。既存規則の言い直し) | 不要 |
+| A-002 | input_validation | 「存在し実行可能」は通常ファイルかつ実行権限で判定する(ディレクトリは `file not executable`) | 仕様に記載なし(F-002、minor) | 2026-10-27 に承認済み(当時の A-006、同じ内容)。今回は引き継ぎの確認だけ |
+| A-003 | error_handling | バイト点検の行数と行の読み取りの行数が合わないときは `error: internal command failed commands=tr,sed`、終了コード 6 | 仕様に記載なし(F-003、minor) | 未(今回新規) |
+| A-004 | error_handling | 読み込み成功後に複製の削除が失敗したら `commands=rm`、終了コード 6。複製の工程も失敗していたら `config snapshot failed` を優先 | 仕様に記載なし(F-004、minor) | 未(今回新規) |
 
-| id | カテゴリ | 前提 | 確信度 | 独立検証 | 人の判断 |
-|---|---|---|---|---|---|
-| A-001 | 入力検査 | 形式違反(NUL / UTF-8 / BOM / CR / KEY=VALUE でない行)があれば全件報告して終了コード 2。検証ルールは評価しない | medium | 記載なし | 承認 |
-| A-002 | エラー処理 | stdout は検証ルールを評価したときだけ出す。ファイル不在・形式違反・内部障害では出さない | medium | 記載なし | 承認 |
-| A-003 | 出力形式 | 必須キー欠落・空のとき command_path: - / has_job_id_placeholder=false / violations=1 | medium | 記載なし | 承認 |
-| A-004 | 入力検査 | 絶対パスでないときは実行可能の検査をせず 1 行だけ出す。`{job_id}` と `{params}` の検査は独立に行う | high | 記載なし | 承認 |
-| A-005 | 入力検査 | 空白だけの値は空とみなし、必須キー違反にする | high | 記載なし | 承認 |
-| A-006 | 入力検査 | 「存在し実行可能」は通常ファイルかつ実行権限ありで判定(ディレクトリは拒否) | high | 記載なし | 承認 |
-| A-007 | 入力検査 | 同じキーが複数行にあれば後の行で検証し、重複は警告しない | medium | 記載なし | 承認 |
-| A-008 | 入力検査 | キーと値の前後空白を除く。キーが空の行は KEY=VALUE でない行として拒否 | medium | 記載なし | 承認 |
-| A-009 | 入力検査 | 値の先頭末尾の引用符は対になっているかを見ずに 1 文字ずつ除く(feature flag 設定と同じ規則) | low | 記載なし | 却下(仕様変更) |
-| A-010 | 入力検査 | RAPID_COMPARE_COMMAND 以外のキーは検証せず、未知キーの警告も出さない | medium | 記載なし | 承認 |
-| A-011 | 出力形式 | `--verbose` で、現れたキーを出現順に info 行で出す(値は出さない) | medium | 記載なし | 承認 |
-| A-012 | エラー処理 | `--final-crosscheck` は所有 UC の実装まで「未実装」として終了コード 6 | medium | 記載なし | 承認 |
+判断待ちの 2 件の補足(レビューで利用者が判断するための材料):
 
-補足: A-009 は、CLI 契約の中で引数分割の決まり(「引用符を 1 組だけ除く」)と env ファイルの決まり(「feature flag の設定契約に従う」)の書き方が揃っておらず、対になっていない引用符の扱いが一意に読めない。独立検証は立証済みの仕様違反とは扱っていない。レビューで仕様変更として却下され(期待: 2 か所の記述を今の実装の規則に揃える。実装は変更しない)、要求 CR-dcd8234d-010 として追加した。
+- **A-003**: CLI 契約の `internal_failure` は「`commands=` は実際に失敗したコマンド名だけ」と定める。行数の不一致は、どのコマンドが想定外の出力をしたか特定できない。そのため、いまの実装の「tr と sed を両方書く」は、この定めと一部食い違い得る(実装者も記録している)。独立検証は「矛盾とは立証できない」と判定した。通常の tr / sed の失敗(終了状態が非 0)では、失敗した 1 つの名前だけが出ることを確認済み。起きるのは、補助コマンドが成功を返しながら誤った出力をしたときだけ
+- **A-004**: 複製の削除だけが失敗する回の `commands=rm`・終了コード 6 は、契約の工程の区分「(2) 複製完了後の補助コマンドの失敗」に沿う。仕様に無いのは、複製の工程と削除の両方が失敗したときに、どちらの error 行を出すかの優先だけ
 
-## 5. 前サイクルの issue と要求の回収状況(確認のみ)
+## 4. 他 UC の事実(この UC の要求ではない)
 
-| 前サイクルの入力 | 状態 |
-|---|---|
-| `issues/20261010_084142_cross-uc-scenarios.md` | 旧仕様(比較定義 CSV / 対象カタログ)向け。今サイクルの issue 083500 で置き換え済み |
-| `issues/20261010_084142_facade-dispatch-and-csv-parser-outside-tiers.md` | 公開済み要求(20261010_104636)で回収済み。簡素化の反映で UC の tier が tier-facade だけになり、ティア間の委譲は無くなった |
-| `issues/20261010_092630_tier-handler-function-namespace-collision.md` | 同上で回収済み |
-| `issues/20261010_093000_tier-bdd-placeholder-scenario-given-then-mismatch.md` | 同上で回収済み |
-| 公開済み要求 20261010_104636(簡素化ほか 4 件)/ 20261027_053600(引数ごとに分けて起動) | 仕様に反映済み。今サイクルでは要求にしない |
+| UC | 状態 | 内容 | 根拠 |
+|---|---|---|---|
+| feature flag を設定する(fd678b04) | completed(再実行待ち) | `validate-config.sh --feature-flag` の `--verbose` の実装が、新しい info 行の規則に未追従。2026-11-11 に利用者が「ほかの 3 種類と同じ規則にそろえ、実装はマージ直後の再実行で直す」と決定済み。前サイクルで記録した env 読み込みの契約への未追従も同じ再実行で直す | spec-decision-033 context、review-notes 2026-11-10 |
+| slot ごとのジョブマップを定義する(eff24f55) | completed(再実行待ち) | 前サイクルで記録した tier BDD の Scenario 1 件の不足と、共有のバイト検査の出力順の変化への追従。この機能のマージ直後に再実行する(2026-11-10 利用者決定) | review-notes 2026-11-10 |
+| ハウスキープ(validate-config.sh `--housekeep` の担当 UC) | 未実装 | `--housekeep` の検証は未実装。担当 UC の実装時に、info 行の規則も含めて実装する | S5 scope_exclusions |
+| 確報クロスチェック(`--final-crosscheck` の担当 UC) | 未実装 | 受け付けて未実装の終了コード 6 を返す(2026-10-27 に承認済みの扱い) | S5 scope_exclusions、review-notes 2026-10-27 |
+
+どれも今回の変更による回帰ではない(今回のソース変更はコメントだけ)。

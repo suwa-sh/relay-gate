@@ -1,152 +1,146 @@
 stage: "S9"
 uc_id: "dcd8234d"
-manifest_sha256: "945094d65bb404232b80a8b2e224753f6661edc1fcf8e311aafdea570dd022cd"
+manifest_sha256: "426b0241023ffc06ae2d22909c4be05e28635272763b00d0eb084f534d74d95d"
 manifest_projection: v2
 result: pass
 review_html: "docs/impl/latest/dcd8234d/review/index.html"
 review_html_note: "gitignore 済みの再生成可能な派生ビュー(上書き)。HTML の SHA は証跡に結ばない"
-cycle_note: "前回レビュー(20261027_092806_s9_review_generated_dcd8234d)の回答を S8 refresh で反映した後の再生成。新しい選択肢は増やさず、公開許可と回答どおりかの確認だけを問う"
-source_revision: "feature/define-crosscheck-job-map-and-comparison-definitions @ 27d1b11"
-prior_answer_source: "docs/impl/latest/dcd8234d/review/review-notes.md の「2026-10-27 仕様還流後の再レビュー」節"
-prior_answer: "機能=A / 要求=公開 / 前提=A-009:却下(仕様変更) / 前提=A-012:承認 / 前提=残り10件:一括承認"
+cycle_note: "仕様の書き足し(spec-decision-033)後の stale 再実行の最終確認。仕様への要求 0 件。実装の最終承認と、新しく出た補った前提 2 件(A-003 / A-004、回答任意)の扱いの 2 判断を問う。確認だけの 4 点を併記"
+source_revision: "feature/define-crosscheck-job-map-and-comparison-definitions @ afc6c81"
 validator:
   command: "node validateReviewHtml.js docs/impl/latest/dcd8234d/review/index.html"
   result: "pass"
-  human_html_review_validate: "python3 validate.py の結果は VALID(警告 0。内部 ID 0 / 長段落 0 / h2 14 に対し svg 8)"
-  visual_check: "headless Chrome で 1440px を render して目視(ダークモード)。新規の回答反映図と更新した流れ図・前提図で connector の重なり・attach point 共有・非 endpoint node 背面通過・diagonal なし、label と線の間隔あり。390px 指定の render は headless の最小幅のため右端が切れて見え、図は横スクロール枠に収まることだけ確認。ライトモードとコピー操作のクリックは目視していない"
+  human_html_review_validate: "python3 validate.py の結果は VALID(警告 0。内部 ID 0 / 長段落 0 / h2 14 に対し svg 7)"
+  visual_check: "headless Chrome で 1440px を render して目視(OS がダークモードのため暗い配色で表示)。7 図すべてで connector の重なり・attach point 共有・非 endpoint node 背面通過・diagonal なし、label と線の間隔あり。回答欄はスクリプトが動き、推奨の文面(2 行)が初期表示されることを確認。選択を変えたときの文面の変化、コピーボタンのクリック、390px 幅、ライトモードは目視していない"
 figures:
-  - type: flowchart
-    title: "前回の回答から公開までの流れと、いまの位置"
+  - type: "architecture"
+    title: "作業全体の流れと現在地"
     nodes: 7
     arrows: 6
-  - type: architecture
-    title: "前回の 5 つの回答と、その行き先"
+  - type: "flowchart"
+    title: "終了コード 6 になる分かれ道と、新しい前提 2 つの位置"
     nodes: 9
-    arrows: 5
-  - type: architecture
-    title: "要求は 2 点、仕様は 3 点で、実装は仕様に従った"
-    nodes: 6
-    arrows: 3
-  - type: architecture
-    title: "処理の段階ごとの前提の件数と、回答の結果"
-    nodes: 5
-    arrows: 4
-  - type: architecture
+    arrows: 8
+  - type: "architecture"
     title: "検証コマンドの部品と外の境界"
-    nodes: 8
+    nodes: 7
     arrows: 7
-  - type: flowchart
+  - type: "flowchart"
     title: "検証コマンドの処理の流れと終了コード"
-    nodes: 8
-    arrows: 7
-  - type: data-flow
-    title: "起動コマンドの値が設計者から検証コマンドを通って結果になるまで"
+    nodes: 9
+    arrows: 9
+  - type: "architecture"
+    title: "起動コマンドの値が結果になるまで"
     nodes: 5
     arrows: 4
-  - type: architecture
-    title: "テストの段と、それぞれが確かめた範囲"
+  - type: "architecture"
+    title: "テストの段と、それぞれの結果"
     nodes: 5
     arrows: 4
-feedback_request_count: 2
+  - type: "flowchart"
+    title: "回答ごとの次の流れ"
+    nodes: 7
+    arrows: 6
+feedback_request_count: 0
 open_blocker_count: 0
 decision_summary:
   approval_questions: 1
   selection_questions: 0
   assumption_questions: 0
-  confirmation_questions: 1
+  optional_assumption_questions: 1
   recommended_choices: 2
   questions:
-    - id: "要求"
-      question: "更新した変更要求 2 件を公開してよいか"
-      recommended: "公開(変更要求 2 件)"
+    - id: "実装"
+      question: "実装を最終承認するか"
+      recommended: "承認する"
       alternatives:
-        - "書き直し(直す点は補足に書く)"
-    - id: "確認"
-      question: "回答の反映が前回の回答どおりか"
-      recommended: "前回の回答どおり"
+        - "差し戻す(直してほしい点は補足に書く)"
+      recommendation_changes_when: "今回変えたこと(テスト追加とコメント修正)や出力例に意図と違う振る舞いがあるとき"
+    - id: "前提"
+      question: "新しく出た補った前提 2 件(tier-facade A-003 / A-004)をどう扱うか(回答任意。未回答なら承認扱い)"
+      recommended: "2 件ともそのまま承認する"
       alternatives:
-        - "違う点あり(補足に書く)"
-  answered_decisions:
-    - id: "機能"
-      answer: "A(承認)"
-      reflected_as: "実装・テストは変更なし"
-    - id: "要求"
-      answer: "公開"
-      reflected_as: "CR-dcd8234d-009(bytes 不変)"
-    - id: "前提 A-009"
-      answer: "却下(仕様変更)"
-      reflected_as: "CR-dcd8234d-010(追加)"
-    - id: "前提 A-012"
-      answer: "承認"
-      reflected_as: "承認済みとして表示"
-    - id: "前提 残り10件"
-      answer: "一括承認"
-      reflected_as: "承認済みとして表示"
-  answer_template: "要求=公開(変更要求 2 件) / 確認=前回の回答どおり"
-  answer_template_examples:
-    - "書き直し: 要求=書き直し(直す点: …) / 確認=前回の回答どおり"
-    - "回答の訂正: 要求=書き直し / 確認=違う点あり(違う点: …)"
-    - "旧表記 機能=A / 相互運用=A / 監査=A も受け付ける(要求=公開 と 確認=前回の回答どおり の両方と同義)"
-  required_answers_note: "回答必須は 要求 と 確認 の 2 行。前回の 5 判断は回答済みで選び直しを求めない"
+        - "個別に決める: 各前提について そのまま承認 / 却下(仕様変更: いまの実装どおりに仕様へ書き足す) / 却下(実装修正)"
+      items:
+        - assumption: "tier-facade:A-003"
+          html_name: "行数が合わないときのコマンド名"
+          recommended: "そのまま承認"
+          spec_change_reply: "前提(行数が合わないときのコマンド名)=却下(仕様変更: 原因のコマンドを特定できないときは、関わったコマンド名 tr と sed を並べて書く、といまの実装どおりに仕様へ書き足す)"
+          impl_fix_reply: "前提(行数が合わないときのコマンド名)=却下(実装修正: 直し方を補足に書きます)"
+          recommendation_changes_when: "運用の仕組みが commands= を機械的に読み、書かれた名前を失敗した 1 つのコマンドとして扱う(予定がある)とき"
+        - assumption: "tier-facade:A-004"
+          html_name: "複製の削除に失敗したときの表示"
+          recommended: "そのまま承認"
+          spec_change_reply: "前提(複製の削除に失敗したときの表示)=却下(仕様変更: 削除の失敗は commands=rm で終了コード 6、複製の工程も失敗していたら config snapshot failed を優先する、といまの実装どおりに仕様へ書き足す)"
+          impl_fix_reply: "前提(複製の削除に失敗したときの表示)=却下(実装修正: 複製の工程と削除の両方が失敗したときも commands=rm を優先して表示する)"
+          recommendation_changes_when: "一時複製が残ったことを、どの回でも必ず表示で知る必要があるとき"
+      recommendation_reason: "どちらも環境の異常で検査を続けられない回(終了コード 6)の表示の細部で、通常の検証結果に影響しない。完了済みの slot ジョブマップの検証(共有部分 job_map_repo.sh)も同じ決め方をしている"
+  confirmation_items:
+    - "--feature-flag の --verbose は新しい info 行の規則に未追従。マージ直後の fd678b04 再実行で直す(2026-11-11 利用者決定)"
+    - "eff24f55(slot ごとのジョブマップを定義する)も共有部分の変更に合わせてマージ直後に再実行する(利用者決定済み)"
+    - "--housekeep の検証は未実装で別 UC の担当"
+    - "作業ブランチには仕様の書き足しと設定の再確認のコミットも含まれ、1 コミットにまとめる"
+  answer_template: "実装=承認します / 前提=新しい 2 件はそのまま承認します"
+  answer_template_note: "HTML 本文の回答は名前で書く(内部 ID なし)。行数が合わないときのコマンド名 = tier-facade A-003、複製の削除に失敗したときの表示 = tier-facade A-004。validateReviewHtml.js が要求する汎用形 機能=A / 相互運用=A / 監査=A は付録にだけ載せた"
+  approval_meaning: "承認は delivery approval。作業ブランチを 1 コミットに squash し、事前許可済みの上書き push(この作業ブランチに限り 1 回)を行い、PR #14 を更新してマージ待ちにする。前提で仕様変更・実装修正を選んだ場合は 1 周遅れる"
 assumption_summary:
-  total: 12
+  total: 4
   by_tier:
-    tier-facade: 12
+    tier-facade: 4
   required_answer: 0
   required_ids: []
-  required_note: "全 12 件 spec_absent。security / persistence は 0 件"
-  decided:
-    approved: 11
-    rejected_spec_change: 1
-    rejected_implementation_change: 0
-    rejected_ids:
-      - "tier-facade:A-009"
+  required_note: "分類は data_format 1 / input_validation 1 / error_handling 2。security / persistence は 0 件"
+  no_decision_needed:
+    - id: "tier-facade:A-001"
+      reason: "consistent(既存規則の言い直し)"
+    - id: "tier-facade:A-002"
+      reason: "2026-10-27 に同じ内容(当時の A-006)が承認済み。docs/impl/events/20261027_112730_review_approved_dcd8234d_feedback_publish/event.yaml"
+  optional_ids:
+    - "tier-facade:A-003"
+    - "tier-facade:A-004"
   verdicts:
-    consistent: 0
-    spec_absent: 12
+    consistent: 1
+    spec_absent: 3
     contradicts: 0
     unlisted: 0
   unlisted_ids: []
 feedback_review_evidence:
-  feedback_id: "20261027_091000_impl_feedback_dcd8234d"
-  draft_path: "docs/impl/latest/dcd8234d/feedback/draft.md"
-  draft_sha256: "37b8b54d7a4a8b1a978e389924c4b6e3ee9a1d276823a9d877f10fd01b866ca8"
-  request_count: 2
-  blocker_count: 0
-  requests:
-    - id: "CR-dcd8234d-009"
-      severity: "spec-gap"
-      html_title: "速報の起動コマンドの検証項目が、要求(2 点)と仕様(3 点)で食い違っている"
-      decision_key: "要求"
-      source_answer: "要求=公開"
-    - id: "CR-dcd8234d-010"
-      severity: "spec-gap"
-      html_title: "設定値の先頭末尾の引用符の外し方が、CLI 契約の 2 か所で別の書き方になっている"
-      decision_key: "要求"
-      source_answer: "前提=A-009:却下(仕様変更)"
+  feedback_id: null
+  draft_sha256: null
+  request_count: 0
 implementation_review_evidence:
   gate_result: "6/6 pass"
+  open_blocker_count: 0
+  open_major_count: 0
+  assumption_evidence_sha256: "2ce25d1e631455e18b19ea066adc4f01504acb386371ef3cb1f80e75c01d48f0"
+implementation_review_details:
   gates:
     format: "pass (tier-facade)"
     lint: "pass (tier-facade)"
-    tdd: "pass (373/373)"
-    bdd_tier: "pass (46/46, this UC 5/5)"
-    uc_bdd: "pass (43/43, this UC 7/7)"
-    atdd: "pass (6/6)"
-  open_blocker_count: 0
-  open_major_count: 0
-  open_minor_count: 13
-  open_minor_note: "F-001..F-012 は前提 12 件(人の回答で 11 承認、1 件 spec_change 却下)、F-013 は単体テストの 2 回 Act(実装起因、情報のみ)"
+    tdd: "pass (384/384)"
+    bdd_tier: "pass (57/57 scenarios, 197 steps。この UC 16/16)"
+    uc_bdd: "pass (46/46、この UC 10/10)"
+    atdd: "pass (7/7)"
+  open_minor_count: 4
+  open_minor_note: "F-001〜F-004 はすべて assumption_conformance(A-001 consistent、A-002〜A-004 spec_absent)"
   findings_paths:
     - "docs/impl/latest/dcd8234d/stages/attempt-4/S5_verify.tier-facade.findings.yaml"
-  assumption_evidence_sha256: "71a22185f7c4f60069dddf6a640165d811ff24b0283674c30168b00dcf9e13d6"
   assumption_evidence_inputs:
     - tier: "tier-facade"
-      assumptions_sha256: "ca3ac08893cc86ba9b8b3b5b90501874b6b9ba2bf49473727448c953e946a8eb"
-      assumption_verdicts_sha256: "93d3ba68135195dbeeb35a5efbf844076ba4db328183f7422076ce99152ea881"
-  assumption_evidence_command: "node validateAssumptions.js evidence tier-facade:ca3ac08893cc86ba9b8b3b5b90501874b6b9ba2bf49473727448c953e946a8eb:93d3ba68135195dbeeb35a5efbf844076ba4db328183f7422076ce99152ea881"
+      assumptions_sha256: "b558e9ef4853d073d188c879e14f9c39d78ad47dbda89cdeed86155109025a3d"
+      assumption_verdicts_sha256: "d65a068e9179d790aa1ed3c0e0df90f4140bd77967ff39e9f87a7475bf1bf99b"
+  assumption_evidence_command: "node validateAssumptions.js evidence tier-facade:b558e9ef4853d073d188c879e14f9c39d78ad47dbda89cdeed86155109025a3d:d65a068e9179d790aa1ed3c0e0df90f4140bd77967ff39e9f87a7475bf1bf99b"
+other_uc_followups:
+  - uc_id: "fd678b04"
+    note: "validate-config.sh --feature-flag の --verbose が info 行の規則に未追従。マージ直後に再実行する"
+  - uc_id: "eff24f55"
+    note: "共有部分の変更への追従と tier BDD の不足 1 件。マージ直後に再実行する"
 captures: []
-demo_note: "動かし方の出力例は前回生成時に scratchpad で実行した結果を再掲(実装は不変。記録済みゲートは再実行していない)"
-write_set_note: "書き込みは review/index.html(gitignore 済み。上書き)と本 done のみ。git は check-ignore / rev-parse の読み取りだけ"
-completed_at: "2026-10-27T10:02:21+09:00"
+demo_note: "出力例は scratchpad の一時ディレクトリで facade/bin/validate-config.sh を実行して採取した。A-003 は出力の最終行を落とす代替 tr、A-004 は失敗する代替 rm、両方失敗の回は失敗する代替 mv と rm(どちらも呼ばれたことを印のファイルで確認)を PATH の先頭に置いた。合格例は比較ツールのパスだけ /opt/compare/compare.sh に置換。実装を直す案の出力は推測(実装していない)。記録済みゲートは再実行していない"
+reporting_conflicts:
+  - "validateReviewHtml.js は 機能=A / 相互運用=A / 監査=A の文字列を必須とするが、利用者向けの回答は名前で書く指示のため、汎用形は付録にだけ載せた"
+  - "dist-impl-review は前提 ID を回答 template に表示するとするが、本文の内部 ID 禁止の指示のため、回答文は前提の名前で書き、ID 対応は付録と本 done の items にだけ置いた"
+  - "dist-impl-review は script を使わないと定めるが、human-html-review の回答欄は base.html 同梱のスクリプトを必須とするため、そのスクリプトだけを含めた(通信・外部読み込みなし)"
+write_set_note: "書き込みは review/index.html(gitignore 済み。上書き)と本 done のみ。デモの一時ファイルと作業用 HTML は scratchpad に置いた。git は rev-parse / check-ignore の読み取りだけ"
+completed_at: "2026-11-11T08:35:00+09:00"
 completed_by: "dist-impl-review@0.14.1"

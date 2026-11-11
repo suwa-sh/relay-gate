@@ -21,7 +21,7 @@ x_cli_commands:
   - name: "validate-config.sh"
     tier: "tier-facade"
     role: "uses"
-    synopsis: "validate-config.sh --final-crosscheck <path>(確報の比較ツール起動コマンドを検証。本体の正本は UC「feature flag を設定する」)"
+    synopsis: "validate-config.sh --final-crosscheck <path> [--verbose](確報の比較ツール起動コマンドを検証。本体の正本は UC「feature flag を設定する」)"
     invoked_by: "基盤適用設計者 / 運用者(直接起動)"
     args: []
     options:
@@ -29,6 +29,11 @@ x_cli_commands:
         type: "string"
         required: false
         description: "確報クロスチェック worker 設定ファイル(final-crosscheck.env)のパス。FINAL_COMPARE_COMMAND のコマンド部分(先頭の語)が絶対パスで存在・実行可能であることを検証する(プレースホルダ無しのため {job_id} 検査なし)。他の検証種別オプションと排他"
+      - name: "--verbose"
+        type: "boolean"
+        required: false
+        default: "false"
+        description: "読み取ったキーごとに info: key loaded key=<KEY> path: <path> を stderr に出す(キーごとの検査の段(契約 config_input_rules.env_files の (iii))へ進んだ回だけ。文言・出す回・順の正本は契約 config_input_rules.env_files の『validate-config.sh の --verbose の info 行』。終了コード・stdout・violations に影響しない)"
     stdin: "なし"
     stdout: "config=final-crosscheck, path: ..., command_path: <FINAL_COMPARE_COMMAND の先頭の語>, status=valid|invalid, violations=N(invalid 時)。入力の守備範囲の違反で値を使わないときは command_path: -(契約 config_input_rules.env_files)"
     stderr: "error: option required option=FINAL_COMPARE_COMMAND path: ...(2)/ error: path is not absolute key=FINAL_COMPARE_COMMAND path=...(2)/ error: file not executable key=FINAL_COMPARE_COMMAND path=...(2)/ 入力の守備範囲の違反(invalid line / error: duplicate key key=<KEY> lines=<n1,n2,...> path: ... など。文言と報告の順は契約 config_input_rules.env_files。2)。キー表(契約 config_files.final-crosscheck.env の keys)に無いキーは `warn: unknown key key=<KEY> path: ...` を出して継続する(終了コード・violations に数えない。他の読み手が使うキーは未知キーではない。契約 config_files.final-crosscheck.env note)"

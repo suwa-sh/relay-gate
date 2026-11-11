@@ -1,0 +1,53 @@
+round: 1
+findings:
+  - id: R-001
+    viewpoint: 4
+    severity: minor
+    target: "_cross-cutting/api/cli-command-contract.yaml"
+    claim: "validate-config.sh の --verbose の description の冒頭が「行ごとの解決結果を info: で stderr に出す」のまま残っており、続く文で正本とした env 形式 3 検証種別の規則(読み取ったキーごとに info: key loaded、値は出さない)と言い方が食い違う。"
+    evidence: "commands の validate-config.sh options --verbose の description: 「行ごとの解決結果を info: で stderr に出す(…)。info 行の文言・出す回・順の正本は検証種別ごとに次のとおり: --job-map は …、--rapid-crosscheck / --final-crosscheck / --housekeep は config_input_rules.env_files の『validate-config.sh の --verbose の info 行』」。env_files 側 (a) は「読み取ったキーごとに 1 行」「値は出さない」で、解決結果(値)を出す行ではない。読み手が冒頭だけを読むと、env 形式でも値を含む解決結果を出すと読める。"
+    suggested_fix: "冒頭を「補助出力の info: 行を stderr に出す」など検証種別に依存しない表現にし、「行ごとの解決結果」は --job-map の説明の側に移す。--feature-flag の扱いには触れない(今回の範囲外のまま)。"
+  - id: R-002
+    viewpoint: 4
+    severity: minor
+    target: "ハウスキープ業務/ハウスキープフロー/保持日数を過ぎた終了済みの実行と確報比較依頼を判定する/_api-summary.yaml"
+    claim: "3 検証種別に「同じ規則を同じ書き方で」適用するという利用者決定に対し、info 行を出す回の書き方が UC ごとに揃っていない。ハウスキープ側は「保持日数の検査の段へ進んだ回だけ」、確報・速報側は「キーごとの検査の段へ進んだ回だけ」、確報の tier md は「入力の守備範囲の違反で止めた回は出さず」と、同じ段 (iii) を別の名前で呼んでいる。"
+    evidence: "housekeep の _api-summary.yaml と tier-facade.md の --verbose 行: 「保持日数の検査の段へ進んだ回だけ」。final-crosscheck の _api-summary.yaml: 「キーごとの検査の段へ進んだ回だけ」。rapid の _api-summary.yaml / tier-facade.md: 「キーごとの検査の段(契約 config_input_rules.env_files の (iii))へ進んだ回だけ」。(iii) は保持日数の検査だけでなく未知キーの warn も含むため、「保持日数の検査の段」は段の範囲を狭く読ませる。"
+    suggested_fix: "3 UC とも「キーごとの検査の段(契約 config_input_rules.env_files の (iii))へ進んだ回だけ」と同じ言い回しに揃え、止めた回の説明も「バイト・改行の検査または行の構造の検査で止めた回」に統一する。"
+  - id: R-003
+    viewpoint: 5
+    severity: minor
+    target: "ハウスキープ業務/ハウスキープフロー/保持日数を過ぎた終了済みの実行と確報比較依頼を判定する/tier-facade.md"
+    claim: "BDD「同じキーの重複で止めた回は --verbose でも info 行を出さない」が stderr だけを判定し、stdout を判定していない。速報側の同種の場面(行の構造の検査で止めた回)は stdout の 6 行まで判定しており、場面の粒度が揃っていない。止めた回の stdout(retention_days=- / status=invalid / violations=1)が --verbose で変わらないことを確かめられない。"
+    evidence: "追加場面の Then は「stderr は \"error: duplicate key key=HOUSEKEEP_RETENTION_DAYS lines=1,2 path: …\" の 1 行だけである(info 行は出ない)」のみで And が無い。契約 env_files は (ii) で止めたときも stdout に固定順の行を出し値から決まる行は `-`、violations=その段の error 行の数と決めており、(c) は info 行が stdout を変えないとしている。"
+    suggested_fix: "And stdout が \"config=housekeep\" / \"path: /etc/relay-gate/housekeep.env\" / \"retention_days=-\" / \"status=invalid\" / \"violations=1\" の 5 行である、を足す。"
+  - id: R-004
+    viewpoint: 5
+    severity: minor
+    target: "クロスチェック業務/確報クロスチェックフロー/比較ツールで日次全量比較を実行して結果を保存する/tier-final-crosscheck.md"
+    claim: "確報の検証種別に追加した --verbose の場面は 3 段目の順の 1 場面だけで、2 つ目の変更要求(1 段目・2 段目で止めた回は info 行を出さない)を確報の検証種別で確かめる場面が無い。範囲を 3 検証種別とした決定に対し、速報(バイト・改行 / 行の構造)とハウスキープ(重複)には止めた回の場面があるのに、確報だけ欠けている。確報は未実装のため、実装時にこの規則がテストされないまま通るおそれがある。"
+    evidence: "tier-final-crosscheck.md の追加場面は「--verbose では info 行をすべて出してから未知キーの warn 行、起動コマンドの error 行の順に出す」の 1 つだけ。本文の「補助出力(--verbose)」には「入力の守備範囲の違反で止めた回は出さず」と書いているが、対応する Then が無い。"
+    suggested_fix: "例えば 1 行目 ZZ=x、2 行目 broken、3 行目 FINAL_COMPARE_COMMAND=<実行可能な絶対パス> の final-crosscheck.env を --verbose で検証すると、終了コード 2 で stderr は error: invalid line line=2 path: … の 1 行だけ、stdout は command_path: - / status=invalid / violations=1 になる場面を足す。"
+  - id: R-005
+    viewpoint: 4
+    severity: minor
+    target: "適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/tier-facade.md"
+    claim: "コマンド契約の表の「コマンド」行が `validate-config.sh --rapid-crosscheck <path>` のままで、--verbose を引数の行にだけ足している。確報の tier md は書式を `validate-config.sh --final-crosscheck <path> [--verbose]`、確報の _api-summary.yaml の synopsis も `[--verbose]` に直しており、3 検証種別で書式の書き方が揃っていない。"
+    evidence: "rapid tier-facade.md の表: 「コマンド | `validate-config.sh --rapid-crosscheck <path>`」、「引数 | … `--verbose`(任意)は補助出力の info 行を stderr に出す」。tier-final-crosscheck.md: 「**書式**: `validate-config.sh --final-crosscheck <path> [--verbose]`」。"
+    suggested_fix: "rapid の「コマンド」行を `validate-config.sh --rapid-crosscheck <path> [--verbose]` にする(rapid の _api-summary.yaml に synopsis があれば同様に揃える)。"
+resolved:
+  - id: R-001
+    resolution: fixed
+    note: "--verbose の説明の冒頭を「補助出力の info: 行を stderr に出す」にし、「行ごとの解決結果」は --job-map の側へ移した"
+  - id: R-002
+    resolution: fixed
+    note: "3 UC の --verbose の説明を「キーごとの検査の段(契約 config_input_rules.env_files の (iii))へ進んだ回だけ」、止めた回を「バイト・改行の検査または行の構造の検査で止めた回」に揃えた"
+  - id: R-003
+    resolution: fixed
+    note: "ハウスキープの重複で止めた場面に stdout 5 行の And を足した"
+  - id: R-004
+    resolution: fixed
+    note: "確報に「行の構造の検査で止めた回は --verbose でも info 行を出さない」場面を足した"
+  - id: R-005
+    resolution: fixed
+    note: "速報の tier-facade.md のコマンド行を `validate-config.sh --rapid-crosscheck <path> [--verbose]` にした"

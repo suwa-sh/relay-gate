@@ -1,14 +1,14 @@
 version: "1.0"
-event_id: "20261105_112000_feedback_single_management_db"
-created_at: "2026-11-05T11:20:00+09:00"
-source: "Spec 差分更新(design 無しモード。2026-11-05 の管理 DB を 1 つとする前提の明記)。CR-f4c8b261-001(infra 直接所有。spec は保守的 closure): インフラ設計が、管理 DB は 1 つで、すべての接続参照名(RAPID_DB_CONN_REF、実行ホストと DB セグメントそれぞれの FINAL_DB_CONN_REF、HANG_DB_CONN_REF、HOUSEKEEP_DB_CONN_REF(専用 DB ロール housekeep_del))が同じ 1 つの管理 DB に解決されることを前提として書いたことに追従した。CLI 契約の conventions.credentials に、単一の管理 DB の前提、条件は参照名の文字列ではなく解決先が同じこと(確報 runner が登録した依頼を確報 worker が同じキューから取得するため)、解決先が同じことは導入する側が確かめること、構築時の検査は設定ファイルの存在確認だけで relay-gate のコマンドも解決先を検査しないことを書いた。config_files の final-crosscheck.env の note と 4 つの参照名のキー説明、6 UC の tier md の設定キー表(ハウスキープ判定 UC はキー表の直下の説明)から参照した。新しい検査・error 文言・終了コード・BDD は足さない(spec-decision-032)"
+event_id: "20261110_153000_feedback_impl_feedback_dcd8234d"
+created_at: "2026-11-10T15:30:00+09:00"
+source: "Spec 差分更新(design 無しモード。2026-11-10 の設定検証の --verbose の info 行の明記)。CR-dcd8234d-011 / CR-dcd8234d-012(spec 直接所有): CLI 契約 config_input_rules.env_files に「validate-config.sh の --verbose の info 行」を足した。文言は読み取ったキーごとに 1 行 info: key loaded key=<KEY> path: <path>(コメント行を除く全キー。値は出さない)、キーごとの検査の段の中の順は info 行をすべて → 未知キーの warn 行をすべて → キーごとの検査の error 行(と hint)、バイト・改行の検査と行の構造の検査で止めた回は info 行を出さない。--feature-flag / --rapid-crosscheck / --final-crosscheck / --housekeep の 4 検証種別に同じ規則を適用し(--feature-flag は 2026-11-11 の利用者決定)、validate-config.sh の --verbose と stderr の補助出力、3 UC の tier md と _api-summary.yaml、出力規約を揃え、tier BDD を 11 場面足した。あわせて 4 UC(slot runner の実体スクリプトを割り当てる / 切り替えた運用モードで業務ジョブを実行する / slot ごとのジョブマップを定義する / feature flag を設定する)の API 要約と UC「feature flag を設定する」の tier-facade.md の検証種別の列挙を契約どおり 5 つに直した(意味は変えない)。--feature-flag の実装は規則に未追従で、該当 UC の実装の再実行で直す。実装は変えない(spec-decision-033)"
 design_available: false
-previous_event_ref: "20261105_092000_feedback_external_review_round2"
+previous_event_ref: "20261105_112000_feedback_single_management_db"
 feedback_request:
-  feedback_request_id: "20261105_single_management_db"
-  input_sha256: "97bb80ca208301540a11760f416c348f73ea0c1898d9535a80c5a8f013df194a"
-  request_ids: ["CR-f4c8b261-001"]
-  work_unit_ids: ["CR-f4c8b261-001#1"]
+  feedback_request_id: "20261110_080548_impl_feedback_dcd8234d"
+  input_sha256: "d5c7a17dcf011fceadfa4ed54bd25731a2916da6fcbc78ad752be42249ca7389"
+  request_ids: ["CR-dcd8234d-011","CR-dcd8234d-012"]
+  work_unit_ids: ["CR-dcd8234d-011#1","CR-dcd8234d-012#1"]
 
 use_cases:
   - business: "クロスチェック業務"
@@ -1079,11 +1079,15 @@ stats:
   bucs: 8
 
 review:
-  method: "差分更新(2026-11-05 の管理 DB を 1 つとする前提の明記)の Step6.5 反証レビュー: 生成とは別コンテキストのサブエージェント(修正禁止)が差分ファイルと差分外の参照名の記述で round 1 を実施。修正はオーケストレータが行い、機械検証を再実行"
+  method: "差分更新(2026-11-10 の設定検証の --verbose の info 行の明記)の Step6.5 反証レビュー: 生成とは別コンテキストのサブエージェント(修正禁止)が差分ファイルと契約の関係節を読み、--rapid-crosscheck の実装を実走して BDD の期待値を照合して round 1 を実施。修正はオーケストレータが行い、機械検証を再実行"
   rounds: 1
   converged: true
-  final_state: "blocker 0 / 未解決 major 0(1 ラウンドで収束)。round 1: minor 1(fixed。文言の追加だけのため再レビューなし)。実装可能性は変更した UC すべて ready(_review/implementation-readiness.md)"
+  final_state: "blocker 0 / 未解決 major 0(1 ラウンドで収束)。round 1: minor 5(すべて fixed。文言と場面の追加だけのため再レビューなし)。実装可能性は変更した UC すべて ready(_review/implementation-readiness.md)。--feature-flag は 2026-11-11 の利用者決定で同じ規則に含めた(BDD 3 場面を追加。文言と場面の追加のため再レビューなし)"
   history:
+    - round: 1
+      event: "20261110_153000_feedback_impl_feedback_dcd8234d"
+      findings: "minor 5(R-001〜R-005。すべて fixed)"
+      resolution: "_review/round-1.yaml の resolved(blocker 0 / 未解決 major 0 で収束)"
     - round: 1
       event: "20261105_112000_feedback_single_management_db"
       findings: "minor 1(R-001。fixed)"

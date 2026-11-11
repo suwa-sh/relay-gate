@@ -2,7 +2,7 @@
 # 転写: 1 criterion = 1 Scenario。文言は原文のまま(Given / When / Then の区切りで行分割のみ)。bootstrap P7 生成
 Feature: SPEC-008-05 hang_detect_limit_minutes は導入時に全ジョブ 60 分に設定し、正常終了パターンの警告が出そろった時点でジョブごとに最後の警告の経過時間を基準に調整する。foreground role は 0 を設定して検知対象から除外できる
 
-  REQ-008: ハング検知が background 実行(background slot と速報比較依頼)を定期監視し、ジョブスケジューラの実行結果に現れない background 異常を運用者へ通知すること
+  REQ-008: ハング検知が background 実行(background slot と速報比較依頼)を定期監視し、ジョブスケジューラの実行結果に現れない background 異常を、ハング検知ジョブ自身の終了結果と標準エラーで運用者へ知らせること
 
   @atdd_SPEC-008-05-1
   Scenario: SPEC-008-05-1

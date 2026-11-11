@@ -1,4 +1,6 @@
 // UC BDD(②)step definition。uc_id=dcd8234d / branch_slug=define-crosscheck-job-map-and-comparison-definitions(S6 uc-bdd で実装)。
+// 2026-11-10 S2 再生成: feedback run 2〜9 後の spec に合わせ、error 行が 1 行だけであることの Then・
+// 「引数部分の内容は検査しない」・「クロスチェックジョブマップと対象カタログの検証種別は無い」の step を追加した。
 // source: docs/specs/latest/適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/spec.md#E2E完了条件(BDD)
 // step 文言は feature から転写したリテラルを正規表現で完全一致させる(S2 skeleton の方式を踏襲)。
 //
@@ -140,12 +142,26 @@ function assertStdoutHas(world, expected) {
   }
 }
 
+function errorLines(world) {
+  return lines(world.result.stderr).filter((line) => line.startsWith('error:'));
+}
+
 function assertStderrHas(world, expected) {
   assert.ok(
     lines(world.result.stderr).includes(expected),
     `stderr should include "${expected}"\nstderr:\n${world.result.stderr}`,
   );
 }
+
+// 「<文言> の 1 行だけが error 行として出る」: error: で始まる行がちょうど 1 行で、その行が期待の文言と一致する
+function assertOnlyErrorLine(world, expected) {
+  assert.deepEqual(errorLines(world), [expected], `error lines should be exactly ["${expected}"]\nstderr:\n${world.result.stderr}`);
+}
+
+// 廃止された検証種別(クロスチェックジョブマップ / 対象カタログ)の Scenario Outline の Examples の値だけを受ける。
+// 汎用の正規表現にすると `--rapid-crosscheck` の When と曖昧一致するため、値を列挙する。
+const ABOLISHED_OPTION = '(--crosscheck-job-map|--target-catalog)';
+const ABOLISHED_FILE = '(crosscheck-job-map\\.csv|target-catalog\\.csv)';
 
 // --- 速報の起動コマンドを検証する(SPEC-004-01) ---
 
@@ -176,6 +192,10 @@ Then(
   },
 );
 
+Then(literal('stderr に error 行は出ない'), function () {
+  assert.deepEqual(errorLines(this), [], `no error line expected\nstderr:\n${this.result.stderr}`);
+});
+
 Then(literal('管理 DB への接続は行われず、relay-gate のスクリプトは変更されていない'), function () {
   assert.equal(fs.existsSync(this.dbSentinel), false, 'DB client (psql / pg_isready) should not be invoked');
   assert.equal(this.scriptsHashAfter, this.scriptsHashBefore, 'facade scripts should be unchanged');
@@ -203,6 +223,27 @@ Then(literal('終了コード 0 で stdout に `command_path: /opt/compare/compa
   assertStdoutHas(this, [`command_path: ${SPEC_COMPARE_V2}`, 'status=valid']);
 });
 
+// --- 引数部分の内容は検査しない(SPEC-004-04) ---
+
+Given(
+  literal(
+    'rapid-crosscheck.env の RAPID_COMPARE_COMMAND が `/opt/compare/compare.sh --job {job_id} --in /no/such/path unknown-word` で、引数部分に存在しないパスと未知の語を含み、`{params}` を引数の一部に含まない',
+  ),
+  function () {
+    // 引数部分(/no/such/path)は sandbox へ写像しない(存在しないパスのまま書く)
+    writeRapidEnvWithCommand(this, `${SPEC_COMPARE} --job {job_id} --in /no/such/path unknown-word`);
+    assert.equal(fs.existsSync('/no/such/path'), false, 'fixture premise: /no/such/path should not exist');
+  },
+);
+
+Then(
+  literal('終了コード 0 で stdout に `command_path: /opt/compare/compare.sh`、`has_job_id_placeholder=true`、`status=valid` が出る'),
+  function () {
+    assertExit(this, 0);
+    assertStdoutHas(this, [`command_path: ${SPEC_COMPARE}`, 'has_job_id_placeholder=true', 'status=valid']);
+  },
+);
+
 // --- コマンド部分が実行できない ---
 
 Given(
@@ -213,10 +254,13 @@ Given(
   },
 );
 
-Then(literal('終了コードは 2 で stderr に `error: file not executable key=RAPID_COMPARE_COMMAND path=/opt/compare/missing.sh` が出る'), function () {
-  assertExit(this, 2);
-  assertStderrHas(this, 'error: file not executable key=RAPID_COMPARE_COMMAND path=/opt/compare/missing.sh');
-});
+Then(
+  literal('終了コードは 2 で stderr に `error: file not executable key=RAPID_COMPARE_COMMAND path=/opt/compare/missing.sh` の 1 行だけが error 行として出る'),
+  function () {
+    assertExit(this, 2);
+    assertOnlyErrorLine(this, 'error: file not executable key=RAPID_COMPARE_COMMAND path=/opt/compare/missing.sh');
+  },
+);
 
 // --- コマンド部分が絶対パスでない ---
 
@@ -224,10 +268,13 @@ Given(literal('rapid-crosscheck.env の RAPID_COMPARE_COMMAND が `compare.sh --
   writeRapidEnvWithCommand(this, 'compare.sh --job {job_id}');
 });
 
-Then(literal('終了コードは 2 で stderr に `error: path is not absolute key=RAPID_COMPARE_COMMAND path=compare.sh` が出る'), function () {
-  assertExit(this, 2);
-  assertStderrHas(this, 'error: path is not absolute key=RAPID_COMPARE_COMMAND path=compare.sh');
-});
+Then(
+  literal('終了コードは 2 で stderr に `error: path is not absolute key=RAPID_COMPARE_COMMAND path=compare.sh` の 1 行だけが error 行として出る'),
+  function () {
+    assertExit(this, 2);
+    assertOnlyErrorLine(this, 'error: path is not absolute key=RAPID_COMPARE_COMMAND path=compare.sh');
+  },
+);
 
 // --- {job_id} プレースホルダが無い ---
 
@@ -238,10 +285,10 @@ Given(literal('rapid-crosscheck.env の RAPID_COMPARE_COMMAND が `/opt/compare/
 });
 
 Then(
-  literal('終了コードは 2 で stderr に `error: placeholder {job_id} is missing key=RAPID_COMPARE_COMMAND value=/opt/compare/compare.sh --run {run_id}` が出る'),
+  literal('終了コードは 2 で stderr に `error: placeholder {job_id} is missing key=RAPID_COMPARE_COMMAND value=/opt/compare/compare.sh --run {run_id}` の 1 行だけが error 行として出る'),
   function () {
     assertExit(this, 2);
-    assertStderrHas(this, 'error: placeholder {job_id} is missing key=RAPID_COMPARE_COMMAND value=/opt/compare/compare.sh --run {run_id}');
+    assertOnlyErrorLine(this,'error: placeholder {job_id} is missing key=RAPID_COMPARE_COMMAND value=/opt/compare/compare.sh --run {run_id}');
   },
 );
 
@@ -256,10 +303,10 @@ Given(
 );
 
 Then(
-  literal('終了コードは 2 で stderr に `error: placeholder {params} must be a whole argument key=RAPID_COMPARE_COMMAND value=/opt/compare/compare.sh --job {job_id} --args={params}` が出る'),
+  literal('終了コードは 2 で stderr に `error: placeholder {params} must be a whole argument key=RAPID_COMPARE_COMMAND value=/opt/compare/compare.sh --job {job_id} --args={params}` の 1 行だけが error 行として出る'),
   function () {
     assertExit(this, 2);
-    assertStderrHas(
+    assertOnlyErrorLine(
       this,
       'error: placeholder {params} must be a whole argument key=RAPID_COMPARE_COMMAND value=/opt/compare/compare.sh --job {job_id} --args={params}',
     );
@@ -279,4 +326,41 @@ Given(
 Then(literal('終了コード 0 で stdout に `status=valid` が出る'), function () {
   assertExit(this, 0);
   assertStdoutHas(this, ['status=valid']);
+});
+
+// --- クロスチェックジョブマップと対象カタログの検証種別は無い(SPEC-004-04) ---
+
+Given(new RegExp(`^/etc/relay-gate/${ABOLISHED_FILE} が存在する$`), function (file) {
+  // 旧形式の CSV を設定ファイル置き場に実ファイルとして置く(中身は検証されない前提のため最小のヘッダー行)
+  const target = this.sandbox(`/etc/relay-gate/${file}`);
+  fs.mkdirSync(path.dirname(target), { recursive: true });
+  fs.writeFileSync(target, 'job_id\n');
+});
+
+When(new RegExp(`^\`validate-config\\.sh ${ABOLISHED_OPTION} /etc/relay-gate/${ABOLISHED_FILE}\` を実行する$`), function (option, file) {
+  const target = this.sandbox(`/etc/relay-gate/${file}`);
+  assert.ok(fs.existsSync(target), `fixture should exist: /etc/relay-gate/${file}`);
+  const proc = spawnSync(VALIDATE_CONFIG, [option, target], {
+    cwd: this.root,
+    encoding: 'utf8',
+    env: { ...process.env, RELAY_GATE_CONFIG_DIR: this.sandbox('/etc/relay-gate') },
+  });
+  assert.equal(proc.error, undefined, `spawn failed: ${proc.error}`);
+  this.result = { status: proc.status, stdout: this.unsandbox(proc.stdout), stderr: this.unsandbox(proc.stderr) };
+  this.abolishedOption = option;
+});
+
+Then(new RegExp(`^終了コードは 2 で stderr に \`error: unknown option option=${ABOLISHED_OPTION}\` が出る$`), function (option) {
+  // S6 自己点検で強化: Then の option が When で実際に渡した option と同じであることを確かめる(取り違えの見逃し防止)
+  assert.equal(option, this.abolishedOption, 'Then option should match the option passed in When');
+  assertExit(this, 2);
+  assertStderrHas(this, `error: unknown option option=${option}`);
+});
+
+Then(literal('stdout に検証結果(`config=` 行)は出ない'), function () {
+  assert.equal(
+    lines(this.result.stdout).some((line) => line.startsWith('config=')),
+    false,
+    `stdout should not include config= line\nstdout:\n${this.result.stdout}`,
+  );
 });

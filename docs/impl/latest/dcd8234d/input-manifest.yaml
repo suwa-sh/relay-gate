@@ -1,50 +1,50 @@
 schema_version: '1.0'
 uc_id: dcd8234d
-fixed_at: '2026-10-27T08:30:00+09:00'
+fixed_at: '2026-11-11T07:52:57+09:00'
 inputs:
   spec_event:
-    event_id: spec:20261027_055000_feedback_impl_feedback_dcd8234d
-    sha256: 2c49001369ec37a9c1e0917d996c04485c0378167fbbc63ebb74c7065a4f6a55
+    event_id: spec:20261110_153000_feedback_impl_feedback_dcd8234d
+    sha256: 178dd80ba2fe6a2048ac5136849c678d1f46c6ca40f84fd2a47c82cb00b64ed9
   spec_md:
     path: docs/specs/latest/適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/spec.md
-    sha256: 204e9ae0289899cd2d5c9fed4285039856d31175437a7d84f66e8165862b0369
+    sha256: 3bf87cf639bd093649fed88b97b6475a5de040ad2f5ef231c74ac5afe3482491
   tier_mds:
   - tier: tier-facade
     path: docs/specs/latest/適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/tier-facade.md
-    sha256: ae8ccabf8a81e955d38ba87f8997a4e40f2c323466afd85e65930857ba9c582b
+    sha256: 8b1a68ea4ea648c1ad558e3f4b807f2e92b1b3e409bbb996e7ea49f834f450ca
   api_summary:
     path: docs/specs/latest/適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/_api-summary.yaml
-    sha256: 9cb90cd30bec51e89b6f5fdc67dee04f2c4a70db3ef73aa36cb3e4fced8171da
+    sha256: 367a579d2b6f472a0c5565fa442a536ca3edaac4a0b47c5dbcc4e4092f368755
   shared_spec_refs:
   - path: docs/specs/latest/_cross-cutting/api/asyncapi.yaml
-    sha256: c1d5aaf174ad7b4be5833f3e4a1b4bf43d6a4f03d57ef54693c17c95294f9a65
+    sha256: d7ee3342ea5f162b739f92f9e7d770969692a9d209a04fcd687672b1a46e67b9
   - path: docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml
-    sha256: 9030b13e7d8254a3b65256954a4dfb24edf52511e48f9042f88cba85a1122a96
+    sha256: 4073b2886c0ab5b7b4972a620d3e3beff7f59687a17dfa6e01705a990318a8c8
   - path: docs/specs/latest/_cross-cutting/datastore/rdb-schema.yaml
-    sha256: e3bd8af635cddca433c764b0efa77b05ec2dbfbb91bb08294696aad543356515
+    sha256: bbe77902949f155ada1a352661e41cc16409fa58b4076cde648cb028b5de11ac
   - path: docs/specs/latest/_cross-cutting/ux-ui/data-visualization.md
-    sha256: 1e545b80dd39a47f26e754de62264c99da46fbebb7a0d32d68223e3d31173bce
+    sha256: 762c015c99af2d63edee3e9b648b8f3e427c1b872ea42b89e8b311faded18ebf
   - path: docs/specs/latest/_cross-cutting/ux-ui/ui-design.md
-    sha256: 47a32f078689093b5ab105efd77512babd2fea2242a7023439d39ac3a6999435
+    sha256: 0b20576772ef4d7857e49080746ad9e79accccaa668d3090298315f5bbf3c6bb
   model_summary:
     path: docs/specs/latest/適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/_model-summary.yaml
     sha256: 4029503a5c8a73b91894f69b8a40fbc05335f8e6f5e09aab968c12e2741819eb
   datastore_schema:
     path: docs/specs/latest/_cross-cutting/datastore/rdb-schema.yaml
-    sha256: e3bd8af635cddca433c764b0efa77b05ec2dbfbb91bb08294696aad543356515
+    sha256: bbe77902949f155ada1a352661e41cc16409fa58b4076cde648cb028b5de11ac
   nfr:
     path: docs/nfr/latest/nfr-grade.yaml
-    sha256: 0283ce5aa1c4ada1b8836ec191174c23e526e329f29bc266dcc8d2137ea3accf
+    sha256: 71b7a2b971a9c5b57f2bbe1cfc360f3662d928ea9bb4be34af9396d49d74ac37
   usdm:
-    event_id: 20261010_200000_feedback_impl_feedback_dcd8234d
-    sha256: 35d4984e36eec37d8bdc8f337f50f1df3b7734dee2d6950ad6b3e62deab57050
+    event_id: 20261103_131000_feedback_housekeeping_db_required
+    sha256: b331577ccf21ee2b03596ae57aa9a43e149821d1fe0eda0bb0d5715cb820f262
   arch:
-    event_id: 20261010_202000_feedback_impl_feedback_dcd8234d
-    sha256: 4c5cf9d626f8441479f7bc337f09a9b89d2478b4bd1397852284f41b3d3c2adc
+    event_id: 20261103_133000_feedback_housekeeping_db_required
+    sha256: 6ee48d9e90d09b186d8d085a0ac0c64adb0a637559321a753c0612124f5da27d
   contracts_decl:
     sha256: 7841f9ba9d00013173c0b90f45ffabb37034ae872ddafdd02d5fdaff26b7d6e5
   contracts_lock:
     path: docs/impl/latest/contracts.lock.yaml
-    sha256: 98d3515f05096d93dba396cc6afae3944952e21aa45b6f2146bbe8e8f31944b6
+    sha256: 85d0a7048f69781737f394ff299e61a17af70eccf5a4a2d4b245e4c1feb1b324
   dev_rules_sha256: 6ea5fb63bf9ba32e793f87c4514b912050cd95b958660576b545ba5c484991b2
 lineage_ok: true

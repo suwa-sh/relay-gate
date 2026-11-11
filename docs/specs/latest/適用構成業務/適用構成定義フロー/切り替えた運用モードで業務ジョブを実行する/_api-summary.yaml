@@ -38,7 +38,7 @@ x_cli_commands:
       - name: "--feature-flag"
         type: "string"
         required: false
-        description: "feature-flag.env のパス。検証種別オプション(--feature-flag / --job-map / --rapid-crosscheck / --final-crosscheck)のうちちょうど 1 つを指定する(契約 option_exclusivity。本 UC は --feature-flag のみ使う)"
+        description: "feature-flag.env のパス。検証種別オプション(--feature-flag / --job-map / --rapid-crosscheck / --final-crosscheck / --housekeep)のうちちょうど 1 つを指定する(契約 option_exclusivity。本 UC は --feature-flag のみ使う)"
     stdin: "なし"
     stdout: "15 キー固定順の key=value(blue_impl / green_impl / rapid_crosscheck_runner / rapid_crosscheck_worker / operation_mode を含む)"
     stderr: "違反ごとに error: 1 行"

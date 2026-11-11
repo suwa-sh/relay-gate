@@ -1,0 +1,41 @@
+event_id: 20261110_083307_review_approved_dcd8234d_feedback_publish
+type: review_approved
+uc_id: dcd8234d
+stage: S9
+payload:
+  approval_kind: feedback_publish_approval
+  review_evidence_event_id: 20261110_082425_s9_review_generated_dcd8234d
+  feedback_review_evidence:
+    feedback_id: 20261110_080548_impl_feedback_dcd8234d
+    draft_path: docs/impl/latest/dcd8234d/feedback/draft.md
+    draft_sha256: d5c7a17dcf011fceadfa4ed54bd25731a2916da6fcbc78ad752be42249ca7389
+    request_count: 2
+    blocker_count: 0
+    requests:
+    - id: CR-dcd8234d-011
+      severity: spec-gap
+      html_title: 詳細表示の行の文言と、行の出る順が決まっていない
+      decision_key: 仕様
+      questions: 問い 1・問い 2・問い 3
+    - id: CR-dcd8234d-012
+      severity: spec-gap
+      html_title: 途中の段で止めた回に、詳細表示の行を出すかが決まっていない
+      decision_key: 仕様
+      questions: 問い 4
+  implementation_review_evidence:
+    gate_result: 6/6 pass
+    open_blocker_count: 0
+    open_major_count: 0
+    assumption_evidence_sha256: 1c194ce3925cbc6e2897e63d4aac0d3039bead24e2bf50e670d03ade06c609c1
+  assumption_decisions:
+  - tier: tier-facade
+    id: A-001
+    decision: confirmed
+    note: as-built behaviour is written into the spec by CR-dcd8234d-011 (recommended options)
+  - tier: tier-facade
+    id: A-002
+    decision: confirmed
+    note: as-built behaviour is written into the spec by CR-dcd8234d-012 (recommended option)
+  user_answer: 実装=承認 / 仕様=4 問とも実装どおり(推奨案)で公開 / 別機能=案 A / 前提=仕様の回答に従う / 確認=異論なし
+  confirmed_by: user
+created_at: '2026-11-10T08:33:07+09:00'

@@ -3,7 +3,7 @@ uc_id: dcd8234d
 business: 適用構成業務
 buc: 適用構成定義フロー
 uc: クロスチェックのジョブマップと比較定義を定義する
-state: blocked_on_spec
+state: completed
 current_attempt: 4
 resolved_models:
   implementer: claude-opus-5-5
@@ -13,21 +13,22 @@ git_delivery:
   uc_english_name: Define crosscheck job map and comparison definitions
   branch_slug: define-crosscheck-job-map-and-comparison-definitions
   base_branch: main
-  base_head: eee392b767caca105d94e6246ced9577d2443b00
+  base_head: cae841231a7d8e7c9b76dbbc7fd63c94249cde2e
   feature_branch: feature/define-crosscheck-job-map-and-comparison-definitions
   remote: origin
+  base_head_note: 'changed from eee392b on 2026-11-11 (PR #14 already merged as cae8412; user confirmed delivery by a new PR)'
 stages:
   S1_uc_init:
     status: done
-    event: 20261027_082600_s1_uc_init_completed_dcd8234d
+    event: 20261111_075258_s1_uc_init_completed_dcd8234d
   S2_test_scaffold:
     status: done
     red_baseline: pass
-    mode: initial
-    event: 20261027_084500_s2_test_scaffold_completed_dcd8234d
+    mode: full
+    event: 20261111_075931_s2_test_scaffold_completed_dcd8234d
   S3_contracts:
     status: done
-    event: 20261027_084700_s3_contracts_completed_dcd8234d
+    event: 20261111_075932_s3_contracts_completed_dcd8234d
   S4_tier_impl:
     tier-facade:
       status: done
@@ -37,6 +38,7 @@ stages:
         lint: pass
         tdd: pass
         bdd_tier: pass
+      event: 20261111_080518_s4_tier_impl_completed_dcd8234d_facade
   S5_verify:
     tier-facade:
       status: done
@@ -44,46 +46,48 @@ stages:
       result: pass
       open_blockers: 0
       open_major: 0
+      event: 20261111_081216_s5_verify_completed_dcd8234d_facade
   S6_uc_bdd:
     status: done
-    scenarios: 43
-    this_uc: 7
+    scenarios: 46
+    this_uc: 10
+    event: 20261111_081418_s6_uc_bdd_completed_dcd8234d
   S7_atdd:
     status: done
-    scenarios: 6
+    scenarios: 7
+    event: 20261111_081419_s7_atdd_completed_dcd8234d
   S8_feedback:
-    status: published
-    mode: publish
-    request_count: 2
+    status: no_request
+    mode: initial
+    request_count: 0
     blocker_count: 0
     draft_path: null
-    feedback_id: 20261027_091000_impl_feedback_dcd8234d
+    event: 20261111_081806_s8_feedback_draft_completed_dcd8234d
     previous_published:
     - feedback_id: 20261010_104636_impl_feedback_dcd8234d
       published_event: 20261010_185203_feedback_request_published_dcd8234d
     - feedback_id: 20261027_053600_impl_feedback_dcd8234d
-      note: spec-only request written by the orchestrator after the S9 security finding
-        (reflected by dist-pipeline run 20261027_053600)
-    published_path: docs/impl/latest/dcd8234d/feedback-requests/20261027_091000_impl_feedback_dcd8234d.md
-    published_event: 20261027_113048_feedback_request_published_dcd8234d
+      note: spec-only request written by the orchestrator after the S9 security finding (reflected by dist-pipeline run 20261027_053600)
+    - feedback_id: 20261027_091000_impl_feedback_dcd8234d
+      published_event: 20261027_113048_feedback_request_published_dcd8234d
+    - feedback_id: 20261110_080548_impl_feedback_dcd8234d
+      published_event: 20261110_083523_feedback_request_published_dcd8234d
   S9_review:
     status: done
     state: approved
-    review_event: 20261027_100325_s9_review_generated_dcd8234d_refresh
-    previous_review_event: 20261027_092806_s9_review_generated_dcd8234d
-    approval_event: 20261027_112730_review_approved_dcd8234d_feedback_publish
-    approval_kind: feedback_publish_approval
+    review_event: 20261111_083032_s9_review_generated_dcd8234d
+    approval_event: 20261111_084319_review_approved_dcd8234d_delivery
+    approval_kind: delivery_approval
+    delivery_prepared_event: 20261111_093304_delivery_prepared_dcd8234d_rebased_on_main
 restart:
-  at: '2026-10-27T08:20:00+09:00'
-  reason: reflux reflected (crosscheck simplification + argv launch rule). all done
-    stale, UC tiers -> [tier-facade]
-  invalidation_event: 20261027_082000_stage_invalidated_dcd8234d_stale_after_reflux
-  note: stale re-execution stays in attempt-4 (no attempt++). attempts 1-3 kept as
-    history
+  at: '2026-11-11T07:52:57+09:00'
+  reason: reflux reflected (feedback run 20261110_080548_impl_feedback_dcd8234d). all done stale
+  invalidation_event: 20261111_075257_stage_invalidated_dcd8234d_stale_after_feedback_run_verbose_info_line
+  note: stale re-execution stays in attempt-4 (no attempt++)
 attempt_limit:
   reached: true
   attempt: 3
   user_decision: continue_once
   result_attempt_4: pass
   note: attempt 4(ユーザー承認)で旧 2 tier pass。仕様反映後の再実行は stale 由来のため attempt 制御に乗せない
-updated_at: '2026-10-27T11:31:59+09:00'
+updated_at: '2026-11-11T09:33:04+09:00'

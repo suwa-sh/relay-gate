@@ -1,0 +1,94 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "specification"
+artifact_id: "spec-decision-033"
+title: "設定検証の --verbose の info 行の文言・出す回・出力順を CLI 契約の env の検査の段で 1 つに決め、feature flag・速報・確報・ハウスキープの env 形式の 4 検証種別に同じ規則で適用する"
+status: "approved"
+generated_at: "2026-11-10T15:30:00+09:00"
+context: |
+  - 速報クロスチェック設定の検証(validate-config.sh --rapid-crosscheck)を --verbose で実行すると、いまの実装は読み取ったキーごとに
+    `info: key loaded key=<KEY> path: <path>` を出す。この文言は仕様のどこにも書かれていなかった。
+    - CLI 契約の --verbose は「行ごとの解決結果を info: で stderr に出す」だけで、文言を決めていたのはジョブマップの検証(`info: resolved job_id=...`)だけだった。
+  - env の検査の段(CLI 契約 config_input_rules.env_files)は、3 段目(キーごとの検査)で未知キーの warn を出すことを決めていたが、
+    3 段目の中で info・warn・error をどの順に出すかを決めていなかった。
+  - 2 段目(行の構造の検査)で止めた回に info 行を出すかどうかも決めていなかった。2 段目で止めた回でもキーは読み取れているため、出す読み方も成り立った。
+  - ハング検知の設定(hang-detector.env)は、未知キーの warn 行・info 行・error 行の順と出さない回を契約で決め、
+    「どの入力・状態の組み合わせでも標準エラーの行数と内容を 1 つに決める」としている。設定検証だけ、この決め方が抜けていた。
+  - 同じ env の検査の段は、確報クロスチェック worker 設定(--final-crosscheck)とハウスキープ設定(--housekeep)の検証も使う。
+    どちらもまだ実装していないため、決まりが無いままだと別の文言や別の順が選ばれるおそれがあった。
+  - 利用者が 2026-11-10 に次の 5 点を確定した。
+    1. 文言は、いまの実装どおり `info: key loaded key=<KEY> path: <path>` を読み取ったキーごとに 1 行。key= と path: は制御文字の可視表記に従う。
+    2. 3 段目の中の順は、info 行をすべて → 未知キーの warn 行をすべて → キーごとの検査の error 行(と hint)。info と warn はそれぞれキーがファイルに初めて出た順。
+    3. 適用範囲は --rapid-crosscheck / --final-crosscheck / --housekeep の 3 検証種別で、同じ規則を同じ書き方で適用する。
+    4. 1 段目・2 段目で止めた回は info 行を出さず、止めた段の error 行(と hint)だけを出す。
+    5. 実装コードは変えない。いまの実装どおりを仕様へ書き足す。
+  - feature flag の検証(--feature-flag)は、いまの実装と 3 検証種別の規則が同じ結果にならないため、確認事項として利用者に返した。
+    利用者は 2026-11-11 に「ほかの 3 種類と同じ規則にそろえる。実装の直しはマージ直後の再実行で行う」と決めた。
+decision: |
+  1. CLI 契約 config_input_rules.env_files に「validate-config.sh の --verbose の info 行」の規則を足した。
+     - (a) 文言: 読み取ったキーごとに 1 行 `info: key loaded key=<KEY> path: <path>`。
+       - 対象はコメント行と 0 バイトの空行を除く全行のキー。未知キー・値が空のキー・その検証種別が検査しないキーも含む。
+       - key= は前後の空白を除いたキー、path: は利用者が指定したパス。どちらも制御文字の可視表記。値は出さない。
+     - (b) 出す回: 3 段目へ進んだ回だけ。
+       - 1 段目・2 段目で止めた回、ファイルが無い・読めない回、検証器の内部障害(終了コード 6)の回は出さない。
+     - (c) 3 段目の中の順: info 行をすべて → 未知キーの warn 行をすべて → キーごとの検査の error 行(と hint)。
+       - info と warn は、キーがファイルに初めて出た順(物理行番号の昇順)。
+       - info 行と warn 行は終了コードと violations に数えず、stdout を変えない。--verbose が無ければ info 行だけが無くなる。
+     - (d) この規則は validate-config.sh の env 形式の検証種別のもの。実行時の読み手の --verbose は各コマンドの契約のとおり。
+     - 例 2 つ(3 段目まで進む回の 7 行、2 段目で止める回の 1 行)を、いまの実装で実走した出力と同じ文言で書いた。
+     - 結びに、ハング検知の設定と同じ「どの入力・状態の組み合わせでも標準エラーの行数と内容を 1 つに決める」を置いた。
+  2. CLI 契約の validate-config.sh から、上記の規則を参照させた。
+     - --verbose オプションの説明: 検証種別ごとの正本(--job-map は stderr の補助出力、env 形式の検証種別は env_files の規則)。
+     - stderr の補助出力: env 形式の検証種別の info 行の文言と順の要約。
+  3. 3 つの UC の記述を契約に揃えた。
+     - クロスチェックのジョブマップと比較定義を定義する: tier-facade.md(stderr の行と BDD 4 場面)と _api-summary.yaml。
+       あわせて、検証種別の数を契約どおり 5 つ(--housekeep を含む)に直した。
+     - 比較ツールで日次全量比較を実行して結果を保存する: tier-final-crosscheck.md(書式・補助出力・行の順と BDD 2 場面)と _api-summary.yaml(--verbose)。
+     - 保持日数を過ぎた終了済みの実行と確報比較依頼を判定する: tier-facade.md(--verbose の説明は「固有の補助出力は無い」から直した。stderr の表・行の順と BDD 2 場面)と _api-summary.yaml。
+     - 出力規約(ui-design.md)の「設定ファイルの入力の守備範囲の定型文」に同じ規則の要約を足した。
+  4. feature flag の検証(--feature-flag)にも同じ規則を適用した(2026-11-11 利用者決定)。
+     - 選択肢は次の 3 案だった。
+       - 案 A(採用): 3 検証種別と同じ規則をそのまま適用する。
+       - 案 B: 文言と「3 段目へ進んだ回だけ、3 段目の先頭に出す」までをそろえ、warn と error の順は feature flag のいまの規則のままにする。
+       - 案 C: --feature-flag では info 行を出さない。
+     - 採用理由: 同じ検査の段を使う設定では、結果を違えない。
+     - 規則の中身は変えず、適用対象を 4 検証種別に広げた。--feature-flag に固有の点は次の 2 つだけを書いた。
+       - キーごとの検査の error 行には、組合せ検証・`FINAL_` で始まるキー・対応ジョブマップの error 行を含む。runner --help 問い合わせの warn 行は、問い合わせをキーごとの検査のあとに行うため、error 行(と hint)のあとに出る。
+       - runner の問い合わせの準備失敗(終了コード 6)の回は、既存の規則(error 行 1 つだけ)どおり info 行を出さない。
+     - 揃えた箇所: 契約の --verbose の説明・stderr の補助出力・env_files の規則(例 3 を追加)、出力規約、
+       UC「feature flag を設定する」の tier-facade.md(--verbose の説明・stderr の行の順と BDD 3 場面)と _api-summary.yaml、
+       ほかの 3 UC の tier md の「同じ規則」の列挙。
+  5. 検証種別の数の表記を契約に揃えた(意味は変えない)
+     - 契約の option_exclusivity は検証種別を 5 つ(--feature-flag / --job-map / --rapid-crosscheck / --final-crosscheck / --housekeep)としているが、
+       次の 4 UC の API 要約は 4 つ(--housekeep 抜き)のままだった: slot runner の実体スクリプトを割り当てる / 切り替えた運用モードで業務ジョブを実行する / slot ごとのジョブマップを定義する / feature flag を設定する。
+     - 4 UC の _api-summary.yaml の検証種別オプションの列挙と、UC「feature flag を設定する」の tier-facade.md の排他の列挙に --housekeep を足した。
+     - 排他の規則そのもの(ちょうど 1 つ、0 個・2 個以上は終了コード 2)は変えていない。
+  6. 実装との照合(2026-11-10 時点)
+     - --rapid-crosscheck の実装(facade の validate_rapid_crosscheck.sh / rapid_crosscheck_env.sh)は、文言・出す回・順のすべてでこの規則と一致する。
+       独立した実走で、例 1 の 7 行と例 2 の 1 行、バイト・改行の検査で止めた回に info 行が出ないこと、値が空のキーにも info 行が出ることを確認した。
+     - --final-crosscheck と --housekeep は未実装。食い違う実装は無い。
+     - --feature-flag の実装(facade の validate_feature_flag.sh / feature_flag_config.sh)は、この規則に未追従である。該当 UC の実装の再実行で直す。
+       - 壊れた行(`=` の無い行など)でも止まらず、info 行を出して検証を続ける。
+       - 出力の順が info 行をすべて → error 行 → warn 行と error 行(キーの順に交互)→ error 行(対応ジョブマップ)になり、規則の info → warn → error と違う。
+consequences:
+  positive:
+    - "env 形式の 4 検証種別の --verbose で、どの入力でも標準エラーの info・warn・error の行の文言と順(error 行どうしの順は各検証種別の契約のとおり)が仕様から決まる"
+    - "まだ実装していない --final-crosscheck / --housekeep も同じ文言と順で実装でき、検証種別ごとに結果が違わない"
+    - "値を使わない回(1 段目・2 段目で止めた回)に、キーを読み込んだと示す行が出ない"
+    - "ハング検知の設定と同じ書き方(出さない回まで決めて行数と内容を 1 つにする)にそろう"
+  negative:
+    - "feature flag の検証の実装は規則に未追従で、実装の再実行までは仕様と出力が食い違う"
+    - "info 行に値を出さないため、値の確認には設定ファイルそのものを見る必要がある"
+alternatives_considered:
+  - name: "info 行に値まで出す(例: info: key loaded key=<KEY> value=<VALUE> path: <path>)"
+    reason_rejected: "接続の参照名など、値を出さない決まりのキーの扱いを併せて決める必要がある。利用者はいまの実装どおり値を出さない文言を選んだ"
+  - name: "info 行と warn 行を物理行番号の順に混ぜて出し、そのあとに error 行を出す"
+    reason_rejected: "いまの実装と違い、実装の変更が要る。利用者はいまの実装どおりの順(info をすべて → warn をすべて → error)を選んだ"
+  - name: "--rapid-crosscheck だけに適用する"
+    reason_rejected: "env 形式の検証種別は同じ env の検査の段の規則を共有しており、まだ実装していない検証種別で別の文言や順が選ばれるおそれがある"
+  - name: "--feature-flag は文言と出す位置だけをそろえ、warn と error の順は feature flag のいまの規則のままにする"
+    reason_rejected: "同じ検査の段を使う設定で結果が違ってしまう。利用者は 3 検証種別と同じ規則にそろえることを選んだ(2026-11-11)"
+  - name: "--feature-flag では info 行を出さない"
+    reason_rejected: "共通の --verbose の説明と、feature flag の tier md の「読み込んだキー一覧」を取り消すことになり、ほかの検証種別と結果が違う。利用者は同じ規則にそろえることを選んだ(2026-11-11)"
+  - name: "2 段目で止めた回も、読み取れたキーの info 行を 2 段目の error 行より前に出す"
+    reason_rejected: "そのファイルの値を使わない回に「読み込んだ」と示すと誤解を招く。1 段目で止めた回と同じく、止めた段の error 行だけを出すほうが一貫する"

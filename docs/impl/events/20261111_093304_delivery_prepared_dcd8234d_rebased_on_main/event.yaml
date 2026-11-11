@@ -1,0 +1,15 @@
+event_id: 20261111_093304_delivery_prepared_dcd8234d_rebased_on_main
+type: delivery_prepared
+uc_id: dcd8234d
+stage: S9
+payload:
+  review_approved_event_id: 20261111_084319_review_approved_dcd8234d_delivery
+  pending_decision_count: 0
+  decisions_applied: true
+  post_decision_gates: pass
+  post_decision_review_aligned: true
+  base_branch: main
+  base_head: cae841231a7d8e7c9b76dbbc7fd63c94249cde2e
+  feature_branch: feature/define-crosscheck-job-map-and-comparison-definitions
+  supersedes: 20261111_084320_delivery_prepared_dcd8234d
+created_at: '2026-11-11T09:33:04+09:00'
