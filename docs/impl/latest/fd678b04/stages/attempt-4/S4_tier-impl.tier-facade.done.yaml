@@ -1,0 +1,216 @@
+stage: S4
+tier: tier-facade
+attempt: 4
+uc_id: fd678b04
+manifest_sha256: 829aa482569f86811e8a0a8453851b577b684bce01b8b83992f88cb1250b1ee5
+manifest_projection: v2
+result: pass
+rerun_mode: blocker_rerun
+rerun_reason: "attempt 3 の独立検証の止める指摘 F-001(制御文字を多数含むキーの 5,000 行で 10 秒を超える)の修正"
+findings_provided: true
+findings_addressed:
+  - id: F-001
+    severity: blocker
+    status: fixed
+    cause: "制御文字の可視表記を作る共有関数 cli_field_escape_text(facade/src/domain/cli_field.sh)が、制御文字 1 個ごとに未処理の残りを切り詰め直す処理(1 個につきシェルの処理を 10 回前後)を繰り返していた。可視表記の関数だけを 1 万回(ESC 128 個のキー)呼ぶ実測で macOS 29.9 秒、Linux 20.6 秒かかり、コマンド全体の所要時間(macOS 28.1 秒、Linux 23.1 秒)のほぼすべてを占めた。制御文字 1 個あたり約 16〜23 マイクロ秒。行の読み取り・重複検査・出力の組み立ては合計 1 秒未満で原因ではなかった。--verbose の info 行と未知キーの warn 行で同じキーを 2 回置き換えていたことが、時間を 2 倍にしていた"
+    fix: "共有関数の中身だけを直した(呼び出し側の feature flag の 3 ファイルと、他の検証種別のソースは変更なし)。(1) 同じ制御文字が窓に 4 個以上あれば 1 回の処理で一括して置き換える。(2) それ以外は、窓を制御文字で区切った断片と表引きの結果を順に連結する(1 個につき連結 1 回)。(3) C1 制御文字は 32 種類を順に一括で置き換える。(4) 同じ値の可視表記の結果を控えて再利用する(1,024 バイト以下)。処理時間は行数とバイト数に比例する"
+    output_unchanged_evidence:
+      - "修正前の関数と修正後の関数に同じ乱数入力(制御文字・C1 の先頭と後続・引用符・バックスラッシュ・& ・全バイト値、長さ 0〜500 バイト、窓 1 / 2 / 3 / 5 / 16 / 64 / 1024 バイト、前にバックスラッシュを付ける文字 19 通り)を与え、結果のバイト列を比較: macOS(bash 5.3.15、ロケール未設定と en_US.UTF-8)と Linux(bash 5.2.21、C と C.UTF-8)で各 40,000 回、不一致 0 件"
+      - "F-001 の再現入力(ESC 128 個のキー 5,000 行、--verbose)の stdout と stderr を修正前後で cmp: macOS、Linux とも一致"
+      - "他の検証種別を含む 7 通りの 5,000 行入力(feature flag、速報クロスチェック設定、slot ジョブマップ)の stdout と stderr を修正前後で cmp: Linux で全件一致"
+      - "約 100 万バイトの値(全種類の制御文字と引用符を混ぜたもの)の結果の cksum が修正前後で同じ(4021959149、5,075,000 バイト)"
+  - id: F-002
+    severity: major
+    status: no_behavior_change
+    note: "前提 A-010 の照合記録。挙動は変えていない(S9 の確認対象のまま)"
+  - id: "F-003〜F-013"
+    severity: minor
+    status: no_behavior_change
+    note: "前提の照合記録。挙動は変えていない。error 行どうしの順(A-016)と列挙外の mode の扱い(A-028)は 2026-09 完了時の挙動のまま"
+gates:
+  format: pass
+  lint: pass
+  tdd: pass
+  bdd_tier: pass
+gate_runs:
+  - gate: format
+    cwd: facade
+    command: "shfmt -d ."
+    exit_code: 0
+  - gate: lint
+    cwd: facade
+    command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+    exit_code: 0
+  - gate: tdd
+    cwd: facade
+    command: "bats -r test"
+    exit_code: 0
+    summary: "421 tests, 421 ok, 0 not ok(attempt 3 の 409 件 + 今回追加した 12 件。他の検証種別のテストを含む既存 409 件はすべて pass のまま)"
+  - gate: bdd_tier
+    cwd: facade
+    command: "npx cucumber-js --config ../cucumber.cjs features"
+    exit_code: 0
+    summary: "80 scenarios (80 passed), 437 steps (437 passed)。対象 feature configure-feature-flags.feature は 32 scenarios (32 passed), 176 steps (176 passed)。他 UC の 48 scenarios も pass のまま"
+extra_checks:
+  - name: "Linux(ubuntu 24.04、bash 5.2.21、LANG=C.UTF-8、arm64 コンテナ)での bats 全件"
+    command: "docker run --rm -e LANG=C.UTF-8 -v \"$PWD:/work:ro\" -w /work/facade relay-gate-ci:ubuntu24 bats -r test"
+    exit_code: 0
+    summary: "421 tests, 421 ok"
+  - name: "Linux コンテナでの 5,000 行の性能テスト 4 件(bats -T)"
+    command: "docker run --rm -e LANG=C.UTF-8 -v \"$PWD:/work:ro\" -w /work/facade relay-gate-ci:ubuntu24 bats -T -f '制御文字|5000行' test/usecase/validate_feature_flag_env_rules.bats"
+    exit_code: 0
+    summary: "4 tests, 4 ok。テスト全体の所要時間(入力の生成と結果の確認を含む): 未知キー 4,995 行 2.8 秒、同じキー 5,000 行 4.0 秒、ESC 128 個のキー 4.4 秒、全種類の制御文字のキー 7.8 秒(コマンドだけの所要時間は measurements のとおり 2.3 秒と 4.9 秒)"
+measurements:
+  environment:
+    macos: "macOS(Darwin 25.5.0)、bash 5.3.15、arm64"
+    linux: "ubuntu 24.04、bash 5.2.21、arm64 コンテナ relay-gate-ci:ubuntu24、LC_ALL=C"
+  method: "bin/validate-config.sh を実プロセスで起動し、stdout と stderr をファイルへ向けて、コマンドの開始から終了までを EPOCHREALTIME で計測(各 1 回)。runner は --help にすぐ応答するスクリプト、対応ジョブマップは存在するファイル"
+  f001_reproduction:
+    input: "有効な単独本番設定 5 行 + 「K<連番> + ESC 128 個」の未知キー 4,995 行(5,000 行、約 68 万バイト)、--feature-flag --verbose。exit 0、stdout 15 行、stderr 9,995 行"
+    before_seconds:
+      macos: 28.131
+      linux: 23.103
+    after_seconds:
+      macos: 3.076
+      linux: 2.306
+    linux_after_by_escape_count:
+      - escapes_per_key: 0
+        input_bytes: 38968
+        seconds: 0.787
+        note: "この 1 行だけ、修正の途中の版での計測(制御文字が無い入力は可視表記の処理を通らない)"
+      - escapes_per_key: 64
+        input_bytes: 358648
+        seconds: 1.967
+      - escapes_per_key: 128
+        input_bytes: 678328
+        seconds: 2.306
+      - escapes_per_key: 256
+        input_bytes: 1317688
+        seconds: 3.088
+  many_kinds_of_control_chars:
+    input: "未知キー 4,995 行に、1 バイトの制御文字 30 種と C1 制御文字 32 種を 1 個ずつ(5,000 行、約 51 万バイト)、--feature-flag --verbose"
+    before_seconds:
+      linux: 16.268
+    after_seconds:
+      macos: 5.149
+      linux: 4.856
+  other_validation_kinds_linux:
+    note: "同じ可視表記の関数を共有する他の検証種別。修正前は同じ問題があり、共有関数の修正で解消した。修正前後の stdout と stderr は全件一致"
+    cases:
+      - name: "速報クロスチェック設定: ESC 128 個の未知キー 4,999 行、--verbose"
+        before_seconds: 22.288
+        after_seconds: 1.614
+      - name: "速報クロスチェック設定: 全種類の制御文字を 2 個ずつ含む未知キー 4,999 行、--verbose"
+        before_seconds: 29.181
+        after_seconds: 6.946
+      - name: "slot ジョブマップ: job_id に ESC 128 個を含む 4,999 行、--verbose(検証エラーの行を全件出す)"
+        before_seconds: 25.187
+        after_seconds: 3.363
+      - name: "slot ジョブマップ: work_dir と script に ESC 128 個を含む 4,999 行、--verbose"
+        before_seconds: 27.927
+        after_seconds: 3.877
+      - name: "slot ジョブマップ: fixed_params の要素が \\u001b 128 個の 4,999 行、--verbose"
+        before_seconds: 3.288
+        after_seconds: 3.918
+        note: "修正前から 10 秒以内。差は計測のばらつきの範囲(制御文字の無い 4,999 行でも 1.691 秒 → 1.954 秒)"
+      - name: "slot ジョブマップ: 制御文字の無い 4,999 行、--verbose(基準)"
+        before_seconds: 1.691
+        after_seconds: 1.954
+      - name: "feature flag: 全種類の制御文字を 2 個ずつ含む未知キー 4,995 行(約 95 万バイト)、--verbose"
+        before_seconds: 29.755
+        after_seconds: 7.607
+  escape_function_only:
+    note: "可視表記の関数だけの所要時間(コマンドを通さない)"
+    cases:
+      - name: "ESC 128 個のキーを 1 万回(相異なる値)"
+        before_seconds:
+          macos: 29.918
+          linux: 20.552
+        after_seconds:
+          linux: 1.504
+      - name: "約 100 万バイトの 1 つの値(半分が ESC)"
+        before_seconds:
+          macos: 55.275
+        after_seconds:
+          linux: 2.076
+      - name: "約 100 万バイトの 1 つの値(全種類の制御文字と引用符)"
+        before_seconds:
+          macos: 131.614
+        after_seconds:
+          linux: 5.096
+  remaining_limits:
+    - "処理時間はバイト数に比例するが、1 バイトあたりの時間は内容で変わる(Linux 実測の目安: 同じ制御文字の繰り返しは 1 個あたり約 0.3 マイクロ秒、種類が多くどれも少ない場合は 1 個あたり約 5 マイクロ秒)。行の長さに上限が無いため、制御文字だけで 1 行 200 バイトを超える行が 5,000 行続く入力(約 100 万バイト以上)は 10 秒に近づく(全種類を 2 個ずつ含むキー 4,995 行、約 95 万バイトで 7.6 秒)。前提 A-030 に記録した"
+    - "bash 5.0 / 5.1 と Linux x86_64 の実機では実測していない(手元にイメージが無い)。使った構文(local -、declare -g、引用符で囲んだ置き換え文字列)は bash 4.4 以降のもの"
+implementation_summary:
+  - file: facade/src/domain/cli_field.sh
+    change: "cli_field_escape_text の中身を、窓ごとの「同じ文字の一括置き換え」と「断片の連結」に置き換えた(新しい内部関数 cli_field_escape_chunk、可視表記の表 CLI_FIELD_ESCAPE_TABLE / CLI_FIELD_C1_SEQUENCES / CLI_FIELD_C1_ESCAPES)。cli_field_safe_text に結果の控え(CLI_FIELD_SAFE_CACHE)を加えた。関数の名前・引数・結果の変数・出力のバイト列は変えていない。使わなくなった定数 CLI_FIELD_C1_TRAIL_FIRST / CLI_FIELD_C1_TRAIL_LAST を CLI_FIELD_C1_TRAIL_BYTES に置き換えた(参照はこのファイルだけ)"
+design_notes:
+  - "feature flag の 3 ファイル(domain/feature_flag.sh、repository/feature_flag_config.sh、usecase/validate_feature_flag.sh)は変更していない。原因が共有関数にあり、速報クロスチェック設定と slot ジョブマップにも同じ問題があったため、共有関数だけを直した"
+  - "結果の控えは、usecase が info 行を作ったあとに domain の検証をサブシェルで呼ぶ流れでも効く(サブシェルは親の控えを引き継ぐ)"
+  - "断片への分割は単語分割で行う。IFS とパス名展開の設定(set -f)は関数の中だけで変え、関数の外へ漏らさない(単体テストで固定)"
+test_changes:
+  existing_tests_modified: false
+  other_uc_tests_modified: false
+  added:
+    - file: facade/test/usecase/validate_feature_flag_env_rules.bats
+      tests:
+        - "validate-config_sh_--feature-flagのverboseで5000行のうち4995行がESCを128個含む未知キーの場合_10秒以内に検証を終えinfoとwarnを全件可視表記で出すこと"
+        - "validate-config_sh_--feature-flagのverboseで5000行のうち4995行が全種類の制御文字を含む未知キーの場合_10秒以内に検証を終え種類ごとの可視表記で出すこと"
+      reason: "F-001 を検出する回帰テスト。既存の 5,000 行のテストは短い通常のキーと重複キーだけで、制御文字の多いキーを通していなかった。修正前の実装では 1 件目が Linux 23 秒、2 件目が Linux 16 秒で fail する"
+    - file: facade/test/domain/cli_field_escape_paths.bats
+      tests_count: 10
+      reason: "一括置き換えと断片の連結のどちらの経路でも、規則を 1 バイトずつ適用する参照実装と同じバイト列になること(経路の切り替わる境界の個数、全種類の制御文字、固定の乱数列 400 通り)、IFS とパス名展開の設定を変えないこと、& を展開しないこと、結果の控えが値を取り違えないこと、約 100 万バイトの値が 10 秒以内に終わることを固定する"
+assumptions:
+  path: "attempt-4/S4_tier-impl.tier-facade.assumptions.yaml"
+  count: 15
+  by_category:
+    input_validation: 2
+    data_format: 3
+    error_handling: 5
+    persistence: 0
+    performance: 4
+    security: 1
+  sha256: 262d6ce553a752479cf85986003a9735fbad41a5bb843fc5e7ec9495bd946350
+  extraction:
+    candidate_count: 24
+    excluded_as_explicit: 9
+    recorded_count: 15
+  changes_from_attempt_3:
+    carried_forward:
+      - A-010
+      - A-016
+      - A-017
+      - A-018
+      - A-019
+      - A-020
+      - A-023
+      - A-024
+      - A-025
+      - A-027
+      - A-028
+      - A-029
+    target_line_updated:
+      - id: A-023
+        note: "判断の内容は同じ。対象の行番号だけ facade/src/domain/cli_field.sh:130 から :253 へ"
+    added:
+      - id: A-030
+        summary: "「5,000 行・内容によらず 10 秒」を、行の長さに上限が無いため「行数とバイト数に比例する」こととして満たし、回帰テストの入力の大きさを 2 通りに決めた"
+      - id: A-031
+        summary: "同じ値の可視表記の結果を控えて再利用する(1,024 バイト以下)"
+      - id: A-032
+        summary: "可視表記の置き換えの方法と、経路を切り替える個数(4 個、64 個)・窓の大きさ(1,024 バイト)"
+    removed: []
+  undefined_in_spec_awaiting_user_decision:
+    - id: A-016
+      summary: "キーごとの検査の error 行どうしの順。2026-09 完了時の実装の順を変えていない"
+    - id: A-028
+      summary: "mode が列挙外・欠落のときも、その slot を off でないとして従属キーを検査する。2026-09 完了時の実装の挙動を変えていない"
+issues:
+  new: []
+  new_note: "他の検証種別だけにある別の性能問題は見つからなかった(速報クロスチェック設定と slot ジョブマップの遅さは、同じ共有関数が原因で、今回の修正で解消した)"
+  referenced:
+    - path: docs/impl/latest/fd678b04/issues/20261113_021600_feature-flag-error-line-order-undefined.md
+      summary: "error 行どうしの順と、列挙外の mode の扱いが仕様に無い(S2 で起票済み。blocker ではない)"
+      blocker: false
+completed_at: '2026-11-13T03:50:00+09:00'
+completed_by: dist-impl-implement@0.14.1

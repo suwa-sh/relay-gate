@@ -2,39 +2,122 @@ stage: "S5"
 tier: "tier-facade"
 attempt: 3
 uc_id: "fd678b04"
-manifest_sha256: "1802e7aaaecea1c74c643022cb6bd64bd90cb653f0c8e55ebf73b9888907116e"
+manifest_sha256: "829aa482569f86811e8a0a8453851b577b684bce01b8b83992f88cb1250b1ee5"
 manifest_projection: "v2"
-result: "pass"
-open_blockers: 0
-summary:
-  blocker: 0
-  major: 2
-  minor: 15
+result: "fail"
+open_blockers: 1
+open_majors: 1
 gate_reexec:
   format: "pass"
   lint: "pass"
   tdd: "pass"
   bdd_tier: "pass"
-environment_failures: []
-environment_probe:
-  result: "pass"
-  evidence: "bash/shfmt/shellcheck/bats/node/npxとローカルcucumberを確認。/tmpの書込み・実行・独立プロセスグループ起動と停止が成功。DB操作なしのため常設サービス接続やDB起動は実施していない。"
-findings: "docs/impl/latest/fd678b04/stages/attempt-3/S5_verify.tier-facade.findings.yaml"
-assumptions_sha256: "9a99cef7ee2cb03166d96ceb6bbc3cb58fb44d221fec5813de99545df9dfadbf"
-assumption_verdicts_sha256: "f4b777fbcd4c0728034dc8d83851696d8f4a9863cb27adfdd17289f22bed4916"
+viewpoints_checked:
+  spec_conformance:
+    status: "done"
+    note: "9キー・3mode・foreground排他・FINAL_拒否・15行出力・検査3段・verbose順を照合。tier featureのgherkinは仕様からの完全転写。API summaryは旧CLI形式でv2 slice照合非該当、tables=[]でDB操作なし。byte oracle45ケース、特殊キー9ケース通過。"
+  readability_maintainability:
+    status: "done"
+    note: "dev-rules3ファイル、各層責務、定数、命名とAAA、実ファイルによるテストを確認。変更前の3実装ファイルだけを一時コピーへ戻す負例では追加テスト23件中18件が失敗し、現行では23件すべて通過。"
+  security:
+    status: "done"
+    note: "envのsource/evalなし、9キーallowlist、任意キーの連想配列参照を確認。式・backtick・@・*・日本語・ESCを含むキーを実行し、コマンド評価なし、正しい重複報告。可視表記を確認。"
+  performance:
+    status: "done"
+    note: "通常の5000行5種類は0.329〜1.595秒。制御文字多数の有効な設定はLinuxで23.496秒となりF-001。DB/index観点はtables=[]のため非該当。"
+  operability:
+    status: "done"
+    note: "エラー文言・終了コード・stdout/stderr分離・ユーザー指定pathを確認。異常6種注入でstdout/info/warn抑止と診断を確認。"
+  fault_tolerance:
+    status: "done"
+    note: "cat/mv/mktemp/tr/sed/rmの失敗を一時PATHで注入し工程別終了6を確認。複製完了後に元ファイルを書き換えても旧snapshotだけで判定。既存gateway timeout/プロセス回収テスト通過。BSD用fallbackのmv失敗注入では作業名が残る既存挙動を観測したがLinux対象の回帰とはしない。"
+  refactoring:
+    status: "done"
+    note: "共有cli_field/job_map/repositoryの変更なしをgit diffで確認。job-map/rapid-crosscheckを含む全409 BatsがmacOS/Linuxで通過。feature_flag_config_loadの他の実行入口は検索範囲に実装されておらず、その実行時挙動は未検証。"
+  assumption_conformance:
+    status: "done"
+    note: "観点1〜7完了後にid/assumption/targetのみ開き、S4固定指示を照合して12件のverdictを確定。その後reason/confidence/spec_refsを補助照合。追加unlistedなし。既知2点は新規欠陥とせず、実装選択が他の規則に矛盾しない照合結果をスキーマ必須の前提レコードとして残した。"
+assumptions_sha256: "26d756a6ff335d755ae5035388cb3da45e7b112e7e5de5d8e88fff486197694c"
+assumption_verdicts_sha256: "a93c80fbb2312da5b58922cc1273f61a007482e30f60f34dd0f9ba845e139139"
 assumption_verdicts_summary:
   consistent: 0
-  spec_absent: 16
+  spec_absent: 12
   contradicts: 0
   unlisted: 0
-verdicts_sha256: "f4b777fbcd4c0728034dc8d83851696d8f4a9863cb27adfdd17289f22bed4916"
-counts:
-  consistent: 0
-  spec_absent: 16
-  contradicts: 0
-  unlisted: 0
-requires_answer: 2
-completed_at: "2026-09-17T01:33:00.742551+00:00"
+findings_path: "docs/impl/latest/fd678b04/stages/attempt-3/S5_verify.tier-facade.findings.yaml"
+findings_summary:
+  blocker: 1
+  major: 1
+  minor: 11
+environment_failures: []
+completed_at: "2026-11-12T17:47:23.234344+00:00"
 completed_by: "dist-impl-verify@0.14.1"
-write_set_compliance: "リポジトリ内の書込みは指定されたS5 done/findingsの2ファイルのみ。テストの一時ファイルとnpmキャッシュは許可された/tmp配下。実装・テスト・仕様・他の状態ファイルを変更していない。gitコマンド未実行。"
-repository_verification: "cwdとCLAUDE.mdを確認し、.git/HEADの参照はfeature/configure-feature-flags。ユーザーのgit全面禁止に従いgit rev-parseとgit statusは実行していない。"
+result_note: "8観点の検証は完了。指定4ゲートはpassだが、追加のLinux性能反証F-001によりresult=fail。前提記録12件は欠陥の再起票ではなくS9照合記録。"
+verification_evidence:
+  host: "macOS ARM64 / bash 5.3.15"
+  format:
+    command: "shfmt -d ."
+    cwd: "facade"
+    exit_code: 0
+  lint:
+    command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+    cwd: "facade"
+    exit_code: 0
+  tdd:
+    command: "bats -r test"
+    cwd: "facade"
+    exit_code: 0
+    passed: 409
+  bdd_tier:
+    command: "npx --no-install cucumber-js --config ../cucumber.cjs features"
+    cwd: "facade"
+    exit_code: 0
+    scenarios: 80
+    steps: 437
+    note: "インストールを防ぐ--no-install以外は指定コマンドと同じ。npm cacheとTMPDIRは一時領域。"
+  linux:
+    image: "relay-gate-ci:ubuntu24"
+    bash: "5.2.21"
+    architecture: "aarch64"
+    locale: "C.utf8"
+    command: "bats -r test"
+    exit_code: 0
+    passed: 409
+    mount: "repository read-only; network none; non-root; /tmp tmpfs"
+  negative_control:
+    scope: "一時コピーの3実装ファイルのみHEAD~1へ戻し、現行追加テストを実行"
+    tests: 23
+    failed: 18
+    passed: 5
+    exit_code: 1
+  independent_byte_cases: 45
+  independent_special_key_cases: 9
+  fault_injection:
+    - "cat"
+    - "mv"
+    - "mktemp"
+    - "tr"
+    - "sed"
+    - "rm"
+  snapshot_replacement: "複製後の元ファイル置換で混在なし"
+  performance_seconds:
+    unique_5000: 1.278
+    duplicate_5000: 0.521
+    invalid_5000: 0.329
+    byte_errors_5000: 0.922
+    one_ESC_key_5000: 1.595
+    linux_64_ESC_key_5000: 11.741
+    linux_128_ESC_key_5000_valid: 23.496
+  environment_probe: "loopback bind成功。一時initdb/pg_ctl起動/psql SELECT 1/停止成功。常設DB未接続。"
+verification_limits:
+  - "LinuxはUbuntu24 ARM64/bash5.2.21、macOSはbash5.3.15。最低版bash5.0そのものとLinux x86_64は未実測。"
+  - "Linuxイメージにnode/npx/shfmtが無いため追加Linux検証はBatsのみ。指定4ゲートはホストですべて実行済み。"
+  - "facade.sh/background-rerun.shなど未存在の他入口の将来動作は保証しない。final-crosscheck/housekeepの未実装はスコープ外。"
+review_questions:
+  - assumption_id: "A-010"
+    question: "未知キーの値をプロセス変数に取り込まず、キー名だけを診断に使用する判断を採用するか。"
+    options:
+      - "採用する"
+      - "仕様で別の保持方法を決める"
+    required_at: "S9"
+    note: "security前提のためスキーマ上は人間回答必須。今回の実行中に質問・承認待ちは行わない。"

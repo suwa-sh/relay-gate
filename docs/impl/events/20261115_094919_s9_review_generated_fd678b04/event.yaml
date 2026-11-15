@@ -1,0 +1,44 @@
+event_id: 20261115_094919_s9_review_generated_fd678b04
+type: stage_completed
+uc_id: fd678b04
+stage: S9
+payload:
+  done: docs/impl/latest/fd678b04/stages/S9_review_generated.done.yaml
+  feedback_review_evidence:
+    feedback_id: 20261115_093126_impl_feedback_fd678b04
+    draft_path: docs/impl/latest/fd678b04/feedback/draft.md
+    draft_sha256: 25caf38054a64316034645c9a2da7de0616818683b41aab58223544e8b98009f
+    request_count: 4
+    blocker_count: 0
+    request_ids:
+    - CR-fd678b04-001
+    - CR-fd678b04-002
+    - CR-fd678b04-003
+    - CR-fd678b04-004
+  implementation_review_evidence:
+    gate_result: 6/6 pass
+    gates:
+      format: pass
+      lint: pass
+      tdd: pass (475/475)
+      bdd_tier: pass (80/80)
+      uc_bdd: pass (46/46, injections 0)
+      atdd: pass (1/1)
+    open_blocker_count: 0
+    open_major_count: 1
+    open_minor_count: 20
+    verifier_blocker_findings: 2
+    verifier_blocker_finding_ids:
+    - F-001
+    - F-002
+    verifier_blocker_handling: 性能目標との差 2 件。利用者の決定(20261115_092742_config_confirmed_fd678b04_performance_target_is_goal_not_gate)により合否の検査として扱わないため、open_blocker_count には数えていない。S5 done の open_blockers は 2 のまま
+    tiers:
+    - tier: tier-facade
+      attempt: 5
+      assumptions_sha256: 764eb97433280c6e2d3321c97e9c73c6fc0c0bd4ab06c3da04f58f743bf23aa1
+      assumption_verdicts_sha256: 3c4c577facfef77bb57cac50a1a04689662b8959682503b8fdf6a42e31114066
+    assumption_evidence_sha256: 508c82fc00f546de84ac16df15d8223434913ae84691df2ab87ab6a138c76867
+  note: S5 attempt 5 の独立検証には性能の blocker 2 件が残るが、利用者決定(性能は目標であり合否の検査ではない)により open_blocker_count は 0 として扱う
+  manifest_sha256: 829aa482569f86811e8a0a8453851b577b684bce01b8b83992f88cb1250b1ee5
+  manifest_projection: v2
+created_at: '2026-11-15T09:49:19+09:00'

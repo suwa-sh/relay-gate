@@ -1,0 +1,23 @@
+event_id: 20261113_021831_s2_test_scaffold_completed_fd678b04
+type: stage_completed
+uc_id: fd678b04
+stage: S2
+payload:
+  result: pass
+  red_baseline: pass
+  mode: 'full (diff_only red: tests follow the current spec; the implementation is behind)'
+  red:
+    tier_bdd: 16
+    unit: 19
+    uc_bdd: 0
+    atdd: 0
+  totals:
+    tier_bdd: 80
+    unit: 408
+    uc_bdd: 46
+    atdd_this_uc: 1
+  issues:
+  - issues/20261113_021600_feature-flag-error-line-order-undefined.md
+  manifest_sha256: b36aeb29b227cdb7bc1fc5f2e44b44b56ade2bc7d5b490833a17f7b7c4651a68
+  manifest_projection: v2
+created_at: '2026-11-13T02:18:31+09:00'

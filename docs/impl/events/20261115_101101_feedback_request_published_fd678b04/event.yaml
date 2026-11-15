@@ -1,0 +1,19 @@
+event_id: 20261115_101101_feedback_request_published_fd678b04
+type: feedback_request_published
+uc_id: fd678b04
+stage: S8
+payload:
+  feedback_id: 20261115_093126_impl_feedback_fd678b04
+  path: docs/impl/latest/fd678b04/feedback-requests/20261115_093126_impl_feedback_fd678b04.md
+  draft_path: docs/impl/latest/fd678b04/feedback/draft.md
+  input_sha256: 25caf38054a64316034645c9a2da7de0616818683b41aab58223544e8b98009f
+  request_count: 4
+  blocker_count: 0
+  supersedes: null
+  review_approved_event_id: 20261115_100850_review_approved_fd678b04_feedback_publish
+  review_evidence_event_id: 20261115_094919_s9_review_generated_fd678b04
+  publish_started_event_id: 20261115_101100_feedback_request_publish_started_fd678b04
+  published_sha256: 25caf38054a64316034645c9a2da7de0616818683b41aab58223544e8b98009f
+  published_at: '2026-11-15T10:11:01+09:00'
+  next_state: blocked_on_spec
+created_at: '2026-11-15T10:11:01+09:00'

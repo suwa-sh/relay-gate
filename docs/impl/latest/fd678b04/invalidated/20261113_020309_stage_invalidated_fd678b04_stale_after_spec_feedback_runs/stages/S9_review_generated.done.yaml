@@ -1,0 +1,91 @@
+stage: "S9"
+uc_id: "fd678b04"
+manifest_sha256: "1802e7aaaecea1c74c643022cb6bd64bd90cb653f0c8e55ebf73b9888907116e"
+manifest_projection: "v2"
+result: "generated"
+attempt: 3
+cycle: 3
+rerun_reason: "stale after spec event 20260917_100000_feedback_impl_feedback_fd678b04_cycle2 (invalidated by 20260917_100200_stale_invalidated_spec_feedback_cycle2_applied_fd678b04)"
+previous_done: "docs/impl/latest/fd678b04/invalidated/20260917_100200_stale_invalidated_spec_feedback_cycle2_applied_fd678b04/stages/S9_review_generated.done.yaml"
+review_html: "docs/impl/latest/fd678b04/review/index.html"
+review_html_tracked: false
+review_notes_input: "docs/impl/latest/fd678b04/review/review-notes.md"
+review_notes_note: "review-notes.md は前 2 サイクルの承認記録。本サイクルの前提 16 件に対する人の判断は未取得のため、継続 13 件は「前回承認済み(内容不変)」と表示し、判断の焦点を回答必須 2 件(A-010 / A-015)と文面変更 1 件(A-007)に絞った。A-023 は復唱として除外、A-006 / A-025 は分類のみ修正"
+validator: "node validateReviewHtml.js docs/impl/latest/fd678b04/review/index.html: pass"
+render_check: "1440px で図 1〜3 を Chrome(ローカル HTTP 配信)で目視。diagonal 0、shared attach point 0、overlapping segment 0、non-endpoint 背面通過 0、label gap 6〜10px。図 1〜3 は前回 evidence の図を再利用(図 2 の分岐表の表記のみ「契約で確定」へ更新)"
+diagrams:
+  - type: "architecture"
+    subject: "validate-config.sh の構成(5 層 + 設定ファイル 2 種 + runner 実体)。前回から変更なし"
+  - type: "flowchart"
+    subject: "validate-config.sh --feature-flag の処理フロー(判断 3、終了コード 0 / 2 / 6)。前回から変更なし"
+  - type: "data-flow"
+    subject: "設計者 / 検証器 / runner の役割別データフロー(5 段階)。前回から変更なし"
+feedback_request_count: 0
+open_blocker_count: 0
+decision_summary:
+  approval_questions: 1
+  selection_questions: 0
+  assumption_questions: 2
+  recommended_choices: 1
+  selection_labels:
+    - "機能"
+  fixed_from_previous_cycles:
+    forbidden_key: "A (FINAL_ 接頭辞。契約 validation_rules に反映済み。今回は選び直さない)"
+    interop: "A (契約 runner_help_probe に反映済み。今回は選び直さない)"
+    audit: "A (spec.md の Scenario 分離に反映済み。今回は選び直さない)"
+  recommended_response: "機能=A / 禁止キー=A / 相互運用=A / 監査=A / 前提=A-010:承認 / A-015:承認 / A-007:承認"
+  assumption_required_ids:
+    - "A-010"
+    - "A-015"
+  assumption_reworded_ids:
+    - "A-007"
+  assumption_carried_forward_ids:
+    - "A-005"
+    - "A-006"
+    - "A-008"
+    - "A-016"
+    - "A-017"
+    - "A-018"
+    - "A-019"
+    - "A-020"
+    - "A-021"
+    - "A-024"
+    - "A-025"
+    - "A-026"
+    - "A-027"
+  assumption_excluded_as_explicit_ids:
+    - "A-023"
+  approval_outcome_note: "要求 0 件のため、承認後は S8 publish を経ずに UC 完了 → PR 作成へ進む(git_delivery.required: true)"
+feedback_review_evidence:
+  feedback_id: null
+  draft_path: null
+  draft_sha256: null
+  request_count: 0
+  blocker_count: 0
+  request_ids: []
+implementation_review_evidence:
+  gate_result: "6/6 pass"
+  gates:
+    format: "pass"
+    lint: "pass"
+    tdd: "pass (76/76)"
+    bdd_tier: "pass (9/9)"
+    uc_bdd: "pass (12/12, injections 0)"
+    atdd: "pass (1/1)"
+  open_blocker_count: 0
+  open_major_count: 2
+  open_minor_count: 15
+  tiers:
+    - tier: "tier-facade"
+      attempt: 3
+      assumptions_sha256: "9a99cef7ee2cb03166d96ceb6bbc3cb58fb44d221fec5813de99545df9dfadbf"
+      assumption_verdicts_sha256: "f4b777fbcd4c0728034dc8d83851696d8f4a9863cb27adfdd17289f22bed4916"
+  assumption_evidence_sha256: "395460842caa661d8858251bf81484300c0910a8de134ddd4f713fdb6b03b20a"
+captures: []
+issues: []
+notes:
+  - "manifest_sha256 と assumption_evidence_sha256 はオーケストレータ受領値を再計算せず転記した"
+  - "feedback draft は存在しない(要求 0 件)ため feedback_review_evidence は null / 0 を記録した"
+  - "git コマンドは実行していない。write-set 外のファイルは変更していない"
+completed_at: "2026-09-17T11:30:00+09:00"
+completed_by: "dist-impl-review@0.14.1"

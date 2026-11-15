@@ -142,7 +142,16 @@ setup() {
 
 @test "validate-config_sh_runner問い合わせの準備に失敗した場合_runner probe failedで終了コード6でstdoutは空であること" {
 	# Arrange(契約 runner_help_probe.preparation_failure: 応答を受ける一時ファイルの作成に失敗 → 終了コード 6。
-	# 一時ファイルの置き場を存在しないディレクトリにして mktemp を失敗させる。runner 自体は正常に応答する)
+	# runner 自体は正常に応答する。
+	# 2026-11-13 S2 再実行で準備失敗の起こし方を変更: TMPDIR を存在しないディレクトリにすると、入力の複製
+	# (config_input_rules.snapshot。--feature-flag にも適用)が先に失敗して `config snapshot failed` になる。
+	# そこで PATH の先頭に代替の mktemp を置き、入力の複製の作業名(契約: 最終名 + `.part`)だけを本物へ通し、
+	# それ以外(問い合わせの応答を受ける一時ファイル)を失敗させる(代替コマンドの利用は snapshot.out_of_scope が許す))
+	local real_mktemp fake_bin="$BATS_TEST_TMPDIR/fake-bin"
+	real_mktemp="$(command -v mktemp)"
+	mkdir -p "$fake_bin"
+	printf '%s\n' '#!/usr/bin/env bash' 'for arg in "$@"; do' '  case "$arg" in' "    *.part) exec \"$real_mktemp\" \"\$@\" ;;" '  esac' 'done' 'exit 1' >"$fake_bin/mktemp"
+	chmod +x "$fake_bin/mktemp"
 	local runner="$BATS_TEST_TMPDIR/green-runner.sh"
 	printf '%s\n' '#!/usr/bin/env bash' 'if [ "${1:-}" = "--help" ]; then echo "runner-if-version=1"; exit 0; fi' 'exit 6' >"$runner"
 	chmod +x "$runner"
@@ -152,7 +161,7 @@ setup() {
 
 	# Act
 	set +e
-	TMPDIR="$BATS_TEST_TMPDIR/nonexistent-tmp" "$SCRIPT" --feature-flag "$BATS_TEST_TMPDIR/ff.env" >"$stdout_file" 2>"$stderr_file"
+	PATH="$fake_bin:$PATH" "$SCRIPT" --feature-flag "$BATS_TEST_TMPDIR/ff.env" >"$stdout_file" 2>"$stderr_file"
 	local exit_status=$?
 	set -e
 

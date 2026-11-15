@@ -1,29 +1,24 @@
 stage: S2
 uc_id: fd678b04
-manifest_sha256: 93b891273f0f42d9e35a110f2f0d19803c1a08240b69ee0892aebd6c0b72c457
+manifest_sha256: b36aeb29b227cdb7bc1fc5f2e44b44b56ade2bc7d5b490833a17f7b7c4651a68
 manifest_projection: v2
 result: pass
-scaffold_mode: scoped_rerun
-rerun_reason: "stale after spec event 20260917_100000_feedback_impl_feedback_fd678b04_cycle2 (invalidated by 20260917_100200_stale_invalidated_spec_feedback_cycle2_applied_fd678b04)"
-previous_done: "docs/impl/latest/fd678b04/invalidated/20260917_100200_stale_invalidated_spec_feedback_cycle2_applied_fd678b04/stages/S2_test-scaffold.done.yaml"
-spec_commit: 80a402b
+scaffold_mode: full
+rerun_reason: "stale after spec feedback runs up to spec event 20261110_153000_feedback_impl_feedback_dcd8234d (invalidated by 20261113_020309_stage_invalidated_fd678b04_stale_after_spec_feedback_runs)"
+previous_done: "docs/impl/latest/fd678b04/invalidated/20261113_020309_stage_invalidated_fd678b04_stale_after_spec_feedback_runs/stages/S2_test-scaffold.done.yaml"
 branch_slug: configure-feature-flags
 tiers:
   - tier-facade
-scaffold_scope:
-  tiers:
-    - tier-facade
-  uc_feature: regenerated
-  atdd: untouched
-red_baseline: not_applicable
-red_baseline_note: "scoped 再実行のため red baseline は done 条件にしない。再生成した feature / step / bats は全て parse 可能かつ実行可能。BDD の fail は新 Scenario の step skeleton が未実装(S4 / S6 の再実行で追従予定)を理由とするもののみで、パースエラー・設定ミス・undefined step 由来の fail は 0 件"
+red_baseline: pass
+red_baseline_mode: "diff_only(既存実装あり。dist-impl-implement の scoped 再実行の done 条件に準じる)"
+red_baseline_note: "追加・変更したテストは parse 可能かつ実行可能で、undefined / ambiguous step・パースエラー・設定ミスは 0 件。fail はすべて、現行実装(facade/src/)が env 形式の共通規則と --verbose の info 行の規則に未追従であることを理由とする assertion failure(tier BDD 16 件、bats 19 件)。S4 の再実行で追従する。実装は変更していない"
 spec_changes_applied:
-  - "cli-command-contract.yaml config_files.feature-flag.env.validation_rules: 確報制御キーの拒否範囲 = キー名が FINAL_ で始まる全キー(接頭辞判定・大文字小文字を区別)。未知キー warn より先に判定し、該当キーごとに error 1 行、同じキーに warn は出さない"
-  - "spec.md E2E 完了条件: Scenario「FINAL_ で始まる確報設定のキーは未知キーではなく拒否される(SPEC-001-01)」を追加(FINAL_DB_CONN_REF=final-db)→ features/uc の feature に再転写(既存 11 Scenario は本文一致を確認)"
-  - "tier-facade.md ティア完了条件: Scenario「validate-config_sh_feature-flag は FINAL_ で始まるキーを未知キーではなく終了コード 2 で拒否する」を追加 → facade/features の feature に再転写(既存 8 Scenario は本文一致を確認)"
-  - "usdm / rdra は当該 spec event で未変更のため features/atdd/ は触れていない"
+  - "tier-facade.md ティア完了条件: 9 Scenario から 17 Scenario + Scenario Outline 3 本(Examples 15 行)へ。追加は、制御文字の可視表記 / CRLF の拒否 / バイト・改行の違反の全件報告 / invalid line / 字下げしたコメント行 / 値の先頭の # / duplicate key / 大文字小文字の違うキー / --verbose の 3 Scenario"
+  - "cli-command-contract.yaml config_input_rules(byte_checks / env_files / snapshot / internal_failure)が --feature-flag にも適用される。検査の段は バイト・改行 → 行の構造(invalid line → duplicate key)→ キーごとの検査"
+  - "--verbose の info 行(spec-decision-033): 文言 'info: key loaded key=<KEY> path: <path>'。キーごとの検査へ進んだ回だけ出す。順は info 全件 → 未知キーの warn 全件 → error → runner 未応答の warn"
+  - "spec.md E2E 完了条件は本文の変更なし(12 Scenario)。usdm の受け入れ条件も変更なしのため features/uc と features/atdd は触れていない"
 transcription_check:
-  method: "spec.md / tier-facade.md の gherkin ブロックと feature 本文(コメント・空行除外)を行単位で完全一致比較"
+  method: "spec.md / tier-facade.md の gherkin ブロックと feature 本文(出典コメント行を除く)を行単位で完全一致比較"
   uc_feature_verbatim: true
   tier_feature_verbatim: true
 generated:
@@ -36,76 +31,110 @@ generated:
       - SPEC-001-01-4
   uc_bdd:
     feature: features/uc/configure-feature-flags.feature
-    feature_regenerated: true
+    feature_regenerated: false
     steps: features/uc/steps/configure-feature-flags.steps.js
-    steps_changed: true
-    steps_change_summary: "新 Scenario の step 5 件(Given 2 / Then 3)を未実装 skeleton(notImplemented で明示 fail)として追加。既存 step 定義は変更なし"
+    steps_changed: false
     source: "docs/specs/latest/適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md#E2E完了条件(BDD)"
     scenarios: 12
-    added_scenarios:
-      - "FINAL_ で始まる確報設定のキーは未知キーではなく拒否される(SPEC-001-01)"
     cross_uc_scenarios_added: 0
-    cross_uc_note: "追加 Scenario の Then は全て validate-config.sh の終了コード・stderr のみを判定し、他 UC の責務を含まない"
+    cross_uc_note: "Scenario の追加・変更が無いため、UC 横断 Scenario の一覧は既存 issue(20260917_004843 / 20260917_074633)のまま"
   tier_bdd:
     - tier: tier-facade
       feature: facade/features/configure-feature-flags.feature
       feature_regenerated: true
       steps: facade/features/steps/configure-feature-flags.steps.js
       steps_changed: true
-      steps_change_summary: "新 Scenario の step 2 件(Given 1 / Then 1)を未実装 skeleton として追加。And「stderr に warn: unknown key で始まる行は出ない」は既存 step を再利用"
+      steps_change_summary: "追加 Scenario の step 28 件(Given 12 / When 1 / Then 15)を実体で実装して追加。ff.env をバイト列で書く経路(CR・不正な UTF-8・行の挿入)を追加。既存 step の定義は変更なし"
       source: "docs/specs/latest/適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md#ティア完了条件(BDD)"
-      scenarios: 9
-      added_scenarios:
-        - "validate-config_sh_feature-flag は FINAL_ で始まるキーを未知キーではなく終了コード 2 で拒否する"
+      scenarios: 32
+      scenarios_note: "Scenario 17 + Scenario Outline 3 本の Examples 15 行。再実行前は 9"
   tdd:
     - tier: tier-facade
-      file: facade/test/domain/feature_flag.bats
-      added_tests: 3
-      target: "facade/src/domain/feature_flag.sh validate_feature_flag(FINAL_CROSSCHECK_ で始まらない FINAL_ キーの拒否 / 複数 FINAL_ キーは該当キーごとに error 1 行で warn なし / 小文字 final_ は接頭辞判定に該当せず未知キー warn)"
+      file: facade/test/usecase/validate_feature_flag_env_rules.bats
+      change: added
+      tests: 22
+      target: "facade/bin/validate-config.sh --feature-flag(エントリポイント経由)。バイト・改行の検査 / invalid line・duplicate key / 未知キーの warn と error の順 / --verbose の info 行 / 入力の複製の失敗(終了コード 6)/ 制御文字の可視表記 / 5,000 行で 10 秒以内"
+    - tier: tier-facade
+      file: facade/test/repository/feature_flag_config.bats
+      change: updated
+      tests: 13
+      detail: "削除 3(同じキーは後の行が勝つ / = の無い行をキーだけの行として読む 2 件。いずれも仕様から消えた場面)。書き換え 2(コメント行のテストから空白だけの行を外す / CRLF のテストを最終行の改行なしだけにする)。追加 5(キーと値の前後の空白 / 引用符の内側の空白 / 片側だけ・種類違いの引用符 / 値の先頭の # / 改ページ・垂直タブは空白として除かない)"
     - tier: tier-facade
       file: facade/test/usecase/validate_feature_flag.bats
-      added_tests: 1
-      target: "facade/src/usecase/validate_feature_flag.sh validate_feature_flag_query(有効設定 + FINAL_DB_CONN_REF → error 1 行だけ・warn なし・NG)"
+      change: updated
+      tests: 13
+      detail: "= の無い FINAL_DB_CONN_REF 行の期待を、FINAL_ キーの error から invalid line 1 行へ変更。--verbose のテストに info 行が 9 行だけであることの確認を追加"
     - tier: tier-facade
       file: facade/test/presentation/validate_config.bats
-      added_tests: 1
-      target: "facade/bin/validate-config.sh(FINAL_DB_CONN_REF と FINAL_CROSSCHECK_MODE の 2 キー → 各 error・終了コード 2・warn なし)"
-  tdd_note: "追加した bats 5 件は既存実装(facade/src/domain/feature_flag.sh の FEATURE_FLAG_FORBIDDEN_KEY_PREFIX=FINAL_ 接頭辞 case 判定が未知キー判定より先)が cycle2 契約に既に適合しているため green。実装は変更していない(S4 の責務)。契約の変更点は回帰テストとして固定した"
+      change: updated
+      tests: 12
+      detail: "runner 問い合わせの準備失敗のテストで、失敗の起こし方を TMPDIR の差し替えから PATH 先頭の代替 mktemp へ変更(TMPDIR の差し替えは入力の複製の失敗が先に起きるため)。期待は変更なし"
 test_runs:
   - stage: atdd
     cwd: "."
     command: "npx cucumber-js --config cucumber.cjs features/atdd --tags @atdd_SPEC-001-01-4"
     exit_code: 0
-    summary: "1 scenario (1 passed), 3 steps (3 passed)"
+    summary: "1 scenario (1 passed), 5 steps (5 passed)"
     fail_reason: none
     undefined_steps: 0
   - stage: uc_bdd
     cwd: "."
     command: "npx cucumber-js --config cucumber.cjs features/uc"
-    exit_code: 1
-    summary: "12 scenarios (1 failed, 11 passed), 49 steps (1 failed, 5 skipped, 43 passed)"
-    fail_reason: not_implemented
-    failed_scenarios:
-      - "FINAL_ で始まる確報設定のキーは未知キーではなく拒否される(SPEC-001-01)"
+    exit_code: 0
+    summary: "46 scenarios (46 passed), 269 steps (269 passed)"
+    target_feature_summary: "12 scenarios (12 passed), 73 steps (73 passed)"
+    fail_reason: none
     undefined_steps: 0
   - stage: tier_bdd
     tier: tier-facade
     cwd: facade
     command: "npx cucumber-js --config ../cucumber.cjs features"
     exit_code: 1
-    summary: "9 scenarios (1 failed, 8 passed), 32 steps (1 failed, 3 skipped, 28 passed)"
+    summary: "80 scenarios (64 passed, 16 failed), 437 steps (413 passed, 8 skipped, 16 failed)"
+    target_feature_summary: "32 scenarios (16 passed, 16 failed), 176 steps (152 passed, 8 skipped, 16 failed)"
     fail_reason: not_implemented
-    failed_scenarios:
-      - "validate-config_sh_feature-flag は FINAL_ で始まるキーを未知キーではなく終了コード 2 で拒否する"
     undefined_steps: 0
+    ambiguous_steps: 0
+    failed_scenarios:
+      - name: "値に含まれる制御文字を可視表記で出力する"
+        count: 1
+        reason: "value= に生の ESC をそのまま出す"
+      - name: "CRLF 改行の設定を拒否する"
+        count: 1
+        reason: "CR を落として受理し終了コード 0 になる"
+      - name: "バイト・改行の違反を全件出してキーの検査をしない"
+        count: 1
+        reason: "バイト・改行の検査が無く、キーごとの検査の error を出す"
+      - name: "キーが空の行と KEY=VALUE でない行を invalid line で拒否する(Examples 5 行)"
+        count: 5
+        reason: "invalid line の検査が無い。読み飛ばすか、キーだけの行として読む"
+      - name: "同じキーが 2 行以上ある設定を duplicate key で拒否する(Examples 6 行)"
+        count: 6
+        reason: "duplicate key の検査が無く、後の行の値で検証する"
+      - name: "--verbose で info 行をすべて出してから未知キーの warn 行、キーごとの検査の error 行の順に出す"
+        count: 1
+        reason: "error 行を未知キーの warn 行より先に出す"
+      - name: "行の構造の検査で止めた回は --verbose でも info 行を出さない"
+        count: 1
+        reason: "invalid line で止めず、info 行とキーごとの検査の行を出す"
   - stage: tdd
     tier: tier-facade
     cwd: facade
     command: "bats -r test"
-    exit_code: 0
-    summary: "72 tests, 72 ok, 0 not ok(HEAD 時点 67 + 本 stage 追加 5。追加分は既存実装が契約に適合済みのため green)"
-    fail_reason: none
-    failed_tests: []
+    exit_code: 1
+    summary: "408 tests, 389 ok, 19 not ok(再実行前は 384 tests, 384 ok)"
+    fail_reason: not_implemented
+    failed_tests:
+      - file: facade/test/usecase/validate_feature_flag_env_rules.bats
+        count: 17
+        reason: "バイト・改行の検査なし 3 / invalid line・duplicate key の検査なし 3 / 未知キーの warn が error より後 3 / --verbose で (i)(ii) の違反があっても info を出す 3 / 入力の複製が無く config snapshot failed を出さない 1 / 制御文字の可視表記なし 2 / 5,000 行で 10 秒を超える 2"
+      - file: facade/test/repository/feature_flag_config.bats
+        count: 1
+        reason: "値の前後の改ページ・垂直タブを空白として除いてしまう"
+      - file: facade/test/usecase/validate_feature_flag.bats
+        count: 1
+        reason: "= の無い行を invalid line にせず、キーだけの行として読む"
+    passed_new_tests_note: "追加 22 件のうち 5 件は現行実装でも green(最終行の改行なし / 字下げしたコメント行 / runner 未応答の warn の位置 / ファイルが無い回 / 一時ファイルが残らない)。回帰テストとして残す"
 format_check:
   tier: tier-facade
   command: "shfmt -d ."
@@ -115,7 +144,10 @@ lint:
   command: "find src test -name '*.sh' -exec shellcheck -x {} +"
   exit_code: 0
 dom_snapshot_tests: not_applicable
-issues: []
-issues_note: "新 Scenario に UC 横断の Then は無く、仕様と実装の矛盾も見つからなかったため起票なし。既存 issue(20260917_004843 / 20260917_074633)は変更なし"
-completed_at: '2026-09-17T10:20:00+09:00'
+issues:
+  - path: docs/impl/latest/fd678b04/issues/20261113_021600_feature-flag-error-line-order-undefined.md
+    summary: "--feature-flag のキーごとの検査で error 行が 2 行以上出るときの error 行どうしの順が仕様に無い(契約 1353 行目は『各検証種別の契約のとおり』とするが、feature flag の節に順の定めが無い)。テストでは順を固定していない。あわせて、mode が列挙外のときに必須検査を行うかも仕様から 1 つに決まらない"
+    blocker: false
+issues_note: "UC 横断 Scenario の新規起票は無し(spec.md の Scenario に変更が無い)。既存 issue 2 件は変更なし"
+completed_at: '2026-11-13T02:25:00+09:00'
 completed_by: dist-impl-implement@0.14.1

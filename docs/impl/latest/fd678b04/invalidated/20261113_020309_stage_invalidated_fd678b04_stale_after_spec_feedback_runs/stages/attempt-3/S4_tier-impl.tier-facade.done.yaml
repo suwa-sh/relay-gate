@@ -1,0 +1,168 @@
+stage: S4
+tier: tier-facade
+attempt: 3
+uc_id: fd678b04
+manifest_sha256: 1802e7aaaecea1c74c643022cb6bd64bd90cb653f0c8e55ebf73b9888907116e
+manifest_projection: v2
+result: pass
+rerun_mode: attempt_increment
+rerun_reason: "attempt-2 S5 verify blocker F-005 (assumption A-007 contradicts contract config_files.feature-flag.env.validation_rules FINAL_ prefix precedence)"
+previous_done: "docs/impl/latest/fd678b04/stages/attempt-2/S4_tier-impl.tier-facade.done.yaml"
+findings_provided: true
+findings_path: "docs/impl/latest/fd678b04/stages/attempt-2/S5_verify.tier-facade.findings.yaml"
+gates:
+  format: pass
+  lint: pass
+  tdd: pass
+  bdd_tier: pass
+gate_runs:
+  - gate: format
+    cwd: facade
+    command: "shfmt -d ."
+    exit_code: 0
+  - gate: lint
+    cwd: facade
+    command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+    exit_code: 0
+  - gate: tdd
+    cwd: facade
+    command: "bats -r test"
+    exit_code: 0
+    summary: "76 tests, 76 ok (attempt-2: 72; +2 from F-001 test split, +2 new FINAL_ no-equals-line tests)"
+  - gate: bdd_tier
+    cwd: facade
+    command: "npx cucumber-js --config ../cucumber.cjs features"
+    exit_code: 0
+    summary: "9 scenarios (9 passed), 32 steps (32 passed)"
+assumptions:
+  path: "attempt-3/S4_tier-impl.tier-facade.assumptions.yaml"
+  count: 16
+  by_category:
+    input_validation: 6
+    data_format: 2
+    error_handling: 6
+    persistence: 0
+    performance: 1
+    security: 1
+  sha256: 9a99cef7ee2cb03166d96ceb6bbc3cb58fb44d221fec5813de99545df9dfadbf
+  extraction:
+    candidate_count: 25
+    excluded_as_explicit: 9
+    recorded_count: 16
+  changes_from_attempt_2:
+    reworded:
+      - id: A-007
+        finding: F-005
+        note: "assumption text now states that a line without = is read as key-only with an empty value and that the key is evaluated by the same rules as a KEY=value line: FINAL_ prefix rejected with error before the unknown-key warn, 9 keys become option required only when they are subject to validation (mode keys, non-off slot keys, active rapid keys), other keys warn unknown key"
+    recategorized:
+      - id: A-006
+        finding: F-004
+        from: data_format
+        to: input_validation
+      - id: A-025
+        finding: F-018
+        from: data_format
+        to: error_handling
+    excluded_as_explicit_now:
+      - id: A-023
+        finding: F-015
+        note: "stdout key=value vs key: value switch and the always-colon path keys are explicit in cli-command-contract.yaml conventions.output_format.stdout and the tier-facade.md 15-line output example (restatement)"
+    added: []
+    carried_forward:
+      - A-005
+      - A-008
+      - A-010
+      - A-015
+      - A-016
+      - A-017
+      - A-018
+      - A-019
+      - A-020
+      - A-021
+      - A-024
+      - A-026
+      - A-027
+findings_handling:
+  blocker:
+    - id: F-005
+      action: fixed
+      note: "no logic change (Verifier confirmed the FINAL_ rejection is correct). A-007 reworded to match the contract; repository comment at feature_flag_config.sh:63 aligned with the same wording; added bats at repository level (FINAL_ key without = stays in FEATURE_FLAG_KEYS and is not exported) and usecase level (valid config + FINAL_DB_CONN_REF line without = gives exactly one error line, no warn, empty stdout, non-zero status)"
+  major:
+    - id: F-007
+      action: none
+      note: "A-010 security spec_absent is answered by a human in S9 (pending_questions); no implementation change"
+  minor:
+    - id: F-001
+      action: fixed
+      note: "cli_field.bats -n / -e / -ne test split into three single-Act tests (test-strategy.md AAA rule)"
+    - id: F-004
+      action: fixed
+      note: "A-006 category changed to input_validation"
+    - id: F-018
+      action: fixed
+      note: "A-025 category changed to error_handling"
+    - id: F-015
+      action: fixed
+      note: "A-023 removed from the record as a restatement; counted in excluded_as_explicit"
+    - ids:
+        - F-002
+        - F-003
+        - F-006
+        - F-008
+        - F-009
+        - F-010
+        - F-011
+        - F-012
+        - F-013
+        - F-014
+        - F-016
+        - F-017
+        - F-019
+        - F-020
+      action: none
+      note: "spec_absent handoffs to the S9 assumption review; the assumptions are carried forward unchanged so the human decision is taken on the same text"
+variable_prompt_usage: "findings path and the orchestrator's F-005 fix direction were used only for the assumption record wording, test splitting and test additions; no runtime behaviour was decided from them, so no new assumption was recorded"
+ddd_guide: "ddd:ddd-tactical-implementation not re-invoked (no domain model change; comment and test changes only)"
+implemented:
+  - path: facade/bin/validate-config.sh
+    layer: entrypoint
+    note: "unchanged"
+  - path: facade/src/presentation/validate-config.sh
+    layer: presentation
+    model: ValidateConfigRequest
+    note: "unchanged"
+  - path: facade/src/usecase/validate_feature_flag.sh
+    layer: usecase
+    model: ValidateFeatureFlagQuery
+    note: "unchanged"
+  - path: facade/src/domain/feature_flag.sh
+    layer: domain
+    model: "FeatureFlag / SlotRunnerAssignment"
+    note: "unchanged"
+  - path: facade/src/domain/cli_field.sh
+    layer: domain
+    note: "unchanged"
+  - path: facade/src/repository/feature_flag_config.sh
+    layer: repository
+    model: FeatureFlagConfig
+    note: "comment only (line 63: no-equals line evaluation order FINAL_ reject -> conditional option required -> unknown key warn)"
+  - path: facade/src/gateway/runner_probe.sh
+    layer: gateway
+    note: "unchanged"
+tests:
+  tier_bdd_steps: facade/features/steps/configure-feature-flags.steps.js
+  tier_bdd_steps_changed: false
+  tdd:
+    - facade/test/domain/feature_flag.bats
+    - facade/test/domain/cli_field.bats
+    - facade/test/repository/feature_flag_config.bats
+    - facade/test/gateway/runner_probe.bats
+    - facade/test/usecase/validate_feature_flag.bats
+    - facade/test/presentation/validate_config.bats
+  tdd_changed:
+    - facade/test/domain/cli_field.bats
+    - facade/test/repository/feature_flag_config.bats
+    - facade/test/usecase/validate_feature_flag.bats
+issues: []
+completed_at: '2026-09-17T10:24:09+09:00'
+completed_by: dist-impl-implement@0.14.1

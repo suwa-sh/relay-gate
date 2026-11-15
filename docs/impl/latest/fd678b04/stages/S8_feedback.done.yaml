@@ -1,109 +1,118 @@
 stage: S8
-uc_id: fd678b04
-manifest_sha256: 1802e7aaaecea1c74c643022cb6bd64bd90cb653f0c8e55ebf73b9888907116e
+uc_id: "fd678b04"
+mode: initial
+manifest_sha256: "829aa482569f86811e8a0a8453851b577b684bce01b8b83992f88cb1250b1ee5"
 manifest_projection: v2
 result: pass
-mode: initial
-attempt: 3
-cycle: 3
-rerun_reason: "stale after spec event 20260917_100000_feedback_impl_feedback_fd678b04_cycle2 (invalidated by 20260917_100200_stale_invalidated_spec_feedback_cycle2_applied_fd678b04)"
-previous_done: "docs/impl/latest/fd678b04/invalidated/20260917_100200_stale_invalidated_spec_feedback_cycle2_applied_fd678b04/stages/S8_feedback.done.yaml"
-previous_feedback:
-  - feedback_id: 20260917_014138_impl_feedback_fd678b04
-    published_path: "docs/impl/latest/fd678b04/feedback-requests/20260917_014138_impl_feedback_fd678b04.md"
-    applied_spec_event: "20260917_050000_feedback_impl_feedback_fd678b04"
-    note: "要求 2 件 (Scenario 分離、runner --help 問い合わせの契約一元化) は spec に反映済み。再要求しない"
-  - feedback_id: 20260917_081430_impl_feedback_fd678b04
-    published_path: "docs/impl/latest/fd678b04/feedback-requests/20260917_081430_impl_feedback_fd678b04.md"
-    applied_spec_event: "20260917_100000_feedback_impl_feedback_fd678b04_cycle2"
-    note: "CR-fd678b04-001 (確報の制御キーの範囲 = FINAL_ 接頭辞) は契約 validation_rules / spec.md / tier-facade.md に反映済み。境界 Scenario も追加済み。再要求しない。supersedes も使わない"
+status: "published"
+tier_impl_attempt: 5
 feedback_request:
+  feedback_id: "20261115_093126_impl_feedback_fd678b04"
+  created_at: "2026-11-15T09:31:26+09:00"
   draft_path: null
-  draft_note: "仕様起因の未解決事項が 0 件のため draft を作成していない (feedback/draft.md は存在しない)"
-  request_count: 0
+  published_path: "docs/impl/latest/fd678b04/feedback-requests/20261115_093126_impl_feedback_fd678b04.md"
+  input_sha256: "25caf38054a64316034645c9a2da7de0616818683b41aab58223544e8b98009f"
+  published_sha256: "25caf38054a64316034645c9a2da7de0616818683b41aab58223544e8b98009f"
+  draft_sha256: "25caf38054a64316034645c9a2da7de0616818683b41aab58223544e8b98009f"
+  supersedes: null
+  review_approved_event_id: "20261115_100850_review_approved_fd678b04_feedback_publish"
+  review_evidence_event_id: "20261115_094919_s9_review_generated_fd678b04"
+  publish_started_event_id: "20261115_101100_feedback_request_publish_started_fd678b04"
+  published_event_id: "20261115_101101_feedback_request_published_fd678b04"
+  published_at: "2026-11-15T10:11:01+09:00"
+  request_count: 4
   blocker_count: 0
-  severity_counts:
+  cr_ids:
+    - "CR-fd678b04-001"
+    - "CR-fd678b04-002"
+    - "CR-fd678b04-003"
+    - "CR-fd678b04-004"
+  severities:
     blocker: 0
-    spec-gap: 0
+    spec_gap: 4
     improvement: 0
-  requests: []
+  format_check: "feedbackRequest.js verify --feedback: PASS (4 requests)"
+  publish_check: "公開の直前に feedbackRequest.js verify が PASS (4 requests)。validateAssumptions.js の record / verdicts / evidence を再実行し、承認時の 3 つの hash と一致。承認された前提の決定 21 件は独立検証の判定 21 件と 1 対 1"
+  note: "性能の指摘 2 件は利用者の決定により blocker として扱わず、目標との差の事実として 1 件目の要求に添えた。2〜4 件目は仕様に定めが無い点で、選択肢と推奨を付けた(最終確認で利用者が決める)"
 as_built_summary: "docs/impl/latest/fd678b04/feedback/as-built-summary.md"
-as_built_summary_note: "attempt-3 の実装事実 (FINAL_ 接頭辞判定と境界 7 ケース、等号なし FINAL_ 行の扱い、runner probe 契約準拠) で全面更新"
 classification:
-  spec_origin: 0
-  implementation_origin: 4
+  spec_origin_requests: 4
+  implementation_origin_other_uc: 1
+  implementation_origin: 1
   environment_origin: 1
-  resolved_by_previous_feedback: 2
-  spec_origin_items: []
-  implementation_origin_items:
-    - "attempt-2 F-005 (blocker, contradicts): 前提 A-007 の文面が反映前の規則のまま。attempt-3 で文面・コメント・TDD を契約に整合 (ロジック変更なし)。attempt-3 S5 で contradicts 0"
-    - "attempt-2 F-001 (minor): TDD 1 ケース 3 Act。attempt-3 でケース分割済み"
-    - "attempt-2 F-004 / F-018 / F-015: A-006 / A-025 の再分類、A-023 の explicit 除外。attempt-3 で反映済み"
-    - "A-020: 未実装の検証種別を終了コード 6 にする段階実装措置。担当 UC の実装で解消"
-  environment_origin_items:
-    - "issues/20260917_074633 残存項目: 正常系 Scenario の Given (runner スタブ・ジョブマップ) が別 UC 成果物を前提。一時ディレクトリのハーネスで解決済み、仕様変更不要"
-  resolved_items:
-    - "運用モード切替 Scenario の When / Then 分離 (20260917_014138 CR-001): spec 反映済み、S6 injections 0"
-    - "runner --help 問い合わせの契約一元化 (20260917_014138 CR-002): 契約 runner_help_probe 反映済み"
-    - "確報の制御キーの範囲 (20260917_081430 CR-001): FINAL_ 接頭辞で 3 ファイル同表記、S6 12/12 通過"
-  excluded_from_draft:
-    - "attempt-3 F-005 / F-006 (major): A-010 / A-015 の security 前提 (spec_absent、要回答) は S9 で人が回答する。要求化しない"
-    - "attempt-3 spec_absent 前提 14 件 (minor) と category_mismatch F-017: S9 で判断。前提の一括仕様化要求は出さない"
-assumption_handling:
-  source: "docs/impl/latest/fd678b04/stages/attempt-3/S5_verify.tier-facade.findings.yaml"
-  assumptions_sha256: 9a99cef7ee2cb03166d96ceb6bbc3cb58fb44d221fec5813de99545df9dfadbf
-  verdicts_sha256: f4b777fbcd4c0728034dc8d83851696d8f4a9863cb27adfdd17289f22bed4916
-  total: 16
-  spec_absent: 16
-  consistent: 0
+  resolved_past_issues: 2
+issues_read:
+  - "docs/impl/latest/fd678b04/issues/20261113_021600_feature-flag-error-line-order-undefined.md"
+  - "docs/impl/latest/fd678b04/issues/20261113_063000_other-validation-kinds-exceed-performance-target.md"
+  - "docs/impl/latest/fd678b04/issues/20261115_090000_performance-target-gaps-not-gating.md"
+findings_read: "docs/impl/latest/fd678b04/stages/attempt-5/S5_verify.tier-facade.findings.yaml"
+assumptions:
+  record: "docs/impl/latest/fd678b04/stages/attempt-5/S4_tier-impl.tier-facade.assumptions.yaml"
+  total: 21
+  spec_absent: 20
+  consistent: 1
   contradicts: 0
   unlisted: 0
-  requires_answer: 2
-  requires_answer_ids:
-    - A-010
-    - A-015
-  human_decisions: "未取得 (本サイクルの S9 で回答)。前サイクル (cycle 2) の承認は同文 17 件すべて confirmed だが spec event 後の再走のため改めて判断する"
-  human_rejected_spec_change: 0
-learnings: 1
+  answer_required_ids:
+    - "A-010"
+  requested_ids:
+    - "A-010"
+    - "A-016"
+    - "A-028"
+    - "A-030"
+verify_findings:
+  blocker: 2
+  major: 1
+  minor: 20
+  blocker_handling: "F-001 / F-002 は性能目標との差。利用者の決定(2026-11-13 / 2026-11-15)により合否の検査として扱わない"
+user_decisions:
+  - date: "2026-11-13"
+    text: "5,000行 8MB 10sec以内は パフォーマンスの目標値であって、入力を制限する仕様ではありません"
+  - date: "2026-11-15"
+    text: "目標であってチェックではないです"
+open_questions_for_review:
+  - cr_id: "CR-fd678b04-001"
+    question: "性能目標を 4 つの設定検証種別のどれに適用するか"
+    recommended: "すべてに適用する"
+  - cr_id: "CR-fd678b04-002"
+    question: "error 行が 2 行以上出るときの error 行どうしの順"
+    recommended: "現行の順を仕様に書く"
+  - cr_id: "CR-fd678b04-003"
+    question: "mode が列挙外・欠落のとき、その slot の従属キーを検査するか"
+    recommended: "現行どおり検査すると仕様に書く"
+  - cr_id: "CR-fd678b04-004"
+    question: "9 キー以外のキーの値をプロセスの変数へ取り込まないことを仕様に書くか"
+    recommended: "仕様に書く"
+policy_docs_check:
+  checked:
+    - "tmp/RelayGateのしくみ.md"
+    - "tmp/RelayGateの利用イメージ.md"
+  conflicts: 0
+  note: "設定ファイルの規模・検査時間・検証コマンドの出力の順・未知キーの扱いは、どちらの方針資料にも記載が無い。要求は方針と食い違わない"
+other_uc_facts:
+  - target: "--rapid-crosscheck / --job-map"
+    note: "数 MB の入力で 10 秒を超える。本 UC の変更の前後で出力と所要時間は同じ。実装の改善は所有する UC の再実行で行う"
+learnings: 2
 learning_files:
-  - "docs/impl/latest/fd678b04/learnings/20260917_111500_assumption-text-stale-after-spec-event.md"
+  - "docs/impl/latest/fd678b04/learnings/20261115_093126_performance-target-treated-as-pass-fail-gate.md"
+  - "docs/impl/latest/fd678b04/learnings/20261115_093126_bash-large-string-processing-patterns.md"
 proposals:
   skill: true
-  context: false
+  context: true
 proposal_files:
-  skill: "docs/impl/latest/fd678b04/learnings/20260917_111500_proposal-skill.md"
-proposals_note: "context (CLAUDE.md / dev-rules) への新規追記提案は無い。前サイクルの 20260917_081430_proposal-context.md の提案 3 (仕様反映後の再実行手順) が本サイクルの学びを含む"
-existing_learnings_untouched:
-  - "docs/impl/latest/fd678b04/learnings/20260917_014138_*.md"
-  - "docs/impl/latest/fd678b04/learnings/20260917_081430_*.md"
-policy_docs_checked:
-  - "tmp/RelayGateのしくみ.md"
-  - "tmp/RelayGateの利用イメージ.md"
-inputs_read:
-  - "docs/impl/latest/fd678b04/issues/20260917_004843_cross-uc-scenarios.md"
-  - "docs/impl/latest/fd678b04/issues/20260917_074633_cross-uc-scenarios-resolution.md"
-  - "docs/impl/latest/fd678b04/stages/attempt-3/S5_verify.tier-facade.findings.yaml"
-  - "docs/impl/latest/fd678b04/stages/attempt-3/S5_verify.tier-facade.done.yaml"
-  - "docs/impl/latest/fd678b04/stages/attempt-3/S4_tier-impl.tier-facade.assumptions.yaml"
-  - "docs/impl/latest/fd678b04/stages/attempt-3/S4_tier-impl.tier-facade.done.yaml"
-  - "docs/impl/latest/fd678b04/stages/attempt-2/S5_verify.tier-facade.findings.yaml"
-  - "docs/impl/latest/fd678b04/stages/attempt-2/S4_tier-impl.tier-facade.assumptions.yaml"
-  - "docs/impl/latest/fd678b04/stages/S6_uc-bdd.done.yaml"
-  - "docs/impl/latest/fd678b04/stages/S7_atdd.done.yaml"
-  - "docs/impl/latest/fd678b04/review/review-notes.md"
-  - "docs/impl/latest/fd678b04/feedback-requests/20260917_081430_impl_feedback_fd678b04.md"
-  - "docs/impl/latest/fd678b04/invalidated/20260917_100200_stale_invalidated_spec_feedback_cycle2_applied_fd678b04/stages/S8_feedback.done.yaml"
-  - "docs/impl/events/20260917_100200_stale_invalidated_spec_feedback_cycle2_applied_fd678b04/event.yaml"
-  - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml"
-  - "docs/specs/latest/適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md"
-  - "docs/specs/latest/適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md"
-next_command: null
-next_note: "要求 0 件のため dist-pipeline の実行対象は無い。次は S9 review (前提 16 件の回答: A-010 / A-015 は必須)"
-issues: []
-notes:
-  - "manifest_sha256 は受領値を再計算せず転記した"
-  - "git コマンドは実行していない。write-set 外のファイルは変更していない (status.yaml の更新はオーケストレータ)"
-  - "公開済み Markdown 2 件は編集していない"
-  - "completed_at はパイプラインの論理時刻 (S7 done 10:45 / status 11:08 の後) に合わせた"
-completed_at: "2026-09-17T11:15:00+09:00"
-completed_by: dist-impl-feedback@0.14.1
+  - "docs/impl/latest/fd678b04/learnings/20261115_093126_proposal-skill.md"
+  - "docs/impl/latest/fd678b04/learnings/20261115_093126_proposal-context.md"
+selected_options:
+  - cr_id: "CR-fd678b04-001"
+    selected: "A"
+  - cr_id: "CR-fd678b04-002"
+    selected: "A"
+  - cr_id: "CR-fd678b04-003"
+    selected: "A"
+  - cr_id: "CR-fd678b04-004"
+    selected: "A"
+selected_options_source: "docs/impl/events/20261115_100850_review_approved_fd678b04_feedback_publish/event.yaml"
+next_state: "blocked_on_spec"
+published_by: "dist-impl-feedback@0.14.1 (mode=publish)"
+completed_at: "2026-11-15T09:34:44+09:00"
+completed_by: "dist-impl-feedback@0.14.1"

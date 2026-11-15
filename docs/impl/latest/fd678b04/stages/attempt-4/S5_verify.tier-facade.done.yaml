@@ -1,0 +1,57 @@
+stage: "S5"
+tier: "tier-facade"
+attempt: 4
+uc_id: "fd678b04"
+manifest_sha256: "829aa482569f86811e8a0a8453851b577b684bce01b8b83992f88cb1250b1ee5"
+manifest_projection: "v2"
+result: "fail"
+open_blockers: 2
+gate_reexec:
+  format: "pass"
+  lint: "pass"
+  tdd: "pass"
+  bdd_tier: "pass"
+viewpoints_checked:
+  spec_conformance:
+    status: "done"
+    note: "9キー・3 mode・foreground排他・FINAL_拒否・stdout15行・検査3段・verbose順を仕様/契約/判断記録023,026,028〜031,033と照合。tier featureのgherkin完全一致。独立バイト/構造oracle18ケース通過。API summaryは旧CLI形式でv2 slice対象外、tables=[]でDB操作なし。management-db生成tablesはscope内のsourceと一致。CLIのためUI対象外。"
+  readability_maintainability:
+    status: "done"
+    note: "dev-rules3ファイルに照合。4/64/1024の閾値は名前付き定数と説明付き、変更は共有関数に集約。追加テストは実ファイル、独立期待値、終了コード/出力件数/順序/時間のassertを持ち空実装なし。"
+  security:
+    status: "done"
+    note: "env値のsource/evalなし、未知キーをグローバル変数へ代入しないallowlist、配列添字の接頭辞と引用を確認。NULを除く全C0/DEL/C1、不正UTF-8、パス名展開文字、JSON引用符/バックスラッシュを独立oracleで検査。"
+  performance:
+    status: "done"
+    note: "前回ESC128入力は改善するが、多種類制御文字を含む5,000行で10秒超過を実測。F-001。4個/64個/1024バイト周辺を測定。DB/indexは対象外。"
+  operability:
+    status: "done"
+    note: "診断文言、stdout/stderr分離、ユーザー指定path、制御文字可視化、info→warn→errorを確認。修正前と現行の出力をバイト比較し、キャッシュ再利用での取り違え/IFS・LC_ALL・shell flagsの漏れなし。"
+  fault_tolerance:
+    status: "done"
+    note: "一時スナップショット・補助コマンド失敗・シグナル時削除・runner準備失敗/未応答のゲートを再実行。独立18ケースでバイト/構造違反時の後続検査・info/warn抑止を確認。"
+  refactoring:
+    status: "done"
+    note: "共有cli_field関数の修正でfeature flag、job-map、rapid-crosscheckの全テストと旧新出力比較を実施。facade/binの現存入口はvalidate-config.shのみ。他tierから共有ファイルへの参照は見つからず、未実装の別入口/別UCは欠陥扱いしない。"
+  assumption_conformance:
+    status: "done"
+    note: "観点1〜7完了後にid/assumption/targetだけを読み、S4固定指示と仕様で判定してからreason/confidence/spec_refsを読んだ。15件をexactly-oneで照合。A-030のみcontradicts、14件spec_absent、候補の未記録0件。A-016/A-028は既存issueの判断と整合する確認記録であり、仕様未定義そのものを新たな実装欠陥にしない。F-001とA-030のF-014は同一の性能問題。"
+assumptions_sha256: "262d6ce553a752479cf85986003a9735fbad41a5bb843fc5e7ec9495bd946350"
+assumption_verdicts_sha256: "50c89c492f2797be05f20a0c0c05ef8ed071448686657a3d23542ee806b7b21e"
+assumption_verdicts_summary:
+  consistent: 0
+  spec_absent: 14
+  contradicts: 1
+  unlisted: 0
+summary:
+  blocker: 2
+  major: 1
+  minor: 13
+environment_failures: []
+environment_notes:
+  - "macOSのloopback bindとinitdb/pg_ctlによる一時PostgreSQL起動・SELECT 1・停止を事前probeし全て成功。常設DBへ接続していない。"
+  - "初回Linux Batsのホスト共有TMPDIRではchmod600でもtest -xがtrueとなる環境問題を独立再現したため中断。コンテナ内mktemp -dで権限判定をprobeし直して全421件を再実行、全通過。未解消の環境失敗なし。"
+findings_path: "docs/impl/latest/fd678b04/stages/attempt-4/S5_verify.tier-facade.findings.yaml"
+completed_at: "2026-11-12T19:06:34.924860+00:00"
+completed_by: "dist-impl-verify@0.14.1"
+note: "必須4ゲートはすべてpass。LinuxでもBats421件とShellCheckがpass。F-001とF-014は同一の未解決性能問題を性能/前提整合の2観点で記録したblocker2件。A-030が保証を計算量へ読み替えることは許容できない。既存issueのerror間順と列挙外mode検査は実装欠陥として新規起票していない。"
