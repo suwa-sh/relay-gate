@@ -2,34 +2,39 @@
 
 ## translation を変えない理由
 
-- 上流(USDM / RDRA / NFR / arch)の latest は変わっていない
-- 管理 DB が単一インスタンスであることは既存の構成どおり。今回は、その前提を接続参照名の解決先として明記するだけ
-- そのため、workload_type / availability_tier / latency / data_classification / traffic / consistency / cost_posture / target_clouds は影響を受けない
+- 上流で変わったのは、標準の slot runner を提供物として持つことと、feature flag の任意の 2 キーでジョブマップの場所を指定できることだけ
+- 負荷・可用性・遅延・データの機密度・整合性・コスト方針・対象クラウドを決める入力は変わっていない
+- 標準の slot runner は facade と同じ実行ホストで動くシェルスクリプトで、新しいミドルウェア・ホスト・ネットワーク経路は増えない
+- そのため workload_type / availability_tier / latency / data_classification / traffic / consistency / cost_posture / target_clouds は影響を受けない。MCL の全量再実行はしない
 
 ## 根拠にした事実
 
-| 事実 | 反映 |
+| 事実(上流の変更記録) | 反映 |
 |---|---|
-| 確報 runner は実行ホストの FINAL_DB_CONN_REF、確報 worker は DB セグメントの FINAL_DB_CONN_REF で管理 DB に接続する(前回の変更で置き場ごとに別ファイルになった) | 2 つの置き場の参照名が同じ管理 DB に解決されなければならないことを、確報設定のコメントと検証規則の description に書いた |
-| 確報 runner が登録した依頼を、確報 worker が同じキューから取得する | 解決先が別の DB だと、設定の検査を通っても確報ジョブが完了しない、を理由として書いた |
-| 速報(RAPID_DB_CONN_REF)・ハング検知(HANG_DB_CONN_REF)・ハウスキープ(HOUSEKEEP_DB_CONN_REF)も同じ管理 DB の表を読み書きする | 5 つの参照名すべてを前提の対象にした |
-| ハウスキープは専用 DB ロール housekeep_del で接続する | 同じ管理 DB に専用ロールで接続する、と書いた |
-| 構築時の検査は設定ファイルの存在確認だけ | 検査は変えず、解決先が同じことは導入する側が確かめる、と書いた |
+| 標準の slot runner は facade ティアの正式な構成要素で、実行ホストは facade と同じ | 実行ホストの配置物に加え、DB ホストには置かないと書いた |
+| slot には標準の slot runner か自作の runner を割り当てる。特殊な接続だけ利用者が自作する | 構築手順に、割り当て先と、自作の runner も同じ実行ホストに置くことを書いた |
+| 標準の slot runner は host と user が両方空の行をローカル実行、それ以外を SSH 実行とする | SSH は既存の実行ユーザーの鍵と known_hosts を使うと書き、新しい接続経路は増えないとした |
+| 「参考実装(仮採用)」の扱いをやめる | インフラ成果物には「参考実装」「適用側が用意する runner」という記述は無かった(確認済み)。置き換えではなく、配置物としての記述を足した |
+| feature flag は 9 キー + 任意の 2 キー。9 キーだけの設定はそのまま通る | config_store の説明・impl の contents と検証規則・mapping・適合性 notes・図を直した |
+| ジョブマップの場所は、無い・空なら設定ファイル置き場の固定の名前。絶対パスと相対パスを受け付け、基準は feature-flag.env のあるディレクトリ | 配置・権限・正本(バックアップ)の記述に、別の場所に置く設置の扱いを足した |
+| キー名は仕様で確定 | インフラ成果物ではキー名を書かず、役割で書き「キー名は仕様で確定」と注記した |
+| 構築時の検査は設定ファイルの存在確認だけ(既存の方針) | 変えない。指定先と配置先が一致することは導入する側が確かめる、と書いた |
 
 ## 書き方の選び方
 
-- 条件は「参照名の文字列が同じ」ではなく「解決先(接続先の DB)が同じ」とした
-  - 置き場ごとに参照名の文字列が違っても、同じ DB に解決されれば正しい
-- 新しい検証規則・検査タスクは足さず、既存の説明文(connection_resolution、確報の存在の検証規則の description、コメント)の中に書いた
-  - 新しい規則を足すと「構築時に検査する」と読めてしまうため
-- 確かめ方の具体的な手順は書かない(利用者の指示の範囲外)
+- 構築のタスクと変数は足さない
+  - 別の場所に置く設置の配置先は適用側の構成管理で決まり、キー名も仕様の確定待ちのため、固定の変数名を先取りすると仕様とずれる
+  - 代わりにコメントと README で、loop と配置先を適用側が差し替えると書いた
+- 標準の slot runner の置き場所(パス)と、ファイル構成は書かない。仕様で確定と注記した
+- 方針資料(しくみ・利用イメージ)との関係
+  - しくみの資料の feature flag 設定例は 9 キーのままで通る
+  - 標準の slot runner の提供は方針資料に明記の無い利用者決定で、割り当てる実体として標準の slot runner を選べる形なので、方針資料の「適用ごとに実体を割り当てる」とは両立する
 
-## ハウスキープの仮置き表現を揃えた根拠(controller の追加指示)
+## 確認したが変えなかった箇所
 
-| CLI 契約の記述 | 反映 |
+| 箇所 | 理由 |
 |---|---|
-| config_files の housekeep.env: path は $RELAY_GATE_CONFIG_DIR/housekeep.env、キーは HOUSEKEEP_RETENTION_DAYS(既定 90)と HOUSEKEEP_DB_CONN_REF(housekeep_del の接続参照名) | 設定の置き場は /etc/relay-gate なので、配置先は /etc/relay-gate/housekeep.env。config ロールは配置先を /etc/relay-gate/{{ relay_gate_housekeep_config_file }} と組み立てるため、変数の値を housekeep.env にすると書いた |
-| artifact_root_entries: $RELAY_GATE_ARTIFACT_ROOT/hang-detector-notified/ と $RELAY_GATE_ARTIFACT_ROOT/housekeep-pending/ | 成果物の run ディレクトリは /var/lib/relay-gate/facade/(impl の mount_point)なので、成果物ルートは /var/lib/relay-gate。置き場の例を /var/lib/relay-gate/housekeep-pending にした |
-| notified_mark の file_name: <run_id>.<role> | 印のファイル名として書いた |
-
-- 変数名・タスク・検査は変えていない。仕様に無い設計判断は足していない
+| terraform の variables(セグメントの説明に facade / slot runner と書いてある) | すでに slot runner が実行ホストセグメントのものとして書かれている |
+| site.yml / backup ロール | ロールの割り当てと管理 DB のバックアップは不変 |
+| product-observability.yaml / product-cost-hints.yaml / product-decision-*.yaml | runner の提供元とジョブマップの場所に触れていない |
+| 設定の認証情報らしい値の警告(`/etc/relay-gate/*.csv`) | 既定の置き場の検査。別の場所に置く設置は適用側の差し替えの範囲 |

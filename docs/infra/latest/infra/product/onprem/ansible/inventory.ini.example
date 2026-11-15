@@ -8,6 +8,8 @@
 
 [relay_gate_execution_hosts:vars]
 segment=execution
+; slot ジョブマップの置き場所は feature-flag.env の任意の 2 キー(キー名は仕様で確定)で変えられる。無い・空なら設定ファイル置き場の固定の名前を使う。
+; 絶対パスと相対パスを受け付け、相対パスの基準は feature-flag.env のあるディレクトリ。別の場所を指定する設置では、指定先へ配るよう config ロールの loop を差し替える
 ; ハウスキープ設定のファイル名(配置先は /etc/relay-gate/housekeep.env)と削除待ちの置き場(成果物ルート直下の housekeep-pending/。成果物ルートと同じファイルシステム)。
 ; どちらも CLI 契約で決まった値を設定する
 ; relay_gate_housekeep_config_file=housekeep.env

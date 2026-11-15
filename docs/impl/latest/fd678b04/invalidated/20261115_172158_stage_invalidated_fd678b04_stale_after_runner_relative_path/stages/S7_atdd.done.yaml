@@ -1,0 +1,46 @@
+stage: S7
+uc_id: fd678b04
+manifest_sha256: 890bfec8902fb1f1779157d5b2f7dc7b4a92540e4f9c267c260dfded6a683903
+manifest_projection: v2
+result: pass
+rerun_reason: "stale after spec feedback 20261115 (invalidated by 20261115_141514_stage_invalidated_fd678b04_stale_after_spec_feedback_20261115)"
+previous_done: "docs/impl/latest/fd678b04/invalidated/20261115_141514_stage_invalidated_fd678b04_stale_after_spec_feedback_20261115/stages/S7_atdd.done.yaml"
+branch_slug: configure-feature-flags
+tiers:
+  - tier-facade
+tier_impl_attempt: 5
+atdd_confirmed: true
+atdd_scenarios:
+  - SPEC-001-01-4
+feature: features/atdd/SPEC-001-01.feature
+feature_changed: false
+steps: features/atdd/steps/configure-feature-flags.steps.js
+steps_changed: false
+steps_change_summary: "変更なし。既存の step 定義が attempt 5 の実装に対してそのまま pass した"
+tier_impl_changed: false
+run:
+  cwd: "."
+  command: "npx cucumber-js --config cucumber.cjs features/atdd --tags \"@atdd_SPEC-001-01-4\""
+  selection: "tag exact match only (no name filter, feature not run as a whole)"
+  tag_uniqueness: "@atdd_SPEC-001-01-4 は features/atdd/ の feature 内で 1 箇所のみ(SPEC-001-01.feature L25)"
+  exit_code: 0
+  summary: "1 scenario (1 passed), 5 steps (5 passed)"
+  steps_count_note: "cucumber の集計は Before / After フックを含む"
+  scenarios_expected: 1
+  scenarios_total: 1
+  scenarios_passed: 1
+  scenarios_failed: 0
+  undefined_steps: 0
+  ambiguous_steps: 0
+  pending_steps: 0
+  count_matches_atdd_scenarios: true
+performance_note: "性能(5,000 行以内かつ 8 MB 以内を 10 秒以内)は目標値であり合否の検査ではない(利用者決定)。本 stage では時間を判定に使っていない。参考: 実行は約 1 秒"
+harness:
+  sandbox_root: "Scenario ごとの一時ディレクトリを root とし、仕様の絶対パス(/etc/relay-gate, /opt/relay-gate)を root 配下の同じ相対位置に配置。出力照合時に root 接頭辞を除去"
+  entrypoint: "facade/bin/validate-config.sh(実体を起動)"
+  external_connections: none
+injections: []
+injections_note: "ハーネス注入なし(検証コマンドのみで完結)"
+issues: []
+completed_at: '2026-11-15T14:57:00+09:00'
+completed_by: dist-impl-implement@0.14.1

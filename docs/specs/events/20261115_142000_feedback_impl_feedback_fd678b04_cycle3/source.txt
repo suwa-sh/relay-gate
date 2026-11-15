@@ -1,0 +1,41 @@
+Spec 差分更新(design 無しモード): 2026-11-15 の設定ファイルの検査の性能の目標値化と、feature flag の検証の細部(error 行の順・列挙外の mode の扱い・9 キー以外のキーの値の扱い)の明記(dist-pipeline feedback mode Step6)。上流は nfr だけが 2026-11-15 に変わった(B.1.1.2 / B.2.1.1 を目標値の記載へ)。usdm / rdra / arch / infra は変更なし。
+
+CR-fd678b04-001#1(非機能要求グレードが直接所有。spec は追従): 設定ファイルの検査の性能を目標値として書いた。
+- CLI 契約 config_input_rules に performance_target を新設した。目標は「1 ファイルあたり 5,000 行以内かつ 8 MB 以内の設定ファイルを、内容によらず 10 秒以内」。対象は 4 つの設定検証種別(--feature-flag / --job-map / --rapid-crosscheck / --final-crosscheck)すべてと facade の設定読み込みで、CSV 形式・env 形式の両方。入力の制限ではない(大きさを理由に拒否・警告しない)。合否の検査ではない(目標を超えても終了コード・stdout・stderr は変わらず、不合格の理由にしない)。数値の出所は NFR B.1.1.2 / B.2.1.1。
+- 追従した UC 別仕様: slot ごとのジョブマップを定義する(tier-facade.md の性能の記載と、入力の守備範囲の表の「5,000 行超」の行)、feature flag を設定する(tier-facade.md の UC ロジックに性能の項)、ジョブマップで JOB_ID から実行先を解決する(tier-facade.md の「NFR B.2.1.1 を満たす手段」)、出力規約 ui-design.md と UX 設計 ux-design.md(「10 秒以内」の言い方)。
+
+CR-fd678b04-001#2(spec 直接所有): 目標値と分かる語への改めと、runner の応答待ちの数え方。
+- config_input_rules.rules の「行・セルの長さの上限」: 「共通前提(1 ファイル最大 5,000 行)の範囲で保証する」→「長さを理由に拒否・警告しない。処理時間は性能の目標値のとおり」。
+- 同「5,000 行を超えるファイル」→「5,000 行または 8 MB を超えるファイル」: 「性能保証の範囲外」→「受理する。検証の結果は大きさによって変わらない。目標値の条件であって入力の制限ではない」。
+- validate-config.sh の runner_help_probe.response_time_budget: 「問い合わせ以外の検証と出力を 0.8 秒以内に収めれば NFR B.2.1.1(CLI 応答 10 秒以内)を満たす」を削除し、「runner の応答待ち(最大 9.2 秒)は、設定ファイルの検査の性能の目標値(10 秒以内)とは別に数える。合計が 10 秒を超えても検証の結果は変わらない」と書いた。1 slot 4.6 秒・両 slot 9.2 秒の上限は変えていない。
+- conventions.runtime_prerequisites.external_commands の「NFR B.2.1.1 の応答時間を満たす手段として」→「目標に近づける手段として」。
+- UC「slot runner の実体スクリプトを割り当てる」の、応答しない runner の場面(spec.md / tier-facade.md)は残し、「10 秒以内」の出所の注記を NFR B.2.1.1 から runner への問い合わせの上限(この入力での確認)へ改めた。
+
+CR-fd678b04-002#1(spec 直接所有): --feature-flag のキーごとの検査の error 行どうしの順(利用者決定 2026-11-15: いまの順を仕様に書く)。
+- CLI 契約 config_files の feature-flag.env に error_order を新設した。順は (1) BLUE_MODE → GREEN_MODE → RAPID_CROSSCHECK_MODE の必須・列挙(列挙外の hint はその error 行の次)、(2) foreground の個数、(3) BLUE_IMPL → BLUE_RUNNER → GREEN_IMPL → GREEN_RUNNER、(4) RAPID_CROSSCHECK_RUNNER → RAPID_CROSSCHECK_WORKER、(5) FINAL_ で始まるキー(ファイルに出た順)、(6) 対応ジョブマップ(blue → green)。1 つのキーの error 行は 1 行だけ。12 行の例を置いた。
+- config_input_rules.env_files の (c) と validate-config.sh の stderr から error_order を参照した。UC「feature flag を設定する」の tier-facade.md / _api-summary.yaml、UC「slot runner の実体スクリプトを割り当てる」の tier-facade.md は順を持たず契約を参照する。
+- BDD を追加: spec.md「error 行が 2 行以上のときは決まった順に報告される」、tier-facade.md「validate-config_sh_feature-flag は error 行が 2 行以上のとき契約の error_order の順に出す」。
+- 反証レビューの指摘で足した点: (a) foreground の個数の error 行の blue_mode= / green_mode= は読み取った値をそのまま出し、キーが無い・値が空のときは `-`(error_messages。tier BDD「validate-config_sh_feature-flag は mode が 3 つとも欠落・空の設定で foreground の個数の error 行に - を出す」)。(b) error_order の対象は validate-config.sh --feature-flag の出力だけと契約に明記した。facade.sh / background-rerun.sh の起動時検証が違反 2 つ以上のときに出す error 行は今回定めない(未決事項として docs/todo.md に記録)。
+
+CR-fd678b04-003#1(spec 直接所有): mode の値が列挙外・欠落・空のときの扱い(利用者決定 2026-11-15: いまどおり検査する)。
+- CLI 契約 config_files の feature-flag.env の validation_rules に 1 項を足した。その mode は「off でない」として扱い、mode 自体の error 行に加えて、slot の実装版・runner の必須と実体の検査、対応ジョブマップの検査、runner への --help の問い合わせを行う(RAPID_CROSSCHECK_MODE なら速報 runner / worker)。foreground の個数は値が foreground と完全一致する slot だけを数える。runner_help_probe.scope に同じ扱いの参照を足した。
+- UC「feature flag を設定する」の tier-facade.md の設定契約に 1 文と対応表を足し、spec.md の分岐条件「速報クロスチェック有効判定」と処理フローの補足に書いた。UC「slot runner の実体スクリプトを割り当てる」の tier-facade.md の「mode=off の slot は検証しない」に同じ扱いを足した。
+- BDD を追加: spec.md「mode が列挙外の slot も実装版と対応ジョブマップを検査し runner へ問い合わせる」、tier-facade.md「validate-config_sh_feature-flag は mode が列挙外・空・欠落の slot も従属キーと対応ジョブマップを検査し runner へ問い合わせる」(Scenario Outline 3 例)と「validate-config_sh_feature-flag は RAPID_CROSSCHECK_MODE が列挙外でも速報 runner と worker を検査する」。
+
+CR-fd678b04-004#1(spec 直接所有): 9 キー以外のキーの値の扱い(利用者決定 2026-11-15: 仕様に書く)。
+- CLI 契約 config_input_rules.env_files に「feature-flag.env から値を取り込むキーの範囲」を足した。値を取り込むのは 9 キーだけ。9 キー以外のキー(未知キーと FINAL_ で始まるキー)は、値をプロセスの変数・環境変数へ取り込まず、キー名を表示と重複の判定に使うだけ。検証コマンドだけでなく、feature-flag.env を読むすべての処理(readers の実行時の読み手)に及ぶ。
+- config_files の feature-flag.env の validation_rules(未知キーの項)と reader_scope、UC「feature flag を設定する」の tier-facade.md の設定契約・spec.md の分岐条件「設定所有区分」・_api-summary.yaml から参照した。
+- tier BDD を追加: 「validate-config_sh_feature-flag は 9 キー以外のキーの値をプロセスの環境へ取り込まない」。
+
+実装との照合: feature flag の検証の実装(読み取り専用)を一時ディレクトリで実走し、追加した BDD の期待値(error 行の順の 12 行、mode が列挙外・空・欠落の 3 通り、RAPID_CROSSCHECK_MODE が列挙外、PATH などの 9 キー以外のキー)が実際の出力と一致することを確認した。実装は変えない。判断は decisions/spec-decision-034。
+E2E BDD は 2 場面増えた(どちらも USDM の受け入れ条件に現れない細部のため usdm[] には載せない)。UC ツリー(34 UC / 8 BUC / 6 業務)とティア構成は不変。
+
+feedback request:
+- feedback_request_id: 20261115_093126_impl_feedback_fd678b04
+- input_sha256: 25caf38054a64316034645c9a2da7de0616818683b41aab58223544e8b98009f
+- request_ids: CR-fd678b04-001, CR-fd678b04-002, CR-fd678b04-003, CR-fd678b04-004
+- direct_work_unit_ids: CR-fd678b04-001#2, CR-fd678b04-002#1, CR-fd678b04-003#1, CR-fd678b04-004#1
+- causal_work_unit_ids: CR-fd678b04-001#1, CR-fd678b04-001#2, CR-fd678b04-002#1, CR-fd678b04-003#1, CR-fd678b04-004#1
+- stage packet: docs/pipeline/feedback-runs/20261115_093126_impl_feedback_fd678b04/stage-packets/spec.md
+
+trigger_event: rdra:20261103_131000_feedback_housekeeping_db_required, arch:20261103_133000_feedback_housekeeping_db_required(上流は nfr:20261115_135000_feedback_impl_feedback_fd678b04_cycle3 だけが変わった。arch・infra は今回 no-change)

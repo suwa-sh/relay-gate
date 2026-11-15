@@ -1,0 +1,69 @@
+round: 1
+findings:
+  - id: R-1
+    viewpoint: 4
+    severity: minor
+    target: "_cross-cutting/api/cli-command-contract.yaml"
+    claim: "background 側をリランするコマンドが 4 キーのうちどれを解決・検査するかが、同じ契約の中の 2 つの節で食い違って読める。新設した runner_path_resolution は「3 キーを使い、存在・実行権限の検査は検証コマンドとジョブ起動コマンドだけ」と書くが、既存の reader_scope は「リランのコマンドも validation_rules / error_messages のとおりに検査する」と書いており、こちらに従うと worker の実体も解決して存在を検査し、実体が無ければ終了コード 2 になる。"
+    evidence: "config_files.feature-flag.env.reader_scope: 「facade.sh・background-rerun.sh・validate-config.sh --feature-flag は validation_rules / error_messages のとおりに検査する」。runner_path_resolution.readers: 「background-rerun.sh は BLUE_RUNNER / GREEN_RUNNER / RAPID_CROSSCHECK_RUNNER」。runner_path_resolution.usage の 1 項目め: 「存在・実行権限の検査(validate-config.sh --feature-flag と facade.sh の起動時検証)」。UC「元の execution-spec.json から復元して新しい run_id で起動する」tier-ops.md の既存シナリオ「runner 起動失敗時は起動前に INSERT した slot_executions を FAILED に閉じる」は実行権限の無い runner を終了コード 6(runner failed to start)で扱い、今回追加したシナリオ「background-rerun_sh は相対パスの runner を設定ファイルのあるディレクトリ基準で起動する」の Given は速報 runner と worker の実体の有無を書いていない。食い違い自体は今回より前からあるが、新設の節が読み手ごとの適用範囲を明記したことで矛盾が表に出た。"
+    suggested_fix: "runner_path_resolution.readers か reader_scope のどちらかに、リランのコマンドは 4 キーの存在・実行権限を起動前に検査しない(解決して起動・受け渡し・表示に使うだけで、起動できなければ終了コード 6)のか、検証コマンドと同じ検査をする(終了コード 2)のかを 1 つに決めて書く。前者なら reader_scope の該当箇所からリランのコマンドを外すか「4 キーの実体の検査を除く」と補う。追加したシナリオの Given にも、速報 runner / worker の実体の有無が結果に影響しないことが分かる前提を足す。"
+  - id: R-2
+    viewpoint: 5
+    severity: minor
+    target: "実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/tier-facade.md"
+    claim: "追加したシナリオ「facade_sh は相対パスの runner を設定ファイルのあるディレクトリ基準で起動し速報 runner を解決後のパスで渡す」は、書いてある Given だけでは終了コード 0 に到達しない。速報クロスチェックが background なのに、速報クロスチェック設定ファイル(管理 DB の接続参照名)と blue 側のジョブマップの前提が無い。"
+    evidence: "Given は RAPID_CROSSCHECK_MODE=background と「管理 DB が起動している」だけ。契約 facade.sh の notes は「RAPID_CROSSCHECK_MODE が off 以外のとき …rapid-crosscheck.env の RAPID_DB_CONN_REF を読む。不在は facade.sh が終了コード 2」と定める。同じファイルの既存シナリオ(管理 DB へ参照名で接続する場面)は「RELAY_GATE_CONFIG_DIR/rapid-crosscheck.env に RAPID_DB_CONN_REF=mgmt-db …がある」を Given に明記している。"
+    suggested_fix: "Given に「RELAY_GATE_CONFIG_DIR/rapid-crosscheck.env に RAPID_DB_CONN_REF がある」「RELAY_GATE_CONFIG_DIR に JOB001 を含む blue-job-map.csv がある」を足す。または RAPID_CROSSCHECK_MODE=off にせず検証したい点(速報 runner を解決後のパスで渡す)を保つため、既存シナリオと同じ前提の書き方にそろえる。"
+  - id: R-3
+    viewpoint: 5
+    severity: minor
+    target: "_cross-cutting/api/cli-command-contract.yaml"
+    claim: "runner_path_resolution の規則そのものはどの入力でも解決後のパスが 1 つに決まるが、実行時の読み手で起こりやすい 3 つの入力(設定ファイル置き場が相対パス、置き場の末尾が `/`、作業ディレクトリが `/`)の結果が例にも BDD にも無く、BDD の期待値の書き方(<置き場>/./x)はこれらの入力では成り立たない。実装者が「見た目を整える」正規化を足す余地が残る。"
+    evidence: "conventions.environment_variables: RELAY_GATE_HOME の既定は「スクリプト自身のディレクトリ($(dirname \"$0\"))」、RELAY_GATE_CONFIG_DIR の既定は「$RELAY_GATE_HOME/config」。相対パスで起動すると設定ファイルのパスは相対パスになり、base_dir の 2 により解決後のパスは「作業ディレクトリ/./config/./blue-runner.sh」の形になる。置き場が `/etc/relay-gate/` なら規則どおりで `/etc/relay-gate//./blue-runner.sh`。作業ディレクトリが `/` で設定ファイルのパスが `conf/ff.env` なら base_dir の 2 で `//conf/ff.env`、解決後は `//conf/x`(resolved_path の「基準が `/` のときは `/` + 値」の特例は、この経路の `//` には適用されない)。examples の 4 件と UC 別仕様の追加シナリオは、どれも絶対パスで末尾に `/` の無い置き場だけを扱い、期待値を「<RELAY_GATE_CONFIG_DIR>/./rapid-crosscheck-runner.sh」と書いている。"
+    suggested_fix: "runner_path_resolution.examples に、(a) 置き場を既定値のまま相対パスで起動した場合、(b) 置き場の末尾が `/` の場合、(c) 作業ディレクトリが `/` の場合の解決後のパスを 1 行ずつ足し、連続する `/` をそのまま残すことを例で固定する。facade.sh と background-rerun.sh の追加シナリオには「RELAY_GATE_CONFIG_DIR は末尾に `/` の無い絶対パス」という前提を Given に書く。"
+  - id: R-4
+    viewpoint: 5
+    severity: minor
+    target: "適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md"
+    claim: "シナリオ「validate-config_sh_feature-flag は ~ と環境変数を展開せず文字のまま相対パスとして扱う」は、題名が環境変数も対象にしているのに、検証しているのは `~/green-runner.sh` の 1 例だけで、環境変数(`$HOME/…`)とコマンド置換を展開しないことを判定する場面が無い。"
+    evidence: "Given は「GREEN_RUNNER=~/green-runner.sh」だけ。契約 runner_path_resolution.relative_criteria は「`~`・環境変数(`$HOME` など)・コマンド置換は展開しない(値は文字のまま扱う)」と 3 種類を定める。値を eval や変数展開つきで読む実装でも、このシナリオは通る。"
+    suggested_fix: "Scenario Outline にして `~/green-runner.sh`、`$HOME/green-runner.sh`、`$(pwd)/green-runner.sh` の 3 例を並べ、どれも「<conf の絶対パス>/<値の文字のまま>」で file not executable になること(コマンド置換の例は置換の中身が実行されていないこと)を期待値にする。1 例のままにするなら題名から環境変数を外す。"
+  - id: R-5
+    viewpoint: 4
+    severity: minor
+    target: "クロスチェック業務/速報クロスチェックフロー/速報比較依頼を claim する/tier-rapid-crosscheck.md"
+    claim: "速報クロスチェック worker の実体は、実行時にどのコマンドも解決も起動もしない(検証だけ)。ジョブスケジューラのジョブ定義 / 常駐起動が「feature flag の RAPID_CROSSCHECK_WORKER が指す実体を参照する」という記述は、値が相対パスになると、ジョブ定義にどのパスを書けばよいかが読み取れない。今回の差分はこの記述に追従していない。"
+    evidence: "同ファイル「アクセス権」: 「ジョブ定義 / 常駐起動は feature flag の `RAPID_CROSSCHECK_WORKER` が指す実体を参照する」。同 UC の spec.md: 「本コマンドの実体は RAPID_CROSSCHECK_WORKER が指す」。契約 keys.RAPID_CROSSCHECK_WORKER の description も「ジョブスケジューラの worker ジョブ定義 / 常駐起動が参照する実体」。契約 runner_path_resolution.usage には worker を起動する読み手が無く、readers は「facade.sh は 4 キー(worker は検証のみ)」。方針資料の設定例は worker も `./rapid-crosscheck-worker.sh` と相対パスで書いている。"
+    suggested_fix: "契約 keys.RAPID_CROSSCHECK_WORKER の description か runner_path_resolution.usage に「ジョブスケジューラの worker のジョブ定義 / 常駐起動には、解決後のパス(検証コマンドの stdout の `rapid_crosscheck_worker:` の行に出る値)を書く」と 1 文足し、UC「速報比較依頼を claim する」の該当記述から参照する。"
+  - id: R-6
+    viewpoint: 4
+    severity: minor
+    target: "適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md"
+    claim: "契約は「UC 別仕様はこの節を参照し、規則を持たない」と定めるが、UC 別仕様の 2 か所が規則の要約を持ち、要約は正本より粗い(基準が `/` のときの扱い、連続する `/` を畳まないこと、値が空のときは解決しないこと、作業ディレクトリが論理パスであることが無い)。要約だけを読んで実装すると正本と違う結果になり得る。"
+    evidence: "契約 runner_path_resolution.summary: 「UC 別仕様はこの節を参照し、規則を持たない」。tier-facade.md の「runner / worker の実体パスの解決」の表(5 行。「解決後のパス | 基準のディレクトリ + `/` + 値(`.`・`..` を畳まない)」)と、同 UC の spec.md の処理の表の行「値が `/` で始まれば値のまま。そうでなければ『設定ファイルのあるディレクトリ + `/` + 値』…」が規則を再掲している。UC「slot 実行モードを選択して runner を起動する」「元の execution-spec.json から復元して新しい run_id で起動する」は参照だけで足りている。"
+    suggested_fix: "tier-facade.md の表と spec.md の行を「何に使うか」(解決後のパスを使う場所)だけに絞り、判定・基準・連結の規則は契約への参照 1 行にする。要約を残すなら「実装は契約の節だけに従う。この表は読み物」と明記し、契約の summary の「規則を持たない」と表現をそろえる。"
+resolved:
+  - id: R-1
+    resolution: fixed
+    by: orchestrator
+    note: "runner_path_resolution は解決の規則と使い方・表示だけを定め、どの読み手が起動前にどのキーの実体を検査するかは reader_scope と各コマンドの契約のままと明記した。追加したリランの場面の Given に、速報 runner / worker の実体がある前提を足した。reader_scope とリランの既存の場面(実行権限の無い runner は終了コード 6)の読み方の違いは今回より前からあるもので、今回の変更の範囲外として確認推奨項目に挙げる"
+  - id: R-2
+    resolution: fixed
+    by: orchestrator
+    note: "追加した場面の Given に、速報クロスチェック設定ファイルと blue 側のジョブマップの前提を足した"
+  - id: R-3
+    resolution: fixed
+    by: orchestrator
+    note: "作業ディレクトリが `/` のときの絶対化を規則に足し、置き場が相対パス・末尾が `/`・作業ディレクトリが `/` の例を契約に足した。起動側の追加場面の Given に、置き場が末尾に `/` の無い絶対パスである前提を書いた"
+  - id: R-4
+    resolution: fixed
+    by: orchestrator
+    note: "Scenario Outline にして `~`・環境変数・コマンド置換の 3 例を並べ、コマンド置換の中身が実行されないことを期待値に足した"
+  - id: R-5
+    resolution: fixed
+    by: orchestrator
+    note: "契約の runner_path_resolution.usage に、worker のジョブ定義 / 常駐起動には解決後のパスを書くことを足し、UC「速報比較依頼を claim する」の tier-rapid-crosscheck.md から参照した"
+  - id: R-6
+    resolution: fixed
+    by: orchestrator
+    note: "UC 別仕様の要約は読むための抜粋で、実装は契約の節だけに従うことを、契約と UC 別仕様の両方に書いた"

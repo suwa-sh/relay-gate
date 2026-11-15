@@ -1,0 +1,78 @@
+round: 2
+findings:
+  - id: R-4
+    viewpoint: 5
+    severity: major
+    target: "実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/tier-facade.md"
+    claim: >-
+      facade.sh が「契約の順で最初の違反の 1 行だけを出す」と定めた結果、同じ tier の既存の異常系の場面 2 つは、
+      Given に書かれた設定のままでは Then の error 行が出ない。Given に書かれていないキーの違反が、
+      契約の順では期待する error 行より先に来るためである。
+      Given を「関係するキーだけの省略記法」と読む場合も、省略したキーをどう補うかで出る 1 行が変わるので、
+      テストを書く側が結果を選び直すことになる。
+    evidence: >-
+      (1) 場面「facade_sh は両 slot foreground を終了コード 2 で拒否する」の Given は
+      `BLUE_MODE=foreground GREEN_MODE=foreground` だけで、RAPID_CROSSCHECK_MODE が無い。
+      契約 config_files の feature-flag.env の error_order では、mode の必須・列挙(1 番目)が foreground の個数(2 番目)より先なので、
+      最初の違反は `error: option required option=RAPID_CROSSCHECK_MODE path: ...` になり、
+      Then の `error: foreground slot must be exactly one blue_mode=foreground green_mode=foreground` は出ない。
+      (2) 場面「facade_sh は runner 実体が実行不可なら終了コード 2 で終了する」の Given は
+      BLUE_MODE=foreground / BLUE_RUNNER / GREEN_MODE=background / GREEN_RUNNER=/opt/relay-gate/runners/missing.sh / RAPID_CROSSCHECK_MODE=off で、
+      BLUE_IMPL と GREEN_IMPL が無い。error_order の 3 番目は BLUE_IMPL → BLUE_RUNNER → GREEN_IMPL → GREEN_RUNNER の順なので、
+      最初の違反は `error: option required option=BLUE_IMPL path: ...` になり、
+      Then の `error: file not executable key=GREEN_RUNNER ...` は出ない。
+      同じ tier のバリデーション 2. は「違反が 2 つ以上あるとき stderr に出す error 行は、その順で最初の違反の 1 行(と hint)」と書く。
+      UC「切り替えた運用モードで業務ジョブを実行する」の spec.md の異常系の場面
+      (Given が `BLUE_MODE=foreground GREEN_MODE=foreground` だけ)も (1) と同じ形。
+      なお同 UC の spec.md の場面(3 つの mode をすべて書く)は、foreground の個数が従属キーより先なので成り立つ。
+    suggested_fix: >-
+      2 つの場面の Given を、期待する error 行が契約の順で最初の違反になる設定に直す。
+      (1) は RAPID_CROSSCHECK_MODE=off を足す(従属キーは foreground の個数より後なので書かなくてよい)。
+      (2) は BLUE_IMPL と GREEN_IMPL を足す。
+      UC「切り替えた運用モードで業務ジョブを実行する」の spec.md の異常系も、
+      「有効な設定の GREEN_MODE を foreground に書き換えた」のように、ほかの違反が無い前提を Given に書く。
+      あわせて各場面の Then を「stderr の error 行はこの 1 行だけ」にすると、1 行だけ出す契約を判定できる。
+  - id: R-5
+    viewpoint: 4
+    severity: major
+    target: "_cross-cutting/api/cli-command-contract.yaml"
+    claim: >-
+      error_order の summary に足した「facade.sh / background-rerun.sh の起動時検証も同じ検証を同じ順に行う。
+      error を 1 行だけ出すコマンドは、行う検査の範囲でこの順の最初の違反の 1 行を出す」が、
+      2 つのコマンドの契約と合っておらず、2 点が 1 つに決まらない。
+      (a) facade.sh の「行う検査の範囲」に対応ジョブマップの検査(順の 6 番目)が入るかどうか。
+      (b) background-rerun.sh が feature-flag.env の検証違反を見つけたときの stderr の行数・終了コード・事前検証との前後。
+    evidence: >-
+      (a) reader_scope は「facade.sh・background-rerun.sh・validate-config.sh --feature-flag は validation_rules / error_messages のとおりに検査する」と書き、
+      validation_rules には「off でない slot の <slot>-job-map.csv が存在し読める(無ければ違反)」がある。
+      一方、commands の facade.sh の終了コード 2 の条件にも、UC「slot 実行モードを選択して runner を起動する」の tier-facade.md の
+      バリデーション 2. の検査項目(各キーの列挙、foreground、従属キーの必須と実体、`FINAL_` で始まるキー)と
+      終了コード表・エラーメッセージ表にも、ジョブマップが無い場合(job map not found)が無い。
+      ジョブマップは slot runner が読む(config_files の <slot>-job-map.csv の readers)。
+      ジョブマップだけが無い設定で、facade.sh が `error: job map not found ...` で終了コード 2 にするのか、runner を起動するのかが決まらない。
+      (b) commands の background-rerun.sh の stderr(「機械可読な正本」と書かれた一覧)と exit_codes には、
+      feature-flag.env の検証違反の行も条件も 1 つも無い(終了コード 2 の条件は引数の違反だけ)。
+      stderr は「error: 1 行 + hint 1 行」の形だが、summary が 1 行だけ出すコマンドとして名前を挙げるのは facade.sh だけ。
+      readers は background-rerun.sh が読むキーを RAPID_CROSSCHECK_MODE / BLUE_RUNNER / GREEN_RUNNER / RAPID_CROSSCHECK_RUNNER の 4 つとし、
+      実行復旧業務の background 側リランフロー配下の 3 UC(tier-ops.md / spec.md)にも、feature-flag.env の検証違反の扱いは無い
+      (error_order と食い違う独自の順は残っていない。扱いそのものが書かれていない)。
+      そのため、たとえば両 slot foreground の feature-flag.env で background-rerun.sh --role green を起動したとき、
+      全キーを検証して foreground の個数の error 行で終了コード 2 にするのか、読む 4 キーだけを検査するのか、
+      元実行の事前検証(終了コード 3)とどちらを先に出すのかを、契約から導けない。
+    suggested_fix: >-
+      summary の「行う検査の範囲」を、コマンドごとに契約へ書く。
+      (a) facade.sh: 対応ジョブマップの検査と runner への --help の問い合わせを起動時検証で行うかどうかを、
+      reader_scope か commands の facade.sh の終了コード 2 の条件に 1 文で書く
+      (行わないなら reader_scope の「validation_rules のとおりに検査する」から除く項目として明記し、
+      行うなら終了コード 2 の条件と tier-facade.md のバリデーション 2.・エラーメッセージ表に job map not found を足す)。
+      (b) background-rerun.sh: commands の stderr の一覧と exit_codes に、feature-flag.env の検証違反の扱い
+      (検査するキーの範囲、出すのは契約の順で最初の違反の 1 行か、終了コード、引数の検証・元実行の事前検証との前後)を足し、
+      UC「リラン対象を検証する」の tier-ops.md は契約を参照する形で同じ扱いを書く。
+      元の方針資料・利用者の決定に無い部分は、facade.sh の 1 行の選び方と同じく仮採用として docs/todo.md に記録する。
+resolved:
+  - id: R-4
+    resolution: fixed
+    note: "原因の記載(facade.sh は契約の順で最初の違反の 1 行だけを出す)を取り下げた。UC「slot 実行モードを選択して runner を起動する」の tier-facade.md は前イベントの内容へ戻し、契約の error_order の summary から facade.sh / background-rerun.sh への言及を外して、対象を validate-config.sh --feature-flag の出力だけに限った。既存の場面は前イベントと同じ前提のまま成り立つ"
+  - id: R-5
+    resolution: fixed
+    note: "error_order の summary から『行う検査の範囲でこの順の最初の違反の 1 行を出す』を外した。facade.sh / background-rerun.sh の起動時検証が stderr に出す行は、この節では定めず各コマンドの契約と UC 別仕様のとおりと書いた。起動時検証で違反が 2 つ以上あるときに出す行と、background-rerun.sh の検証違反の扱いは、今回の利用者の決定の範囲外の未決事項として docs/todo.md に記録し、確認推奨項目として返す"

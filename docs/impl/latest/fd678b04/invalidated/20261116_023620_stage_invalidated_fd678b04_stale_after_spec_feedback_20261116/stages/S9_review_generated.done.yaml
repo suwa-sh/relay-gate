@@ -1,0 +1,204 @@
+stage: "S9"
+uc_id: "fd678b04"
+manifest_sha256: "6d465907738491c6eafd278adff9938a3a6a44a5c88748d49207f72a29a49079"
+manifest_projection: "v2"
+result: "generated"
+tier_impl_attempt: 5
+rerun_reason: "stale after spec feedback 20261115_runner_relative_path (invalidated by 20261115_172158_stage_invalidated_fd678b04_stale_after_runner_relative_path)"
+previous_done: "docs/impl/latest/fd678b04/invalidated/20261115_172158_stage_invalidated_fd678b04_stale_after_runner_relative_path/stages/S9_review_generated.done.yaml"
+review_html: "docs/impl/latest/fd678b04/review/index.html"
+review_html_tracked: false
+review_html_basis: "前回(午後)のレビュー資料の構成・図・回答欄を出発点にして更新した。新しく描いた図は 3 枚、文字を直した図は 4 枚、そのままの図は 1 枚"
+review_notes_input: "docs/impl/latest/fd678b04/review/review-notes.md"
+review_notes_note: "review-notes.md は読むだけで変更していない。利用者が決定済みの 4 点(runner のパスに相対パスを受け付け、基準は設定ファイルのあるディレクトリ / 性能は目標値 / 時間を確認する自動テストは残す / 最初の公開は全機能がそろってから)は、選択肢に戻さず『決定済み』の表 1 か所に示した"
+validators:
+  review_html_contract: "node validateReviewHtml.js docs/impl/latest/fd678b04/review/index.html: pass"
+  human_html_review: "python3 validate.py docs/impl/latest/fd678b04/review/index.html: VALID (ERROR 0 / WARN 0)"
+  human_html_review_detail:
+    errors: 0
+    warnings: 0
+    internal_id_warnings: 0
+    long_paragraph_warnings: 0
+    h2_count: 13
+    svg_count: 8
+    size_bytes: 141075
+render_check: "headless Chrome を DevTools Protocol で操作して確かめた。1440px 幅(暗い配色・明るい配色)で図 8 枚を 1 枚ずつ画像にし、うち 5 枚(今日の流れ / 相対パスの基準 / 起動コマンドのエラー 1 行 / リランの起動前の検査 / 構成図、相対パスの基準は明るい配色も)を拡大で目視した。斜め線 0、矢印の重なり 0、接続点の共有 0、端点でない箱の背面通過 0、ラベルと線のすき間 8px、文字のはみ出し 0。390px 幅(暗い配色)で『お願いしたいこと』『回答欄』を目視し(『いま何の話か』は 390px 幅では見ていない)、ページ全体の横スクロール 0、図は個別に横スクロールになることを確認した"
+interaction_check: "スクリプト実行後に操作部品の disabled が 0 個。初期の返信文面が推奨 7 行と一致。問い 3 を案 B に変えると 3 行目が案 B の文に変わり、問い 5b を案 C に変えると 6 行目が変わり、補足欄に書いた文が最後の行に足されることを確認した"
+render_check_not_done:
+  - "コピーボタンの成功(headless Chrome で file:// から押すとクリップボードへ書けず、『コピーできません。文面を選択して手でコピーしてください』の表示になった。https か localhost で開いた場合の成功は確かめていない)"
+  - "図 3 枚(未知の項目の値が入る所 / 処理フロー / データフロー)の拡大での目視(前回の資料で目視済みの図形で、今回は文字だけを直したか、そのまま。画像は作ったが拡大では見ていない)"
+  - "390px 幅の明るい配色での目視"
+  - "実機のスマホでの表示"
+diagrams:
+  - type: "flowchart"
+    subject: "今日の作業の流れと現在地(午前の承認、仕様への反映、午後の資料の失効、相対パスの決定、仕様と実装への反映、最終確認、承認後の公開と取り込み)"
+    status: "new"
+  - type: "architecture"
+    subject: "相対パスの基準は設定ファイルのあるディレクトリで、作業ディレクトリは基準にしないこと"
+    status: "new"
+  - type: "data-flow"
+    subject: "未知の項目の値が入る所と入らない所"
+    status: "unchanged"
+  - type: "flowchart"
+    subject: "違反が 2 つある設定で、ジョブを起動するコマンドが出す 1 行の案ごとの違い"
+    status: "text updated (例を、相対パスの違反から、実体が無い違反へ変えた)"
+  - type: "flowchart"
+    subject: "runner に実行権限が無い設定で、リランのコマンドがどう終わるかの案ごとの違い"
+    status: "new"
+  - type: "architecture"
+    subject: "検証コマンドの構成(今回変えた部品と、問い 2 が関わる部品)"
+    status: "text updated"
+  - type: "flowchart"
+    subject: "検証コマンドの処理の流れ(判断 3 つ、終了コード 0 / 2 / 6)"
+    status: "text updated"
+  - type: "data-flow"
+    subject: "設定ファイルの中身が結果の表示になるまで"
+    status: "text updated"
+feedback_request_count: 1
+open_blocker_count: 0
+decision_summary:
+  approval_questions: 1
+  selection_questions: 6
+  assumption_questions: 1
+  recommended_choices: 7
+  selection_labels:
+    - "問い 1: 全体の承認"
+    - "問い 2: 未知の項目の値の一時的な置き場(回答必須)"
+    - "問い 3: 相対パスの表示の形(細部の確認)"
+    - "問い 4: 実装者が補ったそのほかの前提(23 件)"
+    - "問い 5a: ジョブを起動するコマンドのエラー 1 行(範囲外)"
+    - "問い 5b: リランのコマンドの起動前の検査(範囲外)"
+    - "問い 6: 本線への取り込み"
+  question_to_request:
+    - question: "問い 2"
+      cr_id: "CR-fd678b04-001"
+      assumption_id: "A-040"
+      finding_id: "F-020"
+      options: "A = 一時的な保持を許し、条件を仕様に書く(推奨。実装は変わらない。A-040 の承認) / B = 許さず、保持しない読み方に実装を変える(A-040 の却下。実装修正 + 仕様には案 B の内容を書く)"
+    - question: "問い 3"
+      cr_id: null
+      spec_ref: "cli-command-contract.yaml の config_files.feature-flag.env.runner_path_resolution(resolved_path / display)"
+      options: "A = このまま(畳まない。推奨。仕様どおりで変更なし) / B = 畳んで表示する(仕様への要求を追加し、反映後に実装を直す)"
+      note: "案 B のときだけ、この UC の feedback draft に要求を足す必要がある"
+    - question: "問い 5a"
+      cr_id: null
+      todo_id: "DIST-032"
+      options: "A = 検証コマンドと同じ順で最初の違反を 1 行(推奨) / B = いまの機能別仕様の粗い順のまま最初の違反を 1 行 / C = 起動コマンドも違反を全件出す / D = 該当機能に着手するときに決める"
+      note: "この UC の範囲外。回答は該当 UC の仕様への要求として別に出す。この UC の feedback draft には入れない"
+    - question: "問い 5b"
+      cr_id: null
+      source: "docs/specs/events/20261115_164000_feedback_runner_relative_path/_review/round-1.yaml の R-1(確認推奨項目)"
+      options: "A = 起動前に検査せず、起動の失敗は終了コード 6(推奨。既存の場面に合う) / B = 検証コマンドと同じ検査で終了コード 2 / C = 起動する runner だけ検査する / D = 該当機能に着手するときに決める"
+      note: "この UC の範囲外。回答は該当 UC の仕様への要求として別に出す。この UC の feedback draft には入れない"
+    - question: "問い 6"
+      cr_id: null
+      options: "A = 要求の公開に続けて push と PR 作成まで進める(推奨) / B = 要求の公開まで"
+  recommended_response: "全体=承認 / 問い 2=A / 問い 3=A / 問い 4=23 件すべて承認 / 問い 5a=A / 問い 5b=A / 問い 6=A"
+  response_format_note: "回答欄は文で組み上がる形式(内部 ID を出さない)。前提は『残りの 23 件はすべて承認』か『一部を却下(補足に前提の番号と、実装修正か仕様変更かを書く)』。番号と ID の対応は HTML の付録 1 と下の assumption_number_to_id"
+  initial_reply_text:
+    - "【全体】この実装内容を承認します。"
+    - "【未知の項目の値の一時的な置き場】案 A: 読み取りの途中だけ作業用の領域に置くことを許します。実装はこのままで承認します。条件(環境変数にしない・読み終えたときと失敗したときに空にする・後に残すのは項目の名前だけ)を仕様に書く要求を出してください。"
+    - "【相対パスの表示の形】案 A: いまのまま(設定ファイルのディレクトリと書いた値をつなげるだけで、./ や ../ を畳まない)で承認します。"
+    - "【実装者が補った前提】残りの 23 件はすべて承認します。"
+    - "【起動コマンドのエラー 1 行】案 A: 検証コマンドと同じ順で、最初の違反を 1 行出す、としてください。該当機能の仕様への要求として別に出してください。"
+    - "【リランのコマンドの起動前の検査】案 A: 起動の前に 4 項目の実体を検査せず、起動に失敗したら終了コード 6 にする、としてください。該当機能の仕様への要求として別に出してください。"
+    - "【本線への取り込み】承認後、仕様への要求を公開し、作業ブランチの共有と取り込み依頼の作成まで進めてください。"
+  assumption_total: 24
+  assumption_required_ids:
+    - "A-040"
+  assumption_requested_ids:
+    - "A-040"
+  assumption_consistent_ids:
+    - "A-042"
+  assumption_new_ids:
+    - "A-041"
+    - "A-042"
+    - "A-043"
+    - "A-044"
+  assumption_first_shown_in_withdrawn_review_ids:
+    - "A-039"
+    - "A-040"
+  assumption_rewritten_ids:
+    - "A-025"
+    - "A-031"
+    - "A-033"
+    - "A-037"
+    - "A-038"
+  assumption_category_differs_ids:
+    - "A-019"
+    - "A-025"
+    - "A-039"
+    - "A-041"
+  assumption_number_to_id:
+    - "1: A-040"
+    - "2: A-041"
+    - "3: A-042"
+    - "4: A-043"
+    - "5: A-044"
+    - "6: A-039"
+    - "7: A-017"
+    - "8: A-018"
+    - "9: A-019"
+    - "10: A-020"
+    - "11: A-023"
+    - "12: A-024"
+    - "13: A-025"
+    - "14: A-027"
+    - "15: A-029"
+    - "16: A-030"
+    - "17: A-031"
+    - "18: A-032"
+    - "19: A-033"
+    - "20: A-034"
+    - "21: A-035"
+    - "22: A-036"
+    - "23: A-037"
+    - "24: A-038"
+  decided_not_asked:
+    - "runner のパスに相対パスを受け付け、基準は設定ファイルのあるディレクトリ(2026-11-15)"
+    - "性能(5,000 行以内かつ 8 MB 以内を 10 秒以内)は目標値。入力の制限でも合否の検査でもない。目標との差は記録にとどめる"
+    - "特定のデータで時間を確認する自動テストは残す"
+    - "最初の公開(リリース)は全機能がそろってから"
+  mentioned_for_later:
+    - "ジョブマップの場所の決め方も方針資料と違っている。別の判断用の資料を出す(この資料では決めない)"
+  approval_outcome_note: "承認かつ問い 2 が A なら、仕様への要求 1 件を公開する。問い 6 が A なら続けて push と PR 作成まで進める。問い 2 が B なら、承認の前に実装を直して独立検証をやり直す。問い 3 が B なら、表示の形を変える要求を足し、仕様の反映後に実装を直す。問い 5a・5b の回答は該当 UC の仕様への要求として別に出す"
+feedback_review_evidence:
+  feedback_id: "20261115_145719_impl_feedback_fd678b04"
+  draft_path: "docs/impl/latest/fd678b04/feedback/draft.md"
+  draft_sha256: "1daaee82102103037cb5e1ebc34e0687513edc7a246c6a787b094a585f204e1f"
+  request_count: 1
+  blocker_count: 0
+  request_ids:
+    - "CR-fd678b04-001"
+implementation_review_evidence:
+  gate_result: "6/6 pass"
+  gates:
+    format: "pass"
+    lint: "pass"
+    tdd: "pass (509/509)"
+    bdd_tier: "pass (97/97)"
+    uc_bdd: "pass (50/50, injections 0)"
+    atdd: "pass (1/1)"
+  open_blocker_count: 0
+  open_major_count: 1
+  open_minor_count: 27
+  tiers:
+    - tier: "tier-facade"
+      attempt: 5
+      assumptions_sha256: "47be339cbd1b1ab5a34b9e0526bb3edf668e8ff80a729abebd4618879d4d6a16"
+      assumption_verdicts_sha256: "69d9c691c423421a9ec6335e9fb003b893a60881cf4840dbeb75986a3dce614a"
+  assumption_evidence_sha256: "dc801179a07aed58effd6f878079c295e750d97a449172f54e8592e6aef1d93f"
+captures: []
+issues: []
+notes:
+  - "manifest_sha256 は引数の値を再計算せず転記した"
+  - "assumption_evidence_sha256 は validateAssumptions.js evidence に S5 done の 2 つの hash を渡して算出した(ok: true、tiers 1)"
+  - "draft_sha256 は feedback/draft.md の現在の bytes の sha256(shasum で再計算して S8 done の記録と一致)。draft は変更していない"
+  - "HTML の付録 4 に 2026-09 の回答の原文(機能=A / 禁止キー=A / 相互運用=A / 監査=A)を、今回は選び直さない確定事項として載せた。validateReviewHtml.js の回答 template 検査はこの記載で通る"
+  - "feedback の要求の全文と前提 24 件の全件は、内部 ID を本文に出さない利用者の規則に従い、付録(折りたたみ)に置いた。本文は名前と『前提 1〜24』の番号で呼ぶ"
+  - "記録だけの指摘 27 件の内訳は、前提 23 件に対応するもの 23 件と、分類の付け方が実装者と違うという記録 4 件。分類が security / persistence へ変わった前提は無く、回答必須は A-040 の 1 件のまま"
+  - "問い 3 の案 B の弱点に書いた『シンボリックリンクがあると畳んだパスが別の実体を指す場合の扱い』は、レビュー資料の作成者の見立てで、HTML では『推測』のラベルを付けた"
+  - "テストのゲートは再実行していない。このレビュー資料の作成時に実行したのは、読み取り専用の git diff --shortstat 44cb3a6..HEAD -- facade features(11 ファイル、追加 1,834 行、削除 20 行)と git status --short だけ"
+  - "git の書き込みコマンドは実行していない。write-set 外のリポジトリのファイルは変更していない。一時ファイルは mktemp -d で作ったディレクトリの下に置いた"
+completed_at: "2026-11-15T18:24:00+09:00"
+completed_by: "dist-impl-review@0.14.1"

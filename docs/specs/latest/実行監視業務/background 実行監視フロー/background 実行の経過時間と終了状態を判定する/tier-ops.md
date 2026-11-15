@@ -43,7 +43,7 @@
   | off で印の置き場を読めない、または置き場の存在を確認できない(成果物ルートが読めないときを含む)(6) | 出さない(error 1 行だけ) |
   | 走査した(0 / 3 / 6) | 走査を始めるときに、stderr の先頭に出現順で出す |
 
-- feature flag 設定(env 形式。9 キー)の `RAPID_CROSSCHECK_MODE`(foreground / background / off)を読む(ファイル名・所在は tier-facade の設定契約を正とする)。判定は「off か off 以外か」だけで行う(foreground と background の挙動差は無い)。`BLUE_MODE` / `GREEN_MODE` は読まない(role の mode は run 開始時に確定した execution-spec.json を正とする)
+- feature flag 設定(env 形式。9 キー + 任意の 2 キー)の `RAPID_CROSSCHECK_MODE`(foreground / background / off)を読む(ファイル名・所在は tier-facade の設定契約を正とする)。判定は「off か off 以外か」だけで行う(foreground と background の挙動差は無い)。`BLUE_MODE` / `GREEN_MODE` は読まない(role の mode は run 開始時に確定した execution-spec.json を正とする)
 - execution-spec.json(run 単位 1 ファイル。構造は UC「execution-spec.json を確定保存する」の契約 = step3 canonical C1 を正とする)から読むキー: `job_id`、`slots.<role>.mode`(foreground / background)、`slots.<role>.hang_detect_limit_minutes`。mode が off の slot は節を持たないため走査に現れない。ファイルが無い run(started-at.txt はあるが execution-spec.json が無い契約違反状態)は `warn: execution-spec missing run_id=...` を stderr に出して判定対象外にする(既定値で判定しない。監視記録も作らない。終了コードは 0 のまま)
 - slot 実行の状態は RAPID_CROSSCHECK_MODE によらず成果物ファイル正本から導出する(条件「slot 実行の状態導出規則」): `<role>/exitcode.txt` があれば 0 = SUCCEEDED / 非 0 = FAILED、無く `<role>/aborted.txt`(abort-blue / abort-green が中止時に書く。中止日時 1 行)があれば ABORTED、どちらも無ければ RUNNING。両方あるときは exitcode.txt を優先する。ABORTED の background slot は中止済み(COMPLETED)として終端し通知しない。管理 DB の `slot_executions.status` は条件付き UPDATE で一度だけ終端値を書いた複製(abort-blue / abort-green で ABORTED にした後に実装が走り切って exitcode.txt を公開した経路では ABORTED のまま残り、導出値と異なる)であり、判定には読まない
 - 環境変数 `RELAY_GATE_NOW`(テスト専用。cli-command-contract.yaml environment_variables で宣言。UTC ISO 8601 Z 付きで受け取り、ローカル時刻へ変換して使う。本番未設定): 設定時はシステム時刻の代わりに now として使う(経過時間・detected_at・judged_at)

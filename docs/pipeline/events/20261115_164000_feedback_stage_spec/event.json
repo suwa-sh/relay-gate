@@ -1,0 +1,347 @@
+{
+  "event_id": "20261115_164000_feedback_stage_spec",
+  "type": "feedback_stage_completed",
+  "run_id": "feedback-20261115_runner_relative_path-20261115_165658-45422",
+  "attempt": 1,
+  "created_at": "2026-11-15T16:40:00Z",
+  "stage": "spec",
+  "direct_work_unit_ids": [
+    "CR-c5a81e37-001#1"
+  ],
+  "causal_work_unit_ids": [
+    "CR-c5a81e37-001#1"
+  ],
+  "work_unit_results": [
+    {
+      "work_unit_id": "CR-c5a81e37-001#1",
+      "disposition": "applied",
+      "reason": "feature-flag.env の BLUE_RUNNER / GREEN_RUNNER / RAPID_CROSSCHECK_RUNNER / RAPID_CROSSCHECK_WORKER の 4 キーに相対パスを受け付け、基準を設定ファイルのあるディレクトリにした(利用者決定 2026-11-15)。CLI 契約 config_files の feature-flag.env に runner_path_resolution を新設し(相対パスの判定・基準のディレクトリ・解決後のパス・使う場所・表示)、4 キーでは error: path is not absolute を出さないようにした。4 キーを扱う UC 別仕様と出力規約を追従させ、相対パスの設定を判定する BDD を追加し、相対パスを拒否する BDD を置き換えた。比較ツール起動コマンドの絶対パス検査は変えていない。実装との差分は判断記録 spec-decision-035 に記録した",
+      "artifact_refs": [
+        "specs/events/20261115_164000_feedback_runner_relative_path/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20261115_164000_feedback_runner_relative_path/適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md",
+        "specs/events/20261115_164000_feedback_runner_relative_path/適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md",
+        "specs/events/20261115_164000_feedback_runner_relative_path/適用構成業務/適用構成定義フロー/feature flag を設定する/_api-summary.yaml",
+        "specs/events/20261115_164000_feedback_runner_relative_path/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/spec.md",
+        "specs/events/20261115_164000_feedback_runner_relative_path/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/tier-facade.md",
+        "specs/events/20261115_164000_feedback_runner_relative_path/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/_api-summary.yaml",
+        "specs/events/20261115_164000_feedback_runner_relative_path/実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/tier-facade.md",
+        "specs/events/20261115_164000_feedback_runner_relative_path/実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/_api-summary.yaml",
+        "specs/events/20261115_164000_feedback_runner_relative_path/クロスチェック業務/速報クロスチェックフロー/速報クロスチェック runner へ完了通知を送信する/spec.md",
+        "specs/events/20261115_164000_feedback_runner_relative_path/クロスチェック業務/速報クロスチェックフロー/速報クロスチェック runner へ完了通知を送信する/tier-facade.md",
+        "specs/events/20261115_164000_feedback_runner_relative_path/クロスチェック業務/速報クロスチェックフロー/速報比較依頼を claim する/tier-rapid-crosscheck.md",
+        "specs/events/20261115_164000_feedback_runner_relative_path/実行復旧業務/background 側リランフロー/元の execution-spec.json から復元して新しい run_id で起動する/tier-ops.md",
+        "specs/events/20261115_164000_feedback_runner_relative_path/_cross-cutting/ux-ui/ui-design.md",
+        "specs/events/20261115_164000_feedback_runner_relative_path/_cross-cutting/ux-ui/ux-design.md",
+        "specs/events/20261115_164000_feedback_runner_relative_path/decisions/spec-decision-035.yaml",
+        "specs/events/20261115_164000_feedback_runner_relative_path/_inference.md",
+        "specs/events/20261115_164000_feedback_runner_relative_path/spec-event.yaml"
+      ]
+    }
+  ],
+  "reconciliation_results": [
+    {
+      "work_unit_id": "CR-c5a81e37-001#1",
+      "status": "changed",
+      "reason": "feature-flag.env の BLUE_RUNNER / GREEN_RUNNER / RAPID_CROSSCHECK_RUNNER / RAPID_CROSSCHECK_WORKER の 4 キーに相対パスを受け付け、基準を設定ファイルのあるディレクトリにした(利用者決定 2026-11-15)。CLI 契約 config_files の feature-flag.env に runner_path_resolution を新設し(相対パスの判定・基準のディレクトリ・解決後のパス・使う場所・表示)、4 キーでは error: path is not absolute を出さないようにした。4 キーを扱う UC 別仕様と出力規約を追従させ、相対パスの設定を判定する BDD を追加し、相対パスを拒否する BDD を置き換えた。比較ツール起動コマンドの絶対パス検査は変えていない。実装との差分は判断記録 spec-decision-035 に記録した",
+      "artifact_refs": [
+        "specs/events/20261115_164000_feedback_runner_relative_path/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20261115_164000_feedback_runner_relative_path/適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md",
+        "specs/events/20261115_164000_feedback_runner_relative_path/適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md",
+        "specs/events/20261115_164000_feedback_runner_relative_path/適用構成業務/適用構成定義フロー/feature flag を設定する/_api-summary.yaml",
+        "specs/events/20261115_164000_feedback_runner_relative_path/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/spec.md",
+        "specs/events/20261115_164000_feedback_runner_relative_path/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/tier-facade.md",
+        "specs/events/20261115_164000_feedback_runner_relative_path/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/_api-summary.yaml",
+        "specs/events/20261115_164000_feedback_runner_relative_path/実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/tier-facade.md",
+        "specs/events/20261115_164000_feedback_runner_relative_path/実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/_api-summary.yaml",
+        "specs/events/20261115_164000_feedback_runner_relative_path/クロスチェック業務/速報クロスチェックフロー/速報クロスチェック runner へ完了通知を送信する/spec.md",
+        "specs/events/20261115_164000_feedback_runner_relative_path/クロスチェック業務/速報クロスチェックフロー/速報クロスチェック runner へ完了通知を送信する/tier-facade.md",
+        "specs/events/20261115_164000_feedback_runner_relative_path/クロスチェック業務/速報クロスチェックフロー/速報比較依頼を claim する/tier-rapid-crosscheck.md",
+        "specs/events/20261115_164000_feedback_runner_relative_path/実行復旧業務/background 側リランフロー/元の execution-spec.json から復元して新しい run_id で起動する/tier-ops.md",
+        "specs/events/20261115_164000_feedback_runner_relative_path/_cross-cutting/ux-ui/ui-design.md",
+        "specs/events/20261115_164000_feedback_runner_relative_path/_cross-cutting/ux-ui/ux-design.md",
+        "specs/events/20261115_164000_feedback_runner_relative_path/decisions/spec-decision-035.yaml",
+        "specs/events/20261115_164000_feedback_runner_relative_path/_inference.md",
+        "specs/events/20261115_164000_feedback_runner_relative_path/spec-event.yaml"
+      ]
+    }
+  ],
+  "work_unit_evidence_refs": [
+    {
+      "work_unit_id": "CR-c5a81e37-001#1",
+      "path": "specs/events/20261115_164000_feedback_runner_relative_path/_cross-cutting/api/cli-command-contract.yaml",
+      "sha256": "1c6ca74e33350cc7c21919df14449fc9caba201ef798d752931c85b262cff87d"
+    },
+    {
+      "work_unit_id": "CR-c5a81e37-001#1",
+      "path": "specs/events/20261115_164000_feedback_runner_relative_path/適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md",
+      "sha256": "a7c560fb4b959bd414e42804211343318164ee1b697941ea99a50961787c5706"
+    },
+    {
+      "work_unit_id": "CR-c5a81e37-001#1",
+      "path": "specs/events/20261115_164000_feedback_runner_relative_path/適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md",
+      "sha256": "88b9ed5662456cc9ff639ddf5b7c384eaaf16823dd02278b375f227dec41e4b6"
+    },
+    {
+      "work_unit_id": "CR-c5a81e37-001#1",
+      "path": "specs/events/20261115_164000_feedback_runner_relative_path/適用構成業務/適用構成定義フロー/feature flag を設定する/_api-summary.yaml",
+      "sha256": "89243e9be64904ad48b4a7d8433926feb6d9104000bc605505e74b3820b1f922"
+    },
+    {
+      "work_unit_id": "CR-c5a81e37-001#1",
+      "path": "specs/events/20261115_164000_feedback_runner_relative_path/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/spec.md",
+      "sha256": "f8f1c76b6f05f790a6e47794b504c0e628b482c0cb79ae0645acdaede36346df"
+    },
+    {
+      "work_unit_id": "CR-c5a81e37-001#1",
+      "path": "specs/events/20261115_164000_feedback_runner_relative_path/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/tier-facade.md",
+      "sha256": "07daa9767327c870397037e3ebd5bed9a71e609ba6fe78393a3b6602d558198c"
+    },
+    {
+      "work_unit_id": "CR-c5a81e37-001#1",
+      "path": "specs/events/20261115_164000_feedback_runner_relative_path/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/_api-summary.yaml",
+      "sha256": "e118b5be17e541270ef088e85f56a8b602ac51037e828ac8189660c470c755e1"
+    },
+    {
+      "work_unit_id": "CR-c5a81e37-001#1",
+      "path": "specs/events/20261115_164000_feedback_runner_relative_path/実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/tier-facade.md",
+      "sha256": "880c565e33cf8fd1914265c482d3c19ec496cb787ba3ebc127a58ad8127828b6"
+    },
+    {
+      "work_unit_id": "CR-c5a81e37-001#1",
+      "path": "specs/events/20261115_164000_feedback_runner_relative_path/実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/_api-summary.yaml",
+      "sha256": "76c5a574dbb2a219c1e35a41e7a43e4bef3897be0aa19fcf00eed02827034350"
+    },
+    {
+      "work_unit_id": "CR-c5a81e37-001#1",
+      "path": "specs/events/20261115_164000_feedback_runner_relative_path/クロスチェック業務/速報クロスチェックフロー/速報クロスチェック runner へ完了通知を送信する/spec.md",
+      "sha256": "176c797cd014986fd26fc6dc024f85878933629c497417d6cd99597021af8f2e"
+    },
+    {
+      "work_unit_id": "CR-c5a81e37-001#1",
+      "path": "specs/events/20261115_164000_feedback_runner_relative_path/クロスチェック業務/速報クロスチェックフロー/速報クロスチェック runner へ完了通知を送信する/tier-facade.md",
+      "sha256": "cbf9f96b6e077be8d91677937e6d3d8dff6b31bfdcf9f5e419f9dec0068c6421"
+    },
+    {
+      "work_unit_id": "CR-c5a81e37-001#1",
+      "path": "specs/events/20261115_164000_feedback_runner_relative_path/クロスチェック業務/速報クロスチェックフロー/速報比較依頼を claim する/tier-rapid-crosscheck.md",
+      "sha256": "d332cd227775082b7dbe8aa8289242bf36da398312d41574b1954d1b11bea038"
+    },
+    {
+      "work_unit_id": "CR-c5a81e37-001#1",
+      "path": "specs/events/20261115_164000_feedback_runner_relative_path/実行復旧業務/background 側リランフロー/元の execution-spec.json から復元して新しい run_id で起動する/tier-ops.md",
+      "sha256": "ab63c75d0a1303c85c57170a562b863881af8ffbb529ed2d5ff2444e891ffe07"
+    },
+    {
+      "work_unit_id": "CR-c5a81e37-001#1",
+      "path": "specs/events/20261115_164000_feedback_runner_relative_path/_cross-cutting/ux-ui/ui-design.md",
+      "sha256": "6068d5580177537ea7091b0068ab0370bae15045adcdd61184ad404a4bde2555"
+    },
+    {
+      "work_unit_id": "CR-c5a81e37-001#1",
+      "path": "specs/events/20261115_164000_feedback_runner_relative_path/_cross-cutting/ux-ui/ux-design.md",
+      "sha256": "b57f69fcfc441eee2ca43e6ed92a88378b0ffb87614d07b15e3cfd368ecff0bb"
+    },
+    {
+      "work_unit_id": "CR-c5a81e37-001#1",
+      "path": "specs/events/20261115_164000_feedback_runner_relative_path/decisions/spec-decision-035.yaml",
+      "sha256": "aeed72f244a9b5d20d621cb6ee916e90da2ecc8ebc27d5a2c1a620aea02cdccd"
+    },
+    {
+      "work_unit_id": "CR-c5a81e37-001#1",
+      "path": "specs/events/20261115_164000_feedback_runner_relative_path/_inference.md",
+      "sha256": "9dfea51674481634b80de3862b66fd5d31d51f8c01ea36147750fc08e4027dda"
+    },
+    {
+      "work_unit_id": "CR-c5a81e37-001#1",
+      "path": "specs/events/20261115_164000_feedback_runner_relative_path/spec-event.yaml",
+      "sha256": "7c31d52face56e2c5d05cd0bad8a2e4e2305806a1134c19fe511a73911050bdd"
+    }
+  ],
+  "domain_event_refs": [
+    {
+      "path": "specs/events/20261115_164000_feedback_runner_relative_path/spec-event.yaml",
+      "sha256": "7c31d52face56e2c5d05cd0bad8a2e4e2305806a1134c19fe511a73911050bdd"
+    }
+  ],
+  "feedback_request": {
+    "feedback_request_id": "20261115_runner_relative_path",
+    "input_sha256": "6d8f5ef4e077d4445a4495eace5014edbcda8cf4b7b1dfb096bc5556bed60414",
+    "request_ids": [
+      "CR-c5a81e37-001"
+    ],
+    "work_unit_ids": [
+      "CR-c5a81e37-001#1"
+    ]
+  },
+  "post_execution_basis": {
+    "repository_head": "6a0e293c951474d97b1d3d76fcf2d3c73e85b179",
+    "latest_domain_event_ids": {
+      "requirements": {
+        "rdra/events": "20261103_131000_feedback_housekeeping_db_required",
+        "usdm/events": "20261103_131000_feedback_housekeeping_db_required"
+      },
+      "quality_attributes": {
+        "nfr/events": "20261115_135000_feedback_impl_feedback_fd678b04_cycle3"
+      },
+      "architecture": {
+        "arch/events": "20261115_140000_feedback_impl_feedback_fd678b04_cycle3"
+      },
+      "infrastructure": {
+        "infra/events": "20261115_141000_feedback_impl_feedback_fd678b04_cycle3"
+      },
+      "design_system": {
+        "design/events": null
+      },
+      "spec": {
+        "specs/events": "20261115_164000_feedback_runner_relative_path"
+      },
+      "spec_stories": {
+        "design/events": null
+      }
+    },
+    "domain_event_root_snapshots": {
+      "rdra/events": {
+        "head_event_id": "20261103_131000_feedback_housekeeping_db_required",
+        "head_event_sha256": "3e511fca6a1fea0c55efdc3a33fb8b8e7e5ca12899627a7b14221d326de9fb7d",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency",
+          "20260908_011000_feedback_slot_status_wording",
+          "20260921_084000_feedback_impl_feedback_eff24f55",
+          "20261010_200000_feedback_impl_feedback_dcd8234d",
+          "20261101_101000_feedback_impl_feedback_dcd8234d",
+          "20261101_121000_feedback_mail_removal_housekeeping",
+          "20261103_081000_feedback_housekeeping_followups",
+          "20261103_131000_feedback_housekeeping_db_required"
+        ],
+        "event_set_sha256": "608c77661bedd39000b6f1c22dbe8e3c3d8b2c0c35359df2261b25a55aa9346f",
+        "latest_tree_sha256": "b4b4296ae1547f95cba62b54d1140692a16a05e72e184aa44fa8f8f35854b577"
+      },
+      "usdm/events": {
+        "head_event_id": "20261103_131000_feedback_housekeeping_db_required",
+        "head_event_sha256": "d5b9cc924c01032584134b561a0c833b5fa9262f0abafa9e664900b0171d8574",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency",
+          "20260908_011000_feedback_slot_status_wording",
+          "20260921_084000_feedback_impl_feedback_eff24f55",
+          "20261010_200000_feedback_impl_feedback_dcd8234d",
+          "20261101_101000_feedback_impl_feedback_dcd8234d",
+          "20261101_121000_feedback_mail_removal_housekeeping",
+          "20261103_081000_feedback_housekeeping_followups",
+          "20261103_131000_feedback_housekeeping_db_required"
+        ],
+        "event_set_sha256": "608c77661bedd39000b6f1c22dbe8e3c3d8b2c0c35359df2261b25a55aa9346f",
+        "latest_tree_sha256": "48b132d17198156a3da6feef7fd725090592abd41d7e50bd23229b210888d358"
+      },
+      "nfr/events": {
+        "head_event_id": "20261115_135000_feedback_impl_feedback_fd678b04_cycle3",
+        "head_event_sha256": "324b14da24788f15427d74b7125fc7e26b020bc974bb4dd616adf412dc476083",
+        "event_ids": [
+          "20260830_183726_initial_nfr",
+          "20260905_085000_feedback_todo_resolution",
+          "20260907_013000_feedback_todo_followup",
+          "20260907_120000_feedback_abort_consistency",
+          "20260908_013000_feedback_slot_status_wording",
+          "20260921_090000_feedback_impl_feedback_eff24f55",
+          "20261010_201000_feedback_impl_feedback_dcd8234d",
+          "20261101_102000_feedback_impl_feedback_dcd8234d",
+          "20261101_122000_feedback_mail_removal_housekeeping",
+          "20261103_082000_feedback_housekeeping_followups",
+          "20261103_132000_feedback_housekeeping_db_required",
+          "20261115_135000_feedback_impl_feedback_fd678b04_cycle3"
+        ],
+        "event_set_sha256": "7e826961fad76bedefd3443db2249f4908e3324e92273e9b183d3ad622a8554e",
+        "latest_tree_sha256": "12490438310ace0b863320236a1aae4659b2f7f60aaf92cbb84bb57b3805d572"
+      },
+      "arch/events": {
+        "head_event_id": "20261115_140000_feedback_impl_feedback_fd678b04_cycle3",
+        "head_event_sha256": "78a8c3d1b1f1be61911b199014f881551080a71012b6afe0f30f35a2eeaabf26",
+        "event_ids": [
+          "20260830_184457_initial_arch",
+          "20260830_202427_arch_infra_feedback_20260830_190412_infra_product_design",
+          "20260905_091000_feedback_todo_resolution",
+          "20260907_015000_feedback_todo_followup",
+          "20260907_122000_feedback_abort_consistency",
+          "20260908_015000_feedback_slot_status_wording",
+          "20260921_092000_feedback_impl_feedback_eff24f55",
+          "20261010_202000_feedback_impl_feedback_dcd8234d",
+          "20261101_103000_feedback_impl_feedback_dcd8234d",
+          "20261101_123000_feedback_mail_removal_housekeeping",
+          "20261103_083000_feedback_housekeeping_followups",
+          "20261103_133000_feedback_housekeeping_db_required",
+          "20261115_140000_feedback_impl_feedback_fd678b04_cycle3"
+        ],
+        "event_set_sha256": "66023fd0b53c0d668b362ed791fb1aa7f7779362bff9c581fa60be79d49b4403",
+        "latest_tree_sha256": "5e00d5989382518efa1cf9387b0f8c2f14b9010ef51ec8d110cb748c20355bfc"
+      },
+      "infra/events": {
+        "head_event_id": "20261115_141000_feedback_impl_feedback_fd678b04_cycle3",
+        "head_event_sha256": "7740e15905e9795cd783829a49a1fe67dc14a27be6497c7a0f6c2e0fd87361e0",
+        "event_ids": [
+          "20260830_190412_infra_product_design",
+          "20260905_093000_feedback_todo_resolution",
+          "20260907_021000_feedback_todo_followup",
+          "20260907_124000_feedback_abort_consistency",
+          "20260908_021000_feedback_slot_status_wording",
+          "20260921_094000_feedback_impl_feedback_eff24f55",
+          "20261010_203000_feedback_impl_feedback_dcd8234d",
+          "20261101_104000_feedback_impl_feedback_dcd8234d",
+          "20261101_124000_feedback_mail_removal_housekeeping",
+          "20261103_084000_feedback_housekeeping_followups",
+          "20261103_134000_feedback_housekeeping_db_required",
+          "20261104_091000_feedback_external_review_fixes",
+          "20261104_101000_feedback_rapid_env_deploy_check",
+          "20261105_091000_feedback_final_env_per_segment",
+          "20261105_111000_feedback_single_management_db",
+          "20261115_141000_feedback_impl_feedback_fd678b04_cycle3"
+        ],
+        "event_set_sha256": "f4edfb85e639ac1e0fcfd8dbb0896d8de1564254f3905afa91724b715467c3dc",
+        "latest_tree_sha256": "e2f26117303d8823a20eb60a93f5e9919a2adfb5e1327c9161a0b8fa959cadf2"
+      },
+      "design/events": {
+        "head_event_id": null,
+        "head_event_sha256": null,
+        "event_ids": [],
+        "event_set_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "latest_tree_sha256": null
+      },
+      "specs/events": {
+        "head_event_id": "20261115_164000_feedback_runner_relative_path",
+        "head_event_sha256": "7a6b024e710f483b7567f972352e8a562c27c431a08ae5173308444e70fa15a3",
+        "event_ids": [
+          "20260830_202851_spec_generation",
+          "20260905_100000_feedback_todo_resolution",
+          "20260907_024000_feedback_todo_followup",
+          "20260907_131000_feedback_abort_consistency",
+          "20260908_024000_feedback_slot_status_wording",
+          "20260908_062000_feedback_spec_machine_readable",
+          "20260917_050000_feedback_impl_feedback_fd678b04",
+          "20260917_100000_feedback_impl_feedback_fd678b04_cycle2",
+          "20260921_100000_feedback_impl_feedback_eff24f55",
+          "20260923_112000_feedback_impl_feedback_eff24f55_cycle2",
+          "20261010_204000_feedback_impl_feedback_dcd8234d",
+          "20261027_055000_feedback_impl_feedback_dcd8234d",
+          "20261101_105000_feedback_impl_feedback_dcd8234d",
+          "20261101_125000_feedback_mail_removal_housekeeping",
+          "20261103_085000_feedback_housekeeping_followups",
+          "20261103_135000_feedback_housekeeping_db_required",
+          "20261103_151000_feedback_env_duplicate_key",
+          "20261104_092000_feedback_external_review_fixes",
+          "20261104_102000_feedback_rapid_env_deploy_check",
+          "20261105_092000_feedback_external_review_round2",
+          "20261105_112000_feedback_single_management_db",
+          "20261110_153000_feedback_impl_feedback_dcd8234d",
+          "20261115_142000_feedback_impl_feedback_fd678b04_cycle3",
+          "20261115_164000_feedback_runner_relative_path"
+        ],
+        "event_set_sha256": "4fa9d0fce29300bcfd5a0ac286327fd34901d4d9ed864d597ce7da98b28b1f23",
+        "latest_tree_sha256": "a2c3deda3f42e9b644447dca87c8dedf112cfacee4963e74d5653fec8e5e4dba"
+      }
+    }
+  }
+}

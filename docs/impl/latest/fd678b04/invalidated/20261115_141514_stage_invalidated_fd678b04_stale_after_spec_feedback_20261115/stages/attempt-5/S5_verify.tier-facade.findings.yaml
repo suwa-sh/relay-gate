@@ -1,0 +1,870 @@
+schema_version: "1.0"
+uc_id: "fd678b04"
+tier: "tier-facade"
+attempt: 5
+verified_at: "2026-11-13T08:13:48+09:00"
+gate_reexec:
+  format: "pass"
+  lint: "pass"
+  tdd: "pass"
+  bdd_tier: "pass"
+viewpoints_checked:
+  spec_conformance:
+    status: "done"
+    note: "spec/tier/CLI契約と全featureを照合。tier gherkinは正本と完全一致。APIはCLI1入口、DB tables=[]、UIなし。9キー・検査3段・info/warn/error順・引用符・コメント・入力複製を確認。--final-crosscheck/--housekeep未実装は対象外。"
+  readability_maintainability:
+    status: "done"
+    note: "dev-rulesとレイヤー責務、定数・失敗伝播を確認。追加テストは実入力と出力全行/終了コードを検査し、参照実装も製品実装とは独立。新たな保守性欠陥の立証なし。"
+  security:
+    status: "done"
+    note: "source/evalによる入力実行なし。未知PATHとコマンド置換を含むキー/値の独立試験で副作用なし。スナップショット権限・削除・シグナル試験をゲートで確認。"
+  performance:
+    status: "done"
+    note: "F-001/F-002で目標未達を立証。通常の敵対入力68測定ずつ、F-001旧再現3境界、長さ配分1/2/9/127/4997行、FINAL_、制御文字/C1、空白/コメント/invalid/duplicateを検証。サイズによる拒否はない。"
+  operability:
+    status: "done"
+    note: "エラー語彙・出力先・制御文字可視化を独立oracleと旧版比較で確認。Linux/macOSとC/C.UTF-8において出力一致。"
+  fault_tolerance:
+    status: "done"
+    note: "補助コマンドの非0終了・空/不正出力・snapshot失敗・runner準備失敗のゲートを再実行。error1行とstdout空、終了6を確認。一般的な内部障害処理の新たな違反は未検出。"
+  refactoring:
+    status: "done"
+    note: "共有cli_fieldを使うjob-map/rapid-crosscheckの新旧比較で出力と終了コードが一致。約8MBの遅さは旧版にも存在し、今回の変更による有意な悪化を裏付ける証拠なし。他UC起票を本UCの欠陥にしない。"
+  assumption_conformance:
+    status: "done"
+    note: "観点1〜7の後でid/assumption/targetだけを読み、仕様とS4固定指示で判定してからreason/confidence/spec_refsを読んだ。21件にexactly-one。候補のバッチ化/閾値/キャッシュ/遅延出力はA-031〜038に収まり、unlistedなし。既知未定義2点は欠落の指摘でなく既存起票の照合記録。"
+assumptions_sha256: "764eb97433280c6e2d3321c97e9c73c6fc0c0bd4ab06c3da04f58f743bf23aa1"
+assumption_verdicts:
+  - id: "A-010"
+    tier: "tier-facade"
+    assumption: "env から変数として取り込むのは 9 キーだけとし、9 キー以外のキー(PATH 等)は値をプロセス変数に載せずキー名の一覧にのみ記録する"
+    target: "facade/src/repository/feature_flag_config.sh:189"
+    category: "security"
+    verified_category: "security"
+    verdict: "spec_absent"
+    finding_id: "F-003"
+    evidence: "tier-facade.md 設定契約の9キー所有・source禁止と env_files に照合。未知キーの保持先やプロセス変数への非代入までは規定しない。PATH=/invalid と $(touch ...) をキー・値に置いてもコマンド置換は起きず、未知キーwarnと規定の検証結果だけになった。安全側の設計判断であり脆弱性の指摘ではない。"
+  - id: "A-016"
+    tier: "tier-facade"
+    assumption: "キーごとの検査で error 行が 2 行以上出るときの error 行どうしの順は、mode 3 キー(BLUE_MODE → GREEN_MODE → RAPID_CROSSCHECK_MODE)→ foreground の個数 → BLUE_IMPL → BLUE_RUNNER → GREEN_IMPL → GREEN_RUNNER → RAPID_CROSSCHECK_RUNNER → RAPID_CROSSCHECK_WORKER → FINAL_ で始まるキー(ファイルに出た順)→ 対応ジョブマップ(blue → green)とする(2026-09 完了時の実装の順を変えていない)。ほかの選択肢: キー表の順(mode 3 キー → IMPL 2 キー → RUNNER 2 キー → 速報 2 キー)→ foreground の個数 → FINAL_ で始まるキー → 対応ジョブマップ(issue の案 A)。変更する場合の影響範囲: domain の validate_feature_flag_errors の中の検査の並び(facade/src/domain/feature_flag.sh)だけで、usecase・repository・ほかの UC には及ばない。テストは error 行どうしの順を固定していないため、並べ替えてもテストの変更は要らない(順を仕様に定めるなら順を固定するテストを足す)"
+    target: "facade/src/domain/feature_flag.sh:373"
+    category: "data_format"
+    verified_category: "data_format"
+    verdict: "spec_absent"
+    finding_id: "F-004"
+    evidence: "env_files の info全件→未知warn全件→error→runner warn、および tier-facade.md の出力契約を照合。error相互の順を追加指定する記載は見つからず、既存起票の範囲説明と矛盾しない。旧2版との436条件比較で順序変更なし。これは既存起票の反証結果の記録であり、仕様未定義そのものを新たな欠陥として扱わない。"
+  - id: "A-017"
+    tier: "tier-facade"
+    assumption: "検証種別オプションが 0 個の場合は error: option required option=--feature-flag|--job-map|--rapid-crosscheck|--final-crosscheck と hint: specify exactly one validation option を出して終了コード 2 にする"
+    target: "facade/src/presentation/validate-config.sh:123"
+    category: "error_handling"
+    verified_category: "error_handling"
+    verdict: "spec_absent"
+    finding_id: "F-005"
+    evidence: "commands.validate-config.sh.option_exclusivity は0個を終了2とするが、選択肢一覧を埋める具体文言・hintを固定していない。presentationテストと引数なしの実行で終了2を確認。他UCの未実装は指摘しない。"
+  - id: "A-018"
+    tier: "tier-facade"
+    assumption: "検証種別オプションが 2 個以上の場合は error: options are exclusive options=<--a,--b> と hint: specify exactly one validation option を出して終了コード 2 にする"
+    target: "facade/src/presentation/validate-config.sh:128"
+    category: "error_handling"
+    verified_category: "error_handling"
+    verdict: "spec_absent"
+    finding_id: "F-006"
+    evidence: "option_exclusivity は複数指定を終了2とする。options= のカンマ連結とhintの具体表現は仕様に指定がない。presentationゲートで複数指定拒否を確認。"
+  - id: "A-019"
+    tier: "tier-facade"
+    assumption: "検証種別オプションの値が無い(末尾、または次の引数が -- で始まる)場合は error: option required option=<--option> を出して終了コード 2 にし、オプション以外の位置引数は error: unexpected argument value=<arg> で終了コード 2 にする"
+    target: "facade/src/presentation/validate-config.sh:99"
+    category: "input_validation"
+    verified_category: "input_validation"
+    verdict: "spec_absent"
+    finding_id: "F-007"
+    evidence: "args: []、値必須、--key value形式に照合。次トークンが--で始まる場合の扱いとunexpected argumentの具体文言は実装判断。実プロセスの引数異常系テストが終了2を検査している。"
+  - id: "A-020"
+    tier: "tier-facade"
+    assumption: "所有 UC の usecase が未実装の検証種別(現時点では --final-crosscheck)を指定された場合は error: validation kind is not implemented option=--<kind> を出して終了コード 6(実行エラー)にする"
+    target: "facade/src/presentation/validate-config.sh:141"
+    category: "error_handling"
+    verified_category: "error_handling"
+    verdict: "spec_absent"
+    finding_id: "F-008"
+    evidence: "対象UCの境界と利用者指示に従い、他UC未実装そのものを欠陥判定しない。未実装handlerへの暫定応答6という設計記録だけを照合し、今回その分岐に変更がないことを確認。"
+  - id: "A-023"
+    tier: "tier-facade"
+    assumption: "stdout の key=value / key: value の切替は、値に ASCII の空白文字(半角空白・タブ・LF・VT・FF・CR)が 1 つでも含まれるかで判定し、パス系のキー以外(mode / impl / operation_mode / runner_if_version)にこの規則を適用する"
+    target: "facade/src/domain/cli_field.sh:531"
+    category: "data_format"
+    verified_category: "data_format"
+    verdict: "spec_absent"
+    finding_id: "F-009"
+    evidence: "conventions.output_format.stdout/control_chars は元の値に空白があればcolon形式とするが、空白文字集合を列挙していない。ASCII空白とUnicode文字を含む独立比較・既存cli_fieldテストでロケール間の出力一致を確認。"
+  - id: "A-024"
+    tier: "tier-facade"
+    assumption: "runner --help の待機上限(4 秒)の監視は 0.1 秒間隔の生存確認で行い、上限到達の検出は最大 0.1 秒遅れる(契約の per_slot_probe_budget_seconds 4.6 秒に含まれるオーバーヘッドとして扱う)"
+    target: "facade/src/gateway/runner_probe.sh:19"
+    category: "performance"
+    verified_category: "performance"
+    verdict: "spec_absent"
+    finding_id: "F-010"
+    evidence: "runner_help_probe は4秒待機、TERM後0.2秒KILL、slot全体4.6秒を指定するが監視粒度は指定しない。小入力の両slot未応答はLinux8.607〜8.637秒、macOS9.219〜9.229秒。総検証時間の不足はF-001で別に記録。"
+  - id: "A-025"
+    tier: "tier-facade"
+    assumption: "準備失敗の error 行の reason= の値は、一時ファイル作成失敗なら temp-file-create-failed tmpdir=<dir>、プロセスグループでの起動失敗なら process-group-start-failed runner=<path> とする(理由の識別子は空白を含まない kebab-case、続けて具体値を key=value で付ける)"
+    target: "facade/src/gateway/runner_probe.sh:91"
+    category: "data_format"
+    verified_category: "data_format"
+    verdict: "spec_absent"
+    finding_id: "F-011"
+    evidence: "runner_help_probe.preparation_failure が指定するのは slot と reason の枠。reasonの識別子・後続フィールドの語彙は定義していない。準備失敗ゲートはerror1行・stdoutなし・終了6を確認。"
+  - id: "A-027"
+    tier: "tier-facade"
+    assumption: "「プロセスグループでの起動に失敗」は job control の有効化(set -m)に失敗した場合とバックグラウンド起動の pid が得られない場合に限り、runner 実体の exec 失敗(終了コード 126 / 127)は起動失敗ではなく「応答しない」(warn)として扱う"
+    target: "facade/src/gateway/runner_probe.sh:40"
+    category: "error_handling"
+    verified_category: "error_handling"
+    verdict: "spec_absent"
+    finding_id: "F-012"
+    evidence: "runner_help_probe.preparation_failure と no_response_criteria の境界を照合。exec126/127をプロセスグループ準備失敗と同一視する明示はなく、非0終了を未応答とする既存規定に反しない。runner_probeゲートで失敗系を実行。"
+  - id: "A-028"
+    tier: "tier-facade"
+    assumption: "mode の値が列挙外(例 BLUE_MODE=parallel)または欠落・空のときも、その slot は「off でない」として扱い、実装版・runner の必須検査、対応ジョブマップの検査、runner --help の問い合わせを行う(RAPID_CROSSCHECK_MODE が列挙外のときの速報 runner / worker の検査も同じ。2026-09 完了時の実装の挙動を変えていない)。ほかの選択肢: 列挙外・欠落の mode では invalid value / option required の error 行だけを出し、その slot の従属キーの検査を行わない。変更する場合の影響範囲: 判定関数 feature_flag_mode_is_active の呼び出し側(facade/src/domain/feature_flag.sh の validate_feature_flag_errors と validate_slot_runner_assignment、facade/src/usecase/validate_feature_flag.sh の runner 問い合わせと表示する値の控え)で、列挙外の mode を含む入力の error 行の件数が減る。spec.md の Scenario「違反は全件まとめて報告される」はどちらでも通る"
+    target: "facade/src/domain/feature_flag.sh:191"
+    category: "input_validation"
+    verified_category: "input_validation"
+    verdict: "spec_absent"
+    finding_id: "F-013"
+    evidence: "tier-facade.mdのMODE≠off条件、spec.mdの違反全件報告、runner_help_probe.scopeに照合。列挙外mode専用の短絡規則はなく、現行の従属検査は既存記述と矛盾しない。既存起票の反証結果を記録するもので、未定義自体を新規欠陥としない。"
+  - id: "A-029"
+    tier: "tier-facade"
+    assumption: "バイト点検の事前走査が数えた総行数と、行の読み取りで読んだ行数が一致しないときは、補助コマンドの失敗として error: internal command failed commands=tr,sed path: <path> を出して終了コード 6 にする(速報クロスチェック設定・slot ジョブマップの読み込みと同じ扱い)"
+    target: "facade/src/repository/feature_flag_config.sh:267"
+    category: "error_handling"
+    verified_category: "error_handling"
+    verdict: "spec_absent"
+    finding_id: "F-014"
+    evidence: "internal_failureは想定外出力を終了6とするが、走査と解析の行数照合と、原因を特定できない際のtr,sed表記までは指定しない。repositoryゲートの補助コマンド故障試験を確認。"
+  - id: "A-030"
+    tier: "tier-facade"
+    assumption: "性能目標を「5,000 行以内かつ 8 MB 以内(8 MiB = 8,388,608 バイトまで)の feature flag 設定ファイルを、内容によらず 10 秒以内に検証する」とし、これを満たすように実装した(attempt 4 の「行数とバイト数に比例すればよい」という読み替えは取り下げた)。大きさの条件(8 MB)は利用者決定に基づく性能目標で、仕様への書き足しは最終確認で要求として出す。目標値であり入力を制限する仕様ではないため、5,000 行または 8 MB を超えるファイルも拒否・警告せずに処理する(保証の範囲外になるだけ)。回帰テストで固定する入力は、(a) S5 attempt-4 の指摘 F-001 の再現入力(29 種の制御文字を並べた 1,023 / 1,024 / 1,025 バイトの未知キー 4,995 行。約 5.1 MB)、(b) 5,000 行・8 MiB 弱で未知キーが制御文字 29 種だけのもの、(c) 同じ大きさで C1 制御文字・DEL・多バイト文字を混ぜたもの、(d) 8 MiB 弱で制御文字だらけの同じキー 2,497 個の重複、(e) 1 行が 8 MiB 弱の列挙外の mode の値、の 5 通りとする"
+    target: "facade/test/usecase/validate_feature_flag_env_rules.bats:561"
+    category: "performance"
+    verified_category: "performance"
+    verdict: "spec_absent"
+    finding_id: "F-015"
+    evidence: "2026-11-13 review-notesの利用者決定と今回指示に照合。線形ならよいという読み替えは撤回され、目標と入力拒否の区別は整合。固定する5種の回帰入力の選定は実装判断。目標達成の主張はF-001/F-002の実測で否定される。8MBの仕様未反映自体を指摘しない。"
+  - id: "A-031"
+    tier: "tier-facade"
+    assumption: "可視表記の結果を、プロセスの中で値ごとに控えて再利用する。控えるのは (1) 値ごとの置き換え(cli_field_safe_text)で置き換えが要った 1,024 バイト以下の値と、(2) feature flag の検証が表示の前にまとめて置き換えた値(mode 3 キーと off でない slot・速報クロスチェックの値。大きさによらない)。控えの合計(元の値と可視表記のバイト数の和)が 64 MiB を超える分は控えない(入力の大きさに上限が無いため、メモリの使用量を入力の大きさに比例させない)。控えは実行の終わりまで保持する"
+    target: "facade/src/domain/cli_field.sh:386"
+    category: "performance"
+    verified_category: "performance"
+    verdict: "spec_absent"
+    finding_id: "F-016"
+    evidence: "control_charsは出力バイト列を指定し、キャッシュ方式・1024バイト・64MiB・寿命を指定しない。独立oracle151値をbatch変換後にprepare/printで再表示して全バイト一致、既存容量境界テストも通過。"
+  - id: "A-032"
+    tier: "tier-facade"
+    assumption: "値ごとの可視表記の置き換え(cli_field_escape_text。外部コマンドを起動しない)は、値を 1,024 バイトの窓ごとに、(1) 同じ 1 バイトの制御文字が窓に 4 個以上あればその文字を一括で置き換え、(2) それ以外は窓を制御文字で区切った断片と表引きの結果を順に連結し、(3) C1 制御文字がある窓は 32 種類を順に一括で置き換える。種類ごとの個数を数えるのは、窓の 1 バイトの制御文字の合計が 64 個以上のときだけとする。4 個・64 個・1,024 バイトは実測で決めた値で、結果のバイト列には影響しない(attempt 4 から変更なし。attempt 5 では、数 MB になりうる値をこの経路に通さないようにした: A-033)"
+    target: "facade/src/domain/cli_field.sh:314"
+    category: "performance"
+    verified_category: "performance"
+    verdict: "spec_absent"
+    finding_id: "F-017"
+    evidence: "control_charsとPOSIX外部コマンド許容規則は窓サイズ・頻度閾値を指定しない。旧版との差分と独立oracle、1,023/1,024/1,025境界テストで表現の差なし。他UCの遅さは旧版でも再現。"
+  - id: "A-033"
+    tier: "tier-facade"
+    assumption: "feature flag の検証で表示するキー名(info 行・未知キーの warn 行・確報制御キーの error 行・duplicate key の行)と、表示しうる値(mode 3 キーと off でない slot・速報クロスチェックの値)の可視表記は、値の合計が 4,096 バイト以上のとき、外部コマンドでまとめて作る(値の個数によらず sed 1 回。値に 0xC2 があるとき・空の値があるときは、C1 制御文字の置き換えのために sed 2 回と tr 1 回)。合計が 4,096 バイト未満のときは外部コマンドを起動せず bash で置き換える。sed のスクリプトは基本正規表現と生のバイトだけで書き、LC_ALL=C で実行する(GNU sed と BSD sed の両方)。外部コマンドを使うのは feature flag の検証だけで、値ごとの関数(cli_field_safe_text)を呼ぶ他の検証種別の挙動は変えていない"
+    target: "facade/src/domain/cli_field.sh:143"
+    category: "performance"
+    verified_category: "performance"
+    verdict: "spec_absent"
+    finding_id: "F-018"
+    evidence: "control_chars/internal_failureは結果と失敗時出力を指定するが4096バイト分岐・sed段数を指定しない。4095/4096/4097、C1・空値・改行・不正バイトの独立oracle/差分比較がBSD/GNU双方で一致。"
+  - id: "A-034"
+    tier: "tier-facade"
+    assumption: "可視表記をまとめて作る外部コマンドの失敗を補助コマンドの失敗として報告するとき、commands= に出す名前は、パイプライン(sed だけ、または sed → sed → tr)のうち最も後ろで 0 以外の終了状態になったコマンド 1 つ(sed または tr)とする。どのコマンドも終了状態 0 なのに出力の件数が値の個数と合わないときは、使ったコマンドすべて(commands=sed または commands=sed,tr)とする。失敗の検出は、何かを出力する前(duplicate key の行を出す前、キーごとの検査の行と stdout を出す前)に行う"
+    target: "facade/src/domain/cli_field.sh:214"
+    category: "error_handling"
+    verified_category: "error_handling"
+    verdict: "spec_absent"
+    finding_id: "F-019"
+    evidence: "internal_failureのerror1行・stdoutなし・終了6は明示。パイプラインのSIGPIPE連鎖から最後の失敗を選ぶ方法と件数異常時の名前集合は指定なし。sed/tr故障注入のゲートは出力前検出と失敗名を厳密比較しており空振りでない。"
+  - id: "A-035"
+    tier: "tier-facade"
+    assumption: "feature flag env の行の構造(空行・コメント行・形式違反の行・キーと値)を取り出す sed が 0 以外の終了状態で終わったとき、または出力が想定外(行の種類を表す文字が不正・キーの行の次が値の行でない)のときは、補助コマンドの失敗として error: internal command failed commands=sed path: <path> を出して終了コード 6 にする"
+    target: "facade/src/repository/feature_flag_config.sh:263"
+    category: "error_handling"
+    verified_category: "error_handling"
+    verdict: "consistent"
+    finding_id: "F-020"
+    evidence: "config_input_rules.internal_failureは複製完了後の補助コマンドの非0終了・想定外出力をerror: internal command failed commands=<name> path: ...、終了6、stdoutなしと明示している。sedを選んだ実装への適用はこの規則の復唱。repositoryの構造抽出失敗試験で確認。"
+  - id: "A-036"
+    tier: "tier-facade"
+    assumption: "feature flag env の 1 行ごとの処理(コメント行の判定、最初の = での分割、キーと値の前後の半角空白・タブの除去)は、入力の複製に対する sed 1 回で行い、bash は sed の結果(行の種類・キー・値)を読むだけにする。sed の照合はどれも行の長さに比例する時間で終わる形にする(置き換えは行頭に固定した 1 回の照合)。値の先頭末尾の引用符を外す処理は、9 キーの値にだけ bash で行う"
+    target: "facade/src/repository/feature_flag_config.sh:104"
+    category: "performance"
+    verified_category: "performance"
+    verdict: "spec_absent"
+    finding_id: "F-021"
+    evidence: "env_filesのコメント判定→最初の=→半角空白/tab除去→引用符除去に照合。sed1回という方式は指定なし。大きな先頭/末尾空白・キー末尾空白・値先頭空白・コメント・invalid/duplicate入力とランダム比較で結果は一致。"
+  - id: "A-037"
+    tier: "tier-facade"
+    assumption: "domain の関数 validate_feature_flag を、表示用のキー名の配列を渡さずに単体で呼んだとき(usecase を通さない呼び方。CLI からは通らない)に可視表記をまとめて作る外部コマンドが失敗したら、キーごとに bash で置き換えて検証表の結果を返す(終了コード 6 にしない)。補助コマンドの失敗として止めるのは、可視表記を作って渡す usecase だけとする"
+    target: "facade/src/domain/feature_flag.sh:424"
+    category: "error_handling"
+    verified_category: "error_handling"
+    verdict: "spec_absent"
+    finding_id: "F-022"
+    evidence: "CLIのinternal_failureは公開コマンドの出力・終了コードを定義する。domain単体呼出し時の再試行方式は規定しない。CLIはusecaseで先に失敗を検出し終了6となる。現リポで他の実行時入口からこの関数への呼出しは存在せず、将来のreaderでの扱いは未検証。"
+  - id: "A-038"
+    tier: "tier-facade"
+    assumption: "値を埋め込む error 行と warn 行(invalid value、foreground slot の排他、path is not absolute、file not executable、runner does not respond)は、埋め込む値の合計が 4,096 バイト以上のとき、可視表記を埋め込んだ行を組み立てて溜めず、元の値のまま控えておいて、行を出すときに可視表記を直接出す。stdout の 15 行も、キー・値・改行を順に出す。出力のバイト列と行の順は、行を組み立ててから出す場合と同じ"
+    target: "facade/src/domain/feature_flag.sh:95"
+    category: "performance"
+    verified_category: "performance"
+    verdict: "spec_absent"
+    finding_id: "F-023"
+    evidence: "env_files/output_formatが要求するのは出力内容・行順であり、4096バイト閾値や遅延組立は指定なし。大小値、空値、特殊文字、旧版との比較で同じバイト列。UTF-8ロケールでの全体性能不足はF-002に記録。"
+assumption_verdicts_summary:
+  consistent: 1
+  spec_absent: 20
+  contradicts: 0
+  unlisted: 0
+findings:
+  - id: "F-001"
+    viewpoint: "performance"
+    severity: "blocker"
+    target: "facade/src/usecase/validate_feature_flag.sh:228"
+    claim: "5,000行以内かつ8MB以内でも、大きな設定の検証と両slotのrunner未応答が重なるとCLI全体が10秒を超える。"
+    evidence: "2026-11-13利用者決定とCLI契約 runner_help_probe.response_time_budget に反する。7,485,000バイトの制御文字を含む未知キー4,990行と有効な7キーを合わせた4,997行、約7.524MB。両runnerは実行可能な sleep 30 のスクリプト。終了0で正規の15行とwarnを返すが、再測定でLinux 11.022/11.120秒、macOS 14.048/14.434秒。順にverboseなし/あり。小入力はLinux 8.637/8.607秒、macOS 9.219/9.229秒。同じ7.5MBをBLUE_IMPLの値にした7行でもLinux 11.636/11.647秒、macOS 15.153/15.195秒。入力生成時間を除きプロセス開始から終了までmonotonicで計測、stdout/stderrは通常ファイルへ出力。既存性能テストはrunner即応条件のためこの組合せを検出しない。"
+    suggested_fix: "runner_help_probeの4秒待機・逐次実行を維持した総応答時間で性能予算を検証する。大きな設定と未応答runnerの組合せを回帰入力へ追加し、入力を制限せず10秒以内に収める。"
+  - id: "F-002"
+    viewpoint: "performance"
+    severity: "blocker"
+    target: "facade/src/usecase/validate_feature_flag.sh:210"
+    claim: "C.UTF-8ロケールでは、runnerを呼ばない3行・8MiB未満の設定でも10秒を超える。"
+    evidence: "BLUE_MODEの値をbytes([1,194,133])*1398000、GREEN_MODEをbytes([2,194,134])*1398000、RAPID_CROSSCHECK_MODE=offとする。LF付き3行、8,388,049バイト。modeは列挙外、runner未指定なので問い合わせ待ちはない。終了2。通常ファイルへの出力で再測定するとC.UTF-8のLinux 9.936/10.213秒、macOS 10.426/10.587秒。初回もLinux 10.962/10.078秒、macOS 10.751/10.458秒。順にverboseなし/あり。同じ入力のCロケール再測定はLinux 4.149/4.382秒、macOS 7.868/8.418秒。sed内部のLC_ALL=Cだけでは検証全体の時間を一定にできていない。今回指示は8MiB以内の内容によらない10秒目標を明示している。"
+    suggested_fix: "長い文字列を扱うdomain/usecaseの文字列長・比較・出力準備も含めてロケールの影響を調べ、可視表記と出力順を維持して改善する。CとC.UTF-8の双方で異なる長いmode値を同時に検証する回帰試験を追加する。"
+  - id: "F-003"
+    viewpoint: "assumption_conformance"
+    kind: "spec_absent"
+    assumption_id: "A-010"
+    severity: "major"
+    target: "facade/src/repository/feature_flag_config.sh:189"
+    claim: "実装判断の照合記録 A-010。tier-facade.md 設定契約の9キー所有・source禁止と env_files に照合。"
+    evidence: "tier-facade.md 設定契約の9キー所有・source禁止と env_files に照合。未知キーの保持先やプロセス変数への非代入までは規定しない。PATH=/invalid と $(touch ...) をキー・値に置いてもコマンド置換は起きず、未知キーwarnと規定の検証結果だけになった。安全側の設計判断であり脆弱性の指摘ではない。"
+  - id: "F-004"
+    viewpoint: "assumption_conformance"
+    kind: "spec_absent"
+    assumption_id: "A-016"
+    severity: "minor"
+    target: "facade/src/domain/feature_flag.sh:373"
+    claim: "既存起票のerror行順の選択を反証照合し、規定済みの出力順との矛盾は検出しなかった。欠陥追加ではなく前提台帳の対応記録。"
+    evidence: "env_files の info全件→未知warn全件→error→runner warn、および tier-facade.md の出力契約を照合。error相互の順を追加指定する記載は見つからず、既存起票の範囲説明と矛盾しない。旧2版との436条件比較で順序変更なし。これは既存起票の反証結果の記録であり、仕様未定義そのものを新たな欠陥として扱わない。"
+  - id: "F-005"
+    viewpoint: "assumption_conformance"
+    kind: "spec_absent"
+    assumption_id: "A-017"
+    severity: "minor"
+    target: "facade/src/presentation/validate-config.sh:123"
+    claim: "実装判断の照合記録 A-017。commands.validate-config.sh.option_exclusivity は0個を終了2とするが、選択肢一覧を埋める具体文言・hintを固定していない。"
+    evidence: "commands.validate-config.sh.option_exclusivity は0個を終了2とするが、選択肢一覧を埋める具体文言・hintを固定していない。presentationテストと引数なしの実行で終了2を確認。他UCの未実装は指摘しない。"
+  - id: "F-006"
+    viewpoint: "assumption_conformance"
+    kind: "spec_absent"
+    assumption_id: "A-018"
+    severity: "minor"
+    target: "facade/src/presentation/validate-config.sh:128"
+    claim: "実装判断の照合記録 A-018。option_exclusivity は複数指定を終了2とする。"
+    evidence: "option_exclusivity は複数指定を終了2とする。options= のカンマ連結とhintの具体表現は仕様に指定がない。presentationゲートで複数指定拒否を確認。"
+  - id: "F-007"
+    viewpoint: "assumption_conformance"
+    kind: "spec_absent"
+    assumption_id: "A-019"
+    severity: "minor"
+    target: "facade/src/presentation/validate-config.sh:99"
+    claim: "実装判断の照合記録 A-019。args: []、値必須、--key value形式に照合。"
+    evidence: "args: []、値必須、--key value形式に照合。次トークンが--で始まる場合の扱いとunexpected argumentの具体文言は実装判断。実プロセスの引数異常系テストが終了2を検査している。"
+  - id: "F-008"
+    viewpoint: "assumption_conformance"
+    kind: "spec_absent"
+    assumption_id: "A-020"
+    severity: "minor"
+    target: "facade/src/presentation/validate-config.sh:141"
+    claim: "他UC未実装への暫定応答の前提を照合した。他UC未実装そのものを本UCの欠陥としていない。"
+    evidence: "対象UCの境界と利用者指示に従い、他UC未実装そのものを欠陥判定しない。未実装handlerへの暫定応答6という設計記録だけを照合し、今回その分岐に変更がないことを確認。"
+  - id: "F-009"
+    viewpoint: "assumption_conformance"
+    kind: "spec_absent"
+    assumption_id: "A-023"
+    severity: "minor"
+    target: "facade/src/domain/cli_field.sh:531"
+    claim: "実装判断の照合記録 A-023。conventions.output_format.stdout/control_chars は元の値に空白があればcolon形式とするが、空白文字集合を列挙していない。"
+    evidence: "conventions.output_format.stdout/control_chars は元の値に空白があればcolon形式とするが、空白文字集合を列挙していない。ASCII空白とUnicode文字を含む独立比較・既存cli_fieldテストでロケール間の出力一致を確認。"
+  - id: "F-010"
+    viewpoint: "assumption_conformance"
+    kind: "spec_absent"
+    assumption_id: "A-024"
+    severity: "minor"
+    target: "facade/src/gateway/runner_probe.sh:19"
+    claim: "実装判断の照合記録 A-024。runner_help_probe は4秒待機、TERM後0.2秒KILL、slot全体4.6秒を指定するが監視粒度は指定しない。"
+    evidence: "runner_help_probe は4秒待機、TERM後0.2秒KILL、slot全体4.6秒を指定するが監視粒度は指定しない。小入力の両slot未応答はLinux8.607〜8.637秒、macOS9.219〜9.229秒。総検証時間の不足はF-001で別に記録。"
+  - id: "F-011"
+    viewpoint: "assumption_conformance"
+    kind: "spec_absent"
+    assumption_id: "A-025"
+    severity: "minor"
+    target: "facade/src/gateway/runner_probe.sh:91"
+    claim: "実装判断の照合記録 A-025。runner_help_probe.preparation_failure が指定するのは slot と reason の枠。"
+    evidence: "runner_help_probe.preparation_failure が指定するのは slot と reason の枠。reasonの識別子・後続フィールドの語彙は定義していない。準備失敗ゲートはerror1行・stdoutなし・終了6を確認。"
+  - id: "F-012"
+    viewpoint: "assumption_conformance"
+    kind: "spec_absent"
+    assumption_id: "A-027"
+    severity: "minor"
+    target: "facade/src/gateway/runner_probe.sh:40"
+    claim: "実装判断の照合記録 A-027。runner_help_probe.preparation_failure と no_response_criteria の境界を照合。"
+    evidence: "runner_help_probe.preparation_failure と no_response_criteria の境界を照合。exec126/127をプロセスグループ準備失敗と同一視する明示はなく、非0終了を未応答とする既存規定に反しない。runner_probeゲートで失敗系を実行。"
+  - id: "F-013"
+    viewpoint: "assumption_conformance"
+    kind: "spec_absent"
+    assumption_id: "A-028"
+    severity: "minor"
+    target: "facade/src/domain/feature_flag.sh:191"
+    claim: "既存起票の列挙外modeに対する従属検査を反証照合し、他の仕様記述との矛盾は検出しなかった。欠陥追加ではなく前提台帳の対応記録。"
+    evidence: "tier-facade.mdのMODE≠off条件、spec.mdの違反全件報告、runner_help_probe.scopeに照合。列挙外mode専用の短絡規則はなく、現行の従属検査は既存記述と矛盾しない。既存起票の反証結果を記録するもので、未定義自体を新規欠陥としない。"
+  - id: "F-014"
+    viewpoint: "assumption_conformance"
+    kind: "spec_absent"
+    assumption_id: "A-029"
+    severity: "minor"
+    target: "facade/src/repository/feature_flag_config.sh:267"
+    claim: "実装判断の照合記録 A-029。internal_failureは想定外出力を終了6とするが、走査と解析の行数照合と、原因を特定できない際のtr,sed表記までは指定しない。"
+    evidence: "internal_failureは想定外出力を終了6とするが、走査と解析の行数照合と、原因を特定できない際のtr,sed表記までは指定しない。repositoryゲートの補助コマンド故障試験を確認。"
+  - id: "F-015"
+    viewpoint: "assumption_conformance"
+    kind: "spec_absent"
+    assumption_id: "A-030"
+    severity: "minor"
+    target: "facade/test/usecase/validate_feature_flag_env_rules.bats:561"
+    claim: "性能目標の読み替え撤回は利用者決定に整合する。5種の回帰入力の選定を前提として記録し、達成主張の反証はF-001/F-002へ分離する。"
+    evidence: "2026-11-13 review-notesの利用者決定と今回指示に照合。線形ならよいという読み替えは撤回され、目標と入力拒否の区別は整合。固定する5種の回帰入力の選定は実装判断。目標達成の主張はF-001/F-002の実測で否定される。8MBの仕様未反映自体を指摘しない。"
+  - id: "F-016"
+    viewpoint: "assumption_conformance"
+    kind: "spec_absent"
+    assumption_id: "A-031"
+    severity: "minor"
+    target: "facade/src/domain/cli_field.sh:386"
+    claim: "実装判断の照合記録 A-031。control_charsは出力バイト列を指定し、キャッシュ方式・1024バイト・64MiB・寿命を指定しない。"
+    evidence: "control_charsは出力バイト列を指定し、キャッシュ方式・1024バイト・64MiB・寿命を指定しない。独立oracle151値をbatch変換後にprepare/printで再表示して全バイト一致、既存容量境界テストも通過。"
+  - id: "F-017"
+    viewpoint: "assumption_conformance"
+    kind: "spec_absent"
+    assumption_id: "A-032"
+    severity: "minor"
+    target: "facade/src/domain/cli_field.sh:314"
+    claim: "実装判断の照合記録 A-032。control_charsとPOSIX外部コマンド許容規則は窓サイズ・頻度閾値を指定しない。"
+    evidence: "control_charsとPOSIX外部コマンド許容規則は窓サイズ・頻度閾値を指定しない。旧版との差分と独立oracle、1,023/1,024/1,025境界テストで表現の差なし。他UCの遅さは旧版でも再現。"
+  - id: "F-018"
+    viewpoint: "assumption_conformance"
+    kind: "spec_absent"
+    assumption_id: "A-033"
+    severity: "minor"
+    target: "facade/src/domain/cli_field.sh:143"
+    claim: "実装判断の照合記録 A-033。control_chars/internal_failureは結果と失敗時出力を指定するが4096バイト分岐・sed段数を指定しない。"
+    evidence: "control_chars/internal_failureは結果と失敗時出力を指定するが4096バイト分岐・sed段数を指定しない。4095/4096/4097、C1・空値・改行・不正バイトの独立oracle/差分比較がBSD/GNU双方で一致。"
+  - id: "F-019"
+    viewpoint: "assumption_conformance"
+    kind: "spec_absent"
+    assumption_id: "A-034"
+    severity: "minor"
+    target: "facade/src/domain/cli_field.sh:214"
+    claim: "実装判断の照合記録 A-034。internal_failureのerror1行・stdoutなし・終了6は明示。"
+    evidence: "internal_failureのerror1行・stdoutなし・終了6は明示。パイプラインのSIGPIPE連鎖から最後の失敗を選ぶ方法と件数異常時の名前集合は指定なし。sed/tr故障注入のゲートは出力前検出と失敗名を厳密比較しており空振りでない。"
+  - id: "F-020"
+    viewpoint: "assumption_conformance"
+    kind: "restatement"
+    assumption_id: "A-035"
+    severity: "minor"
+    target: "facade/src/repository/feature_flag_config.sh:263"
+    claim: "明示ルールの復唱 A-035。config_input_rules.internal_failureは複製完了後の補助コマンドの非0終了・想定外出力をerror: internal command failed commands=<name> path: ...、終了6、stdoutなしと明示している。"
+    evidence: "config_input_rules.internal_failureは複製完了後の補助コマンドの非0終了・想定外出力をerror: internal command failed commands=<name> path: ...、終了6、stdoutなしと明示している。sedを選んだ実装への適用はこの規則の復唱。repositoryの構造抽出失敗試験で確認。"
+  - id: "F-021"
+    viewpoint: "assumption_conformance"
+    kind: "spec_absent"
+    assumption_id: "A-036"
+    severity: "minor"
+    target: "facade/src/repository/feature_flag_config.sh:104"
+    claim: "実装判断の照合記録 A-036。env_filesのコメント判定→最初の=→半角空白/tab除去→引用符除去に照合。"
+    evidence: "env_filesのコメント判定→最初の=→半角空白/tab除去→引用符除去に照合。sed1回という方式は指定なし。大きな先頭/末尾空白・キー末尾空白・値先頭空白・コメント・invalid/duplicate入力とランダム比較で結果は一致。"
+  - id: "F-022"
+    viewpoint: "assumption_conformance"
+    kind: "spec_absent"
+    assumption_id: "A-037"
+    severity: "minor"
+    target: "facade/src/domain/feature_flag.sh:424"
+    claim: "実装判断の照合記録 A-037。CLIのinternal_failureは公開コマンドの出力・終了コードを定義する。"
+    evidence: "CLIのinternal_failureは公開コマンドの出力・終了コードを定義する。domain単体呼出し時の再試行方式は規定しない。CLIはusecaseで先に失敗を検出し終了6となる。現リポで他の実行時入口からこの関数への呼出しは存在せず、将来のreaderでの扱いは未検証。"
+  - id: "F-023"
+    viewpoint: "assumption_conformance"
+    kind: "spec_absent"
+    assumption_id: "A-038"
+    severity: "minor"
+    target: "facade/src/domain/feature_flag.sh:95"
+    claim: "実装判断の照合記録 A-038。env_files/output_formatが要求するのは出力内容・行順であり、4096バイト閾値や遅延組立は指定なし。"
+    evidence: "env_files/output_formatが要求するのは出力内容・行順であり、4096バイト閾値や遅延組立は指定なし。大小値、空値、特殊文字、旧版との比較で同じバイト列。UTF-8ロケールでの全体性能不足はF-002に記録。"
+summary:
+  blocker: 2
+  major: 1
+  minor: 20
+environment_failures:
+  - check: "additional_linux_format_check"
+    command: "docker run --rm --network none relay-gate-ci:ubuntu24 bash -c \"command -v shfmt\""
+    evidence: "コンテナにshfmtなし。macOSのshfmt -d .はexit0。Linuxでのformatゲート再実行は環境を補って行う必要がある。"
+  - check: "additional_linux_bdd_tier"
+    command: "docker run --rm --network none relay-gate-ci:ubuntu24 bash -c \"command -v node\""
+    evidence: "コンテナにnode/npxなし。macOSのtier BDD 80 scenarios/437 stepsは全件pass。LinuxでのBDD再実行には環境を補う必要がある。"
+verification_details:
+  head: "86af592"
+  branch: "feature/configure-feature-flags"
+  macos_gates: "shfmt exit0; shellcheck exit0; bats 475/475 exit0; cucumber 80 scenarios/437 steps exit0。S4 gatesと一致。"
+  linux_gates: "relay-gate-ci:ubuntu24、bash 5.2.21/GNU sed4.9。shellcheck exit0、コンテナnative一時領域のbats 475/475 exit0。macOSはbash5.3.15/BSD sed。"
+  initial_environment_interference: "初回macOSは検証ハーネス間の共有TMPDIRでBSD mktemp固定作業名が競合しsnapshot failureが発生。旧2版でも再現したため独立TMPDIRへ分離して全ゲートと出力比較を再実行し通過。Linux初回はhost bind mount上の実行権限試験1件が失敗、native一時領域で全475件通過。回復済みでblockerに数えない。"
+  environment_probe: "macOSのTCP loopback bind成功、initdb/pg_ctlで一時PostgreSQLを起動しSELECT 1成功後停止。常設サービス未使用。Docker --network noneで起動可能。"
+  differential: "HEAD/a4136ad/2a20a26のstdout/stderr/終了コードを436条件ずつ比較して差分0。109入力×2locale×verbose有無。独立Pythonバイトoracle151値×2locale×2OSはbatch/キャッシュ経由とも完全一致。NUL以外の全バイト、LF、C1、DEL、UTF-8、0xC2不正列、&、backslash、slash、空値を含む。"
+  gates_scope: "facadeだけでbats実行。他tierのbatsは実行しない。"
+  runtime_readers: "現時点のリポジトリにはvalidate-config以外からfeature_flag_config_load/validate_feature_flagを呼ぶ実装済み入口がない。将来のreaderの動作保証はしていない。repository/domainの直接呼出しは既存ゲートで回帰確認。"
+  premise_scope: "A-016/A-028/A-020/A-030のfindingはvalidatorが要求する前提との1対1対応記録。既知の仕様未定義・他UC未実装・8MB未記載を新たな欠陥として起票するものではない。"
+  temporary_evidence_root: "/tmp/relay-verify-5.TJtmlk"
+measurements:
+  f001_macos:
+    - platform: "macOS"
+      kind: "small"
+      bytes: 199
+      lines: 7
+      verbose: false
+      seconds: 9.219
+      rc: 0
+    - platform: "macOS"
+      kind: "small"
+      bytes: 199
+      lines: 7
+      verbose: true
+      seconds: 9.229
+      rc: 0
+    - platform: "macOS"
+      kind: "unknown"
+      bytes: 7524009
+      lines: 4997
+      verbose: false
+      seconds: 14.048
+      rc: 0
+    - platform: "macOS"
+      kind: "unknown"
+      bytes: 7524009
+      lines: 4997
+      verbose: true
+      seconds: 14.434
+      rc: 0
+    - platform: "macOS"
+      kind: "impl"
+      bytes: 7500197
+      lines: 7
+      verbose: false
+      seconds: 15.153
+      rc: 0
+    - platform: "macOS"
+      kind: "impl"
+      bytes: 7500197
+      lines: 7
+      verbose: true
+      seconds: 15.195
+      rc: 0
+  f001_linux_native:
+    - platform: "Linux"
+      kind: "small"
+      bytes: 185
+      lines: 7
+      verbose: false
+      seconds: 8.637
+      rc: 0
+    - platform: "Linux"
+      kind: "small"
+      bytes: 185
+      lines: 7
+      verbose: true
+      seconds: 8.607
+      rc: 0
+    - platform: "Linux"
+      kind: "unknown"
+      bytes: 7523995
+      lines: 4997
+      verbose: false
+      seconds: 11.022
+      rc: 0
+    - platform: "Linux"
+      kind: "unknown"
+      bytes: 7523995
+      lines: 4997
+      verbose: true
+      seconds: 11.12
+      rc: 0
+    - platform: "Linux"
+      kind: "impl"
+      bytes: 7500183
+      lines: 7
+      verbose: false
+      seconds: 11.636
+      rc: 0
+    - platform: "Linux"
+      kind: "impl"
+      bytes: 7500183
+      lines: 7
+      verbose: true
+      seconds: 11.647
+      rc: 0
+  f002_macos:
+    - platform: "macOS"
+      locale: "C"
+      verbose: false
+      bytes: 8388049
+      seconds: 7.868
+      rc: 2
+    - platform: "macOS"
+      locale: "C"
+      verbose: true
+      bytes: 8388049
+      seconds: 8.418
+      rc: 2
+    - platform: "macOS"
+      locale: "C.UTF-8"
+      verbose: false
+      bytes: 8388049
+      seconds: 10.426
+      rc: 2
+    - platform: "macOS"
+      locale: "C.UTF-8"
+      verbose: true
+      bytes: 8388049
+      seconds: 10.587
+      rc: 2
+  f002_linux_native:
+    - platform: "Linux"
+      locale: "C"
+      verbose: false
+      bytes: 8388049
+      seconds: 4.149
+      rc: 2
+    - platform: "Linux"
+      locale: "C"
+      verbose: true
+      bytes: 8388049
+      seconds: 4.382
+      rc: 2
+    - platform: "Linux"
+      locale: "C.UTF-8"
+      verbose: false
+      bytes: 8388049
+      seconds: 9.936
+      rc: 2
+    - platform: "Linux"
+      locale: "C.UTF-8"
+      verbose: true
+      bytes: 8388049
+      seconds: 10.213
+      rc: 2
+  input_limits_macos:
+    - platform: "macOS"
+      name: "over-lines"
+      locale: "C"
+      bytes: 45137
+      lines: 5006
+      seconds: 0.429
+      rc: 0
+      stdout_bytes: 413
+      stderr_bytes: 0
+      stderr_empty: true
+    - platform: "macOS"
+      name: "over-lines"
+      locale: "C.UTF-8"
+      bytes: 45137
+      lines: 5006
+      seconds: 0.212
+      rc: 0
+      stdout_bytes: 413
+      stderr_bytes: 0
+      stderr_empty: true
+    - platform: "macOS"
+      name: "over-bytes"
+      locale: "C"
+      bytes: 9437314
+      lines: 6
+      seconds: 1.307
+      rc: 0
+      stdout_bytes: 413
+      stderr_bytes: 0
+      stderr_empty: true
+    - platform: "macOS"
+      name: "over-bytes"
+      locale: "C.UTF-8"
+      bytes: 9437314
+      lines: 6
+      seconds: 1.303
+      rc: 0
+      stdout_bytes: 413
+      stderr_bytes: 0
+      stderr_empty: true
+    - platform: "macOS"
+      name: "quoted"
+      locale: "C"
+      bytes: 6000128
+      lines: 5
+      seconds: 4.006
+      rc: 0
+      stdout_bytes: 15000411
+      stderr_bytes: 0
+      stderr_empty: true
+    - platform: "macOS"
+      name: "quoted"
+      locale: "C.UTF-8"
+      bytes: 6000128
+      lines: 5
+      seconds: 4.315
+      rc: 0
+      stdout_bytes: 15000411
+      stderr_bytes: 0
+      stderr_empty: true
+    - platform: "macOS"
+      name: "unicode-values"
+      locale: "C"
+      bytes: 7800049
+      lines: 3
+      seconds: 7.488
+      rc: 2
+      stdout_bytes: 0
+      stderr_bytes: 62400569
+      stderr_empty: false
+    - platform: "macOS"
+      name: "unicode-values"
+      locale: "C.UTF-8"
+      bytes: 7800049
+      lines: 3
+      seconds: 9.582
+      rc: 2
+      stdout_bytes: 0
+      stderr_bytes: 62400569
+      stderr_empty: false
+  input_limits_linux:
+    - platform: "Linux"
+      name: "over-lines"
+      locale: "C"
+      bytes: 45127
+      lines: 5006
+      seconds: 0.201
+      rc: 0
+      stdout_bytes: 383
+      stderr_bytes: 0
+      stderr_empty: true
+    - platform: "Linux"
+      name: "over-lines"
+      locale: "C.UTF-8"
+      bytes: 45127
+      lines: 5006
+      seconds: 0.203
+      rc: 0
+      stdout_bytes: 383
+      stderr_bytes: 0
+      stderr_empty: true
+    - platform: "Linux"
+      name: "over-bytes"
+      locale: "C"
+      bytes: 9437304
+      lines: 6
+      seconds: 0.264
+      rc: 0
+      stdout_bytes: 383
+      stderr_bytes: 0
+      stderr_empty: true
+    - platform: "Linux"
+      name: "over-bytes"
+      locale: "C.UTF-8"
+      bytes: 9437304
+      lines: 6
+      seconds: 0.274
+      rc: 0
+      stdout_bytes: 383
+      stderr_bytes: 0
+      stderr_empty: true
+    - platform: "Linux"
+      name: "quoted"
+      locale: "C"
+      bytes: 6000118
+      lines: 5
+      seconds: 2.474
+      rc: 0
+      stdout_bytes: 15000381
+      stderr_bytes: 0
+      stderr_empty: true
+    - platform: "Linux"
+      name: "quoted"
+      locale: "C.UTF-8"
+      bytes: 6000118
+      lines: 5
+      seconds: 3.698
+      rc: 0
+      stdout_bytes: 15000381
+      stderr_bytes: 0
+      stderr_empty: true
+    - platform: "Linux"
+      name: "unicode-values"
+      locale: "C"
+      bytes: 7800049
+      lines: 3
+      seconds: 4.424
+      rc: 2
+      stdout_bytes: 0
+      stderr_bytes: 62400529
+      stderr_empty: false
+    - platform: "Linux"
+      name: "unicode-values"
+      locale: "C.UTF-8"
+      bytes: 7800049
+      lines: 3
+      seconds: 10.11
+      rc: 2
+      stdout_bytes: 0
+      stderr_bytes: 62400529
+      stderr_empty: false
+  other_kinds_macos:
+    - platform: "macOS"
+      kind: "rapid-crosscheck"
+      label: "small"
+      bytes: 8590
+      results:
+        - rev: "a4136ad"
+          seconds: 0.197
+          rc: 2
+          out: "e922c0dacdb20024e02b213ed7d0edaae673b46f7b1a2caf6d2e3f70667dc2b1"
+          err: "6fec3afad2f184b3c8fbc09d6490812ec89ff786fdc95c179915efe359cd19d3"
+        - rev: "HEAD"
+          seconds: 0.182
+          rc: 2
+          out: "e922c0dacdb20024e02b213ed7d0edaae673b46f7b1a2caf6d2e3f70667dc2b1"
+          err: "6fec3afad2f184b3c8fbc09d6490812ec89ff786fdc95c179915efe359cd19d3"
+    - platform: "macOS"
+      kind: "rapid-crosscheck"
+      label: "large"
+      bytes: 8283916
+      results:
+        - rev: "a4136ad"
+          seconds: 49.691
+          rc: 2
+          out: "e922c0dacdb20024e02b213ed7d0edaae673b46f7b1a2caf6d2e3f70667dc2b1"
+          err: "41b2d1de6eedd37f683b5981a45a40d2292650493a6479012981c15d4b9ee9ab"
+        - rev: "HEAD"
+          seconds: 50.688
+          rc: 2
+          out: "e922c0dacdb20024e02b213ed7d0edaae673b46f7b1a2caf6d2e3f70667dc2b1"
+          err: "41b2d1de6eedd37f683b5981a45a40d2292650493a6479012981c15d4b9ee9ab"
+    - platform: "macOS"
+      kind: "job-map"
+      label: "small"
+      bytes: 9952
+      results:
+        - rev: "a4136ad"
+          seconds: 0.285
+          rc: 0
+          out: "3acf7e770bce185a1c0e25a10b464574ea5329235945fc874ab6dc168e4bded5"
+          err: "b1f2783e7f8c76269dac1a17e515cab755971c5d096d44849e5935cbdcab7207"
+        - rev: "HEAD"
+          seconds: 0.285
+          rc: 0
+          out: "3acf7e770bce185a1c0e25a10b464574ea5329235945fc874ab6dc168e4bded5"
+          err: "b1f2783e7f8c76269dac1a17e515cab755971c5d096d44849e5935cbdcab7207"
+    - platform: "macOS"
+      kind: "job-map"
+      label: "large"
+      bytes: 8348939
+      results:
+        - rev: "a4136ad"
+          seconds: 29.595
+          rc: 0
+          out: "2385d84a45092cbbbad7819f91e175e7cc21f8ecc32fc3f1e7d24bb29cae33ea"
+          err: "0f17a46f9d9c117ea46e066144931201bd047c09f787d4b7139c93a1c0cbfd52"
+        - rev: "HEAD"
+          seconds: 28.758
+          rc: 0
+          out: "2385d84a45092cbbbad7819f91e175e7cc21f8ecc32fc3f1e7d24bb29cae33ea"
+          err: "0f17a46f9d9c117ea46e066144931201bd047c09f787d4b7139c93a1c0cbfd52"
+  other_kinds_linux:
+    - platform: "Linux"
+      kind: "rapid-crosscheck"
+      label: "small"
+      bytes: 8590
+      results:
+        - rev: "a4136ad"
+          seconds: 0.136
+          rc: 2
+          out: "3fe327d9fd22bb55934880ef1f3e8dca55e60f32c46a22704f479d8c40284264"
+          err: "a511222b19397a4f3e7d25847bc1c599e4c740fec38865ab9f425f5ad6579eab"
+        - rev: "HEAD"
+          seconds: 0.113
+          rc: 2
+          out: "3fe327d9fd22bb55934880ef1f3e8dca55e60f32c46a22704f479d8c40284264"
+          err: "a511222b19397a4f3e7d25847bc1c599e4c740fec38865ab9f425f5ad6579eab"
+    - platform: "Linux"
+      kind: "rapid-crosscheck"
+      label: "large"
+      bytes: 8283916
+      results:
+        - rev: "a4136ad"
+          seconds: 41.082
+          rc: 2
+          out: "3fe327d9fd22bb55934880ef1f3e8dca55e60f32c46a22704f479d8c40284264"
+          err: "e2fe38b7f4ae266b732c6265f56fb56d728414e6b37fe515e5a7c75a5f5befaa"
+        - rev: "HEAD"
+          seconds: 40.211
+          rc: 2
+          out: "3fe327d9fd22bb55934880ef1f3e8dca55e60f32c46a22704f479d8c40284264"
+          err: "e2fe38b7f4ae266b732c6265f56fb56d728414e6b37fe515e5a7c75a5f5befaa"
+    - platform: "Linux"
+      kind: "job-map"
+      label: "small"
+      bytes: 9952
+      results:
+        - rev: "a4136ad"
+          seconds: 0.182
+          rc: 0
+          out: "dc2446f70c4a640498fd22f68b83f2596d799fc33fcd4a75a847f30dd7372513"
+          err: "b1f2783e7f8c76269dac1a17e515cab755971c5d096d44849e5935cbdcab7207"
+        - rev: "HEAD"
+          seconds: 0.166
+          rc: 0
+          out: "dc2446f70c4a640498fd22f68b83f2596d799fc33fcd4a75a847f30dd7372513"
+          err: "b1f2783e7f8c76269dac1a17e515cab755971c5d096d44849e5935cbdcab7207"
+    - platform: "Linux"
+      kind: "job-map"
+      label: "large"
+      bytes: 8348939
+      results:
+        - rev: "a4136ad"
+          seconds: 22.032
+          rc: 0
+          out: "bb6e85a86aa65e65165ec3c52050624e8604a5a6ee48306860af3a412a48d36f"
+          err: "0f17a46f9d9c117ea46e066144931201bd047c09f787d4b7139c93a1c0cbfd52"
+        - rev: "HEAD"
+          seconds: 21.369
+          rc: 0
+          out: "bb6e85a86aa65e65165ec3c52050624e8604a5a6ee48306860af3a412a48d36f"
+          err: "0f17a46f9d9c117ea46e066144931201bd047c09f787d4b7139c93a1c0cbfd52"
+  output_comparison_macos:
+    platform: "macOS"
+    comparisons: 436
+    failures: []
+  output_comparison_linux:
+    platform: "Linux"
+    comparisons: 436
+    failures: []
+reproduction:
+  F_001: "mktemp -dで専用ディレクトリDを作る。D/slow-runnerに#!/usr/bin/env bashとsleep 30を書いてchmod755。D/blue-job-map.csvとgreen-job-map.csvにヘッダーを置く。envはBLUE_MODE=foreground、GREEN_MODE=background、RAPID_CROSSCHECK_MODE=off、BLUE_IMPL=v1、GREEN_IMPL=v2、BLUE_RUNNER=D/slow-runner、GREEN_RUNNER=D/slow-runnerの7行に、i=0..4989それぞれbytes(\"K\"+str(i))+bytes([1])*1500+b\"=x\\n\"を追加する。LC_ALL=C、TMPDIR=D、RELAY_GATE_CONFIG_DIR=Dでfacade/bin/validate-config.sh --feature-flag D/probe.envを実行し、--verbose有無を測る。stdout/stderrはD内の通常ファイルへリダイレクト。入力生成は計測外。"
+  F_002: "専用Dのenvをb\"BLUE_MODE=\"+bytes([1,194,133])*1398000+b\"\\nGREEN_MODE=\"+bytes([2,194,134])*1398000+b\"\\nRAPID_CROSSCHECK_MODE=off\\n\"で生成する。8,388,049バイト。LC_ALL=C.UTF-8、TMPDIR=D、RELAY_GATE_CONFIG_DIR=DでCLIを実行。--verbose有無、LC_ALL=Cとの比較を行う。入力生成を計測外とし、stdout/stderrは通常ファイルへリダイレクト。"
+assumption_verdicts_sha256: "3c4c577facfef77bb57cac50a1a04689662b8959682503b8fdf6a42e31114066"

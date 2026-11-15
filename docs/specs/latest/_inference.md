@@ -184,7 +184,8 @@ HTTP API は存在しない(arch `technology_context.constraints`「HTTP API は
 ```
 relay-gate/
   facade.sh                      業務ジョブ起動口(JOB_ID [PARAM...])
-  runners/ $BLUE_RUNNER, $GREEN_RUNNER
+  runners/standard-runner.sh     標準の slot runner($BLUE_RUNNER / $GREEN_RUNNER に割り当てる。特殊な接続は自作の runner)
+  lib/runner-*.sh                共通ライブラリ(標準の slot runner と自作の runner が使う)
   rapid-crosscheck-runner.sh     blue-completed / green-completed
   rapid-crosscheck-worker.sh
   rapid-crosscheck-result.sh     比較結果参照
@@ -581,3 +582,95 @@ UI 画面が無いため可視化は「出力の集計・表形式」に限る�
 - UC ツリー: 34 UC / 8 BUC / 6 業務で不変。ティア構成も不変
 - トレーサビリティ: RDRA は要素の追加・削除なし。網羅率は不変(100%)。rdra-feedback.md への追記は不要(標準エラーの行の文言・順は RDRA の粒度に無い)
 - 方針資料との照合: `tmp/RelayGateのしくみ.md` は設定検証の補助出力の文言を定めておらず、矛盾しない
+
+## 差分更新履歴(event 20261115_142000_feedback_impl_feedback_fd678b04_cycle3)
+
+- 2026-11-15T14:20:00Z(event_id: `20261115_142000_feedback_impl_feedback_fd678b04_cycle3`)。設定ファイルの検査の性能の目標値化と、feature flag の検証の細部の明記(direct 4 件 = CR-fd678b04-001#2 / CR-fd678b04-002#1 / CR-fd678b04-003#1 / CR-fd678b04-004#1、causal 5 件 = 左記 + CR-fd678b04-001#1)
+- trigger_event: rdra `20261103_131000_feedback_housekeeping_db_required`、arch `20261103_133000_feedback_housekeeping_db_required`(上流は nfr `20261115_135000_feedback_impl_feedback_fd678b04_cycle3` だけが変わった。arch・infra は no-change)
+- design 無しモード判定: 引数 `design_available=false`(最優先条件)。`_inputs-digest.md` は extractSections.js で本イベントの event_id で作り直した(arch は前イベントと同じ。nfr は B.1.1.2 / B.2.1.1 が目標値の記載に変わった)
+- 変更の一覧:
+
+| 要求 | 契約(cli-command-contract.yaml) | UC 別仕様 |
+|---|---|---|
+| 性能は目標値(CR-fd678b04-001#1 への追従) | `config_input_rules.performance_target` を新設 | slot ごとのジョブマップを定義する(tier-facade.md)/ feature flag を設定する(tier-facade.md)/ ジョブマップで JOB_ID から実行先を解決する(tier-facade.md)/ ui-design.md / ux-design.md |
+| 語の改めと runner の応答待ち(CR-fd678b04-001#2) | `config_input_rules.rules` の 2 項目、`runner_help_probe.response_time_budget`、`conventions.runtime_prerequisites.external_commands` | slot runner の実体スクリプトを割り当てる(spec.md / tier-facade.md の場面の注記) |
+| error 行どうしの順(CR-fd678b04-002#1) | `config_files` の feature-flag.env に `error_order` を新設。`env_files` の (c) と validate-config.sh の stderr から参照 | feature flag を設定する(spec.md / tier-facade.md / _api-summary.yaml)/ slot runner の実体スクリプトを割り当てる(tier-facade.md) |
+| 列挙外・欠落・空の mode(CR-fd678b04-003#1) | feature-flag.env の `validation_rules` に 1 項、`runner_help_probe.scope` | feature flag を設定する(spec.md / tier-facade.md / _api-summary.yaml)/ slot runner の実体スクリプトを割り当てる(tier-facade.md) |
+| 9 キー以外のキーの値(CR-fd678b04-004#1) | `config_input_rules.env_files` に「feature-flag.env から値を取り込むキーの範囲」。feature-flag.env の `validation_rules` / `reader_scope` から参照 | feature flag を設定する(spec.md / tier-facade.md / _api-summary.yaml) |
+
+- BDD の追加: E2E 2 場面(spec.md: error 行の順、列挙外の mode)、tier 5 場面(tier-facade.md: error 行の順、mode が列挙外・空・欠落の Scenario Outline、mode が 3 つとも欠落・空のときの foreground の個数の error 行、RAPID_CROSSCHECK_MODE が列挙外、9 キー以外のキーの値)。既存の場面は変えていない(応答しない runner の場面は残し、「10 秒以内」の出所の注記だけを改めた)
+- 横断確認: `rg` で「5,000」「10 秒以内」「0.8 秒」「9.2 秒」「保証」「範囲外」「合否」「性能」「NFR B.」を docs/specs 全体に当て、設定ファイルの検査の性能に関する記載を上の表の箇所へ揃えた。facade の中継の「blue 終了後 10 秒以内」(foreground slot の結果の中継)は設定ファイルの検査ではないため変えていない。--rapid-crosscheck / --final-crosscheck の UC 別仕様には性能の記載が無く、契約の `performance_target` が 4 検証種別を対象に含める
+- 実装の照合: feature flag の検証の実装(読み取り専用)を一時ディレクトリで実走し、追加した BDD の期待値と契約の例(12 行)が実際の出力と一致することを確認した。実装は変えない(判断は spec-decision-034)
+- UC ツリー: 34 UC / 8 BUC / 6 業務で不変。ティア構成も不変。usdm[] と受け入れ条件の数は不変(追加した E2E 2 場面は USDM の受け入れ条件に現れない細部)
+- トレーサビリティ: RDRA は要素の追加・削除なし。網羅率は不変(100%)。rdra-feedback.md への追記は不要(性能の目標値は NFR、error 行の順・列挙外の mode・9 キー以外のキーの値は RDRA の粒度に無い)
+- 方針資料との照合: `tmp/RelayGateのしくみ.md` / `tmp/RelayGateの利用イメージ.md` は、設定ファイルの規模と検査時間、検証コマンドの error 行の順、列挙外の mode の扱い、9 キー以外のキーの値の扱いを定めておらず、矛盾しない(9 キーだけを持つという設定契約と一致する)
+- 反証レビュー: round 1 で major 2 / minor 1。(1) foreground の個数の error 行の値の表記(欠落・空は `-`)を契約の error_messages に書き、tier BDD を 1 場面足した。(2) UC「slot 実行モードを選択して runner を起動する」の tier-facade.md の起動時検証の順と error_order の食い違いは、error_order の対象を validate-config.sh --feature-flag の出力だけに限ると契約に明記して解いた(tier-facade.md は変えていない)。(3) spec-event.md を作り直した。round 2 で major 2(facade.sh / background-rerun.sh へ順を広げた修正が、既存の場面と各コマンドの契約に合わない)。広げた修正を取り下げて解消した
+- confidence: low の項目: 仮採用は 0 件。未決事項が 1 件(facade.sh / background-rerun.sh の起動時検証で違反が 2 つ以上あるときに出す error 行。今回は定めず、docs/todo.md に記録して確認推奨項目として返す)。要求 4 件そのものは利用者が 2026-11-13 / 2026-11-15 に決定済み
+
+## 差分更新履歴(event 20261115_164000_feedback_runner_relative_path)
+
+- 2026-11-15T16:40:00Z(event_id: `20261115_164000_feedback_runner_relative_path`)。feature flag の runner / worker の実体パスへの相対パスの受け付け(direct = causal = 1 件 = CR-c5a81e37-001#1。2026-11-15 利用者決定)
+- trigger_event: rdra `20261103_131000_feedback_housekeeping_db_required`、arch `20261103_133000_feedback_housekeeping_db_required`(上流は今回どれも変わっていない)
+- design 無しモード判定: 引数 `design_available=false`(最優先条件)。`_inputs-digest.md` は extractSections.js で本イベントの event_id で作り直した(arch・nfr とも前イベントと同じ内容)
+- 方針資料との照合: `tmp/RelayGateのしくみ.md`(391〜394 行)と `tmp/RelayGateの利用イメージ.md`(425〜428 行)の設定例は、4 キーを `./` で始まる相対パスで書いている。これまでの仕様(絶対パス必須)では通らなかった。今回の変更で、実体が設定ファイルと同じディレクトリにあれば通る
+- 変更の一覧:
+
+| 項目 | 契約(cli-command-contract.yaml) | UC 別仕様 |
+|---|---|---|
+| 相対パスの受け付けと基準 | `config_files` の feature-flag.env に `runner_path_resolution` を新設(判定・基準のディレクトリ・解決後のパス・使う場所・表示・読み手・例)。keys の type / description、`validation_rules` | feature flag を設定する(spec.md / tier-facade.md / _api-summary.yaml)/ slot runner の実体スクリプトを割り当てる(spec.md / tier-facade.md / _api-summary.yaml) |
+| `path is not absolute` を 4 キーで出さない | `error_messages`、`error_order` の per_key と例、validate-config.sh の stderr と終了コード 2 の条件、facade.sh の終了コード 2 の条件 | 上記 2 UC と slot 実行モードを選択して runner を起動する(tier-facade.md / _api-summary.yaml)、出力規約 ui-design.md |
+| 解決後のパスの使い方と表示 | `runner_help_probe`、validate-config.sh の stdout、runner IF の invoked_by / environment、facade.sh の notes、background-rerun.sh の stderr | 速報クロスチェック runner へ完了通知を送信する(spec.md / tier-facade.md)/ 元の execution-spec.json から復元して新しい run_id で起動する(tier-ops.md)/ 速報比較依頼を claim する(tier-rapid-crosscheck.md)/ UX 設計 ux-design.md |
+
+- 細部の決定(仕様で 1 つに決めた値):
+  - 相対パスの判定は「値が `/` で始まらない」。`~`・環境変数・コマンド置換は展開しない
+  - 基準は渡された設定ファイルのパスの字面のディレクトリ。シンボリックリンクは辿らない。設定ファイルのパスが相対パスのときだけ、作業ディレクトリの論理パス(シェルの `$PWD`)で絶対化する
+  - 解決後のパスは連結だけで作り、`.`・`..`・連続する `/` を畳まない
+  - 表示(stdout の 4 行、error 行の `path=`、warn / error 行の `runner=`)は解決後のパス
+- 変えていないもの: 比較ツール起動コマンドのコマンド部分の絶対パス検査、slot ジョブマップの所在、ジョブマップの work_dir / script の扱い
+- 実装との差分: 現在の実装は 4 キーの相対パスを拒否する。判断は decisions/spec-decision-035(2026-09-22 の spec-decision-013 の決定 3 を上書き)
+- RDRA に無い要素の追加は無い。UC ツリー(34 UC / 8 BUC / 6 業務)とティア構成は不変
+- 反証レビュー: 1 ラウンド。minor 6 件をすべて直した(blocker 0 / major 0)。記録は `_review/round-1.yaml`
+
+## 差分更新履歴(event 20261116_010000_feedback_impl_feedback_fd678b04_cycle4)
+
+- 2026-11-16T01:00:00Z(event_id: `20261116_010000_feedback_impl_feedback_fd678b04_cycle4`)。feature-flag.env の 9 キー以外のキーの値を、読み取りの途中だけ作業用の領域に置くことの可否(direct = causal = 1 件 = CR-fd678b04-001#1。2026-11-15 利用者決定: 一時的な保持を許し、条件を仕様に書く)
+- trigger_event: rdra `20261103_131000_feedback_housekeeping_db_required`、arch `20261103_133000_feedback_housekeeping_db_required`(上流は今回どれも変わっていない)
+- design 無しモード判定: 引数 `design_available=false`(最優先条件)。`_inputs-digest.md` は arch・nfr とも前イベントと同じ内容で、event_id の行だけを本イベントにした
+- 方針資料との照合: `tmp/RelayGateのしくみ.md` と `tmp/RelayGateの利用イメージ.md` は feature flag の設定例として 9 キーを示すだけで、読み取りの途中の値の持ち方の記載は無い。今回の変更は方針資料と食い違わない
+- 変更の一覧:
+
+| 要求 | 契約(cli-command-contract.yaml) | UC 別仕様 |
+|---|---|---|
+| 読み取りの途中の一時的な保持(CR-fd678b04-001#1) | `config_input_rules.env_files` の「feature-flag.env から値を取り込むキーの範囲」に「読み取りの途中の一時的な保持」を追加(「取り込む」の意味、作業用の領域の範囲、3 条件、条件を満たさない例、及ぶ読み手)。feature-flag.env の `reader_scope` と `keys` から参照 | feature flag を設定する(spec.md の分岐条件一覧 / tier-facade.md の設定契約) |
+
+- 細部の決定(仕様で 1 つに決めた値):
+  - 「取り込む」は、キーに対応する変数・環境変数へ値を載せること(設定値として後の処理で使える状態にすること)
+  - 作業用の領域は、読み取りの処理の中だけで使うシェルの変数・配列、入力の複製の一時ファイル、読み取りに使う補助コマンドの入出力
+  - 作業用の領域の変数の名前は実装が固定で決め、ファイルに書かれたキー名から決めない(キー名から名前を決めた変数は作業用の領域に当たらない)
+  - 空にする対象は、読み手が取り込まないキーの値を置いた作業用の領域。読み手が取り込むキーの値だけが入る作業用の変数は対象外
+  - 読み取りは、行・キー・値を取り出し、読み手が使うキーの値をキーに対応する変数へ載せ終えるまで。設定値を使う処理(キーごとの検査、runner への問い合わせなど)は読み取りの後
+  - 補助コマンドへ、入力の複製の一時ファイルや標準入力で行の内容を読ませることは「環境変数にしない」に反しない。補助コマンドの環境変数に載せて渡すことは反する
+  - 「失敗したとき」は、設定エラーで止めたときと、内部障害で打ち切ったときの両方
+  - 9 キーの一部だけを使う読み手では、検査にも処理にも使わないキーの値は、9 キー以外のキーの値と同じ扱い。既存の文は「自分が使うキー(検査に使うキーを含む)の値だけを取り込む」に語をそろえた
+- 変えていないもの: 出力(stdout / stderr)、終了コード、BDD の場面と期待値、`_api-summary.yaml`。観測できる挙動が変わらないため、BDD は追加していない(既存の場面「9 キー以外のキーの値をプロセスの環境へ取り込まない」が、環境へ値が載らないことを判定する)
+- 実装との関係: 現在の実装は 3 条件を満たしている(独立した検証の確認どおり)。実装の変更は要らない。判断は decisions/spec-decision-036
+- RDRA に無い要素の追加は無い。UC ツリー(34 UC / 8 BUC / 6 業務)とティア構成は不変
+
+## 差分更新履歴(event 20261116_021000_feedback_standard_runner_job_map_location)
+
+- trigger_event: `usdm:20261116_013000_feedback_standard_runner_job_map_location`, `rdra:20261116_013000_feedback_standard_runner_job_map_location`, `arch:20261116_015000_feedback_standard_runner_job_map_location`, `infra:20261116_020000_feedback_standard_runner_job_map_location`(nfr は変更なし)
+- design_available: false(引数で指定)。UC ツリー(34 UC / 8 BUC / 6 業務)とティア構成は不変。RDRA は要素の追加なし(情報「feature flag 設定」の属性が 1 つ増え、網羅率の分母は 344 → 345。網羅率は 100% のまま)
+- 反映した決定(利用者決定 2026-11-15 と 2026-11-16。確認推奨項目にせず決めた):
+
+| 決定 | 仕様で決めたこと | 正本 | 判断記録 |
+|---|---|---|---|
+| 標準の slot runner を正式に提供する | ファイルは `runners/standard-runner.sh`。実体は 1 つで blue と green の両方に割り当てる(slot は `--role`)。ローカル実行と SSH 実行を扱う。「参考実装(仮採用)」の扱いをやめた | CLI 契約 commands の slot runner の `standard_runner` | spec-decision-037 |
+| ジョブマップの場所を feature flag に書ける | 任意の 2 キー `BLUE_JOB_MAP_CSV` / `GREEN_JOB_MAP_CSV`。無い・空なら固定の名前。解決の規則は runner / worker の 4 キーと同じ 1 つの規則。facade.sh が slot runner へ環境変数で渡す | config_files の feature-flag.env の `job_map_location` と `runner_path_resolution` | spec-decision-038 |
+| facade.sh は最初の違反の 1 行だけを出す | 検証コマンドの error 行の順(error_order)で最初の違反の error 行(と hint) | commands の facade.sh の `config_violation_report` | spec-decision-039 |
+| background-rerun.sh は起動の前に実体を検査しない | 起動に失敗したら終了コード 6。読むキーと検査の順を定めた | commands の background-rerun.sh の `feature_flag_reading` | spec-decision-040 |
+
+- 方針資料との照合: 標準の runner の提供と、キー名を slot の名前に合わせたことは、方針資料と違う点として利用者決定(2026-11-16)を判断記録に書いた。それ以外に、方針資料と食い違う記述は足していない(しくみの資料の 9 キーの設定例はそのまま通る。利用イメージの資料の、feature flag にジョブマップの場所を相対パスで書く設定例を表せる)
+- 利用者決定より踏み込んで決めた細部は、各判断記録の「細部」の項に書いた(標準の slot runner の配置ディレクトリの決め方・SSH の起動形・認証情報の参照名の扱い、off の slot のジョブマップのキー、facade.sh の未知キーの warn の位置、background-rerun.sh の読むキーの欠落の扱いと起動の失敗の定義 など)
+- 実装との差分: 実装済みの feature flag の検証コマンドは 9 キー前提で、任意の 2 キーを未知キーとして扱い、固定の名前のジョブマップだけを検査する(spec-decision-038 の 9)。ジョブマップ単体の検証と比較ツール起動コマンドの検証は契約が変わらない
+- 課題一覧: DIST-032(facade.sh / background-rerun.sh の起動時検証で出す error 行)を決定済みとして閉じた
+- Step6.5 反証レビュー: `_review/round-*.yaml` と `_review/implementation-readiness.md`

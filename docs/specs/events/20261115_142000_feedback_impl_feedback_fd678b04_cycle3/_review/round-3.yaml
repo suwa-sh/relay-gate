@@ -1,0 +1,32 @@
+round: 3
+# 検証パスの確認結果(round 2 の 2 件の取り下げ対応について。いずれも指摘なし)
+# - UC「slot 実行モードを選択して runner を起動する」の tier-facade.md は、2026-11-10 のイベントの同ファイルとバイト単位で一致(cmp で確認)。
+# - CLI 契約 config_files の feature-flag.env の error_order(summary / sequence / per_key / surrounding_lines / example)は、
+#   対象を validate-config.sh --feature-flag の出力だけに限っている。facade.sh / background-rerun.sh の出力を定める文は無い。
+#   契約の commands の facade.sh / background-rerun.sh の節は 2026-11-10 のイベントから変わっておらず、
+#   reader_scope / validation_rules / commands の validate-config.sh / config_input_rules.env_files とも矛盾しない。
+# - UC「feature flag を設定する」「slot runner の実体スクリプトを割り当てる」の spec.md / tier-facade.md / _api-summary.yaml と
+#   2026-11-15 の決定記録に、facade.sh が error_order の順で最初の違反を出すと読める文は無い。
+# - round 1 の「起動時検証の順と error_order の食い違い」は、対象のコマンドが別になったため、文面上の矛盾としては残っていない。
+#   残るのは「facade.sh が違反 2 つ以上のときにどの 1 行を出すか」が決まらない点で、docs/todo.md に未決事項として記録済み。
+findings:
+  - id: R-3
+    viewpoint: 4
+    severity: minor
+    target: "spec-event.md"
+    claim: >-
+      round 1 で「spec-event.yaml から作り直した」と解決済みにした spec-event.md が、いまも前イベントの内容のままで、
+      同じイベントの spec-event.yaml・README.md と食い違う。解決の記載と、ファイルの現在の内容が合っていない。
+    evidence: >-
+      spec-event.md は 2026-11-10 のイベントの spec-event.md とバイト単位で同一(cmp の終了コード 0)。
+      7 行目の Event ID の行が 2026-11-10 のイベントを指している。
+      spec-event.yaml の event_id / source / previous_event_ref は 2026-11-15 のイベントの内容。
+      ファイルの更新時刻は spec-event.md が 13:49、spec-event.yaml が 13:57 で、
+      spec-event.yaml の最後の更新より後に spec-event.md は作り直されていない。
+    suggested_fix: >-
+      generateSpecEventMd.js で、現在の spec-event.yaml から spec-event.md を作り直す(手で編集しない)。
+      作り直した後に、Event ID の行が 2026-11-15 のイベントを指すことと、前イベントの同ファイルと差分があることを確認する。
+resolved:
+  - id: R-3
+    resolution: fixed
+    note: "spec-event.md は spec-event.yaml の review 節を確定した後の最終段で generateSpecEventMd.js により作り直した(round 1 の時点では未実施だった)。Event ID と Source が spec-event.yaml と一致することを確認した"

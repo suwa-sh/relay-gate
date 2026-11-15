@@ -1,0 +1,43 @@
+Spec 差分更新(design 無しモード): 2026-11-15 の利用者決定により、feature flag の runner / worker の実体パス(4 キー)に相対パスを受け付け、基準を設定ファイルのあるディレクトリにした(dist-pipeline feedback mode Step6)。上流(usdm / rdra / nfr / arch / infra)は変更なし。仕様を元の方針資料の設定例(相対パス)へ戻す変更。
+
+CR-c5a81e37-001#1(spec 直接所有): feature-flag.env の BLUE_RUNNER / GREEN_RUNNER / RAPID_CROSSCHECK_RUNNER / RAPID_CROSSCHECK_WORKER の 4 キー。
+- CLI 契約 config_files の feature-flag.env に runner_path_resolution を新設した(規則の正本)。
+  - 相対パスの判定: 値が `/` で始まらなければ相対パス。`./x`・`x`・`../d/x` を同じ基準で解決する。`~`・環境変数・コマンド置換は展開しない。
+  - 基準のディレクトリ: その feature-flag.env のあるディレクトリ(検証コマンドは渡されたパス、実行時の読み手は $RELAY_GATE_CONFIG_DIR/feature-flag.env のディレクトリ部分)。プロセスの作業ディレクトリは基準にしない。設定ファイルのパス自体が相対パスなら作業ディレクトリ(論理パス)で絶対化してからディレクトリ部分を取る。シンボリックリンクは辿らない。
+  - 解決後のパス: 基準のディレクトリ + `/` + 値(`.`・`..` を畳まない)。絶対パスの値はそのまま。
+  - 解決後のパスを使う場所: 存在・実行権限の検査、runner への --help の問い合わせ、runner の起動、slot runner へ環境変数で渡す RAPID_CROSSCHECK_RUNNER、stdout の blue_runner / green_runner / rapid_crosscheck_runner / rapid_crosscheck_worker の行、error 行の path=、warn / error 行と実行ログの runner=。
+  - `error: path is not absolute` は 4 キーでは出さない(比較ツール起動コマンドの検証には残る)。
+- 契約の関連箇所をそろえた: keys の type と description、validation_rules、error_messages、error_order の per_key(欠落・空 → 実体が無い・実行不可)と 12 行の例、validate-config.sh の --feature-flag の説明・runner_help_probe・stdout・stderr・終了コード 2 の条件、facade.sh の終了コード 2 の条件と runner へ引き継ぐ環境変数、runner IF の invoked_by と environment、background-rerun.sh の runner= の表示。
+- 追従した UC 別仕様:
+  - feature flag を設定する(spec.md / tier-facade.md / _api-summary.yaml)
+  - slot runner の実体スクリプトを割り当てる(spec.md / tier-facade.md / _api-summary.yaml)
+  - slot 実行モードを選択して runner を起動する(tier-facade.md / _api-summary.yaml)
+  - 速報クロスチェック runner へ完了通知を送信する(spec.md / tier-facade.md。送信先は解決後の絶対パス)
+  - 元の execution-spec.json から復元して新しい run_id で起動する(tier-ops.md。background 側のリランも同じ規則で解決する)
+  - 速報比較依頼を claim する(tier-rapid-crosscheck.md。worker のジョブ定義 / 常駐起動には解決後のパスを書く)
+  - 出力規約 ui-design.md と UX 設計 ux-design.md
+- BDD の追加:
+  - feature flag を設定する spec.md: 「方針資料の設定例の書き方(相対パス)の feature flag を検証する」「相対パスの基準は作業ディレクトリではなく設定ファイルのあるディレクトリである」
+  - feature flag を設定する tier-facade.md: 「validate-config_sh_feature-flag は方針資料の書き方の相対パスを設定ファイルのあるディレクトリ基準で解決して受理する」「validate-config_sh_feature-flag は相対パスの基準を作業ディレクトリではなく設定ファイルのあるディレクトリにする」(Scenario Outline 3 例)「validate-config_sh_feature-flag は設定ファイルのパスが相対パスのとき作業ディレクトリで絶対化したディレクトリを基準にする」「validate-config_sh_feature-flag は設定ファイルがシンボリックリンクのときリンクのあるディレクトリを基準にする」「validate-config_sh_feature-flag は相対パスの実体が無いとき解決後のパスで報告し path is not absolute を出さない」「validate-config_sh_feature-flag は ~ と環境変数とコマンド置換を展開せず文字のまま相対パスとして扱う」(Scenario Outline 3 例)
+  - slot runner の実体スクリプトを割り当てる spec.md: 「設定ファイルと同じディレクトリに置いた runner を相対パスで割り当てる」
+  - slot 実行モードを選択して runner を起動する tier-facade.md: 「facade_sh は相対パスの runner を設定ファイルのあるディレクトリ基準で起動し速報 runner を解決後のパスで渡す」「facade_sh は相対パスの runner 実体が無ければ解決後のパスを報告して終了コード 2 で終了する」
+  - 元の execution-spec.json から復元して新しい run_id で起動する tier-ops.md: 「background-rerun_sh は相対パスの runner を設定ファイルのあるディレクトリ基準で起動する」
+- BDD の置換:
+  - slot runner の実体スクリプトを割り当てる tier-facade.md: 「validate-config_sh_feature-flag は相対パスの runner を終了コード 2 で拒否する」を削除し、「validate-config_sh_feature-flag は相対パスの runner を設定ファイルのあるディレクトリ基準で解決して問い合わせる」「validate-config_sh_feature-flag は応答しない相対パスの runner を解決後のパスで警告する」に置き換えた。
+  - feature flag を設定する spec.md「error 行が 2 行以上のときは決まった順に報告される」と tier-facade.md「validate-config_sh_feature-flag は error 行が 2 行以上のとき契約の error_order の順に出す」: 5 行目の期待値を `error: path is not absolute key=BLUE_RUNNER path=relative/blue-runner.sh` から、解決後のパスの `error: file not executable key=BLUE_RUNNER path=...` に置き換えた(行数と順は同じ)。
+- 変えていないもの: 速報・確報の比較ツール起動コマンド(RAPID_COMPARE_COMMAND / FINAL_COMPARE_COMMAND)のコマンド部分の絶対パス検査、slot ジョブマップの所在($RELAY_GATE_CONFIG_DIR 配下の固定名)、ジョブマップの work_dir / script の扱い。
+
+方針資料との照合: tmp/RelayGateのしくみ.md の 391〜394 行と tmp/RelayGateの利用イメージ.md の 425〜428 行の設定例は、4 キーをどちらも ./ で始まる相対パスで書いている。今回の変更で、実体が設定ファイルと同じディレクトリにあればこの書き方が検証を通る。
+
+実装との差分: 現在の実装は 4 キーの相対パスを `error: path is not absolute` で拒否する。新しい契約とは違うため、実装との差分として decisions/spec-decision-035 に残した(2026-09-22 の spec-decision-013 の決定 3「runner パスの絶対パス検査は変えない」は今回の利用者決定で上書き)。実装は変えていない。
+E2E BDD は 3 場面増えた(どれも USDM の受け入れ条件に現れない細部のため usdm[] には載せない)。UC ツリー(34 UC / 8 BUC / 6 業務)とティア構成は不変。
+
+feedback request:
+- feedback_request_id: 20261115_runner_relative_path
+- input_sha256: 6d8f5ef4e077d4445a4495eace5014edbcda8cf4b7b1dfb096bc5556bed60414
+- request_ids: CR-c5a81e37-001
+- direct_work_unit_ids: CR-c5a81e37-001#1
+- causal_work_unit_ids: CR-c5a81e37-001#1
+- stage packet: docs/pipeline/feedback-runs/20261115_runner_relative_path/stage-packets/spec.md
+
+trigger_event: rdra:20261103_131000_feedback_housekeeping_db_required, arch:20261103_133000_feedback_housekeeping_db_required(上流は今回どれも変わっていない)

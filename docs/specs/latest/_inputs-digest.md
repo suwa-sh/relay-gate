@@ -1,10 +1,10 @@
 design_available: false
-event_id: 20261110_153000_feedback_impl_feedback_dcd8234d
+event_id: 20261116_021000_feedback_standard_runner_job_map_location
 
 # arch ダイジェスト
 
 - 転写元: `docs/arch/latest/arch-design.yaml`
-- source_sha256: `6ee48d9e90d09b186d8d085a0ac0c64adb0a637559321a753c0612124f5da27d`
+- source_sha256: `c53102258eb87c109a5e44ec19daf68de60dc5770785d80c474f31b1cf8d9879`
 - 生成: `extractSections.js`（原文転写。要約・言い換えなし）
 
 ## 転写済みセクションのチェックリスト
@@ -185,13 +185,15 @@ domain_architecture:
       name: "適用構成コンテキスト"
       ubiquitous_language:
         - term: "feature flag"
-          definition: "9 キー(BLUE_MODE / GREEN_MODE / RAPID_CROSSCHECK_MODE / BLUE_IMPL / GREEN_IMPL / BLUE_RUNNER / GREEN_RUNNER / RAPID_CROSSCHECK_RUNNER / RAPID_CROSSCHECK_WORKER)で slot ごとの実行モード・実装版・runner 実体・速報クロスチェックモード(foreground / background / off)と完了通知先・worker 実体を切り替える正本。設定版は持たない。運用モード(並行稼働 / 単独本番 / 次世代並行稼働)を組み合わせで表現する"
+          definition: "9 キー(BLUE_MODE / GREEN_MODE / RAPID_CROSSCHECK_MODE / BLUE_IMPL / GREEN_IMPL / BLUE_RUNNER / GREEN_RUNNER / RAPID_CROSSCHECK_RUNNER / RAPID_CROSSCHECK_WORKER)に、slot ジョブマップの場所を書く任意の 2 キー(blue 用と green 用に 1 つずつ。キー名は仕様で確定する)を加えた構成で、slot ごとの実行モード・実装版・runner 実体・速報クロスチェックモード(foreground / background / off)と完了通知先・worker 実体・slot ジョブマップの場所を切り替える正本。任意の 2 キーを書かない 9 キーだけの設定はそのまま通り、未知のキーとして扱うのは 9 キーと任意の 2 キーのどちらでもないキーとする。BLUE_RUNNER / GREEN_RUNNER には、relay-gate が提供する標準の slot runner か、利用者が自作した runner を割り当てる。設定版は持たない。運用モード(並行稼働 / 単独本番 / 次世代並行稼働)を組み合わせで表現する"
         - term: "ジョブマップ"
-          definition: "JOB_ID から実行先(host・user・work_dir・script・fixed_params・hang_detect_limit_minutes)を slot ごとに解決する正本。1 行目ヘッダーの CSV(1 行 1 job_id)で、credential_ref / map_version は末尾の任意列"
+          definition: "JOB_ID から実行先(host・user・work_dir・script・fixed_params・hang_detect_limit_minutes)を slot ごとに解決する正本。1 行目ヘッダーの CSV(1 行 1 job_id)で、credential_ref / map_version は末尾の任意列。slot ごとのジョブマップの場所は feature flag の任意のキーで指定でき(絶対パスと相対パスのどちらも受け付け、相対パスの基準は feature flag の設定ファイルがあるディレクトリ)、キーが無い・空なら設定ファイル置き場の固定の名前(blue-job-map.csv / green-job-map.csv)を使う。feature flag の検証コマンドと実行時の読み手(slot runner など)は、同じ設定から同じジョブマップを選ぶ"
+        - term: "標準の slot runner"
+          definition: "relay-gate が正式な提供物として提供する slot runner。そのまま BLUE_RUNNER / GREEN_RUNNER に割り当てられ、slot ジョブマップの行に従ってローカル実行(host と user が両方空の行)と SSH 実行(それ以外の行)の両方を扱い、runner の外部 IF(引数、--help の応答、Runner Result Contract の 3 ファイルと execution-spec.json、完了通知)を満たす。これを使う適用で利用者が用意するものは feature flag と slot ジョブマップ(と実行先の実装)だけで、runner のスクリプトは書かない。標準の slot runner が扱わない起動方式・プロトコル(特殊な接続)は、利用者が共通ライブラリと runner の外部 IF に従って runner を自作して割り当てる。参考実装(仮採用)としては扱わない。ファイル構成(1 つの実体を blue と green の両方に割り当てられる形を推奨)・ファイル名・置き場所は仕様で確定する。方針資料に明記の無い利用者決定(2026-11-16)で、方針資料の「適用ごとに実体を割り当てる」とは、割り当てる実体として標準の slot runner を選べる形で両立する"
         - term: "速報クロスチェック設定"
           definition: "速報クロスチェック用の env 設定ファイル(rapid-crosscheck.env)。管理 DB 接続参照名(RAPID_DB_CONN_REF。値は置かず参照名のみ)・lease 期間(RAPID_LEASE_SEC)・worker の poll 間隔(RAPID_POLL_INTERVAL_SEC)を保持し、facade・slot runner・速報クロスチェック runner・worker が読む。RAPID_CROSSCHECK_MODE=off では不要。ハング検知定期ジョブ設定と同型だが所有項目と読み手が異なるため別ファイル"
         - term: "設定所有区分"
-          definition: "各設定項目の正本をどこ(feature flag / slot ジョブマップ / ハング検知定期ジョブ設定(管理 DB 接続参照名)/ ハウスキープ設定(保持日数と管理 DB 接続参照名)/ 速報クロスチェック設定(速報の比較ツール起動コマンドを含む)/ 確報クロスチェック worker 設定(確報の比較ツール起動コマンドを含む)/ 適用文書)が所有するかの区分。比較対象は比較ツール側(適用側)が持つ"
+          definition: "各設定項目の正本をどこ(feature flag / slot ジョブマップ / ハング検知定期ジョブ設定(管理 DB 接続参照名)/ ハウスキープ設定(保持日数と管理 DB 接続参照名)/ 速報クロスチェック設定(速報の比較ツール起動コマンドを含む)/ 確報クロスチェック worker 設定(確報の比較ツール起動コマンドを含む)/ 適用文書)が所有するかの区分。slot ジョブマップの場所は feature flag が所有する(任意のキー)。比較対象は比較ツール側(適用側)が持つ"
         - term: "ハウスキープ設定"
           definition: "ハウスキープ定期ジョブが使う設定。保持日数(正の整数。既定 90 日)と、ハウスキープ専用 DB ロールの管理 DB 接続参照名(値は置かず参照名のみ)を持つ。接続参照名は、RAPID_CROSSCHECK_MODE が off 以外の設置と確報クロスチェックを使う設置(確報クロスチェック worker の設定がある設置)では必須で、無い・空なら設定エラーとしてハウスキープは何も削除せずに終わる。無し・空にできるのは管理 DB を一切使わない設置(off で確報クロスチェック worker の設定が無い設置)だけで、そのときハウスキープは管理 DB に接続せず、確報比較依頼と管理 DB の行を削除しない。ファイル名・キー名と、確報クロスチェック worker の設定があるとみなす判定方法は仕様で確定する。保持日数は設定検証で正の整数であることを検査する"
       related_subdomain_id: "SD-004"
@@ -234,9 +236,9 @@ domain_architecture:
       to_bc_id: "BC-005"
       pattern: "conformist"
       direction: "downstream"
-      translator_description: "BC-001(並行稼働実行)は BC-005 の設定契約(feature flag / slot ジョブマップ)をそのまま読み込み従う。翻訳層は持たず、run 開始時に execution-spec.json へ確定保存することで以後の変更から隔離する"
+      translator_description: "BC-001(並行稼働実行)は BC-005 の設定契約(feature flag / slot ジョブマップ)をそのまま読み込み従う。slot ジョブマップの場所も feature flag の任意のキー(無い・空なら固定の名前)に従って決め、検証コマンドと実行時の読み手が同じ場所を使う。翻訳層は持たず、run 開始時に execution-spec.json へ確定保存することで以後の変更から隔離する"
       integration_events: []
-      reason: "facade は設定された runner を起動するだけ、runner はジョブマップで実行先を解決するだけであり、設定契約に変更を加える余地がないため"
+      reason: "facade は設定された runner を起動するだけ、runner はジョブマップで実行先を解決するだけであり(relay-gate が提供する標準の slot runner でも、利用者が自作した runner でも同じ)、設定契約に変更を加える余地がないため"
       source_model: "条件: 実装固有事項の runner への閉じ込め, ジョブマップ解決条件, 実行設定の確定条件"
       confidence: "medium"
     - id: "CM-002"
@@ -461,7 +463,7 @@ domain_architecture:
   tiers:
     - id: "tier-facade"
       name: "facade / slot runner ティア"
-      description: "ジョブスケジューラの業務ジョブから JOB_ID [PARAM...] で同期起動される CLI。facade.sh が feature flag(9 キー)で slot と mode を選択し、run_id を発行して blue / green slot runner を起動し、foreground の Runner Result だけを中継する。slot runner はジョブマップ(CSV)で実行先を解決し、SSH で実装スクリプトを実行して Runner Result を出力し、速報有効時(RAPID_CROSSCHECK_MODE が foreground / background)に RAPID_CROSSCHECK_RUNNER へ完了通知を送る。速報有効時の管理 DB 接続参照名は速報クロスチェック設定(rapid-crosscheck.env)から読み、off では読まない"
+      description: "ジョブスケジューラの業務ジョブから JOB_ID [PARAM...] で同期起動される CLI。facade.sh が feature flag(9 キー + slot ジョブマップの場所を書く任意の 2 キー)で slot と mode を選択し、run_id を発行して blue / green slot runner を起動し、foreground の Runner Result だけを中継する。slot runner には、relay-gate が正式な提供物として提供する標準の slot runner か、利用者が自作した runner を割り当てる。標準の slot runner はジョブマップ(CSV。場所は feature flag の任意のキーで決まり、無い・空なら固定の名前)で実行先を解決し、ジョブマップの行に従ってローカル実行または SSH 実行で実装スクリプトを実行して Runner Result を出力し、速報有効時(RAPID_CROSSCHECK_MODE が foreground / background)に RAPID_CROSSCHECK_RUNNER へ完了通知を送る。速報有効時の管理 DB 接続参照名は速報クロスチェック設定(rapid-crosscheck.env)から読み、off では読まない"
       technology_candidates:
         - "シェルスクリプト CLI(bash)"
         - "SSH クライアント(リモート実行ホストへの実装スクリプト起動)"
@@ -470,7 +472,7 @@ domain_architecture:
       policies:
         - id: "SP-001"
           name: "facade の責務限定と slot 選択"
-          description: "facade は JOB_ID [PARAM...] だけを受け取り、feature flag 設定(BLUE_MODE / GREEN_MODE / RAPID_CROSSCHECK_MODE / BLUE_IMPL / GREEN_IMPL / BLUE_RUNNER / GREEN_RUNNER / RAPID_CROSSCHECK_RUNNER / RAPID_CROSSCHECK_WORKER の 9 キー。設定版は持たない)を起動のたびに読み込んで blue / green slot ごとに foreground / background / off を選択する。元資料の 9 キーは未知キーとして警告しない。比較対象や実装固有の起動方式は判断せず、設定された runner を起動するだけとする。off の slot は起動しない"
+          description: "facade は JOB_ID [PARAM...] だけを受け取り、feature flag 設定(BLUE_MODE / GREEN_MODE / RAPID_CROSSCHECK_MODE / BLUE_IMPL / GREEN_IMPL / BLUE_RUNNER / GREEN_RUNNER / RAPID_CROSSCHECK_RUNNER / RAPID_CROSSCHECK_WORKER の 9 キーに、slot ジョブマップの場所を書く任意の 2 キー(blue 用と green 用。キー名は仕様で確定する)を加えた構成。設定版は持たない)を起動のたびに読み込んで blue / green slot ごとに foreground / background / off を選択する。元資料の 9 キーと任意の 2 キーは未知キーとして警告せず、どちらでもないキーだけを未知キーとして扱う。任意の 2 キーを書かない 9 キーだけの設定はそのまま通る。比較対象や実装固有の起動方式は判断せず、設定された runner(標準の slot runner か自作の runner かを区別しない)を起動するだけとする。off の slot は起動しない"
           reason: "条件「facade の責務限定」「slot 起動可否判定」により、ジョブスケジューラ側の定義を実装非依存に保ち runner の差し替えだけで世代交代を可能にするため"
           source_model: "外部システム: ジョブスケジューラ, 情報: ジョブ起動要求, feature flag 設定, 条件: facade の責務限定, slot 起動可否判定, 実装固有事項の runner への閉じ込め, BUC: 実装切替ジョブ実行フロー"
           confidence: "high"
@@ -500,9 +502,9 @@ domain_architecture:
           confidence: "high"
         - id: "SP-006"
           name: "ジョブマップによる実行先解決と引数連結"
-          description: "slot runner は自 slot のジョブマップ(1 行目ヘッダーの CSV。列は job_id / host / user / work_dir / script / fixed_params / hang_detect_limit_minutes。credential_ref / map_version は末尾の任意列)に JOB_ID の行が存在するときのみ実行先を解決する。host / user はローカル実行の slot では省略できる。fixed_params は JSON 配列文字列を格納する CSV セル(二重引用符で囲み、セル内の二重引用符は二重化。空は [])で、bash 単独でクォートを解析する。固定引数の後ろに PARAM を順序を変えずに連結し、引数の数と空白・カンマを維持する。JOB_ID 未定義なら非 0 の exitcode.txt と原因を含む stderr.log を出力して終了する"
-          reason: "条件「ジョブマップ解決条件」「引数連結規則」。ジョブスケジューラ側の定義に実行先を持たせないため"
-          source_model: "条件: ジョブマップ解決条件, 引数連結規則, 情報: ジョブマップ, slot runner 割当, 外部システム: リモート実行ホスト(SSH), 現行実装(blue), 新実装(green)"
+          description: "slot runner は自 slot のジョブマップ(1 行目ヘッダーの CSV。列は job_id / host / user / work_dir / script / fixed_params / hang_detect_limit_minutes。credential_ref / map_version は末尾の任意列)に JOB_ID の行が存在するときのみ実行先を解決する。host / user はローカル実行の slot では省略できる。fixed_params は JSON 配列文字列を格納する CSV セル(二重引用符で囲み、セル内の二重引用符は二重化。空は [])で、bash 単独でクォートを解析する。固定引数の後ろに PARAM を順序を変えずに連結し、引数の数と空白・カンマを維持する。JOB_ID 未定義なら非 0 の exitcode.txt と原因を含む stderr.log を出力して終了する。自 slot のジョブマップの場所は feature flag の任意のキー(blue 用と green 用に 1 つずつ。キー名は仕様で確定する)で決まり、キーが無い・空なら設定ファイル置き場の固定の名前(blue-job-map.csv / green-job-map.csv)を使う。値は絶対パスと相対パスのどちらも受け付け、相対パスの基準は feature flag の設定ファイルがあるディレクトリとする(解決の規則は runner / worker の 4 キーと同じ。詳細は仕様の CLI 契約を正とする)。解決した後の場所は、ジョブマップを読むすべての処理(feature flag の検証コマンドによる所在の検査と表示、slot runner のジョブマップ解決、ジョブマップを読む運用系のコマンド)で同じものを使う。slot runner は feature flag の設定ファイルを読まない契約のままとし、解決した後の場所を runner へ渡す方法は仕様で確定する。ジョブマップ単体の検証コマンドは、渡されたパスを検証する動きのまま変えない。標準の slot runner は、host と user が両方空の行をローカル実行、それ以外の行を SSH 実行として扱う"
+          reason: "条件「ジョブマップ解決条件」「引数連結規則」「設定所有区分」。ジョブスケジューラ側の定義に実行先を持たせないため。ジョブマップの場所の指定は、方針資料の利用イメージの資料の設定例(feature flag にジョブマップの場所を書く)に寄せた利用者決定(2026-11-16)"
+          source_model: "条件: ジョブマップ解決条件, 引数連結規則, 設定所有区分, 情報: ジョブマップ, slot runner 割当, feature flag 設定, 外部システム: リモート実行ホスト(SSH), 現行実装(blue), 新実装(green)"
           confidence: "high"
         - id: "SP-007"
           name: "execution-spec の一度きりの確定保存"
@@ -525,8 +527,8 @@ domain_architecture:
           confidence: "high"
         - id: "SR-002"
           name: "実装固有事項の runner への閉じ込め"
-          description: "実装固有の起動方式・ホスト・OS・プロトコル・SSH 接続方法は slot の runner 実体スクリプトに閉じ込める。facade と速報 / 確報の比較規約、ハング検知、リラン、中止の各スクリプトは runner を差し替えても変更しない"
-          reason: "条件「実装固有事項の runner への閉じ込め」と NFR F.1.1.1(実装側の OS 差異は runner に閉じ込める)への対応"
+          description: "実装固有の起動方式・ホスト・OS・プロトコル・SSH 接続方法は slot の runner 実体スクリプトに閉じ込める。facade と速報 / 確報の比較規約、ハング検知、リラン、中止の各スクリプトは runner を差し替えても変更しない。relay-gate は、そのまま BLUE_RUNNER / GREEN_RUNNER に割り当てられる標準の slot runner を、正式な構成要素(提供物)として本ティアに置く。標準の slot runner は slot ジョブマップの行に従ってローカル実行と SSH 実行を扱い、runner の外部 IF(引数、--help の応答、Runner Result Contract の 3 ファイルと execution-spec.json、完了通知)を満たす。標準の slot runner を使う適用で利用者が用意するものは feature flag と slot ジョブマップ(と実行先の実装)だけで、runner のスクリプトは書かない。標準の slot runner が扱わない起動方式・プロトコル(特殊な接続)は、利用者が runner を自作して割り当て、その runner に閉じ込める。自作する runner のための共通ライブラリの提供と runner の外部 IF は残す。標準の slot runner を参考実装(仮採用)としては扱わない。ファイル構成(1 つの実体を blue と green の両方に割り当てられる形を推奨)・ファイル名・置き場所・feature flag への書き方の例は仕様で確定する"
+          reason: "条件「実装固有事項の runner への閉じ込め」と NFR F.1.1.1(実装側の OS 差異は runner に閉じ込める)への対応。標準の slot runner の正式な提供は方針資料に明記の無い利用者決定(2026-11-16)で、方針資料の「適用ごとに実体を割り当てる」とは、割り当てる実体として標準の slot runner を選べる形で両立する。runner を差し替えて異なる世代の実装を並行稼働できることは変えない"
           source_model: "条件: 実装固有事項の runner への閉じ込め, 情報: slot runner 割当, 適用構成文書, NFR F.1.1.1, NFR D.2.1.1"
           confidence: "high"
     - id: "tier-rapid-crosscheck"
@@ -693,8 +695,8 @@ domain_architecture:
           confidence: "high"
         - id: "SP-025"
           name: "設定所有区分に基づく設定ファイル配置"
-          description: "実装スロット・実装版(BLUE_IMPL / GREEN_IMPL)・runner と完了通知先・worker 実体の割当は feature flag(env 形式 9 キー)、実行先とハング検知上限は該当 slot のジョブマップ(CSV)、速報の比較ツール起動コマンド(1 行。{job_id} を含む)は速報クロスチェック設定、確報の比較ツール起動コマンド(1 行)は確報クロスチェック worker 設定が持ち、比較対象は比較ツール側(適用側)が定義する、ハング検知の管理 DB 接続参照名はハング検知定期ジョブ設定(env 形式。通知の宛先・送信コマンド・件名の項目は持たない)、ハウスキープの保持日数(既定 90 日)とハウスキープ専用 DB ロールの管理 DB 接続参照名はハウスキープ設定(ファイル名・キー名は仕様で確定)、速報クロスチェックの管理 DB 接続参照名(RAPID_DB_CONN_REF)・lease 期間(RAPID_LEASE_SEC)・worker の poll 間隔(RAPID_POLL_INTERVAL_SEC)は速報クロスチェック設定(env 形式 rapid-crosscheck.env。facade・slot runner・速報クロスチェック runner・worker が読み、RAPID_CROSSCHECK_MODE=off では不要)、外部 IF 方針・ネットワーク制約・ホスト配置・hang_detect_limit_minutes の調整記録は適用文書が所有する。所有者はいずれも基盤適用設計者。接続参照名は値を置かず参照名のみとする。feature flag は設定版を持たず、実装版は BLUE_IMPL / GREEN_IMPL、マップ版はジョブマップ側の任意列 map_version、文書版は適用文書が持ち、適用側が版管理する"
-          reason: "条件「設定所有区分」「適用側で定義する事項」と元の方針資料の設定契約(9 キー・CSV 列名)への対応。正本を一意に定め、relay-gate のスクリプトを変更せずに案件・世代を切り替えるため"
+          description: "実装スロット・実装版(BLUE_IMPL / GREEN_IMPL)・runner と完了通知先・worker 実体の割当と slot ジョブマップの場所(任意の 2 キー。無い・空なら設定ファイル置き場の固定の名前)は feature flag(env 形式。9 キー + 任意の 2 キー)、実行先とハング検知上限は該当 slot のジョブマップ(CSV)、速報の比較ツール起動コマンド(1 行。{job_id} を含む)は速報クロスチェック設定、確報の比較ツール起動コマンド(1 行)は確報クロスチェック worker 設定が持ち、比較対象は比較ツール側(適用側)が定義する、ハング検知の管理 DB 接続参照名はハング検知定期ジョブ設定(env 形式。通知の宛先・送信コマンド・件名の項目は持たない)、ハウスキープの保持日数(既定 90 日)とハウスキープ専用 DB ロールの管理 DB 接続参照名はハウスキープ設定(ファイル名・キー名は仕様で確定)、速報クロスチェックの管理 DB 接続参照名(RAPID_DB_CONN_REF)・lease 期間(RAPID_LEASE_SEC)・worker の poll 間隔(RAPID_POLL_INTERVAL_SEC)は速報クロスチェック設定(env 形式 rapid-crosscheck.env。facade・slot runner・速報クロスチェック runner・worker が読み、RAPID_CROSSCHECK_MODE=off では不要)、外部 IF 方針・ネットワーク制約・ホスト配置・hang_detect_limit_minutes の調整記録は適用文書が所有する。所有者はいずれも基盤適用設計者。接続参照名は値を置かず参照名のみとする。feature flag は設定版を持たず、実装版は BLUE_IMPL / GREEN_IMPL、マップ版はジョブマップ側の任意列 map_version、文書版は適用文書が持ち、適用側が版管理する"
+          reason: "条件「設定所有区分」「適用側で定義する事項」と元の方針資料の設定契約(9 キー・CSV 列名)への対応。slot ジョブマップの場所を書く任意の 2 キーは、方針資料の利用イメージの資料の設定例に寄せた利用者決定(2026-11-16)で、9 キーだけの設定はそのまま通る。正本を一意に定め、relay-gate のスクリプトを変更せずに案件・世代を切り替えるため"
           source_model: "条件: 設定所有区分, 適用側で定義する事項, ジョブマップ解決条件, 認証情報の非保存, 情報: feature flag 設定, ジョブマップ, 比較定義, ハング検知定期ジョブ設定, ハウスキープ設定, 速報クロスチェック設定, 適用構成文書, バリエーション: 設定所有区分, アクター: 基盤適用設計者, BUC: 適用構成定義フロー, NFR C.2.2.1, NFR C.1.2.2, NFR E.5.1.1"
           confidence: "high"
         - id: "SP-026"
@@ -720,7 +722,7 @@ domain_architecture:
       layers:
         - id: "L-facade-presentation"
           name: "プレゼンテーション層(CLI エントリ)"
-          responsibility: "facade.sh / blue-runner / green-runner の CLI 入口。JOB_ID [PARAM...] と feature flag の入力検証(foreground slot 排他を含む)、終了コードの決定、foreground の Runner Result の標準出力・標準エラー・終了コードへの無加工中継"
+          responsibility: "facade.sh と slot runner(relay-gate が提供する標準の slot runner。blue と green の両方に割り当てる。ファイル構成は仕様で確定する)の CLI 入口。JOB_ID [PARAM...] と feature flag の入力検証(foreground slot 排他を含む)、終了コードの決定、foreground の Runner Result の標準出力・標準エラー・終了コードへの無加工中継"
           allowed_dependencies:
             - "L-facade-usecase"
           policies:
@@ -759,7 +761,7 @@ domain_architecture:
           rules: []
         - id: "L-facade-domain"
           name: "ドメイン層"
-          responsibility: "slot 実行モードの判定表(起動可否・foreground 排他)、feature flag 9 キーの検証、run_id の生成規則、並行稼働実行と slot 実行の状態遷移、CSV セル(fixed_params)の解析と引数連結規則、exitcode.txt / aborted.txt → SUCCEEDED / FAILED / ABORTED / RUNNING の状態導出など、副作用を持たない純粋関数"
+          responsibility: "slot 実行モードの判定表(起動可否・foreground 排他)、feature flag の 9 キーと任意の 2 キー(slot ジョブマップの場所)の検証、slot ジョブマップの場所の解決規則(キーが無い・空なら固定の名前。相対パスの基準は feature flag の設定ファイルがあるディレクトリ)、run_id の生成規則、並行稼働実行と slot 実行の状態遷移、CSV セル(fixed_params)の解析と引数連結規則、exitcode.txt / aborted.txt → SUCCEEDED / FAILED / ABORTED / RUNNING の状態導出など、副作用を持たない純粋関数"
           allowed_dependencies: []
           policies:
             - id: "LP-005"
@@ -771,7 +773,7 @@ domain_architecture:
           rules: []
         - id: "L-facade-repository"
           name: "リポジトリ層"
-          responsibility: "parallel_run(管理 DB)、execution-spec / Runner Result(成果物ディレクトリ。aborted.txt の有無を含む)、feature flag(env 形式 9 キー)/ ジョブマップ(CSV。credential_ref / map_version は任意列)/ 速報クロスチェック設定(env 形式 rapid-crosscheck.env。速報有効時のみ読み、RAPID_DB_CONN_REF で管理 DB の接続先を解決する)の読み書きを集約単位で提供する"
+          responsibility: "parallel_run(管理 DB)、execution-spec / Runner Result(成果物ディレクトリ。aborted.txt の有無を含む)、feature flag(env 形式。9 キー + 任意の 2 キー)/ ジョブマップ(CSV。credential_ref / map_version は任意列。場所は feature flag の任意のキーから解決し、無い・空なら固定の名前)/ 速報クロスチェック設定(env 形式 rapid-crosscheck.env。速報有効時のみ読み、RAPID_DB_CONN_REF で管理 DB の接続先を解決する)の読み書きを集約単位で提供する"
           allowed_dependencies:
             - "L-facade-domain"
             - "L-facade-gateway"
@@ -1166,12 +1168,12 @@ domain_architecture:
           primary_key: false
         - name: "blue_runner"
           type: "string"
-          description: "BLUE_RUNNER: blue runner 実体スクリプトパス"
+          description: "BLUE_RUNNER: blue runner 実体スクリプトパス(relay-gate が提供する標準の slot runner、または利用者が自作した runner)"
           nullable: false
           primary_key: false
         - name: "green_runner"
           type: "string"
-          description: "GREEN_RUNNER: green runner 実体スクリプトパス"
+          description: "GREEN_RUNNER: green runner 実体スクリプトパス(relay-gate が提供する標準の slot runner、または利用者が自作した runner)"
           nullable: false
           primary_key: false
         - name: "rapid_crosscheck_runner"
@@ -1184,10 +1186,23 @@ domain_architecture:
           description: "RAPID_CROSSCHECK_WORKER: 速報クロスチェック worker の実体パス"
           nullable: false
           primary_key: false
+        - name: "blue_job_map_location"
+          type: "string"
+          description: "blue 用の slot ジョブマップの場所(任意のキー。キー名は仕様で確定する)。無い・空なら設定ファイル置き場の固定の名前(blue-job-map.csv)を使う。絶対パスと相対パスを受け付け、相対パスの基準は feature flag の設定ファイルがあるディレクトリ"
+          nullable: true
+          primary_key: false
+        - name: "green_job_map_location"
+          type: "string"
+          description: "green 用の slot ジョブマップの場所(任意のキー。キー名は仕様で確定する)。無い・空なら設定ファイル置き場の固定の名前(green-job-map.csv)を使う。絶対パスと相対パスを受け付け、相対パスの基準は feature flag の設定ファイルがあるディレクトリ"
+          nullable: true
+          primary_key: false
       relationships:
         - target_entity: "E-002"
           type: "1:N"
-          description: "feature flag が slot ごとの runner 割当(BLUE_RUNNER / GREEN_RUNNER)を所有する"
+          description: "feature flag が slot ごとの runner 割当(BLUE_RUNNER / GREEN_RUNNER)と、対応するジョブマップの所在(任意のキー)を所有する"
+        - target_entity: "E-003"
+          type: "1:N"
+          description: "任意のキーで slot ごとのジョブマップの場所を指定する(無い・空なら固定の名前)"
         - target_entity: "E-010"
           type: "1:N"
           description: "BLUE_IMPL / GREEN_IMPL が execution-spec の実装版として確定保存される"
@@ -1203,12 +1218,12 @@ domain_architecture:
           primary_key: true
         - name: "runner_script_path"
           type: "string"
-          description: "runner 実体スクリプトパス"
+          description: "runner 実体スクリプトパス(relay-gate が提供する標準の slot runner、または利用者が自作した runner)"
           nullable: false
           primary_key: false
         - name: "job_map_location"
           type: "string"
-          description: "対応するジョブマップの所在"
+          description: "対応するジョブマップの所在(feature flag の任意のキーで指定。無い・空なら設定ファイル置き場の固定の名前)"
           nullable: false
           primary_key: false
       relationships:
@@ -1336,7 +1351,7 @@ domain_architecture:
           primary_key: false
         - name: "runner_location"
           type: "text"
-          description: "runner 実体の所在"
+          description: "runner 実体の所在(relay-gate が提供する標準の slot runner の割り当て、または自作した runner の所在)"
           nullable: true
           primary_key: false
         - name: "hang_limit_adjustment_records"
@@ -2231,7 +2246,7 @@ domain_architecture:
 ## 追加転写元: `docs/nfr/latest/nfr-grade.yaml`
 
 - 転写元: `docs/nfr/latest/nfr-grade.yaml`
-- source_sha256: `71b7a2b971a9c5b57f2bbe1cfc360f3662d928ea9bb4be34af9396d49d74ac37`
+- source_sha256: `02bb857be42015520e925f0386818e1515b6015abfe2e0df0bd34bbaaafbef2d`
 - 生成: `extractSections.js`（原文転写。要約・言い換えなし）
 
 ### 転写済みセクションのチェックリスト
@@ -2445,9 +2460,9 @@ domain_architecture:
                 name: "データ量"
                 important: false
                 grade: 1
-                grade_description: "〜100万件/年(parallel_run・slot 実行・比較依頼・監視記録の管理レコード)。CSV 形式の設定ファイルの共通前提: slot ジョブマップは、1 ファイルあたりの想定最大行数をヘッダー行を除いて 5,000 行とする。内容の最悪条件は、全行で任意列を含む全列に値があり、キー列(job_id)が全行一意で、版の列(map_version)の値が全行異なるもの。設定ファイルを読む処理は、行数に比例する時間で処理できる実装を前提とする。機能ごとの仕様・検証は、行数と内容の条件をこの共通前提から引き、機能ごとに再決定しない"
-                reason: "ユーザー指定: 2026-09-21 に利用者が確定。管理レコードは年間 100 万件以内の想定を据え置く。設定ファイルの規模は元の方針資料に記載が無い新規の決定で、1 つのジョブマップに 3,000 ジョブ程度はあり得るという利用者の見立てに余裕を持たせて 5,000 行とした。クロスチェック簡素化(CR-dcd8234d-007)でクロスチェックジョブマップと対象カタログを廃止したため、5,000 行の前提が及ぶ CSV 形式の設定ファイルは slot ジョブマップのみとなった(比較定義は 1 行の起動コマンドで CSV の行構造を持たない)。閾値を機能ごとに考え直さない方針のため、CSV 形式の設定ファイル(slot ジョブマップ)の共通の前提として 1 か所に定める。2026-09-21 の実測(現状のジョブマップ検証、最悪条件)は 1,000 行 2.2 秒、2,000 行 6.6 秒、3,000 行 13.8 秒、5,000 行 36 秒で、典型の内容(map_version 全行同一)は 3,000 行 2.5 秒。現状の実装は 5,000 行の最悪条件で性能目標値(B.2.1.1)を超えるため、版の列の集計を行数の 2 乗の比較から行数に比例する処理へ改める実装改善を前提とする"
-                source_model: "情報: 並行稼働実行(parallel_run)、slot 実行、速報比較依頼、監視記録、ジョブマップ / 条件: ジョブマップ解決条件"
+                grade_description: "〜100万件/年(parallel_run・slot 実行・比較依頼・監視記録の管理レコード)。設定ファイルの大きさの共通前提: 性能の目標値(B.2.1.1)は、1 ファイルあたり 5,000 行以内かつ 8 MB 以内の設定ファイルを条件とする。この前提は、設定検証の 4 種別(--feature-flag / --job-map / --rapid-crosscheck / --final-crosscheck)が読む設定ファイルのすべてに及び、CSV 形式(slot ジョブマップ。行数はヘッダー行を除いて数える)にも env 形式(feature flag 設定・速報クロスチェック設定・確報クロスチェック worker の設定)にも同じものを適用する。内容は問わない(CSV 形式の最悪条件の例は、全行で任意列を含む全列に値があり、キー列(job_id)が全行一意で、版の列(map_version)の値が全行異なるもの)。この前提は目標値の条件であって入力の制限ではなく、5,000 行または 8 MB を超えるファイルも大きさを理由に拒否・警告せず、検証の結果(終了コード・標準出力・標準エラー)は変わらない。設定ファイルを読む処理は、行数に比例する時間で処理できる実装を選ぶ。機能ごとの仕様・検証は、大きさと内容の条件をこの共通前提から引き、機能ごとに再決定しない"
+                reason: "ユーザー指定: 2026-09-21 に利用者が確定し、2026-11-13 と 2026-11-15 に利用者が位置付けと範囲を確定。管理レコードは年間 100 万件以内の想定を据え置く。設定ファイルの規模は元の方針資料に記載が無い新規の決定で、1 つのジョブマップに 3,000 ジョブ程度はあり得るという利用者の見立てに余裕を持たせて 5,000 行とした。行の長さに上限が無く、行数だけでは処理時間が決まらないため、2026-11-15 に大きさの条件へ 8 MB 以内を加えた。同日、目標を 4 つの設定検証種別すべてに同じく適用すると決めたため、前提が及ぶ範囲を CSV 形式(slot ジョブマップ)だけから env 形式の設定ファイルへ広げた(2026-10 のクロスチェック簡素化でクロスチェックジョブマップと対象カタログは廃止済みで、CSV 形式の設定ファイルは slot ジョブマップのみ)。閾値を機能ごとに考え直さない方針のため、共通の前提として 1 か所に定める。5,000 行・8 MB は性能の目標値の条件であり、入力を制限する仕様ではない(2026-11-13 決定)。2026-09-21 の実測(当時のジョブマップ検証、最悪条件)は 1,000 行 2.2 秒、2,000 行 6.6 秒、3,000 行 13.8 秒、5,000 行 36 秒で、版の列の集計が行数の 2 乗の比較になっていたことが原因だったため、行数に比例する処理を選ぶ方針とした。目標(B.2.1.1)との差は差として記録し、実装・検証の不合格の理由にはしない"
+                source_model: "情報: 並行稼働実行(parallel_run)、slot 実行、速報比較依頼、監視記録、ジョブマップ、feature flag 設定、速報クロスチェック設定、比較定義 / 条件: ジョブマップ解決条件、設定所有区分"
                 confidence: "user"
               - id: "B.1.1.3"
                 name: "オンラインリクエスト件数"
@@ -2496,9 +2511,9 @@ domain_architecture:
                 name: "レスポンスタイム"
                 important: true
                 grade: 2
-                grade_description: "10秒以内(facade のオーバーヘッド・中止/リラン CLI の応答)。CSV 形式の設定ファイルを読む CLI と facade の設定読み込みは、B.1.1.2 の共通前提(1 ファイルあたり想定最大 5,000 行、最悪条件を含め内容によらず)で 10 秒以内に収める"
-                reason: "ユーザー指定: 2026-09-21 に利用者が確定。運用者向けの CLI 操作と facade の起動・中継のオーバーヘッドが対象で、業務ジョブ本体の処理時間は実装側の責務のため。目標を満たす行数と内容の条件は B.1.1.2 の共通前提の 1 か所から引き、内容によらず(最悪条件を含めて)10 秒以内とすることで、性能の合否を機能ごとに再決定せず判定できるようにする"
-                source_model: "条件: facade の責務限定 / 条件: CLI による提示 / 条件: ジョブマップ解決条件 / 情報: ジョブマップ"
+                grade_description: "10秒以内(facade のオーバーヘッド・中止/リラン CLI の応答)。設定ファイルの検査は性能の目標値として、B.1.1.2 の共通前提(5,000 行以内かつ 8 MB 以内のファイル)を、内容によらず 10 秒以内に終えることを目指す。対象は設定検証の 4 種別(--feature-flag / --job-map / --rapid-crosscheck / --final-crosscheck)すべてと facade の設定読み込みで、CSV 形式・env 形式のどちらの設定ファイルにも同じ目標を適用する。この目標は入力の制限ではない(大きさを理由に拒否・警告しない)。合否の検査でもない(目標を超えても検証の結果である終了コード・標準出力・標準エラーは変わらず、目標を超えたことを実装・検証の不合格の理由にしない)。runner の応答待ち(仕様どおり最大 9.2 秒)は、設定ファイルの検査の目標(10 秒)とは別に数える"
+                reason: "ユーザー指定: 2026-09-21 に利用者が確定し、2026-11-13 と 2026-11-15 に利用者が目標値としての位置付けを確定。運用者向けの CLI 操作と facade の起動・中継のオーバーヘッドが対象で、業務ジョブ本体の処理時間は実装側の責務のため。設定ファイルの検査の 10 秒以内は性能の目標値で、大きさと内容の条件は B.1.1.2 の共通前提の 1 か所から引き、機能ごとに再決定しない。入力を制限する仕様ではなく(2026-11-13 決定)、合否の検査でもない(2026-11-15 決定)ため、目標を超えた実行でも検証の結果は変えず、目標との差は差として記録する。特定のデータで所要時間を確認する自動テストは「このデータなら、この時間以内に終わる」の確認として残してよく、目標値の記載はこれを妨げない。応答しない runner を待つ時間(仕様どおり最大 9.2 秒)は設定ファイルの検査とは別の待ち時間のため、検査の目標(10 秒)に含めず別に数える。2026-11 の実測では、--feature-flag は 5,000 行以内かつ 8 MB 以内の入力 68 通りのうち 66 通りが 10 秒以内だった(超えた 2 通りは、runner の応答待ちが加わった入力と、多バイトのロケールで 1 行が 8 MB 弱の入力)。--job-map と --rapid-crosscheck は、数 MB の入力で目標との差が大きい"
+                source_model: "条件: facade の責務限定 / 条件: CLI による提示 / 条件: ジョブマップ解決条件 / 条件: 設定所有区分 / 情報: ジョブマップ、feature flag 設定、速報クロスチェック設定、比較定義"
                 confidence: "user"
               - id: "B.2.1.2"
                 name: "スループット"

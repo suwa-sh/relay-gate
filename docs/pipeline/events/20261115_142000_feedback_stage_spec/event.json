@@ -1,0 +1,513 @@
+{
+  "event_id": "20261115_142000_feedback_stage_spec",
+  "type": "feedback_stage_completed",
+  "run_id": "feedback-20261115_093126_impl_feedback_fd678b04-20261115_133830-97522",
+  "attempt": 1,
+  "created_at": "2026-11-15T14:20:00Z",
+  "stage": "spec",
+  "direct_work_unit_ids": [
+    "CR-fd678b04-001#2",
+    "CR-fd678b04-002#1",
+    "CR-fd678b04-003#1",
+    "CR-fd678b04-004#1"
+  ],
+  "causal_work_unit_ids": [
+    "CR-fd678b04-001#1",
+    "CR-fd678b04-001#2",
+    "CR-fd678b04-002#1",
+    "CR-fd678b04-003#1",
+    "CR-fd678b04-004#1"
+  ],
+  "work_unit_results": [
+    {
+      "work_unit_id": "CR-fd678b04-001#2",
+      "disposition": "applied",
+      "reason": "CLI 契約 config_input_rules.rules の「保証する」「性能保証の範囲外」を目標値と分かる語に改め(大きさを理由に拒否・警告せず、検証の結果は変わらない)、runner_help_probe.response_time_budget の「0.8 秒以内に収めれば 10 秒以内を満たす」を削除して、runner の応答待ち(最大 9.2 秒)を設定ファイルの検査の目標(10 秒)とは別に数えると書いた。UC「slot runner の実体スクリプトを割り当てる」の応答しない runner の場面は残し、10 秒以内の出所の注記を runner への問い合わせの上限へ改めた",
+      "artifact_refs": [
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/spec.md",
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/tier-facade.md",
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md",
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/decisions/spec-decision-034.yaml",
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/spec-event.yaml"
+      ]
+    },
+    {
+      "work_unit_id": "CR-fd678b04-002#1",
+      "disposition": "applied",
+      "reason": "CLI 契約 config_files の feature-flag.env に error_order を新設し、--feature-flag のキーごとの検査の error 行どうしの順(mode の必須・列挙 → foreground の個数 → slot の実装版と runner → 速報 runner / worker → FINAL_ で始まるキー → 対応ジョブマップ)を現行の順で定めた。UC「feature flag を設定する」の tier 仕様は順を持たず契約を参照し、順を判定する BDD を spec.md と tier-facade.md に 1 場面ずつ足した",
+      "artifact_refs": [
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md",
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md",
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/適用構成業務/適用構成定義フロー/feature flag を設定する/_api-summary.yaml",
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/tier-facade.md",
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/decisions/spec-decision-034.yaml",
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/spec-event.yaml"
+      ]
+    },
+    {
+      "work_unit_id": "CR-fd678b04-003#1",
+      "disposition": "applied",
+      "reason": "CLI 契約 config_files の feature-flag.env の validation_rules に、mode の値が列挙外・欠落・空のときは off でないとして扱い、mode 自体の error 行に加えて従属キー・対応ジョブマップを検査し runner へ問い合わせることを定めた(現行どおり)。UC「feature flag を設定する」の tier-facade.md のキー表の下に 1 文と対応表を足し、判定する BDD を spec.md に 1 場面、tier-facade.md に 2 場面足した",
+      "artifact_refs": [
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md",
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md",
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/適用構成業務/適用構成定義フロー/feature flag を設定する/_api-summary.yaml",
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/tier-facade.md",
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/decisions/spec-decision-034.yaml",
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/spec-event.yaml"
+      ]
+    },
+    {
+      "work_unit_id": "CR-fd678b04-004#1",
+      "disposition": "applied",
+      "reason": "CLI 契約 config_input_rules.env_files に、feature-flag.env から値を取り込むのは 9 キーだけで、9 キー以外のキーの値をプロセスの変数・環境変数へ取り込まず、キー名を表示と重複の判定に使うだけであること、検証コマンドだけでなく feature-flag.env を読むすべての処理に及ぶことを定めた。UC「feature flag を設定する」の設定契約から参照し、判定する tier BDD を 1 場面足した",
+      "artifact_refs": [
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md",
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md",
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/適用構成業務/適用構成定義フロー/feature flag を設定する/_api-summary.yaml",
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/decisions/spec-decision-034.yaml",
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/spec-event.yaml"
+      ]
+    }
+  ],
+  "reconciliation_results": [
+    {
+      "work_unit_id": "CR-fd678b04-001#1",
+      "status": "changed",
+      "reason": "非機能要求グレード B.1.1.2 / B.2.1.1 の目標値の記載に追従し、CLI 契約 config_input_rules に performance_target を新設した(5,000 行以内かつ 8 MB 以内を内容によらず 10 秒以内は性能の目標値で、入力の制限でも合否の検査でもない。4 つの設定検証種別すべて、CSV 形式と env 形式の両方)。UC 別仕様と出力規約・UX 設計の性能の記載を目標値の語に揃えた",
+      "artifact_refs": [
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/tier-facade.md",
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md",
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/実装切替業務/実装切替ジョブ実行フロー/ジョブマップで JOB_ID から実行先を解決する/tier-facade.md",
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/_cross-cutting/ux-ui/ui-design.md",
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/_cross-cutting/ux-ui/ux-design.md",
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/decisions/spec-decision-034.yaml",
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/spec-event.yaml"
+      ]
+    },
+    {
+      "work_unit_id": "CR-fd678b04-001#2",
+      "status": "changed",
+      "reason": "CLI 契約 config_input_rules.rules の「保証する」「性能保証の範囲外」を目標値と分かる語に改め(大きさを理由に拒否・警告せず、検証の結果は変わらない)、runner_help_probe.response_time_budget の「0.8 秒以内に収めれば 10 秒以内を満たす」を削除して、runner の応答待ち(最大 9.2 秒)を設定ファイルの検査の目標(10 秒)とは別に数えると書いた。UC「slot runner の実体スクリプトを割り当てる」の応答しない runner の場面は残し、10 秒以内の出所の注記を runner への問い合わせの上限へ改めた",
+      "artifact_refs": [
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/spec.md",
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/tier-facade.md",
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md",
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/decisions/spec-decision-034.yaml",
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/spec-event.yaml"
+      ]
+    },
+    {
+      "work_unit_id": "CR-fd678b04-002#1",
+      "status": "changed",
+      "reason": "CLI 契約 config_files の feature-flag.env に error_order を新設し、--feature-flag のキーごとの検査の error 行どうしの順(mode の必須・列挙 → foreground の個数 → slot の実装版と runner → 速報 runner / worker → FINAL_ で始まるキー → 対応ジョブマップ)を現行の順で定めた。UC「feature flag を設定する」の tier 仕様は順を持たず契約を参照し、順を判定する BDD を spec.md と tier-facade.md に 1 場面ずつ足した",
+      "artifact_refs": [
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md",
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md",
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/適用構成業務/適用構成定義フロー/feature flag を設定する/_api-summary.yaml",
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/tier-facade.md",
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/decisions/spec-decision-034.yaml",
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/spec-event.yaml"
+      ]
+    },
+    {
+      "work_unit_id": "CR-fd678b04-003#1",
+      "status": "changed",
+      "reason": "CLI 契約 config_files の feature-flag.env の validation_rules に、mode の値が列挙外・欠落・空のときは off でないとして扱い、mode 自体の error 行に加えて従属キー・対応ジョブマップを検査し runner へ問い合わせることを定めた(現行どおり)。UC「feature flag を設定する」の tier-facade.md のキー表の下に 1 文と対応表を足し、判定する BDD を spec.md に 1 場面、tier-facade.md に 2 場面足した",
+      "artifact_refs": [
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md",
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md",
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/適用構成業務/適用構成定義フロー/feature flag を設定する/_api-summary.yaml",
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/tier-facade.md",
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/decisions/spec-decision-034.yaml",
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/spec-event.yaml"
+      ]
+    },
+    {
+      "work_unit_id": "CR-fd678b04-004#1",
+      "status": "changed",
+      "reason": "CLI 契約 config_input_rules.env_files に、feature-flag.env から値を取り込むのは 9 キーだけで、9 キー以外のキーの値をプロセスの変数・環境変数へ取り込まず、キー名を表示と重複の判定に使うだけであること、検証コマンドだけでなく feature-flag.env を読むすべての処理に及ぶことを定めた。UC「feature flag を設定する」の設定契約から参照し、判定する tier BDD を 1 場面足した",
+      "artifact_refs": [
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md",
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md",
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/適用構成業務/適用構成定義フロー/feature flag を設定する/_api-summary.yaml",
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/decisions/spec-decision-034.yaml",
+        "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/spec-event.yaml"
+      ]
+    }
+  ],
+  "work_unit_evidence_refs": [
+    {
+      "work_unit_id": "CR-fd678b04-001#1",
+      "path": "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/_cross-cutting/api/cli-command-contract.yaml",
+      "sha256": "178e6f8e3fcdbb5e08d00a97778ba3764e93589c1476836ad3d31e8b1b500707"
+    },
+    {
+      "work_unit_id": "CR-fd678b04-001#1",
+      "path": "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/tier-facade.md",
+      "sha256": "17cfb50d8b886c77cf1ff23d3a94245eefc309e26eb5b7e0a4a3c7c415d588e9"
+    },
+    {
+      "work_unit_id": "CR-fd678b04-001#1",
+      "path": "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md",
+      "sha256": "9620f85e6242115a027f43ed7cf930f31bf6587095e028af644052fe4de99f19"
+    },
+    {
+      "work_unit_id": "CR-fd678b04-001#1",
+      "path": "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/実装切替業務/実装切替ジョブ実行フロー/ジョブマップで JOB_ID から実行先を解決する/tier-facade.md",
+      "sha256": "3020a5cbe10ede5a77d2c66a19e5b05257c1038e8504f0c296af5b2055e26644"
+    },
+    {
+      "work_unit_id": "CR-fd678b04-001#1",
+      "path": "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/_cross-cutting/ux-ui/ui-design.md",
+      "sha256": "7db1d026aa065f443a4ebee8bbf65c9a42ee4b3d9889a260296852e629af3c7e"
+    },
+    {
+      "work_unit_id": "CR-fd678b04-001#1",
+      "path": "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/_cross-cutting/ux-ui/ux-design.md",
+      "sha256": "9d395a8b036b7772f5f6784771e53d319097288db541ec070caf988737e21c73"
+    },
+    {
+      "work_unit_id": "CR-fd678b04-001#1",
+      "path": "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/decisions/spec-decision-034.yaml",
+      "sha256": "2ecfa71c59ebd23d576910254a21ebbe35d7f09777d47a832271da3b834d34d6"
+    },
+    {
+      "work_unit_id": "CR-fd678b04-001#1",
+      "path": "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/spec-event.yaml",
+      "sha256": "334698acf46dba87ce29e246d40572b8b0762c4a7e032d3fc63468268c8438c9"
+    },
+    {
+      "work_unit_id": "CR-fd678b04-001#2",
+      "path": "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/_cross-cutting/api/cli-command-contract.yaml",
+      "sha256": "178e6f8e3fcdbb5e08d00a97778ba3764e93589c1476836ad3d31e8b1b500707"
+    },
+    {
+      "work_unit_id": "CR-fd678b04-001#2",
+      "path": "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/spec.md",
+      "sha256": "d5d272a199ecd2619710e9c73bb56282f380b7226f76e65176d2d686a53c53c4"
+    },
+    {
+      "work_unit_id": "CR-fd678b04-001#2",
+      "path": "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/tier-facade.md",
+      "sha256": "35ef7cadb4d3ddad64c4f940003309af8717c798f16334eac63269cde5ee8e75"
+    },
+    {
+      "work_unit_id": "CR-fd678b04-001#2",
+      "path": "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md",
+      "sha256": "9620f85e6242115a027f43ed7cf930f31bf6587095e028af644052fe4de99f19"
+    },
+    {
+      "work_unit_id": "CR-fd678b04-001#2",
+      "path": "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/decisions/spec-decision-034.yaml",
+      "sha256": "2ecfa71c59ebd23d576910254a21ebbe35d7f09777d47a832271da3b834d34d6"
+    },
+    {
+      "work_unit_id": "CR-fd678b04-001#2",
+      "path": "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/spec-event.yaml",
+      "sha256": "334698acf46dba87ce29e246d40572b8b0762c4a7e032d3fc63468268c8438c9"
+    },
+    {
+      "work_unit_id": "CR-fd678b04-002#1",
+      "path": "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/_cross-cutting/api/cli-command-contract.yaml",
+      "sha256": "178e6f8e3fcdbb5e08d00a97778ba3764e93589c1476836ad3d31e8b1b500707"
+    },
+    {
+      "work_unit_id": "CR-fd678b04-002#1",
+      "path": "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md",
+      "sha256": "f379e0de286b6b8b1c411d12ce1c2a6546ff1222f2ab5f97d002a50f197385cd"
+    },
+    {
+      "work_unit_id": "CR-fd678b04-002#1",
+      "path": "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md",
+      "sha256": "9620f85e6242115a027f43ed7cf930f31bf6587095e028af644052fe4de99f19"
+    },
+    {
+      "work_unit_id": "CR-fd678b04-002#1",
+      "path": "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/適用構成業務/適用構成定義フロー/feature flag を設定する/_api-summary.yaml",
+      "sha256": "68a6154dabdf64fdb938421c414192cf12440b59471b41c3c205022001bf9648"
+    },
+    {
+      "work_unit_id": "CR-fd678b04-002#1",
+      "path": "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/tier-facade.md",
+      "sha256": "35ef7cadb4d3ddad64c4f940003309af8717c798f16334eac63269cde5ee8e75"
+    },
+    {
+      "work_unit_id": "CR-fd678b04-002#1",
+      "path": "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/decisions/spec-decision-034.yaml",
+      "sha256": "2ecfa71c59ebd23d576910254a21ebbe35d7f09777d47a832271da3b834d34d6"
+    },
+    {
+      "work_unit_id": "CR-fd678b04-002#1",
+      "path": "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/spec-event.yaml",
+      "sha256": "334698acf46dba87ce29e246d40572b8b0762c4a7e032d3fc63468268c8438c9"
+    },
+    {
+      "work_unit_id": "CR-fd678b04-003#1",
+      "path": "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/_cross-cutting/api/cli-command-contract.yaml",
+      "sha256": "178e6f8e3fcdbb5e08d00a97778ba3764e93589c1476836ad3d31e8b1b500707"
+    },
+    {
+      "work_unit_id": "CR-fd678b04-003#1",
+      "path": "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md",
+      "sha256": "f379e0de286b6b8b1c411d12ce1c2a6546ff1222f2ab5f97d002a50f197385cd"
+    },
+    {
+      "work_unit_id": "CR-fd678b04-003#1",
+      "path": "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md",
+      "sha256": "9620f85e6242115a027f43ed7cf930f31bf6587095e028af644052fe4de99f19"
+    },
+    {
+      "work_unit_id": "CR-fd678b04-003#1",
+      "path": "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/適用構成業務/適用構成定義フロー/feature flag を設定する/_api-summary.yaml",
+      "sha256": "68a6154dabdf64fdb938421c414192cf12440b59471b41c3c205022001bf9648"
+    },
+    {
+      "work_unit_id": "CR-fd678b04-003#1",
+      "path": "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/tier-facade.md",
+      "sha256": "35ef7cadb4d3ddad64c4f940003309af8717c798f16334eac63269cde5ee8e75"
+    },
+    {
+      "work_unit_id": "CR-fd678b04-003#1",
+      "path": "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/decisions/spec-decision-034.yaml",
+      "sha256": "2ecfa71c59ebd23d576910254a21ebbe35d7f09777d47a832271da3b834d34d6"
+    },
+    {
+      "work_unit_id": "CR-fd678b04-003#1",
+      "path": "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/spec-event.yaml",
+      "sha256": "334698acf46dba87ce29e246d40572b8b0762c4a7e032d3fc63468268c8438c9"
+    },
+    {
+      "work_unit_id": "CR-fd678b04-004#1",
+      "path": "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/_cross-cutting/api/cli-command-contract.yaml",
+      "sha256": "178e6f8e3fcdbb5e08d00a97778ba3764e93589c1476836ad3d31e8b1b500707"
+    },
+    {
+      "work_unit_id": "CR-fd678b04-004#1",
+      "path": "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md",
+      "sha256": "f379e0de286b6b8b1c411d12ce1c2a6546ff1222f2ab5f97d002a50f197385cd"
+    },
+    {
+      "work_unit_id": "CR-fd678b04-004#1",
+      "path": "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md",
+      "sha256": "9620f85e6242115a027f43ed7cf930f31bf6587095e028af644052fe4de99f19"
+    },
+    {
+      "work_unit_id": "CR-fd678b04-004#1",
+      "path": "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/適用構成業務/適用構成定義フロー/feature flag を設定する/_api-summary.yaml",
+      "sha256": "68a6154dabdf64fdb938421c414192cf12440b59471b41c3c205022001bf9648"
+    },
+    {
+      "work_unit_id": "CR-fd678b04-004#1",
+      "path": "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/decisions/spec-decision-034.yaml",
+      "sha256": "2ecfa71c59ebd23d576910254a21ebbe35d7f09777d47a832271da3b834d34d6"
+    },
+    {
+      "work_unit_id": "CR-fd678b04-004#1",
+      "path": "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/spec-event.yaml",
+      "sha256": "334698acf46dba87ce29e246d40572b8b0762c4a7e032d3fc63468268c8438c9"
+    }
+  ],
+  "domain_event_refs": [
+    {
+      "path": "specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/spec-event.yaml",
+      "sha256": "334698acf46dba87ce29e246d40572b8b0762c4a7e032d3fc63468268c8438c9"
+    }
+  ],
+  "feedback_request": {
+    "feedback_request_id": "20261115_093126_impl_feedback_fd678b04",
+    "input_sha256": "25caf38054a64316034645c9a2da7de0616818683b41aab58223544e8b98009f",
+    "request_ids": [
+      "CR-fd678b04-001",
+      "CR-fd678b04-002",
+      "CR-fd678b04-003",
+      "CR-fd678b04-004"
+    ],
+    "work_unit_ids": [
+      "CR-fd678b04-001#1",
+      "CR-fd678b04-001#2",
+      "CR-fd678b04-002#1",
+      "CR-fd678b04-003#1",
+      "CR-fd678b04-004#1"
+    ]
+  },
+  "post_execution_basis": {
+    "repository_head": "44cb3a660a9fd2343bda3a43631bc8f7bb3bdc6f",
+    "latest_domain_event_ids": {
+      "requirements": {
+        "rdra/events": "20261103_131000_feedback_housekeeping_db_required",
+        "usdm/events": "20261103_131000_feedback_housekeeping_db_required"
+      },
+      "quality_attributes": {
+        "nfr/events": "20261115_135000_feedback_impl_feedback_fd678b04_cycle3"
+      },
+      "architecture": {
+        "arch/events": "20261115_140000_feedback_impl_feedback_fd678b04_cycle3"
+      },
+      "infrastructure": {
+        "infra/events": "20261115_141000_feedback_impl_feedback_fd678b04_cycle3"
+      },
+      "design_system": {
+        "design/events": null
+      },
+      "spec": {
+        "specs/events": "20261115_142000_feedback_impl_feedback_fd678b04_cycle3"
+      },
+      "spec_stories": {
+        "design/events": null
+      }
+    },
+    "domain_event_root_snapshots": {
+      "rdra/events": {
+        "head_event_id": "20261103_131000_feedback_housekeeping_db_required",
+        "head_event_sha256": "3e511fca6a1fea0c55efdc3a33fb8b8e7e5ca12899627a7b14221d326de9fb7d",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency",
+          "20260908_011000_feedback_slot_status_wording",
+          "20260921_084000_feedback_impl_feedback_eff24f55",
+          "20261010_200000_feedback_impl_feedback_dcd8234d",
+          "20261101_101000_feedback_impl_feedback_dcd8234d",
+          "20261101_121000_feedback_mail_removal_housekeeping",
+          "20261103_081000_feedback_housekeeping_followups",
+          "20261103_131000_feedback_housekeeping_db_required"
+        ],
+        "event_set_sha256": "608c77661bedd39000b6f1c22dbe8e3c3d8b2c0c35359df2261b25a55aa9346f",
+        "latest_tree_sha256": "b4b4296ae1547f95cba62b54d1140692a16a05e72e184aa44fa8f8f35854b577"
+      },
+      "usdm/events": {
+        "head_event_id": "20261103_131000_feedback_housekeeping_db_required",
+        "head_event_sha256": "d5b9cc924c01032584134b561a0c833b5fa9262f0abafa9e664900b0171d8574",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency",
+          "20260908_011000_feedback_slot_status_wording",
+          "20260921_084000_feedback_impl_feedback_eff24f55",
+          "20261010_200000_feedback_impl_feedback_dcd8234d",
+          "20261101_101000_feedback_impl_feedback_dcd8234d",
+          "20261101_121000_feedback_mail_removal_housekeeping",
+          "20261103_081000_feedback_housekeeping_followups",
+          "20261103_131000_feedback_housekeeping_db_required"
+        ],
+        "event_set_sha256": "608c77661bedd39000b6f1c22dbe8e3c3d8b2c0c35359df2261b25a55aa9346f",
+        "latest_tree_sha256": "48b132d17198156a3da6feef7fd725090592abd41d7e50bd23229b210888d358"
+      },
+      "nfr/events": {
+        "head_event_id": "20261115_135000_feedback_impl_feedback_fd678b04_cycle3",
+        "head_event_sha256": "324b14da24788f15427d74b7125fc7e26b020bc974bb4dd616adf412dc476083",
+        "event_ids": [
+          "20260830_183726_initial_nfr",
+          "20260905_085000_feedback_todo_resolution",
+          "20260907_013000_feedback_todo_followup",
+          "20260907_120000_feedback_abort_consistency",
+          "20260908_013000_feedback_slot_status_wording",
+          "20260921_090000_feedback_impl_feedback_eff24f55",
+          "20261010_201000_feedback_impl_feedback_dcd8234d",
+          "20261101_102000_feedback_impl_feedback_dcd8234d",
+          "20261101_122000_feedback_mail_removal_housekeeping",
+          "20261103_082000_feedback_housekeeping_followups",
+          "20261103_132000_feedback_housekeeping_db_required",
+          "20261115_135000_feedback_impl_feedback_fd678b04_cycle3"
+        ],
+        "event_set_sha256": "7e826961fad76bedefd3443db2249f4908e3324e92273e9b183d3ad622a8554e",
+        "latest_tree_sha256": "12490438310ace0b863320236a1aae4659b2f7f60aaf92cbb84bb57b3805d572"
+      },
+      "arch/events": {
+        "head_event_id": "20261115_140000_feedback_impl_feedback_fd678b04_cycle3",
+        "head_event_sha256": "78a8c3d1b1f1be61911b199014f881551080a71012b6afe0f30f35a2eeaabf26",
+        "event_ids": [
+          "20260830_184457_initial_arch",
+          "20260830_202427_arch_infra_feedback_20260830_190412_infra_product_design",
+          "20260905_091000_feedback_todo_resolution",
+          "20260907_015000_feedback_todo_followup",
+          "20260907_122000_feedback_abort_consistency",
+          "20260908_015000_feedback_slot_status_wording",
+          "20260921_092000_feedback_impl_feedback_eff24f55",
+          "20261010_202000_feedback_impl_feedback_dcd8234d",
+          "20261101_103000_feedback_impl_feedback_dcd8234d",
+          "20261101_123000_feedback_mail_removal_housekeeping",
+          "20261103_083000_feedback_housekeeping_followups",
+          "20261103_133000_feedback_housekeeping_db_required",
+          "20261115_140000_feedback_impl_feedback_fd678b04_cycle3"
+        ],
+        "event_set_sha256": "66023fd0b53c0d668b362ed791fb1aa7f7779362bff9c581fa60be79d49b4403",
+        "latest_tree_sha256": "5e00d5989382518efa1cf9387b0f8c2f14b9010ef51ec8d110cb748c20355bfc"
+      },
+      "infra/events": {
+        "head_event_id": "20261115_141000_feedback_impl_feedback_fd678b04_cycle3",
+        "head_event_sha256": "7740e15905e9795cd783829a49a1fe67dc14a27be6497c7a0f6c2e0fd87361e0",
+        "event_ids": [
+          "20260830_190412_infra_product_design",
+          "20260905_093000_feedback_todo_resolution",
+          "20260907_021000_feedback_todo_followup",
+          "20260907_124000_feedback_abort_consistency",
+          "20260908_021000_feedback_slot_status_wording",
+          "20260921_094000_feedback_impl_feedback_eff24f55",
+          "20261010_203000_feedback_impl_feedback_dcd8234d",
+          "20261101_104000_feedback_impl_feedback_dcd8234d",
+          "20261101_124000_feedback_mail_removal_housekeeping",
+          "20261103_084000_feedback_housekeeping_followups",
+          "20261103_134000_feedback_housekeeping_db_required",
+          "20261104_091000_feedback_external_review_fixes",
+          "20261104_101000_feedback_rapid_env_deploy_check",
+          "20261105_091000_feedback_final_env_per_segment",
+          "20261105_111000_feedback_single_management_db",
+          "20261115_141000_feedback_impl_feedback_fd678b04_cycle3"
+        ],
+        "event_set_sha256": "f4edfb85e639ac1e0fcfd8dbb0896d8de1564254f3905afa91724b715467c3dc",
+        "latest_tree_sha256": "e2f26117303d8823a20eb60a93f5e9919a2adfb5e1327c9161a0b8fa959cadf2"
+      },
+      "design/events": {
+        "head_event_id": null,
+        "head_event_sha256": null,
+        "event_ids": [],
+        "event_set_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "latest_tree_sha256": null
+      },
+      "specs/events": {
+        "head_event_id": "20261115_142000_feedback_impl_feedback_fd678b04_cycle3",
+        "head_event_sha256": "f4db1f73514645ac40eb8d833296c8f995505f39ea857e24a867614afc6390af",
+        "event_ids": [
+          "20260830_202851_spec_generation",
+          "20260905_100000_feedback_todo_resolution",
+          "20260907_024000_feedback_todo_followup",
+          "20260907_131000_feedback_abort_consistency",
+          "20260908_024000_feedback_slot_status_wording",
+          "20260908_062000_feedback_spec_machine_readable",
+          "20260917_050000_feedback_impl_feedback_fd678b04",
+          "20260917_100000_feedback_impl_feedback_fd678b04_cycle2",
+          "20260921_100000_feedback_impl_feedback_eff24f55",
+          "20260923_112000_feedback_impl_feedback_eff24f55_cycle2",
+          "20261010_204000_feedback_impl_feedback_dcd8234d",
+          "20261027_055000_feedback_impl_feedback_dcd8234d",
+          "20261101_105000_feedback_impl_feedback_dcd8234d",
+          "20261101_125000_feedback_mail_removal_housekeeping",
+          "20261103_085000_feedback_housekeeping_followups",
+          "20261103_135000_feedback_housekeeping_db_required",
+          "20261103_151000_feedback_env_duplicate_key",
+          "20261104_092000_feedback_external_review_fixes",
+          "20261104_102000_feedback_rapid_env_deploy_check",
+          "20261105_092000_feedback_external_review_round2",
+          "20261105_112000_feedback_single_management_db",
+          "20261110_153000_feedback_impl_feedback_dcd8234d",
+          "20261115_142000_feedback_impl_feedback_fd678b04_cycle3"
+        ],
+        "event_set_sha256": "4a2afa072e8f40d7a17d48e4feeeb5c581f777fd2c149e1374983b54fdfa41ce",
+        "latest_tree_sha256": "e3872e06f88362c3f849935f0317e8bf85eafea9e183df29509a8b39d1ea217d"
+      }
+    }
+  }
+}

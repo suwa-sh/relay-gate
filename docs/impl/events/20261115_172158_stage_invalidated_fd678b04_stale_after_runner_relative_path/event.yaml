@@ -1,0 +1,21 @@
+event_id: 20261115_172158_stage_invalidated_fd678b04_stale_after_runner_relative_path
+type: stage_invalidated
+uc_id: fd678b04
+stage: S1
+payload:
+  reason: stale
+  targets:
+  - stages/S1_uc-init.done.yaml
+  - stages/S2_test-scaffold.done.yaml
+  - stages/S3_contracts.done.yaml
+  - stages/attempt-5/S4_tier-impl.tier-facade.done.yaml
+  - stages/attempt-5/S4_tier-impl.tier-facade.assumptions.yaml
+  - stages/attempt-5/S5_verify.tier-facade.done.yaml
+  - stages/attempt-5/S5_verify.tier-facade.findings.yaml
+  - stages/S6_uc-bdd.done.yaml
+  - stages/S7_atdd.done.yaml
+  - stages/S8_feedback.done.yaml
+  - stages/S9_review_generated.done.yaml
+  archived_to: docs/impl/latest/fd678b04/invalidated/20261115_172158_stage_invalidated_fd678b04_stale_after_runner_relative_path/
+  detail: 利用者決定(2026-11-15「A」= feature flag の runner / worker の 4 キーに相対パスを受け付け、基準を設定ファイルのあるディレクトリにする)を仕様へ反映した(dist-pipeline feedback run 20261115_runner_relative_path。CLI 契約 runner_path_resolution、この UC の spec.md・tier-facade.md、spec-decision-035)。全 done の projection が不一致になった。レビュー待ち(awaiting_review)だった資料は利用者の回答前に失効したため取り下げ、同一 attempt で S1 からやり直す(attempt++ しない。前回の findings は渡さない)。回答待ちだった問い(未知キーの値の一時保持、起動コマンドの error 1 行)は次のレビュー資料で改めて聞く
+created_at: '2026-11-15T17:21:58+09:00'

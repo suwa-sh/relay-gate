@@ -1,15 +1,16 @@
 stage: "S9"
 uc_id: "fd678b04"
-manifest_sha256: "829aa482569f86811e8a0a8453851b577b684bce01b8b83992f88cb1250b1ee5"
+manifest_sha256: "808bf63e1c7564ffef1498814b5d3f4e3a6163b4c2ff1429e03ae81125b0d01b"
 manifest_projection: "v2"
 result: "generated"
-tier_impl_attempt: 5
-rerun_reason: "stale after spec feedback runs (invalidated by 20261113_020309_stage_invalidated_fd678b04_stale_after_spec_feedback_runs)"
-previous_done: "docs/impl/latest/fd678b04/invalidated/20261113_020309_stage_invalidated_fd678b04_stale_after_spec_feedback_runs/stages/S9_review_generated.done.yaml"
+tier_impl_attempt: 6
+rerun_reason: "stale after spec feedback 20261116 (optional job map location keys, standard slot runner, transient hold conditions)"
+previous_done: "docs/impl/latest/fd678b04/invalidated/20261116_023620_stage_invalidated_fd678b04_stale_after_spec_feedback_20261116/stages/S9_review_generated.done.yaml"
 review_html: "docs/impl/latest/fd678b04/review/index.html"
 review_html_tracked: false
+review_html_basis: "前回のレビュー資料の CSS と回答欄の形だけを引き継ぎ、本文と図 8 枚はすべて書き直した"
 review_notes_input: "docs/impl/latest/fd678b04/review/review-notes.md"
-review_notes_note: "review-notes.md は読むだけで変更していない。2026-11-13 と 2026-11-15 の利用者の決定(性能は目標値であり、入力の制限でも合否の検査でもない)に従い、性能は合否ではなく目標との差の事実として表示した"
+review_notes_note: "review-notes.md は読むだけで変更していない。利用者が決定済みの事項(標準の runner を配る / 場所を書く項目を足す / 起動コマンドの 1 行 / リランの起動前の検査 / 一時的な保持 / 性能は目標値)は選択肢に戻さず、付録 5 に『今回は選び直さないこと』として示した"
 validators:
   review_html_contract: "node validateReviewHtml.js docs/impl/latest/fd678b04/review/index.html: pass"
   human_html_review: "python3 validate.py docs/impl/latest/fd678b04/review/index.html: VALID (ERROR 0 / WARN 0)"
@@ -18,88 +19,122 @@ validators:
     warnings: 0
     internal_id_warnings: 0
     long_paragraph_warnings: 0
-    h2_count: 11
-    svg_count: 6
-render_check: "Chrome headless のスクリーンショットで 1440px 幅(暗い配色)を目視。図 6 枚で斜め線 0、矢印の重なり 0、接続点の共有 0、端点でない箱の背面通過 0、ラベルと線のすき間 8px を確認。目視で見つけた 4 点(現在地の図の右端が切れる、図 3 と図 4 の文字が箱からはみ出す、前提の表の回答列が折り返す)を直して再生成した。500px 幅で本文の横スクロールなし(scrollWidth = innerWidth)を DOM で確認。選択を変えると返信文面が変わること・コピーボタンが有効になることを確認用の複製で確認した"
+    h2_count: 14
+    svg_count: 8
+    size_bytes: 122792
+    external_resources: 0
+render_check: "headless Chrome を DevTools Protocol で操作して確かめた(localhost で配信)。1440px 幅・明るい配色で、最初の画面(見出しと『お願いしたいこと』の全体が 900px の高さに入り、『いま何の話か』の図の上端が見える)、図 8 枚すべての個別の画像、『決めてほしいことの詳細』の節全体、回答欄の節全体を目視した。図 8 枚は、斜め線 0、矢印の重なり 0、接続点の共有 0、端点でない箱の背面通過 0、ラベルと線のすき間あり、文字のはみ出し 0。1440px 幅・暗い配色では図 2 枚(標準の runner の位置づけ / 場所の決まり方)だけを目視した。390px 幅・明るい配色で『お願いしたいこと』『いま何の話か』『実装者が補った前提』『回答欄』の 4 節を目視し、390px 幅・暗い配色で最初の画面を目視した。390px 幅ではページ全体の横スクロール 0(scrollWidth 390 = innerWidth 390、横スクロール領域の外にはみ出す要素 0)、図と表は個別に横スクロールになる。1 回目の目視で 390px 幅の表が 1 文字ずつの縦書きに潰れていたため、表に最小幅を付けて直し、『実装者が補った前提』の節で直ったことを目視した"
+interaction_check: "スクリプト実行後に操作部品の disabled が 0 個。初期の返信文面が推奨 7 行と一致。問い 4(2) を案 B に変えると 5 行目が、問い 6 を案 B に変えると 7 行目が変わり、補足欄に書いた文が最後の行に足された。コピーボタンを押すと『コピーしました』と表示され、クリップボードの中身が返信文面と一致した(localhost、フォーカスのエミュレーションあり)"
 render_check_not_done:
-  - "390px 幅の実機表示(headless Chrome の最小幅が 500px のため、500px で代用した)"
-  - "明るい配色での目視(CSS 変数の切り替えのみで、構造は同じ)"
-  - "コピーボタンを押した結果のクリップボードの中身"
+  - "1440px 幅で目視していない節: 判断サマリ / この機能と対象の仕様 / 今回の実装で変わったこと(図だけ見た)/ 実装者が補った前提 / 実装の構成・処理フロー・データフロー・テスト・判断後に起きること(図だけ見た)/ 動かし方 / 付録。ページ全体の縮小画像は見たが、文字は読めない大きさ"
+  - "390px 幅で目視していない節: 判断サマリから判断後に起きることまでのうち『実装者が補った前提』以外、付録。表の最小幅の修正後に見直したのは『実装者が補った前提』の節だけ(ほかの節の表は同じ CSS が当たるが、目視していない)"
+  - "暗い配色での図 6 枚(現在地 / 設定の項目 / 構成 / データフロー / テストの段 / 判断後)と、暗い配色の本文"
+  - "file:// で開いたときのコピーボタン(標準のコピー機能が使えず、旧方式に切り替わる経路)"
+  - "実機のスマホでの表示"
 diagrams:
   - type: "flowchart"
-    subject: "作業全体の流れと現在地(済み 3 段階、最終確認、承認後の公開。差し戻しの戻り先)"
+    subject: "今回の流れ(決定 → 仕様 → 実装 → 検証)と現在地(最終確認)"
   - type: "data-flow"
-    subject: "いまの実装がエラー行を出す順(6 つのまとまり。案 B で位置が変わる 2 つを強調)"
-  - type: "flowchart"
-    subject: "切り替えモードの値ごとの、関連項目の検査の有無(不正・空・なしの枝が未定)"
+    subject: "設定ファイルの項目(必須の 9 と任意の 2、どちらでもない項目)と検証コマンドの出力"
   - type: "architecture"
-    subject: "検証コマンドの構成(4 層と、設定ファイル・runner の実体。今回変わった 3 部品)"
+    subject: "標準の runner の位置づけ(仕様に入った・実装はこれから)"
+  - type: "architecture"
+    subject: "検証コマンドの構成(今回変えた部品 2 つ)"
   - type: "flowchart"
-    subject: "検証コマンドの処理の流れ(判断 3 つ、終了コード 0 / 2 / 6)"
+    subject: "ジョブマップの場所の決まり方(停止 / 項目なし / 絶対パス / 相対パス)"
   - type: "data-flow"
-    subject: "設定ファイルの中身が結果の表示になるまで(未知の項目の値を止める安全の境目)"
-feedback_request_count: 4
+    subject: "設定ファイルの中身が結果の行になるまで(取り込むのは 11 項目の値だけ)"
+  - type: "flowchart"
+    subject: "テストの段と件数、独立検証の 1 回目と 2 回目"
+  - type: "flowchart"
+    subject: "回答のあとの流れ(仕様に 1 文足すかどうかで、要求の公開か最終承認か)"
+executed_examples:
+  note: "『動かし方』の 4 例は、mktemp -d の一時ディレクトリで facade/bin/validate-config.sh --feature-flag を実際に実行した出力を載せた(一時ディレクトリのパスだけ置き換えた)"
+  cases:
+    - "任意の 2 項目を相対パスで書いた設定を、別のディレクトリから実行: 終了コード 0、blue_job_map と green_job_map は設定ファイルのあるディレクトリ + 書いた値"
+    - "書いた場所にジョブマップが無い: error: job map not found slot=blue map=<決めた場所>、終了コード 2"
+    - "9 項目だけの設定: 既定の場所、終了コード 0"
+    - "名前の違う項目 + 起動した側の環境の同名の変数: warn: unknown key、環境の値は使われず既定の場所、終了コード 0"
+feedback_request_count: 0
 open_blocker_count: 0
 decision_summary:
   approval_questions: 1
-  selection_questions: 5
-  assumption_questions: 1
+  selection_questions: 6
+  assumption_questions: 0
   recommended_choices: 7
   selection_labels:
-    - "全体の承認"
-    - "問い 1: 性能の目標を適用する範囲"
-    - "問い 2: エラー行の並び順"
-    - "問い 3: 切り替えモードが不正なときの関連項目"
-    - "問い 4: 未知の項目の値を読み込まない安全策"
-    - "問い 5: 文字コード設定(UTF-8)による遅さ"
-    - "実装者が補った前提(21 件)"
-  question_to_request:
-    - question: "問い 1"
-      cr_id: "CR-fd678b04-001"
-      options: "A = 4 検証種別すべてに適用(推奨) / B = slot ジョブマップと feature flag だけ / C = 要求を出さない"
-      assumption_id: "A-030"
+    - "問い 1: 全体の承認"
+    - "問い 2: 仕様の段で決めた細部"
+    - "問い 3: 受け入れテストに仮に加えた 4 件"
+    - "問い 4(1): 実装者が補った前提(25 件と記録漏れ 1 件)"
+    - "問い 4(2): 起動した側の環境の同名の変数を使わないこと"
+    - "問い 5: 次の機能での静的検査の対象"
+    - "問い 6: 本線への取り込み"
+  question_to_source:
     - question: "問い 2"
-      cr_id: "CR-fd678b04-002"
-      options: "A = 現行の順を仕様に書く(推奨) / B = キー表の順に変える"
-      assumption_id: "A-016"
+      source: "docs/specs/latest/decisions/spec-decision-036.yaml 〜 040.yaml"
+      options: "A = まとめて承認(推奨) / B = 一部を変える(補足に記入。仕様への要求として出す)"
     - question: "問い 3"
-      cr_id: "CR-fd678b04-003"
-      options: "A = 現行どおり検査する(推奨) / B = 検査しない"
-      assumption_id: "A-028"
-    - question: "問い 4"
-      cr_id: "CR-fd678b04-004"
-      options: "A = 仕様に書く(推奨) / B = 仕様に書かない。どちらも前提 A-010 の承認を含む"
-      assumption_id: "A-010"
+      source: "docs/impl/events/20261116_023619_config_confirmed_fd678b04_atdd_scenarios_provisional/event.yaml"
+      options: "A = 4 件とも加えたまま(推奨。atdd_scenarios 5 件を確定) / B = 外す(SPEC-001-01-4 の 1 件に戻す。テストは残す)"
+      provisional_scenarios:
+        - "SPEC-001-01-7"
+        - "SPEC-001-01-8"
+        - "SPEC-001-01-9"
+        - "SPEC-004-01-9"
+    - question: "問い 4(2)"
+      assumption_id: "A-046"
+      options: "A = 検証コマンドにも明記する 1 文を足す要求を出す(推奨。最終承認ではなく要求の公開になる。実装は変わらない) / B = このまま(要求 0 件。最終承認)"
+      note: "案 A のときだけ、S8 で要求 1 件の下書きを作る必要がある。要求の案は HTML の付録 4 に置いた"
     - question: "問い 5"
-      cr_id: null
-      options: "A = この変更の中では直さず記録にとどめる(推奨) / B = この変更の中で直す(実装の修正と独立検証をもう 1 回)"
-      finding_id: "F-002"
-  recommended_response: "全体=承認 / 問い 1=A / 問い 2=A / 問い 3=A / 問い 4=A / 問い 5=A / 前提=21 件すべて承認"
-  response_format_note: "回答欄は文で組み上がる形式(内部 ID を出さない)。前提は「21 件すべて承認」か「一部を却下(補足に前提の番号と、実装修正か仕様変更かを書く)」。番号と ID の対応は HTML の付録 1 と下の assumption_number_to_id"
-  optional_checkbox: "本線への取り込み(push と PR 作成)まで続けて進める。初期状態は未選択"
-  assumption_required_ids:
-    - "A-010"
-  assumption_requested_ids:
-    - "A-010"
-    - "A-016"
-    - "A-028"
-    - "A-030"
+      source: "docs/impl/events/20261116_023525_bootstrap_completed_partial_rerun_standard_runner_job_map_location/event.yaml の open_note"
+      options: "A = 本体は src/ に置き runners/ と lib/ は数行の入口(推奨。設定変更なし) / B = lint の対象に bin runners lib を足す(impl-config と CI の変更)"
+      note: "この UC の範囲外(次の UC の進め方)。回答は次の UC の開始時に使う"
+    - question: "問い 6"
+      options: "A = 1 コミットにまとめ直して PR 18 を更新し、CI が通ったらマージまで(推奨) / B = PR の更新までで止める"
+  recommended_response: "全体=承認 / 仕様の細部=まとめて承認 / 受け入れテスト=4 件とも加えたまま / 前提=26 件すべて承認 / 同名の変数=案 A(1 文足す要求) / 静的検査=案 A / 取り込み=案 A"
+  response_format_note: "回答欄は文で組み上がる形式(内部 ID を出さない)。前提は『すべて承認』か『一部を却下(補足に前提の番号と、実装修正か仕様変更かを書く)』。番号と ID の対応は HTML の付録 2 と下の assumption_number_to_id"
+  initial_reply_text:
+    - "【全体】今回の実装(ジョブマップの場所を書く任意の 2 項目への対応)を承認します。"
+    - "【仕様の細部】仕様の段で決めた細部は、まとめて承認します。"
+    - "【受け入れテスト】仮に加えた 4 件は、この機能の受け入れテストに加えたままにしてください。"
+    - "【実装者が補った前提】25 件と、記録から漏れていた 1 件を、すべて承認します。"
+    - "【起動した側の環境の同名の変数】案 A: 検証コマンドも使わないことを、仕様に 1 文足す要求として出してください(実装は変えない)。"
+    - "【次の機能での静的検査の対象】案 A: 標準の runner の本体は src/ に置き、runners/ と lib/ は数行の入口にしてください(検査の設定は変えない)。"
+    - "【本線への取り込み】承認後、今回の分を 1 コミットにまとめ直して取り込み依頼 18 を更新し、自動検査が通ったらマージまで進めてください。"
+  assumption_total: 25
+  assumption_unlisted_total: 1
+  assumption_required_ids: []
+  assumption_required_note: "実装者の分類も独立検証の分類も security / persistence の前提は 0 件。回答必須は 0 件"
+  assumption_new_ids:
+    - "A-045"
+    - "A-046"
+  assumption_unlisted_ids:
+    - "V-001"
   assumption_consistent_ids:
     - "A-035"
+    - "A-042"
+    - "A-046"
+  assumption_rewritten_ids:
+    - "A-031"
+    - "A-033"
+    - "A-036"
+    - "A-044"
+  assumption_category_differs_ids: []
   assumption_number_to_id:
-    - "1: A-010"
-    - "2: A-016"
-    - "3: A-028"
-    - "4: A-030"
-    - "5: A-017"
-    - "6: A-018"
-    - "7: A-019"
-    - "8: A-020"
-    - "9: A-023"
-    - "10: A-024"
-    - "11: A-025"
-    - "12: A-027"
-    - "13: A-029"
+    - "1: A-045"
+    - "2: A-046"
+    - "3: V-001"
+    - "4: A-017"
+    - "5: A-018"
+    - "6: A-019"
+    - "7: A-020"
+    - "8: A-023"
+    - "9: A-024"
+    - "10: A-025"
+    - "11: A-027"
+    - "12: A-029"
+    - "13: A-030"
     - "14: A-031"
     - "15: A-032"
     - "16: A-033"
@@ -108,49 +143,53 @@ decision_summary:
     - "19: A-036"
     - "20: A-037"
     - "21: A-038"
-  approval_outcome_note: "承認後は仕様への要求(最大 4 件)を公開し、仕様の反映待ちになる。本線への取り込み(push・PR)は利用者の指示があってから行う"
+    - "22: A-039"
+    - "23: A-041"
+    - "24: A-042"
+    - "25: A-043"
+    - "26: A-044"
+  decided_not_asked:
+    - "標準の runner(ローカル実行と SSH 実行)を正式に配る(2026-11-16)"
+    - "設定ファイルにジョブマップの場所を書く任意の 2 項目を足し、書かなければ固定の名前。相対パスの基準は設定ファイルのあるディレクトリ(2026-11-16)"
+    - "ジョブを起動するコマンドは最初の違反を 1 行 / リランのコマンドは起動前に実体を検査せず起動失敗は終了コード 6(2026-11-15)"
+    - "読み取りの途中の一時的な保持を許す(2026-11-15)"
+    - "性能(5,000 行・8 MB・10 秒)は目標値。入力の制限でも合否の検査でもない"
+  approval_outcome_note: "問い 4(2) が A なら、最終承認ではなく要求 1 件の公開になる(S8 で下書きを作る)。B なら要求 0 件のまま最終承認。問い 2 が B なら補足の点を仕様への要求として出す。問い 3 が B なら atdd_scenarios を 1 件に戻して受け入れの段をやり直す。問い 6 の A / B で、PR 18 の更新後にマージまで進めるかが決まる。『要求を公開した場合も取り込みを進める』は前回(2026-11-15)の進め方にならった見込みで、HTML では『推測』のラベルを付けた"
 feedback_review_evidence:
-  feedback_id: "20261115_093126_impl_feedback_fd678b04"
-  draft_path: "docs/impl/latest/fd678b04/feedback/draft.md"
-  draft_sha256: "25caf38054a64316034645c9a2da7de0616818683b41aab58223544e8b98009f"
-  request_count: 4
+  feedback_id: null
+  draft_path: null
+  draft_sha256: null
+  request_count: 0
   blocker_count: 0
-  request_ids:
-    - "CR-fd678b04-001"
-    - "CR-fd678b04-002"
-    - "CR-fd678b04-003"
-    - "CR-fd678b04-004"
+  request_ids: []
 implementation_review_evidence:
   gate_result: "6/6 pass"
   gates:
     format: "pass"
     lint: "pass"
-    tdd: "pass (475/475)"
-    bdd_tier: "pass (80/80)"
-    uc_bdd: "pass (46/46, injections 0)"
-    atdd: "pass (1/1)"
+    tdd: "pass (535/535)"
+    bdd_tier: "pass (111/111)"
+    uc_bdd: "pass (54/54, injections 0)"
+    atdd: "pass (5/5)"
   open_blocker_count: 0
-  open_major_count: 1
-  open_minor_count: 20
-  verifier_blocker_findings: 2
-  verifier_blocker_finding_ids:
-    - "F-001"
-    - "F-002"
-  verifier_blocker_handling: "性能目標との差 2 件。利用者の決定(20261115_092742_config_confirmed_fd678b04_performance_target_is_goal_not_gate)により合否の検査として扱わないため、open_blocker_count には数えていない。S5 done の open_blockers は 2 のまま"
+  open_major_count: 0
+  open_minor_count: 26
   tiers:
     - tier: "tier-facade"
-      attempt: 5
-      assumptions_sha256: "764eb97433280c6e2d3321c97e9c73c6fc0c0bd4ab06c3da04f58f743bf23aa1"
-      assumption_verdicts_sha256: "3c4c577facfef77bb57cac50a1a04689662b8959682503b8fdf6a42e31114066"
-  assumption_evidence_sha256: "508c82fc00f546de84ac16df15d8223434913ae84691df2ab87ab6a138c76867"
+      attempt: 6
+      assumptions_sha256: "ce40a9ad847e9b99a8f5ca7c58235adf62504092151fadb914858441e43ce95a"
+      assumption_verdicts_sha256: "e7a199c8e485607596d691eb069dd3044d6d744d0b993a6873d38b6cbe51e7c9"
+  assumption_evidence_sha256: "75af6ae1255247e2a85a6f95651908c04bf906364625bd71138ade1eb1f7978c"
 captures: []
 issues: []
 notes:
   - "manifest_sha256 は引数の値を再計算せず転記した"
-  - "assumption_evidence_sha256 は validateAssumptions.js evidence に S5 done の 2 つの hash を渡して算出した"
-  - "draft_sha256 は feedback/draft.md の現在の bytes の sha256。draft は変更していない"
-  - "HTML の付録 3 に 2026-09 の回答の原文(機能=A / 禁止キー=A / 相互運用=A / 監査=A)を、今回は選び直さない確定事項として載せた。validateReviewHtml.js の回答 template 検査はこの記載で通る"
-  - "問い 2 の具体例の出力は、このレビュー資料の作成時に facade/bin/validate-config.sh を一時ディレクトリの設定で 1 回実行して得た(読み取り専用。リポジトリのファイルは変更していない)。テストのゲートは再実行していない"
-  - "git の書き込みコマンドは実行していない。write-set 外のリポジトリのファイルは変更していない"
-completed_at: "2026-11-15T09:49:00+09:00"
+  - "assumption_evidence_sha256 は validateAssumptions.js evidence に S5 done(attempt 6)の 2 つの hash を渡して算出した(ok: true、tiers 1)"
+  - "feedback の下書きは無い(S8 は no_requests)。HTML の付録 4 に『要求 0 件』と、問い 4(2) で案 A を選んだ場合に作る要求の案を置いた"
+  - "HTML の付録 5 に 2026-09 の回答の原文(機能=A / 禁止キー=A / 相互運用=A / 監査=A)を、今回は選び直さない確定事項として載せた。validateReviewHtml.js の回答 template 検査はこの記載で通る"
+  - "前提 26 件の全件と ID、仕様の細部の全件は、内部 ID を本文に出さない利用者の規則に従い、付録(折りたたみ)に置いた。本文は名前と『前提 1〜26』の番号で呼ぶ"
+  - "問い 5 の案 B の弱点『既存の入口に指摘が出るかもしれない』は試していない見立てで、HTML では『推測』のラベルを付けた"
+  - "テストのゲートは再実行していない。このレビュー資料の作成時に実行したのは、『動かし方』の 4 例、読み取り専用の git(diff --stat / --shortstat、log)、gh pr view 18(OPEN、MERGEABLE、検査 12 項目 SUCCESS、head ea52633)だけ。ローカルの未 push のコミットは 11 個"
+  - "git の書き込みコマンドは実行していない。write-set 外のリポジトリのファイルは変更していない。一時ファイルは作業用の領域と mktemp -d のディレクトリに置いた"
+completed_at: "2026-11-16T04:06:24+09:00"
 completed_by: "dist-impl-review@0.14.1"

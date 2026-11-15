@@ -9,7 +9,7 @@
 ### rapid-crosscheck-worker.sh
 
 - **書式**: `rapid-crosscheck-worker.sh [--once] [--worker-id <id>] [--verbose] [--help]`
-- **アクセス権**: ジョブスケジューラの定期起動(`--once`)または常駐プロセス(ジョブ定義 / 常駐起動は feature flag の `RAPID_CROSSCHECK_WORKER` が指す実体を参照する)。管理 DB は閉域セグメント内の OS 権限で接続(CTP-002)
+- **アクセス権**: ジョブスケジューラの定期起動(`--once`)または常駐プロセス(ジョブ定義 / 常駐起動は feature flag の `RAPID_CROSSCHECK_WORKER` が指す実体を参照する。値が相対パスのときは、設定ファイルのあるディレクトリを基準に解決した後のパス(`validate-config.sh --feature-flag` の stdout の `rapid_crosscheck_worker:` の行の値)をジョブ定義に書く。CLI 契約 `config_files.feature-flag.env.runner_path_resolution`)。管理 DB は閉域セグメント内の OS 権限で接続(CTP-002)
 
 #### 引数・オプション
 

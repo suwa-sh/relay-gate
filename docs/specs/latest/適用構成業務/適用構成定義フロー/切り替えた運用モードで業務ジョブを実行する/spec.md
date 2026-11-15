@@ -190,7 +190,7 @@ Feature: 切り替えた運用モードで業務ジョブを実行する
 
 ```gherkin
   Scenario: 誤った運用モード設定は業務ジョブを起動せずに止まる
-    Given 基盤適用設計者が誤って BLUE_MODE=foreground GREEN_MODE=foreground を設定した
+    Given 並行稼働モードの有効な feature flag(BLUE_MODE=foreground GREEN_MODE=background RAPID_CROSSCHECK_MODE=background と、実行可能な runner / worker を指すキー)のうち、基盤適用設計者が GREEN_MODE だけを誤って foreground に書き換えた(ほかのキーは有効なまま)
     When ジョブスケジューラが facade.sh JOB001 を実行する
     Then ジョブスケジューラは終了コード 2 と標準エラー "error: foreground slot must be exactly one blue_mode=foreground green_mode=foreground" を受け取る
     And blue も green も起動されない

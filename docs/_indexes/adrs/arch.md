@@ -32,3 +32,4 @@
 | 24 | [relay-gate は実行ログを整理しない。実行ログは設置環境の OS 標準のログ整理(logrotate)で 3 か月保管する(arch-decision-023 の「実行ログの手動ローテーションは残す」を改める)](../../arch/events/20261103_083000_feedback_housekeeping_followups/decisions/arch-decision-024.yaml) | approved |
 | 25 | [管理 DB に接続しない設定のハウスキープは、確報比較依頼と管理 DB の行を消さず、off 以外の期間に作られた実行を単位ごと残す。ハウスキープ設定の接続参照名は off では省略できる](../../arch/events/20261103_083000_feedback_housekeeping_followups/decisions/arch-decision-025.yaml) | approved |
 | 26 | [ハウスキープ設定の管理 DB 接続参照名は、管理 DB を使う機能が 1 つでもある設置では必須とし、欠けたら設定エラーで何も削除しない。管理 DB に接続しない振る舞いは管理 DB を一切使わない設置に限る](../../arch/events/20261103_133000_feedback_housekeeping_db_required/decisions/arch-decision-026.yaml) | approved |
+| 27 | [relay-gate は標準の slot runner を正式な構成要素として持ち、feature flag は 9 キーに slot ジョブマップの場所を書く任意の 2 キーを加えた構成とする](../../arch/events/20261116_015000_feedback_standard_runner_job_map_location/decisions/arch-decision-027.yaml) | approved |

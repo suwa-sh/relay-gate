@@ -2,11 +2,11 @@
 
 | 項目 | 値 |
 |------|-----|
-| イベント ID | 20261105_111000_feedback_single_management_db |
-| 作成日時 | 2026-11-05T11:10:00+09:00 |
-| ソース | 管理 DB の接続先の指摘(2026-11-05)に基づくインフラ設計の差分更新: 管理 DB は 1 つで、すべての接続先の参照名(RAPID_DB_CONN_REF、実行ホストと DB セグメントそれぞれの FINAL_DB_CONN_REF、HANG_DB_CONN_REF、HOUSEKEEP_DB_CONN_REF)が同じ 1 つの管理 DB に解決されることを前提として書く。条件は参照名の文字列ではなく解決先の DB が同じこと。構築時の検査は存在確認のままで、解決先が同じことは導入する側が確かめる |
-| Arch 参照 | 20261103_133000_feedback_housekeeping_db_required |
-| NFR 参照 | 20261103_132000_feedback_housekeeping_db_required |
+| イベント ID | 20261116_020000_feedback_standard_runner_job_map_location |
+| 作成日時 | 2026-11-16T02:00:00Z |
+| ソース | 標準の slot runner の正式な提供と、slot ジョブマップの場所を feature flag の任意の 2 キーで書けること(利用者決定 2026-11-16)に基づくインフラ設計の差分更新: 標準の slot runner(ローカル実行と SSH 実行)を facade と同じ実行ホストの配置物として書き、feature flag を 9 キー + 任意の 2 キー、ジョブマップの場所を任意のキーで指定でき無い・空なら固定の名前、と構築手順とインフラ設計に反映する。構築時の検査は存在確認のままで、指定先と配置先が一致することは導入する側が確かめる |
+| Arch 参照 | 20261116_015000_feedback_standard_runner_job_map_location |
+| NFR 参照 | 20261116_014000_feedback_standard_runner_job_map_location |
 
 ## 変換サマリ
 

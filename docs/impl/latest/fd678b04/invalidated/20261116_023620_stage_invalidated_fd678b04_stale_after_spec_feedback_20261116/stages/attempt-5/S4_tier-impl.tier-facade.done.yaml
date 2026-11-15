@@ -1,0 +1,90 @@
+stage: S4
+tier: tier-facade
+attempt: 5
+uc_id: fd678b04
+manifest_sha256: 6d465907738491c6eafd278adff9938a3a6a44a5c88748d49207f72a29a49079
+manifest_projection: v2
+result: pass
+rerun_mode: stale_rerun
+rerun_reason: "仕様の更新(spec-decision-035。feature flag の runner / worker の実体パスに相対パスを受け付ける。spec event 20261115_164000_feedback_runner_relative_path)による stale 由来の再実行。attempt は 5 のまま。前回の検証の指摘は受け取っていない"
+findings_provided: false
+api_summary_check: "_api-summary.yaml に schema_version: distillery.api-summary/v2 の記載は無く、_contract-slice.json も無い(契約 slice の hash 照合の対象外)"
+implementation:
+  summary: "BLUE_RUNNER / GREEN_RUNNER / RAPID_CROSSCHECK_RUNNER / RAPID_CROSSCHECK_WORKER の 4 キーの値を、設定ファイルのあるディレクトリを基準に解決する関数を domain に追加し、validate-config.sh --feature-flag の実体の検査・runner への --help の問い合わせ・stdout / error 行 / warn 行の表示を解決後のパスで行うようにした。4 キーの path is not absolute は出さない"
+  rules_source: "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml の config_files.feature-flag.env.runner_path_resolution"
+  tdd:
+    red: "S2 の red 22 件(tier BDD 11 / bats 11)に加えて、domain の関数の単体テスト 19 件を先に書いて fail を確認した(関数が無いため 19 件とも not ok)"
+    green: "domain の 3 つの関数を追加し、usecase から呼ぶようにして、上の 41 件がすべて通った"
+    refactor: "検証表の関数から絶対パスの判定を外し、コメントを現行の仕様の言い方に直した"
+code_changes:
+  behavior_changed: true
+  files:
+    - path: facade/src/domain/feature_flag.sh
+      change: "関数 3 つを追加(feature_flag_resolve_runner_base_dir = 基準のディレクトリ / feature_flag_resolve_runner_path = 解決後のパス / feature_flag_resolve_runner_paths = 4 キーの変数を解決後のパスへ置き換える)。validate_feature_flag_executable_path から path is not absolute の判定を外した(欠落・空 → 実体が無い・実行不可 の 2 段)。validate_feature_flag_errors が検査の前に 4 キーを解決する"
+    - path: facade/src/usecase/validate_feature_flag.sh
+      change: "キーごとの検査の段の先頭(表示用の値を控える前)で feature_flag_resolve_runner_paths を呼ぶ。以降の検査・問い合わせ・表示は解決後のパスを使う。コメントを直した"
+    - path: facade/test/domain/feature_flag_runner_path.bats
+      change: "新規。domain の解決の関数の単体テスト 19 件(基準のディレクトリ 8 / 解決後のパス 5 / 4 キーの置き換え 4 / 検証表 2)"
+  not_changed:
+    - "facade/src/repository/feature_flag_config.sh(読み込みは設定に書いた値のまま載せる)"
+    - "facade/src/domain/launch_command.sh と --rapid-crosscheck / --job-map の経路(比較ツール起動コマンドの path is not absolute はそのまま。既存のテストが通ることで退行が無いことを確かめた)"
+    - "ジョブを起動するコマンドなどの実行時の読み手(別の UC。未実装)。解決の関数は domain に置いたため、そのまま再利用できる"
+    - "特定のデータで時間を確認する既存の自動テスト(削除も緩和もしていない。利用者決定)"
+gates:
+  format: pass
+  lint: pass
+  tdd: pass
+  bdd_tier: pass
+gate_runs:
+  - gate: format
+    cwd: facade
+    command: "shfmt -d ."
+    exit_code: 0
+  - gate: lint
+    cwd: facade
+    command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+    exit_code: 0
+  - gate: tdd
+    cwd: facade
+    command: "bats -r test"
+    exit_code: 0
+    summary: "509 tests, 509 ok, 0 not ok(S2 の時点の 490 件 + 今回追加した 19 件。S2 で red だった 11 件はすべて ok)"
+  - gate: bdd_tier
+    cwd: facade
+    command: "npx cucumber-js --config ../cucumber.cjs features"
+    exit_code: 0
+    summary: "97 scenarios (97 passed), 568 steps (568 passed)。S2 で red だった 11 件はすべて passed"
+gate_run_notes:
+  - "4 つのゲートは最終のコードで、1 つずつ順に実行した(bats と cucumber を同時に走らせていない)"
+  - "ゲートの後に書いたのは前提ファイルとこの done だけ(facade/ 配下は変えていない)"
+additional_runs:
+  - name: "UC BDD(この UC の feature だけ。参考。S6 の担当)"
+    cwd: "."
+    command: "npx cucumber-js --config cucumber.cjs features/uc/configure-feature-flags.feature"
+    exit_code: 0
+    summary: "16 scenarios (16 passed), 104 steps (104 passed)。S2 で red だった 3 件はすべて passed"
+  - name: "Linux コンテナでの bats"
+    image: "relay-gate-ci:ubuntu24"
+    method: "docker cp で facade をコンテナ内の /work/facade へ複製して実行した(共有マウントは使っていない)"
+    environment: "Linux aarch64、GNU bash 5.2.21、Bats 1.10.0、実行ユーザーは root"
+    command: "bats -r test"
+    exit_code: 0
+    summary: "509 tests, 509 ok, 0 not ok"
+environment: "macOS(Darwin 25.5.0、arm64)でゲートを実測。Linux コンテナ(relay-gate-ci:ubuntu24)でも bats を実行した"
+issues_added: []
+issues_note: "仕様と実装が両立しない事実は見つからなかった。新規の起票は無い"
+assumptions:
+  path: "attempt-5/S4_tier-impl.tier-facade.assumptions.yaml"
+  count: 24
+  by_category: {input_validation: 3, data_format: 4, error_handling: 9, persistence: 0, performance: 7, security: 1}
+  sha256: "47be339cbd1b1ab5a34b9e0526bb3edf668e8ff80a729abebd4618879d4d6a16"
+  extraction: {candidate_count: 41, excluded_as_explicit: 17, recorded_count: 24}
+  validate_command: "node validateAssumptions.js record <assumptions.yaml> --uc fd678b04 --tier tier-facade --attempt 5"
+  validate_result: "ok: true"
+  changes_from_previous:
+    removed_as_explicit: []
+    rewritten: ["A-025", "A-031", "A-033", "A-037", "A-038"]
+    added: ["A-041", "A-042", "A-043", "A-044"]
+    kept_as_is: 15
+completed_at: "2026-11-15T17:52:00+09:00"
+completed_by: "dist-impl-implement@0.14.1"

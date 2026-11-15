@@ -21,7 +21,7 @@ x_cli_commands:
       - name: "--role"
         type: "enum(blue|green)"
         required: true
-        description: "自 slot"
+        description: "自 slot(relay-gate が提供する標準の slot runner runners/standard-runner.sh は、1 つの実体を blue と green の両方に割り当て、slot をこの引数で受け取る。契約 commands「$BLUE_RUNNER / $GREEN_RUNNER」の standard_runner)"
       - name: "--mode"
         type: "enum(foreground|background)"
         required: true
@@ -29,7 +29,7 @@ x_cli_commands:
       - name: "--execution-spec"
         type: "string"
         required: false
-        description: "復元起動。ジョブマップを再解決しない"
+        description: "復元起動。ジョブマップを再解決しない(通常起動では、自 slot のジョブマップの場所を環境変数 BLUE_JOB_MAP_CSV / GREEN_JOB_MAP_CSV で受け取り、未設定・空なら $RELAY_GATE_CONFIG_DIR/<role>-job-map.csv を使う。契約 config_files.feature-flag.env.job_map_location)"
       - name: "--help"
         type: "boolean"
         required: false
@@ -59,15 +59,15 @@ x_cli_commands:
       - name: "--feature-flag"
         type: "string"
         required: false
-        description: "feature-flag.env のパス。runner 実体と対応ジョブマップの検証を含む。検証種別オプション 5 つ(--feature-flag / --job-map / --rapid-crosscheck / --final-crosscheck / --housekeep)のうちちょうど 1 つを指定する(排他)"
+        description: "feature-flag.env のパス。runner 実体(標準の slot runner か自作の runner かを区別しない)と対応ジョブマップの検証を含む。検証種別オプション 5 つ(--feature-flag / --job-map / --rapid-crosscheck / --final-crosscheck / --housekeep)のうちちょうど 1 つを指定する(排他)"
       - name: "--verbose"
         type: "boolean"
         required: false
         default: "false"
         description: "検証の詳細を stderr の info: に出す"
     stdin: "なし"
-    stdout: "feature flag の出力に blue_job_map / green_job_map / blue_runner_if_version / green_runner_if_version を追記(off の slot と --help 未応答の slot は -。--help 問い合わせの規則は契約 validate-config.sh の runner_help_probe)"
-    stderr: "error: path is not absolute key=<SLOT>_RUNNER path=... / error: file not executable key=<SLOT>_RUNNER path=... / error: job map not found slot=... map=... / warn: runner does not respond to --help slot=... runner=... / error: runner probe failed slot=... reason=...(問い合わせの準備失敗)"
+    stdout: "feature flag の出力に blue_job_map / green_job_map / blue_runner_if_version / green_runner_if_version を追記(blue_job_map / green_job_map は決めた場所: feature-flag.env の BLUE_JOB_MAP_CSV / GREEN_JOB_MAP_CSV の値を解決したパスで、キーが無い・値が空なら $RELAY_GATE_CONFIG_DIR/<slot>-job-map.csv。契約 config_files.feature-flag.env.job_map_location。off の slot と --help 未応答の slot は -。--help 問い合わせの規則は契約 validate-config.sh の runner_help_probe)"
+    stderr: "error: file not executable key=<SLOT>_RUNNER path=...(path= は解決後のパス。相対パスの runner は設定ファイルのあるディレクトリを基準に解決する) / error: job map not found slot=... map=...(map= は決めた場所) / warn: runner does not respond to --help slot=... runner=... / error: runner probe failed slot=... reason=...(問い合わせの準備失敗)"
     exit_codes:
       - code: 0
         meaning: "検証 OK"

@@ -1,0 +1,648 @@
+{
+  "event_id": "20261116_021000_feedback_stage_spec",
+  "type": "feedback_stage_completed",
+  "run_id": "feedback-20261116_standard_runner_job_map_location-20261116_010255-1469",
+  "attempt": 1,
+  "created_at": "2026-11-16T02:10:00Z",
+  "stage": "spec",
+  "direct_work_unit_ids": [
+    "CR-65b09d93-001#2",
+    "CR-65b09d93-002#2",
+    "CR-65b09d93-003#1",
+    "CR-65b09d93-004#1"
+  ],
+  "causal_work_unit_ids": [
+    "CR-65b09d93-001#1",
+    "CR-65b09d93-001#2",
+    "CR-65b09d93-002#1",
+    "CR-65b09d93-002#2",
+    "CR-65b09d93-003#1",
+    "CR-65b09d93-004#1"
+  ],
+  "work_unit_results": [
+    {
+      "work_unit_id": "CR-65b09d93-001#2",
+      "disposition": "applied",
+      "reason": "標準の slot runner のファイル構成を 1 つに決めた。ファイルは runners/standard-runner.sh(relay-gate の配置ディレクトリ配下)。実体は 1 つで、blue と green の両方に同じファイルを割り当てる(slot は既存の引数 --role で受け取り、runner IF は変えない)。feature flag への書き方の例は BLUE_RUNNER=/opt/relay-gate/runners/standard-runner.sh / GREEN_RUNNER=/opt/relay-gate/runners/standard-runner.sh。「参考実装 runners/ssh-runner.sh(仮採用)」の扱いをやめた。細部として、配置ディレクトリの決め方(自身のあるディレクトリの 1 つ上)、SSH の起動形(ssh -n -o BatchMode=yes)、認証情報の参照名を ssh の引数に使わないことを定めた。標準の slot runner を両 slot に割り当てた設定が検証を通る場面と、ローカル実行の行・SSH 実行の行をそれぞれ解決・実行する場面を BDD に置いた。正本は CLI 契約 commands の slot runner の standard_runner、判断は spec-decision-037",
+      "artifact_refs": [
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/spec.md",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/tier-facade.md",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/_api-summary.yaml",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/実装切替業務/実装切替ジョブ実行フロー/ジョブマップで JOB_ID から実行先を解決する/spec.md",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/実装切替業務/実装切替ジョブ実行フロー/ジョブマップで JOB_ID から実行先を解決する/tier-facade.md",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/実装切替業務/実装切替ジョブ実行フロー/実装スクリプトを実行して Runner Result を出力する/spec.md",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/実装切替業務/実装切替ジョブ実行フロー/実装スクリプトを実行して Runner Result を出力する/tier-facade.md",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/_cross-cutting/ux-ui/ui-design.md",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/decisions/spec-decision-037.yaml",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/_inference.md",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/spec-event.yaml"
+      ]
+    },
+    {
+      "work_unit_id": "CR-65b09d93-002#2",
+      "disposition": "applied",
+      "reason": "キー名を BLUE_JOB_MAP_CSV / GREEN_JOB_MAP_CSV に確定した。キーが無い・値が空のときは固定の名前($RELAY_GATE_CONFIG_DIR/blue-job-map.csv / green-job-map.csv)。値は絶対パスと相対パスを受け付け、相対パスの基準は feature-flag.env のあるディレクトリ。解決の規則は runner / worker の 4 キーと同じ runner_path_resolution を 6 キーに適用し(複写しない)、ジョブマップに固有の既定・使い方・表示・読み手を job_map_location(新設)に書いた。決めた場所を、検証コマンドの所在の検査と stdout・error 行に使い、facade.sh が通常起動で自 slot の runner へ環境変数 BLUE_JOB_MAP_CSV / GREEN_JOB_MAP_CSV で渡す(slot runner は feature-flag.env を読まない)。background-rerun.sh と復元起動の runner はジョブマップを読まないため渡さない。validate-config.sh --job-map は渡されたパスを検証する動きのまま。off の slot のキーは解決も検査もしない。キーを書いた場合・書かない場合・値が空の場合・相対パスの場合を判定する BDD を置いた。実装済みの feature flag の検証コマンド(9 キー前提、固定の名前だけを検査)との差分を spec-decision-038 に記録した",
+      "artifact_refs": [
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/適用構成業務/適用構成定義フロー/feature flag を設定する/_api-summary.yaml",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/spec.md",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/tier-facade.md",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/spec.md",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/tier-facade.md",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/実装切替業務/実装切替ジョブ実行フロー/ジョブマップで JOB_ID から実行先を解決する/spec.md",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/実装切替業務/実装切替ジョブ実行フロー/ジョブマップで JOB_ID から実行先を解決する/tier-facade.md",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/_cross-cutting/uc-dependencies.md",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/decisions/spec-decision-038.yaml",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/spec-event.yaml"
+      ]
+    },
+    {
+      "work_unit_id": "CR-65b09d93-003#1",
+      "disposition": "applied",
+      "reason": "facade.sh は、feature flag の設定のキーごとの検査で違反が 2 つ以上あるとき、検証コマンドの error 行の順(error_order)で最初に出る違反の error 行(hint があれば hint も)だけを出して終了コード 2 で終わる、と CLI 契約 commands の facade.sh の config_violation_report(新設)に定めた(利用者決定 2026-11-15)。facade.sh が検査するのは error_order の 1〜5 で、未知キーの warn 行は error 行より前、入力の守備範囲の違反は対象外で全件とした。UC「slot 実行モードを選択して runner を起動する」の独自の検査の順をやめて契約を参照する形に直し、違反が 2 つある設定で最初の 1 行だけが出る場面を BDD に置いた。課題一覧の DIST-032 を決定済みとして閉じた。判断は spec-decision-039",
+      "artifact_refs": [
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/spec.md",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/tier-facade.md",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/decisions/spec-decision-039.yaml",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/spec-event.yaml"
+      ]
+    },
+    {
+      "work_unit_id": "CR-65b09d93-004#1",
+      "disposition": "applied",
+      "reason": "background-rerun.sh は、起動の前に runner / worker の 4 キーの実体(存在・実行権限・--help の応答)を検査せず、runner の起動に失敗したら終了コード 6 で終わる、と CLI 契約 commands の background-rerun.sh の feature_flag_reading(新設)に定めた(利用者決定 2026-11-15)。終了コード 6 の既存の意味(実行エラー。runner の起動失敗を含む)と矛盾せず、error 行(error: runner failed to start ...)と成果物・管理 DB に残すものは既存の規則のまま。起動の失敗は、解決後のパスに何も無い・通常ファイルでない・実行権限が無い、の 3 つとした。feature-flag.env から読むキー(速報クロスチェックのモード、リラン対象 role の runner、off 以外のときの速報クロスチェック runner)と、検査の順(引数 → feature flag の設定 → 速報クロスチェック設定 → 事前検証)、読めない・形式が不正・読むキーが無いときの終了コード 2 を明記した。判定する BDD を 2 つの UC に置き、課題一覧の DIST-032 を決定済みとして閉じた。判断は spec-decision-040",
+      "artifact_refs": [
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/実行復旧業務/background 側リランフロー/元の execution-spec.json から復元して新しい run_id で起動する/spec.md",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/実行復旧業務/background 側リランフロー/元の execution-spec.json から復元して新しい run_id で起動する/tier-ops.md",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/実行復旧業務/background 側リランフロー/リラン対象を検証する/tier-ops.md",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/decisions/spec-decision-040.yaml",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/spec-event.yaml"
+      ]
+    }
+  ],
+  "reconciliation_results": [
+    {
+      "work_unit_id": "CR-65b09d93-001#1",
+      "status": "changed",
+      "reason": "上流(要求・アーキテクチャ・インフラ設計)が定めた標準の slot runner の正式な提供に追従した。CLI 契約 commands の slot runner に standard_runner を新設し、標準の slot runner が runner IF を満たす正式な提供物であること、扱う範囲(ローカル実行と SSH 実行)、利用者が用意するものが feature flag と slot ジョブマップだけであること、特殊な接続は利用者が runner を自作して割り当てられること(共通ライブラリと runner IF は残す)を書いた。UC 別仕様から「参考実装(仮採用)」の扱いを除き、要求の新しい受け入れ条件を BDD と対応表に対応づけた。方針資料が触れていない標準の runner の提供は、利用者決定(2026-11-16)として判断記録 spec-decision-037 に記録した",
+      "artifact_refs": [
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/spec.md",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/tier-facade.md",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/実装切替業務/実装切替ジョブ実行フロー/ジョブマップで JOB_ID から実行先を解決する/tier-facade.md",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/実装切替業務/実装切替ジョブ実行フロー/実装スクリプトを実行して Runner Result を出力する/spec.md",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/_cross-cutting/usdm-acceptance-matrix.md",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/decisions/spec-decision-037.yaml",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/spec-event.yaml"
+      ]
+    },
+    {
+      "work_unit_id": "CR-65b09d93-001#2",
+      "status": "changed",
+      "reason": "標準の slot runner のファイル構成を 1 つに決めた。ファイルは runners/standard-runner.sh(relay-gate の配置ディレクトリ配下)。実体は 1 つで、blue と green の両方に同じファイルを割り当てる(slot は既存の引数 --role で受け取り、runner IF は変えない)。feature flag への書き方の例は BLUE_RUNNER=/opt/relay-gate/runners/standard-runner.sh / GREEN_RUNNER=/opt/relay-gate/runners/standard-runner.sh。「参考実装 runners/ssh-runner.sh(仮採用)」の扱いをやめた。細部として、配置ディレクトリの決め方(自身のあるディレクトリの 1 つ上)、SSH の起動形(ssh -n -o BatchMode=yes)、認証情報の参照名を ssh の引数に使わないことを定めた。標準の slot runner を両 slot に割り当てた設定が検証を通る場面と、ローカル実行の行・SSH 実行の行をそれぞれ解決・実行する場面を BDD に置いた。正本は CLI 契約 commands の slot runner の standard_runner、判断は spec-decision-037",
+      "artifact_refs": [
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/spec.md",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/tier-facade.md",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/_api-summary.yaml",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/実装切替業務/実装切替ジョブ実行フロー/ジョブマップで JOB_ID から実行先を解決する/spec.md",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/実装切替業務/実装切替ジョブ実行フロー/ジョブマップで JOB_ID から実行先を解決する/tier-facade.md",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/実装切替業務/実装切替ジョブ実行フロー/実装スクリプトを実行して Runner Result を出力する/spec.md",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/実装切替業務/実装切替ジョブ実行フロー/実装スクリプトを実行して Runner Result を出力する/tier-facade.md",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/_cross-cutting/ux-ui/ui-design.md",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/decisions/spec-decision-037.yaml",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/_inference.md",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/spec-event.yaml"
+      ]
+    },
+    {
+      "work_unit_id": "CR-65b09d93-002#1",
+      "status": "changed",
+      "reason": "上流(要求・アーキテクチャ・インフラ設計)が定めた、feature flag の「9 キー + slot ジョブマップの場所を書く任意の 2 キー」に追従した。CLI 契約の feature-flag.env の keys に任意の 2 キーを足し、未知キーの範囲・値を取り込むキーの範囲・読み取りの途中の一時的な保持・検証ルールの「9 キー」の記述を「9 キー + 任意の 2 キー」に揃えた。9 キーだけの設定がそのまま通ることを明記した。要求の新しい受け入れ条件を BDD と対応表に対応づけ、RDRA の情報「feature flag 設定」の属性の追加に合わせて網羅率の分母を数え直した(344 → 345、網羅率 100% のまま)。判断は spec-decision-038",
+      "artifact_refs": [
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/適用構成業務/適用構成定義フロー/buc-spec.md",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/_cross-cutting/traceability-matrix.md",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/_cross-cutting/usdm-acceptance-matrix.md",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/decisions/spec-decision-038.yaml",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/spec-event.yaml"
+      ]
+    },
+    {
+      "work_unit_id": "CR-65b09d93-002#2",
+      "status": "changed",
+      "reason": "キー名を BLUE_JOB_MAP_CSV / GREEN_JOB_MAP_CSV に確定した。キーが無い・値が空のときは固定の名前($RELAY_GATE_CONFIG_DIR/blue-job-map.csv / green-job-map.csv)。値は絶対パスと相対パスを受け付け、相対パスの基準は feature-flag.env のあるディレクトリ。解決の規則は runner / worker の 4 キーと同じ runner_path_resolution を 6 キーに適用し(複写しない)、ジョブマップに固有の既定・使い方・表示・読み手を job_map_location(新設)に書いた。決めた場所を、検証コマンドの所在の検査と stdout・error 行に使い、facade.sh が通常起動で自 slot の runner へ環境変数 BLUE_JOB_MAP_CSV / GREEN_JOB_MAP_CSV で渡す(slot runner は feature-flag.env を読まない)。background-rerun.sh と復元起動の runner はジョブマップを読まないため渡さない。validate-config.sh --job-map は渡されたパスを検証する動きのまま。off の slot のキーは解決も検査もしない。キーを書いた場合・書かない場合・値が空の場合・相対パスの場合を判定する BDD を置いた。実装済みの feature flag の検証コマンド(9 キー前提、固定の名前だけを検査)との差分を spec-decision-038 に記録した",
+      "artifact_refs": [
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/適用構成業務/適用構成定義フロー/feature flag を設定する/_api-summary.yaml",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/spec.md",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/tier-facade.md",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/spec.md",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/tier-facade.md",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/実装切替業務/実装切替ジョブ実行フロー/ジョブマップで JOB_ID から実行先を解決する/spec.md",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/実装切替業務/実装切替ジョブ実行フロー/ジョブマップで JOB_ID から実行先を解決する/tier-facade.md",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/_cross-cutting/uc-dependencies.md",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/decisions/spec-decision-038.yaml",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/spec-event.yaml"
+      ]
+    },
+    {
+      "work_unit_id": "CR-65b09d93-003#1",
+      "status": "changed",
+      "reason": "facade.sh は、feature flag の設定のキーごとの検査で違反が 2 つ以上あるとき、検証コマンドの error 行の順(error_order)で最初に出る違反の error 行(hint があれば hint も)だけを出して終了コード 2 で終わる、と CLI 契約 commands の facade.sh の config_violation_report(新設)に定めた(利用者決定 2026-11-15)。facade.sh が検査するのは error_order の 1〜5 で、未知キーの warn 行は error 行より前、入力の守備範囲の違反は対象外で全件とした。UC「slot 実行モードを選択して runner を起動する」の独自の検査の順をやめて契約を参照する形に直し、違反が 2 つある設定で最初の 1 行だけが出る場面を BDD に置いた。課題一覧の DIST-032 を決定済みとして閉じた。判断は spec-decision-039",
+      "artifact_refs": [
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/spec.md",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/tier-facade.md",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/decisions/spec-decision-039.yaml",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/spec-event.yaml"
+      ]
+    },
+    {
+      "work_unit_id": "CR-65b09d93-004#1",
+      "status": "changed",
+      "reason": "background-rerun.sh は、起動の前に runner / worker の 4 キーの実体(存在・実行権限・--help の応答)を検査せず、runner の起動に失敗したら終了コード 6 で終わる、と CLI 契約 commands の background-rerun.sh の feature_flag_reading(新設)に定めた(利用者決定 2026-11-15)。終了コード 6 の既存の意味(実行エラー。runner の起動失敗を含む)と矛盾せず、error 行(error: runner failed to start ...)と成果物・管理 DB に残すものは既存の規則のまま。起動の失敗は、解決後のパスに何も無い・通常ファイルでない・実行権限が無い、の 3 つとした。feature-flag.env から読むキー(速報クロスチェックのモード、リラン対象 role の runner、off 以外のときの速報クロスチェック runner)と、検査の順(引数 → feature flag の設定 → 速報クロスチェック設定 → 事前検証)、読めない・形式が不正・読むキーが無いときの終了コード 2 を明記した。判定する BDD を 2 つの UC に置き、課題一覧の DIST-032 を決定済みとして閉じた。判断は spec-decision-040",
+      "artifact_refs": [
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/実行復旧業務/background 側リランフロー/元の execution-spec.json から復元して新しい run_id で起動する/spec.md",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/実行復旧業務/background 側リランフロー/元の execution-spec.json から復元して新しい run_id で起動する/tier-ops.md",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/実行復旧業務/background 側リランフロー/リラン対象を検証する/tier-ops.md",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/decisions/spec-decision-040.yaml",
+        "specs/events/20261116_021000_feedback_standard_runner_job_map_location/spec-event.yaml"
+      ]
+    }
+  ],
+  "work_unit_evidence_refs": [
+    {
+      "work_unit_id": "CR-65b09d93-001#1",
+      "path": "specs/events/20261116_021000_feedback_standard_runner_job_map_location/_cross-cutting/api/cli-command-contract.yaml",
+      "sha256": "a6d7c7942947d73af03ea2ad8c9fc640184396a7efc1f67fe2de06f1eab16d10"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-001#1",
+      "path": "specs/events/20261116_021000_feedback_standard_runner_job_map_location/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/spec.md",
+      "sha256": "0b9b952e2800154407e276ed6ca893e2cdf9a97759c988ca69030cb2528cd819"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-001#1",
+      "path": "specs/events/20261116_021000_feedback_standard_runner_job_map_location/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/tier-facade.md",
+      "sha256": "339ac7c1edb9db5864dc3e25ceadb993fb098d301927c99f7a41e72fcd890231"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-001#1",
+      "path": "specs/events/20261116_021000_feedback_standard_runner_job_map_location/実装切替業務/実装切替ジョブ実行フロー/ジョブマップで JOB_ID から実行先を解決する/tier-facade.md",
+      "sha256": "e37c5ad26f7f0df428fa0d805d7b13640a875e9d71943b4d883cd0e79d246f48"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-001#1",
+      "path": "specs/events/20261116_021000_feedback_standard_runner_job_map_location/実装切替業務/実装切替ジョブ実行フロー/実装スクリプトを実行して Runner Result を出力する/spec.md",
+      "sha256": "1e84e344a80f61b360f31633da64ce1d54fa7c798333ef365e07ebf7ae091946"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-001#1",
+      "path": "specs/events/20261116_021000_feedback_standard_runner_job_map_location/_cross-cutting/usdm-acceptance-matrix.md",
+      "sha256": "8c61a43670a0ea48efbe3158db1fd8196c377a88db08a22aa336dd055cdb5e3e"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-001#1",
+      "path": "specs/events/20261116_021000_feedback_standard_runner_job_map_location/decisions/spec-decision-037.yaml",
+      "sha256": "8776d45ed5826cc5a6413f1c85d768b98ff444a83614023aa2144d3ef3f48550"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-001#1",
+      "path": "specs/events/20261116_021000_feedback_standard_runner_job_map_location/spec-event.yaml",
+      "sha256": "8aaf650924c43958cf75da8d7f90370dab8e60416382b4d9a7b2217e11d18200"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-001#2",
+      "path": "specs/events/20261116_021000_feedback_standard_runner_job_map_location/_cross-cutting/api/cli-command-contract.yaml",
+      "sha256": "a6d7c7942947d73af03ea2ad8c9fc640184396a7efc1f67fe2de06f1eab16d10"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-001#2",
+      "path": "specs/events/20261116_021000_feedback_standard_runner_job_map_location/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/spec.md",
+      "sha256": "0b9b952e2800154407e276ed6ca893e2cdf9a97759c988ca69030cb2528cd819"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-001#2",
+      "path": "specs/events/20261116_021000_feedback_standard_runner_job_map_location/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/tier-facade.md",
+      "sha256": "339ac7c1edb9db5864dc3e25ceadb993fb098d301927c99f7a41e72fcd890231"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-001#2",
+      "path": "specs/events/20261116_021000_feedback_standard_runner_job_map_location/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/_api-summary.yaml",
+      "sha256": "2796de7fbe6c2633103a6a0486d63150ce004b48fa054b152364dd68c4291c45"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-001#2",
+      "path": "specs/events/20261116_021000_feedback_standard_runner_job_map_location/実装切替業務/実装切替ジョブ実行フロー/ジョブマップで JOB_ID から実行先を解決する/spec.md",
+      "sha256": "50ec08157e8fb5beb2b6424f2f51da5244ebd673e217f02fda7488e696a3c7d4"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-001#2",
+      "path": "specs/events/20261116_021000_feedback_standard_runner_job_map_location/実装切替業務/実装切替ジョブ実行フロー/ジョブマップで JOB_ID から実行先を解決する/tier-facade.md",
+      "sha256": "e37c5ad26f7f0df428fa0d805d7b13640a875e9d71943b4d883cd0e79d246f48"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-001#2",
+      "path": "specs/events/20261116_021000_feedback_standard_runner_job_map_location/実装切替業務/実装切替ジョブ実行フロー/実装スクリプトを実行して Runner Result を出力する/spec.md",
+      "sha256": "1e84e344a80f61b360f31633da64ce1d54fa7c798333ef365e07ebf7ae091946"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-001#2",
+      "path": "specs/events/20261116_021000_feedback_standard_runner_job_map_location/実装切替業務/実装切替ジョブ実行フロー/実装スクリプトを実行して Runner Result を出力する/tier-facade.md",
+      "sha256": "6a95e367efa3e367a4b7ee577eb9deb7d45cf8d87b0278812bedd2a94942349c"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-001#2",
+      "path": "specs/events/20261116_021000_feedback_standard_runner_job_map_location/_cross-cutting/ux-ui/ui-design.md",
+      "sha256": "9241510c007b3f71d14b15d87cc169bab5a1eaf08ab5b532d44a43eebfc1d468"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-001#2",
+      "path": "specs/events/20261116_021000_feedback_standard_runner_job_map_location/decisions/spec-decision-037.yaml",
+      "sha256": "8776d45ed5826cc5a6413f1c85d768b98ff444a83614023aa2144d3ef3f48550"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-001#2",
+      "path": "specs/events/20261116_021000_feedback_standard_runner_job_map_location/_inference.md",
+      "sha256": "083aaa82e6fde427e1d72040d2fdbb2692b219933708db2b6af699321177e186"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-001#2",
+      "path": "specs/events/20261116_021000_feedback_standard_runner_job_map_location/spec-event.yaml",
+      "sha256": "8aaf650924c43958cf75da8d7f90370dab8e60416382b4d9a7b2217e11d18200"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-002#1",
+      "path": "specs/events/20261116_021000_feedback_standard_runner_job_map_location/_cross-cutting/api/cli-command-contract.yaml",
+      "sha256": "a6d7c7942947d73af03ea2ad8c9fc640184396a7efc1f67fe2de06f1eab16d10"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-002#1",
+      "path": "specs/events/20261116_021000_feedback_standard_runner_job_map_location/適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md",
+      "sha256": "fe9c3664d7e49a38a34b2722939f779223aaf921673fbd35fc00cd373a76720b"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-002#1",
+      "path": "specs/events/20261116_021000_feedback_standard_runner_job_map_location/適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md",
+      "sha256": "dc838dce29fc9552b64c98e9feac64ded852b1c43ff756a6aacfce63c4083d9e"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-002#1",
+      "path": "specs/events/20261116_021000_feedback_standard_runner_job_map_location/適用構成業務/適用構成定義フロー/buc-spec.md",
+      "sha256": "b8341a2611a31bb877c0cc62d0e2323965eefb5cea0195d7e7cc955720a360bc"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-002#1",
+      "path": "specs/events/20261116_021000_feedback_standard_runner_job_map_location/_cross-cutting/traceability-matrix.md",
+      "sha256": "743cd2be49eee9881ed1e5a969cd86ecf46f1ee1322c73a70b4b74565dc42242"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-002#1",
+      "path": "specs/events/20261116_021000_feedback_standard_runner_job_map_location/_cross-cutting/usdm-acceptance-matrix.md",
+      "sha256": "8c61a43670a0ea48efbe3158db1fd8196c377a88db08a22aa336dd055cdb5e3e"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-002#1",
+      "path": "specs/events/20261116_021000_feedback_standard_runner_job_map_location/decisions/spec-decision-038.yaml",
+      "sha256": "c94f51a29c44f0633c790ff3c8f86ec0026560e491e1458227576f30a3dc3118"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-002#1",
+      "path": "specs/events/20261116_021000_feedback_standard_runner_job_map_location/spec-event.yaml",
+      "sha256": "8aaf650924c43958cf75da8d7f90370dab8e60416382b4d9a7b2217e11d18200"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-002#2",
+      "path": "specs/events/20261116_021000_feedback_standard_runner_job_map_location/_cross-cutting/api/cli-command-contract.yaml",
+      "sha256": "a6d7c7942947d73af03ea2ad8c9fc640184396a7efc1f67fe2de06f1eab16d10"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-002#2",
+      "path": "specs/events/20261116_021000_feedback_standard_runner_job_map_location/適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md",
+      "sha256": "fe9c3664d7e49a38a34b2722939f779223aaf921673fbd35fc00cd373a76720b"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-002#2",
+      "path": "specs/events/20261116_021000_feedback_standard_runner_job_map_location/適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md",
+      "sha256": "dc838dce29fc9552b64c98e9feac64ded852b1c43ff756a6aacfce63c4083d9e"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-002#2",
+      "path": "specs/events/20261116_021000_feedback_standard_runner_job_map_location/適用構成業務/適用構成定義フロー/feature flag を設定する/_api-summary.yaml",
+      "sha256": "a6e5606c85fda1208d18d85330c18ef8c677ef3ff46889c785035273c8c4074c"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-002#2",
+      "path": "specs/events/20261116_021000_feedback_standard_runner_job_map_location/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/spec.md",
+      "sha256": "0e3092b41552054855b779c9c4fd7a7760eeacee8ef239a1e9d49b517d16c7d5"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-002#2",
+      "path": "specs/events/20261116_021000_feedback_standard_runner_job_map_location/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/tier-facade.md",
+      "sha256": "530981cb2603a7ce7ce50a66eb4ef4870e0809910f9ed9c09cb3e6ccbeb2c5f6"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-002#2",
+      "path": "specs/events/20261116_021000_feedback_standard_runner_job_map_location/実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/spec.md",
+      "sha256": "991ba2bc64c1e857544243d019d3ac8710c57fc65e86f33b7d8ce62eb17b2c42"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-002#2",
+      "path": "specs/events/20261116_021000_feedback_standard_runner_job_map_location/実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/tier-facade.md",
+      "sha256": "4d35e0490ec5bc8a26c8a71b132faf4060620c6bfc030a32c5b6dcf3b1322019"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-002#2",
+      "path": "specs/events/20261116_021000_feedback_standard_runner_job_map_location/実装切替業務/実装切替ジョブ実行フロー/ジョブマップで JOB_ID から実行先を解決する/spec.md",
+      "sha256": "50ec08157e8fb5beb2b6424f2f51da5244ebd673e217f02fda7488e696a3c7d4"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-002#2",
+      "path": "specs/events/20261116_021000_feedback_standard_runner_job_map_location/実装切替業務/実装切替ジョブ実行フロー/ジョブマップで JOB_ID から実行先を解決する/tier-facade.md",
+      "sha256": "e37c5ad26f7f0df428fa0d805d7b13640a875e9d71943b4d883cd0e79d246f48"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-002#2",
+      "path": "specs/events/20261116_021000_feedback_standard_runner_job_map_location/_cross-cutting/uc-dependencies.md",
+      "sha256": "650f259677cf6fa982127b5bc4c53afef00b965800051c77c7ed5fb20546c935"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-002#2",
+      "path": "specs/events/20261116_021000_feedback_standard_runner_job_map_location/decisions/spec-decision-038.yaml",
+      "sha256": "c94f51a29c44f0633c790ff3c8f86ec0026560e491e1458227576f30a3dc3118"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-002#2",
+      "path": "specs/events/20261116_021000_feedback_standard_runner_job_map_location/spec-event.yaml",
+      "sha256": "8aaf650924c43958cf75da8d7f90370dab8e60416382b4d9a7b2217e11d18200"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-003#1",
+      "path": "specs/events/20261116_021000_feedback_standard_runner_job_map_location/_cross-cutting/api/cli-command-contract.yaml",
+      "sha256": "a6d7c7942947d73af03ea2ad8c9fc640184396a7efc1f67fe2de06f1eab16d10"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-003#1",
+      "path": "specs/events/20261116_021000_feedback_standard_runner_job_map_location/実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/spec.md",
+      "sha256": "991ba2bc64c1e857544243d019d3ac8710c57fc65e86f33b7d8ce62eb17b2c42"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-003#1",
+      "path": "specs/events/20261116_021000_feedback_standard_runner_job_map_location/実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/tier-facade.md",
+      "sha256": "4d35e0490ec5bc8a26c8a71b132faf4060620c6bfc030a32c5b6dcf3b1322019"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-003#1",
+      "path": "specs/events/20261116_021000_feedback_standard_runner_job_map_location/decisions/spec-decision-039.yaml",
+      "sha256": "cda2e8f5d75abb10002ee02b0c6366ca6554dead38e537072db65c96833d30fa"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-003#1",
+      "path": "specs/events/20261116_021000_feedback_standard_runner_job_map_location/spec-event.yaml",
+      "sha256": "8aaf650924c43958cf75da8d7f90370dab8e60416382b4d9a7b2217e11d18200"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-004#1",
+      "path": "specs/events/20261116_021000_feedback_standard_runner_job_map_location/_cross-cutting/api/cli-command-contract.yaml",
+      "sha256": "a6d7c7942947d73af03ea2ad8c9fc640184396a7efc1f67fe2de06f1eab16d10"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-004#1",
+      "path": "specs/events/20261116_021000_feedback_standard_runner_job_map_location/実行復旧業務/background 側リランフロー/元の execution-spec.json から復元して新しい run_id で起動する/spec.md",
+      "sha256": "0e2bb9a70c62c065efc18b59de88c976d3c91813b34393573396d7ed01195dc4"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-004#1",
+      "path": "specs/events/20261116_021000_feedback_standard_runner_job_map_location/実行復旧業務/background 側リランフロー/元の execution-spec.json から復元して新しい run_id で起動する/tier-ops.md",
+      "sha256": "bf2d8345fb6c23deef0d3f485eee17b6519f01e441d2be49600790b3cb92983f"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-004#1",
+      "path": "specs/events/20261116_021000_feedback_standard_runner_job_map_location/実行復旧業務/background 側リランフロー/リラン対象を検証する/tier-ops.md",
+      "sha256": "52679e5214dce407d9580acfb2d1079d0a220d15a03cf5f1f10352594805f684"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-004#1",
+      "path": "specs/events/20261116_021000_feedback_standard_runner_job_map_location/decisions/spec-decision-040.yaml",
+      "sha256": "2f12cdc97a25937c13a520255e89a8e6e87b58e7b211fe7f194feae8e88e4c7e"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-004#1",
+      "path": "specs/events/20261116_021000_feedback_standard_runner_job_map_location/spec-event.yaml",
+      "sha256": "8aaf650924c43958cf75da8d7f90370dab8e60416382b4d9a7b2217e11d18200"
+    }
+  ],
+  "domain_event_refs": [
+    {
+      "path": "specs/events/20261116_021000_feedback_standard_runner_job_map_location/spec-event.yaml",
+      "sha256": "8aaf650924c43958cf75da8d7f90370dab8e60416382b4d9a7b2217e11d18200"
+    }
+  ],
+  "feedback_request": {
+    "feedback_request_id": "20261116_standard_runner_job_map_location",
+    "input_sha256": "733163f9092ac7055b410880c40f85fd312b2684f25fb0fb20d8d3412626822a",
+    "request_ids": [
+      "CR-65b09d93-001",
+      "CR-65b09d93-002",
+      "CR-65b09d93-003",
+      "CR-65b09d93-004"
+    ],
+    "work_unit_ids": [
+      "CR-65b09d93-001#1",
+      "CR-65b09d93-001#2",
+      "CR-65b09d93-002#1",
+      "CR-65b09d93-002#2",
+      "CR-65b09d93-003#1",
+      "CR-65b09d93-004#1"
+    ]
+  },
+  "post_execution_basis": {
+    "repository_head": "13714eaa1b9cb3b0dc4887449c166cfac6c21364",
+    "latest_domain_event_ids": {
+      "requirements": {
+        "rdra/events": "20261116_013000_feedback_standard_runner_job_map_location",
+        "usdm/events": "20261116_013000_feedback_standard_runner_job_map_location"
+      },
+      "quality_attributes": {
+        "nfr/events": "20261116_014000_feedback_standard_runner_job_map_location"
+      },
+      "architecture": {
+        "arch/events": "20261116_015000_feedback_standard_runner_job_map_location"
+      },
+      "infrastructure": {
+        "infra/events": "20261116_020000_feedback_standard_runner_job_map_location"
+      },
+      "design_system": {
+        "design/events": null
+      },
+      "spec": {
+        "specs/events": "20261116_021000_feedback_standard_runner_job_map_location"
+      },
+      "spec_stories": {
+        "design/events": null
+      }
+    },
+    "domain_event_root_snapshots": {
+      "rdra/events": {
+        "head_event_id": "20261116_013000_feedback_standard_runner_job_map_location",
+        "head_event_sha256": "758385a692477c72fdb910828f0f3328da65ea659a5fa76f707933c162707dec",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency",
+          "20260908_011000_feedback_slot_status_wording",
+          "20260921_084000_feedback_impl_feedback_eff24f55",
+          "20261010_200000_feedback_impl_feedback_dcd8234d",
+          "20261101_101000_feedback_impl_feedback_dcd8234d",
+          "20261101_121000_feedback_mail_removal_housekeeping",
+          "20261103_081000_feedback_housekeeping_followups",
+          "20261103_131000_feedback_housekeeping_db_required",
+          "20261116_013000_feedback_standard_runner_job_map_location"
+        ],
+        "event_set_sha256": "8e2c2b393aee48b70ce3eff47aa5f2e196eed6db1a09761a2a75c91ed7c97064",
+        "latest_tree_sha256": "a0ccc8f89943b0a769be8be672e1d3cf43c2f3c32a6503a5ef8c801ca22fd9f2"
+      },
+      "usdm/events": {
+        "head_event_id": "20261116_013000_feedback_standard_runner_job_map_location",
+        "head_event_sha256": "1282000f4877536f1163b9adadaa58a8f8cb406f48a7dc741d2853befc0e2775",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency",
+          "20260908_011000_feedback_slot_status_wording",
+          "20260921_084000_feedback_impl_feedback_eff24f55",
+          "20261010_200000_feedback_impl_feedback_dcd8234d",
+          "20261101_101000_feedback_impl_feedback_dcd8234d",
+          "20261101_121000_feedback_mail_removal_housekeeping",
+          "20261103_081000_feedback_housekeeping_followups",
+          "20261103_131000_feedback_housekeeping_db_required",
+          "20261116_013000_feedback_standard_runner_job_map_location"
+        ],
+        "event_set_sha256": "8e2c2b393aee48b70ce3eff47aa5f2e196eed6db1a09761a2a75c91ed7c97064",
+        "latest_tree_sha256": "c85fad1166d8725ddf2aa4e1e74932c12fe26eb2420c0f2c1470e97f92f84e7b"
+      },
+      "nfr/events": {
+        "head_event_id": "20261116_014000_feedback_standard_runner_job_map_location",
+        "head_event_sha256": "38bb0ee2349828c8a850f4ed85a3f2813526c9c060be368ca21c245e4c1c0cf1",
+        "event_ids": [
+          "20260830_183726_initial_nfr",
+          "20260905_085000_feedback_todo_resolution",
+          "20260907_013000_feedback_todo_followup",
+          "20260907_120000_feedback_abort_consistency",
+          "20260908_013000_feedback_slot_status_wording",
+          "20260921_090000_feedback_impl_feedback_eff24f55",
+          "20261010_201000_feedback_impl_feedback_dcd8234d",
+          "20261101_102000_feedback_impl_feedback_dcd8234d",
+          "20261101_122000_feedback_mail_removal_housekeeping",
+          "20261103_082000_feedback_housekeeping_followups",
+          "20261103_132000_feedback_housekeeping_db_required",
+          "20261115_135000_feedback_impl_feedback_fd678b04_cycle3",
+          "20261116_014000_feedback_standard_runner_job_map_location"
+        ],
+        "event_set_sha256": "d1aa1df52c9e9d9e880d9b9849c6c10f2532c657565f70af8da17be7065693b2",
+        "latest_tree_sha256": "12490438310ace0b863320236a1aae4659b2f7f60aaf92cbb84bb57b3805d572"
+      },
+      "arch/events": {
+        "head_event_id": "20261116_015000_feedback_standard_runner_job_map_location",
+        "head_event_sha256": "0480eec377d4e5171de7f2c280f379eec0d8535ab0b1cbbffbb4dc288f314ab7",
+        "event_ids": [
+          "20260830_184457_initial_arch",
+          "20260830_202427_arch_infra_feedback_20260830_190412_infra_product_design",
+          "20260905_091000_feedback_todo_resolution",
+          "20260907_015000_feedback_todo_followup",
+          "20260907_122000_feedback_abort_consistency",
+          "20260908_015000_feedback_slot_status_wording",
+          "20260921_092000_feedback_impl_feedback_eff24f55",
+          "20261010_202000_feedback_impl_feedback_dcd8234d",
+          "20261101_103000_feedback_impl_feedback_dcd8234d",
+          "20261101_123000_feedback_mail_removal_housekeeping",
+          "20261103_083000_feedback_housekeeping_followups",
+          "20261103_133000_feedback_housekeeping_db_required",
+          "20261115_140000_feedback_impl_feedback_fd678b04_cycle3",
+          "20261116_015000_feedback_standard_runner_job_map_location"
+        ],
+        "event_set_sha256": "a1c8751a87e69b96af7148ec69704a5989b317882662b86ba02b5411f0c8104f",
+        "latest_tree_sha256": "d60f3ea6cc61bdede57012574e0abe7c18b91176381d2305d1720e8630d0f892"
+      },
+      "infra/events": {
+        "head_event_id": "20261116_020000_feedback_standard_runner_job_map_location",
+        "head_event_sha256": "093f75bf0de2b6bf432bccd8cdf7cbdb002d7eaa85880c2be290d38c8fbff5e9",
+        "event_ids": [
+          "20260830_190412_infra_product_design",
+          "20260905_093000_feedback_todo_resolution",
+          "20260907_021000_feedback_todo_followup",
+          "20260907_124000_feedback_abort_consistency",
+          "20260908_021000_feedback_slot_status_wording",
+          "20260921_094000_feedback_impl_feedback_eff24f55",
+          "20261010_203000_feedback_impl_feedback_dcd8234d",
+          "20261101_104000_feedback_impl_feedback_dcd8234d",
+          "20261101_124000_feedback_mail_removal_housekeeping",
+          "20261103_084000_feedback_housekeeping_followups",
+          "20261103_134000_feedback_housekeeping_db_required",
+          "20261104_091000_feedback_external_review_fixes",
+          "20261104_101000_feedback_rapid_env_deploy_check",
+          "20261105_091000_feedback_final_env_per_segment",
+          "20261105_111000_feedback_single_management_db",
+          "20261115_141000_feedback_impl_feedback_fd678b04_cycle3",
+          "20261116_020000_feedback_standard_runner_job_map_location"
+        ],
+        "event_set_sha256": "b89c15113e8ee255c81265f99e8a49d0d68b4582ba29da67e0c5b8e6a4387725",
+        "latest_tree_sha256": "4fecf467480b70fb9074010cc475dc5e9275ab6fc71a422ce203e93ae5e4ebd6"
+      },
+      "design/events": {
+        "head_event_id": null,
+        "head_event_sha256": null,
+        "event_ids": [],
+        "event_set_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "latest_tree_sha256": null
+      },
+      "specs/events": {
+        "head_event_id": "20261116_021000_feedback_standard_runner_job_map_location",
+        "head_event_sha256": "046c4bafcab34fcc9ff3332170d7533b3eef19bddbd3be8f1750da39b0c93e2b",
+        "event_ids": [
+          "20260830_202851_spec_generation",
+          "20260905_100000_feedback_todo_resolution",
+          "20260907_024000_feedback_todo_followup",
+          "20260907_131000_feedback_abort_consistency",
+          "20260908_024000_feedback_slot_status_wording",
+          "20260908_062000_feedback_spec_machine_readable",
+          "20260917_050000_feedback_impl_feedback_fd678b04",
+          "20260917_100000_feedback_impl_feedback_fd678b04_cycle2",
+          "20260921_100000_feedback_impl_feedback_eff24f55",
+          "20260923_112000_feedback_impl_feedback_eff24f55_cycle2",
+          "20261010_204000_feedback_impl_feedback_dcd8234d",
+          "20261027_055000_feedback_impl_feedback_dcd8234d",
+          "20261101_105000_feedback_impl_feedback_dcd8234d",
+          "20261101_125000_feedback_mail_removal_housekeeping",
+          "20261103_085000_feedback_housekeeping_followups",
+          "20261103_135000_feedback_housekeeping_db_required",
+          "20261103_151000_feedback_env_duplicate_key",
+          "20261104_092000_feedback_external_review_fixes",
+          "20261104_102000_feedback_rapid_env_deploy_check",
+          "20261105_092000_feedback_external_review_round2",
+          "20261105_112000_feedback_single_management_db",
+          "20261110_153000_feedback_impl_feedback_dcd8234d",
+          "20261115_142000_feedback_impl_feedback_fd678b04_cycle3",
+          "20261115_164000_feedback_runner_relative_path",
+          "20261116_010000_feedback_impl_feedback_fd678b04_cycle4",
+          "20261116_021000_feedback_standard_runner_job_map_location"
+        ],
+        "event_set_sha256": "89a6a77c804044dc947ea12d16f8f5cc57d87d57e5ce3c7e14da0efe328146c0",
+        "latest_tree_sha256": "fb2b39dddbff455d50cf0451cf018ead026fe7cc4842c23e0913179713a9d0b1"
+      }
+    }
+  }
+}

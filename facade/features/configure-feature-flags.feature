@@ -1,5 +1,8 @@
 # source: docs/specs/latest/適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md#ティア完了条件(BDD)
 # 転写: ティア完了条件の gherkin を意訳せず転写(S2 test-scaffold 生成。uc_id=fd678b04。spec event 20261110_153000_feedback_impl_feedback_dcd8234d までの仕様更新に追従した再転写)
+# 追記: spec event 20261115_142000_feedback_impl_feedback_fd678b04_cycle3 で足された末尾の Scenario 4 本と Scenario Outline 1 本(error 行の順 / mode が列挙外・空・欠落の slot の検査 / 9 キー以外の値を取り込まない)を転写(2026-11-15 の S2 再実行。既存 Scenario は変更なし)
+# 追記: spec event 20261115_164000_feedback_runner_relative_path で足された末尾の Scenario 4 本と Scenario Outline 2 本(相対パスの解決 / 基準は作業ディレクトリではない / 設定ファイルのパスが相対パス / シンボリックリンク / 実体が無いとき / ~・環境変数・コマンド置換を展開しない)を転写し、error_order の Scenario の Given 1 行・When・表の 5 行目を仕様の置換どおりに差し替えた(2026-11-15 の S2 再実行。ほかの Scenario は変更なし)
+# 追記: 2026-11-16 の仕様更新(slot ジョブマップの場所を書く任意の 2 キー BLUE_JOB_MAP_CSV / GREEN_JOB_MAP_CSV。契約 config_files.feature-flag.env.job_map_location、spec-decision-036 / 038)で足された Scenario 6 本と Scenario Outline 2 本(同じ絶対パス / 2 キーが無いときの固定の名前 / 値が空のキー / 相対パスの基準 / 作業ディレクトリにだけある / 書いた場所に無い / off の slot / 名前が違うキー)を仕様と同じ位置へ転写し、duplicate key の Examples に 1 行を足し、Scenario「9 キー以外のキーの値をプロセスの環境へ取り込まない」の名前を仕様の改名どおりに差し替えた(2026-11-16 の S2 再実行。ほかの Scenario は変更なし)
 Feature: feature flag を設定する - facade / slot runner ティア
 
   Scenario: validate-config_sh_feature-flag は有効な並行稼働設定に終了コード 0 と operation_mode=parallel を返す
@@ -107,6 +110,7 @@ Feature: feature flag を設定する - facade / slot runner ティア
       | <SP>BLUE_MODE<SP>=off                   | "error: duplicate key key=BLUE_MODE lines=1,2 path: ff.env"                                               | キーの前後の空白は除く   |
       | BLUE_MODE=                              | "error: duplicate key key=BLUE_MODE lines=1,2 path: ff.env"                                               | 値が空の行も数える       |
       | CONFIG_VERSION=a と CONFIG_VERSION=b    | "error: duplicate key key=CONFIG_VERSION lines=2,3 path: ff.env"                                          | 未知キーも数える         |
+      | BLUE_JOB_MAP_CSV=a.csv と BLUE_JOB_MAP_CSV= | "error: duplicate key key=BLUE_JOB_MAP_CSV lines=2,3 path: ff.env"                                    | 任意の 2 キーも数える    |
       | BLUE_MODE=off と BLUE_MODE=background   | "error: duplicate key key=BLUE_MODE lines=1,2,3 path: ff.env"                                             | 3 行は初出行から全部     |
       | BLUE_MODE と BLUE_MODE=off              | "error: invalid line line=2 path: ff.env" と "error: duplicate key key=BLUE_MODE lines=1,3 path: ff.env" | invalid line が先        |
 
@@ -142,3 +146,204 @@ Feature: feature flag を設定する - facade / slot runner ティア
     Given ff.env の 1 行目が ZZ=x、2 行目が broken、3 行目が BLUE_MODE=off、4 行目が GREEN_MODE=foreground、5 行目が RAPID_CROSSCHECK_MODE=off である
     When `validate-config.sh --feature-flag ff.env --verbose` を実行する
     Then 終了コード 2 で stdout は 0 行、stderr は "error: invalid line line=2 path: ff.env" の 1 行だけである(info 行と未知キーの warn 行は出ない。契約 config_input_rules.env_files)
+
+  Scenario: validate-config_sh_feature-flag は error 行が 2 行以上のとき契約の error_order の順に出す
+    Given ff.env の 1 行目が BLUE_MODE=foreground、2 行目が GREEN_MODE=foreground、3 行目が RAPID_CROSSCHECK_MODE=maybe、4 行目が GREEN_IMPL=green-1.4.0、5 行目が BLUE_RUNNER=relative/blue-runner.sh、6 行目が FINAL_POLL_LIMIT_SEC=60、7 行目が FINAL_CROSSCHECK_MODE=background である(BLUE_IMPL / GREEN_RUNNER / RAPID_CROSSCHECK_RUNNER / RAPID_CROSSCHECK_WORKER は書かない)
+    And RELAY_GATE_CONFIG_DIR に blue-job-map.csv も green-job-map.csv も無く、ff.env のあるディレクトリに relative/blue-runner.sh は無い
+    When ff.env のあるディレクトリを作業ディレクトリにして `validate-config.sh --feature-flag ff.env` を実行する
+    Then 終了コード 2 で stdout は 0 行、stderr は次の 12 行だけがこの順に出る(契約 config_files.feature-flag.env.error_order)
+      | error: invalid value key=RAPID_CROSSCHECK_MODE value=maybe                              |
+      | hint: use foreground, background or off                                                 |
+      | error: foreground slot must be exactly one blue_mode=foreground green_mode=foreground   |
+      | error: option required option=BLUE_IMPL path: ff.env                                    |
+      | error: file not executable key=BLUE_RUNNER path=<ff.env のあるディレクトリの絶対パス>/relative/blue-runner.sh |
+      | error: option required option=GREEN_RUNNER path: ff.env                                 |
+      | error: option required option=RAPID_CROSSCHECK_RUNNER path: ff.env                      |
+      | error: option required option=RAPID_CROSSCHECK_WORKER path: ff.env                      |
+      | error: final crosscheck key is not allowed key=FINAL_POLL_LIMIT_SEC                     |
+      | error: final crosscheck key is not allowed key=FINAL_CROSSCHECK_MODE                    |
+      | error: job map not found slot=blue map=<RELAY_GATE_CONFIG_DIR>/blue-job-map.csv         |
+      | error: job map not found slot=green map=<RELAY_GATE_CONFIG_DIR>/green-job-map.csv       |
+
+  Scenario Outline: validate-config_sh_feature-flag は mode が列挙外・空・欠落の slot も従属キーと対応ジョブマップを検査し runner へ問い合わせる
+    Given ff.env に <blue_mode_line> GREEN_MODE=foreground RAPID_CROSSCHECK_MODE=off BLUE_RUNNER=<実行可能な blue スタブ> GREEN_IMPL=green-1.4.0 GREEN_RUNNER=<実行可能な green スタブ> を書き BLUE_IMPL を書かない(<blue_mode_line> が「(書かない)」のときは BLUE_MODE の行を書かない)
+    And 両 runner スタブは --help で "runner-if-version=1" を返し、起動されるたびに受け取った引数を記録する
+    And RELAY_GATE_CONFIG_DIR に green-job-map.csv があり blue-job-map.csv は無い
+    When `validate-config.sh --feature-flag ff.env` を実行する
+    Then 終了コード 2 で stdout は 0 行、stderr は <mode_lines> に続けて "error: option required option=BLUE_IMPL path: ff.env" / "error: job map not found slot=blue map=<RELAY_GATE_CONFIG_DIR>/blue-job-map.csv" がこの順に出て、ほかの行は出ない(契約 config_files.feature-flag.env.validation_rules)
+    And blue スタブと green スタブは、それぞれ引数 --help で 1 回ずつ起動されている
+
+    Examples:
+      | blue_mode_line     | mode_lines                                                                                       | note   |
+      | BLUE_MODE=parallel | "error: invalid value key=BLUE_MODE value=parallel" / "hint: use foreground, background or off" | 列挙外 |
+      | BLUE_MODE=         | "error: option required option=BLUE_MODE path: ff.env"                                          | 空     |
+      | (書かない)       | "error: option required option=BLUE_MODE path: ff.env"                                          | 欠落   |
+
+  Scenario: validate-config_sh_feature-flag は mode が 3 つとも欠落・空の設定で foreground の個数の error 行に - を出す
+    Given ff.env の 1 行目が CONFIG_VERSION=cfg-v1、2 行目が GREEN_MODE=(値が空)で、ほかの行は無い
+    And RELAY_GATE_CONFIG_DIR に blue-job-map.csv も green-job-map.csv も無い
+    When `validate-config.sh --feature-flag ff.env` を実行する
+    Then 終了コード 2 で stdout は 0 行、stderr は次の 13 行だけがこの順に出る(契約 config_files.feature-flag.env の error_messages / error_order / validation_rules)
+      | warn: unknown key key=CONFIG_VERSION path: ff.env                                  |
+      | error: option required option=BLUE_MODE path: ff.env                               |
+      | error: option required option=GREEN_MODE path: ff.env                              |
+      | error: option required option=RAPID_CROSSCHECK_MODE path: ff.env                   |
+      | error: foreground slot must be exactly one blue_mode=- green_mode=-                |
+      | error: option required option=BLUE_IMPL path: ff.env                               |
+      | error: option required option=BLUE_RUNNER path: ff.env                             |
+      | error: option required option=GREEN_IMPL path: ff.env                              |
+      | error: option required option=GREEN_RUNNER path: ff.env                            |
+      | error: option required option=RAPID_CROSSCHECK_RUNNER path: ff.env                 |
+      | error: option required option=RAPID_CROSSCHECK_WORKER path: ff.env                 |
+      | error: job map not found slot=blue map=<RELAY_GATE_CONFIG_DIR>/blue-job-map.csv    |
+      | error: job map not found slot=green map=<RELAY_GATE_CONFIG_DIR>/green-job-map.csv  |
+
+  Scenario: validate-config_sh_feature-flag は RAPID_CROSSCHECK_MODE が列挙外でも速報 runner と worker を検査する
+    Given ff.env に BLUE_MODE=off GREEN_MODE=foreground RAPID_CROSSCHECK_MODE=maybe GREEN_IMPL=green-1.4.0 GREEN_RUNNER=<実行可能。--help で runner-if-version=1 を返す> を書き RAPID_CROSSCHECK_RUNNER / RAPID_CROSSCHECK_WORKER を書かない
+    And RELAY_GATE_CONFIG_DIR に green-job-map.csv がある
+    When `validate-config.sh --feature-flag ff.env` を実行する
+    Then 終了コード 2 で stdout は 0 行、stderr は次の 4 行だけがこの順に出る(契約 config_files.feature-flag.env.validation_rules)
+      | error: invalid value key=RAPID_CROSSCHECK_MODE value=maybe          |
+      | hint: use foreground, background or off                             |
+      | error: option required option=RAPID_CROSSCHECK_RUNNER path: ff.env  |
+      | error: option required option=RAPID_CROSSCHECK_WORKER path: ff.env  |
+
+  Scenario: validate-config_sh_feature-flag は 9 キーと任意の 2 キーのどちらでもないキーの値をプロセスの環境へ取り込まない
+    Given 有効な並行稼働設定の 1 行目の前に PATH=/nonexistent を、最終行の後に RELAY_GATE_CONFIG_DIR=/nonexistent を書いた ff.env がある
+    And 両 runner スタブは --help で "runner-if-version=1" を返し、RELAY_GATE_CONFIG_DIR(環境変数)のディレクトリに blue-job-map.csv と green-job-map.csv がある
+    When `validate-config.sh --feature-flag ff.env` を実行する
+    Then 終了コード 0 で stderr は "warn: unknown key key=PATH path: ff.env" / "warn: unknown key key=RELAY_GATE_CONFIG_DIR path: ff.env" の 2 行だけがこの順に出る(契約 config_input_rules.env_files。キー名を表示に使うだけ)
+    And stdout は 15 行で、12 行目は "blue_job_map: <環境変数 RELAY_GATE_CONFIG_DIR>/blue-job-map.csv"、最終行は "green_runner_if_version=1" である(ファイルの PATH / RELAY_GATE_CONFIG_DIR の値は使われない)
+
+  Scenario: validate-config_sh_feature-flag は blue と green に同じ絶対パスのジョブマップの場所を書いた設定を未知キーの warn なしで受理する
+    Given 有効な並行稼働設定に加えて BLUE_JOB_MAP_CSV=<一時ディレクトリ maps の絶対パス>/jobs.csv と GREEN_JOB_MAP_CSV=<一時ディレクトリ maps の絶対パス>/jobs.csv を書いた ff.env がある
+    And maps に jobs.csv があり、RELAY_GATE_CONFIG_DIR に blue-job-map.csv も green-job-map.csv も無い
+    And 両 runner スタブは --help で "runner-if-version=1" を返す
+    When `validate-config.sh --feature-flag ff.env` を実行する
+    Then 終了コード 0 で stderr は 0 行である("warn: unknown key" で始まる行は出ない。契約 config_files.feature-flag.env.job_map_location)
+    And stdout は 15 行で、12 行目は "blue_job_map: <maps の絶対パス>/jobs.csv"、13 行目は "green_job_map: <maps の絶対パス>/jobs.csv" である
+
+  Scenario: validate-config_sh_feature-flag は 2 キーが無い設定で渡したファイルのあるディレクトリではなく RELAY_GATE_CONFIG_DIR 配下の固定の名前を使う
+    Given 一時ディレクトリ conf に 9 キーだけの有効な並行稼働設定 ff.env があり、conf に blue-job-map.csv も green-job-map.csv も無い
+    And conf とは別のディレクトリを指す RELAY_GATE_CONFIG_DIR に blue-job-map.csv と green-job-map.csv がある
+    And 両 runner スタブは --help で "runner-if-version=1" を返す
+    When `validate-config.sh --feature-flag <conf の絶対パス>/ff.env` を実行する
+    Then 終了コード 0 で stderr は 0 行である
+    And stdout の 12 行目は "blue_job_map: <RELAY_GATE_CONFIG_DIR>/blue-job-map.csv"、13 行目は "green_job_map: <RELAY_GATE_CONFIG_DIR>/green-job-map.csv" である
+
+  Scenario Outline: validate-config_sh_feature-flag は値が空のキーと書いていないキーの slot に固定の名前を使う
+    Given 有効な並行稼働設定(9 キー)に加えて <lines> を書いた ff.env がある(<lines> の「 と 」は行の区切り)
+    And 一時ディレクトリ maps に blue-jobs.csv と green-jobs.csv があり、RELAY_GATE_CONFIG_DIR に blue-job-map.csv と green-job-map.csv がある
+    And 両 runner スタブは --help で "runner-if-version=1" を返す
+    When `validate-config.sh --feature-flag ff.env` を実行する
+    Then 終了コード 0 で stderr は 0 行である(値が空のキーに error も warn も出ない)
+    And stdout の 12 行目は "blue_job_map: <blue>"、13 行目は "green_job_map: <green>" である
+
+    Examples:
+      | lines                                                                    | blue                                      | green                                      | note                         |
+      | BLUE_JOB_MAP_CSV=                                                        | <RELAY_GATE_CONFIG_DIR>/blue-job-map.csv  | <RELAY_GATE_CONFIG_DIR>/green-job-map.csv  | 値が空は無いときと同じ       |
+      | BLUE_JOB_MAP_CSV= と GREEN_JOB_MAP_CSV=<maps の絶対パス>/green-jobs.csv  | <RELAY_GATE_CONFIG_DIR>/blue-job-map.csv  | <maps の絶対パス>/green-jobs.csv           | 空のキーと書いたキー         |
+      | GREEN_JOB_MAP_CSV=<maps の絶対パス>/green-jobs.csv                       | <RELAY_GATE_CONFIG_DIR>/blue-job-map.csv  | <maps の絶対パス>/green-jobs.csv           | green だけ書く               |
+      | BLUE_JOB_MAP_CSV=<maps の絶対パス>/blue-jobs.csv                         | <maps の絶対パス>/blue-jobs.csv           | <RELAY_GATE_CONFIG_DIR>/green-job-map.csv  | blue だけ書く                |
+
+  Scenario Outline: validate-config_sh_feature-flag は相対パスのジョブマップの場所を作業ディレクトリではなく設定ファイルのあるディレクトリ基準で解決する
+    Given 一時ディレクトリ conf に ff.env があり、BLUE_MODE=off GREEN_MODE=foreground RAPID_CROSSCHECK_MODE=off GREEN_IMPL=green-1.4.0 GREEN_RUNNER=<実行可能。--help で runner-if-version=1 を返す> GREEN_JOB_MAP_CSV=<value> が書いてある
+    And <location> にジョブマップがあり、作業ディレクトリにするディレクトリ work(conf とは別で、親ディレクトリも conf の親とは別)から見た同じ相対位置にファイルは無い
+    And RELAY_GATE_CONFIG_DIR に green-job-map.csv は無い
+    When work を作業ディレクトリにして `validate-config.sh --feature-flag <conf の絶対パス>/ff.env` を実行する
+    Then 終了コード 0 で stdout の 13 行目は "green_job_map: <conf の絶対パス>/<value>" である(`.`・`..` を畳まない。契約 config_files.feature-flag.env の job_map_location / runner_path_resolution)
+
+    Examples:
+      | value                   | location                         | note             |
+      | ./green-jobs.csv        | conf/green-jobs.csv              | ./ で始まる      |
+      | green-jobs.csv          | conf/green-jobs.csv              | ./ を付けない    |
+      | ../maps/green-jobs.csv  | conf の親の maps/green-jobs.csv  | .. で親をたどる  |
+
+  Scenario: validate-config_sh_feature-flag は相対パスのジョブマップが作業ディレクトリにだけあるとき解決後のパスで job map not found を出す
+    Given 一時ディレクトリ conf の ff.env に BLUE_MODE=off GREEN_MODE=foreground RAPID_CROSSCHECK_MODE=off GREEN_IMPL=green-1.4.0 GREEN_RUNNER=<実行可能。--help で runner-if-version=1 を返す> GREEN_JOB_MAP_CSV=./green-jobs.csv が書いてあり、conf に green-jobs.csv は無い
+    And 作業ディレクトリにするディレクトリ work(conf とは別)に green-jobs.csv がある
+    When work を作業ディレクトリにして `validate-config.sh --feature-flag <conf の絶対パス>/ff.env` を実行する
+    Then 終了コード 2 で stdout は 0 行、stderr は "error: job map not found slot=green map=<conf の絶対パス>/./green-jobs.csv" の 1 行だけである
+
+  Scenario: validate-config_sh_feature-flag は書いた場所にジョブマップが無ければ固定の名前のファイルがあっても job map not found を出す
+    Given 有効な並行稼働設定に加えて BLUE_JOB_MAP_CSV=<一時ディレクトリ maps の絶対パス>/missing.csv を書いた ff.env がある(GREEN_JOB_MAP_CSV は書かない)
+    And maps に missing.csv は無く、RELAY_GATE_CONFIG_DIR に blue-job-map.csv があり green-job-map.csv は無い
+    When `validate-config.sh --feature-flag ff.env` を実行する
+    Then 終了コード 2 で stdout は 0 行、stderr は次の 2 行だけがこの順に出る(契約 config_files.feature-flag.env の job_map_location / error_order)
+      | error: job map not found slot=blue map=<maps の絶対パス>/missing.csv              |
+      | error: job map not found slot=green map=<RELAY_GATE_CONFIG_DIR>/green-job-map.csv |
+
+  Scenario: validate-config_sh_feature-flag は off の slot のジョブマップの場所を解決も検査もしない
+    Given ff.env に BLUE_MODE=off GREEN_MODE=foreground RAPID_CROSSCHECK_MODE=off GREEN_IMPL=green-1.4.0 GREEN_RUNNER=<実行可能。--help で runner-if-version=1 を返す> BLUE_JOB_MAP_CSV=/nonexistent/blue-jobs.csv を書く
+    And RELAY_GATE_CONFIG_DIR に green-job-map.csv がある(blue-job-map.csv は無い)
+    When `validate-config.sh --feature-flag ff.env` を実行する
+    Then 終了コード 0 で stderr は 0 行である("error: job map not found" も "warn: unknown key" も出ない)
+    And stdout の 12 行目は "blue_job_map: -"、13 行目は "green_job_map: <RELAY_GATE_CONFIG_DIR>/green-job-map.csv" である
+
+  Scenario: validate-config_sh_feature-flag は任意の 2 キーと名前が違うキーを未知キーとして warn し値を使わない
+    Given 有効な並行稼働設定の最終行の後に BLUE_JOB_MAP=<一時ディレクトリ maps の絶対パス>/blue-jobs.csv と green_job_map_csv=<一時ディレクトリ maps の絶対パス>/green-jobs.csv の 2 行を書いた ff.env がある
+    And maps に blue-jobs.csv と green-jobs.csv があり、RELAY_GATE_CONFIG_DIR に blue-job-map.csv と green-job-map.csv がある
+    And 両 runner スタブは --help で "runner-if-version=1" を返す
+    When `validate-config.sh --feature-flag ff.env` を実行する
+    Then 終了コード 0 で stderr は "warn: unknown key key=BLUE_JOB_MAP path: ff.env" / "warn: unknown key key=green_job_map_csv path: ff.env" の 2 行だけがこの順に出る(キーの比較は大文字小文字を区別した完全一致)
+    And stdout の 12 行目は "blue_job_map: <RELAY_GATE_CONFIG_DIR>/blue-job-map.csv"、13 行目は "green_job_map: <RELAY_GATE_CONFIG_DIR>/green-job-map.csv" である
+
+  Scenario: validate-config_sh_feature-flag は方針資料の書き方の相対パスを設定ファイルのあるディレクトリ基準で解決して受理する
+    Given 一時ディレクトリ conf に ff.env があり、BLUE_MODE=foreground GREEN_MODE=background RAPID_CROSSCHECK_MODE=background BLUE_IMPL=blue-2.3.1 GREEN_IMPL=green-1.4.0 BLUE_RUNNER=./blue-runner.sh GREEN_RUNNER=./green-runner.sh RAPID_CROSSCHECK_RUNNER=./rapid-crosscheck-runner.sh RAPID_CROSSCHECK_WORKER=./rapid-crosscheck-worker.sh が書いてある
+    And conf に実行可能な blue-runner.sh / green-runner.sh / rapid-crosscheck-runner.sh / rapid-crosscheck-worker.sh があり、両 runner は --help で "runner-if-version=1" を返す
+    And RELAY_GATE_CONFIG_DIR に blue-job-map.csv と green-job-map.csv がある
+    When conf とは別のディレクトリを作業ディレクトリにして `validate-config.sh --feature-flag <conf の絶対パス>/ff.env` を実行する
+    Then 終了コード 0 で stderr は 0 行である
+    And stdout の 6 行目は "blue_runner: <conf の絶対パス>/./blue-runner.sh"、7 行目は "green_runner: <conf の絶対パス>/./green-runner.sh"、9 行目は "rapid_crosscheck_runner: <conf の絶対パス>/./rapid-crosscheck-runner.sh"、10 行目は "rapid_crosscheck_worker: <conf の絶対パス>/./rapid-crosscheck-worker.sh" である(契約 config_files.feature-flag.env.runner_path_resolution)
+    And stdout の最終行は "green_runner_if_version=1" である
+
+  Scenario Outline: validate-config_sh_feature-flag は相対パスの基準を作業ディレクトリではなく設定ファイルのあるディレクトリにする
+    Given 一時ディレクトリ conf に ff.env があり、BLUE_MODE=off GREEN_MODE=foreground RAPID_CROSSCHECK_MODE=off GREEN_IMPL=green-1.4.0 GREEN_RUNNER=<value> が書いてある
+    And <location> に、--help で "runner-if-version=1" を返す実行可能な green スタブがある
+    And 作業ディレクトリにするディレクトリ work(conf とは別で、親ディレクトリも conf の親とは別)から見た同じ相対位置に、起動されたら記録を残し --help で "runner-if-version=9" を返す別の実行可能ファイルがある
+    And RELAY_GATE_CONFIG_DIR に green-job-map.csv がある
+    When work を作業ディレクトリにして `validate-config.sh --feature-flag <conf の絶対パス>/ff.env` を実行する
+    Then 終了コード 0 で stdout の 7 行目は "green_runner: <conf の絶対パス>/<value>"、最終行は "green_runner_if_version=1" である
+    And work から見た位置に置いた別の実行可能ファイルは起動されていない
+
+    Examples:
+      | value                       | location                            | note             |
+      | ./green-runner.sh           | conf/green-runner.sh                | ./ で始まる      |
+      | green-runner.sh             | conf/green-runner.sh                | ./ を付けない    |
+      | ../runners/green-runner.sh  | conf の親の runners/green-runner.sh | .. で親をたどる  |
+
+  Scenario: validate-config_sh_feature-flag は設定ファイルのパスが相対パスのとき作業ディレクトリで絶対化したディレクトリを基準にする
+    Given ディレクトリ work の下の conf/ff.env に BLUE_MODE=off GREEN_MODE=foreground RAPID_CROSSCHECK_MODE=off GREEN_IMPL=green-1.4.0 GREEN_RUNNER=green-runner.sh が書いてある
+    And work/conf/green-runner.sh は --help で "runner-if-version=1" を返す実行可能なスタブで、work/green-runner.sh は無い
+    And RELAY_GATE_CONFIG_DIR に green-job-map.csv がある
+    When work を作業ディレクトリにして `validate-config.sh --feature-flag conf/ff.env` を実行する
+    Then 終了コード 0 で stdout の 7 行目は "green_runner: <work の絶対パス>/conf/green-runner.sh" である(<work の絶対パス> は作業ディレクトリの論理パス = シェルの $PWD)
+
+  Scenario: validate-config_sh_feature-flag は設定ファイルがシンボリックリンクのときリンクのあるディレクトリを基準にする
+    Given ディレクトリ real に ff.env(BLUE_MODE=off GREEN_MODE=foreground RAPID_CROSSCHECK_MODE=off GREEN_IMPL=green-1.4.0 GREEN_RUNNER=./green-runner.sh)があり、real に green-runner.sh は無い
+    And 別のディレクトリ link に、real/ff.env へのシンボリックリンク ff.env と、--help で "runner-if-version=1" を返す実行可能な green-runner.sh がある
+    And RELAY_GATE_CONFIG_DIR に green-job-map.csv がある
+    When `validate-config.sh --feature-flag <link の絶対パス>/ff.env` を実行する
+    Then 終了コード 0 で stdout の 7 行目は "green_runner: <link の絶対パス>/./green-runner.sh" である(リンク先のディレクトリ real は基準にしない)
+
+  Scenario: validate-config_sh_feature-flag は相対パスの実体が無いとき解決後のパスで報告し path is not absolute を出さない
+    Given 一時ディレクトリ conf の ff.env に BLUE_MODE=off GREEN_MODE=foreground RAPID_CROSSCHECK_MODE=off GREEN_IMPL=green-1.4.0 GREEN_RUNNER=./green-runner.sh が書いてあり、conf に green-runner.sh は無い
+    And 作業ディレクトリにするディレクトリ work(conf とは別)に実行可能な green-runner.sh がある
+    And RELAY_GATE_CONFIG_DIR に green-job-map.csv がある
+    When work を作業ディレクトリにして `validate-config.sh --feature-flag <conf の絶対パス>/ff.env` を実行する
+    Then 終了コード 2 で stdout は 0 行、stderr は "error: file not executable key=GREEN_RUNNER path=<conf の絶対パス>/./green-runner.sh" の 1 行だけである
+    And stderr に "path is not absolute" を含む行は出ない
+
+  Scenario Outline: validate-config_sh_feature-flag は ~ と環境変数とコマンド置換を展開せず文字のまま相対パスとして扱う
+    Given 一時ディレクトリ conf の ff.env に BLUE_MODE=off GREEN_MODE=foreground RAPID_CROSSCHECK_MODE=off GREEN_IMPL=green-1.4.0 GREEN_RUNNER=<value> が書いてある
+    And 環境変数 HOME のディレクトリに実行可能な green-runner.sh があり、conf に marker という名前のファイルは無い
+    And RELAY_GATE_CONFIG_DIR に green-job-map.csv がある
+    When conf を作業ディレクトリにして `validate-config.sh --feature-flag <conf の絶対パス>/ff.env` を実行する
+    Then 終了コード 2 で stderr は "error: file not executable key=GREEN_RUNNER path=<conf の絶対パス>/<value>" の 1 行だけである(<value> は設定に書いた文字のまま)
+    And conf に marker という名前のファイルは作られていない(コマンド置換の中身は実行されない)
+
+    Examples:
+      | value                              | note           |
+      | ~/green-runner.sh                  | ~ を展開しない |
+      | $HOME/green-runner.sh              | 環境変数       |
+      | $(touch marker)green-runner.sh     | コマンド置換   |

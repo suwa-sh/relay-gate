@@ -1,4 +1,4 @@
-# digest of arch/latest/arch-design.yaml section app_architecture (L818-1231); source_sha256: 6ee48d9e90d09b186d8d085a0ac0c64adb0a637559321a753c0612124f5da27d
+# digest of arch/latest/arch-design.yaml section app_architecture (L820-1233); source_sha256: c53102258eb87c109a5e44ec19daf68de60dc5770785d80c474f31b1cf8d9879
 # 派生物。正本は arch-design.yaml。編集しない
 app_architecture:
   tier_layers:
@@ -6,7 +6,7 @@ app_architecture:
       layers:
         - id: "L-facade-presentation"
           name: "プレゼンテーション層(CLI エントリ)"
-          responsibility: "facade.sh / blue-runner / green-runner の CLI 入口。JOB_ID [PARAM...] と feature flag の入力検証(foreground slot 排他を含む)、終了コードの決定、foreground の Runner Result の標準出力・標準エラー・終了コードへの無加工中継"
+          responsibility: "facade.sh と slot runner(relay-gate が提供する標準の slot runner。blue と green の両方に割り当てる。ファイル構成は仕様で確定する)の CLI 入口。JOB_ID [PARAM...] と feature flag の入力検証(foreground slot 排他を含む)、終了コードの決定、foreground の Runner Result の標準出力・標準エラー・終了コードへの無加工中継"
           allowed_dependencies:
             - "L-facade-usecase"
           policies:
@@ -45,7 +45,7 @@ app_architecture:
           rules: []
         - id: "L-facade-domain"
           name: "ドメイン層"
-          responsibility: "slot 実行モードの判定表(起動可否・foreground 排他)、feature flag 9 キーの検証、run_id の生成規則、並行稼働実行と slot 実行の状態遷移、CSV セル(fixed_params)の解析と引数連結規則、exitcode.txt / aborted.txt → SUCCEEDED / FAILED / ABORTED / RUNNING の状態導出など、副作用を持たない純粋関数"
+          responsibility: "slot 実行モードの判定表(起動可否・foreground 排他)、feature flag の 9 キーと任意の 2 キー(slot ジョブマップの場所)の検証、slot ジョブマップの場所の解決規則(キーが無い・空なら固定の名前。相対パスの基準は feature flag の設定ファイルがあるディレクトリ)、run_id の生成規則、並行稼働実行と slot 実行の状態遷移、CSV セル(fixed_params)の解析と引数連結規則、exitcode.txt / aborted.txt → SUCCEEDED / FAILED / ABORTED / RUNNING の状態導出など、副作用を持たない純粋関数"
           allowed_dependencies: []
           policies:
             - id: "LP-005"
@@ -57,7 +57,7 @@ app_architecture:
           rules: []
         - id: "L-facade-repository"
           name: "リポジトリ層"
-          responsibility: "parallel_run(管理 DB)、execution-spec / Runner Result(成果物ディレクトリ。aborted.txt の有無を含む)、feature flag(env 形式 9 キー)/ ジョブマップ(CSV。credential_ref / map_version は任意列)/ 速報クロスチェック設定(env 形式 rapid-crosscheck.env。速報有効時のみ読み、RAPID_DB_CONN_REF で管理 DB の接続先を解決する)の読み書きを集約単位で提供する"
+          responsibility: "parallel_run(管理 DB)、execution-spec / Runner Result(成果物ディレクトリ。aborted.txt の有無を含む)、feature flag(env 形式。9 キー + 任意の 2 キー)/ ジョブマップ(CSV。credential_ref / map_version は任意列。場所は feature flag の任意のキーから解決し、無い・空なら固定の名前)/ 速報クロスチェック設定(env 形式 rapid-crosscheck.env。速報有効時のみ読み、RAPID_DB_CONN_REF で管理 DB の接続先を解決する)の読み書きを集約単位で提供する"
           allowed_dependencies:
             - "L-facade-domain"
             - "L-facade-gateway"

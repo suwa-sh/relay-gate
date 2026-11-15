@@ -15,7 +15,7 @@ graph LR
     P["presentation\nJobLaunchRequest(JOB_ID, PARAM...)"]
     U["usecase\nLaunchSlotsCommand"]
     D["domain\nSlotLaunchPlan(起動可否表 / foreground 排他)\nParallelRun(STARTED → RUNNING)"]
-    R1["repository\nFeatureFlagConfig(9 キー: BLUE_MODE / GREEN_MODE / RAPID_CROSSCHECK_MODE / BLUE_IMPL / GREEN_IMPL / BLUE_RUNNER / GREEN_RUNNER / RAPID_CROSSCHECK_RUNNER / RAPID_CROSSCHECK_WORKER)\nRapidCrosscheckConfig(速報クロスチェック設定: RAPID_DB_CONN_REF。off 以外のみ)"]
+    R1["repository\nFeatureFlagConfig(9 キー: BLUE_MODE / GREEN_MODE / RAPID_CROSSCHECK_MODE / BLUE_IMPL / GREEN_IMPL / BLUE_RUNNER / GREEN_RUNNER / RAPID_CROSSCHECK_RUNNER / RAPID_CROSSCHECK_WORKER + 任意の 2 キー: BLUE_JOB_MAP_CSV / GREEN_JOB_MAP_CSV)\nRapidCrosscheckConfig(速報クロスチェック設定: RAPID_DB_CONN_REF。off 以外のみ)"]
     R2["repository\nParallelRunRepository / SlotExecutionRepository / RapidRunRepository"]
     G1["gateway\nRunnerProcessAdapter($BLUE_RUNNER / $GREEN_RUNNER)"]
     G2["gateway\nRdbClientAdapter"]
@@ -27,7 +27,7 @@ graph LR
     U -->|"function 呼び出し"| G1
   end
   subgraph FS["FS(設定ファイル / 成果物ディレクトリ)"]
-    CFG[("feature flag env\n9 キー")]
+    CFG[("feature flag env\n9 キー + 任意の 2 キー")]
     RCFG[("rapid-crosscheck.env\n速報クロスチェック設定(RAPID_DB_CONN_REF)")]
     ART[("facade/run_id/\nrole ディレクトリ")]
   end
@@ -39,7 +39,7 @@ graph LR
   JOB -->|"引数 JOB_ID PARAM..."| P
   R1 -->|"ファイル読み込み"| CFG
   R1 -->|"ファイル読み込み(off 以外のみ。参照名だけ)"| RCFG
-  G1 -->|"プロセス起動 runner IF + 環境変数(RAPID_CROSSCHECK_MODE / RAPID_CROSSCHECK_RUNNER / BLUE_IMPL / GREEN_IMPL)"| ART
+  G1 -->|"プロセス起動 runner IF + 環境変数(RAPID_CROSSCHECK_MODE / RAPID_CROSSCHECK_RUNNER / BLUE_IMPL / GREEN_IMPL / BLUE_JOB_MAP_CSV / GREEN_JOB_MAP_CSV)"| ART
   G2 -->|"SQL INSERT / UPDATE(off 以外のみ)"| PR
   G2 -->|"SQL INSERT(起動前, pid=NULL)→ UPDATE pid(起動後)(off 以外のみ)"| SE
   G2 -->|"SQL INSERT(off 以外のみ。parallel_runs と同一トランザクション)"| RR
@@ -47,11 +47,11 @@ graph LR
 
 | レイヤー | データモデル | 変換内容 |
 |---------|------------|---------|
-| presentation | JobLaunchRequest(JOB_ID, PARAM...) | 引数検証(JOB_ID 必須・job_id 文字種)。feature flag の検証結果を終了コード 2 に変換 |
+| presentation | JobLaunchRequest(JOB_ID, PARAM...) | 引数検証(JOB_ID 必須・job_id 文字種)。feature flag の検証結果を終了コード 2 に変換(キーごとの検査で違反が 2 つ以上あるときは、最初の違反の error 行だけを出す。CLI 契約 facade.sh `config_violation_report`) |
 | usecase | LaunchSlotsCommand | feature flag 読み込み → 起動計画作成 → run_id 発行 → (off 以外) parallel_run INSERT → background 起動 → foreground 起動 → (off 以外) RUNNING 更新 → foreground 待機 |
 | domain | SlotLaunchPlan | 実装スロット × slot 実行モードの起動可否表。foreground × foreground を拒否。起動順序(background 全部 → foreground)を決める純粋関数 |
 | repository | FeatureFlagConfig / RapidCrosscheckConfig / ParallelRunRepository / SlotExecutionRepository / RapidRunRepository | env ファイルの読み込み(feature-flag.env。RAPID_CROSSCHECK_MODE が off 以外のときだけ速報クロスチェック設定 rapid-crosscheck.env の RAPID_DB_CONN_REF も読む。値は参照名のみ)。parallel_runs の INSERT(STARTED)+ rapid_runs の INSERT(PENDING)を同一トランザクションで、slot_executions の INSERT(RUNNING。runner 起動前に pid=NULL)と pid の UPDATE(起動後)、parallel_runs の条件付き UPDATE(RUNNING) |
-| gateway | RunnerProcessAdapter / RdbClientAdapter | runner IF `<runner> --run-id --job-id --role --mode -- PARAM...` でのプロセス起動と PID 取得(feature flag の値は環境変数 `RAPID_CROSSCHECK_MODE` / `RAPID_CROSSCHECK_RUNNER` / `BLUE_IMPL` / `GREEN_IMPL` で runner へ渡す。runner は feature-flag.env を読まない)。RDB クライアント CLI 呼び出し(ジョブキュー兼管理 DB は relay-gate 内部のデータストア) |
+| gateway | RunnerProcessAdapter / RdbClientAdapter | runner IF `<runner> --run-id --job-id --role --mode -- PARAM...` でのプロセス起動と PID 取得(feature flag の値は環境変数 `RAPID_CROSSCHECK_MODE` / `RAPID_CROSSCHECK_RUNNER` / `BLUE_IMPL` / `GREEN_IMPL` と、自 slot のジョブマップの場所 `BLUE_JOB_MAP_CSV` / `GREEN_JOB_MAP_CSV`(CLI 契約 `config_files.feature-flag.env.job_map_location` で決めた場所)で runner へ渡す。runner は feature-flag.env を読まない)。RDB クライアント CLI 呼び出し(ジョブキュー兼管理 DB は relay-gate 内部のデータストア) |
 
 ## 処理フロー
 
@@ -73,9 +73,10 @@ sequenceDiagram
   Pres->>Pres: 引数検証(JOB_ID 必須)
   Pres->>UC: LaunchSlotsCommand(JOB001, [20260830, full])
   UC->>Repo: feature flag を読み込む
-  Repo->>FS: 9 キー(BLUE_MODE / GREEN_MODE / RAPID_CROSSCHECK_MODE / BLUE_IMPL / GREEN_IMPL / BLUE_RUNNER / GREEN_RUNNER / RAPID_CROSSCHECK_RUNNER / RAPID_CROSSCHECK_WORKER)
+  Repo->>FS: 9 キー(BLUE_MODE / GREEN_MODE / RAPID_CROSSCHECK_MODE / BLUE_IMPL / GREEN_IMPL / BLUE_RUNNER / GREEN_RUNNER / RAPID_CROSSCHECK_RUNNER / RAPID_CROSSCHECK_WORKER)と任意の 2 キー(BLUE_JOB_MAP_CSV / GREEN_JOB_MAP_CSV)
   FS-->>Repo: 設定値
   UC->>Dom: SlotLaunchPlan を作る
+  Note over UC,Dom: キーごとの検査の違反が 2 つ以上あるときは、最初の違反の error 行だけを出して終了コード 2(契約 facade.sh config_violation_report)
   alt foreground slot 排他: BLUE_MODE=foreground かつ GREEN_MODE=foreground
     Dom-->>UC: 検証エラー(both slots foreground)
     UC-->>Pres: error
@@ -98,7 +99,7 @@ sequenceDiagram
     opt RAPID_CROSSCHECK_MODE≠off(runner 起動前)
       GW->>DB: INSERT slot_executions(status=RUNNING, mode=background, pid=NULL)
     end
-    UC->>GW: runner を background で起動(環境変数 RAPID_CROSSCHECK_MODE / RAPID_CROSSCHECK_RUNNER / <ROLE>_IMPL を渡す)
+    UC->>GW: runner を background で起動(環境変数 RAPID_CROSSCHECK_MODE / RAPID_CROSSCHECK_RUNNER / <ROLE>_IMPL / <ROLE>_JOB_MAP_CSV を渡す)
     GW->>Runner: <runner> --run-id --job-id --role --mode background -- PARAM...
     Runner-->>GW: PID
     opt RAPID_CROSSCHECK_MODE≠off(runner 起動後)
@@ -182,7 +183,7 @@ sequenceDiagram
 | BUC | 実装切替ジョブ実行フロー | この UC を含む BUC |
 | アクター | 運用者 | 受益者(ジョブ定義を変更せずに結果を受け取る) |
 | 情報 | ジョブ起動要求 | JOB_ID / PARAM... の入力 |
-| 情報 | feature flag 設定 | 起動のたびに読み込む。9 キー(BLUE_MODE / GREEN_MODE / RAPID_CROSSCHECK_MODE / BLUE_IMPL / GREEN_IMPL / BLUE_RUNNER / GREEN_RUNNER / RAPID_CROSSCHECK_RUNNER / RAPID_CROSSCHECK_WORKER)。設定版は持たない |
+| 情報 | feature flag 設定 | 起動のたびに読み込む。9 キー(BLUE_MODE / GREEN_MODE / RAPID_CROSSCHECK_MODE / BLUE_IMPL / GREEN_IMPL / BLUE_RUNNER / GREEN_RUNNER / RAPID_CROSSCHECK_RUNNER / RAPID_CROSSCHECK_WORKER)と、slot ジョブマップの場所を書く任意の 2 キー(BLUE_JOB_MAP_CSV / GREEN_JOB_MAP_CSV)。設定版は持たない |
 | 情報 | slot runner 割当 | BLUE_RUNNER / GREEN_RUNNER |
 | 情報 | 速報クロスチェック設定 | 属性: 管理 DB 接続参照名(RAPID_DB_CONN_REF。値は置かず参照名のみ)/ lease 期間(秒。RAPID_LEASE_SEC)/ worker の poll 間隔(秒。RAPID_POLL_INTERVAL_SEC)。`$RELAY_GATE_CONFIG_DIR/rapid-crosscheck.env`。所有者は基盤適用設計者(設定所有区分)。facade は RAPID_CROSSCHECK_MODE が off 以外のとき RAPID_DB_CONN_REF だけを読む(lease / poll は速報クロスチェック worker が読む)。off では読まず、存在しなくても slot 実行できる。適用 tier: tier-facade |
 | 情報 | 並行稼働実行(parallel_run) | RAPID_CROSSCHECK_MODE が off 以外のとき作成・更新。run_id 形式 `{ローカル yyyymmddThhmmss}-{job_id}-{8 桁 hex}`(off でも facade 単独で発行) |
@@ -206,6 +207,7 @@ sequenceDiagram
 | REQ-001 | SPEC-001-03 | 新実装の単独本番モードでは green だけを起動し管理 DB に触れない(SPEC-001-03) / 次世代並行稼働モードでは blue background と green foreground を起動する(SPEC-001-03) ※ 実行側。AC「ジョブ定義を変更しないで feature flag だけを変更すると並行稼働と単独本番を切り替えられる」の検証側(validate-config.sh --feature-flag が operation_mode=green_only を返す)は UC〈feature flag を設定する〉の Scenario「ジョブ定義を変えずに feature flag だけで運用モードを切り替える(SPEC-001-03)」で覆う |
 | REQ-002 | SPEC-002-01 | background を先に起動し foreground だけを待機する(SPEC-002-01) |
 | REQ-002 | SPEC-002-03 | 並行稼働モードで blue foreground と green background を起動する(SPEC-001-01) |
+| REQ-004 | SPEC-004-01 | feature flag に書いたジョブマップの場所を自 slot の runner へ渡し、書いていない slot の runner へは既定の場所を渡す / 値が空のジョブマップの場所のキーがある slot の runner は固定の名前のジョブマップで実行先を解決する(SPEC-004-01) ※ 起動側(facade が場所を決めて runner へ渡す)。1 件目は AC「相対パスは feature-flag.env のあるディレクトリを基準に解決する(カレントディレクトリは別)」「片方の slot だけキーを書くと、書いた slot はその場所、書かない slot は固定の名前」「キーが無い slot は固定の名前」に、2 件目は AC「キーの値が空のとき、その slot の runner は固定の名前のジョブマップで解決する」に対応。AC「検証コマンドと slot runner が同じファイルを使う」の検証側は UC〈feature flag を設定する〉、受け取った場所で実行先を解決する側は UC〈ジョブマップで JOB_ID から実行先を解決する〉で覆う |
 | REQ-005 | SPEC-005-04 | RAPID_CROSSCHECK_MODE=off では管理 DB に触れない(SPEC-005-04) / RAPID_CROSSCHECK_MODE=background では parallel_run を STARTED から RUNNING にする(SPEC-011-01) / RAPID_CROSSCHECK_MODE=foreground でも background と同じく parallel_run を作成する(SPEC-005-04) |
 | REQ-005 | SPEC-005-06 | 速報クロスチェック設定には管理 DB 接続の参照名だけがあり認証情報の値は含まれない(SPEC-005-06) / RAPID_CROSSCHECK_MODE=off では速報クロスチェック設定が存在しなくても slot 実行できる(SPEC-005-06) |
 | REQ-011 | SPEC-011-01 | RAPID_CROSSCHECK_MODE=background では parallel_run を STARTED から RUNNING にする(SPEC-011-01) |
@@ -300,6 +302,23 @@ Feature: slot 実行モードを選択して runner を起動する
     And facade は rapid-crosscheck.env を読まず、終了コードは foreground の exitcode.txt の値である
     And facade/<run_id>/blue/ と facade/<run_id>/green/ に started-at.txt が存在する
 
+  Scenario: feature flag に書いたジョブマップの場所を自 slot の runner へ渡し、書いていない slot の runner へは既定の場所を渡す
+    Given 設定ファイル置き場が /etc/relay-gate で、/etc/relay-gate/feature-flag.env に BLUE_MODE=foreground GREEN_MODE=background RAPID_CROSSCHECK_MODE=off BLUE_IMPL=v1 GREEN_IMPL=v2 と、起動引数と環境変数を記録するスタブ runner を指す BLUE_RUNNER / GREEN_RUNNER と、BLUE_JOB_MAP_CSV=./blue-jobs.csv が定義されている
+    And feature flag に GREEN_JOB_MAP_CSV の行は無い
+    And /etc/relay-gate/blue-job-map.csv も存在する
+    When ジョブスケジューラが /etc/relay-gate とは別の作業ディレクトリ /work で facade.sh JOB001 を実行する
+    Then blue runner が --role blue --mode foreground で起動され、環境変数 BLUE_JOB_MAP_CSV=/etc/relay-gate/./blue-jobs.csv が設定されている
+    And green runner が --role green --mode background で起動され、環境変数 GREEN_JOB_MAP_CSV=/etc/relay-gate/green-job-map.csv が設定されている
+    And blue runner の環境変数 BLUE_JOB_MAP_CSV は /work/blue-jobs.csv でも /etc/relay-gate/blue-job-map.csv でもない
+
+  Scenario: 値が空のジョブマップの場所のキーがある slot の runner は固定の名前のジョブマップで実行先を解決する(SPEC-004-01)
+    Given 設定ファイル置き場が /etc/relay-gate で、/etc/relay-gate/feature-flag.env に BLUE_MODE=foreground GREEN_MODE=background RAPID_CROSSCHECK_MODE=off BLUE_IMPL=v1 GREEN_IMPL=v2 と、標準の slot runner /opt/relay-gate/runners/standard-runner.sh を指す BLUE_RUNNER / GREEN_RUNNER と、値が空の行 `GREEN_JOB_MAP_CSV=` が定義されている
+    And /etc/relay-gate/blue-job-map.csv に JOB001 の行があり、/etc/relay-gate/green-job-map.csv に行 `JOB001,,,/var/app/work,/opt/app/bin/green-job001.sh,[],60` がある(host と user が空のローカル実行の行)
+    When ジョブスケジューラが facade.sh JOB001 を実行する
+    Then green runner は環境変数 GREEN_JOB_MAP_CSV=/etc/relay-gate/green-job-map.csv を受け取って起動される(空の値は渡らない)
+    And facade/<run_id>/execution-spec.json の slots.green は script=/opt/app/bin/green-job001.sh work_dir=/var/app/work hang_detect_limit_minutes=60 である(/etc/relay-gate/green-job-map.csv の JOB001 の行)
+    And facade/<run_id>/green/stderr.log に "error: job map not found" で始まる行は無い
+
   Scenario: run_id はローカルタイムゾーンの時刻と job_id と 8 桁 hex で発行され成果物と管理 DB で同値である(SPEC-011-04)
     Given feature flag に BLUE_MODE=foreground GREEN_MODE=background RAPID_CROSSCHECK_MODE=background が定義されている
     And TZ=UTC で RELAY_GATE_NOW=2026-08-30T11:30:00Z が設定されている
@@ -339,6 +358,15 @@ Feature: slot 実行モードを選択して runner を起動する
     And stderr の次行に "hint: use foreground, background or off" が出る
     And どの runner も起動されない
 
+  Scenario: 設定の違反が 2 つあるときは検証コマンドの error 行の順で最初の違反の 1 行だけを出す
+    Given /etc/relay-gate/feature-flag.env に BLUE_MODE=foreground GREEN_MODE=background RAPID_CROSSCHECK_MODE=off BLUE_IMPL=blue-2.3.1 BLUE_RUNNER=relative/blue-runner.sh と実行可能な runner を指す GREEN_RUNNER が定義され、GREEN_IMPL の行は無い
+    And /etc/relay-gate/relative/blue-runner.sh は存在しない
+    When ジョブスケジューラが facade.sh JOB001 を実行する
+    Then 終了コード 2 で終了する
+    And stderr は "error: file not executable key=BLUE_RUNNER path=/etc/relay-gate/relative/blue-runner.sh" の 1 行だけである
+    And stderr に "error: option required option=GREEN_IMPL" で始まる行は出ない
+    And blue runner も green runner も起動されない
+
   Scenario: RAPID_CROSSCHECK_MODE=background で管理 DB に接続できない
     Given feature flag に BLUE_MODE=foreground GREEN_MODE=background RAPID_CROSSCHECK_MODE=background が定義されている
     And 管理 DB が停止している
@@ -347,6 +375,8 @@ Feature: slot 実行モードを選択して runner を起動する
     And stderr に "error: management db connection failed run_id=" で始まり "conn_ref=" を含む行が出る
     And どの runner も起動されない
 ```
+
+> Scenario「設定の違反が 2 つあるときは検証コマンドの error 行の順で最初の違反の 1 行だけを出す」は、CLI 契約 `commands` の `facade.sh` の `config_violation_report`(違反が 2 つ以上あるときに出す 1 行の選び方)を判定する。USDM の受け入れ条件には現れない細部のため、「関連 USDM」表には載せない。
 
 ## ティア別仕様
 

@@ -39,3 +39,10 @@
 | 31 | [hang-detector.sh の未知キーの warn は走査を始めるときに出し、DB 障害・印の置き場の読み取り失敗・設定エラーの回は出さない。確報の設定ファイルは置き場ごとに中身が違うことを契約に明記する](../../specs/events/20261105_092000_feedback_external_review_round2/decisions/spec-decision-031.yaml) | approved |
 | 32 | [管理 DB は 1 つで、すべての管理 DB 接続参照名は同じ管理 DB に解決されることを CLI 契約の前提として書く。解決先は導入する側が確かめ、relay-gate は検査しない](../../specs/events/20261105_112000_feedback_single_management_db/decisions/spec-decision-032.yaml) | approved |
 | 33 | [設定検証の --verbose の info 行の文言・出す回・出力順を CLI 契約の env の検査の段で 1 つに決め、feature flag・速報・確報・ハウスキープの env 形式の 4 検証種別に同じ規則で適用する](../../specs/events/20261110_153000_feedback_impl_feedback_dcd8234d/decisions/spec-decision-033.yaml) | approved |
+| 34 | [設定ファイルの検査の性能を目標値として書き直し、feature flag の検証の error 行の順・列挙外の mode の扱い・9 キー以外のキーの値の扱いを CLI 契約に定める](../../specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3/decisions/spec-decision-034.yaml) | approved |
+| 35 | [feature flag の runner / worker の実体パスに相対パスを受け付け、基準を設定ファイルのあるディレクトリにする](../../specs/events/20261115_164000_feedback_runner_relative_path/decisions/spec-decision-035.yaml) | approved |
+| 36 | [feature-flag.env の 9 キー以外のキーの値を、読み取りの途中だけ作業用の領域に置いてよい条件を CLI 契約に定める](../../specs/events/20261116_010000_feedback_impl_feedback_fd678b04_cycle4/decisions/spec-decision-036.yaml) | approved |
+| 37 | [標準の slot runner を正式な提供物とし、1 つの実体 runners/standard-runner.sh を blue と green の両方に割り当てる](../../specs/events/20261116_021000_feedback_standard_runner_job_map_location/decisions/spec-decision-037.yaml) | approved |
+| 38 | [slot ジョブマップの場所を feature flag の任意の 2 キー BLUE_JOB_MAP_CSV / GREEN_JOB_MAP_CSV に書けるようにし、書かなければ固定の名前を使う](../../specs/events/20261116_021000_feedback_standard_runner_job_map_location/decisions/spec-decision-038.yaml) | approved |
+| 39 | [ジョブを起動するコマンドは、設定の違反が 2 つ以上あるとき、検証コマンドの error 行の順で最初の違反の 1 行だけを出す](../../specs/events/20261116_021000_feedback_standard_runner_job_map_location/decisions/spec-decision-039.yaml) | approved |
+| 40 | [リランのコマンドは、起動の前に runner / worker の実体を検査せず、起動に失敗したら終了コード 6 にする](../../specs/events/20261116_021000_feedback_standard_runner_job_map_location/decisions/spec-decision-040.yaml) | approved |

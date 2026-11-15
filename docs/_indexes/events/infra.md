@@ -21,3 +21,5 @@
 | 2026-11-04 10:10:00 | [20261104_101000_feedback_rapid_env_deploy_check](../../infra/events/20261104_101000_feedback_rapid_env_deploy_check) |
 | 2026-11-05 09:10:00 | [20261105_091000_feedback_final_env_per_segment](../../infra/events/20261105_091000_feedback_final_env_per_segment) |
 | 2026-11-05 11:10:00 | [20261105_111000_feedback_single_management_db](../../infra/events/20261105_111000_feedback_single_management_db) |
+| 2026-11-15 14:10:00 | [20261115_141000_feedback_impl_feedback_fd678b04_cycle3](../../infra/events/20261115_141000_feedback_impl_feedback_fd678b04_cycle3) |
+| 2026-11-16 02:00:00 | [20261116_020000_feedback_standard_runner_job_map_location](../../infra/events/20261116_020000_feedback_standard_runner_job_map_location) |

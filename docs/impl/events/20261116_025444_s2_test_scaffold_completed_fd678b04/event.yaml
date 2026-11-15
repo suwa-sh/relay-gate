@@ -1,0 +1,28 @@
+event_id: 20261116_025444_s2_test_scaffold_completed_fd678b04
+type: stage_completed
+uc_id: fd678b04
+stage: S2
+payload:
+  result: pass
+  red_baseline: measured red (optional job map location keys not implemented yet). accepted by red_baseline_measured under the rerun done condition, as in the previous reruns
+  mode: diff_only (tests for the optional job map location keys BLUE_JOB_MAP_CSV / GREEN_JOB_MAP_CSV)
+  red:
+    tier_bdd: 11
+    unit: 6
+    uc_bdd: 3
+    atdd: 2
+  added:
+    tier_bdd: 14
+    unit: 7
+    uc_bdd: 4
+    atdd: 4
+  green_from_start: 7
+  totals:
+    tier_bdd: 111
+    unit: 516
+    uc_bdd: 54
+    atdd_this_uc: 5
+  issues: []
+  manifest_sha256: ea471d8749f1ddfcb1a55fd391ca4613ec8297095687bcce25da3e8b499da272
+  manifest_projection: v2
+created_at: '2026-11-16T02:54:44+09:00'

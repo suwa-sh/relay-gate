@@ -39,9 +39,10 @@ VALIDATE_FEATURE_FLAG_IF_VERSION=""
 VALIDATE_FEATURE_FLAG_PROBE_ERROR=""
 
 # slot の runner IF 版を解決する(契約 runner_help_probe)。
-# mode=off の slot / 実体検証(絶対パス・実行可能)に違反した slot は問い合わせず `-`。
+# mode=off の slot / 実体検証(解決後のパスに実体が存在し実行可能)に違反した slot は問い合わせず `-`。
 # 「応答しない」(上限到達・非 0 終了・版行なし・版が 1 でない)は warn を報告行に足して `-`(拒否しない)。
-# 引数: slot mode runner
+# 問い合わせで起動するのも、warn 行の `runner=` に出すのも解決後のパス(契約 runner_path_resolution の usage / display)
+# 引数: slot mode runner(解決後のパス)
 # 戻り値: 0 … VALIDATE_FEATURE_FLAG_IF_VERSION に版(`-` を含む)。warn があれば報告行(feature_flag_emit)に 1 行
 #         6 … 準備失敗。VALIDATE_FEATURE_FLAG_PROBE_ERROR に `error: runner probe failed slot=<s> reason=<r>`
 validate_feature_flag_resolve_if_version() {
@@ -123,10 +124,12 @@ validate_feature_flag_prepare_shown_values() {
   if feature_flag_mode_is_active "${RAPID_CROSSCHECK_MODE:-}"; then
     values+=("${RAPID_CROSSCHECK_RUNNER:-}" "${RAPID_CROSSCHECK_WORKER:-}")
   fi
+  # slot ジョブマップの決めた場所(off の slot は空。stdout と job map not found の map= で表示する)
+  values+=("$FEATURE_FLAG_BLUE_JOB_MAP" "$FEATURE_FLAG_GREEN_JOB_MAP")
   cli_field_safe_text_prepare "${values[@]}"
 }
 
-# 引数: path config_dir verbose(true|false)
+# 引数: path config_dir(slot ジョブマップの既定の場所の置き場。RELAY_GATE_CONFIG_DIR) verbose(true|false)
 validate_feature_flag_query() {
   local path="$1" config_dir="$2" verbose="${3:-false}" shown_path load_status=0
   cli_field_safe_text "$path"
@@ -195,6 +198,13 @@ validate_feature_flag_query() {
   # キー名の可視表記(FEATURE_FLAG_KEYS と同じ並び)。info 行・未知キーの warn 行・確報制御キーの error 行で使い回す。
   # 可視表記は数十 MB になりうる(制御文字 1 つが 6 バイトになる)ため、info 行と warn 行は配列に溜めず、最後に書式で直接出す
   local -a shown_keys=()
+  # runner / worker の 4 キーを解決後のパスに置き換える(契約 runner_path_resolution。基準は設定ファイルのあるディレクトリ)。
+  # これ以降の実体の検査・runner への問い合わせ・stdout / error 行 / warn 行の表示は、すべて解決後のパスで行う。
+  # 表示する値の可視表記を控える前に行う(控えるのは解決後のパスの可視表記)。作業ディレクトリは省略時と同じ $PWD を明示して渡す
+  feature_flag_resolve_runner_paths "$PWD"
+  # slot ジョブマップの場所を決める(契約 job_map_location。任意の 2 キーの値を同じ規則で解決し、無い・空なら
+  # <config_dir>/<slot>-job-map.csv。off の slot は決めない)。所在の検査・stdout・error 行の map= は、決めた場所を使う
+  feature_flag_resolve_job_map_locations "$config_dir"
   if ! cli_field_safe_text_list shown_keys ${FEATURE_FLAG_KEYS[@]+"${FEATURE_FLAG_KEYS[@]}"} \
     || ! validate_feature_flag_prepare_shown_values; then
     validate_feature_flag_report_escape_failure "$shown_path"
@@ -212,9 +222,9 @@ validate_feature_flag_query() {
   fi
 
   local blue_mode="${BLUE_MODE:-}" green_mode="${GREEN_MODE:-}" rapid_mode="${RAPID_CROSSCHECK_MODE:-}"
-  local blue_job_map="$config_dir/blue-job-map.csv" green_job_map="$config_dir/green-job-map.csv"
+  local blue_job_map="$FEATURE_FLAG_BLUE_JOB_MAP" green_job_map="$FEATURE_FLAG_GREEN_JOB_MAP"
 
-  # SlotRunnerAssignment: off でない slot の対応ジョブマップ
+  # SlotRunnerAssignment: off でない slot の対応ジョブマップ(error_order の 6。blue → green)
   if ! validate_slot_runner_assignment blue "$blue_mode" "$blue_job_map"; then
     errors=$((errors + 1))
   fi

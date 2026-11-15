@@ -1,0 +1,57 @@
+stage: S6
+uc_id: fd678b04
+manifest_sha256: 890bfec8902fb1f1779157d5b2f7dc7b4a92540e4f9c267c260dfded6a683903
+manifest_projection: v2
+result: pass
+rerun_reason: "stale after spec feedback 20261115 (invalidated by 20261115_141514_stage_invalidated_fd678b04_stale_after_spec_feedback_20261115)"
+previous_done: "docs/impl/latest/fd678b04/invalidated/20261115_141514_stage_invalidated_fd678b04_stale_after_spec_feedback_20261115/stages/S6_uc-bdd.done.yaml"
+branch_slug: configure-feature-flags
+tiers:
+  - tier-facade
+tier_impl_attempt: 5
+feature: features/uc/configure-feature-flags.feature
+feature_changed: false
+feature_change_note: "本 stage では feature を変更していない。末尾 2 Scenario(error 行の順 / mode が列挙外の slot の検査)は S2 再実行で転写済み。前回の S6 時点(12 Scenario)から 14 Scenario に増えている"
+steps: features/uc/steps/configure-feature-flags.steps.js
+steps_changed: false
+steps_change_summary: "本 stage では変更なし。追加 2 Scenario の step 定義(stdout 0 行 / stderr の行数と順序の完全一致 / blue runner の --help 起動 1 回)は S2 再実行で実装済みで、attempt 5 の実装に対して全件 pass した"
+source: "docs/specs/latest/適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md#E2E完了条件(BDD)"
+tier_impl_changed: false
+run:
+  cwd: "."
+  command: "npx cucumber-js --config cucumber.cjs features/uc"
+  exit_code: 0
+  summary: "48 scenarios (48 passed), 284 steps (284 passed)"
+  scenarios_total: 48
+  scenarios_passed: 48
+  scenarios_failed: 0
+  undefined_steps: 0
+  ambiguous_steps: 0
+  pending_steps: 0
+target_feature_run:
+  cwd: "."
+  command: "npx cucumber-js --config cucumber.cjs features/uc/configure-feature-flags.feature"
+  exit_code: 0
+  summary: "14 scenarios (14 passed), 88 steps (88 passed)"
+  scenarios_total: 14
+  scenarios_passed: 14
+  scenarios_failed: 0
+  added_scenarios:
+    - "error 行が 2 行以上のときは決まった順に報告される"
+    - "mode が列挙外の slot も実装版と対応ジョブマップを検査し runner へ問い合わせる"
+other_uc_features:
+  regression: none
+  note: "features/uc の他 2 feature は合計 34 Scenario が全件 pass(全体 48 から対象 feature 14 を引いた値。前回と同数)。feature 別の内訳は個別実行していないため記録しない"
+  scenarios_passed: 34
+  scenarios_failed: 0
+performance_note: "性能(5,000 行以内かつ 8 MB 以内を 10 秒以内)は目標値であり合否の検査ではない(利用者決定)。本 stage では時間を判定に使っていない。参考: features/uc 全体の実行は約 7 秒"
+harness:
+  sandbox_root: "Scenario ごとの一時ディレクトリを root とし、feature の絶対パス(/etc/relay-gate, /opt/relay-gate)を root 配下の同じ相対位置に配置。出力照合時に root 接頭辞を除去"
+  entrypoint: "facade/bin/validate-config.sh(実体を起動)"
+  runner_stubs: "--help で runner-if-version=1 を返す実行可能スタブ"
+  external_connections: none
+injections: []
+injections_note: "ハーネス注入なし(検証コマンドのみで完結)"
+issues: []
+completed_at: '2026-11-15T14:55:00+09:00'
+completed_by: dist-impl-implement@0.14.1

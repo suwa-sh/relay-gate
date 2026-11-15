@@ -38,11 +38,14 @@
   | RAPID_CROSSCHECK_MODE=off かつ `--role rapid-crosscheck` | `error: management db is not configured (RAPID_CROSSCHECK_MODE=off) run_id=... role=rapid-crosscheck`(管理 DB 接続前に判定。abort-rapid-crosscheck の off 時と同じ文言) | なし |
 - **stderr(終了コード 6 / 警告)**: `error: execution-spec is not readable run_id=... path: {path}`(存在するが読めない / JSON 不正 / 必須キー欠落。6)/ `error: management db connection failed run_id=... role=... conn_ref=...`(6。接続失敗)/ `error: management db query failed run_id=...`(6。SQL 失敗。rapid-crosscheck の依頼特定時)
 - **stderr(入力エラー 2)**: `error: option required option=--source-run-id|--role` / `error: invalid value option=--role value=...`(`final-crosscheck` を含む enum 外) / `error: invalid value option=--source-run-id value=...` / `error: unknown option option=...`
+- **stderr(feature-flag.env の読み取りと検査 2)**: 文言と検査の一覧は CLI 契約 `background-rerun.sh` の `feature_flag_reading.checks`(例: `error: config file not found path: ...` / `error: option required option=RAPID_CROSSCHECK_MODE path: ...` / `error: invalid value key=RAPID_CROSSCHECK_MODE value=...` + `hint: use foreground, background or off` / `error: option required option=<BLUE_RUNNER|GREEN_RUNNER|RAPID_CROSSCHECK_RUNNER> path: ...`)。`--role rapid-crosscheck` で読むキーは `RAPID_CROSSCHECK_MODE` だけ
+- **stderr(rapid-crosscheck.env の読み取りと検査 2)**: `RAPID_CROSSCHECK_MODE` が off 以外のとき(`--role` を問わない)、`$RELAY_GATE_CONFIG_DIR/rapid-crosscheck.env` を読んで検査する。文言と検査の一覧は契約 `feature_flag_reading.checks` の 6(例: `error: config file not found path: ...` / `error: config file is not readable path: ...` / `error: option required option=RAPID_DB_CONN_REF path: ...`)。off では rapid-crosscheck.env を読まない
+- **検査の順**(契約 `feature_flag_reading.order`): 引数の検査(2)→ feature-flag.env の読み取りと検査(2)→ `RAPID_CROSSCHECK_MODE` が off 以外のときの rapid-crosscheck.env の読み取りと検査(2)→ 事前検証(3。下の事前検証表)→ 後続 UC。先の検査で止まったら、後の検査と処理は行わない(元の実行の状態を読まず、変更しない)。feature-flag.env の検査は読むキーの値の有無と `RAPID_CROSSCHECK_MODE` の列挙までで、runner / worker の実体は検査しない
 - **終了コード**:
   | コード | 意味 | 条件 |
   |-------|------|------|
   | 0 | 成功 | 検証を通過し後続 UC の起動 / 依頼作成が完了した |
-  | 2 | 入力エラー | `--source-run-id` / `--role` 欠落、role が enum 外(`final-crosscheck` / `foo` 等)、run_id 形式不正、未知オプション |
+  | 2 | 入力エラー | `--source-run-id` / `--role` 欠落、role が enum 外(`final-crosscheck` / `foo` 等)、run_id 形式不正、未知オプション。feature-flag.env の読み取りと検査の違反、`RAPID_CROSSCHECK_MODE` が off 以外のときの rapid-crosscheck.env の読み取りと検査の違反(契約 `feature_flag_reading.checks`) |
   | 3 | 業務エラー(事前検証 NG) | 上表のすべて(off かつ rapid-crosscheck の管理 DB 無しを含む)。状態は変更しない |
   | 6 | 実行エラー | execution-spec.json の読み取り失敗(存在するが読めない / JSON 不正)、管理 DB 接続・SQL 失敗 |
 
@@ -77,7 +80,7 @@
 
 ## UC ロジック
 
-- **バリデーション**: presentation で必須引数・列挙・形式を検証。NG は状態を読まず 2
+- **バリデーション**: presentation で必須引数・列挙・形式を検証。NG は状態を読まず 2。続けて feature-flag.env を読み取って検査し(契約 `feature_flag_reading`)、違反は状態を読まず 2。`RAPID_CROSSCHECK_MODE` が off 以外のときは、その直後に rapid-crosscheck.env を読み取って検査し(契約 `feature_flag_reading.checks` の 6)、違反は状態を読まず 2。事前検証はその後に行う
 - **確認プロンプト**: なし
 - **冪等性**: 検証のみで書き込みは無い。同じ入力で同じ判定
 - **エラーハンドリング**: 不可はすべて 3 で `error:` + `hint:`。ファイル読み取り失敗・DB 障害は 6。エラーは 1 回だけ出す(CLR-004)
@@ -144,6 +147,33 @@ Feature: リラン対象を検証する - 実行監視・復旧ティア
     Given RAPID_CROSSCHECK_MODE=off である
     When `background-rerun.sh --source-run-id 20260830T113000-JOB001-3f9a1c2e --role rapid-crosscheck` を実行する
     Then 終了コード 3 で stderr の 1 行目が `error: management db is not configured (RAPID_CROSSCHECK_MODE=off) run_id=20260830T113000-JOB001-3f9a1c2e role=rapid-crosscheck` で、hint 行は無い
+
+  Scenario: feature-flag_env が無いと元の実行の状態を読む前に終了コード 2 で止める
+    Given RELAY_GATE_CONFIG_DIR=/etc/relay-gate で /etc/relay-gate/feature-flag.env が存在せず、facade/20260830T113000-JOB001-3f9a1c2e/execution-spec.json に slots.blue 節が無い(事前検証まで進めば終了コード 3 になる元 run)
+    When `background-rerun.sh --source-run-id 20260830T113000-JOB001-3f9a1c2e --role blue` を実行する
+    Then 終了コード 2 で stderr は `error: config file not found path: /etc/relay-gate/feature-flag.env` の 1 行だけである(`error: source run is not rerunnable ...` は出ない。契約 background-rerun.sh の feature_flag_reading.order)
+
+  Scenario: feature-flag_env の検査を通った後に事前検証で拒否する
+    Given /etc/relay-gate/feature-flag.env は RAPID_CROSSCHECK_MODE=off と BLUE_RUNNER=/opt/relay-gate/runners/no-such-runner.sh(実体は無い)の 2 行だけで、facade/20260830T113000-JOB001-3f9a1c2e/execution-spec.json に slots.blue 節が無い
+    When `background-rerun.sh --source-run-id 20260830T113000-JOB001-3f9a1c2e --role blue` を実行する
+    Then 終了コード 3 で stderr の 1 行目が `error: source run is not rerunnable run_id=20260830T113000-JOB001-3f9a1c2e role=blue mode=off status=-` である(runner の実体が無いことを理由にした error 行は出ない)
+
+  Scenario: rapid-crosscheck のリランは runner のキーが無い設定でも事前検証へ進む
+    Given RELAY_GATE_CONFIG_DIR=/etc/relay-gate で、/etc/relay-gate/feature-flag.env は RAPID_CROSSCHECK_MODE=background の 1 行だけ、/etc/relay-gate/rapid-crosscheck.env は RAPID_DB_CONN_REF=mgmt-db を持ち、rapid_crosscheck_requests に run_id=20260830T113000-JOB001-3f9a1c2e status=CLAIMED がある
+    When `background-rerun.sh --source-run-id 20260830T113000-JOB001-3f9a1c2e --role rapid-crosscheck` を実行する
+    Then 終了コード 3 で stderr の 1 行目が `error: source request is not rerunnable run_id=20260830T113000-JOB001-3f9a1c2e role=rapid-crosscheck status=CLAIMED` である(`error: option required option=...` は出ない)
+
+  Scenario: rapid-crosscheck_env が無いと元の実行の状態を読む前に終了コード 2 で止める
+    Given RELAY_GATE_CONFIG_DIR=/etc/relay-gate で、/etc/relay-gate/feature-flag.env は RAPID_CROSSCHECK_MODE=background、GREEN_RUNNER=/opt/relay-gate/runners/standard-runner.sh、RAPID_CROSSCHECK_RUNNER=/opt/relay-gate/rapid-crosscheck-runner.sh の 3 行で、/etc/relay-gate/rapid-crosscheck.env は存在しない
+    And facade/20260830T113000-JOB001-3f9a1c2e/execution-spec.json の green.mode が background で、green/ に started-at.txt だけがあり exitcode.txt も aborted.txt も無い(事前検証まで進めば終了コード 3 になる RUNNING の元 run)
+    When `background-rerun.sh --source-run-id 20260830T113000-JOB001-3f9a1c2e --role green` を実行する
+    Then 終了コード 2 で stderr は `error: config file not found path: /etc/relay-gate/rapid-crosscheck.env` の 1 行だけである(`error: source run is not rerunnable ...` は出ない。契約 background-rerun.sh の feature_flag_reading.order)
+    And 管理 DB への接続は行われず、新しい run_id は発行されない
+
+  Scenario: rapid-crosscheck_env に RAPID_DB_CONN_REF が無い rapid-crosscheck のリランは依頼を探す前に終了コード 2 で止める
+    Given RELAY_GATE_CONFIG_DIR=/etc/relay-gate で、/etc/relay-gate/feature-flag.env は RAPID_CROSSCHECK_MODE=background の 1 行だけ、/etc/relay-gate/rapid-crosscheck.env に RAPID_DB_CONN_REF の行は無い
+    When `background-rerun.sh --source-run-id 20260830T113000-JOB001-3f9a1c2e --role rapid-crosscheck` を実行する
+    Then 終了コード 2 で stderr は `error: option required option=RAPID_DB_CONN_REF path: /etc/relay-gate/rapid-crosscheck.env` の 1 行だけである(`error: source request ...` は出ず、管理 DB への接続は行われない)
 
   Scenario: --role 欠落は終了コード 2
     When `background-rerun.sh --source-run-id 20260830T113000-JOB001-3f9a1c2e` を実行する

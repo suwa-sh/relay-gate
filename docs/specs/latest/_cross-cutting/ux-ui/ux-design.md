@@ -69,8 +69,8 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-  A["feature flag 設定 (9 キー)\nBLUE_MODE / GREEN_MODE / RAPID_CROSSCHECK_MODE\nBLUE_IMPL / GREEN_IMPL"] --> B["runner 割当\nBLUE_RUNNER / GREEN_RUNNER\nRAPID_CROSSCHECK_RUNNER / RAPID_CROSSCHECK_WORKER"]
-  B --> C["slot ジョブマップ定義 (CSV)\njob_id → 実行先 + fixed_params + hang_detect_limit_minutes"]
+  A["feature flag 設定 (9 キー + 任意の 2 キー)\nBLUE_MODE / GREEN_MODE / RAPID_CROSSCHECK_MODE\nBLUE_IMPL / GREEN_IMPL"] --> B["runner 割当 (標準の slot runner または自作の runner)\nBLUE_RUNNER / GREEN_RUNNER\nRAPID_CROSSCHECK_RUNNER / RAPID_CROSSCHECK_WORKER"]
+  B --> C["slot ジョブマップ定義 (CSV)\njob_id → 実行先 + fixed_params + hang_detect_limit_minutes\n場所は既定、または BLUE_JOB_MAP_CSV / GREEN_JOB_MAP_CSV に書く"]
   C --> D["比較ツール起動コマンド設定 (env)\n速報 rapid-crosscheck.env (RAPID_COMPARE_COMMAND)\n確報 final-crosscheck.env (FINAL_COMPARE_COMMAND)"]
   D --> E["validate-config.sh\n設定検証 (終了コード 0 / 2)"]
   E --> F["ジョブスケジューラ: 業務ジョブ定義\nfacade.sh JOB_ID PARAM..."]
@@ -81,9 +81,9 @@ flowchart LR
 
 | ステップ | コマンドまたはジョブ | UC | 感情 | 改善機会 |
 |---------|------|---|------|---------|
-| feature flag 設定 | `feature-flag.env` 編集(9 キー。設定版は持たない) → `validate-config.sh` | feature flag を設定する | ニュートラル | foreground × foreground の組合せを検証で拒否し、どの slot も起動しない。元資料の 9 キーで書けば未知キー警告は出ない。モードは 3 値(foreground / background / off)、実装版は BLUE_IMPL / GREEN_IMPL |
-| runner 割当 | `feature-flag.env` 編集 → `validate-config.sh` | slot runner の実体スクリプトを割り当てる | ニュートラル | BLUE_RUNNER / GREEN_RUNNER(と off 以外のときの RAPID_CROSSCHECK_RUNNER / RAPID_CROSSCHECK_WORKER)の絶対パス・存在・実行権限を検証で確認する |
-| slot ジョブマップ定義 | `blue-job-map.csv` / `green-job-map.csv` 編集 → `validate-config.sh` | slot ごとのジョブマップを定義する | ニュートラル | CSV(1 行目ヘッダー、列はヘッダー名で対応付け)。`fixed_params` の JSON 配列セル(二重引用符で囲む)と hang_detect_limit_minutes(0 以上の整数)、host / user の両方あり・両方なしを検証で確認する |
+| feature flag 設定 | `feature-flag.env` 編集(9 キー + 任意の 2 キー。設定版は持たない) → `validate-config.sh` | feature flag を設定する | ニュートラル | foreground × foreground の組合せを検証で拒否し、どの slot も起動しない。元資料の 9 キーで書けば未知キー警告は出ない。モードは 3 値(foreground / background / off)、実装版は BLUE_IMPL / GREEN_IMPL |
+| runner 割当 | `feature-flag.env` 編集 → `validate-config.sh` | slot runner の実体スクリプトを割り当てる | ニュートラル | ローカル実行と SSH 実行で足りる適用は、relay-gate が提供する標準の slot runner(`runners/standard-runner.sh`)を BLUE_RUNNER と GREEN_RUNNER の両方に割り当てる(runner のスクリプトを書かない)。標準の slot runner が扱わない特殊な接続だけ、runner を自作して割り当てる。BLUE_RUNNER / GREEN_RUNNER(と off 以外のときの RAPID_CROSSCHECK_RUNNER / RAPID_CROSSCHECK_WORKER)の存在・実行権限を検証で確認する(値は絶対パスでも相対パスでもよい。相対パスの基準は feature-flag.env のあるディレクトリ) |
+| slot ジョブマップ定義 | `blue-job-map.csv` / `green-job-map.csv` 編集 → `validate-config.sh` | slot ごとのジョブマップを定義する | ニュートラル | CSV(1 行目ヘッダー、列はヘッダー名で対応付け)。`fixed_params` の JSON 配列セル(二重引用符で囲む)と hang_detect_limit_minutes(0 以上の整数)、host / user の両方あり・両方なしを検証で確認する。ジョブマップの場所は、feature-flag.env の任意のキー BLUE_JOB_MAP_CSV / GREEN_JOB_MAP_CSV に書ける(書かなければ設定ファイル置き場の `<slot>-job-map.csv`。相対パスの基準は feature-flag.env のあるディレクトリ)。feature flag の検証は、決めた場所でジョブマップの所在を確認する |
 | 比較ツール起動コマンド定義 | `rapid-crosscheck.env`(`RAPID_COMPARE_COMMAND`)/ `final-crosscheck.env`(`FINAL_COMPARE_COMMAND`)編集 → `validate-config.sh` | クロスチェックのジョブマップと比較定義を定義する | ニュートラル | 起動コマンドのコマンド部分(先頭の語)が絶対パスで存在・実行可能であること(速報は加えて `{job_id}` を含むこと)を検証で確認する |
 | 切り替え後の運用 | ジョブスケジューラ → `facade.sh` | 切り替えた運用モードで業務ジョブを実行する | ポジティブ | ジョブ定義を変えずに運用モードが切り替わる。ジョブスケジューラの見え方は変わらない |
 
@@ -181,7 +181,7 @@ graph LR
 | 運用者の直接起動 | `abort-blue.sh` / `abort-green.sh` / `abort-rapid-crosscheck.sh` / `abort-final-crosscheck.sh --run-id` | tier-ops | 対話。現在状態表示 → 停止確認プロンプト |
 | 運用者の直接起動 | `rapid-crosscheck-result.sh --run-id` / `run-lineage.sh --run-id` / `hang-detect-trend.sh` | tier-rapid-crosscheck / tier-ops | 参照のみ。状態を変えない |
 | 基盤適用設計者の直接起動 | `validate-config.sh` | tier-facade(rapid / final / housekeep の設定も検証) | 参照のみ。終了コードで妥当性を返す |
-| 内部呼び出し | `$BLUE_RUNNER` / `$GREEN_RUNNER` | tier-facade | facade.sh と background-rerun.sh が起動する。運用者は直接起動しない |
+| 内部呼び出し | `$BLUE_RUNNER` / `$GREEN_RUNNER`(実体は標準の slot runner `runners/standard-runner.sh`、または自作の runner) | tier-facade | facade.sh と background-rerun.sh が起動する。運用者は直接起動しない |
 | 内部呼び出し | `$RAPID_CROSSCHECK_RUNNER blue-completed / green-completed`(実体は feature flag の `RAPID_CROSSCHECK_RUNNER`。既定の配置名は `rapid-crosscheck-runner.sh`) | tier-rapid-crosscheck | slot runner が完了時に起動する(RAPID_CROSSCHECK_MODE が off 以外。foreground / background で同じ挙動) |
 
 ### 外部システムとの接点(5 種)
@@ -203,7 +203,7 @@ graph LR
 - **終了コードの引き継ぎ**: `facade.sh` は foreground の `exitcode.txt` を、`final-crosscheck-runner.sh` は依頼に保存された `exit_code` を、**そのまま**プロセス終了コードとしてジョブスケジューラへ返す。relay-gate 自身の終了コード体系(0 / 2 / 3 / 6)はこの中継経路には適用しない(arch CTR-002)
 - **完了通知の受け渡し**: slot runner → `$RAPID_CROSSCHECK_RUNNER`(送信先は facade / background-rerun が環境変数で渡す)は `run_id` / `job_id` / `exit_code` を引数で渡す(成果物 URI は渡さない)。runner は自系統の通知だけを送り、相手側の状態を判断しない(条件「完了通知の系統独立」)。送信失敗は自動検知せず、実行ログの `WARN completion notice failed ...` を手がかりに運用者が同一引数で再実行する(条件「完了通知失敗の扱い」。冪等・先勝ちで完了結果は一度だけ登録される)
 - **ジョブキューの受け渡し**: runner(dispatcher)→ worker は管理 DB の依頼レコード(`rapid_crosscheck_requests` / `final_crosscheck_requests`)で受け渡す。claim は `worker_id` + `lease_until` で排他する(arch CTP-004)
-- **リランの受け渡し**: `background-rerun.sh` → slot runner は元の `execution-spec.json` を `--execution-spec <path>` で渡し、最新ジョブマップを再解決しない。新 run_id の `parent_run_id` に元 run_id を設定する。事前検証はファイル正本で行うため off でもリランできる。off 以外では、リラン由来の parallel_run は background slot の終端(exitcode.txt 公開)時に slot runner が、速報比較依頼だけを作り直した run は依頼の終端時に速報クロスチェック worker が COMPLETED にする
+- **リランの受け渡し**: `background-rerun.sh` → slot runner は元の `execution-spec.json` を `--execution-spec <path>` で渡し、最新ジョブマップを再解決しない。新 run_id の `parent_run_id` に元 run_id を設定する。事前検証はファイル正本で行うため off でもリランできる。`background-rerun.sh` は起動の前に runner の実体を検査せず、runner の起動に失敗したら終了コード 6 で成果物を残す(リラン対象でない slot の設定の不備ではリランを止めない)。off 以外では、リラン由来の parallel_run は background slot の終端(exitcode.txt 公開)時に slot runner が、速報比較依頼だけを作り直した run は依頼の終端時に速報クロスチェック worker が COMPLETED にする
 - **異常の受け渡し**: `hang-detector.sh` → 運用者は、終了コード(3 = 警告終了 / 6 = 失敗)をジョブスケジューラの障害通知で届け、標準エラーの alert 行に通知種別・run_id・role・job_id・経過時間を 1 件 1 行で載せる。運用者は alert 行の run_id と role をそのまま `abort-*` / `background-rerun.sh` / `rapid-crosscheck-result.sh` の引数に使える
 - **成果物ルートの共有**: `facade/<run_id>/`(Runner Result)、`hang-detector-notified/`(通知済みの印。off のとき hang-detector が書き、housekeep が消す)、`housekeep-pending/`(削除待ちの置き場。housekeep だけが使う)は同じ成果物ルート直下に置く。run ディレクトリとして列挙するのは `facade/` 直下の run_id 形式のディレクトリだけ(`cli-command-contract.yaml` `shared_rules.artifact_root_entries`)
 
@@ -223,7 +223,7 @@ graph LR
 | **系列位置効果 (Serial Position Effect)** | alert 行、TSV 出力の列順 | alert 行の先頭に重要度と通知種別、続けて識別子、末尾に経過時間を置く。TSV は左端に識別子(run_id / job_id)、右端に判断材料(status / 警告回数 / 警告時経過時間)を置く |
 
 - 選定基準: BtoB の社内運用系 CLI で、アクターは運用者と基盤適用設計者の 2 種。動機づけ系(ゲーミフィケーション・希少性・社会的証明)は適用しない
-- 「ドハティの閾値」は CLI の応答 10 秒以内(NFR B.2.1.1)で代替し、進捗表示は行わない(非 TTY 起動が主のため)
+- 「ドハティの閾値」は CLI の応答 10 秒以内(NFR B.2.1.1。設定ファイルの検査は性能の目標値)で代替し、進捗表示は行わない(非 TTY 起動が主のため)
 
 ## アクセシビリティ方針
 

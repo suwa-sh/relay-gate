@@ -1,0 +1,58 @@
+Spec 差分更新(design 無しモード): 2026-11-15 と 2026-11-16 の利用者決定 4 件を仕様へ反映した(dist-pipeline feedback mode Step6)。上流(usdm / rdra / arch / infra)は、標準の slot runner の正式な提供と、feature flag の任意の 2 キーを反映済み(nfr は変更なし)。
+
+CR-65b09d93-001#2(spec 直接所有)/ CR-65b09d93-001#1(上流に追従): 標準の slot runner。
+- relay-gate は標準の slot runner を正式な提供物として提供する。ファイルは runners/standard-runner.sh($RELAY_GATE_HOME/runners/standard-runner.sh)。実体は 1 つで、blue と green の両方に同じファイルを割り当てる(slot は --role で受け取る。runner IF は不変)。
+- 扱う範囲はローカル実行(host と user が両方無い・両方空)と SSH 実行。利用者が用意するのは feature flag と slot ジョブマップ(と実行先の実装)だけ。特殊な接続だけ利用者が runner を自作する(共通ライブラリ lib/runner-*.sh と runner IF は残る)。
+- feature flag への書き方の例: BLUE_RUNNER=/opt/relay-gate/runners/standard-runner.sh / GREEN_RUNNER=/opt/relay-gate/runners/standard-runner.sh。
+- 「参考実装 runners/ssh-runner.sh(仮採用)」の扱いをやめた。
+- 細部: 配置ディレクトリは自身のあるディレクトリの 1 つ上(環境変数で受け取らない)。SSH の起動形は ssh -n -o BatchMode=yes。認証情報の参照名(credential_ref)は ssh の引数に使わず execution-spec.json へ転記するだけ。
+- 正本: CLI 契約 commands の「$BLUE_RUNNER / $GREEN_RUNNER」の standard_runner。判断記録: decisions/spec-decision-037。
+
+CR-65b09d93-002#2(spec 直接所有)/ CR-65b09d93-002#1(上流に追従): slot ジョブマップの場所。
+- feature-flag.env に任意の 2 キー BLUE_JOB_MAP_CSV / GREEN_JOB_MAP_CSV を足した。キーが無い・値が空のときは固定の名前($RELAY_GATE_CONFIG_DIR/blue-job-map.csv / green-job-map.csv)。しくみの資料の 9 キーの設定例はそのまま通る。
+- 値は絶対パスと相対パス。相対パスの基準は feature-flag.env のあるディレクトリ。解決の規則は runner / worker の 4 キーと同じ runner_path_resolution を 6 キーに適用する(複写しない)。ジョブマップに固有のこと(既定・使い方・表示・読み手)は job_map_location(新設)。
+- 決めた場所の使い方: validate-config.sh --feature-flag の所在の検査、stdout の blue_job_map / green_job_map、error: job map not found の map=。facade.sh は通常起動で、自 slot の runner へ環境変数 BLUE_JOB_MAP_CSV / GREEN_JOB_MAP_CSV で渡す(キーが無い・空でも既定の場所を渡す)。slot runner は受け取った値をそのまま使い、未設定・空なら既定の場所。slot runner は feature-flag.env を読まない。
+- background-rerun.sh と復元起動の runner はジョブマップを読まないため、2 キーを読まず、渡さない。validate-config.sh --job-map は渡されたパスを検証する動きのまま。
+- ジョブマップを読む処理は slot runner(通常起動)と検証コマンドだけ。運用系のコマンドは読まない。読む処理を足すときは feature-flag.env の 2 キーを読んで同じ規則で場所を決める。
+- off の slot のキーは解決も検査もしない。「9 キー」の記述を「9 キー + 任意の 2 キー」に揃えた(未知キーの範囲、値を取り込むキーの範囲、読み取りの途中の一時的な保持、検証ルール)。
+- 判断記録: decisions/spec-decision-038(実装との差分を含む)。
+
+CR-65b09d93-003#1(spec 直接所有): ジョブを起動するコマンドの error 1 行。
+- facade.sh は、feature flag の設定のキーごとの検査で違反が 2 つ以上あるとき、検証コマンドの error 行の順(error_order)で最初に出る違反の error 行(hint があれば hint も)だけを出して終了コード 2 で終わる。
+- facade.sh が検査するのは error_order の 1〜5(対応ジョブマップは runner が Runner Result で返す)。未知キーの warn 行は error 行より前に全件。入力の守備範囲の違反は対象外で全件。
+- UC「slot 実行モードを選択して runner を起動する」の独自の検査の順をやめ、契約を参照する形にした。
+- 正本: CLI 契約 commands の facade.sh の config_violation_report。判断記録: decisions/spec-decision-039。
+
+CR-65b09d93-004#1(spec 直接所有): リランのコマンドの起動前の検査。
+- background-rerun.sh は、起動の前に runner / worker の 4 キーの実体(存在・実行権限・--help の応答)を検査しない。runner の起動に失敗したら終了コード 6(既存の error: runner failed to start ... と、既存の成果物・管理 DB の扱いのまま)。
+- 起動の失敗は、解決後のパスに何も無い・通常ファイルでない・実行権限が無い、の 3 つ。起動した後の runner の終了は待たず、起動の失敗に数えない。
+- feature-flag.env から読むキーは、RAPID_CROSSCHECK_MODE、リラン対象 role の runner、off 以外のときの RAPID_CROSSCHECK_RUNNER(速報クロスチェックの依頼の再作成は RAPID_CROSSCHECK_MODE だけ)。
+- 検査の順: 引数 → feature-flag.env(無い・読めない、入力の守備範囲、モード、読むキーの欠落・空。終了コード 2)→ off 以外のときの rapid-crosscheck.env(終了コード 2)→ 事前検証(終了コード 3)→ 復元起動または依頼の再作成。
+- 正本: CLI 契約 commands の background-rerun.sh の feature_flag_reading。判断記録: decisions/spec-decision-040。
+
+課題一覧(docs/todo.md): DIST-032 を決定済みとして閉じた。
+
+方針資料との照合: tmp/RelayGateのしくみ.md と tmp/RelayGateの利用イメージ.md を開いて照合した。
+- しくみの資料は「BLUE_RUNNER と GREEN_RUNNER は適用ごとに実体を割り当てる」と書き、標準の runner の提供に触れていない。標準の slot runner の正式な提供は利用者決定(2026-11-16)で、割り当てる実体として標準の slot runner を選べる形で両立する。
+- 利用イメージの資料は、feature flag にジョブマップの場所を相対パスで書く(キー名は適用側が決めた名前)。キー名を slot の名前に合わせて BLUE_JOB_MAP_CSV / GREEN_JOB_MAP_CSV にしたことは利用者決定(2026-11-16)。
+- しくみの資料の 9 キーの設定例は、そのまま検証を通る。
+- facade.sh の error 1 行と background-rerun.sh の起動前の検査は、方針資料に記載が無い。
+- これ以外に、方針資料と食い違う記述は足していない。
+
+実装との関係:
+- 実装済みの feature flag の検証コマンドは 9 キー前提で、新しい契約と違う。任意の 2 キーを未知キーとして扱わないこと、値を取り込んで解決すること、決めた場所で所在を検査し stdout と error 行に出すこと、の実装の変更が要る。
+- 実装済みのジョブマップ単体の検証と、比較ツール起動コマンドの検証は、契約が変わらない。
+- 標準の slot runner、共通ライブラリ、facade.sh、background-rerun.sh は、まだ実装していない。
+
+上流への追従で変えた対応表: usdm-acceptance-matrix.md(受け入れ条件 190 → 209)、traceability-matrix.md(RDRA の情報の属性 168 → 169、分母 344 → 345、網羅率 100% のまま)。
+UC ツリー(34 UC / 8 BUC / 6 業務)とティア構成は不変。
+
+feedback request:
+- feedback_request_id: 20261116_standard_runner_job_map_location
+- input_sha256: 733163f9092ac7055b410880c40f85fd312b2684f25fb0fb20d8d3412626822a
+- request_ids: CR-65b09d93-001, CR-65b09d93-002, CR-65b09d93-003, CR-65b09d93-004
+- direct_work_unit_ids: CR-65b09d93-001#2, CR-65b09d93-002#2, CR-65b09d93-003#1, CR-65b09d93-004#1
+- causal_work_unit_ids: CR-65b09d93-001#1, CR-65b09d93-001#2, CR-65b09d93-002#1, CR-65b09d93-002#2, CR-65b09d93-003#1, CR-65b09d93-004#1
+- stage packet: docs/pipeline/feedback-runs/20261116_standard_runner_job_map_location/stage-packets/spec.md
+
+trigger_event: usdm:20261116_013000_feedback_standard_runner_job_map_location, rdra:20261116_013000_feedback_standard_runner_job_map_location, arch:20261116_015000_feedback_standard_runner_job_map_location, infra:20261116_020000_feedback_standard_runner_job_map_location

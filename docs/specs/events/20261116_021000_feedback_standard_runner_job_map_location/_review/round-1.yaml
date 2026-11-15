@@ -1,0 +1,183 @@
+round: 1
+findings:
+  - id: "R-001"
+    viewpoint: 4
+    severity: "major"
+    target: "実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/tier-facade.md(Scenario「facade_sh は RAPID_CROSSCHECK_MODE=background で rapid-crosscheck.env が無ければ終了コード 2 で終了する」)、適用構成業務/適用構成定義フロー/切り替えた運用モードで業務ジョブを実行する/spec.md(Scenario「誤った運用モード設定は業務ジョブを起動せずに止まる」)"
+    claim: "既存シナリオの Given が、最初の違反の 1 行だけを出す新しい規則と検査の順のもとで、Then の error 行に届かない設定のまま残っている。同じ型の別のシナリオは今回キーを足して直してあり、直し漏れに見える。"
+    evidence: |
+      契約 commands の facade.sh の config_violation_report.order_with_other_checks は「引数 → feature-flag.env の存在・読み取り → 検査の段 (i)(ii) → 検査の段 (iii) → RAPID_CROSSCHECK_MODE が off 以外のときの rapid-crosscheck.env。先の検査で止まったら、後の検査は行わない」。
+      (1) tier-facade.md の Given は「feature-flag.env に BLUE_MODE=foreground GREEN_MODE=off RAPID_CROSSCHECK_MODE=background がある」だけで、Then は "error: config file not found path: <RELAY_GATE_CONFIG_DIR>/rapid-crosscheck.env"。この 3 キーだけの設定では、error_order の sequence 3 の BLUE_IMPL 欠落(error: option required option=BLUE_IMPL ...)が最初の違反になり、そこで止まるため rapid-crosscheck.env の検査へ進まない。
+      (2) 切り替えた運用モード…/spec.md の Given は「誤って BLUE_MODE=foreground GREEN_MODE=foreground を設定した」、Then は "error: foreground slot must be exactly one ..."。この 2 キーだけなら sequence 1 の RAPID_CROSSCHECK_MODE 欠落(option required)が先に出る。
+      同じ tier-facade.md の「facade_sh は両 slot foreground を終了コード 2 で拒否する」は Given に RAPID_CROSSCHECK_MODE=off を、「facade_sh は runner 実体が実行不可なら…」は BLUE_IMPL=v1 / GREEN_IMPL=v2 を足して直してある。
+    suggested_fix: "(1) の Given に BLUE_IMPL と実行可能な BLUE_RUNNER / RAPID_CROSSCHECK_RUNNER / RAPID_CROSSCHECK_WORKER を足す(feature flag の検査を通る設定にする)。(2) の Given を「ほかのキーは有効で、GREEN_MODE だけを誤って foreground にした」と読める書き方にする(RAPID_CROSSCHECK_MODE を明記する)。facade.sh が終了コード 2 になる他のシナリオも、Given の設定で最初の違反が Then の行になるかを同じ目で点検する。"
+  - id: "R-002"
+    viewpoint: 3
+    severity: "major"
+    target: "_cross-cutting/api/cli-command-contract.yaml(commands の background-rerun.sh の feature_flag_reading.summary / launch_failure)、実行復旧業務/background 側リランフロー/元の execution-spec.json から復元して新しい run_id で起動する/tier-ops.md(処理順序 5、Scenario「実体が無い runner は起動の前に検査せず起動を試みて終了コード 6 になる」)"
+    claim: "「起動の前に実体を検査しない」と「起動できなかったときは pid=NULL・stderr 1 行・終了コード 6」を両立させる判定の方法(何をもって起動に失敗したとするか)が決まっていない。実装者が判断することになる。"
+    evidence: |
+      契約 summary「起動の前に … 実体(存在・実行権限・--help の応答)を検査しない。runner を起動し、起動に失敗したら終了コード 6」。launch_failure「解決後のパスの runner を起動できなかったとき(実体が無い、実行権限が無い、実行できない形式など)」。tier-ops.md 処理順序 5「runner を非同期起動し PID を取得(起動不能・即時終了で exitcode.txt が非 0 なら 6)」。
+      BDD の Then は「stderr は error: runner failed to start ... の 1 行だけ」「slot_executions は pid=NULL status=FAILED」。
+      bash で実体の無いパスを非同期起動すると、子プロセスは作られて PID が取れ、シェル自身の「No such file or directory」が stderr に出て 127 で終わる。期待値(pid=NULL、stderr 1 行)を満たすには、(a) 起動の直前に存在・実行権限を調べる、(b) 起動してから子の終了を待って 126 / 127 を見る、のどちらかを選ぶ必要がある。(a) は「起動の前に検査しない」の文言と衝突して見え、(b) は待つ時間と「runner が起動して自分で 127 を返した場合」との区別が要る。
+      入力例: GREEN_RUNNER がディレクトリを指す / 実行権限はあるがシバンのインタプリタが無いスクリプト / 起動直後に exitcode.txt を書かずに 127 で終わる自作 runner。どれが launch_failure(成果物を background-rerun が書く)で、どれが「起動済み」(終了コード 0、pid あり)かが 1 つに決まらない。処理順序 5 の「即時終了で exitcode.txt が非 0 なら 6」のときの stderr の行も書かれていない。
+    suggested_fix: "契約の launch_failure に判定の規則を 1 つ書く。例: 「検査しない」が指すのは feature-flag.env の読み取りの段(終了コード 2)での検査であり、処理順序 5 の起動の時点で解決後のパスが通常ファイルでない・実行権限が無いことを確かめて起動失敗とするのは起動失敗の検出に当たる、と明記する。あわせて、起動後すぐ終わった runner の扱い(exitcode.txt の有無で分ける、待たない、など)と、そのときの終了コード・stderr を定め、ディレクトリ・実行できない形式の例を BDD に足す。"
+  - id: "R-003"
+    viewpoint: 3
+    severity: "major"
+    target: "_cross-cutting/api/cli-command-contract.yaml(commands の background-rerun.sh の feature_flag_reading.order / exit_codes)、実行復旧業務/background 側リランフロー/元の execution-spec.json から復元して新しい run_id で起動する/tier-ops.md(「feature-flag.env」の項の末尾)"
+    claim: "background-rerun.sh の検査の順を新しく定めたが、RAPID_CROSSCHECK_MODE が off 以外のときの rapid-crosscheck.env(RAPID_DB_CONN_REF)の不在・欠落が、順のどこで、どの終了コード・error 行になるかが書かれていない。参照先の「前段 UC の検証」にも記述が無い。"
+    evidence: |
+      order「引数の検査(2)→ feature-flag.env の読み取りと checks(2)→ 事前検証(3)→ 復元起動または依頼再作成。先の検査で止まったら、後の検査と処理は行わない」。rapid-crosscheck.env は出てこない。exit_codes の 2 の condition にも無い。
+      tier-ops.md の今回書き直した行は「off 以外のとき rapid-crosscheck.env の RAPID_DB_CONN_REF で管理 DB に接続する(不在は前段 UC の検証で終了)」と残しているが、前段 UC「リラン対象を検証する」の tier-ops.md に rapid-crosscheck.env の記述は無い(grep で 0 件)。
+      facade.sh 側は config_violation_report.order_with_other_checks に rapid-crosscheck.env の位置を書いている。
+      入力例: RAPID_CROSSCHECK_MODE=background、GREEN_RUNNER あり、rapid-crosscheck.env が無い、元の green は RUNNING(事前検証なら終了コード 3)。`background-rerun.sh --source-run-id ... --role green` の結果が、終了コード 2(config file not found)か 3(source run is not rerunnable)か決まらない。この不足は今回より前からあるが、新設の order が全体の順を定める形になったため、欠けが結果の食い違いになる。
+    suggested_fix: "feature_flag_reading.order に rapid-crosscheck.env の読み取り(off 以外のときだけ。不在・RAPID_DB_CONN_REF 欠落の error 行と終了コード 2)の位置を書く(facade.sh と同じく feature-flag.env の検査の直後が自然)。exit_codes の 2 の condition と UC「リラン対象を検証する」の tier-ops.md に同じ内容を足し、順を判定する BDD を 1 つ置く。"
+  - id: "R-004"
+    viewpoint: 3
+    severity: "major"
+    target: "適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/tier-facade.md(runner IF の表「実装の実行」の提供元)、実装切替業務/実装切替ジョブ実行フロー/実装スクリプトを実行して Runner Result を出力する/spec.md(計算ルール「SSH コマンド」)、_cross-cutting/api/cli-command-contract.yaml(standard_runner.scope / external_interfaces の SSH)"
+    claim: "標準の slot runner が SSH 実行で使うコマンドの形が、契約と UC 別仕様で食い違う。正式な提供物になった今、対話禁止オプションを付けるかどうかを実装者が決めることになる。"
+    evidence: |
+      契約 standard_runner.scope は external_interfaces の『SSH(実装スクリプトの実行)』を参照し、その launch は `ssh -n {user}@{host} 'cd {work_dir} && {script} ...'`(BatchMode の記述なし)。
+      slot runner の実体スクリプトを割り当てる/tier-facade.md は「標準の slot runner(runners/standard-runner.sh。SSH 実行は `ssh -o BatchMode=yes`、host / user が空の行はローカル実行)」。
+      実装スクリプトを実行して Runner Result を出力する/spec.md は「BatchMode 等の対話禁止オプションは runner 実体 / SSH 設定に閉じ込める。仮採用」。runner 実体が relay-gate の提供物になったため、「runner 実体に閉じ込める」は relay-gate 自身の決めごとになる。
+      BDD(標準の slot runner は SSH 実行の行を…)は起動引数に "-n" と "batch@host-green-01" と "cd /var/app/work && /opt/app/bin/job001.sh" が含まれることだけを見るため、`-o BatchMode=yes` の有無を判定しない。
+      入力例: 鍵が未登録でパスワードを聞かれるホストの行。BatchMode を付ければ即時に失敗(exitcode.txt=6)、付けなければ応答待ちで止まる。
+    suggested_fix: "標準の slot runner の SSH の起動形を契約(standard_runner か external_interfaces)に 1 つ書く(`-n` と `-o BatchMode=yes` を付けるかどうか、ほかに付けるオプションが無いこと)。UC 別仕様の 2 か所はその節を参照する書き方に直し、「runner 実体に閉じ込める。仮採用」は自作の runner の話として残すか消す。BDD の Then に決めたオプションを足す。"
+  - id: "R-005"
+    viewpoint: 3
+    severity: "major"
+    target: "実装切替業務/実装切替ジョブ実行フロー/実装スクリプトを実行して Runner Result を出力する/tier-facade.md(「SSH 接続方法 …」の行)と同 spec.md(データフローの gateway 行)、_cross-cutting/api/cli-command-contract.yaml(external_interfaces の SSH / standard_runner)"
+    claim: "標準の slot runner が slot ジョブマップの credential_ref を SSH 実行でどう使うか(使わないか)が 1 つに決まらない。"
+    evidence: |
+      tier-facade.md「credential_ref は SSH 設定の Host 別名または鍵の参照名として runner 実体が解釈する(仮採用)」(2 通りを並べたまま)。
+      spec.md の gateway 行「認証は credential_ref から実行環境の設定(~/.ssh/config の Host 別名。仮採用)に解決」。
+      契約 external_interfaces「`ssh -n {user}@{host} '...'`。credential_ref は参照名のみ(鍵の所在は適用側の SSH 設定)」。起動形に credential_ref は現れない。
+      入力例: 行 `JOB001,host-green-01,batch,/var/app/work,/opt/app/bin/job001.sh,[],60,prod-key`。標準の slot runner の ssh の引数が `batch@host-green-01`(credential_ref を使わない)か、`prod-key` を Host 別名として接続先にするか、`-i` などの鍵の指定に使うかが決まらない。完了条件「『参考実装(仮採用)』という扱いが仕様に残っていない」に対し、参考実装の振る舞いだった仮採用の記述が、標準の slot runner の振る舞いとして残っている。
+    suggested_fix: "標準の slot runner での credential_ref の扱いを契約の standard_runner に 1 つ書く(例: ssh の引数には使わず execution-spec.json へ転記するだけで、鍵の選択は実行ユーザーの SSH 設定に任せる)。UC 別仕様の 2 か所をそれに合わせ、credential_ref のある行の BDD を足す。利用者決定に無い決めごとなので、判断記録に踏み込んで決めたことと明記する。"
+  - id: "R-006"
+    viewpoint: 4
+    severity: "major"
+    target: "_cross-cutting/api/cli-command-contract.yaml(conventions.environment_variables の RELAY_GATE_HOME の default、commands の facade.sh の notes、slot runner の standard_runner.location / lib_location、job_map_location.usage の slot runner の項)"
+    claim: "RELAY_GATE_HOME の既定(スクリプト自身のディレクトリ)と、標準の slot runner の置き場所($RELAY_GATE_HOME/runners/)が合わず、facade.sh を介さない起動で既定の設定ファイル置き場・成果物ルートが 1 つに決まらない。"
+    evidence: |
+      conventions.environment_variables: RELAY_GATE_HOME の default は「スクリプト自身のディレクトリ($(dirname \"$0\"))」、RELAY_GATE_CONFIG_DIR の default は「$RELAY_GATE_HOME/config」。facade.sh の notes は「RELAY_GATE_HOME は runner が自身の所在から再解決する」。
+      standard_runner.location は「$RELAY_GATE_HOME/runners/standard-runner.sh」、lib_location は「自身のあるディレクトリ(runners/)の 1 つ上のディレクトリの lib/」(ここでは配置ディレクトリ = 1 つ上としている)。
+      job_map_location.usage は、環境変数が未設定・空のとき(facade.sh を介さずに起動されたとき)に `$RELAY_GATE_CONFIG_DIR/<role>-job-map.csv` を使うと定め、BDD「環境変数でジョブマップの場所を受け取らない起動では既定の場所のジョブマップで解決する」もある。
+      入力例: RELAY_GATE_* をどれも設定せずに `/opt/relay-gate/runners/standard-runner.sh --run-id ... --job-id JOB001 --role green --mode background` を起動する。既定の文言どおりなら RELAY_GATE_HOME=/opt/relay-gate/runners で、ジョブマップは /opt/relay-gate/runners/config/green-job-map.csv。location の読み方なら /opt/relay-gate/config/green-job-map.csv。成果物ルート・ログも同じく 2 通りになる。
+    suggested_fix: "標準の slot runner(と runners/ に置く runner)の RELAY_GATE_HOME の既定を契約に 1 つ書く(例: 標準の slot runner は自身のあるディレクトリの 1 つ上を配置ディレクトリとする。lib_location と同じ基準)。conventions.environment_variables の default と facade.sh の notes の「自身の所在から再解決」をそれに合わせる。"
+  - id: "R-007"
+    viewpoint: 1
+    severity: "minor"
+    target: "_cross-cutting/api/cli-command-contract.yaml(config_files の feature-flag.env の runner_path_resolution.readers)"
+    claim: "background-rerun.sh が使うキーの記述が、同じ契約の中で古いまま残っている。"
+    evidence: |
+      runner_path_resolution.readers「4 キーの値を使う実行時の読み手(facade.sh は 4 キー、background-rerun.sh は BLUE_RUNNER / GREEN_RUNNER / RAPID_CROSSCHECK_RUNNER)」。
+      feature_flag_reading.keys_read と config_files の feature-flag.env の readers は「リラン対象 role の runner(--role blue なら BLUE_RUNNER、--role green なら GREEN_RUNNER)と、off 以外のときの RAPID_CROSSCHECK_RUNNER。リラン対象でない slot の runner は使わず、値を取り込まない」。
+    suggested_fix: "runner_path_resolution.readers の括弧書きを「background-rerun.sh は feature_flag_reading.keys_read のキー」に直す。"
+  - id: "R-008"
+    viewpoint: 1
+    severity: "minor"
+    target: "適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md(「slot ジョブマップの場所」の箇条書きの最後)"
+    claim: "「決めた場所を使う読み手」の列挙に、決めた場所を使わない読み手が入っており、契約と別の UC の記述と食い違う。"
+    evidence: |
+      feature flag を設定する/tier-facade.md「決めた場所を使う読み手(facade.sh が slot runner へ渡す環境変数、slot runner、background-rerun.sh、`validate-config.sh --job-map`)の扱いは契約 job_map_location の usage / readers を参照する」。
+      契約 job_map_location.usage は「background-rerun.sh は 2 キーを読まず、渡さない」「--job-map は渡されたパスをそのまま検証する。feature-flag.env も 2 キーも読まない」。slot ごとのジョブマップを定義する/tier-facade.md は「決めた場所を使う読み手(feature flag の検証、facade.sh が slot runner へ渡す環境変数、slot runner)」。
+    suggested_fix: "feature flag を設定する/tier-facade.md の列挙を「決めた場所を使う読み手(feature flag の検証、facade.sh、slot runner)と、使わない処理(background-rerun.sh、--job-map)」に分けて書く。"
+  - id: "R-009"
+    viewpoint: 5
+    severity: "minor"
+    target: "_cross-cutting/api/cli-command-contract.yaml(config_files の feature-flag.env の job_map_location.summary / location / usage / examples / key_names、runner_path_resolution.summary)"
+    claim: "契約の本文に、変更の前後を比べる文と編集の理由の文が入っている。"
+    evidence: |
+      job_map_location.summary「これまでの固定の名前」「これまでと同じジョブマップを使い」。location「これまでと同じ文字列で」「(…これまでと同じ)」。usage の --job-map の項「(これまでと同じ)」。examples「(これまでと同じ)」。key_names「…と同じ語尾にし、slot の名前はほかのキーに合わせた」。runner_path_resolution.summary「節の名前は、参照を変えないため runner_path_resolution のまま」。
+    suggested_fix: "「これまで」を使わずに規則そのものを書く(例: 「キーが無い・値が空のときは $RELAY_GATE_CONFIG_DIR/<slot>-job-map.csv」)。キー名を選んだ理由と節の名前を変えなかった理由は判断記録に書いてあるので、契約からは外す。"
+  - id: "R-010"
+    viewpoint: 2
+    severity: "minor"
+    target: "適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/spec.md と tier-facade.md(BDD)"
+    claim: "受け入れ条件「提供物の一覧で、標準の slot runner は正式な提供物として載っており、参考実装(仮採用)という扱いの runner は無い」を判定する場面が無い。"
+    evidence: |
+      該当 UC の BDD は、標準の slot runner の --help、両 slot への割当の検証、相対パスの割当、標準と自作の混在だけ。提供物の一覧を見る場面は無く、tier-facade.md の成果物の表(runners/standard-runner.sh 追加)は本文の記述にとどまる。
+    suggested_fix: "tier-facade.md に、配置ディレクトリの runners/ に実行可能な standard-runner.sh があり、runners/ssh-runner.sh が無いことを確かめる場面を 1 つ置く。BDD にしないなら、どの記述で満たすかを UC の関連 USDM の表の補足に書く。"
+  - id: "R-011"
+    viewpoint: 2
+    severity: "minor"
+    target: "実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/tier-facade.md(Scenario「facade_sh は相対パスの BLUE_JOB_MAP_CSV を…」)"
+    claim: "facade.sh が、値が空のキー(`BLUE_JOB_MAP_CSV=`)の slot の runner へ既定の場所を渡すことを判定する場面が無い。"
+    evidence: |
+      契約 job_map_location.usage「キーが無い・値が空のときも既定の場所を渡す(常に空でない値を渡す)」。facade.sh の BDD は「GREEN_JOB_MAP_CSV の行は無い」場合だけ。値が空の場合は、検証コマンド側(feature flag を設定する/tier-facade.md の Scenario Outline)と runner 側(環境変数が空文字)にしか無い。受け入れ条件「キーの値が空のとき、その slot の runner が固定の名前のジョブマップで解決する」の facade.sh を通る経路が判定されない。
+    suggested_fix: "同じ Scenario を Outline にするか 1 場面足し、`GREEN_JOB_MAP_CSV=` の行がある設定で green のスタブが受け取る値が <RELAY_GATE_CONFIG_DIR>/green-job-map.csv であることを確かめる。"
+  - id: "R-012"
+    viewpoint: 3
+    severity: "minor"
+    target: "_cross-cutting/api/cli-command-contract.yaml(commands の slot runner の standard_runner.lib_location)"
+    claim: "標準の slot runner をシンボリックリンク経由で割り当てたとき、共通ライブラリを読む基準と、読めなかったときの結果が決まらない。"
+    evidence: |
+      lib_location「自身のあるディレクトリ(runners/)の 1 つ上のディレクトリの lib/ から読む」。runner_path_resolution は「シンボリックリンクは辿らない」。
+      入力例: `BLUE_RUNNER=/etc/relay-gate/runner.sh`(/opt/relay-gate/runners/standard-runner.sh へのリンク)。「自身のあるディレクトリ」を起動されたパスの字面(/etc/relay-gate)とするか、リンク先(/opt/relay-gate/runners)とするかで、lib/ の場所が変わる。字面なら /etc/lib/ を探して見つからず、そのときの終了コード・stderr.log・exitcode.txt の扱いも書かれていない。
+    suggested_fix: "lib_location に、基準が起動されたパスの字面かリンク先かを書き、共通ライブラリを読めないときの結果(終了コードと、Runner Result を書けるかどうか)を 1 つに決める。リンク経由の割当を認めないなら、そう書く。"
+  - id: "R-013"
+    viewpoint: 5
+    severity: "minor"
+    target: "decisions/spec-decision-037.yaml、decisions/spec-decision-038.yaml(decision)"
+    claim: "利用者決定と要求に無い決めごとが、踏み込んで決めたことと明記されずに決定の中に並んでいる(ほかの 2 件の判断記録は明記している)。"
+    evidence: |
+      spec-decision-039 と spec-decision-040 は「細部(利用者決定より踏み込んで決めたこと)」と項目を分けている。
+      spec-decision-038 の次の項目は、利用者決定(項目を足す・書かなければ固定の名前・相対パスの基準)にも要求にも無いが、区別が無い: mode が off の slot のキーは解決も検査もしない、mode が列挙外・欠落・空の slot は検査する(6)、ジョブマップを読む処理を足すときの規則(8)。契約にだけあって判断記録に無いもの: facade.sh のプロセスの環境に同じ名前の変数があっても使わない、blue と green に同じ場所を書いてよい、値の内容(拡張子・ファイル名)は検査しない。
+      spec-decision-037 では、共通ライブラリを自身のあるディレクトリの 1 つ上の lib/ から読むこと(配置ディレクトリを環境変数で受け取らない)が同じ扱い。
+    suggested_fix: "spec-decision-037 と spec-decision-038 に「利用者決定より踏み込んで決めたこと」の項目を設け、上の決めごとをそこへ移す(契約にだけある 3 点も加える)。"
+resolved:
+  - id: "R-001"
+    resolution: "fixed"
+    note: "指摘の 2 場面の Given に足りない前提を足した(Then は不変)。facade.sh が終了コード 2 になる場面 15 件と、background-rerun.sh の終了コード 2 / 3 / 6 の場面 29 件を同じ目で点検し、前提が足りなくなった場面を直した"
+    by: "orchestrator"
+  - id: "R-002"
+    resolution: "fixed"
+    note: "契約 feature_flag_reading の summary に起動の前の検査が指す範囲を、launch_failure に起動の失敗の定義(OS が runner を実行できなかったこと)・見分ける手段を縛らないこと・runner が動き出した後の終了は待たず起動の失敗に数えないこと・stdout を出さないことを書いた。UC の処理順序 5 は契約を参照し、ディレクトリの場面とすぐ終わる runner の場面を足した。判断記録 040 に踏み込んで決めたことと明記した"
+    by: "orchestrator"
+  - id: "R-003"
+    resolution: "fixed"
+    note: "契約 feature_flag_reading の checks に 6(off 以外のときの rapid-crosscheck.env)を足し、order / first_violation / exit_codes / stderr を揃えた。UC 2 件と BDD を追従させた。判断記録 040 に記録した"
+    by: "orchestrator"
+  - id: "R-004"
+    resolution: "fixed"
+    note: "契約 standard_runner.ssh_launch と external_interfaces の SSH の launch に起動形(-n と -o BatchMode=yes だけ)を定め、UC 別仕様は契約を参照する書き方にした。BDD の Then に足した。判断記録 037 に踏み込んで決めたことと明記した"
+    by: "orchestrator"
+  - id: "R-005"
+    resolution: "fixed"
+    note: "契約 standard_runner.credential_ref_usage に、ssh の引数にも接続先の決定にも使わず execution-spec.json へ転記するだけと定めた。UC 別仕様の仮採用の記述を置き換え、BDD を足した。判断記録 037 に明記した"
+    by: "orchestrator"
+  - id: "R-006"
+    resolution: "fixed"
+    note: "契約 standard_runner.home に配置ディレクトリの決め方(自身のあるディレクトリの 1 つ上)と既定の置き場の決め方を定め、conventions.environment_variables の RELAY_GATE_HOME の default と facade.sh の notes を揃えた"
+    by: "orchestrator"
+  - id: "R-007"
+    resolution: "fixed"
+    note: "runner_path_resolution.readers の括弧書きを feature_flag_reading.keys_read の参照に直した"
+    by: "orchestrator"
+  - id: "R-008"
+    resolution: "fixed"
+    note: "使う読み手と使わない処理に分けて書いた"
+    by: "orchestrator"
+  - id: "R-009"
+    resolution: "fixed"
+    note: "契約の job_map_location と runner_path_resolution から、変更の前後を比べる文と編集の理由の文を外した。UC 別仕様と横断の文書の追加行には該当が無いことを確かめた"
+    by: "orchestrator"
+  - id: "R-010"
+    resolution: "fixed"
+    note: "配置ディレクトリの runners を確かめる場面を足し、関連 USDM の表と対応表を揃えた"
+    by: "orchestrator"
+  - id: "R-011"
+    resolution: "fixed"
+    note: "facade.sh が値が空のキーの slot の runner へ既定の場所を渡す場面(tier)と、値が空のキーの E2E を足し、対応表を揃えた"
+    by: "orchestrator"
+  - id: "R-012"
+    resolution: "fixed"
+    note: "契約 standard_runner.home に基準は起動されたパスの字面(シンボリックリンクを辿らない)と書き、assignment_path にリンクやコピーの割り当ては対象外で動作を保証しないと定めた"
+    by: "orchestrator"
+  - id: "R-013"
+    resolution: "fixed"
+    note: "判断記録 037 と 038 に、利用者決定と要求より踏み込んで決めたことの項を設けた(契約にだけあった 3 点を含む)"
+    by: "orchestrator"

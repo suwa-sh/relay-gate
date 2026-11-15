@@ -2,7 +2,7 @@
 
 ## 概要
 
-slot runner(`$BLUE_RUNNER` / `$GREEN_RUNNER`)が、自 slot のジョブマップ(CSV。1 行目ヘッダー、1 行 1 job_id)から JOB_ID に対応する host・user・script・work_dir・fixed_params(JSON 配列を格納する CSV セル)・hang_detect_limit_minutes と、末尾の任意列 credential_ref・map_version を解決する。host / user はローカル実行の slot では省略でき、両方無い(または両方空)ならローカル実行として解決する。実装版はジョブマップに持たず feature flag(BLUE_IMPL / GREEN_IMPL)が所有する。固定引数の後ろに facade から渡された PARAM... を順序を変えずに連結する。ジョブマップに JOB_ID の行が無い場合も Runner Result の 3 ファイルを可能な限り出力して非 0 で終了する。
+slot runner(`$BLUE_RUNNER` / `$GREEN_RUNNER`)が、自 slot のジョブマップ(CSV。1 行目ヘッダー、1 行 1 job_id)から JOB_ID に対応する host・user・script・work_dir・fixed_params(JSON 配列を格納する CSV セル)・hang_detect_limit_minutes と、末尾の任意列 credential_ref・map_version を解決する。host / user はローカル実行の slot では省略でき、両方無い(または両方空)ならローカル実行として解決する。実装版はジョブマップに持たず feature flag(BLUE_IMPL / GREEN_IMPL)が所有する。固定引数の後ろに facade から渡された PARAM... を順序を変えずに連結する。ジョブマップに JOB_ID の行が無い場合も Runner Result の 3 ファイルを可能な限り出力して非 0 で終了する。ジョブマップの場所は、facade が feature flag から決めて環境変数 `BLUE_JOB_MAP_CSV` / `GREEN_JOB_MAP_CSV`(自 slot の分)で渡した値を使い、未設定・空なら既定の場所 `$RELAY_GATE_CONFIG_DIR/<slot>-job-map.csv` を使う(CLI 契約 `config_files.feature-flag.env.job_map_location`)。relay-gate が提供する標準の slot runner(ローカル実行と SSH 実行を扱う)は、共通ライブラリでこの解決を行う。利用者が自作する runner も、同じ共通ライブラリを使えば同じ解決になる。
 
 ## データフロー
 
@@ -33,7 +33,7 @@ graph LR
 | presentation | RunnerInvocation | runner IF の引数検証(`--run-id` / `--job-id` / `--role` / `--mode` 必須、`--` 以降を PARAM 列に保持) |
 | usecase | ResolveExecutionTargetQuery | ジョブマップ読み込み → 行検索 → 引数連結 → ExecutionTarget を返す。未定義なら Runner Result 3 ファイルを揃えて非 0 終了 |
 | domain | ExecutionTarget / ArgumentList | CSV 1 行 → 実行先(host / user が無い・空ならローカル実行)。`fixed_params`(JSON 配列)を要素単位に展開し、PARAM... を末尾に順序保持で連結する純粋関数 |
-| repository | JobMapRepository | `$RELAY_GATE_CONFIG_DIR/<slot>-job-map.csv` をヘッダー行付き CSV として読む(セルの二重引用符と `""` 二重化を 1 文字ずつの状態機械で解析。ヘッダー名で列を対応付ける)。job_id 完全一致で 1 行を返す |
+| repository | JobMapRepository | 自 slot のジョブマップ(環境変数 `BLUE_JOB_MAP_CSV` / `GREEN_JOB_MAP_CSV` の場所。未設定・空なら `$RELAY_GATE_CONFIG_DIR/<slot>-job-map.csv`)をヘッダー行付き CSV として読む(セルの二重引用符と `""` 二重化を 1 文字ずつの状態機械で解析。ヘッダー名で列を対応付ける)。job_id 完全一致で 1 行を返す |
 | gateway | FilesystemAdapter | 未定義時の `stderr.log`(原因)/ `stdout.log`(空)/ `exitcode.txt`(`2`)の一時ファイル書き込みと `mv` |
 
 ## 処理フロー
@@ -54,7 +54,7 @@ sequenceDiagram
   Pres->>Pres: 引数検証
   Pres->>UC: ResolveExecutionTargetQuery(JOB001, green, [20260830, full])
   UC->>Repo: green のジョブマップから JOB001 を探す
-  Repo->>FS: green-job-map.csv を読む
+  Repo->>FS: green のジョブマップを読む(環境変数 GREEN_JOB_MAP_CSV の場所。未設定・空なら green-job-map.csv)
   FS-->>Repo: ヘッダー + 行
   alt ジョブマップ解決条件: job_id=JOB001 の行がある
     Repo->>Dom: 行 → ExecutionTarget
@@ -74,10 +74,10 @@ sequenceDiagram
 
 | バリエーション名 | 値 | 処理内容 | 適用 tier | 適用箇所 |
 |----------------|---|---------|----------|---------|
-| 実装スロット | blue | `$RELAY_GATE_CONFIG_DIR/blue-job-map.csv` を読む | tier-facade | repository `job_map_repo` |
-| 実装スロット | green | `$RELAY_GATE_CONFIG_DIR/green-job-map.csv` を読む | tier-facade | repository `job_map_repo` |
+| 実装スロット | blue | 環境変数 `BLUE_JOB_MAP_CSV` の場所のジョブマップを読む(未設定・空なら `$RELAY_GATE_CONFIG_DIR/blue-job-map.csv`) | tier-facade | repository `job_map_repo` |
+| 実装スロット | green | 環境変数 `GREEN_JOB_MAP_CSV` の場所のジョブマップを読む(未設定・空なら `$RELAY_GATE_CONFIG_DIR/green-job-map.csv`) | tier-facade | repository `job_map_repo` |
 | 設定所有区分 | slot ジョブマップ | host・user・script・work_dir・fixed_params・hang_detect_limit_minutes(と任意列 credential_ref・map_version)の正本 | tier-facade | repository `job_map_repo` |
-| 設定所有区分 | feature flag | runner 実体・slot・実装版(BLUE_IMPL / GREEN_IMPL)の正本。この UC では参照しない(facade が解決済みで、実装版は環境変数で runner に渡る。ジョブマップに実装版の列は無い) | tier-facade | — |
+| 設定所有区分 | feature flag | runner 実体・slot・実装版(BLUE_IMPL / GREEN_IMPL)・ジョブマップの場所(任意の BLUE_JOB_MAP_CSV / GREEN_JOB_MAP_CSV)の正本。この UC では feature-flag.env を読まない(facade が解決済みで、実装版とジョブマップの場所は環境変数で runner に渡る。ジョブマップに実装版の列は無い) | tier-facade | — |
 | Runner Result 成果物種別 | stderr.log | 未定義時に `error: job_id=JOB001 not found in job map slot=green map=<path>` を書く | tier-facade | gateway `filesystem_adapter` |
 | Runner Result 成果物種別 | exitcode.txt | 未定義時に `2` | tier-facade | gateway `filesystem_adapter` |
 | Runner Result 成果物種別 | stdout.log | 未定義時に空ファイル | tier-facade | gateway `filesystem_adapter` |
@@ -98,7 +98,7 @@ sequenceDiagram
 | 計算名 | 入力情報 | 計算式/ロジック | 出力情報 | 適用 tier |
 |--------|---------|---------------|---------|----------|
 | 引数連結 | fixed_params(JSON 配列文字列)、PARAM... | `args = parse_json_array(fixed_params) ++ PARAM...`。JSON 文字列要素のエスケープ(`\"` `\\`)を解除して 1 要素 = 1 引数。bash では配列 `"${args[@]}"` として保持する | ArgumentList | tier-facade |
-| ジョブマップパス | RELAY_GATE_CONFIG_DIR、slot | `$RELAY_GATE_CONFIG_DIR/<slot>-job-map.csv`(仮採用) | map path | tier-facade |
+| ジョブマップパス | 環境変数 BLUE_JOB_MAP_CSV / GREEN_JOB_MAP_CSV(自 slot の分)、RELAY_GATE_CONFIG_DIR、slot | 環境変数の値が空でなければ、その値をそのまま使う(相対パスの解決も正規化もしない)。未設定・空なら `$RELAY_GATE_CONFIG_DIR/<slot>-job-map.csv`(CLI 契約 `config_files.feature-flag.env.job_map_location`) | map path(stderr.log と実行ログの `map=` / `path:` に出すパス) | tier-facade |
 | CSV 行の分解 | ヘッダー行、データ行 | カンマ区切り。セルは二重引用符で囲める(囲まない場合はカンマ・二重引用符を含められない)。囲んだセル内の `""` は `"` 1 文字。bash 単独の 1 文字ずつの状態機械で解析し、ネスト・複数行セルは不可(`error: csv quote is invalid line=N path: ...`)。行頭 `#` はコメント行、文字コード UTF-8、改行コードは LF。ヘッダー列名で位置を決める(列順に依存しない)。形式から外れた入力(NUL / 不正な文字コード / BOM / CR)の拒否、1 時点の内容だけで解決する保証、補助コマンドの失敗(exitcode.txt=6)は CLI 契約 `config_input_rules` に従う。候補行の絞り込みに `grep` などを使ってよい | ExecutionTarget | tier-facade |
 | fixed_params セルの解析 | fixed_params セル | CSV 解析後の文字列(例 `"[""p1"",""p2 p3""]"` → `["p1","p2 p3"]`)を JSON 配列として解析する。空は `"[]"` または `[]` | fixed_params(JSON 配列) | tier-facade |
 
@@ -127,10 +127,11 @@ sequenceDiagram
 
 | REQ ID | SPEC ID | 対応 BDD Scenario |
 |---|---|---|
-| REQ-004 | SPEC-004-01 | ジョブマップの行から実行先を解決する(SPEC-004-01) |
+| REQ-004 | SPEC-004-01 | ジョブマップの行から実行先を解決する(SPEC-004-01) / feature flag に書いた場所のジョブマップで実行先を解決し、固定の名前のジョブマップは使わない / 環境変数でジョブマップの場所を受け取らない起動では既定の場所のジョブマップで解決する ※ 2 件目は AC「キーに書いたパスと固定の名前の両方にジョブマップがあるとき、キーに書いたパスのジョブマップで解決する」に対応。3 件目は固定の名前で解決する側の runner の動き(場所を受け取らないときの既定)。facade が場所を決めて runner へ渡す側(相対パスの基準、片方の slot だけ書いた設定、キーが無い slot)は UC〈slot 実行モードを選択して runner を起動する〉、検証コマンドが同じ場所で所在を検査して表示する側は UC〈feature flag を設定する〉で覆う。値が空のキーがある設定で facade から起動された runner が固定の名前で解決することは UC〈slot 実行モードを選択して runner を起動する〉の E2E、runner が空の環境変数を受け取ったときの既定は tier-facade.md のティア完了条件で判定する |
 | REQ-004 | SPEC-004-02 | 固定引数の後ろに PARAM を順序保持で連結する(SPEC-004-02) |
 | REQ-004 | SPEC-004-04 | CSV の列名で読み替えなしに実行先を解決する(SPEC-004-04) / 二重引用符で囲んだ fixed_params セルを 2 引数として解析する(SPEC-004-04) / host と user の列が無いジョブマップはローカル実行として解決する(SPEC-004-04) / credential_ref と map_version の列が無くても解決できる(SPEC-004-04) |
 | REQ-003 | SPEC-003-02 | ジョブマップ未定義でも 3 ファイルを揃えて非 0 終了する(SPEC-003-02) |
+| REQ-001 | SPEC-001-04 | 標準の slot runner はローカル実行の行と SSH 実行の行をそれぞれ解決する ※ 解決側。AC「標準の slot runner が、host と user が両方空の行をローカル実行、host と user がある行を SSH 実行する」の実行側(3 ファイルと execution-spec.json)は UC〈実装スクリプトを実行して Runner Result を出力する〉、割当と検証の側は UC〈slot runner の実体スクリプトを割り当てる〉で覆う |
 
 > 機械可読の正本は `spec-event.yaml` の `use_cases[].usdm`(本表と同内容)。「対応 BDD Scenario」列は本 UC の `Scenario:` 名(接尾の SPEC ID を含む完全名)を「 / 」で区切って列挙し、Scenario 名以外の補足は「※」以降に置く。区切りは人が読む用で、Scenario 名自体に「 / 」を含むものがあるため機械分割には使わず、機械照合は `spec-event.yaml` の `scenarios[]` を使う。
 
@@ -181,6 +182,28 @@ Feature: ジョブマップで JOB_ID から実行先を解決する
     Given blue-job-map.csv の JOB002 行の fixed_params が [] である
     When facade が blue runner を --run-id 20260830T113000-JOB002-5c7d9e0f --job-id JOB002 --role blue --mode foreground -- 20260830 で起動する
     Then 実装へ渡す引数は 1 個で 20260830 である
+
+  Scenario: feature flag に書いた場所のジョブマップで実行先を解決し、固定の名前のジョブマップは使わない
+    Given RELAY_GATE_CONFIG_DIR は /etc/relay-gate で、/etc/relay-gate/feature-flag.env に GREEN_JOB_MAP_CSV=/srv/relay-gate/maps/green-jobs.csv が定義されている
+    And /srv/relay-gate/maps/green-jobs.csv に行 "JOB001,host-green-01,batch,/var/app/work,/opt/app/bin/job001.sh,[],60" がある
+    And /etc/relay-gate/green-job-map.csv に行 "JOB001,host-default-99,other,/var/default,/opt/default/job001.sh,[],60" がある
+    When facade が green runner を環境変数 GREEN_JOB_MAP_CSV=/srv/relay-gate/maps/green-jobs.csv と --run-id 20260830T113000-JOB001-3f9a1c2e --job-id JOB001 --role green --mode background で起動する
+    Then runner は host=host-green-01 user=batch script=/opt/app/bin/job001.sh work_dir=/var/app/work を解決する
+    And 実行ログに "job map resolved job_id=JOB001 slot=green host=host-green-01 map_version=-" が出る
+
+  Scenario: 環境変数でジョブマップの場所を受け取らない起動では既定の場所のジョブマップで解決する
+    Given RELAY_GATE_CONFIG_DIR は /etc/relay-gate で、環境変数 GREEN_JOB_MAP_CSV は未設定である
+    And /etc/relay-gate/green-job-map.csv に行 "JOB001,host-green-01,batch,/var/app/work,/opt/app/bin/job001.sh,[],60" がある
+    When green runner を facade を介さずに --run-id 20260830T113000-JOB001-3f9a1c2e --job-id JOB001 --role green --mode background で起動する
+    Then runner は host=host-green-01 user=batch script=/opt/app/bin/job001.sh work_dir=/var/app/work を解決する
+
+  Scenario: 標準の slot runner はローカル実行の行と SSH 実行の行をそれぞれ解決する
+    Given feature flag の BLUE_RUNNER と GREEN_RUNNER の両方に標準の slot runner /opt/relay-gate/runners/standard-runner.sh が割り当てられている
+    And blue のジョブマップのヘッダーが "job_id,host,user,work_dir,script,fixed_params,hang_detect_limit_minutes" で、行 "JOB001,,,/var/app/work,/opt/app/bin/job001.sh,[],0"(host と user が両方空)がある
+    And green のジョブマップのヘッダーが同じ 7 列で、行 "JOB001,host-green-01,batch,/var/app/work,/opt/app/bin/job001.sh,[],60" がある
+    When facade が標準の slot runner を --run-id 20260830T113000-JOB001-3f9a1c2e --job-id JOB001 --role blue --mode foreground と --role green --mode background でそれぞれ起動する
+    Then role=blue の runner は host=null user=null のローカル実行として解決する(SSH しない)
+    And role=green の runner は host=host-green-01 user=batch の SSH 実行として解決する
 ```
 
 ### 異常系
@@ -202,6 +225,15 @@ Feature: ジョブマップで JOB_ID から実行先を解決する
     Then runner は終了コード 2 で終了し、exitcode.txt の中身は "2" である
     And stderr.log に "error: job map not found slot=green map=/etc/relay-gate/green-job-map.csv" が含まれる
 
+  Scenario: feature flag に書いた場所のジョブマップに行が無い・ファイルが無いときは、その場所を map= に出す
+    Given RELAY_GATE_CONFIG_DIR は /etc/relay-gate で、/etc/relay-gate/green-job-map.csv に JOB001 と JOB999 の行がある
+    And /srv/relay-gate/maps/green-jobs.csv に JOB999 の行が無く、/srv/relay-gate/maps/missing-job-map.csv は存在しない
+    When facade が green runner を環境変数 GREEN_JOB_MAP_CSV=/srv/relay-gate/maps/green-jobs.csv と --run-id 20260830T113000-JOB999-a1b2c3d4 --job-id JOB999 --role green --mode background で起動する
+    And facade が green runner を環境変数 GREEN_JOB_MAP_CSV=/srv/relay-gate/maps/missing-job-map.csv と --run-id 20260830T113000-JOB001-3f9a1c2e --job-id JOB001 --role green --mode background で起動する
+    Then どちらの runner も終了コード 2 で終了し、exitcode.txt の中身は "2" である
+    And 1 つ目の stderr.log に "error: job_id=JOB999 not found in job map slot=green map=/srv/relay-gate/maps/green-jobs.csv" が含まれる
+    And 2 つ目の stderr.log に "error: job map not found slot=green map=/srv/relay-gate/maps/missing-job-map.csv" が含まれる
+
   Scenario: fixed_params が JSON 配列でない行は解決失敗にする
     Given green-job-map.csv の 3 行目 JOB003 の fixed_params セルが "p1 p2"(配列でない)である
     When facade が green runner を --run-id 20260830T113000-JOB003-6d8e0f1a --job-id JOB003 --role green --mode background で起動する
@@ -218,6 +250,8 @@ Feature: ジョブマップで JOB_ID から実行先を解決する
     When facade が green runner を --run-id 20260830T113000-JOB001-3f9a1c2e --job-id JOB001 --role green --mode background で起動する
     Then runner は終了コード 2 で終了し、stderr.log に "error: csv quote is invalid line=2 path: /etc/relay-gate/green-job-map.csv" が含まれる
 ```
+
+> Scenario「feature flag に書いた場所のジョブマップに行が無い・ファイルが無いときは、その場所を map= に出す」は、CLI 契約 `config_files.feature-flag.env.job_map_location`(stderr.log の `map=` に、使ったジョブマップのパスを出す)を判定する。USDM の受け入れ条件には現れない細部のため、「関連 USDM」表には載せない。
 
 ## ティア別仕様
 

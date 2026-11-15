@@ -1,0 +1,141 @@
+{
+  "schema_version": "distillery.stage-ownership-catalog/v1",
+  "catalog_version": "1.0.0",
+  "stages": [
+    {
+      "id": "requirements",
+      "order": 1,
+      "steps": [
+        "1"
+      ],
+      "domain_event_roots": [
+        "rdra/events",
+        "usdm/events"
+      ],
+      "related_id_prefixes": [
+        "REQ-",
+        "RDRA-",
+        "UC-"
+      ],
+      "related_path_patterns": [
+        "(^|/)usdm(/|$)",
+        "(^|/)requirements?(/|\\.)"
+      ]
+    },
+    {
+      "id": "quality_attributes",
+      "order": 2,
+      "steps": [
+        "2"
+      ],
+      "domain_event_roots": [
+        "nfr/events"
+      ],
+      "related_id_prefixes": [
+        "NFR-",
+        "QA-"
+      ],
+      "related_path_patterns": [
+        "(^|/)nfr(/|$)",
+        "quality[-_]attributes"
+      ]
+    },
+    {
+      "id": "architecture",
+      "order": 3,
+      "steps": [
+        "3"
+      ],
+      "domain_event_roots": [
+        "arch/events"
+      ],
+      "related_id_prefixes": [
+        "ADR-",
+        "ARCH-"
+      ],
+      "related_path_patterns": [
+        "(^|/)arch(/|$)",
+        "architecture"
+      ]
+    },
+    {
+      "id": "infrastructure",
+      "order": 4,
+      "steps": [
+        "4a",
+        "4b"
+      ],
+      "domain_event_roots": [
+        "infra/events"
+      ],
+      "related_id_prefixes": [
+        "INFRA-",
+        "IAC-"
+      ],
+      "related_path_patterns": [
+        "(^|/)infra(/|$)",
+        "(^|/)(terraform|pulumi|cdk)(/|$)"
+      ]
+    },
+    {
+      "id": "design_system",
+      "order": 5,
+      "steps": [
+        "5"
+      ],
+      "domain_event_roots": [
+        "design/events"
+      ],
+      "related_id_prefixes": [
+        "DESIGN-",
+        "DS-",
+        "UI-"
+      ],
+      "related_path_patterns": [
+        "(^|/)design(/|$)",
+        "design[-_]system",
+        "storybook"
+      ]
+    },
+    {
+      "id": "spec",
+      "order": 6,
+      "steps": [
+        "6"
+      ],
+      "domain_event_roots": [
+        "specs/events"
+      ],
+      "related_id_prefixes": [
+        "SPEC-",
+        "API-",
+        "OPENAPI-",
+        "ASYNCAPI-"
+      ],
+      "related_path_patterns": [
+        "(^|/)specs?(/|$)",
+        "openapi",
+        "asyncapi"
+      ]
+    },
+    {
+      "id": "spec_stories",
+      "order": 7,
+      "steps": [
+        "6a"
+      ],
+      "domain_event_roots": [
+        "design/events"
+      ],
+      "related_id_prefixes": [
+        "STORY-",
+        "SCENARIO-"
+      ],
+      "related_path_patterns": [
+        "spec[-_]stories",
+        "(^|/)stories(/|$)"
+      ]
+    }
+  ],
+  "outside_stage": "outside_pipeline"
+}

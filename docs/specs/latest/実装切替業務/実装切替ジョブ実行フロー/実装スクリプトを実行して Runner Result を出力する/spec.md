@@ -2,7 +2,7 @@
 
 ## 概要
 
-slot runner が解決済み(または `--execution-spec` から復元済み)の実行先ホストへ実行ユーザーで SSH 接続し(host / user が無い・null のローカル実行では SSH せず runner のプロセスユーザーで)、現行実装(blue)または新実装(green)のスクリプトを作業ディレクトリ・固定引数・追加引数付きで実行する。foreground / background を問わず `started-at.txt` を起動時に、`stdout.log` / `stderr.log` / `exitcode.txt` を実行終了後に一時ファイル経由で原子的に出力する。SSH 失敗・起動失敗でも 3 ファイルを揃える。slot 実行の状態はファイル正本から導出し(条件「slot 実行の状態導出規則」)、exitcode.txt が 0 なら SUCCEEDED、非 0 なら FAILED とする(exitcode.txt が無く abort-blue / abort-green が書いた `aborted.txt` があれば ABORTED。両方あるときは exitcode.txt を優先)。RAPID_CROSSCHECK_MODE が off 以外なら管理 DB の slot_executions.status に exitcode.txt 公開時点の状態を条件付き UPDATE(WHERE status='RUNNING')で一度だけ書き(abort 後に実装が走り切った経路では ABORTED のまま残し再同期しない。条件「slot 実行の状態導出規則」)、background slot をリランした run(execution-spec.json の `parent_run_id` が非 null)では slot の終端時に parallel_run を COMPLETED にする。完了通知の送信は UC「速報クロスチェック runner へ完了通知を送信する」に委ねる。
+slot runner が解決済み(または `--execution-spec` から復元済み)の実行先ホストへ実行ユーザーで SSH 接続し(host / user が無い・null のローカル実行では SSH せず runner のプロセスユーザーで)、現行実装(blue)または新実装(green)のスクリプトを作業ディレクトリ・固定引数・追加引数付きで実行する。foreground / background を問わず `started-at.txt` を起動時に、`stdout.log` / `stderr.log` / `exitcode.txt` を実行終了後に一時ファイル経由で原子的に出力する。SSH 失敗・起動失敗でも 3 ファイルを揃える。slot 実行の状態はファイル正本から導出し(条件「slot 実行の状態導出規則」)、exitcode.txt が 0 なら SUCCEEDED、非 0 なら FAILED とする(exitcode.txt が無く abort-blue / abort-green が書いた `aborted.txt` があれば ABORTED。両方あるときは exitcode.txt を優先)。RAPID_CROSSCHECK_MODE が off 以外なら管理 DB の slot_executions.status に exitcode.txt 公開時点の状態を条件付き UPDATE(WHERE status='RUNNING')で一度だけ書き(abort 後に実装が走り切った経路では ABORTED のまま残し再同期しない。条件「slot 実行の状態導出規則」)、background slot をリランした run(execution-spec.json の `parent_run_id` が非 null)では slot の終端時に parallel_run を COMPLETED にする。完了通知の送信は UC「速報クロスチェック runner へ完了通知を送信する」に委ねる。relay-gate が提供する標準の slot runner は、このローカル実行と SSH 実行の両方を扱う(それ以外の起動方式・プロトコルは、利用者が自作する runner が扱う)。
 
 ## データフロー
 
@@ -36,7 +36,7 @@ graph LR
     SE[("slot_executions\nstatus=RUNNING → SUCCEEDED / FAILED")]
     PR[("parallel_runs\nstatus=RUNNING → COMPLETED(リラン由来 run のみ)")]
   end
-  G1 -->|"ssh -n user@host 'cd work_dir && script args'(ローカル実行では cd work_dir && script args)"| IMPL
+  G1 -->|"ssh -n -o BatchMode=yes user@host 'cd work_dir && script args'(ローカル実行では cd work_dir && script args)"| IMPL
   IMPL -->|"stdout / stderr / 終了コード"| G1
   G2 -->|"ファイル書き込み"| ART
   R1 -->|"ファイル読み込み"| SPEC
@@ -49,7 +49,7 @@ graph LR
 | usecase | ExecuteImplementationCommand | started-at.txt 出力 → SSH 実行またはローカル実行(stdout / stderr を一時ファイルへ)→ 終了コード取得 → 3 ファイル確定 → status 判定 → (off 以外) slot_executions 更新 → (off 以外かつリラン由来 run) parallel_runs COMPLETED → 完了通知(次 UC)。`--execution-spec` 指定時はジョブマップを再解決せず `slots.<role>.*` と run 単位の `params` から復元 |
 | domain | SlotExecution | 状態導出規則の純粋関数: exitcode.txt あり → `0 → SUCCEEDED`、それ以外 → FAILED。exitcode.txt 無し・aborted.txt あり → ABORTED。どちらも無し → RUNNING。両方あれば exitcode.txt を優先。SSH 接続失敗は exit_code 6(ui-design.md の実行エラー。ssh 自身の 255 は 6 に読み替える。仮採用)を FAILED として扱う |
 | repository | RunnerResultRepository / ExecutionSpecRepository / SlotExecutionRepository / ParallelRunRepository | 3 ファイルの原子的公開、spec の読み込み、slot_executions の条件付き UPDATE、リラン由来 run の parallel_runs 条件付き UPDATE(RUNNING → COMPLETED) |
-| gateway | SshAdapter / FilesystemAdapter / RdbClientAdapter | `ssh` コマンド起動(認証は credential_ref から実行環境の設定(`~/.ssh/config` の Host 別名。仮採用)に解決)。host / user が null のローカル実行では ssh を使わず同じコマンド列を直接起動。一時ファイル → `mv`、RDB クライアント CLI(ジョブキュー兼管理 DB は relay-gate 内部のデータストア) |
+| gateway | SshAdapter / FilesystemAdapter / RdbClientAdapter | `ssh` コマンド起動(標準の slot runner の起動形は CLI 契約 `standard_runner.ssh_launch`。接続先はジョブマップの行の user@host で、鍵の選択は runner のプロセスユーザーの SSH 設定に任せる。credential_ref は ssh の引数に使わず execution-spec.json へ転記するだけ。契約 `standard_runner.credential_ref_usage`)。host / user が null のローカル実行では ssh を使わず同じコマンド列を直接起動。一時ファイル → `mv`、RDB クライアント CLI(ジョブキュー兼管理 DB は relay-gate 内部のデータストア) |
 
 ## 処理フロー
 
@@ -78,7 +78,7 @@ sequenceDiagram
   GW->>FS: started-at.txt(UTC ISO 8601)
   UC->>GW: 実装を実行
   alt host / user が非 null(リモート実行)
-    GW->>Host: ssh -n user@host 'cd work_dir && script args...'(stdout → stdout.log.tmp、stderr → stderr.log.tmp)
+    GW->>Host: ssh -n -o BatchMode=yes user@host 'cd work_dir && script args...'(stdout → stdout.log.tmp、stderr → stderr.log.tmp)
   else host / user が null(ローカル実行)
     GW->>GW: cd work_dir && script args... を runner のプロセスユーザーで直接起動(SSH しない)
   end
@@ -143,7 +143,7 @@ sequenceDiagram
 | リラン由来 run の終端 | execution-spec.json の `parent_run_id` が非 null(`restored_at` あり)かつ自 slot が background のとき、exitcode.txt 公開後に parallel_runs を条件付き UPDATE(`status='RUNNING'` → COMPLETED)する。foreground slot を持たないリラン run の終端をここで確定する。off では管理 DB に触れない | tier-facade | usecase `execute_implementation` / repository `parallel_run_repo` | background slot をリランした run は slot の終端時に parallel_run を COMPLETED にする(SPEC-011-06) |
 | 成果物公開判定 | 各ファイルは `.tmp` に書いてから `mv`。exitcode.txt を最後に確定する(exitcode.txt の存在 = 3 ファイル完備の合図) | tier-facade | repository `runner_result_repo` | 書き込み途中の確定名ファイルは存在しない(SPEC-003-03) |
 | 引数連結規則 | 復元起動では `slots.<role>.fixed_params` + run 単位の `params` を、通常起動では前 UC の ArgumentList を、順序を変えずに SSH コマンドへ渡す。各引数は単一クォートでエスケープして 1 引数を維持 | tier-facade | gateway `ssh_adapter` | 空白を含む引数を 1 引数として実装へ渡す |
-| 実装固有事項の runner への閉じ込め | SSH の接続方法(ポート・鍵・踏み台)、OS 差異、プロトコルは runner 実体と適用側の SSH 設定に閉じ込める。本 UC が定める契約は runner IF と 3 ファイルだけ | tier-facade | runner 実体 / gateway `ssh_adapter` | 実行終了後に 3 ファイルが揃う |
+| 実装固有事項の runner への閉じ込め | SSH の接続方法(ポート・鍵・踏み台)、OS 差異、プロトコルは runner 実体と適用側の SSH 設定に閉じ込める。標準の slot runner が扱うのはローカル実行と SSH 実行で、それ以外の起動方式・プロトコルは利用者が自作する runner に閉じ込める(CLI 契約 runner IF の `standard_runner`)。本 UC が定める契約は runner IF と 3 ファイルだけ | tier-facade | runner 実体 / gateway `ssh_adapter` | 実行終了後に 3 ファイルが揃う |
 | リランの実行設定復元 | `--execution-spec <path>` があればジョブマップを読まず、`slots.<role>` の host / user / script / work_dir / fixed_params と run 単位の `params` で起動する | tier-facade | usecase `execute_implementation` | 復元起動はジョブマップを再解決しない(SPEC-009-02) |
 
 ## 計算ルール一覧
@@ -152,7 +152,7 @@ sequenceDiagram
 |--------|---------|---------------|---------|----------|
 | 状態導出 | exitcode.txt、aborted.txt | exitcode.txt あり: `0 → SUCCEEDED`、`それ以外 → FAILED`。exitcode.txt 無し・aborted.txt あり → ABORTED。どちらも無し → RUNNING(条件「slot 実行の状態導出規則」) | slot 実行 status | tier-facade |
 | runner 終了コード | exitcode.txt | runner プロセスの終了コード = exitcode.txt の値(SSH 接続失敗は 6。仮採用: ui-design.md 実行エラー) | 終了コード | tier-facade |
-| SSH コマンド | host、user、work_dir、script、args | `ssh -n <user>@<host> 'cd <work_dir> && <script> <arg1> <arg2> ...'`(契約 external_interfaces「SSH(実装スクリプトの実行)」の形式。`-n` で stdin を閉じる。各引数は単一クォートでエスケープ。BatchMode 等の対話禁止オプションは runner 実体 / SSH 設定に閉じ込める。仮採用)。host / user が null のローカル実行では `cd <work_dir> && <script> <arg1> ...` を runner のプロセスユーザーで直接起動する(stdin は `/dev/null`) | コマンド文字列 | tier-facade |
+| SSH コマンド | host、user、work_dir、script、args | `ssh -n -o BatchMode=yes <user>@<host> 'cd <work_dir> && <script> <arg1> <arg2> ...'`(標準の slot runner の起動形。契約 external_interfaces「SSH(実装スクリプトの実行)」の launch と commands の slot runner の `standard_runner.ssh_launch`。オプションは `-n`(stdin を閉じる)と `-o BatchMode=yes`(対話の入力を求めず、認証できなければ失敗させる)の 2 つだけ。各引数は単一クォートでエスケープ。自作の runner の接続方法は runner の中に閉じる)。host / user が null のローカル実行では `cd <work_dir> && <script> <arg1> ...` を runner のプロセスユーザーで直接起動する(stdin は `/dev/null`) | コマンド文字列 | tier-facade |
 | リラン由来判定 | execution-spec.json の parent_run_id、自 slot の mode | `parent_run_id != null AND mode == background` なら slot 終端時に parallel_runs を COMPLETED にする | 判定 | tier-facade |
 | started_at | 起動時刻 | `date -u +%Y-%m-%dT%H:%M:%SZ`。`RELAY_GATE_NOW` 設定時はその UTC 値(Z 付き)をそのまま書く(ローカルへ変換しない。Runner Result Contract。契約 environment_variables.RELAY_GATE_NOW) | started-at.txt | tier-facade |
 
@@ -197,6 +197,7 @@ sequenceDiagram
 | REQ-009 | SPEC-009-02 | 復元起動はジョブマップを再解決しない(SPEC-009-02) |
 | REQ-010 | SPEC-010-01 | 中止後に実装が終了した場合は exitcode.txt を優先して状態を導出する(SPEC-010-01) / 中止済み slot で runner が再起動されても実装を再実行しない(SPEC-010-01) |
 | REQ-011 | SPEC-011-06 | background slot をリランした run は slot の終端時に parallel_run を COMPLETED にする(SPEC-011-06) |
+| REQ-001 | SPEC-001-04 | 標準の slot runner を割り当てた slot でローカル実行の行と SSH 実行の行をそれぞれ実行し 3 ファイルを揃える ※ 実行側。AC「host と user が両方空の行はローカル実行され、3 ファイルが揃い、execution-spec.json に解決した実行先が記録される」「host と user がある行は SSH で実行され、3 ファイルが揃う」「feature flag と slot ジョブマップだけを用意し、runner のスクリプトを書かずに blue と green の実装が起動される」に対応。解決側は UC〈ジョブマップで JOB_ID から実行先を解決する〉、割当と検証の側は UC〈slot runner の実体スクリプトを割り当てる〉で覆う |
 
 > 機械可読の正本は `spec-event.yaml` の `use_cases[].usdm`(本表と同内容)。「対応 BDD Scenario」列は本 UC の `Scenario:` 名(接尾の SPEC ID を含む完全名)を「 / 」で区切って列挙し、Scenario 名以外の補足は「※」以降に置く。区切りは人が読む用で、Scenario 名自体に「 / 」を含むものがあるため機械分割には使わず、機械照合は `spec-event.yaml` の `scenarios[]` を使う。
 
@@ -250,6 +251,17 @@ Feature: 実装スクリプトを実行して Runner Result を出力する
     Then ssh コマンドは実行されず、job001.sh は runner と同じ OS ユーザーで /var/app/work を作業ディレクトリとして実行される(stdin は /dev/null)
     And facade/<run_id>/blue/ に stdout.log stderr.log exitcode.txt が揃う
     And 実行ログに "INFO local exec started run_id=<run_id> role=blue work_dir=/var/app/work script=/opt/app/bin/job001.sh" と "INFO local exec finished run_id=<run_id> role=blue exit_code=0" が出る
+
+  Scenario: 標準の slot runner を割り当てた slot でローカル実行の行と SSH 実行の行をそれぞれ実行し 3 ファイルを揃える
+    Given feature flag に BLUE_MODE=foreground GREEN_MODE=background RAPID_CROSSCHECK_MODE=off BLUE_IMPL=v1 GREEN_IMPL=v2 BLUE_RUNNER=/opt/relay-gate/runners/standard-runner.sh GREEN_RUNNER=/opt/relay-gate/runners/standard-runner.sh が定義されている
+    And blue のジョブマップの JOB001 行は host と user が両方空で work_dir=/var/app/work script=/opt/app/bin/job001.sh である
+    And green のジョブマップの JOB001 行は host=host-green-01 user=batch work_dir=/var/app/work script=/opt/app/bin/job001.sh である
+    And どちらの job001.sh も終了コード 0 で終了する
+    When ジョブスケジューラが facade.sh JOB001 を実行し、両 slot の実行が終了する
+    Then blue の job001.sh は ssh を使わず facade と同じホストで実行され、facade/<run_id>/blue/ に stdout.log stderr.log exitcode.txt が揃う
+    And execution-spec.json の slots.blue.host と slots.blue.user は null である
+    And green の job001.sh は batch@host-green-01 へ `ssh -n -o BatchMode=yes` で SSH 実行され、facade/<run_id>/green/ に stdout.log stderr.log exitcode.txt が揃う
+    And execution-spec.json の slots.green.host は "host-green-01"、slots.green.user は "batch" である
 
   Scenario: RAPID_CROSSCHECK_MODE=off では管理 DB に触れず完了通知も送らない(SPEC-005-04)
     Given feature flag に RAPID_CROSSCHECK_MODE=off があり、管理 DB の接続設定が存在しない

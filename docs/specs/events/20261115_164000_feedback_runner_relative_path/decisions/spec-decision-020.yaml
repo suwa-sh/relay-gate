@@ -1,0 +1,38 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "specification"
+artifact_id: "spec-decision-020"
+title: "ハング検知の通知を hang-detector.sh 自身の終了コード(0 / 3 / 6)と標準エラーの alert 行に改め、RAPID_CROSSCHECK_MODE=off の通知済みの判定を成果物ルート直下の印ファイルで行う"
+status: "approved"
+generated_at: "2026-11-01T12:50:00Z"
+context: |
+  - 利用者は 2026-11-01 に、メール送信機能を実装しないと決めた。上流(要求・RDRA・NFR・アーキテクチャ・インフラ)と方針資料は、ハング検知の異常をハング検知ジョブ自身の終了結果(異常なしは正常終了、ハング疑いは警告終了、background 実行エラーと速報クロスチェック異常は失敗)と標準エラーの 1 件 1 行で知らせ、ジョブスケジューラの既存のジョブ監視・障害通知で運用者へ届ける形に改められた。
+  - 要求は、警告終了の値を「確報の比較 NG と同じ考え方(ジョブステータスが警告終了になる値)」とし、具体的な値・行の形式・通知済みの印の置き場所とファイル名を仕様で確定するよう求めている。
+  - 既存の終了コード規約は 0 / 2 / 3 / 6 の 4 分類で、比較ツールの契約(0 = 比較 OK / 3 = 比較 NG(警告終了)/ 6 = 実行エラー)と値の意味を揃えている。標準エラーの規約は `error:` を 1 回だけ、`warn:` は継続とし、hang-detector はすでに `warn:` を走査の継続(execution-spec が無い run など)に使っている。
+  - 再通知しない判定は監視記録の monitor_status の遷移規則で行い、ハング疑いを知らせたあとで実行エラー・比較異常へ変わった場合は別種別として知らせる。RAPID_CROSSCHECK_MODE=off では監視記録を保存できない。
+decision: |
+  1. hang-detector.sh の終了コード: 0 = その回に新たに知らせる異常なし、3 = 新たに知らせる異常がハング疑い(warning)だけ(警告終了)、6 = background 実行エラー・速報クロスチェック異常(error)を 1 件以上知らせた、または hang-detector 自身の実行エラー、2 = 走査前の入力・設定エラー。走査した場合の優先順位は 6 > 3 > 0。新しい値(4 や 5)は作らない。
+  2. 異常は標準エラーに `alert: level=<warning|error> kind=<hang-suspected|background-exec-error|rapid-crosscheck-error> run_id=... role=... job_id=... elapsed_minutes=...` の 1 件 1 行で出す。`error:` / `warn:` と別の接頭辞にし、出力規約の stderr の例外として CLI 契約(shared_rules.hang_alert)と ui-design.md「ハング検知の通知出力」に明記する。並び順は run_id 昇順 → role(blue, green, rapid-crosscheck)。stdout は従来どおり 0 行。
+  3. 再通知しない判定は従来の監視状態の遷移規則をそのまま使う。現在の通知済み状態は、off 以外では monitor_records.monitor_status、off では通知済みの印の内容。off 以外で管理 DB に接続できない回は全対象を MONITORING とみなして alert 行を出し、保存は試みずに 6 で終える。alert 行を出したあとで保存し、保存に失敗した異常は終了コード 6 で終えて次回も知らせる(知らせ漏れより重複を選ぶ)。alerted_at は「alert 行を出した日時」と読み替える。
+  4. 通知済みの印は `$RELAY_GATE_ARTIFACT_ROOT/hang-detector-notified/<run_id>.<role>` に置き、内容は通知済み状態の英字コード 1 行(HANG_SUSPECTED_NOTIFIED / EXEC_ERROR_NOTIFIED / COMPLETED)とし、監視状態の遷移と同じく、ハング疑いを知らせたあとで対象が正常終了・中止したら COMPLETED へ書き換えて終端する。`<run_id>.<role>.tmp` へ書いてから mv で確定名へ置き換える。Runner Result の契約ファイルとは別の場所にし、契約ファイルには触れない。HANG_SCAN_WINDOW_HOURS の窓外でも、印が HANG_SUSPECTED_NOTIFIED の run は走査する。
+  5. 成果物ルート直下を facade/(run ディレクトリ)・hang-detector-notified/・housekeep-pending/ の 3 つとし、run ディレクトリとして列挙するのは facade/ 直下の run_id 形式のディレクトリだけとする(shared_rules.artifact_root_entries)。hang-detector / housekeep / background-rerun はこの規則を参照する。
+  6. hang-detector.env からメール 3 項目(宛先・送信コマンド・件名プレフィックス)を除き、HANG_DB_CONN_REF / RAPID_HANG_DETECT_LIMIT_MINUTES / HANG_SCAN_WINDOW_HOURS だけにする。AsyncAPI から通知メールのチャネル・メッセージ・サーバーを除く(alert 行は CLI の出力であり、非同期メッセージとして扱わない)。UC「background 異常の通知メールを受け取る」は「ハング検知ジョブの異常終了を確認する」へ改め、UC ディレクトリ・リンク・コマンドの used_by_ucs を新しい名前に揃える。
+  7. 2026-11-01 以前の判断記録(spec-decision-002 / 004 / 005 / 006 / 012)の通知メールに関する記述は、本判断に読み替える。判断記録は経緯として残し、書き換えない。
+consequences:
+  positive:
+    - "relay-gate が独自の送信手段・送信設定・送信失敗の扱いを持たずに、ジョブスケジューラの既存のジョブ監視・障害通知で運用者へ届く"
+    - "終了コードの値が比較ツールの 0 / 3 / 6 と同じ読み方になり、運用者が確報ジョブと同じ基準で静観・対処を判断できる"
+    - "off でも、通知済みの異常を 2 回目の見回りで知らせない(終了コード 0)ことを受け入れ基準として判定できる"
+  negative:
+    - "6 が「エラーを知らせた」と「hang-detector 自身の実行エラー」の両方を表すため、どちらかは標準エラーの alert 行と error 行で見分ける必要がある"
+    - "メール本文にあった推奨対処・成果物ディレクトリは出力に含まれず、運用者は ui-design.md の推奨対処表を参照する"
+    - "off の通知済みの印が成果物ルートに残るため、ハウスキープが実行の単位とともに削除する必要がある"
+alternatives_considered:
+  - name: "警告終了に新しい値(例 4)、失敗に検知専用の値(例 5)を割り当てる"
+    reason_rejected: "既存の 4 分類(0 / 2 / 3 / 6)と比較ツールの契約から外れ、ジョブスケジューラの判定設定を別に持つ必要がある。要求は確報の比較 NG と同じ考え方を求めている"
+  - name: "異常を `error:` / `warn:` の行で出す"
+    reason_rejected: "`error:` は 1 回だけ・`warn:` は走査の継続という既存規約と衝突し、走査上の警告と知らせる異常を見分けられない"
+  - name: "通知済みの印を run ディレクトリの中(<run_id>/<role>/ 配下)に置く"
+    reason_rejected: "ハウスキープは run ディレクトリを置き場へ移してから印を動かす順序を求めており、印が run ディレクトリと一緒に動くとこの順序を表せない。Runner Result の契約ファイルと同じ場所に置くと契約の構成も変わる"
+  - name: "通知済みの印を「ある・ない」だけのファイルにする"
+    reason_rejected: "ハング疑い通知済みから実行エラー通知済みへの遷移(別種別として 1 回だけ知らせる)を表せない"

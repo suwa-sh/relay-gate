@@ -7,7 +7,7 @@ slot ジョブマップ(CSV)の列定義・CSV セルのクォート解析規則
 ## 実装の前提
 
 - **bash の最低版**: 5.0(CLI 契約 `conventions.runtime_prerequisites`。インフラ設計の「bash 5」と同じ値)。連想配列などを使ってよい
-- **性能**: 1 ファイルあたりの想定最大行数・内容の最悪条件・応答時間の目標は NFR B.1.1.2 / B.2.1.1 の共通前提(`docs/nfr/latest/nfr-grade.yaml`)を参照する。本 UC は数値を再定義しない。行数に比例する時間で処理できる実装(job_id 重複検査・map_version 集計を全組合せ比較にしない)を前提とする
+- **性能**: 設定ファイルの検査の性能は目標値で、入力の制限でも合否の検査でもない(大きさを理由に拒否・警告せず、目標の時間を超えても終了コード・stdout・stderr は変わらない)。目標の大きさの条件(行数とバイト数)・内容の条件・時間は CLI 契約 `config_input_rules.performance_target`(出所は NFR B.1.1.2 / B.2.1.1 の共通前提。`docs/nfr/latest/nfr-grade.yaml`)を参照する。本 UC は数値を再定義しない。行数に比例する時間で処理できる実装(job_id 重複検査・map_version 集計を全組合せ比較にしない)を選ぶ
 - **外部コマンド**: セルの解析は bash 単独で行う。行単位の外部コマンド利用(`sort` による重複検査、`grep` による候補行の絞り込み、`tr` / `sed` によるバイト点検)は許容する(CLI 契約 `conventions.runtime_prerequisites.external_commands`)
 
 ## コマンド契約
@@ -21,7 +21,7 @@ slot ジョブマップ(CSV)の列定義・CSV セルのクォート解析規則
 
 | 名前 | 型 | 必須 | 既定値 | 説明 |
 |------|---|------|-------|------|
-| --job-map | string(パス) | Yes(この検証種別を選ぶ) | なし | 検証する CSV。slot はファイル名(`<slot>-job-map.csv`)から推定しない(任意のパスを検証できる) |
+| --job-map | string(パス) | Yes(この検証種別を選ぶ) | なし | 検証する CSV。slot はファイル名(`<slot>-job-map.csv`)から推定しない(任意のパスを検証できる)。feature-flag.env も、その `BLUE_JOB_MAP_CSV` / `GREEN_JOB_MAP_CSV` も読まず、渡されたパスをそのまま検証する |
 | --verbose | boolean | No | false | 各行の解決結果を `info:` で出す |
 | --help | boolean | No | false | 使い方 |
 
@@ -29,7 +29,7 @@ slot ジョブマップ(CSV)の列定義・CSV セルのクォート解析規則
 
 ## 設定契約(slot ジョブマップ CSV)
 
-- **所在**: `$RELAY_GATE_CONFIG_DIR/blue-job-map.csv` / `green-job-map.csv`(仮採用: _inference.md #5)
+- **所在**: 既定は `$RELAY_GATE_CONFIG_DIR/blue-job-map.csv` / `green-job-map.csv`(固定の名前。設定ファイル置き場は仮採用: _inference.md #5)。feature-flag.env の任意のキー `BLUE_JOB_MAP_CSV` / `GREEN_JOB_MAP_CSV` に場所を書くと、その場所を使う(絶対パスと相対パス。相対パスの基準は feature-flag.env のあるディレクトリ)。キーが無い・値が空なら既定の場所(利用者決定 2026-11-16)。場所の決め方と、決めた場所を使う読み手(feature flag の検証、facade.sh が slot runner へ渡す環境変数、slot runner)の正本は CLI 契約 `config_files.feature-flag.env.job_map_location` で、本書は規則を持たない(キーの定義と検証は UC「feature flag を設定する」)
 - **形式**: CSV(カンマ区切り)。1 行目はヘッダー行(列はヘッダー名で対応付ける。順序は元資料の並び `job_id,host,user,work_dir,script,fixed_params,hang_detect_limit_minutes` を推奨するが検証は名前で行う)。行頭 `#` の行と空行(0 バイトの行)は無視。改行コードは LF。セル内に改行は置けない。文字コード UTF-8。1 ファイル 1 slot。形式から外れた入力(NUL バイト・不正な文字コード・BOM・CR・ヘッダー列名の重複)の扱いは下記「入力の守備範囲」
 - **CSV セルのクォート解析規則**(条件: ジョブマップ解決条件): セルはカンマ区切り。セルは二重引用符で囲める(囲まない場合はカンマ・二重引用符を含められない)。囲んだセル内の二重引用符は `""` と二重化する。`fixed_params` は JSON 配列文字列を格納するセルで、必ず二重引用符で囲む(例: `"[""p1"",""p2 p3""]"` → 固定引数 `p1` と `p2 p3` の 2 要素。空は `"[]"` または `[]`)。bash 単独(外部 CSV パーサ非依存)で 1 文字ずつ状態機械で解析できる範囲に限定する(ネスト・複数行セル不可。これは形式の制約で、行単位の外部コマンド利用は禁じない)。閉じ引用符が無い・囲み外に二重引用符がある行は `error: csv quote is invalid line=N path: <path>`。セルの値に含まれるタブ・ESC などの制御文字(改行・CR・NUL 以外)は値の一部として受理し、出力時に可視表記へ置き換える(`ui-design.md`「制御文字の表記」)
 - **設定所有区分**: 実行先とハング検知上限の正本。runner・mode・実装版(feature flag)、速報・確報の比較ツール起動コマンド(速報クロスチェック設定 / 確報クロスチェック worker 設定)は置かない
@@ -76,7 +76,7 @@ slot ジョブマップ(CSV)の列定義・CSV セルのクォート解析規則
 | データ行 0 件(ヘッダーだけ) | 受理(例外) | なし。stdout `rows=0` |
 | ヘッダー列名の重複 | 拒否 | `error: duplicate column column=<name> path: <path>`(2) |
 | 行・セルの長さ | 上限なし | なし |
-| 5,000 行超 | 対象外(拒否しない。NFR の性能保証の範囲外) | なし |
+| 5,000 行または 8 MB を超えるファイル | 受理(大きさを理由に拒否・警告しない。検証の結果は変わらない。性能の目標値の条件に入らないだけ) | なし |
 | 非 ASCII の値・空白とカンマを含む固定引数・Windows 形式や相対パスの work_dir / script | 値として受理 | なし |
 
 - NUL / UTF-8 / BOM / CR の 4 種類(バイト・改行の検査)は、最初の 1 件で止めずファイル内の全件を物理行番号の昇順に出す。同じ行に種類の違う違反があれば表の順(NUL → UTF-8 → BOM → CR)に 1 種類 1 行。hint は最後の CR の error 行の次に 1 回だけ。4 種類のどれかが 1 件でもあれば、ヘッダー・クォート・列数・列の値・job_id の重複の検査は行わない(CLI 契約 `config_input_rules.byte_checks`)

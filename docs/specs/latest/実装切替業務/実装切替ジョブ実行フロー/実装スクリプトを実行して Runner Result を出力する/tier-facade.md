@@ -2,7 +2,7 @@
 
 ## 変更概要
 
-slot runner の実行フェーズ: usecase(SSH またはローカル実行 → 3 ファイル公開 → 状態導出 → (off 以外) slot_executions 更新 → (off 以外かつリラン由来 run) parallel_runs COMPLETED)、domain(状態導出規則: exitcode.txt / aborted.txt → 状態)、repository(Runner Result の原子的公開、execution-spec 読み込み、slot_executions / parallel_runs 更新)、gateway(SSH アダプタ、ファイルシステムアダプタ、RDB アダプタ)を新規実装する。完了通知の送信(gateway `completed_notifier`)は UC「速報クロスチェック runner へ完了通知を送信する」で定義する。
+slot runner の実行フェーズ: usecase(SSH またはローカル実行 → 3 ファイル公開 → 状態導出 → (off 以外) slot_executions 更新 → (off 以外かつリラン由来 run) parallel_runs COMPLETED)、domain(状態導出規則: exitcode.txt / aborted.txt → 状態)、repository(Runner Result の原子的公開、execution-spec 読み込み、slot_executions / parallel_runs 更新)、gateway(SSH アダプタ、ファイルシステムアダプタ、RDB アダプタ)を新規実装する。完了通知の送信(gateway `completed_notifier`)は UC「速報クロスチェック runner へ完了通知を送信する」で定義する。relay-gate が提供する標準の slot runner(`runners/standard-runner.sh`。blue と green の両方に同じ実体を割り当てる)は、この実行フェーズのローカル実行と SSH 実行の両方を扱う(CLI 契約 runner IF の `standard_runner`)。
 
 ## コマンド契約
 
@@ -20,8 +20,8 @@ slot runner の実行フェーズ: usecase(SSH またはローカル実行 → 3
 | --execution-spec | string | No | なし | 指定時: ジョブマップを読まず、このファイルの `slots.<role>` の host / user / script / work_dir / fixed_params と run 単位の `params` で起動。未指定時: 前フェーズの解決結果 |
 | -- PARAM... | string[] | No | 0 個 | 通常起動で使う。復元起動(`--execution-spec`)では spec の run 単位キー `params` を使い、`--` 以降に PARAM があれば受け付けない(exitcode.txt=2、stderr.log `error: params are not allowed with --execution-spec run_id=... role=...`。契約 `shared_rules.argument_concatenation.execution_spec`) |
 
-- **stdin**: なし(SSH は `-n` で stdin を閉じる(契約 external_interfaces SSH: `ssh -n {user}@{host} 'cd {work_dir} && ...'`))
-- **環境変数**(facade.sh / background-rerun.sh が feature-flag.env を読んで渡す。runner は feature-flag.env を読まない): 既存 4 つ `RELAY_GATE_CONFIG_DIR` / `RELAY_GATE_ARTIFACT_ROOT` / `RELAY_GATE_LOG_DIR` / `RAPID_CROSSCHECK_MODE`(foreground / background / off。全 UC 共通)に加え、RAPID_CROSSCHECK_MODE が off 以外のとき `RAPID_CROSSCHECK_RUNNER`(完了通知の送信先実体。未設定・実行不可は実装起動前の設定検証で exitcode.txt=2(stderr.log `error: option required option=RAPID_CROSSCHECK_RUNNER` / `error: file not executable key=RAPID_CROSSCHECK_RUNNER path=...`。契約 runner IF exit_codes 2)。起動時に起動できなかった場合だけ完了通知失敗 = 条件「完了通知失敗の扱い」(実行ログ WARN、exit_code=127))、通常起動では自 slot の `BLUE_IMPL` / `GREEN_IMPL`(保存フェーズで使用)
+- **stdin**: なし(SSH は `-n` で stdin を閉じる(契約 external_interfaces SSH: `ssh -n -o BatchMode=yes {user}@{host} 'cd {work_dir} && ...'`))
+- **環境変数**(facade.sh / background-rerun.sh が feature-flag.env を読んで渡す。runner は feature-flag.env を読まない): 既存 4 つ `RELAY_GATE_CONFIG_DIR` / `RELAY_GATE_ARTIFACT_ROOT` / `RELAY_GATE_LOG_DIR` / `RAPID_CROSSCHECK_MODE`(foreground / background / off。全 UC 共通)に加え、RAPID_CROSSCHECK_MODE が off 以外のとき `RAPID_CROSSCHECK_RUNNER`(完了通知の送信先実体。未設定・実行不可は実装起動前の設定検証で exitcode.txt=2(stderr.log `error: option required option=RAPID_CROSSCHECK_RUNNER` / `error: file not executable key=RAPID_CROSSCHECK_RUNNER path=...`。契約 runner IF exit_codes 2)。起動時に起動できなかった場合だけ完了通知失敗 = 条件「完了通知失敗の扱い」(実行ログ WARN、exit_code=127))、通常起動では自 slot の `BLUE_IMPL` / `GREEN_IMPL`(保存フェーズで使用)と、自 slot のジョブマップの場所 `BLUE_JOB_MAP_CSV` / `GREEN_JOB_MAP_CSV`(解決フェーズで使用。復元起動ではジョブマップを読まないため渡されない)
 
 #### 読み込む設定(管理 DB 接続。RAPID_CROSSCHECK_MODE が off 以外のときのみ)
 
@@ -43,7 +43,7 @@ slot runner の実行フェーズ: usecase(SSH またはローカル実行 → 3
 | aborted.txt | runner は書かない | abort-blue / abort-green が中止時のみ生成(中止日時 1 行。UTC ISO 8601 秒精度 Z 付き)。状態導出規則で exitcode.txt が無いときの ABORTED 判定に使う。runner は削除も上書きもしない |
 
 - **状態導出規則**(条件「slot 実行の状態導出規則」。runner・abort・background-rerun・hang-detector で共通): exitcode.txt があれば 0 = SUCCEEDED / 非 0 = FAILED。無く aborted.txt があれば ABORTED。どちらも無ければ RUNNING。両方あれば exitcode.txt を優先する(中止後に実装が終了した場合)
-- **実行方式**: `slots.<role>.host` / `user` が非 null なら SSH(`ssh -n user@host 'cd work_dir && script args...'`)。両方 null(ジョブマップに host / user 列が無い・空)ならローカル実行: runner のプロセスユーザーで `cd work_dir && script args...` を直接起動する(stdin は `/dev/null`)。stdout / stderr / 終了コードの扱いと 3 ファイルは SSH と同じ
+- **実行方式**: `slots.<role>.host` / `user` が非 null なら SSH(標準の slot runner の起動形は `ssh -n -o BatchMode=yes user@host 'cd work_dir && script args...'`。オプションはこの 2 つだけ。契約 `standard_runner.ssh_launch`)。両方 null(ジョブマップに host / user 列が無い・空)ならローカル実行: runner のプロセスユーザーで `cd work_dir && script args...` を直接起動する(stdin は `/dev/null`)。stdout / stderr / 終了コードの扱いと 3 ファイルは SSH と同じ
 - **終了コード**: exitcode.txt の値をそのまま返す(実装の終了コード。SSH 接続失敗は 6。仮採用: ui-design.md の実行エラーに揃え、ssh の 255 は読み替える)。relay-gate の 4 分類は実装の終了コードには適用しない。例外: 3 ファイルを揃えられない書き込み失敗は 6。実装起動前の設定検証エラー(復元起動の spec 欠落・PARAM 併用・二重起動 / off 以外で rapid-crosscheck.env 不在・RAPID_DB_CONN_REF 欠落 / off 以外で RAPID_CROSSCHECK_RUNNER 未設定・実行不可)は 2(契約 runner IF exit_codes 2)
 
 ## UC ロジック
@@ -67,8 +67,10 @@ slot runner の実行フェーズ: usecase(SSH またはローカル実行 → 3
 
 ## 設定契約
 
-- SSH 接続方法(鍵・ポート・踏み台・ホスト別名)は適用側の SSH 設定(実行ユーザーの `~/.ssh/config`)と runner 実体に閉じ込める。`credential_ref` は SSH 設定の Host 別名または鍵の参照名として runner 実体が解釈する(仮採用)
-- relay-gate が定めるのは runner IF と Runner Result Contract のみ
+- 標準の slot runner の SSH 実行: 起動形は契約 `standard_runner.ssh_launch`(external_interfaces「SSH(実装スクリプトの実行)」の launch)のとおり `ssh -n -o BatchMode=yes {user}@{host} ...` で、付けるオプションはこの 2 つだけ。鍵・ポート・踏み台・known_hosts などの接続の設定は、runner のプロセスユーザーの SSH 設定(`~/.ssh/config`)に任せる
+- 標準の slot runner での `credential_ref`: ssh の引数にも接続先の決定にも使わず、execution-spec.json の `slots.<role>.credential_ref` へ転記するだけ(参照名の記録)。接続先は常にその行の `{user}@{host}`(契約 `standard_runner.credential_ref_usage`)
+- 標準の slot runner が扱うのはローカル実行と SSH 実行で、それ以外の起動方式・プロトコル(特殊な接続)は、利用者が自作する runner に閉じ込める(自作の runner の接続方法は runner の中に閉じる)
+- relay-gate が契約として定めるのは runner IF と Runner Result Contract のみ。標準の slot runner と自作の runner は、どちらもこの契約を満たす
 
 ## データモデル変更
 
@@ -188,4 +190,29 @@ Feature: 実装スクリプトを実行して Runner Result を出力する - fa
     And 環境変数 RAPID_CROSSCHECK_MODE=background で runner を --mode background で起動する
     When 実装が終了コード 0 で終了する
     Then parallel_runs の該当行は status=RUNNING のままである(COMPLETED は facade の中継 UC が行う)
+
+  Scenario: 標準の slot runner はローカル実行の行を SSH せず実行し 3 ファイルを揃え execution-spec.json の host と user を null にする
+    Given RELAY_GATE_CONFIG_DIR/blue-job-map.csv のヘッダーが "job_id,host,user,work_dir,script,fixed_params,hang_detect_limit_minutes" で、JOB001 の行は host と user が両方空、work_dir=<一時ディレクトリ> script=<pwd と hostname の結果を stdout に出し終了コード 0 のスクリプト> fixed_params=[] である
+    And PATH 上の ssh を呼び出し記録用スタブに置き換え、環境変数 RAPID_CROSSCHECK_MODE=off BLUE_IMPL=v1 を設定している
+    When `<RELAY_GATE_HOME>/runners/standard-runner.sh --run-id 20260830T113000-JOB001-3f9a1c2e --job-id JOB001 --role blue --mode foreground` を実行する
+    Then 終了コード 0 で終了し、ssh スタブの呼び出し記録は無い
+    And blue/ に started-at.txt stdout.log stderr.log exitcode.txt が揃い、exitcode.txt は "0" の 1 行である
+    And stdout.log に <一時ディレクトリ> と、runner を実行したホストのホスト名が含まれる
+    And facade/20260830T113000-JOB001-3f9a1c2e/execution-spec.json の slots.blue.host と slots.blue.user は null である
+
+  Scenario: 標準の slot runner は SSH 実行の行をその host と user で SSH 実行し 3 ファイルを揃える
+    Given RELAY_GATE_CONFIG_DIR/green-job-map.csv のヘッダーが "job_id,host,user,work_dir,script,fixed_params,hang_detect_limit_minutes" で、行 "JOB001,host-green-01,batch,/var/app/work,/opt/app/bin/job001.sh,[],60" がある
+    And PATH 上の ssh を、起動引数を記録し stdout に "done" を出して終了コード 0 で終わるスタブに置き換え、環境変数 RAPID_CROSSCHECK_MODE=off GREEN_IMPL=v2 を設定している
+    When 同じ実体を `<RELAY_GATE_HOME>/runners/standard-runner.sh --run-id 20260830T113000-JOB001-3f9a1c2e --job-id JOB001 --role green --mode background` で実行する
+    Then 終了コード 0 で終了し、ssh スタブは 1 回だけ呼ばれ、記録した起動引数は先頭から順に "-n"、"-o"、"BatchMode=yes"、"batch@host-green-01" で、その次の引数に "cd /var/app/work && /opt/app/bin/job001.sh" が含まれる("-n" と "-o BatchMode=yes" のほかにオプションは無い)
+    And green/ に started-at.txt stdout.log stderr.log exitcode.txt が揃い、stdout.log は "done"、exitcode.txt は "0" の 1 行である
+    And facade/20260830T113000-JOB001-3f9a1c2e/execution-spec.json の slots.green.host は "host-green-01"、slots.green.user は "batch" である
+
+  Scenario: 標準の slot runner は credential_ref を ssh の引数に使わず execution-spec.json へ転記する
+    Given RELAY_GATE_CONFIG_DIR/green-job-map.csv のヘッダーが "job_id,host,user,work_dir,script,fixed_params,hang_detect_limit_minutes,credential_ref" で、行 "JOB001,host-green-01,batch,/var/app/work,/opt/app/bin/job001.sh,[],60,prod-key" がある
+    And PATH 上の ssh を、起動引数を記録し終了コード 0 で終わるスタブに置き換え、環境変数 RAPID_CROSSCHECK_MODE=off GREEN_IMPL=v2 を設定している
+    When `<RELAY_GATE_HOME>/runners/standard-runner.sh --run-id 20260830T113000-JOB001-3f9a1c2e --job-id JOB001 --role green --mode background` を実行する
+    Then 終了コード 0 で終了し、ssh スタブは 1 回だけ呼ばれ、記録した起動引数の接続先は "batch@host-green-01" である
+    And 記録した起動引数のどれにも "prod-key" は含まれず、"-i" の引数も無い
+    And facade/20260830T113000-JOB001-3f9a1c2e/execution-spec.json の slots.green.credential_ref は "prod-key" である
 ```

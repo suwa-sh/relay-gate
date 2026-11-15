@@ -1,48 +1,46 @@
 stage: S7
 uc_id: fd678b04
-manifest_sha256: 829aa482569f86811e8a0a8453851b577b684bce01b8b83992f88cb1250b1ee5
+manifest_sha256: 808bf63e1c7564ffef1498814b5d3f4e3a6163b4c2ff1429e03ae81125b0d01b
 manifest_projection: v2
 result: pass
-rerun_reason: "stale after spec feedback runs (invalidated by 20261113_020309_stage_invalidated_fd678b04_stale_after_spec_feedback_runs)"
-previous_done: "docs/impl/latest/fd678b04/invalidated/20261113_020309_stage_invalidated_fd678b04_stale_after_spec_feedback_runs/stages/S7_atdd.done.yaml"
 branch_slug: configure-feature-flags
-tiers:
-  - tier-facade
-tier_impl_attempt: 5
+tier_impl_attempt: 6
 atdd_confirmed: true
-atdd_scenarios:
-  - SPEC-001-01-4
-feature: features/atdd/SPEC-001-01.feature
+features:
+  - features/atdd/SPEC-001-01.feature
+  - features/atdd/SPEC-004-01.feature
 feature_changed: false
 steps: features/atdd/steps/configure-feature-flags.steps.js
 steps_changed: false
-steps_change_summary: "変更なし。既存の step 定義が attempt 5 の実装に対してそのまま pass した。検証内容は「終了コード 0 かつ stderr に warn: unknown key 行なし」"
-tier_impl_changed: false
+steps_note: "S2 で用意済みの step 定義をそのまま使用。統合実行で不足は見つからず、S7 での変更なし"
+atdd_scenarios:
+  - SPEC-001-01-4
+  - SPEC-001-01-7
+  - SPEC-001-01-8
+  - SPEC-001-01-9
+  - SPEC-004-01-9
+selection:
+  method: "一意タグ @atdd_{SPEC-ID}-{連番} の完全一致(cucumber tag expression の or 結合)。名前の部分一致フィルタは使わず、feature 全体も回していない"
+  tag_expression: "@atdd_SPEC-001-01-4 or @atdd_SPEC-001-01-7 or @atdd_SPEC-001-01-8 or @atdd_SPEC-001-01-9 or @atdd_SPEC-004-01-9"
+  executed_tags_verified_by: "cucumber JSON レポートから実行 Scenario の @atdd_ タグを抽出し、atdd_scenarios と集合一致を確認"
 run:
   cwd: "."
-  command: "npx cucumber-js --config cucumber.cjs features/atdd --tags \"@atdd_SPEC-001-01-4\""
-  selection: "tag exact match only (no name filter, feature not run as a whole)"
-  tag_uniqueness: "@atdd_SPEC-001-01-4 は features/atdd/ 内で 1 箇所のみ(SPEC-001-01.feature L25)"
+  command: "npx cucumber-js --config cucumber.cjs features/atdd --tags '@atdd_SPEC-001-01-4 or @atdd_SPEC-001-01-7 or @atdd_SPEC-001-01-8 or @atdd_SPEC-001-01-9 or @atdd_SPEC-004-01-9'"
   exit_code: 0
-  summary: "1 scenario (1 passed), 5 steps (5 passed)"
-  steps_count_note: "cucumber の集計は Before / After フックを含む。Scenario 本文の step は 3 件"
-  scenarios_expected: 1
-  scenarios_total: 1
-  scenarios_passed: 1
+  summary: "5 scenarios (5 passed), 25 steps (25 passed)"
+  scenarios_expected: 5
+  scenarios_executed: 5
+  scenarios_passed: 5
   scenarios_failed: 0
+  steps_total: 25
+  steps_passed: 25
   undefined_steps: 0
   ambiguous_steps: 0
-  pending_steps: 0
-  count_matches_atdd_scenarios: true
-performance_note: "性能(5,000 行以内かつ 8 MB 以内を 10 秒以内)は目標値であり合否の検査ではない(利用者決定)。本 stage では時間を判定に使っていない。参考: 実行は約 1 秒"
-harness:
-  sandbox_root: "Scenario ごとの一時ディレクトリを root とし、仕様の絶対パス(/etc/relay-gate, /opt/relay-gate)を root 配下の同じ相対位置に配置。出力照合時に root 接頭辞を除去"
-  config_dir: "RELAY_GATE_CONFIG_DIR=<root>/etc/relay-gate(ジョブマップの配置先)"
-  entrypoint: "facade/bin/validate-config.sh(実体を起動)"
-  runner_stubs: "--help で runner-if-version=1 を返す実行可能スタブ(4 実体)"
-  external_connections: none
+  selected_count_matches_atdd_scenarios: true
+tier_impl_changed: false
 injections: []
-injections_note: "ハーネス注入なし(検証コマンドのみで完結)"
+injections_note: "ハーネス注入なし。前提の新規抽出なし"
 issues: []
-completed_at: '2026-11-15T09:30:00+09:00'
+issues_note: "新規起票なし。対象 5 Scenario が仕様どおりに通過した"
+completed_at: '2026-11-16T03:50:00+09:00'
 completed_by: dist-impl-implement@0.14.1

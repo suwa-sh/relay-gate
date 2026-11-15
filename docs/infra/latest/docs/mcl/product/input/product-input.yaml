@@ -28,7 +28,7 @@ workload:
   deployment_constraints:
     - "エアーギャップ環境のオンプレミス Linux。実行時にインターネット接続・外部 SaaS を要求しない"
     - "構成要素はシェルスクリプト実行ホスト(複数、SSH 到達)+ RDB + ファイル共有のみ(メール中継などの通知送信経路は持たない)"
-    - "facade / runner はジョブスケジューラの実行ホスト上で動作する。確報 worker は DB セグメント上で動作する"
+    - "facade / runner(relay-gate が提供する標準の slot runner を含む)はジョブスケジューラの実行ホスト上で動作する。確報 worker は DB セグメント上で動作する"
     - "管理 DB は RDB 1 種・単一インスタンス。速報側と確報側のテーブルを分離する。MQ は導入しない"
     - "成果物に案件固有名を記載しない(中立表現)"
 
@@ -107,7 +107,7 @@ elements:
     entity_refs: ["E-009", "E-010", "E-011", "E-014"]
   - id: "config_store"
     category: "storage"
-    description: "設定ファイル(feature flag: env 形式 9 キー / ジョブマップ: CSV 形式(<role>-job-map.csv)/ ハング検知定期ジョブ設定: env 形式(管理 DB 接続参照名と、ハング疑い上限・走査窓の任意の運用チューニング値 2 キーを持ち得る。接続参照名は RAPID_CROSSCHECK_MODE が off 以外のときだけ必須)/ ハウスキープ設定(保持日数。既定 90 日と、ハウスキープ専用 DB ロールの接続参照名。接続参照名は RAPID_CROSSCHECK_MODE が off 以外、または確報クロスチェックを使う設置では必須で、無い・空なら設定エラーで何も削除しない。省略・空にできるのは管理 DB を一切使わない設置だけで、そのときハウスキープは管理 DB に接続しない。ファイルは housekeep.env(配置先 /etc/relay-gate/housekeep.env)で、保持日数のキーは HOUSEKEEP_RETENTION_DAYS、接続参照名のキーは HOUSEKEEP_DB_CONN_REF)/ 速報クロスチェック設定: env 形式 rapid-crosscheck.env(必須は管理 DB 接続参照名と速報比較ツールの起動コマンド 1 行、lease 期間・poll 間隔は任意の運用チューニング値(既定 600 / 30 秒)。速報有効時に facade・slot runner・速報クロスチェック runner・速報 worker が起動のたびに読む。off では不要)/ 確報クロスチェック worker 設定: env 形式 final-crosscheck.env(確報を使う設置だけ、実行ホストと確報 worker の動くホストの両方に同じファイル名で置き場ごとに中身を分けて配置し、使わない設置では両方から消す(構築の変数で切り替え。既定は使わない)。実行ホストの分は DB 接続参照と確報 runner の polling の任意キーだけで確報 runner が起動のたびに読む。確報比較ツールの起動コマンド 1 行は確報 worker の動くホストの分だけが持ち、確報 worker が起動のたびに読む)/ 適用文書)。比較対象の定義は比較ツール側が持ち、relay-gate はジョブ ID ごとの比較定義 CSV・対象カタログを持たない。適用側が版管理して配置。設定版は持たず、マップ版はジョブマップ側の任意列とする。認証情報は参照名のみで値を置かない"
+    description: "設定ファイル(feature flag: env 形式 9 キーと、slot ジョブマップの場所を書く任意の 2 キー(blue 用と green 用。キー名は仕様で確定) / ジョブマップ: CSV 形式(<role>-job-map.csv。場所は feature flag の任意のキーで指定でき、無い・空なら設定ファイル置き場の固定の名前。絶対パスと相対パスを受け付け、相対パスの基準は feature-flag.env のあるディレクトリ)/ ハング検知定期ジョブ設定: env 形式(管理 DB 接続参照名と、ハング疑い上限・走査窓の任意の運用チューニング値 2 キーを持ち得る。接続参照名は RAPID_CROSSCHECK_MODE が off 以外のときだけ必須)/ ハウスキープ設定(保持日数。既定 90 日と、ハウスキープ専用 DB ロールの接続参照名。接続参照名は RAPID_CROSSCHECK_MODE が off 以外、または確報クロスチェックを使う設置では必須で、無い・空なら設定エラーで何も削除しない。省略・空にできるのは管理 DB を一切使わない設置だけで、そのときハウスキープは管理 DB に接続しない。ファイルは housekeep.env(配置先 /etc/relay-gate/housekeep.env)で、保持日数のキーは HOUSEKEEP_RETENTION_DAYS、接続参照名のキーは HOUSEKEEP_DB_CONN_REF)/ 速報クロスチェック設定: env 形式 rapid-crosscheck.env(必須は管理 DB 接続参照名と速報比較ツールの起動コマンド 1 行、lease 期間・poll 間隔は任意の運用チューニング値(既定 600 / 30 秒)。速報有効時に facade・slot runner・速報クロスチェック runner・速報 worker が起動のたびに読む。off では不要)/ 確報クロスチェック worker 設定: env 形式 final-crosscheck.env(確報を使う設置だけ、実行ホストと確報 worker の動くホストの両方に同じファイル名で置き場ごとに中身を分けて配置し、使わない設置では両方から消す(構築の変数で切り替え。既定は使わない)。実行ホストの分は DB 接続参照と確報 runner の polling の任意キーだけで確報 runner が起動のたびに読む。確報比較ツールの起動コマンド 1 行は確報 worker の動くホストの分だけが持ち、確報 worker が起動のたびに読む)/ 適用文書)。比較対象の定義は比較ツール側が持ち、relay-gate はジョブ ID ごとの比較定義 CSV・対象カタログを持たない。適用側が版管理して配置。設定版は持たず、マップ版はジョブマップ側の任意列とする。認証情報は参照名のみで値を置かない"
     entity_refs: ["E-001", "E-002", "E-003", "E-004", "E-005", "E-006", "E-026", "E-027", "E-028"]
   - id: "execution_log_store"
     category: "storage"
@@ -115,7 +115,7 @@ elements:
     entity_refs: ["E-012", "E-025"]
   - id: "script_runtime_hosts"
     category: "compute"
-    description: "ジョブスケジューラ実行ホスト(facade / runner / rapid worker / ops CLI)、DB セグメントの確報 worker ホスト、SSH 到達可能な実装スクリプト実行ホスト"
+    description: "ジョブスケジューラ実行ホスト(facade / 標準の slot runner と利用者が自作した runner / rapid worker / ops CLI)、DB セグメントの確報 worker ホスト、SSH 到達可能な実装スクリプト実行ホスト"
     entity_refs: []
   - id: "job_scheduler_integration"
     category: "external_integration"

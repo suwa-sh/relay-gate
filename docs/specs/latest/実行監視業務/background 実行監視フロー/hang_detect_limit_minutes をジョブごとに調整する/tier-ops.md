@@ -94,7 +94,7 @@ JOB001	green	3	2	2	82	82	60
 ## 設定契約
 
 - **環境変数**: `RELAY_GATE_CONFIG_DIR`(設定ファイルの所在)/ `RELAY_GATE_LOG_DIR`(実行ログ)/ `RELAY_GATE_NOW`(テスト専用。UTC ISO 8601 Z 付きで受け取りローカル時刻へ変換する。`--since` 既定値「3 ヶ月前」の基準時刻)
-- **feature-flag.env**(`$RELAY_GATE_CONFIG_DIR/feature-flag.env`。9 キー): `RAPID_CROSSCHECK_MODE`(foreground / background / off)を読む。`off` は `error: management db is not configured (RAPID_CROSSCHECK_MODE=off)` で終了コード 3。ファイル不在は `error: config file not found path: ...`(2)
+- **feature-flag.env**(`$RELAY_GATE_CONFIG_DIR/feature-flag.env`。9 キー + 任意の 2 キー): `RAPID_CROSSCHECK_MODE`(foreground / background / off)を読む。`off` は `error: management db is not configured (RAPID_CROSSCHECK_MODE=off)` で終了コード 3。ファイル不在は `error: config file not found path: ...`(2)
 - **rapid-crosscheck.env**(`$RELAY_GATE_CONFIG_DIR/rapid-crosscheck.env`。RDRA 情報「速報クロスチェック設定」。所有者: 基盤適用設計者(設定所有区分: 速報クロスチェック設定)。off 以外のときのみ): 属性「管理 DB 接続参照名」= `RAPID_DB_CONN_REF` を管理 DB の読み取り接続に使う(契約 config_files.rapid-crosscheck.env.readers)。ファイル不在は `error: config file not found path: ...`(2)、キー欠落は `error: option required option=RAPID_DB_CONN_REF path: ...`(2)。接続情報の値は保持・出力しない
 - **hang-detector.env** は読まない(rapid-crosscheck の上限は monitor_records.hang_detect_limit_minutes に転記済みの値を使う)
 

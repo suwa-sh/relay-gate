@@ -2,7 +2,7 @@
 
 ## 変更概要
 
-slot runner の presentation(runner IF の引数解析)、usecase(解決フロー)、domain(ExecutionTarget と引数連結の純粋関数)、repository(ジョブマップ CSV の読み込み)、gateway(未定義時の Runner Result 出力)を新規実装する。runner 実体は `$BLUE_RUNNER` / `$GREEN_RUNNER` として差し替え可能だが、本 UC の解決ロジックは relay-gate が提供する共通ライブラリ(`lib/runner-*.sh`)として runner 実体から `source` して使う(仮採用: 実装固有事項は runner 実体、共通契約はライブラリ)。
+slot runner の presentation(runner IF の引数解析)、usecase(解決フロー)、domain(ExecutionTarget と引数連結の純粋関数)、repository(ジョブマップ CSV の読み込み)、gateway(未定義時の Runner Result 出力)を新規実装する。runner 実体は `$BLUE_RUNNER` / `$GREEN_RUNNER` として差し替え可能で、本 UC の解決ロジックは relay-gate が提供する共通ライブラリ(`lib/runner-*.sh`)に置く。relay-gate が提供する標準の slot runner(`runners/standard-runner.sh`。ローカル実行と SSH 実行を扱う)は、この共通ライブラリを `source` して解決する。利用者が自作する runner も、この共通ライブラリを `source` すれば同じ解決になる(CLI 契約 runner IF の `standard_runner`。実装固有事項は runner 実体、共通契約はライブラリ)。
 
 ## コマンド契約
 
@@ -17,7 +17,7 @@ slot runner の presentation(runner IF の引数解析)、usecase(解決フロ�
 |------|---|------|-------|------|
 | --run-id | string | Yes | なし | facade が発行した run_id。成果物ディレクトリ名 |
 | --job-id | string | Yes | なし | JOB_ID。ジョブマップの検索キー |
-| --role | enum(blue / green) | Yes | なし | 自 slot。ジョブマップの選択(`<role>-job-map.csv`)と成果物ディレクトリ区分 |
+| --role | enum(blue / green) | Yes | なし | 自 slot。ジョブマップの選択(role=blue は環境変数 `BLUE_JOB_MAP_CSV`、role=green は `GREEN_JOB_MAP_CSV` の場所。未設定・空なら `<role>-job-map.csv`)と成果物ディレクトリ区分 |
 | --mode | enum(foreground / background) | Yes | なし | 解決には使わない(execution-spec の `slots.<role>.mode` と完了通知で使う) |
 | --execution-spec | string(パス) | No | なし | 指定時はジョブマップを読まず、このファイルの `slots.<role>` から実行先を復元する(UC「実装スクリプトを実行して Runner Result を出力する」の復元起動) |
 | -- PARAM... | string[] | No | 0 個 | 追加引数。`--` 以降をすべて PARAM として順序保持 |
@@ -27,10 +27,10 @@ slot runner の presentation(runner IF の引数解析)、usecase(解決フロ�
 
 #### ジョブマップ(読み取り専用)
 
-- パス: `$RELAY_GATE_CONFIG_DIR/<role>-job-map.csv`(仮採用: _inference.md #5)
+- パス: 環境変数 `BLUE_JOB_MAP_CSV`(role=blue)/ `GREEN_JOB_MAP_CSV`(role=green)の値(facade.sh が feature-flag.env から決めた場所を渡す。runner は値をそのまま使い、feature-flag.env を読まない)。環境変数が未設定・空のときは既定の場所 `$RELAY_GATE_CONFIG_DIR/<role>-job-map.csv`。stderr.log と実行ログの `map=` / `path:` には、使ったパスを出す。場所の規則の正本は CLI 契約 `config_files.feature-flag.env.job_map_location`(本 tier に複写しない)
 - 形式: CSV(カンマ区切り、1 行目ヘッダー、1 行 1 job_id、文字コード UTF-8、改行コード LF)。列はヘッダー名で対応付ける(順序は元資料の並び `job_id,host,user,work_dir,script,fixed_params,hang_detect_limit_minutes` を推奨。検証は名前で行う)
   - 入力の守備範囲(バイト・行・構造の異常は exitcode.txt=2、読み込みは 1 時点の内容だけで判定、補助コマンドの失敗は exitcode.txt=6)は CLI 契約 `config_input_rules` に従う(値は複写しない)。実現手段は縛らない(ファイルを 1 回だけ読み切れば一時ファイルは不要)
-  - 1 行取り出しの性能: `grep` などで JOB_ID の候補行を絞ってから該当行だけを bash で解析してよい(CLI 契約 `conventions.runtime_prerequisites.external_commands`。NFR B.2.1.1 を満たす手段)。bash の最低版は 5.0(同 `bash_minimum_version`)
+  - 1 行取り出しの性能: `grep` などで JOB_ID の候補行を絞ってから該当行だけを bash で解析してよい(CLI 契約 `conventions.runtime_prerequisites.external_commands`。NFR B.2.1.1 の目標に近づける手段。設定ファイルの読み込みの性能は目標値で、位置付けは CLI 契約 `config_input_rules.performance_target`)。bash の最低版は 5.0(同 `bash_minimum_version`)
   - 必須列 5: `job_id` / `work_dir` / `script` / `fixed_params` / `hang_detect_limit_minutes`
   - 任意列: `host` / `user`(両方あるか両方無い。両方無い、または両方の値が空 = ローカル実行。片方だけある / 片方だけ空は違反)、`credential_ref` / `map_version`(末尾の任意列。ヘッダーに無ければ無いものとして扱う。値が空も可)
   - `impl_version` 列は無い(実装版は feature flag の BLUE_IMPL / GREEN_IMPL が所有)。未知列は `warn: unknown column column=<name> path: ...`
@@ -52,7 +52,7 @@ slot runner の presentation(runner IF の引数解析)、usecase(解決フロ�
 | 2 | 入力・設定検証エラー | runner IF の引数不足・列挙外、ジョブマップファイルなし、入力の守備範囲の違反(NUL バイト・UTF-8 として不正なバイト列・BOM・CR。契約 `config_input_rules`)、ヘッダーの必須列欠落・host / user の片方だけ・列名の重複、CSV クォート不正、job_id 未定義、fixed_params 不正、hang_detect_limit_minutes が非負整数でない、host / user の片方だけ空、script / work_dir が空。exitcode.txt にも `2` を書く。script / work_dir のパスの形式(絶対 / 相対 / Windows 形式)は違反にしない |
 | 6 | 実行エラー | 成果物ディレクトリへの書き込み失敗(3 ファイルを揃えられない場合。実行ログに ERROR)、ジョブマップ読み込みの補助コマンドの失敗(契約 `config_input_rules.internal_failure`。stderr.log に `error: internal command failed commands=... path: ...`、exitcode.txt=6) |
 
-エラーメッセージ(stderr.log に書く。stderr ではない):
+エラーメッセージ(stderr.log に書く。stderr ではない)。`map=` / `path:` には使ったジョブマップのパスを出す(下の例は、環境変数が未設定で既定の場所 /etc/relay-gate/green-job-map.csv を使った場合。環境変数 `GREEN_JOB_MAP_CSV=/srv/relay-gate/maps/green-jobs.csv` を受け取った場合は `map=/srv/relay-gate/maps/green-jobs.csv`):
 
 | 状況 | 文言 |
 |---|---|
@@ -87,7 +87,7 @@ RDB テーブルは触らない。
 
 | ファイル | 列 / 型 | 説明 | 変更種別 |
 |---|---|---|---|
-| `<role>-job-map.csv` | CSV。必須列 5(job_id / work_dir / script / fixed_params / hang_detect_limit_minutes)+ 任意列 host / user / credential_ref / map_version | 解決元 | 追加(参照) |
+| slot ジョブマップ(環境変数 `BLUE_JOB_MAP_CSV` / `GREEN_JOB_MAP_CSV` の場所。未設定・空なら `$RELAY_GATE_CONFIG_DIR/<role>-job-map.csv`) | CSV。必須列 5(job_id / work_dir / script / fixed_params / hang_detect_limit_minutes)+ 任意列 host / user / credential_ref / map_version | 解決元 | 追加(参照) |
 
 ### ファイル(失敗時の出力)
 
@@ -113,6 +113,7 @@ Feature: ジョブマップで JOB_ID から実行先を解決する - facade / 
   Scenario: runner はヘッダー列名で列位置を決めて実行先を解決する
     Given RELAY_GATE_CONFIG_DIR/green-job-map.csv のヘッダーが "job_id,host,user,work_dir,script,fixed_params,hang_detect_limit_minutes,credential_ref,map_version" である
     And CSV 行 'JOB001,host-green-01,batch,/var/app/work,/opt/app/bin/job001.sh,"[""--mode"",""full""]",60,ssh-key-green,map-v3' がある
+    And 環境変数 GREEN_JOB_MAP_CSV は未設定である(既定の場所を使う)
     When `<runner> --run-id 20260830T113000-JOB001-3f9a1c2e --job-id JOB001 --role green --mode background -- 20260830` を解決フェーズまで実行する
     Then 解決結果は host=host-green-01 user=batch script=/opt/app/bin/job001.sh work_dir=/var/app/work hang_detect_limit_minutes=60 credential_ref=ssh-key-green map_version=map-v3 である
     And 引数列は --mode / full / 20260830 の 3 個である
@@ -156,4 +157,44 @@ Feature: ジョブマップで JOB_ID から実行先を解決する - facade / 
     Given 正しいジョブマップがある
     When `<runner> --run-id 20260830T113000-JOB001-3f9a1c2e --role green --mode background` を実行する
     Then 終了コード 2 で終了し、実行ログに "ERROR option required option=--job-id" が出る
+
+  Scenario: runner は環境変数 GREEN_JOB_MAP_CSV に渡されたパスのジョブマップで解決し既定の場所のジョブマップを使わない
+    Given RELAY_GATE_CONFIG_DIR/green-job-map.csv のヘッダーが "job_id,host,user,work_dir,script,fixed_params,hang_detect_limit_minutes" で、行 "JOB001,host-default-99,other,/var/default,/opt/default/job001.sh,[],60" がある
+    And RELAY_GATE_CONFIG_DIR とは別のディレクトリ maps の green-jobs.csv のヘッダーが同じ 7 列で、行 "JOB001,host-green-01,batch,/var/app/work,/opt/app/bin/job001.sh,[],60" がある
+    And 環境変数 GREEN_JOB_MAP_CSV=<maps>/green-jobs.csv が設定されている
+    When `<runner> --run-id 20260830T113000-JOB001-3f9a1c2e --job-id JOB001 --role green --mode background` を解決フェーズまで実行する
+    Then 解決結果は host=host-green-01 user=batch script=/opt/app/bin/job001.sh work_dir=/var/app/work である(host-default-99 ではない)
+    And 実行ログに "job map resolved job_id=JOB001 slot=green host=host-green-01 map_version=-" が出る
+
+  Scenario: runner は環境変数 GREEN_JOB_MAP_CSV の値が空のとき既定の場所のジョブマップで解決する
+    Given RELAY_GATE_CONFIG_DIR/green-job-map.csv のヘッダーが "job_id,host,user,work_dir,script,fixed_params,hang_detect_limit_minutes" で、行 "JOB001,host-green-01,batch,/var/app/work,/opt/app/bin/job001.sh,[],60" がある
+    And 環境変数 GREEN_JOB_MAP_CSV が空文字で設定されている
+    When `<runner> --run-id 20260830T113000-JOB001-3f9a1c2e --job-id JOB001 --role green --mode background` を解決フェーズまで実行する
+    Then 解決結果は host=host-green-01 user=batch script=/opt/app/bin/job001.sh work_dir=/var/app/work である
+
+  Scenario: runner は job_id 未定義の error 行の map= に環境変数で渡されたパスを出す
+    Given RELAY_GATE_CONFIG_DIR/green-job-map.csv に JOB999 の行がある
+    And RELAY_GATE_CONFIG_DIR とは別のディレクトリ maps の green-jobs.csv に JOB999 の行が無い
+    And 環境変数 GREEN_JOB_MAP_CSV=<maps>/green-jobs.csv が設定されている
+    When `<runner> --run-id 20260830T113000-JOB999-a1b2c3d4 --job-id JOB999 --role green --mode background` を実行する
+    Then 終了コード 2 で終了し、exitcode.txt は "2" の 1 行である
+    And stderr.log は "error: job_id=JOB999 not found in job map slot=green map=<maps>/green-jobs.csv" を含む
+
+  Scenario: runner はジョブマップが無いときの error 行の map= に環境変数で渡されたパスを出す
+    Given RELAY_GATE_CONFIG_DIR/green-job-map.csv に JOB001 の行がある
+    And RELAY_GATE_CONFIG_DIR とは別のディレクトリ maps に green-jobs.csv は存在しない
+    And 環境変数 GREEN_JOB_MAP_CSV=<maps>/green-jobs.csv が設定されている
+    When `<runner> --run-id 20260830T113000-JOB001-3f9a1c2e --job-id JOB001 --role green --mode background` を実行する
+    Then 終了コード 2 で終了し、exitcode.txt は "2" の 1 行である
+    And stderr.log は "error: job map not found slot=green map=<maps>/green-jobs.csv" を含む
+
+  Scenario: 標準の slot runner はローカル実行の行と SSH 実行の行をそれぞれ解決する
+    Given RELAY_GATE_CONFIG_DIR/blue-job-map.csv のヘッダーが "job_id,host,user,work_dir,script,fixed_params,hang_detect_limit_minutes" で、行 "JOB001,,,/var/app/work,/opt/app/bin/job001.sh,[],0"(host と user が両方空)がある
+    And RELAY_GATE_CONFIG_DIR/green-job-map.csv のヘッダーが同じ 7 列で、行 "JOB001,host-green-01,batch,/var/app/work,/opt/app/bin/job001.sh,[],60" がある
+    And 環境変数 BLUE_JOB_MAP_CSV と GREEN_JOB_MAP_CSV は未設定である
+    When 標準の slot runner を `<RELAY_GATE_HOME>/runners/standard-runner.sh --run-id 20260830T113000-JOB001-3f9a1c2e --job-id JOB001 --role blue --mode foreground` で解決フェーズまで実行する
+    And 同じ実体を `<RELAY_GATE_HOME>/runners/standard-runner.sh --run-id 20260830T113000-JOB001-3f9a1c2e --job-id JOB001 --role green --mode background` で解決フェーズまで実行する
+    Then role=blue の解決結果は host=null user=null(ローカル実行)script=/opt/app/bin/job001.sh work_dir=/var/app/work である
+    And role=green の解決結果は host=host-green-01 user=batch(SSH 実行)script=/opt/app/bin/job001.sh work_dir=/var/app/work である
+    And 実行ログに "job map resolved job_id=JOB001 slot=blue host=- map_version=-" と "job map resolved job_id=JOB001 slot=green host=host-green-01 map_version=-" が出る
 ```

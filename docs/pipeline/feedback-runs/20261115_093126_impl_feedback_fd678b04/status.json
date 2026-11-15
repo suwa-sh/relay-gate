@@ -1,0 +1,66 @@
+{
+  "schema_version": "distillery.feedback-run-status/v1",
+  "feedback_request_id": "20261115_093126_impl_feedback_fd678b04",
+  "input_sha256": "25caf38054a64316034645c9a2da7de0616818683b41aab58223544e8b98009f",
+  "ambiguity_policy": "interactive",
+  "state": "completed",
+  "stages": [
+    {
+      "id": "quality_attributes",
+      "state": "completed",
+      "event_ids": [
+        "20261115_135000_feedback_stage_quality_attributes"
+      ],
+      "direct_work_unit_ids": [
+        "CR-fd678b04-001#1"
+      ],
+      "causal_work_unit_ids": [
+        "CR-fd678b04-001#1"
+      ]
+    },
+    {
+      "id": "architecture",
+      "state": "completed",
+      "event_ids": [
+        "20261115_140000_feedback_stage_architecture"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-fd678b04-001#1"
+      ]
+    },
+    {
+      "id": "infrastructure",
+      "state": "completed",
+      "event_ids": [
+        "20261115_141000_feedback_stage_infrastructure"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-fd678b04-001#1"
+      ]
+    },
+    {
+      "id": "spec",
+      "state": "completed",
+      "event_ids": [
+        "20261115_142000_feedback_stage_spec"
+      ],
+      "direct_work_unit_ids": [
+        "CR-fd678b04-001#2",
+        "CR-fd678b04-002#1",
+        "CR-fd678b04-003#1",
+        "CR-fd678b04-004#1"
+      ],
+      "causal_work_unit_ids": [
+        "CR-fd678b04-001#1",
+        "CR-fd678b04-001#2",
+        "CR-fd678b04-002#1",
+        "CR-fd678b04-003#1",
+        "CR-fd678b04-004#1"
+      ]
+    }
+  ],
+  "run_id": "feedback-20261115_093126_impl_feedback_fd678b04-20261115_133830-97522",
+  "attempt": 1
+}

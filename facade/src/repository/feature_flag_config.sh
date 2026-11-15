@@ -15,8 +15,13 @@
 # 読み込み結果(グローバル):
 #   FEATURE_FLAG_KEYS      … env に現れたキー(出現順・重複なし)。--verbose の info / 未知キー warn / 確報制御キー拒否に使う
 #   FEATURE_FLAG_PATH      … 読み込んだファイルパス(引数どおり。複製のパスではない。メッセージの `path:` に使う)
-#   BLUE_MODE ほか 9 キー   … 9 キーだけを同名のグローバル変数に載せる(9 キー以外は変数化しない。
-#                            invalid line・同じキーの重複があれば 9 キーとも未設定のまま)
+#   BLUE_MODE ほか 9 キーと任意の 2 キー(BLUE_JOB_MAP_CSV / GREEN_JOB_MAP_CSV)
+#                          … feature flag が所有するキー(domain の FEATURE_FLAG_DEFINED_KEYS)だけを同名のグローバル変数に載せる
+#                            (それ以外のキーは変数化しない。invalid line・同じキーの重複があればどのキーも未設定のまま)
+# 読み取りの途中の一時的な保持(config_input_rules.env_files): 行の内容(取り込まないキーの値を含む)を置くのは、名前を固定した
+#   作業用の領域(feature_flag_config_parse の local 変数と FEATURE_FLAG_CONFIG_SPLIT_LINES、入力の複製、sed / tr の入出力)だけ。
+#   キー名から名前を決めた変数へ代入するのは所有するキーだけ。作業用の領域は export せず、補助コマンドへは複製のファイルで読ませる
+#   (環境変数で渡さない)。読み終えたとき・失敗したときに作業用の領域を空にし、複製を消す
 #   FEATURE_FLAG_CONFIG_INVALID_LINES … invalid line の行番号(昇順)
 #   FEATURE_FLAG_CONFIG_DUPLICATE_KEYS / FEATURE_FLAG_CONFIG_DUPLICATE_LINES
 #                          … 重複したキーと、その全出現行(カンマ区切り)。初出行の昇順
@@ -72,7 +77,7 @@ feature_flag_config_unquote() {
   FEATURE_FLAG_CONFIG_UNQUOTED="$value"
 }
 
-# 9 キーのグローバル変数を未設定にする(プロセス環境の同名変数を feature flag の値と混同しない)
+# 所有するキー(9 キー + 任意の 2 キー)のグローバル変数を未設定にする(プロセス環境の同名変数を feature flag の値と混同しない)
 feature_flag_config_unset_values() {
   local key
   for key in "${FEATURE_FLAG_DEFINED_KEYS[@]}"; do
@@ -137,7 +142,7 @@ feature_flag_config_build_normalize_script() {
 }
 feature_flag_config_build_normalize_script
 
-# KEY=value の行を読み取り、キー一覧・invalid line・同じキーの重複・9 キーの値を載せる(行数に比例する処理)。
+# KEY=value の行を読み取り、キー一覧・invalid line・同じキーの重複・所有するキーの値を載せる(行数に比例する処理)。
 # キーと値は数 MB になりうるため、行の全体を展開する回数を増やさない(1 回の展開が行の長さに比例する)
 # 引数: file(読む対象。入力の複製)
 # 戻り値: 0 … 読み取った / 1 … sed が失敗した・想定外の出力をした(読み込み結果は使わないこと)
@@ -185,7 +190,7 @@ feature_flag_config_parse() {
     key_indexes["${FEATURE_FLAG_CONFIG_SPLIT_LINES[index - 1]}"]="$key_index"
     key_lines[key_index]="$line_number"
     FEATURE_FLAG_KEYS+=("${FEATURE_FLAG_CONFIG_SPLIT_LINES[index - 1]:1}")
-    # 9 キーだけを変数化する(プロセス環境の PATH 等を env ファイルで上書きさせない)
+    # 所有するキー(9 キー + 任意の 2 キー)だけを変数化する(プロセス環境の PATH 等を env ファイルで上書きさせない)
     if feature_flag_is_defined_key "${FEATURE_FLAG_KEYS[key_index]}"; then
       feature_flag_config_unquote "${FEATURE_FLAG_CONFIG_SPLIT_LINES[index]:1}"
       printf -v "${FEATURE_FLAG_KEYS[key_index]}" '%s' "$FEATURE_FLAG_CONFIG_UNQUOTED"
@@ -208,7 +213,7 @@ feature_flag_config_parse() {
   fi
 }
 
-# env を読み込み、9 キーをグローバル変数に載せる(複製 → バイト点検 → 行の読み取り → 複製の削除)。
+# env を読み込み、所有するキーをグローバル変数に載せる(複製 → バイト点検 → 行の読み取り → 複製の削除)。
 # 複製は正常終了・失敗・シグナル(HUP / INT / TERM は複製を削除して 129 / 130 / 143)のいずれでも削除し、
 # 呼び出し元の trap は読み込みの後に元へ戻す(job_map_repo_load と同じ扱い)。
 # 引数: path(存在・可読性の確認は呼び出し元 usecase の責務)

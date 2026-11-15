@@ -1,0 +1,41 @@
+uc: "リラン結果を parent_run_id で追跡する"
+business: "実行復旧業務"
+buc: "background 側リランフロー"
+paths: []
+x_cli_commands:
+  - name: "run-lineage.sh"
+    tier: "tier-ops"
+    role: "defines"
+    synopsis: "run-lineage.sh --run-id <RUN_ID> [--limit N] [--verbose]"
+    invoked_by: "運用者(直接起動)"
+    args: []
+    options:
+      - name: "--run-id"
+        type: "string"
+        required: true
+        default: ""
+        description: "系譜に含まれる任意の run_id"
+      - name: "--limit"
+        type: "integer"
+        required: false
+        default: "100"
+        description: "出力行数の上限(系譜の深さでは打ち切らない)"
+      - name: "--verbose"
+        type: "boolean"
+        required: false
+        default: "false"
+        description: "各 run の成果物ディレクトリを stderr の info: に出す"
+    stdin: "なし"
+    stdout: "TSV(ヘッダー行あり): depth, run_id, parent_run_id, job_id, role, run_status, requested_at, completed_at。depth 降順"
+    stderr: "error: run not found run_id=... / error: management db is not configured (RAPID_CROSSCHECK_MODE=off) / error: lineage cycle detected run_id=...(6)/ error: management db connection failed run_id=... conn_ref=...(6)/ error: management db query failed run_id=...(6)/ error: option required option=--run-id / error: invalid value option=--run-id|--limit value=... / error: unknown option option=...(2)/ warn: output truncated limit=N / info: artifact_dir: {path} run_id=...(--verbose)"
+    exit_codes:
+      - code: 0
+        meaning: "系譜を出力した"
+      - code: 2
+        meaning: "--run-id 欠落・形式不正 / 未知オプション / --limit 不正"
+      - code: 3
+        meaning: "対象 run が無い / RAPID_CROSSCHECK_MODE=off で parallel_runs が無い"
+      - code: 6
+        meaning: "管理 DB 接続・SQL 失敗 / 系譜の循環検出"
+async_events: []
+schemas: []

@@ -29,6 +29,10 @@ use_cases:
   - tier-facade
   atdd_scenarios:
   - SPEC-001-01-4
+  - SPEC-001-01-7
+  - SPEC-001-01-8
+  - SPEC-001-01-9
+  - SPEC-004-01-9
   atdd_confirmed: true
 - uc_id: eff24f55
   business: 適用構成業務

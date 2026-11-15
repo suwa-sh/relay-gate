@@ -1,0 +1,29 @@
+feedback request lineage (requirements stage)
+
+feedback_request_id: 20261116_standard_runner_job_map_location
+input_sha256: 733163f9092ac7055b410880c40f85fd312b2684f25fb0fb20d8d3412626822a
+stage_packet: docs/pipeline/feedback-runs/20261116_standard_runner_job_map_location/stage-packets/requirements.md
+request_ids: CR-65b09d93-001, CR-65b09d93-002
+direct_work_unit_ids: CR-65b09d93-001#1, CR-65b09d93-002#1
+causal_work_unit_ids: CR-65b09d93-001#1, CR-65b09d93-002#1
+
+work unit → USDM / RDRA 反映先(CR 本文は packet を正本とし、ここには複製しない)
+
+- CR-65b09d93-001#1 (standard-slot-runner-officially-provided): relay-gate が、そのまま feature flag の BLUE_RUNNER / GREEN_RUNNER に割り当てられる標準の slot runner(ローカル実行と SSH 実行)を正式に提供する。利用者が 2026-11-16 に決定。
+  - USDM: SPEC-001-04 の仕様文に、標準の slot runner の正式な提供、扱う範囲(host と user が両方空の行はローカル実行、それ以外の行は SSH 実行)、runner の外部 IF を満たすこと、標準の slot runner を使う適用で利用者が用意するものは feature flag と slot ジョブマップ(と実行先の実装)だけであること、特殊な接続は利用者が runner を自作して割り当てられること(共通ライブラリと runner の外部 IF は残す)、「参考実装(仮採用)」として扱わないことを追加。受け入れ基準を 6 件追加(標準の slot runner を割り当てた設定が検証を通る / ローカル実行の行 / SSH 実行の行 / 利用者が用意するもの / 自作の runner の割り当て / 提供物としての位置づけ)。
+  - USDM: REQ-013 の理由と SPEC-013-01 に、ローカル実行と SSH 実行は標準の slot runner が扱い、それ以外の特殊な接続だけを適用側が自作する runner で吸収することを追加。受け入れ基準を 2 件追加。
+  - USDM: 「runner を差し替えて異なる世代の実装を並行稼働できる」要求(SPEC-001-04 の既存の文と受け入れ基準 2 件)は変えていない。
+  - RDRA: 情報「slot runner 割当」「適用構成文書」、条件「実装固有事項の runner への閉じ込め」「ジョブマップ解決条件」、アクター「基盤適用設計者」、BUC「適用構成定義フロー」の UC「slot runner の実体スクリプトを割り当てる」の属性・説明を揃えた(新しい要素は追加しない)。
+  - 標準の slot runner のファイル構成(blue 用と green 用を 1 つの実体で兼ねるか、ファイル名、置き場所、feature flag への書き方の例)は仕様で 1 つに確定するため、要求には推奨(1 つの実体を両方に割り当てられる形)だけを書いた。
+
+- CR-65b09d93-002#1 (feature-flag-job-map-location-keys): feature flag に、slot ジョブマップの場所を書く任意のキーを blue 用と green 用に 1 つずつ足し、書かなければこれまでの固定の名前を使う。利用者が 2026-11-16 に決定。
+  - USDM: SPEC-001-01 の仕様文を、元の方針資料の 9 キーに任意の 2 キーを加えた構成に直し、9 キーだけの設定がそのまま通ること、未知のキーとして扱うのは 9 キーと任意の 2 キーのどちらでもないキーであることを追加。受け入れ基準を 3 件追加。既存の「9 キーで書くと未知キーの警告は出ない」は残した。
+  - USDM: SPEC-004-01(設定の所有)に、slot ジョブマップの場所は feature flag が所有すること、キーが無い・空なら固定の名前(設定ファイル置き場の blue-job-map.csv / green-job-map.csv)を使うこと、絶対パスと相対パスの両方を受け付け相対パスの基準は feature-flag.env があるディレクトリであること、解決の規則は runner / worker の 4 キーと同じにすること、検証コマンドと実行時の読み手が同じジョブマップを使うこと、ジョブマップ単体の検証コマンドは変えないことを追加。受け入れ基準を 8 件追加。
+  - RDRA: 情報「feature flag 設定」「slot runner 割当」「ジョブマップ」、条件「設定所有区分」「ジョブマップ解決条件」、バリエーション「設定所有区分」、アクター「基盤適用設計者」、BUC「適用構成定義フロー」の UC「feature flag を設定する」「slot ごとのジョブマップを定義する」の属性・説明を揃え、「設定契約どおり 9 キーで構成」を「9 キーに任意の 2 キーを加えて構成」に直した(新しい要素は追加しない)。
+  - キー名は仕様で確定する。要求には推奨名(BLUE_JOB_MAP_CSV / GREEN_JOB_MAP_CSV)を「仕様で確定する」の注記つきで書いた。解決した後の場所を slot runner へ渡す方法、エラーや表示の文言も仕様で確定する。
+
+方針資料との照合:
+
+- tmp/RelayGateのしくみ.md: feature flag の設定例は 9 キーで、ジョブマップの場所の行は無い。足す 2 キーは任意で 9 キーだけの設定はそのまま通るため、設定例と矛盾しない。「BLUE_RUNNER と GREEN_RUNNER は適用ごとに実体を割り当てる」は、割り当てる実体として標準の slot runner を選べる形で両立する。
+- tmp/RelayGateの利用イメージ.md: 設定例は feature flag にジョブマップの場所を相対パスで書く行(適用側が決めたキー名)を持ち、足す 2 キーはこれに寄せたもの。案件固有の接続のために適用側が runner を用意する例は、自作の runner を割り当てる道としてそのまま残る。
+- 方針資料と違う点(利用者決定 2026-11-16 として記録): 標準の slot runner の正式な提供は方針資料に明記が無い。ジョブマップの場所のキー名は、利用イメージの資料の適用側の名前ではなく slot の名前(BLUE / GREEN)に合わせる。

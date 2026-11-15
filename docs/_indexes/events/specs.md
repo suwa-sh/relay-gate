@@ -28,3 +28,7 @@
 | 2026-11-05 09:20:00 | [20261105_092000_feedback_external_review_round2](../../specs/events/20261105_092000_feedback_external_review_round2) |
 | 2026-11-05 11:20:00 | [20261105_112000_feedback_single_management_db](../../specs/events/20261105_112000_feedback_single_management_db) |
 | 2026-11-10 15:30:00 | [20261110_153000_feedback_impl_feedback_dcd8234d](../../specs/events/20261110_153000_feedback_impl_feedback_dcd8234d) |
+| 2026-11-15 14:20:00 | [20261115_142000_feedback_impl_feedback_fd678b04_cycle3](../../specs/events/20261115_142000_feedback_impl_feedback_fd678b04_cycle3) |
+| 2026-11-15 16:40:00 | [20261115_164000_feedback_runner_relative_path](../../specs/events/20261115_164000_feedback_runner_relative_path) |
+| 2026-11-16 01:00:00 | [20261116_010000_feedback_impl_feedback_fd678b04_cycle4](../../specs/events/20261116_010000_feedback_impl_feedback_fd678b04_cycle4) |
+| 2026-11-16 02:10:00 | [20261116_021000_feedback_standard_runner_job_map_location](../../specs/events/20261116_021000_feedback_standard_runner_job_map_location) |

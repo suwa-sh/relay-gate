@@ -49,9 +49,9 @@ slot runner IF(`$BLUE_RUNNER` / `$GREEN_RUNNER`)の **`--execution-spec <path>` 
 
 ## 設定契約
 
-- feature flag `BLUE_RUNNER` / `GREEN_RUNNER` の実体が `--execution-spec` を受け付けること(runner IF の必須オプション。`validate-config.sh --feature-flag` は実体の存在・実行権限を検証するが、オプション対応は runner 実体の実装契約とする)
+- feature flag `BLUE_RUNNER` / `GREEN_RUNNER` の実体が `--execution-spec` を受け付けること(runner IF の必須オプション。オプション対応は runner 実体の実装契約とし、標準の slot runner `runners/standard-runner.sh` は満たす。実体の存在・実行権限を検証するのは `validate-config.sh --feature-flag` と `facade.sh` で、`background-rerun.sh` は起動の前に検査しない。実体が無い・実行できないときは runner が起動せず、`background-rerun.sh` が終了コード 6 と成果物を残す。契約 `background-rerun.sh` の `feature_flag_reading`)
 - runner は feature-flag.env を読まない。`RAPID_CROSSCHECK_MODE` と(off 以外の)`RAPID_CROSSCHECK_RUNNER` は background-rerun から環境変数で受け取る
-- ジョブマップは読まない(`RELAY_GATE_CONFIG_DIR` のジョブマップが変更・削除されていても影響しない)
+- ジョブマップは読まない(ジョブマップが変更・削除されていても影響しない。ジョブマップの場所を表す環境変数 `BLUE_JOB_MAP_CSV` / `GREEN_JOB_MAP_CSV` も受け取らない。契約 `config_files.feature-flag.env.job_map_location`)
 
 ## データモデル変更
 

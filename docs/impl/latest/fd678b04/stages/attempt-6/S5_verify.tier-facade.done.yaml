@@ -1,0 +1,55 @@
+stage: "S5"
+tier: "tier-facade"
+attempt: 6
+uc_id: "fd678b04"
+manifest_sha256: "808bf63e1c7564ffef1498814b5d3f4e3a6163b4c2ff1429e03ae81125b0d01b"
+manifest_projection: "v2"
+result: "pass"
+open_blockers: 0
+gate_reexec:
+  format: "pass"
+  lint: "pass"
+  tdd: "pass"
+  bdd_tier: "pass"
+findings_file: "docs/impl/latest/fd678b04/stages/attempt-6/S5_verify.tier-facade.findings.yaml"
+summary:
+  blocker: 0
+  major: 0
+  minor: 26
+assumptions_sha256: "ce40a9ad847e9b99a8f5ca7c58235adf62504092151fadb914858441e43ce95a"
+assumption_verdicts_sha256: "e7a199c8e485607596d691eb069dd3044d6d744d0b993a6873d38b6cbe51e7c9"
+assumption_verdicts_summary:
+  consistent: 3
+  spec_absent: 22
+  contradicts: 0
+  unlisted: 1
+environment_failures: []
+completed_at: "2026-11-15T18:43:09.008131+00:00"
+completed_by: "dist-impl-verify@0.14.1"
+verification_evidence:
+  - check: "repository"
+    result: "pass"
+    evidence: "git rev-parse確認済み。/Users/suwa_sh/src/github.com/suwa-sh/relay-gate、branch feature/configure-feature-flags、HEAD 768dcd2、開始時差分なし。CLAUDE.md全文読了。git書き込みなし。"
+  - check: "macOS gates"
+    result: "pass"
+    evidence: "一時複製のfacade cwdで shfmt -d . exit0、find src test -name *.sh -exec shellcheck -x {} + exit0、bats -r test exit0 535/535、npx --no-install cucumber-js --config ../cucumber.cjs features exit0 111/111 scenarios,670/670 steps。shfmt3.13.1/ShellCheck0.11.0/bash5.3.15/Bats1.14.0。最初の複製では.editorconfigを落としてformat差分が出たため正本の設定を複製して再実行し解消。実装は未変更。"
+  - check: "Linux gates"
+    result: "pass"
+    evidence: "docker relay-gate-ci:ubuntu24 sha256:2520ed934e880d01164254afc9dea3ad2edfb51a0126209f92a6e2604e2fc396。/work/facade cwd、読取専用mount。find src test -name *.sh -exec shellcheck -x {} + exit0 (ShellCheck0.9.0)。非root uid1000、LC_ALL=C.utf8、bash5.2.21でbats -r test exit0 535/535、skipなし。BDDとbatsは同時実行していない。"
+  - check: "environment probe"
+    result: "pass"
+    evidence: "Docker実行とTCP loopback bind成功。macOSのinitdb→pg_ctl start/stopによる一時PostgreSQL起動を確認。常設DBへ未接続。今回のfacadeゲートはDBインスタンスを要求しないためLinuxイメージにPostgreSQLバイナリが無いことは阻害要因なし。"
+  - check: "independent behavior probes"
+    result: "pass"
+    evidence: "338ケース+別ディレクトリを指すsymlink等5ケース、すべて期待値一致。6パスキー、7設定パス形、14値形、任意キー有無/空/片側/両側、親環境、PWD不在/不一致/root/logical symlink、読取不可map、重複/大小文字/等号、216 mode組合せ。相対パスで同名cwd側/設定側/リンク先側の実体を取り違えない。"
+  - check: "transient retention and mutation"
+    result: "pass"
+    evidence: "5終了経路で未採用値は変数にも子環境にも残らない。6変異すべて既存テストが検出し、空振りではない。変異はmktempで作った一時領域の別複製にのみ適用した。"
+  - check: "assumptions validator"
+    result: "pass"
+    evidence: "validateAssumptions.js record ok:true count25、verdicts ok:true。両ファイルにcanonical hashとcountsを同一転記。yaml.safe_loadでparse確認。"
+observations:
+  - "性能目標の時間を合否に用いていない。5001追加コメント行は0.318秒、8400002バイトの追加コメントは1.263秒で拒否・警告なし。catに11秒遅延を注入した実測11.530秒でもbaselineと終了コード/stdout/stderr完全一致。これは出力不変性の障害注入確認であり性能差のベンチマークではない。"
+  - "--final-crosscheck/--housekeep未実装と実行時の読み手は他UC責務として機能欠落findingから除外。A-020/A-039は必須の前提照合結果だけをminorとして記録。"
+  - "実装機能のblocker/majorなし。minor26件は前提整合だけで、25前提の専用findingと未記載の内部戻り値判断V-001。人間への必須質問なし。"
+  - "一時証跡は/tmp/relay-verify6.CQ5LHh。永続的な結論と再現条件はこのdone/findingsに記載。リポジトリの書き込みは指定の2ファイルだけ。"

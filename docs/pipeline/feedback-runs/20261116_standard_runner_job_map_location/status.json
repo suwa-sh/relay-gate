@@ -1,0 +1,83 @@
+{
+  "schema_version": "distillery.feedback-run-status/v1",
+  "feedback_request_id": "20261116_standard_runner_job_map_location",
+  "input_sha256": "733163f9092ac7055b410880c40f85fd312b2684f25fb0fb20d8d3412626822a",
+  "ambiguity_policy": "interactive",
+  "state": "completed",
+  "stages": [
+    {
+      "id": "requirements",
+      "state": "completed",
+      "event_ids": [
+        "20261116_013000_feedback_stage_requirements"
+      ],
+      "direct_work_unit_ids": [
+        "CR-65b09d93-001#1",
+        "CR-65b09d93-002#1"
+      ],
+      "causal_work_unit_ids": [
+        "CR-65b09d93-001#1",
+        "CR-65b09d93-002#1"
+      ]
+    },
+    {
+      "id": "quality_attributes",
+      "state": "completed",
+      "event_ids": [
+        "20261116_014000_feedback_stage_quality_attributes"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-65b09d93-001#1",
+        "CR-65b09d93-002#1"
+      ]
+    },
+    {
+      "id": "architecture",
+      "state": "completed",
+      "event_ids": [
+        "20261116_015000_feedback_stage_architecture"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-65b09d93-001#1",
+        "CR-65b09d93-002#1"
+      ]
+    },
+    {
+      "id": "infrastructure",
+      "state": "completed",
+      "event_ids": [
+        "20261116_020000_feedback_stage_infrastructure"
+      ],
+      "direct_work_unit_ids": [],
+      "causal_work_unit_ids": [
+        "CR-65b09d93-001#1",
+        "CR-65b09d93-002#1"
+      ]
+    },
+    {
+      "id": "spec",
+      "state": "completed",
+      "event_ids": [
+        "20261116_021000_feedback_stage_spec"
+      ],
+      "direct_work_unit_ids": [
+        "CR-65b09d93-001#2",
+        "CR-65b09d93-002#2",
+        "CR-65b09d93-003#1",
+        "CR-65b09d93-004#1"
+      ],
+      "causal_work_unit_ids": [
+        "CR-65b09d93-001#1",
+        "CR-65b09d93-001#2",
+        "CR-65b09d93-002#1",
+        "CR-65b09d93-002#2",
+        "CR-65b09d93-003#1",
+        "CR-65b09d93-004#1"
+      ]
+    }
+  ],
+  "run_id": "feedback-20261116_standard_runner_job_map_location-20261116_010255-1469",
+  "attempt": 1
+}

@@ -1,58 +1,53 @@
 stage: S6
 uc_id: fd678b04
-manifest_sha256: 829aa482569f86811e8a0a8453851b577b684bce01b8b83992f88cb1250b1ee5
+manifest_sha256: 808bf63e1c7564ffef1498814b5d3f4e3a6163b4c2ff1429e03ae81125b0d01b
 manifest_projection: v2
 result: pass
-rerun_reason: "stale after spec feedback runs (invalidated by 20261113_020309_stage_invalidated_fd678b04_stale_after_spec_feedback_runs)"
-previous_done: "docs/impl/latest/fd678b04/invalidated/20261113_020309_stage_invalidated_fd678b04_stale_after_spec_feedback_runs/stages/S6_uc-bdd.done.yaml"
 branch_slug: configure-feature-flags
 tiers:
   - tier-facade
-tier_impl_attempt: 5
+tier_impl_attempt: 6
 feature: features/uc/configure-feature-flags.feature
 feature_changed: false
 steps: features/uc/steps/configure-feature-flags.steps.js
 steps_changed: false
-steps_change_summary: "変更なし。spec.md の E2E 完了条件(12 Scenario)は S2 再実行時点で本文の変更が無く、既存の step 定義が attempt 5 の実装に対してそのまま全件 pass した"
+steps_note: "S2 で用意済みの step 定義をそのまま使用。統合実行で不足は見つからず、S6 での変更なし"
 source: "docs/specs/latest/適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md#E2E完了条件(BDD)"
 tier_impl_changed: false
 run:
   cwd: "."
   command: "npx cucumber-js --config cucumber.cjs features/uc"
   exit_code: 0
-  summary: "46 scenarios (46 passed), 269 steps (269 passed)"
-  scenarios_total: 46
-  scenarios_passed: 46
+  summary: "54 scenarios (54 passed), 333 steps (333 passed)"
+  scenarios_total: 54
+  scenarios_passed: 54
   scenarios_failed: 0
+  steps_total: 333
+  steps_passed: 333
   undefined_steps: 0
   ambiguous_steps: 0
-  pending_steps: 0
 target_feature_run:
-  cwd: "."
   command: "npx cucumber-js --config cucumber.cjs features/uc/configure-feature-flags.feature"
   exit_code: 0
-  summary: "12 scenarios (12 passed), 73 steps (73 passed)"
-  scenarios_total: 12
-  scenarios_passed: 12
+  summary: "20 scenarios (20 passed), 137 steps (137 passed)"
+  scenarios_total: 20
+  scenarios_passed: 20
   scenarios_failed: 0
-other_uc_features:
-  regression: none
-  note: "features/uc の他 2 feature(define-slot-job-maps 24 Scenario / define-crosscheck-job-map-and-comparison-definitions 10 Scenario)は全件 pass。facade/src/domain/cli_field.sh の変更による退行は検出されなかった"
-  scenarios:
-    - feature: features/uc/define-slot-job-maps.feature
-      scenarios_passed: 24
-      scenarios_failed: 0
-    - feature: features/uc/define-crosscheck-job-map-and-comparison-definitions.feature
-      scenarios_passed: 10
-      scenarios_failed: 0
-performance_note: "性能(5,000 行以内かつ 8 MB 以内を 10 秒以内)は目標値であり合否の検査ではない(利用者決定)。本 stage では時間を判定に使っていない。参考: features/uc 全体の実行は約 7 秒"
+  steps_total: 137
+  steps_passed: 137
+other_uc_run:
+  features:
+    - features/uc/define-slot-job-maps.feature
+    - features/uc/define-crosscheck-job-map-and-comparison-definitions.feature
+  scenarios_total: 34
+  scenarios_passed: 34
+  note: "全体実行 54 件のうち他 UC(eff24f55 / dcd8234d)の 34 件。step 定義は未変更で全件 pass(退行なし)"
 harness:
-  sandbox_root: "Scenario ごとの一時ディレクトリを root とし、feature の絶対パス(/etc/relay-gate, /opt/relay-gate)を root 配下の同じ相対位置に配置。出力照合時に root 接頭辞を除去"
-  entrypoint: "facade/bin/validate-config.sh(実体を起動)"
-  runner_stubs: "--help で runner-if-version=1 を返す実行可能スタブ"
+  process: "tier-facade の CLI を実プロセスとして起動(Scenario ごとの一時ディレクトリに実ファイルを配置)"
   external_connections: none
 injections: []
-injections_note: "ハーネス注入なし(検証コマンドのみで完結)"
+injections_note: "ハーネス注入なし。過去の facade.sh 向け注入は撤去済み(根拠: docs/impl/latest/fd678b04/issues/20260917_074633_cross-uc-scenarios-resolution.md)。前提の新規抽出なし"
 issues: []
-completed_at: '2026-11-15T09:30:00+09:00'
+issues_note: "新規起票なし。全 Scenario が仕様どおりに通過した"
+completed_at: '2026-11-16T03:45:00+09:00'
 completed_by: dist-impl-implement@0.14.1

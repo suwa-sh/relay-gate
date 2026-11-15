@@ -7,7 +7,7 @@ x_cli_commands:
     tier: "tier-facade"
     role: "uses"
     synopsis: "<runner> --run-id <run_id> --job-id <JOB_ID> --role blue|green --mode foreground|background [--execution-spec <path>] [--help] -- [PARAM...]"
-    invoked_by: "facade.sh / background-rerun.sh(内部呼び出し。環境変数 RAPID_CROSSCHECK_MODE、off 以外なら RAPID_CROSSCHECK_RUNNER、通常起動なら BLUE_IMPL / GREEN_IMPL を渡す)"
+    invoked_by: "facade.sh / background-rerun.sh(内部呼び出し。環境変数 RAPID_CROSSCHECK_MODE、off 以外なら RAPID_CROSSCHECK_RUNNER、通常起動なら BLUE_IMPL / GREEN_IMPL と、自 slot のジョブマップの場所 BLUE_JOB_MAP_CSV / GREEN_JOB_MAP_CSV を渡す)"
     args: []
     options:
       - name: "--execution-spec"

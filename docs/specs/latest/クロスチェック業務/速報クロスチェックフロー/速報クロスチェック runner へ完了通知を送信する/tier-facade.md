@@ -8,7 +8,7 @@ slot runner(`$BLUE_RUNNER` / `$GREEN_RUNNER`)の usecase `publish_runner_result`
 
 ### 内部呼び出し: $RAPID_CROSSCHECK_RUNNER {blue|green}-completed(送信側の使用契約)
 
-- **書式**: `$RAPID_CROSSCHECK_RUNNER <role>-completed --run-id <run_id> --job-id <job_id> --exit-code <n>`(`RAPID_CROSSCHECK_RUNNER` は feature flag の速報クロスチェック runner 実体の絶対パス。`$RELAY_GATE_HOME` 等の固定パス解決は行わない。成果物のファイルパスは渡さない)
+- **書式**: `$RAPID_CROSSCHECK_RUNNER <role>-completed --run-id <run_id> --job-id <job_id> --exit-code <n>`(`RAPID_CROSSCHECK_RUNNER` は feature flag の速報クロスチェック runner 実体の解決後の絶対パス(相対パスの値は facade.sh / background-rerun.sh が設定ファイルのあるディレクトリを基準に解決してから渡す。CLI 契約 `config_files.feature-flag.env.runner_path_resolution`)。`$RELAY_GATE_HOME` 等の固定パス解決は行わない。成果物のファイルパスは渡さない)
 - **アクセス権**: slot runner からの内部呼び出しのみ。運用者は直接起動しない(通知失敗の復旧時を除く。条件「完了通知失敗の扱い」)
 
 #### 引数・オプション(送信側が組み立てる値)

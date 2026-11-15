@@ -1,0 +1,40 @@
+uc: "foreground slot の結果をジョブスケジューラへ中継する"
+business: "実装切替業務"
+buc: "実装切替ジョブ実行フロー"
+paths: []
+x_cli_commands:
+  - name: "facade.sh"
+    tier: "tier-facade"
+    role: "defines"
+    synopsis: "facade.sh JOB_ID [PARAM...]"
+    invoked_by: "ジョブスケジューラ(業務ジョブ定義)"
+    args:
+      - name: "JOB_ID"
+        type: "string"
+        required: true
+        description: "業務ジョブ識別子"
+      - name: "PARAM..."
+        type: "string[]"
+        required: false
+        description: "追加引数"
+    options:
+      - name: "--help"
+        type: "boolean"
+        required: false
+        default: "false"
+        description: "使い方を stdout に出して終了コード 0(定義は UC「slot 実行モードを選択して runner を起動する」)"
+      - name: "--verbose"
+        type: "boolean"
+        required: false
+        default: "false"
+        description: "info を実行ログに出す(stderr には出さない)"
+    stdin: "なし"
+    stdout: "foreground slot の stdout.log を無加工(バイト単位同一)で中継。出力規約の適用外"
+    stderr: "foreground slot の stderr.log を無加工で中継。中継前の relay-gate 自身のエラーのみ error: 形式"
+    exit_codes:
+      - code: "exitcode.txt の値(0-255)"
+        meaning: "foreground slot の終了コードをそのまま返す"
+      - code: 6
+        meaning: "foreground の Runner Result が完備していない(exitcode.txt なし / 非数値)。中継後の parallel_runs COMPLETED UPDATE 失敗は 6 にしない(実行ログ ERROR のみ)"
+async_events: []
+schemas: []

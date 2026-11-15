@@ -1,0 +1,118 @@
+stage: S8
+uc_id: "fd678b04"
+mode: initial
+manifest_sha256: "829aa482569f86811e8a0a8453851b577b684bce01b8b83992f88cb1250b1ee5"
+manifest_projection: v2
+result: pass
+status: "published"
+tier_impl_attempt: 5
+feedback_request:
+  feedback_id: "20261115_093126_impl_feedback_fd678b04"
+  created_at: "2026-11-15T09:31:26+09:00"
+  draft_path: null
+  published_path: "docs/impl/latest/fd678b04/feedback-requests/20261115_093126_impl_feedback_fd678b04.md"
+  input_sha256: "25caf38054a64316034645c9a2da7de0616818683b41aab58223544e8b98009f"
+  published_sha256: "25caf38054a64316034645c9a2da7de0616818683b41aab58223544e8b98009f"
+  draft_sha256: "25caf38054a64316034645c9a2da7de0616818683b41aab58223544e8b98009f"
+  supersedes: null
+  review_approved_event_id: "20261115_100850_review_approved_fd678b04_feedback_publish"
+  review_evidence_event_id: "20261115_094919_s9_review_generated_fd678b04"
+  publish_started_event_id: "20261115_101100_feedback_request_publish_started_fd678b04"
+  published_event_id: "20261115_101101_feedback_request_published_fd678b04"
+  published_at: "2026-11-15T10:11:01+09:00"
+  request_count: 4
+  blocker_count: 0
+  cr_ids:
+    - "CR-fd678b04-001"
+    - "CR-fd678b04-002"
+    - "CR-fd678b04-003"
+    - "CR-fd678b04-004"
+  severities:
+    blocker: 0
+    spec_gap: 4
+    improvement: 0
+  format_check: "feedbackRequest.js verify --feedback: PASS (4 requests)"
+  publish_check: "公開の直前に feedbackRequest.js verify が PASS (4 requests)。validateAssumptions.js の record / verdicts / evidence を再実行し、承認時の 3 つの hash と一致。承認された前提の決定 21 件は独立検証の判定 21 件と 1 対 1"
+  note: "性能の指摘 2 件は利用者の決定により blocker として扱わず、目標との差の事実として 1 件目の要求に添えた。2〜4 件目は仕様に定めが無い点で、選択肢と推奨を付けた(最終確認で利用者が決める)"
+as_built_summary: "docs/impl/latest/fd678b04/feedback/as-built-summary.md"
+classification:
+  spec_origin_requests: 4
+  implementation_origin_other_uc: 1
+  implementation_origin: 1
+  environment_origin: 1
+  resolved_past_issues: 2
+issues_read:
+  - "docs/impl/latest/fd678b04/issues/20261113_021600_feature-flag-error-line-order-undefined.md"
+  - "docs/impl/latest/fd678b04/issues/20261113_063000_other-validation-kinds-exceed-performance-target.md"
+  - "docs/impl/latest/fd678b04/issues/20261115_090000_performance-target-gaps-not-gating.md"
+findings_read: "docs/impl/latest/fd678b04/stages/attempt-5/S5_verify.tier-facade.findings.yaml"
+assumptions:
+  record: "docs/impl/latest/fd678b04/stages/attempt-5/S4_tier-impl.tier-facade.assumptions.yaml"
+  total: 21
+  spec_absent: 20
+  consistent: 1
+  contradicts: 0
+  unlisted: 0
+  answer_required_ids:
+    - "A-010"
+  requested_ids:
+    - "A-010"
+    - "A-016"
+    - "A-028"
+    - "A-030"
+verify_findings:
+  blocker: 2
+  major: 1
+  minor: 20
+  blocker_handling: "F-001 / F-002 は性能目標との差。利用者の決定(2026-11-13 / 2026-11-15)により合否の検査として扱わない"
+user_decisions:
+  - date: "2026-11-13"
+    text: "5,000行 8MB 10sec以内は パフォーマンスの目標値であって、入力を制限する仕様ではありません"
+  - date: "2026-11-15"
+    text: "目標であってチェックではないです"
+open_questions_for_review:
+  - cr_id: "CR-fd678b04-001"
+    question: "性能目標を 4 つの設定検証種別のどれに適用するか"
+    recommended: "すべてに適用する"
+  - cr_id: "CR-fd678b04-002"
+    question: "error 行が 2 行以上出るときの error 行どうしの順"
+    recommended: "現行の順を仕様に書く"
+  - cr_id: "CR-fd678b04-003"
+    question: "mode が列挙外・欠落のとき、その slot の従属キーを検査するか"
+    recommended: "現行どおり検査すると仕様に書く"
+  - cr_id: "CR-fd678b04-004"
+    question: "9 キー以外のキーの値をプロセスの変数へ取り込まないことを仕様に書くか"
+    recommended: "仕様に書く"
+policy_docs_check:
+  checked:
+    - "tmp/RelayGateのしくみ.md"
+    - "tmp/RelayGateの利用イメージ.md"
+  conflicts: 0
+  note: "設定ファイルの規模・検査時間・検証コマンドの出力の順・未知キーの扱いは、どちらの方針資料にも記載が無い。要求は方針と食い違わない"
+other_uc_facts:
+  - target: "--rapid-crosscheck / --job-map"
+    note: "数 MB の入力で 10 秒を超える。本 UC の変更の前後で出力と所要時間は同じ。実装の改善は所有する UC の再実行で行う"
+learnings: 2
+learning_files:
+  - "docs/impl/latest/fd678b04/learnings/20261115_093126_performance-target-treated-as-pass-fail-gate.md"
+  - "docs/impl/latest/fd678b04/learnings/20261115_093126_bash-large-string-processing-patterns.md"
+proposals:
+  skill: true
+  context: true
+proposal_files:
+  - "docs/impl/latest/fd678b04/learnings/20261115_093126_proposal-skill.md"
+  - "docs/impl/latest/fd678b04/learnings/20261115_093126_proposal-context.md"
+selected_options:
+  - cr_id: "CR-fd678b04-001"
+    selected: "A"
+  - cr_id: "CR-fd678b04-002"
+    selected: "A"
+  - cr_id: "CR-fd678b04-003"
+    selected: "A"
+  - cr_id: "CR-fd678b04-004"
+    selected: "A"
+selected_options_source: "docs/impl/events/20261115_100850_review_approved_fd678b04_feedback_publish/event.yaml"
+next_state: "blocked_on_spec"
+published_by: "dist-impl-feedback@0.14.1 (mode=publish)"
+completed_at: "2026-11-15T09:34:44+09:00"
+completed_by: "dist-impl-feedback@0.14.1"

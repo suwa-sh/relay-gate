@@ -93,7 +93,7 @@ UC「リラン対象を検証する」の tier-ops.md と同一。
 
 - **環境変数**: `RELAY_GATE_CONFIG_DIR`(feature-flag.env / rapid-crosscheck.env の所在)/ `RELAY_GATE_LOG_DIR`(実行ログ)/ `RELAY_GATE_NOW`(テスト専用の現在時刻注入。契約 `environment_variables.RELAY_GATE_NOW`)
 - **`RELAY_GATE_NOW` の適用先**: 新 run_id の時刻部(プロセスのローカルタイムゾーンへ変換した値。spec の例示は TZ=UTC 前提)、`parallel_runs.requested_at`、`rapid_crosscheck_requests.requested_at`、`rapid_runs.blue_completed_at / green_completed_at`(日時はホストで生成して SQL にバインド値で渡す。RELAY_GATE_NOW 設定時はその変換値。conventions.datetime_generation)。未設定なら実時刻。runner を起動しないため環境変数の引き継ぎは無い
-- **feature-flag.env**: `RAPID_CROSSCHECK_MODE`(off は前段 UC で 3)。off 以外(foreground / background)のとき `rapid-crosscheck.env` の `RAPID_DB_CONN_REF` で管理 DB に接続する
+- **feature-flag.env**: `RAPID_CROSSCHECK_MODE`(off は前段 UC で 3)。`--role rapid-crosscheck` で読むキーはこれだけで、runner / worker のキーは読まず、検査しない(CLI 契約 `background-rerun.sh` の `feature_flag_reading`)。off 以外(foreground / background)のとき `rapid-crosscheck.env` の `RAPID_DB_CONN_REF` で管理 DB に接続する(rapid-crosscheck.env の不在・`RAPID_DB_CONN_REF` の欠落は、feature-flag.env の検査の直後・事前検証の前に終了コード 2 で止まる。契約 `feature_flag_reading.checks` の 6 と `order`)
 
 ## ビジネスルール
 

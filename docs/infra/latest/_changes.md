@@ -1,85 +1,64 @@
 # 変更サマリ
 
-- event_id: 20261105_111000_feedback_single_management_db
-- trigger_event: infra:20261105_091000_feedback_final_env_per_segment(上流 latest は変更なし)
-- created_at: 2026-11-05T11:10:00+09:00
+- event_id: 20261116_020000_feedback_standard_runner_job_map_location
+- trigger_event: arch:20261116_015000_feedback_standard_runner_job_map_location(usdm / rdra: 20261116_013000_feedback_standard_runner_job_map_location、nfr: 20261116_014000_feedback_standard_runner_job_map_location)
+- created_at: 2026-11-16T02:00:00Z
 - mode: 差分更新(infra-event-diff.yaml。MCL product-design の全量再実行なし: skipped_targeted_update)
-- feedback request: 20261105_single_management_db(direct work unit: CR-f4c8b261-001#1。causal work unit: CR-f4c8b261-001#1(管理 DB の接続先の参照名が同じ管理 DB に解決されることを、構築と仕様の前提として書く)。packet: docs/pipeline/feedback-runs/20261105_single_management_db/stage-packets/infrastructure.md)
-- 利用者が承認した直し方(2026-11-05)
+- feedback request: 20261116_standard_runner_job_map_location(direct work unit: なし。causal work unit: CR-65b09d93-001#1(relay-gate が標準の slot runner を正式に提供する)、CR-65b09d93-002#1(slot ジョブマップの場所を feature flag に書けるようにし、書かなければ固定の名前を使う)。packet: docs/pipeline/feedback-runs/20261116_standard_runner_job_map_location/stage-packets/infrastructure.md)
+- 利用者決定(2026-11-16): 標準の slot runner(ローカル実行と SSH 実行)を正式に提供し、特殊な接続だけ利用者が runner を自作する。ジョブマップの場所は feature flag の任意の 2 キーで書け、書かなければ固定の名前を使う
 
-## 書き足した前提
+## 変わったこと
 
-管理 DB は 1 つ。次の参照名はすべて、同じ 1 つの管理 DB に解決される。
+```mermaid
+graph LR
+  U[上流の変更<br/>標準の slot runner を提供<br/>ジョブマップの場所を feature flag で指定]
+  U --> A[配置物<br/>標準の slot runner を<br/>facade と同じ実行ホストに配置]
+  U --> B[設定ファイル配置<br/>feature flag は 9 キー + 任意 2 キー<br/>ジョブマップは別の場所に置ける]
+  A --> C[新しい部品は増えない<br/>SSH は既存の鍵と known_hosts]
+  B --> D[検査は存在確認のまま<br/>指定先と配置先の一致は導入する側が確かめる]
+```
 
-| 参照名 | 置き場 | 読み手 |
+| 項目 | これまで | 今回 |
 |---|---|---|
-| RAPID_DB_CONN_REF | rapid-crosscheck.env(実行ホスト) | facade / slot runner / 速報クロスチェック runner / 速報 worker |
-| FINAL_DB_CONN_REF | final-crosscheck.env(実行ホスト) | 確報 runner / abort-final-crosscheck.sh / housekeep.sh |
-| FINAL_DB_CONN_REF | final-crosscheck.env(DB セグメント) | 確報 worker |
-| HANG_DB_CONN_REF | hang-detector.env(実行ホスト) | hang-detector |
-| HOUSEKEEP_DB_CONN_REF | ハウスキープ設定(実行ホスト) | housekeep(専用 DB ロール housekeep_del) |
-
-- 条件: 参照名の文字列が同じことではなく、解決先(接続先の DB)が同じこと
-- 理由: 確報 runner が登録した依頼を、確報 worker が同じキューから取得するため。別の DB に解決されると、設定の検査を通っても確報ジョブが完了しない。速報・ハング検知・ハウスキープも同じ管理 DB の表を読み書きする
-- 確かめる人: 導入する側。構築時の検査は設定ファイルの存在確認だけで、解決先は判定しない
+| slot runner | 配置物の一覧に標準の提供物としては書かれていない。runner は適用側のもの、という読み方ができた | relay-gate の提供物として、facade と同じ実行ホストに構築手順で配置する。割り当てるのは標準か自作の runner。特殊な接続だけ自作 |
+| feature flag | 9 キー | 9 キー + slot ジョブマップの場所を書く任意の 2 キー(blue 用と green 用。キー名は仕様で確定)。9 キーだけの設定もそのまま通る |
+| ジョブマップの場所 | 設定ファイル置き場の固定の名前だけ | 任意のキーで別の場所を指定できる。無い・空なら固定の名前。絶対パスと相対パスを受け付け、相対パスの基準は feature-flag.env のあるディレクトリ |
+| 別の場所に置く設置の扱い | 書かれていない | 所有者・読み取り専用の扱い、正本(構成管理リポジトリ)は設定ファイル置き場と同じ |
+| 構築時の検査 | 存在確認だけ | 変えない。feature-flag.env の値は判定せず、指定先と配置先が一致することは導入する側が確かめる |
 
 ## 追加
 
-- 上の前提の記述(README の前提、config ロールの冒頭と確報設定のコメント、impl / mapping / workload / MCL 入力 / 適合性 notes / ターゲットアーキテクチャ図)
+- 標準の slot runner を実行ホストの配置物として書いた記述(README の前提、runtime ロールのコメント、impl の execution_hosts.slot_runner、mapping の script_runtime_hosts、workload の script_runtime_hosts と REQ-COMP-002 の rationale、MCL 入力、ターゲットアーキテクチャ図)(CR-65b09d93-001#1)
+- ジョブマップの場所を feature flag の任意の 2 キーで変えられる記述(README の前提、config ロールと inventory 例のコメント、impl の config_store、mapping、workload、MCL 入力、適合性 notes、ターゲットアーキテクチャ図)(CR-65b09d93-002#1)
 
 ## 変更
 
-- infra/product/onprem/README.md: 前提に、単一の管理 DB と 5 つの参照名、条件、理由、確かめる人を追記
-- infra/product/onprem/ansible/roles/relay-gate-config/tasks/main.yml: コメントだけを変更(タスクは不変)
-  - 冒頭: 単一の管理 DB の前提と、このロールは解決先を判定しないこと
-  - 確報クロスチェック worker 設定: 2 つの置き場の FINAL_DB_CONN_REF が同じ管理 DB に解決されなければならない理由
-- docs/mcl/product/output/product-impl-onprem.yaml
-  - management_db の connection_resolution: 冒頭に前提と理由を書き、ハウスキープの参照名を HOUSEKEEP_DB_CONN_REF と明記
-  - config_store の final-crosscheck.env の存在の検証規則の description: 解決先は存在確認では判定せず、導入する側が確かめることを追記(新しい検証規則は足さない)
-- docs/mcl/product/output/product-mapping-onprem.yaml: management_db の configuration_notes に、確報 runner / 確報 worker の FINAL_DB_CONN_REF と HOUSEKEEP_DB_CONN_REF を加え、前提を追記
-- docs/mcl/product/output/product-workload-model.yaml: management_db の説明に前提を追記
-- docs/mcl/product/input/product-input.yaml(と直下のコピー): management_db の説明に前提を追記(translation は不変)
-- docs/cloud-context/conformance/product/product-conformance-onprem.yaml: REQ-DB-005 / REQ-DB-007 の notes(判定は不変)
-- docs/cloud-context/generated-md/product/relay-gate-target-architecture.md: 管理 DB のノードに、すべての接続参照名の解決先であることを追記
-
-### ハウスキープの仮置き表現を CLI 契約の名前に揃えた(controller の追加指示)
-
-CLI 契約(config_files の housekeep.env、shared_rules の artifact_root_entries)で確定している名前に揃えた。構築の変数名とタスクは変えていない。
-
-| 対象 | 揃えた名前 |
-|---|---|
-| ハウスキープ設定のファイル | housekeep.env(配置先 /etc/relay-gate/housekeep.env) |
-| ハウスキープ設定のキー | HOUSEKEEP_RETENTION_DAYS(既定 90)/ HOUSEKEEP_DB_CONN_REF(専用 DB ロール housekeep_del) |
-| 削除待ちの置き場 | 成果物ルート直下の housekeep-pending/(この構成では /var/lib/relay-gate/housekeep-pending) |
-| 通知済みの印 | 成果物ルート直下の hang-detector-notified/<run_id>.<role> |
-
-変更したファイル:
-
-- infra/product/onprem/ansible/roles/relay-gate-config/tasks/main.yml: ハウスキープ設定のコメント。変数 relay_gate_housekeep_config_file の値は housekeep.env にする
-- infra/product/onprem/ansible/roles/relay-gate-runtime/tasks/main.yml: 削除待ちの置き場のコメント
-- infra/product/onprem/ansible/inventory.ini.example: `relay_gate_housekeep_config_file=housekeep.env`、`relay_gate_housekeep_staging_dir=/var/lib/relay-gate/housekeep-pending`(例はコメントのまま)
-- product-impl-onprem.yaml: config_store の contents、artifact_store の notified_marks / housekeep_staging
-- product-mapping-onprem.yaml: config_store と artifact_store の configuration_notes
-- product-workload-model.yaml: config_store の説明、REQ-ART-004 の rationale
-- product-input.yaml(2 か所。同一内容): artifact_store と config_store の説明
-- product-conformance-onprem.yaml: REQ-ART-004 の notes(判定は不変)
-- README.md / ターゲットアーキテクチャ図: ハウスキープ設定を housekeep.env と書いた
+- infra/product/onprem/README.md: 前提に、標準の slot runner の配置(facade と同じ実行ホスト、DB ホストには置かない、割り当て先、特殊な接続だけ自作、SSH は既存の鍵と known_hosts、新しい接続経路は増えない)と、ジョブマップの置き場所(任意の 2 キー、無い・空なら固定の名前、絶対パスと相対パス、相対パスの基準、別の場所に置く設置の配布と検査)を追記
+- infra/product/onprem/ansible/roles/relay-gate-runtime/tasks/main.yml: コメントに、標準の slot runner を facade と同じ実行ホストに配置すること、自作の runner も同じホストに置くこと、新しい接続経路は増えないことを追記(タスクは不変)
+- infra/product/onprem/ansible/roles/relay-gate-config/tasks/main.yml: ジョブマップ配置タスクの前に、置き場所を feature flag の任意のキーで変えられること、別の場所を指定する設置では適用側が loop と配置先を差し替えること、このロールは feature-flag.env の値を判定しないことをコメントで追記(タスクは不変)
+- infra/product/onprem/ansible/inventory.ini.example: 実行ホストの変数の前に、ジョブマップの置き場所の注記を追記(変数は足さない)
+- docs/mcl/product/output/product-impl-onprem.yaml: execution_hosts に slot_runner を追加。config_store の contents を 9 キー + 任意 2 キーとジョブマップの場所の決まり方に、検証規則「feature-flag.env のキー」を 9 キーと任意の 2 キーに限られる内容に、ownership と backup に別の場所に置く設置の扱いを追記
+- docs/mcl/product/output/product-mapping-onprem.yaml: script_runtime_hosts の configuration_notes に標準の slot runner と自作の runner を、config_store の configuration_notes に任意 2 キーとジョブマップの場所を追記
+- docs/mcl/product/output/product-workload-model.yaml: script_runtime_hosts の説明、REQ-COMP-002 の rationale、config_store の説明と制約を同様に更新
+- docs/mcl/product/input/product-input.yaml(と直下のコピー。同一内容): 制約の runner に標準の slot runner を含むこと、config_store の説明、script_runtime_hosts の説明を更新(translation のフィールドは不変)
+- docs/cloud-context/conformance/product/product-conformance-onprem.yaml: REQ-CFG-001 の notes を 9 キー + 任意 2 キーとジョブマップの場所に更新(判定は不変)
+- docs/cloud-context/generated-md/product/relay-gate-target-architecture.md: facade ノードを標準の slot runner(ローカル実行と SSH 実行、自作の runner は同じホスト)に、設定ノードを 9 キーと任意 2 キー、ジョブマップの場所は feature flag で変更可に更新
 
 ## 削除
 
-- 「ハウスキープ設定の接続参照名のキー名は仕様で確定」の記述(impl の connection_resolution、mapping の configuration_notes、適合性の REQ-DB-007 notes)。キー名 HOUSEKEEP_DB_CONN_REF に置き換えた
-- 現行の記述に残っていた「仕様で確定」の仮置き表現(ハウスキープ設定のファイル名・キー名、削除待ちの置き場・通知済みの印の場所)。上の表の名前に置き換えた
+- なし
 
 ## 変えなかったもの
 
-- 構築時の検査: 設定ファイルの存在確認だけ。参照名の解決先を確かめる検査タスクは足さない
-- site.yml: ロールの割り当ては不変
-- 構築の変数名(relay_gate_housekeep_config_file / relay_gate_housekeep_staging_dir)とタスク
-- product-observability.yaml / product-cost-hints.yaml: 接続参照名の解決先を書いていない
-- arch: 新しい知見は無い(Phase4 で arch を更新しない)
+- translation(workload_type / availability_tier / latency / data_classification / traffic / consistency / cost_posture / target_clouds)
+- ミドルウェア、ネットワーク経路、ポート、ホストの種類: 標準の slot runner は facade と同じ実行ホストで動くシェルスクリプトで、SSH は既存の実行ユーザーの鍵と known_hosts を使う
+- 構築時の検査: 設定ファイルの存在確認だけ
+- 構築の変数名とタスク、site.yml、terraform、backup ロール
+- product-observability.yaml / product-cost-hints.yaml / product-decision-*.yaml: runner の提供元とジョブマップの場所に触れていない
 
-## 検証
+## 照合結果(causal work unit)
 
-- `npx md-mermaid-lint`(ターゲットアーキテクチャ): 成功
-- 変更した YAML の構文読み込み: 成功
-- validateInfraEvent.js: PASS
+| work unit | status | 反映先 |
+|---|---|---|
+| CR-65b09d93-001#1 | changed | README の前提、runtime ロールのコメント、impl の execution_hosts.slot_runner、mapping / workload / MCL 入力の script_runtime_hosts、ターゲットアーキテクチャ図 |
+| CR-65b09d93-002#1 | changed | README の前提、config ロールと inventory 例のコメント、impl / mapping / workload / MCL 入力の config_store、適合性 REQ-CFG-001、ターゲットアーキテクチャ図 |

@@ -1,0 +1,150 @@
+stage: "S9"
+uc_id: "fd678b04"
+manifest_sha256: "890bfec8902fb1f1779157d5b2f7dc7b4a92540e4f9c267c260dfded6a683903"
+manifest_projection: "v2"
+result: "generated"
+tier_impl_attempt: 5
+rerun_reason: "stale after spec feedback 20261115 (invalidated by 20261115_141514_stage_invalidated_fd678b04_stale_after_spec_feedback_20261115)"
+previous_done: "docs/impl/latest/fd678b04/invalidated/20261115_141514_stage_invalidated_fd678b04_stale_after_spec_feedback_20261115/stages/S9_review_generated.done.yaml"
+review_html: "docs/impl/latest/fd678b04/review/index.html"
+review_html_tracked: false
+review_notes_input: "docs/impl/latest/fd678b04/review/review-notes.md"
+review_notes_note: "review-notes.md は読むだけで変更していない。利用者が決定済みの 3 点(性能は目標値 / 時間を確認する自動テストは残す / 最初の公開は全機能がそろってから)は、選択肢に戻さず『決定済み』の表 1 か所に示した"
+validators:
+  review_html_contract: "node validateReviewHtml.js docs/impl/latest/fd678b04/review/index.html: pass"
+  human_html_review: "python3 validate.py docs/impl/latest/fd678b04/review/index.html: VALID (ERROR 0 / WARN 0)"
+  human_html_review_detail:
+    errors: 0
+    warnings: 0
+    internal_id_warnings: 0
+    long_paragraph_warnings: 0
+    h2_count: 11
+    svg_count: 6
+    size_bytes: 106961
+render_check: "Chrome headless のスクリーンショットで 1440px 幅と 500px 幅(どちらも暗い配色)を目視した。新しく描いた図 3 枚(現在地 / 未知の項目の値が入る所 / 起動コマンドのエラー行)で、斜め線 0、矢印の重なり 0、接続点の共有 0、端点でない箱の背面通過 0、ラベルと線のすき間 8px、文字のはみ出し 0 を確認した。目視で見つけた 1 点(前提のまとまりの表で件数の横棒が幅を取り、代表例の列が狭い)を直して再生成した。スクリプト実行後の DOM で、操作部品の disabled が 0 個、返信文面が初期選択 5 行と一致することを確認した"
+render_check_not_done:
+  - "390px 幅の実機表示(headless Chrome の最小幅が 500px のため、500px で代用した)"
+  - "明るい配色での目視(CSS 変数の切り替えのみで、構造は同じ)"
+  - "選択を変えたときの返信文面の変化と、コピーボタンを押した結果(スクリプトは base.html 同梱のものと一致することを検査で確認しただけ)"
+  - "構成図・処理フロー・データフローの 3 枚の拡大での目視(前回の資料で目視済みの図形を、文字だけ変えて再利用した。全体の縮小表示でだけ確認)"
+diagrams:
+  - type: "flowchart"
+    subject: "今日の作業の流れと現在地(午前の承認、仕様への反映、機能の再確認、最終確認、承認後の公開と取り込み)"
+  - type: "data-flow"
+    subject: "未知の項目の値が入る所と入らない所(設定ファイル、一時ファイルの複製、作業用の領域、項目ごとの変数、名前の一覧、runner の環境変数)"
+  - type: "flowchart"
+    subject: "違反が 2 つある設定で、ジョブを起動するコマンドが出す 1 行の案ごとの違い"
+  - type: "architecture"
+    subject: "検証コマンドの構成(4 層と、設定ファイル・runner の実体。問い 2 が関わる部品)"
+  - type: "flowchart"
+    subject: "検証コマンドの処理の流れ(判断 3 つ、終了コード 0 / 2 / 6)"
+  - type: "data-flow"
+    subject: "設定ファイルの中身が結果の表示になるまで(未知の項目の値を止める安全の境目)"
+feedback_request_count: 1
+open_blocker_count: 0
+decision_summary:
+  approval_questions: 1
+  selection_questions: 4
+  assumption_questions: 1
+  recommended_choices: 5
+  selection_labels:
+    - "問い 1: 全体の承認"
+    - "問い 2: 未知の項目の値の一時的な置き場(回答必須)"
+    - "問い 3: 実装者が補ったそのほかの前提(19 件)"
+    - "問い 4: ジョブを起動するコマンドのエラー 1 行(範囲外)"
+    - "問い 5: 本線への取り込み"
+  question_to_request:
+    - question: "問い 2"
+      cr_id: "CR-fd678b04-001"
+      assumption_id: "A-040"
+      finding_id: "F-020"
+      options: "A = 一時的な保持を許し、条件を仕様に書く(推奨。実装は変わらない。A-040 の承認) / B = 許さず、保持しない読み方に実装を変える(A-040 の却下。実装修正 + 仕様には案 B の内容を書く)"
+    - question: "問い 4"
+      cr_id: null
+      todo_id: "DIST-032"
+      options: "A = 検証コマンドと同じ順で最初の違反を 1 行(推奨) / B = いまの機能別仕様の粗い順のまま最初の違反を 1 行 / C = 起動コマンドも違反を全件出す / D = 該当機能に着手するときに決める"
+      note: "この UC の範囲外。回答は該当 UC の仕様への要求として別に出す。この UC の feedback draft には入れない"
+    - question: "問い 5"
+      cr_id: null
+      options: "A = 要求の公開に続けて push と PR 作成まで進める(推奨) / B = 要求の公開まで"
+  recommended_response: "全体=承認 / 問い 2=A / 問い 3=19 件すべて承認 / 問い 4=A / 問い 5=A"
+  response_format_note: "回答欄は文で組み上がる形式(内部 ID を出さない)。前提は『残りの 19 件はすべて承認』か『一部を却下(補足に前提の番号と、実装修正か仕様変更かを書く)』。番号と ID の対応は HTML の付録 1 と下の assumption_number_to_id"
+  initial_reply_text:
+    - "【全体】この実装内容を承認します。"
+    - "【未知の項目の値の一時的な置き場】案 A: 読み取りの途中だけ作業用の領域に置くことを許します。実装はこのままで承認します。条件(環境変数にしない・読み終えたときと失敗したときに空にする・後に残すのは項目の名前だけ)を仕様に書く要求を出してください。"
+    - "【実装者が補った前提】残りの 19 件はすべて承認します。"
+    - "【起動コマンドのエラー 1 行】案 A: 検証コマンドと同じ順で、最初の違反を 1 行出す、としてください。該当機能の仕様への要求として別に出してください。"
+    - "【本線への取り込み】承認後、仕様への要求を公開し、作業ブランチの共有と取り込み依頼の作成まで進めてください。"
+  assumption_required_ids:
+    - "A-040"
+  assumption_requested_ids:
+    - "A-040"
+  assumption_consistent_ids:
+    - "A-035"
+  assumption_new_ids:
+    - "A-039"
+    - "A-040"
+  assumption_number_to_id:
+    - "1: A-040"
+    - "2: A-039"
+    - "3: A-017"
+    - "4: A-018"
+    - "5: A-019"
+    - "6: A-020"
+    - "7: A-023"
+    - "8: A-024"
+    - "9: A-025"
+    - "10: A-027"
+    - "11: A-029"
+    - "12: A-030"
+    - "13: A-031"
+    - "14: A-032"
+    - "15: A-033"
+    - "16: A-034"
+    - "17: A-035"
+    - "18: A-036"
+    - "19: A-037"
+    - "20: A-038"
+  decided_not_asked:
+    - "性能(5,000 行以内かつ 8 MB 以内を 10 秒以内)は目標値。入力の制限でも合否の検査でもない。目標との差は記録にとどめる"
+    - "特定のデータで時間を確認する自動テストは残す"
+    - "最初の公開(リリース)は全機能がそろってから"
+  approval_outcome_note: "承認かつ問い 2 が A なら、仕様への要求 1 件を公開する。問い 5 が A なら続けて push と PR 作成まで進める。問い 2 が B なら、承認の前に実装を直して独立検証をやり直す"
+feedback_review_evidence:
+  feedback_id: "20261115_145719_impl_feedback_fd678b04"
+  draft_path: "docs/impl/latest/fd678b04/feedback/draft.md"
+  draft_sha256: "33be65d1a882c38815d45a910dcafa5b59e6fc4840197f3096dc4b071c6cc11a"
+  request_count: 1
+  blocker_count: 0
+  request_ids:
+    - "CR-fd678b04-001"
+implementation_review_evidence:
+  gate_result: "6/6 pass"
+  gates:
+    format: "pass"
+    lint: "pass"
+    tdd: "pass (481/481)"
+    bdd_tier: "pass (87/87)"
+    uc_bdd: "pass (48/48, injections 0)"
+    atdd: "pass (1/1)"
+  open_blocker_count: 0
+  open_major_count: 1
+  open_minor_count: 19
+  tiers:
+    - tier: "tier-facade"
+      attempt: 5
+      assumptions_sha256: "2d57f7ab2101e953417a9e1148e687da0cf89a1827593aec7d336bb2ed3274b9"
+      assumption_verdicts_sha256: "2b446091b3be63716b8557ac5f4f9dd14d7d3695335392acea5ec1301cc8507a"
+  assumption_evidence_sha256: "8443e9fb9a7c34f9cdd3dcee378cb7f75b59b7fa6a1badd0a499196e9184d196"
+captures: []
+issues: []
+notes:
+  - "manifest_sha256 は引数の値を再計算せず転記した"
+  - "assumption_evidence_sha256 は validateAssumptions.js evidence に S5 done の 2 つの hash を渡して算出した"
+  - "draft_sha256 は feedback/draft.md の現在の bytes の sha256(shasum で再計算して S8 done の記録と一致)。draft は変更していない"
+  - "HTML の付録 4 に 2026-09 の回答の原文(機能=A / 禁止キー=A / 相互運用=A / 監査=A)を、今回は選び直さない確定事項として載せた。validateReviewHtml.js の回答 template 検査はこの記載で通る"
+  - "feedback の要求の全文と前提 20 件の全件は、内部 ID を本文に出さない利用者の規則に従い、付録(折りたたみ)に置いた。本文は名前と『前提 1〜20』の番号で呼ぶ"
+  - "テストのゲートは再実行していない。このレビュー資料の作成時に実行したのは、読み取り専用の git diff --shortstat 44cb3a6..HEAD -- facade features(7 ファイル、追加 633 行、削除 3 行)だけ"
+  - "git の書き込みコマンドは実行していない。write-set 外のリポジトリのファイルは変更していない。一時ファイルは mktemp -d の下に置いた"
+completed_at: "2026-11-15T15:20:00+09:00"
+completed_by: "dist-impl-review@0.14.1"

@@ -2,7 +2,7 @@
 
 ## 概要
 
-ジョブスケジューラの background リラン専用ジョブから `background-rerun.sh --source-run-id <RUN_ID> --role blue|green|rapid-crosscheck` で起動された background-rerun が、元の実行を事前検証する。元実行の特定元は role で分岐する: `--role blue / green` は元 run の `execution-spec.json` を読み、元の slot mode が background かつ元の状態が終端(SUCCEEDED / FAILED / ABORTED)のときだけ可とする。元の状態は RAPID_CROSSCHECK_MODE によらず **常に成果物のファイル正本**から導出する(条件「slot 実行の状態導出規則」: exitcode.txt があれば SUCCEEDED / FAILED、無く aborted.txt があれば ABORTED、どちらも無ければ RUNNING、started-at.txt が無ければ未起動)。管理 DB の `slot_executions` は事前検証に使わない(off 以外でも読まない。管理 DB は後続 UC が新 run の INSERT にだけ使う)。`--role rapid-crosscheck` は `execution-spec.json` を要求せず、管理 DB(off 以外が前提)の `rapid_crosscheck_requests`(と後続 UC が読む `rapid_runs`)だけで元実行を特定し、元 run の速報比較依頼が終端のときだけ可とする。これにより、rapid-crosscheck リランで作られた run(`execution-spec.json` を持たない)を再度 `--source-run-id` に指定でき、parent_run_id の数珠つなぎリランが成立する。foreground / off、RUNNING(exitcode.txt も aborted.txt も無い = 中止未確認)、未対応 role、元実行なし(blue / green: execution-spec.json なし、rapid-crosscheck: 依頼なし)はリランせず終了コード 3 で終了し、foreground slot と確報クロスチェックはジョブスケジューラの正規ジョブを再実行する旨をヒントに出す。検証を通過した後の処理は UC「元の execution-spec.json から復元して新しい run_id で起動する」(blue / green)と UC「速報比較依頼だけを新規作成する」(rapid-crosscheck)が担う。
+ジョブスケジューラの background リラン専用ジョブから `background-rerun.sh --source-run-id <RUN_ID> --role blue|green|rapid-crosscheck` で起動された background-rerun が、元の実行を事前検証する。事前検証の前に、引数の検査に続けて feature-flag.env の読み取りと検査を行い、RAPID_CROSSCHECK_MODE が off 以外のときはその直後に rapid-crosscheck.env の読み取りと検査を行う(違反は元の実行の状態を読まずに終了コード 2。読むキーの範囲・検査の内容・順は CLI 契約 `background-rerun.sh` の `feature_flag_reading`。runner / worker の実体は検査しない)。元実行の特定元は role で分岐する: `--role blue / green` は元 run の `execution-spec.json` を読み、元の slot mode が background かつ元の状態が終端(SUCCEEDED / FAILED / ABORTED)のときだけ可とする。元の状態は RAPID_CROSSCHECK_MODE によらず **常に成果物のファイル正本**から導出する(条件「slot 実行の状態導出規則」: exitcode.txt があれば SUCCEEDED / FAILED、無く aborted.txt があれば ABORTED、どちらも無ければ RUNNING、started-at.txt が無ければ未起動)。管理 DB の `slot_executions` は事前検証に使わない(off 以外でも読まない。管理 DB は後続 UC が新 run の INSERT にだけ使う)。`--role rapid-crosscheck` は `execution-spec.json` を要求せず、管理 DB(off 以外が前提)の `rapid_crosscheck_requests`(と後続 UC が読む `rapid_runs`)だけで元実行を特定し、元 run の速報比較依頼が終端のときだけ可とする。これにより、rapid-crosscheck リランで作られた run(`execution-spec.json` を持たない)を再度 `--source-run-id` に指定でき、parent_run_id の数珠つなぎリランが成立する。foreground / off、RUNNING(exitcode.txt も aborted.txt も無い = 中止未確認)、未対応 role、元実行なし(blue / green: execution-spec.json なし、rapid-crosscheck: 依頼なし)はリランせず終了コード 3 で終了し、foreground slot と確報クロスチェックはジョブスケジューラの正規ジョブを再実行する旨をヒントに出す。検証を通過した後の処理は UC「元の execution-spec.json から復元して新しい run_id で起動する」(blue / green)と UC「速報比較依頼だけを新規作成する」(rapid-crosscheck)が担う。
 
 ## データフロー
 
@@ -35,7 +35,7 @@ graph LR
 
 | レイヤー | データモデル | 変換内容 |
 |---------|------------|---------|
-| ops presentation | 引数(`--source-run-id 20260830T113000-JOB001-3f9a1c2e`, `--role green`) | 引数検証(role 列挙・run_id 形式)→ RerunPrecheck |
+| ops presentation | 引数(`--source-run-id 20260830T113000-JOB001-3f9a1c2e`, `--role green`) | 引数検証(role 列挙・run_id 形式)→ feature-flag.env の読み取りと検査 → RAPID_CROSSCHECK_MODE が off 以外のときの rapid-crosscheck.env の読み取りと検査(契約 `background-rerun.sh` の `feature_flag_reading`)→ RerunPrecheck |
 | ops repository / gateway | blue / green: execution-spec.json(`slots.{role}` 節の有無と mode / host / user / script / work_dir / fixed_params)、成果物ファイル(started-at.txt / exitcode.txt / aborted.txt → 元状態。slot_executions は読まない)。rapid-crosscheck: rapid_crosscheck_requests(存在 / status)+ parallel_runs(job_id)。blue / green は管理 DB を読まない | 元実行の存在確認と状態取得(特定元は role で分岐) |
 | ops domain | RerunEligibility: role × 元 mode × 元状態 の判定表 | 可 / 不可(理由コード) |
 | ops presentation(出力) | 不可: `error: source run is not rerunnable ...` + `hint: ...`、終了コード 3。可: 後続 UC へ | 判定結果の提示 |
@@ -57,6 +57,8 @@ sequenceDiagram
 
   Sched->>Pres: background-rerun.sh --source-run-id 20260830T113000-JOB001-3f9a1c2e --role green
   Pres->>Pres: 引数検証(--source-run-id / --role 必須。role は blue / green / rapid-crosscheck → 他は 2)
+  Pres->>Pres: feature-flag.env の読み取りと検査(読むキーの値の有無と RAPID_CROSSCHECK_MODE の列挙まで。違反は状態を読まず 2)
+  Pres->>Pres: off 以外のとき rapid-crosscheck.env の読み取りと検査(不在・RAPID_DB_CONN_REF 欠落は状態を読まず 2)
   Pres->>UC: RerunPrecheck(source_run_id, role)
   alt role = blue / green
     UC->>Repo: 元の execution-spec.json を読む

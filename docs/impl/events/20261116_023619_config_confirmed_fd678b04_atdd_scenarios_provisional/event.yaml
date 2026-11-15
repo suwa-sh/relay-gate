@@ -1,0 +1,20 @@
+event_id: 20261116_023619_config_confirmed_fd678b04_atdd_scenarios_provisional
+type: config_confirmed
+uc_id: fd678b04
+stage: S1
+payload:
+  confirmed_by: orchestrator_provisional
+  pending_user_confirmation: true
+  confirmed_via: not confirmed by the user yet. USDM acceptance criteria were added on 2026-11-16 (optional job map location keys). the orchestrator adopted the recommended candidates so that the run can proceed; the user is asked to confirm or remove them in the final review (S9)
+  candidate_rule: 'scenarios of the added acceptance criteria that this UC alone can judge with validate-config.sh --feature-flag (SPEC-001-01-7/8/9: optional keys accepted, 9 keys only still valid, unknown key warning; SPEC-004-01-9: job map not found at the configured location). scenarios that need the slot runner or facade.sh (SPEC-004-01-3..8, 10) belong to later UCs'
+  items:
+  - key: uc-map[fd678b04].atdd_scenarios
+    before:
+    - SPEC-001-01-4
+    after:
+    - SPEC-001-01-4
+    - SPEC-001-01-7
+    - SPEC-001-01-8
+    - SPEC-001-01-9
+    - SPEC-004-01-9
+created_at: '2026-11-16T02:36:19+09:00'

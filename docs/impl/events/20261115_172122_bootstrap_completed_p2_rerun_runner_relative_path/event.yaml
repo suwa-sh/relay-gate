@@ -1,0 +1,16 @@
+event_id: 20261115_172122_bootstrap_completed_p2_rerun_runner_relative_path
+type: bootstrap_completed
+uc_id: null
+stage: S0
+payload:
+  mode: partial_rerun
+  rerun_phases:
+  - P2_config
+  reason: spec_event (334698ac -> 7c31d52f) changed by dist-pipeline feedback run 20261115_runner_relative_path (relative runner paths resolved against the config file directory). conditional input cli_command_contract content changed (178e6f8e -> 1c6ca74e; existence unchanged, no contract kind)
+  on_feature_branch: feature/configure-feature-flags
+  branch_note: reflux artifacts exist only on the feature branch (blocked_on_spec resume exception)
+  p2_result: 'content-stable: uc-map derivation identical (34 UC, no add / remove / tier / path diff), impl-config unchanged. no file touched, no config_confirmed'
+  inputs_sha256_updated:
+  - spec_event
+  - conditional_inputs.cli_command_contract
+created_at: '2026-11-15T17:21:22+09:00'

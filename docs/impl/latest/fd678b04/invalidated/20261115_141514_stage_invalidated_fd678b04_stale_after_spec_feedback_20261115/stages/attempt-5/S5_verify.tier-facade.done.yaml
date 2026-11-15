@@ -1,0 +1,60 @@
+stage: "S5"
+tier: "tier-facade"
+attempt: 5
+uc_id: "fd678b04"
+manifest_sha256: "829aa482569f86811e8a0a8453851b577b684bce01b8b83992f88cb1250b1ee5"
+manifest_projection: "v2"
+result: "fail"
+open_blockers: 2
+gate_reexec:
+  format: "pass"
+  lint: "pass"
+  tdd: "pass"
+  bdd_tier: "pass"
+viewpoints_checked:
+  spec_conformance:
+    status: "done"
+    note: "spec/tier/CLI契約と全featureを照合。tier gherkinは正本と完全一致。APIはCLI1入口、DB tables=[]、UIなし。9キー・検査3段・info/warn/error順・引用符・コメント・入力複製を確認。--final-crosscheck/--housekeep未実装は対象外。"
+  readability_maintainability:
+    status: "done"
+    note: "dev-rulesとレイヤー責務、定数・失敗伝播を確認。追加テストは実入力と出力全行/終了コードを検査し、参照実装も製品実装とは独立。新たな保守性欠陥の立証なし。"
+  security:
+    status: "done"
+    note: "source/evalによる入力実行なし。未知PATHとコマンド置換を含むキー/値の独立試験で副作用なし。スナップショット権限・削除・シグナル試験をゲートで確認。"
+  performance:
+    status: "done"
+    note: "F-001/F-002で目標未達を立証。通常の敵対入力68測定ずつ、F-001旧再現3境界、長さ配分1/2/9/127/4997行、FINAL_、制御文字/C1、空白/コメント/invalid/duplicateを検証。サイズによる拒否はない。"
+  operability:
+    status: "done"
+    note: "エラー語彙・出力先・制御文字可視化を独立oracleと旧版比較で確認。Linux/macOSとC/C.UTF-8において出力一致。"
+  fault_tolerance:
+    status: "done"
+    note: "補助コマンドの非0終了・空/不正出力・snapshot失敗・runner準備失敗のゲートを再実行。error1行とstdout空、終了6を確認。一般的な内部障害処理の新たな違反は未検出。"
+  refactoring:
+    status: "done"
+    note: "共有cli_fieldを使うjob-map/rapid-crosscheckの新旧比較で出力と終了コードが一致。約8MBの遅さは旧版にも存在し、今回の変更による有意な悪化を裏付ける証拠なし。他UC起票を本UCの欠陥にしない。"
+  assumption_conformance:
+    status: "done"
+    note: "観点1〜7の後でid/assumption/targetだけを読み、仕様とS4固定指示で判定してからreason/confidence/spec_refsを読んだ。21件にexactly-one。候補のバッチ化/閾値/キャッシュ/遅延出力はA-031〜038に収まり、unlistedなし。既知未定義2点は欠落の指摘でなく既存起票の照合記録。"
+assumptions_sha256: "764eb97433280c6e2d3321c97e9c73c6fc0c0bd4ab06c3da04f58f743bf23aa1"
+assumption_verdicts_summary:
+  consistent: 1
+  spec_absent: 20
+  contradicts: 0
+  unlisted: 0
+findings_path: "docs/impl/latest/fd678b04/stages/attempt-5/S5_verify.tier-facade.findings.yaml"
+summary:
+  blocker: 2
+  major: 1
+  minor: 20
+environment_failures:
+  - check: "additional_linux_format_check"
+    command: "docker run --rm --network none relay-gate-ci:ubuntu24 bash -c \"command -v shfmt\""
+    evidence: "コンテナにshfmtなし。macOSのshfmt -d .はexit0。Linuxでのformatゲート再実行は環境を補って行う必要がある。"
+  - check: "additional_linux_bdd_tier"
+    command: "docker run --rm --network none relay-gate-ci:ubuntu24 bash -c \"command -v node\""
+    evidence: "コンテナにnode/npxなし。macOSのtier BDD 80 scenarios/437 stepsは全件pass。LinuxでのBDD再実行には環境を補う必要がある。"
+completed_at: "2026-11-13T08:13:48+09:00"
+completed_by: "dist-impl-verify@0.14.1"
+note: "8観点の検証を完了。性能blocker2件。前提major1/minor20は人間確認・台帳照合用。実装変更なし。"
+assumption_verdicts_sha256: "3c4c577facfef77bb57cac50a1a04689662b8959682503b8fdf6a42e31114066"

@@ -1,0 +1,31 @@
+event_id: 20261115_173830_s2_test_scaffold_completed_fd678b04
+type: stage_completed
+uc_id: fd678b04
+stage: S2
+payload:
+  result: pass
+  red_baseline: measured red (relative path resolution not implemented yet)
+  mode: diff_only (tests for relative runner paths; old expectations of path is not absolute replaced)
+  red:
+    tier_bdd: 11
+    unit: 11
+    uc_bdd: 3
+    atdd: 0
+  added:
+    tier_bdd: 10
+    unit: 9
+    uc_bdd: 2
+    atdd: 0
+  updated:
+    tier_bdd: 1
+    unit: 3
+    uc_bdd: 1
+  totals:
+    tier_bdd: 97
+    unit: 490
+    uc_bdd: 50
+    atdd_this_uc: 1
+  issues: []
+  manifest_sha256: dee92025af3be3e20aecf1f99a59e6b911041405eec43a76a3da8e2da74ed1d5
+  manifest_projection: v2
+created_at: '2026-11-15T17:38:30+09:00'

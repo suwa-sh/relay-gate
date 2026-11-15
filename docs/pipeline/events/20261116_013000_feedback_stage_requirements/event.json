@@ -1,0 +1,274 @@
+{
+  "event_id": "20261116_013000_feedback_stage_requirements",
+  "type": "feedback_stage_completed",
+  "run_id": "feedback-20261116_standard_runner_job_map_location-20261116_010255-1469",
+  "attempt": 1,
+  "created_at": "2026-11-16T01:30:00Z",
+  "stage": "requirements",
+  "direct_work_unit_ids": [
+    "CR-65b09d93-001#1",
+    "CR-65b09d93-002#1"
+  ],
+  "causal_work_unit_ids": [
+    "CR-65b09d93-001#1",
+    "CR-65b09d93-002#1"
+  ],
+  "work_unit_results": [
+    {
+      "work_unit_id": "CR-65b09d93-001#1",
+      "disposition": "applied",
+      "reason": "relay-gate が標準の slot runner を正式に提供する変更を USDM 増分と RDRA 差分へ反映した。USDM は REQ-001 の SPEC-001-04 に、そのまま BLUE_RUNNER / GREEN_RUNNER に割り当てられる標準の slot runner を正式な提供物とすること、slot ジョブマップの行に従いローカル実行(host と user が両方空の行)と SSH 実行の両方を扱い runner の外部 IF を満たすこと、標準の slot runner を使う適用で利用者が用意するものは feature flag と slot ジョブマップ(と実行先の実装)だけであること、標準の slot runner が扱わない起動方式・プロトコルは利用者が runner を自作して割り当てられること(共通ライブラリと runner の外部 IF は残す)、参考実装(仮採用)として扱わないことを加え、受け入れ基準を 6 件追加した。runner を差し替えて異なる世代の実装を並行稼働できる要求と既存の受け入れ基準 2 件は変えていない。REQ-013 の理由と SPEC-013-01 に、ローカル実行と SSH 実行は標準の slot runner が扱い特殊な接続だけを適用側が自作する runner で吸収することを加え、受け入れ基準を 2 件追加した。標準の slot runner のファイル構成・ファイル名・置き場所・feature flag への書き方の例は仕様で確定するとして、推奨(1 つの実体を blue と green の両方に割り当てられる形)だけを書いた。標準の slot runner の正式な提供は方針資料に明記の無い利用者決定(2026-11-16)で、方針資料の「適用ごとに実体を割り当てる」とは割り当てる実体として標準の slot runner を選べる形で両立すると明記した。RDRA は情報 slot runner 割当・適用構成文書、条件 実装固有事項の runner への閉じ込め・ジョブマップ解決条件、アクター 基盤適用設計者、BUC 適用構成定義フローの UC の説明を同じ内容に揃えた(新しい要素の追加なし)。lint はエラー 0・警告 0",
+      "artifact_refs": [
+        "usdm/events/20261116_013000_feedback_standard_runner_job_map_location/requirements.yaml",
+        "rdra/events/20261116_013000_feedback_standard_runner_job_map_location/event.json"
+      ]
+    },
+    {
+      "work_unit_id": "CR-65b09d93-002#1",
+      "disposition": "applied",
+      "reason": "feature flag に slot ジョブマップの場所を書く任意のキーを blue 用と green 用に 1 つずつ足す変更を USDM 増分と RDRA 差分へ反映した。USDM は REQ-001 の SPEC-001-01 を、元の方針資料の 9 キーに任意の 2 キーを加えた構成に直し、9 キーだけの設定はそのまま通ること、未知のキーとして扱うのは 9 キーと任意の 2 キーのどちらでもないキーであることを加え、受け入れ基準を 3 件追加した。REQ-004 の SPEC-004-01(設定の所有)に、slot ジョブマップの場所は feature flag が所有すること、キーが無い・空ならこれまでの固定の名前(設定ファイル置き場の blue-job-map.csv / green-job-map.csv)を使うこと、値は絶対パスと相対パスの両方を受け付け相対パスの基準はその feature-flag.env があるディレクトリであること、解決の規則は runner / worker の 4 キーと同じにすること、feature flag の検証コマンドと実行時の読み手が同じ設定から同じジョブマップを使うこと、slot runner は feature flag の設定ファイルを読まない契約のままにすること、ジョブマップ単体の検証コマンドは変えないことを加え、受け入れ基準を 8 件追加した。キー名は仕様で確定するとして、推奨名(BLUE_JOB_MAP_CSV / GREEN_JOB_MAP_CSV)を注記つきで書いた。解決した後の場所を slot runner へ渡す方法と文言も仕様で確定する。方針資料のしくみの資料の 9 キーの設定例はそのまま通り、足す 2 キーは利用イメージの資料の設定例に寄せた利用者決定(2026-11-16)であると明記した。RDRA は情報 feature flag 設定・slot runner 割当・ジョブマップ、条件 設定所有区分・ジョブマップ解決条件、バリエーション 設定所有区分、アクター 基盤適用設計者、BUC 適用構成定義フローの UC の説明を揃え、「設定契約どおり 9 キーで構成」を「9 キーに任意の 2 キーを加えて構成」に直した(新しい要素の追加なし)。lint はエラー 0・警告 0",
+      "artifact_refs": [
+        "usdm/events/20261116_013000_feedback_standard_runner_job_map_location/requirements.yaml",
+        "rdra/events/20261116_013000_feedback_standard_runner_job_map_location/event.json"
+      ]
+    }
+  ],
+  "reconciliation_results": [
+    {
+      "work_unit_id": "CR-65b09d93-001#1",
+      "status": "changed",
+      "reason": "relay-gate が標準の slot runner を正式に提供する変更を USDM 増分と RDRA 差分へ反映した。USDM は REQ-001 の SPEC-001-04 に、そのまま BLUE_RUNNER / GREEN_RUNNER に割り当てられる標準の slot runner を正式な提供物とすること、slot ジョブマップの行に従いローカル実行(host と user が両方空の行)と SSH 実行の両方を扱い runner の外部 IF を満たすこと、標準の slot runner を使う適用で利用者が用意するものは feature flag と slot ジョブマップ(と実行先の実装)だけであること、標準の slot runner が扱わない起動方式・プロトコルは利用者が runner を自作して割り当てられること(共通ライブラリと runner の外部 IF は残す)、参考実装(仮採用)として扱わないことを加え、受け入れ基準を 6 件追加した。runner を差し替えて異なる世代の実装を並行稼働できる要求と既存の受け入れ基準 2 件は変えていない。REQ-013 の理由と SPEC-013-01 に、ローカル実行と SSH 実行は標準の slot runner が扱い特殊な接続だけを適用側が自作する runner で吸収することを加え、受け入れ基準を 2 件追加した。標準の slot runner のファイル構成・ファイル名・置き場所・feature flag への書き方の例は仕様で確定するとして、推奨(1 つの実体を blue と green の両方に割り当てられる形)だけを書いた。標準の slot runner の正式な提供は方針資料に明記の無い利用者決定(2026-11-16)で、方針資料の「適用ごとに実体を割り当てる」とは割り当てる実体として標準の slot runner を選べる形で両立すると明記した。RDRA は情報 slot runner 割当・適用構成文書、条件 実装固有事項の runner への閉じ込め・ジョブマップ解決条件、アクター 基盤適用設計者、BUC 適用構成定義フローの UC の説明を同じ内容に揃えた(新しい要素の追加なし)。lint はエラー 0・警告 0",
+      "artifact_refs": [
+        "usdm/events/20261116_013000_feedback_standard_runner_job_map_location/requirements.yaml",
+        "rdra/events/20261116_013000_feedback_standard_runner_job_map_location/event.json"
+      ]
+    },
+    {
+      "work_unit_id": "CR-65b09d93-002#1",
+      "status": "changed",
+      "reason": "feature flag に slot ジョブマップの場所を書く任意のキーを blue 用と green 用に 1 つずつ足す変更を USDM 増分と RDRA 差分へ反映した。USDM は REQ-001 の SPEC-001-01 を、元の方針資料の 9 キーに任意の 2 キーを加えた構成に直し、9 キーだけの設定はそのまま通ること、未知のキーとして扱うのは 9 キーと任意の 2 キーのどちらでもないキーであることを加え、受け入れ基準を 3 件追加した。REQ-004 の SPEC-004-01(設定の所有)に、slot ジョブマップの場所は feature flag が所有すること、キーが無い・空ならこれまでの固定の名前(設定ファイル置き場の blue-job-map.csv / green-job-map.csv)を使うこと、値は絶対パスと相対パスの両方を受け付け相対パスの基準はその feature-flag.env があるディレクトリであること、解決の規則は runner / worker の 4 キーと同じにすること、feature flag の検証コマンドと実行時の読み手が同じ設定から同じジョブマップを使うこと、slot runner は feature flag の設定ファイルを読まない契約のままにすること、ジョブマップ単体の検証コマンドは変えないことを加え、受け入れ基準を 8 件追加した。キー名は仕様で確定するとして、推奨名(BLUE_JOB_MAP_CSV / GREEN_JOB_MAP_CSV)を注記つきで書いた。解決した後の場所を slot runner へ渡す方法と文言も仕様で確定する。方針資料のしくみの資料の 9 キーの設定例はそのまま通り、足す 2 キーは利用イメージの資料の設定例に寄せた利用者決定(2026-11-16)であると明記した。RDRA は情報 feature flag 設定・slot runner 割当・ジョブマップ、条件 設定所有区分・ジョブマップ解決条件、バリエーション 設定所有区分、アクター 基盤適用設計者、BUC 適用構成定義フローの UC の説明を揃え、「設定契約どおり 9 キーで構成」を「9 キーに任意の 2 キーを加えて構成」に直した(新しい要素の追加なし)。lint はエラー 0・警告 0",
+      "artifact_refs": [
+        "usdm/events/20261116_013000_feedback_standard_runner_job_map_location/requirements.yaml",
+        "rdra/events/20261116_013000_feedback_standard_runner_job_map_location/event.json"
+      ]
+    }
+  ],
+  "work_unit_evidence_refs": [
+    {
+      "work_unit_id": "CR-65b09d93-001#1",
+      "path": "usdm/events/20261116_013000_feedback_standard_runner_job_map_location/requirements.yaml",
+      "sha256": "734654d505e5d4eacb1b15e2ba59e3ee104c6f7fd8d77f7a8bda97b50089d885"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-001#1",
+      "path": "rdra/events/20261116_013000_feedback_standard_runner_job_map_location/event.json",
+      "sha256": "821489e07ea9b4abb25ada9e3517570b1117b5546d67154b9fa67fbf640c87dc"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-002#1",
+      "path": "usdm/events/20261116_013000_feedback_standard_runner_job_map_location/requirements.yaml",
+      "sha256": "734654d505e5d4eacb1b15e2ba59e3ee104c6f7fd8d77f7a8bda97b50089d885"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-002#1",
+      "path": "rdra/events/20261116_013000_feedback_standard_runner_job_map_location/event.json",
+      "sha256": "821489e07ea9b4abb25ada9e3517570b1117b5546d67154b9fa67fbf640c87dc"
+    }
+  ],
+  "domain_event_refs": [
+    {
+      "path": "rdra/events/20261116_013000_feedback_standard_runner_job_map_location/event.json",
+      "sha256": "821489e07ea9b4abb25ada9e3517570b1117b5546d67154b9fa67fbf640c87dc"
+    },
+    {
+      "path": "usdm/events/20261116_013000_feedback_standard_runner_job_map_location/requirements.yaml",
+      "sha256": "734654d505e5d4eacb1b15e2ba59e3ee104c6f7fd8d77f7a8bda97b50089d885"
+    }
+  ],
+  "feedback_request": {
+    "feedback_request_id": "20261116_standard_runner_job_map_location",
+    "input_sha256": "733163f9092ac7055b410880c40f85fd312b2684f25fb0fb20d8d3412626822a",
+    "request_ids": [
+      "CR-65b09d93-001",
+      "CR-65b09d93-002"
+    ],
+    "work_unit_ids": [
+      "CR-65b09d93-001#1",
+      "CR-65b09d93-002#1"
+    ]
+  },
+  "post_execution_basis": {
+    "repository_head": "13714eaa1b9cb3b0dc4887449c166cfac6c21364",
+    "latest_domain_event_ids": {
+      "requirements": {
+        "rdra/events": "20261116_013000_feedback_standard_runner_job_map_location",
+        "usdm/events": "20261116_013000_feedback_standard_runner_job_map_location"
+      },
+      "quality_attributes": {
+        "nfr/events": "20261115_135000_feedback_impl_feedback_fd678b04_cycle3"
+      },
+      "architecture": {
+        "arch/events": "20261115_140000_feedback_impl_feedback_fd678b04_cycle3"
+      },
+      "infrastructure": {
+        "infra/events": "20261115_141000_feedback_impl_feedback_fd678b04_cycle3"
+      },
+      "design_system": {
+        "design/events": null
+      },
+      "spec": {
+        "specs/events": "20261116_010000_feedback_impl_feedback_fd678b04_cycle4"
+      },
+      "spec_stories": {
+        "design/events": null
+      }
+    },
+    "domain_event_root_snapshots": {
+      "rdra/events": {
+        "head_event_id": "20261116_013000_feedback_standard_runner_job_map_location",
+        "head_event_sha256": "758385a692477c72fdb910828f0f3328da65ea659a5fa76f707933c162707dec",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency",
+          "20260908_011000_feedback_slot_status_wording",
+          "20260921_084000_feedback_impl_feedback_eff24f55",
+          "20261010_200000_feedback_impl_feedback_dcd8234d",
+          "20261101_101000_feedback_impl_feedback_dcd8234d",
+          "20261101_121000_feedback_mail_removal_housekeeping",
+          "20261103_081000_feedback_housekeeping_followups",
+          "20261103_131000_feedback_housekeeping_db_required",
+          "20261116_013000_feedback_standard_runner_job_map_location"
+        ],
+        "event_set_sha256": "8e2c2b393aee48b70ce3eff47aa5f2e196eed6db1a09761a2a75c91ed7c97064",
+        "latest_tree_sha256": "a0ccc8f89943b0a769be8be672e1d3cf43c2f3c32a6503a5ef8c801ca22fd9f2"
+      },
+      "usdm/events": {
+        "head_event_id": "20261116_013000_feedback_standard_runner_job_map_location",
+        "head_event_sha256": "1282000f4877536f1163b9adadaa58a8f8cb406f48a7dc741d2853befc0e2775",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency",
+          "20260908_011000_feedback_slot_status_wording",
+          "20260921_084000_feedback_impl_feedback_eff24f55",
+          "20261010_200000_feedback_impl_feedback_dcd8234d",
+          "20261101_101000_feedback_impl_feedback_dcd8234d",
+          "20261101_121000_feedback_mail_removal_housekeeping",
+          "20261103_081000_feedback_housekeeping_followups",
+          "20261103_131000_feedback_housekeeping_db_required",
+          "20261116_013000_feedback_standard_runner_job_map_location"
+        ],
+        "event_set_sha256": "8e2c2b393aee48b70ce3eff47aa5f2e196eed6db1a09761a2a75c91ed7c97064",
+        "latest_tree_sha256": "c85fad1166d8725ddf2aa4e1e74932c12fe26eb2420c0f2c1470e97f92f84e7b"
+      },
+      "nfr/events": {
+        "head_event_id": "20261115_135000_feedback_impl_feedback_fd678b04_cycle3",
+        "head_event_sha256": "324b14da24788f15427d74b7125fc7e26b020bc974bb4dd616adf412dc476083",
+        "event_ids": [
+          "20260830_183726_initial_nfr",
+          "20260905_085000_feedback_todo_resolution",
+          "20260907_013000_feedback_todo_followup",
+          "20260907_120000_feedback_abort_consistency",
+          "20260908_013000_feedback_slot_status_wording",
+          "20260921_090000_feedback_impl_feedback_eff24f55",
+          "20261010_201000_feedback_impl_feedback_dcd8234d",
+          "20261101_102000_feedback_impl_feedback_dcd8234d",
+          "20261101_122000_feedback_mail_removal_housekeeping",
+          "20261103_082000_feedback_housekeeping_followups",
+          "20261103_132000_feedback_housekeeping_db_required",
+          "20261115_135000_feedback_impl_feedback_fd678b04_cycle3"
+        ],
+        "event_set_sha256": "7e826961fad76bedefd3443db2249f4908e3324e92273e9b183d3ad622a8554e",
+        "latest_tree_sha256": "12490438310ace0b863320236a1aae4659b2f7f60aaf92cbb84bb57b3805d572"
+      },
+      "arch/events": {
+        "head_event_id": "20261115_140000_feedback_impl_feedback_fd678b04_cycle3",
+        "head_event_sha256": "78a8c3d1b1f1be61911b199014f881551080a71012b6afe0f30f35a2eeaabf26",
+        "event_ids": [
+          "20260830_184457_initial_arch",
+          "20260830_202427_arch_infra_feedback_20260830_190412_infra_product_design",
+          "20260905_091000_feedback_todo_resolution",
+          "20260907_015000_feedback_todo_followup",
+          "20260907_122000_feedback_abort_consistency",
+          "20260908_015000_feedback_slot_status_wording",
+          "20260921_092000_feedback_impl_feedback_eff24f55",
+          "20261010_202000_feedback_impl_feedback_dcd8234d",
+          "20261101_103000_feedback_impl_feedback_dcd8234d",
+          "20261101_123000_feedback_mail_removal_housekeeping",
+          "20261103_083000_feedback_housekeeping_followups",
+          "20261103_133000_feedback_housekeeping_db_required",
+          "20261115_140000_feedback_impl_feedback_fd678b04_cycle3"
+        ],
+        "event_set_sha256": "66023fd0b53c0d668b362ed791fb1aa7f7779362bff9c581fa60be79d49b4403",
+        "latest_tree_sha256": "5e00d5989382518efa1cf9387b0f8c2f14b9010ef51ec8d110cb748c20355bfc"
+      },
+      "infra/events": {
+        "head_event_id": "20261115_141000_feedback_impl_feedback_fd678b04_cycle3",
+        "head_event_sha256": "7740e15905e9795cd783829a49a1fe67dc14a27be6497c7a0f6c2e0fd87361e0",
+        "event_ids": [
+          "20260830_190412_infra_product_design",
+          "20260905_093000_feedback_todo_resolution",
+          "20260907_021000_feedback_todo_followup",
+          "20260907_124000_feedback_abort_consistency",
+          "20260908_021000_feedback_slot_status_wording",
+          "20260921_094000_feedback_impl_feedback_eff24f55",
+          "20261010_203000_feedback_impl_feedback_dcd8234d",
+          "20261101_104000_feedback_impl_feedback_dcd8234d",
+          "20261101_124000_feedback_mail_removal_housekeeping",
+          "20261103_084000_feedback_housekeeping_followups",
+          "20261103_134000_feedback_housekeeping_db_required",
+          "20261104_091000_feedback_external_review_fixes",
+          "20261104_101000_feedback_rapid_env_deploy_check",
+          "20261105_091000_feedback_final_env_per_segment",
+          "20261105_111000_feedback_single_management_db",
+          "20261115_141000_feedback_impl_feedback_fd678b04_cycle3"
+        ],
+        "event_set_sha256": "f4edfb85e639ac1e0fcfd8dbb0896d8de1564254f3905afa91724b715467c3dc",
+        "latest_tree_sha256": "e2f26117303d8823a20eb60a93f5e9919a2adfb5e1327c9161a0b8fa959cadf2"
+      },
+      "design/events": {
+        "head_event_id": null,
+        "head_event_sha256": null,
+        "event_ids": [],
+        "event_set_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "latest_tree_sha256": null
+      },
+      "specs/events": {
+        "head_event_id": "20261116_010000_feedback_impl_feedback_fd678b04_cycle4",
+        "head_event_sha256": "e5bb81882f5c25b3058c4fadbc6608ab63a980c4efb39dc5b3edec1cb43820cd",
+        "event_ids": [
+          "20260830_202851_spec_generation",
+          "20260905_100000_feedback_todo_resolution",
+          "20260907_024000_feedback_todo_followup",
+          "20260907_131000_feedback_abort_consistency",
+          "20260908_024000_feedback_slot_status_wording",
+          "20260908_062000_feedback_spec_machine_readable",
+          "20260917_050000_feedback_impl_feedback_fd678b04",
+          "20260917_100000_feedback_impl_feedback_fd678b04_cycle2",
+          "20260921_100000_feedback_impl_feedback_eff24f55",
+          "20260923_112000_feedback_impl_feedback_eff24f55_cycle2",
+          "20261010_204000_feedback_impl_feedback_dcd8234d",
+          "20261027_055000_feedback_impl_feedback_dcd8234d",
+          "20261101_105000_feedback_impl_feedback_dcd8234d",
+          "20261101_125000_feedback_mail_removal_housekeeping",
+          "20261103_085000_feedback_housekeeping_followups",
+          "20261103_135000_feedback_housekeeping_db_required",
+          "20261103_151000_feedback_env_duplicate_key",
+          "20261104_092000_feedback_external_review_fixes",
+          "20261104_102000_feedback_rapid_env_deploy_check",
+          "20261105_092000_feedback_external_review_round2",
+          "20261105_112000_feedback_single_management_db",
+          "20261110_153000_feedback_impl_feedback_dcd8234d",
+          "20261115_142000_feedback_impl_feedback_fd678b04_cycle3",
+          "20261115_164000_feedback_runner_relative_path",
+          "20261116_010000_feedback_impl_feedback_fd678b04_cycle4"
+        ],
+        "event_set_sha256": "125bf5c38b406136f7235e56960627973e5dba3c9e7e7185b19eb526433d1b6e",
+        "latest_tree_sha256": "2bef9bd986d03c387421621ece75e0164e87de2104664676dd5a876437337d85"
+      }
+    }
+  }
+}

@@ -1,6 +1,6 @@
 stage: S1
 uc_id: fd678b04
-manifest_sha256: b36aeb29b227cdb7bc1fc5f2e44b44b56ade2bc7d5b490833a17f7b7c4651a68
+manifest_sha256: ea471d8749f1ddfcb1a55fd391ca4613ec8297095687bcce25da3e8b499da272
 manifest_projection: v2
 result: pass
 input_preflight:
@@ -12,11 +12,15 @@ input_preflight:
   - tier-facade
   conditional_inputs_consistent: true
 lineage_ok: true
-lineage_note: spec-event 20261110_153000_feedback_impl_feedback_dcd8234d. usdm latest 20261103_131000, arch latest 20261103_133000 (both older than the spec event). consistent with bootstrap.done.yaml
+lineage_note: 'spec-event 20261116_021000_feedback_standard_runner_job_map_location. usdm / arch latest are the events of the same feedback run (bootstrap.done.yaml preflight.lineage: {''spec_event_id'': ''20261116_021000_feedback_standard_runner_job_map_location'', ''arch_event_id'': ''20261116_015000_feedback_standard_runner_job_map_location'', ''usdm_event_id'': ''20261116_013000_feedback_standard_runner_job_map_location'', ''lineage_ok'': True, ''note'': ''2026-11-16 再確認。spec-event.yaml の source に書かれた trigger_event(usdm 20261116_013000 / arch 20261116_015000)は usdm / arch の latest と一致する(arch / usdm の最新 event は spec event より前)''})'
 atdd_scenarios:
 - SPEC-001-01-4
-atdd_mapping: unchanged (atdd_confirmed true). all tags exist in features/atdd
-shared_spec_refs_note: 'direct: spec.md -> cli-command-contract.yaml / ui-design.md / asyncapi.yaml; tier-facade.md -> ui-design.md. transitive: rdb-schema.yaml / data-visualization.md. 5 refs (same set as the 2026-09 run). _api-summary.yaml is legacy (no _contract-slice.json)'
-scope_note: 'rerun of a completed UC after later spec feedback runs. what to follow: the env-format rules now shared by all validation kinds and the --verbose info line rule (spec-decision-033) for --feature-flag. open question for S8/S9: order among error lines of --feature-flag validation is not fixed by the spec'
-completed_at: '2026-11-13T02:03:08+09:00'
+- SPEC-001-01-7
+- SPEC-001-01-8
+- SPEC-001-01-9
+- SPEC-004-01-9
+atdd_mapping: 'provisionally extended by the orchestrator (20261116_023619_config_confirmed_fd678b04_atdd_scenarios_provisional): [''SPEC-001-01-4''] -> [''SPEC-001-01-4'', ''SPEC-001-01-7'', ''SPEC-001-01-8'', ''SPEC-001-01-9'', ''SPEC-004-01-9'']. pending user confirmation at S9'
+shared_spec_refs_note: same derivation rule as the previous runs (manifest.py)
+scope_note: 'redo after the 2026-11-16 spec reflux. implementation change expected: accept the optional keys BLUE_JOB_MAP_CSV / GREEN_JOB_MAP_CSV (not unknown keys), resolve them against the directory of the config file, and use the resolved location for the job map presence check, the blue_job_map / green_job_map lines and the job map not found error (spec-decision-038). the transient holding conditions (spec-decision-036) need no implementation change'
+completed_at: '2026-11-16T02:36:19+09:00'
 completed_by: dist-impl-run@0.14.1

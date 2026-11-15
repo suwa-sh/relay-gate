@@ -1,0 +1,36 @@
+event_id: 20261115_182534_s9_review_generated_fd678b04
+type: stage_completed
+uc_id: fd678b04
+stage: S9
+payload:
+  done: docs/impl/latest/fd678b04/stages/S9_review_generated.done.yaml
+  feedback_review_evidence:
+    feedback_id: 20261115_145719_impl_feedback_fd678b04
+    draft_path: docs/impl/latest/fd678b04/feedback/draft.md
+    draft_sha256: 1daaee82102103037cb5e1ebc34e0687513edc7a246c6a787b094a585f204e1f
+    request_count: 1
+    blocker_count: 0
+    request_ids:
+    - CR-fd678b04-001
+  implementation_review_evidence:
+    gate_result: 6/6 pass
+    gates:
+      format: pass
+      lint: pass
+      tdd: pass (509/509)
+      bdd_tier: pass (97/97)
+      uc_bdd: pass (50/50, injections 0)
+      atdd: pass (1/1)
+    open_blocker_count: 0
+    open_major_count: 1
+    open_minor_count: 27
+    tiers:
+    - tier: tier-facade
+      attempt: 5
+      assumptions_sha256: 47be339cbd1b1ab5a34b9e0526bb3edf668e8ff80a729abebd4618879d4d6a16
+      assumption_verdicts_sha256: 69d9c691c423421a9ec6335e9fb003b893a60881cf4840dbeb75986a3dce614a
+    assumption_evidence_sha256: dc801179a07aed58effd6f878079c295e750d97a449172f54e8592e6aef1d93f
+  note: after the relative runner path change. open blockers 0, major 1 (assumption A-040, requires the user's answer), minor 27. the review also asks two questions outside this UC (start command error line = DIST-032 in docs/todo.md; pre-launch checks of the rerun command). render_check corrected by the orchestrator per the generator's own report
+  manifest_sha256: 6d465907738491c6eafd278adff9938a3a6a44a5c88748d49207f72a29a49079
+  manifest_projection: v2
+created_at: '2026-11-15T18:25:34+09:00'

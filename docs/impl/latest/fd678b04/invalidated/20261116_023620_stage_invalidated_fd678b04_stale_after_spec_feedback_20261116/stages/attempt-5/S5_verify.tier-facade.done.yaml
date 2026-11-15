@@ -1,0 +1,54 @@
+stage: "S5"
+tier: "tier-facade"
+attempt: 5
+uc_id: "fd678b04"
+manifest_sha256: "6d465907738491c6eafd278adff9938a3a6a44a5c88748d49207f72a29a49079"
+manifest_projection: "v2"
+result: "pass"
+open_blockers: 0
+open_majors: 1
+findings_summary:
+  blocker: 0
+  major: 1
+  minor: 27
+gate_reexec:
+  format: "pass"
+  lint: "pass"
+  tdd: "pass"
+  bdd_tier: "pass"
+assumptions_sha256: "47be339cbd1b1ab5a34b9e0526bb3edf668e8ff80a729abebd4618879d4d6a16"
+assumption_verdicts_summary:
+  consistent: 1
+  spec_absent: 23
+  contradicts: 0
+  unlisted: 0
+environment_failures: []
+observations:
+  - check: "environment"
+    detail: "macOS Bash 5.3.15、Linux Ubuntu24 aarch64 Bash 5.2.21/C.utf8。loopback bind、initdb、pg_ctl start/stop成功。一時PGのみ使用。Linux重点55 tests pass。Linuxイメージにnode/shfmtはなくLinux全4ゲートは未実施。"
+  - check: "execution_location"
+    detail: "原本はformat/lintのcheck-onlyのみ。bats/BDD/独自入力/変異はmktemp -dで作った/tmp/relay-verify.ruZi8W配下の複製で実行。node_modulesは既存依存へのsymlink。元リポの実装に変更なし。"
+  - check: "independent_matrix"
+    detail: "98パス組合せ、PWD4ケース、mode6^3=216ケース、未知値の子環境1ケース、大規模入力1ケース、計320/320。途中の1回にsnapshot失敗があり、全ゲート後の再実行は320/320成功。macOS /tmpの物理パス差は検証側PWD指定を修正し誤検出を除去。"
+  - check: "mutation"
+    detail: "baseをPWDへ変更: bats7件失敗・tier BDD6件失敗。解決呼出をusecase/domain両方から除去: bats8件失敗。mode順逆転: bats1件失敗。実体検査除去: bats4件失敗。usecase側だけの解決呼出除去はdomainの同じ処理が補う等価変異なので欠陥検出漏れとしない。"
+  - check: "scope"
+    detail: "--final-crosscheck/--housekeepとfacade.sh等の実行時実装は他UC所有。契約が全読み手に及ぶことだけ確認。性能テストの存在・既知の性能目標との差をblocker/majorにしていない。"
+completed_at: "2026-11-15T09:01:44.060121+00:00"
+completed_by: "dist-impl-verify@0.14.1"
+human_review_items:
+  - assumption_id: "A-040"
+    question: "未知キーの値を、非exportの解析用一時領域にだけ読み取り中保持し、読み取り後に破棄する解釈を採用するか。"
+    options:
+      - "解析用一時領域での保持を許可する旨を契約に明記する"
+      - "未知値をシェル変数へ入れない抽出方式を要求する"
+assumption_verdicts_sha256: "69d9c691c423421a9ec6335e9fb003b893a60881cf4840dbeb75986a3dce614a"
+verification_counts:
+  host_bats_passed: 509
+  tier_bdd_scenarios_passed: 97
+  tier_bdd_steps_passed: 568
+  uc_bdd_scenarios_passed: 16
+  uc_bdd_steps_passed: 104
+  linux_focused_bats_passed: 55
+  independent_cases_passed: 320
+  semantic_mutations_detected: 4

@@ -1,0 +1,94 @@
+stage: S8
+uc_id: "fd678b04"
+mode: initial
+manifest_sha256: "890bfec8902fb1f1779157d5b2f7dc7b4a92540e4f9c267c260dfded6a683903"
+manifest_projection: v2
+result: pass
+status: "draft"
+tier_impl_attempt: 5
+rerun_reason: "stale after spec feedback 20261115 (4 requests of 20261115_093126_impl_feedback_fd678b04 reflected)"
+previous_done: "docs/impl/latest/fd678b04/invalidated/20261115_141514_stage_invalidated_fd678b04_stale_after_spec_feedback_20261115/stages/S8_feedback.done.yaml"
+feedback_request:
+  feedback_id: "20261115_145719_impl_feedback_fd678b04"
+  created_at: "2026-11-15T14:57:19+09:00"
+  draft_path: "docs/impl/latest/fd678b04/feedback/draft.md"
+  draft_sha256: "33be65d1a882c38815d45a910dcafa5b59e6fc4840197f3096dc4b071c6cc11a"
+  supersedes: null
+  request_count: 1
+  blocker_count: 0
+  cr_ids:
+    - "CR-fd678b04-001"
+  severities:
+    blocker: 0
+    spec_gap: 1
+    improvement: 0
+  format_check: "feedbackRequest.js verify --feedback: PASS (1 requests)"
+  note: "要求は前提 A-040(独立検証の F-020。major)の 1 件。読み取りの途中だけ作業用の領域に値を置くことの可否を、選択肢と推奨を付けて要求の候補にした。利用者が最終確認で選ぶ"
+as_built_summary: "docs/impl/latest/fd678b04/feedback/as-built-summary.md"
+classification:
+  spec_origin_requests: 1
+  already_reflected_requests: 4
+  implementation_origin: 1
+  environment_origin: 1
+  out_of_scope_other_uc: 1
+  not_requested_minor_wording: 1
+issues_read:
+  - "docs/impl/latest/fd678b04/issues/20260917_004843_cross-uc-scenarios.md"
+  - "docs/impl/latest/fd678b04/issues/20260917_074633_cross-uc-scenarios-resolution.md"
+  - "docs/impl/latest/fd678b04/issues/20261113_021600_feature-flag-error-line-order-undefined.md"
+  - "docs/impl/latest/fd678b04/issues/20261113_063000_other-validation-kinds-exceed-performance-target.md"
+  - "docs/impl/latest/fd678b04/issues/20261115_090000_performance-target-gaps-not-gating.md"
+issues_note: "今回の新規起票は 0 件。既存 5 件は反映済みか事実の記録で、要求にしない"
+findings_read: "docs/impl/latest/fd678b04/stages/attempt-5/S5_verify.tier-facade.findings.yaml"
+assumptions:
+  record: "docs/impl/latest/fd678b04/stages/attempt-5/S4_tier-impl.tier-facade.assumptions.yaml"
+  total: 20
+  spec_absent: 19
+  consistent: 1
+  contradicts: 0
+  unlisted: 0
+  answer_required_ids:
+    - "A-040"
+  requested_ids:
+    - "A-040"
+verify_findings:
+  blocker: 0
+  major: 1
+  minor: 19
+not_requested:
+  - item: "午前に公開した要求 4 件"
+    reason: "2026-11-15 に仕様へ反映済み"
+  - item: "性能の目標との差"
+    reason: "利用者の決定により、目標であり入力の制限でも合否の検査でもない。事実の記録のみ。時間を確認する既存の自動テストは残した"
+  - item: "仕様の更新履歴の概要文の『4 場面』"
+    reason: "本文と feature ファイルは完全に一致。数え方の違いだけで、更新履歴は書き換えない記録。直しても実装・テスト・判断は変わらない"
+  - item: "ジョブを起動するコマンドの起動時検証で違反が 2 つ以上あるときの 1 行"
+    reason: "別の UC の範囲。docs/todo.md に記録済み"
+  - item: "未実装の検証種別への暫定の応答 A-020 / A-039"
+    reason: "段階実装。所有する UC の実装で解消"
+open_questions_for_review:
+  - cr_id: "CR-fd678b04-001"
+    assumption_id: "A-040"
+    question: "9 キー以外のキーの値を、読み取りの途中だけ作業用の領域に置くことを許すか"
+    options:
+      - "A: 一時的な保持を許し、条件を仕様に書く(実装は変わらない)"
+      - "B: 許さない。保持しない読み方に実装を変え、仕様にもそう書く"
+    recommended: "A"
+policy_docs_check:
+  checked:
+    - "tmp/RelayGateのしくみ.md"
+    - "tmp/RelayGateの利用イメージ.md"
+  conflicts: 0
+  note: "どちらの方針資料も feature flag の設定例として 9 キーを示すだけで、読み取りの途中の値の持ち方の記載は無い。どちらの案も方針と食い違わない"
+learnings: 2
+learning_files:
+  - "docs/impl/latest/fd678b04/learnings/20261115_145719_prohibition-rule-needs-transient-boundary.md"
+  - "docs/impl/latest/fd678b04/learnings/20261115_145719_container-bind-mount-execute-permission.md"
+proposals:
+  skill: true
+  context: true
+proposal_files:
+  - "docs/impl/latest/fd678b04/learnings/20261115_145719_proposal-skill.md"
+  - "docs/impl/latest/fd678b04/learnings/20261115_145719_proposal-context.md"
+completed_at: "2026-11-15T14:59:31+09:00"
+completed_by: "dist-impl-feedback@0.14.1"

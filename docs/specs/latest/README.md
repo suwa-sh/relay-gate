@@ -1,6 +1,6 @@
 # Spec 一覧
 
-> 最新イベント: `20261110_153000_feedback_impl_feedback_dcd8234d`(design 無しモード。UI 画面なし。2026-11-10: 設定検証(feature flag・速報・確報・ハウスキープの 4 検証種別)の --verbose の info 行の文言・出す回・出力順を CLI 契約に書いた)。UC 34 件 / BUC 8 件。
+> 最新イベント: `20261116_021000_feedback_standard_runner_job_map_location`(design 無しモード。UI 画面なし。2026-11-16: 標準の slot runner `runners/standard-runner.sh` を正式な提供物とし、feature-flag.env に slot ジョブマップの場所を書く任意の 2 キー `BLUE_JOB_MAP_CSV` / `GREEN_JOB_MAP_CSV` を足した。facade.sh は設定の違反が 2 つ以上あるとき最初の違反の error 行だけを出し、background-rerun.sh は起動の前に runner / worker の実体を検査しない)。UC 34 件 / BUC 8 件。
 
 ## UC 仕様
 
@@ -13,33 +13,33 @@
 | クロスチェック業務 | 確報クロスチェックフロー | [確報比較依頼を登録して終端状態まで待機する](クロスチェック業務/確報クロスチェックフロー/確報比較依頼を登録して終端状態まで待機する/spec.md) | 0 | 有 | 20261105_112000_feedback_single_management_db |
 | クロスチェック業務 | 速報クロスチェックフロー | [両系成功時に速報比較依頼を作成する](クロスチェック業務/速報クロスチェックフロー/両系成功時に速報比較依頼を作成する/spec.md) | 0 | 有 | 20261101_125000_feedback_mail_removal_housekeeping |
 | クロスチェック業務 | 速報クロスチェックフロー | [比較ツールでジョブ単位比較を実行して結果を登録する](クロスチェック業務/速報クロスチェックフロー/比較ツールでジョブ単位比較を実行して結果を登録する/spec.md) | 0 | 有 | 20261101_125000_feedback_mail_removal_housekeeping |
-| クロスチェック業務 | 速報クロスチェックフロー | [速報クロスチェック runner へ完了通知を送信する](クロスチェック業務/速報クロスチェックフロー/速報クロスチェック runner へ完了通知を送信する/spec.md) | 0 | 有 | 20261105_112000_feedback_single_management_db |
-| クロスチェック業務 | 速報クロスチェックフロー | [速報比較依頼を claim する](クロスチェック業務/速報クロスチェックフロー/速報比較依頼を claim する/spec.md) | 0 | 有 | 20261105_112000_feedback_single_management_db |
+| クロスチェック業務 | 速報クロスチェックフロー | [速報クロスチェック runner へ完了通知を送信する](クロスチェック業務/速報クロスチェックフロー/速報クロスチェック runner へ完了通知を送信する/spec.md) | 0 | 有 | 20261115_164000_feedback_runner_relative_path |
+| クロスチェック業務 | 速報クロスチェックフロー | [速報比較依頼を claim する](クロスチェック業務/速報クロスチェックフロー/速報比較依頼を claim する/spec.md) | 0 | 有 | 20261115_164000_feedback_runner_relative_path |
 | クロスチェック業務 | 速報クロスチェックフロー | [速報比較結果を参照する](クロスチェック業務/速報クロスチェックフロー/速報比較結果を参照する/spec.md) | 0 | 無 | 20261010_204000_feedback_impl_feedback_dcd8234d |
 | ハウスキープ業務 | ハウスキープフロー | [保持日数を過ぎた終了済みの実行と確報比較依頼を判定する](ハウスキープ業務/ハウスキープフロー/保持日数を過ぎた終了済みの実行と確報比較依頼を判定する/spec.md) | 0 | 無 | 20261110_153000_feedback_impl_feedback_dcd8234d |
 | ハウスキープ業務 | ハウスキープフロー | [成果物と管理 DB の履歴を削除する](ハウスキープ業務/ハウスキープフロー/成果物と管理 DB の履歴を削除する/spec.md) | 0 | 無 | 20261104_092000_feedback_external_review_fixes |
-| 実行復旧業務 | background 側リランフロー | [リラン対象を検証する](実行復旧業務/background 側リランフロー/リラン対象を検証する/spec.md) | 0 | 無 | 20261101_125000_feedback_mail_removal_housekeeping |
+| 実行復旧業務 | background 側リランフロー | [リラン対象を検証する](実行復旧業務/background 側リランフロー/リラン対象を検証する/spec.md) | 0 | 無 | 20261116_021000_feedback_standard_runner_job_map_location |
 | 実行復旧業務 | background 側リランフロー | [リラン結果を parent_run_id で追跡する](実行復旧業務/background 側リランフロー/リラン結果を parent_run_id で追跡する/spec.md) | 0 | 無 | 20260908_062000_feedback_spec_machine_readable |
-| 実行復旧業務 | background 側リランフロー | [元の execution-spec.json から復元して新しい run_id で起動する](実行復旧業務/background 側リランフロー/元の execution-spec.json から復元して新しい run_id で起動する/spec.md) | 0 | 有 | 20261101_125000_feedback_mail_removal_housekeeping |
-| 実行復旧業務 | background 側リランフロー | [速報比較依頼だけを新規作成する](実行復旧業務/background 側リランフロー/速報比較依頼だけを新規作成する/spec.md) | 0 | 有 | 20261010_204000_feedback_impl_feedback_dcd8234d |
+| 実行復旧業務 | background 側リランフロー | [元の execution-spec.json から復元して新しい run_id で起動する](実行復旧業務/background 側リランフロー/元の execution-spec.json から復元して新しい run_id で起動する/spec.md) | 0 | 有 | 20261116_021000_feedback_standard_runner_job_map_location |
+| 実行復旧業務 | background 側リランフロー | [速報比較依頼だけを新規作成する](実行復旧業務/background 側リランフロー/速報比較依頼だけを新規作成する/spec.md) | 0 | 有 | 20261116_021000_feedback_standard_runner_job_map_location |
 | 実行復旧業務 | 実行中止フロー | [実行を ABORTED へ遷移させる](実行復旧業務/実行中止フロー/実行を ABORTED へ遷移させる/spec.md) | 0 | 無 | 20261010_204000_feedback_impl_feedback_dcd8234d |
 | 実行復旧業務 | 実行中止フロー | [現在状態を確認して停止確認に応答する](実行復旧業務/実行中止フロー/現在状態を確認して停止確認に応答する/spec.md) | 0 | 無 | 20261101_125000_feedback_mail_removal_housekeeping |
-| 実行監視業務 | background 実行監視フロー | [background 実行の経過時間と終了状態を判定する](実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/spec.md) | 0 | 有 | 20261105_112000_feedback_single_management_db |
-| 実行監視業務 | background 実行監視フロー | [hang_detect_limit_minutes をジョブごとに調整する](実行監視業務/background 実行監視フロー/hang_detect_limit_minutes をジョブごとに調整する/spec.md) | 0 | 無 | 20261101_125000_feedback_mail_removal_housekeeping |
+| 実行監視業務 | background 実行監視フロー | [background 実行の経過時間と終了状態を判定する](実行監視業務/background 実行監視フロー/background 実行の経過時間と終了状態を判定する/spec.md) | 0 | 有 | 20261116_021000_feedback_standard_runner_job_map_location |
+| 実行監視業務 | background 実行監視フロー | [hang_detect_limit_minutes をジョブごとに調整する](実行監視業務/background 実行監視フロー/hang_detect_limit_minutes をジョブごとに調整する/spec.md) | 0 | 無 | 20261116_021000_feedback_standard_runner_job_map_location |
 | 実行監視業務 | background 実行監視フロー | [ハング検知ジョブの異常終了を確認する](実行監視業務/background 実行監視フロー/ハング検知ジョブの異常終了を確認する/spec.md) | 0 | 無 | 20261104_092000_feedback_external_review_fixes |
 | 実行監視業務 | background 実行監視フロー | [ハング疑い・実行エラー・比較異常を通知する](実行監視業務/background 実行監視フロー/ハング疑い・実行エラー・比較異常を通知する/spec.md) | 0 | 無 | 20261105_092000_feedback_external_review_round2 |
 | 実行監視業務 | background 実行監視フロー | [監視記録を保存する](実行監視業務/background 実行監視フロー/監視記録を保存する/spec.md) | 0 | 無 | 20261104_092000_feedback_external_review_fixes |
 | 実装切替業務 | 実装切替ジョブ実行フロー | [execution-spec.json を確定保存する](実装切替業務/実装切替ジョブ実行フロー/execution-spec.json を確定保存する/spec.md) | 0 | 無 | 20261010_204000_feedback_impl_feedback_dcd8234d |
 | 実装切替業務 | 実装切替ジョブ実行フロー | [foreground slot の結果をジョブスケジューラへ中継する](実装切替業務/実装切替ジョブ実行フロー/foreground slot の結果をジョブスケジューラへ中継する/spec.md) | 0 | 無 | 20261101_125000_feedback_mail_removal_housekeeping |
-| 実装切替業務 | 実装切替ジョブ実行フロー | [slot 実行モードを選択して runner を起動する](実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/spec.md) | 0 | 無 | 20261101_125000_feedback_mail_removal_housekeeping |
-| 実装切替業務 | 実装切替ジョブ実行フロー | [ジョブマップで JOB_ID から実行先を解決する](実装切替業務/実装切替ジョブ実行フロー/ジョブマップで JOB_ID から実行先を解決する/spec.md) | 0 | 無 | 20261104_092000_feedback_external_review_fixes |
-| 実装切替業務 | 実装切替ジョブ実行フロー | [実装スクリプトを実行して Runner Result を出力する](実装切替業務/実装切替ジョブ実行フロー/実装スクリプトを実行して Runner Result を出力する/spec.md) | 0 | 有 | 20261010_204000_feedback_impl_feedback_dcd8234d |
+| 実装切替業務 | 実装切替ジョブ実行フロー | [slot 実行モードを選択して runner を起動する](実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/spec.md) | 0 | 無 | 20261116_021000_feedback_standard_runner_job_map_location |
+| 実装切替業務 | 実装切替ジョブ実行フロー | [ジョブマップで JOB_ID から実行先を解決する](実装切替業務/実装切替ジョブ実行フロー/ジョブマップで JOB_ID から実行先を解決する/spec.md) | 0 | 無 | 20261116_021000_feedback_standard_runner_job_map_location |
+| 実装切替業務 | 実装切替ジョブ実行フロー | [実装スクリプトを実行して Runner Result を出力する](実装切替業務/実装切替ジョブ実行フロー/実装スクリプトを実行して Runner Result を出力する/spec.md) | 0 | 有 | 20261116_021000_feedback_standard_runner_job_map_location |
 | 実装切替業務 | 実装切替ジョブ実行フロー | [業務ジョブの実行結果を確認する](実装切替業務/実装切替ジョブ実行フロー/業務ジョブの実行結果を確認する/spec.md) | 0 | 無 | 20261101_125000_feedback_mail_removal_housekeeping |
-| 適用構成業務 | 適用構成定義フロー | [feature flag を設定する](適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md) | 0 | 無 | 20261110_153000_feedback_impl_feedback_dcd8234d |
-| 適用構成業務 | 適用構成定義フロー | [slot runner の実体スクリプトを割り当てる](適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/spec.md) | 0 | 有 | 20261110_153000_feedback_impl_feedback_dcd8234d |
-| 適用構成業務 | 適用構成定義フロー | [slot ごとのジョブマップを定義する](適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/spec.md) | 0 | 無 | 20261110_153000_feedback_impl_feedback_dcd8234d |
+| 適用構成業務 | 適用構成定義フロー | [feature flag を設定する](適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md) | 0 | 無 | 20261116_021000_feedback_standard_runner_job_map_location |
+| 適用構成業務 | 適用構成定義フロー | [slot runner の実体スクリプトを割り当てる](適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/spec.md) | 0 | 有 | 20261116_021000_feedback_standard_runner_job_map_location |
+| 適用構成業務 | 適用構成定義フロー | [slot ごとのジョブマップを定義する](適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/spec.md) | 0 | 無 | 20261116_021000_feedback_standard_runner_job_map_location |
 | 適用構成業務 | 適用構成定義フロー | [クロスチェックのジョブマップと比較定義を定義する](適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/spec.md) | 0 | 無 | 20261110_153000_feedback_impl_feedback_dcd8234d |
-| 適用構成業務 | 適用構成定義フロー | [切り替えた運用モードで業務ジョブを実行する](適用構成業務/適用構成定義フロー/切り替えた運用モードで業務ジョブを実行する/spec.md) | 0 | 無 | 20261110_153000_feedback_impl_feedback_dcd8234d |
+| 適用構成業務 | 適用構成定義フロー | [切り替えた運用モードで業務ジョブを実行する](適用構成業務/適用構成定義フロー/切り替えた運用モードで業務ジョブを実行する/spec.md) | 0 | 無 | 20261116_021000_feedback_standard_runner_job_map_location |
 
 ## BUC 仕様
 
@@ -73,5 +73,5 @@
 - [spec-event.yaml](spec-event.yaml) / [spec-event.md](spec-event.md): イベントメタデータ(UC 一覧・横断仕様サマリー・レビュー履歴)
 - [_inference.md](_inference.md): 分析根拠(UC ツリー・UC-ティアマッピング・確認推奨項目)
 - [_inputs-digest.md](_inputs-digest.md): arch / nfr の入力ダイジェスト
-- [decisions/](decisions/): 設計判断記録(spec-decision-001〜031)
+- [decisions/](decisions/): 設計判断記録(spec-decision-001〜040)
 - [source.txt](source.txt): トリガー・入力の正本

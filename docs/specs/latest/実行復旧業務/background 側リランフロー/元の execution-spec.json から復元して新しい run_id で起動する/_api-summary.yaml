@@ -22,19 +22,21 @@ x_cli_commands:
         description: "blue / green(本 UC の経路)"
     stdin: "なし"
     stdout: "固定順: role, mode=background, pid, artifact_dir: ..., execution_spec: ..., run_id={新 run_id}, parent_run_id={元 run_id}"
-    stderr: "error: runner failed to start run_id=... role=... runner=... / error: artifact dir is not writable path: ... / error: management db insert failed ..."
+    stderr: "error: runner failed to start run_id=... role=... runner=<解決後のパス> / error: artifact dir is not writable path: ... / error: management db insert failed ... / feature-flag.env と rapid-crosscheck.env(off 以外のとき)の読み取りと検査の error 行(契約 background-rerun.sh の feature_flag_reading.checks)"
     exit_codes:
       - code: 0
         meaning: "新 run_id で runner を起動し、RAPID_CROSSCHECK_MODE が off 以外なら管理レコードを RUNNING にした(runner の完了は待たない。off では成果物ファイルだけで起動)"
+      - code: 2
+        meaning: "feature-flag.env の読み取りと検査の違反(読むキーは RAPID_CROSSCHECK_MODE、リラン対象 role の runner、off 以外のときの RAPID_CROSSCHECK_RUNNER)、off 以外のときの rapid-crosscheck.env の読み取りと検査の違反(不在・読めない・RAPID_DB_CONN_REF 欠落)。どちらも事前検証より前(契約 background-rerun.sh の feature_flag_reading)。引数不正は UC「リラン対象を検証する」"
       - code: 3
         meaning: "事前検証 NG(UC「リラン対象を検証する」)"
       - code: 6
-        meaning: "成果物ディレクトリ作成・spec 保存失敗、runner 起動失敗(gateway が exitcode.txt=6 と stderr.log を書く)、管理 DB INSERT / UPDATE 失敗"
+        meaning: "成果物ディレクトリ作成・spec 保存失敗、runner 起動失敗(起動の失敗の定義は契約 background-rerun.sh の feature_flag_reading.launch_failure。解決後のパスに何も無い・通常ファイルでない・実行権限が無いの 3 つ。gateway が exitcode.txt=6 と stderr.log を書く。runner が動き出した後の終了は起動失敗に数えず、待たずに終了コード 0)、管理 DB INSERT / UPDATE 失敗"
   - name: "$BLUE_RUNNER / $GREEN_RUNNER (runner IF, --execution-spec 入力モード)"
     tier: "tier-facade"
     role: "uses"
     synopsis: "<runner> --run-id <RUN_ID> --job-id <JOB_ID> --role blue|green --mode background --execution-spec <path>"
-    invoked_by: "内部呼び出し(background-rerun.sh。環境変数 RELAY_GATE_CONFIG_DIR / RELAY_GATE_ARTIFACT_ROOT / RELAY_GATE_LOG_DIR / RAPID_CROSSCHECK_MODE と、off 以外なら RAPID_CROSSCHECK_RUNNER を渡す。BLUE_IMPL / GREEN_IMPL は渡さない)。runner IF の定義元は UC「slot runner の実体スクリプトを割り当てる」(適用構成業務/適用構成定義フロー)。本 UC は --execution-spec 入力モードの使用側"
+    invoked_by: "内部呼び出し(background-rerun.sh。環境変数 RELAY_GATE_CONFIG_DIR / RELAY_GATE_ARTIFACT_ROOT / RELAY_GATE_LOG_DIR / RAPID_CROSSCHECK_MODE と、off 以外なら RAPID_CROSSCHECK_RUNNER を渡す。BLUE_IMPL / GREEN_IMPL と BLUE_JOB_MAP_CSV / GREEN_JOB_MAP_CSV は渡さない)。runner IF の定義元は UC「slot runner の実体スクリプトを割り当てる」(適用構成業務/適用構成定義フロー)。本 UC は --execution-spec 入力モードの使用側"
     args: []
     options:
       - name: "--run-id"
