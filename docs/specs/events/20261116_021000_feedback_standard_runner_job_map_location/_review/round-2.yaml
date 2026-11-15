@@ -1,0 +1,123 @@
+round: 2
+findings:
+  - id: "R-006"
+    viewpoint: 4
+    severity: "minor"
+    target: "_cross-cutting/api/cli-command-contract.yaml(conventions.environment_variables の RELAY_GATE_HOME の default、commands の slot runner の standard_runner.home / custom_runner)、適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/tier-facade.md(「自作の runner の配置」の行)"
+    claim: |
+      標準の slot runner の配置ディレクトリの決め方は 1 つに決まった(この部分は解消)。残りが 2 点ある。
+      (1) 環境変数 RELAY_GATE_HOME が設定されているときに標準の slot runner がそれを使うかどうかが、2 つの節で違って読める。
+      (2) 推奨の置き場(runners/)に置いた自作の runner の既定が、標準の slot runner と食い違う書き方のまま残っている。
+    evidence: |
+      (1) conventions.environment_variables は RELAY_GATE_HOME を環境変数として挙げ、default の欄に「スクリプト自身のディレクトリ($(dirname "$0"))。標準の slot runner(runners/standard-runner.sh)だけは、自身のあるディレクトリ(runners/)の 1 つ上のディレクトリ」と書く(default = 未設定のときの値、と読める)。
+      standard_runner.home は「配置ディレクトリを環境変数で受け取らない」と書く(設定されていても使わない、と読める)。
+      入力例: RELAY_GATE_HOME=/srv/other を設定した環境から /opt/relay-gate/runners/standard-runner.sh を起動する。共通ライブラリを /srv/other/lib/ から読むのか /opt/relay-gate/lib/ から読むのかが、default の読み方と home の読み方で分かれる。判定する BDD は無い。
+      (2) default の欄は「標準の slot runner だけは」と限定している。一方 tier-facade.md は「自作の runner の配置: relay-gate 配置ディレクトリ配下の `runners/`(推奨)」、契約の custom_runner は「共通ライブラリ($RELAY_GATE_HOME/lib/runner-resolve.sh / ...)を source して使える」と書く。
+      入力例: /opt/relay-gate/runners/green-next-runner.sh(自作)を RELAY_GATE_* を設定せずに起動する。default の文言どおりなら RELAY_GATE_HOME=/opt/relay-gate/runners で、共通ライブラリは /opt/relay-gate/runners/lib/、既定の設定ファイル置き場は /opt/relay-gate/runners/config になり、同じディレクトリにある標準の slot runner(/opt/relay-gate/lib/、/opt/relay-gate/config)と違う場所を指す。
+    suggested_fix: |
+      (1) conventions.environment_variables の RELAY_GATE_HOME に、標準の slot runner は環境変数 RELAY_GATE_HOME が設定されていても使わない(standard_runner.home)ことを 1 文で足す。
+      (2) custom_runner に、runners/ に置いた自作の runner が共通ライブラリを読む場所の書き方(自身のあるディレクトリの 1 つ上の lib/)を 1 つ書くか、default の欄の限定を「runners/ に置く runner」に広げる。どちらにするかを判断記録の細部に書く。
+  - id: "R-014"
+    viewpoint: 4
+    severity: "minor"
+    target: "実行復旧業務/background 側リランフロー/元の execution-spec.json から復元して新しい run_id で起動する/tier-ops.md(Scenario「リラン対象でない slot の runner と速報クロスチェック worker に不備があっても green のリランは成功する」)、同 spec.md(Scenario「runner の実体が無い設定は起動の前に止めず起動失敗として終了コード 6 で成果物を残す」)"
+    claim: |
+      速報クロスチェックが off 以外の設定を Given に置く 2 場面で、新しく足した検査(速報クロスチェック設定の読み取り。事前検証の前に終了コード 2)を通る前提が Given に無い。Given に書かれたものだけでは Then に届かない。
+    evidence: |
+      契約 feature_flag_reading.checks の 6「RAPID_CROSSCHECK_MODE が off 以外のとき(--role を問わない)、rapid-crosscheck.env を読む: ファイルが無い `error: config file not found path: ...` ...(いずれも 2)」、order「... → rapid-crosscheck.env(checks の 6。2)→ 事前検証(3)→ 復元起動」。
+      tier-ops.md の場面は Given で「feature-flag.env の行は次の 6 行だけである: RAPID_CROSSCHECK_MODE=background、...」と feature-flag.env を行単位で限定するが、rapid-crosscheck.env と管理 DB には触れない。Then は「終了コード 0 で ... stderr は 0 行である」。rapid-crosscheck.env が無ければ、終了コード 2 と `error: config file not found path: /etc/relay-gate/rapid-crosscheck.env` になる。
+      spec.md の場面も「RAPID_CROSSCHECK_MODE=background で、/etc/relay-gate/feature-flag.env の GREEN_RUNNER=... 」だけで、Then は終了コード 6 と slot_executions / parallel_runs の行を見る。
+      同じ tier-ops.md の「実体が無い runner は起動の前に検査せず起動を試みて終了コード 6 になる」は「And /etc/relay-gate/rapid-crosscheck.env は RAPID_DB_CONN_REF=mgmt-db を持ち、管理 DB が起動している」を置いている。
+    suggested_fix: |
+      2 場面の Given に、同じ 1 行(rapid-crosscheck.env が RAPID_DB_CONN_REF を持ち、管理 DB が起動している)を足す。
+  - id: "R-015"
+    viewpoint: 3
+    severity: "minor"
+    target: "_cross-cutting/api/cli-command-contract.yaml(commands の background-rerun.sh の feature_flag_reading.launch_failure)、実行復旧業務/background 側リランフロー/元の execution-spec.json から復元して新しい run_id で起動する/tier-ops.md(処理順序 5 と BDD)"
+    claim: |
+      起動の失敗の定義は書かれたが、「実行できない形式」の境目が 1 つに決まらない入力が残り、その分類を判定する BDD も無い。
+    evidence: |
+      launch_failure「起動の失敗とは、解決後のパスの runner を OS が実行できなかったこと ...: パスに何も無い、通常ファイルでない(ディレクトリなど)、実行権限が無い、実行できない形式(シバンのインタプリタが無い場合を含む)」「runner が動き出した後に runner 自身が終了した場合 ... は起動の失敗ではなく、background-rerun.sh は runner の終了を待たずに終了コード 0 で終わる」。
+      BDD は、実体が無い・ディレクトリ・実行権限が無い・すぐ終了コード 2 で終わるスタブ、の 4 つ。「実行できない形式」の場面は無い。
+      入力例 1: 実行権限があり、先頭にシバンの無いテキストファイル。OS(execve)は実行できないが、シェルから起動するとシェルスクリプトとして動く。定義の字面では起動の失敗(終了コード 6、pid=NULL)、シェルから起動する実装では起動済み(終了コード 0、pid あり)。同じファイルは validate-config.sh の --help の問い合わせと facade.sh では起動できる。
+      入力例 2: シバンのインタプリタが無いスクリプト。存在と実行権限を確かめても通り、非同期に起動した子は 126 / 127 で終わる。終了を待たない規則のもとでは、シバン行を読んでインタプリタの有無を確かめる以外に見分けられない。そこまで行うのかどうかは「手段は縛らない」に任されている。
+    suggested_fix: |
+      次のどちらかに決めて launch_failure に書く。
+      (a) 起動の失敗を、起動の時点で確かめられる 3 つ(パスに何も無い、通常ファイルでない、実行権限が無い)に限る。それ以外(実行できない形式、インタプリタが無い)は「動き出した後の終了」と同じ扱い(終了コード 0。結果はハング検知が扱う)と明記する。
+      (b) 「実行できない形式」を残すなら、シバンの無いファイルの分類と、インタプリタが無い場合の期待値(終了コード 6、成果物)を BDD に 1 つずつ足す。
+      決めた内容は判断記録の細部に書く。
+  - id: "R-016"
+    viewpoint: 2
+    severity: "minor"
+    target: "適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/spec.md(関連 USDM の表の REQ-013 の行、Scenario「runner 実体を差し替えても facade は変更不要である(SPEC-001-04)」)、_cross-cutting/usdm-acceptance-matrix.md(SPEC-013-01 の行)"
+    claim: |
+      受け入れ条件「自作の runner を割り当てても、relay-gate のスクリプトと標準の slot runner は変更不要」を対応づけた場面が、標準の slot runner が変更されていないことを見ていない。
+    evidence: |
+      上流の受け入れ条件: 「When 適用側が自作した runner を割り当てる Then facade・クロスチェック runner / worker・ハング検知・リラン・中止のスクリプトと標準の slot runner は変更不要である」。
+      対応表は、この条件を Scenario「runner 実体を差し替えても facade は変更不要である」(自作の runner を割り当てる側)で covered としている。
+      その Then は「facade.sh・速報クロスチェック runner(RAPID_CROSSCHECK_RUNNER の実体)・hang-detector.sh・background-rerun.sh・abort-green.sh のファイルは変更されていない」。runners/standard-runner.sh(と共通ライブラリ、速報クロスチェック worker)は挙がっていない。
+    suggested_fix: |
+      その Scenario の Then の列挙に runners/standard-runner.sh(と lib/runner-*.sh、速報クロスチェック worker の実体)を足す。
+  - id: "R-017"
+    viewpoint: 1
+    severity: "minor"
+    target: "_cross-cutting/api/cli-command-contract.yaml(commands の background-rerun.sh の stderr の「feature-flag.env の読み取り」の項)"
+    claim: |
+      「機械可読な正本」とする stderr の節で、速報クロスチェック設定の error 行の列挙が、同じコマンドの feature_flag_reading.checks の 6 より少ない。
+    evidence: |
+      stderr「RAPID_CROSSCHECK_MODE が off 以外のときの rapid-crosscheck.env の `error: config file not found path: ...` / `error: option required option=RAPID_DB_CONN_REF path: ...`(2)」。
+      checks の 6「ファイルが無い `error: config file not found path: ...`、読めない `error: config file is not readable path: ...`、入力の守備範囲の違反(config_input_rules.env_files の (i)(ii))、RAPID_DB_CONN_REF が無い・値が空 `error: option required option=RAPID_DB_CONN_REF path: ...`」。
+      同じ項の feature-flag.env の側は、読めない場合と入力の守備範囲の違反を挙げている。UC「リラン対象を検証する」の tier-ops.md は 3 つの文言を挙げている。
+    suggested_fix: |
+      stderr の項に `error: config file is not readable path: ...` と入力の守備範囲の違反を足す(または、列挙をやめて checks の 6 を参照する)。
+  - id: "R-018"
+    viewpoint: 1
+    severity: "minor"
+    target: "decisions/spec-decision-040.yaml(decision の 8)"
+    claim: |
+      判断記録が挙げる BDD の置き場と場面が、実物より少ない。
+    evidence: |
+      decision の 8「判定する BDD を、UC『元の execution-spec.json から復元して新しい run_id で起動する』に置いた」とし、3 場面(実体が無い runner、リラン対象でない slot の不備、読むキーが無い設定)を挙げる。
+      実物には、同じ UC にディレクトリの場面・すぐ終わる runner の場面・違反が 2 つある設定の場面があり、UC「リラン対象を検証する」の tier-ops.md に検査の順の 5 場面(feature-flag.env が無い、検査を通った後の事前検証、runner のキーが無い rapid-crosscheck のリラン、rapid-crosscheck.env が無い、RAPID_DB_CONN_REF が無い)がある。decision の 4 と 5 で決めた順と速報クロスチェック設定の検査を判定するのは、後者の UC の場面である。
+    suggested_fix: |
+      decision の 8 に、UC「リラン対象を検証する」に置いた場面と、同じ UC に足した 3 場面を加える。
+  - id: "R-019"
+    viewpoint: 1
+    severity: "minor"
+    target: "実装切替業務/実装切替ジョブ実行フロー/ジョブマップで JOB_ID から実行先を解決する/tier-facade.md(概要)と同 spec.md(概要)、適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/tier-facade.md(runner IF の表の下の箇条書き)"
+    claim: |
+      自作の runner が共通ライブラリを使うことが、契約では任意、UC 別仕様では前提として書かれている。
+    evidence: |
+      契約 standard_runner.custom_runner「自作する runner は、この runner IF を満たせばよく、relay-gate が提供する共通ライブラリ(...)を source して使える」。slot runner の実体スクリプトを割り当てる/tier-facade.md の表も「runner IF を満たせばよく、共通ライブラリを `source` して使える」。
+      ジョブマップで JOB_ID から実行先を解決する/tier-facade.md「標準の slot runner(...)と、利用者が自作する runner は、どちらもこの共通ライブラリを `source` して同じ解決を行う」。同 spec.md「標準の slot runner ... と、利用者が自作する runner は、同じ共通ライブラリでこの解決を行う」。slot runner の実体スクリプトを割り当てる/tier-facade.md「『提供元』列の `lib/runner-*.sh` は、標準の slot runner と自作の runner の両方が `source` して使う共通ライブラリである」。
+    suggested_fix: |
+      UC 別仕様の 3 か所を「標準の slot runner は共通ライブラリで解決する。自作の runner も共通ライブラリを使えば同じ解決になる」と読める書き方に揃える(契約の「使える」に合わせる)。
+resolved:
+  - id: "R-006"
+    resolution: "fixed"
+    note: "契約 conventions.environment_variables の RELAY_GATE_HOME に、標準の slot runner は環境変数が設定されていても使わないことと、この既定が自作の runner には及ばないことを書いた。standard_runner.custom_runner に、自作の runner は配置ディレクトリと共通ライブラリの位置を自分で決めることを書いた。判断記録 037 の細部に記録した"
+    by: "orchestrator"
+  - id: "R-014"
+    resolution: "fixed"
+    note: "2 場面の Given に、速報クロスチェック設定が管理 DB 接続の参照名を持ち管理 DB が起動している前提を足した"
+    by: "orchestrator"
+  - id: "R-015"
+    resolution: "fixed"
+    note: "起動の失敗を、起動の時点で確かめられる 3 つ(何も無い、通常ファイルでない、実行権限が無い)に限った。それ以外は起動したものとして扱い、終了を待たずに終了コード 0 とした。契約 launch_failure、UC の処理順序 5 と API 要約、判断記録 040 を揃えた"
+    by: "orchestrator"
+  - id: "R-016"
+    resolution: "fixed"
+    note: "Then の列挙に、速報クロスチェック worker、標準の slot runner、共通ライブラリを足した"
+    by: "orchestrator"
+  - id: "R-017"
+    resolution: "fixed"
+    note: "stderr の項の列挙をやめ、feature_flag_reading.checks の 6 を参照する書き方にした"
+    by: "orchestrator"
+  - id: "R-018"
+    resolution: "fixed"
+    note: "判断記録 040 の 8 に、UC リラン対象を検証する の場面と、同じ UC に足した 3 場面を加えた"
+    by: "orchestrator"
+  - id: "R-019"
+    resolution: "fixed"
+    note: "UC 別仕様の記述を、標準の slot runner は共通ライブラリで解決し、自作の runner も使えば同じ解決になる、という書き方に揃えた"
+    by: "orchestrator"

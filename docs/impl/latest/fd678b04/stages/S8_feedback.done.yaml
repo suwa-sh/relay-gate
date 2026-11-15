@@ -1,118 +1,139 @@
 stage: S8
 uc_id: "fd678b04"
 mode: initial
-manifest_sha256: "829aa482569f86811e8a0a8453851b577b684bce01b8b83992f88cb1250b1ee5"
+manifest_sha256: "808bf63e1c7564ffef1498814b5d3f4e3a6163b4c2ff1429e03ae81125b0d01b"
 manifest_projection: v2
 result: pass
-status: "published"
-tier_impl_attempt: 5
+status: "no_requests"
+tier_impl_attempt: 6
+rerun_reason: "stale after spec feedback 20261116 (optional job map location keys and transient hold conditions)"
+previous_done: "docs/impl/latest/fd678b04/invalidated/20261116_023620_stage_invalidated_fd678b04_stale_after_spec_feedback_20261116/stages/S8_feedback.done.yaml"
+mode_note: "未公開の下書きは無い。直前の要求(feedback ID 20261115_145719_impl_feedback_fd678b04)は公開済みで、2026-11-16 に仕様へ反映済み。今回は要求 0 件のため、下書きも feedback ID も作っていない"
 feedback_request:
-  feedback_id: "20261115_093126_impl_feedback_fd678b04"
-  created_at: "2026-11-15T09:31:26+09:00"
+  feedback_id: null
   draft_path: null
-  published_path: "docs/impl/latest/fd678b04/feedback-requests/20261115_093126_impl_feedback_fd678b04.md"
-  input_sha256: "25caf38054a64316034645c9a2da7de0616818683b41aab58223544e8b98009f"
-  published_sha256: "25caf38054a64316034645c9a2da7de0616818683b41aab58223544e8b98009f"
-  draft_sha256: "25caf38054a64316034645c9a2da7de0616818683b41aab58223544e8b98009f"
   supersedes: null
-  review_approved_event_id: "20261115_100850_review_approved_fd678b04_feedback_publish"
-  review_evidence_event_id: "20261115_094919_s9_review_generated_fd678b04"
-  publish_started_event_id: "20261115_101100_feedback_request_publish_started_fd678b04"
-  published_event_id: "20261115_101101_feedback_request_published_fd678b04"
-  published_at: "2026-11-15T10:11:01+09:00"
-  request_count: 4
+  request_count: 0
   blocker_count: 0
-  cr_ids:
-    - "CR-fd678b04-001"
-    - "CR-fd678b04-002"
-    - "CR-fd678b04-003"
-    - "CR-fd678b04-004"
+  cr_ids: []
   severities:
     blocker: 0
-    spec_gap: 4
+    spec_gap: 0
     improvement: 0
-  format_check: "feedbackRequest.js verify --feedback: PASS (4 requests)"
-  publish_check: "公開の直前に feedbackRequest.js verify が PASS (4 requests)。validateAssumptions.js の record / verdicts / evidence を再実行し、承認時の 3 つの hash と一致。承認された前提の決定 21 件は独立検証の判定 21 件と 1 対 1"
-  note: "性能の指摘 2 件は利用者の決定により blocker として扱わず、目標との差の事実として 1 件目の要求に添えた。2〜4 件目は仕様に定めが無い点で、選択肢と推奨を付けた(最終確認で利用者が決める)"
+  note: "仕様起因の問題は見つからなかった。新規の issue は 0 件、仕様と矛盾する前提は 0 件、利用者が却下した前提は 0 件"
 as_built_summary: "docs/impl/latest/fd678b04/feedback/as-built-summary.md"
 classification:
-  spec_origin_requests: 4
-  implementation_origin_other_uc: 1
-  implementation_origin: 1
+  spec_origin_requests: 0
+  already_reflected: 2
+  approved_carried_assumptions: 23
+  implementation_internal_assumptions: 2
+  derivable_from_spec_assumptions: 1
+  implementation_origin: 3
   environment_origin: 1
-  resolved_past_issues: 2
+  fact_record_only: 1
 issues_read:
+  - "docs/impl/latest/fd678b04/issues/20260917_004843_cross-uc-scenarios.md"
+  - "docs/impl/latest/fd678b04/issues/20260917_074633_cross-uc-scenarios-resolution.md"
   - "docs/impl/latest/fd678b04/issues/20261113_021600_feature-flag-error-line-order-undefined.md"
   - "docs/impl/latest/fd678b04/issues/20261113_063000_other-validation-kinds-exceed-performance-target.md"
   - "docs/impl/latest/fd678b04/issues/20261115_090000_performance-target-gaps-not-gating.md"
-findings_read: "docs/impl/latest/fd678b04/stages/attempt-5/S5_verify.tier-facade.findings.yaml"
+issues_note: "今回の新規起票は 0 件。既存 5 件は反映済みか事実の記録で、要求にしない"
+findings_read:
+  - "docs/impl/latest/fd678b04/stages/attempt-6/S5_verify.tier-facade.findings.yaml"
+  - "docs/impl/latest/fd678b04/stages/attempt-5/S5_verify.tier-facade.findings.yaml"
 assumptions:
-  record: "docs/impl/latest/fd678b04/stages/attempt-5/S4_tier-impl.tier-facade.assumptions.yaml"
-  total: 21
-  spec_absent: 20
-  consistent: 1
+  record: "docs/impl/latest/fd678b04/stages/attempt-6/S4_tier-impl.tier-facade.assumptions.yaml"
+  total: 25
+  spec_absent: 22
+  consistent: 3
   contradicts: 0
-  unlisted: 0
-  answer_required_ids:
-    - "A-010"
-  requested_ids:
-    - "A-010"
-    - "A-016"
-    - "A-028"
-    - "A-030"
+  unlisted: 1
+  carried_over_approved: 23
+  added_this_run:
+    - "A-045"
+    - "A-046"
+  unlisted_ids:
+    - "V-001"
+  answer_required_ids: []
+  requested_ids: []
+  rejected_by_user: 0
 verify_findings:
-  blocker: 2
-  major: 1
-  minor: 20
-  blocker_handling: "F-001 / F-002 は性能目標との差。利用者の決定(2026-11-13 / 2026-11-15)により合否の検査として扱わない"
-user_decisions:
-  - date: "2026-11-13"
-    text: "5,000行 8MB 10sec以内は パフォーマンスの目標値であって、入力を制限する仕様ではありません"
-  - date: "2026-11-15"
-    text: "目標であってチェックではないです"
-open_questions_for_review:
-  - cr_id: "CR-fd678b04-001"
-    question: "性能目標を 4 つの設定検証種別のどれに適用するか"
-    recommended: "すべてに適用する"
-  - cr_id: "CR-fd678b04-002"
-    question: "error 行が 2 行以上出るときの error 行どうしの順"
-    recommended: "現行の順を仕様に書く"
-  - cr_id: "CR-fd678b04-003"
-    question: "mode が列挙外・欠落のとき、その slot の従属キーを検査するか"
-    recommended: "現行どおり検査すると仕様に書く"
-  - cr_id: "CR-fd678b04-004"
-    question: "9 キー以外のキーの値をプロセスの変数へ取り込まないことを仕様に書くか"
-    recommended: "仕様に書く"
+  attempt_5:
+    blocker: 1
+    major: 0
+    minor: 27
+    note: "blocker は F-001(Linux の ShellCheck 0.9.0 で lint が失敗)。実装起因。attempt 6 で修正済み"
+  attempt_6:
+    blocker: 0
+    major: 0
+    minor: 26
+    note: "minor 26 件は前提の追跡記録 25 件と、記録に無かった判断 1 件"
+new_assumption_judgements:
+  - id: "A-045"
+    summary: "決めたジョブマップの場所を、2 キーと同じ名前の変数に上書きせず別の変数に持つ"
+    verifier_verdict: "spec_absent"
+    belongs_in_spec: false
+    reason: "実装の内部の事情。仕様は決めた場所を使う先(所在の検査・結果の行・error 行・runner への受け渡し)を定めており、プロセスの中の持ち方は出力に現れない"
+  - id: "A-046"
+    summary: "検証コマンドを起動したプロセスの環境に 2 キーと同じ名前の変数があっても使わない"
+    verifier_verdict: "consistent"
+    verifier_verdict_previous_attempt: "spec_absent"
+    belongs_in_spec: false
+    reason: "仕様から 1 つに決まる。場所の規則は『ファイルにキーが無い・値が空なら既定の場所』で環境の変数を見る例外が無く、検証と起動で同じ場所になる保証も環境の値を使うと成り立たない。書き足さなくても挙動は変わらない"
+    note_for_review: "仕様はジョブを起動するコマンドについてだけ明記している。検証の判定が回によって分かれた事実を最終確認で見せる"
+  - id: "V-001"
+    summary: "入力の複製の失敗は内部の戻り値 7。上の層がコマンドの終了コード 6 へ変える"
+    verifier_verdict: "unlisted"
+    belongs_in_spec: false
+    reason: "実装の内部の事情。コマンドの終了コード 6 と error・hint の行は仕様どおりで、7 は関数どうしの間だけの値。利用者には現れない"
+    follow_up: "前提の記録を次に更新するときに足す(今回は実装の段の記録を変更していない)"
+not_requested:
+  - item: "1 つ前の回に公開した要求(読み取りの途中の一時的な保持の条件)"
+    reason: "2026-11-16 に仕様へ反映済み。対応する前提 A-040 は仕様に明記されたため前提から外れた"
+  - item: "slot ジョブマップの場所を書く任意の 2 キー"
+    reason: "2026-11-16 に仕様へ反映済み。実装も対応済み"
+  - item: "引き継いだ前提 23 件"
+    reason: "2026-11-15 の最終確認で利用者が承認済み。判断は変わっていない(4 件は 2 キーに合わせて文面だけ直した)"
+  - item: "新しい前提 A-045 と、記録に無かった判断 V-001"
+    reason: "実装の内部の事情。利用者に見える挙動は変わらない"
+  - item: "新しい前提 A-046"
+    reason: "仕様の 2 つの規則から 1 つに決まる。独立検証の判定は仕様どおり"
+  - item: "attempt 5 の独立検証の blocker(Linux の lint)"
+    reason: "実装起因。attempt 6 で修正済み。仕様とは関係が無い"
+  - item: "性能の目標との差"
+    reason: "利用者の決定により、目標であり入力の制限でも合否の検査でもない。事実の記録のみ"
+  - item: "相対パスの表示の形"
+    reason: "利用者の決定により、いまのまま(畳まない)"
+  - item: "未実装の検証種別への暫定の応答 A-020 / A-039"
+    reason: "段階実装。所有する UC の実装で解消"
+open_questions_for_review: []
 policy_docs_check:
   checked:
     - "tmp/RelayGateのしくみ.md"
     - "tmp/RelayGateの利用イメージ.md"
   conflicts: 0
-  note: "設定ファイルの規模・検査時間・検証コマンドの出力の順・未知キーの扱いは、どちらの方針資料にも記載が無い。要求は方針と食い違わない"
-other_uc_facts:
-  - target: "--rapid-crosscheck / --job-map"
-    note: "数 MB の入力で 10 秒を超える。本 UC の変更の前後で出力と所要時間は同じ。実装の改善は所有する UC の再実行で行う"
-learnings: 2
+  note: "要求が 0 件のため要求の照合は無い。実装した 2 キーを照合した。しくみの資料の 9 キーだけの設定例は既定の場所を使ってそのまま通る。利用イメージの資料の設定例(語尾が _JOB_MAP_CSV のキーに ./ で始まる相対パス)は、キーの語尾と相対パスの書き方が実装と一致する"
+test_results:
+  bats: "535 passed (macOS and Linux container)"
+  tier_bdd: "111 scenarios passed (macOS)"
+  uc_bdd: "54 scenarios passed (this UC: 20)"
+  atdd: "5 scenarios passed"
+  linux:
+    environment: "relay-gate-ci:ubuntu24 (Ubuntu 24.04, ShellCheck 0.9.0)"
+    lint: "pass"
+    format: "pass"
+    bats: "pass (535)"
+    tier_bdd: "not run (no node in the image)"
+learnings: 3
 learning_files:
-  - "docs/impl/latest/fd678b04/learnings/20261115_093126_performance-target-treated-as-pass-fail-gate.md"
-  - "docs/impl/latest/fd678b04/learnings/20261115_093126_bash-large-string-processing-patterns.md"
+  - "docs/impl/latest/fd678b04/learnings/20261116_034712_linux-lint-version-gap.md"
+  - "docs/impl/latest/fd678b04/learnings/20261116_034712_one-sided-explicit-rule-splits-verdict.md"
+  - "docs/impl/latest/fd678b04/learnings/20261116_034712_internal-return-code-missed-in-assumptions.md"
 proposals:
   skill: true
   context: true
 proposal_files:
-  - "docs/impl/latest/fd678b04/learnings/20261115_093126_proposal-skill.md"
-  - "docs/impl/latest/fd678b04/learnings/20261115_093126_proposal-context.md"
-selected_options:
-  - cr_id: "CR-fd678b04-001"
-    selected: "A"
-  - cr_id: "CR-fd678b04-002"
-    selected: "A"
-  - cr_id: "CR-fd678b04-003"
-    selected: "A"
-  - cr_id: "CR-fd678b04-004"
-    selected: "A"
-selected_options_source: "docs/impl/events/20261115_100850_review_approved_fd678b04_feedback_publish/event.yaml"
-next_state: "blocked_on_spec"
-published_by: "dist-impl-feedback@0.14.1 (mode=publish)"
-completed_at: "2026-11-15T09:34:44+09:00"
+  - "docs/impl/latest/fd678b04/learnings/20261116_034712_proposal-skill.md"
+  - "docs/impl/latest/fd678b04/learnings/20261116_034712_proposal-context.md"
+completed_at: "2026-11-16T03:47:12+09:00"
 completed_by: "dist-impl-feedback@0.14.1"

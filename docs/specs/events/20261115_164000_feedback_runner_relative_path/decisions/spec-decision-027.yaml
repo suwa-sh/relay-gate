@@ -1,0 +1,62 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "specification"
+artifact_id: "spec-decision-027"
+title: "ハウスキープ設定の管理 DB 接続参照名は、off 以外または確報クロスチェックを使う設置(final-crosscheck.env があり FINAL_DB_CONN_REF が欠落していない)で必須とし、設定の検査を削除待ちの置き場の残りの削除より先に行う"
+status: "approved"
+generated_at: "2026-11-03T13:50:00Z"
+context: |
+  - CLI 契約の housekeep.sh は、HOUSEKEEP_DB_CONN_REF の要否を feature flag の RAPID_CROSSCHECK_MODE だけで決めていた(off 以外で必須、off では省略可。spec-decision-021 / 024)。
+  - 確報クロスチェックは速報クロスチェックのモードにかかわらず管理 DB を使う(確報系は final-crosscheck.env の FINAL_DB_CONN_REF で常に接続する)。
+    このため off で確報クロスチェックを使う設置では、接続参照名を省略すると確報比較依頼が保持日数を過ぎても削除されず増え続けた。
+  - 2026-11-03 に要求が改まった(SPEC-014-07 / SPEC-014-08 の条件と受け入れ基準、SPEC-014-04 の受け入れ基準の追加)。
+    接続参照名は「RAPID_CROSSCHECK_MODE が off 以外」または「確報クロスチェックを使う設置」で必須とし、無い・空なら設定エラーで何も削除しない。
+    管理 DB に接続しない振る舞いは、管理 DB を一切使わない設置に絞る。確報クロスチェックを使う設置とみなす判定方法と終了コードは仕様で確定する。
+    RDRA(情報「ハウスキープ設定」、条件「ハウスキープの削除判定」)、NFR、アーキテクチャ設計(arch-decision-026。SP-027 / SP-028 / tier-ops の usecase)、インフラ設計も同じ趣旨に追従済み。
+  - 契約の processing_order は削除待ちの置き場の残りの削除を手順 1 に置き、設定の検査の位置を明記していなかった(stderr の一覧は「走査前の設定エラーは何も削除しない」と書いていた)。
+decision: |
+  1. HOUSEKEEP_DB_CONN_REF の要否の正本として契約 shared_rules.housekeep_rules.db_requirement を新設する。
+     必須になる設置: (a) RAPID_CROSSCHECK_MODE が off 以外、または (b) 確報クロスチェックを使う設置。
+  2. (b) の判定は既存の確報系コマンドの判定と揃える(利用者が 2026-11-03 に承認した推奨案)。
+     abort-final-crosscheck.sh は「final-crosscheck.env 不在または FINAL_DB_CONN_REF 欠落」を管理 DB なしとする。その裏返しで、
+     $RELAY_GATE_CONFIG_DIR/final-crosscheck.env があり、その FINAL_DB_CONN_REF が欠落していない(キーがあり、env 解析後の値が空でない)ときに確報クロスチェックを使う設置とする。
+     「欠落 = キーが無い、または値が空」を abort-final-crosscheck.sh の終了コード 3 の条件にも書き、両者を同じ規則にする。(b) の判定に RAPID_CROSSCHECK_MODE は使わない。
+  3. 判定の順: (1) HOUSEKEEP_DB_CONN_REF があれば管理 DB に接続し、final-crosscheck.env は読まない。(2) 無い・空で off 以外なら設定エラー。
+     (3) 無い・空で off なら final-crosscheck.env を読んで (b) を判定し、使う設置なら設定エラー、使わない設置なら管理 DB に接続しない。
+     final-crosscheck.env は (3) のときだけ読み、FINAL_DB_CONN_REF 以外のキーは検査せず、未知キーの warn も出さない。
+     housekeep.sh は FINAL_DB_CONN_REF で接続せず、その値を出力しない。あるのに読めないときは `error: config file is not readable path: ...`(2)、入力の守備範囲の違反は config_input_rules の文言で 2。
+  4. 設定エラーの文言と終了コードは既存のものに揃える: `error: option required option=HOUSEKEEP_DB_CONN_REF path: <housekeep.env のパス>`、終了コード 2。
+     (a) / (b) のどちらで必須になったかは文言で区別しない(新しい文言・hint は作らない)。
+  5. processing_order の先頭に手順 0「入力と設定を検査する」を置く。引数、housekeep.env、feature-flag.env、HOUSEKEEP_DB_CONN_REF の要否(必要なら final-crosscheck.env)、
+     RELAY_GATE_ARTIFACT_ROOT をここで検査し、失敗は終了コード 2 で手順 1 以降を行わない。削除待ちの置き場の残りの削除(手順 1)は手順 0 を通ったときだけ行う。
+     既存の手順番号 1〜6 は変えない(stdout の purged_pending_entries、idempotency、UC の参照が手順 1 を指すため)。recovery の「次回の実行の最初に削除」も「設定の検査を通ったあと」に改める。
+  6. 管理 DB に接続しない振る舞い(`warn: management db is not configured ...`、`warn: run kept rapid crosscheck mode ...`、成果物だけの判定)は、
+     管理 DB を一切使わない設置(off で確報クロスチェックを使わない設置)で接続参照名が無い・空のときだけとする。
+     off でも確報クロスチェックを使う設置では、接続参照名が必須のため確報比較依頼を保持日数で削除する(final_request に明記)。
+  7. 揃える箇所: 契約の housekeep.sh(config、stderr、exit_codes、processing_order)、shared_rules.housekeep_rules(member_source、final_request、recovery)、
+     management_db.used_when、config_files の housekeep.env の HOUSEKEEP_DB_CONN_REF(required、description)、
+     feature-flag.env と final-crosscheck.env の readers(housekeep.sh を加える)、validate-config.sh --housekeep の説明(要否は housekeep.sh の起動時に検査)。
+     判定 UC の spec.md(データフロー、シーケンス、分岐 B-09 の新設、B-02、関連 RDRA モデル、関連 USDM、BDD)、tier-ops.md(要否の表、stderr、処理の順序、判定表、BDD)、
+     tier-facade.md、_api-summary.yaml、_model-summary.yaml。削除 UC の spec.md(シーケンス、B-11、B-14)と tier-ops.md(手順 1 の前提、終了コード 2、冪等性、BDD)。
+     UC「切り替えた運用モードで業務ジョブを実行する」の tier-facade.md の接続参照名の表。
+  8. 受け入れ基準の BDD: SPEC-014-04 の追加 1 件と SPEC-014-07 の追加 2 件を判定 UC に置く(SPEC-014-07 の権限と設定内容の 3 件は削除 UC のまま)。
+     SPEC-014-07 の 2 件には削除待ちの置き場の残りが残ることも書き、設定の検査が置き場の削除より先であることを確かめる。
+     SPEC-014-08 の 4 件の Given に「確報クロスチェック worker の設定が無い設置(final-crosscheck.env が無い)」を書き、管理 DB に接続しない設定のシナリオの Background にも同じ前提を置く。
+consequences:
+  positive:
+    - "管理 DB を使う設置では確報比較依頼も保持日数で削除され、管理 DB の容量が保持日数分で頭打ちになる"
+    - "確報クロスチェックを使う設置かの判定が確報系コマンドと同じ規則になり、運用者が 1 つの規則で理解できる"
+    - "設定エラーの実行では削除待ちの置き場の中身も消さず、誤った設定のまま一部だけ削除されることが無い"
+  negative:
+    - "off で確報クロスチェックを使う設置では、ハウスキープ専用 DB ロールの接続参照名を必ず設定する必要がある"
+    - "housekeep.sh が final-crosscheck.env を読むため、確報クロスチェック設定の形式の違反や読み取り権限の不足でハウスキープも設定エラーになり得る(接続参照名があるときは読まない)"
+    - "実装済みのコードは無い(housekeep.sh と abort-final-crosscheck.sh は未実装。実装済みは facade の validate-config.sh だけ)ため実装差分は無いが、実装時に final-crosscheck.env の読み取りと、値が空の FINAL_DB_CONN_REF を欠落として扱う判定を加える必要がある"
+alternatives_considered:
+  - name: "final-crosscheck.env の有無だけで確報クロスチェックを使う設置とみなす"
+    reason_rejected: "abort-final-crosscheck.sh の管理 DB なしの判定(ファイル不在または FINAL_DB_CONN_REF 欠落)と食い違い、同じ設置が確報系コマンドとハウスキープで別の扱いになる"
+  - name: "FINAL_DB_CONN_REF の有無だけで判定し、ファイルが無いときも同じに扱う(ファイルの有無を問わない)"
+    reason_rejected: "結果は推奨案と同じだが、既存の確報系コマンドの判定の書き方(ファイル不在または欠落)と揃わない。推奨案は同じ条件を既存の表現で書く"
+  - name: "final-crosscheck.env を常に読む(接続参照名があるときも)"
+    reason_rejected: "接続参照名が既にある正しい設定でも、確報クロスチェック設定の不備でハウスキープが止まる。要否の判定に必要なときだけ読む方が影響が小さい"
+  - name: "必須なのに欠けているときは warn を出して成果物だけ削除する"
+    reason_rejected: "要求の受け入れ基準(設定エラーで何も削除しない)と合わない"

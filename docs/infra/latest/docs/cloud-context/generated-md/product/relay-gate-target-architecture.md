@@ -10,12 +10,12 @@
 ```mermaid
 graph TD
   subgraph 実行ホストセグメント
-    FACADE[facade / slot runner CLI]
+    FACADE[facade / 標準の slot runner CLI<br/>ローカル実行と SSH 実行 relay-gate の提供物<br/>特殊な接続だけ自作の runner を同じホストに置く]
     RAPID[rapid-crosscheck-runner・worker<br/>systemd常駐]
     HANG[hang-detector<br/>ジョブスケジューラの定期ジョブ 5分ごと]
     HK[housekeep<br/>ジョブスケジューラの定期ジョブ 1日1回]
     OPS[ops CLI 中止/リラン]
-    CFG[[設定ファイル配置<br/>/etc/relay-gate 読取専用<br/>feature-flag.env / *.csv / hang-detector.env / housekeep.env / rapid-crosscheck.env<br/>final-crosscheck.env 確報 runner 用 確報を使う設置だけ<br/>FINAL_DB_CONN_REF と runner の任意キーだけ 比較コマンドは置かない<br/>実行ホストセグメントだけに構築手順で配る]]
+    CFG[[設定ファイル配置<br/>/etc/relay-gate 読取専用<br/>feature-flag.env 9 キーと任意 2 キー / ジョブマップ *.csv 場所は feature flag で変更可 / hang-detector.env / housekeep.env / rapid-crosscheck.env<br/>final-crosscheck.env 確報 runner 用 確報を使う設置だけ<br/>FINAL_DB_CONN_REF と runner の任意キーだけ 比較コマンドは置かない<br/>実行ホストセグメントだけに構築手順で配る]]
   end
 
   subgraph DBセグメント

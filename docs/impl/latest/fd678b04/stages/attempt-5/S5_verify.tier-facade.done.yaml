@@ -2,59 +2,50 @@ stage: "S5"
 tier: "tier-facade"
 attempt: 5
 uc_id: "fd678b04"
-manifest_sha256: "829aa482569f86811e8a0a8453851b577b684bce01b8b83992f88cb1250b1ee5"
+manifest_sha256: "808bf63e1c7564ffef1498814b5d3f4e3a6163b4c2ff1429e03ae81125b0d01b"
 manifest_projection: "v2"
 result: "fail"
-open_blockers: 2
+open_blockers: 1
 gate_reexec:
   format: "pass"
-  lint: "pass"
+  lint: "fail"
   tdd: "pass"
   bdd_tier: "pass"
-viewpoints_checked:
-  spec_conformance:
-    status: "done"
-    note: "spec/tier/CLI契約と全featureを照合。tier gherkinは正本と完全一致。APIはCLI1入口、DB tables=[]、UIなし。9キー・検査3段・info/warn/error順・引用符・コメント・入力複製を確認。--final-crosscheck/--housekeep未実装は対象外。"
-  readability_maintainability:
-    status: "done"
-    note: "dev-rulesとレイヤー責務、定数・失敗伝播を確認。追加テストは実入力と出力全行/終了コードを検査し、参照実装も製品実装とは独立。新たな保守性欠陥の立証なし。"
-  security:
-    status: "done"
-    note: "source/evalによる入力実行なし。未知PATHとコマンド置換を含むキー/値の独立試験で副作用なし。スナップショット権限・削除・シグナル試験をゲートで確認。"
-  performance:
-    status: "done"
-    note: "F-001/F-002で目標未達を立証。通常の敵対入力68測定ずつ、F-001旧再現3境界、長さ配分1/2/9/127/4997行、FINAL_、制御文字/C1、空白/コメント/invalid/duplicateを検証。サイズによる拒否はない。"
-  operability:
-    status: "done"
-    note: "エラー語彙・出力先・制御文字可視化を独立oracleと旧版比較で確認。Linux/macOSとC/C.UTF-8において出力一致。"
-  fault_tolerance:
-    status: "done"
-    note: "補助コマンドの非0終了・空/不正出力・snapshot失敗・runner準備失敗のゲートを再実行。error1行とstdout空、終了6を確認。一般的な内部障害処理の新たな違反は未検出。"
-  refactoring:
-    status: "done"
-    note: "共有cli_fieldを使うjob-map/rapid-crosscheckの新旧比較で出力と終了コードが一致。約8MBの遅さは旧版にも存在し、今回の変更による有意な悪化を裏付ける証拠なし。他UC起票を本UCの欠陥にしない。"
-  assumption_conformance:
-    status: "done"
-    note: "観点1〜7の後でid/assumption/targetだけを読み、仕様とS4固定指示で判定してからreason/confidence/spec_refsを読んだ。21件にexactly-one。候補のバッチ化/閾値/キャッシュ/遅延出力はA-031〜038に収まり、unlistedなし。既知未定義2点は欠落の指摘でなく既存起票の照合記録。"
-assumptions_sha256: "764eb97433280c6e2d3321c97e9c73c6fc0c0bd4ab06c3da04f58f743bf23aa1"
+assumptions_sha256: "ce40a9ad847e9b99a8f5ca7c58235adf62504092151fadb914858441e43ce95a"
 assumption_verdicts_summary:
   consistent: 1
-  spec_absent: 20
+  spec_absent: 24
   contradicts: 0
   unlisted: 0
-findings_path: "docs/impl/latest/fd678b04/stages/attempt-5/S5_verify.tier-facade.findings.yaml"
-summary:
-  blocker: 2
-  major: 1
-  minor: 20
-environment_failures:
-  - check: "additional_linux_format_check"
-    command: "docker run --rm --network none relay-gate-ci:ubuntu24 bash -c \"command -v shfmt\""
-    evidence: "コンテナにshfmtなし。macOSのshfmt -d .はexit0。Linuxでのformatゲート再実行は環境を補って行う必要がある。"
-  - check: "additional_linux_bdd_tier"
-    command: "docker run --rm --network none relay-gate-ci:ubuntu24 bash -c \"command -v node\""
-    evidence: "コンテナにnode/npxなし。macOSのtier BDD 80 scenarios/437 stepsは全件pass。LinuxでのBDD再実行には環境を補う必要がある。"
-completed_at: "2026-11-13T08:13:48+09:00"
+completed_at: "2026-11-15T18:19:36+00:00"
 completed_by: "dist-impl-verify@0.14.1"
-note: "8観点の検証を完了。性能blocker2件。前提major1/minor20は人間確認・台帳照合用。実装変更なし。"
-assumption_verdicts_sha256: "3c4c577facfef77bb57cac50a1a04689662b8959682503b8fdf6a42e31114066"
+environment_failures: []
+findings_summary:
+  blocker: 1
+  major: 0
+  minor: 27
+verification_runs:
+  - environment: "macOS Bash 5.3.15 / ShellCheck 0.11.0 / BSD commands"
+    format: "pass"
+    lint: "pass"
+    tdd: "535/535 pass"
+    bdd_tier: "111 scenarios / 670 steps pass"
+    uc_bdd: "20 scenarios / 137 steps pass"
+    atdd: "selected 5 scenarios / 25 steps pass"
+    independent: "267/267 pass"
+  - environment: "relay-gate-ci:ubuntu24 / Ubuntu 24.04.5 / Bash 5.2.21 / ShellCheck 0.9.0-1 / GNU commands / C.utf8"
+    lint: "fail SC2120 and SC2119"
+    tdd: "focused 60/60 pass in native container temporary filesystem"
+    independent: "267/267 pass"
+    limitation: "Linuxでは全535件とcucumberは再実行していない。Bash 5.0そのものは未実測。Linuxイメージにはnode/shfmt/PostgreSQLが無く、それらの必須ゲートとDB環境probeはmacOSで実施。"
+observations:
+  - "環境probeはloopback bindとmktemp内のinitdb/pg_ctl start/stopが成功。常設DBへ接続していない。"
+  - "独立実行用複製は元facadeとdiff -qrで一致。ソース/テスト/仕様/既存状態ファイルは変更していない。"
+  - "Linux共有マウント上の実行不可2テストはホスト共有FSの権限挙動で失敗したが、コンテナ内部mktempへ複製すると両方を含む60件全て通過。環境問題を製品のblockerに数えていない。"
+  - "最初の複製には.editorconfigが無くformatに差が出たが、正本設定を複製して同一コマンドを再実行しpass。.shellcheckrcも複製してLinux lintの失敗を再現。"
+  - "5001行追加は0.336秒、8MiB超追加は1.264秒で通常出力と一致。11秒の人工遅延は性能不足の指摘ではなく時間超過で結果が変わらない確認。"
+  - "4変異を全検出: raw配列cleanup削除2失敗、raw環境export追加2失敗、mapを常に既定へ戻す4失敗、BLUE/GREEN mode順反転1失敗。"
+  - "minorの前提追跡は実装欠陥や既承認判断の撤回要求を意味しない。別UCの--final-crosscheck/--housekeep未実装と特定入力の時間テストの存在は欠陥指摘しない。"
+  - "前提判定はconsistent=1/spec_absent=24/contradicts=0/unlisted=0。A-035はinternal_failureの一般規則と内部k/vプロトコルの未規定を区別してspec_absent。"
+  - "検証証跡は一時領域 /tmp/relay-verify-5.nSR0DP に保持。probe.py / independent.json / mutation.json / bats.log / bdd.log / linux-native.log に再実行手順と結果を格納。"
+assumption_verdicts_sha256: "6273539decc69d473f9932c3237896dd71ca257d11913be66b57cfd9d4a997bf"

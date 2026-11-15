@@ -1,0 +1,15 @@
+event_id: 20261115_150027_s8_feedback_draft_completed_fd678b04
+type: stage_completed
+uc_id: fd678b04
+stage: S8
+payload:
+  result: pass
+  mode: initial
+  status: draft
+  draft_path: docs/impl/latest/fd678b04/feedback/draft.md
+  draft_sha256: 33be65d1a882c38815d45a910dcafa5b59e6fc4840197f3096dc4b071c6cc11a
+  request_count: 1
+  blocker_count: 0
+  manifest_sha256: 890bfec8902fb1f1779157d5b2f7dc7b4a92540e4f9c267c260dfded6a683903
+  manifest_projection: v2
+created_at: '2026-11-15T15:00:27+09:00'

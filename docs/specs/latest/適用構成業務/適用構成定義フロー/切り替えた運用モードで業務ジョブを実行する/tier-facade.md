@@ -30,7 +30,7 @@
 | custom(表に無い有効な組合せ。例: blue=foreground / green=background / rapid=off) | — | background → foreground | foreground | foreground | rapid が off 以外(foreground / background)なら作成、off なら接続しない | rapid が off 以外なら送信 | background slot(hang-detector は off でも成果物を走査) |
 
 - 管理 DB(ジョブキュー兼管理 DB)は relay-gate 内部のデータストアで、外部システムではない。rapid の foreground と background は完了通知・管理 DB 書き込みの範囲で同じ挙動(判定は「off か off 以外か」)
-- 世代交代(並行稼働 → 単独本番 → 次世代並行稼働)の切り替え単位は feature flag の変更のみ。次世代並行稼働への移行時は `BLUE_RUNNER` / `BLUE_IMPL` に旧 green の runner と実装版、`GREEN_RUNNER` / `GREEN_IMPL` に次世代の runner と実装版を割り当て、`blue-job-map.csv` を旧 green のジョブマップから作る(UC「slot runner の実体スクリプトを割り当てる」「slot ごとのジョブマップを定義する」)
+- 世代交代(並行稼働 → 単独本番 → 次世代並行稼働)の切り替え単位は feature flag の変更のみ。次世代並行稼働への移行時は `BLUE_RUNNER` / `BLUE_IMPL` に旧 green の runner と実装版、`GREEN_RUNNER` / `GREEN_IMPL` に次世代の runner と実装版を割り当て(両 slot とも標準の slot runner なら、runner の割当は同じファイルのまま変えない)、blue の slot ジョブマップ(既定は `blue-job-map.csv`。feature flag の `BLUE_JOB_MAP_CSV` で場所を変えられる)を旧 green のジョブマップから作る(UC「slot runner の実体スクリプトを割り当てる」「slot ごとのジョブマップを定義する」)
 
 ## 出力契約
 

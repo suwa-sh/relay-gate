@@ -1,140 +1,187 @@
 stage: S2
 uc_id: fd678b04
-manifest_sha256: b36aeb29b227cdb7bc1fc5f2e44b44b56ade2bc7d5b490833a17f7b7c4651a68
+manifest_sha256: ea471d8749f1ddfcb1a55fd391ca4613ec8297095687bcce25da3e8b499da272
 manifest_projection: v2
 result: pass
-scaffold_mode: full
-rerun_reason: "stale after spec feedback runs up to spec event 20261110_153000_feedback_impl_feedback_dcd8234d (invalidated by 20261113_020309_stage_invalidated_fd678b04_stale_after_spec_feedback_runs)"
-previous_done: "docs/impl/latest/fd678b04/invalidated/20261113_020309_stage_invalidated_fd678b04_stale_after_spec_feedback_runs/stages/S2_test-scaffold.done.yaml"
+scaffold_mode: diff_only
+rerun: true
+rerun_reason: "stale after the 2026-11-16 spec update (optional job map location keys BLUE_JOB_MAP_CSV / GREEN_JOB_MAP_CSV; invalidated by 20261116_023620_stage_invalidated_fd678b04_stale_after_spec_feedback_20261116)"
+previous_done: "docs/impl/latest/fd678b04/invalidated/20261116_023620_stage_invalidated_fd678b04_stale_after_spec_feedback_20261116/stages/S2_test-scaffold.done.yaml"
 branch_slug: configure-feature-flags
 tiers:
   - tier-facade
-red_baseline: pass
-red_baseline_mode: "diff_only(既存実装あり。dist-impl-implement の scoped 再実行の done 条件に準じる)"
-red_baseline_note: "追加・変更したテストは parse 可能かつ実行可能で、undefined / ambiguous step・パースエラー・設定ミスは 0 件。fail はすべて、現行実装(facade/src/)が env 形式の共通規則と --verbose の info 行の規則に未追従であることを理由とする assertion failure(tier BDD 16 件、bats 19 件)。S4 の再実行で追従する。実装は変更していない"
+scaffold_scope:
+  tiers:
+    - tier-facade
+  uc_feature: regenerated
+  atdd: untouched
+scaffold_scope_note: "既存の実装が残る再実行のため、dist-impl-implement mode=test-scaffold の再実行時の done 条件(parse 可能かつ実行可能。新規・変更 Scenario の fail は未実装が理由のものだけ許容)で判定した。全段が未実装で fail する初回の red_baseline: pass は記録しない。実測の red を red_baseline_measured に記録する。atdd: untouched は features/atdd/*.feature の本文のこと(step 定義は追加した)"
+red_baseline_measured:
+  red_total: 22
+  green_added_total: 7
+  by_stage:
+    - stage: atdd
+      total: 5
+      added: 4
+      updated: 0
+      red: 2
+      green: 3
+    - stage: uc_bdd
+      total: 20
+      added: 4
+      updated: 1
+      red: 3
+      green: 17
+    - stage: tier_bdd
+      total: 63
+      added: 14
+      updated: 1
+      red: 11
+      green: 52
+    - stage: tdd
+      total: 516
+      added: 7
+      updated: 0
+      red: 6
+      green: 510
+  reason: "red の 22 件はすべて assertion failure で、理由は『slot ジョブマップの場所を書く任意の 2 キーが未実装』。現行実装は BLUE_JOB_MAP_CSV / GREEN_JOB_MAP_CSV を未知キーとして warn: unknown key を出し(値が空の行も同じ)、ジョブマップは $RELAY_GATE_CONFIG_DIR/<slot>-job-map.csv の固定の名前だけを見る。新しい仕様(契約 config_files.feature-flag.env.job_map_location)は、2 キーを未知キーとせず、値を runner_path_resolution と同じ規則で解決した場所を、所在の検査・stdout の blue_job_map / green_job_map・error 行の map= に使う。実装は変更していない(S4 で追従する)"
+  red_is_assertion_failure: true
+  undefined_steps: 0
+  ambiguous_steps: 0
+  parse_errors: 0
+  red_tests:
+    atdd:
+      - "SPEC-001-01-7: 2 キーが warn: unknown key になり、固定の名前のファイルが無いため job map not found で終了コード 2"
+      - "SPEC-004-01-9: GREEN_JOB_MAP_CSV の値を使わず固定の名前のファイルを見つけて終了コード 0"
+    uc_bdd:
+      - "ジョブマップの場所を絶対パスで書いた feature flag は未知キー警告なしで検証を通過する(SPEC-001-01)"
+      - "ジョブマップの場所の相対パスは設定ファイルのあるディレクトリを基準に解決される(SPEC-004-01)"
+      - "書いた場所にジョブマップが無い feature flag は解決後のパスつきで拒否される(SPEC-004-01)"
+    tier_bdd:
+      - "blue と green に同じ絶対パスのジョブマップの場所を書いた設定を未知キーの warn なしで受理する(1 件)"
+      - "値が空のキーと書いていないキーの slot に固定の名前を使う(Examples 4 行。値が空の行にも warn: unknown key が出る)"
+      - "相対パスのジョブマップの場所を作業ディレクトリではなく設定ファイルのあるディレクトリ基準で解決する(Examples 3 行)"
+      - "相対パスのジョブマップが作業ディレクトリにだけあるとき解決後のパスで job map not found を出す(1 件)"
+      - "書いた場所にジョブマップが無ければ固定の名前のファイルがあっても job map not found を出す(1 件)"
+      - "off の slot のジョブマップの場所を解決も検査もしない(1 件。warn: unknown key が出る)"
+    tdd:
+      - "facade/test/usecase/validate_feature_flag_job_map_location.bats の 7 件中 6 件(2 キーを書くテストすべて)"
+  green_added_note: "追加したテストのうち 7 件は現行実装でも成り立つため最初から green。ATDD の SPEC-001-01-8(9 キーだけの設定)と SPEC-001-01-9(名前が違うキーの warn)、UC BDD の『9 キーと任意の 2 キーのどちらでもないキーは未知キーとして警告される』、tier BDD の 3 件(duplicate key の Examples の追加行 / 2 キーが無い設定で RELAY_GATE_CONFIG_DIR 配下の固定の名前を使う / 名前が違うキーを未知キーとして warn し値を使わない)、単体テストの 1 件(9 キーだけの設定)。回帰の見張りとして残した。And 2 行が足された UC BDD の『元資料の 9 キーの feature flag は未知キー警告なしで検証を通過する』も green のまま"
+scaffold_validation:
+  method: "追加した step と単体テストが、正しい実装で通ることを確認した。リポジトリの facade と features を scratchpad へ複製し、複製側にだけ試作(2 キーを定義済みのキーに加え、値が空でなければ runner と同じ規則で解決したパスをジョブマップの場所にする)を当てて実行した。リポジトリ側の facade/src と facade/bin は変更していない"
+  results:
+    - "tier BDD(configure-feature-flags.feature): 63 scenarios (63 passed), 409 steps (409 passed)"
+    - "UC BDD(configure-feature-flags.feature): 20 scenarios (20 passed), 137 steps (137 passed)"
+    - "ATDD(割り当ての 5 タグ): 5 scenarios (5 passed)"
+    - "bats(追加 1 ファイル): 7 tests, 7 ok"
+  conclusion: "red は足場の誤りではなく、実装が未追従であることだけが理由"
 spec_changes_applied:
-  - "tier-facade.md ティア完了条件: 9 Scenario から 17 Scenario + Scenario Outline 3 本(Examples 15 行)へ。追加は、制御文字の可視表記 / CRLF の拒否 / バイト・改行の違反の全件報告 / invalid line / 字下げしたコメント行 / 値の先頭の # / duplicate key / 大文字小文字の違うキー / --verbose の 3 Scenario"
-  - "cli-command-contract.yaml config_input_rules(byte_checks / env_files / snapshot / internal_failure)が --feature-flag にも適用される。検査の段は バイト・改行 → 行の構造(invalid line → duplicate key)→ キーごとの検査"
-  - "--verbose の info 行(spec-decision-033): 文言 'info: key loaded key=<KEY> path: <path>'。キーごとの検査へ進んだ回だけ出す。順は info 全件 → 未知キーの warn 全件 → error → runner 未応答の warn"
-  - "spec.md E2E 完了条件は本文の変更なし(12 Scenario)。usdm の受け入れ条件も変更なしのため features/uc と features/atdd は触れていない"
+  - "spec.md E2E 完了条件: 16 Scenario から 20 Scenario へ。追加は『ジョブマップの場所を絶対パスで書いた…(SPEC-001-01)』『ジョブマップの場所の相対パスは…(SPEC-004-01)』『9 キーと任意の 2 キーのどちらでもないキーは…(SPEC-001-01)』『書いた場所にジョブマップが無い…(SPEC-004-01)』。『元資料の 9 キーの feature flag は…』に And 2 行を追加"
+  - "tier-facade.md ティア完了条件: 実行 49 から 63 へ。追加は Scenario 6 本と Scenario Outline 2 本(Examples 4 行と 3 行)、duplicate key の Examples 1 行。改名 1 本(『9 キーと任意の 2 キーのどちらでもないキーの値をプロセスの環境へ取り込まない』。step は同じ)"
+  - "CLI 契約 config_files.feature-flag.env.job_map_location の細部(blue と green で別の場所 / 絶対パスと相対パスの混在 / 両方の値が空 / off の slot の相対パス / mode が列挙外の slot / --verbose の info 行 / map= の制御文字の可視表記)を単体テストで判定する"
+  - "『読み取りの途中の一時的な保持』の 3 条件: 仕様の BDD に新しい Scenario は無く(改名された Scenario が外から見える結果を判定している)、実装の内部の条件のため、テストは足していない。S4 と S5 で実装とつき合わせる"
+  - "性能を合否とするテストは足していない。時間に依存する既存のテストは変更していない"
 transcription_check:
-  method: "spec.md / tier-facade.md の gherkin ブロックと feature 本文(出典コメント行を除く)を行単位で完全一致比較"
+  method: "spec.md / tier-facade.md の gherkin ブロックを feature 本文へ機械的に転写し、tier の feature 本文(# で始まる出典コメント行を除く)が仕様のブロックと行単位で完全一致することを確認した。UC の feature は従来どおり 2 ブロックを空行 1 行でつないだ。git diff で、変わったのが仕様の追加・改名の箇所と出典コメント 1 行だけであることを確認した"
   uc_feature_verbatim: true
   tier_feature_verbatim: true
 generated:
   atdd:
-    feature: features/atdd/SPEC-001-01.feature
+    features:
+      - features/atdd/SPEC-001-01.feature
+      - features/atdd/SPEC-004-01.feature
     feature_body_changed: false
     steps: features/atdd/steps/configure-feature-flags.steps.js
-    steps_changed: false
+    steps_changed: true
+    steps_change_summary: "追加 4 Scenario の step 9 件(Given 4 / When 1 / Then 4)を実体で実装して末尾に追加。既存 step(SPEC-001-01-4)は変更なし。受け入れ基準に無い具体値(キー名・パス・文言)は対応する UC BDD Scenario と CLI 契約の値を使った"
     scenarios:
       - SPEC-001-01-4
+      - SPEC-001-01-7
+      - SPEC-001-01-8
+      - SPEC-001-01-9
+      - SPEC-004-01-9
+    scenarios_added: 4
   uc_bdd:
     feature: features/uc/configure-feature-flags.feature
-    feature_regenerated: false
+    feature_regenerated: true
+    feature_change: "仕様と同じ位置に 4 Scenario を追加。『元資料の 9 キーの feature flag は…』に And 2 行を追加。出典コメントを 1 行追加。ほかの Scenario の本文は変更なし"
     steps: features/uc/steps/configure-feature-flags.steps.js
-    steps_changed: false
+    steps_changed: true
+    steps_change_summary: "追加された step 20 件(Given 10 / When 2 / Then 8)を実体で実装して末尾に追加。既存 step は変更なし"
     source: "docs/specs/latest/適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md#E2E完了条件(BDD)"
-    scenarios: 12
+    scenarios: 20
+    scenarios_added: 4
+    scenarios_updated: 1
     cross_uc_scenarios_added: 0
-    cross_uc_note: "Scenario の追加・変更が無いため、UC 横断 Scenario の一覧は既存 issue(20260917_004843 / 20260917_074633)のまま"
+    cross_uc_note: "追加した 4 Scenario と足された And 2 行の Then は validate-config.sh の終了コード・stdout・stderr だけで、他 UC の責務を含まない(runner が同じ場所を使う実行側は、spec.md『関連 USDM』の注記どおり別 UC が覆う)。UC 横断 Scenario の一覧は既存 issue(20260917_004843 / 20260917_074633)のまま"
   tier_bdd:
     - tier: tier-facade
       feature: facade/features/configure-feature-flags.feature
       feature_regenerated: true
+      feature_change: "仕様と同じ位置に Scenario 6 本と Scenario Outline 2 本を追加。duplicate key の Examples に 1 行を追加。Scenario 1 本を改名。出典コメントを 1 行追加。ほかの Scenario の本文は変更なし"
       steps: facade/features/steps/configure-feature-flags.steps.js
       steps_changed: true
-      steps_change_summary: "追加 Scenario の step 28 件(Given 12 / When 1 / Then 15)を実体で実装して追加。ff.env をバイト列で書く経路(CR・不正な UTF-8・行の挿入)を追加。既存 step の定義は変更なし"
+      steps_change_summary: "追加された step 24 件(Given 18 / When 1 / Then 5。うち正規表現で複数の文言を受けるものを含む)を実体で実装して末尾に追加。既存 step の変更は 2 点だけ。(1)『一時ディレクトリ conf に ff.env があり … GREEN_RUNNER=<value> が書いてある』の正規表現を、同じ書き出しで GREEN_JOB_MAP_CSV=<value> が続く新しい step と両方に一致しないよう絞った(既存の Examples の値の扱いは変わらない)。(2)パスの置き場に <maps の絶対パス> と <一時ディレクトリ maps の絶対パス> を足した"
       source: "docs/specs/latest/適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md#ティア完了条件(BDD)"
-      scenarios: 32
-      scenarios_note: "Scenario 17 + Scenario Outline 3 本の Examples 15 行。再実行前は 9"
+      scenarios: 63
+      scenarios_added: 14
+      scenarios_updated: 1
+      scenarios_note: "再実行前は 49。追加 14 = Scenario 6 + Outline の Examples 7 行 + duplicate key の Examples 1 行。更新 1 は改名"
   tdd:
     - tier: tier-facade
-      file: facade/test/usecase/validate_feature_flag_env_rules.bats
+      file: facade/test/usecase/validate_feature_flag_job_map_location.bats
       change: added
-      tests: 22
-      target: "facade/bin/validate-config.sh --feature-flag(エントリポイント経由)。バイト・改行の検査 / invalid line・duplicate key / 未知キーの warn と error の順 / --verbose の info 行 / 入力の複製の失敗(終了コード 6)/ 制御文字の可視表記 / 5,000 行で 10 秒以内"
-    - tier: tier-facade
-      file: facade/test/repository/feature_flag_config.bats
-      change: updated
-      tests: 13
-      detail: "削除 3(同じキーは後の行が勝つ / = の無い行をキーだけの行として読む 2 件。いずれも仕様から消えた場面)。書き換え 2(コメント行のテストから空白だけの行を外す / CRLF のテストを最終行の改行なしだけにする)。追加 5(キーと値の前後の空白 / 引用符の内側の空白 / 片側だけ・種類違いの引用符 / 値の先頭の # / 改ページ・垂直タブは空白として除かない)"
-    - tier: tier-facade
-      file: facade/test/usecase/validate_feature_flag.bats
-      change: updated
-      tests: 13
-      detail: "= の無い FINAL_DB_CONN_REF 行の期待を、FINAL_ キーの error から invalid line 1 行へ変更。--verbose のテストに info 行が 9 行だけであることの確認を追加"
-    - tier: tier-facade
-      file: facade/test/presentation/validate_config.bats
-      change: updated
-      tests: 12
-      detail: "runner 問い合わせの準備失敗のテストで、失敗の起こし方を TMPDIR の差し替えから PATH 先頭の代替 mktemp へ変更(TMPDIR の差し替えは入力の複製の失敗が先に起きるため)。期待は変更なし"
+      tests: 7
+      red: 6
+      target: "facade/bin/validate-config.sh --feature-flag(エントリポイント経由。内部の関数の分け方を固定しない)。2 キーを書かない 9 キーだけの設定 / blue に絶対パス・green にサブディレクトリの相対パス / 2 キーとも値が空 / off の slot に実体の無い相対パス / mode が列挙外の slot の場所に実体が無い / 値にタブを含むときの map= の可視表記 / --verbose の info 行"
+legacy_rule_expectations_found:
+  note: "2 キーを未知キーとして warn する前提のテスト、および 2 キーがあっても固定の名前だけを見る前提のテストを、facade/test・facade/features・features/uc・features/atdd/steps で検索した(BLUE_JOB_MAP_CSV / GREEN_JOB_MAP_CSV の出現)。該当は無かったため、期待値を直した既存テストは無い"
+  updated: []
 test_runs:
   - stage: atdd
     cwd: "."
-    command: "npx cucumber-js --config cucumber.cjs features/atdd --tags @atdd_SPEC-001-01-4"
-    exit_code: 0
-    summary: "1 scenario (1 passed), 5 steps (5 passed)"
-    fail_reason: none
+    command: "npx cucumber-js --config cucumber.cjs features/atdd --tags \"@atdd_SPEC-001-01-4 or @atdd_SPEC-001-01-7 or @atdd_SPEC-001-01-8 or @atdd_SPEC-001-01-9 or @atdd_SPEC-004-01-9\""
+    exit_code: 1
+    summary: "5 scenarios (3 passed, 2 failed), 25 steps (23 passed, 2 failed)"
+    total: 5
+    red: 2
+    fail_reason: "未実装(ジョブマップの場所の 2 キー)。2 件とも assertion failure"
     undefined_steps: 0
+    ambiguous_steps: 0
   - stage: uc_bdd
     cwd: "."
     command: "npx cucumber-js --config cucumber.cjs features/uc"
-    exit_code: 0
-    summary: "46 scenarios (46 passed), 269 steps (269 passed)"
-    target_feature_summary: "12 scenarios (12 passed), 73 steps (73 passed)"
-    fail_reason: none
+    exit_code: 1
+    summary: "54 scenarios (51 passed, 3 failed), 333 steps (327 passed, 3 skipped, 3 failed)。再実行前は 50 scenarios"
+    target_feature_summary: "20 scenarios (17 passed, 3 failed), 137 steps (131 passed, 3 skipped, 3 failed)"
+    total: 20
+    red: 3
+    fail_reason: "未実装(ジョブマップの場所の 2 キー)。3 件とも assertion failure"
     undefined_steps: 0
+    ambiguous_steps: 0
   - stage: tier_bdd
     tier: tier-facade
     cwd: facade
     command: "npx cucumber-js --config ../cucumber.cjs features"
     exit_code: 1
-    summary: "80 scenarios (64 passed, 16 failed), 437 steps (413 passed, 8 skipped, 16 failed)"
-    target_feature_summary: "32 scenarios (16 passed, 16 failed), 176 steps (152 passed, 8 skipped, 16 failed)"
-    fail_reason: not_implemented
+    summary: "111 scenarios (100 passed, 11 failed), 670 steps (653 passed, 6 skipped, 11 failed)。再実行前は 97 scenarios"
+    target_feature_summary: "63 scenarios (52 passed, 11 failed), 409 steps (392 passed, 6 skipped, 11 failed)"
+    total: 63
+    red: 11
+    fail_reason: "未実装(ジョブマップの場所の 2 キー)。11 件とも assertion failure"
     undefined_steps: 0
     ambiguous_steps: 0
-    failed_scenarios:
-      - name: "値に含まれる制御文字を可視表記で出力する"
-        count: 1
-        reason: "value= に生の ESC をそのまま出す"
-      - name: "CRLF 改行の設定を拒否する"
-        count: 1
-        reason: "CR を落として受理し終了コード 0 になる"
-      - name: "バイト・改行の違反を全件出してキーの検査をしない"
-        count: 1
-        reason: "バイト・改行の検査が無く、キーごとの検査の error を出す"
-      - name: "キーが空の行と KEY=VALUE でない行を invalid line で拒否する(Examples 5 行)"
-        count: 5
-        reason: "invalid line の検査が無い。読み飛ばすか、キーだけの行として読む"
-      - name: "同じキーが 2 行以上ある設定を duplicate key で拒否する(Examples 6 行)"
-        count: 6
-        reason: "duplicate key の検査が無く、後の行の値で検証する"
-      - name: "--verbose で info 行をすべて出してから未知キーの warn 行、キーごとの検査の error 行の順に出す"
-        count: 1
-        reason: "error 行を未知キーの warn 行より先に出す"
-      - name: "行の構造の検査で止めた回は --verbose でも info 行を出さない"
-        count: 1
-        reason: "invalid line で止めず、info 行とキーごとの検査の行を出す"
   - stage: tdd
     tier: tier-facade
     cwd: facade
     command: "bats -r test"
     exit_code: 1
-    summary: "408 tests, 389 ok, 19 not ok(再実行前は 384 tests, 384 ok)"
-    fail_reason: not_implemented
-    failed_tests:
-      - file: facade/test/usecase/validate_feature_flag_env_rules.bats
-        count: 17
-        reason: "バイト・改行の検査なし 3 / invalid line・duplicate key の検査なし 3 / 未知キーの warn が error より後 3 / --verbose で (i)(ii) の違反があっても info を出す 3 / 入力の複製が無く config snapshot failed を出さない 1 / 制御文字の可視表記なし 2 / 5,000 行で 10 秒を超える 2"
-      - file: facade/test/repository/feature_flag_config.bats
-        count: 1
-        reason: "値の前後の改ページ・垂直タブを空白として除いてしまう"
-      - file: facade/test/usecase/validate_feature_flag.bats
-        count: 1
-        reason: "= の無い行を invalid line にせず、キーだけの行として読む"
-    passed_new_tests_note: "追加 22 件のうち 5 件は現行実装でも green(最終行の改行なし / 字下げしたコメント行 / runner 未応答の warn の位置 / ファイルが無い回 / 一時ファイルが残らない)。回帰テストとして残す"
+    summary: "516 tests, 510 ok, 6 not ok。再実行前は 509 tests"
+    total: 516
+    added: 7
+    updated: 0
+    red: 6
+    fail_reason: "未実装(ジョブマップの場所の 2 キー)。追加 7 件のうち 6 件"
 format_check:
   tier: tier-facade
   command: "shfmt -d ."
@@ -144,10 +191,10 @@ lint:
   command: "find src test -name '*.sh' -exec shellcheck -x {} +"
   exit_code: 0
 dom_snapshot_tests: not_applicable
-issues:
-  - path: docs/impl/latest/fd678b04/issues/20261113_021600_feature-flag-error-line-order-undefined.md
-    summary: "--feature-flag のキーごとの検査で error 行が 2 行以上出るときの error 行どうしの順が仕様に無い(契約 1353 行目は『各検証種別の契約のとおり』とするが、feature flag の節に順の定めが無い)。テストでは順を固定していない。あわせて、mode が列挙外のときに必須検査を行うかも仕様から 1 つに決まらない"
-    blocker: false
-issues_note: "UC 横断 Scenario の新規起票は無し(spec.md の Scenario に変更が無い)。既存 issue 2 件は変更なし"
-completed_at: '2026-11-13T02:25:00+09:00'
+issues: []
+issues_note: "新規起票は無し。仕様と契約の間に矛盾は見つからなかった。UC 横断 Scenario の追加は無い"
+observations:
+  - "bats の全件を tier BDD・UC BDD と同時に走らせた 1 回目は、この UC の追加分と関係の無い既存テスト 3 件が落ちた。bats だけで走らせ直すと 510 ok で、落ちたのは追加した 6 件だけだった(前回の記録と同じ現象)。段は 1 つずつ実行すること。上の test_runs の tdd は単独実行の結果"
+  - "CLI 契約の job_map_location の節は全文を読んでいない。テストの期待値は spec.md / tier-facade.md の BDD と設定契約の表・要約から取った。契約にだけある細部(基準が / のときなど)は runner_path_resolution と共通の規則で、既存の runner 側のテストが判定している"
+completed_at: '2026-11-16T02:55:00+09:00'
 completed_by: dist-impl-implement@0.14.1

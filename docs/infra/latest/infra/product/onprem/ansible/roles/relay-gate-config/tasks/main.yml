@@ -20,6 +20,11 @@
     group: relay-gate
     mode: "0750"
 
+# ジョブマップの置き場所は feature flag の任意の 2 キー(blue 用と green 用。キー名は仕様で確定)で変えられる。
+# キーが無い・空なら、下の loop の固定の名前(/etc/relay-gate/<role>-job-map.csv)を使う。9 キーだけの既存の設定はそのまま動く。
+# 絶対パスと相対パスを受け付け、相対パスの基準は feature-flag.env のあるディレクトリ(この構成では /etc/relay-gate/)。
+# 別の場所を指定する設置では、適用側が loop の項目と配置先を指定先に合わせて差し替え、その場所のファイルも同じ所有者・読み取り専用にする(正本は同じ構成管理リポジトリ)。
+# このロールは feature-flag.env の値を判定しない。指定先と配置先が一致することは導入する側が確かめる。
 - name: feature flag / ジョブマップ(CSV)等を配置する(読み取り専用)
   ansible.builtin.copy:
     src: "files/{{ item }}"

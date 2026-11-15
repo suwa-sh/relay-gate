@@ -1,0 +1,32 @@
+event_id: 20261115_172159_s1_uc_init_completed_fd678b04
+type: stage_completed
+uc_id: fd678b04
+stage: S1
+payload:
+  result: pass
+  manifest_sha256: dee92025af3be3e20aecf1f99a59e6b911041405eec43a76a3da8e2da74ed1d5
+  manifest_projection: v2
+  done:
+    stage: S1
+    uc_id: fd678b04
+    manifest_sha256: dee92025af3be3e20aecf1f99a59e6b911041405eec43a76a3da8e2da74ed1d5
+    manifest_projection: v2
+    result: pass
+    input_preflight:
+      files_exist: true
+      yaml_parse: true
+      gherkin_blocks: 3
+      gherkin_blocks_note: spec.md 2 / tier-facade.md 1
+      tier_ids_in_arch:
+      - tier-facade
+      conditional_inputs_consistent: true
+    lineage_ok: true
+    lineage_note: spec-event 20261115_164000_feedback_runner_relative_path. usdm latest 20261103_131000, arch latest 20261103_133000 (both older than the spec event). consistent with bootstrap.done.yaml
+    atdd_scenarios:
+    - SPEC-001-01-4
+    atdd_mapping: unchanged (atdd_confirmed true). all tags exist in features/atdd
+    shared_spec_refs_note: 'direct: spec.md -> cli-command-contract.yaml / ui-design.md / asyncapi.yaml; tier-facade.md -> ui-design.md. transitive: rdb-schema.yaml / data-visualization.md. 5 refs (same set as the 2026-09 run). _api-summary.yaml is legacy (no _contract-slice.json)'
+    scope_note: 'redo after the user''s decision (2026-11-15) to accept relative paths for the 4 runner / worker keys of feature-flag.env, resolved against the directory of the config file (spec-decision-035, CLI contract runner_path_resolution). the current implementation rejects relative paths, so the implementation must change. open questions carried to the next review: transient holding of unknown key values (assumption A-040), error line of the start command (docs/todo.md)'
+    completed_at: '2026-11-15T17:21:58+09:00'
+    completed_by: dist-impl-run@0.14.1
+created_at: '2026-11-15T17:21:58+09:00'

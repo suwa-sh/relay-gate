@@ -1,31 +1,31 @@
 schema_version: '1.0'
 uc_id: fd678b04
-fixed_at: '2026-11-13T02:03:08+09:00'
+fixed_at: '2026-11-16T02:36:19+09:00'
 inputs:
   spec_event:
-    event_id: spec:20261110_153000_feedback_impl_feedback_dcd8234d
-    sha256: 178dd80ba2fe6a2048ac5136849c678d1f46c6ca40f84fd2a47c82cb00b64ed9
+    event_id: spec:20261116_021000_feedback_standard_runner_job_map_location
+    sha256: 8aaf650924c43958cf75da8d7f90370dab8e60416382b4d9a7b2217e11d18200
   spec_md:
     path: docs/specs/latest/適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md
-    sha256: 6042bf16ad96c5bb1bea19726c864139300cddb4cfbbd47b9063e5d46f435de5
+    sha256: fe9c3664d7e49a38a34b2722939f779223aaf921673fbd35fc00cd373a76720b
   tier_mds:
   - tier: tier-facade
     path: docs/specs/latest/適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md
-    sha256: a45bb0798bdea025b7046315fa56e9077f5af286ebfb3183e707b655973f6186
+    sha256: dc838dce29fc9552b64c98e9feac64ded852b1c43ff756a6aacfce63c4083d9e
   api_summary:
     path: docs/specs/latest/適用構成業務/適用構成定義フロー/feature flag を設定する/_api-summary.yaml
-    sha256: c35272038e911228f0aeeb0770cb40399ce55f80ab9a5729071980aa787110de
+    sha256: a6e5606c85fda1208d18d85330c18ef8c677ef3ff46889c785035273c8c4074c
   shared_spec_refs:
   - path: docs/specs/latest/_cross-cutting/api/asyncapi.yaml
     sha256: d7ee3342ea5f162b739f92f9e7d770969692a9d209a04fcd687672b1a46e67b9
   - path: docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml
-    sha256: 4073b2886c0ab5b7b4972a620d3e3beff7f59687a17dfa6e01705a990318a8c8
+    sha256: a6d7c7942947d73af03ea2ad8c9fc640184396a7efc1f67fe2de06f1eab16d10
   - path: docs/specs/latest/_cross-cutting/datastore/rdb-schema.yaml
     sha256: bbe77902949f155ada1a352661e41cc16409fa58b4076cde648cb028b5de11ac
   - path: docs/specs/latest/_cross-cutting/ux-ui/data-visualization.md
     sha256: 762c015c99af2d63edee3e9b648b8f3e427c1b872ea42b89e8b311faded18ebf
   - path: docs/specs/latest/_cross-cutting/ux-ui/ui-design.md
-    sha256: 0b20576772ef4d7857e49080746ad9e79accccaa668d3090298315f5bbf3c6bb
+    sha256: 9241510c007b3f71d14b15d87cc169bab5a1eaf08ab5b532d44a43eebfc1d468
   model_summary:
     path: docs/specs/latest/適用構成業務/適用構成定義フロー/feature flag を設定する/_model-summary.yaml
     sha256: 268f5bf094bdf60a35d2d4828503cb7db3d6b967c147c6a9426582fb7f065719
@@ -34,13 +34,13 @@ inputs:
     sha256: bbe77902949f155ada1a352661e41cc16409fa58b4076cde648cb028b5de11ac
   nfr:
     path: docs/nfr/latest/nfr-grade.yaml
-    sha256: 71b7a2b971a9c5b57f2bbe1cfc360f3662d928ea9bb4be34af9396d49d74ac37
+    sha256: 02bb857be42015520e925f0386818e1515b6015abfe2e0df0bd34bbaaafbef2d
   usdm:
-    event_id: 20261103_131000_feedback_housekeeping_db_required
-    sha256: b331577ccf21ee2b03596ae57aa9a43e149821d1fe0eda0bb0d5715cb820f262
+    event_id: 20261116_013000_feedback_standard_runner_job_map_location
+    sha256: 05c1056ed1909eae0293a6ad2a77c2455a5793d19fd4f2d8e8eebc45fcb53cda
   arch:
-    event_id: 20261103_133000_feedback_housekeeping_db_required
-    sha256: 6ee48d9e90d09b186d8d085a0ac0c64adb0a637559321a753c0612124f5da27d
+    event_id: 20261116_015000_feedback_standard_runner_job_map_location
+    sha256: c53102258eb87c109a5e44ec19daf68de60dc5770785d80c474f31b1cf8d9879
   contracts_decl:
     sha256: 7841f9ba9d00013173c0b90f45ffabb37034ae872ddafdd02d5fdaff26b7d6e5
   contracts_lock:

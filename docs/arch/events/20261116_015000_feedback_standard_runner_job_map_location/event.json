@@ -1,0 +1,49 @@
+{
+  "schema_version": "distillery.arch-feedback-event/v1",
+  "event_id": "20261116_015000_feedback_standard_runner_job_map_location",
+  "created_at": "2026-11-16T01:50:00Z",
+  "stage": "architecture",
+  "trigger_event": "usdm:20261116_013000_feedback_standard_runner_job_map_location, rdra:20261116_013000_feedback_standard_runner_job_map_location, nfr:20261116_014000_feedback_standard_runner_job_map_location",
+  "feedback_request": {
+    "feedback_request_id": "20261116_standard_runner_job_map_location",
+    "input_sha256": "733163f9092ac7055b410880c40f85fd312b2684f25fb0fb20d8d3412626822a",
+    "request_ids": [
+      "CR-65b09d93-001",
+      "CR-65b09d93-002"
+    ],
+    "work_unit_ids": [
+      "CR-65b09d93-001#1",
+      "CR-65b09d93-002#1"
+    ]
+  },
+  "members": [
+    {
+      "path": "arch/events/20261116_015000_feedback_standard_runner_job_map_location/_changes.md",
+      "sha256": "8bcec974c9074e6422ccff7f3685ec89f905ea6596138563dfee81678192a950"
+    },
+    {
+      "path": "arch/events/20261116_015000_feedback_standard_runner_job_map_location/_inference.md",
+      "sha256": "9427e7e3c8dd935eab1a13db2f77a2d6924df59b9b9f266fd7645d7f8cd77363"
+    },
+    {
+      "path": "arch/events/20261116_015000_feedback_standard_runner_job_map_location/arch-design-diff.yaml",
+      "sha256": "cbf7625268ad71ce9055dca8c0a0dab13de6f76ac0bb484a97beebb24b08a307"
+    },
+    {
+      "path": "arch/events/20261116_015000_feedback_standard_runner_job_map_location/arch-design.md",
+      "sha256": "8036b481958012027b03ee279065e1b694cb6428ad590ec3a16597ab178e8ca4"
+    },
+    {
+      "path": "arch/events/20261116_015000_feedback_standard_runner_job_map_location/coverage-report.md",
+      "sha256": "fb134923bba0b7bd14a95b9130e66847f07843c42cfe291fe04ffa8fba95af28"
+    },
+    {
+      "path": "arch/events/20261116_015000_feedback_standard_runner_job_map_location/decisions/arch-decision-027.yaml",
+      "sha256": "0662fd572d5fc14c1175d9aadb473aacd32ce3e0cc87a7a734fc0ffead9a24f4"
+    },
+    {
+      "path": "arch/events/20261116_015000_feedback_standard_runner_job_map_location/source.txt",
+      "sha256": "f6e22b3afa3cca3c0361c421a28f3332951daf6bc009657e544dae19667dfe56"
+    }
+  ]
+}

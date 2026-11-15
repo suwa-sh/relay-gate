@@ -24,18 +24,20 @@
 
 #### 読み込む設定(feature flag env)
 
-キーは元の方針資料の 9 キーだけ。設定版(`CONFIG_VERSION`)は持たない。
+キーは元の方針資料の 9 キーと、slot ジョブマップの場所を書く任意の 2 キー(`BLUE_JOB_MAP_CSV` / `GREEN_JOB_MAP_CSV`)。設定版(`CONFIG_VERSION`)は持たない。
 
 | キー | 値 | 必須 | 検証 |
 |---|---|---|---|
 | BLUE_MODE / GREEN_MODE | foreground / background / off | Yes | 列挙外は `error: invalid value key=<KEY> value=...` で終了コード 2。foreground がちょうど 1 slot でなければ(両方 foreground / 両方 background または off)`error: foreground slot must be exactly one blue_mode=... green_mode=...` で終了コード 2 |
 | RAPID_CROSSCHECK_MODE | foreground / background / off | Yes | 列挙外は終了コード 2。foreground と background は同じ挙動(判定は「off か off 以外か」) |
 | BLUE_IMPL / GREEN_IMPL | 実装版(非空文字列) | mode≠off の slot で Yes | 欠落・空は `error: option required option=<KEY> path: ...` で終了コード 2(mode=off の slot は検証しない)。自 slot の runner に環境変数で渡す(execution-spec.json の `slots.<role>.impl_version` の出所) |
-| BLUE_RUNNER / GREEN_RUNNER | runner 実体スクリプトの絶対パス | mode≠off の slot で Yes | 絶対パスでなければ `error: path is not absolute key=<KEY> path=...`、実行可能ファイルでなければ `error: file not executable key=<KEY> path=...` で終了コード 2(mode=off の slot は検証しない) |
-| RAPID_CROSSCHECK_RUNNER | 速報クロスチェック runner 実体の絶対パス | RAPID_CROSSCHECK_MODE≠off のとき Yes | 上と同じ絶対パス・実行可能検証。slot runner が完了通知(blue-completed / green-completed)を送る先として環境変数で渡す |
-| RAPID_CROSSCHECK_WORKER | 速報クロスチェック worker 実体の絶対パス | RAPID_CROSSCHECK_MODE≠off のとき Yes | 上と同じ絶対パス・実行可能検証。facade は起動に使わない(検証のみ) |
+| BLUE_RUNNER / GREEN_RUNNER | runner 実体スクリプトのパス(絶対パスまたは相対パス) | mode≠off の slot で Yes | 相対パスの値は `$RELAY_GATE_CONFIG_DIR/feature-flag.env` のあるディレクトリを基準に解決する(プロセスの作業ディレクトリは基準にしない。CLI 契約 `config_files.feature-flag.env.runner_path_resolution`)。解決後のパスが実行可能ファイルでなければ `error: file not executable key=<KEY> path=<解決後のパス>` で終了コード 2(mode=off の slot は検証しない)。起動するのは解決後のパス |
+| RAPID_CROSSCHECK_RUNNER | 速報クロスチェック runner 実体のパス(絶対パスまたは相対パス) | RAPID_CROSSCHECK_MODE≠off のとき Yes | 上と同じ解決と実行可能検証(環境変数で渡すのは解決後のパス)。slot runner が完了通知(blue-completed / green-completed)を送る先として環境変数で渡す |
+| RAPID_CROSSCHECK_WORKER | 速報クロスチェック worker 実体のパス(絶対パスまたは相対パス) | RAPID_CROSSCHECK_MODE≠off のとき Yes | 上と同じ解決と実行可能検証。facade は起動に使わない(検証のみ) |
+| BLUE_JOB_MAP_CSV / GREEN_JOB_MAP_CSV | slot ジョブマップの場所(絶対パスまたは相対パス) | No(任意) | 起動する slot ごとに、CLI 契約 `config_files.feature-flag.env.job_map_location` で場所を決め、自 slot の runner へ同じ名前の環境変数で渡す(キーが無い・値が空のときは既定の場所 `$RELAY_GATE_CONFIG_DIR/<slot>-job-map.csv` を渡す。相対パスの解決は runner のキーと同じ `runner_path_resolution`)。facade はジョブマップの存在を検査しない(不在は slot runner が Runner Result で返す)。mode=off の slot のキーは解決しない |
 
-- 未知キーは `warn: unknown key key=<KEY> path: ...`(終了コードは変えない)。上記 9 キー以外に必須キーは無い
+- 未知キー(9 キーと任意の 2 キーのどちらでもなく、`FINAL_` で始まらないキー)は `warn: unknown key key=<KEY> path: ...`(終了コードは変えない)。上記 9 キー以外に必須キーは無い(任意の 2 キーは、無くても値が空でも違反にも warn にもならない)
+- キーごとの検査で違反が 2 つ以上あるときに出す error 行は、CLI 契約 `commands` の facade.sh の `config_violation_report` に従う(検証コマンドの error 行の順で最初に出る違反の 1 行と、続く hint だけ)
 - 設定ファイルの所在: `$RELAY_GATE_CONFIG_DIR/feature-flag.env`(仮採用: _inference.md #5)。起動のたびに読み込み、キャッシュしない
 
 #### 読み込む設定(速報クロスチェック設定 = 管理 DB 接続。RAPID_CROSSCHECK_MODE が off 以外のときのみ)
@@ -53,19 +55,19 @@
 `<runner> --run-id <run_id> --job-id <JOB_ID> --role blue|green --mode foreground|background -- [PARAM...]`
 
 - background は `&` で起動し PID を記録する。foreground も `&` で起動して PID を記録し、すべて起動後に foreground の PID だけを `wait` する
-- runner に引き継ぐ環境変数: 既存 4 つ `RELAY_GATE_CONFIG_DIR` / `RELAY_GATE_ARTIFACT_ROOT` / `RELAY_GATE_LOG_DIR` / `RAPID_CROSSCHECK_MODE`(全 UC 共通)に加え、RAPID_CROSSCHECK_MODE が off 以外のとき `RAPID_CROSSCHECK_RUNNER`(完了通知の送信先実体)、通常起動では自 slot の実装版 `BLUE_IMPL`(role=blue)/ `GREEN_IMPL`(role=green)。runner は feature-flag.env を読まない。RAPID_DB_CONN_REF は渡さず、runner が off 以外のとき `rapid-crosscheck.env`(情報「速報クロスチェック設定」)を自分で読む。復元起動(background-rerun の `--execution-spec`)では impl_version を spec から読むため BLUE_IMPL / GREEN_IMPL は渡さない
+- runner に引き継ぐ環境変数: 既存 4 つ `RELAY_GATE_CONFIG_DIR` / `RELAY_GATE_ARTIFACT_ROOT` / `RELAY_GATE_LOG_DIR` / `RAPID_CROSSCHECK_MODE`(全 UC 共通)に加え、RAPID_CROSSCHECK_MODE が off 以外のとき `RAPID_CROSSCHECK_RUNNER`(完了通知の送信先実体。feature-flag.env の値を解決した後の絶対パス)、通常起動では自 slot の実装版 `BLUE_IMPL`(role=blue)/ `GREEN_IMPL`(role=green)と、自 slot のジョブマップの場所 `BLUE_JOB_MAP_CSV`(role=blue)/ `GREEN_JOB_MAP_CSV`(role=green。契約 `job_map_location` で決めた場所。feature-flag.env にキーが無い・値が空のときも既定の場所を渡す)。runner は feature-flag.env を読まない。RAPID_DB_CONN_REF は渡さず、runner が off 以外のとき `rapid-crosscheck.env`(情報「速報クロスチェック設定」)を自分で読む。復元起動(background-rerun の `--execution-spec`)では impl_version を spec から読むため BLUE_IMPL / GREEN_IMPL は渡さず、ジョブマップを読まないため BLUE_JOB_MAP_CSV / GREEN_JOB_MAP_CSV も渡さない
 - runner の実体仕様は UC「slot runner の実体スクリプトを割り当てる」を参照
 
 ## 出力契約
 
 - **stdout**: facade 自身は何も出さない。foreground の `stdout.log` の中継のみ(UC「foreground slot の結果をジョブスケジューラへ中継する」)
-- **stderr**: relay-gate 自身の検証・実行エラーのみ `error: ... key=value` 1 行 + 任意の `hint:` 1 行。foreground 起動後は stderr を汚さず実行ログへ出す
+- **stderr**: relay-gate 自身の検証・実行エラーのみ `error: ... key=value` 1 行 + 任意の `hint:` 1 行。feature flag のキーごとの検査で違反が 2 つ以上あっても、出す error 行は最初の違反の 1 行だけ(契約 facade.sh `config_violation_report`。未知キーの warn 行は error 行より前に全件出す。入力の守備範囲の違反はこの規則の対象外で、検証コマンドと同じ順・同じ件数で全件出す)。foreground 起動後は stderr を汚さず実行ログへ出す
 - **終了コード**:
 
 | コード | 意味 | 条件 |
 |-------|------|------|
 | foreground の exitcode.txt の値 | 中継 | foreground slot が終了し 3 ファイルが揃った(この UC の正常終了) |
-| 2 | 入力・設定検証エラー | JOB_ID 欠落 / JOB_ID の文字種違反 / 未知のオプション / mode 列挙外 / foreground slot がちょうど 1 つでない(両方 foreground、または両方 background / off) / 必須キー(BLUE_IMPL / GREEN_IMPL / BLUE_RUNNER / GREEN_RUNNER / RAPID_CROSSCHECK_RUNNER / RAPID_CROSSCHECK_WORKER)の欠落・空 / 実体パスが絶対パスでない・実体なし・実行権限なし / RAPID_CROSSCHECK_MODE 列挙外 / feature flag ファイルなし(validate-config.sh --feature-flag と同じ検証関数。canonical C8)/ off 以外のとき rapid-crosscheck.env 不在・RAPID_DB_CONN_REF 欠落 |
+| 2 | 入力・設定検証エラー | JOB_ID 欠落 / JOB_ID の文字種違反 / 未知のオプション / mode 列挙外 / foreground slot がちょうど 1 つでない(両方 foreground、または両方 background / off) / 必須キー(BLUE_IMPL / GREEN_IMPL / BLUE_RUNNER / GREEN_RUNNER / RAPID_CROSSCHECK_RUNNER / RAPID_CROSSCHECK_WORKER)の欠落・空 / 解決後の実体パスに実体なし・実行権限なし / RAPID_CROSSCHECK_MODE 列挙外 / `FINAL_` で始まるキー / feature flag ファイルなし(validate-config.sh --feature-flag と同じ検証関数。canonical C8。対応ジョブマップの所在は検査しない。違反が 2 つ以上あるときに出す error 行は契約 facade.sh `config_violation_report`)/ off 以外のとき rapid-crosscheck.env 不在・RAPID_DB_CONN_REF 欠落 |
 | 6 | 実行エラー | runner 起動前の管理 DB 書き込み失敗(parallel_runs INSERT(STARTED)、rapid_runs INSERT、slot_executions INSERT)、runner プロセスの起動失敗(exec 不可)、成果物ディレクトリ作成失敗、run_id 発行失敗。全 slot 起動後の parallel_runs STARTED→RUNNING UPDATE 失敗、slot_executions.pid UPDATE 失敗、中継後の COMPLETED UPDATE 失敗は終了コードに反映しない(実行ログ ERROR のみ。契約 facade.sh exit 6 / UC「foreground slot の結果をジョブスケジューラへ中継する」) |
 
 エラーメッセージ(固定文言):
@@ -77,9 +79,10 @@
 | foreground なし | `error: foreground slot must be exactly one blue_mode=background green_mode=off` |
 | mode 列挙外 | `error: invalid value key=BLUE_MODE value=parallel` + `hint: use foreground, background or off`(KEY が RAPID_CROSSCHECK_MODE / BLUE_MODE / GREEN_MODE のとき。契約 config_files.feature-flag.env.error_messages) |
 | 必須キー欠落・空 | `error: option required option=GREEN_IMPL path: /etc/relay-gate/feature-flag.env` |
-| 実体パスが絶対パスでない | `error: path is not absolute key=GREEN_RUNNER path=runners/green-runner.sh` |
+| 相対パスの runner 実体なし・実行不可(`GREEN_RUNNER=./green-runner.sh`、設定ファイルが /etc/relay-gate/feature-flag.env) | `error: file not executable key=GREEN_RUNNER path=/etc/relay-gate/./green-runner.sh` |
 | runner 実体なし・実行不可 | `error: file not executable key=GREEN_RUNNER path=/opt/relay-gate/runners/green-runner.sh` |
-| 未知キー(warn。終了コードは変えない) | `warn: unknown key key=CONFIG_VERSION path: /etc/relay-gate/feature-flag.env` |
+| 違反が 2 つ以上(`BLUE_RUNNER=relative/blue-runner.sh` の実体なしと GREEN_IMPL の欠落。設定ファイルが /etc/relay-gate/feature-flag.env) | `error: file not executable key=BLUE_RUNNER path=/etc/relay-gate/relative/blue-runner.sh` の 1 行だけ(`error: option required option=GREEN_IMPL ...` は出さない。契約 facade.sh `config_violation_report`) |
+| 未知キー(warn。終了コードは変えない。error 行があるときは error 行より前) | `warn: unknown key key=CONFIG_VERSION path: /etc/relay-gate/feature-flag.env` |
 | 管理 DB 接続失敗(off 以外) | `error: management db connection failed run_id=... conn_ref=<RAPID_DB_CONN_REF>`(ui-design.md の定型文) |
 | 管理 DB INSERT 失敗(off 以外、runner 起動前) | `error: management db insert failed table=parallel_runs|rapid_runs|slot_executions run_id=...`(定型文。UPDATE 失敗は runner 起動済みのため stderr に出さず実行ログ ERROR のみ) |
 | 管理 DB 接続設定なし(off 以外) | `error: config file not found path: /etc/relay-gate/rapid-crosscheck.env` / `error: option required option=RAPID_DB_CONN_REF path: /etc/relay-gate/rapid-crosscheck.env` |
@@ -89,7 +92,7 @@
 - **設定ファイルの読み込み(共通規約の参照)**: 読む設定ファイル(env / CSV)の入力の守備範囲は CLI 契約 `config_input_rules` に従う(形式(UTF-8 / LF)から外れた NUL バイト・不正な文字コード・BOM・CR と、env の invalid line・同じキーが 2 行以上ある設定(`error: duplicate key key=<KEY> lines=<n1,n2,...> path: ...`。どちらの行の値も使わない。報告の順は `config_input_rules.env_files`)は契約と同文の error 行で拒否して終了コード 2、読み込みは 1 時点の内容だけで判定、補助コマンドの失敗は終了コード 6。値は本 tier に複写しない。判定する BDD は UC「slot ごとのジョブマップを定義する」に置く)。stdout / stderr / 実行ログに出す任意入力の制御文字は `ui-design.md`「制御文字の表記」の可視表記にする。bash の最低版は 5.0(契約 `conventions.runtime_prerequisites`)
 - **バリデーション**(presentation → domain。runner を 1 つも起動する前にすべて実施):
   1. 引数: JOB_ID 必須、`^[A-Za-z0-9_-]+$`
-  2. feature flag: ファイル存在 → 各キーの列挙 → foreground がちょうど 1 slot → 必須キー(mode≠off の slot の *_IMPL / *_RUNNER、RAPID_CROSSCHECK_MODE≠off の RAPID_CROSSCHECK_RUNNER / RAPID_CROSSCHECK_WORKER)の存在 → 実体パスの絶対パス・存在・実行権限 → 未知キー warn
+  2. feature flag: 検査する項目、ほかの検査との前後、違反が 2 つ以上あるときに出す error 行(最初の違反の 1 行と、続く hint だけ)、未知キーの warn 行の位置は、CLI 契約 `commands` の facade.sh の `config_violation_report` に従う(error 行どうしの順の正本は `config_files.feature-flag.env.error_order`。本 tier は検査の順を持たない)。実体パスの解決は `runner_path_resolution`(相対パスは設定ファイルのあるディレクトリが基準)。対応ジョブマップの所在は検査しない
   2'. 速報クロスチェック設定(RAPID_CROSSCHECK_MODE≠off のときだけ): rapid-crosscheck.env の存在 → RAPID_DB_CONN_REF の存在。off では読まない
   3. 検証 NG なら run_id を発行せず、成果物ディレクトリも作らない
 - **確認プロンプト**: なし(非対話)
@@ -97,7 +100,7 @@
 - **起動順序**(usecase `launch_slots`):
   1. run_id 発行(`{ローカル yyyymmddThhmmss}-{job_id}-{8 桁 hex}`。RAPID_CROSSCHECK_MODE によらず常に facade 単独で発行)→ `facade/<run_id>/` と起動対象 role のディレクトリを作成
   2. off 以外のとき parallel_runs INSERT(STARTED)と rapid_runs INSERT(completion_status=PENDING)を **同一トランザクション** で実行する(canonical C3。facade が INSERT の主体。速報側は UPDATE のみ)
-  3. background slot をすべて起動(blue → green の固定順。仮採用)。slot ごとに: off 以外のとき runner 起動「前」に slot_executions INSERT(status=RUNNING, pid=NULL)→ runner 起動(環境変数 RAPID_CROSSCHECK_MODE / RAPID_CROSSCHECK_RUNNER(off 以外)/ 自 slot の BLUE_IMPL または GREEN_IMPL を渡す)→ PID 取得 → off 以外のとき `UPDATE slot_executions SET pid=? WHERE run_id=? AND slot=?`
+  3. background slot をすべて起動(blue → green の固定順。仮採用)。slot ごとに: off 以外のとき runner 起動「前」に slot_executions INSERT(status=RUNNING, pid=NULL)→ runner 起動(環境変数 RAPID_CROSSCHECK_MODE / RAPID_CROSSCHECK_RUNNER(off 以外)/ 自 slot の BLUE_IMPL または GREEN_IMPL / 自 slot の BLUE_JOB_MAP_CSV または GREEN_JOB_MAP_CSV を渡す)→ PID 取得 → off 以外のとき `UPDATE slot_executions SET pid=? WHERE run_id=? AND slot=?`
   4. foreground slot を起動(step 3 と同じ順序: off 以外のとき INSERT(pid=NULL)→ 起動 → pid UPDATE)
   5. off 以外のとき parallel_runs を条件付き UPDATE(STARTED → RUNNING)
   - INSERT を起動前に行う理由: 即時に終了する runner(ジョブマップ未定義・SSH 即失敗)の終端 UPDATE(`WHERE status='RUNNING'`)が facade の INSERT より先に走って 0 件になる競合を防ぐ(round-1 F-004)
@@ -185,7 +188,7 @@ Feature: slot 実行モードを選択して runner を起動する - facade / s
     And facade の終了時に green のスタブはまだ実行中である
 
   Scenario: facade_sh は両 slot foreground を終了コード 2 で拒否する
-    Given feature-flag.env に BLUE_MODE=foreground GREEN_MODE=foreground がある
+    Given feature-flag.env に BLUE_MODE=foreground GREEN_MODE=foreground RAPID_CROSSCHECK_MODE=off がある
     When `facade.sh JOB001` を実行する
     Then 終了コード 2 で stderr に "error: foreground slot must be exactly one blue_mode=foreground green_mode=foreground" が出る
     And スタブ runner の起動記録は存在しない
@@ -215,7 +218,7 @@ Feature: slot 実行モードを選択して runner を起動する - facade / s
     And 最終的に slot_executions の slot=green の行は status=FAILED exit_code=2 で pid が設定されている(runner 側の終端 UPDATE が 0 件にならない)
 
   Scenario: facade_sh は RAPID_CROSSCHECK_MODE=background で rapid-crosscheck.env が無ければ終了コード 2 で終了する
-    Given feature-flag.env に BLUE_MODE=foreground GREEN_MODE=off RAPID_CROSSCHECK_MODE=background がある
+    Given feature-flag.env に BLUE_MODE=foreground GREEN_MODE=off RAPID_CROSSCHECK_MODE=background BLUE_IMPL=v1 BLUE_RUNNER=<記録用スタブ runner> RAPID_CROSSCHECK_RUNNER=<実行可能なスタブ> RAPID_CROSSCHECK_WORKER=<実行可能なスタブ> がある(feature-flag.env のキーごとの検査を通る設定)
     And RELAY_GATE_CONFIG_DIR/rapid-crosscheck.env が存在しない
     When `facade.sh JOB001` を実行する
     Then 終了コード 2 で stderr に "error: config file not found path: <RELAY_GATE_CONFIG_DIR>/rapid-crosscheck.env" が出る
@@ -238,7 +241,7 @@ Feature: slot 実行モードを選択して runner を起動する - facade / s
     And blue と green のスタブ runner の起動記録がある
 
   Scenario: facade_sh は runner 実体が実行不可なら終了コード 2 で終了する
-    Given feature-flag.env に BLUE_MODE=foreground BLUE_RUNNER=<実行可能な runner> GREEN_MODE=background GREEN_RUNNER=/opt/relay-gate/runners/missing.sh RAPID_CROSSCHECK_MODE=off がある
+    Given feature-flag.env に BLUE_MODE=foreground BLUE_IMPL=v1 BLUE_RUNNER=<実行可能な runner> GREEN_MODE=background GREEN_IMPL=v2 GREEN_RUNNER=/opt/relay-gate/runners/missing.sh RAPID_CROSSCHECK_MODE=off がある
     When `facade.sh JOB001` を実行する
     Then 終了コード 2 で stderr に "error: file not executable key=GREEN_RUNNER path=/opt/relay-gate/runners/missing.sh" が出る
     And blue runner も起動されない
@@ -252,4 +255,62 @@ Feature: slot 実行モードを選択して runner を起動する - facade / s
     Given feature-flag.env が正しく定義されている
     When `facade.sh` を引数なしで実行する
     Then 終了コード 2 で stderr に "error: JOB_ID required" が出る
+
+  Scenario: facade_sh は相対パスの runner を設定ファイルのあるディレクトリ基準で起動し速報 runner を解決後のパスで渡す
+    Given RELAY_GATE_CONFIG_DIR/feature-flag.env に BLUE_MODE=foreground GREEN_MODE=off RAPID_CROSSCHECK_MODE=background BLUE_IMPL=v1 BLUE_RUNNER=./blue-runner.sh RAPID_CROSSCHECK_RUNNER=./rapid-crosscheck-runner.sh RAPID_CROSSCHECK_WORKER=./rapid-crosscheck-worker.sh がある
+    And RELAY_GATE_CONFIG_DIR のディレクトリに、起動引数と環境変数を記録して exitcode.txt に 0 を書く実行可能なスタブ blue-runner.sh と、実行可能な rapid-crosscheck-runner.sh / rapid-crosscheck-worker.sh があり、管理 DB が起動している
+    And RELAY_GATE_CONFIG_DIR は末尾に `/` の無い絶対パスで、そのディレクトリに RAPID_DB_CONN_REF を書いた rapid-crosscheck.env と、JOB001 の行を含む blue-job-map.csv がある
+    And 作業ディレクトリにするディレクトリ work(RELAY_GATE_CONFIG_DIR とは別)に、起動されたら記録を残す別の実行可能な blue-runner.sh がある
+    When work を作業ディレクトリにして `facade.sh JOB001` を実行する
+    Then 終了コード 0 で、RELAY_GATE_CONFIG_DIR のスタブ blue-runner.sh が 1 回起動され、work の blue-runner.sh は起動されていない
+    And スタブが記録した環境変数 RAPID_CROSSCHECK_RUNNER は "<RELAY_GATE_CONFIG_DIR>/./rapid-crosscheck-runner.sh" である(契約 config_files.feature-flag.env.runner_path_resolution)
+
+  Scenario: facade_sh は相対パスの runner 実体が無ければ解決後のパスを報告して終了コード 2 で終了する
+    Given RELAY_GATE_CONFIG_DIR/feature-flag.env に BLUE_MODE=foreground BLUE_IMPL=v1 BLUE_RUNNER=<実行可能な runner の絶対パス> GREEN_MODE=background GREEN_IMPL=v2 GREEN_RUNNER=./green-runner.sh RAPID_CROSSCHECK_MODE=off がある
+    And RELAY_GATE_CONFIG_DIR は末尾に `/` の無い絶対パスで、そのディレクトリに green-runner.sh は無く、作業ディレクトリにするディレクトリ work に実行可能な green-runner.sh がある
+    When work を作業ディレクトリにして `facade.sh JOB001` を実行する
+    Then 終了コード 2 で stderr に "error: file not executable key=GREEN_RUNNER path=<RELAY_GATE_CONFIG_DIR>/./green-runner.sh" が出る
+    And どの runner も起動されず、stderr に "path is not absolute" を含む行は出ない
+
+  Scenario: facade_sh は設定の違反が 2 つあるとき検証コマンドの error 行の順で最初の違反の 1 行だけを出す
+    Given RELAY_GATE_CONFIG_DIR/feature-flag.env に BLUE_MODE=foreground GREEN_MODE=background RAPID_CROSSCHECK_MODE=off BLUE_IMPL=blue-2.3.1 BLUE_RUNNER=relative/blue-runner.sh GREEN_RUNNER=<記録用スタブ runner> があり、GREEN_IMPL の行は無い
+    And RELAY_GATE_CONFIG_DIR は末尾に `/` の無い絶対パスで、<RELAY_GATE_CONFIG_DIR>/relative/blue-runner.sh は無い
+    When `facade.sh JOB001` を実行する
+    Then 終了コード 2 で、stderr は "error: file not executable key=BLUE_RUNNER path=<RELAY_GATE_CONFIG_DIR>/relative/blue-runner.sh" の 1 行だけである
+    And stderr に "option=GREEN_IMPL" を含む行は出ない
+    And その 1 行は、同じファイルを `validate-config.sh --feature-flag <RELAY_GATE_CONFIG_DIR>/feature-flag.env` で検証したときの stderr の最初の error 行と同じである
+    And スタブ runner の起動記録は存在せず、RELAY_GATE_ARTIFACT_ROOT/facade/ 配下にディレクトリは作成されない
+
+  Scenario: facade_sh は最初の違反に hint が続くとき error 行と hint の 2 行だけを出す
+    Given RELAY_GATE_CONFIG_DIR/feature-flag.env に BLUE_MODE=foreground GREEN_MODE=foreground RAPID_CROSSCHECK_MODE=maybe だけがある
+    When `facade.sh JOB001` を実行する
+    Then 終了コード 2 で、stderr は 1 行目 "error: invalid value key=RAPID_CROSSCHECK_MODE value=maybe"、2 行目 "hint: use foreground, background or off" の 2 行だけである
+    And stderr に "foreground slot must be exactly one" を含む行も "option required" を含む行も出ない
+    And RELAY_GATE_ARTIFACT_ROOT/facade/ 配下にディレクトリは作成されない
+
+  Scenario: facade_sh は未知キーの warn 行を最初の違反の error 行より前に出す
+    Given RELAY_GATE_CONFIG_DIR/feature-flag.env に CONFIG_VERSION=2026-08-30 BLUE_MODE=foreground GREEN_MODE=background RAPID_CROSSCHECK_MODE=off BLUE_IMPL=blue-2.3.1 BLUE_RUNNER=relative/blue-runner.sh GREEN_RUNNER=<記録用スタブ runner> があり、GREEN_IMPL の行は無い
+    And RELAY_GATE_CONFIG_DIR は末尾に `/` の無い絶対パスで、<RELAY_GATE_CONFIG_DIR>/relative/blue-runner.sh は無い
+    When `facade.sh JOB001` を実行する
+    Then 終了コード 2 で、stderr は 1 行目 "warn: unknown key key=CONFIG_VERSION path: <RELAY_GATE_CONFIG_DIR>/feature-flag.env"、2 行目 "error: file not executable key=BLUE_RUNNER path=<RELAY_GATE_CONFIG_DIR>/relative/blue-runner.sh" の 2 行だけである
+    And スタブ runner の起動記録は存在しない
+
+  Scenario: facade_sh は相対パスの BLUE_JOB_MAP_CSV を設定ファイルのあるディレクトリ基準で解決して blue の runner へ渡しキーの無い green の runner へ既定の場所を渡す
+    Given RELAY_GATE_CONFIG_DIR/feature-flag.env に BLUE_MODE=foreground GREEN_MODE=background RAPID_CROSSCHECK_MODE=off BLUE_IMPL=v1 GREEN_IMPL=v2 BLUE_RUNNER=<記録用スタブ runner> GREEN_RUNNER=<記録用スタブ runner> BLUE_JOB_MAP_CSV=./maps/blue-jobs.csv があり、GREEN_JOB_MAP_CSV の行は無い
+    And RELAY_GATE_CONFIG_DIR は末尾に `/` の無い絶対パスで、<RELAY_GATE_CONFIG_DIR>/maps/blue-jobs.csv も <RELAY_GATE_CONFIG_DIR>/green-job-map.csv も存在しない
+    And スタブ runner は起動引数と環境変数をファイルに記録し、exitcode.txt に 0 を書いて終了する
+    And facade.sh を起動するプロセスの環境に BLUE_JOB_MAP_CSV=/tmp/other-blue.csv と GREEN_JOB_MAP_CSV=/tmp/other-green.csv がある
+    When RELAY_GATE_CONFIG_DIR とは別のディレクトリ work を作業ディレクトリにして `facade.sh JOB001` を実行する
+    Then 終了コード 0 で終了し、blue のスタブの起動引数は "--run-id <run_id> --job-id JOB001 --role blue --mode foreground --" である
+    And blue のスタブが記録した環境変数 BLUE_JOB_MAP_CSV は "<RELAY_GATE_CONFIG_DIR>/./maps/blue-jobs.csv" である(契約 config_files.feature-flag.env.job_map_location)
+    And green のスタブが記録した環境変数 GREEN_JOB_MAP_CSV は "<RELAY_GATE_CONFIG_DIR>/green-job-map.csv" である
+    And stderr に "job map not found" を含む行は出ない(facade はジョブマップの存在を検査しない)
+
+  Scenario: facade_sh は値が空の GREEN_JOB_MAP_CSV の行がある設定で green の runner へ既定の場所を渡す
+    Given RELAY_GATE_CONFIG_DIR/feature-flag.env に BLUE_MODE=foreground GREEN_MODE=background RAPID_CROSSCHECK_MODE=off BLUE_IMPL=v1 GREEN_IMPL=v2 BLUE_RUNNER=<記録用スタブ runner> GREEN_RUNNER=<記録用スタブ runner> があり、加えて値が空の行 `GREEN_JOB_MAP_CSV=` がある
+    And RELAY_GATE_CONFIG_DIR は末尾に `/` の無い絶対パスである
+    And スタブ runner は起動引数と環境変数をファイルに記録し、exitcode.txt に 0 を書いて終了する
+    When `facade.sh JOB001` を実行する
+    Then 終了コード 0 で終了し、green のスタブが記録した環境変数 GREEN_JOB_MAP_CSV は "<RELAY_GATE_CONFIG_DIR>/green-job-map.csv" である(空の値ではない。契約 config_files.feature-flag.env.job_map_location)
+    And stderr に "warn: unknown key key=GREEN_JOB_MAP_CSV" を含む行は出ない
 ```

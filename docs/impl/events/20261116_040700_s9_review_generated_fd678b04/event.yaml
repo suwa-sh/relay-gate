@@ -1,0 +1,35 @@
+event_id: 20261116_040700_s9_review_generated_fd678b04
+type: stage_completed
+uc_id: fd678b04
+stage: S9
+payload:
+  done: docs/impl/latest/fd678b04/stages/S9_review_generated.done.yaml
+  feedback_review_evidence:
+    feedback_id: null
+    draft_path: null
+    draft_sha256: null
+    request_count: 0
+    blocker_count: 0
+    request_ids: []
+  implementation_review_evidence:
+    gate_result: 6/6 pass
+    gates:
+      format: pass
+      lint: pass
+      tdd: pass (535/535)
+      bdd_tier: pass (111/111)
+      uc_bdd: pass (54/54, injections 0)
+      atdd: pass (5/5)
+    open_blocker_count: 0
+    open_major_count: 0
+    open_minor_count: 26
+    tiers:
+    - tier: tier-facade
+      attempt: 6
+      assumptions_sha256: ce40a9ad847e9b99a8f5ca7c58235adf62504092151fadb914858441e43ce95a
+      assumption_verdicts_sha256: e7a199c8e485607596d691eb069dd3044d6d744d0b993a6873d38b6cbe51e7c9
+    assumption_evidence_sha256: 75af6ae1255247e2a85a6f95651908c04bf906364625bd71138ade1eb1f7978c
+  note: 'after the 2026-11-16 spec reflux (optional job map location keys). requests 0, open blockers 0, major 0, minor 26. the review asks 7 decisions: overall approval, spec details decided beyond the user''s decisions, the provisional ATDD mapping (4 scenarios), assumptions (25 + 1 unlisted), whether to request one sentence in the spec about same-named environment variables for the validation command (default = request; answering with the default turns this into a feedback publish instead of the final approval), lint scope for the runner UC, and git delivery (update PR 18)'
+  manifest_sha256: 808bf63e1c7564ffef1498814b5d3f4e3a6163b4c2ff1429e03ae81125b0d01b
+  manifest_projection: v2
+created_at: '2026-11-16T04:07:00+09:00'

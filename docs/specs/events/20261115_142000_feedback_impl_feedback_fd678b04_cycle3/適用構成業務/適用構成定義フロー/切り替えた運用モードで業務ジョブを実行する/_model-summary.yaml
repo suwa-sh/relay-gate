@@ -1,0 +1,37 @@
+uc: "切り替えた運用モードで業務ジョブを実行する"
+business: "適用構成業務"
+buc: "適用構成定義フロー"
+bounded_context_id: "BC-005"
+aggregate_id: "AG-005"
+
+models:
+  - name: "JobLaunchRequest"
+    tier: "tier-facade"
+    layer: "presentation"
+    type: "request"
+    rdra_info: "ジョブ起動要求"
+  - name: "OperationMode"
+    tier: "tier-facade"
+    layer: "domain"
+    type: "value-object"
+    rdra_info: "feature flag 設定"
+  - name: "FeatureFlagConfig"
+    tier: "tier-facade"
+    layer: "repository"
+    type: "record"
+    rdra_info: "feature flag 設定"
+  - name: "SchedulerResponse"
+    tier: "tier-facade"
+    layer: "presentation"
+    type: "record"
+    rdra_info: "ジョブスケジューラ応答"
+  - name: "HangAlertLine"
+    tier: "tier-ops"
+    layer: "domain"
+    type: "value-object"
+    rdra_info: "監視記録"
+    note: "参照のみ。hang-detector.sh の標準エラーの alert 行と終了コードは tier-ops(UC「ハング疑い・実行エラー・比較異常を通知する」)が定義し、facade は出力しない"
+
+tables: []
+kvs: []
+object_storage: []

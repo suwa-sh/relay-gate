@@ -1,0 +1,69 @@
+stage: S4
+tier: tier-facade
+attempt: 5
+uc_id: fd678b04
+manifest_sha256: 890bfec8902fb1f1779157d5b2f7dc7b4a92540e4f9c267c260dfded6a683903
+manifest_projection: v2
+result: pass
+rerun_mode: stale_rerun
+rerun_reason: "仕様の更新(spec-decision-034。実装から出した変更要求 4 件の反映)による stale 由来の再実行。attempt は 5 のまま。前回の検証の指摘は受け取っていない"
+findings_provided: false
+spec_conformance_check:
+  summary: "更新後の tier-facade.md / spec.md / CLI 契約(config_files.feature-flag.env の validation_rules / error_messages / error_order、config_input_rules の env_files / performance_target、validate-config.sh の runner_help_probe)を読み直し、実装と照合した。食い違いは無く、挙動を変えるコードの変更はしていない"
+  items:
+    - topic: "error 行どうしの順(error_order)"
+      result: match
+      evidence: "facade/src/domain/feature_flag.sh の validate_feature_flag_errors(mode 3 キー → foreground の個数 → BLUE_IMPL → BLUE_RUNNER → GREEN_IMPL → GREEN_RUNNER → 速報 runner → 速報 worker → FINAL_ で始まるキー)と facade/src/usecase/validate_feature_flag.sh(その後に対応ジョブマップ blue → green、runner の warn)。1 キー 1 行(欠落・空 → 絶対パスでない → 実行不可の最初の 1 つ)"
+    - topic: "mode が列挙外・欠落・空の slot の扱い"
+      result: match
+      evidence: "feature_flag_mode_is_active は値が off と完全一致するときだけ off。foreground の個数は foreground と完全一致する slot だけ数える。キーが無い・値が空のとき error 行に - を出す(feature_flag_emit_value_line)"
+    - topic: "9 キー以外のキーの値を取り込まない"
+      result: match
+      evidence: "facade/src/repository/feature_flag_config.sh の feature_flag_config_parse は 9 キーだけを変数に載せる。読み取りの作業用の領域の扱いは前提 A-040 に記録した"
+    - topic: "性能は目標値(入力の制限でも合否の検査でもない)"
+      result: match
+      evidence: "大きさを理由にした拒否・警告・打ち切りは無い。特定の入力で時間を確認する既存の自動テストは削除も緩和もしていない(利用者決定)"
+code_changes:
+  behavior_changed: false
+  files:
+    - path: facade/src/domain/feature_flag.sh
+      change: "コメント 1 行だけを直した(350 行目。「error 行どうしの順は仕様に定めが無い」という旧仕様の記述を、正本である CLI 契約 error_order への参照に置き換えた)。行数は変わらない"
+gates:
+  format: pass
+  lint: pass
+  tdd: pass
+  bdd_tier: pass
+gate_runs:
+  - gate: format
+    cwd: facade
+    command: "shfmt -d ."
+    exit_code: 0
+  - gate: lint
+    cwd: facade
+    command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+    exit_code: 0
+  - gate: tdd
+    cwd: facade
+    command: "bats -r test"
+    exit_code: 0
+    summary: "481 tests, 481 ok, 0 not ok(コメントを直した後の最終のコードで実行。直す前のコードでも同じ 481 件 ok)"
+  - gate: bdd_tier
+    cwd: facade
+    command: "npx cucumber-js --config ../cucumber.cjs features"
+    exit_code: 0
+    summary: "87 scenarios (87 passed), 486 steps (486 passed)"
+environment: "macOS(Darwin 25.5.0、arm64)。Linux コンテナでの再実行は今回していない"
+issues_added: []
+assumptions:
+  path: "attempt-5/S4_tier-impl.tier-facade.assumptions.yaml"
+  count: 20
+  by_category: {input_validation: 1, data_format: 2, error_handling: 9, persistence: 0, performance: 7, security: 1}
+  sha256: "2d57f7ab2101e953417a9e1148e687da0cf89a1827593aec7d336bb2ed3274b9"
+  extraction: {candidate_count: 34, excluded_as_explicit: 14, recorded_count: 20}
+  changes_from_previous:
+    removed_as_explicit: ["A-010", "A-016", "A-028"]
+    rewritten: ["A-030", "A-036", "A-017", "A-020", "A-032"]
+    added: ["A-039", "A-040"]
+    kept_as_is: 13
+completed_at: "2026-11-15T14:37:00+09:00"
+completed_by: "dist-impl-implement@0.14.1"

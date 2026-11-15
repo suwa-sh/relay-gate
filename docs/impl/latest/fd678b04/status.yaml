@@ -3,8 +3,8 @@ uc_id: fd678b04
 business: 適用構成業務
 buc: 適用構成定義フロー
 uc: feature flag を設定する
-state: blocked_on_spec
-current_attempt: 5
+state: completed
+current_attempt: 6
 resolved_models:
   implementer: claude-fable-5-2
   verifier: gpt-6-astra
@@ -13,66 +13,68 @@ git_delivery:
   uc_english_name: Configure feature flags
   branch_slug: configure-feature-flags
   base_branch: main
-  base_head: 4f447dfa19599fd976120ef1639b3875111afdde
+  base_head: 44cb3a660a9fd2343bda3a43631bc8f7bb3bdc6f
   feature_branch: feature/configure-feature-flags
   remote: origin
-  base_head_note: 'changed from f695c7b on 2026-11-13 for the rerun after PR #15 merge (20261113_020308_config_confirmed_fd678b04_git_delivery_rerun_base_head)'
+  base_head_note: 'changed from 4f447df on 2026-11-15 for the resume after PR #16 merge (20261115_141513_config_confirmed_fd678b04_git_delivery_rerun_base_head)'
   previous_deliveries:
   - pr: 7
     base_head: f695c7b819c1e86668a92519d31abdec3e296caf
     completed: '2026-09-18'
+  - pr: 16
+    base_head: 4f447dfa19599fd976120ef1639b3875111afdde
+    completed: '2026-11-15'
+    note: delivered while blocked_on_spec (user instruction)
 stages:
   S1_uc_init:
     status: done
-    event: 20261113_020310_s1_uc_init_completed_fd678b04
+    event: 20261116_023621_s1_uc_init_completed_fd678b04
   S2_test_scaffold:
     status: done
-    red_baseline: pass
-    mode: full
-    event: 20261113_021831_s2_test_scaffold_completed_fd678b04
+    mode: diff_only (tests for the optional job map location keys BLUE_JOB_MAP_CSV / GREEN_JOB_MAP_CSV)
+    red: 22
+    added: 29
+    event: 20261116_025444_s2_test_scaffold_completed_fd678b04
   S3_contracts:
     status: done
-    event: 20261113_021832_s3_contracts_completed_fd678b04
+    event: 20261116_025445_s3_contracts_completed_fd678b04
   S4_tier_impl:
     tier-facade:
       status: done
-      attempt: 5
+      attempt: 6
       gates:
         format: pass
         lint: pass
         tdd: pass
         bdd_tier: pass
-      event: 20261113_075723_s4_tier_impl_completed_fd678b04_facade_attempt5
+      event: 20261116_033005_s4_tier_impl_completed_fd678b04_facade_attempt6
   S5_verify:
     tier-facade:
       status: done
-      attempt: 5
-      open_blockers: 2
+      attempt: 6
+      open_blockers: 0
       open_major: null
-      event: 20261113_081532_s5_verify_completed_fd678b04_facade_attempt5
-      note: 2 performance-only blockers accepted as gaps against the goal by the user's decision (not a pass/fail check)
-      user_override_event: 20261115_092742_config_confirmed_fd678b04_performance_target_is_goal_not_gate
-      findings: docs/impl/latest/fd678b04/stages/attempt-5/S5_verify.tier-facade.findings.yaml
+      event: 20261116_034357_s5_verify_completed_fd678b04_facade_attempt6
   S6_uc_bdd:
     status: done
-    event: 20261115_092919_s6_uc_bdd_completed_fd678b04
+    event: 20261116_034558_s6_uc_bdd_completed_fd678b04
   S7_atdd:
     status: done
-    event: 20261115_093018_s7_atdd_completed_fd678b04
+    event: 20261116_034600_s7_atdd_completed_fd678b04
   S8_feedback:
-    status: published
-    published_event: 20261115_101101_feedback_request_published_fd678b04
-    published_path: docs/impl/latest/fd678b04/feedback-requests/20261115_093126_impl_feedback_fd678b04.md
-    request_count: 4
+    status: no_requests
+    event: 20261116_035014_s8_feedback_completed_fd678b04_no_requests
+    request_count: 0
     blocker_count: 0
   S9_review:
     status: approved
-    event: 20261115_100850_review_approved_fd678b04_feedback_publish
-    review_evidence_event: 20261115_094919_s9_review_generated_fd678b04
-    delivery_event: 20261115_101206_delivery_prepared_fd678b04_rerun_with_open_requests
-updated_at: '2026-11-15T10:12:06+09:00'
+    event: 20261116_044340_review_approved_fd678b04_final
+    review_evidence_event: 20261116_040700_s9_review_generated_fd678b04
+    delivery_event: 20261116_044341_delivery_prepared_fd678b04_job_map_location_keys
+updated_at: '2026-11-16T04:43:39+09:00'
 restart:
-  at: '2026-11-13T02:03:08+09:00'
-  reason: rerun of a completed UC after dcd8234d merge (user decision). all done stale
-  invalidation_event: 20261113_020309_stage_invalidated_fd678b04_stale_after_spec_feedback_runs
-  note: stale re-execution stays in attempt-3 (no attempt++)
+  at: '2026-11-16T02:36:19+09:00'
+  reason: resume after the 2026-11-16 spec reflux (transient holding conditions; optional job map location keys; standard slot runner)
+  invalidation_event: 20261116_023620_stage_invalidated_fd678b04_stale_after_spec_feedback_20261116
+  note: stale re-execution stays in attempt-5 (no attempt++)
+completed_at: '2026-11-16T04:43:39+09:00'

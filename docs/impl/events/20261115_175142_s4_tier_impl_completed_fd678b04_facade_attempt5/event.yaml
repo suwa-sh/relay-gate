@@ -1,0 +1,28 @@
+event_id: 20261115_175142_s4_tier_impl_completed_fd678b04_facade_attempt5
+type: stage_completed
+uc_id: fd678b04
+stage: S4
+tier: tier-facade
+attempt: 5
+payload:
+  result: pass
+  gates:
+    format: pass
+    lint: pass
+    tdd: pass
+    bdd_tier: pass
+  assumptions:
+    path: attempt-5/S4_tier-impl.tier-facade.assumptions.yaml
+    count: 24
+    by_category:
+      input_validation: 3
+      data_format: 4
+      error_handling: 9
+      persistence: 0
+      performance: 7
+      security: 1
+    sha256: 47be339cbd1b1ab5a34b9e0526bb3edf668e8ff80a729abebd4618879d4d6a16
+  manifest_sha256: 6d465907738491c6eafd278adff9938a3a6a44a5c88748d49207f72a29a49079
+  manifest_projection: v2
+  note: relative runner paths resolved against the config file directory (domain functions reusable by later UCs); 24 assumptions (5 reworded, 4 new)
+created_at: '2026-11-15T17:51:42+09:00'

@@ -264,14 +264,14 @@
 適用構成業務	適用構成定義フロー		切り替え後の運用		切り替えた運用モードで業務ジョブを実行する	画面	facade 運用モード出力	アクター	運用者		受益者
 適用構成業務	適用構成定義フロー		切り替え後の運用		切り替えた運用モードで業務ジョブを実行する	イベント	運用モード別の業務ジョブ起動	外部システム	ジョブスケジューラ		
 適用構成業務	適用構成定義フロー		切り替え後の運用		切り替えた運用モードで業務ジョブを実行する	イベント	運用モード別のハング検知ジョブ異常終了の受信	外部システム	ジョブスケジューラ		
-適用構成業務	適用構成定義フロー		運用モードの設定		feature flag を設定する	情報	feature flag 設定			slot(blue / green)ごとの実行モード(foreground / background / off)と runner 割り当て、RAPID_CROSSCHECK_MODE(foreground / background / off)、実装版(BLUE_IMPL / GREEN_IMPL)、速報クロスチェックの runner / worker 実体(RAPID_CROSSCHECK_RUNNER / RAPID_CROSSCHECK_WORKER)を feature flag 設定として定義する。両 slot が foreground にならない組み合わせで並行稼働・単独本番・次世代実装との並行稼働を表現し、ジョブ定義の改修なしで運用モードを切り替える	
+適用構成業務	適用構成定義フロー		運用モードの設定		feature flag を設定する	情報	feature flag 設定			slot(blue / green)ごとの実行モード(foreground / background / off)と runner 割り当て、RAPID_CROSSCHECK_MODE(foreground / background / off)、実装版(BLUE_IMPL / GREEN_IMPL)、速報クロスチェックの runner / worker 実体(RAPID_CROSSCHECK_RUNNER / RAPID_CROSSCHECK_WORKER)を feature flag 設定として定義する。両 slot が foreground にならない組み合わせで並行稼働・単独本番・次世代実装との並行稼働を表現し、ジョブ定義の改修なしで運用モードを切り替える。slot ジョブマップの場所を書く任意の 2 キー(blue 用と green 用)も feature flag 設定に書ける(書かなければ設定ファイル置き場の固定の名前のジョブマップを使う)	
 適用構成業務	適用構成定義フロー		運用モードの設定		feature flag を設定する	情報	slot runner 割当				
 適用構成業務	適用構成定義フロー		運用モードの設定		feature flag を設定する	条件	foreground slot 排他				
 適用構成業務	適用構成定義フロー		運用モードの設定		feature flag を設定する	条件	設定所有区分				
 適用構成業務	適用構成定義フロー		運用モードの設定		feature flag を設定する	条件	速報クロスチェック有効判定				
 適用構成業務	適用構成定義フロー		運用モードの設定		feature flag を設定する	条件	確報クロスチェック非起動				
 適用構成業務	適用構成定義フロー		運用モードの設定		feature flag を設定する	画面	feature flag 設定検証出力	アクター	基盤適用設計者		提供者
-適用構成業務	適用構成定義フロー		runner の割り当て		slot runner の実体スクリプトを割り当てる	情報	slot runner 割当			blue / green slot に現行実装・新実装・次世代実装の起動方式・ホスト・OS・プロトコルを閉じ込めた runner 実体スクリプトを割り当てる。runner の差し替えだけで facade と比較規約を変更せずに異なる世代の実装を並行稼働できるようにする	
+適用構成業務	適用構成定義フロー		runner の割り当て		slot runner の実体スクリプトを割り当てる	情報	slot runner 割当			blue / green slot に現行実装・新実装・次世代実装の起動方式・ホスト・OS・プロトコルを閉じ込めた runner 実体スクリプトを割り当てる。runner の差し替えだけで facade と比較規約を変更せずに異なる世代の実装を並行稼働できるようにする。ローカル実行と SSH 実行で足りる slot には relay-gate が提供する標準の slot runner をそのまま割り当て(利用者は runner を書かない)、標準の slot runner が扱わない起動方式・プロトコルの slot には、共通ライブラリと runner の外部 IF に従って自作した runner を割り当てる	
 適用構成業務	適用構成定義フロー		runner の割り当て		slot runner の実体スクリプトを割り当てる	情報	feature flag 設定				
 適用構成業務	適用構成定義フロー		runner の割り当て		slot runner の実体スクリプトを割り当てる	情報	適用構成文書				
 適用構成業務	適用構成定義フロー		runner の割り当て		slot runner の実体スクリプトを割り当てる	条件	実装固有事項の runner への閉じ込め				
@@ -280,7 +280,7 @@
 適用構成業務	適用構成定義フロー		runner の割り当て		slot runner の実体スクリプトを割り当てる	画面	slot runner 割当検証出力	アクター	基盤適用設計者		提供者
 適用構成業務	適用構成定義フロー		runner の割り当て		slot runner の実体スクリプトを割り当てる	イベント	現行実装 runner の割当	外部システム	現行実装(blue)		
 適用構成業務	適用構成定義フロー		runner の割り当て		slot runner の実体スクリプトを割り当てる	イベント	新実装 runner の割当	外部システム	新実装(green)		
-適用構成業務	適用構成定義フロー		slot ジョブマップの定義		slot ごとのジョブマップを定義する	情報	ジョブマップ			slot ごとに JOB_ID から解決するホスト・実行ユーザー・スクリプト・作業ディレクトリ・固定引数(JSON 配列)・hang_detect_limit_minutes(導入時 60 分、foreground role は 0)をジョブマップとして定義する。認証情報は参照名で指定し、ジョブスケジューラ側のジョブ定義には実行先を持たせない	
+適用構成業務	適用構成定義フロー		slot ジョブマップの定義		slot ごとのジョブマップを定義する	情報	ジョブマップ			slot ごとに JOB_ID から解決するホスト・実行ユーザー・スクリプト・作業ディレクトリ・固定引数(JSON 配列)・hang_detect_limit_minutes(導入時 60 分、foreground role は 0)をジョブマップとして定義する。認証情報は参照名で指定し、ジョブスケジューラ側のジョブ定義には実行先を持たせない。ジョブマップの場所は feature flag の任意のキーで指定でき、指定しなければ設定ファイル置き場の固定の名前で置く	
 適用構成業務	適用構成定義フロー		slot ジョブマップの定義		slot ごとのジョブマップを定義する	情報	ハング検知上限設定				
 適用構成業務	適用構成定義フロー		slot ジョブマップの定義		slot ごとのジョブマップを定義する	情報	適用構成文書				
 適用構成業務	適用構成定義フロー		slot ジョブマップの定義		slot ごとのジョブマップを定義する	条件	設定所有区分				

@@ -1,0 +1,93 @@
+stage: S4
+tier: tier-facade
+attempt: 6
+uc_id: fd678b04
+manifest_sha256: 808bf63e1c7564ffef1498814b5d3f4e3a6163b4c2ff1429e03ae81125b0d01b
+manifest_projection: v2
+result: pass
+rerun_mode: blocker_rerun
+rerun_reason: "独立検証(attempt 5)の blocker 1 件(F-001。Linux の ShellCheck 0.9.0 で lint ゲートが exit 1)による再実行"
+findings_provided: true
+findings:
+  path: "docs/impl/latest/fd678b04/stages/attempt-5/S5_verify.tier-facade.findings.yaml"
+  blockers_fixed: ["F-001"]
+  major: 0
+  minor_note: "minor 27 件は前提の追跡記録などで、修正の対象にしていない"
+api_summary_check: "_api-summary.yaml に schema_version distillery.api-summary/v2 の記載は無く、_contract-slice.json も無い(契約 slice の hash 照合の対象外。attempt 5 と同じ)"
+implementation:
+  summary: "省略可能な引数(作業ディレクトリ)を持つ feature_flag_resolve_runner_paths を引数なしで呼んでいた 2 か所で、省略時の既定と同じ $PWD を明示して渡すようにした。ShellCheck 0.9.0 の SC2120 / SC2119 が出なくなる。振る舞いは変えていない"
+  fix_choice: "検証者の提案 2 つのうち「作業ディレクトリを明示して渡す」を採った(診断の抑制は使っていない)。検証関数の引数を無条件に転送する形は使っていない"
+  behavior_equivalence: "関数の中は ${1-$PWD}。引数に $PWD を渡した結果は、引数を省略した結果と同じ値になる"
+code_changes:
+  behavior_changed: false
+  files:
+    - path: facade/src/domain/feature_flag.sh
+      change: "472 行の呼び出しを feature_flag_resolve_runner_paths \"$PWD\" にした(直前のコメントに理由を 1 文足した)。行数は変わらない"
+    - path: facade/src/usecase/validate_feature_flag.sh
+      change: "204 行の呼び出しを feature_flag_resolve_runner_paths \"$PWD\" にした(直前のコメントに理由を 1 文足した)。行数は変わらない"
+  not_changed:
+    - "関数 feature_flag_resolve_runner_paths の定義(335 行。省略可能な引数のまま。テストは作業ディレクトリを渡して呼ぶ)"
+    - "テスト、feature、step 定義、write-set の外のファイル"
+gates:
+  format: pass
+  lint: pass
+  tdd: pass
+  bdd_tier: pass
+gate_runs:
+  - gate: format
+    cwd: facade
+    command: "shfmt -d ."
+    exit_code: 0
+  - gate: lint
+    cwd: facade
+    command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+    exit_code: 0
+  - gate: tdd
+    cwd: facade
+    command: "bats -r test"
+    exit_code: 0
+    summary: "535 tests, 535 ok, 0 not ok"
+  - gate: bdd_tier
+    cwd: facade
+    command: "npx cucumber-js --config ../cucumber.cjs features"
+    exit_code: 0
+    summary: "111 scenarios (111 passed), 670 steps (670 passed)"
+gate_run_notes:
+  - "gate_runs は macOS(Darwin 25.5.0、arm64。ShellCheck 0.11.0、shfmt 3.13.1)での実測。最終のコードで 1 つずつ順に実行した(bats と cucumber を同時に走らせていない)"
+  - "ゲートの後に書いたのは前提ファイルとこの done だけ(facade/ 配下は変えていない)"
+linux_runs:
+  environment: "docker イメージ relay-gate-ci:ubuntu24(Ubuntu 24.04.5 LTS、arm64、Bash 5.2.21、ShellCheck 0.9.0、Bats 1.10.0)"
+  method: "リポジトリを読み取り専用でマウントし、コンテナ内の一時ディレクトリへ複製(.git と node_modules を除く)して facade を cwd に実行した。テストの一時ディレクトリもコンテナ内に作った。リポジトリ内に生成物は残していない"
+  runs:
+    - gate: lint
+      command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+      exit_code: 0
+      summary: "診断 0 件(attempt 5 の検証では SC2120 / SC2119 で exit 1 だった)"
+    - gate: format
+      command: "shfmt -d ."
+      exit_code: 0
+      note: "イメージに shfmt が無いため、CI と同じ版(v3.13.1)の公式リリースの Linux arm64 バイナリを作業用ディレクトリに取得し、読み取り専用でマウントして使った"
+    - gate: tdd
+      command: "bats -r test"
+      exit_code: 0
+      summary: "535 tests, 535 ok, 0 not ok(一般ユーザー ubuntu で実行)"
+  limitation: "イメージに node が無いため、tier BDD(cucumber)は Linux では実行していない(macOS で実測)"
+environment: "macOS(Darwin 25.5.0、arm64)で 4 ゲートを実測。Linux コンテナで lint / format / bats を実測"
+issues_added: []
+issues_note: "仕様と実装が両立しない事実は見つからなかった。新規の起票は無い"
+assumptions:
+  path: "attempt-6/S4_tier-impl.tier-facade.assumptions.yaml"
+  count: 25
+  by_category: {input_validation: 4, data_format: 5, error_handling: 9, persistence: 0, performance: 7, security: 0}
+  sha256: "ce40a9ad847e9b99a8f5ca7c58235adf62504092151fadb914858441e43ce95a"
+  extraction: {candidate_count: 46, excluded_as_explicit: 21, recorded_count: 25}
+  validate_command: "node validateAssumptions.js record <assumptions.yaml> --uc fd678b04 --tier tier-facade --attempt 6"
+  validate_result: "ok: true"
+  changes_from_previous:
+    carried_over: "attempt 5 の 25 件を内容を変えずに引き継いだ(差分は attempt の値 5 → 6 の 1 行だけ)"
+    target_line_only: []
+    target_line_note: "今回の修正は行数を変えていないため、target の行番号の修正は無い"
+    added: []
+    added_note: "今回の修正は振る舞いを変えず、仕様に無い事項を新しく決めていないため、新しい前提は無い"
+completed_at: "2026-11-16T03:29:40+09:00"
+completed_by: "dist-impl-implement@0.14.1"

@@ -30,7 +30,7 @@ mappings:
     vendor_feature: "systemd service(常駐 worker)/ systemd timer または cron(定期起動 worker)/ OpenSSH 公開鍵認証"
     fidelity: "partial"
     configuration_notes: >-
-      ジョブスケジューラ実行ホストに facade / slot runner / rapid-crosscheck-runner・worker / ops CLI を配置し、
+      ジョブスケジューラ実行ホストに facade / 標準の slot runner(relay-gate の提供物。ローカル実行と SSH 実行を扱い、新しいミドルウェアや接続経路は増えない)/ rapid-crosscheck-runner・worker / ops CLI を配置し(標準が扱わない特殊な接続だけ、利用者が自作した runner も同じホストに置く)、
       DB セグメントの専用ホストに final-crosscheck-worker を配置する。worker は systemd service として常駐させ、
       Restart=on-failure で復帰させる。SSH は実行ユーザーごとの鍵ペアを使い、known_hosts を事前配布する。
       水平スケールは worker ホストを追加して同じ unit を配置する(手動)。
@@ -100,7 +100,7 @@ mappings:
     vendor_feature: "OS ファイル権限(所有者 = 配布ユーザー、実行ユーザーは読み取りのみ)"
     fidelity: "exact"
     configuration_notes: >-
-      /etc/relay-gate/ 相当に feature-flag.env(9 キー)、slot ごとのジョブマップ(<role>-job-map.csv)、
+      /etc/relay-gate/ 相当に feature-flag.env(9 キー + slot ジョブマップの場所を書く任意の 2 キー(blue 用と green 用。キー名は仕様で確定))、slot ごとのジョブマップ(<role>-job-map.csv。場所は feature flag の任意のキーで指定でき、無い・空なら設定ファイル置き場の固定の名前。絶対パスと相対パスを受け付け、相対パスの基準は feature-flag.env のあるディレクトリ。別の場所に置く設置では、その場所のファイルも同じ所有者・読み取り専用で配布する)、
       hang-detector.env(HANG_DB_CONN_REF と任意キー RAPID_HANG_DETECT_LIMIT_MINUTES / HANG_SCAN_WINDOW_HOURS の 3 キーを持ち得る。HANG_DB_CONN_REF は RAPID_CROSSCHECK_MODE が off 以外のときだけ必須)、ハウスキープ設定(保持日数と専用 DB ロールの接続参照名。接続参照名は off 以外または確報クロスチェックを使う設置では必須で、省略・空にできるのは管理 DB を一切使わない設置だけ。ファイルは housekeep.env(配置先 /etc/relay-gate/housekeep.env)で、保持日数のキーは HOUSEKEEP_RETENTION_DAYS、接続参照名のキーは HOUSEKEEP_DB_CONN_REF)、
       rapid-crosscheck.env(速報有効時のみ。
       必須は RAPID_DB_CONN_REF と速報比較ツールの起動コマンド 1 行、任意は RAPID_LEASE_SEC(既定 600)/ RAPID_POLL_INTERVAL_SEC(既定 30))、

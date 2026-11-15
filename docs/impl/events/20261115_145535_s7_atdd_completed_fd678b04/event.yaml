@@ -1,0 +1,11 @@
+event_id: 20261115_145535_s7_atdd_completed_fd678b04
+type: stage_completed
+uc_id: fd678b04
+stage: S7
+payload:
+  result: pass
+  done: docs/impl/latest/fd678b04/stages/S7_atdd.done.yaml
+  manifest_sha256: 890bfec8902fb1f1779157d5b2f7dc7b4a92540e4f9c267c260dfded6a683903
+  manifest_projection: v2
+  tier_impl_attempt: 5
+created_at: '2026-11-15T14:55:35+09:00'

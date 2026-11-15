@@ -374,3 +374,15 @@ RDRA に存在しない要素を追加する前に、ここで合意を得てか
 - **ステータス**: closed
 - **決定(2026-11-03, feedback:20261103_housekeeping_followups)**: invalid line に揃える。CLI 契約 config_input_rules.env_files の順序つき規則に「キーの前後の空白を除いた結果キーが空になる行は `error: invalid line line=N path: ...`(終了コード 2)」と例(` =abc` / `=abc` / ` = `)を書き、全 env 設定ファイル共通とした(compare_command_argv.split の再掲も同時に更新)。feature flag 設定の読み込みの差分(キーが空の行の読み飛ばし、`=` の無い行をキーだけの行として扱う、空白だけの行の読み飛ばし)は実装を契約に合わせる対象として spec-decision-023 に記録(CR-f3b8a1d0-002、spec:20261103_085000_feedback_housekeeping_followups)
 
+## 2026-11-15 dist-spec からの追加提案
+
+### DIST-032: facade.sh / background-rerun.sh の起動時検証で違反が 2 つ以上あるときに出す error 行が未決
+- **発生元**: dist-spec (20261115_142000_feedback_impl_feedback_fd678b04_cycle3)
+- **種別**: Spec確認
+- **提案内容**: feature flag の検証コマンド(validate-config.sh --feature-flag)の error 行どうしの順は、2026-11-15 に CLI 契約 config_files の feature-flag.env の error_order に定めた。一方、facade.sh は検証エラーを error 1 行で出す契約で、違反が 2 つ以上ある設定でどの違反の 1 行を出すかが 1 つに決まらない。UC「slot 実行モードを選択して runner を起動する」の tier 仕様は検査を「列挙 → foreground → 必須キーの存在 → 実体パス」の順で書き、検証コマンドと同じ検証関数を使うとも書く。この 2 つは、たとえば BLUE_RUNNER が相対パスで GREEN_IMPL が欠落の設定で、出る 1 行が食い違う。background-rerun.sh は、feature-flag.env の検証違反を見つけたときの扱い(検査するキーの範囲・終了コード・事前検証との前後)が契約に無い。利用者の 2026-11-15 の決定は検証コマンドの出力の順までで、元の方針資料にも記載が無いため、今回は定めていない(error_order の対象を検証コマンドだけと明記した)。
+- **根拠**: (サブエージェントが記入)
+- **影響範囲**: (サブエージェントが記入)
+- **推奨対応**: 反映
+- **ステータス**: closed
+- **決定(2026-11-15, feedback:20261116_standard_runner_job_map_location)**: (1) facade.sh は、feature flag の設定のキーごとの検査で違反が 2 つ以上あるとき、検証コマンドの error 行の順(error_order)で最初に出る違反の error 行(hint があれば hint も)だけを出して終了コード 2 で終わる(CLI 契約 commands の facade.sh の config_violation_report。UC「slot 実行モードを選択して runner を起動する」の独自の検査の順はやめ、契約を参照する。spec-decision-039)。(2) background-rerun.sh は、起動の前に runner / worker の 4 キーの実体(存在・実行権限・--help の応答)を検査せず、runner の起動に失敗したら終了コード 6 で終わる(既存の `error: runner failed to start ...` と成果物・管理 DB の扱いのまま)。feature-flag.env から読むキーは RAPID_CROSSCHECK_MODE・リラン対象 role の runner・(off 以外の)RAPID_CROSSCHECK_RUNNER だけで、読むキーの欠落・空と設定ファイルの不備は事前検証の前に終了コード 2 で止める(CLI 契約 commands の background-rerun.sh の feature_flag_reading。spec-decision-040)(CR-65b09d93-003、CR-65b09d93-004、spec:20261116_021000_feedback_standard_runner_job_map_location)
+

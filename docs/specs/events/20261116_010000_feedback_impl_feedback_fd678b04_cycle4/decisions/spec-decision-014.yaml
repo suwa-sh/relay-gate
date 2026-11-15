@@ -1,0 +1,37 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "specification"
+artifact_id: "spec-decision-014"
+title: "設定ファイル検証の重複報告の lines= は、そのキーが現れた全行の物理行番号を初出行を含めて出現順に並べる"
+status: "approved"
+generated_at: "2026-09-23T11:20:00Z"
+context: |
+  - validate-config.sh は、同じ job_id(または同じ対象カタログのキー)が複数行にあると
+    `error: duplicate job_id job_id=<v> lines=<n1,n2,...>` / `error: duplicate target ... lines=<n1,n2,...>` を出して終了コード 2 で終える。
+  - 2026-09-22 の実装フィードバック cycle 2 で、`lines=` に列挙する行番号の定めが仕様の中で 2 通りあることが指摘された。
+    - CLI 契約の stderr 注記と UC「slot ごとのジョブマップを定義する」の列検証表: 2 回目以降の行番号だけ(2 行目と 5 行目なら `lines=5`)
+    - 同 UC の E2E BDD とティア完了条件の BDD: 初出行を含む(`lines=2,5`)
+  - 両方を同時に満たす実装は無い。現行実装は BDD に合わせ、その job_id が現れた行番号を出現順に全部並べる(2・3・4 行目なら `lines=2,3,4`)。
+  - UC「クロスチェックのジョブマップと比較定義を定義する」の BDD は「2 回目以降だけ」の期待値(`lines=6` / `lines=3`)で書かれていた。
+  - 方針資料はジョブマップを「1 行 1 job_id」と定めるだけで、重複したときの報告形式の記載は無い。どちらに統一しても方針資料と矛盾しない。
+decision: |
+  1. `lines=` の規則は検証種別(--job-map / --crosscheck-job-map / --target-catalog)を問わず 1 つにする。
+     そのキーが現れた全行の物理行番号を、初出行を含めて出現順(昇順)にカンマ区切り・空白なしで並べる。重複したキー 1 つにつき error 行は 1 行。
+     例: 2 行目と 5 行目に同じ job_id がある入力は `lines=2,5`、2・3・4 行目にある入力は `lines=2,3,4`。
+  2. 正本は CLI 契約 commands の validate-config.sh の stderr(重複キーの項)に置き、UC の列検証表・検証ルール一覧と BDD は同じ規則にそろえる。
+     - UC「slot ごとのジョブマップを定義する」: 列検証表の job_id 行、分岐条件一覧、E2E / ティア完了条件の BDD(`lines=2,5`。ティアに 3 行重複の `lines=2,3,4` を追加)
+     - UC「クロスチェックのジョブマップと比較定義を定義する」: 検証ルール一覧 #4 / #5 に規則を注記し、BDD を `lines=5,6`(クロスチェックジョブマップ)/ `lines=2,3`(対象カタログ)に直す
+  3. 実行時にジョブマップの重複を先頭採用で扱う UC「ジョブマップで JOB_ID から実行先を解決する」の実行ログ
+     `WARN duplicate job_id in job map ... lines=` も同じ規則にする(同じキー名の表記を 1 つの意味にそろえる)。
+consequences:
+  positive:
+    - "2 行目と 5 行目に同じ job_id がある入力の期待出力 `lines=2,5` が、仕様本文だけから一意に決まる"
+    - "利用者は重複した全行を 1 行の error で把握できる(初出行を探し直さなくてよい)"
+    - "BDD と現行実装に一致し、UC「slot ごとのジョブマップを定義する」の実装変更は要らない"
+  negative:
+    - "UC「クロスチェックのジョブマップと比較定義を定義する」の BDD の期待値が変わる(同 UC は未実装のため手戻りは仕様だけ)"
+alternatives_considered:
+  - name: "2 回目以降の行番号だけにする(`lines=5`)"
+    reason_rejected: "BDD と現行実装を変える必要がある。利用者が初出行を別途探す必要があり、1 行の error で重複の全体を把握できない"
+  - name: "初出行を別キーで出す(`first_line=2 lines=5`)"
+    reason_rejected: "error 行の書式が増え、既存の共通形式 `lines=<n1,n2,...>` から外れる。利点が上の推奨案と変わらない"

@@ -1,0 +1,26 @@
+event_id: 20261116_034357_s5_verify_completed_fd678b04_facade_attempt6
+type: stage_completed
+uc_id: fd678b04
+stage: S5
+tier: tier-facade
+attempt: 6
+lane: verify
+payload:
+  result: pass
+  open_blockers: 0
+  open_majors: null
+  findings_summary:
+    blocker: 0
+    major: 0
+    minor: 26
+  assumptions_sha256: ce40a9ad847e9b99a8f5ca7c58235adf62504092151fadb914858441e43ce95a
+  assumption_verdicts_sha256: e7a199c8e485607596d691eb069dd3044d6d744d0b993a6873d38b6cbe51e7c9
+  assumption_verdicts_summary:
+    consistent: 3
+    spec_absent: 22
+    contradicts: 0
+    unlisted: 1
+  verifier: 'gpt-6-astra via codex exec (sandbox disabled; write-set checked by git status: done + findings only)'
+  manifest_sha256: 808bf63e1c7564ffef1498814b5d3f4e3a6163b4c2ff1429e03ae81125b0d01b
+  manifest_projection: v2
+created_at: '2026-11-16T03:43:57+09:00'

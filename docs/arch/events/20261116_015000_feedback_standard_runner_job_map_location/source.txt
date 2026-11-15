@@ -1,0 +1,9 @@
+標準の slot runner の正式な提供と slot ジョブマップの場所の指定(2026-11-16 の前段 requirements 更新)への追従。relay-gate が標準の slot runner(ローカル実行と SSH 実行)を facade / slot runner ティアの正式な構成要素として持ち、特殊な接続は利用者が自作した runner を割り当てる。feature flag は 9 キーに slot ジョブマップの場所を書く任意の 2 キーを加えた構成とし、無い・空なら固定の名前を使う(BC-005 の語 / CM-001 / tier-facade の説明・SP-001・SP-006・SR-002 / tier-datastore の SP-025 / tier-facade の presentation・domain・repository / E-001・E-002・E-005 / storage_mapping E-001〜E-003、arch-decision-027)。
+trigger_event: usdm:20261116_013000_feedback_standard_runner_job_map_location, rdra:20261116_013000_feedback_standard_runner_job_map_location, nfr:20261116_014000_feedback_standard_runner_job_map_location
+
+feedback_request_id: 20261116_standard_runner_job_map_location
+input_sha256: 733163f9092ac7055b410880c40f85fd312b2684f25fb0fb20d8d3412626822a
+request_ids: CR-65b09d93-001, CR-65b09d93-002
+direct_work_unit_ids: (none)
+causal_work_unit_ids: CR-65b09d93-001#1, CR-65b09d93-002#1
+stage_packet: docs/pipeline/feedback-runs/20261116_standard_runner_job_map_location/stage-packets/architecture.md

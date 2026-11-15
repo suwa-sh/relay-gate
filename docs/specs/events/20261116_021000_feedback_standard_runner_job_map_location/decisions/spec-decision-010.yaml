@@ -1,0 +1,57 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "specification"
+artifact_id: "spec-decision-010"
+title: "feature-flag.env で拒否する「確報の制御キー」の範囲は『キー名が FINAL_ で始まるすべてのキー』(接頭辞判定)とし、正本を CLI 契約 config_files.feature-flag.env.validation_rules に置く"
+status: "approved"
+generated_at: "2026-09-17T01:00:00Z"
+context: |
+  実装フェーズ(distillery-impl。UC fd678b04「feature flag を設定する」)の cycle 2 から spec-gap 1 件が還流した(2026-09-17 の実装フィードバック)。
+  `validate-config.sh --feature-flag` は feature-flag.env に確報クロスチェックの制御キーがあれば
+  `error: final crosscheck key is not allowed key=<KEY>` で終了コード 2 にするが、「確報の制御キー」の範囲が同じ UC の仕様の中で 3 通りに書かれていた。
+  - spec.md の処理フロー(シーケンス図): 「`FINAL_*` キーがある」
+  - spec.md の分岐条件一覧: 「`FINAL_CROSSCHECK_MODE` 等の確報制御キー」(接頭辞を明示しない)
+  - tier-facade.md の設定契約(組合せ検証): 「`FINAL_CROSSCHECK_*` キー」
+  - CLI 契約(config_files.feature-flag.env.validation_rules): 「確報の制御キーは置かない」とだけ書き、キー名・接頭辞のどちらも定めない
+  実装は `FINAL_` 接頭辞で判定していたが、独立した検証は tier-facade.md(`FINAL_CROSSCHECK_*` 以外は未知キーの warn で継続)に従うと
+  `FINAL_RELEASE_LABEL=x` が終了コード 0 + warn になるべきと読み、同じ入力の期待結果を仕様から一意に決められないことを major として記録した。
+  既存 Scenario「確報の制御キーは拒否される(SPEC-001-01)」の入力は `FINAL_CROSSCHECK_MODE=background` で、どちらの解釈でも通過し、境界を判定できない。
+  要件(REQ-001 / SPEC-001-01)の受け入れ条件「確報クロスチェックの制御設定は feature flag に含まれない」と方針資料
+  (「確報クロスチェックは final-crosscheck-runner.sh をジョブスケジューラから直接起動するため facade の設定には含めない」)はキー名の範囲を定めていない。
+  CR 本文に利用者の希望値(`FINAL_` 接頭辞。spec.md の処理フローの表記)が明記され、2026-09-17 のレビューで承認済み。
+decision: |
+  1. 「確報の制御キー」として feature-flag.env で拒否するキーの範囲は『キー名が `FINAL_` で始まるすべてのキー』とする。判定方法は接頭辞で、
+     キー名の列挙ではない。大文字小文字を区別する(feature-flag.env のキー名は大文字固定)。`FINAL_CROSSCHECK_MODE` のような制御キーも、
+     確報クロスチェック設定(final-crosscheck.env)のキー(FINAL_DB_CONN_REF / FINAL_POLL_INTERVAL_SEC / FINAL_POLL_LIMIT_SEC / FINAL_LEASE_MINUTES /
+     FINAL_WORKER_POLL_INTERVAL_SEC)を feature-flag.env に誤って置いた場合も、同じ違反(該当キーごとに
+     `error: final crosscheck key is not allowed key=<KEY>`、終了コード 2)にする。エラー文言・終了コードは変えない。
+  2. 判定順序: `FINAL_` で始まるキーは未知キー(warn)より先に判定し、`warn: unknown key` を出さない。未知キー warn の対象は
+     「9 キー以外で `FINAL_` で始まらないキー」に限る。違反は他の検証と同じく全件収集してから報告する。
+  3. 範囲の正本は cli-command-contract.yaml の config_files.feature-flag.env.validation_rules(文言の正本 error_messages と同じ節)に置き、
+     UC「feature flag を設定する」の spec.md(概要 / 処理フロー / 分岐条件一覧 / 設定所有区分)と tier-facade.md(組合せ検証 / ビジネスルール)、
+     _api-summary.yaml、validate-config.sh の stderr / 終了コード説明、facade.sh の終了コード 2 の条件は、すべて同じ表記
+     「キー名が `FINAL_` で始まるキー」を使う。`FINAL_*` / `FINAL_CROSSCHECK_*` / 「等」の表記は残さない。
+  4. facade.sh の起動時検証は validate-config.sh --feature-flag と同じ検証を共有する(既存の tier-facade.md「facade.sh との共有」と契約
+     「facade.sh の起動時検証も同文」)ため、facade.sh の終了コード 2 の条件にも同じ範囲を明記する(新しい振る舞いの追加ではなく、共有済みの検証の範囲の明示)。
+  5. 境界を判定する BDD Scenario を追加する: E2E「FINAL_ で始まる確報設定のキーは未知キーではなく拒否される(SPEC-001-01)」
+     (有効な 9 キーの設定に `FINAL_DB_CONN_REF=final-db` を加える → 終了コード 2 + `error: final crosscheck key is not allowed key=FINAL_DB_CONN_REF`、
+     `warn: unknown key key=FINAL_DB_CONN_REF` は出ない)。tier-facade.md のティア完了条件にも同旨の Scenario(FINAL_DB_CONN_REF と FINAL_CROSSCHECK_MODE の 2 キーで
+     該当キーごとに 1 行ずつ出ることを判定)を追加する。既存 Scenario「確報の制御キーは拒否される(SPEC-001-01)」は不変。
+  6. USDM / RDRA / 方針資料は変更しない。受け入れ条件「確報クロスチェックの制御設定は feature flag に含まれない」はキー名の範囲を定めない文脈参照のままとし、
+     範囲は spec 成果物(CLI 契約)だけで定める。
+consequences:
+  positive:
+    - "`FINAL_` で始まり `FINAL_CROSSCHECK_` で始まらないキー(例: FINAL_DB_CONN_REF)を feature-flag.env に置いたときの終了コードと stderr が、CLI 契約・spec.md・tier-facade.md のどれを読んでも同じ(終了コード 2 + error 行)に決まる"
+    - "確報クロスチェック設定(final-crosscheck.env)のキーを feature-flag.env に誤配置しても拒否され、利用者は設定所有区分の誤りを検証段階で知る"
+    - "境界を判定する Scenario が UC の完了条件と usdm[](SPEC-001-01)に載り、実装の判定方法(接頭辞)を ATDD で固定できる"
+    - "現行実装(`FINAL_` 接頭辞)の変更は不要"
+  negative:
+    - "将来 `FINAL_` で始まる feature flag のキーを追加したい場合は、接頭辞規則を変えるか別の接頭辞を選ぶ必要がある(feature flag は元資料の 9 キーで閉じており、現時点で追加予定は無い)"
+    - "`final_` のような小文字キーは接頭辞判定の対象外で未知キー warn になる(feature-flag.env のキー名は大文字固定のため実害は無いが、判定は大文字小文字を区別することを契約に明記した)"
+alternatives_considered:
+  - name: "接頭辞 `FINAL_CROSSCHECK_` で判定する(tier-facade.md の旧表記)"
+    reason_rejected: "final-crosscheck.env のキー(FINAL_DB_CONN_REF 等)の誤配置が未知キーの warn で通過し、利用者が設定所有区分の誤りに気づけない。CR 本文で利用者が `FINAL_` を希望し、2026-09-17 のレビューで承認済み"
+  - name: "確報の制御キーをキー名の列挙(FINAL_CROSSCHECK_MODE と final-crosscheck.env の 5 キー)で定める"
+    reason_rejected: "final-crosscheck.env にキーが増えるたびに feature-flag.env の禁止リストも更新する二重管理になる。接頭辞なら確報系のキーの命名規則(FINAL_ で始まる)だけで閉じる"
+  - name: "接頭辞 `FINAL_` を採用しつつ、final-crosscheck.env のキーだけは warn にする(制御キーと設定キーで扱いを分ける)"
+    reason_rejected: "範囲が再び 2 通りになり、CR の完了条件(3 つの仕様ファイルに互いに異なる表記が残らない)に反する。設定キーの誤配置を拒否できる利点も失う"

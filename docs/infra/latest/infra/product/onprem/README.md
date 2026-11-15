@@ -25,6 +25,14 @@ infra/product/onprem/
 
 - エアーギャップ環境のためインターネット経由のパッケージ取得は行わない(オフラインリポジトリ/ローカルミラーを利用)
 - 全ホスト(確報 worker が動く DB セグメントを含む)がこの構築手順で同じようにデプロイされていることを前提にする。relay-gate の処理の中から設定ファイルは配らないため、比較コマンドなど設定を変えたら構築手順で配り直す
+- 標準の slot runner(ローカル実行と SSH 実行)は relay-gate の提供物(2026-11-16 利用者決定)
+  - facade と同じ実行ホストに、構築手順で facade と一緒に配置する。DB ホストには置かない
+  - `BLUE_RUNNER` / `GREEN_RUNNER` には、標準の slot runner か、利用者が自作した runner を割り当てる。特殊な接続(標準が扱わない起動方式)だけ、利用者が runner を自作して同じ実行ホストに置く
+  - SSH は既存の実行ユーザーごとの鍵と `known_hosts` を使う。新しいミドルウェアや接続経路は増えない。ファイル構成は仕様で確定
+- slot ジョブマップの置き場所は、feature flag の任意の 2 キー(blue 用と green 用。キー名は仕様で確定)で変えられる
+  - キーが無い・空なら、設定ファイル置き場の固定の名前(`/etc/relay-gate/<role>-job-map.csv`)を使う。9 キーだけの既存の設定はそのまま動く
+  - 絶対パスと相対パスを受け付け、相対パスの基準は `feature-flag.env` のあるディレクトリ
+  - 別の場所を指定する設置では、指定先へジョブマップを配る(構成管理リポジトリが正本で、所有者と読み取り専用の扱いは `/etc/relay-gate/` と同じ)。構築時の検査はファイルの存在確認だけで、指定先と配置先が一致することは導入する側が確かめる
 - 管理 DB は 1 つ。すべての接続先の参照名が、同じ 1 つの管理 DB に解決されることを前提にする(2026-11-05 利用者決定)
   - 対象の参照名: `rapid-crosscheck.env` の `RAPID_DB_CONN_REF`、実行ホストと DB ホストそれぞれの `final-crosscheck.env` の `FINAL_DB_CONN_REF`、`hang-detector.env` の `HANG_DB_CONN_REF`、ハウスキープ設定 `housekeep.env` の `HOUSEKEEP_DB_CONN_REF`
   - ハウスキープは専用 DB ロール(`housekeep_del`)で、同じ管理 DB に接続する

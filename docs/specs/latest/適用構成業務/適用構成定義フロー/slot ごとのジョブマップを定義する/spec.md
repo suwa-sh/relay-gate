@@ -2,7 +2,7 @@
 
 ## 概要
 
-基盤適用設計者が、slot(blue / green)ごとに JOB_ID から解決するホスト・実行ユーザー・作業ディレクトリ・スクリプト・固定引数(JSON 配列)・hang_detect_limit_minutes(導入時 60 分、foreground role は 0)を slot ジョブマップ(CSV。1 行目ヘッダー、1 行 1 job_id)として定義し、`validate-config.sh --job-map <path>` で検証する。列名は元の方針資料の `job_id,host,user,work_dir,script,fixed_params,hang_detect_limit_minutes` を用いる。host / user はローカル実行の slot では省略できる。認証情報参照名(credential_ref)とマップ版(map_version)は末尾の任意列。実装版の列は持たず、実装版は feature flag(`BLUE_IMPL` / `GREEN_IMPL`)が所有する。認証情報は参照名で指定し、ジョブスケジューラ側のジョブ定義には実行先を持たせない。work_dir / script は Windows 形式(`G:\scripts`)・Linux 形式・相対パスのどれでも受理し、relay-gate はパスを解釈も正規化もしない(実行先の OS が解釈する)。設定ファイル共通の「入力の守備範囲」(形式から外れた入力の拒否、読み込み中の差し替えに対する 1 時点保証、検証器の内部障害の終了コード 6)は CLI 契約 `config_input_rules` を正本とし、本 UC の BDD で判定する。
+基盤適用設計者が、slot(blue / green)ごとに JOB_ID から解決するホスト・実行ユーザー・作業ディレクトリ・スクリプト・固定引数(JSON 配列)・hang_detect_limit_minutes(導入時 60 分、foreground role は 0)を slot ジョブマップ(CSV。1 行目ヘッダー、1 行 1 job_id)として定義し、`validate-config.sh --job-map <path>` で検証する。列名は元の方針資料の `job_id,host,user,work_dir,script,fixed_params,hang_detect_limit_minutes` を用いる。host / user はローカル実行の slot では省略できる。認証情報参照名(credential_ref)とマップ版(map_version)は末尾の任意列。実装版の列は持たず、実装版は feature flag(`BLUE_IMPL` / `GREEN_IMPL`)が所有する。認証情報は参照名で指定し、ジョブスケジューラ側のジョブ定義には実行先を持たせない。ジョブマップの場所は、既定では設定ファイル置き場の固定の名前(`$RELAY_GATE_CONFIG_DIR/blue-job-map.csv` / `green-job-map.csv`)で、feature flag の任意のキー(`BLUE_JOB_MAP_CSV` / `GREEN_JOB_MAP_CSV`)で変えられる(正本は CLI 契約 `config_files.feature-flag.env.job_map_location`)。`validate-config.sh --job-map <path>` は、feature flag の内容によらず、渡されたパスのジョブマップを検証する。work_dir / script は Windows 形式(`G:\scripts`)・Linux 形式・相対パスのどれでも受理し、relay-gate はパスを解釈も正規化もしない(実行先の OS が解釈する)。設定ファイル共通の「入力の守備範囲」(形式から外れた入力の拒否、読み込み中の差し替えに対する 1 時点保証、検証器の内部障害の終了コード 6)は CLI 契約 `config_input_rules` を正本とし、本 UC の BDD で判定する。
 
 ## データフロー
 
@@ -20,7 +20,7 @@ graph LR
     U -->|"function 呼び出し"| D
   end
   subgraph FS["FS(設定ファイル)"]
-    MAP[("RELAY_GATE_CONFIG_DIR/blue-job-map.csv\nRELAY_GATE_CONFIG_DIR/green-job-map.csv")]
+    MAP[("slot ジョブマップ\n既定: RELAY_GATE_CONFIG_DIR/blue-job-map.csv\nRELAY_GATE_CONFIG_DIR/green-job-map.csv\n(feature flag の任意のキーで場所を変えられる)")]
   end
   EDIT -->|"ファイル書き込み"| MAP
   R -->|"ファイル読み込み"| MAP
@@ -91,8 +91,8 @@ sequenceDiagram
 
 | バリエーション名 | 値 | 処理内容 | 適用 tier | 適用箇所 |
 |----------------|---|---------|----------|---------|
-| 実装スロット | blue | `blue-job-map.csv` | tier-facade | repository `job_map_repo` |
-| 実装スロット | green | `green-job-map.csv` | tier-facade | repository `job_map_repo` |
+| 実装スロット | blue | blue の slot ジョブマップ(既定の名前は `blue-job-map.csv`。feature flag の `BLUE_JOB_MAP_CSV` で場所を変えられる) | tier-facade | repository `job_map_repo` |
+| 実装スロット | green | green の slot ジョブマップ(既定の名前は `green-job-map.csv`。feature flag の `GREEN_JOB_MAP_CSV` で場所を変えられる) | tier-facade | repository `job_map_repo` |
 | 設定所有区分 | slot ジョブマップ | host・user・work_dir・script・fixed_params・hang_detect_limit_minutes・認証情報参照名の正本。実装版は持たない(feature flag の所有) | tier-facade | domain `JobMapRow` |
 | 設定所有区分 | 適用文書 | ホスト配置・実行ユーザー方針の根拠(relay-gate は読まない) | — | — |
 | ハング検知上限設定 | 60 分(導入時既定) | 導入時は全行 60 を推奨。検証は値域のみ(推奨値との差は `info:`) | tier-facade | domain `validate_job_map_row` |
@@ -103,7 +103,7 @@ sequenceDiagram
 
 | 条件名 | 判定ルール | 適用 tier | 適用箇所 | BDD Scenario |
 |--------|----------|----------|---------|-------------|
-| 設定所有区分 | ジョブマップの列は必須 5 列(job_id / work_dir / script / fixed_params / hang_detect_limit_minutes)+ 任意列(host / user の対、末尾の credential_ref / map_version)だけ。runner・mode・実装版・比較対象の列は置かない。必須列が欠けたヘッダーは検証 NG、未知列は `warn:` | tier-facade | domain `validate_job_map_header` | ヘッダーに必須列が無いジョブマップは拒否される |
+| 設定所有区分 | ジョブマップの列は必須 5 列(job_id / work_dir / script / fixed_params / hang_detect_limit_minutes)+ 任意列(host / user の対、末尾の credential_ref / map_version)だけ。runner・mode・実装版・比較対象の列は置かない。必須列が欠けたヘッダーは検証 NG、未知列は `warn:`。ジョブマップの場所は feature flag が所有し(任意の 2 キー。無い・空なら固定の名前。CLI 契約 `config_files.feature-flag.env.job_map_location`)、ジョブマップ自身は場所を持たない。`--job-map` の検証は feature-flag.env も 2 キーも読まず、渡されたパスを検証する | tier-facade | domain `validate_job_map_header` | ヘッダーに必須列が無いジョブマップは拒否される / feature flag にジョブマップの場所を書いていても --job-map は渡したパスのジョブマップを検証する(SPEC-004-01) |
 | ジョブマップ解決条件 | CSV(1 行目ヘッダー、1 行 1 job_id、行頭 `#` はコメント、UTF-8、LF)。列はヘッダー名で対応付ける。セルは二重引用符で囲め、囲んだセル内の二重引用符は `""` と二重化する。job_id はファイル内で一意(重複は検証 NG。重複した job_id ごとに `error: duplicate job_id job_id=<v> lines=<n1,n2,...>` を 1 行出し、`lines=` にはその job_id が現れた全行の物理行番号を初出行を含めて出現順にカンマ区切りで並べる。例: 2 行目と 5 行目に同じ job_id があれば `lines=2,5`)。job_id は `^[A-Za-z0-9_-]+$`。host / user は両方無いか両方空でローカル実行、片方だけは検証 NG。work_dir / script は非空なら受理し、パスの形式(Linux / Windows / 相対)は検査しない。**入力の守備範囲**(CLI 契約 `config_input_rules` が正本): 形式から外れた入力(NUL バイト・UTF-8 として不正なバイト列・BOM・CR・ヘッダー列名の重複)は原因ごとの文言で拒否し、最終行の改行なしとデータ行 0 件は受理する。NUL / UTF-8 / BOM / CR はファイル内の全件を行番号の昇順に、同じ行は NUL → UTF-8 → BOM → CR の順に 1 種類 1 行で出し、1 件でもあればヘッダー以降の検査をしない(`config_input_rules.byte_checks`)。検証結果は検証開始時の 1 時点の内容だけに基づく(単一スナップショット)。補助コマンド・複製の失敗は検証結果にせず終了コード 6 | tier-facade | domain `validate_job_map` / repository `csv_parse` / repository `job_map_repo_load`(複製・バイト点検) | 元資料の列名の CSV ジョブマップを検証する(SPEC-004-04) / host と user の列を持たないローカル実行用ジョブマップを検証する(SPEC-004-04) / 方針資料の Windows 形式パスと非 ASCII の値を含むジョブマップを受理する(SPEC-004-04) / 方針資料の相対パスのジョブマップを受理する(SPEC-004-04) / job_id が重複するジョブマップは拒否される / 形式から外れた入力は原因ごとの文言で拒否される / データ行 0 件のジョブマップは受理される / 検証中に差し替わったファイルは複製した時点の内容だけで判定される / 検証器の内部障害は検証結果にならない / 出力する値の制御文字は可視表記になる(SPEC-004-04) |
 | 引数連結規則 | fixed_params は JSON 配列(文字列要素のみ)を格納する CSV セル。必ず二重引用符で囲む(例: `"[""p1"",""p2 p3""]"`)。空は `"[]"` または `[]`。要素内の空白・カンマは許可 | tier-facade | domain `validate_job_map_row` | fixed_params セルの JSON 配列を CSV クォート規則で解析する(SPEC-004-04) / 固定引数が JSON 配列でない行は拒否される(SPEC-004-02) |
 | 認証情報の非保存 | credential_ref は参照名 `^[A-Za-z0-9_.-]*$`(空も可)。正規表現に合わない値(`/` を含む・空白や記号や非 ASCII 文字を含む等、理由を問わない)と `BEGIN` を含む値は、すべて同じ `warn: credential_ref looks like a secret or path line=N job_id=<v>` を 1 行出して受理する(拒否しない。終了コードに影響しない)。参照名の形式は認証情報ストアの運用に依存するため relay-gate 側で拒否しない(CLI 契約 `config_files` の `<slot>-job-map.csv` columns.credential_ref)。credential_ref の値は診断行(validate-config.sh の stdout / stderr、slot runner の stderr / 実行ログ)に一切出さない。受理した値は execution-spec.json へそのまま転記される | tier-facade | domain `validate_job_map_row` | 認証情報らしい値は警告される / 参照名の形式に合わない credential_ref は同じ警告で受理され値は出力されない |
@@ -141,7 +141,7 @@ sequenceDiagram
 
 | REQ ID | SPEC ID | 対応 BDD Scenario |
 |---|---|---|
-| REQ-004 | SPEC-004-01 | 有効なジョブマップを検証する(SPEC-004-01) |
+| REQ-004 | SPEC-004-01 | 有効なジョブマップを検証する(SPEC-004-01) / feature flag にジョブマップの場所を書いていても --job-map は渡したパスのジョブマップを検証する(SPEC-004-01) ※ 2 件目は AC「ジョブマップ単体の検証コマンドに別のパスを渡すと、渡したパスのジョブマップが検証される」に対応。feature flag の検証コマンドが決めた場所で所在を検査する側は UC〈feature flag を設定する〉、runner が決めた場所のジョブマップで解決する側は UC〈ジョブマップで JOB_ID から実行先を解決する〉で覆う |
 | REQ-004 | SPEC-004-02 | 固定引数が JSON 配列でない行は拒否される(SPEC-004-02) ※ 定義側。AC「固定引数の後ろに PARAM を順序保持で連結」の実行側は UC〈ジョブマップで JOB_ID から実行先を解決する〉の Scenario「固定引数の後ろに PARAM を順序保持で連結する」で覆う |
 | REQ-004 | SPEC-004-03 | 認証情報らしい値は警告される / 参照名の形式に合わない credential_ref は同じ警告で受理され値は出力されない ※ 定義側。AC「認証情報の値を保存しない」の実行側は UC〈execution-spec.json を確定保存する〉の Scenario「認証情報の値を保存しない」で覆う |
 | REQ-004 | SPEC-004-04 | 元資料の列名の CSV ジョブマップを検証する(SPEC-004-04) / fixed_params セルの JSON 配列を CSV クォート規則で解析する(SPEC-004-04) / host と user の列を持たないローカル実行用ジョブマップを検証する(SPEC-004-04) / credential_ref と map_version の列が無くてもエラーにならない(SPEC-004-04) / 方針資料の Windows 形式パスと非 ASCII の値を含むジョブマップを受理する(SPEC-004-04) / 方針資料の相対パスのジョブマップを受理する(SPEC-004-04) / 出力する値の制御文字は可視表記になる(SPEC-004-04) ※ 定義側。AC「runner が列名の読み替えなしに解決する」「ローカル実行として解決される」の実行側は UC〈ジョブマップで JOB_ID から実行先を解決する〉で覆う |
@@ -162,6 +162,13 @@ Feature: slot ごとのジョブマップを定義する
     And 行 'JOB001,host-green-01,batch,/var/app/work,/opt/app/bin/job001.sh,"[""--mode"",""full""]",60,ssh-key-green,map-v3' と 'JOB002,host-green-01,batch,/var/app/work,/opt/app/bin/job002.sh,"[]",0,ssh-key-green,map-v3' がある
     When 基盤適用設計者が validate-config.sh --job-map /etc/relay-gate/green-job-map.csv を実行する
     Then 終了コード 0 で stdout に "map_path: /etc/relay-gate/green-job-map.csv" "rows=2" "map_version=map-v3" が出る
+
+  Scenario: feature flag にジョブマップの場所を書いていても --job-map は渡したパスのジョブマップを検証する(SPEC-004-01)
+    Given /etc/relay-gate/feature-flag.env に BLUE_JOB_MAP_CSV=/srv/relay-gate/maps/blue-jobs.csv がある
+    And /srv/relay-gate/maps/blue-jobs.csv はヘッダー "job_id,work_dir,script,fixed_params,hang_detect_limit_minutes" とデータ行 3 行の有効なジョブマップである
+    And /etc/relay-gate/blue-job-map.csv は同じヘッダーと行 'JOB001,/var/app/work,/opt/app/bin/job001.sh,"[]",0' の 1 行の有効なジョブマップである
+    When 基盤適用設計者が RELAY_GATE_CONFIG_DIR=/etc/relay-gate で validate-config.sh --job-map /etc/relay-gate/blue-job-map.csv を実行する
+    Then 終了コード 0 で stdout は "map_path: /etc/relay-gate/blue-job-map.csv" "rows=1" "map_version=-" の 3 行である(feature flag に書いた場所のジョブマップではなく、渡したパスのジョブマップを検証する)
 
   Scenario: 元資料の列名の CSV ジョブマップを検証する(SPEC-004-04)
     Given green-job-map.csv のヘッダーが元資料どおりの "job_id,host,user,work_dir,script,fixed_params,hang_detect_limit_minutes" の 7 列である
@@ -307,7 +314,7 @@ Feature: slot ごとのジョブマップを定義する
 
 ### 統合契約
 
-- [CLI コマンド契約](../../../_cross-cutting/api/cli-command-contract.yaml)(`validate-config.sh --job-map` を uses。validate-config.sh の定義元は UC「feature flag を設定する」。本 UC は --job-map の検証ルールを定義する。設定ファイル共通の入力の守備範囲は `config_input_rules`、bash の最低版と外部コマンドの扱いは `conventions.runtime_prerequisites`)
+- [CLI コマンド契約](../../../_cross-cutting/api/cli-command-contract.yaml)(`validate-config.sh --job-map` を uses。validate-config.sh の定義元は UC「feature flag を設定する」。本 UC は --job-map の検証ルールを定義する。設定ファイル共通の入力の守備範囲は `config_input_rules`、ジョブマップの場所は `config_files.feature-flag.env.job_map_location`、bash の最低版と外部コマンドの扱いは `conventions.runtime_prerequisites`)
 - [出力規約](../../../_cross-cutting/ux-ui/ui-design.md)(「制御文字の表記」「設定ファイルの入力の守備範囲の定型文」)
 - [AsyncAPI Spec](../../../_cross-cutting/api/asyncapi.yaml)(この UC は publish / subscribe しない)
 - 読み手: [ジョブマップで JOB_ID から実行先を解決する](../../../実装切替業務/実装切替ジョブ実行フロー/ジョブマップで%20JOB_ID%20から実行先を解決する/spec.md) / [hang_detect_limit_minutes をジョブごとに調整する](../../../実行監視業務/background%20実行監視フロー/hang_detect_limit_minutes%20をジョブごとに調整する/spec.md)

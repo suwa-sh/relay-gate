@@ -7,7 +7,7 @@ x_cli_commands:
     tier: "tier-facade"
     role: "uses"
     synopsis: "<runner> --run-id <run_id> --job-id <JOB_ID> --role blue|green --mode foreground|background [--execution-spec <path>] [--help] -- [PARAM...]"
-    invoked_by: "facade.sh / background-rerun.sh(内部呼び出し)"
+    invoked_by: "facade.sh / background-rerun.sh(内部呼び出し。facade.sh の通常起動は、自 slot のジョブマップの場所を環境変数 BLUE_JOB_MAP_CSV / GREEN_JOB_MAP_CSV で渡す。復元起動はジョブマップを読まないため渡さない)"
     args: []
     options:
       - name: "--run-id"
@@ -21,7 +21,7 @@ x_cli_commands:
       - name: "--role"
         type: "enum(blue|green)"
         required: true
-        description: "自 slot。<role>-job-map.csv を選ぶ"
+        description: "自 slot。ジョブマップを選ぶ(環境変数 BLUE_JOB_MAP_CSV / GREEN_JOB_MAP_CSV の自 slot の分の場所。未設定・空なら $RELAY_GATE_CONFIG_DIR/<role>-job-map.csv)"
       - name: "--mode"
         type: "enum(foreground|background)"
         required: true

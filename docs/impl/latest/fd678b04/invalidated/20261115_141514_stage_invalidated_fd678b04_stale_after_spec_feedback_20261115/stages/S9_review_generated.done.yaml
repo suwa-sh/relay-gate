@@ -1,0 +1,156 @@
+stage: "S9"
+uc_id: "fd678b04"
+manifest_sha256: "829aa482569f86811e8a0a8453851b577b684bce01b8b83992f88cb1250b1ee5"
+manifest_projection: "v2"
+result: "generated"
+tier_impl_attempt: 5
+rerun_reason: "stale after spec feedback runs (invalidated by 20261113_020309_stage_invalidated_fd678b04_stale_after_spec_feedback_runs)"
+previous_done: "docs/impl/latest/fd678b04/invalidated/20261113_020309_stage_invalidated_fd678b04_stale_after_spec_feedback_runs/stages/S9_review_generated.done.yaml"
+review_html: "docs/impl/latest/fd678b04/review/index.html"
+review_html_tracked: false
+review_notes_input: "docs/impl/latest/fd678b04/review/review-notes.md"
+review_notes_note: "review-notes.md は読むだけで変更していない。2026-11-13 と 2026-11-15 の利用者の決定(性能は目標値であり、入力の制限でも合否の検査でもない)に従い、性能は合否ではなく目標との差の事実として表示した"
+validators:
+  review_html_contract: "node validateReviewHtml.js docs/impl/latest/fd678b04/review/index.html: pass"
+  human_html_review: "python3 validate.py docs/impl/latest/fd678b04/review/index.html: VALID (ERROR 0 / WARN 0)"
+  human_html_review_detail:
+    errors: 0
+    warnings: 0
+    internal_id_warnings: 0
+    long_paragraph_warnings: 0
+    h2_count: 11
+    svg_count: 6
+render_check: "Chrome headless のスクリーンショットで 1440px 幅(暗い配色)を目視。図 6 枚で斜め線 0、矢印の重なり 0、接続点の共有 0、端点でない箱の背面通過 0、ラベルと線のすき間 8px を確認。目視で見つけた 4 点(現在地の図の右端が切れる、図 3 と図 4 の文字が箱からはみ出す、前提の表の回答列が折り返す)を直して再生成した。500px 幅で本文の横スクロールなし(scrollWidth = innerWidth)を DOM で確認。選択を変えると返信文面が変わること・コピーボタンが有効になることを確認用の複製で確認した"
+render_check_not_done:
+  - "390px 幅の実機表示(headless Chrome の最小幅が 500px のため、500px で代用した)"
+  - "明るい配色での目視(CSS 変数の切り替えのみで、構造は同じ)"
+  - "コピーボタンを押した結果のクリップボードの中身"
+diagrams:
+  - type: "flowchart"
+    subject: "作業全体の流れと現在地(済み 3 段階、最終確認、承認後の公開。差し戻しの戻り先)"
+  - type: "data-flow"
+    subject: "いまの実装がエラー行を出す順(6 つのまとまり。案 B で位置が変わる 2 つを強調)"
+  - type: "flowchart"
+    subject: "切り替えモードの値ごとの、関連項目の検査の有無(不正・空・なしの枝が未定)"
+  - type: "architecture"
+    subject: "検証コマンドの構成(4 層と、設定ファイル・runner の実体。今回変わった 3 部品)"
+  - type: "flowchart"
+    subject: "検証コマンドの処理の流れ(判断 3 つ、終了コード 0 / 2 / 6)"
+  - type: "data-flow"
+    subject: "設定ファイルの中身が結果の表示になるまで(未知の項目の値を止める安全の境目)"
+feedback_request_count: 4
+open_blocker_count: 0
+decision_summary:
+  approval_questions: 1
+  selection_questions: 5
+  assumption_questions: 1
+  recommended_choices: 7
+  selection_labels:
+    - "全体の承認"
+    - "問い 1: 性能の目標を適用する範囲"
+    - "問い 2: エラー行の並び順"
+    - "問い 3: 切り替えモードが不正なときの関連項目"
+    - "問い 4: 未知の項目の値を読み込まない安全策"
+    - "問い 5: 文字コード設定(UTF-8)による遅さ"
+    - "実装者が補った前提(21 件)"
+  question_to_request:
+    - question: "問い 1"
+      cr_id: "CR-fd678b04-001"
+      options: "A = 4 検証種別すべてに適用(推奨) / B = slot ジョブマップと feature flag だけ / C = 要求を出さない"
+      assumption_id: "A-030"
+    - question: "問い 2"
+      cr_id: "CR-fd678b04-002"
+      options: "A = 現行の順を仕様に書く(推奨) / B = キー表の順に変える"
+      assumption_id: "A-016"
+    - question: "問い 3"
+      cr_id: "CR-fd678b04-003"
+      options: "A = 現行どおり検査する(推奨) / B = 検査しない"
+      assumption_id: "A-028"
+    - question: "問い 4"
+      cr_id: "CR-fd678b04-004"
+      options: "A = 仕様に書く(推奨) / B = 仕様に書かない。どちらも前提 A-010 の承認を含む"
+      assumption_id: "A-010"
+    - question: "問い 5"
+      cr_id: null
+      options: "A = この変更の中では直さず記録にとどめる(推奨) / B = この変更の中で直す(実装の修正と独立検証をもう 1 回)"
+      finding_id: "F-002"
+  recommended_response: "全体=承認 / 問い 1=A / 問い 2=A / 問い 3=A / 問い 4=A / 問い 5=A / 前提=21 件すべて承認"
+  response_format_note: "回答欄は文で組み上がる形式(内部 ID を出さない)。前提は「21 件すべて承認」か「一部を却下(補足に前提の番号と、実装修正か仕様変更かを書く)」。番号と ID の対応は HTML の付録 1 と下の assumption_number_to_id"
+  optional_checkbox: "本線への取り込み(push と PR 作成)まで続けて進める。初期状態は未選択"
+  assumption_required_ids:
+    - "A-010"
+  assumption_requested_ids:
+    - "A-010"
+    - "A-016"
+    - "A-028"
+    - "A-030"
+  assumption_consistent_ids:
+    - "A-035"
+  assumption_number_to_id:
+    - "1: A-010"
+    - "2: A-016"
+    - "3: A-028"
+    - "4: A-030"
+    - "5: A-017"
+    - "6: A-018"
+    - "7: A-019"
+    - "8: A-020"
+    - "9: A-023"
+    - "10: A-024"
+    - "11: A-025"
+    - "12: A-027"
+    - "13: A-029"
+    - "14: A-031"
+    - "15: A-032"
+    - "16: A-033"
+    - "17: A-034"
+    - "18: A-035"
+    - "19: A-036"
+    - "20: A-037"
+    - "21: A-038"
+  approval_outcome_note: "承認後は仕様への要求(最大 4 件)を公開し、仕様の反映待ちになる。本線への取り込み(push・PR)は利用者の指示があってから行う"
+feedback_review_evidence:
+  feedback_id: "20261115_093126_impl_feedback_fd678b04"
+  draft_path: "docs/impl/latest/fd678b04/feedback/draft.md"
+  draft_sha256: "25caf38054a64316034645c9a2da7de0616818683b41aab58223544e8b98009f"
+  request_count: 4
+  blocker_count: 0
+  request_ids:
+    - "CR-fd678b04-001"
+    - "CR-fd678b04-002"
+    - "CR-fd678b04-003"
+    - "CR-fd678b04-004"
+implementation_review_evidence:
+  gate_result: "6/6 pass"
+  gates:
+    format: "pass"
+    lint: "pass"
+    tdd: "pass (475/475)"
+    bdd_tier: "pass (80/80)"
+    uc_bdd: "pass (46/46, injections 0)"
+    atdd: "pass (1/1)"
+  open_blocker_count: 0
+  open_major_count: 1
+  open_minor_count: 20
+  verifier_blocker_findings: 2
+  verifier_blocker_finding_ids:
+    - "F-001"
+    - "F-002"
+  verifier_blocker_handling: "性能目標との差 2 件。利用者の決定(20261115_092742_config_confirmed_fd678b04_performance_target_is_goal_not_gate)により合否の検査として扱わないため、open_blocker_count には数えていない。S5 done の open_blockers は 2 のまま"
+  tiers:
+    - tier: "tier-facade"
+      attempt: 5
+      assumptions_sha256: "764eb97433280c6e2d3321c97e9c73c6fc0c0bd4ab06c3da04f58f743bf23aa1"
+      assumption_verdicts_sha256: "3c4c577facfef77bb57cac50a1a04689662b8959682503b8fdf6a42e31114066"
+  assumption_evidence_sha256: "508c82fc00f546de84ac16df15d8223434913ae84691df2ab87ab6a138c76867"
+captures: []
+issues: []
+notes:
+  - "manifest_sha256 は引数の値を再計算せず転記した"
+  - "assumption_evidence_sha256 は validateAssumptions.js evidence に S5 done の 2 つの hash を渡して算出した"
+  - "draft_sha256 は feedback/draft.md の現在の bytes の sha256。draft は変更していない"
+  - "HTML の付録 3 に 2026-09 の回答の原文(機能=A / 禁止キー=A / 相互運用=A / 監査=A)を、今回は選び直さない確定事項として載せた。validateReviewHtml.js の回答 template 検査はこの記載で通る"
+  - "問い 2 の具体例の出力は、このレビュー資料の作成時に facade/bin/validate-config.sh を一時ディレクトリの設定で 1 回実行して得た(読み取り専用。リポジトリのファイルは変更していない)。テストのゲートは再実行していない"
+  - "git の書き込みコマンドは実行していない。write-set 外のリポジトリのファイルは変更していない"
+completed_at: "2026-11-15T09:49:00+09:00"
+completed_by: "dist-impl-review@0.14.1"

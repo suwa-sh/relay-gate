@@ -160,7 +160,11 @@ load_domain_or_fail() {
 	[ "$output" = "error: option required option=GREEN_IMPL path: ff.env" ]
 }
 
-@test "validate_feature_flag_runnerが相対パスの場合_path is not absoluteを出すこと" {
+# 2026-11-15 S2 再実行で更新(spec event 20261115_164000_feedback_runner_relative_path): runner / worker の 4 キーは相対パスを
+# 受け付ける(契約 config_files.feature-flag.env.runner_path_resolution)。相対パスを拒否する期待(path is not absolute を出すこと)を、
+# 出さないことへ直した。解決後のパスと error 行の文言は、内部の関数の分け方を固定しないよう、エントリポイント経由の
+# test/usecase/validate_feature_flag_runner_path.bats で判定する
+@test "validate_feature_flag_runnerが相対パスの場合_path is not absoluteを出さないこと" {
 	# Arrange
 	load_domain_or_fail
 	BLUE_MODE=off
@@ -172,9 +176,8 @@ load_domain_or_fail() {
 	# Act
 	run validate_feature_flag
 
-	# Assert
-	[ "$status" -ne 0 ]
-	[ "$output" = "error: path is not absolute key=GREEN_RUNNER path=bin/green.sh" ]
+	# Assert(相対パスであることを理由にした error 行は、この 4 キーには無い)
+	[[ "$output" != *"path is not absolute"* ]]
 }
 
 @test "validate_feature_flag_runnerが存在しない場合_file not executableを出すこと" {

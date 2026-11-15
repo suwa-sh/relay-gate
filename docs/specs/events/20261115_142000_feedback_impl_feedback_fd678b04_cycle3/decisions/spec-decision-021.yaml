@@ -1,0 +1,43 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "specification"
+artifact_id: "spec-decision-021"
+title: "ハウスキープを housekeep.sh(tier-ops)と housekeep.env で仕様化し、削除待ちの置き場・専用 DB ロール housekeep_del・削除順序と回復・接続の要否を確定する"
+status: "approved"
+generated_at: "2026-11-01T12:50:00Z"
+context: |
+  - 2026-11-01 の要求で、保持日数(既定 90 日)を過ぎた終了済みの実行の成果物と管理 DB の履歴、および終端した確報比較依頼を、1 日 1 回の定期ジョブ(housekeep.sh)で自動削除することになった。削除の単位(リランの親子)・終端条件・起算日時・削除待ちの置き場・専用 DB ロールは利用者が承認済みで、設定のファイル名・キー名・終了コード・接続する管理 DB・置き場の場所・ロール名は仕様で確定するよう求められている。
+  - アーキテクチャは housekeep を tier-ops に置き、管理 DB の行と成果物を削除するのは housekeep だけとする(CTR-008)。失敗後に残りの単位を続けるかは仕様で確定するとしている(LP-025)。設定の検証は validate-config.sh(tier-facade)が全設定ファイルを検証する(CTR-007)。
+  - インフラは専用ロールを housekeep_del の名前で構築ロールと実装の正本に置き、置き場を成果物ルートと同じファイルシステムに作って stat のデバイス番号で検査する(変数名は仮置き)。
+  - 確報クロスチェックは RAPID_CROSSCHECK_MODE によらず管理 DB(FINAL_DB_CONN_REF)を使うため、off でも確報比較依頼の行が増える。運用モードは期間によって変わり得るため、管理 DB の行がある実行と成果物だけの実行が同じ成果物ルートに混在し得る。
+  - 管理 DB の外部キーはすべて RESTRICT で、parallel_runs.parent_run_id は自己参照。
+decision: |
+  1. 設定ファイルは `$RELAY_GATE_CONFIG_DIR/housekeep.env`(env 形式)。キーは HOUSEKEEP_RETENTION_DAYS(任意。既定 90。`^[1-9][0-9]{0,8}$`。キーがあって値が空・0・負・小数・先頭 0・`+` 付き・10 桁以上は終了コード 2)と HOUSEKEEP_DB_CONN_REF(housekeep_del の接続参照名)。ファイル不在は終了コード 2。
+  2. HOUSEKEEP_DB_CONN_REF は RAPID_CROSSCHECK_MODE が off 以外で必須とする。off では任意とし、設定されていれば管理 DB の行(確報比較依頼と、off 以外の期間に作られた実行の行)も削除し、未設定なら成果物だけを処理し(ただし execution-spec.json の rapid_crosscheck_mode が off でない実行は、管理 DB に終わっていない構成要素があり得るため判定できないものとして残し warn を出す)、起動のたびに warn(management db is not configured; database rows are not deleted)を 1 行出す(確報クロスチェックを使う構成で未設定のまま確報比較依頼が残り続けることに運用者が気づけるようにする。hang-detector.env の HANG_DB_CONN_REF と同じ要否の考え方)。
+  3. validate-config.sh に検証種別 --housekeep を加え(tier-facade。定義 UC は「保持日数を過ぎた終了済みの実行と確報比較依頼を判定する」)、保持日数の形式だけを検査する。HOUSEKEEP_DB_CONN_REF の要否は feature flag に依存するため housekeep.sh の起動時に検査する。
+  4. 削除待ちの置き場は `$RELAY_GATE_ARTIFACT_ROOT/housekeep-pending/`(facade/ と並ぶ成果物ルート直下)。run ディレクトリは `housekeep-pending/<run_id>`、通知済みの印は `housekeep-pending/notified-<run_id>.<role>` へ rename で移してから削除し、置き場の残りは次回の最初に判定せず削除する。
+  5. 実行の単位は parent_run_id でつながる実行で、つながりは管理 DB の parallel_runs と execution-spec.json の両方から作る。実行ごとに、parallel_runs 行があれば管理 DB の行、無ければ成果物だけで終わったかを判定する。期限 cutoff は現在時刻 − 保持日数 × 86400 秒(暦日ではない)。
+  6. 1 単位の削除順序は「run ディレクトリを置き場へ移す → 印を置き場へ移す → 置き場から削除 → 管理 DB の行を 1 トランザクションで削除(monitor_records → rapid_crosscheck_requests → rapid_runs → slot_executions → parallel_runs(子孫から順))」。管理 DB の接続に失敗した場合は、行の有無が分からない run ディレクトリを成果物だけで消さないよう、実行の単位と確報比較依頼の処理を一切行わずに終了コード 6 で終える。1 つの単位の失敗は error を出して次の単位へ続け、最後に 6 で終える(LP-025 の未確定事項の確定)。
+  7. stdout は固定順の key=value 8 行(retention_days / cutoff / purged_pending_entries / deleted_run_units / deleted_runs / deleted_final_crosscheck_requests / deleted_orphan_marks / kept_units)を終了コード 0 と 6 で出す。終了コードは 0 / 2 / 6。
+  8. 専用 DB ロールは housekeep_del とし、6 テーブルの SELECT と DELETE だけを持つ(SELECT ... FOR UPDATE も使わない)。業務用ロール app_rw と参照用ロール ops_ro に DELETE を足さない。rdb-schema.yaml に db_roles 節を設けて名前と権限の正本とする。列・インデックスは追加しない(既存の status / completed_at / parent_run_id と既存インデックスで足りる)。外部キーは RESTRICT のまま、削除順序で満たす。
+  9. 削除中のリラン: --role blue|green は既存の execution-spec not found(3)で終わる。--role rapid-crosscheck は execution-spec.json を読まないため管理 DB の行が残っている間は成功し、その場合は parallel_runs の削除が外部キー違反でロールバックして 6 になり、次回は新しい run を含む単位として判定する。
+consequences:
+  positive:
+    - "途中で失敗しても次回の実行で残りが消え、何度実行しても同じ結果になる(2 回目は削除件数 0・終了コード 0)"
+    - "運用モードの切り替えで管理 DB の行がある実行と成果物だけの実行が混在しても、実行ごとに判定元を選んで同じ規則で削除できる"
+    - "業務用ロールに DELETE を足さずに済み、誤削除の経路を housekeep だけに限定できる"
+  negative:
+    - "管理 DB に接続できない日は、成果物だけの実行も削除しない(1 日遅れる)"
+    - "parallel_runs 全行を毎回読むため、保持日数分の行数に比例した時間がかかる"
+    - "削除中に rapid-crosscheck リランが割り込むと、成果物は消えたまま管理 DB の行が残る期間ができる"
+alternatives_considered:
+  - name: "HOUSEKEEP_DB_CONN_REF を常に必須にする"
+    reason_rejected: "管理 DB をまったく使わない構成(off で確報も使わない)で housekeep を動かせない"
+  - name: "管理 DB に接続できないときも成果物だけの判定で run ディレクトリを削除する"
+    reason_rejected: "管理 DB で終わっていない構成要素(速報比較依頼など)がある実行の成果物を消してしまう恐れがある"
+  - name: "1 つの単位が失敗したら即座に終了する"
+    reason_rejected: "1 件の障害で他の期限切れの単位が残り続け、容量の圧迫が解消しない。hang-detector の「他の対象は続けて 6」と揃える"
+  - name: "外部キーを ON DELETE CASCADE に変える"
+    reason_rejected: "ハウスキープ以外の誤削除で系譜・依頼レコードが連鎖して失われる。削除順序で RESTRICT を満たせる"
+  - name: "置き場を facade/ の中(例 facade/.pending)に置く"
+    reason_rejected: "run ディレクトリの列挙と同じディレクトリに混ざり、列挙の除外規則が各スクリプトに散らばる"

@@ -1,0 +1,48 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "architecture"
+artifact_id: "arch-decision-027"
+title: "relay-gate は標準の slot runner を正式な構成要素として持ち、feature flag は 9 キーに slot ジョブマップの場所を書く任意の 2 キーを加えた構成とする"
+status: "approved"
+generated_at: "2026-11-16T01:50:00Z"
+context: |
+  これまでのアーキテクチャ設計は、slot runner を「適用ごとに割り当てる実体スクリプト」とだけ書き、relay-gate がそのまま使える runner を提供するかどうかを定めていなかった。
+  ローカル実行と SSH 実行だけで足りる適用でも、利用者は runner のスクリプトを自分で書く必要があった。
+  また feature flag を「9 キー」と定め、slot ジョブマップの場所は設定ファイル置き場の固定の名前だけだった。
+  前段の要求仕様は 2026-11-16 の利用者決定で、次の 2 点を定めた。
+  (1) relay-gate が、そのまま BLUE_RUNNER / GREEN_RUNNER に割り当てられる標準の slot runner(slot ジョブマップの行に従いローカル実行と SSH 実行を扱う)を正式な提供物として提供する。
+  標準の slot runner が扱わない特殊な接続は、これまでどおり利用者が runner を自作して割り当てる。
+  (2) feature flag に、slot ジョブマップの場所を書く任意のキーを blue 用と green 用に 1 つずつ足す。無い・空ならこれまでの固定の名前を使う。
+  RDRA は情報「feature flag 設定」「slot runner 割当」「ジョブマップ」「適用構成文書」と条件「実装固有事項の runner への閉じ込め」「設定所有区分」「ジョブマップ解決条件」の説明を同じ趣旨で更新した。非機能要求に変更は無い。
+  元の方針資料のしくみの資料は「BLUE_RUNNER と GREEN_RUNNER は適用ごとに実体を割り当てる」と書き、標準の runner の提供には触れていない。feature flag の設定例は 9 キーで、ジョブマップの場所の行は無い。
+  利用イメージの資料の設定例は、feature flag にジョブマップの場所を相対パスで書く行を持つ。
+decision: |
+  - 標準の slot runner を、facade / slot runner ティアの正式な構成要素(提供物)として置く。slot ジョブマップの行に従ってローカル実行(host と user が両方空の行)と SSH 実行(それ以外の行)を扱い、runner の外部 IF(引数、--help の応答、Runner Result Contract の 3 ファイルと execution-spec.json、完了通知)を満たす
+  - 標準の slot runner を使う適用で利用者が用意するものは feature flag と slot ジョブマップ(と実行先の実装)だけとする
+  - 標準の slot runner が扱わない起動方式・プロトコルは、利用者が runner を自作して割り当て、その runner に閉じ込める。自作する runner のための共通ライブラリの提供と runner の外部 IF は残す
+  - runner を差し替えて異なる世代の実装を並行稼働できることは変えない。facade は、割り当てられた runner が標準の slot runner か自作の runner かを区別しない
+  - 標準の slot runner の正式な提供は、方針資料に明記の無い利用者決定(2026-11-16)として記録する。方針資料の「適用ごとに実体を割り当てる」とは、割り当てる実体として標準の slot runner を選べる形で両立する
+  - feature flag は、元の方針資料の 9 キーに、slot ジョブマップの場所を書く任意の 2 キー(blue 用と green 用)を加えた構成とする。9 キーだけの設定はそのまま通り、未知のキーとして扱うのは 9 キーと任意の 2 キーのどちらでもないキーとする
+  - 任意の 2 キーが無い・空のときは、設定ファイル置き場の固定の名前(blue-job-map.csv / green-job-map.csv)を使う。値は絶対パスと相対パスを受け付け、相対パスの基準は feature flag の設定ファイルがあるディレクトリとする
+  - 解決した後の場所は、ジョブマップを読むすべての処理(feature flag の検証コマンド、slot runner、ジョブマップを読む運用系のコマンド)で同じものを使う。slot ジョブマップの場所の所有者は feature flag とする
+  - slot runner は feature flag の設定ファイルを読まない契約のままとする
+  - 仕様で確定するもの: 任意の 2 キーのキー名(推奨は BLUE_JOB_MAP_CSV / GREEN_JOB_MAP_CSV)、相対パスの解決規則の詳細、解決した後の場所を runner へ渡す方法、標準の slot runner のファイル構成(1 つの実体を blue と green の両方に割り当てられる形を推奨)・ファイル名・置き場所・feature flag への書き方の例
+consequences:
+  positive:
+    - "ローカル実行と SSH 実行だけで足りる適用は、runner のスクリプトを書かずに feature flag と slot ジョブマップだけで並行稼働を構成できる"
+    - "slot ジョブマップを設定ファイル置き場以外(runner と同じディレクトリなど)に置く適用を、設定だけで表せる"
+    - "任意の 2 キーを書かない既存の設定と、方針資料の 9 キーの設定例はそのまま動く"
+    - "検証コマンドと実行時の読み手が同じ場所を使うため、検証を通ったジョブマップと実行時に使うジョブマップが食い違わない"
+  negative:
+    - "標準の slot runner が relay-gate の保証範囲に入るため、ローカル実行と SSH 実行の振る舞いを relay-gate のテストで保証し続ける必要がある"
+    - "ジョブマップの場所の解決規則を、検証コマンド・facade・運用系のコマンドで 1 つに保つ必要がある"
+    - "feature flag のキーの数が方針資料のしくみの資料の設定例(9 キー)より増える(任意のため設定例とは矛盾しない)"
+alternatives_considered:
+  - name: "runner は適用側の持ち物のままとし、relay-gate は共通ライブラリと参考実装だけを提供する"
+    reason_rejected: "ローカル実行と SSH 実行だけで足りる適用でも利用者が runner を書く必要があり、ジョブマップを置くだけで動かすという利用者の想定と合わないため。参考実装は保証範囲が決まらない"
+  - name: "標準の slot runner だけを提供し、自作の runner を割り当てる道を無くす"
+    reason_rejected: "方針資料は適用ごとに実体を割り当てるとしており、特殊な接続を runner に閉じ込めて世代交代する要求を満たせなくなるため"
+  - name: "slot ジョブマップの場所は固定の名前のままとする"
+    reason_rejected: "方針資料の利用イメージの資料の設定例(feature flag にジョブマップの場所を書く)を表せず、設定ファイル置き場以外にジョブマップを置く手段が無いため"
+  - name: "slot ジョブマップの場所のキーを必須にする"
+    reason_rejected: "方針資料のしくみの資料の 9 キーの設定例と既存の設定が通らなくなるため"

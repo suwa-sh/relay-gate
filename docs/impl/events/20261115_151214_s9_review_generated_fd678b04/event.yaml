@@ -1,0 +1,36 @@
+event_id: 20261115_151214_s9_review_generated_fd678b04
+type: stage_completed
+uc_id: fd678b04
+stage: S9
+payload:
+  done: docs/impl/latest/fd678b04/stages/S9_review_generated.done.yaml
+  feedback_review_evidence:
+    feedback_id: 20261115_145719_impl_feedback_fd678b04
+    draft_path: docs/impl/latest/fd678b04/feedback/draft.md
+    draft_sha256: 33be65d1a882c38815d45a910dcafa5b59e6fc4840197f3096dc4b071c6cc11a
+    request_count: 1
+    blocker_count: 0
+    request_ids:
+    - CR-fd678b04-001
+  implementation_review_evidence:
+    gate_result: 6/6 pass
+    gates:
+      format: pass
+      lint: pass
+      tdd: pass (481/481)
+      bdd_tier: pass (87/87)
+      uc_bdd: pass (48/48, injections 0)
+      atdd: pass (1/1)
+    open_blocker_count: 0
+    open_major_count: 1
+    open_minor_count: 19
+    tiers:
+    - tier: tier-facade
+      attempt: 5
+      assumptions_sha256: 2d57f7ab2101e953417a9e1148e687da0cf89a1827593aec7d336bb2ed3274b9
+      assumption_verdicts_sha256: 2b446091b3be63716b8557ac5f4f9dd14d7d3695335392acea5ec1301cc8507a
+    assumption_evidence_sha256: 8443e9fb9a7c34f9cdd3dcee378cb7f75b59b7fa6a1badd0a499196e9184d196
+  note: resume after spec feedback 20261115. open blockers 0, major 1 (assumption A-040, requires the user's answer), minor 19. the review also asks one question outside this UC (DIST-032 in docs/todo.md)
+  manifest_sha256: 890bfec8902fb1f1779157d5b2f7dc7b4a92540e4f9c267c260dfded6a683903
+  manifest_projection: v2
+created_at: '2026-11-15T15:12:14+09:00'

@@ -1,0 +1,45 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "specification"
+artifact_id: "spec-decision-015"
+title: "参照名の形式に合わない credential_ref は理由を問わず同じ warn を出して受理し、credential_ref の値は診断行に一切出さない"
+status: "approved"
+generated_at: "2026-09-23T11:20:00Z"
+context: |
+  - 仕様は slot ジョブマップの credential_ref を参照名 `^[A-Za-z0-9_.-]*$`(空も可)と定めていた。
+    形式に合わない値の扱いは `/` を含む値と `BEGIN` を含む値の 2 パターン(`warn: credential_ref looks like a secret or path line=N job_id=<v>`。
+    拒否しない)だけで、UC 仕様はこの扱いを「仮採用」と注記していた。
+  - 正規表現に合わず `/` も `BEGIN` も含まない値(空白・記号・非 ASCII 文字を含む値)の扱い(warn か error か、文言)は仕様に無かった。
+    CLI 契約の validate-config.sh の stderr に credential_ref の error 行は無い。
+  - 現行実装は「同じ warn を出して受理する。値は診断に出さない」を選び、利用者はこれを 2026-09-19 のレビューで実装の前提として承認した。
+  - 独立検証は、仕様に定めが無いため 2 回続けて major(秘密情報に関わる境界)として確認を求めた。
+  - 2026-09-22 の実装フィードバック cycle 2 のレビューで、利用者は案 A(同じ warn を出して受理する)を選んだ。
+  - 方針資料は「認証情報そのものは保存せず、認証情報の参照名だけを保存する」と定める。参照名の形式と、形式に合わない値の扱いの記載は無い。
+decision: |
+  1. 正規表現 `^[A-Za-z0-9_.-]*$` に合わない credential_ref の値は、`/` を含むか・空白や記号や非 ASCII 文字を含むか等の理由を問わず、
+     すべて同じ `warn: credential_ref looks like a secret or path line=N job_id=<v>` を 1 行出して受理する。
+     正規表現に合っていても `BEGIN` を含む値は同じ warn を出して受理する(従来どおり)。拒否せず、終了コードに影響しない。
+     1 行に複数の理由が重なっても warn は 1 行。空の値と、正規表現に合い `BEGIN` を含まない値は何も出さない。
+  2. 理由を CLI 契約(config_files の `<slot>-job-map.csv` columns.credential_ref)に書く:
+     参照名の形式は適用側の認証情報ストアの運用に依存するため、relay-gate 側で拒否しない。
+     warn は秘密やパスの混入に気づかせるためのもので、参照名として解決できるかは検査しない。
+  3. credential_ref の値そのものは診断行に一切出さない。対象は validate-config.sh の stdout と stderr(error: / warn: / info:(--verbose を含む)/ hint:。
+     validate-config.sh は実行ログを持たない)と、ジョブマップを読む slot runner の stderr と実行ログ。
+     位置は `line=N` と `job_id=<v>` だけで示し、`value=` を付けない。規則は CLI 契約 conventions.credentials と columns.credential_ref に置く。
+  4. UC「slot ごとのジョブマップを定義する」の「仮採用」注記を確定内容に置き換え、形式の扱いを値の種類ごとの表(tier-facade.md)にする。
+     判定する BDD として、E2E に Scenario「参照名の形式に合わない credential_ref は同じ警告で受理され値は出力されない」(SPEC-004-03)を、
+     ティア完了条件に空白を含む値と `BEGIN_KEY` の Scenario を追加し、既存の `/` を含む値の Scenario にも「値が出力されない」を加える。
+consequences:
+  positive:
+    - "参照名の形式に合わないすべての値について、warn か error かと文言が仕様から一意に読める"
+    - "現行実装と利用者の承認内容に一致し、実装の変更は要らない"
+    - "形式違反の値が秘密やパスであっても、診断行から漏れない"
+  negative:
+    - "参照名として解決できない値(空白を含む等)も検証 OK として受理され、実行時に適用側の認証で失敗して初めて気づく場合がある"
+    - "warn の文言は、空白を含むだけの値にも secret or path と表示する(文言の正確さより文言の一意性を優先した)"
+    - "warn して受理した値(`/` や `BEGIN` を含む値を含む)も、正規の参照名と同じく execution-spec.json の slots.<role>.credential_ref へそのまま転記される。ジョブマップに認証情報の値そのものを置かないのは適用側の責任で、relay-gate は warn で見落としに気づかせるだけ(方針資料の『認証情報そのものは保存しない』は、参照名の欄に認証情報を置かない運用を前提に成り立つ)"
+alternatives_considered:
+  - name: "案 B: 正規表現に合わない値は `error: credential_ref is invalid line=N job_id=<v>` で拒否し、終了コード 2 とする"
+    reason_rejected: "参照名の形式は適用側の認証情報ストアの運用に依存し、relay-gate が拒否すると正当な参照名を使えない適用先が出る。利用者は案 A を選択した"
+  - name: "理由ごとに別の warn 文言を出す(パス / 秘密 / 形式違反)"
+    reason_rejected: "文言が増えても利用者の対処(値を確認する)は同じ。現行実装・既存 BDD と同じ 1 文言のほうが一意に読める"

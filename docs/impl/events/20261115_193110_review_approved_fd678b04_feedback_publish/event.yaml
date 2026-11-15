@@ -1,0 +1,115 @@
+event_id: 20261115_193110_review_approved_fd678b04_feedback_publish
+type: review_approved
+uc_id: fd678b04
+stage: S9
+payload:
+  approval_kind: feedback_publish_approval
+  review_evidence_event_id: 20261115_182534_s9_review_generated_fd678b04
+  feedback_review_evidence:
+    feedback_id: 20261115_145719_impl_feedback_fd678b04
+    draft_path: docs/impl/latest/fd678b04/feedback/draft.md
+    draft_sha256: 1daaee82102103037cb5e1ebc34e0687513edc7a246c6a787b094a585f204e1f
+    request_count: 1
+    blocker_count: 0
+    request_ids:
+    - CR-fd678b04-001
+  implementation_review_evidence:
+    gate_result: 6/6 pass
+    gates:
+      format: pass
+      lint: pass
+      tdd: pass (509/509)
+      bdd_tier: pass (97/97)
+      uc_bdd: pass (50/50, injections 0)
+      atdd: pass (1/1)
+    open_blocker_count: 0
+    open_major_count: 1
+    open_minor_count: 27
+    tiers:
+    - tier: tier-facade
+      attempt: 5
+      assumptions_sha256: 47be339cbd1b1ab5a34b9e0526bb3edf668e8ff80a729abebd4618879d4d6a16
+      assumption_verdicts_sha256: 69d9c691c423421a9ec6335e9fb003b893a60881cf4840dbeb75986a3dce614a
+    assumption_evidence_sha256: dc801179a07aed58effd6f878079c295e750d97a449172f54e8592e6aef1d93f
+  assumption_decisions:
+  - tier: tier-facade
+    id: A-017
+    decision: confirmed
+  - tier: tier-facade
+    id: A-018
+    decision: confirmed
+  - tier: tier-facade
+    id: A-019
+    decision: confirmed
+  - tier: tier-facade
+    id: A-020
+    decision: confirmed
+  - tier: tier-facade
+    id: A-023
+    decision: confirmed
+  - tier: tier-facade
+    id: A-024
+    decision: confirmed
+  - tier: tier-facade
+    id: A-025
+    decision: confirmed
+  - tier: tier-facade
+    id: A-027
+    decision: confirmed
+  - tier: tier-facade
+    id: A-029
+    decision: confirmed
+  - tier: tier-facade
+    id: A-030
+    decision: confirmed
+  - tier: tier-facade
+    id: A-031
+    decision: confirmed
+  - tier: tier-facade
+    id: A-032
+    decision: confirmed
+  - tier: tier-facade
+    id: A-033
+    decision: confirmed
+  - tier: tier-facade
+    id: A-034
+    decision: confirmed
+  - tier: tier-facade
+    id: A-035
+    decision: confirmed
+  - tier: tier-facade
+    id: A-036
+    decision: confirmed
+  - tier: tier-facade
+    id: A-037
+    decision: confirmed
+  - tier: tier-facade
+    id: A-038
+    decision: confirmed
+  - tier: tier-facade
+    id: A-039
+    decision: confirmed
+  - tier: tier-facade
+    id: A-040
+    decision: confirmed
+  - tier: tier-facade
+    id: A-041
+    decision: confirmed
+  - tier: tier-facade
+    id: A-042
+    decision: confirmed
+  - tier: tier-facade
+    id: A-043
+    decision: confirmed
+  - tier: tier-facade
+    id: A-044
+    decision: confirmed
+  decisions:
+    unknown_key_values_transient_holding: allowed (A-040 confirmed). implementation approved as is; publish the request to write the 3 conditions into the spec
+    relative_path_display: keep as is (join the config file directory and the written value; do not collapse ./ or ../)
+    start_command_error_line: 'outside this UC: same order as the validation command, first violation in one line. to be issued as a separate spec request for the owning UC'
+    rerun_command_pre_launch_checks: 'outside this UC: no pre-launch check of the 4 keys; a launch failure exits with code 6. to be issued as a separate spec request for the owning UC'
+    git_delivery: after publishing the request, push the feature branch and create the pull request
+  user_answer: '【全体】この実装内容を承認します。 / 【未知の項目の値の一時的な置き場】案 A: 読み取りの途中だけ作業用の領域に置くことを許します。実装はこのままで承認します。条件(環境変数にしない・読み終えたときと失敗したときに空にする・後に残すのは項目の名前だけ)を仕様に書く要求を出してください。 / 【相対パスの表示の形】案 A: いまのまま(設定ファイルのディレクトリと書いた値をつなげるだけで、./ や ../ を畳まない)で承認します。 / 【実装者が補った前提】残りの 23 件はすべて承認します。 / 【起動コマンドのエラー 1 行】案 A: 検証コマンドと同じ順で、最初の違反を 1 行出す、としてください。該当機能の仕様への要求として別に出してください。 / 【リランのコマンドの起動前の検査】案 A: 起動の前に 4 項目の実体を検査せず、起動に失敗したら終了コード 6 にする、としてください。該当機能の仕様への要求として別に出してください。 / 【本線への取り込み】承認後、仕様への要求を公開し、作業ブランチの共有と取り込み依頼の作成まで進めてください。'
+  confirmed_by: user
+created_at: '2026-11-15T19:31:10+09:00'

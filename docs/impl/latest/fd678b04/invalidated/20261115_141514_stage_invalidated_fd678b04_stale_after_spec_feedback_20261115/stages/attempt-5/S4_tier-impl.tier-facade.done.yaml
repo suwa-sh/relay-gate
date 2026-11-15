@@ -1,0 +1,499 @@
+stage: S4
+tier: tier-facade
+attempt: 5
+uc_id: fd678b04
+manifest_sha256: 829aa482569f86811e8a0a8453851b577b684bce01b8b83992f88cb1250b1ee5
+manifest_projection: v2
+result: pass
+rerun_mode: blocker_rerun
+rerun_reason: attempt 4 の独立検証の止める指摘 F-001 / F-014(制御文字の種類が多い 5,000 行・約 5 MB で 10 秒を超える。同じ性能問題)の修正。やり直し回数の上限に達したため、2026-11-13 の利用者決定で attempt 5 を開いた
+findings_provided: true
+user_decisions:
+  recorded_event: 20261113_041323_config_confirmed_fd678b04_attempt_limit_continue_and_perf_scope
+  source: 'docs/impl/latest/fd678b04/review/review-notes.md 末尾(2026-11-13 再実行: やり直し回数の上限到達と性能目標)'
+  applied:
+  - '方式は「まとめて変換する」: 値ごとに bash で置き換えるのをやめ、行数によらず一定回数の外部コマンド(sed / tr)で一括変換する'
+  - 性能目標は「5,000 行以内かつ 8 MB 以内のファイルを、内容によらず 10 秒以内」。目標値であり入力を制限する仕様ではない(超えるファイルを拒否も警告もしない)
+  - attempt 4 の前提 A-030(行数とバイト数に比例すればよいという読み替え)は取り下げた
+findings_addressed:
+- id: F-001
+  severity: blocker
+  status: fixed
+  cause: 原因は 3 つあった。(1) 可視表記を値ごとに bash で作っていた。制御文字の種類が多い値では 1 バイトあたり約 2.6 マイクロ秒かかり、約 5 MB のキーで 14 秒を超えた。1,024 バイトを超えるキーは結果を控えないため、info 行と warn 行で置き換えを 2 回行い 25 秒になった。(2) 行の読み取り(最初の = での分割・前後の空白の除去)を bash のパターン照合で行っていた。1.6 KB のキー 5,000 行で 2.4 秒かかり、1 行が数 MB のときは行の長さの 2 乗に比例して 60 秒でも終わらなかった。(3) 可視表記は元の最大 6 倍(8 MB の入力で 48 MB)になり、その行を配列に溜めて写し直す・サブシェルで受けて行に分け直すたびに 0.5〜1.5 秒かかっていた
+  fix: (1) キー名と表示しうる値の可視表記を、出力の前にまとめて作る(共有ファイル cli_field.sh に足した cli_field_safe_text_list / cli_field_safe_text_prepare。値の個数にも制御文字の種類の数にもよらず sed 1 回。値に 0xC2 があるときは sed 2 回と tr 1 回)。(2) feature flag env の行の構造の取り出しを sed 1 回にした(行の長さに比例する時間)。(3) info 行と未知キーの warn 行を配列に溜めず、検査をすべて終えた後に書式で直接出す。大きな値を埋め込む error 行は、出すときに可視表記を直接出す。検証表・対応ジョブマップ・runner の問い合わせの結果をサブシェルで受けない。出力のバイト列と stdout / stderr の行の順は変えていない
+- id: F-014
+  severity: blocker
+  status: fixed
+  note: 前提 A-030 を書き換えた。「行数とバイト数に比例すればよい」という読み替えを取り下げ、利用者決定の性能目標(5,000 行以内かつ 8 MB 以内を内容によらず 10 秒以内)を満たす実装と回帰テストにした
+- id: F-002
+  severity: major
+  status: no_behavior_change
+  note: 前提 A-010 の照合記録。未知キーを変数化しない挙動は変えていない(行の読み取りを書き直したが、9 キーだけを変数に載せる判定は同じ)
+- id: F-003〜F-013
+  severity: minor
+  status: no_behavior_change
+  note: 前提の照合記録。挙動は変えていない。error 行どうしの順(A-016)と列挙外の mode の扱い(A-028)は 2026-09 完了時の挙動のまま
+- id: F-015 / F-016
+  severity: minor
+  status: assumption_revised
+  note: 前提 A-031(結果の控え)と A-032(bash での置き換えの方法)を、今回の実装に合わせて書き換えた。値ごとの置き換え(他の検証種別が使う経路)の挙動は attempt 4 のまま
+gates:
+  format: pass
+  lint: pass
+  tdd: pass
+  bdd_tier: pass
+gate_runs:
+- gate: format
+  cwd: facade
+  command: shfmt -d .
+  exit_code: 0
+- gate: lint
+  cwd: facade
+  command: find src test -name '*.sh' -exec shellcheck -x {} +
+  exit_code: 0
+- gate: tdd
+  cwd: facade
+  command: bats -r test
+  exit_code: 0
+  summary: 475 tests, 475 ok, 0 not ok(attempt 4 の 421 件 + 今回追加した 54 件。他の検証種別のテストを含む既存 421 件はすべて pass のまま。所要時間 221 秒)
+- gate: bdd_tier
+  cwd: facade
+  command: npx cucumber-js --config ../cucumber.cjs features
+  exit_code: 0
+  summary: 80 scenarios (80 passed), 437 steps (437 passed)。他 UC の feature と step 定義は変更していない
+extra_checks:
+- name: Linux(ubuntu 24.04、bash 5.2.21、GNU sed 4.9、LANG=C.UTF-8、arm64 コンテナ)での bats 全件と shellcheck
+  command: docker run --rm --network none -e LANG=C.UTF-8 -v "$PWD:/r:ro" relay-gate-ci:ubuntu24 bash -c 'cd /r/facade && bats -r test'
+  exit_code: 0
+  summary: 475 tests, 475 ok, 0 not ok(所要時間 174 秒)。shellcheck も exit 0。shfmt / node はこのイメージに無いため format と BDD は macOS で実行
+approach:
+  chosen: まとめて変換する(利用者決定の第一候補のとおり)
+  summary:
+  - '可視表記: 1 行 1 値にして sed へ渡す。1 バイトの制御文字は、前に \u000 / \u001 を挿入してから y コマンドで元の 1 バイトを 16 進 1 桁へ写す(置き換え 4 回と y 1 回。種類の数によらない)'
+  - 'C1 制御文字(値に 0xC2 があるときだけ): C1 制御文字の前後で行を分け、2 段目の sed が C1 制御文字 1 つだけの行にだけ y を適用し、tr で改行を消して値の終わりの目印で値に分ける'
+  - sed のスクリプトは基本正規表現と生のバイトだけ(LC_ALL=C)。GNU sed 4.9 と BSD sed(macOS)で同じ出力になることを確認した
+  - 外部コマンドを使うのは、値の合計が 4,096 バイト以上のときだけ(通常の大きさの設定では起動しない)
+  - '外部コマンドの失敗・想定外の出力は、何かを出力する前に検出し、error: internal command failed commands=<sed|tr|sed,tr> path: <path> の 1 行だけを出して終了コード 6(CLI 契約 config_input_rules.internal_failure)'
+  - 値ごとの関数 cli_field_safe_text は外部コマンドを起動しない(attempt 4 と同じ bash の置き換え)。他の検証種別の呼び出し元の挙動は変えていない
+  alternatives_measured:
+  - 'C1 制御文字 32 種を 1 種類ずつ置き換える方式(sed の置き換え 32 回)と、目印を付けてから下位 4 ビットごとに置き換える方式(20 回): macOS の BSD sed で 8 MB の C1 制御文字だけの入力が 4.3〜5.2 秒(採用した行を分ける方式は 2.1 秒)。Linux はどれも 1.1〜2.4 秒'
+  - '値ごとに外部コマンドを起動する方式: 1 回の起動が数ミリ秒のため、5,000 行で 10 秒を超える(不採用)'
+  - '可視表記を控え(連想配列)に載せて info 行と warn 行で引く方式: 48 MB の可視表記を載せる・引く・行に組み立てるたびに 0.3〜0.6 秒かかる(キー名は配列で持ち回る形にした。控えは大きな値 9 個までに使う)'
+  - '大きな値を埋め込んだ error 行を組み立てて配列に溜める方式: 4 MiB の値 2 つ(stderr 約 100 MB)で macOS 11.3 秒(10 秒を超えた)。出すときに可視表記を直接出す方式にして 7〜8 秒'
+measurements:
+  environment:
+    macos: macOS(Darwin 25.5.0)、bash 5.3.15、BSD sed、arm64
+    linux: ubuntu 24.04、bash 5.2.21、GNU sed 4.9、arm64 コンテナ relay-gate-ci:ubuntu24(12 コア)、network none、入力と一時ファイルはコンテナ内の /tmp
+  method: bin/validate-config.sh を実プロセスで起動し、stdout と stderr をファイルへ向けて、コマンドの開始から終了までを計測(各 1 回。LC_ALL=C、--verbose)。runner は --help にすぐ応答するスクリプト、対応ジョブマップは存在するファイル。before = attempt 4 の実装(コミット a4136ad の facade/src)、after = 最終のコード。60 秒で打ち切り。null は測っていない
+  f001_reproduction:
+    input: 有効な単独本番設定 5 行 + 一意な未知キー 4,995 行(K + 5 桁の連番 + 制御文字 29 種の繰り返し)。約 5.1 MB。exit 0、stdout 15 行、stderr 9,995 行
+    rows:
+    - key_bytes: 1023
+      linux_before_seconds: 15.66
+      linux_after_seconds: 1.91
+      macos_before_seconds: 19.07
+      macos_after_seconds: 3.38
+    - key_bytes: 1024
+      linux_before_seconds: 15.3
+      linux_after_seconds: 1.88
+      macos_before_seconds: 18.9
+      macos_after_seconds: 3.47
+    - key_bytes: 1025
+      linux_before_seconds: 25.37
+      linux_after_seconds: 1.88
+      macos_before_seconds: 31.57
+      macos_after_seconds: 3.42
+  near_8mb:
+    note: どれも 8 MiB(8,388,608 バイト)以下で 8.3 MB 以上。5,000 行のものは有効な設定 5 行 + 4,995 行(キー 1 つが約 1.67 KB)
+    rows:
+    - input: 未知キーが制御文字 29 種だけ(5,000 行)
+      linux_before_seconds: 42.43
+      linux_after_seconds: 2.81
+      macos_before_seconds: 50.91
+      macos_after_seconds: 5.21
+    - input: 未知キーがタブを含む制御文字 30 種(5,000 行)
+      linux_before_seconds: 41.14
+      linux_after_seconds: 2.77
+      macos_before_seconds: null
+      macos_after_seconds: 5.32
+    - input: 未知キーが C1 制御文字 32 種(5,000 行)
+      linux_before_seconds: 32.54
+      linux_after_seconds: 2.78
+      macos_before_seconds: 41.4
+      macos_after_seconds: 5.34
+    - input: 未知キーが制御文字・C1 制御文字・DEL・多バイト文字・引用符の混在(5,000 行)
+      linux_before_seconds: 47.37
+      linux_after_seconds: 2.68
+      macos_before_seconds: 57.99
+      macos_after_seconds: 5.24
+    - input: 未知キーが 1 バイトの制御文字と C1 制御文字を交互に並べたもの(5,000 行)
+      linux_before_seconds: 50.42
+      linux_after_seconds: 2.88
+      macos_before_seconds: null
+      macos_after_seconds: 5.4
+    - input: 未知キーが ESC だけ(5,000 行)
+      linux_before_seconds: 12.96
+      linux_after_seconds: 2.52
+      macos_before_seconds: null
+      macos_after_seconds: 4.91
+    - input: 未知キーが DEL だけ(5,000 行)
+      linux_before_seconds: 14.93
+      linux_after_seconds: 2.67
+      macos_before_seconds: 18.98
+      macos_after_seconds: 4.91
+    - input: 未知キーが DEL と多バイト文字(あ、U+00A0)の混在(5,000 行)
+      linux_before_seconds: 12.41
+      linux_after_seconds: 1.84
+      macos_before_seconds: 15.93
+      macos_after_seconds: 4.02
+    - input: 未知キーの 16 バイトごとに ESC が 1 つ(5,000 行)
+      linux_before_seconds: 23.95
+      linux_after_seconds: 1.36
+      macos_before_seconds: null
+      macos_after_seconds: 3.15
+    - input: 未知キーが制御文字なしの ASCII(5,000 行)
+      linux_before_seconds: 4.86
+      linux_after_seconds: 1.28
+      macos_before_seconds: 6.68
+      macos_after_seconds: 2.92
+    - input: 未知キーが多バイト文字だけ(5,000 行)
+      linux_before_seconds: 4.55
+      linux_after_seconds: 1.4
+      macos_before_seconds: null
+      macos_after_seconds: 3.14
+    - input: FINAL_ で始まるキー 4,995 行(制御文字と C1 制御文字。info 行と error 行が全件出る。exit 2)
+      linux_before_seconds: 52.49
+      linux_after_seconds: 3.22
+      macos_before_seconds: 60 秒で終わらない
+      macos_after_seconds: 5.38
+    - input: FINAL_ で始まるキー 2,497 行 + 未知キー 2,497 行 + 列挙外の mode(info・warn・error がすべて出る。exit 2)
+      linux_before_seconds: 45.46
+      linux_after_seconds: 2.63
+      macos_before_seconds: null
+      macos_after_seconds: 4.72
+    - input: 制御文字だらけの同じキー 2,497 個の重複(duplicate key 2,497 行。exit 2)
+      linux_before_seconds: 13.89
+      linux_after_seconds: 1.65
+      macos_before_seconds: 17.99
+      macos_after_seconds: 3.26
+    - input: 5,000 行すべて同じキー(duplicate key 1 行。exit 2)
+      linux_before_seconds: null
+      linux_after_seconds: 0.62
+      macos_before_seconds: null
+      macos_after_seconds: 1.66
+    - input: = の無い行 4,995 行(invalid line 4,995 行。exit 2)
+      linux_before_seconds: null
+      linux_after_seconds: 0.17
+      macos_before_seconds: null
+      macos_after_seconds: 0.9
+    - input: 未知キー 4,995 行の値が長い(値が約 1.67 KB の混在。値は表示しない)
+      linux_before_seconds: 1.5
+      linux_after_seconds: 1.08
+      macos_before_seconds: 2.44
+      macos_after_seconds: 1.99
+    - input: キーと値の前後に空白が約 400 バイトずつ(5,000 行)
+      linux_before_seconds: 26.14
+      linux_after_seconds: 1.2
+      macos_before_seconds: 32.77
+      macos_after_seconds: 1.81
+    - input: キーと値の途中に 200〜300 バイトの空白の並び(5,000 行)
+      linux_before_seconds: 23.31
+      linux_after_seconds: 2.22
+      macos_before_seconds: null
+      macos_after_seconds: 3.06
+    - input: コメント行 4,995 行
+      linux_before_seconds: null
+      linux_after_seconds: 0.37
+      macos_before_seconds: null
+      macos_after_seconds: 1.17
+    - input: 1 行が 8 MiB の未知キー(制御文字 29 種だけ)
+      linux_before_seconds: 60 秒で終わらない
+      linux_after_seconds: 2.57
+      macos_before_seconds: null
+      macos_after_seconds: 5.29
+    - input: 1 行が 8 MiB の未知キー(C1 制御文字 32 種)
+      linux_before_seconds: null
+      linux_after_seconds: 2.69
+      macos_before_seconds: null
+      macos_after_seconds: 6.22
+    - input: 1 行が 8 MiB の未知キー(制御文字なし)
+      linux_before_seconds: 60 秒で終わらない
+      linux_after_seconds: 0.96
+      macos_before_seconds: 60 秒で終わらない
+      macos_after_seconds: 2.9
+    - input: 1 行が 8 MiB の GREEN_IMPL の値(混在。検証 OK で stdout に出る)
+      linux_before_seconds: 60 秒で終わらない
+      linux_after_seconds: 3.3
+      macos_before_seconds: null
+      macos_after_seconds: 6.35
+    - input: 1 行が 8 MiB の GREEN_IMPL の値(制御文字 29 種だけ。stdout に 48 MB)
+      linux_before_seconds: null
+      linux_after_seconds: 3.35
+      macos_before_seconds: null
+      macos_after_seconds: 5.92
+    - input: 1 行が 8 MiB の列挙外の BLUE_MODE の値(混在。exit 2)
+      linux_before_seconds: 60 秒で終わらない
+      linux_after_seconds: 4.11
+      macos_before_seconds: 60 秒で終わらない
+      macos_after_seconds: 7.35
+    - input: 1 行が 8 MiB の列挙外の BLUE_MODE の値(制御文字 29 種だけ。exit 2)
+      linux_before_seconds: null
+      linux_after_seconds: 4.05
+      macos_before_seconds: null
+      macos_after_seconds: 6.78
+    - input: 1 行が 8 MiB の列挙外の BLUE_MODE の値(C1 制御文字 32 種。exit 2)
+      linux_before_seconds: null
+      linux_after_seconds: 3.72
+      macos_before_seconds: null
+      macos_after_seconds: 7.34
+    - input: 1 行が 8 MiB の列挙外の BLUE_MODE の値(10 バイトごとに制御文字 3 つと C1 制御文字 1 つ。error 行 2 つに出る。exit 2)
+      linux_before_seconds: null
+      linux_after_seconds: 4.05
+      macos_before_seconds: null
+      macos_after_seconds: 7.08
+    - input: 4 MiB ずつの列挙外の BLUE_MODE と GREEN_MODE の値(制御文字 29 種だけ。error 行 3 つに計 4 回出て stderr は約 100 MB。exit 2)
+      linux_before_seconds: null
+      linux_after_seconds: 4.76
+      macos_before_seconds: null
+      macos_after_seconds: 7.6
+    - input: 4 MiB ずつの列挙外の BLUE_MODE と GREEN_MODE の値(C1 制御文字 32 種。exit 2)
+      linux_before_seconds: null
+      linux_after_seconds: 4.28
+      macos_before_seconds: null
+      macos_after_seconds: 7.98
+    - input: 4 MiB ずつの列挙外の BLUE_MODE と GREEN_MODE の値(1 バイトの制御文字と C1 制御文字を交互。exit 2)
+      linux_before_seconds: null
+      linux_after_seconds: 5.01
+      macos_before_seconds: null
+      macos_after_seconds: 8.37
+    - input: 1 行が 8 MiB の絶対パスでない GREEN_RUNNER の値(混在。exit 2)
+      linux_before_seconds: null
+      linux_after_seconds: 4.09
+      macos_before_seconds: null
+      macos_after_seconds: 6.74
+    - input: 1 行が 8 MiB で、キーの前後が 4 MiB ずつの空白
+      linux_before_seconds: 60 秒で終わらない
+      linux_after_seconds: 0.58
+      macos_before_seconds: 60 秒で終わらない
+      macos_after_seconds: 1.41
+    - input: 1 行が 8 MiB で、値の途中と後ろが 4 MiB ずつの空白
+      linux_before_seconds: 60 秒で終わらない
+      linux_after_seconds: 1.61
+      macos_before_seconds: 60 秒で終わらない
+      macos_after_seconds: 2.51
+    - input: 1 行が 8 MiB の引用符で囲んだ値(空白とタブを含む)
+      linux_before_seconds: null
+      linux_after_seconds: 2.57
+      macos_before_seconds: null
+      macos_after_seconds: 4.01
+    - input: 1 行が 8 MiB のコメント行
+      linux_before_seconds: null
+      linux_after_seconds: 0.33
+      macos_before_seconds: null
+      macos_after_seconds: 1.43
+    - input: 1 行が 8 MiB の = の無い行(invalid line。exit 2)
+      linux_before_seconds: null
+      linux_after_seconds: 0.12
+      macos_before_seconds: null
+      macos_after_seconds: 1.09
+  slowest_near_8mb:
+    linux: 5.01 秒(4 MiB ずつの列挙外の BLUE_MODE と GREEN_MODE の値(1 バイトの制御文字と C1 制御文字を交互。exit 2))。5,000 行の入力では 3.22 秒(FINAL_ で始まるキー 4,995 行(制御文字と C1 制御文字。info 行と error 行が全件出る。exit 2))
+    macos: 8.37 秒(4 MiB ずつの列挙外の BLUE_MODE と GREEN_MODE の値(1 バイトの制御文字と C1 制御文字を交互。exit 2))。5,000 行の入力では 5.4 秒(未知キーが 1 バイトの制御文字と C1 制御文字を交互に並べたもの(5,000 行))
+    over_7_seconds_linux: []
+    over_7_seconds_macos:
+    - '1 行が 8 MiB の列挙外の BLUE_MODE の値(混在。exit 2): 7.35 秒'
+    - '1 行が 8 MiB の列挙外の BLUE_MODE の値(C1 制御文字 32 種。exit 2): 7.34 秒'
+    - '1 行が 8 MiB の列挙外の BLUE_MODE の値(10 バイトごとに制御文字 3 つと C1 制御文字 1 つ。error 行 2 つに出る。exit 2): 7.08 秒'
+    - '4 MiB ずつの列挙外の BLUE_MODE と GREEN_MODE の値(制御文字 29 種だけ。error 行 3 つに計 4 回出て stderr は約 100 MB。exit 2): 7.6 秒'
+    - '4 MiB ずつの列挙外の BLUE_MODE と GREEN_MODE の値(C1 制御文字 32 種。exit 2): 7.98 秒'
+    - '4 MiB ずつの列挙外の BLUE_MODE と GREEN_MODE の値(1 バイトの制御文字と C1 制御文字を交互。exit 2): 8.37 秒'
+    margin_note: Linux は全入力が 7 秒以下。macOS は 5,000 行の入力がすべて 7 秒以下だが、1 行が数 MiB の値を error 行に出す入力は 7 秒を超えるものがあり(over_7_seconds_macos のとおり。どれも 10 秒以内)、目安の 7 秒に余裕が無い。macOS で時間がかかる内訳は、バイト点検(他 UC と共有の走査。macOS の tr が遅い)約 0.9 秒、可視表記の sed(と C1 制御文字があるときの 2 段目の sed・tr)1.5〜2.7 秒、可視表記の読み戻しと控え 約 1.0 秒、約 100 MB の stderr の出力 約 1.2 秒
+  other_validation_kinds:
+    note: 同じ共有ファイルの関数を使う他の検証種別。値ごとの関数の挙動を変えていないため、出力のバイト列も所要時間も attempt 4 と同じ。5,000 行・8 MB 付近では 10 秒を超える入力がある(他 UC の呼び出し側に、feature flag で直したのと同じ形が残っている)。他 UC のソースは変更せず、issues に起票した。数値は after の途中の版での実測(値ごとの関数は最終のコードと同じ)
+    issue: docs/impl/latest/fd678b04/issues/20261113_063000_other-validation-kinds-exceed-performance-target.md
+    rows:
+    - kind: --rapid-crosscheck
+      input: 制御文字なしの未知キー 4,998 行(8 MiB 弱)
+      linux_attempt4_seconds: 3.23
+      linux_seconds: 2.98
+      macos_seconds: 5.05
+    - kind: --rapid-crosscheck
+      input: 制御文字 29 種だけの未知キー 4,998 行
+      linux_attempt4_seconds: 36.88
+      linux_seconds: 36.01
+      macos_seconds: 46.41
+    - kind: --rapid-crosscheck
+      input: 制御文字・C1 制御文字・多バイト文字を混ぜた未知キー 4,998 行
+      linux_attempt4_seconds: 44.25
+      linux_seconds: 42.72
+      macos_seconds: 56.68
+    - kind: --rapid-crosscheck
+      input: 1 行が 8 MiB のキー / 1 行が 8 MiB の RAPID_COMPARE_COMMAND の値
+      linux_attempt4_seconds: 60 秒で終わらない
+      linux_seconds: 60 秒で終わらない
+      macos_seconds: 60 秒で終わらない
+    - kind: --job-map
+      input: 制御文字なしの有効な 4,999 行(script が約 1.6 KB)
+      linux_attempt4_seconds: 4.51
+      linux_seconds: 4.56
+      macos_seconds: 11.78
+    - kind: --job-map
+      input: script に制御文字 29 種を並べた有効な 4,999 行
+      linux_attempt4_seconds: 21.03
+      linux_seconds: 20.74
+      macos_seconds: 29.35
+    - kind: --job-map
+      input: job_id が制御文字だらけ(4,999 行とも error)
+      linux_attempt4_seconds: 40.13
+      linux_seconds: 38.83
+      macos_seconds: 48.8
+    - kind: --job-map
+      input: 1 行が 8 MiB の script
+      linux_attempt4_seconds: 60 秒で終わらない
+      linux_seconds: 60 秒で終わらない
+      macos_seconds: 60 秒で終わらない
+output_unchanged_evidence:
+  baseline: 元の実装 = コミット 2a20a26(HEAD~3。attempt 4 の修正より前。facade/src は cli_field.sh だけが attempt 4 と異なる)。attempt 4 = コミット a4136ad(HEAD)。どの比較も最終のコードで行った
+  function_level:
+    method: 同じ 3,601 個の値(制御文字 32 種・DEL・C1 制御文字 32 種・全バイト値 1〜255 の 1 バイト値と 0xC2 に続く 2 バイト値・多バイト文字・不正な UTF-8・値の終わりの目印や成功の証跡と同じ文字列・パス名展開の文字・1,023〜9,000 バイトの境界の大きさ・乱数 3,000 個)を、元の実装の cli_field_safe_text と、現行の 5 通りの呼び出し方(値ごと / 全値をまとめて / 1 値ずつまとめる経路 / 先に控えてから値ごと / cli_field_line・cli_path_field_line・cli_field_display_value)に渡し、結果のバイト列を cmp で比較。規則を独立に実装した Python の期待値とも比較
+    combinations: 2 OS(macOS bash 5.3.15 + BSD sed、Linux bash 5.2.21 + GNU sed)× 2 ロケール(C、C.UTF-8)× 5 通りの呼び出し方
+    comparisons: 72020
+    mismatches: 0
+    note: 72,020 = 3,601 値 × 5 通り × 2 ロケール × 2 OS。attempt 4 の実装と元の実装の一致も同じ値で確認した(不一致 0)
+  cli_level_random:
+    method: 乱数で作った feature flag env 300 個(有効な設定 + 未知キー、制御文字・C1・多バイト文字・空白・引用符・= ・コメント・重複・FINAL_ で始まるキー・列挙外の mode・存在しない runner・応答しない runner・5,000 バイト級の値と 6,000 バイト級のキー・NUL / BOM / CR / 不正な UTF-8 を混ぜる)を、元の実装と現行の実装に同じパスで渡し、stdout・stderr・終了コードを比較(--verbose の有無 × ロケール C / C.UTF-8)
+    runs_per_os: 1200
+    os: macOS と Linux
+    mismatches: 0
+    exit_codes: 終了コード 0 が 352 回、2 が 848 回(OS ごと)
+  cli_level_shapes:
+    method: 実測に使った入力の形を、元の実装と現行の実装に渡し、終了コード・行数・stdout と stderr の sha256 を比較。元の実装が時間内に終わる大きさに縮めた
+    small: 約 200 KB に縮めた 36 通り(feature flag 27、slot ジョブマップ 6、速報クロスチェック設定 3)が Linux で全件一致。feature flag の 27 通りは macOS でも全件一致
+    tiny: 1 行が長い入力を約 20 KB に縮めた 8 通り(feature flag 5、速報クロスチェック設定 2、slot ジョブマップ 1)が Linux で全件一致。feature flag の 5 通りは macOS でも全件一致
+    full_size_vs_attempt4: 'F-001 の再現入力 3 通りと 8 MiB 弱の入力 10 通りを、attempt 4 の実装と現行の実装で比較: Linux は 13 通りとも一致。macOS は 12 通りが一致し、残り 1 通り(FINAL_ で始まるキー 4,995 行)は attempt 4 の実装が 60 秒で終わらず比較できなかった(Linux では一致)'
+  line_order: stdout / stderr の行の順(info 全件 → 未知キーの warn 全件 → error → runner の warn)は、既存の順のテスト 4 件(validate_feature_flag_env_rules.bats)と上の比較で変わっていないことを確認した
+implementation_summary:
+- file: facade/src/domain/cli_field.sh
+  change: 'まとめて置き換える関数を足した: cli_field_escape_batch(sed 1 回、または sed 2 回と tr 1 回。失敗したコマンド名を CLI_FIELD_BATCH_FAILED_COMMANDS に載せる)、cli_field_safe_text_list(行数に比例する個数の値を配列で受けて配列で返す)、cli_field_safe_text_prepare(大きな値をまとめて置き換えて控える)、cli_field_print_safe_text(控えから直接出す)。値ごとの関数 cli_field_safe_text / cli_field_escape_text の置き換えの方法と出力は attempt 4 のまま(外部コマンドを起動しない)。控えに合計 64 MiB の上限を付けた。cli_field_line / cli_path_field_line / cli_field_display_value は、値を変数へ写さずに出す形にした(出力は同じ)'
+- file: facade/src/repository/feature_flag_config.sh
+  change: 行の構造の取り出し(空行・コメント行・形式違反の行・キーと値、前後の空白の除去)を sed 1 回にし、bash は結果を読むだけにした。sed の失敗・想定外の出力は補助コマンドの失敗(commands=sed)。引用符を外す処理は先頭と末尾の 1 文字だけを見る形にした
+- file: facade/src/domain/feature_flag.sh
+  change: '検証表を 3 つの関数に分けた: feature_flag_classify_keys(キーの分類)、feature_flag_report_unknown_keys(未知キーの warn 行)、validate_feature_flag_errors(error 行)。validate_feature_flag は 3 つを順に呼ぶ(出す行と順は同じ)。報告行の出し先を配列にもできるようにし(feature_flag_emit)、大きな値を埋め込む行は出すときに値の表示を付ける(feature_flag_emit_value_line / feature_flag_flush_report_lines)。運用モード名をサブシェルなしで返す関数を足した。数 MB のキーと値を比べる・写す回数を減らした'
+- file: facade/src/usecase/validate_feature_flag.sh
+  change: キー名と表示しうる値の可視表記を、出力の前にまとめて作る。外部コマンドの失敗は error 行 1 つだけで終了コード 6。info 行と未知キーの warn 行は溜めずに最後に書式で出す。検証表・対応ジョブマップ・runner の問い合わせ・stdout の組み立てでサブシェルを使わない(runner --help の起動だけはサブシェルのまま)
+design_notes:
+- 他 UC のソース(domain/job_map.sh、domain/launch_command.sh、repository/job_map_repo.sh、repository/rapid_crosscheck_env.sh、usecase/validate_job_map.sh、usecase/validate_rapid_crosscheck.sh、presentation/validate-config.sh、gateway/runner_probe.sh)は変更していない
+- 5,000 行または 8 MB を超えるファイルを拒否・警告する処理は入れていない(従来どおり受け付けて処理する)
+- 通常の大きさの設定(キー名と値の合計が 4,096 バイト未満)では外部コマンドを起動しない。可視表記を作る sed / tr を失敗するものに差し替えても、通常の設定の検証結果は変わらない(テストで固定)
+- IFS とパス名展開の設定(set -f)は関数の中だけで変え、関数の外へ漏らさない(単体テストで固定)
+test_changes:
+  existing_test_assertions_modified: false
+  other_uc_tests_modified: false
+  other_uc_features_modified: false
+  updated:
+  - file: facade/test/usecase/validate_feature_flag_env_rules.bats
+    change: attempt 4 で追加した性能テスト 2 件の前の説明文を、A-030 の読み替え(行数とバイト数に比例)から新しい性能目標(5,000 行以内かつ 8 MB 以内を 10 秒以内。目標値)へ書き換えた。テストの入力と検査は変えていない
+  - file: facade/test/domain/cli_field_escape_paths.bats
+    change: 参照実装(reference_escape)と repeat_text を、新しいテストと共用するため cli_field_reference.bash へ移した。既存 10 件の入力と検査は変えていない
+  added:
+  - file: facade/test/usecase/validate_feature_flag_env_rules.bats
+    tests_count: 11
+    tests:
+    - F-001 の再現入力(29 種の制御文字を並べた 1,023 / 1,024 / 1,025 バイトのキー 4,995 行)がどの長さでも 10 秒以内
+    - 5,000 行・8 MiB 弱で未知キーが制御文字 29 種だけの入力が 10 秒以内(info と warn の全件を可視表記で出す)
+    - 5,000 行・8 MiB 弱で C1 制御文字・DEL・多バイト文字を混ぜたキーの入力が 10 秒以内(多バイト文字を変えない)
+    - 8 MiB 弱で制御文字だらけの同じキー 2,497 個の重複が 10 秒以内
+    - 1 行が 8 MiB 弱の列挙外の mode の値が 10 秒以内(invalid value と foreground 排他の 2 行に可視表記で出す)
+    - 可視表記を作る sed が失敗する場合(キー名・重複キー・実装版の値の 3 通り)と tr が失敗する場合は、internal command failed の 1 行だけで終了コード 6・stdout なし
+    - 大きな実装版の値を stdout に可視表記で出す。通常の大きさの設定は外部コマンドが失敗しても終了コード 0
+  - file: facade/test/domain/cli_field_batch.bats
+    tests_count: 25
+    reason: まとめて置き換える経路の結果が bash の経路・参照実装と同じバイト列であること、値の境目(改行・空の値・目印と同じ文字)を取り違えないこと、0xC2 の無い値だけなら tr を使わないこと、外部コマンドの失敗を戻り値と失敗したコマンド名で伝えること、値ごとの関数が外部コマンドを起動しないこと、控えの合計の上限と重複、控えから直接出す関数、シェルの設定を変えないこと、5,000 個・8 MB が 10 秒以内であることを固定する
+  - file: facade/test/domain/cli_field_escape_paths.bats
+    tests_count: 1
+    reason: 置き換えの要らない小さな値を控えに載せないこと
+  - file: facade/test/domain/feature_flag.bats
+    tests_count: 9
+    reason: キーの分類、表示用のキー名の配列を渡した場合、報告行の出し先を配列にした場合、長いキーが多数ある場合に同じ行が出ること、可視表記をまとめて作る sed が失敗してもキーごとの置き換えで同じ行を返すこと、値を埋め込む報告行が小さな値・大きな値・空の値で stdout へ直接出した場合と同じバイト列になること
+  - file: facade/test/repository/feature_flag_config.bats
+    tests_count: 8
+    reason: sed で取り出した行の種類を取り違えないこと、空白の除き方と = の分割、重複キーの全出現行、特別な文字のキー、シェルの設定を変えないこと、sed の失敗が commands=sed になること、1 行が数 MB(長い空白の並びを含む)でも 10 秒以内であること
+  test_duration_note: bats 全件の所要時間は macOS 221 秒、Linux 174 秒(attempt 4 の時点の所要時間は測っていない)。入力の生成は printf 1 回で全行を書く形にし、100 MB 近い出力の検査は先頭・末尾・段の境目の行だけを取り出して行う
+assumptions:
+  path: attempt-5/S4_tier-impl.tier-facade.assumptions.yaml
+  count: 21
+  by_category:
+    input_validation: 2
+    data_format: 3
+    error_handling: 8
+    persistence: 0
+    performance: 7
+    security: 1
+  sha256: 764eb97433280c6e2d3321c97e9c73c6fc0c0bd4ab06c3da04f58f743bf23aa1
+  extraction:
+    candidate_count: 32
+    excluded_as_explicit: 11
+    recorded_count: 21
+  changes_from_attempt_4:
+    carried_forward:
+    - A-010
+    - A-016
+    - A-017
+    - A-018
+    - A-019
+    - A-020
+    - A-023
+    - A-024
+    - A-025
+    - A-027
+    - A-028
+    - A-029
+    target_line_updated:
+    - A-010
+    - A-016
+    - A-023
+    - A-028
+    - A-029
+    rewritten:
+    - id: A-030
+      summary: 「行数とバイト数に比例すればよい」という読み替えを取り下げ、性能目標「5,000 行以内かつ 8 MB 以内を内容によらず 10 秒以内」を満たす実装にした。大きさの条件は利用者決定に基づく性能目標で、仕様への書き足しは最終確認で要求として出す。8 MB は 8 MiB と読んだ
+    - id: A-031
+      summary: '結果の控え: 値ごとの置き換えは 1,024 バイト以下(attempt 4 と同じ)。まとめて置き換えた値は大きさによらず控える。控えの合計は 64 MiB まで'
+    - id: A-032
+      summary: bash での置き換えの方法(attempt 4 と同じ)は、値ごとの関数に残した
+    added:
+    - id: A-033
+      summary: キー名と表示しうる値の合計が 4,096 バイト以上のとき、外部コマンド(sed 1 回、または sed 2 回と tr 1 回)でまとめて可視表記にする
+    - id: A-034
+      summary: 可視表記を作る外部コマンドの失敗を報告するときの commands= の名前の決め方(最も後ろで失敗したコマンド。件数の不一致は使ったコマンドすべて)
+    - id: A-035
+      summary: 行の構造を取り出す sed の失敗・想定外の出力は commands=sed
+    - id: A-036
+      summary: feature flag env の行の構造の取り出しを sed 1 回で行う
+    - id: A-037
+      summary: domain の validate_feature_flag を単体で呼んだときの外部コマンドの失敗は、bash の置き換えで続ける(終了コード 6 にするのは usecase)
+    - id: A-038
+      summary: 大きな値を埋め込む error 行と warn 行は、行を組み立てて溜めず、出すときに可視表記を直接出す(出力は同じ)
+    removed: []
+  undefined_in_spec_awaiting_user_decision:
+  - id: A-016
+    summary: キーごとの検査の error 行どうしの順。2026-09 完了時の実装の順を変えていない
+  - id: A-028
+    summary: mode が列挙外・欠落のときも、その slot を off でないとして従属キーを検査する。2026-09 完了時の実装の挙動を変えていない
+  - id: A-030
+    summary: 性能目標の大きさの条件(8 MB)は仕様に未記載。最終確認で仕様への要求として出す
+issues:
+  new:
+  - path: docs/impl/latest/fd678b04/issues/20261113_063000_other-validation-kinds-exceed-performance-target.md
+    summary: --rapid-crosscheck と --job-map は、5,000 行・8 MB 付近の入力で 10 秒を超える(制御文字の多い入力で 20〜57 秒、1 行が 8 MiB の入力は 60 秒で終わらない)。原因は他 UC の呼び出し側にあり、共有関数の中では直せない。性能目標をどの検証種別に適用するかも仕様に無い
+    blocker: false
+  referenced:
+  - path: docs/impl/latest/fd678b04/issues/20261113_021600_feature-flag-error-line-order-undefined.md
+    summary: error 行どうしの順と、列挙外の mode の扱いが仕様に無い(S2 で起票済み。blocker ではない)
+    blocker: false
+remaining_limits:
+- macOS では、1 行が数 MiB の値を error 行に出す入力が 7〜8.5 秒かかり、目安の 7 秒に余裕が無い(10 秒以内。Linux は 5 秒以下)。5,000 行の入力は macOS でも 5.6 秒以下
+- bash 5.0 / 5.1 と Linux x86_64 の実機では実測していない。使った構文(local -n、local -、declare -g、単語分割)は bash 4.4 以降のもの
+- 8 MB を超える入力は保証の範囲外。可視表記の合計が 64 MiB を超える大きな値は控えず、表示のたびに bash で置き換える
+completed_at: '2026-11-13T07:56:23+09:00'
+completed_by: dist-impl-implement@0.14.1

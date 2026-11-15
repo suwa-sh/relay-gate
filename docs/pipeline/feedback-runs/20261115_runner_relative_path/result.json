@@ -1,0 +1,61 @@
+{
+  "schema_version": "distillery.feedback-result/v1",
+  "run_id": "feedback-20261115_runner_relative_path-20261115_165658-45422",
+  "attempt": 1,
+  "feedback_request_id": "20261115_runner_relative_path",
+  "input_sha256": "6d8f5ef4e077d4445a4495eace5014edbcda8cf4b7b1dfb096bc5556bed60414",
+  "status": "completed",
+  "stages": [
+    {
+      "stage_id": "spec",
+      "state": "succeeded",
+      "event_ids": [
+        "20261115_164000_feedback_stage_spec"
+      ],
+      "direct_work_unit_ids": [
+        "CR-c5a81e37-001#1"
+      ],
+      "causal_work_unit_ids": [
+        "CR-c5a81e37-001#1"
+      ]
+    }
+  ],
+  "work_units": [
+    {
+      "work_unit_id": "CR-c5a81e37-001#1",
+      "disposition": "applied",
+      "reason": "At least one required closure stage changed its domain artifacts.",
+      "artifact_refs": [
+        "specs/events/20261115_164000_feedback_runner_relative_path/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20261115_164000_feedback_runner_relative_path/適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md",
+        "specs/events/20261115_164000_feedback_runner_relative_path/適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md",
+        "specs/events/20261115_164000_feedback_runner_relative_path/適用構成業務/適用構成定義フロー/feature flag を設定する/_api-summary.yaml",
+        "specs/events/20261115_164000_feedback_runner_relative_path/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/spec.md",
+        "specs/events/20261115_164000_feedback_runner_relative_path/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/tier-facade.md",
+        "specs/events/20261115_164000_feedback_runner_relative_path/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/_api-summary.yaml",
+        "specs/events/20261115_164000_feedback_runner_relative_path/実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/tier-facade.md",
+        "specs/events/20261115_164000_feedback_runner_relative_path/実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/_api-summary.yaml",
+        "specs/events/20261115_164000_feedback_runner_relative_path/クロスチェック業務/速報クロスチェックフロー/速報クロスチェック runner へ完了通知を送信する/spec.md",
+        "specs/events/20261115_164000_feedback_runner_relative_path/クロスチェック業務/速報クロスチェックフロー/速報クロスチェック runner へ完了通知を送信する/tier-facade.md",
+        "specs/events/20261115_164000_feedback_runner_relative_path/クロスチェック業務/速報クロスチェックフロー/速報比較依頼を claim する/tier-rapid-crosscheck.md",
+        "specs/events/20261115_164000_feedback_runner_relative_path/実行復旧業務/background 側リランフロー/元の execution-spec.json から復元して新しい run_id で起動する/tier-ops.md",
+        "specs/events/20261115_164000_feedback_runner_relative_path/_cross-cutting/ux-ui/ui-design.md",
+        "specs/events/20261115_164000_feedback_runner_relative_path/_cross-cutting/ux-ui/ux-design.md",
+        "specs/events/20261115_164000_feedback_runner_relative_path/decisions/spec-decision-035.yaml",
+        "specs/events/20261115_164000_feedback_runner_relative_path/_inference.md",
+        "specs/events/20261115_164000_feedback_runner_relative_path/spec-event.yaml"
+      ]
+    }
+  ],
+  "requests": [
+    {
+      "request_id": "CR-c5a81e37-001",
+      "work_unit_ids": [
+        "CR-c5a81e37-001#1"
+      ],
+      "disposition": "applied",
+      "reason": "At least one work unit was applied and all work units completed successfully."
+    }
+  ],
+  "terminal_event_id": "20261115_165900_feedback_run_completed"
+}

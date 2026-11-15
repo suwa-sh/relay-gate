@@ -1,0 +1,60 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "specification"
+artifact_id: "spec-decision-032"
+title: "管理 DB は 1 つで、すべての管理 DB 接続参照名は同じ管理 DB に解決されることを CLI 契約の前提として書く。解決先は導入する側が確かめ、relay-gate は検査しない"
+status: "approved"
+generated_at: "2026-11-05T11:20:00+09:00"
+context: |
+  - 2026-11-05 のインフラ設計で、確報クロスチェックの設定ファイル final-crosscheck.env を、実行ホストと DB セグメントへ別の元ファイルで配るようにした。
+    - 確報 runner は実行ホストのファイルの FINAL_DB_CONN_REF で管理 DB に接続し、確報比較依頼を登録する。
+    - 確報 worker は DB セグメントのファイルの FINAL_DB_CONN_REF で管理 DB に接続し、同じキューから依頼を取得する。
+  - 2 つの参照名が別の DB に解決されると、設定の検査をすべて通っても worker は runner の依頼を取得できず、確報ジョブが完了しない。
+  - CLI 契約の conventions.credentials は、管理 DB 接続の参照名(RAPID_DB_CONN_REF / HANG_DB_CONN_REF / FINAL_DB_CONN_REF / HOUSEKEEP_DB_CONN_REF)を列挙し、
+    参照名から接続情報への解決は適用側の運用手順に委ねるとだけ書いていた。すべての参照名が同じ 1 つの管理 DB に解決されるという前提は書かれていなかった。
+  - 同じ日のインフラ設計の差分更新(管理 DB が 1 つであることを接続参照名の解決先として明記)は、次のように決めた。
+    - 条件は参照名の文字列が同じことではなく、解決先(接続先の DB)が同じこと。
+    - 解決先が同じことは導入する側が確かめる。構築時の検査は設定ファイルの存在確認だけで、解決先を判定しない。
+    - relay-gate のコマンドに新しい検査は足さない。
+  - 変更要求は、CLI 契約にも同じ前提を書き、構築手順と食い違わないようにすることを求めている。
+decision: |
+  1. CLI 契約の conventions.credentials に次の前提を書いた。
+     - 管理 DB は 1 つで、すべての管理 DB 接続参照名は同じ 1 つの管理 DB に解決される。
+       final-crosscheck.env は、実行ホストの置き場と DB セグメントの置き場の両方のファイルの FINAL_DB_CONN_REF が対象。
+     - 理由: 確報 runner が登録した確報比較依頼を、確報 worker が同じキューから取得するため。
+     - 条件は解決先(接続先の DB)が同じこと。参照名の文字列が同じことではない。
+     - HOUSEKEEP_DB_CONN_REF はハウスキープ専用 DB ロール housekeep_del の参照名で、業務用ロールとは別のロールを指す。解決先の DB は同じ。
+     - 解決先が同じことは導入する側が確かめる。構築手順の配置時の検査は設定ファイルの存在確認だけ。
+     - relay-gate のコマンド(validate-config.sh と各読み手の起動時の検査)も解決先を検査しない。
+       解決先が違う設置でも起動時の検査は通り、そのための error 文言・終了コードは無い。
+  2. 同じ前提を、参照名を定義する各所から conventions.credentials へ参照させた。
+     - CLI 契約 config_files: final-crosscheck.env の note と FINAL_DB_CONN_REF、rapid-crosscheck.env の RAPID_DB_CONN_REF、
+       hang-detector.env の HANG_DB_CONN_REF、housekeep.env の HOUSEKEEP_DB_CONN_REF。
+     - UC の tier md の設定キー表と、その直下の説明(6 UC)。
+       - 速報比較依頼を claim する / 速報クロスチェック runner へ完了通知を送信する(tier-rapid-crosscheck.md の RAPID_DB_CONN_REF)。
+       - 確報比較依頼を登録して終端状態まで待機する / 確報比較依頼を claim する(tier-final-crosscheck.md の FINAL_DB_CONN_REF)。
+       - background 実行の経過時間と終了状態を判定する(tier-ops.md の HANG_DB_CONN_REF)。
+       - 保持日数を過ぎた終了済みの実行と確報比較依頼を判定する(tier-ops.md のキー表の直下に HOUSEKEEP_DB_CONN_REF の説明を追加。キー表の列は起動時の検査のため)。
+     - 速報の 2 UC のキー表は「速報管理 DB 接続情報の参照名」を「管理 DB 接続情報の参照名」に直した。
+       速報用の別 DB があると読めないようにするため。業務ルールの「速報管理 DB へ書き込む」などの表現は、方針資料と同じ用語のため変えない。
+     - 確報の登録 UC のキー表の「解決方法は _cross-cutting/datastore/ に従う」は、datastore に解決方法の記載が無いため、
+       適用側の運用手順に委ねることと conventions.credentials への参照に直した。
+  3. 足さないもの
+     - 新しい検査・error 文言・終了コード・BDD は足さない。relay-gate は参照名の解決先を検査しないため。
+     - E2E BDD・usdm[]・受け入れ条件の数は変えない。
+  4. 実装との照合(2026-11-05 時点)
+     - 確報 runner / worker、hang-detector.sh、housekeep.sh は未実装。参照名の解決先を検査する実装も無い。食い違う実装は無い。
+consequences:
+  positive:
+    - "CLI 契約、構築手順、インフラ設計が同じ前提(管理 DB は 1 つ、解決先が同じこと)を書き、食い違わない"
+    - "参照名の文字列が違ってもよいこと(HOUSEKEEP_DB_CONN_REF は別ロールで別の参照名になる)と、解決先が同じでなければならないことが区別して読める"
+    - "relay-gate のコマンドが解決先を検査しないことが契約から読めるため、実装者が検査を発明しない"
+  negative:
+    - "解決先が違う設置は起動時の検査では見つからない。確報ジョブが完了しない形で初めて気付く。確かめるのは導入する側の手順に頼る"
+alternatives_considered:
+  - name: "参照名の文字列をすべて同じにすることを条件にする"
+    reason_rejected: "HOUSEKEEP_DB_CONN_REF はハウスキープ専用 DB ロールで別の参照名になる。実行ホストと DB セグメントで参照名の付け方が違う設置も妨げる。インフラ設計の条件(解決先が同じこと)とも食い違う"
+  - name: "relay-gate のコマンド(validate-config.sh など)で解決先が同じことを検査する"
+    reason_rejected: "参照名から接続情報への解決は適用側の運用手順に委ねており、relay-gate は接続情報を扱わない。実行ホストと DB セグメントは別ホストで、1 つのコマンドから両方のファイルを読めない。変更要求も新しい検査を足さないとしている"
+  - name: "前提をインフラ設計にだけ書き、CLI 契約には書かない"
+    reason_rejected: "CLI 契約は参照名を定義する正本で、読む人が単一の管理 DB の前提に気付けない。変更要求は CLI 契約にも同じ前提を書くことを求めている"

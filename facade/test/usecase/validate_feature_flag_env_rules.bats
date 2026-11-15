@@ -8,8 +8,9 @@
 #    --verbose の info 行の文言・出す回・順。spec-decision-023 / 026 / 028〜031 / 033)を --feature-flag に適用する。
 #   現行実装(facade/src/)は未追従で、S4 の再実行まで red になるテストを含む。
 # error 行が 2 行以上出るときの error 行どうしの順は、(i)(ii) の段の中だけを検証する
-#   ((iii) のキーごとの検査の error 行どうしの順は仕様に定めが無いため固定しない。
-#    docs/impl/latest/fd678b04/issues/20261113_021600_feature-flag-error-line-order-undefined.md)
+#   ((iii) のキーごとの検査の error 行どうしの順は、このファイルを書いた時点では仕様に定めが無かったため固定していない。
+#    docs/impl/latest/fd678b04/issues/20261113_021600_feature-flag-error-line-order-undefined.md。
+#    2026-11-15 に CLI 契約 config_files.feature-flag.env.error_order が定めた。その順の検証は validate_feature_flag_error_order.bats)
 bats_require_minimum_version 1.5.0
 
 setup() {

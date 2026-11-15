@@ -1,4 +1,4 @@
-# digest of arch/latest/arch-design.yaml section data_architecture (L1232-2463); source_sha256: 6ee48d9e90d09b186d8d085a0ac0c64adb0a637559321a753c0612124f5da27d
+# digest of arch/latest/arch-design.yaml section data_architecture (L1234-2478); source_sha256: c53102258eb87c109a5e44ec19daf68de60dc5770785d80c474f31b1cf8d9879
 # 派生物。正本は arch-design.yaml。編集しない
 data_architecture:
   entities:
@@ -34,12 +34,12 @@ data_architecture:
           primary_key: false
         - name: "blue_runner"
           type: "string"
-          description: "BLUE_RUNNER: blue runner 実体スクリプトパス"
+          description: "BLUE_RUNNER: blue runner 実体スクリプトパス(relay-gate が提供する標準の slot runner、または利用者が自作した runner)"
           nullable: false
           primary_key: false
         - name: "green_runner"
           type: "string"
-          description: "GREEN_RUNNER: green runner 実体スクリプトパス"
+          description: "GREEN_RUNNER: green runner 実体スクリプトパス(relay-gate が提供する標準の slot runner、または利用者が自作した runner)"
           nullable: false
           primary_key: false
         - name: "rapid_crosscheck_runner"
@@ -52,10 +52,23 @@ data_architecture:
           description: "RAPID_CROSSCHECK_WORKER: 速報クロスチェック worker の実体パス"
           nullable: false
           primary_key: false
+        - name: "blue_job_map_location"
+          type: "string"
+          description: "blue 用の slot ジョブマップの場所(任意のキー。キー名は仕様で確定する)。無い・空なら設定ファイル置き場の固定の名前(blue-job-map.csv)を使う。絶対パスと相対パスを受け付け、相対パスの基準は feature flag の設定ファイルがあるディレクトリ"
+          nullable: true
+          primary_key: false
+        - name: "green_job_map_location"
+          type: "string"
+          description: "green 用の slot ジョブマップの場所(任意のキー。キー名は仕様で確定する)。無い・空なら設定ファイル置き場の固定の名前(green-job-map.csv)を使う。絶対パスと相対パスを受け付け、相対パスの基準は feature flag の設定ファイルがあるディレクトリ"
+          nullable: true
+          primary_key: false
       relationships:
         - target_entity: "E-002"
           type: "1:N"
-          description: "feature flag が slot ごとの runner 割当(BLUE_RUNNER / GREEN_RUNNER)を所有する"
+          description: "feature flag が slot ごとの runner 割当(BLUE_RUNNER / GREEN_RUNNER)と、対応するジョブマップの所在(任意のキー)を所有する"
+        - target_entity: "E-003"
+          type: "1:N"
+          description: "任意のキーで slot ごとのジョブマップの場所を指定する(無い・空なら固定の名前)"
         - target_entity: "E-010"
           type: "1:N"
           description: "BLUE_IMPL / GREEN_IMPL が execution-spec の実装版として確定保存される"
@@ -71,12 +84,12 @@ data_architecture:
           primary_key: true
         - name: "runner_script_path"
           type: "string"
-          description: "runner 実体スクリプトパス"
+          description: "runner 実体スクリプトパス(relay-gate が提供する標準の slot runner、または利用者が自作した runner)"
           nullable: false
           primary_key: false
         - name: "job_map_location"
           type: "string"
-          description: "対応するジョブマップの所在"
+          description: "対応するジョブマップの所在(feature flag の任意のキーで指定。無い・空なら設定ファイル置き場の固定の名前)"
           nullable: false
           primary_key: false
       relationships:
@@ -204,7 +217,7 @@ data_architecture:
           primary_key: false
         - name: "runner_location"
           type: "text"
-          description: "runner 実体の所在"
+          description: "runner 実体の所在(relay-gate が提供する標準の slot runner の割り当て、または自作した runner の所在)"
           nullable: true
           primary_key: false
         - name: "hang_limit_adjustment_records"
@@ -1097,15 +1110,15 @@ data_architecture:
   storage_mapping:
     - entity_id: "E-001"
       storage_type: "file"
-      reason: "feature flag は元資料の 9 キー(BLUE_MODE / GREEN_MODE / RAPID_CROSSCHECK_MODE / BLUE_IMPL / GREEN_IMPL / BLUE_RUNNER / GREEN_RUNNER / RAPID_CROSSCHECK_RUNNER / RAPID_CROSSCHECK_WORKER)を持つ env 形式の設定ファイルとして基盤適用設計者が版管理し、facade が起動のたびに読み込む。設定版キーは持たない"
+      reason: "feature flag は元資料の 9 キー(BLUE_MODE / GREEN_MODE / RAPID_CROSSCHECK_MODE / BLUE_IMPL / GREEN_IMPL / BLUE_RUNNER / GREEN_RUNNER / RAPID_CROSSCHECK_RUNNER / RAPID_CROSSCHECK_WORKER)に、slot ジョブマップの場所を書く任意の 2 キー(キー名は仕様で確定する)を加えた env 形式の設定ファイルとして基盤適用設計者が版管理し、facade が起動のたびに読み込む。任意の 2 キーを書かない 9 キーだけの設定はそのまま通る。設定版キーは持たない"
       confidence: "high"
     - entity_id: "E-002"
       storage_type: "file"
-      reason: "runner 割当は feature flag 設定ファイル内の BLUE_RUNNER / GREEN_RUNNER として所有される"
+      reason: "runner 割当は feature flag 設定ファイル内の BLUE_RUNNER / GREEN_RUNNER として所有される。割り当てる実体は、relay-gate が提供する標準の slot runner のスクリプトファイルか、利用者が自作した runner のスクリプトファイル。対応するジョブマップの所在も feature flag 設定ファイル内の任意のキーとして所有される(無い・空なら固定の名前)"
       confidence: "high"
     - entity_id: "E-003"
       storage_type: "file"
-      reason: "slot ジョブマップは 1 行目ヘッダーの CSV(列: job_id / host / user / work_dir / script / fixed_params / hang_detect_limit_minutes。credential_ref / map_version は末尾の任意列)として適用側が版管理する設定ファイル。fixed_params は JSON 配列文字列を二重引用符で囲んだセル(内部の二重引用符は二重化)で、bash 単独で解析する。run 開始時に execution-spec.json へ確定保存される"
+      reason: "slot ジョブマップは 1 行目ヘッダーの CSV(列: job_id / host / user / work_dir / script / fixed_params / hang_detect_limit_minutes。credential_ref / map_version は末尾の任意列)として適用側が版管理する設定ファイル。置き場所は feature flag の任意のキーで指定でき、無い・空なら設定ファイル置き場の固定の名前を使う。fixed_params は JSON 配列文字列を二重引用符で囲んだセル(内部の二重引用符は二重化)で、bash 単独で解析する。run 開始時に execution-spec.json へ確定保存される"
       confidence: "high"
     - entity_id: "E-004"
       storage_type: "file"

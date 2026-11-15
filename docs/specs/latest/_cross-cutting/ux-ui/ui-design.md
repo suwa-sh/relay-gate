@@ -26,7 +26,7 @@
 | 成果物ファイル | Runner Result Contract(`started-at.txt` / `stdout.log` / `stderr.log` / `exitcode.txt` / `execution-spec.json`。中止時のみ `aborted.txt`。writer は abort-blue.sh / abort-green.sh) | `facade/20260830T113000-JOB001-3f9a1c2e/green/exitcode.txt` |
 
 - 対話プロンプト(abort-*)は stderr に出す(stdout をパイプしても混ざらない)
-- 進捗表示は行わない(非 TTY 起動が主経路。NFR B.2.1.1 の 10 秒以内で完了する CLI が対象)
+- 進捗表示は行わない(非 TTY 起動が主経路。NFR B.2.1.1 の 10 秒以内の応答を目指す CLI が対象。設定ファイルの検査の 10 秒以内は性能の目標値で、目標を超えても出力と終了コードは変わらない。CLI 契約 `config_input_rules.performance_target`)
 - 運用者への通知は CLI の出力(終了コードと標準エラー)だけで行い、ジョブスケジューラの既存のジョブ監視・障害通知で届ける。relay-gate は CLI の出力以外の通知送信手段を持たない
 
 ## 終了コード規約
@@ -146,8 +146,8 @@ blue_mode=foreground
 green_mode=background
 blue_impl=v1.4.2
 green_impl=v2.0.0
-blue_runner: /opt/relay-gate/runners/blue-runner.sh
-green_runner: /opt/relay-gate/runners/green-runner.sh
+blue_runner: /opt/relay-gate/runners/standard-runner.sh
+green_runner: /opt/relay-gate/runners/standard-runner.sh
 rapid_crosscheck_mode=background
 rapid_crosscheck_runner: /opt/relay-gate/rapid-crosscheck-runner.sh
 rapid_crosscheck_worker: /opt/relay-gate/rapid-crosscheck-worker.sh
@@ -158,7 +158,7 @@ blue_runner_if_version=1
 green_runner_if_version=1
 ```
 
-(`validate-config.sh --feature-flag` の stdout キー順は上の 15 行で固定。`config_version` / `impl_version` は出さない。off の slot は `<slot>_impl` / `<slot>_runner` / `<slot>_job_map` / `<slot>_runner_if_version` が `-`。`--job-map` の stdout は `map_version` を任意とし、列が無ければ `map_version=-`。`operation_mode` の値は英字コード。導出は `cli-command-contract.yaml` `validate-config.sh` / `config_files.feature-flag.env.derived` が正本。facade.sh の実行ログ `operation_mode=` も同じ英字コードを出す)
+(`validate-config.sh --feature-flag` の stdout キー順は上の 15 行で固定。例は、標準の slot runner `runners/standard-runner.sh` を blue と green の両方に割り当て、ジョブマップの場所のキー `BLUE_JOB_MAP_CSV` / `GREEN_JOB_MAP_CSV` を書かない設定(RELAY_GATE_CONFIG_DIR=/etc/relay-gate)。自作の runner を割り当てたときは `<slot>_runner` にその解決後のパスが出る。`blue_job_map` / `green_job_map` には、2 キーを書いたときは解決後の場所、書かない・値が空のときは既定の場所 `$RELAY_GATE_CONFIG_DIR/<slot>-job-map.csv` が出る(`cli-command-contract.yaml` `config_files.feature-flag.env.job_map_location`)。`config_version` / `impl_version` は出さない。off の slot は `<slot>_impl` / `<slot>_runner` / `<slot>_job_map` / `<slot>_runner_if_version` が `-`。`--job-map` の stdout は `map_version` を任意とし、列が無ければ `map_version=-`。`operation_mode` の値は英字コード。導出は `cli-command-contract.yaml` `validate-config.sh` / `config_files.feature-flag.env.derived` が正本。facade.sh の実行ログ `operation_mode=` も同じ英字コードを出す)
 
 `operation_mode` の英字コードと RDRA バリエーション「運用モード」の日本語名の対応:
 
@@ -190,14 +190,15 @@ $ echo $?
 - **管理 DB 障害の定型文**(速報・確報・監視・運用系で共通): 接続失敗は `error: management db connection failed ... conn_ref=...`、SELECT 失敗は `error: management db query failed ...`、INSERT / UPDATE 失敗は `error: management db insert failed table=... ...` / `error: management db update failed ...`(いずれも終了コード 6。「unavailable」系の旧文言は使わない)。管理 DB を使わない構成での拒否は終了コード 3 で、速報系は `error: management db is not configured (RAPID_CROSSCHECK_MODE=off) ...`、確報系(abort-final-crosscheck.sh)は `error: management db is not configured run_id=...`(final-crosscheck.env / FINAL_DB_CONN_REF の有無だけで判定。off 付記なし)(例外 2 つ: `rapid-crosscheck-result.sh` は `error: rapid crosscheck is off; no management db to query mode=off`、`rapid-crosscheck-worker.sh` は `error: management db is not configured mode=off`)。`abort-blue.sh` / `abort-green.sh` は off で拒否しない(`aborted.txt` を正本として中止が成立する。上記「出力例」)。管理 DB は relay-gate 内部のデータストア(ジョブキュー兼管理 DB)であり、外部システムではない
 - **設定ファイル不在・必須キー欠落の定型文**(全コマンド共通): `error: config file not found path: ...` / `error: option required option=<KEY> path: ...`(終了コード 2。runner IF は exitcode.txt=2)。読めないときは `error: config file is not readable path: ...`(2)
 - **正の整数のキーの値違反の定型文**(hang-detector.env / housekeep.env / rapid-crosscheck.env / final-crosscheck.env の整数キー共通): `error: invalid value key=<KEY> value=... path: ...`。続けて `hint: use a positive integer` を 1 行出す(終了コード 2)。feature flag の enum 外の値(下記)は `path:` を付けない別の形で、混同しない
-- **feature flag 検証の定型文**(`validate-config.sh --feature-flag` / `facade.sh` / `background-rerun.sh` 共通。`cli-command-contract.yaml` `config_files.feature-flag.env.error_messages` と同文):
+- **feature flag 検証の定型文**(`validate-config.sh --feature-flag` / `facade.sh` 共通。`cli-command-contract.yaml` `config_files.feature-flag.env.error_messages` と同文。`background-rerun.sh` は自分が読むキーの必須キー欠落・空と `RAPID_CROSSCHECK_MODE` の enum 外だけを同じ文言で出す。下の「読み手ごとの出し方」):
   - 必須キー欠落・空: `error: option required option=<KEY> path: ...`
   - enum 外の値(`BLUE_MODE` / `GREEN_MODE` / `RAPID_CROSSCHECK_MODE` は foreground / background / off): `error: invalid value key=<KEY> value=...`。続けて `hint: use foreground, background or off` を 1 行出す
-  - 絶対パスでない: `error: path is not absolute key=<KEY> path=...`
-  - 実体が無い / 実行不可: `error: file not executable key=<KEY> path=...`
+  - 実体が無い / 実行不可: `error: file not executable key=<KEY> path=...`(`path=` は解決後のパス。`BLUE_RUNNER` / `GREEN_RUNNER` / `RAPID_CROSSCHECK_RUNNER` / `RAPID_CROSSCHECK_WORKER` は相対パスも受け付け、設定ファイルのあるディレクトリを基準に解決する。この 4 キーに `error: path is not absolute` は出さない。`cli-command-contract.yaml` `config_files.feature-flag.env.runner_path_resolution`)
   - foreground が 1 slot ちょうどでない: `error: foreground slot must be exactly one blue_mode=... green_mode=...`
-  - 未知キー(9 キー以外): `warn: unknown key key=<KEY> path: ...`(処理は継続)
+  - 対応ジョブマップが無い(`validate-config.sh --feature-flag` だけ): `error: job map not found slot=<blue|green> map=...`(`map=` は `job_map_location` で決めた場所。`BLUE_JOB_MAP_CSV` / `GREEN_JOB_MAP_CSV` を書いたときは解決後の場所、書かない・値が空のときは `$RELAY_GATE_CONFIG_DIR/<slot>-job-map.csv`)
+  - 未知キー(9 キーと任意の 2 キー `BLUE_JOB_MAP_CSV` / `GREEN_JOB_MAP_CSV` のどちらでもないキー): `warn: unknown key key=<KEY> path: ...`(処理は継続)
   - いずれのエラーも終了コード 2
+  - 読み手ごとの出し方: `validate-config.sh --feature-flag` は違反を全件、`config_files.feature-flag.env.error_order` の順に出す。`facade.sh` は違反が 2 つ以上あっても、その順で最初に出る違反の error 行(hint が続くときは hint も)だけを出す(`commands` の `facade.sh` の `config_violation_report`)。`background-rerun.sh` は自分が読むキーだけを検査し、runner / worker の実体・未知キー・`FINAL_` で始まるキーを検査しない(`file not executable` も `warn: unknown key` も出さない)。runner の起動に失敗したときは `error: runner failed to start run_id=... role=... runner=<解決後のパス>` を出して終了コード 6(`commands` の `background-rerun.sh` の `feature_flag_reading`)
 - **設定ファイルの入力の守備範囲の定型文**(全設定ファイル・全読み手共通。正本は `cli-command-contract.yaml` の `config_input_rules`。原則「形式(UTF-8 / LF / ヘッダー)から外れた入力は拒否する」。例外は最終行の改行なしとデータ行 0 件の受理):
   - NUL バイト: `error: nul byte is not allowed line=N path: ...`
   - UTF-8 として不正なバイト列(コメント行を含む): `error: encoding is not utf-8 line=N path: ...`
@@ -343,14 +344,14 @@ flowchart LR
 
 | 環境変数 | 用途 | 既定値 | 備考 |
 |---|---|---|---|
-| `RELAY_GATE_HOME` | relay-gate の配置ディレクトリ(スクリプトの所在) | スクリプト自身のディレクトリ(`$(dirname "$0")`) | 設定・成果物・ログの既定パスの解決に使う。slot runner と速報クロスチェック runner / worker の実体は feature flag(`BLUE_RUNNER` / `GREEN_RUNNER` / `RAPID_CROSSCHECK_RUNNER` / `RAPID_CROSSCHECK_WORKER`)で解決する(固定パス解決はしない) |
-| `RELAY_GATE_CONFIG_DIR` | 設定ファイル置き場(`feature-flag.env`、`blue-job-map.csv` / `green-job-map.csv`、`rapid-crosscheck.env` / `hang-detector.env` / `final-crosscheck.env` / `housekeep.env`) | `$RELAY_GATE_HOME/config` | 未設定かつ既定パスが無い場合は終了コード 2 |
+| `RELAY_GATE_HOME` | relay-gate の配置ディレクトリ(スクリプトの所在) | スクリプト自身のディレクトリ(`$(dirname "$0")`)。標準の slot runner(`runners/standard-runner.sh`)だけは、自身のあるディレクトリ(`runners/`)の 1 つ上のディレクトリ(CLI 契約 commands「$BLUE_RUNNER / $GREEN_RUNNER」の `standard_runner.home`) | 設定・成果物・ログの既定パスの解決に使う。slot runner と速報クロスチェック runner / worker の実体は feature flag(`BLUE_RUNNER` / `GREEN_RUNNER` / `RAPID_CROSSCHECK_RUNNER` / `RAPID_CROSSCHECK_WORKER`)で解決する(固定パス解決はしない。relay-gate が提供する標準の slot runner `$RELAY_GATE_HOME/runners/standard-runner.sh` を使うときも、feature flag にそのパスを書く。値が相対パスのときの基準は feature-flag.env のあるディレクトリで、プロセスの作業ディレクトリではない) |
+| `RELAY_GATE_CONFIG_DIR` | 設定ファイル置き場(`feature-flag.env`、`blue-job-map.csv` / `green-job-map.csv`、`rapid-crosscheck.env` / `hang-detector.env` / `final-crosscheck.env` / `housekeep.env`) | `$RELAY_GATE_HOME/config` | 未設定かつ既定パスが無い場合は終了コード 2。slot ジョブマップは、feature-flag.env の任意のキー `BLUE_JOB_MAP_CSV` / `GREEN_JOB_MAP_CSV` に場所を書けば置き場の外にも置ける(書かない・値が空のときは置き場の `<slot>-job-map.csv`。相対パスの基準は feature-flag.env のあるディレクトリ) |
 | `RELAY_GATE_ARTIFACT_ROOT` | 成果物ルート。`$RELAY_GATE_ARTIFACT_ROOT/facade/<run_id>/` に Runner Result を置く。同じ成果物ルート直下に通知済みの印の置き場 `hang-detector-notified/` と削除待ちの置き場 `housekeep-pending/` を置く | `$RELAY_GATE_HOME/var` | 書き込み不可は終了コード 6 |
 | `RELAY_GATE_LOG_DIR` | 実行ログの出力先(`{script}.log`) | `$RELAY_GATE_HOME/log` | 書き込み不可は stderr に `warn:` を出して処理は継続する |
 | `RELAY_GATE_NOW` | テスト専用の現在時刻注入(UTC ISO 8601 秒精度、`Z` 付き。例 `2026-08-30T12:45:00Z`)。設定時は全スクリプトの時刻取得(経過時間・`*_at` 列・`started-at.txt`・`aborted.txt`・`judged_at`・housekeep の cutoff)がこの値になる。`started-at.txt` / `aborted.txt` の中身はこの UTC 値のまま。run_id / final_crosscheck_id の時刻部・実行ログ・`*_at` 列・stdout の日時はこの UTC 値をプロセスのローカルタイムゾーン(`TZ`)へ変換した値(BDD の例示値は `TZ=UTC` 前提。`RELAY_GATE_NOW=2026-08-30T11:30:00Z` → run_id `20260830T113000`、ログ・stdout `2026-08-30T11:30:00`) | 未設定(実時刻) | 本番では設定しない。形式不正は終了コード 2。facade / background-rerun は runner にも引き継ぐ。run_id の乱数部は注入せず、テストでは形式パターンで照合する(`cli-command-contract.yaml` `environment_variables` / `shared_rules.run_id.test_verification`) |
 
 - 管理 DB の接続参照名・lease / poll / polling 上限の設定キーは `cli-command-contract.yaml` の `config_files`(`rapid-crosscheck.env` / `hang-detector.env` / `final-crosscheck.env` / `housekeep.env`)で定義する(本ファイルの範囲外)
-- slot runner は `feature-flag.env` を自分で読まない。`facade.sh` / `background-rerun.sh` が読み、runner へ環境変数で渡す: 上記 4 つ(`RELAY_GATE_CONFIG_DIR` / `RELAY_GATE_ARTIFACT_ROOT` / `RELAY_GATE_LOG_DIR`)と `RAPID_CROSSCHECK_MODE`、off 以外のとき `RAPID_CROSSCHECK_RUNNER`(完了通知の送信先実体)、通常起動では自 slot の `BLUE_IMPL` / `GREEN_IMPL`(runner が `execution-spec.json` の `slots.<role>.impl_version` に転記。復元起動 `--execution-spec` では渡さない)
+- slot runner は `feature-flag.env` を自分で読まない。`facade.sh` / `background-rerun.sh` が読み、runner へ環境変数で渡す: 上記 4 つ(`RELAY_GATE_CONFIG_DIR` / `RELAY_GATE_ARTIFACT_ROOT` / `RELAY_GATE_LOG_DIR`)と `RAPID_CROSSCHECK_MODE`、off 以外のとき `RAPID_CROSSCHECK_RUNNER`(完了通知の送信先実体)、通常起動では自 slot の `BLUE_IMPL` / `GREEN_IMPL`(runner が `execution-spec.json` の `slots.<role>.impl_version` に転記。復元起動 `--execution-spec` では渡さない)と、自 slot の `BLUE_JOB_MAP_CSV` / `GREEN_JOB_MAP_CSV`(ジョブマップの場所。`facade.sh` が決めた場所を常に渡し、runner はその値をそのまま使う。復元起動ではジョブマップを読まないため渡さない)
 - 認証情報(SSH 鍵パス・DB パスワード)は環境変数の値として扱わず、参照名のみを設定に置く(arch CTP-002)
 
 ## アクセシビリティ・運用配慮

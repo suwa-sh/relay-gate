@@ -2,14 +2,14 @@
 
 ## 概要
 
-基盤適用設計者が、feature flag 設定(元の方針資料の 9 キー: slot ごとの実行モード・実装版・runner 割当、RAPID_CROSSCHECK_MODE(foreground / background / off)と速報クロスチェックの runner / worker 実体)、slot runner の実体スクリプト、slot ごとのジョブマップ(CSV)、速報・確報の比較ツール起動コマンド(速報クロスチェック設定 / 確報クロスチェック worker 設定の env に 1 行)を設定所有区分に従って定義し、`validate-config.sh` で検証する。運用者はジョブスケジューラのジョブ定義を変更せずに、並行稼働・新実装の単独本番・次世代実装との並行稼働の各運用モードで業務ジョブを実行し、その応答と通知を受け取る。案件固有事項(外部 IF 方針・ネットワーク制約・ホスト配置)は適用構成文書に置き、relay-gate のスクリプトは変更しない。
+基盤適用設計者が、feature flag 設定(元の方針資料の 9 キー: slot ごとの実行モード・実装版・runner 割当、RAPID_CROSSCHECK_MODE(foreground / background / off)と速報クロスチェックの runner / worker 実体。加えて slot ジョブマップの場所を書く任意の 2 キー)、slot runner の実体スクリプト(relay-gate が提供する標準の slot runner、または特殊な接続のために自作した runner)、slot ごとのジョブマップ(CSV)、速報・確報の比較ツール起動コマンド(速報クロスチェック設定 / 確報クロスチェック worker 設定の env に 1 行)を設定所有区分に従って定義し、`validate-config.sh` で検証する。運用者はジョブスケジューラのジョブ定義を変更せずに、並行稼働・新実装の単独本番・次世代実装との並行稼働の各運用モードで業務ジョブを実行し、その応答と通知を受け取る。案件固有事項(外部 IF 方針・ネットワーク制約・ホスト配置)は適用構成文書に置き、relay-gate のスクリプトは変更しない。
 
 ## 所属 UC 一覧
 
 | UC名 | アクター | 主な操作 | 関連情報 |
 |------|---------|---------|---------|
-| [feature flag を設定する](feature%20flag%20を設定する/spec.md) | 基盤適用設計者(提供者) | 元資料の 9 キー(BLUE_MODE / GREEN_MODE / RAPID_CROSSCHECK_MODE(いずれも foreground / background / off)、BLUE_IMPL / GREEN_IMPL、BLUE_RUNNER / GREEN_RUNNER、RAPID_CROSSCHECK_RUNNER / RAPID_CROSSCHECK_WORKER)を env 形式で定義し `validate-config.sh --feature-flag` で検証する。設定版は持たない。両 slot foreground は拒否 | feature flag 設定、slot runner 割当 |
-| [slot runner の実体スクリプトを割り当てる](slot%20runner%20の実体スクリプトを割り当てる/spec.md) | 基盤適用設計者(提供者)/ 現行実装・新実装(外部) | 起動方式・ホスト・OS・プロトコルを閉じ込めた runner 実体を BLUE_RUNNER / GREEN_RUNNER に割り当てる。runner IF と Runner Result Contract への適合を検証する | slot runner 割当、feature flag 設定、適用構成文書 |
+| [feature flag を設定する](feature%20flag%20を設定する/spec.md) | 基盤適用設計者(提供者) | 元資料の 9 キー(BLUE_MODE / GREEN_MODE / RAPID_CROSSCHECK_MODE(いずれも foreground / background / off)、BLUE_IMPL / GREEN_IMPL、BLUE_RUNNER / GREEN_RUNNER、RAPID_CROSSCHECK_RUNNER / RAPID_CROSSCHECK_WORKER)と、slot ジョブマップの場所を書く任意の 2 キー(BLUE_JOB_MAP_CSV / GREEN_JOB_MAP_CSV。無い・空なら固定の名前)を env 形式で定義し `validate-config.sh --feature-flag` で検証する。設定版は持たない。両 slot foreground は拒否 | feature flag 設定、slot runner 割当 |
+| [slot runner の実体スクリプトを割り当てる](slot%20runner%20の実体スクリプトを割り当てる/spec.md) | 基盤適用設計者(提供者)/ 現行実装・新実装(外部) | 起動方式・ホスト・OS・プロトコルを閉じ込めた runner 実体を BLUE_RUNNER / GREEN_RUNNER に割り当てる。ローカル実行と SSH 実行で足りる slot には relay-gate が提供する標準の slot runner(`runners/standard-runner.sh`。1 つの実体を両 slot に割り当てる)をそのまま割り当て、特殊な接続の slot だけ自作の runner を割り当てる。runner IF と Runner Result Contract への適合を検証する | slot runner 割当、feature flag 設定、適用構成文書 |
 | [slot ごとのジョブマップを定義する](slot%20ごとのジョブマップを定義する/spec.md) | 基盤適用設計者(提供者)/ リモート実行ホスト(外部) | slot ごとに JOB_ID → host・user(ローカル実行では省略可)・work_dir・script・fixed_params(JSON 配列を格納する CSV セル)・hang_detect_limit_minutes(+ 末尾の任意列 credential_ref / map_version)を CSV(1 行目ヘッダー、1 行 1 job_id)で定義し `validate-config.sh --job-map` で検証する。実装版の列は持たない | ジョブマップ、ハング検知上限設定、適用構成文書 |
 | [クロスチェックのジョブマップと比較定義を定義する](クロスチェックのジョブマップと比較定義を定義する/spec.md) | 基盤適用設計者(提供者)/ 比較ツール(外部) | 速報クロスチェック設定(rapid-crosscheck.env)に速報の比較ツール起動コマンドを 1 行で定義し `validate-config.sh --rapid-crosscheck` で検証する。確報クロスチェック worker 設定(final-crosscheck.env)の比較ツール起動コマンドは `--final-crosscheck` で検証する。検証は起動コマンドのコマンド部分が絶対パスで実行可能であること(速報は `{job_id}` を含むこと)を確認する | 速報クロスチェック設定、確報クロスチェック worker 設定、適用構成文書 |
 | [切り替えた運用モードで業務ジョブを実行する](切り替えた運用モードで業務ジョブを実行する/spec.md) | 運用者(受益者)/ ジョブスケジューラ(外部) | 定義済みの設定に基づき、ジョブ定義を変更せずに各運用モードで業務ジョブを実行し、ジョブスケジューラ応答とハング検知ジョブの異常終了の知らせを受け取る。読む UC で状態を変更しない | feature flag 設定、ジョブ起動要求、ジョブスケジューラ応答、監視記録 |

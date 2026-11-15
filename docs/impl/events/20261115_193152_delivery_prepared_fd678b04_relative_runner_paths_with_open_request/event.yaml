@@ -1,0 +1,13 @@
+event_id: 20261115_193152_delivery_prepared_fd678b04_relative_runner_paths_with_open_request
+type: delivery_prepared
+uc_id: fd678b04
+stage: S9
+payload:
+  reason: the user instructed, in the final review answer, to push the feature branch and create the pull request right after publishing the spec request. the state stays blocked_on_spec until the request is reflected
+  approval_event: 20261115_193110_review_approved_fd678b04_feedback_publish
+  published_event: 20261115_193128_feedback_request_published_fd678b04
+  base_branch: main
+  base_head: 44cb3a660a9fd2343bda3a43631bc8f7bb3bdc6f
+  feature_branch: feature/configure-feature-flags
+  squash_title: 'feat: feature flag の runner パスに相対パスを受け付け、仕様への要求 4 件を反映する'
+created_at: '2026-11-15T19:31:52+09:00'

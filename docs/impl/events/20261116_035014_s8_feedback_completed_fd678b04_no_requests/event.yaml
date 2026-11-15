@@ -1,0 +1,14 @@
+event_id: 20261116_035014_s8_feedback_completed_fd678b04_no_requests
+type: stage_completed
+uc_id: fd678b04
+stage: S8
+payload:
+  result: pass
+  mode: initial
+  status: no_requests
+  draft_path: null
+  request_count: 0
+  blocker_count: 0
+  manifest_sha256: 808bf63e1c7564ffef1498814b5d3f4e3a6163b4c2ff1429e03ae81125b0d01b
+  manifest_projection: v2
+created_at: '2026-11-16T03:50:14+09:00'

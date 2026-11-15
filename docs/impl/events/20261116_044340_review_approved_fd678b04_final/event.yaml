@@ -1,0 +1,118 @@
+event_id: 20261116_044340_review_approved_fd678b04_final
+type: review_approved
+uc_id: fd678b04
+stage: S9
+payload:
+  approval_kind: final_approval
+  review_evidence_event_id: 20261116_040700_s9_review_generated_fd678b04
+  feedback_review_evidence:
+    feedback_id: null
+    draft_path: null
+    draft_sha256: null
+    request_count: 0
+    blocker_count: 0
+    request_ids: []
+  implementation_review_evidence:
+    gate_result: 6/6 pass
+    gates:
+      format: pass
+      lint: pass
+      tdd: pass (535/535)
+      bdd_tier: pass (111/111)
+      uc_bdd: pass (54/54, injections 0)
+      atdd: pass (5/5)
+    open_blocker_count: 0
+    open_major_count: 0
+    open_minor_count: 26
+    tiers:
+    - tier: tier-facade
+      attempt: 6
+      assumptions_sha256: ce40a9ad847e9b99a8f5ca7c58235adf62504092151fadb914858441e43ce95a
+      assumption_verdicts_sha256: e7a199c8e485607596d691eb069dd3044d6d744d0b993a6873d38b6cbe51e7c9
+    assumption_evidence_sha256: 75af6ae1255247e2a85a6f95651908c04bf906364625bd71138ade1eb1f7978c
+  assumption_decisions:
+  - tier: tier-facade
+    id: A-017
+    decision: confirmed
+  - tier: tier-facade
+    id: A-018
+    decision: confirmed
+  - tier: tier-facade
+    id: A-019
+    decision: confirmed
+  - tier: tier-facade
+    id: A-020
+    decision: confirmed
+  - tier: tier-facade
+    id: A-023
+    decision: confirmed
+  - tier: tier-facade
+    id: A-024
+    decision: confirmed
+  - tier: tier-facade
+    id: A-025
+    decision: confirmed
+  - tier: tier-facade
+    id: A-027
+    decision: confirmed
+  - tier: tier-facade
+    id: A-029
+    decision: confirmed
+  - tier: tier-facade
+    id: A-030
+    decision: confirmed
+  - tier: tier-facade
+    id: A-031
+    decision: confirmed
+  - tier: tier-facade
+    id: A-032
+    decision: confirmed
+  - tier: tier-facade
+    id: A-033
+    decision: confirmed
+  - tier: tier-facade
+    id: A-034
+    decision: confirmed
+  - tier: tier-facade
+    id: A-035
+    decision: confirmed
+  - tier: tier-facade
+    id: A-036
+    decision: confirmed
+  - tier: tier-facade
+    id: A-037
+    decision: confirmed
+  - tier: tier-facade
+    id: A-038
+    decision: confirmed
+  - tier: tier-facade
+    id: A-039
+    decision: confirmed
+  - tier: tier-facade
+    id: A-041
+    decision: confirmed
+  - tier: tier-facade
+    id: A-042
+    decision: confirmed
+  - tier: tier-facade
+    id: A-043
+    decision: confirmed
+  - tier: tier-facade
+    id: A-044
+    decision: confirmed
+  - tier: tier-facade
+    id: A-045
+    decision: confirmed
+  - tier: tier-facade
+    id: A-046
+    decision: confirmed
+  decisions:
+    spec_details: approved as a whole (details decided at the spec stage beyond the user's decisions; spec-decision 036 to 040)
+    atdd_mapping: keep the 4 added scenarios (20261116_044339_config_confirmed_fd678b04_atdd_scenarios_user_confirmed)
+    unlisted_assumption: 'internal return value 7 mapped to CLI exit code 6: approved'
+    same_named_environment_variables: 'option B: leave the spec as is. no request to be issued (the validation command keeps ignoring same-named variables of the invoking environment; assumption confirmed)'
+    lint_scope_for_runner_uc: 'option A: put the body of the standard runner under src/ and keep runners/ and lib/ as thin entry points; lint settings unchanged. applies to the UC that implements the standard slot runner'
+    git_delivery: squash this cycle into 1 commit, update pull request 18, and merge it after the checks pass
+  user_answer: '【全体】今回の実装(ジョブマップの場所を書く任意の 2 項目への対応)を承認します。 / 【仕様の細部】仕様の段で決めた細部は、まとめて承認します。 / 【受け入れテスト】仮に加えた 4 件は、この機能の受け入れテストに加えたままにしてください。 / 【実装者が補った前提】25 件と、記録から漏れていた 1 件を、すべて承認します。 / 【起動した側の環境の同名の変数】案 B: 仕様はこのままでよいです。要求は出さないでください。 / 【次の機能での静的検査の対象】案 A: 標準の runner の本体は src/ に置き、runners/ と lib/ は数行の入口にしてください(検査の設定は変えない)。 / 【本線への取り込み】承認後、今回の分を 1 コミットにまとめ直して取り込み依頼 18 を更新し、自動検査が通ったらマージまで進めてください。'
+  confirmed_by: user
+created_at: '2026-11-16T04:43:39+09:00'

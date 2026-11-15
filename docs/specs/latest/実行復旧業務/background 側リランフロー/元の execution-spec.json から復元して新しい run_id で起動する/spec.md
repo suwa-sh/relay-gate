@@ -2,7 +2,7 @@
 
 ## 概要
 
-事前検証(UC「リラン対象を検証する」)を通過した `--role blue / green` のリランについて、background-rerun が新しい run_id を発行し、(RAPID_CROSSCHECK_MODE が off 以外なら)`parallel_runs` に `parent_run_id = source_run_id` で STARTED を作成し、元 run の `execution-spec.json` を新 run の成果物ディレクトリへ run_id / parent_run_id / restored_at だけ書き換えてコピーし、`slot_executions` に RUNNING(pid=NULL)を INSERT してから slot runner を `--execution-spec <path> --mode background` で起動し、取得した PID を `slot_executions` に UPDATE する。`parallel_runs` を RUNNING にして、runner の完了を待たずに終了コード 0 で戻る(facade と同じ「起動前 INSERT → 起動後 pid UPDATE」の順序。runner の終端 UPDATE より先に行が存在することを保証する)。off では管理 DB に触れず成果物ファイルだけで起動する。最新のジョブマップは再解決しない。background-rerun は feature-flag.env を読み、runner へ必要な値を環境変数で渡す(runner は feature-flag.env を読まない)。このリラン由来の parallel_run は、background slot の終端(exitcode.txt 公開)時に slot runner が COMPLETED にする(他 UC「実装スクリプトを実行して Runner Result を出力する」)。tier-facade 側は runner IF の `--execution-spec` 入力モード(ジョブマップを読まない)の契約を担う。
+事前検証(UC「リラン対象を検証する」)を通過した `--role blue / green` のリランについて、background-rerun が新しい run_id を発行し、(RAPID_CROSSCHECK_MODE が off 以外なら)`parallel_runs` に `parent_run_id = source_run_id` で STARTED を作成し、元 run の `execution-spec.json` を新 run の成果物ディレクトリへ run_id / parent_run_id / restored_at だけ書き換えてコピーし、`slot_executions` に RUNNING(pid=NULL)を INSERT してから slot runner を `--execution-spec <path> --mode background` で起動し、取得した PID を `slot_executions` に UPDATE する。`parallel_runs` を RUNNING にして、runner の完了を待たずに終了コード 0 で戻る(facade と同じ「起動前 INSERT → 起動後 pid UPDATE」の順序。runner の終端 UPDATE より先に行が存在することを保証する)。off では管理 DB に触れず成果物ファイルだけで起動する。最新のジョブマップは再解決しない。background-rerun は feature-flag.env を読み、runner へ必要な値を環境変数で渡す(runner は feature-flag.env を読まない)。feature-flag.env から読むのは、速報クロスチェックのモード、リラン対象 role の runner、off 以外のときの速報クロスチェック runner だけで、起動の前に runner の実体を検査しない。runner の起動に失敗したら終了コード 6 で終わる(CLI 契約 `background-rerun.sh` の `feature_flag_reading`。2026-11-15 利用者決定)。このリラン由来の parallel_run は、background slot の終端(exitcode.txt 公開)時に slot runner が COMPLETED にする(他 UC「実装スクリプトを実行して Runner Result を出力する」)。tier-facade 側は runner IF の `--execution-spec` 入力モード(ジョブマップを読まない)の契約を担う。
 
 ## データフロー
 
@@ -130,7 +130,7 @@ sequenceDiagram
 |--------|----------|----------|---------|-------------|
 | リランの実行設定復元 | 最新ジョブマップを再解決せず、元の execution-spec.json から host / user / script / work_dir / fixed_params / params を復元する。runner は `--execution-spec` 指定時にジョブマップを読まない | tier-ops / tier-facade | usecase `restore_execution_spec`(LP-018)/ runner presentation の入力モード判定 | ジョブマップ変更後でも元の設定で起動する |
 | リラン系譜の追跡 | 新 run の `parent_run_id` に `--source-run-id` の値(直前のリラン元)を設定する | tier-ops | parallel_runs INSERT | 完了済みの green をリランして新 run_id を得る |
-| Runner Result 完備条件 | 新しい成果物ディレクトリに started-at.txt / stdout.log / stderr.log / exitcode.txt を揃える。runner が起動できず 3 ファイルを書けない場合は background-rerun の gateway が started-at.txt / 空の stdout.log / 失敗理由の stderr.log / exitcode.txt=6 を書く | tier-facade / tier-ops | slot runner gateway(LP-007)/ background-rerun の runner 起動アダプタ | runner 起動失敗時も成果物を残す |
+| Runner Result 完備条件 | 新しい成果物ディレクトリに started-at.txt / stdout.log / stderr.log / exitcode.txt を揃える。runner が起動できず 3 ファイルを書けない場合は background-rerun の gateway が started-at.txt / 空の stdout.log / 失敗理由の stderr.log / exitcode.txt=6 を書く(起動の前に runner の実体を検査しないため、実体が無い・実行権限が無い設定もこの扱いになる。契約 `background-rerun.sh` の `feature_flag_reading.launch_failure`) | tier-facade / tier-ops | slot runner gateway(LP-007)/ background-rerun の runner 起動アダプタ | runner 起動失敗時も成果物を残す / runner の実体が無い設定は起動の前に止めず起動失敗として終了コード 6 で成果物を残す |
 | 成果物公開判定 | execution-spec.json は `.tmp` へ書いて `mv` で確定名にする。確定名が既に存在する run_id は使わない(発行し直す) | tier-ops | repository `save_execution_spec_once` | 完了済みの green をリランして新 run_id を得る |
 | 速報クロスチェック有効判定 | RAPID_CROSSCHECK_MODE が off 以外(foreground / background)のときだけ parallel_runs / slot_executions を作成し、runner へ `RAPID_CROSSCHECK_RUNNER` を渡す。off は管理 DB に接続しない | tier-ops | usecase | RAPID_CROSSCHECK_MODE=off では成果物だけで起動する |
 
@@ -239,12 +239,23 @@ Feature: 元の execution-spec.json から復元して新しい run_id で起動
     And facade/{新 run_id}/green/ に background-rerun の gateway が書いた started-at.txt / 空の stdout.log / 失敗理由の stderr.log があり、exitcode.txt の中身が 6 である
     And parallel_runs の run_id={新 run_id} は STARTED のまま、slot_executions の run_id={新 run_id} slot=green の行は pid が NULL で status=FAILED(ベストエフォート更新)である
 
+  Scenario: runner の実体が無い設定は起動の前に止めず起動失敗として終了コード 6 で成果物を残す
+    Given RAPID_CROSSCHECK_MODE=background で、/etc/relay-gate/feature-flag.env の GREEN_RUNNER=/opt/relay-gate/runners/missing-runner.sh が指すファイルは存在せず、RAPID_CROSSCHECK_RUNNER=/opt/relay-gate/rapid-crosscheck-runner.sh で、BLUE_RUNNER と RAPID_CROSSCHECK_WORKER のキーは無い
+    And /etc/relay-gate/rapid-crosscheck.env は RAPID_DB_CONN_REF=mgmt-db を持ち、管理 DB が起動している
+    And run_id=20260830T113000-JOB001-3f9a1c2e の green は background で FAILED(exitcode.txt あり)であり、リランの事前検証を通過する
+    When `background-rerun.sh --source-run-id 20260830T113000-JOB001-3f9a1c2e --role green` を起動する
+    Then 終了コードは 6 で(feature flag の設定の誤りを表す 2 ではない)、stderr に `error: runner failed to start run_id={新 run_id} role=green runner=/opt/relay-gate/runners/missing-runner.sh` が出る({新 run_id} は `^[0-9]{8}T[0-9]{6}-JOB001-[0-9a-f]{8}$` に一致)
+    And /var/relay-gate/facade/{新 run_id}/execution-spec.json があり、/var/relay-gate/facade/{新 run_id}/green/ に started-at.txt / 空の stdout.log / stderr と同じ error 行の stderr.log があり、exitcode.txt の中身が 6 である
+    And parallel_runs の run_id={新 run_id} は STARTED のまま、slot_executions の run_id={新 run_id} slot=green の行は pid が NULL で status=FAILED である
+
   Scenario: 成果物ルートに書き込めない
     Given RELAY_GATE_ARTIFACT_ROOT が書き込み不可である
     When `background-rerun.sh --source-run-id 20260830T113000-JOB001-3f9a1c2e --role green` を起動する
     Then 終了コード 6 で stderr に `error: artifact dir is not writable path: /var/relay-gate/facade/{新 run_id}` が出る({新 run_id} は `^[0-9]{8}T[0-9]{6}-JOB001-[0-9a-f]{8}$` に一致)
     And runner は起動されない
 ```
+
+> Scenario「runner の実体が無い設定は起動の前に止めず起動失敗として終了コード 6 で成果物を残す」は、CLI 契約 `commands` の `background-rerun.sh` の `feature_flag_reading`(起動の前に runner / worker の実体を検査しないこと、起動失敗の扱い)を判定する。USDM の受け入れ条件には現れない細部のため、「関連 USDM」表には載せない。
 
 ## ティア別仕様
 

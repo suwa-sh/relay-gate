@@ -1,4 +1,4 @@
-# digest of arch/latest/arch-design.yaml section domain_architecture (L21-430); source_sha256: 6ee48d9e90d09b186d8d085a0ac0c64adb0a637559321a753c0612124f5da27d
+# digest of arch/latest/arch-design.yaml section domain_architecture (L21-432); source_sha256: c53102258eb87c109a5e44ec19daf68de60dc5770785d80c474f31b1cf8d9879
 # 派生物。正本は arch-design.yaml。編集しない
 domain_architecture:
   subdomains:
@@ -142,13 +142,15 @@ domain_architecture:
       name: "適用構成コンテキスト"
       ubiquitous_language:
         - term: "feature flag"
-          definition: "9 キー(BLUE_MODE / GREEN_MODE / RAPID_CROSSCHECK_MODE / BLUE_IMPL / GREEN_IMPL / BLUE_RUNNER / GREEN_RUNNER / RAPID_CROSSCHECK_RUNNER / RAPID_CROSSCHECK_WORKER)で slot ごとの実行モード・実装版・runner 実体・速報クロスチェックモード(foreground / background / off)と完了通知先・worker 実体を切り替える正本。設定版は持たない。運用モード(並行稼働 / 単独本番 / 次世代並行稼働)を組み合わせで表現する"
+          definition: "9 キー(BLUE_MODE / GREEN_MODE / RAPID_CROSSCHECK_MODE / BLUE_IMPL / GREEN_IMPL / BLUE_RUNNER / GREEN_RUNNER / RAPID_CROSSCHECK_RUNNER / RAPID_CROSSCHECK_WORKER)に、slot ジョブマップの場所を書く任意の 2 キー(blue 用と green 用に 1 つずつ。キー名は仕様で確定する)を加えた構成で、slot ごとの実行モード・実装版・runner 実体・速報クロスチェックモード(foreground / background / off)と完了通知先・worker 実体・slot ジョブマップの場所を切り替える正本。任意の 2 キーを書かない 9 キーだけの設定はそのまま通り、未知のキーとして扱うのは 9 キーと任意の 2 キーのどちらでもないキーとする。BLUE_RUNNER / GREEN_RUNNER には、relay-gate が提供する標準の slot runner か、利用者が自作した runner を割り当てる。設定版は持たない。運用モード(並行稼働 / 単独本番 / 次世代並行稼働)を組み合わせで表現する"
         - term: "ジョブマップ"
-          definition: "JOB_ID から実行先(host・user・work_dir・script・fixed_params・hang_detect_limit_minutes)を slot ごとに解決する正本。1 行目ヘッダーの CSV(1 行 1 job_id)で、credential_ref / map_version は末尾の任意列"
+          definition: "JOB_ID から実行先(host・user・work_dir・script・fixed_params・hang_detect_limit_minutes)を slot ごとに解決する正本。1 行目ヘッダーの CSV(1 行 1 job_id)で、credential_ref / map_version は末尾の任意列。slot ごとのジョブマップの場所は feature flag の任意のキーで指定でき(絶対パスと相対パスのどちらも受け付け、相対パスの基準は feature flag の設定ファイルがあるディレクトリ)、キーが無い・空なら設定ファイル置き場の固定の名前(blue-job-map.csv / green-job-map.csv)を使う。feature flag の検証コマンドと実行時の読み手(slot runner など)は、同じ設定から同じジョブマップを選ぶ"
+        - term: "標準の slot runner"
+          definition: "relay-gate が正式な提供物として提供する slot runner。そのまま BLUE_RUNNER / GREEN_RUNNER に割り当てられ、slot ジョブマップの行に従ってローカル実行(host と user が両方空の行)と SSH 実行(それ以外の行)の両方を扱い、runner の外部 IF(引数、--help の応答、Runner Result Contract の 3 ファイルと execution-spec.json、完了通知)を満たす。これを使う適用で利用者が用意するものは feature flag と slot ジョブマップ(と実行先の実装)だけで、runner のスクリプトは書かない。標準の slot runner が扱わない起動方式・プロトコル(特殊な接続)は、利用者が共通ライブラリと runner の外部 IF に従って runner を自作して割り当てる。参考実装(仮採用)としては扱わない。ファイル構成(1 つの実体を blue と green の両方に割り当てられる形を推奨)・ファイル名・置き場所は仕様で確定する。方針資料に明記の無い利用者決定(2026-11-16)で、方針資料の「適用ごとに実体を割り当てる」とは、割り当てる実体として標準の slot runner を選べる形で両立する"
         - term: "速報クロスチェック設定"
           definition: "速報クロスチェック用の env 設定ファイル(rapid-crosscheck.env)。管理 DB 接続参照名(RAPID_DB_CONN_REF。値は置かず参照名のみ)・lease 期間(RAPID_LEASE_SEC)・worker の poll 間隔(RAPID_POLL_INTERVAL_SEC)を保持し、facade・slot runner・速報クロスチェック runner・worker が読む。RAPID_CROSSCHECK_MODE=off では不要。ハング検知定期ジョブ設定と同型だが所有項目と読み手が異なるため別ファイル"
         - term: "設定所有区分"
-          definition: "各設定項目の正本をどこ(feature flag / slot ジョブマップ / ハング検知定期ジョブ設定(管理 DB 接続参照名)/ ハウスキープ設定(保持日数と管理 DB 接続参照名)/ 速報クロスチェック設定(速報の比較ツール起動コマンドを含む)/ 確報クロスチェック worker 設定(確報の比較ツール起動コマンドを含む)/ 適用文書)が所有するかの区分。比較対象は比較ツール側(適用側)が持つ"
+          definition: "各設定項目の正本をどこ(feature flag / slot ジョブマップ / ハング検知定期ジョブ設定(管理 DB 接続参照名)/ ハウスキープ設定(保持日数と管理 DB 接続参照名)/ 速報クロスチェック設定(速報の比較ツール起動コマンドを含む)/ 確報クロスチェック worker 設定(確報の比較ツール起動コマンドを含む)/ 適用文書)が所有するかの区分。slot ジョブマップの場所は feature flag が所有する(任意のキー)。比較対象は比較ツール側(適用側)が持つ"
         - term: "ハウスキープ設定"
           definition: "ハウスキープ定期ジョブが使う設定。保持日数(正の整数。既定 90 日)と、ハウスキープ専用 DB ロールの管理 DB 接続参照名(値は置かず参照名のみ)を持つ。接続参照名は、RAPID_CROSSCHECK_MODE が off 以外の設置と確報クロスチェックを使う設置(確報クロスチェック worker の設定がある設置)では必須で、無い・空なら設定エラーとしてハウスキープは何も削除せずに終わる。無し・空にできるのは管理 DB を一切使わない設置(off で確報クロスチェック worker の設定が無い設置)だけで、そのときハウスキープは管理 DB に接続せず、確報比較依頼と管理 DB の行を削除しない。ファイル名・キー名と、確報クロスチェック worker の設定があるとみなす判定方法は仕様で確定する。保持日数は設定検証で正の整数であることを検査する"
       related_subdomain_id: "SD-004"
@@ -191,9 +193,9 @@ domain_architecture:
       to_bc_id: "BC-005"
       pattern: "conformist"
       direction: "downstream"
-      translator_description: "BC-001(並行稼働実行)は BC-005 の設定契約(feature flag / slot ジョブマップ)をそのまま読み込み従う。翻訳層は持たず、run 開始時に execution-spec.json へ確定保存することで以後の変更から隔離する"
+      translator_description: "BC-001(並行稼働実行)は BC-005 の設定契約(feature flag / slot ジョブマップ)をそのまま読み込み従う。slot ジョブマップの場所も feature flag の任意のキー(無い・空なら固定の名前)に従って決め、検証コマンドと実行時の読み手が同じ場所を使う。翻訳層は持たず、run 開始時に execution-spec.json へ確定保存することで以後の変更から隔離する"
       integration_events: []
-      reason: "facade は設定された runner を起動するだけ、runner はジョブマップで実行先を解決するだけであり、設定契約に変更を加える余地がないため"
+      reason: "facade は設定された runner を起動するだけ、runner はジョブマップで実行先を解決するだけであり(relay-gate が提供する標準の slot runner でも、利用者が自作した runner でも同じ)、設定契約に変更を加える余地がないため"
       source_model: "条件: 実装固有事項の runner への閉じ込め, ジョブマップ解決条件, 実行設定の確定条件"
       confidence: "medium"
     - id: "CM-002"

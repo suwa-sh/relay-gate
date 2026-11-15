@@ -1,0 +1,73 @@
+meta:
+  event_id: "20261116_020000_feedback_standard_runner_job_map_location"
+  trigger_event: "arch:20261116_015000_feedback_standard_runner_job_map_location"
+  created_at: "2026-11-16T02:00:00Z"
+  mode: "differential"
+  mcl_rerun: "skipped_targeted_update"
+  mcl_rerun_reason: "上流(USDM / RDRA / NFR / arch)の変更は、標準の slot runner の提供と、feature flag の任意の 2 キーによるジョブマップの場所の指定だけで、translation(workload_type / availability_tier / latency / data_classification / traffic / consistency / cost_posture / target_clouds)に効く入力は変わらない。新しいミドルウェア・ホスト・接続経路も増えない。変更はインフラ成果物の記述だけで、標準の slot runner の配置と、feature flag 9 キー + 任意の 2 キー・ジョブマップの場所の決まり方を、構築手順とインフラ設計に反映するもの。構築時の検査とタスクは変えない。MCL 出力の該当記述を差分更新した(MCL product-design の全量再実行は行わない)"
+feedback_request:
+  feedback_request_id: "20261116_standard_runner_job_map_location"
+  input_sha256: "733163f9092ac7055b410880c40f85fd312b2684f25fb0fb20d8d3412626822a"
+  request_ids: ["CR-65b09d93-001","CR-65b09d93-002"]
+  work_unit_ids: ["CR-65b09d93-001#1","CR-65b09d93-002#1"]
+direct_work_unit_ids: []
+causal_work_unit_ids: ["CR-65b09d93-001#1","CR-65b09d93-002#1"]
+stage_packet: "docs/pipeline/feedback-runs/20261116_standard_runner_job_map_location/stage-packets/infrastructure.md"
+changes:
+  event_id: "20261116_020000_feedback_standard_runner_job_map_location"
+  created_at: "2026-11-16T02:00:00Z"
+  source: "標準の slot runner の正式な提供と、slot ジョブマップの場所を feature flag の任意の 2 キーで書けること(利用者決定 2026-11-16)に基づくインフラ設計の差分更新: 標準の slot runner(ローカル実行と SSH 実行)を facade と同じ実行ホストの配置物として書き、feature flag を 9 キー + 任意の 2 キー、ジョブマップの場所を任意のキーで指定でき無い・空なら固定の名前、と構築手順とインフラ設計に反映する。構築時の検査は存在確認のままで、指定先と配置先が一致することは導入する側が確かめる"
+  arch_event_ref: "20261116_015000_feedback_standard_runner_job_map_location"
+  nfr_event_ref: "20261116_014000_feedback_standard_runner_job_map_location"
+  translation:
+    unchanged: true
+  mcl_execution:
+    status: "completed"
+    completed_at: "2026-11-16T02:00:00Z"
+    outputs_updated:
+      - path: "infra/product/onprem/README.md"
+        change: "前提に、標準の slot runner(ローカル実行と SSH 実行)が relay-gate の提供物であること、facade と同じ実行ホストに構築手順で配置し DB ホストには置かないこと、BLUE_RUNNER / GREEN_RUNNER には標準の slot runner か自作の runner を割り当て特殊な接続だけ利用者が自作すること、SSH は既存の鍵と known_hosts で新しい接続経路は増えないことを追記した。あわせて、slot ジョブマップの置き場所を feature flag の任意の 2 キー(キー名は仕様で確定)で変えられること、無い・空なら固定の名前、絶対パスと相対パスを受け付け相対パスの基準は feature-flag.env のあるディレクトリ、別の場所を指定する設置の配布(正本・所有者・読み取り専用は設定ファイル置き場と同じ)と、構築時の検査は存在確認だけで指定先と配置先の一致は導入する側が確かめることを追記した"
+        work_units: ["CR-65b09d93-001#1","CR-65b09d93-002#1"]
+      - path: "infra/product/onprem/ansible/roles/relay-gate-runtime/tasks/main.yml"
+        change: "冒頭のコメントに、標準の slot runner を facade と同じ実行ホスト(segment == 'execution')に配置すること、DB セグメントには置かないこと、自作の runner も同じ実行ホストに置くこと、SSH は既存の known_hosts 配布と実行ユーザーの鍵を使い新しい接続経路は増えないことを書いた(タスクは変えない)"
+        work_units: ["CR-65b09d93-001#1"]
+      - path: "infra/product/onprem/ansible/roles/relay-gate-config/tasks/main.yml"
+        change: "ジョブマップ配置タスクの前のコメントに、置き場所は feature flag の任意の 2 キーで変えられること、キーが無い・空なら下の loop の固定の名前を使い 9 キーだけの既存の設定はそのまま動くこと、絶対パスと相対パスの基準、別の場所を指定する設置では適用側が loop と配置先を差し替えその場所も同じ所有者・読み取り専用にすること、このロールは feature-flag.env の値を判定せず指定先と配置先の一致は導入する側が確かめることを書いた(タスクは変えず、新しい変数や検査タスクは足さない)"
+        work_units: ["CR-65b09d93-002#1"]
+      - path: "infra/product/onprem/ansible/inventory.ini.example"
+        change: "実行ホストの変数の前に、ジョブマップの置き場所は feature-flag.env の任意の 2 キーで変えられ、無い・空なら固定の名前、絶対パスと相対パスを受け付け、別の場所を指定する設置では config ロールの loop を差し替えることを注記した(変数は足さない)"
+        work_units: ["CR-65b09d93-002#1"]
+      - path: "docs/mcl/product/output/product-impl-onprem.yaml"
+        change: "execution_hosts に slot_runner を追加した(標準の slot runner は relay-gate の提供物で facade と同じ実行ホストセグメントに配置し DB セグメントには置かない、割り当て先、特殊な接続だけ利用者が自作、SSH は既存の設定で新しい接続経路は増えない、ファイル構成は仕様で確定)。config_store の contents を feature-flag.env の 9 キーに任意の 2 キーを加えられる形(9 キーだけの設定もそのまま通る)と、ジョブマップの場所の決まり方に直し、検証規則「feature-flag.env のキー」を 9 キーと任意の 2 キーに限られる内容に直した。ownership と backup に、ジョブマップを別の場所に置く設置でも同じ所有者・読み取り専用、正本は同じ構成管理リポジトリであることを追記した"
+        work_units: ["CR-65b09d93-001#1","CR-65b09d93-002#1"]
+      - path: "docs/mcl/product/output/product-mapping-onprem.yaml"
+        change: "script_runtime_hosts の configuration_notes に、標準の slot runner(relay-gate の提供物。ローカル実行と SSH 実行を扱い、新しいミドルウェアや接続経路は増えない)を facade と同じホストに配置し、特殊な接続だけ利用者が自作した runner も同じホストに置くことを書いた。config_store の configuration_notes を feature-flag.env の 9 キー + 任意の 2 キーに直し、ジョブマップの場所の決まり方(任意のキー、無い・空なら固定の名前、絶対パスと相対パス、相対パスの基準)と別の場所に置く設置の配布を追記した"
+        work_units: ["CR-65b09d93-001#1","CR-65b09d93-002#1"]
+      - path: "docs/mcl/product/output/product-workload-model.yaml"
+        change: "script_runtime_hosts の説明に標準の slot runner と利用者が自作する runner を加え、REQ-COMP-002 の rationale に標準の slot runner が host と user が両方空の行をローカル実行・それ以外を SSH 実行とすること(新しいミドルウェアや接続経路は増えない)を追記した。config_store の説明を 9 キー + 任意の 2 キーとジョブマップの場所の決まり方に直し、制約の正本に、ジョブマップを別の場所に置く設置でも置き場の正本は同じ構成管理リポジトリにあることを追記した"
+        work_units: ["CR-65b09d93-001#1","CR-65b09d93-002#1"]
+      - path: "docs/mcl/product/input/product-input.yaml"
+        change: "script_runtime_hosts の説明に標準の slot runner と自作した runner を、制約の runner に標準の slot runner を含むことを、config_store の説明に任意の 2 キーとジョブマップの場所の決まり方を追記した(translation のフィールドは不変)。product-input.yaml(イベント直下のコピー)も同一内容"
+        work_units: ["CR-65b09d93-001#1","CR-65b09d93-002#1"]
+      - path: "docs/cloud-context/conformance/product/product-conformance-onprem.yaml"
+        change: "REQ-CFG-001 の notes を feature-flag.env(9 キー + 任意の 2 キー)とジョブマップ CSV の場所の決まり方に直した(判定は不変)"
+        work_units: ["CR-65b09d93-002#1"]
+      - path: "docs/cloud-context/generated-md/product/relay-gate-target-architecture.md"
+        change: "ワークロード全体構成図の facade ノードを標準の slot runner(ローカル実行と SSH 実行、relay-gate の提供物、特殊な接続だけ自作の runner を同じホストに置く)に、設定ノードを feature-flag.env の 9 キーと任意の 2 キー、ジョブマップの場所は feature flag で変更可に直した。npx md-mermaid-lint で構文を確認した"
+        work_units: ["CR-65b09d93-001#1","CR-65b09d93-002#1"]
+    outputs_verified_unchanged:
+      - path: "infra/product/onprem/ansible/site.yml"
+        reason: "ロールの割り当ては変わらず、標準の slot runner は既存の実行ホストへ置くため変更不要"
+        work_units: ["CR-65b09d93-001#1","CR-65b09d93-002#1"]
+      - path: "infra/product/onprem/terraform/"
+        reason: "セグメントの説明に slot runner が実行ホストセグメントのものとして既に書かれており、ホスト・ネットワークの論理定義は変わらない"
+        work_units: ["CR-65b09d93-001#1","CR-65b09d93-002#1"]
+      - path: "docs/mcl/product/output/product-observability.yaml / product-cost-hints.yaml"
+        reason: "runner の提供元とジョブマップの場所に触れていない"
+        work_units: ["CR-65b09d93-001#1","CR-65b09d93-002#1"]
+  arch_feedback:
+    status: "no_new_feedback"
+    reason: "変更は、上流で決まった標準の slot runner の提供と feature flag の任意の 2 キーを構築手順とインフラ設計に反映しただけで、ティア・依存ルール・方針に関わる新しい知見は無い。本 stage は feedback controller の指示により Phase4 で arch を更新しない"
+  writeback_check:
+    result: "not_required"
+    reason: "arch の変更は product-input の入力フィールド(translation)に影響せず、再生成(translation のやり直し)と Step2 の全量再実行は不要"

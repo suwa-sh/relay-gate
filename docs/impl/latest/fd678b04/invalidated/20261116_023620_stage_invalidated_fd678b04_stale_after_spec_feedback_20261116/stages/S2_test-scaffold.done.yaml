@@ -1,0 +1,195 @@
+stage: S2
+uc_id: fd678b04
+manifest_sha256: dee92025af3be3e20aecf1f99a59e6b911041405eec43a76a3da8e2da74ed1d5
+manifest_projection: v2
+result: pass
+scaffold_mode: diff_only
+rerun: true
+rerun_reason: "stale after spec event 20261115_164000_feedback_runner_relative_path (invalidated by 20261115_172158_stage_invalidated_fd678b04_stale_after_runner_relative_path)"
+previous_done: "docs/impl/latest/fd678b04/invalidated/20261115_172158_stage_invalidated_fd678b04_stale_after_runner_relative_path/stages/S2_test-scaffold.done.yaml"
+branch_slug: configure-feature-flags
+tiers:
+  - tier-facade
+scaffold_scope:
+  tiers:
+    - tier-facade
+  uc_feature: regenerated
+  atdd: untouched
+scaffold_scope_note: "既存の実装が残る再実行のため、dist-impl-implement mode=test-scaffold の再実行時の done 条件(parse 可能かつ実行可能。新規・変更 Scenario の fail は未実装が理由のものだけ許容)で判定した。全段が未実装で fail する初回の red_baseline: pass は記録しない。今回は実測の red を red_baseline_measured に記録する"
+red_baseline_measured:
+  red_total: 25
+  green_added_total: 1
+  by_stage:
+    - stage: atdd
+      total: 1
+      added: 0
+      updated: 0
+      red: 0
+      green: 1
+    - stage: uc_bdd
+      total: 16
+      added: 2
+      updated: 1
+      red: 3
+      green: 13
+    - stage: tier_bdd
+      total: 49
+      added: 10
+      updated: 1
+      red: 11
+      green: 38
+    - stage: tdd
+      total: 490
+      added: 9
+      updated: 3
+      red: 11
+      green: 479
+  reason: "red の 25 件はすべて assertion failure で、理由は『相対パスの解決が未実装』。現行実装(facade/src/domain/feature_flag.sh の validate_feature_flag_executable_path)は BLUE_RUNNER / GREEN_RUNNER / RAPID_CROSSCHECK_RUNNER / RAPID_CROSSCHECK_WORKER の相対パスを `error: path is not absolute key=<KEY> path=<値>` で拒否する。新しい仕様(契約 config_files.feature-flag.env.runner_path_resolution)は、設定ファイルのあるディレクトリを基準に解決し、解決後のパスで検査・問い合わせ・表示する。実装は変更していない(S4 で追従する)"
+  red_is_assertion_failure: true
+  undefined_steps: 0
+  ambiguous_steps: 0
+  parse_errors: 0
+  green_added_note: "追加した単体テストのうち 1 件(off の slot と速報 off の相対パスは解決も検査もせず - を出す)は、現行実装でも成り立つため最初から green。回帰の見張りとして残した"
+scaffold_validation:
+  method: "追加・更新した step と単体テストが、正しい実装で通ることを確認した。リポジトリの facade と features/uc を scratchpad へ複製し、複製側にだけ相対パスの解決の試作(4 キーの値を、設定ファイルのあるディレクトリ + / + 値 へ置き換え、絶対パスの検査を外す)を当てて実行した。リポジトリ側の facade/src は変更していない"
+  results:
+    - "tier BDD(configure-feature-flags.feature): 49 scenarios (49 passed), 307 steps (307 passed)"
+    - "UC BDD(configure-feature-flags.feature): 16 scenarios (16 passed), 104 steps (104 passed)"
+    - "bats(追加 1 ファイル + 更新 2 ファイル): 45 tests, 45 ok"
+    - "bats(feature flag の既存 4 ファイル。旧規則に依存するテストが残っていないことの確認): 82 tests, 82 ok"
+  conclusion: "red は足場の誤りではなく、実装が未追従であることだけが理由"
+spec_changes_applied:
+  - "spec.md E2E 完了条件: 14 Scenario から 16 Scenario へ。追加は『方針資料の設定例の書き方(相対パス)の feature flag を検証する』『相対パスの基準は作業ディレクトリではなく設定ファイルのあるディレクトリである』。置換は『error 行が 2 行以上のときは決まった順に報告される』の Given 1 行と表の 5 行目(path is not absolute から、解決後のパスの file not executable へ)"
+  - "tier-facade.md ティア完了条件: Scenario 21 + Outline 4 本(実行 39)から Scenario 25 + Outline 6 本(実行 49)へ。追加は 相対パスの解決 / 基準は作業ディレクトリではない(Outline、Examples 3 行)/ 設定ファイルのパスが相対パス / シンボリックリンク / 実体が無いとき解決後のパスで報告 / ~・環境変数・コマンド置換を展開しない(Outline、Examples 3 行)。置換は error_order の Scenario の Given 1 行・When・表の 5 行目"
+  - "CLI 契約 config_files.feature-flag.env.runner_path_resolution(relative_criteria / base_dir / resolved_path / usage / display)と error_order.per_key(欠落・空 → 実体が無い・実行不可)を単体テストで判定する"
+  - "比較ツール起動コマンド(RAPID_COMPARE_COMMAND / FINAL_COMPARE_COMMAND)の path is not absolute は仕様が変わっていないため、テストに触れていない"
+  - "性能を合否とするテストは足していない。特定のデータで時間を確認する既存のテストは変更も削除もしていない(利用者決定)"
+  - "usdm の受け入れ条件は変更なしのため features/atdd は触れていない"
+transcription_check:
+  method: "spec.md / tier-facade.md の gherkin ブロックを feature 本文へ機械的に転写し、feature 本文(# で始まる出典コメント行を除く)と行単位で完全一致することを確認した(uc 121 行 / tier 270 行)。git diff で、変わったのが仕様の追加・置換の箇所と出典コメント 1 行だけであることを確認した"
+  uc_feature_verbatim: true
+  tier_feature_verbatim: true
+generated:
+  atdd:
+    feature: features/atdd/SPEC-001-01.feature
+    feature_body_changed: false
+    steps: features/atdd/steps/configure-feature-flags.steps.js
+    steps_changed: false
+    scenarios:
+      - SPEC-001-01-4
+  uc_bdd:
+    feature: features/uc/configure-feature-flags.feature
+    feature_regenerated: true
+    feature_change: "仕様と同じ位置に 2 Scenario を追加。error 行の順の Scenario の Given 1 行と表の 5 行目を差し替え。出典コメントを 1 行追加。ほかの Scenario の本文は変更なし"
+    steps: features/uc/steps/configure-feature-flags.steps.js
+    steps_changed: true
+    steps_change_summary: "追加 Scenario の step 11 件(Given 5 / When 2 / Then 4)を実体で実装して末尾に追加。作業ディレクトリを指定して起動する補助関数を追加。置換された Given 1 件の文言を差し替え、解決後の位置に実体が無いことの確認を足した。ほかの既存 step は変更なし"
+    source: "docs/specs/latest/適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md#E2E完了条件(BDD)"
+    scenarios: 16
+    scenarios_added: 2
+    scenarios_updated: 1
+    cross_uc_scenarios_added: 0
+    cross_uc_note: "追加した 2 Scenario の Then は validate-config.sh の終了コード・stdout・stderr だけで、他 UC の責務を含まない。UC 横断 Scenario の一覧は既存 issue(20260917_004843 / 20260917_074633)のまま"
+  tier_bdd:
+    - tier: tier-facade
+      feature: facade/features/configure-feature-flags.feature
+      feature_regenerated: true
+      feature_change: "末尾に Scenario 4 本と Scenario Outline 2 本(Examples 各 3 行)を追加。error_order の Scenario の Given 1 行・When・表の 5 行目を差し替え。出典コメントを 1 行追加。ほかの Scenario の本文は変更なし"
+      steps: facade/features/steps/configure-feature-flags.steps.js
+      steps_changed: true
+      steps_change_summary: "追加・置換された step 31 件(Given 15 / When 6 / Then 10)を実体で実装して末尾に追加。stderr の行を照合する既存の Then 2 件に、パスの置き場(<conf の絶対パス> など)を実際のパスへ置き換える処理を足した(置き場の無い行の照合は変わらない)。ほかの既存 step は変更なし"
+      source: "docs/specs/latest/適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md#ティア完了条件(BDD)"
+      scenarios: 49
+      scenarios_added: 10
+      scenarios_updated: 1
+      scenarios_note: "Scenario 25 + Scenario Outline 6 本の Examples 24 行。再実行前は 39"
+  tdd:
+    - tier: tier-facade
+      file: facade/test/usecase/validate_feature_flag_runner_path.bats
+      change: added
+      tests: 9
+      red: 8
+      target: "facade/bin/validate-config.sh --feature-flag(エントリポイント経由。内部の関数の分け方を固定しない)。4 キーの書き方の混在と解決後のパスの stdout / 4 キーとも実体が無いときの error 行と順 / 実行権限が無い / 設定ファイルのパスの . と連続する / を畳まない / . で始まる相対パスの設定ファイル / 作業ディレクトリがシンボリックリンク経由のときは論理パス / warn 行の runner= / 制御文字の可視表記 / off の slot と速報 off は解決も検査もしない"
+    - tier: tier-facade
+      file: facade/test/usecase/validate_feature_flag_error_order.bats
+      change: expectation_updated
+      tests: 6
+      tests_updated: 2
+      red: 2
+      detail: "path is not absolute を期待していた 2 件を、解決後のパスの file not executable の期待へ直した(error_order の 12 行の 5 行目 / 1 つのキーの error 行は 1 行だけ)。後者はテスト名も直した。ほかの 4 件は変更なし"
+    - tier: tier-facade
+      file: facade/test/domain/feature_flag.bats
+      change: expectation_updated
+      tests_updated: 1
+      red: 1
+      detail: "『runner が相対パスの場合 path is not absolute を出すこと』を『出さないこと』へ直した。解決後のパスと文言はエントリポイント経由のテストで判定し、domain の関数の分け方は S4 に委ねる"
+legacy_rule_expectations_found:
+  note: "4 キーの相対パス拒否(path is not absolute key=BLUE_RUNNER など)を期待していた既存テストの一覧。リポジトリ全体(docs と node_modules を除く)を検索した。すべてこの UC の write-set 内で、すべて更新済み。他 UC の feature・他 tier のテストには無かった"
+  updated:
+    - "features/uc/configure-feature-flags.feature: error 行の順の Scenario の表の 5 行目(仕様の置換どおり)"
+    - "facade/features/configure-feature-flags.feature: error_order の Scenario の表の 5 行目(仕様の置換どおり)"
+    - "facade/test/usecase/validate_feature_flag_error_order.bats: 2 件(BLUE_RUNNER=relative/blue-runner.sh / GREEN_RUNNER=relative/missing.sh)"
+    - "facade/test/domain/feature_flag.bats: 1 件(GREEN_RUNNER=bin/green.sh)"
+  untouched_by_design:
+    - "RAPID_COMPARE_COMMAND / FINAL_COMPARE_COMMAND の path is not absolute(facade/test/domain/launch_command.bats、facade/test/usecase/validate_rapid_crosscheck.bats、facade/test/presentation/validate_config_rapid_crosscheck.bats、define-crosscheck-job-map-and-comparison-definitions の feature と steps)。仕様が変わっていない"
+test_runs:
+  - stage: atdd
+    cwd: "."
+    command: "npx cucumber-js --config cucumber.cjs features/atdd --tags @atdd_SPEC-001-01-4"
+    exit_code: 0
+    summary: "1 scenario (1 passed), 5 steps (5 passed)"
+    total: 1
+    red: 0
+    fail_reason: none
+    undefined_steps: 0
+  - stage: uc_bdd
+    cwd: "."
+    command: "npx cucumber-js --config cucumber.cjs features/uc"
+    exit_code: 1
+    summary: "50 scenarios (47 passed, 3 failed), 300 steps (295 passed, 2 skipped, 3 failed)。再実行前は 48 scenarios"
+    target_feature_summary: "16 scenarios (13 passed, 3 failed), 104 steps (99 passed, 2 skipped, 3 failed)"
+    total: 16
+    red: 3
+    fail_reason: "未実装(相対パスの解決)。3 件とも assertion failure で、stderr に path is not absolute が出ている"
+    undefined_steps: 0
+    ambiguous_steps: 0
+  - stage: tier_bdd
+    tier: tier-facade
+    cwd: facade
+    command: "npx cucumber-js --config ../cucumber.cjs features"
+    exit_code: 1
+    summary: "97 scenarios (86 passed, 11 failed), 568 steps (548 passed, 9 skipped, 11 failed)。再実行前は 87 scenarios"
+    target_feature_summary: "49 scenarios (38 passed, 11 failed), 307 steps (287 passed, 9 skipped, 11 failed)"
+    total: 49
+    red: 11
+    fail_reason: "未実装(相対パスの解決)。11 件とも assertion failure で、stderr に path is not absolute が出ている"
+    undefined_steps: 0
+    ambiguous_steps: 0
+  - stage: tdd
+    tier: tier-facade
+    cwd: facade
+    command: "bats -r test"
+    exit_code: 1
+    summary: "490 tests, 479 ok, 11 not ok。再実行前は 481 tests"
+    total: 490
+    added: 9
+    updated: 3
+    red: 11
+    fail_reason: "未実装(相対パスの解決)。追加 8 件と期待値を更新した 3 件"
+format_check:
+  tier: tier-facade
+  command: "shfmt -d ."
+  exit_code: 0
+lint:
+  tier: tier-facade
+  command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+  exit_code: 0
+dom_snapshot_tests: not_applicable
+issues: []
+issues_note: "新規起票は無し。仕様と契約の間に矛盾は見つからなかった。UC 横断 Scenario の追加は無い"
+observations:
+  - "作業ディレクトリを指定して起動する step は、環境変数 PWD も作業ディレクトリに合わせて渡す。契約の『作業ディレクトリ』がシェルの $PWD の論理パスのため。渡さないと、一時ディレクトリがシンボリックリンクを含む環境(macOS の /var)で $PWD が物理パスになり、期待する字面と食い違う"
+  - "bats の全件と UC BDD を同時に走らせたとき、この UC と関係の無い既存 Scenario が 1 回だけ error: config snapshot failed(終了コード 6)で落ちた。単独で走らせ直すと通る。段は 1 つずつ実行すること。上の test_runs はすべて単独実行の結果"
+  - "facade/test/usecase/validate_feature_flag_error_order.bats の先頭コメントにある『現行実装で green になる』は 2026-11-15 の前回追加分の説明。今回更新した 2 件は、その下に足したコメントのとおり S4 までは red"
+completed_at: '2026-11-15T17:37:00+09:00'
+completed_by: dist-impl-implement@0.14.1

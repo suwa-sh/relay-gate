@@ -9,7 +9,7 @@
 | UC名 | アクター | 主な操作 | 関連情報 |
 |------|---------|---------|---------|
 | [リラン対象を検証する](リラン対象を検証する/spec.md) | ジョブスケジューラ(専用ジョブ)/ 運用者(受益者) | role × 元 mode × 元状態の判定表でリラン可否を事前検証する。元実行の特定元は role で分岐(blue / green: 元の execution-spec.json + 成果物ファイル(started-at.txt / exitcode.txt / aborted.txt)。元状態は RAPID_CROSSCHECK_MODE によらずファイル正本のみ。rapid-crosscheck: 管理 DB の依頼レコードのみ。execution-spec.json を持たない rapid-crosscheck リラン run も元にできる) | リラン指示、実行設定(execution-spec)、並行稼働実行、slot 実行、速報比較依頼、Runner Result |
-| [元の execution-spec.json から復元して新しい run_id で起動する](元の%20execution-spec.json%20から復元して新しい%20run_id%20で起動する/spec.md) | ジョブスケジューラ(専用ジョブ)/ 運用者(受益者) | `--role blue / green` で新 run_id を発行し、(off 以外)parallel_run(parent_run_id 付き)を作成、元 spec を復元して background slot を再起動する。feature-flag.env を読み runner へ環境変数で渡す | リラン指示、実行設定(execution-spec)、並行稼働実行、slot 実行、Runner Result |
+| [元の execution-spec.json から復元して新しい run_id で起動する](元の%20execution-spec.json%20から復元して新しい%20run_id%20で起動する/spec.md) | ジョブスケジューラ(専用ジョブ)/ 運用者(受益者) | `--role blue / green` で新 run_id を発行し、(off 以外)parallel_run(parent_run_id 付き)を作成、元 spec を復元して background slot を再起動する。feature-flag.env を読み runner へ環境変数で渡す(読むキーと検査は CLI 契約 `background-rerun.sh` の `feature_flag_reading`。起動の前に runner の実体を検査せず、起動に失敗したら終了コード 6) | リラン指示、実行設定(execution-spec)、並行稼働実行、slot 実行、Runner Result |
 | [速報比較依頼だけを新規作成する](速報比較依頼だけを新規作成する/spec.md) | ジョブスケジューラ(専用ジョブ)/ 運用者(受益者) | `--role rapid-crosscheck` で新 run_id の parallel_run と速報比較依頼(REQUESTED)を 1 トランザクションで作成し、worker の通常 claim に委ねる | リラン指示、速報比較依頼、並行稼働実行、Runner Result |
 | [リラン結果を parent_run_id で追跡する](リラン結果を%20parent_run_id%20で追跡する/spec.md) | 運用者 | 指定 run_id から parent_run_id を元の実行まで辿り、系譜を TSV で参照する | 並行稼働実行、リラン指示、Runner Result、実行ログ |
 
@@ -27,7 +27,7 @@ graph LR
     SRC_SPEC["元 run の実行設定\nfacade/<source_run_id>/execution-spec.json"]
     SRC_ART["元 run の Runner Result\nstarted-at.txt / exitcode.txt / aborted.txt\n(blue / green 成果物 URI)"]
     SRC_STATE["元 run の管理レコード(off 以外)\n速報比較依頼 / 並行稼働実行(rapid-crosscheck の特定元)"]
-    FF["feature-flag.env\nRAPID_CROSSCHECK_MODE / BLUE_RUNNER / GREEN_RUNNER / RAPID_CROSSCHECK_RUNNER"]
+    FF["feature-flag.env\nRAPID_CROSSCHECK_MODE / リラン対象 role の runner(BLUE_RUNNER または GREEN_RUNNER)/ RAPID_CROSSCHECK_RUNNER(off 以外)"]
   end
   VERIFY["リラン対象を検証する"]
   RESTORE["元の execution-spec.json から復元して\n新しい run_id で起動する"]
@@ -42,11 +42,11 @@ graph LR
   SRC_SPEC -->|"blue / green のみ"| VERIFY
   SRC_ART -->|"blue / green の元状態(ファイル正本)"| VERIFY
   SRC_STATE -->|"rapid-crosscheck の元実行特定のみ(blue / green は読まない)"| VERIFY
-  FF -->|"RAPID_CROSSCHECK_MODE"| VERIFY
+  FF -->|"読み取りと検査(事前検証の前。違反は終了コード 2)"| VERIFY
   VERIFY -->|"リラン指示(検証通過, role=blue / green)"| RESTORE
   VERIFY -->|"リラン指示(検証通過, role=rapid-crosscheck)"| RECREATE
   SRC_SPEC -->|"復元(ジョブマップは再解決しない)"| RESTORE
-  FF -->|"runner 実体 / 環境変数で渡す値"| RESTORE
+  FF -->|"リラン対象 role の runner 実体(起動の前に検査しない)/ 環境変数で渡す値"| RESTORE
   SRC_ART -->|"成果物 URI を引き継ぐ"| RECREATE
   RESTORE --> NEW_PR
   RESTORE --> NEW_SPEC

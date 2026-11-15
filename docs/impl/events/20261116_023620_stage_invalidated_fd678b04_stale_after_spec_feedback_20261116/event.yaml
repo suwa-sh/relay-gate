@@ -1,0 +1,21 @@
+event_id: 20261116_023620_stage_invalidated_fd678b04_stale_after_spec_feedback_20261116
+type: stage_invalidated
+uc_id: fd678b04
+stage: S1
+payload:
+  reason: stale
+  targets:
+  - stages/S1_uc-init.done.yaml
+  - stages/S2_test-scaffold.done.yaml
+  - stages/S3_contracts.done.yaml
+  - stages/attempt-5/S4_tier-impl.tier-facade.done.yaml
+  - stages/attempt-5/S4_tier-impl.tier-facade.assumptions.yaml
+  - stages/attempt-5/S5_verify.tier-facade.done.yaml
+  - stages/attempt-5/S5_verify.tier-facade.findings.yaml
+  - stages/S6_uc-bdd.done.yaml
+  - stages/S7_atdd.done.yaml
+  - stages/S8_feedback.done.yaml
+  - stages/S9_review_generated.done.yaml
+  archived_to: docs/impl/latest/fd678b04/invalidated/20261116_023620_stage_invalidated_fd678b04_stale_after_spec_feedback_20261116/
+  detail: 2026-11-16 の仕様反映 2 件(公開した変更要求 = 9 キー以外の値の読み取り途中の一時的な保持の条件。利用者決定 = 標準の slot runner の正式提供、feature-flag.env の任意 2 キー BLUE_JOB_MAP_CSV / GREEN_JOB_MAP_CSV、ジョブを起動するコマンドの error 1 行、リランのコマンドの起動前の検査)で、usdm / arch / spec の入力が変わり全 done の projection が不一致になった。feature flag の検証コマンドは任意 2 キーへの対応が要る。同一 attempt で S1 からやり直す(attempt++ しない。前回の findings は渡さない)
+created_at: '2026-11-16T02:36:19+09:00'

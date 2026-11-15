@@ -1,0 +1,21 @@
+event_id: 20261115_141514_stage_invalidated_fd678b04_stale_after_spec_feedback_20261115
+type: stage_invalidated
+uc_id: fd678b04
+stage: S1
+payload:
+  reason: stale
+  targets:
+  - stages/S1_uc-init.done.yaml
+  - stages/S2_test-scaffold.done.yaml
+  - stages/S3_contracts.done.yaml
+  - stages/attempt-5/S4_tier-impl.tier-facade.done.yaml
+  - stages/attempt-5/S4_tier-impl.tier-facade.assumptions.yaml
+  - stages/attempt-5/S5_verify.tier-facade.done.yaml
+  - stages/attempt-5/S5_verify.tier-facade.findings.yaml
+  - stages/S6_uc-bdd.done.yaml
+  - stages/S7_atdd.done.yaml
+  - stages/S8_feedback.done.yaml
+  - stages/S9_review_generated.done.yaml
+  archived_to: docs/impl/latest/fd678b04/invalidated/20261115_141514_stage_invalidated_fd678b04_stale_after_spec_feedback_20261115/
+  detail: 公開した変更要求 4 件の還流(dist-pipeline feedback run 20261115_093126_impl_feedback_fd678b04。nfr-grade の性能目標の記載、CLI 契約の performance_target / error_order / 列挙外の mode / 9 キー以外の値、この UC の spec.md・tier-facade.md の BDD 追加)で、全 done の projection が不一致になった。同一 attempt で S1 からやり直す(attempt++ しない。前回の findings は渡さない)
+created_at: '2026-11-15T14:15:13+09:00'

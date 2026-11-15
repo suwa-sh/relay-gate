@@ -1,0 +1,37 @@
+{
+  "schema_version": "distillery.feedback-no-domain-change/v1",
+  "type": "feedback_no_domain_change",
+  "event_id": "20261116_014000_feedback_standard_runner_job_map_location",
+  "created_at": "2026-11-16T01:40:00Z",
+  "stage": "quality_attributes",
+  "domain_event_root": "nfr/events",
+  "reason": "上流の要求 2 件(標準の slot runner の正式な提供、feature flag へのジョブマップの場所の任意 2 キーの追加)は提供物の範囲と設定項目の変更で、nfr-grade.yaml の runner・feature flag・ジョブマップ・設定ファイルに触れる項目(B.1.1.2、B.2.1.1、C.1.2.2、C.2.2.1、C.5.2.1、D.5.1.3、E.5.2.1、F.1.1.1、F.2.2.1)を照合した結果、グレード値・説明・根拠のどれも変更を要しない。nfr-grade.yaml は feature flag のキーの数にも、runner を利用者が書く前提にも触れていない。latest/ は更新しない",
+  "feedback_request": {
+    "feedback_request_id": "20261116_standard_runner_job_map_location",
+    "input_sha256": "733163f9092ac7055b410880c40f85fd312b2684f25fb0fb20d8d3412626822a",
+    "request_ids": [
+      "CR-65b09d93-001",
+      "CR-65b09d93-002"
+    ],
+    "work_unit_ids": [
+      "CR-65b09d93-001#1",
+      "CR-65b09d93-002#1"
+    ]
+  },
+  "work_unit_results": [],
+  "reconciliation_results": [
+    {
+      "work_unit_id": "CR-65b09d93-001#1",
+      "status": "not_impacted",
+      "reason": "要求の変更(relay-gate が標準の slot runner(ローカル実行と SSH 実行)を正式に提供し、標準の slot runner が扱わない接続だけ利用者が runner を自作する)は提供物の範囲の変更で、nfr-grade.yaml のグレード値と根拠を変えない。runner に触れる項目を照合した: C.2.2.1(ライフサイクル管理。runner の差し替えで実装世代を交代する)、F.1.1.1(単一 OS。実装側の OS 差異は runner に閉じ込める)、F.2.2.1(runner・ジョブマップ・比較定義の差し替えだけで新案件・次世代実装へ適用)、C.5.2.1(エスカレーション先。設定・runner・比較定義の問題は基盤適用設計者)、B.2.1.1(runner の応答待ち最大 9.2 秒は別に数える)、E.5.2.1(アクセス制御。ジョブマップの host / user 列と OS 権限。ローカル実行は host / user を省略)。いずれも「runner を利用者が必ず書く」「参考実装」という前提を書いておらず、runner を差し替えて異なる世代の実装を並行稼働できる要求と、実装固有事項を runner に閉じ込める条件は上流で維持されているため、記述はそのまま成り立つ。標準の slot runner が扱うローカル実行と SSH 実行は既存のアクセス制御・認証情報の非保存の記述の範囲内。latest/ は更新しない",
+      "artifact_refs": []
+    },
+    {
+      "work_unit_id": "CR-65b09d93-002#1",
+      "status": "not_impacted",
+      "reason": "要求の変更(feature flag に slot ジョブマップの場所を書く任意の 2 キーを足し、無い・空なら固定の名前を使う。相対パスの基準は設定ファイルのあるディレクトリ)は設定項目の追加で、nfr-grade.yaml のグレード値と根拠を変えない。nfr-grade.yaml は feature flag のキーの数(9 キー)にもジョブマップの固定の名前・置き場所にも触れていない。関連しうる項目を照合した: B.1.1.2 と B.2.1.1(設定ファイルの大きさの共通前提と検査の目標値。対象は設定検証の 4 種別と facade の設定読み込みで、種別・形式・大きさの条件は変わらず、任意の 2 キーが増えても 5,000 行以内かつ 8 MB 以内・内容によらず 10 秒の前提はそのまま)、C.1.2.2(バックアップ対象。設定を種類で列挙しており置き場所を前提にしないため、ジョブマップを別の場所に置いても対象に含まれる)、C.2.2.1(マップ版はジョブマップ側の版で管理)、D.5.1.3(切り戻し。feature flag の slot 実行モードを戻す)、E.5.2.1(アクセス制御。ジョブマップの host / user 列)。いずれも記述はそのまま成り立つ。latest/ は更新しない",
+      "artifact_refs": []
+    }
+  ],
+  "evidence_refs": []
+}

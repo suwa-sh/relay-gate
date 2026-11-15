@@ -1,0 +1,71 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "specification"
+artifact_id: "spec-decision-037"
+title: "標準の slot runner を正式な提供物とし、1 つの実体 runners/standard-runner.sh を blue と green の両方に割り当てる"
+status: "approved"
+generated_at: "2026-11-16T02:10:00Z"
+context: |
+  - これまでの仕様は、relay-gate が同梱するものを、共通ライブラリ(lib/runner-*.sh)と参考実装(runners/ssh-runner.sh。仮採用)としていた。
+    - 適用側が参考実装をコピーまたは source して、runner 実体(runners/blue-runner.sh など)を書く前提だった。
+    - そのまま割り当てて使える正式な runner は無かった。
+  - 利用者は 2026-11-16 に、次のとおり決定した: 「relay-gate が標準の runner(ローカル実行と SSH 実行)を正式に配り、特殊な接続だけ利用者が自作する形にする」。
+    - 要求(2026-11-16 の要求の変更)は、標準の slot runner を正式な提供物とし、ファイル構成(1 つの実体で兼ねるか、ファイル名、置き場所、feature flag への書き方の例)を仕様で 1 つに確定する、と定めた。
+    - アーキテクチャとインフラ設計は、標準の slot runner を facade と同じ実行ホストに配置する構成要素として位置づけた。
+  - 元の方針資料との関係:
+    - しくみの資料は「BLUE_RUNNER と GREEN_RUNNER は適用ごとに実体を割り当てる」と書き、標準の runner の提供には触れていない。
+    - 利用イメージの資料は、案件固有の接続のために適用側が runner を用意する例を示す。
+  - 現在の CLI 契約では、slot runner は自 slot を起動時の引数 --role blue|green で受け取る。
+    - ジョブマップの選択、成果物ディレクトリ、完了通知の種別は --role から決まる。
+    - そのため、runner IF を変えずに、1 つの実体を blue と green の両方に割り当てられる。
+decision: |
+  1. 標準の slot runner を、relay-gate の正式な提供物として CLI 契約に定めた。
+     - 正本は CLI 契約の commands「$BLUE_RUNNER / $GREEN_RUNNER」の standard_runner(新設)。
+     - 標準の slot runner は runner IF(引数、--help の応答、Runner Result Contract の 3 ファイルと execution-spec.json、完了通知)をすべて満たす。
+     - 扱う範囲は、ローカル実行(host と user が両方無い・両方空の行)と SSH 実行(それ以外の行)。
+  2. ファイル構成を 1 つに決めた。
+     - ファイル名: runners/standard-runner.sh。
+     - 置き場所: relay-gate の配置ディレクトリ配下($RELAY_GATE_HOME/runners/standard-runner.sh)。
+     - 実体は 1 つ。blue と green の両方に同じファイルを割り当てる。slot は --role で受け取る(runner IF は変えない)。
+     - blue 用と green 用の別ファイルは提供しない。
+  3. feature flag への書き方の例を 1 つに決めた。
+     - relay-gate を /opt/relay-gate に配置した場合: BLUE_RUNNER=/opt/relay-gate/runners/standard-runner.sh / GREEN_RUNNER=/opt/relay-gate/runners/standard-runner.sh。
+     - 相対パスでも書ける(基準は設定ファイルのあるディレクトリ)。
+  4. 標準の slot runner を使う適用で利用者が用意するものは、feature flag と slot ジョブマップ(と実行先の実装)だけ。
+  5. 「参考実装(仮採用)」の扱いをやめた。
+     - runners/ssh-runner.sh という名前と、「参考実装をコピーまたは source して runner 実体を書く」という前提を、仕様から除いた。
+     - UC 別仕様の例に残る blue-runner.sh / green-runner.sh は、利用者が自作した runner の例、または方針資料の設定例の書き方として読む。
+  6. 自作の runner の道を残した。
+     - 標準の slot runner が扱わない起動方式・プロトコルは、利用者が runner を自作して割り当てる。
+     - 共通ライブラリ(lib/runner-resolve.sh / runner-spec.sh / runner-result.sh / runner-notify.sh)と runner IF は変えない。
+     - ジョブを起動するコマンド、リランのコマンド、設定の検証コマンドは、割り当てられた実体が標準か自作かを区別しない。
+     - runner を差し替えて異なる世代の実装を並行稼働できる、という要求は変えていない。
+  7. 方針資料と違う点(利用者決定 2026-11-16):
+     - 方針資料は標準の runner の提供に触れていない。標準の slot runner の正式な提供は、方針資料に明記の無い利用者決定である。
+     - 「適用ごとに実体を割り当てる」は、割り当てる実体として標準の slot runner を選べる、という形で両立する。
+  8. 判定する BDD を、該当する UC に置いた。
+     - slot runner の実体スクリプトを割り当てる: 標準の slot runner を blue と green の両方に割り当てた設定が検証を通る場面、標準の slot runner の --help の場面。
+     - ジョブマップで JOB_ID から実行先を解決する / 実装スクリプトを実行して Runner Result を出力する: 標準の slot runner がローカル実行の行と SSH 実行の行をそれぞれ解決・実行する場面。
+  9. 細部(利用者決定と要求より踏み込んで決めたこと。正本は CLI 契約の standard_runner):
+     - 配置ディレクトリの決め方: 標準の slot runner は、自身のあるディレクトリ(起動されたパスの字面。シンボリックリンクは辿らない)の 1 つ上を配置ディレクトリとし、共通ライブラリをその lib/ から読む。配置ディレクトリを環境変数で受け取らない。設定ファイル置き場などの既定も、この配置ディレクトリから決める。
+     - 標準の slot runner は、環境変数で配置ディレクトリが与えられていても使わない。自作の runner が配置ディレクトリと共通ライブラリの位置をどう決めるかは、その runner の中で決める(共通ライブラリを使うかどうかも自作の runner が決める)。
+     - 割り当てるパス: 配置ディレクトリの runners/standard-runner.sh のパスで割り当てる。別の場所に置いたシンボリックリンクやコピーを割り当てる使い方は対象外(動作を保証しない)。
+     - SSH 実行の起動形: `ssh -n -o BatchMode=yes {user}@{host} ...`。オプションは -n と -o BatchMode=yes の 2 つだけ。理由: runner は対話の入力を受けられないため、認証できないホストでは応答待ちで止まらず、失敗として返す。これまで参考実装の説明にだけあった BatchMode を、標準の slot runner の起動形として契約に定めた。
+     - 認証情報の参照名(ジョブマップの credential_ref): ssh の引数にも接続先の決定にも使わず、execution-spec.json へ転記するだけ。鍵の選択は runner のプロセスユーザーの SSH 設定に任せる(インフラ設計の「SSH は既存の実行ユーザーの鍵と known_hosts を使う」に合わせた)。「SSH 設定の Host 別名または鍵の参照名として runner 実体が解釈する(仮採用)」という記述は、標準の slot runner については除いた。
+     - 同じ実体を両 slot に割り当てた設定でも、検証コマンドの --help の問い合わせは slot ごとに 1 回ずつ行う。
+  10. 実装との関係: runner・共通ライブラリ・ジョブを起動するコマンドは、まだ実装していない。実装済みの設定の検証コマンドは、割り当てられた実体の種類を見ないため、この決定による変更は無い。
+consequences:
+  positive:
+    - "ローカル実行と SSH 実行で足りる適用は、runner のスクリプトを書かずに、feature flag と slot ジョブマップだけで動かせる"
+    - "実体が 1 つなので、blue 用と green 用で挙動が食い違わない"
+    - "runner IF を変えていないため、自作の runner と標準の slot runner を slot ごとに混ぜて割り当てられる"
+  negative:
+    - "標準の slot runner の保守(ローカル実行と SSH 実行の挙動の保証)が relay-gate の責任になる"
+    - "feature flag の値は環境変数を展開しないため、配置ディレクトリの実際のパスを利用者が書く必要がある"
+alternatives_considered:
+  - name: "blue 用と green 用の 2 ファイル(blue-runner.sh / green-runner.sh)を提供する"
+    reason_rejected: "slot は --role で受け取れるため 2 ファイルに分ける理由が無い。同じ内容の複製が 2 つでき、片方だけ直す誤りが起きる"
+  - name: "参考実装(ssh-runner.sh)の名前のまま正式な提供物にする"
+    reason_rejected: "ローカル実行も扱うため、名前が役割を表さない。要求とアーキテクチャの語(標準の slot runner)と揃える"
+  - name: "参考実装のまま残し、利用者がコピーして runner を書く"
+    reason_rejected: "利用者決定(2026-11-16)と要求に反する。ジョブマップを置くだけで動かせない"

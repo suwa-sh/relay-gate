@@ -3,6 +3,8 @@
 # hang-detector / housekeep はジョブスケジューラの定期ジョブとして起動する(終了結果が障害通知に乗る唯一の通知経路)。
 # ここでは systemd timer / cron に登録しない。ジョブスケジューラへの登録手順は運用手順書に記載する。
 # 対応: product-impl-onprem.yaml#impl.compute.execution_hosts, impl.storage.artifact_store, impl.storage.execution_log_store
+# 標準の slot runner(ローカル実行と SSH 実行)は relay-gate の提供物で、facade と同じ実行ホスト(segment == 'execution')に facade と一緒に配置する。DB セグメントには置かない。
+# 特殊な接続のために利用者が自作した runner も同じ実行ホストに置く。SSH は下の known_hosts 配布と実行ユーザーの鍵を使い、新しい接続経路は増えない。
 
 - name: 成果物ディレクトリ(RAID1ボリューム上)を作成する
   ansible.builtin.file:

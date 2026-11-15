@@ -1,0 +1,8 @@
+feedback request 20261116_standard_runner_job_map_location(標準の slot runner を正式に提供し、slot ジョブマップの場所を feature flag の任意の 2 キーで書けるようにする)に基づくインフラ設計の差分更新。上流 stage(usdm / rdra / nfr / arch)の反映済み event に追従した。
+- feedback_request_id: 20261116_standard_runner_job_map_location
+- input_sha256: 733163f9092ac7055b410880c40f85fd312b2684f25fb0fb20d8d3412626822a
+- request_ids: CR-65b09d93-001, CR-65b09d93-002
+- direct_work_unit_ids: (none)
+- causal_work_unit_ids: CR-65b09d93-001#1, CR-65b09d93-002#1
+- packet: docs/pipeline/feedback-runs/20261116_standard_runner_job_map_location/stage-packets/infrastructure.md
+- trigger_event: arch:20261116_015000_feedback_standard_runner_job_map_location

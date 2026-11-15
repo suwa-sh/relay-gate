@@ -1,0 +1,28 @@
+event_id: 20261116_033005_s4_tier_impl_completed_fd678b04_facade_attempt6
+type: stage_completed
+uc_id: fd678b04
+stage: S4
+tier: tier-facade
+attempt: 6
+payload:
+  result: pass
+  gates:
+    format: pass
+    lint: pass
+    tdd: pass
+    bdd_tier: pass
+  assumptions:
+    path: attempt-6/S4_tier-impl.tier-facade.assumptions.yaml
+    count: 25
+    by_category:
+      input_validation: 4
+      data_format: 5
+      error_handling: 9
+      persistence: 0
+      performance: 7
+      security: 0
+    sha256: ce40a9ad847e9b99a8f5ca7c58235adf62504092151fadb914858441e43ce95a
+  manifest_sha256: 808bf63e1c7564ffef1498814b5d3f4e3a6163b4c2ff1429e03ae81125b0d01b
+  manifest_projection: v2
+  note: 'blocker rerun: F-001 fixed (pass PWD explicitly to feature_flag_resolve_runner_paths; no behaviour change). Linux container (ShellCheck 0.9.0): shfmt / shellcheck / bats 535 pass. assumptions unchanged (25, same sha256)'
+created_at: '2026-11-16T03:30:05+09:00'

@@ -39,6 +39,7 @@ components:
           restart_policy: "Restart=on-failure, RestartSec=5"
           host_group: "DBセグメント専用ホスト"
       scheduled_scripts: "hang-detector(5 分ごと)と housekeep(1 日 1 回)はジョブスケジューラ実行ホストセグメントにスクリプトとして配置するだけで、systemd timer / cron には登録しない。起動はジョブスケジューラの定期ジョブ(impl.integration.job_scheduler)で行い、終了結果を障害通知に乗せる"
+      slot_runner: "標準の slot runner(ローカル実行と SSH 実行)は relay-gate の提供物で、facade と同じジョブスケジューラ実行ホストセグメントに配置する(DB セグメントには置かない)。BLUE_RUNNER / GREEN_RUNNER には標準の slot runner か利用者が自作した runner を割り当てる。特殊な接続だけ利用者が runner を自作して同じ実行ホストに置く。SSH は下の ssh の設定(公開鍵認証・known_hosts)を使い、新しいミドルウェアや接続経路は増えない。ファイル構成は仕様で確定"
       ssh:
         auth: "公開鍵認証のみ(パスワード認証無効)"
         known_hosts: "配布物として事前配布(TOFU無効化)"
@@ -144,12 +145,12 @@ components:
     vendor_service: "実行ホストのローカルディレクトリ(読み取り専用配置)"
     configuration:
       path: "/etc/relay-gate/"
-      contents: "feature-flag.env(9 キー: BLUE_MODE / GREEN_MODE / RAPID_CROSSCHECK_MODE / BLUE_IMPL / GREEN_IMPL / BLUE_RUNNER / GREEN_RUNNER / RAPID_CROSSCHECK_RUNNER / RAPID_CROSSCHECK_WORKER)、<role>-job-map.csv(CSV: 1 行目ヘッダー、セルは二重引用符で囲み内部の二重引用符は二重化)、hang-detector.env(HANG_DB_CONN_REF と任意キー RAPID_HANG_DETECT_LIMIT_MINUTES / HANG_SCAN_WINDOW_HOURS の 3 キーを持ち得る。HANG_DB_CONN_REF は RAPID_CROSSCHECK_MODE が off 以外のときだけ必須)、ハウスキープ設定(保持日数。既定 90 日と、ハウスキープ専用 DB ロールの接続参照名。接続参照名は RAPID_CROSSCHECK_MODE が off 以外、または確報クロスチェックを使う設置では必須で、無い・空なら設定エラーで何も削除しない。省略・空にできるのは管理 DB を一切使わない設置だけで、そのときハウスキープは管理 DB に接続しない。ファイルは housekeep.env(配置先 /etc/relay-gate/housekeep.env)で、保持日数のキーは HOUSEKEEP_RETENTION_DAYS、接続参照名のキーは HOUSEKEEP_DB_CONN_REF)、rapid-crosscheck.env(必須は RAPID_DB_CONN_REF と速報比較ツールの起動コマンド 1 行 RAPID_COMPARE_COMMAND、任意は RAPID_LEASE_SEC(既定 600)/ RAPID_POLL_INTERVAL_SEC(既定 30)。速報有効時のみ配置。RAPID_CROSSCHECK_MODE=off では不要)、final-crosscheck.env(確報を使う設置(構築の変数 relay_gate_final_crosscheck_enabled=true。既定 false)だけ、読み手のいる実行ホストセグメントと DB セグメントの両方に同じファイル名で、置き場ごとに中身を分けて配置し、使わない設置では両方から消す。実行ホストセグメント(確報 runner 用。abort-final-crosscheck.sh / housekeep.sh も FINAL_DB_CONN_REF だけを使う): 必須 FINAL_DB_CONN_REF、任意 FINAL_POLL_INTERVAL_SEC(既定 60)/ FINAL_POLL_LIMIT_SEC(既定 28800)で、FINAL_COMPARE_COMMAND は配らない。DB セグメント(確報 worker 用): 必須 FINAL_DB_CONN_REF と確報比較ツールの起動コマンド 1 行 FINAL_COMPARE_COMMAND、任意 FINAL_LEASE_MINUTES / FINAL_WORKER_POLL_INTERVAL_SEC。確報の比較ツール起動コマンドを持つのは DB セグメントのファイルだけ)、適用文書。比較対象の定義は比較ツール側が持ち、ジョブ ID ごとの比較定義 CSV・対象カタログは配置しない"
+      contents: "feature-flag.env(9 キー: BLUE_MODE / GREEN_MODE / RAPID_CROSSCHECK_MODE / BLUE_IMPL / GREEN_IMPL / BLUE_RUNNER / GREEN_RUNNER / RAPID_CROSSCHECK_RUNNER / RAPID_CROSSCHECK_WORKER。これにslot ジョブマップの場所を書く任意の 2 キー(blue 用と green 用。キー名は仕様で確定)を加えられ、9 キーだけの設定もそのまま通る)、<role>-job-map.csv(場所は feature flag の任意のキーで指定でき、無い・空なら設定ファイル置き場の固定の名前。絶対パスと相対パスを受け付け、相対パスの基準は feature-flag.env のあるディレクトリ。CSV: 1 行目ヘッダー、セルは二重引用符で囲み内部の二重引用符は二重化)、hang-detector.env(HANG_DB_CONN_REF と任意キー RAPID_HANG_DETECT_LIMIT_MINUTES / HANG_SCAN_WINDOW_HOURS の 3 キーを持ち得る。HANG_DB_CONN_REF は RAPID_CROSSCHECK_MODE が off 以外のときだけ必須)、ハウスキープ設定(保持日数。既定 90 日と、ハウスキープ専用 DB ロールの接続参照名。接続参照名は RAPID_CROSSCHECK_MODE が off 以外、または確報クロスチェックを使う設置では必須で、無い・空なら設定エラーで何も削除しない。省略・空にできるのは管理 DB を一切使わない設置だけで、そのときハウスキープは管理 DB に接続しない。ファイルは housekeep.env(配置先 /etc/relay-gate/housekeep.env)で、保持日数のキーは HOUSEKEEP_RETENTION_DAYS、接続参照名のキーは HOUSEKEEP_DB_CONN_REF)、rapid-crosscheck.env(必須は RAPID_DB_CONN_REF と速報比較ツールの起動コマンド 1 行 RAPID_COMPARE_COMMAND、任意は RAPID_LEASE_SEC(既定 600)/ RAPID_POLL_INTERVAL_SEC(既定 30)。速報有効時のみ配置。RAPID_CROSSCHECK_MODE=off では不要)、final-crosscheck.env(確報を使う設置(構築の変数 relay_gate_final_crosscheck_enabled=true。既定 false)だけ、読み手のいる実行ホストセグメントと DB セグメントの両方に同じファイル名で、置き場ごとに中身を分けて配置し、使わない設置では両方から消す。実行ホストセグメント(確報 runner 用。abort-final-crosscheck.sh / housekeep.sh も FINAL_DB_CONN_REF だけを使う): 必須 FINAL_DB_CONN_REF、任意 FINAL_POLL_INTERVAL_SEC(既定 60)/ FINAL_POLL_LIMIT_SEC(既定 28800)で、FINAL_COMPARE_COMMAND は配らない。DB セグメント(確報 worker 用): 必須 FINAL_DB_CONN_REF と確報比較ツールの起動コマンド 1 行 FINAL_COMPARE_COMMAND、任意 FINAL_LEASE_MINUTES / FINAL_WORKER_POLL_INTERVAL_SEC。確報の比較ツール起動コマンドを持つのは DB セグメントのファイルだけ)、適用文書。比較対象の定義は比較ツール側が持ち、ジョブ ID ごとの比較定義 CSV・対象カタログは配置しない"
       versioning: "設定版ファイルは持たない。実装版は feature-flag.env の BLUE_IMPL / GREEN_IMPL、マップ版はジョブマップ末尾の任意列 map_version"
-      ownership: "所有者=配布用サービスアカウント、実行ユーザーは読み取り専用(0644, グループ read)"
+      ownership: "所有者=配布用サービスアカウント、実行ユーザーは読み取り専用(0644, グループ read)。ジョブマップを別の場所に置く設置でも、その場所のファイルは同じ所有者・読み取り専用で配布する"
       distribution: "適用側の構成管理ツール(Ansible等)で配布"
       secret_handling: "認証情報は参照名のみを記載し実体は置かない(ジョブマップ credential_ref、hang-detector.env HANG_DB_CONN_REF、ハウスキープ設定の専用 DB ロールの接続参照名、rapid-crosscheck.env RAPID_DB_CONN_REF、final-crosscheck.env FINAL_DB_CONN_REF)"
-      backup: "正本は適用側の構成管理リポジトリ。バックアップ対象(C.1.2.2)は版管理側で満たし、ホスト側の追加バックアップは行わない"
+      backup: "正本は適用側の構成管理リポジトリ。バックアップ対象(C.1.2.2)は版管理側で満たし、ホスト側の追加バックアップは行わない。ジョブマップを /etc/relay-gate/ 以外に置く設置でも、その置き場の正本は同じ構成管理リポジトリにある"
     dependencies: []
     iac_module: "infra/product/onprem/ansible/roles/relay-gate-config"
     validation_rules:
@@ -159,7 +160,7 @@ components:
       - rule: "設定ファイル中の認証情報らしい値(password / secret / token の直後に = がある行)を構築時に警告すること(grepベースの静的検査。警告だけで構築は止めない。該当ファイルと行番号を出し、行の中身は出さない。env のコメント行(前後の空白を除いて # で始まる行)は値を持たないため対象から外す。hang-detector.env の HANG_DB_CONN_REF と rapid-crosscheck.env の RAPID_DB_CONN_REF は参照名であること)"
         type: "static"
         description: "foundation.identity.no_secret_values_in_config の確認。CLI 契約の「秘密らしい値は警告して受け付ける」方針(2026-09-22 に利用者が確定。ジョブマップの credential_ref の形式の扱い)と揃え、比較ツール起動コマンドの引数やジョブマップの fixed_params に参照名を渡す正当な設定で構築が失敗しないよう、失敗ではなく警告にする。参照名だけを置く方針は変えない"
-      - rule: "feature-flag.env のキーが 9 キーと一致し、RAPID_CROSSCHECK_MODE が foreground / background / off のいずれかであること"
+      - rule: "feature-flag.env のキーが 9 キーと、slot ジョブマップの場所を書く任意の 2 キーに限られ(9 キーだけの設定もそのまま通り)、RAPID_CROSSCHECK_MODE が foreground / background / off のいずれかであること"
         type: "static"
         description: "元の方針資料の設定契約(E-001)との一致検証"
       - rule: "ジョブマップ CSV(<role>-job-map.csv)の 1 行目ヘッダーが契約の列名と一致し、fixed_params セルが JSON 配列として解析できること"

@@ -5,31 +5,31 @@ phases:
     at: '2026-09-16T08:29:17+09:00'
   P2_config:
     status: done
-    at: '2026-11-11T07:52:10+09:00'
-    note: content-stable rerun after spec feedback run 20261110_080548_impl_feedback_dcd8234d (--verbose info line rule). uc-map / impl-config derivation identical; no file touched
+    at: '2026-11-16T02:34:00+09:00'
+    note: 'content-stable: uc-map derivation identical (34 UC, no add / remove / tier / path / order diff), impl-config unchanged. no file touched, no config_confirmed'
   P3_skeleton:
     status: done
-    at: '2026-11-10T07:13:00+09:00'
-    note: 'content-stable rerun: tier dirs / dev-rules (identical to plugin 0.14.1) / tier configs / CLAUDE.md project section (management-db 6 tables) unchanged. no file touched'
+    at: '2026-11-16T02:34:00+09:00'
+    note: 'no change: tier dirs / packages / features skeleton complete, docs/dev-rules identical to the plugin copy, CLAUDE.md project section still matches impl-config'
   P4_contracts:
     status: done
-    at: '2026-11-10T07:12:00+09:00'
-    note: 'management-db regenerated (rdb-schema e3bd8af6 -> bbe77902, scope 6 tables unchanged). generator reproduced previous output byte-identical from old source before regeneration. management-db.sh / README.md byte-identical (no constant added or removed); schema.json changed only in used_by (housekeeping UCs SELECT / DELETE on all 6 tables) and 3 monitor_records column descriptions (target_type / hang_suspected_at / alerted_at). top-level db_roles is outside the table scope and not carried. column verify against all 34 _model-summary.yaml: 0 mismatch. shellcheck / shfmt pass'
+    at: '2026-11-16T02:34:00+09:00'
+    note: 'content-stable: management-db input sha256 and contracts_decl unchanged, generated files match the source. contracts.lock.yaml not touched'
   P5_ui:
     status: skipped
     reason: 'has_design_system: false'
   P6_ci:
     status: done
-    at: '2026-11-10T07:13:00+09:00'
-    note: 'content-stable rerun: tiers / commands / integration_commands unchanged, ci.yml / qlty / cucumber.cjs untouched'
+    at: '2026-11-16T02:34:00+09:00'
+    note: 'no change: tiers / commands / integration_commands unchanged, ci.yml and .qlty untouched'
   P7_atdd:
     status: done
-    at: '2026-11-10T07:12:30+09:00'
-    note: 'regenerated after usdm change (35d4984e -> b331577c). 41/50 byte-identical; 9 rewritten (SPEC-004-04, SPEC-008-01..06, SPEC-012-01, SPEC-012-02), 9 added (SPEC-008-07, SPEC-014-01..08). scenarios 142 -> 190, no scenario removed or renumbered. reworded scenarios: SPEC-004-04-10, SPEC-008-03-3, SPEC-008-06-1, SPEC-012-01-2. added: SPEC-004-04-12, SPEC-008-07-1..9, SPEC-012-01-3, SPEC-014-*. no @uc_ tags to carry; @manual SPEC-008-05-3 kept. generator verified byte-identical against current features from usdm 35d4984e. cucumber dry-run parses 190 scenarios'
+    at: '2026-11-16T02:34:00+09:00'
+    note: 'regenerated from usdm 20261116_013000: 4 features rewritten (19 scenarios appended, no renumbering), 55 features byte-identical and not touched'
 inputs_sha256:
-  spec_event: 178dd80ba2fe6a2048ac5136849c678d1f46c6ca40f84fd2a47c82cb00b64ed9
-  arch: 6ee48d9e90d09b186d8d085a0ac0c64adb0a637559321a753c0612124f5da27d
-  usdm: b331577ccf21ee2b03596ae57aa9a43e149821d1fe0eda0bb0d5715cb820f262
+  spec_event: 8aaf650924c43958cf75da8d7f90370dab8e60416382b4d9a7b2217e11d18200
+  arch: c53102258eb87c109a5e44ec19daf68de60dc5770785d80c474f31b1cf8d9879
+  usdm: 05c1056ed1909eae0293a6ad2a77c2455a5793d19fd4f2d8e8eebc45fcb53cda
   contracts:
     management-db: bbe77902949f155ada1a352661e41cc16409fa58b4076cde648cb028b5de11ac
   contracts_decl: 7841f9ba9d00013173c0b90f45ffabb37034ae872ddafdd02d5fdaff26b7d6e5
@@ -56,7 +56,7 @@ inputs_sha256:
     cli_command_contract:
       path: docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml
       exists: true
-      sha256: 4073b2886c0ab5b7b4972a620d3e3beff7f59687a17dfa6e01705a990318a8c8
+      sha256: a6d7c7942947d73af03ea2ad8c9fc640184396a7efc1f67fe2de06f1eab16d10
       note: contract-registry.md に対応する種別が無い
     rdb_schema:
       path: docs/specs/latest/_cross-cutting/datastore/rdb-schema.yaml
@@ -147,11 +147,11 @@ preflight:
     has_object_storage: false
     has_design_system: false
   lineage:
-    spec_event_id: 20261110_153000_feedback_impl_feedback_dcd8234d
-    arch_event_id: 20261103_133000_feedback_housekeeping_db_required
-    usdm_event_id: 20261103_131000_feedback_housekeeping_db_required
+    spec_event_id: 20261116_021000_feedback_standard_runner_job_map_location
+    arch_event_id: 20261116_015000_feedback_standard_runner_job_map_location
+    usdm_event_id: 20261116_013000_feedback_standard_runner_job_map_location
     lineage_ok: true
-    note: 2026-11-10 再確認。spec-event.yaml は arch の event_id を参照する欄を持たないため spec_trigger_arch は記録しない(arch / usdm の最新 event は spec event より前)
+    note: 2026-11-16 再確認。spec-event.yaml の source に書かれた trigger_event(usdm 20261116_013000 / arch 20261116_015000)は usdm / arch の latest と一致する(arch / usdm の最新 event は spec event より前)
   consistency_checks:
   - id: async_events_vs_source
     result: pass
@@ -177,13 +177,13 @@ preflight:
   - id: usdm_acceptance_criteria
     result: pass
     detail: SPEC 59 件すべてに acceptance_criteria あり(P7 の criteria 欠落 SPEC 0 件)
-generated_at: '2026-11-10T07:13:00+09:00'
+generated_at: '2026-11-16T02:34:00+09:00'
 generated_by: distillery-impl@0.14.1
 p3_p7_summary:
   config_confirmed_event: 20261110_071000_config_confirmed_bootstrap_p2_mail_removal_housekeeping
   dev_rules_local_diff: []
   atdd_features: 59
-  atdd_scenarios: 190
+  atdd_scenarios: 209
   atdd_manual_scenarios:
   - id: SPEC-008-05-3
     reason: '自動判定の対象外: 運用文書の記載'
@@ -196,27 +196,30 @@ p3_p7_summary:
   - 20261027_061000_config_confirmed_bootstrap_p2_simplification
   - 20261110_071000_config_confirmed_bootstrap_p2_mail_removal_housekeeping
   atdd_rewritten_features:
-  - SPEC-004-04
-  - SPEC-008-01
-  - SPEC-008-02
-  - SPEC-008-03
-  - SPEC-008-04
-  - SPEC-008-05
-  - SPEC-008-06
-  - SPEC-012-01
-  - SPEC-012-02
-  atdd_added_features:
-  - SPEC-008-07
-  - SPEC-014-01
-  - SPEC-014-02
-  - SPEC-014-03
-  - SPEC-014-04
-  - SPEC-014-05
-  - SPEC-014-06
-  - SPEC-014-07
-  - SPEC-014-08
-  atdd_reworded_scenarios:
-  - SPEC-004-04-10
-  - SPEC-008-03-3
-  - SPEC-008-06-1
-  - SPEC-012-01-2
+  - SPEC-001-01
+  - SPEC-001-04
+  - SPEC-004-01
+  - SPEC-013-01
+  atdd_added_features: []
+  atdd_reworded_scenarios: []
+  atdd_renumbered_scenarios: []
+  atdd_added_scenarios:
+  - SPEC-001-01-7
+  - SPEC-001-01-8
+  - SPEC-001-01-9
+  - SPEC-001-04-3
+  - SPEC-001-04-4
+  - SPEC-001-04-5
+  - SPEC-001-04-6
+  - SPEC-001-04-7
+  - SPEC-001-04-8
+  - SPEC-004-01-3
+  - SPEC-004-01-4
+  - SPEC-004-01-5
+  - SPEC-004-01-6
+  - SPEC-004-01-7
+  - SPEC-004-01-8
+  - SPEC-004-01-9
+  - SPEC-004-01-10
+  - SPEC-013-01-3
+  - SPEC-013-01-4

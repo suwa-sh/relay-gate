@@ -1,0 +1,28 @@
+event_id: 20261115_143739_s4_tier_impl_completed_fd678b04_facade_attempt5
+type: stage_completed
+uc_id: fd678b04
+stage: S4
+tier: tier-facade
+attempt: 5
+payload:
+  result: pass
+  gates:
+    format: pass
+    lint: pass
+    tdd: pass
+    bdd_tier: pass
+  assumptions:
+    path: attempt-5/S4_tier-impl.tier-facade.assumptions.yaml
+    count: 20
+    by_category:
+      input_validation: 1
+      data_format: 2
+      error_handling: 9
+      persistence: 0
+      performance: 7
+      security: 1
+    sha256: 2d57f7ab2101e953417a9e1148e687da0cf89a1827593aec7d336bb2ed3274b9
+  manifest_sha256: 890bfec8902fb1f1779157d5b2f7dc7b4a92540e4f9c267c260dfded6a683903
+  manifest_projection: v2
+  note: 'stale rerun after spec feedback 20261115: implementation already matches the updated spec; one comment line fixed; 20 assumptions (3 removed as now specified, 2 new)'
+created_at: '2026-11-15T14:37:39+09:00'

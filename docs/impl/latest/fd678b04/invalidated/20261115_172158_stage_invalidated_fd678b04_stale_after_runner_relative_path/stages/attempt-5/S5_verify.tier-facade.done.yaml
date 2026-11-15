@@ -1,0 +1,86 @@
+stage: "S5"
+lane: "verify"
+tier: "tier-facade"
+attempt: 5
+uc_id: "fd678b04"
+manifest_sha256: "890bfec8902fb1f1779157d5b2f7dc7b4a92540e4f9c267c260dfded6a683903"
+manifest_projection: "v2"
+result: "pass"
+open_blockers: 0
+gate_reexec:
+  format: "pass"
+  lint: "pass"
+  tdd: "pass"
+  bdd_tier: "pass"
+findings_path: "docs/impl/latest/fd678b04/stages/attempt-5/S5_verify.tier-facade.findings.yaml"
+findings_summary:
+  blocker: 0
+  major: 1
+  minor: 19
+assumptions_sha256: "2d57f7ab2101e953417a9e1148e687da0cf89a1827593aec7d336bb2ed3274b9"
+assumption_verdicts_sha256: "2b446091b3be63716b8557ac5f4f9dd14d7d3695335392acea5ec1301cc8507a"
+assumption_verdicts_summary:
+  consistent: 1
+  spec_absent: 19
+  contradicts: 0
+  unlisted: 0
+viewpoints_checked:
+  spec_conformance:
+    status: "done"
+    note: "spec / tier / CLI契約 / featureを照合。324ケースの独立oracle、mode各3種9ケース、12行例、verbose/unknown/error/probe warn順を確認。APIはCLI1本、DB操作なし。"
+  readability_maintainability:
+    status: "done"
+    note: "presentation/usecase/domain/repository/gatewayの責務と日本語コメントを確認。format/lint合格。4段のうち対象tier/UC featureは仕様と空行とインデント以外一致。"
+  security:
+    status: "done"
+    note: "9キーのallowlist、入力のsource/evalなし、未知キー/FINAL/PATH/IFS/BASH_ENV/LD_PRELOAD等12キーの同名変数と子環境の流入なし。コマンド置換風値は実行されない。"
+  performance:
+    status: "done"
+    note: "サイズ超過6001行/8388746bytesでも結果不変。成功するsedを11秒遅延しても結果不変。目標は非ゲート、既知の大入力性能差は再測定せず。"
+  operability:
+    status: "done"
+    note: "stderr契約全行順、欠落/空のハイフン、制御文字可視化、外部設定、終了コード0/2/6を既存実体テストで確認。"
+  fault_tolerance:
+    status: "done"
+    note: "一時複製、内部コマンド失敗、runner準備失敗、未応答とtimeout、trap cleanupの既存テスト通過。runner非0終了のwarn順を独自に確認。"
+  refactoring:
+    status: "done"
+    note: "共通cli_field/byte-scan再利用。他検証種別を含む全facade481テスト通過。5変異が追加batsで検出される。 LinuxネイティブTMPDIRでも481件通過。"
+  assumption_conformance:
+    status: "done"
+    note: "観点1〜7の記録とLinux共有マウントの環境失敗切り分け後にid/assumption/targetのみ開示。仕様とS4固定指示で判定してからreason/confidence/spec_refsを参照。20件にexactly-one。A-025の分類はassumption-record.mdの分類表に照合してdata_format。独立候補は既存A項目または仕様明示済み・他UC所有の既存共通基盤へ対応し、追加V項目なし。Linux環境の再検証は並行して完了。"
+environment_failures:
+  - check: "linux_bind_mount_execute_permission"
+    command: "docker run --rm --user 501:20 -v <temporary-copy>:/work -e TMPDIR=/work/tmp relay-gate-ci:ubuntu24 bats -r test"
+    evidence: "共有マウント上でchmod644直後のtest -xが0、同一コンテナ内/tmpでは1。全481件中launch_command.batsの1件が失敗し、独立matrixでも非実行ファイルを問い合わせるwarn差が発生。コンテナ内mktemp -dへTMPDIRを移した全481件と324ケースは終了0。実装欠陥ではなく環境失敗。"
+    resolved: true
+    resolution: "コンテナ内ネイティブ一時ディレクトリで再検証済み。未解消の環境失敗なし。"
+observations:
+  - check: "repository"
+    detail: "root=/Users/suwa_sh/src/github.com/suwa-sh/relay-gate; branch=feature/configure-feature-flags; HEAD=8f3cd3f; 開始時git status --shortは空。S4のfacade差分はコメント1行のみ。"
+  - check: "macos_gates"
+    detail: "macOS 26.5.2 arm64 / bash 5.3.15。shfmt -d . と shellcheckは終了0。全facade bats 481/481。tier BDD 87シナリオ486step、対象UC BDD14シナリオ88step、すべてpass。"
+  - check: "linux_gates"
+    detail: "relay-gate-ci:ubuntu24 / GNU bash 5.2.21 arm64 / GNU sed。非root uid501でshellcheck終了0。コンテナ内mktemp -dをTMPDIRにして全facade bats 481/481、終了0。共有マウントの権限判定差は下記environment_failures参照。C/C.utf8の空白判定等価性テストも通過。"
+  - check: "independent_matrix"
+    detail: "seed=451。modeの欠落/空/off/foreground/background/parallelの6^3=216通りと、従属値の欠落/空/相対/不在/実行不可/実行可能、map有無、FINAL_Z/FINAL_A、未知キー、PATHを混ぜた108通り。stderr全行と順、終了コード、stdout有無、blue/greenの--help呼出回数を契約から作った独立oracleと比較。macOSとLinuxネイティブ環境の両方で324/324。追加で3modeそれぞれの欠落/空/列挙外9ケースと、info→unknown warn→error/hint→blue/green probe warn順も通過。"
+  - check: "security"
+    detail: "UNKNOWN/FINAL_SECRET/PATH/IFS/BASH_ENV/ENV/LD_PRELOAD/SHELLOPTS/BASHOPTS/RELAY_GATE_CONFIG_DIR/FEATURE_FLAG_DEFINED_KEYS/FEATURE_FLAG_MODE_OFFの値に$(touch <一時marker>)を置いた。markerは未作成、値はrunner環境に含まれず、repositoryの同名変数も上書きされない。未知値はparse中のnormalizedとFEATURE_FLAG_CONFIG_SPLIT_LINESには入り、成功時はクリア、loadの失敗経路もresetする。実行時の別UC読み手には同じ規範が及ぶことだけを確認。"
+  - check: "mutation_testing"
+    detail: "一時複製のみで5変異。mode errorのBLUE/GREEN順入替、列挙外/空modeのactive判定除外、速報worker検査除去、未知キー値の取り込み、FINAL値のexport。追加bats6件がそれぞれ1/2/2/1/1件失敗し全変異を検出。tier BDDはそれぞれ1/6/4/1/0シナリオ失敗。最後はbatsで補完し、テスト空振りではない。"
+  - check: "performance_non_gating"
+    detail: "6001コメント行追加は0.215秒、8388746bytes入力は1.136秒。どちらも通常入力と終了コード/stdout/stderrが完全一致。成功するsedを1回だけ11秒遅延する実験は11.706秒で同じ結果。これは時間超過時の振る舞い確認であり実性能の目標差として数えない。既知の性能差は再測定せず、不合格にしない。"
+  - check: "scope_and_limits"
+    detail: "UIなし、HTTP/イベント/DB操作なし。API summaryは旧CLI形式でv2索引ではないためcontract slice要件は非該当。management-db契約は対象6表のみ参照。--final-crosscheck/--housekeepと実行時読み手の未実装は対象外。Linuxイメージにnode/shfmt/PostgreSQLは無くLinux BDD/format/DB起動は未実施、macOSで4ゲートと一時DB起動を確認。bash最低版5.0そのものの実測はせず5.2/5.3を検証。"
+  - check: "evidence"
+    detail: "/tmp/relay-verify-fd678b04.OYAnGg に独立probe.py/focused.py/extra.py、5変異の各ログ、bats.log、bdd_tier.log、bdd_uc.log、linux-native-bats.log、linux-native-probe.logを保存。リポジトリ内に一時成果物は置いていない。"
+review_questions:
+  - assumption_id: "A-040"
+    stage: "S9"
+    question: "非exportの解析用作業バッファに未知キー・FINAL_キーの値を読み取り中だけ保持し、終了時に破棄する実装を許容するか。"
+    options:
+      - "許容し、同名変数・環境変数への設定を禁止する境界を仕様に明記する。"
+      - "許容せず、未知値をbashの作業バッファへ入れない解析方式と仕様へ変更する。"
+    reason: "verify-viewpoints.md §8ではsecurityのspec_absentはmajorでS9の人間回答が必要。今回の検証中に質問は行わない。"
+completed_at: "2026-11-15T05:52:37+00:00"
+completed_by: "dist-impl-verify@0.14.1"

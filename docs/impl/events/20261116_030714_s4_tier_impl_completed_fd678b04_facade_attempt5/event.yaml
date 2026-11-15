@@ -1,0 +1,28 @@
+event_id: 20261116_030714_s4_tier_impl_completed_fd678b04_facade_attempt5
+type: stage_completed
+uc_id: fd678b04
+stage: S4
+tier: tier-facade
+attempt: 5
+payload:
+  result: pass
+  gates:
+    format: pass
+    lint: pass
+    tdd: pass
+    bdd_tier: pass
+  assumptions:
+    path: attempt-5/S4_tier-impl.tier-facade.assumptions.yaml
+    count: 25
+    by_category:
+      input_validation: 4
+      data_format: 5
+      error_handling: 9
+      persistence: 0
+      performance: 7
+      security: 0
+    sha256: ce40a9ad847e9b99a8f5ca7c58235adf62504092151fadb914858441e43ce95a
+  manifest_sha256: 808bf63e1c7564ffef1498814b5d3f4e3a6163b4c2ff1429e03ae81125b0d01b
+  manifest_projection: v2
+  note: 'stale rerun after the 2026-11-16 spec reflux: optional job map location keys implemented (bats 535, tier BDD 111). assumptions 25 = 23 carried (4 reworded for the 2 added keys) + 2 new (A-045, A-046), A-040 dropped (now in the spec). Linux container run not done in S4'
+created_at: '2026-11-16T03:07:14+09:00'

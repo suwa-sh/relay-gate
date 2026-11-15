@@ -1,16 +1,16 @@
 # arch digest index
 
 - source: `arch/latest/arch-design.yaml`
-- source_sha256: `6ee48d9e90d09b186d8d085a0ac0c64adb0a637559321a753c0612124f5da27d`
+- source_sha256: `c53102258eb87c109a5e44ec19daf68de60dc5770785d80c474f31b1cf8d9879`
 - generated_by: `buildDigest.js`（派生物。正本の sha256 と各 file の sha256 が一致するときだけ有効。不一致なら再生成する）
 
 | section | file | name | lines | bytes | status | file_sha256 |
 |---|---|---|---:|---:|---|---|
-| `technology_context` | `_digest/technology_context.yaml` | - | 16 | 2279 | ok | `1225cdf9732cbca6289d14c52ef1cc69934ba4c816f85e714bbe941c5c5e8487` |
-| `domain_architecture` | `_digest/domain_architecture.yaml` | - | 410 | 40491 | ok | `3d7adb4e4b73ab4203503d657b363deb0092640ea519484f90b510680e9b92bf` |
-| `system_architecture` | `_digest/system_architecture.yaml` | - | 387 | 83515 | ok | `304615bd2e299ee61bcd18a0f8bee4bc8819ceee04fecd62ab3cd599eb279073` |
-| `app_architecture` | `_digest/app_architecture.yaml` | - | 414 | 46366 | ok | `1a06543de582e0b2bfde14e58eb27561defc0bec0d030a9418c59eee4adcccee` |
-| `data_architecture` | `_digest/data_architecture.yaml` | - | 1232 | 56708 | ok | `db29bdb2981c1e29980ca8d200cc359f3e72d769d6d225087ec8a5de58472a3d` |
+| `technology_context` | `_digest/technology_context.yaml` | - | 16 | 2279 | ok | `0fd4c5dfe61a7b819512276c0b717d7a0060ad625811e7e38342bcdcfa5bcd53` |
+| `domain_architecture` | `_digest/domain_architecture.yaml` | - | 412 | 43181 | ok | `a8cd57aeb0f0b46ce5494807ad6a9a357eb2d53d95a6d25efd3089bcc2bdf82c` |
+| `system_architecture` | `_digest/system_architecture.yaml` | - | 387 | 87640 | ok | `3ccc509b22de5be6d9f70007d098c3e45a3abc14e0b9181841b8d1debe186b03` |
+| `app_architecture` | `_digest/app_architecture.yaml` | - | 414 | 46851 | ok | `b5f894c70ac26447d02abd96c66e9d4e6cac687b1d007b714de69139b13cc48e` |
+| `data_architecture` | `_digest/data_architecture.yaml` | - | 1245 | 59049 | ok | `326f8f0706e8b6b75889b360b88d77f566a0c7dc5c683288992e0fadd6511785` |
 
 読み方: 必要な section の file だけを読む。`not_applicable` は正本にセクションが無い（元ファイルを読みに行かない）。
 nfr の `name` 列はカテゴリ名（id ↔ 名前の対応はここで確認する）。

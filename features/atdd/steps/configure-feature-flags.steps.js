@@ -1,5 +1,6 @@
 // ATDD(①)step definition。uc_id=fd678b04 / branch_slug=configure-feature-flags(S7 atdd で実装)。
-// source: features/atdd/SPEC-001-01.feature(@atdd_SPEC-001-01-4 のみ。uc-map fd678b04 の atdd_scenarios)
+// source: features/atdd/SPEC-001-01.feature(@atdd_SPEC-001-01-4。uc-map fd678b04 の atdd_scenarios)
+//   2026-11-16 の S2 再実行で @atdd_SPEC-001-01-7 / -8 / -9 と features/atdd/SPEC-004-01.feature の @atdd_SPEC-004-01-9 を末尾に追加した
 // 対応する UC BDD Scenario: spec.md「元資料の 9 キーの feature flag は未知キー警告なしで検証を通過する(SPEC-001-01)」
 // step 文言は feature から転写したリテラルを正規表現で完全一致させる(S2 skeleton の方式を踏襲)。
 //
@@ -173,4 +174,150 @@ Then(literal('未知キーの警告は出ない'), function () {
   assert.equal(this.result.status, 0, `exit code\n${outputDump(this)}`);
   const warns = stderrLines(this).filter((line) => line.startsWith('warn: unknown key'));
   assert.deepEqual(warns, [], `stderr should not contain "warn: unknown key" lines\n${outputDump(this)}`);
+});
+
+// ==== S2 test-scaffold 再実行(2026-11-16。slot ジョブマップの場所を書く任意の 2 キー)で追加 ====
+// source: features/atdd/SPEC-001-01.feature(@atdd_SPEC-001-01-7 / -8 / -9)と features/atdd/SPEC-004-01.feature(@atdd_SPEC-004-01-9)。
+// uc-map fd678b04 の atdd_scenarios に加わった 4 件。対応する UC BDD Scenario(spec.md「関連 USDM」):
+//   SPEC-001-01-7 → 「ジョブマップの場所を絶対パスで書いた feature flag は未知キー警告なしで検証を通過する(SPEC-001-01)」
+//   SPEC-001-01-8 → 「元資料の 9 キーの feature flag は未知キー警告なしで検証を通過する(SPEC-001-01)」
+//   SPEC-001-01-9 → 「9 キーと任意の 2 キーのどちらでもないキーは未知キーとして警告される(SPEC-001-01)」
+//   SPEC-004-01-9 → 「書いた場所にジョブマップが無い feature flag は解決後のパスつきで拒否される(SPEC-004-01)」
+// 受け入れ基準の文言が持たない具体値(キー名・パス・文言)は、対応する UC BDD Scenario と CLI 契約
+// config_files.feature-flag.env.job_map_location の値を使う。既存 step(@atdd_SPEC-001-01-4)は変更していない。
+// 追加時点の実装は 2 キーを未知キーとして warn し、固定の名前だけを見るため、-7 と SPEC-004-01-9 は実装が追従するまで
+// assertion failure で fail する(-8 と -9 は現行実装でも通る)。
+
+// 設定ファイル置き場の外のジョブマップの場所(仕様の例示値。sandbox root 配下へ写像する)
+const SPEC_MAPS = {
+  blue: '/srv/relay-gate/maps/blue-jobs.csv',
+  green: '/srv/relay-gate/maps/green-jobs.csv',
+};
+// 任意の 2 キーと名前が違うキー(仕様の例示値)
+const UNKNOWN_KEY = 'BLUE_JOB_MAP';
+
+// 有効な並行稼働の 9 キーと runner 実体を用意する(ジョブマップは置かない。置き場は Scenario ごとに決める)
+function arrangeNineKeys(world) {
+  world.env = {
+    BLUE_MODE: 'foreground',
+    GREEN_MODE: 'background',
+    RAPID_CROSSCHECK_MODE: 'background',
+    BLUE_IMPL: 'blue-2.3.1',
+    GREEN_IMPL: 'green-1.4.0',
+  };
+  for (const key of Object.keys(SPEC_RUNNERS)) {
+    const file = world.sandbox(SPEC_RUNNERS[key]);
+    writeExecutable(file, runnerStubBody(path.basename(file)));
+    world.env[key] = file;
+  }
+  assert.deepEqual(Object.keys(world.env).sort(), [...NINE_KEYS].sort(), 'feature flag must contain exactly the 9 keys');
+}
+
+function writeJobMapAt(file) {
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, 'job_id,work_dir,script,fixed_params,hang_detect_limit_minutes\n');
+}
+
+function fixedNameJobMap(world, slot) {
+  return path.join(world.configDir, `${slot}-job-map.csv`);
+}
+
+function runFeatureFlagValidation(world) {
+  const proc = spawnSync(VALIDATE_CONFIG, ['--feature-flag', world.envPath], {
+    cwd: world.root,
+    encoding: 'utf8',
+    env: { ...process.env, RELAY_GATE_CONFIG_DIR: world.configDir },
+  });
+  assert.equal(proc.error, undefined, `spawn failed: ${proc.error}`);
+  world.result = { status: proc.status, stdout: proc.stdout, stderr: proc.stderr };
+}
+
+// ---- Given ----
+
+Given(
+  literal(
+    '元資料の 9 キーに加えて、slot ジョブマップの場所を書く任意の 2 キー(blue 用と green 用。キー名は仕様で確定する。推奨は BLUE_JOB_MAP_CSV / GREEN_JOB_MAP_CSV)を書いた feature flag 設定で、2 キーの値が指す場所にジョブマップがある',
+  ),
+  function () {
+    arrangeNineKeys(this);
+    // キー名は仕様で BLUE_JOB_MAP_CSV / GREEN_JOB_MAP_CSV に確定した(spec.md 設定所有区分、CLI 契約 job_map_location)
+    this.env.BLUE_JOB_MAP_CSV = this.sandbox(SPEC_MAPS.blue);
+    this.env.GREEN_JOB_MAP_CSV = this.sandbox(SPEC_MAPS.green);
+    writeJobMapAt(this.env.BLUE_JOB_MAP_CSV);
+    writeJobMapAt(this.env.GREEN_JOB_MAP_CSV);
+    // 固定の名前のファイルは置かない(2 キーの値を使わない実装なら job map not found になる)
+    assert.ok(!fs.existsSync(fixedNameJobMap(this, 'blue')));
+    assert.ok(!fs.existsSync(fixedNameJobMap(this, 'green')));
+    flushEnv(this);
+  },
+);
+
+Given(literal('元資料の 9 キーだけを書き、slot ジョブマップの場所を書くキーが無い feature flag 設定'), function () {
+  arrangeNineKeys(this);
+  assert.ok(!('BLUE_JOB_MAP_CSV' in this.env) && !('GREEN_JOB_MAP_CSV' in this.env));
+  // 場所を書くキーが無いときの場所 = $RELAY_GATE_CONFIG_DIR/<slot>-job-map.csv
+  writeJobMap(this, 'blue');
+  writeJobMap(this, 'green');
+  flushEnv(this);
+});
+
+Given(literal('元資料の 9 キーと任意の 2 キーのどちらでもないキーを書いた feature flag 設定'), function () {
+  arrangeNineKeys(this);
+  writeJobMap(this, 'blue');
+  writeJobMap(this, 'green');
+  this.env[UNKNOWN_KEY] = this.sandbox(SPEC_MAPS.blue);
+  flushEnv(this);
+});
+
+Given(literal('feature flag のジョブマップの場所のキーに書いた場所にジョブマップが無い'), function () {
+  // 単独本番(green だけ)の設定に、相対パスで場所を書く。書いた場所には置かず、固定の名前のファイルは置く
+  // (固定の名前へ読み替える実装なら検証を通ってしまう)
+  const runner = this.sandbox(SPEC_RUNNERS.GREEN_RUNNER);
+  writeExecutable(runner, runnerStubBody(path.basename(runner)));
+  this.env = {
+    BLUE_MODE: 'off',
+    GREEN_MODE: 'foreground',
+    RAPID_CROSSCHECK_MODE: 'off',
+    GREEN_IMPL: 'green-1.4.0',
+    GREEN_RUNNER: runner,
+    GREEN_JOB_MAP_CSV: './green-jobs.csv',
+  };
+  assert.ok(!fs.existsSync(path.join(this.configDir, 'green-jobs.csv')));
+  writeJobMap(this, 'green');
+  flushEnv(this);
+});
+
+// ---- When ----
+
+When(literal('feature flag の検証コマンドを実行する'), function () {
+  runFeatureFlagValidation(this);
+});
+
+// ---- Then ----
+
+Then(literal('未知キーの警告は出ず、エラーにならない'), function () {
+  assert.equal(this.result.status, 0, `exit code\n${outputDump(this)}`);
+  const hits = stderrLines(this).filter((line) => line.startsWith('warn: unknown key') || line.startsWith('error:'));
+  assert.deepEqual(hits, [], `stderr should not contain "warn: unknown key" or "error:" lines\n${outputDump(this)}`);
+});
+
+Then(literal('ジョブマップの場所を書くキーが無いことを理由とするエラーも警告も出ない'), function () {
+  // 9 キーだけの有効な設定は、error 行も warn 行も 1 行も出さずに通る
+  assert.equal(this.result.status, 0, `exit code\n${outputDump(this)}`);
+  const hits = stderrLines(this).filter((line) => line.startsWith('error:') || line.startsWith('warn:'));
+  assert.deepEqual(hits, [], `stderr should not contain "error:" or "warn:" lines\n${outputDump(this)}`);
+});
+
+Then(literal('そのキーについて未知キーの警告が出る'), function () {
+  const expected = `warn: unknown key key=${UNKNOWN_KEY} path: ${SPEC_ENV_PATH}`;
+  assert.ok(stderrLines(this).includes(expected), `stderr should include line "${expected}"\n${outputDump(this)}`);
+  // 未知キーは拒否しない(warn だけ)
+  assert.equal(this.result.status, 0, `exit code\n${outputDump(this)}`);
+});
+
+Then(literal('非 0 の終了コードで終わり、標準エラーに、ジョブマップが見つからない旨の行が解決した後のパスつきで出る'), function () {
+  assert.notEqual(this.result.status, 0, `exit code should be non-zero\n${outputDump(this)}`);
+  // 解決した後のパス = 設定ファイルのあるディレクトリ + / + 値(. を畳まない)。sandbox root の接頭辞は stderrLines が落とす
+  const expected = `error: job map not found slot=green map=${SPEC_CONFIG_DIR}/./green-jobs.csv`;
+  assert.ok(stderrLines(this).includes(expected), `stderr should include line "${expected}"\n${outputDump(this)}`);
 });

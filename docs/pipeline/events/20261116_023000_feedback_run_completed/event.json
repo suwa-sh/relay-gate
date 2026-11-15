@@ -1,0 +1,52 @@
+{
+  "event_id": "20261116_023000_feedback_run_completed",
+  "type": "feedback_run_completed",
+  "run_id": "feedback-20261116_standard_runner_job_map_location-20261116_010255-1469",
+  "attempt": 1,
+  "created_at": "2026-11-15T17:29:43.935Z",
+  "result_sha256": "5710bebff428f563fb69691f228f2e04eb216e6af137bf6d09998dcf116e3d63",
+  "feedback_request": {
+    "feedback_request_id": "20261116_standard_runner_job_map_location",
+    "input_sha256": "733163f9092ac7055b410880c40f85fd312b2684f25fb0fb20d8d3412626822a",
+    "request_ids": [
+      "CR-65b09d93-001",
+      "CR-65b09d93-002",
+      "CR-65b09d93-003",
+      "CR-65b09d93-004"
+    ],
+    "work_unit_ids": [
+      "CR-65b09d93-001#1",
+      "CR-65b09d93-001#2",
+      "CR-65b09d93-002#1",
+      "CR-65b09d93-002#2",
+      "CR-65b09d93-003#1",
+      "CR-65b09d93-004#1"
+    ]
+  },
+  "work_unit_dispositions": [
+    {
+      "work_unit_id": "CR-65b09d93-001#1",
+      "disposition": "applied"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-001#2",
+      "disposition": "applied"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-002#1",
+      "disposition": "applied"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-002#2",
+      "disposition": "applied"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-003#1",
+      "disposition": "applied"
+    },
+    {
+      "work_unit_id": "CR-65b09d93-004#1",
+      "disposition": "applied"
+    }
+  ]
+}

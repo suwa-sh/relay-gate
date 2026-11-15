@@ -1,0 +1,55 @@
+uc: "ハング疑い・実行エラー・比較異常を通知する"
+business: "実行監視業務"
+buc: "background 実行監視フロー"
+
+bounded_context_id: "BC-004"
+aggregate_id: "AG-004"
+
+models:
+  - name: "NotifyCommand"
+    tier: "tier-ops"
+    layer: "usecase"
+    type: "command"
+    rdra_info: "監視記録"
+  - name: "AlertDecision"
+    tier: "tier-ops"
+    layer: "domain"
+    type: "value-object"
+    rdra_info: "監視記録"
+  - name: "HangAlertLine"
+    tier: "tier-ops"
+    layer: "domain"
+    type: "value-object"
+    rdra_info: "監視記録"
+  - name: "MonitorRecordRepository"
+    tier: "tier-ops"
+    layer: "repository"
+    type: "record"
+    rdra_info: "監視記録"
+  - name: "NotifiedMarkRepository"
+    tier: "tier-ops"
+    layer: "repository"
+    type: "record"
+    rdra_info: "監視記録"
+  - name: "hang-detector-notified/<run_id>.<role>"
+    tier: "tier-ops"
+    layer: "gateway"
+    type: "record"
+    rdra_info: "監視記録"
+
+tables:
+  - name: "monitor_records"
+    rdra_info: "監視記録"
+    operations:
+      - type: "SELECT"
+        columns:
+          - name: "monitor_status"
+            value: ""
+        where: "run_id = ? AND role = ?(現在の通知済み状態の取得。行が無ければ MONITORING 扱い。RAPID_CROSSCHECK_MODE が off 以外のみ)"
+    indexes_needed:
+      - columns: ["run_id", "role"]
+        reason: "主キーによる 1 件取得"
+        access_pattern: "通知対象ごとに 1 回"
+
+kvs: []
+object_storage: []

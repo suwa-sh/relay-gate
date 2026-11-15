@@ -32,7 +32,7 @@ x_cli_commands:
       - code: 0
         meaning: "検証を通過し後続処理(復元起動 / 依頼作成)が完了した"
       - code: 2
-        meaning: "--source-run-id / --role 欠落、role が enum 外(final-crosscheck を含む)、run_id 形式不正、未知オプション"
+        meaning: "--source-run-id / --role 欠落、role が enum 外(final-crosscheck を含む)、run_id 形式不正、未知オプション。feature-flag.env の読み取りと検査の違反、RAPID_CROSSCHECK_MODE が off 以外のときの rapid-crosscheck.env の読み取りと検査の違反(不在・読めない・RAPID_DB_CONN_REF 欠落。feature-flag.env の検査の直後)(引数の検査の後・事前検証の前。契約 background-rerun.sh の feature_flag_reading。runner / worker の実体は検査しない)"
       - code: 3
         meaning: "事前検証 NG(元 mode が foreground / off(slots.{role} 節なし)、元 slot が RUNNING(exitcode.txt も aborted.txt も無い)または未起動(started-at.txt なし)、依頼が REQUESTED / CLAIMED / RUNNING、元実行なし(blue / green: execution-spec.json なし、rapid-crosscheck: 依頼なし)、RAPID_CROSSCHECK_MODE=off かつ rapid-crosscheck。元 slot の状態は RAPID_CROSSCHECK_MODE によらずファイル正本から導出し、off でも aborted.txt があれば ABORTED としてリラン可)"
       - code: 6

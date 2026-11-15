@@ -1,0 +1,16 @@
+event_id: 20261115_141405_bootstrap_completed_p2_rerun_performance_target_and_error_order
+type: bootstrap_completed
+uc_id: null
+stage: S0
+payload:
+  mode: partial_rerun
+  rerun_phases:
+  - P2_config
+  reason: spec_event (178dd80b -> 334698ac) changed by dist-pipeline feedback run 20261115_093126_impl_feedback_fd678b04 (performance target wording, error line order, invalid mode, unknown key values). conditional input cli_command_contract content changed (4073b288 -> 178e6f8e; existence unchanged, no contract kind)
+  on_feature_branch: feature/configure-feature-flags
+  branch_note: reflux artifacts exist only on the feature branch (blocked_on_spec resume exception)
+  p2_result: 'content-stable: uc-map derivation identical (34 UC, no add / remove / tier / path diff), impl-config unchanged. no file touched, no config_confirmed'
+  inputs_sha256_updated:
+  - spec_event
+  - conditional_inputs.cli_command_contract
+created_at: '2026-11-15T14:14:05+09:00'

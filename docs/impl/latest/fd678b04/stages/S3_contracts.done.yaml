@@ -1,11 +1,11 @@
 stage: S3
 uc_id: fd678b04
-manifest_sha256: 829aa482569f86811e8a0a8453851b577b684bce01b8b83992f88cb1250b1ee5
+manifest_sha256: 808bf63e1c7564ffef1498814b5d3f4e3a6163b4c2ff1429e03ae81125b0d01b
 manifest_projection: v2
 result: pass
 contracts_verified:
 - id: management-db
   result: pass
-  detail: 'lock input sha256 (bbe77902...) matches current rdb-schema.yaml (6 tables); contracts_decl unchanged; contracts.lock.yaml sha (85d0a704...) equals input-manifest; no regeneration. consumer side: this UC _model-summary.yaml has tables: [] (validate-config.sh --feature-flag reads feature-flag.env only), so no table/column cross-check target.'
-completed_at: '2026-11-13T02:18:31+09:00'
+  detail: 'lock input sha256 (bbe77902...) matches current rdb-schema.yaml; contracts_decl unchanged; contracts.lock.yaml sha (85d0a704...) equals input-manifest; no regeneration. consumer side: this UC _model-summary.yaml has tables: [] (validate-config.sh --feature-flag reads feature-flag.env only), so no table/column cross-check target.'
+completed_at: '2026-11-16T02:54:44+09:00'
 completed_by: dist-impl-run@0.14.1

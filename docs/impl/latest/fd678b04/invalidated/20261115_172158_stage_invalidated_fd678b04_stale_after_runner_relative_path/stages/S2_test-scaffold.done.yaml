@@ -1,0 +1,153 @@
+stage: S2
+uc_id: fd678b04
+manifest_sha256: 4377e874dc45c2016c09fbd13767f75d158fd021a34dce0bbf54fd3772b5d8a5
+manifest_projection: v2
+result: pass
+scaffold_mode: diff_only
+rerun: true
+rerun_reason: "stale after spec event 20261115_142000_feedback_impl_feedback_fd678b04_cycle3 (invalidated by 20261115_141514_stage_invalidated_fd678b04_stale_after_spec_feedback_20261115)"
+previous_done: "docs/impl/latest/fd678b04/invalidated/20261115_141514_stage_invalidated_fd678b04_stale_after_spec_feedback_20261115/stages/S2_test-scaffold.done.yaml"
+branch_slug: configure-feature-flags
+tiers:
+  - tier-facade
+scaffold_scope:
+  tiers:
+    - tier-facade
+  uc_feature: regenerated
+  atdd: untouched
+scaffold_scope_note: "uc_feature は spec.md の E2E 完了条件に Scenario が 2 本足されたため、末尾へ追記した(既存 12 Scenario の本文は変更なし)。既存の実装が残る再実行のため、dist-impl-implement mode=test-scaffold の再実行時の done 条件(parse 可能かつ実行可能)で判定し、red_baseline: pass は記録しない"
+red_baseline_measured:
+  red_total: 0
+  green_added_total: 15
+  by_stage:
+    - stage: atdd
+      added: 0
+      red: 0
+      green: 0
+    - stage: uc_bdd
+      added: 2
+      red: 0
+      green: 2
+    - stage: tier_bdd
+      added: 7
+      red: 0
+      green: 7
+    - stage: tdd
+      added: 6
+      red: 0
+      green: 6
+  reason: "今回の仕様更新(spec-decision-034)は、現行実装の挙動(error 行どうしの順 / mode が列挙外・欠落・空の slot の検査 / 9 キー以外の値を取り込まない)を仕様に書いたもので、実装は変えない。そのため追加したテストは現行実装(facade/src/)で最初から green になる。red を偽装していない。実装は変更していない"
+  undefined_steps: 0
+  ambiguous_steps: 0
+  parse_errors: 0
+spec_changes_applied:
+  - "spec.md E2E 完了条件: 12 Scenario から 14 Scenario へ。追加は『error 行が 2 行以上のときは決まった順に報告される』『mode が列挙外の slot も実装版と対応ジョブマップを検査し runner へ問い合わせる』"
+  - "tier-facade.md ティア完了条件: Scenario 17 + Outline 3 本(実行 32)から Scenario 21 + Outline 4 本(実行 39)へ。追加は error_order の 12 行 / mode が列挙外・空・欠落の slot(Outline、Examples 3 行)/ mode が 3 つとも欠落・空で blue_mode=- green_mode=- / RAPID_CROSSCHECK_MODE が列挙外 / 9 キー以外のキーの値を取り込まない"
+  - "CLI 契約 config_files.feature-flag.env の error_order(sequence / per_key / example)と validation_rules(mode の値が列挙外・欠落・空のときの扱い)、config_input_rules.env_files『feature-flag.env から値を取り込むキーの範囲』を単体テストで判定する"
+  - "性能(config_input_rules.performance_target)は目標値で、入力の制限でも合否の検査でもない。性能を合否とするテストは足していない。特定のデータで時間を確認する既存のテストは変更も削除もしていない(利用者決定)"
+  - "usdm の受け入れ条件は変更なしのため features/atdd は触れていない"
+transcription_check:
+  method: "spec.md / tier-facade.md の gherkin ブロックと feature 本文(# で始まる出典コメント行を除く)を行単位で完全一致比較。追記前は feature が仕様の先頭部分と完全一致(uc 74 行 / tier 142 行)で、不足する末尾(uc 31 行 / tier 68 行)だけを追記した"
+  uc_feature_verbatim: true
+  tier_feature_verbatim: true
+generated:
+  atdd:
+    feature: features/atdd/SPEC-001-01.feature
+    feature_body_changed: false
+    steps: features/atdd/steps/configure-feature-flags.steps.js
+    steps_changed: false
+    scenarios:
+      - SPEC-001-01-4
+  uc_bdd:
+    feature: features/uc/configure-feature-flags.feature
+    feature_regenerated: true
+    feature_change: "末尾に 2 Scenario を追記。出典コメントを 1 行追加。既存 Scenario の本文は変更なし"
+    steps: features/uc/steps/configure-feature-flags.steps.js
+    steps_changed: true
+    steps_change_summary: "追加 Scenario の step 8 件(Given 4 / When 1 / Then 3)を実体で実装して末尾に追加。--help の起動を記録する runner スタブを追加。既存 step の定義は変更なし"
+    source: "docs/specs/latest/適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md#E2E完了条件(BDD)"
+    scenarios: 14
+    scenarios_added: 2
+    cross_uc_scenarios_added: 0
+    cross_uc_note: "追加した 2 Scenario の Then は validate-config.sh の終了コード・stdout・stderr と runner への --help の起動回数だけで、他 UC の責務を含まない。UC 横断 Scenario の一覧は既存 issue(20260917_004843 / 20260917_074633)のまま"
+  tier_bdd:
+    - tier: tier-facade
+      feature: facade/features/configure-feature-flags.feature
+      feature_regenerated: true
+      feature_change: "末尾に Scenario 4 本と Scenario Outline 1 本(Examples 3 行)を追記。出典コメントを 1 行追加。既存 Scenario の本文は変更なし"
+      steps: facade/features/steps/configure-feature-flags.steps.js
+      steps_changed: true
+      steps_change_summary: "追加 Scenario の step 14 件(Given 9 / Then 5)を実体で実装して末尾に追加。起動された引数を記録する runner スタブを追加。既存 step の定義は変更なし"
+      source: "docs/specs/latest/適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md#ティア完了条件(BDD)"
+      scenarios: 39
+      scenarios_added: 7
+      scenarios_note: "Scenario 21 + Scenario Outline 4 本の Examples 18 行。再実行前は 32"
+  tdd:
+    - tier: tier-facade
+      file: facade/test/usecase/validate_feature_flag_error_order.bats
+      change: added
+      tests: 6
+      target: "facade/bin/validate-config.sh --feature-flag(エントリポイント経由)。error_order の 12 行 / 1 つのキーの error 行は 1 行だけ(per_key)/ blue_mode=parallel green_mode=- / 検証を通らない runner へ問い合わせない / 未知キーの値を runner の環境変数へ渡さない / FINAL_ で始まるキーの値を runner の環境変数へ渡さない"
+    - tier: tier-facade
+      file: facade/test/usecase/validate_feature_flag_env_rules.bats
+      change: comment_only
+      tests: 36
+      detail: "先頭コメントの『error 行どうしの順は仕様に定めが無いため固定しない』を、2026-11-15 に契約 error_order が定めたことと検証先のファイル名に合わせて直した。テスト本体は変更なし(時間を確認する既存のテストも変更なし)"
+test_runs:
+  - stage: atdd
+    cwd: "."
+    command: "npx cucumber-js --config cucumber.cjs features/atdd --tags @atdd_SPEC-001-01-4"
+    exit_code: 0
+    summary: "1 scenario (1 passed), 5 steps (5 passed)"
+    total: 1
+    red: 0
+    fail_reason: none
+    undefined_steps: 0
+  - stage: uc_bdd
+    cwd: "."
+    command: "npx cucumber-js --config cucumber.cjs features/uc"
+    exit_code: 0
+    summary: "48 scenarios (48 passed), 284 steps (284 passed)。再実行前は 46 scenarios"
+    target_feature_summary: "14 scenarios (14 passed), 88 steps (88 passed)"
+    total: 14
+    red: 0
+    fail_reason: none
+    undefined_steps: 0
+    ambiguous_steps: 0
+  - stage: tier_bdd
+    tier: tier-facade
+    cwd: facade
+    command: "npx cucumber-js --config ../cucumber.cjs features"
+    exit_code: 0
+    summary: "87 scenarios (87 passed), 486 steps (486 passed)。再実行前は 80 scenarios"
+    target_feature_summary: "39 scenarios (39 passed), 225 steps (225 passed)"
+    total: 39
+    red: 0
+    fail_reason: none
+    undefined_steps: 0
+    ambiguous_steps: 0
+  - stage: tdd
+    tier: tier-facade
+    cwd: facade
+    command: "bats -r test"
+    exit_code: 0
+    summary: "481 tests, 481 ok, 0 not ok。再実行前は 475 tests"
+    total: 481
+    added: 6
+    red: 0
+    fail_reason: none
+format_check:
+  tier: tier-facade
+  command: "shfmt -d ."
+  exit_code: 0
+lint:
+  tier: tier-facade
+  command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+  exit_code: 0
+dom_snapshot_tests: not_applicable
+issues: []
+issues_note: "新規起票は無し。UC 横断 Scenario の追加は無い。既存 issue 20261113_021600_feature-flag-error-line-order-undefined.md(error 行どうしの順と、mode が列挙外のときの必須検査が仕様に無い)は、今回の仕様更新(契約 error_order / validation_rules)で解消済みで、その順を今回のテストで固定した"
+observations:
+  - "spec-event.md の概要は tier BDD の追加を『4 場面』と書くが、tier-facade.md に足されたのは Scenario 4 本と Scenario Outline 1 本(実行は 7)。仕様の本文どうしの矛盾ではないため起票していない"
+completed_at: '2026-11-15T14:26:00+09:00'
+completed_by: dist-impl-implement@0.14.1

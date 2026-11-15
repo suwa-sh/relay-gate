@@ -1,0 +1,11 @@
+2026-11-15 の実装フィードバックに基づく NFR 更新(設定ファイルの検査の性能「5,000 行以内かつ 8 MB 以内のファイルを、内容によらず 10 秒以内」を目標値と明記する。入力の制限でも合否の検査でもないこと、4 つの設定検証種別すべてと env 形式の設定ファイルに同じ目標を適用すること、runner の応答待ちを別に数えることを定める。グレード値は変更なし。RDRA モデルは不変)
+trigger_event: rdra:20261103_131000_feedback_housekeeping_db_required
+dialogue_policy: interactive(利用者が 2026-11-13 と 2026-11-15 に決定済み。confidence: low の残件なし)
+mode: 差分更新(nfr-grade-diff.yaml。grade の変更なし、B.1.1.2 と B.2.1.1 の grade_description / reason / source_model を更新)
+
+feedback_request_id: 20261115_093126_impl_feedback_fd678b04
+input_sha256: 25caf38054a64316034645c9a2da7de0616818683b41aab58223544e8b98009f
+request_ids: CR-fd678b04-001
+direct_work_unit_ids: CR-fd678b04-001#1
+causal_work_unit_ids: CR-fd678b04-001#1
+feedback_packet: docs/pipeline/feedback-runs/20261115_093126_impl_feedback_fd678b04/stage-packets/quality_attributes.md

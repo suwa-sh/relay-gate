@@ -1,0 +1,82 @@
+round: 1
+findings:
+  - id: R-1
+    viewpoint: 5
+    severity: major
+    target: "_cross-cutting/api/cli-command-contract.yaml"
+    claim: >-
+      mode が欠落・空のときに foreground の個数の error 行へ出す値(blue_mode= / green_mode= の右辺)が、
+      仕様のどこにも定義されていない。今回の validation_rules は「列挙外・欠落・空の mode は foreground に数えない」と定めたため、
+      mode が欠落・空で、もう一方の slot が foreground でない入力では
+      `error: foreground slot must be exactly one blue_mode=... green_mode=...` が必ず出るが、
+      その行の内容を契約(error_messages / error_order / validation_rules)から 1 つに導けない。
+      error 行の順と行数は決まっても、行の文言が決まらない。
+    evidence: >-
+      config_files.feature-flag.env.error_messages は `blue_mode=... green_mode=...` としか書かず、
+      UC「feature flag を設定する」tier-facade.md の組合せ検証も `blue_mode=<v> green_mode=<v>` のみ。
+      「未設定の値は `-`」の記載は stdout(検証 OK のときの 15 行)についてだけある。
+      現行実装を一時ディレクトリで実走した結果(2026-11-15):
+      3 つの mode をすべて書かない入力は `error: foreground slot must be exactly one blue_mode=- green_mode=-`、
+      `BLUE_MODE=parallel` / `GREEN_MODE=`(空)の入力は `... blue_mode=parallel green_mode=-` を出した
+      (欠落も空も `-`、列挙外は値そのまま)。
+      追加した BDD(error 行の順の場面、mode が列挙外・空・欠落の Scenario Outline、速報 mode が列挙外の場面)は
+      すべて GREEN_MODE=foreground か両 slot foreground のため、欠落・空の mode と foreground の個数の error 行が
+      同時に出る入力を 1 つも判定していない。
+    suggested_fix: >-
+      error_messages の foreground の項(または validation_rules の今回の項)に
+      「blue_mode= / green_mode= には読み取った値をそのまま出す(列挙外の値も同じ。制御文字は可視表記)。
+      キーが無い・値が空のときは `-` を出す」を書く。
+      tier-facade.md に、mode が欠落・空で foreground が 0 個になる入力の場面を 1 つ足す
+      (例: 9 キー以外の 1 行だけの ff.env で、stderr が warn 1 行、option required 3 行、
+      `error: foreground slot must be exactly one blue_mode=- green_mode=-`、従属キーの option required 6 行、
+      job map not found 2 行の順になること)。
+  - id: R-2
+    viewpoint: 4
+    severity: major
+    target: "実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/tier-facade.md"
+    claim: >-
+      facade.sh の起動時の feature flag 検証の順が、差分に入っていないこの tier 仕様に別の順で残っており、
+      今回定めた error_order と食い違う。同じ検証関数を使うと書かれているため、実装は両方を同時に満たせない。
+      facade.sh は検証エラーを error 1 行で出す契約なので、違反が 2 つ以上ある入力で「どの 1 行を出すか」が
+      2 つの記載で変わる。
+    evidence: >-
+      同 tier-facade.md の UC ロジック「バリデーション」2.:
+      「ファイル存在 → 各キーの列挙 → foreground がちょうど 1 slot → 必須キー(*_IMPL / *_RUNNER、速報 runner / worker)の存在
+      → 実体パスの絶対パス・存在・実行権限 → 未知キー warn」。
+      同ファイルの終了コード表は「validate-config.sh --feature-flag と同じ検証関数」、
+      UC「feature flag を設定する」tier-facade.md は「facade.sh は起動時に同じ検証を実行」と書く。
+      一方 error_order は BLUE_IMPL → BLUE_RUNNER(欠落 → 絶対パスでない → 実行不可の最初の 1 つ)→ GREEN_IMPL → GREEN_RUNNER の
+      キー単位の順で、`FINAL_` で始まるキーと対応ジョブマップが続き、未知キーの warn は error 行より前に出す。
+      例: BLUE_RUNNER が相対パスで GREEN_IMPL が欠落の設定では、tier の順なら先頭の違反は GREEN_IMPL の option required、
+      error_order なら BLUE_RUNNER の path is not absolute になる。
+      error_order の summary は対象を validate-config.sh --feature-flag に限っており、facade.sh の順には触れていない。
+      なお mode が列挙外・欠落・空のときに従属キーを検査する規則(validation_rules)は reader_scope により facade.sh にも及ぶが、
+      この tier の「必須キー(mode≠off の slot の …)」はその扱いを参照していない。
+    suggested_fix: >-
+      この tier のバリデーション 2. から独自の順を外し、「検査の項目と違反の順は CLI 契約
+      config_files.feature-flag.env の validation_rules / error_order に従う
+      (mode≠off は値が off と完全一致しないすべての場合)。facade.sh が stderr に出すのはその順で最初の違反の 1 行(と hint)」
+      のように契約を参照する形へ直す(facade.sh が全件を出すなら、その旨と順を同じ参照で書く)。
+      あわせて error_order の summary に、facade.sh / background-rerun.sh の起動時検証へ及ぶかどうかを 1 文で書く。
+  - id: R-3
+    viewpoint: 4
+    severity: minor
+    target: "spec-event.md"
+    claim: >-
+      spec-event.md が前イベントの内容のままで、同じイベントの spec-event.yaml・README.md と食い違う。
+    evidence: >-
+      spec-event.md は前イベントのファイルとバイト単位で同一(差分なし)。
+      Event ID の行が 2026-11-10 のイベントを指し、Source の行も 2026-11-10 の --verbose の info 行の説明のまま。
+      spec-event.yaml の event_id / source / previous_event_ref と README.md の「最新イベント」は 2026-11-15 のイベントに更新済み。
+    suggested_fix: >-
+      generateSpecEventMd.js で spec-event.yaml から spec-event.md を再生成する(手で編集しない)。
+resolved:
+  - id: R-1
+    resolution: fixed
+    note: "契約 config_files の feature-flag.env の error_messages の foreground の項に、blue_mode= / green_mode= には読み取った値をそのまま出し(列挙外も同じ。制御文字は可視表記)、キーが無い・値が空のときは `-` を出すと書いた。UC「feature flag を設定する」の tier-facade.md の組合せ検証に同じ参照を足し、mode が 3 つとも欠落・空で foreground が 0 個になる入力の場面(13 行の順)を 1 つ足した。期待値は現行実装の実走の出力と一致する"
+  - id: R-2
+    resolution: fixed
+    note: "契約の error_order の summary に、この節が定めるのは validate-config.sh --feature-flag の出力の順だけで、facade.sh / background-rerun.sh の起動時検証が stderr に出す行はこの節では定めないと書いた。これで UC「slot 実行モードを選択して runner を起動する」の tier-facade.md の起動時検証の順と error_order は別の対象の記載になり、食い違わない(tier-facade.md は変えていない)。最初の対応(起動時検証も同じ順とし、最初の違反の 1 行を出す)は round 2 の指摘 R-4 / R-5 を受けて取り下げた。facade.sh が違反 2 つ以上のときにどの 1 行を出すかは以前から決まっておらず、利用者の決定にも元の方針資料にも無いため、未決事項として docs/todo.md に記録し、確認推奨項目として返す"
+  - id: R-3
+    resolution: fixed
+    note: "generateSpecEventMd.js で spec-event.yaml から spec-event.md を作り直した"
