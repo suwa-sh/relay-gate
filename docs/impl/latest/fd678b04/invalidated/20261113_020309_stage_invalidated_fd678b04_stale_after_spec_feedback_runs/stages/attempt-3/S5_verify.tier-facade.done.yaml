@@ -1,0 +1,40 @@
+stage: "S5"
+tier: "tier-facade"
+attempt: 3
+uc_id: "fd678b04"
+manifest_sha256: "1802e7aaaecea1c74c643022cb6bd64bd90cb653f0c8e55ebf73b9888907116e"
+manifest_projection: "v2"
+result: "pass"
+open_blockers: 0
+summary:
+  blocker: 0
+  major: 2
+  minor: 15
+gate_reexec:
+  format: "pass"
+  lint: "pass"
+  tdd: "pass"
+  bdd_tier: "pass"
+environment_failures: []
+environment_probe:
+  result: "pass"
+  evidence: "bash/shfmt/shellcheck/bats/node/npxとローカルcucumberを確認。/tmpの書込み・実行・独立プロセスグループ起動と停止が成功。DB操作なしのため常設サービス接続やDB起動は実施していない。"
+findings: "docs/impl/latest/fd678b04/stages/attempt-3/S5_verify.tier-facade.findings.yaml"
+assumptions_sha256: "9a99cef7ee2cb03166d96ceb6bbc3cb58fb44d221fec5813de99545df9dfadbf"
+assumption_verdicts_sha256: "f4b777fbcd4c0728034dc8d83851696d8f4a9863cb27adfdd17289f22bed4916"
+assumption_verdicts_summary:
+  consistent: 0
+  spec_absent: 16
+  contradicts: 0
+  unlisted: 0
+verdicts_sha256: "f4b777fbcd4c0728034dc8d83851696d8f4a9863cb27adfdd17289f22bed4916"
+counts:
+  consistent: 0
+  spec_absent: 16
+  contradicts: 0
+  unlisted: 0
+requires_answer: 2
+completed_at: "2026-09-17T01:33:00.742551+00:00"
+completed_by: "dist-impl-verify@0.14.1"
+write_set_compliance: "リポジトリ内の書込みは指定されたS5 done/findingsの2ファイルのみ。テストの一時ファイルとnpmキャッシュは許可された/tmp配下。実装・テスト・仕様・他の状態ファイルを変更していない。gitコマンド未実行。"
+repository_verification: "cwdとCLAUDE.mdを確認し、.git/HEADの参照はfeature/configure-feature-flags。ユーザーのgit全面禁止に従いgit rev-parseとgit statusは実行していない。"

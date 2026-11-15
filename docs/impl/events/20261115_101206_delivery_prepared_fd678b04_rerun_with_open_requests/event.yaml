@@ -1,0 +1,13 @@
+event_id: 20261115_101206_delivery_prepared_fd678b04_rerun_with_open_requests
+type: delivery_prepared
+uc_id: fd678b04
+stage: S9
+payload:
+  reason: the user instructed, in the final review answer, to push the feature branch and create the pull request right after publishing the spec requests. the state stays blocked_on_spec until the requests are reflected
+  approval_event: 20261115_100850_review_approved_fd678b04_feedback_publish
+  published_event: 20261115_101101_feedback_request_published_fd678b04
+  base_branch: main
+  base_head: 4f447dfa19599fd976120ef1639b3875111afdde
+  feature_branch: feature/configure-feature-flags
+  squash_title: 'feat: feature flag の検証を env 形式の共通規則へ追従させる'
+created_at: '2026-11-15T10:12:06+09:00'

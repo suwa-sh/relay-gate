@@ -1,0 +1,115 @@
+event_id: 20261115_100850_review_approved_fd678b04_feedback_publish
+type: review_approved
+uc_id: fd678b04
+stage: S9
+payload:
+  approval_kind: feedback_publish_approval
+  review_evidence_event_id: 20261115_094919_s9_review_generated_fd678b04
+  feedback_review_evidence:
+    feedback_id: 20261115_093126_impl_feedback_fd678b04
+    draft_path: docs/impl/latest/fd678b04/feedback/draft.md
+    draft_sha256: 25caf38054a64316034645c9a2da7de0616818683b41aab58223544e8b98009f
+    request_count: 4
+    blocker_count: 0
+    request_ids:
+    - CR-fd678b04-001
+    - CR-fd678b04-002
+    - CR-fd678b04-003
+    - CR-fd678b04-004
+  implementation_review_evidence:
+    gate_result: 6/6 pass
+    gates:
+      format: pass
+      lint: pass
+      tdd: pass (475/475)
+      bdd_tier: pass (80/80)
+      uc_bdd: pass (46/46, injections 0)
+      atdd: pass (1/1)
+    open_blocker_count: 0
+    open_major_count: 1
+    open_minor_count: 20
+    verifier_blocker_findings: 2
+    verifier_blocker_finding_ids:
+    - F-001
+    - F-002
+    verifier_blocker_handling: 性能目標との差 2 件。利用者の決定(20261115_092742_config_confirmed_fd678b04_performance_target_is_goal_not_gate)により合否の検査として扱わないため、open_blocker_count には数えていない。S5 done の open_blockers は 2 のまま
+    tiers:
+    - tier: tier-facade
+      attempt: 5
+      assumptions_sha256: 764eb97433280c6e2d3321c97e9c73c6fc0c0bd4ab06c3da04f58f743bf23aa1
+      assumption_verdicts_sha256: 3c4c577facfef77bb57cac50a1a04689662b8959682503b8fdf6a42e31114066
+    assumption_evidence_sha256: 508c82fc00f546de84ac16df15d8223434913ae84691df2ab87ab6a138c76867
+  assumption_decisions:
+  - tier: tier-facade
+    id: A-010
+    decision: confirmed
+  - tier: tier-facade
+    id: A-016
+    decision: confirmed
+  - tier: tier-facade
+    id: A-017
+    decision: confirmed
+  - tier: tier-facade
+    id: A-018
+    decision: confirmed
+  - tier: tier-facade
+    id: A-019
+    decision: confirmed
+  - tier: tier-facade
+    id: A-020
+    decision: confirmed
+  - tier: tier-facade
+    id: A-023
+    decision: confirmed
+  - tier: tier-facade
+    id: A-024
+    decision: confirmed
+  - tier: tier-facade
+    id: A-025
+    decision: confirmed
+  - tier: tier-facade
+    id: A-027
+    decision: confirmed
+  - tier: tier-facade
+    id: A-028
+    decision: confirmed
+  - tier: tier-facade
+    id: A-029
+    decision: confirmed
+  - tier: tier-facade
+    id: A-030
+    decision: confirmed
+  - tier: tier-facade
+    id: A-031
+    decision: confirmed
+  - tier: tier-facade
+    id: A-032
+    decision: confirmed
+  - tier: tier-facade
+    id: A-033
+    decision: confirmed
+  - tier: tier-facade
+    id: A-034
+    decision: confirmed
+  - tier: tier-facade
+    id: A-035
+    decision: confirmed
+  - tier: tier-facade
+    id: A-036
+    decision: confirmed
+  - tier: tier-facade
+    id: A-037
+    decision: confirmed
+  - tier: tier-facade
+    id: A-038
+    decision: confirmed
+  decisions:
+    performance_target_scope: all four config validation kinds (goal, not an input restriction, not a pass/fail check; 8 MB size condition; runner wait counted separately)
+    error_line_order: write the current order into the spec
+    mode_out_of_enum_dependent_checks: keep checking dependent keys; write it into the spec
+    unknown_key_values: implementation approved; write into the spec that values are not loaded into variables
+    utf8_locale_slowness: not fixed in this change; recorded as a gap against the goal
+    git_delivery: after publishing the requests, push the feature branch and create the pull request
+  user_answer: '【全体】この実装内容を承認します。仕様への要求を公開して、仕様の反映待ちに進めてください。 / 【問い 1 性能の目標】案 A: 4 種類の設定検証すべてに適用する、で要求を出してください(目標値であり入力の制限でも合否の検査でもないこと、大きさの条件 8 MB、runner の応答待ちは別に数えること、も仕様に書く)。 / 【問い 2 エラー行の並び順】案 A: いまの順を仕様に書く、で要求を出してください。 / 【問い 3 不正な切り替えモード】案 A: いまどおり関連項目も検査する、と仕様に書く要求を出してください。 / 【問い 4 未知の項目の値】案 A: 実装はこのままで承認します。プログラムの変数に読み込まないことを仕様に書く要求を出してください。 / 【問い 5 文字コード設定での遅さ】案 A: この変更の中では直さず、目標との差として記録にとどめてください。 / 【実装者が補った前提】21 件すべて承認します。 / 【本線への取り込み】仕様への要求の公開に続けて、作業ブランチの共有と取り込み依頼の作成まで進めてください。'
+  confirmed_by: user
+created_at: '2026-11-15T10:08:50+09:00'

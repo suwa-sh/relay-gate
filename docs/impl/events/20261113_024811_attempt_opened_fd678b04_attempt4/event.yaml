@@ -1,0 +1,13 @@
+event_id: 20261113_024811_attempt_opened_fd678b04_attempt4
+type: attempt_opened
+uc_id: fd678b04
+stage: S4
+attempt: 4
+payload:
+  reason: blocker
+  from_attempt: 3
+  tiers_rerun:
+  - tier-facade
+  findings:
+  - docs/impl/latest/fd678b04/stages/attempt-3/S5_verify.tier-facade.findings.yaml
+created_at: '2026-11-13T02:48:10+09:00'

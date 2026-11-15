@@ -1,0 +1,21 @@
+event_id: 20261113_020309_stage_invalidated_fd678b04_stale_after_spec_feedback_runs
+type: stage_invalidated
+uc_id: fd678b04
+stage: S1
+payload:
+  reason: stale
+  targets:
+  - stages/S1_uc-init.done.yaml
+  - stages/S2_test-scaffold.done.yaml
+  - stages/S3_contracts.done.yaml
+  - stages/attempt-3/S4_tier-impl.tier-facade.done.yaml
+  - stages/attempt-3/S4_tier-impl.tier-facade.assumptions.yaml
+  - stages/attempt-3/S5_verify.tier-facade.done.yaml
+  - stages/attempt-3/S5_verify.tier-facade.findings.yaml
+  - stages/S6_uc-bdd.done.yaml
+  - stages/S7_atdd.done.yaml
+  - stages/S8_feedback.done.yaml
+  - stages/S9_review_generated.done.yaml
+  archived_to: docs/impl/latest/fd678b04/invalidated/20261113_020309_stage_invalidated_fd678b04_stale_after_spec_feedback_runs/
+  detail: 完了(2026-09-18)後の dist-pipeline feedback run 群(クロスチェック簡素化、メール送信の削除、ハウスキープ、env 形式の共通規則 spec-decision-023/026/028〜031、--verbose の info 行 spec-decision-033)で usdm / arch / 共有仕様 / この UC の spec.md・tier-facade.md が変わり、全 done の projection が不一致になった。利用者決定(dcd8234d のマージ直後に再実行)に従い、同一 attempt で S1 からやり直す(attempt++ しない。前回の findings は渡さない)
+created_at: '2026-11-13T02:03:08+09:00'

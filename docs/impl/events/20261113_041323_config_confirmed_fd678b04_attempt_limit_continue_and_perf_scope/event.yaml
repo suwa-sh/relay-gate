@@ -1,0 +1,16 @@
+event_id: 20261113_041323_config_confirmed_fd678b04_attempt_limit_continue_and_perf_scope
+type: config_confirmed
+uc_id: fd678b04
+stage: S5
+payload:
+  confirmed_by: user
+  confirmed_via: '2026-11-13 の利用者回答(原文): 進め方: 実装をもう 1 回直してください (まとめて変換する方式。そのあと独立検証を 3 回目として実行) / 保証の範囲: 5,000 行以内かつ 8 MB 以内を 10 秒以内に保証する。超えるファイルは拒否せず、保証の範囲外とする / 念のための認識合わせですが 5,000行 8MB 10sec以内は パフォーマンスの目標値であって、入力を制限する仕様ではありません。'
+  decision_page: tmp/reviews/feature-flag-perf-scope-review.html
+  items:
+  - key: attempt_limit
+    decision: continue
+    note: attempt 4 (limit 3 exceeded) had 2 blockers (F-001 / F-014, the same performance issue). the user allowed one more implementation attempt (batch conversion), then a third independent verification. if a blocker remains, stop and ask again
+  - key: performance_target
+    decision: 'config validation finishes within 10 seconds for a file of at most 5,000 lines and at most 8 MB, regardless of content. this is a performance target, not an input restriction: larger files are not rejected and are outside the guarantee (same handling as files over 5,000 lines)'
+    note: the spec (cli-command-contract.yaml config_input_rules.rules 'line / cell length limit') does not state a size condition yet. to be published as a spec request at S8/S9. applies to all config validation kinds that share the rule
+created_at: '2026-11-13T04:13:23+09:00'

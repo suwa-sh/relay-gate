@@ -1,0 +1,11 @@
+event_id: 20261115_092919_s6_uc_bdd_completed_fd678b04
+type: stage_completed
+uc_id: fd678b04
+stage: S6
+payload:
+  result: pass
+  done: docs/impl/latest/fd678b04/stages/S6_uc-bdd.done.yaml
+  manifest_sha256: 829aa482569f86811e8a0a8453851b577b684bce01b8b83992f88cb1250b1ee5
+  manifest_projection: v2
+  tier_impl_attempt: 5
+created_at: '2026-11-15T09:29:19+09:00'

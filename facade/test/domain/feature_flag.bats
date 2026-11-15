@@ -355,3 +355,224 @@ load_domain_or_fail() {
 	[ "$status" -eq 0 ]
 	[ -z "$output" ]
 }
+
+# ---- S4 tier-impl(2026-11-13 attempt-5)で追加: 検証表を「キーの分類 → 未知キーの warn 行 → error 行」の 3 つの関数に分けた ----
+# 行数に比例する件数の warn 行を usecase が溜めずに出すため(性能目標「5,000 行以内かつ 8 MB 以内を内容によらず 10 秒以内」)。
+# validate_feature_flag は 3 つを順に呼ぶだけで、出す行と順は変えていない。
+
+@test "feature_flag_classify_keys_9キーと未知キーとFINAL_で始まるキーが混ざる場合_ファイルに出た順の添字で未知キーと確報の制御キーに分けること" {
+	# Arrange(9 キーと同じ長さの未知キー、9 キーの名前で始まる長いキー、小文字の final_ を混ぜる)
+	load_domain_or_fail
+	FEATURE_FLAG_KEYS=(BLUE_MODE FINAL_X ZZ GREEN_RUNNER FINAL_ final_y BLUE_MODX RAPID_CROSSCHECK_WORKER RAPID_CROSSCHECK_WORKER_2 FINAL)
+
+	# Act
+	feature_flag_classify_keys
+
+	# Assert
+	[ "${FEATURE_FLAG_UNKNOWN_KEY_INDEXES[*]}" = "2 5 6 8 9" ]
+	[ "${FEATURE_FLAG_FORBIDDEN_KEY_INDEXES[*]}" = "1 4" ]
+}
+
+@test "feature_flag_classify_keys_キーが0個の場合_どちらの添字も空であること" {
+	# Arrange
+	load_domain_or_fail
+	FEATURE_FLAG_KEYS=()
+	FEATURE_FLAG_UNKNOWN_KEY_INDEXES=(9)
+	FEATURE_FLAG_FORBIDDEN_KEY_INDEXES=(9)
+
+	# Act
+	feature_flag_classify_keys
+
+	# Assert
+	[ "${#FEATURE_FLAG_UNKNOWN_KEY_INDEXES[@]}" -eq 0 ]
+	[ "${#FEATURE_FLAG_FORBIDDEN_KEY_INDEXES[@]}" -eq 0 ]
+}
+
+@test "validate_feature_flag_表示用のキー名の配列を渡した場合_その表記を未知キーのwarnと確報の制御キーのerrorに使うこと" {
+	# Arrange(usecase は --verbose の info 行と同じ可視表記を使い回す)
+	load_domain_or_fail
+	BLUE_MODE=off
+	GREEN_MODE=foreground
+	RAPID_CROSSCHECK_MODE=off
+	GREEN_IMPL=g
+	GREEN_RUNNER=/bin/sh
+	FEATURE_FLAG_KEYS=(BLUE_MODE $'A\033' $'FINAL_\033')
+	FEATURE_FLAG_PATH=ff.env
+	# shellcheck disable=SC2034  # 名前で渡す
+	local shown=(BLUE_MODE 'shown-A' 'shown-FINAL')
+
+	# Act
+	run validate_feature_flag shown
+
+	# Assert
+	[ "$status" -eq 1 ]
+	[ "${#lines[@]}" -eq 2 ]
+	[ "${lines[0]}" = "warn: unknown key key=shown-A path: ff.env" ]
+	[ "${lines[1]}" = "error: final crosscheck key is not allowed key=shown-FINAL" ]
+}
+
+@test "validate_feature_flag_報告行の出し先を配列にした場合_stdoutへ出さず同じ行を同じ順で配列に載せること" {
+	# Arrange
+	load_domain_or_fail
+	BLUE_MODE=sideways
+	GREEN_MODE=foreground
+	RAPID_CROSSCHECK_MODE=off
+	GREEN_IMPL=g
+	GREEN_RUNNER=/bin/sh
+	FEATURE_FLAG_KEYS=(BLUE_MODE $'A\033' FINAL_Z)
+	FEATURE_FLAG_PATH=ff.env
+	local status_code=0
+	FEATURE_FLAG_REPORT_SINK="$FEATURE_FLAG_REPORT_SINK_ARRAY"
+	FEATURE_FLAG_REPORT_LINES=()
+
+	# Act
+	validate_feature_flag >"$BATS_TEST_TMPDIR/out.txt" || status_code=$?
+
+	# Assert(列挙外の mode でも slot は off でない扱いのため、BLUE_IMPL と BLUE_RUNNER の必須も報告する。error 行どうしの順は固定しない)
+	[ "$status_code" -eq 1 ]
+	[ ! -s "$BATS_TEST_TMPDIR/out.txt" ]
+	[ "${FEATURE_FLAG_REPORT_LINES[0]}" = 'warn: unknown key key=A\u001b path: ff.env' ]
+	[ "${FEATURE_FLAG_REPORT_LINES[1]}" = "error: invalid value key=BLUE_MODE value=sideways" ]
+	[ "${FEATURE_FLAG_REPORT_LINES[2]}" = "hint: use foreground, background or off" ]
+	[ "${#FEATURE_FLAG_REPORT_LINES[@]}" -eq 6 ]
+	[[ " ${FEATURE_FLAG_REPORT_LINES[*]} " == *"error: final crosscheck key is not allowed key=FINAL_Z"* ]]
+}
+
+@test "validate_feature_flag_制御文字だらけの長いキーが多数ある場合_まとめて作った可視表記でもキーごとの可視表記と同じ行を出すこと" {
+	# Arrange(キーの合計が大きいと、可視表記を外部コマンドでまとめて作る。少数のときの表記と同じであること)
+	load_domain_or_fail
+	BLUE_MODE=off
+	GREEN_MODE=foreground
+	RAPID_CROSSCHECK_MODE=off
+	GREEN_IMPL=g
+	GREEN_RUNNER=/bin/sh
+	local body="" shown_body="" index
+	for ((index = 0; index < 150; index++)); do
+		body+=$'\001\033\177\xc2\x9b\t'
+		shown_body+='\u0001\u001b\u007f\u009b\t'
+	done
+	FEATURE_FLAG_KEYS=(BLUE_MODE)
+	for ((index = 0; index < 20; index++)); do
+		FEATURE_FLAG_KEYS+=("U$index$body" "FINAL_$index$body")
+	done
+	FEATURE_FLAG_PATH=$'dir\033/ff.env'
+
+	# Act
+	run validate_feature_flag
+
+	# Assert(未知キーの warn 20 行 → 確報の制御キーの error 20 行。どちらもファイルに出た順)
+	[ "$status" -eq 1 ]
+	[ "${#lines[@]}" -eq 40 ]
+	[ "${lines[0]}" = "warn: unknown key key=U0$shown_body path: dir\\u001b/ff.env" ]
+	[ "${lines[19]}" = "warn: unknown key key=U19$shown_body path: dir\\u001b/ff.env" ]
+	[ "${lines[20]}" = "error: final crosscheck key is not allowed key=FINAL_0$shown_body" ]
+	[ "${lines[39]}" = "error: final crosscheck key is not allowed key=FINAL_19$shown_body" ]
+}
+
+@test "feature_flag_is_defined_key_9キーより長いキーや9キーの名前で始まるキーの場合_9キーではないと判定すること" {
+	# Arrange
+	load_domain_or_fail
+
+	# Act / Assert
+	local key rejected=0
+	feature_flag_is_defined_key RAPID_CROSSCHECK_WORKER
+	feature_flag_is_defined_key BLUE_MODE
+	for key in RAPID_CROSSCHECK_WORKERS BLUE_MODE_ "" blue_mode; do
+		if ! feature_flag_is_defined_key "$key"; then
+			rejected=$((rejected + 1))
+		fi
+	done
+	[ "$rejected" -eq 4 ]
+}
+
+@test "validate_feature_flag_長いキーが多数あり可視表記をまとめて作るsedが失敗する場合_キーごとの置き換えで同じ行を出し検証表の結果を返すこと" {
+	# Arrange(domain は終了コードを決めない。補助コマンドの失敗として止めるのは usecase。ここでは同じ行を返す)
+	load_domain_or_fail
+	BLUE_MODE=off
+	GREEN_MODE=foreground
+	RAPID_CROSSCHECK_MODE=off
+	GREEN_IMPL=g
+	GREEN_RUNNER=/bin/sh
+	local body="" shown_body="" index
+	for ((index = 0; index < 150; index++)); do
+		body+=$'\001\033'
+		shown_body+='\u0001\u001b'
+	done
+	FEATURE_FLAG_KEYS=(BLUE_MODE)
+	for ((index = 0; index < 20; index++)); do
+		FEATURE_FLAG_KEYS+=("U$index$body")
+	done
+	FEATURE_FLAG_PATH=ff.env
+	local fake_bin="$BATS_TEST_TMPDIR/fake-bin"
+	mkdir -p "$fake_bin"
+	printf '%s\n' '#!/bin/sh' 'exit 1' >"$fake_bin/sed"
+	chmod +x "$fake_bin/sed"
+	PATH="$fake_bin:$PATH"
+
+	# Act
+	run validate_feature_flag
+
+	# Assert
+	[ "$status" -eq 0 ]
+	[ "${#lines[@]}" -eq 20 ]
+	[ "${lines[0]}" = "warn: unknown key key=U0$shown_body path: ff.env" ]
+	[ "${lines[19]}" = "warn: unknown key key=U19$shown_body path: ff.env" ]
+}
+
+# ---- S4 tier-impl(2026-11-13 attempt-5)で追加: 値を埋め込む報告行(大きな値は、出すときに可視表記を付ける) ----
+
+@test "feature_flag_emit_value_line_出し先がstdoutの場合_値の表示を埋め込んだ1行を出し空の値は-にすること" {
+	# Arrange
+	load_domain_or_fail
+
+	# Act
+	run feature_flag_emit_value_line "error: invalid value key=BLUE_MODE value=" $'side\033ways'
+	local one_value="$output"
+	run feature_flag_emit_value_line "error: foreground slot must be exactly one blue_mode=" "" " green_mode=" $'o\tff'
+
+	# Assert
+	[ "$one_value" = 'error: invalid value key=BLUE_MODE value=side\u001bways' ]
+	[ "$output" = 'error: foreground slot must be exactly one blue_mode=- green_mode=o\tff' ]
+}
+
+@test "feature_flag_emit_value_line_出し先が配列で値が小さい場合と大きい場合_溜めた行を出すとstdoutへ直接出した場合と同じバイト列になること" {
+	# Arrange(大きな値(合計が FEATURE_FLAG_REPORT_DEFERRED_MIN_BYTES 以上)は元の値のまま控え、出すときに可視表記を付ける)
+	load_domain_or_fail
+	local big="" index
+	for ((index = 0; index < 1200; index++)); do
+		big+=$'v\033\xc2\x85 '
+	done
+	local direct="$BATS_TEST_TMPDIR/direct.txt" flushed="$BATS_TEST_TMPDIR/flushed.txt"
+	emit_all() {
+		feature_flag_emit "warn: first"
+		feature_flag_emit_value_line "error: invalid value key=BLUE_MODE value=" "small"$'\033'
+		feature_flag_emit_value_line "error: invalid value key=GREEN_MODE value=" "$big"
+		feature_flag_emit "hint: use foreground, background or off"
+		feature_flag_emit_value_line "error: foreground slot must be exactly one blue_mode=" "$big" " green_mode=" ""
+		feature_flag_emit_value_line "error: foreground slot must be exactly one blue_mode=" "x" " green_mode=" "$big"
+		feature_flag_emit "warn: last"
+	}
+
+	# Act
+	emit_all >"$direct"
+	FEATURE_FLAG_REPORT_SINK="$FEATURE_FLAG_REPORT_SINK_ARRAY"
+	feature_flag_reset_report_lines
+	emit_all >"$BATS_TEST_TMPDIR/none.txt"
+	local line_count="${#FEATURE_FLAG_REPORT_LINES[@]}" deferred_count="${#FEATURE_FLAG_REPORT_VALUE_1[@]}"
+	FEATURE_FLAG_REPORT_SINK="$FEATURE_FLAG_REPORT_SINK_STDOUT"
+	feature_flag_flush_report_lines >"$flushed"
+
+	# Assert(配列に溜めている間は何も出さない。7 行のうち大きな値を含む 3 行が後回し。出した後は配列が空)
+	[ ! -s "$BATS_TEST_TMPDIR/none.txt" ]
+	[ "$line_count" -eq 7 ]
+	[ "$deferred_count" -eq 3 ]
+	cmp "$direct" "$flushed"
+	[ "$(wc -l <"$flushed" | tr -d ' ')" -eq 7 ]
+	[ "$(sed -n '2p' "$flushed")" = 'error: invalid value key=BLUE_MODE value=small\u001b' ]
+	local fifth expected_head='error: foreground slot must be exactly one blue_mode=v\u001b\u0085 v'
+	fifth="$(sed -n '5p' "$flushed")"
+	[ "${fifth:0:${#expected_head}}" = "$expected_head" ]
+	[ "${fifth: -14}" = '  green_mode=-' ]
+	[ "${#FEATURE_FLAG_REPORT_LINES[@]}" -eq 0 ]
+	[ "${#FEATURE_FLAG_REPORT_VALUE_1[@]}" -eq 0 ]
+}

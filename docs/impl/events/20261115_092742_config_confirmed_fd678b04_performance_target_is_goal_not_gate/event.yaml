@@ -1,0 +1,17 @@
+event_id: 20261115_092742_config_confirmed_fd678b04_performance_target_is_goal_not_gate
+type: config_confirmed
+uc_id: fd678b04
+stage: S5
+attempt: 5
+payload:
+  confirmed_by: user
+  confirmed_via: '2026-11-15 の利用者回答(原文): 目標であってチェックではないです'
+  decision_page: tmp/reviews/feature-flag-runner-wait-review.html
+  items:
+  - key: performance_target
+    decision: the performance target (5,000 lines and 8 MB within 10 seconds) is a goal, not a pass/fail check. exceeding it does not block a stage
+    note: 'orchestrator''s interpretation of the user''s answer: performance findings of independent verification are recorded as gaps against the goal, not as blockers. the three questions on the decision page (runner wait, one more fix, OS for judgement) are withdrawn'
+  - key: attempt_5_blockers
+    decision: continue
+    note: 'S5 attempt 5 blockers F-001 (large config plus two unresponsive runners: Linux 11s, macOS 14s) and F-002 (C.UTF-8 locale, 3 lines near 8 MiB: about 10s) are both performance-only. they are kept in findings unchanged and carried as known gaps to S8/S9. no attempt 6'
+created_at: '2026-11-15T09:27:42+09:00'

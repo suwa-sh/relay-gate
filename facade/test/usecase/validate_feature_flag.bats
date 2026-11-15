@@ -230,8 +230,9 @@ EOF
 	! grep -q '^warn: unknown key key=FINAL_DB_CONN_REF' "$STDERR_FILE"
 }
 
-@test "validate_feature_flag_query_有効な設定に=の無いFINAL_DB_CONN_REF行を加えた場合_未知キーwarnではなくerror1行で拒否されること" {
-	# Arrange(= の無い行はキーだけとして扱い、FINAL_ 接頭辞の拒否が未知キー warn より先に判定される)
+@test "validate_feature_flag_query_有効な設定に=の無いFINAL_DB_CONN_REF行を加えた場合_invalid lineだけで拒否されキーごとの検査をしないこと" {
+	# Arrange(2026-11-13 S2 再実行で期待を変更。`=` の無い行はキーだけの行として読まず invalid line で拒否し、
+	#   キーごとの検査(FINAL_ で始まるキーの error を含む)を行わない。契約 config_input_rules.env_files の (ii))
 	write_parallel_env
 	echo 'FINAL_DB_CONN_REF' >>"$ENV_FILE"
 
@@ -239,8 +240,8 @@ EOF
 	run_query "$ENV_FILE" "$CONFIG_DIR" false
 
 	# Assert
-	[ "$QUERY_STATUS" -ne 0 ]
-	[ "$(cat "$STDERR_FILE")" = "error: final crosscheck key is not allowed key=FINAL_DB_CONN_REF" ]
+	[ "$QUERY_STATUS" -eq 2 ]
+	[ "$(cat "$STDERR_FILE")" = "error: invalid line line=10 path: $ENV_FILE" ]
 	[ ! -s "$STDOUT_FILE" ]
 }
 
@@ -255,6 +256,9 @@ EOF
 	[ "$QUERY_STATUS" -eq 0 ]
 	grep -qx "info: key loaded key=BLUE_MODE path: $ENV_FILE" "$STDERR_FILE"
 	[ "$(grep -c '^info: key loaded' "$STDERR_FILE")" -eq 9 ]
+	# info 行だけが出る(値は出さない。--verbose の行の文言・出す回・順の詳細は validate_feature_flag_env_rules.bats)
+	[ "$(wc -l <"$STDERR_FILE" | tr -d ' ')" -eq 9 ]
+	[ "$(sed -n 9p "$STDERR_FILE")" = "info: key loaded key=RAPID_CROSSCHECK_WORKER path: $ENV_FILE" ]
 }
 
 # ---- S2 test-scaffold 再実行(spec event 20260917_050000)で追加: 契約 cli-command-contract.yaml validate-config.sh runner_help_probe ----

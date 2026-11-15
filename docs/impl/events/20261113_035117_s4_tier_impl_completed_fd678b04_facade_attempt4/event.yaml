@@ -1,0 +1,28 @@
+event_id: 20261113_035117_s4_tier_impl_completed_fd678b04_facade_attempt4
+type: stage_completed
+uc_id: fd678b04
+stage: S4
+tier: tier-facade
+attempt: 4
+payload:
+  result: pass
+  gates:
+    format: pass
+    lint: pass
+    tdd: pass
+    bdd_tier: pass
+  assumptions:
+    path: attempt-4/S4_tier-impl.tier-facade.assumptions.yaml
+    count: 15
+    by_category:
+      input_validation: 2
+      data_format: 3
+      error_handling: 5
+      persistence: 0
+      performance: 4
+      security: 1
+    sha256: 262d6ce553a752479cf85986003a9735fbad41a5bb843fc5e7ec9495bd946350
+  manifest_sha256: 829aa482569f86811e8a0a8453851b577b684bce01b8b83992f88cb1250b1ee5
+  manifest_projection: v2
+  note: attempt 4 after blocker F-001 (control-character escaping took 23s for 5,000 lines on Linux). only the shared function cli_field_escape_text in facade/src/domain/cli_field.sh changed (output bytes unchanged; 40,000 random comparisons per locale on macOS and Linux, 0 mismatch). the same slowness in --rapid-crosscheck and --job-map is resolved by the same fix. 12 regression tests added
+created_at: '2026-11-13T03:51:17+09:00'

@@ -1,0 +1,28 @@
+event_id: 20261113_075723_s4_tier_impl_completed_fd678b04_facade_attempt5
+type: stage_completed
+uc_id: fd678b04
+stage: S4
+tier: tier-facade
+attempt: 5
+payload:
+  result: pass
+  gates:
+    format: pass
+    lint: pass
+    tdd: pass
+    bdd_tier: pass
+  assumptions:
+    path: attempt-5/S4_tier-impl.tier-facade.assumptions.yaml
+    count: 21
+    by_category:
+      input_validation: 2
+      data_format: 3
+      error_handling: 8
+      persistence: 0
+      performance: 7
+      security: 1
+    sha256: 764eb97433280c6e2d3321c97e9c73c6fc0c0bd4ab06c3da04f58f743bf23aa1
+  manifest_sha256: 829aa482569f86811e8a0a8453851b577b684bce01b8b83992f88cb1250b1ee5
+  manifest_projection: v2
+  note: 'attempt 5: batch conversion of control characters (constant number of external commands); meets the performance target (5,000 lines and 8 MB within 10s; target, not an input restriction). bats 475 / tier BDD 80 on macOS and Linux'
+created_at: '2026-11-13T07:57:23+09:00'

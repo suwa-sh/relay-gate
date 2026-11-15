@@ -8,6 +8,15 @@
 # 違反行は stdout に `error:` / `hint:` / `warn:` 1 行ずつ出し(全件収集。1 件目で止めない)、
 # 呼び出し元(usecase)が stderr へ振り分ける。戻り値は「error 行が 1 件以上あれば 1、無ければ 0」。
 # 値は任意文字列(実装版 `-n` 等)を含むため、出力は echo ではなく printf の固定フォーマットで行う。
+# 違反行の `key=` / `value=` / `path:` / `path=` に埋め込む任意入力(キー名・値・パス)は、制御文字を可視表記にする
+# (domain/cli_field.sh の cli_field_safe_text。tier-facade.md「出力契約」stderr / ui-design.md「制御文字の表記」)。
+# 依存: domain/cli_field.sh(未 source なら自分で source する。単体でも source できるようにするため)
+# shellcheck source-path=SCRIPTDIR
+
+if ! declare -F cli_field_safe_text >/dev/null; then
+  # shellcheck source=cli_field.sh
+  source "${BASH_SOURCE[0]%/*}/cli_field.sh"
+fi
 
 # 設定所有区分: feature flag が所有する 9 キー(元の方針資料の設定契約と同じ。設定版は持たない)
 FEATURE_FLAG_DEFINED_KEYS=(
@@ -42,8 +51,125 @@ OPERATION_MODE_CUSTOM="custom"
 # 空値の表記(ui-design.md 出力フォーマット「空値」)
 FEATURE_FLAG_EMPTY_VALUE="-"
 
+# 報告行(`warn:` / `error:` / `hint:`)の出し先。既定は stdout(1 行ずつ)。
+# 行数に比例する件数の行を受け取る呼び出し元(usecase)は配列に溜める(サブシェルで受けて行に分け直すと、数十 MB の報告で
+# 秒単位の時間がかかる)。配列に溜めるときは、呼び出し元が feature_flag_reset_report_lines で初期化し、呼び出しの後に出し先を戻して、
+# feature_flag_flush_report_lines で出す(FEATURE_FLAG_REPORT_LINES へ行を足してから出してもよい)
+FEATURE_FLAG_REPORT_SINK_STDOUT="stdout"
+FEATURE_FLAG_REPORT_SINK_ARRAY="array"
+FEATURE_FLAG_REPORT_SINK="$FEATURE_FLAG_REPORT_SINK_STDOUT"
+FEATURE_FLAG_REPORT_LINES=()
+
+# 報告行を出す(1 引数 1 行)
+feature_flag_emit() {
+  if [ "$FEATURE_FLAG_REPORT_SINK" = "$FEATURE_FLAG_REPORT_SINK_ARRAY" ]; then
+    FEATURE_FLAG_REPORT_LINES+=("$@")
+  else
+    printf '%s\n' "$@"
+  fi
+}
+
+# 値を埋め込む報告行のうち、配列に溜めるときに値の表示を後回しにする大きさ(値の合計のバイト数)。
+# 値の可視表記は元の最大 6 倍になる。数 MB の値を埋め込んだ行を組み立てて配列に溜めると、行を写すたびに長さに比例する時間が
+# かかるため、大きな値は元の値のまま控えておき、出すときに可視表記を直接出す。出力のバイト列は変わらない
+FEATURE_FLAG_REPORT_DEFERRED_MIN_BYTES=4096
+# 値の表示を後回しにした報告行の、埋め込む値(添字は FEATURE_FLAG_REPORT_LINES と同じ。その行の FEATURE_FLAG_REPORT_LINES は値の前までの文字列)
+#   FEATURE_FLAG_REPORT_VALUE_1 … 1 つ目の値 / FEATURE_FLAG_REPORT_MIDDLE … 2 つ目の値の前の文字列 / FEATURE_FLAG_REPORT_VALUE_2 … 2 つ目の値
+FEATURE_FLAG_REPORT_VALUE_1=()
+FEATURE_FLAG_REPORT_MIDDLE=()
+FEATURE_FLAG_REPORT_VALUE_2=()
+
+# 値の表示(空なら空値表記 `-`、それ以外は制御文字を可視表記にした値)を、改行を付けずに stdout へ出す
+# 引数: value
+feature_flag_print_shown_value() {
+  if [ -n "${1:-}" ]; then
+    cli_field_print_safe_text "$1"
+  else
+    printf '%s' "$FEATURE_FLAG_EMPTY_VALUE"
+  fi
+}
+
+# 値を 1 つか 2 つ埋め込む報告行を出す: `<prefix><値 1 の表示>`、または `<prefix><値 1 の表示><middle><値 2 の表示>`。
+# 値の表示は feature_flag_print_shown_value と同じ(空なら `-`)
+# 引数: prefix value [middle value2]
+feature_flag_emit_value_line() {
+  local total="${#2}" index
+  if [ $# -ge 4 ]; then
+    total=$((total + ${#4}))
+  fi
+  if [ "$FEATURE_FLAG_REPORT_SINK" != "$FEATURE_FLAG_REPORT_SINK_ARRAY" ]; then
+    printf '%s' "$1"
+    feature_flag_print_shown_value "$2"
+    if [ $# -ge 4 ]; then
+      printf '%s' "$3"
+      feature_flag_print_shown_value "$4"
+    fi
+    printf '\n'
+  elif [ "$total" -lt "$FEATURE_FLAG_REPORT_DEFERRED_MIN_BYTES" ]; then
+    local line
+    feature_flag_shown_value "$2"
+    line="$1$FEATURE_FLAG_SHOWN_VALUE"
+    if [ $# -ge 4 ]; then
+      feature_flag_shown_value "$4"
+      line+="$3$FEATURE_FLAG_SHOWN_VALUE"
+    fi
+    FEATURE_FLAG_REPORT_LINES+=("$line")
+  else
+    index="${#FEATURE_FLAG_REPORT_LINES[@]}"
+    FEATURE_FLAG_REPORT_LINES+=("$1")
+    FEATURE_FLAG_REPORT_VALUE_1[index]="$2"
+    if [ $# -ge 4 ]; then
+      FEATURE_FLAG_REPORT_MIDDLE[index]="$3"
+      FEATURE_FLAG_REPORT_VALUE_2[index]="$4"
+    fi
+  fi
+}
+
+# 配列に溜めた報告行を、溜めた順に stdout へ出して、配列を空にする(値の表示を後回しにした行は、ここで値の表示を付ける)
+feature_flag_flush_report_lines() {
+  local index
+  for index in ${FEATURE_FLAG_REPORT_LINES[@]+"${!FEATURE_FLAG_REPORT_LINES[@]}"}; do
+    if [ -z "${FEATURE_FLAG_REPORT_VALUE_1[index]+x}" ]; then
+      printf '%s\n' "${FEATURE_FLAG_REPORT_LINES[index]}"
+      continue
+    fi
+    printf '%s' "${FEATURE_FLAG_REPORT_LINES[index]}"
+    feature_flag_print_shown_value "${FEATURE_FLAG_REPORT_VALUE_1[index]}"
+    if [ -n "${FEATURE_FLAG_REPORT_MIDDLE[index]+x}" ]; then
+      printf '%s' "${FEATURE_FLAG_REPORT_MIDDLE[index]}"
+      feature_flag_print_shown_value "${FEATURE_FLAG_REPORT_VALUE_2[index]}"
+    fi
+    printf '\n'
+  done
+  feature_flag_reset_report_lines
+}
+
+# 配列に溜めた報告行を捨てる
+feature_flag_reset_report_lines() {
+  FEATURE_FLAG_REPORT_LINES=()
+  FEATURE_FLAG_REPORT_VALUE_1=()
+  FEATURE_FLAG_REPORT_MIDDLE=()
+  FEATURE_FLAG_REPORT_VALUE_2=()
+}
+
+# 9 キーのうち最も長いキー名の長さ(これより長いキーは 9 キーのどれでもない)
+FEATURE_FLAG_DEFINED_KEY_MAX_LENGTH=0
+feature_flag_measure_defined_keys() {
+  local defined
+  for defined in "${FEATURE_FLAG_DEFINED_KEYS[@]}"; do
+    if [ "${#defined}" -gt "$FEATURE_FLAG_DEFINED_KEY_MAX_LENGTH" ]; then
+      FEATURE_FLAG_DEFINED_KEY_MAX_LENGTH="${#defined}"
+    fi
+  done
+}
+feature_flag_measure_defined_keys
+
 # 9 キーに含まれるか
 feature_flag_is_defined_key() {
+  # 長いキーは比べる前に除く(数 MB のキーを 9 回比べない。行数に比例して呼ばれる)
+  if [ "${#1}" -gt "$FEATURE_FLAG_DEFINED_KEY_MAX_LENGTH" ]; then
+    return 1
+  fi
   local key="$1" defined
   for defined in "${FEATURE_FLAG_DEFINED_KEYS[@]}"; do
     if [ "$key" = "$defined" ]; then
@@ -77,23 +203,30 @@ count_foreground() {
   printf '%s\n' "$count"
 }
 
-# 計算ルール「運用モード名」: (BLUE_MODE, GREEN_MODE, RAPID_CROSSCHECK_MODE) → operation_mode
-derive_operation_mode() {
-  local blue="$1" green="$2" rapid="$3"
-  case "$blue/$green/$rapid" in
+# 計算ルール「運用モード名」: (BLUE_MODE, GREEN_MODE, RAPID_CROSSCHECK_MODE) → operation_mode。結果は FEATURE_FLAG_OPERATION_MODE
+# (サブシェルを使わずグローバルで返す。大きな設定を読み込んだ後のサブシェルの起動は、プロセスの複製に時間がかかる)
+FEATURE_FLAG_OPERATION_MODE=""
+feature_flag_resolve_operation_mode() {
+  case "$1/$2/$3" in
     "$FEATURE_FLAG_MODE_FOREGROUND/$FEATURE_FLAG_MODE_BACKGROUND/$FEATURE_FLAG_MODE_BACKGROUND")
-      printf '%s\n' "$OPERATION_MODE_PARALLEL"
+      FEATURE_FLAG_OPERATION_MODE="$OPERATION_MODE_PARALLEL"
       ;;
     "$FEATURE_FLAG_MODE_OFF/$FEATURE_FLAG_MODE_FOREGROUND/$FEATURE_FLAG_MODE_OFF")
-      printf '%s\n' "$OPERATION_MODE_GREEN_ONLY"
+      FEATURE_FLAG_OPERATION_MODE="$OPERATION_MODE_GREEN_ONLY"
       ;;
     "$FEATURE_FLAG_MODE_BACKGROUND/$FEATURE_FLAG_MODE_FOREGROUND/$FEATURE_FLAG_MODE_BACKGROUND")
-      printf '%s\n' "$OPERATION_MODE_NEXT_GEN_PARALLEL"
+      FEATURE_FLAG_OPERATION_MODE="$OPERATION_MODE_NEXT_GEN_PARALLEL"
       ;;
     *)
-      printf '%s\n' "$OPERATION_MODE_CUSTOM"
+      FEATURE_FLAG_OPERATION_MODE="$OPERATION_MODE_CUSTOM"
       ;;
   esac
+}
+
+# 運用モード名を stdout に出す
+derive_operation_mode() {
+  feature_flag_resolve_operation_mode "$1" "$2" "$3"
+  printf '%s\n' "$FEATURE_FLAG_OPERATION_MODE"
 }
 
 # 値が空なら空値表記 `-` に置き換える
@@ -105,28 +238,39 @@ feature_flag_display_value() {
   fi
 }
 
+# 違反行に埋め込む mode 値の表示(空なら空値表記 `-`、それ以外は制御文字を可視表記にした値)。結果は FEATURE_FLAG_SHOWN_VALUE
+# (サブシェルを使わずグローバルで返す)
+FEATURE_FLAG_SHOWN_VALUE=""
+feature_flag_shown_value() {
+  if [ -n "${1:-}" ]; then
+    cli_field_safe_text "$1"
+    FEATURE_FLAG_SHOWN_VALUE="$CLI_FIELD_SAFE_TEXT"
+  else
+    FEATURE_FLAG_SHOWN_VALUE="$FEATURE_FLAG_EMPTY_VALUE"
+  fi
+}
+
 # mode キー 1 つの検証: 必須(欠落・空)→ 列挙
-# 引数: key path value
+# 値は数 MB になりうるため(行の長さに上限は無い)、変数へ写さずに引数のまま使う(1 回写すたびに値の長さに比例する時間がかかる)
+# 引数: key path(表示用に置き換え済みのパス) value
 validate_feature_flag_mode_key() {
-  local key="$1" path="$2" value="$3"
-  if [ -z "$value" ]; then
-    printf '%s\n' "error: option required option=$key path: $path"
+  if [ -z "$3" ]; then
+    feature_flag_emit "error: option required option=$1 path: $2"
     return 1
   fi
-  if ! feature_flag_is_valid_mode "$value"; then
-    printf '%s\n' "error: invalid value key=$key value=$value"
-    printf '%s\n' "$FEATURE_FLAG_MODE_HINT"
+  if ! feature_flag_is_valid_mode "$3"; then
+    feature_flag_emit_value_line "error: invalid value key=$1 value=" "$3"
+    feature_flag_emit "$FEATURE_FLAG_MODE_HINT"
     return 1
   fi
   return 0
 }
 
 # 非空文字列キー(<SLOT>_IMPL)の検証: 欠落・空は option required
-# 引数: key path value
+# 引数: key path(表示用に置き換え済みのパス) value
 validate_feature_flag_required_value() {
-  local key="$1" path="$2" value="$3"
-  if [ -z "$value" ]; then
-    printf '%s\n' "error: option required option=$key path: $path"
+  if [ -z "$3" ]; then
+    feature_flag_emit "error: option required option=$1 path: $2"
     return 1
   fi
   return 0
@@ -134,22 +278,19 @@ validate_feature_flag_required_value() {
 
 # 実体パスキー(<SLOT>_RUNNER / RAPID_CROSSCHECK_RUNNER / RAPID_CROSSCHECK_WORKER)の検証:
 # 欠落 → 絶対パス → 存在かつ実行可能
-# 引数: key path value
+# 引数: key path(表示用に置き換え済みのパス) value
 validate_feature_flag_executable_path() {
-  local key="$1" path="$2" value="$3"
-  if [ -z "$value" ]; then
-    printf '%s\n' "error: option required option=$key path: $path"
+  if [ -z "$3" ]; then
+    feature_flag_emit "error: option required option=$1 path: $2"
     return 1
   fi
-  case "$value" in
-    /*) ;;
-    *)
-      printf '%s\n' "error: path is not absolute key=$key path=$value"
-      return 1
-      ;;
-  esac
-  if [ ! -f "$value" ] || [ ! -x "$value" ]; then
-    printf '%s\n' "error: file not executable key=$key path=$value"
+  # 先頭の 1 文字だけを見る(値の全体をパターンに照合しない)
+  if [ "${3:0:1}" != / ]; then
+    feature_flag_emit_value_line "error: path is not absolute key=$1 path=" "$3"
+    return 1
+  fi
+  if [ ! -f "$3" ] || [ ! -x "$3" ]; then
+    feature_flag_emit_value_line "error: file not executable key=$1 path=" "$3"
     return 1
   fi
   return 0
@@ -157,69 +298,142 @@ validate_feature_flag_executable_path() {
 
 # 実体パスが検証を通過済み(絶対パス・存在・実行可能)か。runner --help 問い合わせの前提判定に使う
 feature_flag_path_is_executable() {
-  local value="$1"
-  case "$value" in
-    /*) [ -f "$value" ] && [ -x "$value" ] ;;
-    *) return 1 ;;
-  esac
+  [ "${1:0:1}" = / ] && [ -f "$1" ] && [ -x "$1" ]
 }
 
-# 検証表の全項目を評価する(違反は全件収集)。
+# feature_flag_classify_keys の結果: FEATURE_FLAG_KEYS の添字(ファイルに初めて出た順)
+#   FEATURE_FLAG_UNKNOWN_KEY_INDEXES   … 未知キー(9 キー以外で FINAL_ で始まらないキー)
+#   FEATURE_FLAG_FORBIDDEN_KEY_INDEXES … 確報の制御キー(FINAL_ で始まるキー)
+FEATURE_FLAG_UNKNOWN_KEY_INDEXES=()
+FEATURE_FLAG_FORBIDDEN_KEY_INDEXES=()
+
+# 条件「設定所有区分」「確報クロスチェック非起動」: FEATURE_FLAG_KEYS を 9 キー / 未知キー / 確報の制御キーに分ける。
+# キー名は長いことがあるため(行の長さに上限は無い)、接頭辞と長さだけを見て、キー名の全体を比べる回数を増やさない
+feature_flag_classify_keys() {
+  local index prefix_length="${#FEATURE_FLAG_FORBIDDEN_KEY_PREFIX}"
+  FEATURE_FLAG_UNKNOWN_KEY_INDEXES=()
+  FEATURE_FLAG_FORBIDDEN_KEY_INDEXES=()
+  for index in ${FEATURE_FLAG_KEYS[@]+"${!FEATURE_FLAG_KEYS[@]}"}; do
+    if [ "${FEATURE_FLAG_KEYS[index]:0:prefix_length}" = "$FEATURE_FLAG_FORBIDDEN_KEY_PREFIX" ]; then
+      FEATURE_FLAG_FORBIDDEN_KEY_INDEXES+=("$index")
+    elif [ "${#FEATURE_FLAG_KEYS[index]}" -gt "$FEATURE_FLAG_DEFINED_KEY_MAX_LENGTH" ] \
+      || ! feature_flag_is_defined_key "${FEATURE_FLAG_KEYS[index]}"; then
+      FEATURE_FLAG_UNKNOWN_KEY_INDEXES+=("$index")
+    fi
+  done
+}
+
+# 未知キーの warn 行をすべて出す(キーがファイルに初めて出た順。拒否しない)。feature_flag_classify_keys の後に呼ぶ。
+# 可視表記のキー名は数十 MB になりうるため、stdout へ出すときは行を組み立てずに printf の書式で出す
+# 引数: shown_keys_name(FEATURE_FLAG_KEYS と同じ並びで、キー名を表示用に置き換え済みの配列の名前)
+feature_flag_report_unknown_keys() {
+  local -n feature_flag_unknown_shown_ref="$1"
+  local index path
+  cli_field_safe_text "${FEATURE_FLAG_PATH:-$FEATURE_FLAG_EMPTY_VALUE}"
+  path="$CLI_FIELD_SAFE_TEXT"
+  for index in ${FEATURE_FLAG_UNKNOWN_KEY_INDEXES[@]+"${FEATURE_FLAG_UNKNOWN_KEY_INDEXES[@]}"}; do
+    if [ "$FEATURE_FLAG_REPORT_SINK" = "$FEATURE_FLAG_REPORT_SINK_ARRAY" ]; then
+      FEATURE_FLAG_REPORT_LINES+=("warn: unknown key key=${feature_flag_unknown_shown_ref[index]} path: $path")
+    else
+      printf 'warn: unknown key key=%s path: %s\n' "${feature_flag_unknown_shown_ref[index]}" "$path"
+    fi
+  done
+}
+
+# 検証表の error 行(と hint)を全件出す(違反は全件収集)。feature_flag_classify_keys の後に呼ぶ。
 # 入力(グローバル。repository が env から構築する):
 #   BLUE_MODE GREEN_MODE RAPID_CROSSCHECK_MODE BLUE_IMPL GREEN_IMPL BLUE_RUNNER GREEN_RUNNER
 #   RAPID_CROSSCHECK_RUNNER RAPID_CROSSCHECK_WORKER(未設定可)
 #   FEATURE_FLAG_PATH(メッセージの `path:` に使う。未設定なら `-`)
-#   FEATURE_FLAG_KEYS(env に現れたキー一覧。未知キー warn / 確報制御キー拒否に使う。未設定なら評価しない)
-validate_feature_flag() {
-  local path="${FEATURE_FLAG_PATH:-$FEATURE_FLAG_EMPTY_VALUE}"
-  local errors=0
-  local blue_mode="${BLUE_MODE:-}" green_mode="${GREEN_MODE:-}" rapid_mode="${RAPID_CROSSCHECK_MODE:-}"
+#   FEATURE_FLAG_FORBIDDEN_KEY_INDEXES(確報の制御キーの添字)
+# 引数: shown_keys_name(FEATURE_FLAG_KEYS と同じ並びで、キー名を表示用に置き換え済みの配列の名前)
+# error 行どうしの順は仕様に定めが無い(AssumptionRecord A-016。issues/20261113_021600_feature-flag-error-line-order-undefined.md)
+validate_feature_flag_errors() {
+  local -n feature_flag_error_shown_ref="$1"
+  local path errors=0 index foreground_count=0 blue_active=false green_active=false rapid_active=false
+  cli_field_safe_text "${FEATURE_FLAG_PATH:-$FEATURE_FLAG_EMPTY_VALUE}"
+  path="$CLI_FIELD_SAFE_TEXT"
+  # mode の値は数 MB になりうるため、変数へ写さず、判定の結果だけを控える
+  if [ "${BLUE_MODE:-}" = "$FEATURE_FLAG_MODE_FOREGROUND" ]; then
+    foreground_count=$((foreground_count + 1))
+  fi
+  if [ "${GREEN_MODE:-}" = "$FEATURE_FLAG_MODE_FOREGROUND" ]; then
+    foreground_count=$((foreground_count + 1))
+  fi
+  if feature_flag_mode_is_active "${BLUE_MODE:-}"; then
+    blue_active=true
+  fi
+  if feature_flag_mode_is_active "${GREEN_MODE:-}"; then
+    green_active=true
+  fi
+  if feature_flag_mode_is_active "${RAPID_CROSSCHECK_MODE:-}"; then
+    rapid_active=true
+  fi
 
   # 列挙・必須(BLUE_MODE / GREEN_MODE / RAPID_CROSSCHECK_MODE)
-  validate_feature_flag_mode_key BLUE_MODE "$path" "$blue_mode" || errors=$((errors + 1))
-  validate_feature_flag_mode_key GREEN_MODE "$path" "$green_mode" || errors=$((errors + 1))
-  validate_feature_flag_mode_key RAPID_CROSSCHECK_MODE "$path" "$rapid_mode" || errors=$((errors + 1))
+  validate_feature_flag_mode_key BLUE_MODE "$path" "${BLUE_MODE:-}" || errors=$((errors + 1))
+  validate_feature_flag_mode_key GREEN_MODE "$path" "${GREEN_MODE:-}" || errors=$((errors + 1))
+  validate_feature_flag_mode_key RAPID_CROSSCHECK_MODE "$path" "${RAPID_CROSSCHECK_MODE:-}" || errors=$((errors + 1))
 
-  # 条件「foreground slot 排他」: foreground はちょうど 1 slot(2 個・0 個は同じ文言で NG)
-  if [ "$(count_foreground "$blue_mode" "$green_mode")" -ne 1 ]; then
-    printf '%s\n' "error: foreground slot must be exactly one blue_mode=$(feature_flag_display_value "$blue_mode") green_mode=$(feature_flag_display_value "$green_mode")"
+  # 条件「foreground slot 排他」: foreground はちょうど 1 slot(2 個・0 個は同じ文言で NG。計算ルール「foreground 数」)
+  if [ "$foreground_count" -ne 1 ]; then
+    feature_flag_emit_value_line "error: foreground slot must be exactly one blue_mode=" "${BLUE_MODE:-}" " green_mode=" "${GREEN_MODE:-}"
     errors=$((errors + 1))
   fi
 
   # slot 実行モード: off 以外の slot は <SLOT>_IMPL(非空)と <SLOT>_RUNNER(実体)が必須。off は検証をスキップ
-  if feature_flag_mode_is_active "$blue_mode"; then
+  if [ "$blue_active" = true ]; then
     validate_feature_flag_required_value BLUE_IMPL "$path" "${BLUE_IMPL:-}" || errors=$((errors + 1))
     validate_feature_flag_executable_path BLUE_RUNNER "$path" "${BLUE_RUNNER:-}" || errors=$((errors + 1))
   fi
-  if feature_flag_mode_is_active "$green_mode"; then
+  if [ "$green_active" = true ]; then
     validate_feature_flag_required_value GREEN_IMPL "$path" "${GREEN_IMPL:-}" || errors=$((errors + 1))
     validate_feature_flag_executable_path GREEN_RUNNER "$path" "${GREEN_RUNNER:-}" || errors=$((errors + 1))
   fi
 
   # 条件「速報クロスチェック有効判定」: off 以外は速報 runner / worker の実体が必須
-  if feature_flag_mode_is_active "$rapid_mode"; then
+  if [ "$rapid_active" = true ]; then
     validate_feature_flag_executable_path RAPID_CROSSCHECK_RUNNER "$path" "${RAPID_CROSSCHECK_RUNNER:-}" || errors=$((errors + 1))
     validate_feature_flag_executable_path RAPID_CROSSCHECK_WORKER "$path" "${RAPID_CROSSCHECK_WORKER:-}" || errors=$((errors + 1))
   fi
 
-  # 条件「確報クロスチェック非起動」/「設定所有区分」: env に現れたキーの検査
-  # (FINAL_ 接頭辞の拒否を先に判定し、それ以外の 9 キー外キーだけを未知キー warn にする)
-  local key
-  for key in ${FEATURE_FLAG_KEYS[@]+"${FEATURE_FLAG_KEYS[@]}"}; do
-    case "$key" in
-      "$FEATURE_FLAG_FORBIDDEN_KEY_PREFIX"*)
-        printf '%s\n' "error: final crosscheck key is not allowed key=$key"
-        errors=$((errors + 1))
-        ;;
-      *)
-        if ! feature_flag_is_defined_key "$key"; then
-          printf '%s\n' "warn: unknown key key=$key path: $path"
-        fi
-        ;;
-    esac
+  # 条件「確報クロスチェック非起動」: キー名が FINAL_ で始まるキーは該当キーごとに error(同じキーに未知キーの warn は出さない)
+  for index in ${FEATURE_FLAG_FORBIDDEN_KEY_INDEXES[@]+"${FEATURE_FLAG_FORBIDDEN_KEY_INDEXES[@]}"}; do
+    feature_flag_emit "error: final crosscheck key is not allowed key=${feature_flag_error_shown_ref[index]}"
+    errors=$((errors + 1))
   done
 
   [ "$errors" -eq 0 ]
+}
+
+# 検証表の全項目を評価する(違反は全件収集)。入力のグローバルは validate_feature_flag_errors と同じで、加えて
+#   FEATURE_FLAG_KEYS(env に現れたキー一覧。未知キー warn / 確報制御キー拒否に使う。未設定なら評価しない)
+# 引数: [shown_keys_name](任意。FEATURE_FLAG_KEYS と同じ並びで、キー名を表示用に置き換え済みの配列の名前。省略したらこの関数が作る)
+# 行の順(契約 config_input_rules.env_files「validate-config.sh の --verbose の info 行」(c)):
+#   未知キーの warn 行をすべて(キーがファイルに初めて出た順)→ error 行(と hint)。
+# usecase は、行数に比例する件数の warn 行を溜めずに出すため、この関数を使わず、同じ 3 つの関数(キーの分類 → 未知キーの warn 行 →
+# error 行)を自分で順に呼ぶ
+validate_feature_flag() {
+  local shown_keys_name="${1:-}"
+  # shellcheck disable=SC2034  # 名前で渡して使う(cli_field_safe_text_list が載せ、後の 2 つの関数が読む)
+  local -a feature_flag_local_shown_keys=()
+  # キー名の可視表記は、行数によらず一定回数の外部コマンドでまとめて作る(キーごとに置き換えを繰り返さない)。
+  # 外部コマンドが失敗したときは、キーごとに置き換える(結果は同じ。この層は終了コードを決めないため、検証表の結果を返す。
+  # 補助コマンドの失敗として終了コード 6 で止めるのは、可視表記を作って渡す usecase の責務)
+  if [ -z "$shown_keys_name" ]; then
+    if ! cli_field_safe_text_list feature_flag_local_shown_keys ${FEATURE_FLAG_KEYS[@]+"${FEATURE_FLAG_KEYS[@]}"}; then
+      local key
+      feature_flag_local_shown_keys=()
+      for key in ${FEATURE_FLAG_KEYS[@]+"${FEATURE_FLAG_KEYS[@]}"}; do
+        cli_field_safe_text "$key"
+        feature_flag_local_shown_keys+=("$CLI_FIELD_SAFE_TEXT")
+      done
+    fi
+    shown_keys_name=feature_flag_local_shown_keys
+  fi
+  feature_flag_classify_keys
+  feature_flag_report_unknown_keys "$shown_keys_name"
+  validate_feature_flag_errors "$shown_keys_name"
 }
 
 # SlotRunnerAssignment: off でない slot の対応ジョブマップ `<slot>-job-map.csv` が存在し読めること
@@ -231,7 +445,8 @@ validate_slot_runner_assignment() {
     return 0
   fi
   if [ ! -f "$job_map" ] || [ ! -r "$job_map" ]; then
-    printf '%s\n' "error: job map not found slot=$slot map=$job_map"
+    cli_field_safe_text "$job_map"
+    feature_flag_emit "error: job map not found slot=$slot map=$CLI_FIELD_SAFE_TEXT"
     return 1
   fi
   return 0

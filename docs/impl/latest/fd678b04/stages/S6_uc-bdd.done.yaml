@@ -1,42 +1,58 @@
 stage: S6
 uc_id: fd678b04
-manifest_sha256: 1802e7aaaecea1c74c643022cb6bd64bd90cb653f0c8e55ebf73b9888907116e
+manifest_sha256: 829aa482569f86811e8a0a8453851b577b684bce01b8b83992f88cb1250b1ee5
 manifest_projection: v2
 result: pass
-rerun_reason: "stale after spec event 20260917_100000_feedback_impl_feedback_fd678b04_cycle2 (invalidated by 20260917_100200_stale_invalidated_spec_feedback_cycle2_applied_fd678b04)"
-previous_done: "docs/impl/latest/fd678b04/invalidated/20260917_100200_stale_invalidated_spec_feedback_cycle2_applied_fd678b04/stages/S6_uc-bdd.done.yaml"
+rerun_reason: "stale after spec feedback runs (invalidated by 20261113_020309_stage_invalidated_fd678b04_stale_after_spec_feedback_runs)"
+previous_done: "docs/impl/latest/fd678b04/invalidated/20261113_020309_stage_invalidated_fd678b04_stale_after_spec_feedback_runs/stages/S6_uc-bdd.done.yaml"
 branch_slug: configure-feature-flags
 tiers:
   - tier-facade
+tier_impl_attempt: 5
 feature: features/uc/configure-feature-flags.feature
 feature_changed: false
 steps: features/uc/steps/configure-feature-flags.steps.js
-steps_changed: true
-steps_change_summary: "S2 scoped 再実行で追加された Scenario「FINAL_ で始まる確報設定のキーは未知キーではなく拒否される(SPEC-001-01)」の未実装 skeleton step 5 件(Given 2 / Then 3)を実装。未実装用ヘルパ notImplemented を撤去。既存 11 Scenario の step 定義は変更なし"
+steps_changed: false
+steps_change_summary: "変更なし。spec.md の E2E 完了条件(12 Scenario)は S2 再実行時点で本文の変更が無く、既存の step 定義が attempt 5 の実装に対してそのまま全件 pass した"
 source: "docs/specs/latest/適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md#E2E完了条件(BDD)"
 tier_impl_changed: false
 run:
   cwd: "."
   command: "npx cucumber-js --config cucumber.cjs features/uc"
   exit_code: 0
-  summary: "12 scenarios (12 passed), 49 steps (49 passed)"
+  summary: "46 scenarios (46 passed), 269 steps (269 passed)"
+  scenarios_total: 46
+  scenarios_passed: 46
+  scenarios_failed: 0
+  undefined_steps: 0
+  ambiguous_steps: 0
+  pending_steps: 0
+target_feature_run:
+  cwd: "."
+  command: "npx cucumber-js --config cucumber.cjs features/uc/configure-feature-flags.feature"
+  exit_code: 0
+  summary: "12 scenarios (12 passed), 73 steps (73 passed)"
   scenarios_total: 12
   scenarios_passed: 12
   scenarios_failed: 0
-  undefined_steps: 0
-changed_scenario_run:
-  scenario: "FINAL_ で始まる確報設定のキーは未知キーではなく拒否される(SPEC-001-01)"
-  command: "npx cucumber-js --config cucumber.cjs features/uc --name 'FINAL_ で始まる'"
-  exit_code: 0
-  summary: "1 scenario (1 passed), 6 steps (6 passed)"
+other_uc_features:
+  regression: none
+  note: "features/uc の他 2 feature(define-slot-job-maps 24 Scenario / define-crosscheck-job-map-and-comparison-definitions 10 Scenario)は全件 pass。facade/src/domain/cli_field.sh の変更による退行は検出されなかった"
+  scenarios:
+    - feature: features/uc/define-slot-job-maps.feature
+      scenarios_passed: 24
+      scenarios_failed: 0
+    - feature: features/uc/define-crosscheck-job-map-and-comparison-definitions.feature
+      scenarios_passed: 10
+      scenarios_failed: 0
+performance_note: "性能(5,000 行以内かつ 8 MB 以内を 10 秒以内)は目標値であり合否の検査ではない(利用者決定)。本 stage では時間を判定に使っていない。参考: features/uc 全体の実行は約 7 秒"
 harness:
   sandbox_root: "Scenario ごとの一時ディレクトリを root とし、feature の絶対パス(/etc/relay-gate, /opt/relay-gate)を root 配下の同じ相対位置に配置。出力照合時に root 接頭辞を除去"
-  config_dir: "RELAY_GATE_CONFIG_DIR=<root>/etc/relay-gate(ジョブマップの配置先)"
-  runner_stubs: "--help で runner-if-version=1 を返す実行可能スタブ(4 実体)。--help 以外で呼ばれた場合は起動記録を残す"
-  final_prefix_scenario: "並行稼働の有効状態(9 キー + runner 実体 + ジョブマップ)を組み、単体で終了コード 0 と operation_mode=parallel を実体確認してから FINAL_DB_CONN_REF=final-db を 1 行追加。error 行が当該 1 行だけで warn: unknown key が出ないことを stderr 全行で照合"
+  entrypoint: "facade/bin/validate-config.sh(実体を起動)"
+  runner_stubs: "--help で runner-if-version=1 を返す実行可能スタブ"
   external_connections: none
 injections: []
-injections_note: "ハーネス注入なし(検証コマンドのみで完結。facade.sh は配置も起動もしない)"
+injections_note: "ハーネス注入なし(検証コマンドのみで完結)"
 issues: []
-completed_at: '2026-09-17T10:30:00+09:00'
+completed_at: '2026-11-15T09:30:00+09:00'
 completed_by: dist-impl-implement@0.14.1

@@ -1,0 +1,28 @@
+event_id: 20261113_023838_s4_tier_impl_completed_fd678b04_facade
+type: stage_completed
+uc_id: fd678b04
+stage: S4
+tier: tier-facade
+attempt: 3
+payload:
+  result: pass
+  gates:
+    format: pass
+    lint: pass
+    tdd: pass
+    bdd_tier: pass
+  assumptions:
+    path: attempt-3/S4_tier-impl.tier-facade.assumptions.yaml
+    count: 12
+    by_category:
+      input_validation: 2
+      data_format: 3
+      error_handling: 5
+      persistence: 0
+      performance: 1
+      security: 1
+    sha256: 26d756a6ff335d755ae5035388cb3da45e7b112e7e5de5d8e88fff486197694c
+  manifest_sha256: 829aa482569f86811e8a0a8453851b577b684bce01b8b83992f88cb1250b1ee5
+  manifest_projection: v2
+  note: stale re-execution in attempt-3 (no findings passed). feature-flag.env reader and validate-config.sh --feature-flag follow the env-format rules and the --verbose info line rule. A-016 (error line order) and A-028 (dependent checks when mode is out of the enum) keep the 2026-09 behavior and wait for the user's decision
+created_at: '2026-11-13T02:38:38+09:00'

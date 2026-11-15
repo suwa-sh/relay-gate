@@ -2,14 +2,12 @@ stage: S4
 tier: tier-facade
 attempt: 3
 uc_id: fd678b04
-manifest_sha256: 1802e7aaaecea1c74c643022cb6bd64bd90cb653f0c8e55ebf73b9888907116e
+manifest_sha256: 829aa482569f86811e8a0a8453851b577b684bce01b8b83992f88cb1250b1ee5
 manifest_projection: v2
 result: pass
-rerun_mode: attempt_increment
-rerun_reason: "attempt-2 S5 verify blocker F-005 (assumption A-007 contradicts contract config_files.feature-flag.env.validation_rules FINAL_ prefix precedence)"
-previous_done: "docs/impl/latest/fd678b04/stages/attempt-2/S4_tier-impl.tier-facade.done.yaml"
-findings_provided: true
-findings_path: "docs/impl/latest/fd678b04/stages/attempt-2/S5_verify.tier-facade.findings.yaml"
+rerun_mode: stale_rerun
+rerun_reason: "2026-09 に完了した UC の再実行。完了後の仕様更新(env 形式の共通規則と --verbose の info 行の規則)へ実装を追従させた"
+findings_provided: false
 gates:
   format: pass
   lint: pass
@@ -28,141 +26,85 @@ gate_runs:
     cwd: facade
     command: "bats -r test"
     exit_code: 0
-    summary: "76 tests, 76 ok (attempt-2: 72; +2 from F-001 test split, +2 new FINAL_ no-equals-line tests)"
+    summary: "409 tests, 409 ok, 0 not ok(S2 の 408 件 + S4 で追加した 1 件。S2 時点で落ちていた 19 件はすべて pass)"
   - gate: bdd_tier
     cwd: facade
     command: "npx cucumber-js --config ../cucumber.cjs features"
     exit_code: 0
-    summary: "9 scenarios (9 passed), 32 steps (32 passed)"
+    summary: "80 scenarios (80 passed), 437 steps (437 passed)。対象 feature configure-feature-flags.feature は 32 scenarios (32 passed), 176 steps (176 passed)。S2 時点で落ちていた 16 件はすべて pass。他 UC の 48 scenarios も pass のまま"
+extra_checks:
+  - name: "Linux(ubuntu 24.04、LANG=C.UTF-8、arm64 コンテナ)での bats 全件"
+    command: "docker run --rm -e LANG=C.UTF-8 -v \"$PWD:/work:ro\" -w /work/facade relay-gate-ci:ubuntu24 bats -r test"
+    exit_code: 0
+    summary: "409 tests, 409 ok"
+  - name: "Linux(amd64 エミュレーション)での feature flag 関連 5 ファイル"
+    command: "docker run --rm --platform linux/amd64 -e LANG=C.UTF-8 -v \"$PWD:/work:ro\" -w /work/facade relay-gate-ci:ubuntu24-amd64 bats -T <feature flag の bats 5 ファイル>"
+    exit_code: 0
+    summary: "82 tests, 82 ok。5,000 行の 2 件は 3.8 秒と 5.4 秒(テスト入力の生成を含む。上限 10 秒)"
+implementation_summary:
+  - file: facade/src/repository/feature_flag_config.sh
+    change: "入力を一時ファイルへ複製してバイト点検(NUL / UTF-8 / BOM / CR)してから行を読む形に変更(複製・バイト点検は slot ジョブマップと同じ関数を再利用)。invalid line と同じキーの重複を記録し、どちらかがあれば 9 キーの値を使わない。空白は半角空白とタブだけ。行ごとのサブシェルと重複判定の総当たりをやめ、行数に比例する処理にした"
+  - file: facade/src/usecase/validate_feature_flag.sh
+    change: "検査の段を (i) バイト・改行 → (ii) invalid line・duplicate key → (iii) キーごとの検査に分けた。(iii) の stderr は溜めてから info 全件 → 未知キーの warn 全件 → error(と hint)→ runner 未応答の warn の順に出す。入力の複製の失敗・補助コマンドの失敗・runner 問い合わせの準備失敗は、その error 行(+ hint)だけを出して終了コード 6"
+  - file: facade/src/domain/feature_flag.sh
+    change: "未知キーの warn 行を error 行より先に出す。key= / value= / path: / path= / map= に出す任意入力を制御文字の可視表記にする。error 行どうしの順と、列挙外の mode の扱いは変えていない"
+design_notes:
+  - "feature flag の 3 ファイルは、依存する共有関数のファイル(domain/cli_field.sh、domain/job_map.sh、repository/job_map_repo.sh、usecase/validate_job_map.sh)が未 source のときだけ自分で source する。S2 の単体テストが source するファイルの組(domain / repository / usecase を個別に source)を変えずに共有関数を再利用するため。共有関数の中身と、他 UC のソース・テスト・feature は変更していない"
+test_changes:
+  s2_tests_modified: false
+  added:
+    - file: facade/test/usecase/validate_feature_flag_env_rules.bats
+      test: "validate-config_sh_--feature-flagのverboseで未知キーがありrunner問い合わせの準備に失敗した場合_runner probe failedの1行だけで終了コード6でstdoutは空であること"
+      reason: "契約 config_input_rules.env_files の「準備失敗の回は、その error 行だけを出し、info 行を出さない」を固定するテストが無かったため追加(S2 の既存テストは error 行が含まれることだけを確認)。PATH 先頭の代替 mktemp を使うため、bats の run ではなくファイルへ出力を受ける"
+  mktemp_handoff: "入力の複製以外で新たに mktemp を使っていない(runner 問い合わせの応答ファイルだけ)。S2 の代替 mktemp のテストは調整なしで pass"
 assumptions:
   path: "attempt-3/S4_tier-impl.tier-facade.assumptions.yaml"
-  count: 16
+  count: 12
   by_category:
-    input_validation: 6
-    data_format: 2
-    error_handling: 6
+    input_validation: 2
+    data_format: 3
+    error_handling: 5
     persistence: 0
     performance: 1
     security: 1
-  sha256: 9a99cef7ee2cb03166d96ceb6bbc3cb58fb44d221fec5813de99545df9dfadbf
+  sha256: 26d756a6ff335d755ae5035388cb3da45e7b112e7e5de5d8e88fff486197694c
   extraction:
-    candidate_count: 25
+    candidate_count: 21
     excluded_as_explicit: 9
-    recorded_count: 16
+    recorded_count: 12
   changes_from_attempt_2:
-    reworded:
-      - id: A-007
-        finding: F-005
-        note: "assumption text now states that a line without = is read as key-only with an empty value and that the key is evaluated by the same rules as a KEY=value line: FINAL_ prefix rejected with error before the unknown-key warn, 9 keys become option required only when they are subject to validation (mode keys, non-off slot keys, active rapid keys), other keys warn unknown key"
-    recategorized:
-      - id: A-006
-        finding: F-004
-        from: data_format
-        to: input_validation
-      - id: A-025
-        finding: F-018
-        from: data_format
-        to: error_handling
     excluded_as_explicit_now:
-      - id: A-023
-        finding: F-015
-        note: "stdout key=value vs key: value switch and the always-colon path keys are explicit in cli-command-contract.yaml conventions.output_format.stdout and the tier-facade.md 15-line output example (restatement)"
-    added: []
-    carried_forward:
       - A-005
+      - A-006
+      - A-007
       - A-008
-      - A-010
       - A-015
+      - A-021
+      - A-026
+    carried_forward:
+      - A-010
       - A-016
       - A-017
       - A-018
       - A-019
       - A-020
-      - A-021
+      - A-023
       - A-024
-      - A-026
+      - A-025
       - A-027
-findings_handling:
-  blocker:
-    - id: F-005
-      action: fixed
-      note: "no logic change (Verifier confirmed the FINAL_ rejection is correct). A-007 reworded to match the contract; repository comment at feature_flag_config.sh:63 aligned with the same wording; added bats at repository level (FINAL_ key without = stays in FEATURE_FLAG_KEYS and is not exported) and usecase level (valid config + FINAL_DB_CONN_REF line without = gives exactly one error line, no warn, empty stdout, non-zero status)"
-  major:
-    - id: F-007
-      action: none
-      note: "A-010 security spec_absent is answered by a human in S9 (pending_questions); no implementation change"
-  minor:
-    - id: F-001
-      action: fixed
-      note: "cli_field.bats -n / -e / -ne test split into three single-Act tests (test-strategy.md AAA rule)"
-    - id: F-004
-      action: fixed
-      note: "A-006 category changed to input_validation"
-    - id: F-018
-      action: fixed
-      note: "A-025 category changed to error_handling"
-    - id: F-015
-      action: fixed
-      note: "A-023 removed from the record as a restatement; counted in excluded_as_explicit"
-    - ids:
-        - F-002
-        - F-003
-        - F-006
-        - F-008
-        - F-009
-        - F-010
-        - F-011
-        - F-012
-        - F-013
-        - F-014
-        - F-016
-        - F-017
-        - F-019
-        - F-020
-      action: none
-      note: "spec_absent handoffs to the S9 assumption review; the assumptions are carried forward unchanged so the human decision is taken on the same text"
-variable_prompt_usage: "findings path and the orchestrator's F-005 fix direction were used only for the assumption record wording, test splitting and test additions; no runtime behaviour was decided from them, so no new assumption was recorded"
-ddd_guide: "ddd:ddd-tactical-implementation not re-invoked (no domain model change; comment and test changes only)"
-implemented:
-  - path: facade/bin/validate-config.sh
-    layer: entrypoint
-    note: "unchanged"
-  - path: facade/src/presentation/validate-config.sh
-    layer: presentation
-    model: ValidateConfigRequest
-    note: "unchanged"
-  - path: facade/src/usecase/validate_feature_flag.sh
-    layer: usecase
-    model: ValidateFeatureFlagQuery
-    note: "unchanged"
-  - path: facade/src/domain/feature_flag.sh
-    layer: domain
-    model: "FeatureFlag / SlotRunnerAssignment"
-    note: "unchanged"
-  - path: facade/src/domain/cli_field.sh
-    layer: domain
-    note: "unchanged"
-  - path: facade/src/repository/feature_flag_config.sh
-    layer: repository
-    model: FeatureFlagConfig
-    note: "comment only (line 63: no-equals line evaluation order FINAL_ reject -> conditional option required -> unknown key warn)"
-  - path: facade/src/gateway/runner_probe.sh
-    layer: gateway
-    note: "unchanged"
-tests:
-  tier_bdd_steps: facade/features/steps/configure-feature-flags.steps.js
-  tier_bdd_steps_changed: false
-  tdd:
-    - facade/test/domain/feature_flag.bats
-    - facade/test/domain/cli_field.bats
-    - facade/test/repository/feature_flag_config.bats
-    - facade/test/gateway/runner_probe.bats
-    - facade/test/usecase/validate_feature_flag.bats
-    - facade/test/presentation/validate_config.bats
-  tdd_changed:
-    - facade/test/domain/cli_field.bats
-    - facade/test/repository/feature_flag_config.bats
-    - facade/test/usecase/validate_feature_flag.bats
-issues: []
-completed_at: '2026-09-17T10:24:09+09:00'
+    added:
+      - A-028
+      - A-029
+  undefined_in_spec_awaiting_user_decision:
+    - id: A-016
+      summary: "キーごとの検査の error 行どうしの順。2026-09 完了時の実装の順を変えていない"
+    - id: A-028
+      summary: "mode が列挙外・欠落のときも、その slot を off でないとして従属キーを検査する。2026-09 完了時の実装の挙動を変えていない"
+issues:
+  new: []
+  referenced:
+    - path: docs/impl/latest/fd678b04/issues/20261113_021600_feature-flag-error-line-order-undefined.md
+      summary: "error 行どうしの順と、列挙外の mode の扱いが仕様に無い(S2 で起票済み。blocker ではない)"
+      blocker: false
+completed_at: '2026-11-13T02:40:00+09:00'
 completed_by: dist-impl-implement@0.14.1
