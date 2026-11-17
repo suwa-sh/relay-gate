@@ -1,5 +1,6 @@
 # source: docs/specs/latest/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/spec.md#E2E完了条件(BDD)
 # 転写: 正常系・異常系の 2 ブロックを意訳せず結合(S2 test-scaffold scoped 再生成。uc_id=eff24f55。spec event 20260923_112000_feedback_impl_feedback_eff24f55_cycle2)
+# 追記: 2026-11-16 の仕様変更(feature flag の任意のキー BLUE_JOB_MAP_CSV / GREEN_JOB_MAP_CSV)で足された Scenario「feature flag にジョブマップの場所を書いていても --job-map は渡したパスのジョブマップを検証する(SPEC-004-01)」を転写(2026-11-16 の S2 再実行。既存 Scenario は変更なし)
 Feature: slot ごとのジョブマップを定義する
 
   Scenario: 有効なジョブマップを検証する(SPEC-004-01)
@@ -7,6 +8,13 @@ Feature: slot ごとのジョブマップを定義する
     And 行 'JOB001,host-green-01,batch,/var/app/work,/opt/app/bin/job001.sh,"[""--mode"",""full""]",60,ssh-key-green,map-v3' と 'JOB002,host-green-01,batch,/var/app/work,/opt/app/bin/job002.sh,"[]",0,ssh-key-green,map-v3' がある
     When 基盤適用設計者が validate-config.sh --job-map /etc/relay-gate/green-job-map.csv を実行する
     Then 終了コード 0 で stdout に "map_path: /etc/relay-gate/green-job-map.csv" "rows=2" "map_version=map-v3" が出る
+
+  Scenario: feature flag にジョブマップの場所を書いていても --job-map は渡したパスのジョブマップを検証する(SPEC-004-01)
+    Given /etc/relay-gate/feature-flag.env に BLUE_JOB_MAP_CSV=/srv/relay-gate/maps/blue-jobs.csv がある
+    And /srv/relay-gate/maps/blue-jobs.csv はヘッダー "job_id,work_dir,script,fixed_params,hang_detect_limit_minutes" とデータ行 3 行の有効なジョブマップである
+    And /etc/relay-gate/blue-job-map.csv は同じヘッダーと行 'JOB001,/var/app/work,/opt/app/bin/job001.sh,"[]",0' の 1 行の有効なジョブマップである
+    When 基盤適用設計者が RELAY_GATE_CONFIG_DIR=/etc/relay-gate で validate-config.sh --job-map /etc/relay-gate/blue-job-map.csv を実行する
+    Then 終了コード 0 で stdout は "map_path: /etc/relay-gate/blue-job-map.csv" "rows=1" "map_version=-" の 3 行である(feature flag に書いた場所のジョブマップではなく、渡したパスのジョブマップを検証する)
 
   Scenario: 元資料の列名の CSV ジョブマップを検証する(SPEC-004-04)
     Given green-job-map.csv のヘッダーが元資料どおりの "job_id,host,user,work_dir,script,fixed_params,hang_detect_limit_minutes" の 7 列である

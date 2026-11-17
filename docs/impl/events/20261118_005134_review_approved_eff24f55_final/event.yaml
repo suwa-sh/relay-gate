@@ -1,0 +1,131 @@
+event_id: 20261118_005134_review_approved_eff24f55_final
+type: review_approved
+uc_id: eff24f55
+stage: S9
+payload:
+  approval_kind: final_approval
+  review_evidence_event_id: 20261118_005133_s9_review_generated_eff24f55_no_requests
+  feedback_review_evidence:
+    feedback_id: null
+    draft_path: null
+    draft_sha256: null
+    request_count: 0
+    blocker_count: 0
+    request_ids: []
+    withdrawn_feedback_id: 20261116_090543_impl_feedback_eff24f55
+    withdrawn_request_ids:
+    - CR-eff24f55-008
+    - CR-eff24f55-009
+    s8_status: no_requests
+    as_built_summary_sha256: f8f48c49a211e8f1ecdc30413930db561f06813353bd041c7365bc238c821fbf
+  implementation_review_evidence:
+    gate_result: 6/6 pass
+    gates:
+      format: pass
+      lint: pass
+      tdd: pass (537/537 non-heavy macOS + Linux; heavy 42/42 Linux)
+      bdd_tier: pass (112/112)
+      uc_bdd: pass (55/55, injections 0)
+      atdd: pass (3/3; completed UCs 12/12)
+    open_blocker_count: 0
+    open_major_count: 0
+    open_minor_count: 27
+    tiers:
+    - tier: tier-facade
+      attempt: 6
+      assumptions_sha256: 67792697d5376cad6683b1208bbef1fb63e7e08e9ad78c15519c4c738fc22437
+      assumption_verdicts_sha256: 42260b6e3d916f556c32f51e93a42d5d4d12bb3d1d1534047ccae37d0583378c
+    assumption_evidence_sha256: 8d1ddabedf6a1fe2bfb245d2df4761eb489b7b3fe2d4e334cc8097783a2e1e21
+  assumption_decisions:
+  - tier: tier-facade
+    id: A-005
+    decision: confirmed
+  - tier: tier-facade
+    id: A-006
+    decision: confirmed
+  - tier: tier-facade
+    id: A-008
+    decision: confirmed
+  - tier: tier-facade
+    id: A-010
+    decision: confirmed
+  - tier: tier-facade
+    id: A-014
+    decision: confirmed
+  - tier: tier-facade
+    id: A-016
+    decision: confirmed
+  - tier: tier-facade
+    id: A-017
+    decision: confirmed
+  - tier: tier-facade
+    id: A-018
+    decision: confirmed
+  - tier: tier-facade
+    id: A-019
+    decision: confirmed
+  - tier: tier-facade
+    id: A-020
+    decision: confirmed
+  - tier: tier-facade
+    id: A-022
+    decision: confirmed
+  - tier: tier-facade
+    id: A-025
+    decision: confirmed
+  - tier: tier-facade
+    id: A-043
+    decision: confirmed
+  - tier: tier-facade
+    id: A-044
+    decision: confirmed
+  - tier: tier-facade
+    id: A-049
+    decision: confirmed
+  - tier: tier-facade
+    id: A-052
+    decision: confirmed
+  - tier: tier-facade
+    id: A-053
+    decision: confirmed
+  - tier: tier-facade
+    id: A-054
+    decision: confirmed
+  - tier: tier-facade
+    id: A-055
+    decision: confirmed
+  - tier: tier-facade
+    id: A-056
+    decision: confirmed
+  - tier: tier-facade
+    id: A-057
+    decision: confirmed
+  - tier: tier-facade
+    id: A-058
+    decision: confirmed
+  - tier: tier-facade
+    id: A-059
+    decision: confirmed
+  - tier: tier-facade
+    id: A-060
+    decision: confirmed
+  - tier: tier-facade
+    id: A-061
+    decision: confirmed
+  - tier: tier-facade
+    id: A-062
+    decision: confirmed
+  decisions:
+    implementation: approved on 2026-11-17 (speed-up of the job map validation; output bytes and exit codes unchanged). nothing in implementation, tests or spec changed after that approval
+    unlisted_assumption: 'validating in a locale-independent setting (C locale): approved on 2026-11-17'
+    atdd_mapping: the provisionally added scenario is confirmed (20261117_200745_config_confirmed_eff24f55_atdd_scenarios_confirmed_by_user)
+    performance_requests: withdrawn on 2026-11-18 by the user's statements; the spec is not changed (20261118_004308_s8_feedback_completed_eff24f55_refresh_no_requests). the answers of 2026-11-17 about the performance target (excluded shapes by number, Linux as the measuring environment, housekeep in the scope) are superseded
+    heavy_tests: 'tagged and excluded from the normal runs (approved 2026-11-17). the user said on 2026-11-18 they may even be deleted; orchestrator''s plan: delete them together with the selection mechanism at the start of the next UC''s implementation, where verification runs anyway (reported to the user; not yet done)'
+    git_delivery: squash into 1 commit, open a pull request, and merge it after the checks pass (2026-11-17). with the requests withdrawn there is no spec reflux before it
+  interpretation_note: 'the final review page regenerated on 2026-11-18 asks nothing new; it was not shown to the user for another answer. the approval rests on the user''s answer of 2026-11-17 and the two statements of 2026-11-18 (orchestrator''s reading: withdraw the requests and proceed)'
+  user_answer: '【全体】今回の実装(ジョブマップの検証の高速化。出力と終了コードは変えていない)を承認します。 / 【実装者が補った前提】26 件と、記録から漏れていた 1 件(言語設定に左右されない設定で検証する)を、すべて承認します。 / 【受け入れテスト】仮に加えた 1 件(feature flag に場所を書いていても、検証コマンドは渡したパスのジョブマップを検証する)を、この機能の受け入れテストとして確定してください。 / 【重いテストの扱い】1 件 2 秒以上か MB 級の入力のテストに印を付け、仕組みを変えたときだけ流す今の運用で、このままでよいです。 / 【本線への取り込み】案 A: 仕様への反映と再確認を済ませてから 1 コミットにまとめて取り込み依頼を作り、自動検査が通ったらマージまで進めてください。 / 重いテストを実行するのは対象ファイルを変更したときで良いですが、実行は実装作業の最後・レビュー直前にして下さい。何度も実行するものではなく、パフォーマンスの劣化が起きていないかを確認するのが目的です。'
+  user_statements_2026_11_18:
+  - ずっとどうでも良いエッジケースを考えすぎです。大きなデータに意味はなく、ムダな処理がないことを見たいだけです。
+  - 推奨ですすめるというか、実装の効率が下がるなら仕様を取り下げてもよいです。重いテストも削除しても良いくらいです。
+  confirmed_by: user
+created_at: '2026-11-18T00:51:33+09:00'

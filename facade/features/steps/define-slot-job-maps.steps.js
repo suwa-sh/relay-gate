@@ -569,3 +569,42 @@ Given(literal('map.csv の 2 行目(JOB001)の credential_ref が BEGIN_KEY で�
 Then(literal('stdout と stderr のどこにも "BEGIN_KEY" は出ない'), function () {
   assertValueAbsent(this, 'BEGIN_KEY');
 });
+
+// ---- CLI 契約 config_input_rules.byte_checks(バイト・改行の検査の報告の規則)で足された Scenario の step(2026-11-16 の S2 再実行で追加) ----
+// Scenario: validate-config_sh_job-map は種類の違うバイト・改行の違反を全件、行番号の昇順と表の順で出す
+
+Given(literal('map.csv の 1 行目が BOM 付きのヘッダーで CRLF で終わり、2 行目のデータ行が NUL バイトと UTF-8 として不正なバイト列を含み CRLF で終わり、3 行目のデータ行が LF で終わり、4 行目のデータ行が NUL バイトを含む'), function () {
+  writeMapBytes(
+    this,
+    Buffer.concat([
+      // 1 行目: EF BB BF + ヘッダー + CRLF
+      Buffer.from([0xef, 0xbb, 0xbf]),
+      Buffer.from(`${HEADER_5}\r\n`),
+      // 2 行目: job_id に NUL、work_dir に孤立した 0xFF(UTF-8 として不正)、行末 CRLF
+      Buffer.from([0x4a, 0x00, 0x31]),
+      Buffer.from(',/w'),
+      Buffer.from([0xff]),
+      Buffer.from(',/s,"[]",60\r\n'),
+      // 3 行目: 違反の無いデータ行(LF)
+      Buffer.from('J3,/w,/s,"[]",60\n'),
+      // 4 行目: job_id に NUL(LF)
+      Buffer.from([0x4a, 0x00, 0x34]),
+      Buffer.from(',/w,/s,"[]",60\n'),
+    ]),
+  );
+});
+
+// DataTable は 1 列。各行が stderr の 1 行(セルの前後の空白は gherkin が落とす)
+Then(literal('終了コード 2 で stdout は 0 行、stderr は次の 7 行がこの順に出る(hint は最後の CR の error 行(2 行目)の次で、4 行目の error 行より前)'), function (table) {
+  const expected = table.raw().map((row) => row[0]);
+  assert.equal(expected.length, 7, 'the scenario lists 7 stderr lines');
+  assertExit(this, 2);
+  assert.deepEqual(stdoutLines(this), [], `stdout should be empty\n--- stdout ---\n${this.result.stdout}`);
+  assert.deepEqual(stderrLines(this), expected, `stderr lines and their order\n--- stderr ---\n${this.result.stderr}`);
+});
+
+Then(literal('stderr に "job map header mismatch" / "csv quote is invalid" / "column count mismatch" を含む行は出ない'), function () {
+  for (const text of ['job map header mismatch', 'csv quote is invalid', 'column count mismatch']) {
+    assertNoStderrLineIncluding(this, text);
+  }
+});

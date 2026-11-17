@@ -1,0 +1,13 @@
+event_id: 20261116_093751_s9_review_generated_eff24f55
+type: stage_completed
+uc_id: eff24f55
+stage: S9
+payload:
+  result: generated
+  done: docs/impl/latest/eff24f55/stages/S9_review_generated.done.yaml
+  review_html: docs/impl/latest/eff24f55/review/index.html (gitignored)
+  feedback_request_count: 2
+  draft_sha256: null
+  manifest_sha256: d0748fc7bd00fb2a27165e23252a2184ac3143dd29e6f3328e3db19bf759f79e
+  manifest_projection: v2
+created_at: '2026-11-16T09:37:51+09:00'

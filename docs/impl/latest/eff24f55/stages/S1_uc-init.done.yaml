@@ -1,23 +1,24 @@
 stage: S1
 uc_id: eff24f55
-manifest_sha256: 1c96b5d216dd8e2248eb6ab01d27da88edc475692681d5e5480fd39689bc24cc
+manifest_sha256: 1882e324483ee83d175e5e3565f696ef270e536734f97a5bdaf1f0e79e14a90f
 manifest_projection: v2
 result: pass
 input_preflight:
   files_exist: true
   yaml_parse: true
   gherkin_blocks: 3
-  gherkin_blocks_note: 'spec.md 2 / tier-facade.md 1'
+  gherkin_blocks_note: spec.md 2 / tier-facade.md 1
   tier_ids_in_arch:
   - tier-facade
   conditional_inputs_consistent: true
 lineage_ok: true
-lineage_note: 'spec-event 20260923_112000_feedback_impl_feedback_eff24f55_cycle2 trigger_event = rdra:20260921_084000 + arch:20260921_092000 (same trigger as the previous spec event; no new rdra/usdm/arch events). heads of rdra/arch events match the trigger. usdm latest stays 20260921_084000 (requirements.yaml sha unchanged); arch latest event_id stays 20260908_015000 (arch-design.yaml sha unchanged).'
+lineage_note: 'spec-event 20261116_021000_feedback_standard_runner_job_map_location. bootstrap.done.yaml preflight.lineage: {''spec_event_id'': ''20261116_021000_feedback_standard_runner_job_map_location'', ''arch_event_id'': ''20261116_015000_feedback_standard_runner_job_map_location'', ''usdm_event_id'': ''20261116_013000_feedback_standard_runner_job_map_location'', ''lineage_ok'': True, ''note'': ''2026-11-16 再確認。spec-event.yaml の source に書かれた trigger_event(usdm 20261116_013000 / arch 20261116_015000)は usdm / arch の latest と一致する(arch / usdm の最新 event は spec event より前)''}'
 atdd_scenarios:
 - SPEC-004-04-4
 - SPEC-008-05-2
-atdd_mapping: 'uc-map atdd_confirmed: true, confirmed by 20260917_004437_config_confirmed_atdd_mapping_all_ucs (not re-asked). SPEC-008-05-3 (@manual, operational-document criterion) is intentionally not in atdd_scenarios: it is marked non-automatable in USDM.'
-shared_spec_refs_note: 'same 5 refs as previous manifest (direct: cli-command-contract.yaml / ui-design.md / asyncapi.yaml; transitive: rdb-schema.yaml / data-visualization.md). only cli-command-contract.yaml changed (CR-006 lines= rule / CR-007 credential_ref rule). openapi.yaml stays excluded (paths: {} stub). reader UC spec.md links (resolve-by-JOB_ID / hang_detect_limit) are not shared definitions and stay excluded, unchanged from the previous cycle.'
-rerun_reason: 'stale after spec reflux 20260922_130000_impl_feedback_eff24f55 (invalidated event 20260923_115100_stage_invalidated_eff24f55_spec_reflux_cycle2_stale)'
-completed_at: '2026-09-23T11:51:30+09:00'
+- SPEC-004-01-10
+atdd_mapping: 'provisionally extended by the orchestrator (20261116_045152_config_confirmed_eff24f55_atdd_scenarios_provisional): [''SPEC-004-04-4'', ''SPEC-008-05-2''] -> [''SPEC-004-04-4'', ''SPEC-008-05-2'', ''SPEC-004-01-10'']. pending user confirmation at S9'
+shared_spec_refs_note: same 5 refs as the previous runs (manifest.py)
+scope_note: 're-run of a completed UC. inputs changed after 2026-09-28: performance is a target (5,000 lines and 8 MB within 10 s; not an input limit nor a pass/fail gate), common input rules of config files, optional job map location keys in feature-flag.env (validate-config.sh --job-map keeps validating the path it is given), shared functions touched by the feature flag UC. known fact carried from the feature flag UC: --job-map exceeds the performance target near 8 MB (issues/20261113_063000_other-validation-kinds-exceed-performance-target.md in fd678b04); to be recorded as a fact, not a gate'
+completed_at: '2026-11-16T04:51:51+09:00'
 completed_by: dist-impl-run@0.14.1

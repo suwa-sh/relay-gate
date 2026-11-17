@@ -46,6 +46,7 @@ use_cases:
   atdd_scenarios:
   - SPEC-004-04-4
   - SPEC-008-05-2
+  - SPEC-004-01-10
   atdd_confirmed: true
 - uc_id: dcd8234d
   business: 適用構成業務

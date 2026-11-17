@@ -326,6 +326,8 @@ bind_valid_row() {
 @test "job_map_fixed_params_parse_取り込みの窓が1バイトの場合_窓の境界をまたぐエスケープと空白を正しく解析すること" {
 	# Arrange(長い値は窓ごとに取り込む。窓の大きさで結果が変わらないこと)
 	JOB_MAP_PARSE_WINDOW_BYTES=1
+	# 状態機械に渡す断片も 1 バイトずつにする(既定は `"` と `\` の前で分けるだけ)
+	JOB_MAP_PARSE_CHUNK_MAX_BYTES=1
 
 	# Act
 	job_map_fixed_params_parse '  [ "p2 p3" , "a\"b\\c\/d\n\t" ,"日本語","" ]  '
@@ -341,6 +343,8 @@ bind_valid_row() {
 @test "job_map_fixed_params_parse_取り込みの窓が1バイトで閉じ引用符が無い場合_1を返すこと" {
 	# Arrange
 	JOB_MAP_PARSE_WINDOW_BYTES=1
+	# 状態機械に渡す断片も 1 バイトずつにする(既定は `"` と `\` の前で分けるだけ)
+	JOB_MAP_PARSE_CHUNK_MAX_BYTES=1
 
 	# Act
 	run job_map_fixed_params_parse '["abc'

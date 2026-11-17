@@ -538,6 +538,7 @@ load_domain_or_fail() {
 	[ "$output" = 'error: foreground slot must be exactly one blue_mode=- green_mode=o\tff' ]
 }
 
+# bats test_tags=heavy
 @test "feature_flag_emit_value_line_出し先が配列で値が小さい場合と大きい場合_溜めた行を出すとstdoutへ直接出した場合と同じバイト列になること" {
 	# Arrange(大きな値(合計が FEATURE_FLAG_REPORT_DEFERRED_MIN_BYTES 以上)は元の値のまま控え、出すときに可視表記を付ける)
 	load_domain_or_fail

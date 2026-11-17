@@ -409,6 +409,7 @@ count_lines() {
 	assert_stopped_stdout 1
 }
 
+# bats test_tags=heavy
 @test "validate_rapid_crosscheck_5000行で未知キーが4999行のenvの場合_10秒以内に検証を終え未知キーを全件warnで出すこと" {
 	# Arrange(NFR B.1.1.2 の共通前提: 1 ファイル最大 5,000 行・内容によらず 10 秒。
 	#   重複検査・未知キーの warn をすべての行に対して行う最悪ケース)
@@ -431,6 +432,7 @@ count_lines() {
 	[ "${stderr_lines[0]}" = "warn: unknown key key=RAPID_UNKNOWN_1 path: $ENV_FILE" ]
 }
 
+# bats test_tags=heavy
 @test "validate_rapid_crosscheck_5000行すべてが同じキーのenvの場合_10秒以内に重複キーを1行で出し終了コード2であること" {
 	# Arrange(NFR B.1.1.2 の共通前提: 1 ファイル最大 5,000 行・内容によらず 10 秒。重複の行番号を全件並べる最悪ケース)
 	local i expected_lines

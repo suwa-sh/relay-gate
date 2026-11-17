@@ -1,0 +1,25 @@
+event_id: 20261118_004308_s8_feedback_completed_eff24f55_refresh_no_requests
+type: stage_completed
+uc_id: eff24f55
+stage: S8
+payload:
+  result: pass
+  mode: refresh
+  refreshed_at: '2026-11-18T00:39:31+09:00'
+  updated: 0
+  added: 0
+  removed: 2
+  removed_request_ids:
+  - CR-eff24f55-008
+  - CR-eff24f55-009
+  request_count: 0
+  blocker_count: 0
+  published: false
+  withdrawn_feedback_id: 20261116_090543_impl_feedback_eff24f55
+  reason: 仕様を変えると、この機能の全工程の再確認が要り、実装の効率が下がる(利用者の 2026-11-18 の指示)
+  user_statements:
+  - ずっとどうでも良いエッジケースを考えすぎです。大きなデータに意味はなく、ムダな処理がないことを見たいだけです。
+  - 推奨ですすめるというか、実装の効率が下がるなら仕様を取り下げてもよいです。重いテストも削除しても良いくらいです。
+  manifest_sha256: d0748fc7bd00fb2a27165e23252a2184ac3143dd29e6f3328e3db19bf759f79e
+  manifest_projection: v2
+created_at: '2026-11-18T00:43:08+09:00'

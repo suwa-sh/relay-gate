@@ -100,6 +100,7 @@ install_failing_command() {
 	[ "${escaped[8]}" = 'last\u009f\n\u0080' ]
 }
 
+# bats test_tags=heavy
 @test "cli_field_escape_batch_決まった乱数列で作った150個の値の場合_1回の呼び出しで全件がbashの経路と同じバイト列になること" {
 	# Arrange(制御文字・C1 の先頭と後続・DEL・多バイト文字の断片・引用符・バックスラッシュ・& ・パス名展開の文字を多めに混ぜる)
 	local alphabet=($'\001' $'\033' $'\n' $'\t' $'\r' $'\177' $'\037' $'\xc2' $'\xc2' $'\x80' $'\x9f' $'\x9b' $'\xa0' $'\xe3' $'\x81' '"' "\\" '&' 'a' ' ' '=' '*' '?' '[' ']' '/')
@@ -345,6 +346,7 @@ install_failing_command() {
 	[ ! -s "$BATS_TEST_TMPDIR/err.txt" ]
 }
 
+# bats test_tags=heavy
 @test "cli_field_safe_text_prepare_値の合計が大きい場合_まとめて作った可視表記を控えcli_field_safe_textが外部コマンドなしで同じ結果を返すこと" {
 	# Arrange(大きな値 2 つ(置き換えの要る値と要らない値)と小さな値。空の値は控えない)
 	repeat_text $'a\001\033\177\xc2\x85' 1000
@@ -402,6 +404,7 @@ install_failing_command() {
 	[ ! -s "$BATS_TEST_TMPDIR/err.txt" ]
 }
 
+# bats test_tags=heavy
 @test "cli_field_safe_text_prepare_値に改行と配列の添字として特別な文字を含む場合_値ごとに別の可視表記を控えること" {
 	# Arrange(控えの添字に値を使う。@ / * / 式に見える値を取り違えない。合計を大きくするための埋め草を足す)
 	repeat_text 'x' 5000
@@ -422,6 +425,7 @@ install_failing_command() {
 	[ "$CLI_FIELD_SAFE_TEXT" = ']\n\u001b' ]
 }
 
+# bats test_tags=heavy
 @test "cli_field_line_まとめて控えた大きな値に制御文字と空白を含む場合_元の値の空白で形式を選び可視表記で出すこと" {
 	# Arrange(形式は元の値で決める。表示する値は控えた可視表記)
 	repeat_text $'v\033' 3000
@@ -462,6 +466,7 @@ install_failing_command() {
 	[ "$CLI_FIELD_SAFE_CACHE_TOTAL_BYTES" -eq 18 ]
 }
 
+# bats test_tags=heavy
 @test "cli_field_safe_text_list_5000個で8MBの制御文字だらけの値の場合_10秒以内に全件を可視表記にすること" {
 	# Arrange(性能目標の上限の大きさ。C1 制御文字 32 種と 1 バイトの制御文字 29 種を並べた約 1,676 バイトの値を 5,000 個)
 	local pattern="" index value
@@ -490,6 +495,7 @@ install_failing_command() {
 	[ "${expected:0:14}" = 'K0\u0080\u0081' ]
 }
 
+# bats test_tags=heavy
 @test "cli_field_safe_text_prepare_同じ値を2回以上渡した場合_1回だけ控え合計を二重に数えないこと" {
 	# Arrange(mode 3 キーが同じ値のときなど)
 	repeat_text $'m\033' 2500
@@ -505,6 +511,7 @@ install_failing_command() {
 	[ "${CLI_FIELD_SAFE_TEXT:0:14}" = 'm\u001bm\u001b' ]
 }
 
+# bats test_tags=heavy
 @test "cli_field_print_safe_text_控えにある値と無い値の場合_どちらもcli_field_safe_textと同じバイト列を改行なしで出すこと" {
 	# Arrange(控えにある大きな値は、控えから直接出す)
 	repeat_text $'p\033' 2500

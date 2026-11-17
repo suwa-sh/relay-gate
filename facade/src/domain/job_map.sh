@@ -21,6 +21,26 @@ JOB_MAP_REPORT_SINK_ARRAY="array"
 JOB_MAP_REPORT_SINK=""
 JOB_MAP_REPORT_LINES=()
 
+# true のとき、ヘッダーと行ごとの検証の報告行(未知の列名の warn 行・列名の重複の error 行・列の値の error 行・credential_ref の warn 行・
+# --verbose の info 行・job_id の重複・版の混在の warn 行)に、値を可視表記にせず元の値のまま埋め込む。usecase が JOB_MAP_REPORT_LINES に溜め、出す前にまとめて
+# 置き換える(cli_field_safe_text_list。値ごとに bash で置き換えると、制御文字の多い数 MB の入力で 10 秒を大きく超えるため)。
+# 行全体をまとめて置き換えても、値ごとに置き換えた結果と同じバイト列になる: 置き換えはバイトごとの写像(C1 制御文字だけは 2 バイト)で、
+# 値と値の間には必ず ASCII の表示文字の固定文字列があり、置き換え済みの部分(パス・JSON 表記)をもう一度置き換えても変わらない。
+JOB_MAP_REPORT_DEFER_ESCAPE=false
+# job_map_shown_value の結果
+JOB_MAP_SHOWN=""
+
+# 報告行に埋め込む値を JOB_MAP_SHOWN に載せる(JOB_MAP_REPORT_DEFER_ESCAPE が true なら元の値のまま、それ以外は可視表記)
+# 引数: text
+job_map_shown_value() {
+  if [ "$JOB_MAP_REPORT_DEFER_ESCAPE" = true ]; then
+    JOB_MAP_SHOWN="$1"
+  else
+    cli_field_safe_text "$1"
+    JOB_MAP_SHOWN="$CLI_FIELD_SAFE_TEXT"
+  fi
+}
+
 # 報告行(error / warn / info / hint)を 1 行出す
 # 引数: line
 job_map_emit() {
@@ -65,8 +85,17 @@ JOB_MAP_JSON_STRING_SPECIAL_CHARS="\"\\$JOB_MAP_JSON_CONTROL_CHARS"
 # JSON の文字列へ戻すときに前へバックスラッシュを付ける文字(閉じ引用符とバックスラッシュ)
 JOB_MAP_JSON_BACKSLASH_ESCAPED_CHARS="\"\\"
 
-# JSON 配列の解析とエスケープが 1 回に取り込む窓の大きさ(バイト)。結果には影響しない(長い値の処理時間だけに効く)
+# JSON 配列の表記へ戻すエスケープ(job_map_json_escape_string)が 1 回に取り込む窓の大きさ(バイト)。結果には影響しない
 JOB_MAP_PARSE_WINDOW_BYTES=1024
+# JSON 配列の状態機械(job_map_fixed_params_parse)に渡す断片の大きさの上限(バイト)。空なら上限なし。結果には影響しない
+# (テストが 1 にして、断片の境界をまたぐ解析を確かめる)。
+# 断片は値を `"` と `\` の前で分けて作る(job_map_fixed_params_chunks)。bash の部分文字列の取り出し(${text:offset:n})は
+# 値全体の長さに比例する時間がかかるため、値を一定の大きさの窓ずつ取り出すと、数 MB の値で長さの 2 乗の時間がかかる
+JOB_MAP_PARSE_CHUNK_MAX_BYTES=""
+# job_map_fixed_params_chunks の結果
+JOB_MAP_PARSE_CHUNKS=()
+# job_map_replace_char の結果
+JOB_MAP_REPLACED=""
 
 # job_map_header_bind の結果: JOB_MAP_COLUMNS と同じ並びの「ヘッダー内の位置」(無い列は JOB_MAP_COLUMN_ABSENT)
 JOB_MAP_COLUMN_INDEXES=()
@@ -82,6 +111,10 @@ JOB_MAP_ROW_CREDENTIAL_REF=""
 JOB_MAP_ROW_MAP_VERSION=""
 # job_map_fixed_params_parse の結果(エスケープ解除後の固定引数)
 JOB_MAP_FIXED_PARAMS=()
+# job_map_fixed_params_parse の結果(JOB_MAP_FIXED_PARAMS と同じ並びの、要素の JSON の文字列の表記。`\` と `"` の前に
+# バックスラッシュを付け、改行とタブを `\n` と `\t` にしたもの。それ以外の制御文字(C1 制御文字・DEL)は元のまま。
+# 後から cli_field_safe_text と同じ規則で置き換えると job_map_json_escape_string の結果と同じになる)
+JOB_MAP_FIXED_PARAMS_JSON_ELEMENTS=()
 # JOB_MAP_FIXED_PARAMS が現在の JobMapRow(JOB_MAP_ROW_FIXED_PARAMS)の解析結果なら true
 # (validate_job_map_row が解析した結果を job_map_row_resolved_line が再解析せずに使う。job_map_row_bind で false に戻す)
 JOB_MAP_FIXED_PARAMS_BOUND=false
@@ -94,15 +127,16 @@ JOB_MAP_LINES=()
 # job_map_version_summary の結果(stdout の map_version の値。元の値のまま。空値表記は `-`)
 JOB_MAP_VERSION_SUMMARY="$JOB_MAP_EMPTY_VALUE"
 
+# 契約の 9 列の名前の集合(添字は `c` + 列名。ヘッダーの列の数によらず 1 回の参照で判定するため)
+declare -gA JOB_MAP_DEFINED_COLUMN_SET=()
+for job_map_defined_column in "${JOB_MAP_COLUMNS[@]}"; do
+  JOB_MAP_DEFINED_COLUMN_SET["c$job_map_defined_column"]=1
+done
+unset job_map_defined_column
+
 # 列名が契約の 9 列に含まれるか
 job_map_is_defined_column() {
-  local name="$1" defined
-  for defined in "${JOB_MAP_COLUMNS[@]}"; do
-    if [ "$name" = "$defined" ]; then
-      return 0
-    fi
-  done
-  return 1
+  [ -n "${JOB_MAP_DEFINED_COLUMN_SET["c$1"]+x}" ]
 }
 
 # 列名が必須 5 列に含まれるか
@@ -158,14 +192,15 @@ validate_job_map_header() {
     fi
   done
 
-  # パスと未知の列名は任意入力(表示用に制御文字を可視表記にする)。missing= は契約の列名だけ
+  # パスと未知の列名は任意入力(表示用に制御文字を可視表記にする。列名は JOB_MAP_REPORT_DEFER_ESCAPE が true なら後でまとめて)。
+  # missing= は契約の列名だけ
   local shown_path
   cli_field_safe_text "$path"
   shown_path="$CLI_FIELD_SAFE_TEXT"
   for column in "$@"; do
     if ! job_map_is_defined_column "$column"; then
-      cli_field_safe_text "$column"
-      job_map_emit "warn: unknown column column=$CLI_FIELD_SAFE_TEXT path: $shown_path"
+      job_map_shown_value "$column"
+      job_map_emit "warn: unknown column column=$JOB_MAP_SHOWN path: $shown_path"
     fi
   done
 
@@ -180,8 +215,8 @@ validate_job_map_header() {
     key="c$column"
     if [ "${counts["$key"]}" -gt 1 ] && [ -z "${reported["$key"]+x}" ]; then
       reported["$key"]=1
-      cli_field_safe_text "$column"
-      job_map_emit "error: duplicate column column=$CLI_FIELD_SAFE_TEXT path: $shown_path"
+      job_map_shown_value "$column"
+      job_map_emit "error: duplicate column column=$JOB_MAP_SHOWN path: $shown_path"
       errors=$((errors + 1))
     fi
   done
@@ -334,25 +369,32 @@ job_map_fixed_params_parse() {
     return 0
   fi
   # bash の文字列操作は文字列全体の長さに比例する時間がかかるため、1 文字ずつ添字で取り出すと
-  # 長さの 2 乗の時間がかかる。JOB_MAP_PARSE_WINDOW_BYTES ずつ rest(未処理の窓)へ取り込み、
+  # 長さの 2 乗の時間がかかる。値を `"` と `\` の前で分けた断片(job_map_fixed_params_chunks)を順に rest(未処理の窓)へ取り込み、
   # 文字列内の通常の文字と文字列の外の空白は連続した分をまとめて取り込む。状態遷移は 1 文字ずつの解析と同じ
-  local text="$1" tab=$'\t' rest="" offset=0 total
-  local char run state="array_open" element=""
+  local tab=$'\t' rest="" chunk_index=0 chunk_count
+  # 要素の値は断片(element_parts)を最後に 1 回だけつないで作る(断片ごとに値へ連結すると、連結のたびに値全体を写すため、
+  # 長い要素で長さの 2 乗の時間がかかる)。つなぐときの区切りは無い(IFS は空)
+  # 要素の JSON の表記(json_parts)も同じ断片から作る(エスケープは JSON の文字列の表記に戻す。`\/` は `/`)
+  local char run state="array_open" IFS=""
+  local -a element_parts=() json_parts=()
   # バイト単位で処理する(ロケールに依存させない)。UTF-8 の多バイト文字の各バイトは 0x80 以上で、
   # 区切りの ASCII 文字と重ならない(UTF-8 として不正な行は repository が解析前に拒否する。この関数はバイト列を変えない)
   local LC_ALL=C
-  total="${#text}"
+  job_map_fixed_params_chunks "$1"
+  chunk_count="${#JOB_MAP_PARSE_CHUNKS[@]}"
   JOB_MAP_FIXED_PARAMS=()
-  while [ -n "$rest" ] || [ "$offset" -lt "$total" ]; do
+  JOB_MAP_FIXED_PARAMS_JSON_ELEMENTS=()
+  while [ -n "$rest" ] || [ "$chunk_index" -lt "$chunk_count" ]; do
     if [ -z "$rest" ]; then
-      rest="${text:offset:JOB_MAP_PARSE_WINDOW_BYTES}"
-      offset=$((offset + JOB_MAP_PARSE_WINDOW_BYTES))
+      rest="${JOB_MAP_PARSE_CHUNKS[chunk_index]}"
+      chunk_index=$((chunk_index + 1))
     fi
     case "$state" in
       in_string)
         # 引用符・バックスラッシュ・制御文字の手前まで
         run="${rest%%["$JOB_MAP_JSON_STRING_SPECIAL_CHARS"]*}"
-        element+="$run"
+        element_parts+=("$run")
+        json_parts+=("$run")
         rest="${rest:${#run}}"
         # 窓を使い切った(続きがあれば取り込む。無ければ閉じ引用符が無いまま終端に達した)
         if [ -z "$rest" ]; then
@@ -362,8 +404,10 @@ job_map_fixed_params_parse() {
         rest="${rest:1}"
         case "$char" in
           '"')
-            JOB_MAP_FIXED_PARAMS+=("$element")
-            element=""
+            JOB_MAP_FIXED_PARAMS+=("${element_parts[*]}")
+            JOB_MAP_FIXED_PARAMS_JSON_ELEMENTS+=("${json_parts[*]}")
+            element_parts=()
+            json_parts=()
             state="after_element"
             ;;
           \\) state="escape" ;;
@@ -375,9 +419,22 @@ job_map_fixed_params_parse() {
         char="${rest:0:1}"
         rest="${rest:1}"
         case "$char" in
-          '"' | \\ | /) element+="$char" ;;
-          n) element+=$'\n' ;;
-          t) element+=$'\t' ;;
+          '"' | \\)
+            element_parts+=("$char")
+            json_parts+=("\\$char")
+            ;;
+          /)
+            element_parts+=("$char")
+            json_parts+=("$char")
+            ;;
+          n)
+            element_parts+=($'\n')
+            json_parts+=('\n')
+            ;;
+          t)
+            element_parts+=($'\t')
+            json_parts+=('\t')
+            ;;
           *) return 1 ;;
         esac
         state="in_string"
@@ -402,7 +459,72 @@ job_map_fixed_params_parse() {
         ;;
     esac
   done
+  JOB_MAP_PARSE_CHUNKS=()
   [ "$state" = "array_closed" ]
+}
+
+# job_map_fixed_params_parse の状態機械に渡す断片を作る。結果は JOB_MAP_PARSE_CHUNKS(つなぐと元の値になる。空の断片は含めない)。
+# 値を `"` の後ろと `\` の前で分ける(断片の中で特別な文字は、先頭の `\`・末尾の `"`・制御文字だけになり、
+# 状態機械が断片の長さに比例する処理を特別な文字ごとに繰り返さない)。分けるのは単語分割で行い、値の長さに比例する時間で終わる。
+# JOB_MAP_PARSE_CHUNK_MAX_BYTES が空でなければ、それより長い断片をその大きさずつに分ける
+# 引数: text
+job_map_fixed_params_chunks() {
+  local quote='"' backslash="\\" max="$JOB_MAP_PARSE_CHUNK_MAX_BYTES" IFS
+  local piece part quote_index quote_count backslash_index backslash_count offset
+  local -a quote_pieces=() backslash_pieces=()
+  local -
+  set -f
+  JOB_MAP_PARSE_CHUNKS=()
+  # 単語分割は末尾の空の語を 1 つ落とすので、区切りを 1 つ足してから分ける
+  IFS="$quote"
+  # shellcheck disable=SC2206  # 区切りでの単語分割が目的
+  quote_pieces=($1$quote)
+  quote_count="${#quote_pieces[@]}"
+  for ((quote_index = 0; quote_index < quote_count; quote_index++)); do
+    piece="${quote_pieces[quote_index]}"
+    if [ "$((quote_index + 1))" -lt "$quote_count" ]; then
+      piece+="$quote"
+    fi
+    IFS="$backslash"
+    # shellcheck disable=SC2206  # 区切りでの単語分割が目的
+    backslash_pieces=($piece$backslash)
+    backslash_count="${#backslash_pieces[@]}"
+    for ((backslash_index = 0; backslash_index < backslash_count; backslash_index++)); do
+      part="${backslash_pieces[backslash_index]}"
+      if [ "$backslash_index" -gt 0 ]; then
+        part="$backslash$part"
+      fi
+      if [ -z "$part" ]; then
+        continue
+      fi
+      if [ -z "$max" ] || [ "${#part}" -le "$max" ]; then
+        JOB_MAP_PARSE_CHUNKS+=("$part")
+        continue
+      fi
+      for ((offset = 0; offset < ${#part}; offset += max)); do
+        JOB_MAP_PARSE_CHUNKS+=("${part:offset:max}")
+      done
+    done
+  done
+}
+
+# 文字列の中の 1 文字(空白類以外)をすべて別の文字列に置き換える。結果は JOB_MAP_REPLACED。
+# bash のパターン置換(${text//c/r})は一致のたびに残り全体を照合し直すため、一致が多い長い値で長さの 2 乗の時間がかかる。
+# 単語分割で分けて printf の書式でつなぐ(値の長さに比例する時間で終わる)。
+# 空白類(半角空白・タブ・改行)は単語分割で連続が 1 つにまとめられるため、char に使えない
+# 引数: text char(1 バイト) replacement
+job_map_replace_char() {
+  local replace_format="${3//%/%%}" IFS="$2"
+  local -a replace_parts=()
+  local -
+  set -f
+  replace_format="${replace_format//\\/\\\\}"
+  # 単語分割は末尾の空の語を 1 つ落とすので、区切りを 1 つ足してから分ける
+  # shellcheck disable=SC2206  # 区切りでの単語分割が目的
+  replace_parts=($1$2)
+  # shellcheck disable=SC2059  # 置き換え後の文字列を書式に埋め込む(% と \ はエスケープ済み)
+  printf -v JOB_MAP_REPLACED "%s$replace_format" "${replace_parts[@]}"
+  JOB_MAP_REPLACED="${JOB_MAP_REPLACED%"$3"}"
 }
 
 # job_map_fixed_params_parse の早期判定: バックスラッシュ・未エスケープで置けない制御文字を含まず、`["` で始まり `"]` で終わり、
@@ -411,11 +533,12 @@ job_map_fixed_params_parse() {
 # 空の `[]` もここで受理する。戻り値: 0 … 解析した / 1 … この形ではない(状態機械で解析する)
 # 引数: text
 job_map_fixed_params_parse_plain() {
-  local text="$1" inner rest separator='","'
+  local text="$1" inner
   if [ "${LC_ALL:-}" != C ]; then
     local LC_ALL=C
   fi
   JOB_MAP_FIXED_PARAMS=()
+  JOB_MAP_FIXED_PARAMS_JSON_ELEMENTS=()
   if [ "$text" = "[]" ]; then
     return 0
   fi
@@ -423,16 +546,37 @@ job_map_fixed_params_parse_plain() {
     return 1
   fi
   inner="${text:2:${#text}-4}"
-  rest="${inner//"$separator"/}"
-  if [[ "$rest" == *\"* ]]; then
+  # 内側を `"` で分けると、要素(偶数番目)と区切り(奇数番目)が交互に並ぶ。区切りがすべて `,` のときだけ受理する
+  # (区切り `","` を 1 つずつ探して残りを切り詰めたり、パターン置換で消したりすると、要素の数と値の長さの積の時間がかかる)。
+  # 確かめるのも要素を取り出すのも printf の書式(2 つずつ取る)と単語分割で行う。目印の U+001F はこの形の値には現れない。
+  # 単語分割は末尾の空の語を 1 つ落とすので、区切りを 1 つ足してから分ける(`[""]` は空の要素 1 つ)。パス名展開は止めて行う
+  local quote='"' unit=$'\037' IFS='"' count pairs separators expected elements
+  local -a pieces=()
+  local -
+  set -f
+  # shellcheck disable=SC2206  # 区切りでの単語分割が目的
+  pieces=($inner$quote)
+  count="${#pieces[@]}"
+  if [ $((count % 2)) -ne 1 ]; then
     return 1
   fi
-  rest="$inner"
-  while [[ "$rest" == *"$separator"* ]]; do
-    JOB_MAP_FIXED_PARAMS+=("${rest%%"$separator"*}")
-    rest="${rest#*"$separator"}"
-  done
-  JOB_MAP_FIXED_PARAMS+=("$rest")
+  pairs=$(((count - 1) / 2))
+  # この形の要素は `\` も `"` も制御文字も含まないため、JSON の文字列の表記は要素そのもの
+  if [ "$pairs" -eq 0 ]; then
+    JOB_MAP_FIXED_PARAMS=("${pieces[0]}")
+    JOB_MAP_FIXED_PARAMS_JSON_ELEMENTS=("${pieces[0]}")
+    return 0
+  fi
+  printf -v separators "%.0s%s$unit" "${pieces[@]}"
+  printf -v expected ",$unit%.0s" "${pieces[@]:0:pairs}"
+  if [ "$separators" != "$expected$unit" ]; then
+    return 1
+  fi
+  printf -v elements "%s$unit%.0s" "${pieces[@]}"
+  IFS="$unit"
+  # shellcheck disable=SC2206  # 目印での単語分割が目的
+  JOB_MAP_FIXED_PARAMS=($elements)
+  JOB_MAP_FIXED_PARAMS_JSON_ELEMENTS=("${JOB_MAP_FIXED_PARAMS[@]}")
   return 0
 }
 
@@ -462,6 +606,21 @@ job_map_fixed_params_json_build() {
   JOB_MAP_FIXED_PARAMS_JSON="[$json]"
 }
 
+# JOB_MAP_FIXED_PARAMS_JSON_ELEMENTS(job_map_fixed_params_parse が作る要素の表記)をつないで、1 行の JSON 配列の表記にする。
+# 結果は JOB_MAP_FIXED_PARAMS_JSON。制御文字(C1 制御文字・DEL)は元のまま残る。後から行全体を cli_field_safe_text と同じ規則で
+# 置き換えると、job_map_fixed_params_json_build の結果と同じバイト列になる。
+# 要素を目印(U+001F。要素の表記には現れない)でつないでから、目印を区切り `","` に置き換える(job_map_replace_char。
+# 要素ごとに連結したりパターン置換を使ったりすると、要素の数と値の長さの積の時間がかかる)
+job_map_fixed_params_json_join() {
+  local unit=$'\037' IFS=$'\037'
+  if [ "${#JOB_MAP_FIXED_PARAMS_JSON_ELEMENTS[@]}" -eq 0 ]; then
+    JOB_MAP_FIXED_PARAMS_JSON="[]"
+    return 0
+  fi
+  job_map_replace_char "${JOB_MAP_FIXED_PARAMS_JSON_ELEMENTS[*]}" "$unit" '","'
+  JOB_MAP_FIXED_PARAMS_JSON="[\"$JOB_MAP_REPLACED\"]"
+}
+
 # 文字列を JSON の文字列(引用符の内側)にエスケープする。結果は JOB_MAP_JSON_ESCAPED。
 # `\` `"` 改行 タブは 2 文字のエスケープ、それ以外の制御文字(U+0001〜U+001F、U+007F、U+0080〜U+009F)は \u00XX にする。
 # 制御文字の表記は任意入力の表示(cli_field_safe_text)と同じ関数で作る(表記を二重に持たない)。
@@ -475,18 +634,18 @@ job_map_json_escape_string() {
 # 必須列の空セル: `error: <column> is empty line=N job_id=<v> value=`(job_id は表示用に制御文字を可視表記にする)
 # 引数: column line job_id(元の値)
 job_map_empty_cell_error() {
-  cli_field_safe_text "$3"
-  job_map_emit "error: $1 is empty line=$2 job_id=$CLI_FIELD_SAFE_TEXT value="
+  job_map_shown_value "$3"
+  job_map_emit "error: $1 is empty line=$2 job_id=$JOB_MAP_SHOWN value="
 }
 
 # 列の値の違反: `error: <column> is <reason> line=N job_id=<v> value=<v>`(job_id と value は表示用に制御文字を可視表記にする)
 # 引数: column_and_reason line job_id(元の値) value(元の値)
 job_map_value_error() {
   local job_id
-  cli_field_safe_text "$3"
-  job_id="$CLI_FIELD_SAFE_TEXT"
-  cli_field_safe_text "$4"
-  job_map_emit "error: $1 line=$2 job_id=$job_id value=$CLI_FIELD_SAFE_TEXT"
+  job_map_shown_value "$3"
+  job_id="$JOB_MAP_SHOWN"
+  job_map_shown_value "$4"
+  job_map_emit "error: $1 line=$2 job_id=$job_id value=$JOB_MAP_SHOWN"
 }
 
 # 列ごとの検証(JOB_MAP_ROW_* を検証する。違反は全件出す)。
@@ -548,8 +707,8 @@ validate_job_map_row() {
 
   # credential_ref: 秘密らしい値は警告(拒否しない)。値そのものは出力しない
   if job_map_credential_ref_looks_like_secret "$JOB_MAP_ROW_CREDENTIAL_REF"; then
-    cli_field_safe_text "$job_id"
-    job_map_emit "warn: credential_ref looks like a secret or path line=$line job_id=$CLI_FIELD_SAFE_TEXT"
+    job_map_shown_value "$job_id"
+    job_map_emit "warn: credential_ref looks like a secret or path line=$line job_id=$JOB_MAP_SHOWN"
   fi
 
   [ "$errors" -eq 0 ]
@@ -567,6 +726,20 @@ job_map_row_resolved_line() {
   # validate_job_map_row が解析済みなら再解析しない(同じ値の同じ結果)
   if [ "$JOB_MAP_FIXED_PARAMS_BOUND" != true ]; then
     job_map_fixed_params_parse "$JOB_MAP_ROW_FIXED_PARAMS" || return 1
+  fi
+  if [ "$JOB_MAP_REPORT_DEFER_ESCAPE" = true ]; then
+    # 制御文字の可視表記は、usecase が行全体をまとめて作る(JOB_MAP_REPORT_DEFER_ESCAPE)。
+    # 検証済みのセルが空白(半角空白・タブ)も `\/` も含まなければ、セルの値がそのまま JSON 配列の表記になる
+    # (要素の外に空白が無く、要素の中のエスケープ `\"` `\\` `\n` `\t` は表記へ戻したときと同じ。生の C1 制御文字と DEL は
+    # 後でまとめて置き換える)。要素を作り直さずに済む(エスケープの多い数 MB の値で時間がかかるため)
+    local fixed_params_tab=$'\t' fixed_params_slash='\/'
+    if [[ "$JOB_MAP_ROW_FIXED_PARAMS" != *[" $fixed_params_tab"]* ]] && [[ "$JOB_MAP_ROW_FIXED_PARAMS" != *"$fixed_params_slash"* ]]; then
+      JOB_MAP_FIXED_PARAMS_JSON="$JOB_MAP_ROW_FIXED_PARAMS"
+    else
+      job_map_fixed_params_json_join
+    fi
+    job_map_emit "info: resolved job_id=$JOB_MAP_ROW_JOB_ID host=$host user=$user exec=$exec_kind work_dir=$JOB_MAP_ROW_WORK_DIR script=$JOB_MAP_ROW_SCRIPT fixed_params=$JOB_MAP_FIXED_PARAMS_JSON hang_detect_limit_minutes=$JOB_MAP_ROW_HANG_DETECT_LIMIT_MINUTES"
+    return 0
   fi
   job_map_fixed_params_json_build
   # host / user / work_dir / script は任意の文字を含む(表示用に制御文字を可視表記にする)。
@@ -641,16 +814,16 @@ validate_job_map_unique_job_ids() {
     fi
     if [ "$group_size" -gt 1 ]; then
       # job_id is invalid の値は任意の文字を含む(表示用に制御文字を可視表記にする。比較は元の値で行う)
-      cli_field_safe_text "$group_id"
-      reports+=("${group_lines%%,*}${tab}error: duplicate job_id job_id=$CLI_FIELD_SAFE_TEXT lines=$group_lines")
+      job_map_shown_value "$group_id"
+      reports+=("${group_lines%%,*}${tab}error: duplicate job_id job_id=$JOB_MAP_SHOWN lines=$group_lines")
     fi
     group_id="$job_id"
     group_lines="$line"
     group_size=1
   done
   if [ "$group_size" -gt 1 ]; then
-    cli_field_safe_text "$group_id"
-    reports+=("${group_lines%%,*}${tab}error: duplicate job_id job_id=$CLI_FIELD_SAFE_TEXT lines=$group_lines")
+    job_map_shown_value "$group_id"
+    reports+=("${group_lines%%,*}${tab}error: duplicate job_id job_id=$JOB_MAP_SHOWN lines=$group_lines")
   fi
 
   if [ "${#reports[@]}" -eq 0 ]; then
@@ -709,8 +882,8 @@ job_map_version_summary() {
     printf '%s\n' "$JOB_MAP_VERSION_SUMMARY"
   fi
   if [ "$distinct_count" -gt 1 ]; then
-    cli_field_safe_text "$joined"
-    job_map_emit "warn: mixed map_version values=$CLI_FIELD_SAFE_TEXT"
+    job_map_shown_value "$joined"
+    job_map_emit "warn: mixed map_version values=$JOB_MAP_SHOWN"
   fi
   return 0
 }

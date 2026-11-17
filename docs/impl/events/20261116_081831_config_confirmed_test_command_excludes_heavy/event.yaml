@@ -1,0 +1,30 @@
+event_id: 20261116_081831_config_confirmed_test_command_excludes_heavy
+type: config_confirmed
+uc_id: null
+stage: S0
+payload:
+  confirmed_by: user
+  confirmed_via: 'user instruction 2026-11-16 (given while the eff24f55 re-run was in S4): run long-running / large-input tests only when the mechanism they check is changed'
+  items:
+  - key: impl_config.tiers[tier-facade].commands.test
+    before: bats -r test
+    after: bats -r --filter-tags '!heavy' test
+  - key: impl_config.tiers[tier-rapid-crosscheck].commands.test
+    before: bats -r test
+    after: bats -r --filter-tags '!heavy' test
+  - key: impl_config.tiers[tier-final-crosscheck].commands.test
+    before: bats -r test
+    after: bats -r --filter-tags '!heavy' test
+  - key: impl_config.tiers[tier-ops].commands.test
+    before: bats -r test
+    after: bats -r --filter-tags '!heavy' test
+  rules:
+    heavy_tag: '# bats test_tags=heavy (a test that takes 2 seconds or more on macOS or Linux, or builds MB-scale input)'
+    heavy_command: 'bats --filter-tags heavy <files printed by: node scripts/ci/heavy-test-files.js <tier_dir> <base_ref>>'
+    when: only when a source or test file of the group in scripts/ci/heavy-tests.json changed against the base
+    drift_check: node scripts/ci/heavy-test-files.js --check
+  unchanged:
+  - contracts[] (contracts_decl unchanged)
+  - docs/dev-rules (plugin copy kept identical; the project rule is written in CLAUDE.md project section)
+  - format_check / lint / bdd / integration_commands
+created_at: '2026-11-16T08:18:31+09:00'

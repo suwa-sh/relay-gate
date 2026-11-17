@@ -1,0 +1,13 @@
+event_id: 20261116_045151_config_confirmed_eff24f55_git_delivery_rerun_base_head
+type: config_confirmed
+uc_id: eff24f55
+stage: S1
+payload:
+  confirmed_by: user
+  confirmed_via: 'standing instruction of the user (2026-11-15, restated in the session): after the feature flag UC, re-run this UC (slot job maps), then start the 4th UC. the previous delivery of this UC was merged as pull request 11 (2026-10-06)'
+  orchestrator_interpretation: a completed UC is re-run because its inputs changed after completion (performance is a target and not a gate; env / CSV input rules; optional job map location keys; shared functions changed by the feature flag UC). the re-run is delivered as a new pull request from a new branch with the same name as uc-map branch_slug, created from the current main. the base value was not specified by the user; it follows from the instruction
+  items:
+  - key: status[eff24f55].git_delivery.base_head
+    before: 9bb6057dbc222e598bafeb0b38c2cb2b1df7b185
+    after: f2c82b2655460d2fe9488c79adaa6a62f732d02d
+created_at: '2026-11-16T04:51:51+09:00'

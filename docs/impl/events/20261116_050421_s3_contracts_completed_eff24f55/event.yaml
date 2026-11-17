@@ -1,0 +1,13 @@
+event_id: 20261116_050421_s3_contracts_completed_eff24f55
+type: stage_completed
+uc_id: eff24f55
+stage: S3
+payload:
+  result: pass
+  contracts_verified:
+  - id: management-db
+    result: pass
+    detail: 'lock input sha256 (bbe77902...) matches current rdb-schema.yaml; contracts_decl unchanged; contracts.lock.yaml sha (85d0a704...) equals input-manifest; no regeneration. consumer side: this UC _model-summary.yaml has tables: [] (validate-config.sh --job-map reads the job map CSV only), so no table/column cross-check target.'
+  manifest_sha256: d0748fc7bd00fb2a27165e23252a2184ac3143dd29e6f3328e3db19bf759f79e
+  manifest_projection: v2
+created_at: '2026-11-16T05:04:20+09:00'

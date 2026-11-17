@@ -1,0 +1,28 @@
+event_id: 20261116_084556_s4_tier_impl_completed_eff24f55_facade_attempt6
+type: stage_completed
+uc_id: eff24f55
+stage: S4
+tier: tier-facade
+attempt: 6
+payload:
+  result: pass
+  gates:
+    format: pass
+    lint: pass
+    tdd: pass
+    bdd_tier: pass
+  assumptions:
+    path: attempt-6/S4_tier-impl.tier-facade.assumptions.yaml
+    count: 26
+    by_category:
+      input_validation: 1
+      data_format: 12
+      error_handling: 10
+      persistence: 0
+      performance: 3
+      security: 0
+    sha256: 67792697d5376cad6683b1208bbef1fb63e7e08e9ad78c15519c4c738fc22437
+  manifest_sha256: d0748fc7bd00fb2a27165e23252a2184ac3143dd29e6f3328e3db19bf759f79e
+  manifest_projection: v2
+  note: 'job-map validation speed-up (output bytes and exit codes unchanged on 139 inputs). after the done was written, heavy tests were tagged by user instruction (2026-11-16): the test gate is now bats -r --filter-tags ''!heavy'' test. re-measured after tagging: normal 538 ok on macOS and Linux; heavy 41 ok on Linux; on macOS heavy time-asserting tests fail intermittently only under external load (load average 44, another session), different tests each run, pass when re-run. one more test was tagged afterwards (normal 537 / heavy 42). issue: 20261116_062901_job-map-bash-only-parse-exceeds-performance-target'
+created_at: '2026-11-16T08:45:56+09:00'

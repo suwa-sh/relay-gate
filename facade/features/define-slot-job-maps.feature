@@ -1,5 +1,6 @@
 # source: docs/specs/latest/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/tier-facade.md#ティア完了条件(BDD)
 # 転写: gherkin ブロックを意訳せず転写(S2 test-scaffold scoped 再生成。uc_id=eff24f55。spec event 20260923_112000_feedback_impl_feedback_eff24f55_cycle2)
+# 追記: 2026-10〜11 の仕様変更(CLI 契約 config_input_rules.byte_checks の報告の規則)で足された Scenario「validate-config_sh_job-map は種類の違うバイト・改行の違反を全件、行番号の昇順と表の順で出す」を転写(2026-11-16 の S2 再実行。既存 Scenario は変更なし)
 Feature: slot ごとのジョブマップを定義する - facade / slot runner ティア
 
   Scenario: validate-config_sh_job-map は有効な CSV に終了コード 0 と集計を返す
@@ -140,6 +141,19 @@ Feature: slot ごとのジョブマップを定義する - facade / slot runner 
     Given map.csv の全行が CRLF で終わる(ヘッダーと 1 データ行)
     When `validate-config.sh --job-map map.csv` を実行する
     Then 終了コード 2 で stderr に "error: carriage return is not allowed line=1 path: map.csv" と "error: carriage return is not allowed line=2 path: map.csv" と "hint: use LF line endings" が出る
+
+  Scenario: validate-config_sh_job-map は種類の違うバイト・改行の違反を全件、行番号の昇順と表の順で出す
+    Given map.csv の 1 行目が BOM 付きのヘッダーで CRLF で終わり、2 行目のデータ行が NUL バイトと UTF-8 として不正なバイト列を含み CRLF で終わり、3 行目のデータ行が LF で終わり、4 行目のデータ行が NUL バイトを含む
+    When `validate-config.sh --job-map map.csv` を実行する
+    Then 終了コード 2 で stdout は 0 行、stderr は次の 7 行がこの順に出る(hint は最後の CR の error 行(2 行目)の次で、4 行目の error 行より前)
+      | error: byte order mark is not allowed line=1 path: map.csv |
+      | error: carriage return is not allowed line=1 path: map.csv |
+      | error: nul byte is not allowed line=2 path: map.csv        |
+      | error: encoding is not utf-8 line=2 path: map.csv          |
+      | error: carriage return is not allowed line=2 path: map.csv |
+      | hint: use LF line endings                                  |
+      | error: nul byte is not allowed line=4 path: map.csv        |
+    And stderr に "job map header mismatch" / "csv quote is invalid" / "column count mismatch" を含む行は出ない
 
   Scenario: validate-config_sh_job-map は空白だけの行を列数不一致として拒否する
     Given map.csv の 2 行目が半角空白 3 つだけで、ヘッダーは 5 列である

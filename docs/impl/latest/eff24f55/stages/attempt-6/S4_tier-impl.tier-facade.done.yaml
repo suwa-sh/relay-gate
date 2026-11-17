@@ -2,79 +2,156 @@ stage: S4
 tier: tier-facade
 attempt: 6
 uc_id: eff24f55
-manifest_sha256: 85d1ebda8af9b786c1abbfc4e09198f4716663209279349d7e7ad9c947902002
+manifest_sha256: d0748fc7bd00fb2a27165e23252a2184ac3143dd29e6f3328e3db19bf759f79e
 manifest_projection: v2
 result: pass
-rerun_reason: 仕様還流 cycle 2(spec event 20260923_112000_feedback_impl_feedback_eff24f55_cycle2。invalidated event 20260923_115100_stage_invalidated_eff24f55_spec_reflux_cycle2_stale)後の stale 由来の再実行。attempt 6 のまま。findings は渡されていない
-changes:
-- path: facade/features/steps/define-slot-job-maps.steps.js
-  summary: S2 が追加した skeleton step 10 件を実装した(重複 job_id の lines=2,5(初出行を含む)/ 1 行だけ / 2・3・4 行重複の Given と Then、credential_ref の値 3 種を stdout と stderr に出さない Then、ssh key green と BEGIN_KEY の Given、warn が 1 行だけの Then)。feature から参照されなくなった旧文言の step(lines=2,5 の末尾に『(初出行 2 を含む)』が無い版)を削除した
-- path: facade/src/domain/job_map.sh
-  summary: コメント 3 行の根拠表記だけを更新した(credential_ref の形式違反は契約 columns.credential_ref.on_format_violation、lines= は契約 validate-config.sh stderr の規則を根拠とする)。行数は不変で、処理の変更は無い
-implementation_note: 新仕様(credential_ref の形式違反は理由を問わず同じ warn 1 行で受理し値を出さない / lines= は初出行を含む出現順)は旧 attempt 6 の実装で既に満たしていた。facade/src の処理は変更していない(git diff f33529d..HEAD -- facade/src facade/bin は空)
+rerun_mode: stale_rerun
+rerun_reason: "完了済みの UC の再実行(仕様の変更への追従)。S2 で足したテスト 13 件は変更前の実装で通っていた。今回の主題は、性能の目標値との差を縮めること(fd678b04 の既知の差の提案 3 と提案 4)"
+findings_provided: false
+api_summary_check: "_api-summary.yaml に schema_version distillery.api-summary/v2 の記載は無く、_contract-slice.json も無い(契約 slice の hash 照合の対象外)"
+implementation:
+  summary: "--job-map の性能の目標値(5,000 行以内かつ 8 MB 以内を内容によらず 10 秒以内)との差を縮めた。出力のバイト列(stdout / stderr)と終了コードは変えていない"
+  proposal_3: "ヘッダーと行ごとの検証の報告行(未知の列名・列名の重複・列の値の error・credential_ref の warn・info: resolved・duplicate job_id・mixed map_version)は値を元のまま溜め、stderr へ出す直前に共有関数 cli_field_safe_text_list でまとめて可視表記にする。stdout の map_version は cli_field_safe_text_prepare で先に控える。共有ファイル cli_field.sh は変更していない(規則を複写していない)"
+  proposal_4: "セルの解析は bash だけのまま。行の長さの 2 乗に比例する処理を除いた: (1) CSV はすべての行を窓なしの解析(単語分割)で分け、囲んだセルの `\"\"` は断片の配列を最後に 1 回つなぐ。(2) fixed_params の状態機械は、部分文字列を窓ごとに取り出さず、`\"` と `\\` の前で分けた断片を読み、要素の JSON の表記も一緒に作る。(3) fixed_params の早期判定と表記の組み立ては、パターン置換を使わず単語分割と printf の書式で行う"
+  locale: "--job-map の検証全体を C ロケールで行う(validate_job_map_query の先頭で local LC_ALL=C)。LANG=C.UTF-8 のときの所要時間がロケール C と同じになった。出力のバイト列は 3 通りのロケールで変更前と同じ"
+  remaining_gap: "制約(bash だけで解析・検査する)のままでは、1 行に CSV の `\"\"` や JSON のエスケープが数十万個ある 8 MB の入力(Linux 39〜97 秒)と、列が 200 万個のヘッダー(macOS 103 秒)が 10 秒を超える。事実と選択肢を issues に書いた。macOS は制御文字だらけの job_id などで 10〜12 秒(BSD sed と bash の文字列の扱いによる。実行環境の Linux では 8 秒前後)"
+code_changes:
+  behavior_changed: false
+  files:
+    - path: facade/src/domain/job_map.sh
+      change: "JOB_MAP_REPORT_DEFER_ESCAPE と job_map_shown_value(報告行に元の値を埋め込む切り替え。ヘッダーの行にも使う)を追加。列名の判定を集合の参照にした。info: resolved 行の fixed_params= は、検証済みのセルが半角空白・タブ・`\\/` を含まなければセルの値のまま、含むときは解析で作った要素の表記(JOB_MAP_FIXED_PARAMS_JSON_ELEMENTS)をつなぐ。job_map_fixed_params_chunks / job_map_replace_char / job_map_fixed_params_json_join を追加。JSON の状態機械の要素の連結と早期判定を、長さの 2 乗の時間がかからない形にした"
+    - path: facade/src/repository/job_map_repo.sh
+      change: "CSV_PARSE_SHORT_MAX_BYTES(既定は空 = すべての行を窓なしで解析)を追加。窓なしの解析の囲んだセルを断片の配列でつなぐようにした。窓ありの状態機械は残した(テストが選んで同じ結果を確かめる)"
+    - path: facade/src/usecase/validate_job_map.sh
+      change: "validate_job_map_flush_escaped_report を追加し、ヘッダー不一致で止める回と行ごとの検証の後の stderr をまとめて可視表記にして出す。sed / tr の失敗は error: internal command failed commands=<sed|tr|sed,tr> の 1 行と終了コード 6。map_version の可視表記は stderr を出す前に控える。検証全体を C ロケールで行う"
+    - path: facade/test/domain/job_map.bats
+      change: "状態機械の窓の大きさを変える 2 件に JOB_MAP_PARSE_CHUNK_MAX_BYTES=1 を足した(既定では断片を 1 バイトずつにしないため)"
+    - path: facade/test/repository/job_map_repo.bats
+      change: "窓ありの状態機械を確かめる 4 件に CSV_PARSE_SHORT_MAX_BYTES=0 を足した"
+    - path: facade/test/domain/job_map_deferred_escape.bats
+      change: "新規 21 件(まとめて置き換えた報告行が値ごとに置き換えた行と同じになること(ヘッダー・行・重複・版)、JSON の早期判定・状態機械・表記のつなぎ、置き換えの関数、列名の判定)。heavy タグ 2 件"
+    - path: facade/test/repository/job_map_repo_parse_paths.bats
+      change: "新規 5 件(窓なしと窓ありの状態機械で同じ戻り値とセルになること、`\"\"` の多い長いセル)。heavy タグ 1 件"
+    - path: facade/test/usecase/validate_job_map_batch_escape.bats
+      change: "新規 8 件(可視表記を作る sed / tr の失敗で終了コード 6 と error 行 1 つだけ(行の検証の後・ヘッダー不一致で止める回・map_version)、まとめて作った info 行・warn 行・map_version が参照実装と同じバイト列)。heavy タグ 4 件"
+  heavy_tags: "利用者の追加指示により、今回追加したテストのうち 1 件で 2 秒以上かかるもの 7 件の @test の直前に `# bats test_tags=heavy` を付けた(MB 級の入力を作るテストは追加していない)。他のファイルの一括タグ付け・実行コマンド・CI・開発規約は変えていない"
+  not_changed:
+    - "facade/src/domain/cli_field.sh(共有関数。--feature-flag と --rapid-crosscheck の出力と所要時間は変わらない)"
+    - "--feature-flag / --rapid-crosscheck の usecase・repository、validate_job_map_flush_report と validate_job_map_report_byte_errors(他の検証種別と共有)"
+    - "時間の合否を判定するテスト(新しく足していない。既存の時間を確かめるテストは変えていない)"
+    - "features/、docs/specs、write-set の外のファイル"
 gates:
   format: pass
   lint: pass
   tdd: pass
   bdd_tier: pass
 gate_runs:
-- gate: format
-  cwd: facade
-  command: shfmt -d .
-  exit_code: 0
-- gate: lint
-  cwd: facade
-  command: find src test -name '*.sh' -exec shellcheck -x {} +
-  exit_code: 0
-- gate: tdd
-  cwd: facade
-  command: bats -r test
-  exit_code: 0
-  detail: 334 tests passed, 0 failed(S2 で追加された 10 件を含む)
-- gate: bdd_tier
-  cwd: facade
-  command: npx cucumber-js --config ../cucumber.cjs features
-  exit_code: 0
-  detail: 41 scenarios passed, 143 steps passed(define-slot-job-maps.feature 32 + configure-feature-flags.feature 9。S2 時点で fail していた追加・変更 5 Scenario が green)
+  - gate: format
+    cwd: facade
+    command: "shfmt -d ."
+    exit_code: 0
+  - gate: lint
+    cwd: facade
+    command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+    exit_code: 0
+  - gate: tdd
+    cwd: facade
+    command: "bats -r --timing test"
+    exit_code: 1
+    summary: "579 tests, 578 ok, 1 not ok(変更前 545 + 新規 34。heavy を含む全件)"
+    flaky: "not ok の 1 件は、変更していない既存の時間を確かめるテスト test/domain/cli_field_batch.bats「cli_field_safe_text_list_5000個で8MBの制御文字だらけの値の場合_10秒以内に全件を可視表記にすること」(11.6 秒)。開発機に別の作業の負荷があった(load average 18〜45)。そのテストだけを再実行して 7.5 秒で ok。テストの対象(cli_field.sh)は今回変更していない。同じ実装の前回の全件実行(負荷の低い回)は 575 件すべて ok"
+  - gate: bdd_tier
+    cwd: facade
+    command: "npx cucumber-js --config ../cucumber.cjs features"
+    exit_code: 0
+    summary: "112 scenarios (112 passed), 676 steps (676 passed)"
+gate_run_notes:
+  - "gate_runs は macOS(Darwin 25.5.0、arm64。ShellCheck 0.11.0、shfmt 3.13.1)での実測。最終のコードで 1 つずつ順に実行した(テストの段を同時に走らせていない)"
+  - "最終のゲートの後に facade/ 配下で変えたのは、heavy タグのコメント 1 行(validate_job_map_batch_escape.bats のヘッダー不一致の出力のテスト。Linux の計時で 2 秒以上だったため)だけ。ソースコードは変えていない。shfmt -d で確認済み"
+  - "開発中は軽いテスト(bats -r --filter-tags '!heavy' test)で回し、heavy を含む全件は最終ゲートで macOS / Linux 各 1 回だけ流した"
+slow_tests_report: "1 件 2 秒以上のテストの一覧(facade/test 全体。macOS 32 件・Linux 37 件)は完了報告に含めた。最大は test/domain/cli_field_escape_paths.bats の 1 件(macOS 72.7 秒・Linux 58.0 秒)"
+linux_runs:
+  environment: "docker イメージ relay-gate-ci:ubuntu24(bash 5.2.21、arm64、ShellCheck 0.9.0、Bats 1.10.0、LANG=C.UTF-8)"
+  method: "リポジトリを読み取り専用でマウントし、コンテナ内の一時ディレクトリへ facade/ と .editorconfig を複製して facade を cwd に実行した。一般ユーザー ubuntu で実行。リポジトリ内に生成物は残していない"
+  runs:
+    - gate: lint
+      command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+      exit_code: 0
+    - gate: format
+      command: "shfmt -d ."
+      exit_code: 0
+      note: "イメージに shfmt が無いため、CI と同じ版(v3.13.1)の Linux arm64 バイナリを作業用ディレクトリから読み取り専用でマウントして使った"
+    - gate: tdd
+      command: "bats -r --timing test"
+      exit_code: 1
+      summary: "579 tests, 578 ok, 1 not ok"
+      flaky: "not ok の 1 件は、変更していない既存の時間を確かめるテスト test/domain/cli_field_escape_paths.bats「cli_field_escape_text_制御文字が半分を占める100万バイトの値の場合_10秒以内に置き換えること」(10.8 秒。開発機の load average 30〜45)。そのテストだけをコンテナで再実行して 5.7 秒で ok。同じ実装の前回の全件実行は 575 件すべて ok"
+  limitation: "イメージに node が無いため、tier BDD(cucumber)は Linux では実行していない(macOS で実測)"
+integration_checks:
+  uc_bdd:
+    command: "npx cucumber-js --config cucumber.cjs features/uc"
+    exit_code: 0
+    summary: "55 scenarios (55 passed), 340 steps (340 passed)"
+  atdd:
+    command: "npx cucumber-js --config cucumber.cjs features/atdd --tags \"@atdd_SPEC-004-04-4 or @atdd_SPEC-008-05-2 or @atdd_SPEC-004-01-10\""
+    exit_code: 0
+    summary: "3 scenarios (3 passed), 15 steps (15 passed)"
+  note: "参考として macOS で実行(リポルート)"
+output_equivalence:
+  method: "変更前の実装を git show HEAD:<path> で一時ディレクトリへ取り出し(git stash は使っていない)、同じ入力・同じパスで変更前と変更後を実行して、終了コードと stdout・stderr の sha256 を比べた"
+  inputs:
+    - "既存テストと今回のテストの --job-map の入力 124 個(presentation と usecase の bats を、入力を写す記録用の差し替えで実行して集めた。--verbose の有無もテストどおり)"
+    - "同梱のサンプル facade/config/green-job-map.csv.example"
+    - "既知の差の形の入力を約 300 KB に縮めたもの 9 個と、補足の形 5 個(--verbose)"
+  results:
+    - "macOS: LC_ALL=C / LANG=C.UTF-8 / ロケール未設定 の 3 通りで 139 件とも一致(差 0)"
+    - "Linux(relay-gate-ci:ubuntu24): 同じ 3 通りで 139 件とも一致(差 0)"
+    - "8 MiB 弱の既知の差の 8 通り: 終了コード・stderr の sha256・stdout の sha256(macOS は同じパス)が変更前と一致。Linux は stdout にコンテナ内の一時パスが入るため stderr と終了コードで一致を確認"
+performance:
+  conditions: "--verbose 付き。コマンドだけの所要時間。入力は 8 MiB 弱(7.8〜8.2 MB)。変更前は 60 秒、補足は 120 秒で打ち切り。値は最終の実装のもの"
+  environments:
+    linux: "relay-gate-ci:ubuntu24(bash 5.2.21、GNU sed、arm64、コンテナ内の一時ディレクトリ)"
+    macos: "Darwin 25.5.0(bash 5.3、BSD sed、arm64)"
+  known_gap_cases:
+    - {input: "制御文字なしの有効な 4,999 行(script 約 1.6 KB)", linux_before: 4.5, linux_after: 3.8, linux_after_utf8: 3.9, macos_before: 6.7, macos_after: 5.2}
+    - {input: "script に制御文字 29 種の有効な 4,999 行", linux_before: 17.7, linux_after: 5.0, linux_after_utf8: 6.0, macos_before: 21.8, macos_after: 7.2}
+    - {input: "script に制御文字・C1・多バイト文字の有効な 4,999 行", linux_before: 25.8, linux_after: 5.5, linux_after_utf8: 5.6, macos_before: 32.6, macos_after: 7.1}
+    - {input: "fixed_params の要素に制御文字 29 種(全行 error)", linux_before: 18.6, linux_after: 6.0, linux_after_utf8: 6.0, macos_before: 23.1, macos_after: 8.1}
+    - {input: "fixed_params の要素に C1 制御文字", linux_before: 20.3, linux_after: 5.8, linux_after_utf8: 5.8, macos_before: 27.2, macos_after: 8.3}
+    - {input: "job_id が制御文字だらけ(全行 error)", linux_before: 32.8, linux_after: 8.1, linux_after_utf8: 7.9, macos_before: 39.5, macos_after: 11.3}
+    - {input: "job_id が C1 制御文字だらけ(全行 error)", linux_before: 32.0, linux_after: 7.8, linux_after_utf8: 7.8, macos_before: 41.0, macos_after: 11.5}
+    - {input: "引用符で囲んだ script に制御文字と `\"\"`", linux_before: 22.9, linux_after: 7.8, linux_after_utf8: 7.8, macos_before: 28.3, macos_after: 10.5}
+    - {input: "1 行が 8 MiB の script", linux_before: "60 秒で終わらない", linux_after: 1.2, linux_after_utf8: 1.3, macos_before: "60 秒で終わらない", macos_after: 2.9}
+  supplementary_cases:
+    - {input: "1 行が 8 MiB の囲んだセル(30 バイトごとに `\"\"`)", linux_after: 4.2, macos_before: "60 秒で終わらない", macos_after: 6.0}
+    - {input: "1 行が 8 MiB の小さなセルの並び(列数不一致)", linux_after: 5.0, macos_before: "60 秒で終わらない", macos_after: 3.4}
+    - {input: "map_version が行ごとに違い制御文字を含む 4,999 行", linux_after: 9.1, macos_before: "60 秒で終わらない", macos_after: 11.8}
+    - {input: "1 行が 8 MiB の fixed_params(要素 1 つ。エスケープが 16 バイトごとに 3 つ)", linux_after: 96.6, macos_before: "60 秒で終わらない", macos_after: 105.7}
+    - {input: "1 行が 8 MiB の fixed_params(要素約 137 万個)", linux_after: 39.3, macos_before: "60 秒で終わらない", macos_after: 43.3}
+    - {input: "ヘッダーの未知の列名 1 つが 8 MiB(制御文字だらけ)", macos_before: "60 秒で終わらない", macos_after: 6.0}
+    - {input: "ヘッダーに未知の列名が約 206 万個", macos_before: "60 秒で終わらない", macos_after: 102.8}
+  locale_note: "linux_after はロケール C、linux_after_utf8 は LANG=C.UTF-8(LC_ALL 未設定)。検証全体を C ロケールにする前は、LANG=C.UTF-8 で制御文字だらけの job_id が 11.2〜12.0 秒だった。macOS の値はロケール C"
+  variance_note: "開発機に別の作業の負荷がある回は 1〜2 秒(macOS では最大 2 倍)ばらつく。known_gap_cases は負荷の小さい回の値。supplementary_cases の値は 1 つ前の実装(ヘッダーの置き換えと C ロケール化の前)のもので、変更点はこれらの入力の所要時間にほとんど効かない(ヘッダーの 2 行は最終の実装)"
+  unit: "秒"
+  other_validation_kinds: "cli_field.sh と --feature-flag / --rapid-crosscheck のコードは変えていないため、所要時間は測り直していない。出力は bats の全件で確認"
+environment: "macOS(Darwin 25.5.0、arm64)で 4 ゲートと UC BDD・ATDD を実測。Linux コンテナで lint / format / bats と、出力の一致・性能を実測"
+issues_added:
+  - path: "docs/impl/latest/eff24f55/issues/20261116_062901_job-map-bash-only-parse-exceeds-performance-target.md"
+    summary: "bash だけでセルを解析・検査する制約のままでは、1 行に `\"\"` や JSON のエスケープが数十万個ある 8 MB の入力と、列が 200 万個のヘッダーが 10 秒を超える。選択肢 A(推奨: 対象外の形を仕様に書く)/ B(awk を許す)/ C(目標の文言を緩める)。あわせて、目標値は実行環境の Linux で判断すると書き添えることを推奨"
 assumptions:
-  path: attempt-6/S4_tier-impl.tier-facade.assumptions.yaml
-  count: 24
-  by_category:
-    input_validation: 1
-    data_format: 12
-    error_handling: 10
-    persistence: 0
-    performance: 0
-    security: 0
-  sha256: 40fd91da14ab9a90f39339c9bf859e223fadbcf4d4c1175618af1aabd21d9d2a
-  extraction:
-    candidate_count: 48
-    excluded_as_explicit: 25
-    recorded_count: 23
-  validator: 'validateAssumptions.js record → ok: true'
-  changes_from_previous_attempt_6:
-    removed_as_now_explicit:
-    - A-012
-    added: []
-    note: A-012(credential_ref の形式違反の扱い。security)は仕様で確定したため除外へ移した。根拠は cli-command-contract.yaml の config_files <slot>-job-map.csv columns.credential_ref(on_format_violation / output_rule)と tier-facade.md の『credential_ref の形式の扱い』表。lines= が初出行を含むことは契約 validate-config.sh stderr の lines= 規則で確定したが、旧記録に前提として無かったため件数は変わらない。A-025(複数の重複 job_id の error 行どうしの順序)は仕様に定義が無いため残した
-findings_source: none (stale 由来の再実行のため findings は渡されていない)
-issues:
-  new: []
-  note: 仕様と実装の矛盾は無い。既存の issues/20260922_120000_duplicate-job-id-lines-contract-vs-bdd.md と issues/20260922_120100_credential-ref-warning-boundary-undefined.md は cycle 2 の仕様還流で解消済み(ファイルは書き捨てのため変更していない)
-completed_at: '2026-09-23T13:00:00+09:00'
-completed_by: dist-impl-implement@0.14.1
-rerun:
-  reason: ci_linux_failure_post_delivery
-  after_event: 20260928_100000_stage_invalidated_eff24f55_ci_linux_fix
-  tdd: 341 tests, 0 not ok (macOS and Ubuntu 24.04 with LANG unset and LANG=C.UTF-8)
-  bdd_tier: 41 scenarios / 143 steps passed
-  changes:
-  - 'job_map_repo: read snapshot under LC_ALL=C (UTF-8 locale read merged a dangling lead byte line with the next line)'
-  - 'job_map_repo: when sed fails, ignore tr exit status (SIGPIPE ignored on CI runners makes tr exit 1 instead of 141)'
-  - 'performance: O(n^2) join, per-position CSV parse, repeated safe-text and setlocale removed; 5,000 rows verbose 7.06s -> 3.16s on Ubuntu arm64'
-  - 'cli_field: key=value / key: value whitespace test uses the fixed ASCII set under LC_ALL=C (locale independent); Unicode spaces are not whitespace (A-058)'
-  assumptions_changed:
-  - A-053
-  - A-058 (added)
-  blockers_resolved:
-  - F-001
+  path: "attempt-6/S4_tier-impl.tier-facade.assumptions.yaml"
+  count: 26
+  by_category: {input_validation: 1, data_format: 12, error_handling: 10, persistence: 0, performance: 3, security: 0}
+  sha256: "67792697d5376cad6683b1208bbef1fb63e7e08e9ad78c15519c4c738fc22437"
+  extraction: {candidate_count: 53, excluded_as_explicit: 27, recorded_count: 26}
+  validate_command: "node validateAssumptions.js record <assumptions.yaml> --uc eff24f55 --tier tier-facade --attempt 6"
+  validate_result: "ok: true"
+  changes_from_previous:
+    carried_over: "利用者が承認した前回の記録 24 件のうち 22 件を、同じ ID と内容で引き継いだ(target の行番号だけを現物に合わせた。A-058 は前回からずれていた行番号を cli_field.sh:531 に直した)"
+    dropped:
+      - {id: "A-050", reason: "バイト点検の違反で止めることが cli-command-contract.yaml config_input_rules.byte_checks.stop で確定した"}
+      - {id: "A-051", reason: "同じ行の複数の違反の並び(NUL → UTF-8 → BOM → CR)が config_input_rules.byte_checks.order で確定した"}
+    added: ["A-059", "A-060", "A-061", "A-062"]
+    added_note: "報告行の可視表記をまとめて作る取り決め、可視表記を作る補助コマンドの失敗の扱いと関数の間の戻り値、CSV をすべて窓なしで解析すること、JSON の状態機械の断片の作り方と要素の表記"
+completed_at: "2026-11-16T08:14:45+09:00"
+completed_by: "dist-impl-implement@0.14.1"

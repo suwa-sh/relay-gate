@@ -1,0 +1,17 @@
+event_id: 20261117_200745_config_confirmed_eff24f55_atdd_scenarios_confirmed_by_user
+type: config_confirmed
+uc_id: eff24f55
+stage: S1
+payload:
+  confirmed_by: user
+  pending_user_confirmation: false
+  confirmed_via: 'review reply on 2026-11-17: the provisionally added scenario is confirmed as an acceptance test of this feature'
+  supersedes: 20261116_045152_config_confirmed_eff24f55_atdd_scenarios_provisional
+  items:
+  - key: uc-map[eff24f55].atdd_scenarios
+    before: &id001
+    - SPEC-004-04-4
+    - SPEC-008-05-2
+    - SPEC-004-01-10
+    after: *id001
+created_at: '2026-11-17T20:07:45+09:00'
