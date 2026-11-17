@@ -99,14 +99,12 @@ dev-rules 正本は `docs/dev-rules/`(coding-rules / test-strategy / tier-rules)
 | tier-ops | `ops/` | cli | bash |
 
 - 契約: `management-db`(rdb-schema、6 テーブル、provider tier-ops)。生成物は `packages/contracts/management-db/`。asyncapi / openapi は契約として宣言しない。`cli-command-contract.yaml` は契約外の共有仕様(S1 の shared_spec_refs)
-- コマンド(tier dir を cwd に実行): format_check `shfmt -d .` / lint `find src test -name '*.sh' -exec shellcheck -x {} +` / test `bats -r --filter-tags '!heavy' test` / bdd `npx cucumber-js --config ../cucumber.cjs features`
-- **重いテストは、対象の仕組みを変更したときだけ流す**:
-  - 対象: 1 件で 2 秒以上かかるテスト、MB 級の入力を作るテスト。@test の直前に `# bats test_tags=heavy` を付ける。通常の test コマンドと CI の常時実行には入らない
-  - 目的は性能の劣化が起きていないかの確認。**流すのは実装作業の最後・レビュー直前の 1 回**(対象ファイルを変更した場合だけ)。実装の途中や検証のたびに繰り返し流さない
-  - 流すとき: `node scripts/ci/heavy-test-files.js <tier_dir> <base_ref>` が出したファイルを `bats --filter-tags heavy <files>` で流す(出力が空なら流さない)。判定の元は `scripts/ci/heavy-tests.json`(重いテストのファイルと、それが確かめる仕組みのソースの対応表)
-  - 重いテストを足したら対応表にも足す。ずれは `node scripts/ci/heavy-test-files.js --check` が検出する(CI で常時実行)
-  - 性能の目標(5,000 行・8 MB を 10 秒以内)は目標であり合否の検査ではない。時間を確かめるテストは重いテストとして扱う
-  - 性能で見るのは「ムダな処理がないこと」(実際の利用で想定する形の入力で、行数に比例する時間で終わること)だけ。大きなデータそのものに意味はない。目標から外すために作った入力(引用符やエスケープだらけのセル、巨大な列数など)は測らず、指摘・課題・仕様への要望にもしない。性能のために実装の効率が下がるなら、目標のほうを取り下げる
+- コマンド(tier dir を cwd に実行): format_check `shfmt -d .` / lint `find src test -name '*.sh' -exec shellcheck -x {} +` / test `bats -r test` / bdd `npx cucumber-js --config ../cucumber.cjs features`
+- **性能で見るのは「ムダな処理がないこと」だけ**:
+  - 見るのは、実際の利用で想定する形の入力で、行数に比例する時間で終わること。大きなデータそのものに意味はない
+  - 時間を確かめるテスト、MB 級の入力を作るテストは書かない(2026-11-18 に削除した)
+  - 目標から外すために作った入力(引用符やエスケープだらけのセル、巨大な列数など)は測らず、指摘・課題・仕様への要望にもしない
+  - 性能の目標(5,000 行・8 MB を 10 秒以内)は目標であり合否の検査ではない。性能のために実装の効率が下がるなら、目標のほうを取り下げる
 - 統合テスト(リポルート): uc_bdd `npx cucumber-js --config cucumber.cjs features/uc` / atdd `npx cucumber-js --config cucumber.cjs features/atdd`
 - 4 段テスト: ATDD `features/atdd/{spec_id}.feature`(S0 生成、`@atdd_{SPEC-ID}-{連番}` タグで選択実行)/ UC BDD `features/uc/{branch_slug}.feature` / tier BDD `{tier_dir}/features/{branch_slug}.feature` / TDD `{tier_dir}/test/`(bats)。step 定義は JavaScript(CommonJS)
 - I/O 境界は実体で検証する(PostgreSQL は `initdb` + `pg_ctl` の一時インスタンス。常設サービスに接続しない。環境不足は fail)

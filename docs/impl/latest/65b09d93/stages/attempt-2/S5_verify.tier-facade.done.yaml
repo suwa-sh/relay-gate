@@ -1,0 +1,154 @@
+stage: "S5"
+tier: "tier-facade"
+attempt: 2
+uc_id: "65b09d93"
+manifest_sha256: "504ab51615700f48c2722e4e7f385f5b5e22a74f41757b45b31237192cdfea26"
+manifest_projection: "v2"
+result: "pass"
+gate_reexec:
+  format: "pass"
+  lint: "pass"
+  tdd: "pass"
+  bdd_tier: "pass"
+open_blockers: 0
+open_majors: 0
+open_minors: 12
+findings_summary:
+  blocker: 0
+  major: 0
+  minor: 12
+findings_path: "docs/impl/latest/65b09d93/stages/attempt-2/S5_verify.tier-facade.findings.yaml"
+assumptions_sha256: "be0f45e4a9fd9ca54f4d709cb8de8f67fd176b44ef9d56b5a3f56125c00b69e0"
+assumption_verdicts_sha256: "5052c4a3a7e8fb09c036c9ba81d0c78da8218e3231e9cb525729dd5feee85304"
+assumption_verdicts_summary:
+  consistent: 1
+  spec_absent: 10
+  contradicts: 0
+  unlisted: 0
+viewpoints_checked:
+  spec_conformance:
+    status: "done"
+    note: "CLI defines runner IFとuses validate-configを照合。tier BDD11件は原文転写一致、10成功・1は指定skip。DB tables=[]、HTTP/UIなし。旧形式api-summaryのためv2 contract-slice照合は非該当。"
+  readability_maintainability:
+    status: "done"
+    note: "dev-rules3ファイル、入口とsrc本体、テスト命名・責務を確認。実装欠陥なし。"
+  security:
+    status: "done"
+    note: "引数の空値・列挙・未知option・PARAM併用を拒否。新コードにeval/外部通信/秘密出力なし。lib sourceの設定・trap・変数の非汚染を実測。"
+  performance:
+    status: "done"
+    note: "利用者指定に従い無駄な処理の有無だけ確認。新runnerは引数の線形走査と配置解決のみ。大きな入力・性能目標から外す入力の測定なし。"
+  operability:
+    status: "done"
+    note: "helpと版行、実行権限なしの診断、cwd/環境変数/リンクの配置規則を実測。暫定6は成功を偽装しない。"
+  fault_tolerance:
+    status: "done"
+    note: "未応答runnerの停止はBDDで確認。準備失敗は実mktempの失敗で6・error1行・stdout空・runner未起動・snapshot削除を確認。"
+  refactoring:
+    status: "done"
+    note: "入口からsrcへの委譲と後続4UCの責務を確認。6変異を既存追加テストで検出。1〜7の完了後にのみ前提ファイルを読んだ。"
+  assumption_conformance:
+    status: "done"
+    note: "11前提をexactly-oneで照合。独立候補はA-003/A-004に結合しunlistedなし。S4固定指示と仕様で判定後にreason/confidence/spec_refsを読んだ。A-010の空値の主張が現実と不一致、A-007分類差あり。"
+environment_failures: []
+gate_runs:
+  - check: "macos format"
+    command: "shfmt -d ."
+    cwd: "facade"
+    exit_code: 0
+  - check: "macos lint"
+    command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+    cwd: "facade"
+    exit_code: 0
+    version: "ShellCheck 0.11.0"
+  - check: "entrypoint lint"
+    command: "shellcheck -x runners/*.sh lib/*.sh"
+    cwd: "facade"
+    exit_code: 0
+    platforms:
+      - "macOS"
+      - "Linux ShellCheck 0.9.0"
+  - check: "macos tdd"
+    command: "bats -r test"
+    cwd: "facade"
+    exit_code: 0
+    passed: 570
+    failed: 0
+    full_runs: 1
+  - check: "linux lint and tdd"
+    command: "docker run --rm -v <repo>:/repo:ro -w /repo/facade relay-gate-ci:ubuntu24 bash -c 'find src test -name \"*.sh\" -exec shellcheck -x {} + && shellcheck -x runners/*.sh lib/*.sh && work=$(mktemp -d) && TMPDIR=\"$work\" bats -r test'"
+    exit_code: 0
+    passed: 570
+    failed: 0
+    full_runs: 1
+    versions: "Bash 5.2.21 / ShellCheck 0.9.0 / Bats 1.10.0"
+  - check: "macos tier bdd"
+    command: "npx --no-install cucumber-js --config ../cucumber.cjs features"
+    cwd: "facade"
+    exit_code: 0
+    scenarios: 123
+    passed: 122
+    skipped: 1
+    steps_passed: 871
+    steps_skipped: 3
+    scope_note: "対象UC11 Scenario中10成功・1指定skip。skipはpassの件数に含めない。"
+  - check: "direct probes"
+    passed: 21
+    evidence: "絶対/相対/全配置リンク/別cwd/実行不可/runnerだけのリンク、help・2/6・無出力/無作成、Bash3.2/5.3のlib非汚染。追加でBash3.2/5.3のhelp/正規起動/空execution-specを各実測。"
+  - check: "preparation failure injection"
+    exit_code: 6
+    stdout: ""
+    stderr: "error: runner probe failed slot=blue reason=temp-file-create-failed tmpdir=/nonexistent/tmp\n"
+    evidence: "代替mktempはsnapshotのみ作成。実mktempがprobe作成に失敗。--verboseでもerror1行、runnerは未起動、snapshot残存なし。"
+  - check: "mutation tests"
+    mutations:
+      - mutation: "missing-runner"
+        bats_exit: 1
+        failed_tests:
+          - "not ok 1 standard-runner_sh_--helpの場合_usage行とrunner-if-version=1をstdoutに出して終了コード0であること"
+          - "not ok 2 standard-runner_sh_ほかのオプションの後に--helpを付けた場合_使い方を出して終了コード0であること"
+          - "not ok 3 standard-runner_sh_--helpが--より後のPARAMにある場合_使い方を出さず何も出力しないこと"
+          - "not ok 4 standard-runner_sh_runner IFの引数が不正な場合_何も出力せず終了コード2であること"
+          - "not ok 5 standard-runner_sh_値を取るオプションに空の値を渡した場合_何も出力せず終了コード2であること"
+          - "not ok 6 standard-runner_sh_シンボリックリンクを含むパスで起動した場合_起動されたパスの字面から配置ディレクトリを決めること"
+          - "not ok 7 配置ディレクトリのrunners_標準のslot runnerを配置した場合_standard-runner_shは実行可能な通常ファイルでssh-runner_shは無いこと"
+        bdd_exit: 1
+      - mutation: "ssh-runner"
+        bats_exit: 1
+        failed_tests:
+          - "not ok 7 配置ディレクトリのrunners_標準のslot runnerを配置した場合_standard-runner_shは実行可能な通常ファイルでssh-runner_shは無いこと"
+        bdd_exit: 1
+      - mutation: "no-exec"
+        bats_exit: 1
+        failed_tests:
+          - "not ok 1 standard-runner_sh_--helpの場合_usage行とrunner-if-version=1をstdoutに出して終了コード0であること"
+          - "not ok 2 standard-runner_sh_ほかのオプションの後に--helpを付けた場合_使い方を出して終了コード0であること"
+          - "not ok 3 standard-runner_sh_--helpが--より後のPARAMにある場合_使い方を出さず何も出力しないこと"
+          - "not ok 4 standard-runner_sh_runner IFの引数が不正な場合_何も出力せず終了コード2であること"
+          - "not ok 5 standard-runner_sh_値を取るオプションに空の値を渡した場合_何も出力せず終了コード2であること"
+          - "not ok 6 standard-runner_sh_シンボリックリンクを含むパスで起動した場合_起動されたパスの字面から配置ディレクトリを決めること"
+          - "not ok 7 配置ディレクトリのrunners_標準のslot runnerを配置した場合_standard-runner_shは実行可能な通常ファイルでssh-runner_shは無いこと"
+        bdd_exit: 1
+      - mutation: "missing-lib"
+        bats_exit: 1
+        failed_tests:
+          - "not ok 8 共通ライブラリ_lib_runner-*_shをsourceした場合_4ファイルとも出力も終了もせずに読み込めること"
+        bdd_exit: 1
+      - mutation: "bad-version"
+        bats_exit: 1
+        failed_tests:
+          - "not ok 1 standard-runner_sh_--helpの場合_usage行とrunner-if-version=1をstdoutに出して終了コード0であること"
+          - "not ok 2 standard-runner_sh_ほかのオプションの後に--helpを付けた場合_使い方を出して終了コード0であること"
+        bdd_exit: 1
+      - mutation: "empty-regression"
+        bats_exit: 1
+        failed_tests:
+          - "not ok 5 standard-runner_sh_値を取るオプションに空の値を渡した場合_何も出力せず終了コード2であること"
+    evidence: "一時複製だけを改変。全6変異をBatsが検出、提供物と版の5変異をBDDも検出。全件Batsの追加実行なし。"
+gate_comparison: "S4 doneの4 gateのpassと再実行結果は一致。BDDの指定skip1件は成功数に含めず例外として明記。"
+verification_limits:
+  - "未実装のジョブ解決・実装実行・Runner Result公開・通知・facade.sh実行はこのUCの保証に含めない。"
+  - "Linuxではnode/shfmtなしのためBatsとShellCheckを実測。cucumberとshfmtはmacOSで実測。"
+cleanup: "BDDシナリオのrelay-gate-ff-*、probe一時ファイル、Bats一時ディレクトリは残存なし。未応答stubの終了確認はBDDで成功。検証作業用ディレクトリは最終確認後に削除。"
+completed_at: "2026-11-17T17:21:28.246698+00:00"
+completed_by: "dist-impl-verify@0.14.1"

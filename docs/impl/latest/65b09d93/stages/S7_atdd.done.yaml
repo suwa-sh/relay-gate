@@ -1,0 +1,50 @@
+stage: S7
+uc_id: 65b09d93
+manifest_sha256: 504ab51615700f48c2722e4e7f385f5b5e22a74f41757b45b31237192cdfea26
+manifest_projection: v2
+result: pass
+branch_slug: assign-slot-runner-scripts
+tier_impl_attempt: 2
+atdd_confirmed: true
+feature: features/atdd/SPEC-001-04.feature
+feature_changed: false
+steps: features/atdd/steps/assign-slot-runner-scripts.steps.js
+steps_changed: true
+atdd_scenarios:
+  - SPEC-001-04-3
+  - SPEC-001-04-8
+selection:
+  method: "一意タグ @atdd_{SPEC-ID}-{連番} の完全一致(cucumber tag expression の or 結合)。名前の部分一致フィルタは使わず、feature 全体も回していない"
+  tag_expression: "@atdd_SPEC-001-04-3 or @atdd_SPEC-001-04-8"
+  executed_tags_verified_by: "cucumber JSON レポートから実行 Scenario の @atdd_ タグを抽出し、atdd_scenarios と集合一致を確認(@atdd_SPEC-001-04-3 / @atdd_SPEC-001-04-8)"
+run:
+  cwd: "."
+  command: "npx cucumber-js --config cucumber.cjs features/atdd --tags '@atdd_SPEC-001-04-3 or @atdd_SPEC-001-04-8'"
+  exit_code: 0
+  summary: "2 scenarios (2 passed), 10 steps (10 passed)"
+  scenarios_expected: 2
+  scenarios_executed: 2
+  scenarios_passed: 2
+  scenarios_failed: 0
+  undefined_steps: 0
+  ambiguous_steps: 0
+  selected_count_matches_atdd_scenarios: true
+ci_selection_run:
+  command: "npx cucumber-js --config cucumber.cjs features/atdd --tags \"$(node scripts/ci/atdd-tag-expression.js) or @atdd_SPEC-001-04-3 or @atdd_SPEC-001-04-8\""
+  exit_code: 0
+  summary: "17 scenarios (17 passed), 85 steps (85 passed)"
+  note: "scripts/ci/atdd-tag-expression.js は status が completed の UC だけを選ぶため、現時点の出力(15 タグ)にこの UC の 2 タグは含まれない。この UC の完了後の CI と同じ選択(15 + 2)で 1 回流し、先行 UC の 15 件に退行が無いことを確認した"
+judgement:
+  - scenario: SPEC-001-04-3
+    method: "facade/ の runners・lib・src を一時ディレクトリの /opt/relay-gate へ複製し、BLUE_RUNNER / GREEN_RUNNER に runners/standard-runner.sh、両 slot のジョブマップを置いた feature-flag.env で validate-config.sh --feature-flag を実行。終了コード 0・error 行なし・両 slot の runner パスと runner_if_version=1 を確認。割当以外の必須キーは CLI 契約 config_files.feature-flag.env の keys / validation_rules に従い有効な値で補った"
+  - scenario: SPEC-001-04-8
+    method: "(a) CLI 契約 commands「$BLUE_RUNNER / $GREEN_RUNNER」の standard_runner.file が runners/standard-runner.sh で summary が正式な提供物と述べ、契約に ssh-runner・参考実装の記載が無いこと (b) facade/runners/standard-runner.sh が実行可能な通常ファイルで ssh-runner.sh が無いこと(照合先は S2 の issue に記載)"
+tier_impl_changed: false
+injections: []
+injections_note: "ハーネス注入なし。前提の新規抽出なし"
+cross_uc_refs:
+  - docs/impl/latest/65b09d93/issues/20261118_012630_cross-uc-scenarios.md
+issues: []
+issues_note: "新規起票なし。対象 2 Scenario が仕様どおりに通過した"
+completed_at: '2026-11-18T12:10:00+09:00'
+completed_by: dist-impl-implement@0.14.1

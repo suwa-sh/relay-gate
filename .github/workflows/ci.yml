@@ -70,42 +70,15 @@ jobs:
         - ops
     steps:
     - uses: actions/checkout@v7
-      with:
-        # 重いテストの選択で base との差分(base...HEAD)を取るため全履歴を取得する
-        fetch-depth: 0
     - name: Install shell toolchain
       run: |
         sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck bats postgresql
         sudo curl -sSL -o /usr/local/bin/shfmt "https://github.com/mvdan/sh/releases/download/v${SHFMT_VERSION}/shfmt_v${SHFMT_VERSION}_linux_amd64"
         sudo chmod +x /usr/local/bin/shfmt
         echo "/usr/lib/postgresql/$(ls /usr/lib/postgresql | sort -V | tail -1)/bin" >> "$GITHUB_PATH"
-    - uses: actions/setup-node@v7
-      with:
-        node-version: '22'
-    - name: heavy test map check
-      # heavy の印(# bats test_tags=heavy)を持つ bats ファイルと scripts/ci/heavy-tests.json の tests の一致を検査する
-      run: node scripts/ci/heavy-test-files.js --check
     - name: test
-      # 長時間・大容量のテスト(heavy)は除く。heavy は次のステップで仕組みを変更したときだけ流す
       working-directory: ${{ matrix.tier }}
-      run: bats -r --filter-tags '!heavy' test
-    - name: heavy tests (only when the mechanism changed)
-      # 変更ファイルが heavy-tests.json のグループ(tests / sources)に当たったときだけ、そのグループの heavy を流す
-      env:
-        TIER: ${{ matrix.tier }}
-        EVENT_NAME: ${{ github.event_name }}
-        PR_BASE_REF: ${{ github.base_ref }}
-        PUSH_BEFORE: ${{ github.event.before }}
-      run: |
-        if [ "$EVENT_NAME" = "pull_request" ]; then BASE="origin/$PR_BASE_REF"; else BASE="$PUSH_BEFORE"; fi
-        FILES="$(node scripts/ci/heavy-test-files.js "$TIER" "$BASE")"
-        if [ -z "$FILES" ]; then echo "no mechanism change for heavy tests (base: $BASE); skip"; exit 0; fi
-        echo "base: $BASE"
-        echo "heavy test files:"
-        echo "$FILES"
-        cd "$TIER"
-        # FILES は 1 行 1 ファイル(空白を含まない tier dir 相対パス)なので単語分割で引数に展開する
-        bats --filter-tags heavy $FILES
+      run: bats -r test
   tier-bdd:
     runs-on: ubuntu-latest
     needs:

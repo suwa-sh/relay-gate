@@ -2,9 +2,8 @@
 # UC eff24f55 × tier-facade: presentation 層 validate-config.sh --job-map の単体テスト(2026-11-16 の S2 再実行で追加)。
 # 前回の完了(2026-10-06)より後に変わった仕様のうち、仕様の BDD が判定していない細部を判定する。
 # 仕様: tier-facade.md「コマンド契約」(--job-map は feature-flag.env も BLUE_JOB_MAP_CSV / GREEN_JOB_MAP_CSV も読まない)、
-#       「入力の守備範囲」(5,000 行または 8 MB を超えるファイルは受理。バイト・改行の検査の報告の規則)、
-#       CLI 契約 config_input_rules.byte_checks / performance_target。
-# 性能は目標値で、入力の制限でも合否の検査でもない。ここでは所要時間を判定しない(大きさで結果が変わらないことだけを見る)。
+#       「入力の守備範囲」(バイト・改行の検査の報告の規則)、
+#       CLI 契約 config_input_rules.byte_checks。
 # エントリポイント(bin/validate-config.sh)経由で実プロセスとして起動する。I/O 境界は実ファイル(一時ディレクトリ)。
 # stdout と stderr を分けて判定するため `run --separate-stderr`(bats 1.5 以上)を使う。
 bats_require_minimum_version 1.5.0
@@ -184,82 +183,4 @@ write_flag_map() {
 	[ "${#stderr_lines[@]}" -eq 2 ]
 	[ "${stderr_lines[0]}" = "error: carriage return is not allowed line=5 path: $MAP" ]
 	[ "${stderr_lines[1]}" = "hint: use LF line endings" ]
-}
-
-# ---- 5,000 行または 8 MB を超えるファイルは受理する(大きさを理由に拒否・警告しない) ----
-
-# bats test_tags=heavy
-@test "validate-config_sh_--job-mapでデータ行が5001行の場合_大きさについての行を出さず終了コード0でrows=5001を出すこと" {
-	# Arrange(性能の目標値の条件(5,000 行以内)を 1 行超える。所要時間は判定しない)
-	{
-		printf '%s\n' "$HEADER_5"
-		index=1
-		while [ "$index" -le 5001 ]; do
-			printf 'JOB%05d,/w,/s,"[]",60\n' "$index"
-			index=$((index + 1))
-		done
-	} >"$MAP"
-
-	# Act
-	run --separate-stderr "$SCRIPT" --job-map "$MAP"
-
-	# Assert
-	[ "$status" -eq 0 ]
-	[ "${#lines[@]}" -eq 3 ]
-	[ "${lines[0]}" = "map_path: $MAP" ]
-	[ "${lines[1]}" = "rows=5001" ]
-	[ "${lines[2]}" = "map_version=-" ]
-	[ -z "$stderr" ]
-}
-
-# bats test_tags=heavy
-@test "validate-config_sh_--job-mapで5000行を超えた先の行に違反がある場合_5000行以内と同じ規則でその行のerrorを出して終了コード2であること" {
-	# Arrange(5,001 件目のデータ行 = 物理 5002 行目の hang_detect_limit_minutes が不正。大きさで検証の結果を変えない)
-	{
-		printf '%s\n' "$HEADER_5"
-		index=1
-		while [ "$index" -le 5000 ]; do
-			printf 'JOB%05d,/w,/s,"[]",60\n' "$index"
-			index=$((index + 1))
-		done
-		printf '%s\n' 'JOB05001,/w,/s,"[]",60m'
-	} >"$MAP"
-
-	# Act
-	run --separate-stderr "$SCRIPT" --job-map "$MAP"
-
-	# Assert
-	[ "$status" -eq 2 ]
-	[ -z "$output" ]
-	[ "${#stderr_lines[@]}" -eq 1 ]
-	[ "${stderr_lines[0]}" = "error: hang_detect_limit_minutes is not a non-negative integer line=5002 job_id=JOB05001 value=60m" ]
-}
-
-# bats test_tags=heavy
-@test "validate-config_sh_--job-mapでファイルが8MBを超える場合_大きさについての行を出さず終了コード0でrows=1を出すこと" {
-	# Arrange(1 MiB のコメント行 9 行 + データ行 1 行。性能の目標値の条件(8 MB 以内)を超える。所要時間は判定しない)
-	{
-		printf '%s\n' "$HEADER_5"
-		index=1
-		while [ "$index" -le 9 ]; do
-			printf '# '
-			head -c 1048576 /dev/zero | tr '\0' 'x'
-			printf '\n'
-			index=$((index + 1))
-		done
-		printf '%s\n' 'J1,/w,/s,"[]",60'
-	} >"$MAP"
-	size="$(wc -c <"$MAP")"
-	[ "$size" -gt 8388608 ]
-
-	# Act
-	run --separate-stderr "$SCRIPT" --job-map "$MAP"
-
-	# Assert
-	[ "$status" -eq 0 ]
-	[ "${#lines[@]}" -eq 3 ]
-	[ "${lines[0]}" = "map_path: $MAP" ]
-	[ "${lines[1]}" = "rows=1" ]
-	[ "${lines[2]}" = "map_version=-" ]
-	[ -z "$stderr" ]
 }

@@ -1,0 +1,19 @@
+event_id: 20261118_011502_config_confirmed_test_command_heavy_tests_removed
+type: config_confirmed
+uc_id: 65b09d93
+payload:
+  confirmed_by: user
+  confirmed_via: 'user statements on 2026-11-18: large data has no meaning, only the absence of wasteful processing matters; the heavy tests may even be deleted. the orchestrator reported the plan to delete them at the start of this UC and received no objection'
+  supersedes: 20261116_081831_config_confirmed_test_command_excludes_heavy
+  items:
+  - key: impl-config.tiers[*].commands.test
+    before: bats -r --filter-tags '!heavy' test
+    after: bats -r test
+  removed:
+  - 17 tests that assert an upper bound of elapsed time or exist only to feed large input (5,000 rows / 8 MB)
+  - scripts/ci/heavy-tests.json
+  - scripts/ci/heavy-test-files.js
+  - the heavy steps of the tdd job in .github/workflows/ci.yml
+  kept: 25 of the 42 tagged tests check behavior, not time or size; they stay without the tag (5 of them with smaller input)
+  result: 'facade bats: 562 tests, all ok (macOS)'
+created_at: '2026-11-18T01:15:02+09:00'

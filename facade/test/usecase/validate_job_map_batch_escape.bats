@@ -73,7 +73,6 @@ write_valid_rows() {
 	} >"$MAP"
 }
 
-# bats test_tags=heavy
 @test "validate_job_map_query_verboseで制御文字を含む有効な行が多数あり可視表記を作るsedが失敗する場合_internal command failedの1行だけで6を返しstdoutを出さないこと" {
 	# Arrange(info 行の合計が 4,096 バイト以上)
 	write_valid_rows 40 "/s$CONTROLS"
@@ -89,7 +88,6 @@ write_valid_rows() {
 	[ "$(cat "$STDERR_FILE")" = "error: internal command failed commands=sed path: $MAP" ]
 }
 
-# bats test_tags=heavy
 @test "validate_job_map_query_verboseでC1制御文字を含む有効な行が多数あり改行を消すtrが失敗する場合_internal command failedの1行だけで6を返すこと" {
 	# Arrange(0xC2 を含む値は sed 2 回と tr 1 回で置き換える)
 	write_valid_rows 40 $'/s\xc2\x85\xc2\x9b'
@@ -105,7 +103,6 @@ write_valid_rows() {
 	[ "$(cat "$STDERR_FILE")" = "error: internal command failed commands=tr path: $MAP" ]
 }
 
-# bats test_tags=heavy
 @test "validate_job_map_query_制御文字を含むjob_idの違反が多数あり可視表記を作るsedが失敗する場合_error行を出さずinternal command failedの1行だけで6を返すこと" {
 	# Arrange
 	local index
@@ -142,7 +139,6 @@ write_valid_rows() {
 	[ "$(cat "$STDERR_FILE")" = "error: internal command failed commands=sed path: $MAP" ]
 }
 
-# bats test_tags=heavy
 @test "validate_job_map_query_verboseで制御文字を含む有効な行が多数ある場合_info行を値ごとの可視表記と同じバイト列で出すこと" {
 	# Arrange(sed でまとめて置き換える大きさ。期待値は参照実装で値ごとに作る)
 	local index script expected=""
@@ -163,7 +159,6 @@ write_valid_rows() {
 	[ "$(sed -n 2,3p "$STDOUT_FILE")" = $'rows=40\nmap_version=v1' ]
 }
 
-# bats test_tags=heavy
 @test "validate_job_map_query_制御文字を含む版が行ごとに違う場合_warnとstdoutのmap_versionを値ごとの可視表記と同じバイト列で出すこと" {
 	# Arrange
 	local index joined=""
@@ -202,7 +197,6 @@ write_valid_rows() {
 	[ "$(cat "$STDERR_FILE")" = "error: internal command failed commands=sed path: $MAP" ]
 }
 
-# bats test_tags=heavy
 @test "validate_job_map_query_制御文字を含む未知の列名が多数ありヘッダー不一致で止まる場合_warnとerrorを値ごとの可視表記と同じバイト列で出すこと" {
 	# Arrange
 	local header="job_id,script,fixed_params,hang_detect_limit_minutes" expected="" index

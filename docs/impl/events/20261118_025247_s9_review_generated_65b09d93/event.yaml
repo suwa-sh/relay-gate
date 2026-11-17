@@ -1,0 +1,41 @@
+event_id: 20261118_025247_s9_review_generated_65b09d93
+type: stage_completed
+uc_id: 65b09d93
+stage: S9
+payload:
+  result: generated
+  done: docs/impl/latest/65b09d93/stages/S9_review_generated.done.yaml
+  review_html: docs/impl/latest/65b09d93/review/index.html (gitignored)
+  feedback_request_count: 0
+  draft_sha256: null
+  feedback_review_evidence:
+    feedback_id: null
+    draft_path: null
+    draft_sha256: null
+    request_count: 0
+    blocker_count: 0
+    request_ids: []
+    s8_status: no_requests
+    as_built_summary_sha256: 7a5f791e70ee921f917cd7379a7928c3377ab8d3fc17146361013ebd21dd9c67
+  implementation_review_evidence:
+    gate_result: 6/6 pass
+    gates:
+      format: pass
+      lint: pass
+      tdd: pass (570/570 macOS + Linux)
+      bdd_tier: pass (122/123 passed, 1 skipped, 0 failed)
+      uc_bdd: pass (62/64 passed, 2 skipped, 0 failed)
+      atdd: pass (2/2; with completed UCs 17/17)
+    open_blocker_count: 0
+    open_major_count: 0
+    open_minor_count: 12
+    tiers:
+    - tier: tier-facade
+      attempt: 2
+      assumptions_sha256: be0f45e4a9fd9ca54f4d709cb8de8f67fd176b44ef9d56b5a3f56125c00b69e0
+      assumption_verdicts_sha256: 5052c4a3a7e8fb09c036c9ba81d0c78da8218e3231e9cb525729dd5feee85304
+    assumption_evidence_sha256: 9ce6b1e5445ffd7c500d684b1013c8950ed3cf791ee44f88c6f426a5448a3e9b
+  assumption_evidence_sha256: null
+  manifest_sha256: 504ab51615700f48c2722e4e7f385f5b5e22a74f41757b45b31237192cdfea26
+  manifest_projection: v2
+created_at: '2026-11-18T02:52:47+09:00'

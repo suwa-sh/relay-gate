@@ -997,28 +997,6 @@ has_control_byte() {
 	[ "${lines[0]}" = 'info: resolved job_id=J1 host=- user=- exec=local work_dir=/w script=/s fixed_params=["a\tb\nc"] hang_detect_limit_minutes=60' ]
 }
 
-# bats test_tags=heavy
-@test "validate_job_map_query_一意なjob_idが4000行ある場合_10秒以内に0を返すこと" {
-	# Arrange(nfr-grade B.2.1.1 の CLI 応答 10 秒目標。job_id 重複検査と行の取り出しを行数の 2 乗にしない)
-	{
-		printf '%s\n' 'job_id,work_dir,script,fixed_params,hang_detect_limit_minutes'
-		index=1
-		while [ "$index" -le 4000 ]; do
-			printf 'JOB%s,/w,/s,[],60\n' "$index"
-			index=$((index + 1))
-		done
-	} >"$MAP"
-	SECONDS=0
-
-	# Act
-	run validate_job_map_query "$MAP" false
-
-	# Assert
-	[ "$status" -eq 0 ]
-	[ "${lines[1]}" = "rows=4000" ]
-	[ "$SECONDS" -lt 10 ]
-}
-
 @test "validate_job_map_query_verboseで違反行と有効行が混在する場合_有効行だけinfo resolvedを出すこと" {
 	# Arrange
 	{

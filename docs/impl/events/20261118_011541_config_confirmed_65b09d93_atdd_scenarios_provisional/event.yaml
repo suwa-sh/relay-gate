@@ -1,0 +1,17 @@
+event_id: 20261118_011541_config_confirmed_65b09d93_atdd_scenarios_provisional
+type: config_confirmed
+uc_id: 65b09d93
+stage: S1
+payload:
+  confirmed_by: orchestrator_provisional
+  pending_user_confirmation: true
+  confirmed_via: not confirmed by the user yet. same rule as the one the user accepted for the two preceding UCs (assign the scenarios of the added acceptance criteria that this UC alone can judge). to be confirmed or removed in the final review
+  candidate_rule: 'SPEC-001-04-3: a setting that assigns the standard runner to both slots passes validation / SPEC-001-04-8: the standard runner is an official deliverable and no runner is shipped as a mere sample'
+  not_assigned: SPEC-001-04-4..7, SPEC-004-01-3..8, SPEC-013-01-3, SPEC-013-01-4 need the job launching command or the runner's execution part (later UCs)
+  items:
+  - key: uc-map[65b09d93].atdd_scenarios
+    before: []
+    after:
+    - SPEC-001-04-3
+    - SPEC-001-04-8
+created_at: '2026-11-18T01:15:41+09:00'

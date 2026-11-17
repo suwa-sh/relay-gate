@@ -1,0 +1,26 @@
+event_id: 20261118_020313_s5_verify_completed_65b09d93_facade_attempt1
+type: stage_failed
+uc_id: 65b09d93
+stage: S5
+tier: tier-facade
+attempt: 1
+lane: verify
+payload:
+  result: fail
+  open_blockers: 1
+  open_majors: 0
+  findings_summary:
+    blocker: 1
+    major: 0
+    minor: 11
+  assumptions_sha256: 910b6cabafbc05e1d741b84943f06c4afec1410a78c1270dc068c80536e57491
+  assumption_verdicts_sha256: 83632695df1c8cb2a50c4be0c770b98911403f8ea3d6059d64ea6532217d4742
+  assumption_verdicts_summary:
+    consistent: 0
+    spec_absent: 9
+    contradicts: 0
+    unlisted: 2
+  verifier: 'gpt-6-astra via codex exec (sandbox disabled; write-set checked by git status: done + findings only)'
+  manifest_sha256: 504ab51615700f48c2722e4e7f385f5b5e22a74f41757b45b31237192cdfea26
+  manifest_projection: v2
+created_at: '2026-11-18T02:03:13+09:00'

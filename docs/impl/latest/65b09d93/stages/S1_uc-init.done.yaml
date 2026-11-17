@@ -1,0 +1,22 @@
+stage: S1
+uc_id: 65b09d93
+manifest_sha256: 20000fd15647744ec54f37a94d3ecb00d3755df845ba95980661bf6ccd3ff278
+manifest_projection: v2
+result: pass
+input_preflight:
+  files_exist: true
+  yaml_parse: true
+  gherkin_blocks: 3
+  gherkin_blocks_note: spec.md 2 / tier-facade.md 1
+  tier_ids_in_arch:
+  - tier-facade
+  conditional_inputs_consistent: true
+lineage_ok: true
+atdd_scenarios:
+- SPEC-001-04-3
+- SPEC-001-04-8
+atdd_mapping: 'provisionally assigned by the orchestrator (20261118_011541_config_confirmed_65b09d93_atdd_scenarios_provisional): [] -> [''SPEC-001-04-3'', ''SPEC-001-04-8'']. pending user confirmation at the final review'
+shared_spec_refs_note: same 5 refs as the previous UCs (manifest.py)
+scope_note: 'first run of this UC. scope decided by the orchestrator from spec.md / tier-facade.md (to be shown in the final review): (1) standard slot runner entry runners/standard-runner.sh answering --help with runner-if-version=1, and the 4 shared library files under lib/; the bodies of resolve / execute / publish / notify belong to the 4 later UCs. (2) location: facade/runners/ and facade/lib/ hold thin entry points, bodies under facade/src/ (user decision 2026-11-16; lint settings unchanged). (3) scenarios that launch facade.sh (owned by the next UC) follow the precedent of cross-UC scenarios (eff24f55 issues/20260919_161456_cross-uc-scenarios.md). performance: only the absence of wasteful processing is looked at; no time-asserting or large-input tests (user decision 2026-11-18)'
+completed_at: '2026-11-18T01:15:41+09:00'
+completed_by: dist-impl-run@0.14.1

@@ -1,0 +1,112 @@
+stage: "S9"
+uc_id: "65b09d93"
+manifest_sha256: "504ab51615700f48c2722e4e7f385f5b5e22a74f41757b45b31237192cdfea26"
+manifest_projection: "v2"
+result: "generated"
+tier_impl_attempt: 2
+review_html: "docs/impl/latest/65b09d93/review/index.html"
+review_html_tracked: false
+review_html_basis: "human-html-review の原則と、前例(docs/impl/latest/eff24f55/review/index.html)の CSS・回答欄のスクリプトを土台にした。本文と図 6 枚は新しく書いた"
+review_notes_input: null
+review_notes_note: "初回のため review/review-notes.md は無い"
+validators:
+  review_html_contract: "node validateReviewHtml.js docs/impl/latest/65b09d93/review/index.html: pass"
+  human_html_review: "python3 validate.py docs/impl/latest/65b09d93/review/index.html: VALID (ERROR 0 / WARN 0)"
+  human_html_review_detail:
+    errors: 0
+    warnings: 0
+    h2_count: 11
+    svg_count: 6
+    external_resources: 0
+render_check: "headless Chrome で 1440px 幅(暗い配色)のページ全体を撮り、分割して目視した。図 6 枚で、線の重なり・接続点の共有・箱の背面通過・ラベルのはみ出しは見当たらなかった。回答欄が操作できる状態で、初期の返信文面が推奨の 2 行であることを画像で確認した。目視の後に、データフロー図の箱の間隔と、前提の表の「任意」の折り返しを直した(直した後の再撮影はしていない。検査 2 種は再実行して通過)"
+render_check_not_done:
+  - "390px 幅での目視(headless Chrome の最小幅の制約で、画像の右側が切れて判定できなかった)"
+  - "明るい配色での目視"
+  - "選択を変えたとき・記入したときに文面が変わることの操作確認"
+  - "コピーボタンの動作"
+  - "実機のスマホでの表示"
+diagrams:
+  - type: "flowchart"
+    subject: "作業の流れと現在地(最終確認)"
+  - type: "architecture"
+    subject: "実装の構成(標準の runner の入口と本体、共通ライブラリの入口と本体)"
+  - type: "flowchart"
+    subject: "標準の runner を起動したときの流れ(終了コード 0 / 2 / 6)"
+  - type: "architecture"
+    subject: "割り当ての検証で値が流れる道筋(設定 → 検証コマンド → runner → 検証の結果)"
+  - type: "flowchart"
+    subject: "テストの段と件数、独立検証"
+  - type: "flowchart"
+    subject: "回答の後の流れ(承認 / 差し戻し)"
+executed_examples:
+  note: "『動かし方』の facade/runners/standard-runner.sh --help は、この資料の作成時に実行した出力(終了コード 0、2 行)。validate-config.sh --feature-flag の例は実行しておらず、HTML では『報告のみ』と表示した。テストは一切実行していない"
+feedback_request_count: 0
+open_blocker_count: 0
+decision_summary:
+  approval_questions: 1
+  selection_questions: 1
+  assumption_questions: 0
+  recommended_choices: 2
+  selection_labels:
+    - "【全体】実装と「推奨で決めたこと」をまとめて承認する(推奨)/ 差し戻す(自由記入)"
+    - "【本線への取り込み】1 コミットにまとめて取り込み依頼を作り、自動検査が通ったらマージまで進める(推奨)/ 取り込み依頼の作成までで止める"
+  initial_reply_text:
+    - "【全体】実装と「推奨で決めたこと」をまとめて承認します(実装者が補った前提 11 件を含む)。"
+    - "【本線への取り込み】1 コミットにまとめて取り込み依頼を作り、自動検査が通ったらマージまで進めてください。"
+  response_format_note: "回答欄は文で組み上がる形式(内部 ID を出さない)。2 問とも推奨を初期選択にし、操作しなくてもコピーできる"
+  decided_by_recommendation_reported_not_asked:
+    - "範囲: 標準の runner の中身は後続の 4 機能で作る"
+    - "--help 以外で起動したときの仮の扱い: 引数の誤りは 2、正しい引数は 6。何も出さず、ファイルも書かない"
+    - "置き場所: facade/runners/ と facade/lib/ は入口、本体は facade/src/(2026-11-16 の利用者の決定)"
+    - "受け入れテストの割り当て 2 件(SPEC-001-04-3 / SPEC-001-04-8)。ジョブを起動するコマンドが要る 12 件は後続の機能"
+    - "ジョブを起動するコマンドを使うシナリオ 3 件(機能のシナリオ 1、結合テスト 2)は保留"
+    - "「10 秒以内に戻る」シナリオは仕様どおり確かめた"
+    - "「問い合わせの準備に失敗すると止まる」シナリオは、問い合わせの準備だけが失敗する形で確かめた"
+    - "仕様への要望は 0 件"
+    - "重いテストの削除(時間の上限 14 件、大きな入力 3 件、仕分けの仕組み。25 件は残した)"
+  assumption_total: 11
+  assumption_unlisted_total: 0
+  assumption_required_ids: []
+  assumption_required_note: "回答必須(verdict が spec_absent / unlisted で、Implementer 分類か Verifier 分類が security / persistence)は 0 件。11 件は 1 問目の承認に含めると HTML に明記した。規約の回答テンプレートの必須文字列(機能=A / 相互運用=A / 監査=A / 前提=…)は付録 3 に載せた"
+  approval_outcome_note: "承認 + マージまで = 1 コミットにまとめる → 取り込み依頼 → 自動検査 → マージ → 次の機能(slot 実行モードを選択して runner を起動する)。承認 + 依頼までで止める = 取り込み依頼を作って指示を待つ。差し戻し = 記入された点を直し、直した範囲のテストと独立検証をやり直して S9 を作り直す"
+feedback_review_evidence:
+  feedback_id: null
+  draft_path: null
+  draft_sha256: null
+  request_count: 0
+  blocker_count: 0
+  request_ids: []
+  s8_status: "no_requests"
+  as_built_summary_sha256: "7a5f791e70ee921f917cd7379a7928c3377ab8d3fc17146361013ebd21dd9c67"
+implementation_review_evidence:
+  gate_result: "6/6 pass"
+  gates:
+    format: "pass"
+    lint: "pass"
+    tdd: "pass (570/570 macOS + Linux)"
+    bdd_tier: "pass (122/123 passed, 1 skipped, 0 failed)"
+    uc_bdd: "pass (62/64 passed, 2 skipped, 0 failed)"
+    atdd: "pass (2/2; with completed UCs 17/17)"
+  open_blocker_count: 0
+  open_major_count: 0
+  open_minor_count: 12
+  tiers:
+    - tier: "tier-facade"
+      attempt: 2
+      assumptions_sha256: "be0f45e4a9fd9ca54f4d709cb8de8f67fd176b44ef9d56b5a3f56125c00b69e0"
+      assumption_verdicts_sha256: "5052c4a3a7e8fb09c036c9ba81d0c78da8218e3231e9cb525729dd5feee85304"
+  assumption_evidence_sha256: "9ce6b1e5445ffd7c500d684b1013c8950ed3cf791ee44f88c6f426a5448a3e9b"
+captures: []
+issues: []
+notes:
+  - "manifest_sha256 は再計算せず、引数の値を転記した(S4 / S5 / S6 / S7 / S8 の done と同じ値)。S1 done だけは別の値(20000fd1…)を記録している。食い違いとして報告する"
+  - "assumption_evidence_sha256 は validateAssumptions.js evidence tier-facade:{assumptions_sha256}:{assumption_verdicts_sha256}(S5 done attempt 2)で算出した(ok: true、tiers 1)"
+  - "as_built_summary_sha256 は実ファイルの sha256 と S8 done の記録が一致することを確認した。feedback の draft は無い"
+  - "gate の値は各段の done からの転記。依頼に書かれた数値(570 / 122・保留 1 / 62・保留 2 / 2 / 独立検証 1 件 → 0 件 / 誤り 6 種類)は done の値と一致した"
+  - "重いテストの削除の件数(14 / 3 / 25、うち 5 件は入力を小さくした)は as-built summary と依頼の文面による。「5 件は入力を小さくした」は依頼の文面だけが出どころで、HTML では『報告のみ』と表示した"
+  - "データフローの図は、技術的な値の道筋のため data-diagram-type を architecture にした(diagram-design の type-architecture を読んだ)"
+  - "回答欄は human-html-review の base.html のスクリプト(書き換えなし。前例から転記)で動く。dist-impl-review の『script を使わない』とは食い違うが、依頼の指示と前例に従った"
+  - "図の文字は 12px、フォントは外部読み込みなしのシステムフォント(human-html-review の規則が優先)"
+  - "git の書き込みコマンドは実行していない。書いたのは review/index.html と、この done だけ(作業用ファイルは scratchpad)"
+completed_at: "2026-11-18T02:55:00+09:00"
+completed_by: "dist-impl-review@0.14.1"
