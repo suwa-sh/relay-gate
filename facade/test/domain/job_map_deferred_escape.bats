@@ -185,7 +185,6 @@ validate_and_resolve() {
 	[[ "$-" != *f* ]]
 }
 
-# bats test_tags=heavy
 @test "job_map_fixed_params_parse_要素が多数ある場合_早期判定と状態機械で同じ要素になること" {
 	# Arrange(早期判定の形の値と、空白を足して状態機械で解析させる値。要素 300 個)
 	local plain="[" spaced="[ " index
@@ -208,7 +207,6 @@ validate_and_resolve() {
 	[ "${JOB_MAP_FIXED_PARAMS[*]}" = "${from_plain[*]}" ]
 }
 
-# bats test_tags=heavy
 @test "job_map_fixed_params_parse_長い要素にエスケープが多数ある場合_エスケープを解除して1つの要素にすること" {
 	# Arrange(状態機械の経路。要素の値は断片を最後に 1 回だけつないで作る)
 	local unit='ab\"c\\d\ne\t' expected_unit=$'ab"c\\d\ne\t' text="" expected="" index

@@ -100,7 +100,6 @@ setup() {
 	[ "${lines[0]}" = "error: validation kind is not implemented option=--final-crosscheck" ]
 }
 
-# bats test_tags=heavy
 @test "validate-config_sh_runnerが終了しない場合_待機上限で戻りwarnと版-で終了コード0であること" {
 	# Arrange(--help に応答せず終了しない runner。CLI が NFR の 10 秒以内に戻ることを検証する)
 	local runner="$BATS_TEST_TMPDIR/hang-runner.sh"

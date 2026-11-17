@@ -1,0 +1,118 @@
+stage: S4
+tier: tier-facade
+attempt: 1
+uc_id: 65b09d93
+manifest_sha256: 504ab51615700f48c2722e4e7f385f5b5e22a74f41757b45b31237192cdfea26
+manifest_projection: v2
+result: pass
+rerun_mode: initial
+findings_provided: false
+api_summary_check: "_api-summary.yaml に schema_version distillery.api-summary/v2 の記載は無く、_contract-slice.json も無い(契約 slice の hash 照合の対象外)"
+implementation:
+  summary: "標準の slot runner の入口 runners/standard-runner.sh(--help で usage 行と runner-if-version=1 を返す。runner IF の引数が不正なら何も出さず終了コード 2)と、共通ライブラリの入口 lib/runner-resolve.sh / runner-spec.sh / runner-result.sh / runner-notify.sh を配置した。入口は数行で、本体は src/ に置いた(利用者決定 2026-11-16)。解決・実行・結果の出力・通知の中身は後続 4 UC の担当で、共通ライブラリの本体は関数を定義しない空のファイルにした"
+  validate_config_changed: false
+  validate_config_note: "validate-config.sh --feature-flag は先行 UC の実装のままで、この UC の tier BDD 10 件を通した(既存の出力と終了コードは変えていない)"
+code_changes:
+  behavior_changed: true
+  files:
+    - path: facade/runners/standard-runner.sh
+      change: "追加(実行可能。配置ディレクトリを字面の runners/ の 1 つ上として求め、本体を source して standard_runner_main を呼ぶ)"
+    - path: facade/src/presentation/standard_runner.sh
+      change: "追加(--help の応答と runner IF の引数の検査。何も出力せず、引数不正は終了コード 2、引数が正しい起動は終了コード 6 の仮置き。前提 A-003 / A-004 / A-005)"
+    - path: facade/lib/runner-resolve.sh
+      change: "追加(src/usecase/runner_resolve.sh を source する入口)"
+    - path: facade/lib/runner-spec.sh
+      change: "追加(src/usecase/runner_spec.sh を source する入口)"
+    - path: facade/lib/runner-result.sh
+      change: "追加(src/usecase/runner_result.sh を source する入口)"
+    - path: facade/lib/runner-notify.sh
+      change: "追加(src/usecase/runner_notify.sh を source する入口)"
+    - path: facade/src/usecase/runner_resolve.sh
+      change: "追加(本体の置き場。中身は UC『ジョブマップで JOB_ID から実行先を解決する』)"
+    - path: facade/src/usecase/runner_spec.sh
+      change: "追加(本体の置き場。中身は UC『execution-spec.json を確定保存する』)"
+    - path: facade/src/usecase/runner_result.sh
+      change: "追加(本体の置き場。中身は UC『実装スクリプトを実行して Runner Result を出力する』)"
+    - path: facade/src/usecase/runner_notify.sh
+      change: "追加(本体の置き場。中身は UC『速報クロスチェック runner へ完了通知を送信する』)"
+    - path: facade/test/presentation/standard_runner.bats
+      change: "単体テストを 4 件追加(ほかのオプションの後の --help / `--` より後の --help は使い方にせず何も出力しない / runner IF の引数不正 10 通りは何も出力せず終了コード 2 / シンボリックリンクを含むパスで起動したとき字面から配置ディレクトリを決める)。S2 の 3 件は変えていない"
+    - path: facade/features/steps/assign-slot-runner-scripts.steps.js
+      change: "S2 の skeleton を実装に置き換えた(11 Scenario 分)。条件つきの BeforeStep / AfterStep / After を足した(該当 Scenario が印を立てたときだけ働く)"
+  not_changed:
+    - "facade/bin/validate-config.sh と src/ の既存ファイル"
+    - "feature の本文(facade/features/assign-slot-runner-scripts.feature)"
+    - "他 UC の step 定義、write-set の外のファイル"
+scenario_handling:
+  facade_sh_scenario: "『差し替えた runner 実体は runner IF だけで facade から起動できる』は、facade/bin/facade.sh が無い間は When の step が skipped を返す(Then の 2 step は実行されない)。facade.sh が存在すれば When が未実装として失敗する。fake の facade.sh は作っていない(前提 A-008)"
+  probe_timeout_scenario: "『10 秒以内に復帰する』は待機の上限の振る舞いの確認として仕様どおりに判定した。経過時間は When の step の開始から終了まで(前提 A-007)。両 slot のスタブの PID を記録し、終了時点で残っていないことも確かめた"
+  probe_preparation_failure_scenario: "Given どおり TMPDIR を /nonexistent/tmp にすると問い合わせの前の入力の複製が失敗して Then に届かない(issue 起票)。step は TMPDIR を /nonexistent/tmp にしたうえで、PATH の先頭の代替 mktemp が入力の複製の作業名だけを Scenario 専用のディレクトリに作る。問い合わせの一時ファイルの作成は本物の mktemp で実際に失敗する"
+  home_in_steps: "読むだけの Scenario は <home> = facade/。config/ff.env を書く相対パスの Scenario は一時ディレクトリに runners/ lib/ src/ を複製した配置ディレクトリ(前提 A-009)。step はリポジトリの中にファイルを書かない"
+gates:
+  format: pass
+  lint: pass
+  tdd: pass
+  bdd_tier: pass
+gate_runs:
+  - gate: format
+    cwd: facade
+    command: "shfmt -d ."
+    exit_code: 0
+  - gate: lint
+    cwd: facade
+    command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+    exit_code: 0
+    note: "lint の対象外の入口(runners/standard-runner.sh と lib/*.sh)も shellcheck -x で確認し、診断 0 件(exit 0)"
+  - gate: tdd
+    cwd: facade
+    command: "bats -r test"
+    exit_code: 0
+    summary: "569 tests, 569 ok, 0 not ok(S2 時点の 565 件 + 追加 4 件)"
+  - gate: bdd_tier
+    cwd: facade
+    command: "npx cucumber-js --config ../cucumber.cjs features"
+    exit_code: 0
+    summary: "123 scenarios (122 passed, 1 skipped), 874 steps (871 passed, 3 skipped)。skipped は facade.sh を起動する 1 Scenario(skipped を含んでも strict で失敗にならない)"
+gate_run_notes:
+  - "gate_runs は macOS(Darwin 25.5.0、arm64。ShellCheck 0.11.0、shfmt 3.13.1)での実測。最終のコードで 1 つずつ順に実行した(bats と cucumber を同時に走らせていない)"
+  - "時間の上限を確かめるテスト・大きな入力を作るテストは追加していない(tier BDD の 10 秒の Scenario は仕様の転写で、S2 で生成済み)"
+linux_runs:
+  environment: "docker イメージ relay-gate-ci:ubuntu24(aarch64、Bash 5.2.21、ShellCheck 0.9.0、Bats 1.10.0)"
+  method: "リポジトリを読み取り専用でマウントし、コンテナ内の一時ディレクトリへ複製(.git と node_modules を除く)して facade を cwd に一般ユーザー ubuntu で実行した。リポジトリ内に生成物は残していない"
+  runs:
+    - gate: format
+      command: "shfmt -d ."
+      exit_code: 0
+      note: "イメージに shfmt が無いため、公式リリースの v3.13.1 linux arm64 バイナリを作業用ディレクトリに取得し、読み取り専用でマウントして使った"
+    - gate: lint
+      command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+      exit_code: 0
+      note: "入口(runners/standard-runner.sh と lib/*.sh)の shellcheck -x も exit 0"
+    - gate: tdd
+      command: "bats -r test"
+      exit_code: 0
+      summary: "569 tests, 569 ok, 0 not ok"
+  limitation: "イメージに node が無いため、tier BDD(cucumber)は Linux では実行していない(macOS で実測)"
+environment: "macOS(Darwin 25.5.0、arm64)で 4 ゲートを実測。Linux コンテナで format / lint / bats を実測"
+issues_added:
+  - path: docs/impl/latest/65b09d93/issues/20261118_013500_probe-preparation-failure-scenario-unreachable.md
+    summary: "tier BDD『--help 問い合わせの準備に失敗すると終了コード 6 で止まる』の Given(TMPDIR=/nonexistent/tmp)では、問い合わせより先の入力の複製が失敗して config snapshot failed になり、Then の runner probe failed に届かない。Given の起こし方の書き換えを提案"
+    blocker: false
+assumptions:
+  path: "attempt-1/S4_tier-impl.tier-facade.assumptions.yaml"
+  count: 9
+  by_category:
+    input_validation: 1
+    data_format: 5
+    error_handling: 2
+    persistence: 0
+    performance: 1
+    security: 0
+  sha256: 910b6cabafbc05e1d741b84943f06c4afec1410a78c1270dc068c80536e57491
+  extraction:
+    candidate_count: 12
+    excluded_as_explicit: 3
+    recorded_count: 9
+  validator: "validateAssumptions.js record: ok true"
+completed_at: '2026-11-18T01:52:22+09:00'
+completed_by: dist-impl-implement@0.14.1

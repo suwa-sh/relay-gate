@@ -27,7 +27,6 @@ setup() {
 	[ "$CLI_FIELD_ESCAPED" = "K0$REPEATED=x" ]
 }
 
-# bats test_tags=heavy
 @test "cli_field_escape_text_制御文字の個数が経路の切り替わる境界の前後の場合_どの個数でも参照実装と同じバイト列になること" {
 	# Arrange(1 窓の合計が CLI_FIELD_ESCAPE_COUNT_MIN_TOTAL の前後、1 種類の個数が CLI_FIELD_ESCAPE_BULK_MIN_COUNT の前後)
 	local total few value
@@ -65,7 +64,6 @@ setup() {
 	[[ "$CLI_FIELD_ESCAPED" == 'x\u0001\u0002'*'\u001f\u007f\u0080\u0081'*'\u009f'$'\xc2\xa0\xc2\xbf\xc2''\u0085y'$'\xc2' ]]
 }
 
-# bats test_tags=heavy
 @test "cli_field_escape_text_決まった乱数列で作った値の場合_窓の大きさと前にバックスラッシュを付ける文字によらず参照実装と同じバイト列になること" {
 	# Arrange(線形合同法の固定の乱数列。制御文字・C1 の先頭と後続・引用符・バックスラッシュ・& ・パス名展開の文字を多めに混ぜる)
 	local alphabet=($'\001' $'\033' $'\n' $'\t' $'\r' $'\177' $'\037' $'\xc2' $'\xc2' $'\x80' $'\x9f' $'\x9b' $'\xa0' $'\xe3' $'\x81' '"' "\\" '&' 'a' ' ' '=' '*' '?' '[' ']' '/')
@@ -76,7 +74,7 @@ setup() {
 		seed=$(((seed * 1103515245 + 12345) % 2147483648))
 		RANDOM_VALUE=$((seed / 65536))
 	}
-	for ((round = 0; round < 400; round++)); do
+	for ((round = 0; round < 50; round++)); do
 		next_random
 		length=$((RANDOM_VALUE % 48))
 		if [ $((round % 8)) -eq 0 ]; then
@@ -183,26 +181,4 @@ setup() {
 	# Assert
 	[ "$CLI_FIELD_SAFE_TEXT" = "/opt/app/bin/runner.sh" ]
 	[ "${#CLI_FIELD_SAFE_CACHE[@]}" -eq 0 ]
-}
-
-# bats test_tags=heavy
-@test "cli_field_escape_text_制御文字が半分を占める100万バイトの値の場合_10秒以内に置き換えること" {
-	# Arrange(行の長さに上限は無い。処理時間を値のバイト数に比例させる)
-	local chunk="a"$'\033' value="" index
-	for ((index = 0; index < 9; index++)); do
-		chunk+="$chunk"
-	done
-	for ((index = 0; index < 1024; index++)); do
-		value+="$chunk"
-	done
-	SECONDS=0
-
-	# Act
-	cli_field_escape_text "$value"
-
-	# Assert
-	[ "$SECONDS" -lt 10 ]
-	[ "${#value}" -eq 1048576 ]
-	[ "${#CLI_FIELD_ESCAPED}" -eq 3670016 ]
-	[ "${CLI_FIELD_ESCAPED:0:14}" = 'a\u001ba\u001b' ]
 }

@@ -650,7 +650,6 @@ setup() {
 	[ "$(job_map_repo_row_count)" -eq 0 ]
 }
 
-# bats test_tags=heavy
 @test "job_map_repo_load_SIGPIPEを無視する環境でsedが失敗する場合_trのwrite_errorを失敗に数えずコマンド名sedだけを返すこと" {
 	# Arrange(CI の runner のように SIGPIPE を無視して起動された環境(無視の設定は子プロセスへ引き継がれる)。
 	#          sed が読まずに終わると、tr はパイプのバッファを超えた書き込みで write error(終了状態 1)になる。

@@ -1,0 +1,168 @@
+stage: S2
+uc_id: 65b09d93
+manifest_sha256: 20000fd15647744ec54f37a94d3ecb00d3755df845ba95980661bf6ccd3ff278
+manifest_projection: v2
+result: pass
+scaffold_mode: initial
+rerun: false
+branch_slug: assign-slot-runner-scripts
+tiers:
+  - tier-facade
+red_baseline: pass
+red_baseline_detail:
+  red_total: 25
+  by_stage:
+    - stage: atdd
+      total: 2
+      red: 2
+    - stage: uc_bdd
+      total: 9
+      red: 9
+    - stage: tier_bdd
+      total: 11
+      red: 11
+    - stage: tdd
+      total: 3
+      red: 3
+  reason: "全段が未実装を理由に fail する。ATDD / UC BDD / tier BDD は各 Scenario の最初の step(この UC で新しく定義した skeleton)が 'not implemented: <step 文言>' を投げる。単体テストは配置ディレクトリ(facade/)に runners/standard-runner.sh と lib/runner-*.sh が無いことを 'not implemented: <path> does not exist' として明示して fail する"
+  red_is_assertion_failure: true
+  undefined_steps: 0
+  ambiguous_steps: 0
+  parse_errors: 0
+transcription_check:
+  method: "spec.md(2 ブロック)と tier-facade.md(1 ブロック)の gherkin をスクリプトで取り出して feature へ書き、# で始まる出典コメント行を除いた本文が仕様のブロックと完全一致することを同じスクリプトで確認した。UC の feature は先行機能と同じく正常系・異常系の 2 ブロックを空行 1 行でつないだ"
+  uc_feature_verbatim: true
+  tier_feature_verbatim: true
+step_reuse:
+  method: "cucumber の --dry-run(message 形式)で、新しい feature の各 step が既存の step 定義に一致するかを調べ、一致しない step だけを新しい step ファイルに skeleton として定義した。既存の step と同じ文言を再定義していない"
+  reused:
+    tier_bdd:
+      - "RELAY_GATE_CONFIG_DIR に blue-job-map.csv と green-job-map.csv がある(facade/features/steps/configure-feature-flags.steps.js)"
+      - "RELAY_GATE_CONFIG_DIR に green-job-map.csv がある(同)"
+      - "`validate-config.sh --feature-flag ff.env` を実行する(同)"
+      - "work を作業ディレクトリにして `validate-config.sh --feature-flag <conf の絶対パス>/ff.env` を実行する(同)"
+      - "`validate-config.sh --feature-flag <conf の絶対パス>/ff.env` を実行する(同)"
+      - "終了コード 0 で stderr は 0 行である / 同(割り当てられた実体が標準か自作かを区別しない)(同)"
+    uc_bdd:
+      - "基盤適用設計者が validate-config.sh --feature-flag /etc/relay-gate/feature-flag.env を実行する(features/uc/steps/configure-feature-flags.steps.js)"
+      - "基盤適用設計者が RELAY_GATE_CONFIG_DIR=/etc/relay-gate で validate-config.sh --feature-flag /etc/relay-gate/feature-flag.env を実行する(同)"
+      - "基盤適用設計者が作業ディレクトリ /tmp で validate-config.sh --feature-flag /etc/relay-gate/feature-flag.env を実行する(同)"
+      - "validate-config.sh --feature-flag を実行する(同)"
+    atdd:
+      - "設定を検証する(features/atdd/steps/configure-feature-flags.steps.js)"
+  reuse_note: "再利用した step は、configure-feature-flags.steps.js の Before が作る World(workDir / envPath / env など)を前提にする。新しい step ファイルには Before / After を置いていない(同じディレクトリの全 Scenario に掛かるため)。S4 / S6 / S7 で skeleton を実装するときは、この World に合わせて Given を書く"
+  directory_dry_run:
+    - "facade/features 全体: 123 scenarios、undefined 0、ambiguous 0"
+    - "features/uc 全体: 64 scenarios、undefined 0、ambiguous 0"
+    - "features/atdd 全体: 209 scenarios(192 undefined は step 未実装の他 UC の ATDD で、この UC の追加前からのもの)、ambiguous 0"
+generated:
+  atdd:
+    features:
+      - features/atdd/SPEC-001-04.feature
+    feature_body_changed: false
+    steps: features/atdd/steps/assign-slot-runner-scripts.steps.js
+    steps_defined: 5
+    steps_by_keyword:
+      given: 2
+      when: 1
+      then: 2
+    scenarios:
+      - SPEC-001-04-3
+      - SPEC-001-04-8
+  uc_bdd:
+    feature: features/uc/assign-slot-runner-scripts.feature
+    source: "docs/specs/latest/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/spec.md#E2E完了条件(BDD)"
+    scenarios: 9
+    steps: features/uc/steps/assign-slot-runner-scripts.steps.js
+    steps_defined: 35
+    steps_by_keyword:
+      given: 18
+      when: 2
+      then: 15
+    cross_uc_scenarios: 2
+  tier_bdd:
+    - tier: tier-facade
+      feature: facade/features/assign-slot-runner-scripts.feature
+      source: "docs/specs/latest/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/tier-facade.md#ティア完了条件(BDD)"
+      scenarios: 11
+      steps: facade/features/steps/assign-slot-runner-scripts.steps.js
+      steps_defined: 37
+      steps_by_keyword:
+        given: 12
+        when: 4
+        then: 21
+      cross_uc_scenarios: 1
+  tdd:
+    - tier: tier-facade
+      file: facade/test/presentation/standard_runner.bats
+      tests: 3
+      red: 3
+      target: "配置ディレクトリ(facade/)の runners/standard-runner.sh と lib/runner-*.sh(4 本)。(1) --help が環境変数なしで終了コード 0、stderr なし、'usage: ' で始まる行があり、版の行(契約 runner_help_probe.version_line_selection の読み方)の値が 1 (2) standard-runner.sh が実行可能な通常ファイル(シンボリックリンクでない)で runners/ssh-runner.sh が無い (3) 4 本を source しても出力も終了もしない"
+scaffold_validation:
+  method: "単体テストが正しい実装で通ることを、リポジトリ外の scratchpad に置いた複製で確認した。複製に試作の入口(--help で usage 行と runner-if-version=1 を返す)と空の共通ライブラリ 4 本を置いて実行し、さらに runners/ssh-runner.sh を置いた反例で 2 件目が落ちることを確かめた。複製は確認後に削除した。リポジトリに facade/runners/ と facade/lib/ は作っていない"
+  results:
+    - "bats(追加 1 ファイル、試作あり): 3 tests, 3 ok"
+    - "bats(反例 ssh-runner.sh あり): fail を検出"
+    - "全件実行の後に 1 件目の判定を tier BDD の文言と契約の版の行の読み方に合わせて緩めた。追加ファイルだけを再実行し、リポジトリでは 3 件とも not implemented で red、試作ありの複製では 3 ok を確認した(全件の再実行はしていない)"
+  bdd_note: "BDD の 3 段は skeleton(全 step が not implemented)のため、正しい実装での確認は S4 / S6 / S7 で step を実装するときに行う"
+test_runs:
+  - stage: tier_bdd
+    tier: tier-facade
+    cwd: facade
+    command: "npx cucumber-js --config ../cucumber.cjs features/assign-slot-runner-scripts.feature"
+    exit_code: 1
+    summary: "11 scenarios (11 failed), 75 steps (22 passed, 42 skipped, 11 failed)。passed の 22 は既存の Before / After hook"
+    total: 11
+    red: 11
+    fail_reason: "11 件とも最初の step の 'not implemented'"
+  - stage: uc_bdd
+    cwd: "."
+    command: "npx cucumber-js --config cucumber.cjs features/uc/assign-slot-runner-scripts.feature"
+    exit_code: 1
+    summary: "9 scenarios (9 failed), 61 steps (18 passed, 34 skipped, 9 failed)。passed の 18 は既存の Before / After hook"
+    total: 9
+    red: 9
+    fail_reason: "9 件とも最初の step の 'not implemented'"
+  - stage: atdd
+    cwd: "."
+    command: "npx cucumber-js --config cucumber.cjs features/atdd --tags \"@atdd_SPEC-001-04-3 or @atdd_SPEC-001-04-8\""
+    exit_code: 1
+    summary: "2 scenarios (2 failed), 10 steps (4 passed, 4 skipped, 2 failed)。passed の 4 は既存の Before / After hook"
+    total: 2
+    red: 2
+    executed_matches_atdd_scenarios: true
+    fail_reason: "2 件とも Given の 'not implemented'"
+  - stage: tdd
+    tier: tier-facade
+    cwd: facade
+    command: "bats -r test"
+    exit_code: 1
+    summary: "565 tests, 562 ok, 3 not ok。落ちたのは追加した 3 件だけ"
+    total: 565
+    added: 3
+    red: 3
+    fail_reason: "未実装(facade/runners/standard-runner.sh と facade/lib/runner-*.sh が無い)"
+format_check:
+  tier: tier-facade
+  command: "shfmt -d ."
+  exit_code: 0
+lint:
+  tier: tier-facade
+  command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+  exit_code: 0
+dom_snapshot_tests: not_applicable
+issues:
+  - path: docs/impl/latest/65b09d93/issues/20261118_012630_cross-uc-scenarios.md
+    kind: cross_uc_scenarios
+    summary: "facade.sh を起動する 3 Scenario(UC BDD 2 件・tier BDD 1 件)は facade.sh の担当 UC(09730858)の責務を含む。ATDD SPEC-001-04-8 の『提供物の一覧』は CLI 契約の standard_runner と配置ディレクトリの中身で判定する"
+    blocker: false
+  - path: docs/impl/latest/65b09d93/issues/20261118_012631_probe-timeout-scenarios-assert-elapsed-time.md
+    kind: spec_vs_user_decision
+    summary: "UC BDD と tier BDD の『10 秒以内に復帰する』2 Scenario の Then が経過時間を合否にしており、2026-11-18 の利用者決定(時間を確かめるテストは書かない)と合わない。feature 本文は転写ルールどおり仕様のまま。S4 / S6 の前に扱いを決め、S8 で仕様の変更要求を出す"
+    blocker: false
+observations:
+  - "テストの配置は、オーケストレータの決定(facade/runners/ と facade/lib/ に数行の入口、本体は facade/src/)を前提にした。単体テストは配置ディレクトリを facade/(runners/ の 1 つ上。契約 standard_runner.home)として入口と 4 ファイルを見る。入口から呼ぶ facade/src/ 側の関数の分け方は固定していない"
+  - "tier BDD の『配置ディレクトリ <home>』は、この tier では facade/ にあたる。step を実装するとき、リポジトリの中にファイルを書かないこと(相対パスの Scenario で config/ff.env を置く先は一時ディレクトリに作った配置ディレクトリの複製か、facade/ を指す一時ディレクトリの構成にする)は S4 で決める"
+  - "時間を確かめるテスト・大きな入力を作るテストは書いていない"
+completed_at: '2026-11-18T01:27:30+09:00'
+completed_by: dist-impl-implement@0.14.1

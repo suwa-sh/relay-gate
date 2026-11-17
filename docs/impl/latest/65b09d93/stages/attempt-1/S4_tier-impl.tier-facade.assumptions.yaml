@@ -1,0 +1,92 @@
+schema_version: "1.0"
+uc_id: "65b09d93"
+tier: "tier-facade"
+attempt: 1
+extraction:
+  candidate_count: 12
+  excluded_as_explicit: 3
+  recorded_count: 9
+  excluded_note: "除外した 3 件: 配置ディレクトリを起動されたパスの字面の runners/ の 1 つ上とし環境変数で受け取らないこと(契約 standard_runner.home)/ --help が runner-if-version=1 を stdout に出して終了コード 0 で終わること(契約の --help と runner IF version = 1)/ TMPDIR を存在しないディレクトリにした Scenario の扱い(仕様どうしの食い違いのため issues/20261118_013500_probe-preparation-failure-scenario-unreachable.md に記録)"
+assumptions:
+  - id: A-001
+    category: data_format
+    assumption: "runners/standard-runner.sh と lib/runner-*.sh は数行の入口にし、本体は src/presentation/standard_runner.sh と src/usecase/runner_resolve.sh / runner_spec.sh / runner_result.sh / runner_notify.sh に置く。共通ライブラリの本体 4 本は、この UC では関数を定義しない空のファイルにする"
+    target: "facade/runners/standard-runner.sh:9"
+    reason: "配置(入口は数行、本体は src/)は利用者決定 2026-11-16 としてこの dispatch で渡された。共通ライブラリの本体を usecase 層に置くこと、中身を後続 UC に回すことは仕様に定義が無い"
+    confidence: medium
+    spec_refs:
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#commands[$BLUE_RUNNER / $GREEN_RUNNER].standard_runner"
+      - "tier-facade.md#データモデル変更"
+      - "docs/arch/latest/arch-design.yaml(層の構成。共通ライブラリの本体の層の指定は無い)"
+  - id: A-002
+    category: data_format
+    assumption: "標準の slot runner の入口は、配置ディレクトリを CDPATH を空にした cd と論理パスの pwd で決め、本体へは引数でも環境変数でも渡さない(環境変数に export しない)"
+    target: "facade/runners/standard-runner.sh:7"
+    reason: "契約 standard_runner.home は『字面の runners/ の 1 つ上・シンボリックリンクを辿らない・環境変数で受け取らない』と定めるが、求め方と、決めた値を子プロセスへ渡すかどうかは定義が無い"
+    confidence: high
+    spec_refs:
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#commands[$BLUE_RUNNER / $GREEN_RUNNER].standard_runner.home"
+      - "tier-facade.md#標準の slot runner"
+  - id: A-003
+    category: input_validation
+    assumption: "標準の slot runner は、引数のうち `--` より前のどこかに --help があれば使い方を出して終了コード 0 で終える。`--` より後の --help は PARAM として扱い、使い方を出さない"
+    target: "facade/src/presentation/standard_runner.sh:28"
+    reason: "契約は --help を真偽のオプションとして挙げるだけで、ほかのオプションと併用したときや `--` より後に現れたときの扱いを定義していない"
+    confidence: medium
+    spec_refs:
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#commands[$BLUE_RUNNER / $GREEN_RUNNER].options[--help]"
+      - "tier-facade.md#引数・オプション"
+  - id: A-004
+    category: error_handling
+    assumption: "標準の slot runner を --help 以外で起動したときは、stdout / stderr に何も出さずファイルも書かない。runner IF の引数が不正(--run-id / --job-id / --role / --mode の欠落・空の値・値の欠落、--role / --mode の列挙外、未知のオプション、--execution-spec と PARAM の併用)なら終了コード 2、引数が正しければ終了コード 6 で終える。exitcode.txt=2 の公開と、引数が正しい起動の処理(終了コード 6 は仮置き)は、後続 UC がジョブマップ解決・execution-spec 保存・実装の実行・Runner Result 公開・完了通知を実装するときに置き換える"
+    target: "facade/src/presentation/standard_runner.sh:13"
+    reason: "この dispatch で解決・実行・結果の出力・通知の中身は後続 4 UC の担当とされた。契約 exit_codes の 2 は『引数不足』『PARAM 併用』などを条件に挙げるが exitcode.txt=2 の公開を伴い、6 も exitcode.txt の公開を伴う条件だけを挙げる。Runner Result を公開できない状態での起動の扱い、空の値を欠落と同じに扱うことは定義が無い"
+    confidence: low
+    spec_refs:
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#commands[$BLUE_RUNNER / $GREEN_RUNNER].exit_codes"
+      - "tier-facade.md#runner 実体の責務(Runner Result Contract)"
+  - id: A-005
+    category: data_format
+    assumption: "--help の出力は `usage: standard-runner.sh --run-id <run_id> --job-id <JOB_ID> --role blue|green --mode foreground|background [--execution-spec <path>] [--help] -- [PARAM...]` の 1 行と `runner-if-version=1` の 1 行の 2 行にする"
+    target: "facade/src/presentation/standard_runner.sh:15"
+    reason: "契約は『使い方と runner-if-version=1 を stdout に出す』とだけ定め、使い方の文言・行数・版の行の位置を定義していない(usage の書式は契約の synopsis から写した)"
+    confidence: high
+    spec_refs:
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#commands[$BLUE_RUNNER / $GREEN_RUNNER].options[--help]"
+      - "docs/specs/latest/_cross-cutting/ux-ui/(CLI 出力規約。runner の usage の文言の定義は無い)"
+  - id: A-006
+    category: data_format
+    assumption: "共通ライブラリの入口 lib/runner-*.sh は、本体を自分のファイルのあるディレクトリ(BASH_SOURCE の字面)の ../src/usecase/ から source し、配置ディレクトリを表す変数を使わない"
+    target: "facade/lib/runner-resolve.sh:6"
+    reason: "契約は自作の runner が共通ライブラリを source して使えると定めるだけで、共通ライブラリが自分の本体や配置ディレクトリをどう見つけるかは定義が無い(自作の runner の配置ディレクトリの決め方は自作の runner に任されている)"
+    confidence: medium
+    spec_refs:
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#commands[$BLUE_RUNNER / $GREEN_RUNNER].standard_runner.custom_runner"
+      - "tier-facade.md#設定契約"
+  - id: A-007
+    category: performance
+    assumption: "tier BDD の『10 秒以内に復帰する』Scenario は、待機の上限という振る舞いの確認として仕様どおりに判定し、経過時間は When の step(validate-config.sh の起動から終了まで)だけを cucumber の BeforeStep / AfterStep で測る"
+    target: "facade/features/steps/assign-slot-runner-scripts.steps.js:444"
+    reason: "この dispatch で、この Scenario は性能の検査ではなく振る舞いの確認として仕様どおりに実装・判定すると指示された(issues/20261118_012631_probe-timeout-scenarios-assert-elapsed-time.md は要求にしない)。経過時間の測り方は仕様に定義が無い"
+    confidence: medium
+    spec_refs:
+      - "tier-facade.md#ティア完了条件(BDD)"
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#commands[validate-config.sh].runner_help_probe.response_time_budget"
+  - id: A-008
+    category: error_handling
+    assumption: "tier BDD『差し替えた runner 実体は runner IF だけで facade から起動できる』の facade.sh を起動する step は、facade/bin/facade.sh が無い間は skipped を返し、有るのに step が未実装なら失敗させる。fake の facade.sh は作らない"
+    target: "facade/features/steps/assign-slot-runner-scripts.steps.js:567"
+    reason: "facade.sh は UC『slot 実行モードを選択して runner を起動する』の担当で、この UC の時点では存在しない。扱いはこの dispatch で決められた(仕様には UC をまたぐ Scenario の扱いの定義が無い)"
+    confidence: high
+    spec_refs:
+      - "tier-facade.md#ティア完了条件(BDD)"
+      - "docs/impl/latest/65b09d93/issues/20261118_012630_cross-uc-scenarios.md"
+  - id: A-009
+    category: data_format
+    assumption: "tier BDD の『配置ディレクトリ <home>』は、読むだけの Scenario では facade/ そのもの、config/ff.env を書く相対パスの Scenario では一時ディレクトリに runners/ と lib/ と src/ を複製した配置ディレクトリとする(リポジトリの中にファイルを書かない)"
+    target: "facade/features/steps/assign-slot-runner-scripts.steps.js:280"
+    reason: "Scenario は <home> の作り方を定義しておらず、先行機能の step にも前例が無い。この dispatch で step がリポジトリ内にファイルを書かないことが指示された。runner だけの複製・リンクは契約 standard_runner.assignment_path の対象外のため、配置ディレクトリ全体を複製した"
+    confidence: medium
+    spec_refs:
+      - "tier-facade.md#ティア完了条件(BDD)"
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#commands[$BLUE_RUNNER / $GREEN_RUNNER].standard_runner.assignment_path"

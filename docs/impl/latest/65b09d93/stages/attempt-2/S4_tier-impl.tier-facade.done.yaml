@@ -1,0 +1,113 @@
+stage: S4
+tier: tier-facade
+attempt: 2
+uc_id: "65b09d93"
+manifest_sha256: 504ab51615700f48c2722e4e7f385f5b5e22a74f41757b45b31237192cdfea26
+manifest_projection: v2
+result: pass
+rerun_mode: blocker_fix
+findings_provided: true
+findings_paths:
+  - docs/impl/latest/65b09d93/stages/attempt-1/S5_verify.tier-facade.findings.yaml
+api_summary_check: "_api-summary.yaml に schema_version distillery.api-summary/v2 の記載は無く、_contract-slice.json も無い(契約 slice の hash 照合の対象外。attempt 1 と同じ)"
+findings_resolution:
+  - id: F-001
+    severity: blocker
+    resolution: fixed
+    summary: "standard-runner.sh が --execution-spec \"\"(空の値)を受理して終了コード 6 を返していた。契約 exit_codes の 2(引数不足 / spec なし)に合わせ、値を取る 5 オプション(--run-id / --job-id / --role / --mode / --execution-spec)の空の値を、値の欠落と同じく引数不正として終了コード 2 にした(何も出力せずファイルも書かない)"
+    other_options_check: "--run-id / --job-id は従来から最後の非空検査で、--role / --mode は列挙の検査で空の値を 2 にしていた。穴は --execution-spec だけだった。値を受け取る分岐で 5 オプションをまとめて拒否する形にそろえた"
+    regression_test: "facade/test/presentation/standard_runner.bats に 1 件追加。5 オプションのそれぞれに空文字の引数を 1 つ渡し、末尾の -- の有無の両方で、終了コード 2・stdout / stderr 空・作業ディレクトリに何も書かないことを確かめる。修正前に --execution-spec で status=6 となり失敗すること(red)を確認した"
+  - id: F-011
+    severity: minor
+    resolution: recorded_as_assumption
+    summary: "重複したオプションは後に書いた値が勝つ。契約の options に重複の規則が無いため挙動は変えず、前提 A-010 として記録した"
+  - id: F-012
+    severity: minor
+    resolution: recorded_as_assumption
+    summary: "PARAM が無い起動では末尾の -- を省いても受理する。契約の args は -- PARAM... を required: false とし、区切り自体の必須性を定めないため挙動は変えず、前提 A-011 として記録した"
+  - id: "F-002..F-010"
+    severity: minor
+    resolution: carried_forward
+    summary: "attempt 1 の前提 A-001〜A-009 の照合記録(spec_absent)。A-004 だけ F-001 の修正に合わせて内容を更新し、ほかの 8 件は同じ id・同じ内容で引き継いだ"
+implementation:
+  summary: "attempt 1 の実装をそのまま使い、runner IF の引数の検査で空の値を拒否する差分だけを入れた。範囲・置き場所・facade.sh の Scenario の skipped の扱い・10 秒以内に復帰する Scenario の扱いは attempt 1 と同じ"
+  validate_config_changed: false
+code_changes:
+  behavior_changed: true
+  files:
+    - path: facade/src/presentation/standard_runner.sh
+      change: "standard_runner_arguments_valid: 値を取るオプションの分岐で、値の欠落に加えて空の値も引数不正(終了コード 2)にした。日本語コメントを 2 行追加"
+    - path: facade/test/presentation/standard_runner.bats
+      change: "単体テストを 1 件追加(値を取るオプションに空の値を渡した場合に何も出力せず終了コード 2)。既存の 7 件は変えていない"
+  not_changed:
+    - "facade/bin/validate-config.sh と検証側のソース"
+    - "facade/runners/ / facade/lib/ / facade/src/usecase/runner_*.sh"
+    - "step 定義(facade/features/steps/assign-slot-runner-scripts.steps.js)と feature の本文"
+scenario_handling:
+  facade_sh_scenario: "attempt 1 と同じ(facade/bin/facade.sh が無い間は When が skipped。前提 A-008)"
+  probe_timeout_scenario: "attempt 1 と同じ(前提 A-007)"
+gates:
+  format: pass
+  lint: pass
+  tdd: pass
+  bdd_tier: pass
+gate_runs:
+  - gate: format
+    cwd: facade
+    command: "shfmt -d ."
+    exit_code: 0
+  - gate: lint
+    cwd: facade
+    command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+    exit_code: 0
+    note: "入口(runners/standard-runner.sh と lib/runner-resolve.sh / runner-spec.sh / runner-result.sh / runner-notify.sh)も shellcheck -x で個別に確認し exit 0"
+  - gate: tdd
+    cwd: facade
+    command: "bats -r test"
+    exit_code: 0
+    summary: "570 tests, 570 ok, 0 not ok(attempt 1 の 569 件 + 追加 1 件)"
+  - gate: bdd_tier
+    cwd: facade
+    command: "npx cucumber-js --config ../cucumber.cjs features"
+    exit_code: 0
+    summary: "123 scenarios (122 passed, 1 skipped), 874 steps (871 passed, 3 skipped)。skipped は facade.sh を起動する 1 Scenario(attempt 1 と同じ)"
+gate_run_notes:
+  - "gate_runs は macOS(Darwin 25.5.0、arm64)での実測。最終のコードで 1 つずつ順に実行した(bats と cucumber を同時に走らせていない。全件の実行は各 1 回)"
+  - "時間の上限を確かめるテスト・大きな入力を作るテストは追加していない"
+linux_runs:
+  environment: "docker イメージ relay-gate-ci:ubuntu24(aarch64、Bash 5.2.21、ShellCheck 0.9.0、Bats 1.10.0)"
+  method: "リポジトリを読み取り専用でマウントし、コンテナ内の一時ディレクトリへ複製(.git と node_modules を除く)して facade を cwd に一般ユーザー ubuntu で実行した。shfmt は attempt 1 が作業用ディレクトリに置いた v3.13.1 linux arm64 バイナリを読み取り専用でマウントして使った"
+  runs:
+    - gate: format
+      command: "shfmt -d ."
+      exit_code: 0
+    - gate: lint
+      command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+      exit_code: 0
+      note: "入口(runners/standard-runner.sh と lib/*.sh)の shellcheck -x も exit 0"
+    - gate: tdd
+      command: "bats -r test"
+      exit_code: 0
+      summary: "570 tests, 570 ok, 0 not ok"
+  limitation: "イメージに node が無いため、tier BDD(cucumber)は Linux では実行していない(macOS で実測)"
+environment: "macOS(Darwin 25.5.0、arm64)で 4 ゲートを実測。Linux コンテナで format / lint / bats を実測"
+issues_added: []
+assumptions:
+  path: "attempt-2/S4_tier-impl.tier-facade.assumptions.yaml"
+  count: 11
+  by_category:
+    input_validation: 3
+    data_format: 5
+    error_handling: 2
+    persistence: 0
+    performance: 1
+    security: 0
+  sha256: be0f45e4a9fd9ca54f4d709cb8de8f67fd176b44ef9d56b5a3f56125c00b69e0
+  extraction:
+    candidate_count: 14
+    excluded_as_explicit: 3
+    recorded_count: 11
+  changes_from_attempt_1: "A-004 を更新(空の値を拒否するオプションに --execution-spec を含めた)。A-010(重複したオプションは後勝ち。F-011)と A-011(PARAM が無いとき末尾の -- を省略可。F-012)を追加。A-001〜A-003 / A-005〜A-009 は同じ内容で引き継いだ"
+  validator: "validateAssumptions.js record: ok true"
+completed_at: "2026-11-18T02:11:35+09:00"
+completed_by: dist-impl-implement@0.14.1

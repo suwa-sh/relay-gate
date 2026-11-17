@@ -1,0 +1,63 @@
+schema_version: '1.0'
+uc_id: 65b09d93
+business: 適用構成業務
+buc: 適用構成定義フロー
+uc: slot runner の実体スクリプトを割り当てる
+state: completed
+current_attempt: 2
+resolved_models:
+  implementer: claude-opus-5-5
+  verifier: gpt-6-astra
+git_delivery:
+  required: true
+  uc_english_name: Assign slot runner scripts
+  branch_slug: assign-slot-runner-scripts
+  base_branch: main
+  base_head: 7ab3f2444d847350cf1911214ebbf2dfea3668f2
+  feature_branch: feature/assign-slot-runner-scripts
+  remote: origin
+stages:
+  S1_uc_init:
+    status: done
+    event: 20261118_011542_s1_uc_init_completed_65b09d93
+  S2_test_scaffold:
+    status: done
+    event: 20261118_012759_s2_test_scaffold_completed_65b09d93
+  S3_contracts:
+    status: done
+    event: 20261118_012800_s3_contracts_completed_65b09d93
+  S4_tier_impl:
+    tier-facade:
+      status: done
+      attempt: 2
+      gates:
+        format: pass
+        lint: pass
+        tdd: pass
+        bdd_tier: pass
+      event: 20261118_021159_s4_tier_impl_completed_65b09d93_facade_attempt2
+  S5_verify:
+    tier-facade:
+      status: done
+      attempt: 2
+      open_blockers: 0
+      open_major: 0
+      event: 20261118_022211_s5_verify_completed_65b09d93_facade_attempt2
+  S6_uc_bdd:
+    status: done
+    event: 20261118_023112_s6_uc_bdd_completed_65b09d93
+  S7_atdd:
+    status: done
+    event: 20261118_023113_s7_atdd_completed_65b09d93
+  S8_feedback:
+    status: done
+    event: 20261118_023612_s8_feedback_completed_65b09d93_no_requests
+    request_count: 0
+    blocker_count: 0
+  S9_review:
+    status: approved
+    event: 20261118_070423_review_approved_65b09d93_final
+    review_evidence_event: 20261118_025247_s9_review_generated_65b09d93
+    delivery_event: 20261118_070424_delivery_prepared_65b09d93_assign_slot_runner_scripts
+updated_at: '2026-11-18T07:04:22+09:00'
+completed_at: '2026-11-18T07:04:22+09:00'

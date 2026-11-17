@@ -3,9 +3,6 @@
 # specs_root / repo_root は同一リポ(distillery 出力 docs/ と実装先が同居)。tier-datastore は実装 tier ではなく共有資産(datastore_owner)。
 # capabilities は P1 の存在プローブ結果の記録であり契約の正ではない(asyncapi.yaml は存在するが契約としては宣言しない。
 # cli-command-contract.yaml は契約外の共有仕様として S1 の shared_spec_refs で扱う)。
-# commands.test は重いテスト(`# bats test_tags=heavy`)を外して流す(2026-11-16 確定:
-# docs/impl/events の config_confirmed_test_command_excludes_heavy)。重いテストは、対象の仕組みを変更したときだけ
-# `node scripts/ci/heavy-test-files.js <tier_dir> <base_ref>` が出すファイルを `bats --filter-tags heavy` で流す。
 schema_version: '1.0'
 specs_root: docs
 repo_root: .
@@ -17,7 +14,7 @@ tiers:
   commands:
     format_check: shfmt -d .
     lint: find src test -name '*.sh' -exec shellcheck -x {} +
-    test: bats -r --filter-tags '!heavy' test
+    test: bats -r test
     bdd: npx cucumber-js --config ../cucumber.cjs features
 - id: tier-rapid-crosscheck
   dir: rapid-crosscheck
@@ -26,7 +23,7 @@ tiers:
   commands:
     format_check: shfmt -d .
     lint: find src test -name '*.sh' -exec shellcheck -x {} +
-    test: bats -r --filter-tags '!heavy' test
+    test: bats -r test
     bdd: npx cucumber-js --config ../cucumber.cjs features
 - id: tier-final-crosscheck
   dir: final-crosscheck
@@ -35,7 +32,7 @@ tiers:
   commands:
     format_check: shfmt -d .
     lint: find src test -name '*.sh' -exec shellcheck -x {} +
-    test: bats -r --filter-tags '!heavy' test
+    test: bats -r test
     bdd: npx cucumber-js --config ../cucumber.cjs features
 - id: tier-ops
   dir: ops
@@ -44,7 +41,7 @@ tiers:
   commands:
     format_check: shfmt -d .
     lint: find src test -name '*.sh' -exec shellcheck -x {} +
-    test: bats -r --filter-tags '!heavy' test
+    test: bats -r test
     bdd: npx cucumber-js --config ../cucumber.cjs features
 datastore_owner: tier-ops
 contracts:

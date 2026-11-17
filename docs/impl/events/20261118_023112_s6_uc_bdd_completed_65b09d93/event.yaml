@@ -1,0 +1,11 @@
+event_id: 20261118_023112_s6_uc_bdd_completed_65b09d93
+type: stage_completed
+uc_id: 65b09d93
+stage: S6
+payload:
+  result: pass
+  done: docs/impl/latest/65b09d93/stages/S6_uc-bdd.done.yaml
+  manifest_sha256: 504ab51615700f48c2722e4e7f385f5b5e22a74f41757b45b31237192cdfea26
+  manifest_projection: v2
+  note: 'uc-bdd: 7 passed / 2 skipped (facade.sh scenarios, judged by the next UC); features/uc as a whole 62 passed / 2 skipped'
+created_at: '2026-11-18T02:31:12+09:00'

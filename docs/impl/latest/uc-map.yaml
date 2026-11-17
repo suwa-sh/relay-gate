@@ -75,7 +75,9 @@ use_cases:
   path: docs/specs/latest/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる
   tiers:
   - tier-facade
-  atdd_scenarios: []
+  atdd_scenarios:
+  - SPEC-001-04-3
+  - SPEC-001-04-8
   atdd_confirmed: true
 - uc_id: 09730858
   business: 実装切替業務

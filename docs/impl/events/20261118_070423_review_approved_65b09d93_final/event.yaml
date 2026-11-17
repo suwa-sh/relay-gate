@@ -1,0 +1,81 @@
+event_id: 20261118_070423_review_approved_65b09d93_final
+type: review_approved
+uc_id: 65b09d93
+stage: S9
+payload:
+  approval_kind: final_approval
+  review_evidence_event_id: 20261118_025247_s9_review_generated_65b09d93
+  feedback_review_evidence:
+    feedback_id: null
+    draft_path: null
+    draft_sha256: null
+    request_count: 0
+    blocker_count: 0
+    request_ids: []
+    s8_status: no_requests
+    as_built_summary_sha256: 7a5f791e70ee921f917cd7379a7928c3377ab8d3fc17146361013ebd21dd9c67
+  implementation_review_evidence:
+    gate_result: 6/6 pass
+    gates:
+      format: pass
+      lint: pass
+      tdd: pass (570/570 macOS + Linux)
+      bdd_tier: pass (122/123 passed, 1 skipped, 0 failed)
+      uc_bdd: pass (62/64 passed, 2 skipped, 0 failed)
+      atdd: pass (2/2; with completed UCs 17/17)
+    open_blocker_count: 0
+    open_major_count: 0
+    open_minor_count: 12
+    tiers:
+    - tier: tier-facade
+      attempt: 2
+      assumptions_sha256: be0f45e4a9fd9ca54f4d709cb8de8f67fd176b44ef9d56b5a3f56125c00b69e0
+      assumption_verdicts_sha256: 5052c4a3a7e8fb09c036c9ba81d0c78da8218e3231e9cb525729dd5feee85304
+    assumption_evidence_sha256: 9ce6b1e5445ffd7c500d684b1013c8950ed3cf791ee44f88c6f426a5448a3e9b
+  assumption_decisions:
+  - tier: tier-facade
+    id: A-001
+    decision: confirmed
+  - tier: tier-facade
+    id: A-002
+    decision: confirmed
+  - tier: tier-facade
+    id: A-003
+    decision: confirmed
+  - tier: tier-facade
+    id: A-004
+    decision: confirmed
+  - tier: tier-facade
+    id: A-005
+    decision: confirmed
+  - tier: tier-facade
+    id: A-006
+    decision: confirmed
+  - tier: tier-facade
+    id: A-007
+    decision: confirmed
+  - tier: tier-facade
+    id: A-008
+    decision: confirmed
+  - tier: tier-facade
+    id: A-009
+    decision: confirmed
+  - tier: tier-facade
+    id: A-010
+    decision: confirmed
+  - tier: tier-facade
+    id: A-011
+    decision: confirmed
+  decisions:
+    implementation: approved (standard runner entry answering --help, the 4 library entries; validate-config.sh unchanged)
+    scope: the body of the standard runner (resolve / run / result / notify) is built by the following 4 features
+    placeholder_behavior: 'other than --help: invalid arguments exit 2, valid arguments exit 6; no output, no file written'
+    placement: facade/runners and facade/lib are thin entries, bodies under facade/src (user decision 2026-11-16)
+    atdd_mapping: the 2 provisionally assigned scenarios are confirmed (20261118_070422_config_confirmed_65b09d93_atdd_scenarios_confirmed_by_user)
+    skipped_scenarios: the scenarios that launch facade.sh stay skipped until the next feature builds it; spec unchanged
+    spec_requests: '0'
+    heavy_tests: 17 tests removed, the selection mechanism removed, 25 kept without the tag (done at the start of this feature)
+    git_delivery: squash into 1 commit, open a pull request, and merge it after the checks pass
+  user_answer: 【全体】実装と「推奨で決めたこと」をまとめて承認します(実装者が補った前提 11 件を含む)。 / 【本線への取り込み】1 コミットにまとめて取り込み依頼を作り、自動検査が通ったらマージまで進めてください。
+  confirmed_by: user
+created_at: '2026-11-18T07:04:22+09:00'

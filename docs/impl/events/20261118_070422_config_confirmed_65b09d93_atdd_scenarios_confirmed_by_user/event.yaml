@@ -1,0 +1,16 @@
+event_id: 20261118_070422_config_confirmed_65b09d93_atdd_scenarios_confirmed_by_user
+type: config_confirmed
+uc_id: 65b09d93
+stage: S1
+payload:
+  confirmed_by: user
+  pending_user_confirmation: false
+  confirmed_via: 'review reply on 2026-11-18: the decisions made by recommendation (including the assignment of the 2 acceptance scenarios) are approved as a whole'
+  supersedes: 20261118_011541_config_confirmed_65b09d93_atdd_scenarios_provisional
+  items:
+  - key: uc-map[65b09d93].atdd_scenarios
+    before: &id001
+    - SPEC-001-04-3
+    - SPEC-001-04-8
+    after: *id001
+created_at: '2026-11-18T07:04:22+09:00'

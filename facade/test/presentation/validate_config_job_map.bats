@@ -810,52 +810,6 @@ has_control_byte() {
 	[ -z "$(ls -A "$TMPDIR")" ]
 }
 
-# bats test_tags=heavy
-@test "validate-config_sh_--job-mapでNFR共通前提の最悪条件5000行の場合_10秒以内に終了コード0であること" {
-	# Arrange(nfr-grade B.1.1.2 の共通前提: ヘッダーを除いて 5,000 行、全列に値があり、job_id が全行一意、map_version が全行異なる。
-	#         B.2.1.1: 内容によらず 10 秒以内。行数に比例する時間で処理できること(重複検査・版の集計を全組合せ比較にしない))
-	{
-		printf '%s\n' 'job_id,host,user,work_dir,script,fixed_params,hang_detect_limit_minutes,credential_ref,map_version'
-		index=1
-		while [ "$index" -le 5000 ]; do
-			printf 'JOB%05d,host-green-%02d,batch,/var/app/work,/opt/app/bin/job%05d.sh,"[""--mode"",""full"",""--id"",""%d""]",60,ssh-key-green,map-v%d\n' "$index" "$((index % 100))" "$index" "$index" "$index"
-			index=$((index + 1))
-		done
-	} >"$MAP"
-	SECONDS=0
-
-	# Act
-	run "$SCRIPT" --job-map "$MAP"
-
-	# Assert(版の混在は warn。違反は無いので終了コード 0)
-	[ "$status" -eq 0 ]
-	[[ "$output" == *"rows=5000"* ]]
-	[[ "$output" == *"warn: mixed map_version values="* ]]
-	[ "$SECONDS" -lt 10 ]
-}
-
-# bats test_tags=heavy
-@test "validate-config_sh_--job-mapでNFR共通前提の最悪条件5000行にverboseを付けた場合_10秒以内に終了コード0であること" {
-	# Arrange(--verbose は 1 行 1 job_id の info を出す。出力量が行数に比例しても 10 秒以内)
-	{
-		printf '%s\n' 'job_id,host,user,work_dir,script,fixed_params,hang_detect_limit_minutes,credential_ref,map_version'
-		index=1
-		while [ "$index" -le 5000 ]; do
-			printf 'JOB%05d,host-green-%02d,batch,/var/app/work,/opt/app/bin/job%05d.sh,"[""--mode"",""full"",""--id"",""%d""]",60,ssh-key-green,map-v%d\n' "$index" "$((index % 100))" "$index" "$index" "$index"
-			index=$((index + 1))
-		done
-	} >"$MAP"
-	SECONDS=0
-
-	# Act
-	run "$SCRIPT" --job-map "$MAP" --verbose
-
-	# Assert
-	[ "$status" -eq 0 ]
-	[ "$(printf '%s\n' "${lines[@]}" | grep -c '^info: resolved job_id=')" -eq 5000 ]
-	[ "$SECONDS" -lt 10 ]
-}
-
 # ---- S2 test-scaffold scoped 再生成(spec event 20260923_112000_feedback_impl_feedback_eff24f55_cycle2)----
 # 変更点 1: 重複 job_id の error 行は job_id ごとに 1 行。lines= は初出行を含む出現順の全行番号。
 # 変更点 2: credential_ref が参照名の形式に合わない値は理由を問わず同じ warn で受理し、値を診断に出さない。

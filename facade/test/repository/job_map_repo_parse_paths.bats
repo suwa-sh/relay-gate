@@ -79,7 +79,6 @@ assert_same_on_all_paths() {
 	[ "${CSV_CELLS[*]}" = "short-path" ]
 }
 
-# bats test_tags=heavy
 @test "csv_parse_引用符とカンマの並びが様々な行の場合_窓なしと窓ありの状態機械で同じ戻り値とセルになること" {
 	# Arrange(受理する行とクォート不正の行の両方)
 	local -a samples=(
@@ -114,7 +113,6 @@ assert_same_on_all_paths() {
 	done
 }
 
-# bats test_tags=heavy
 @test "csv_parse_長い囲みセルに二重化された引用符が多数ある場合_引用符を1文字ずつに戻して1つのセルにすること" {
 	# Arrange(`""` 300 個。窓なしの解析は `""` の数によらず値を 1 回だけつなぐ)
 	local unit='abc""' value_unit='abc"' cell="" expected="" index

@@ -1,0 +1,73 @@
+stage: S6
+uc_id: 65b09d93
+manifest_sha256: 504ab51615700f48c2722e4e7f385f5b5e22a74f41757b45b31237192cdfea26
+manifest_projection: v2
+result: pass
+branch_slug: assign-slot-runner-scripts
+tiers:
+  - tier-facade
+tier_impl_attempt: 2
+source: "docs/specs/latest/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/spec.md#E2E完了条件(BDD)"
+feature: features/uc/assign-slot-runner-scripts.feature
+feature_changed: false
+steps: features/uc/steps/assign-slot-runner-scripts.steps.js
+steps_changed: true
+tier_impl_changed: false
+dry_run:
+  command: "npx cucumber-js --config cucumber.cjs features/uc --dry-run"
+  summary: "64 scenarios (64 skipped), 401 steps (401 skipped)"
+  undefined_steps: 0
+  ambiguous_steps: 0
+target_feature_run:
+  cwd: "."
+  command: "npx cucumber-js --config cucumber.cjs features/uc/assign-slot-runner-scripts.feature"
+  exit_code: 0
+  summary: "9 scenarios (7 passed, 2 skipped), 61 steps (55 passed, 6 skipped)"
+  scenarios_total: 9
+  scenarios_passed: 7
+  scenarios_skipped: 2
+  scenarios_failed: 0
+run:
+  cwd: "."
+  command: "npx cucumber-js --config cucumber.cjs features/uc"
+  exit_code: 0
+  summary: "64 scenarios (62 passed, 2 skipped), 401 steps (395 passed, 6 skipped)"
+  scenarios_total: 64
+  scenarios_passed: 62
+  scenarios_skipped: 2
+  scenarios_failed: 0
+  undefined_steps: 0
+  ambiguous_steps: 0
+preceding_uc_run:
+  features:
+    - features/uc/configure-feature-flags.feature
+    - features/uc/define-slot-job-maps.feature
+    - features/uc/define-crosscheck-job-map-and-comparison-definitions.feature
+  scenarios_total: 55
+  scenarios_passed: 55
+  note: "全体実行 64 件のうち先行 UC の 55 件。先行 UC の step 定義は未変更で全件 pass(退行なし)"
+skipped_scenarios:
+  - scenario: "runner 実体を差し替えても facade は変更不要である(SPEC-001-04)"
+    skipped_from: "When(facade.sh JOB001 の実行)以降。When の前半(GREEN_RUNNER を自作 runner へ差し替えて validate-config.sh が終了コード 0)は実行して判定済み"
+  - scenario: "facade は設定された runner を runner IF で起動するだけである(SPEC-002-03)"
+    skipped_from: "When(facade.sh JOB001 x y の実行)以降。Given(スタブ runner・ジョブマップの配置)は実行済み"
+skipped_reason: "facade/bin/facade.sh は UC「slot 実行モードを選択して runner を起動する」(09730858)の担当で、この UC の時点では存在しない(オーケストレータの決定: 仕様は変えず、facade.sh が無い間は step が cucumber の skipped を返し、存在したら未実装として失敗させる。fake の facade.sh は作らない)。tier 側の同じ扱いは facade/features/steps/assign-slot-runner-scripts.steps.js"
+spec_interpretation:
+  - scenario: "runner 割当を検証する(SPEC-001-04) / runner IF に応答しない実体は警告される / --help に応答しない runner の問い合わせは待機上限で打ち切られ 10 秒以内に復帰する"
+    note: "Given の feature-flag.env は例示として一部のキーだけを挙げるが Then は終了コード 0 を期待する。「がある」を「その行を含む」と読み、必須キー(BLUE_IMPL / GREEN_IMPL / RAPID_CROSSCHECK_MODE=off)を有効な値で補った。必須の根拠は CLI 契約 config_files.feature-flag.env の keys / validation_rules(既存規則の適用で、前提の新規抽出ではない)"
+  - scenario: "--help に応答しない runner の問い合わせは待機上限で打ち切られ 10 秒以内に復帰する"
+    note: "待機の上限という振る舞いの確認として仕様どおり経過時間(最後の Given の終わりから最初の Then の始まり = validate-config.sh の実行)が 10 秒以内であることを判定した(性能の検査ではない)。runner のプロセスの残存は最初の Then で控えてから片付ける"
+harness:
+  process: "facade/bin/validate-config.sh を実プロセスとして起動(Scenario ごとの一時ディレクトリを root に、仕様の絶対パスを root 配下へ写像して実ファイルを配置)。標準の slot runner は facade/ の runners・lib・src を一時ディレクトリの /opt/relay-gate へ複製して使う"
+  external_connections: none
+  repository_writes: none
+  leftover_processes: none
+injections: []
+injections_note: "ハーネス注入なし(facade.sh の代わりのスタブも注入しない)。前提の新規抽出なし"
+cross_uc_refs:
+  - docs/impl/latest/65b09d93/issues/20261118_012630_cross-uc-scenarios.md
+  - docs/impl/latest/65b09d93/issues/20261118_012631_probe-timeout-scenarios-assert-elapsed-time.md
+issues: []
+issues_note: "新規起票なし"
+completed_at: '2026-11-18T12:00:00+09:00'
+completed_by: dist-impl-implement@0.14.1

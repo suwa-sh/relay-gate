@@ -1,0 +1,142 @@
+stage: "S8"
+uc_id: "65b09d93"
+manifest_sha256: "504ab51615700f48c2722e4e7f385f5b5e22a74f41757b45b31237192cdfea26"
+manifest_projection: v2
+mode: "initial"
+mode_note: "初回の実行。仕様への要求は 0 件。起票された 3 件の issue は、出さなくても実装・運用に実害が無いため要求にしない(利用者の 2026-11-18 の方針)。draft は作っていない"
+result: pass
+status: "no_requests"
+tier_impl_attempt: 2
+policy:
+  source: "利用者の方針(2026-11-18)"
+  summary: "仕様への要求は、出さないと実装や運用で実害が出るものだけにする。仕様を変えると全工程の再確認が要り、実装の効率が下がるため"
+  user_statements:
+    - "ずっとどうでも良いエッジケースを考えすぎです。大きなデータに意味はなく、ムダな処理がないことを見たいだけです。"
+    - "推奨ですすめるというか、実装の効率が下がるなら仕様を取り下げてもよいです。"
+  precedent: "docs/impl/latest/eff24f55/stages/S8_feedback.done.yaml"
+inputs:
+  issues_dir: "docs/impl/latest/65b09d93/issues/"
+  findings:
+    - "docs/impl/latest/65b09d93/stages/attempt-1/S5_verify.tier-facade.findings.yaml"
+    - "docs/impl/latest/65b09d93/stages/attempt-2/S5_verify.tier-facade.findings.yaml"
+  assumptions: "docs/impl/latest/65b09d93/stages/attempt-2/S4_tier-impl.tier-facade.assumptions.yaml"
+  s4_done: "docs/impl/latest/65b09d93/stages/attempt-2/S4_tier-impl.tier-facade.done.yaml"
+  s5_done: "docs/impl/latest/65b09d93/stages/attempt-2/S5_verify.tier-facade.done.yaml"
+  s6_done: "docs/impl/latest/65b09d93/stages/S6_uc-bdd.done.yaml"
+  s7_done: "docs/impl/latest/65b09d93/stages/S7_atdd.done.yaml"
+  review_notes: null
+  review_notes_note: "初回のため review/review-notes.md は無い。人による前提の却下は 0 件"
+resolution:
+  issues:
+    - path: "docs/impl/latest/65b09d93/issues/20261118_012630_cross-uc-scenarios.md"
+      verdict: "not_requested"
+      decided_by: "オーケストレータの判断(利用者の 2026-11-18 の方針による)"
+      decision_reason: "要求にしない。仕様の不足ではなく、機能をまたぐ scenario の責務分担の記録である。facade.sh を起動する 3 件(tier 1 件 + UC 2 件)は skipped とし、次の機能で facade.sh を作った時点で判定する"
+      evidence: "S4 done の scenario_handling.facade_sh_scenario、S6 done の skipped_scenarios(2 件)、tier BDD の skipped 1 件。代役の facade.sh は作っていない"
+    - path: "docs/impl/latest/65b09d93/issues/20261118_012631_probe-timeout-scenarios-assert-elapsed-time.md"
+      verdict: "not_requested"
+      decided_by: "オーケストレータの判断(利用者の 2026-11-18 の方針による)"
+      decision_reason: "要求にしない。待機の上限という振る舞いの確認で、性能の検査ではない。仕様どおりに実装・判定した"
+      evidence: "前提 A-007 の独立検証の判定は consistent(復唱)。独立検証は分類を失敗時の振る舞いと判定した(F-012)。tier BDD と UC BDD の該当 scenario は pass"
+    - path: "docs/impl/latest/65b09d93/issues/20261118_013500_probe-preparation-failure-scenario-unreachable.md"
+      verdict: "not_requested"
+      decided_by: "オーケストレータの推奨(利用者の 2026-11-18 の方針による)"
+      decision_reason: "要求にしない。scenario の前提の文面の直しは実害が無い。テストは、問い合わせの準備だけが失敗する形に step を組んで確かめている"
+      evidence: "独立検証の実測: 終了コード 6、stderr は runner probe failed の 1 行、stdout は空、runner は起動されない。validate-config.sh の振る舞いは変えていない。事実は as-built summary の第 3 節に記録した"
+  override_of_orchestrator_judgement: "なし(判断を覆すべき実害は見つからなかった)"
+  new_issues_in_this_stage: 0
+  findings:
+    attempt_1:
+      blocker: 1
+      major: 0
+      minor: 11
+      verdict: "blocker 1 件(値が空の --execution-spec を受理する)は実装起因。attempt 2 で修正済み。要求にしない"
+    attempt_2:
+      blocker: 0
+      major: 0
+      minor: 12
+      spec_absent: 10
+      restatement: 1
+      category_mismatch: 1
+      contradicts: 0
+      unlisted: 0
+      verdict: "findings 起因の要求なし。spec_absent 10 件は人が spec_change で却下していないため要求にしない。restatement 1 件(F-007)は仕様どおり。category_mismatch 1 件(F-012)と F-010 の後半(前提 A-010 の空の値の記述が実装と合わない)は前提の記録の不正確さで、実装は正しく、仕様起因ではない"
+  rejected_spec_change: 0
+  rejected_implementation_change: 0
+classification:
+  spec_origin: 0
+  not_requested_by_user_policy: 3
+  implementation_origin: 1
+  implementation_origin_records: 2
+  environment_origin: 1
+  note: "仕様起因の要求 = 0 件。要求にしない(利用者の方針)= issue 3 件。実装起因 = 値が空の引数の受理(attempt 2 で修正済み)。実装起因の記録 = 前提の記録漏れ 2 件(attempt 2 で記録済み)と前提の記述の不正確さ 2 か所(as-built summary の第 4 節に正しい記述を書いた)。環境起因 = Linux のコンテナに node が無く tier BDD を Linux で流していない(macOS で実測)"
+requests: []
+assumptions_summary:
+  count: 11
+  consistent: 1
+  spec_absent: 10
+  contradicts: 0
+  unlisted: 0
+  rejected_spec_change: 0
+  human_decision: "未判断(最後の確認で求める)"
+  changes_from_attempt_1: "A-004 を更新。A-010 と A-011 を追加"
+  record_corrections_for_review:
+    - id: "A-010"
+      note: "前提は「前の値が空でも後の値で上書きしたあとに検査する」と書くが、実装は空の値を出現した時点で引数不正(終了コード 2)にする。実装が正しい。前提のファイルは検証済みの記録のため書き換えていない"
+    - id: "A-007"
+      note: "前提の分類は performance だが、独立検証の分類は error_handling(失敗時の振る舞い)。前提のファイルは書き換えていない"
+review_attention:
+  - key: "a"
+    topic: "この機能の範囲"
+    summary: "標準の runner の入口と --help の応答、共通ライブラリ 4 本の置き場まで。中身は後続の 4 機能"
+    related_assumptions: ["A-001"]
+  - key: "b"
+    topic: "--help 以外で起動したときの仮の扱い"
+    summary: "引数不正は終了コード 2、正しい引数は終了コード 6(仮置き)。何も出さずファイルも書かない"
+    related_assumptions: ["A-004"]
+  - key: "c"
+    topic: "置き場所"
+    summary: "facade/runners/ と facade/lib/ は入口、本体は facade/src/"
+    related_assumptions: ["A-001", "A-006"]
+  - key: "d"
+    topic: "受け入れテストの仮の割り当て"
+    summary: "SPEC-001-04-3 と SPEC-001-04-8 の 2 件。利用者の確定待ち"
+    related_assumptions: []
+  - key: "e"
+    topic: "保留の scenario"
+    summary: "tier 1 件 + UC 2 件。facade.sh を起動するため、次の機能で判定する"
+    related_assumptions: ["A-008"]
+  - key: "f"
+    topic: "この branch の最初のコミットで削除したテスト"
+    summary: "時間の上限を確かめるテスト 14 件、大きな入力を作るだけのテスト 3 件、重いテストの仕分けの仕組みを削除した。印の付いていた 42 件のうち振る舞いを確かめる 25 件は残した(コミット b720be0)"
+    related_assumptions: []
+feedback_request:
+  feedback_id: null
+  draft_path: null
+  draft_sha256: null
+  request_count: 0
+  blocker_count: 0
+  request_ids: []
+  supersedes: null
+  published: false
+  note: "要求 0 件のため draft を作っていない"
+as_built_summary: "docs/impl/latest/65b09d93/feedback/as-built-summary.md"
+as_built_summary_sha256: "7a5f791e70ee921f917cd7379a7928c3377ab8d3fc17146361013ebd21dd9c67"
+issues_added: []
+learnings: 3
+learning_files:
+  - "docs/impl/latest/65b09d93/learnings/20261118_023215_empty-option-value-must-be-rejected-where-value-is-read.md"
+  - "docs/impl/latest/65b09d93/learnings/20261118_023215_scenario-owned-by-later-feature-skip-not-fake.md"
+  - "docs/impl/latest/65b09d93/learnings/20261118_023215_inject-failure-only-at-target-step.md"
+proposals:
+  skill: true
+  context: true
+proposal_files:
+  - "docs/impl/latest/65b09d93/learnings/20261118_023215_proposal-skill.md"
+  - "docs/impl/latest/65b09d93/learnings/20261118_023215_proposal-context.md"
+checks:
+  yaml_parse: "yaml.safe_load で確認"
+  mermaid_lint: "未確認(npx md-mermaid-lint が内蔵ブラウザの起動の時間切れで失敗。環境の問題。図は flowchart 2 つ)"
+  tests_run: false
+completed_at: "2026-11-18T02:32:15+09:00"
+completed_by: "dist-impl-feedback@0.14.1"
