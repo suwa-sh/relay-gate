@@ -1,101 +1,112 @@
 stage: "S9"
 uc_id: "eff24f55"
-manifest_sha256: "85d1ebda8af9b786c1abbfc4e09198f4716663209279349d7e7ad9c947902002"
-manifest_projection: v2
-result: pass
+manifest_sha256: "d0748fc7bd00fb2a27165e23252a2184ac3143dd29e6f3328e3db19bf759f79e"
+manifest_projection: "v2"
+result: "generated"
+tier_impl_attempt: 6
+regenerated_reason: "2026-11-16 の S9(仕様への要求 2 件の前提)を、要求 0 件の状態で作り直した。S8 は 2026-11-18 に refresh 済み(status: no_requests。event 20261118_004308_s8_feedback_completed_eff24f55_refresh_no_requests)。実装・テスト・仕様は 2026-11-16 の時点から変わっていない"
+rerun_reason: "re-run of a completed UC after spec changes (2026-10 to 2026-11-16). invalidation event 20261116_045153_stage_invalidated_eff24f55_stale_rerun_20261116"
+previous_done: "docs/impl/events/20261116_093751_s9_review_generated_eff24f55(2026-11-16 の S9。feedback_request_count 2、draft_sha256 57d58b7c…)"
 review_html: "docs/impl/latest/eff24f55/review/index.html"
-review_html_note: "gitignore 済みの再生成可能な派生ビュー。HTML の SHA は証跡に結ばない"
-cycle_note: "2026-09-23 の承認(要求 0 件)後、PR #11 の Linux CI で facade 単体テスト 5 件が失敗したため、利用者の決定(同じ branch で修正)に従い実装を修正した後の再レビュー。旧 S9 done は invalidated/20260928_100000_stage_invalidated_eff24f55_ci_linux_fix/ に退避済み。仕様は不変(変更要求 0 件)。実装側の差分 4 点(LC_ALL=C 固定の読み込み / sed 失敗時に tr の終了状態を見ない / 5,000 行の性能 7.06 秒 → 3.16 秒 / 空白判定を ASCII 6 種に固定 = A-058)を冒頭の差分表に置いた。独立検証は 2 回(1 回目 blocker 1 = F-001 → 修正 → 2 回目 blocker 0 / major 0 / minor 30)"
-source_revision: "feature/define-slot-job-maps @ 8c1f340"
-validator:
-  command: "node validateReviewHtml.js docs/impl/latest/eff24f55/review/index.html"
-  result: "pass"
-  visual_check: "headless Chrome で 940px(図のみ)/ 1440px / 500px で render を目視。SVG 3 図の幾何は前回の目視済み版から不変(focal node の割り当て、sublabel、caption、legend、text alternative を今回の修正 4 点に合わせて更新。図 1 は accent 矢印を外し focal node 2 つに変更)。connector の重なり・attach point 共有・非 endpoint node 背面通過なし"
-figures:
-  - type: architecture
-    title: "検証コマンドの構成"
-  - type: flowchart
-    title: "検証の処理フロー"
-  - type: data-flow
-    title: "ジョブマップのデータの流れ"
+review_html_tracked: false
+review_html_basis: "2026-11-16 のレビュー資料の CSS と、実装が変わっていない図 4 枚(構成 / 処理フロー / データフロー / テストの段)を引き継いだ。本文は「承認済みの内容の最終確認」として短く書き直し、現在地の図と回答後の流れの図は描き直した"
+review_notes_input: "docs/impl/latest/eff24f55/review/review-notes.md"
+review_notes_note: "読んだだけで、書き換えていない(追記はオーケストレータが行う)"
+validators:
+  review_html_contract: "node validateReviewHtml.js docs/impl/latest/eff24f55/review/index.html: pass"
+  human_html_review: "python3 validate.py docs/impl/latest/eff24f55/review/index.html: VALID (ERROR 0 / WARN 0)"
+  human_html_review_detail:
+    errors: 0
+    warnings: 0
+    internal_id_warnings: 0
+    long_paragraph_warnings: 0
+    h2_count: 12
+    svg_count: 6
+    external_resources: 0
+render_check: "headless Chrome で 1440px 幅(暗い配色)のページ全体を撮り、分割して目視した。図 6 枚で、線の重なり・接続点の共有・箱の背面通過・ラベルのはみ出しは見当たらなかった。回答欄のチェックと記入欄が操作できる状態(disabled 解除)で、初期の返信文面が推奨の 1 行であることを画像で確認した"
+render_check_not_done:
+  - "390px 幅での目視"
+  - "明るい配色での目視"
+  - "チェックを外す・記入したときに文面が変わることの操作確認"
+  - "コピーボタンの動作(https / localhost での確認)"
+  - "実機のスマホでの表示"
+diagrams:
+  - type: "flowchart"
+    subject: "作業の流れと現在地(取り込み前の最終確認)"
+  - type: "architecture"
+    subject: "検証コマンドの構成(今回変えた 3 部品)"
+  - type: "flowchart"
+    subject: "検証の処理フロー(終了コード 0 / 2 / 6)"
+  - type: "data-flow"
+    subject: "値が出力の行になるまでと、認証情報の参照名の境界"
+  - type: "flowchart"
+    subject: "テストの段と件数、独立検証"
+  - type: "flowchart"
+    subject: "回答の後の流れ(進める / 差し戻す)"
+executed_examples:
+  note: "『動かし方』の例は 2026-11-16 の S9 で実行した出力の転記。今回は検証コマンドもテストも実行していない(HTML では『報告のみ』と表示)"
 feedback_request_count: 0
 open_blocker_count: 0
 decision_summary:
   approval_questions: 1
-  selection_questions: 2
+  selection_questions: 0
   assumption_questions: 0
-  recommended_choices: 3
-  questions:
-    - id: "機能"
-      question: "直した実装を承認しますか"
-      recommended: "A. 承認する(変更要求 0 件のため squash → push → PR #11 更新)"
-    - id: "A-058"
-      question: "「空白」を ASCII の 6 種だけと決めた実装を、前提として承認しますか"
-      recommended: "A. 前提として承認する(実装・仕様とも変えない)"
-      alternatives:
-        - "B. 却下(仕様変更: cross-cutting の出力規約に「空白 = ASCII 6 種」の定義を明文化する要求を出す。実装は不変)"
-        - "C. 却下(実装修正: Unicode の空白も空白として key: value にする)"
-      note: "回答任意(data_format。security / persistence ではない)。S8 の review_attention 候補として個別に提示した"
-    - id: "A-053"
-      question: "「sed が失敗したときは tr の終了状態を見ない」を、前提として承認しますか"
-      recommended: "A. 前提として承認する"
-      alternatives:
-        - "B. 却下(仕様変更: パイプラインの失敗の帰属規則を契約に書く。実装は不変)"
-      note: "回答任意(error_handling)。内容更新のため個別に提示した"
-  answer_template: "機能=A / 前提=一括承認"
-  answer_template_examples:
-    - "問い 2 = B: 機能=A / 前提=一括承認(例外: A-058:却下(仕様変更: 共通の出力規約に「空白」の定義を明文化する))"
-    - "問い 2 = C: 機能=A / 前提=一括承認(例外: A-058:却下(実装修正: Unicode の空白も空白として key: value にする))"
-    - "問い 3 = B: 機能=A / 前提=一括承認(例外: A-053:却下(仕様変更: パイプラインの失敗の帰属規則を契約に書く))"
-    - "旧表記 機能=A / 相互運用=A / 監査=A も受け付ける(監査=A は 前提=一括承認 と同義)"
-assumption_summary:
-  total: 24
-  required_answer: 0
-  required_ids: []
-  review_attention_ids:
-    - "A-058"
-    - "A-053"
-  optional_default: "auto_confirmed"
-  verdicts:
-    consistent: 2
-    spec_absent: 22
-    contradicts: 0
-    unlisted: 5
-  unlisted_ids:
-    - "V-001"
-    - "V-002"
-    - "V-003"
-    - "V-004"
-    - "V-005"
-  unlisted_note: "性能改善の内部実装選択(Verifier 分類 performance)。回答任意として HTML の前提節に別表で掲載。却下は V-00x:却下(実装修正: …) 形式"
-  change_from_previous_review: "A-058 を追加(23 → 24)、A-053 の内容を更新。他 22 件は内容不変(影響箇所の行番号のみ修正 3 の影響で移動)"
+  recommended_choices: 1
+  selection_labels:
+    - "このまま本線への取り込みへ進めてよいか(推奨: 進める。差し戻しは自由記入)"
+  recommended_response: "このまま取り込みへ進めてください(1 コミットにまとめて取り込み依頼を作り、自動検査の通過後にマージ)。"
+  response_format_note: "回答欄は文で組み上がる形式(内部 ID を出さない)。選択肢は推奨の 1 つ(チェック)と、差し戻し用の自由記入だけ"
+  initial_reply_text:
+    - "このまま取り込みへ進めてください(1 コミットにまとめて取り込み依頼を作り、自動検査の通過後にマージ)。"
+  assumption_total: 26
+  assumption_unlisted_total: 1
+  assumption_required_ids: []
+  assumption_required_note: "dist-impl-review の規則(仕様に無く、かつ Implementer / Verifier 分類が security / persistence)では 0 件。26 件と V-001 は 2026-11-17 に利用者がすべて承認済み(S8 done の assumptions_summary.user_decision_2026_11_17)。HTML では承認済みとして示し、あらためて聞いていない"
+  assumption_new_ids: ["A-059", "A-060", "A-061", "A-062"]
+  assumption_unlisted_ids: ["V-001"]
+  already_decided_not_asked:
+    - "2026-11-17: 実装全体の承認 / 前提 26 件と記録漏れ 1 件(V-001)の承認 / 仮に加えた受け入れテスト 1 件(SPEC-004-01-10)の確定(event 20261117_200745_config_confirmed_eff24f55_atdd_scenarios_confirmed_by_user)/ 1 コミットにまとめて取り込み依頼を作り、自動検査の通過後にマージ"
+    - "2026-11-18: 性能についての仕様への要求 2 件(CR-eff24f55-008 / 009)の取り下げ。作為的な入力の遅さは扱わない"
+  approval_outcome_note: "進める = delivery_ready → 1 コミットにまとめる → 新しい取り込み依頼 → 自動検査の通過後にマージ(仕様への反映と S8 publish は無い)。差し戻し = 記入された点を直し、直した範囲のテストと独立検証をやり直して S9 を作り直す"
 feedback_review_evidence:
   feedback_id: null
   draft_path: null
   draft_sha256: null
   request_count: 0
   blocker_count: 0
+  request_ids: []
+  withdrawn_feedback_id: "20261116_090543_impl_feedback_eff24f55"
+  withdrawn_request_ids: ["CR-eff24f55-008", "CR-eff24f55-009"]
+  s8_status: "no_requests"
+  as_built_summary_sha256: "f8f48c49a211e8f1ecdc30413930db561f06813353bd041c7365bc238c821fbf"
 implementation_review_evidence:
   gate_result: "6/6 pass"
   gates:
     format: "pass"
     lint: "pass"
-    tdd: "pass (341/341; macOS, Ubuntu 24.04 LANG unset, Ubuntu 24.04 C.UTF-8)"
-    bdd_tier: "pass (41/41)"
-    uc_bdd: "pass (36/36, 本 UC 24/24)"
-    atdd: "pass (2/2)"
+    tdd: "pass (537/537 non-heavy macOS + Linux; heavy 42/42 Linux)"
+    bdd_tier: "pass (112/112)"
+    uc_bdd: "pass (55/55, injections 0)"
+    atdd: "pass (3/3; completed UCs 12/12)"
   open_blocker_count: 0
   open_major_count: 0
-  open_minor_count: 30
-  resolved_previous_blockers:
-    - "F-001"
-  findings_path: "docs/impl/latest/eff24f55/stages/attempt-6/S5_verify.tier-facade.findings.yaml"
-  assumption_evidence_sha256: "efbe4937e8665c971cce41fe5d0a11f707db6cdfe749258d381d6215bfa1996d"
-  assumption_evidence_inputs:
+  open_minor_count: 27
+  tiers:
     - tier: "tier-facade"
-      assumptions_sha256: "40fd91da14ab9a90f39339c9bf859e223fadbcf4d4c1175618af1aabd21d9d2a"
-      assumption_verdicts_sha256: "9d62848cbe1f1a4da15e285abf3698a27fb75dadd20ced0ed64e1c28535d743f"
-  assumption_evidence_command: "node validateAssumptions.js evidence tier-facade:40fd91da…:9d62848c…"
+      attempt: 6
+      assumptions_sha256: "67792697d5376cad6683b1208bbef1fb63e7e08e9ad78c15519c4c738fc22437"
+      assumption_verdicts_sha256: "42260b6e3d916f556c32f51e93a42d5d4d12bb3d1d1534047ccae37d0583378c"
+  assumption_evidence_sha256: "8d1ddabedf6a1fe2bfb245d2df4761eb489b7b3fe2d4e334cc8097783a2e1e21"
 captures: []
-completed_at: "2026-10-06T08:20:00+09:00"
+issues: []
+notes:
+  - "manifest_sha256 は再計算せず、S8 done / S5 done / S8 の event に記録された値(3 か所で一致)を転記した。dist-impl-review の引数としては渡されていない"
+  - "assumption_evidence_sha256 は validateAssumptions.js evidence tier-facade:{assumptions_sha256}:{assumption_verdicts_sha256}(S5 done attempt 6)で算出した(ok: true、tiers 1)。2026-11-16 の S9 と同じ値"
+  - "as_built_summary_sha256 は実ファイルの sha256 と S8 done の記録が一致することを確認した。feedback/draft.md は存在しない(削除済み)"
+  - "gate の値は 2026-11-16 の S9 done と各段の done・as-built summary からの転記。テスト(重いテストを含む)は一切実行していない"
+  - "validateReviewHtml.js は『機能=A … 相互運用=A … 監査=A』の文字列を必須とする。今回の判断は 1 問で相互運用・監査の問いが無いため、HTML の付録 4(過去の回答の記録)に 2026-09-19 の回答の形として載せて検査を通した。本文の回答欄は文の形式"
+  - "回答欄は human-html-review の base.html のスクリプト(書き換えなし)で動く。dist-impl-review の『script を使わない』とは食い違うが、利用者の指示(human-html-review の base.html を土台にする)と 2026-11-16 の S9 の形に従った"
+  - "図の文字は 12px、フォントは外部読み込みなしのシステムフォント(diagram-design の既定フォントの link は入れていない。human-html-review の規則が優先)"
+  - "git の書き込みコマンドは実行していない。書いたのは review/index.html と、この done だけ"
+completed_at: "2026-11-18T00:50:27+09:00"
 completed_by: "dist-impl-review@0.14.1"

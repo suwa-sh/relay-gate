@@ -13,20 +13,22 @@ git_delivery:
   uc_english_name: Define slot job maps
   branch_slug: define-slot-job-maps
   base_branch: main
-  base_head: 9bb6057dbc222e598bafeb0b38c2cb2b1df7b185
+  base_head: f2c82b2655460d2fe9488c79adaa6a62f732d02d
   feature_branch: feature/define-slot-job-maps
   remote: origin
 stages:
   S1_uc_init:
     status: done
+    event: 20261116_045154_s1_uc_init_completed_eff24f55
   S2_test_scaffold:
     status: done
-    red_baseline: pass
-    mode: scoped_rerun
-    tiers:
-    - tier-facade
+    mode: 'diff_only (re-run of a completed UC: 2 missing scenarios transcribed, 10 unit tests for rules the BDD does not judge, 1 ATDD step set)'
+    red: 0
+    added: 13
+    event: 20261116_050420_s2_test_scaffold_completed_eff24f55
   S3_contracts:
     status: done
+    event: 20261116_050421_s3_contracts_completed_eff24f55
   S4_tier_impl:
     tier-facade:
       status: done
@@ -36,36 +38,43 @@ stages:
         lint: pass
         tdd: pass
         bdd_tier: pass
+      event: 20261116_084556_s4_tier_impl_completed_eff24f55_facade_attempt6
   S5_verify:
     tier-facade:
       status: done
       attempt: 6
-      result: pass
       open_blockers: 0
-      open_major: 0
+      open_major: null
+      event: 20261116_085822_s5_verify_completed_eff24f55_facade_attempt6
   S6_uc_bdd:
     status: done
+    event: 20261116_090153_s6_uc_bdd_completed_eff24f55
   S7_atdd:
     status: done
+    event: 20261116_090154_s7_atdd_completed_eff24f55
   S8_feedback:
     status: done
-    mode: initial
+    event: 20261118_004308_s8_feedback_completed_eff24f55_refresh_no_requests
     request_count: 0
     blocker_count: 0
-    draft_path: null
-    feedback_id: null
   S9_review:
-    status: done
-    state: approved
-    review_event: 20260928_140000_s9_review_generated_eff24f55_ci_linux_fix
-    approved_event: 20260928_150000_review_approved_eff24f55_ci_linux_fix
-    delivery_prepared_event: 20260928_150100_delivery_prepared_eff24f55_ci_linux_fix
+    status: approved
+    event: 20261118_005134_review_approved_eff24f55_final
+    review_evidence_event: 20261118_005133_s9_review_generated_eff24f55_no_requests
+    delivery_event: 20261118_005135_delivery_prepared_eff24f55_job_map_validation_speed_up
 attempt_limit:
   reached: true
   user_decision: continue_once
   decision_event: 20260922_110000_attempt_opened_eff24f55_a6
   previous_decision_event: 20260919_195500_attempt_opened_eff24f55_a4
-updated_at: '2026-09-23T11:51:50+09:00'
+updated_at: '2026-11-18T00:51:33+09:00'
 stale_rerun:
   event: 20260923_115100_stage_invalidated_eff24f55_spec_reflux_cycle2_stale
   attempt_kept: 6
+restart:
+  at: '2026-11-16T04:51:51+09:00'
+  reason: re-run of a completed UC after spec changes (2026-10 to 2026-11-16)
+  invalidation_event: 20261116_045153_stage_invalidated_eff24f55_stale_rerun_20261116
+  base_head_event: 20261116_045151_config_confirmed_eff24f55_git_delivery_rerun_base_head
+  note: stale re-execution stays in attempt-6 (no attempt++)
+completed_at: '2026-11-18T00:51:33+09:00'

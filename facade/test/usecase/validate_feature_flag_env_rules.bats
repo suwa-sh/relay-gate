@@ -369,6 +369,7 @@ write_green_only_env() {
 
 # ---- 性能の共通前提(NFR B.1.1.2: 1 ファイル最大 5,000 行・内容によらず 10 秒) ----
 
+# bats test_tags=heavy
 @test "validate-config_sh_--feature-flagで5000行のうち4995行が未知キーの場合_10秒以内に検証を終え未知キーを全件warnで出すこと" {
 	# Arrange(重複検査・未知キーの warn をすべての行に対して行う最悪ケース。runner は --help にすぐ応答する)
 	local i
@@ -391,6 +392,7 @@ write_green_only_env() {
 	[ "${lines[10]}" = "operation_mode=green_only" ]
 }
 
+# bats test_tags=heavy
 @test "validate-config_sh_--feature-flagで5000行すべてが同じキーの場合_10秒以内に重複キーを1行で出し終了コード2であること" {
 	# Arrange(重複の行番号を全件並べる最悪ケース)
 	local i expected_lines
@@ -449,6 +451,7 @@ write_green_only_env() {
 # 可視表記(制御文字 → `\u00XX`)は、行数によらず一定回数の外部コマンド(sed / tr)でまとめて作る。
 # 出力が数十 MB になるため、bats の run で変数へ受けずファイルへ受け、コマンドの実行時間だけを計る。
 
+# bats test_tags=heavy
 @test "validate-config_sh_--feature-flagのverboseで5000行のうち4995行がESCを128個含む未知キーの場合_10秒以内に検証を終えinfoとwarnを全件可視表記で出すこと" {
 	# Arrange(S5 の指摘 F-001 の再現入力: 有効な単独本番設定 5 行 + 「K<連番> + ESC 128 個」の未知キー 4,995 行。約 68 万バイト)
 	local i escapes="" shown=""
@@ -479,6 +482,7 @@ write_green_only_env() {
 	! LC_ALL=C grep -q $'\033' "$stderr_file"
 }
 
+# bats test_tags=heavy
 @test "validate-config_sh_--feature-flagのverboseで5000行のうち4995行が全種類の制御文字を含む未知キーの場合_10秒以内に検証を終え種類ごとの可視表記で出すこと" {
 	# Arrange(同じ文字の繰り返しではなく、種類の多い入力: キー 1 つに 1 バイトの制御文字 30 種(改行と CR を除く)と
 	#   C1 制御文字 32 種を 1 個ずつ。約 50 万バイト)
@@ -559,6 +563,7 @@ build_controls_29() {
 	done
 }
 
+# bats test_tags=heavy
 @test "validate-config_sh_--feature-flagのverboseで29種の制御文字を並べた1023と1024と1025バイトのキーが4995行ある場合_どの長さでも10秒以内に検証を終えること" {
 	# Arrange(S5 attempt-4 の指摘 F-001 の再現入力: 有効な単独本番設定 5 行 + 一意な未知キー 4,995 行。全体は約 5.1 MB。
 	#   修正前は 14.3 / 14.7 / 24.9 秒(Linux)。1,024 バイトを境に結果の控えが効かなくなり、info 行と warn 行で置き換えを繰り返していた)
@@ -595,6 +600,7 @@ build_controls_29() {
 	done
 }
 
+# bats test_tags=heavy
 @test "validate-config_sh_--feature-flagのverboseで5000行8MBのうち4995行が29種の制御文字だけのキーの場合_10秒以内に検証を終えinfoとwarnを全件可視表記で出すこと" {
 	# Arrange(性能目標の上限の大きさ: 5,000 行・8 MiB 弱。キー 1 つが 1,676 バイトで、ほぼ全バイトが制御文字。stderr は約 100 MB)
 	build_controls_29
@@ -626,6 +632,7 @@ build_controls_29() {
 	[ "${#line}" -eq $((22 + 6 + 1670 * 6 + 7 + ${#ENV_FILE})) ]
 }
 
+# bats test_tags=heavy
 @test "validate-config_sh_--feature-flagのverboseで5000行8MBのうち4995行がC1制御文字とDELと多バイト文字を混ぜたキーの場合_10秒以内に検証を終え多バイト文字を変えずに出すこと" {
 	# Arrange(C1 制御文字 32 種(各 2 バイト)、DEL、通常の多バイト文字(あ、U+00A0)、ESC を並べたキー。UTF-8 として有効)
 	local pattern="" code char
@@ -663,6 +670,7 @@ build_controls_29() {
 	[ "${line:0:28}" = 'warn: unknown key key=K04994' ]
 }
 
+# bats test_tags=heavy
 @test "validate-config_sh_--feature-flagで8MBのうち半分ずつが制御文字だらけの同じキー2497個の重複の場合_10秒以内にduplicate keyを全件可視表記で出すこと" {
 	# Arrange(同じ 2,497 個のキーを 2 回並べる。(ii) の段で止まり、duplicate key を初出行の昇順に 2,497 行出す)
 	build_controls_29
@@ -693,6 +701,7 @@ build_controls_29() {
 	[ "${line: -$((23 + ${#ENV_FILE}))}" = " lines=2497,4994 path: $ENV_FILE" ]
 }
 
+# bats test_tags=heavy
 @test "validate-config_sh_--feature-flagで列挙外のmodeの値が1行で8MBあり制御文字と多バイト文字を含む場合_10秒以内にinvalid valueとforeground排他を可視表記で出すこと" {
 	# Arrange(1 行 1 つの値が 8 MiB 弱。BLUE_MODE の値は error 行 2 つ(invalid value と foreground slot の排他)に出る。
 	#   16 バイトごとに ESC・DEL・C1 制御文字(U+0085)・多バイト文字(あ)が 1 つずつ。制御文字だけの入力は上のキーのテストが固定する)

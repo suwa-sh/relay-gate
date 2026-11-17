@@ -1,0 +1,101 @@
+stage: "S9"
+uc_id: "eff24f55"
+manifest_sha256: "85d1ebda8af9b786c1abbfc4e09198f4716663209279349d7e7ad9c947902002"
+manifest_projection: v2
+result: pass
+review_html: "docs/impl/latest/eff24f55/review/index.html"
+review_html_note: "gitignore 済みの再生成可能な派生ビュー。HTML の SHA は証跡に結ばない"
+cycle_note: "2026-09-23 の承認(要求 0 件)後、PR #11 の Linux CI で facade 単体テスト 5 件が失敗したため、利用者の決定(同じ branch で修正)に従い実装を修正した後の再レビュー。旧 S9 done は invalidated/20260928_100000_stage_invalidated_eff24f55_ci_linux_fix/ に退避済み。仕様は不変(変更要求 0 件)。実装側の差分 4 点(LC_ALL=C 固定の読み込み / sed 失敗時に tr の終了状態を見ない / 5,000 行の性能 7.06 秒 → 3.16 秒 / 空白判定を ASCII 6 種に固定 = A-058)を冒頭の差分表に置いた。独立検証は 2 回(1 回目 blocker 1 = F-001 → 修正 → 2 回目 blocker 0 / major 0 / minor 30)"
+source_revision: "feature/define-slot-job-maps @ 8c1f340"
+validator:
+  command: "node validateReviewHtml.js docs/impl/latest/eff24f55/review/index.html"
+  result: "pass"
+  visual_check: "headless Chrome で 940px(図のみ)/ 1440px / 500px で render を目視。SVG 3 図の幾何は前回の目視済み版から不変(focal node の割り当て、sublabel、caption、legend、text alternative を今回の修正 4 点に合わせて更新。図 1 は accent 矢印を外し focal node 2 つに変更)。connector の重なり・attach point 共有・非 endpoint node 背面通過なし"
+figures:
+  - type: architecture
+    title: "検証コマンドの構成"
+  - type: flowchart
+    title: "検証の処理フロー"
+  - type: data-flow
+    title: "ジョブマップのデータの流れ"
+feedback_request_count: 0
+open_blocker_count: 0
+decision_summary:
+  approval_questions: 1
+  selection_questions: 2
+  assumption_questions: 0
+  recommended_choices: 3
+  questions:
+    - id: "機能"
+      question: "直した実装を承認しますか"
+      recommended: "A. 承認する(変更要求 0 件のため squash → push → PR #11 更新)"
+    - id: "A-058"
+      question: "「空白」を ASCII の 6 種だけと決めた実装を、前提として承認しますか"
+      recommended: "A. 前提として承認する(実装・仕様とも変えない)"
+      alternatives:
+        - "B. 却下(仕様変更: cross-cutting の出力規約に「空白 = ASCII 6 種」の定義を明文化する要求を出す。実装は不変)"
+        - "C. 却下(実装修正: Unicode の空白も空白として key: value にする)"
+      note: "回答任意(data_format。security / persistence ではない)。S8 の review_attention 候補として個別に提示した"
+    - id: "A-053"
+      question: "「sed が失敗したときは tr の終了状態を見ない」を、前提として承認しますか"
+      recommended: "A. 前提として承認する"
+      alternatives:
+        - "B. 却下(仕様変更: パイプラインの失敗の帰属規則を契約に書く。実装は不変)"
+      note: "回答任意(error_handling)。内容更新のため個別に提示した"
+  answer_template: "機能=A / 前提=一括承認"
+  answer_template_examples:
+    - "問い 2 = B: 機能=A / 前提=一括承認(例外: A-058:却下(仕様変更: 共通の出力規約に「空白」の定義を明文化する))"
+    - "問い 2 = C: 機能=A / 前提=一括承認(例外: A-058:却下(実装修正: Unicode の空白も空白として key: value にする))"
+    - "問い 3 = B: 機能=A / 前提=一括承認(例外: A-053:却下(仕様変更: パイプラインの失敗の帰属規則を契約に書く))"
+    - "旧表記 機能=A / 相互運用=A / 監査=A も受け付ける(監査=A は 前提=一括承認 と同義)"
+assumption_summary:
+  total: 24
+  required_answer: 0
+  required_ids: []
+  review_attention_ids:
+    - "A-058"
+    - "A-053"
+  optional_default: "auto_confirmed"
+  verdicts:
+    consistent: 2
+    spec_absent: 22
+    contradicts: 0
+    unlisted: 5
+  unlisted_ids:
+    - "V-001"
+    - "V-002"
+    - "V-003"
+    - "V-004"
+    - "V-005"
+  unlisted_note: "性能改善の内部実装選択(Verifier 分類 performance)。回答任意として HTML の前提節に別表で掲載。却下は V-00x:却下(実装修正: …) 形式"
+  change_from_previous_review: "A-058 を追加(23 → 24)、A-053 の内容を更新。他 22 件は内容不変(影響箇所の行番号のみ修正 3 の影響で移動)"
+feedback_review_evidence:
+  feedback_id: null
+  draft_path: null
+  draft_sha256: null
+  request_count: 0
+  blocker_count: 0
+implementation_review_evidence:
+  gate_result: "6/6 pass"
+  gates:
+    format: "pass"
+    lint: "pass"
+    tdd: "pass (341/341; macOS, Ubuntu 24.04 LANG unset, Ubuntu 24.04 C.UTF-8)"
+    bdd_tier: "pass (41/41)"
+    uc_bdd: "pass (36/36, 本 UC 24/24)"
+    atdd: "pass (2/2)"
+  open_blocker_count: 0
+  open_major_count: 0
+  open_minor_count: 30
+  resolved_previous_blockers:
+    - "F-001"
+  findings_path: "docs/impl/latest/eff24f55/stages/attempt-6/S5_verify.tier-facade.findings.yaml"
+  assumption_evidence_sha256: "efbe4937e8665c971cce41fe5d0a11f707db6cdfe749258d381d6215bfa1996d"
+  assumption_evidence_inputs:
+    - tier: "tier-facade"
+      assumptions_sha256: "40fd91da14ab9a90f39339c9bf859e223fadbcf4d4c1175618af1aabd21d9d2a"
+      assumption_verdicts_sha256: "9d62848cbe1f1a4da15e285abf3698a27fb75dadd20ced0ed64e1c28535d743f"
+  assumption_evidence_command: "node validateAssumptions.js evidence tier-facade:40fd91da…:9d62848c…"
+captures: []
+completed_at: "2026-10-06T08:20:00+09:00"
+completed_by: "dist-impl-review@0.14.1"

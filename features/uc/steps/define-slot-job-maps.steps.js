@@ -746,3 +746,47 @@ Then(literal("stderr に \"error:\" で始まる行は出ず、stdout に \"rows
 Then(literal("stdout と stderr のどこにも \"ssh key green\" は出ない"), function () {
   assertNotInOutput(this, 'ssh key green');
 });
+
+// ---- 2026-11-16 の仕様変更(feature flag の任意のキー BLUE_JOB_MAP_CSV / GREEN_JOB_MAP_CSV)で足された Scenario の step(S2 再実行で追加) ----
+// Scenario: feature flag にジョブマップの場所を書いていても --job-map は渡したパスのジョブマップを検証する(SPEC-004-01)
+// 仕様: --job-map の検証は feature-flag.env も 2 キーも読まず、渡されたパスを検証する(spec.md 分岐条件「設定所有区分」、
+//   tier-facade.md コマンド契約 --job-map)。feature flag に書いた場所のジョブマップ(データ行 3 行)と、渡すパスのジョブマップ
+//   (データ行 1 行)で行数を変えてあるので、stdout の rows= でどちらを検証したかが決まる。
+
+const SPEC_FF_ENV = '/etc/relay-gate/feature-flag.env';
+const SPEC_FF_BLUE_MAP = '/srv/relay-gate/maps/blue-jobs.csv';
+
+Given(literal('/etc/relay-gate/feature-flag.env に BLUE_JOB_MAP_CSV=/srv/relay-gate/maps/blue-jobs.csv がある'), function () {
+  // 値は sandbox root 配下へ写像した絶対パス(実在する場所を指す。--job-map が feature flag を読むなら、こちらが検証されてしまう)
+  const file = this.sandbox(SPEC_FF_ENV);
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, `BLUE_JOB_MAP_CSV=${this.sandbox(SPEC_FF_BLUE_MAP)}\n`);
+});
+
+Given(literal('/srv/relay-gate/maps/blue-jobs.csv はヘッダー "job_id,work_dir,script,fixed_params,hang_detect_limit_minutes" とデータ行 3 行の有効なジョブマップである'), function () {
+  writeMap(this, SPEC_FF_BLUE_MAP, [HEADER_LOCAL, rowLocal('JOB101'), rowLocal('JOB102'), rowLocal('JOB103')]);
+  // 前提の確認: feature flag に書いた場所のジョブマップは、単体で検証すると rows=3 で通る(有効で、渡すパスのジョブマップと区別できる)
+  const direct = runJobMap(this, SPEC_FF_BLUE_MAP);
+  assert.equal(direct.status, 0, `fixture at ${SPEC_FF_BLUE_MAP} must be a valid job map\n${outputDump(direct)}`);
+  assert.ok(stdoutLines(this).includes('rows=3'), `fixture at ${SPEC_FF_BLUE_MAP} must have 3 data rows\n${outputDump(direct)}`);
+  this.result = undefined;
+});
+
+Given(literal("/etc/relay-gate/blue-job-map.csv は同じヘッダーと行 'JOB001,/var/app/work,/opt/app/bin/job001.sh,\"[]\",0' の 1 行の有効なジョブマップである"), function () {
+  writeMap(this, SPEC_BLUE_MAP, [HEADER_LOCAL, 'JOB001,/var/app/work,/opt/app/bin/job001.sh,"[]",0']);
+});
+
+When(literal('基盤適用設計者が RELAY_GATE_CONFIG_DIR=/etc/relay-gate で validate-config.sh --job-map /etc/relay-gate/blue-job-map.csv を実行する'), function () {
+  // RELAY_GATE_CONFIG_DIR は spawnEnv が World の configDir(sandbox の /etc/relay-gate)を渡す。feature-flag.env はその直下にある
+  assert.equal(this.configDir, this.sandbox('/etc/relay-gate'));
+  assert.ok(fs.existsSync(path.join(this.configDir, 'feature-flag.env')), 'feature-flag.env must exist in RELAY_GATE_CONFIG_DIR');
+  runJobMap(this, SPEC_BLUE_MAP);
+});
+
+Then(literal('終了コード 0 で stdout は "map_path: /etc/relay-gate/blue-job-map.csv" "rows=1" "map_version=-" の 3 行である(feature flag に書いた場所のジョブマップではなく、渡したパスのジョブマップを検証する)'), function () {
+  assertExit(this, 0);
+  assert.deepEqual(stdoutLines(this), ['map_path: /etc/relay-gate/blue-job-map.csv', 'rows=1', 'map_version=-'], outputDump(this.result));
+  // feature flag に書いた場所は stdout / stderr のどこにも出ない(読んでいない)
+  const all = this.unsandbox(`${this.result.stdout}\n${this.result.stderr}`);
+  assert.equal(all.includes(SPEC_FF_BLUE_MAP), false, `output must not mention the location written in feature flag\n${outputDump(this.result)}`);
+});

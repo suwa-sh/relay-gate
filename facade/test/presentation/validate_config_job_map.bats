@@ -810,6 +810,7 @@ has_control_byte() {
 	[ -z "$(ls -A "$TMPDIR")" ]
 }
 
+# bats test_tags=heavy
 @test "validate-config_sh_--job-mapでNFR共通前提の最悪条件5000行の場合_10秒以内に終了コード0であること" {
 	# Arrange(nfr-grade B.1.1.2 の共通前提: ヘッダーを除いて 5,000 行、全列に値があり、job_id が全行一意、map_version が全行異なる。
 	#         B.2.1.1: 内容によらず 10 秒以内。行数に比例する時間で処理できること(重複検査・版の集計を全組合せ比較にしない))
@@ -833,6 +834,7 @@ has_control_byte() {
 	[ "$SECONDS" -lt 10 ]
 }
 
+# bats test_tags=heavy
 @test "validate-config_sh_--job-mapでNFR共通前提の最悪条件5000行にverboseを付けた場合_10秒以内に終了コード0であること" {
 	# Arrange(--verbose は 1 行 1 job_id の info を出す。出力量が行数に比例しても 10 秒以内)
 	{

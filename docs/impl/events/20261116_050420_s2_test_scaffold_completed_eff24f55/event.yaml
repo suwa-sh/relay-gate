@@ -1,0 +1,27 @@
+event_id: 20261116_050420_s2_test_scaffold_completed_eff24f55
+type: stage_completed
+uc_id: eff24f55
+stage: S2
+payload:
+  result: pass
+  red_baseline: 'measured: red 0. the existing implementation already satisfies the changed spec (--job-map does not read feature-flag.env; byte / newline report rules implemented; no size-based rejection). the added tests were shown to detect violations by mutating a scratch copy (8 of 13 fail under 2 mutations; the other 5 judge other rules). accepted by red_baseline_measured under the rerun done condition'
+  mode: 'diff_only (re-run of a completed UC: 2 missing scenarios transcribed, 10 unit tests for rules the BDD does not judge, 1 ATDD step set)'
+  red:
+    tier_bdd: 0
+    unit: 0
+    uc_bdd: 0
+    atdd: 0
+  added:
+    tier_bdd: 1
+    unit: 10
+    uc_bdd: 1
+    atdd: 1
+  totals:
+    tier_bdd: 112
+    unit: 545
+    uc_bdd: 55
+    atdd_this_uc: 3
+  issues: []
+  manifest_sha256: 1882e324483ee83d175e5e3565f696ef270e536734f97a5bdaf1f0e79e14a90f
+  manifest_projection: v2
+created_at: '2026-11-16T05:04:20+09:00'

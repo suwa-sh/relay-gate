@@ -1,24 +1,46 @@
 # NEXT: slot ごとのジョブマップを定義する(eff24f55)
 
-- state: **completed**(還流不要。要求 0 件)
-- 承認: `review_approved` event `20260928_150000_review_approved_eff24f55_ci_linux_fix`(S9 evidence `20260928_140000_s9_review_generated_eff24f55_ci_linux_fix`)。回答 `機能=A / 前提=一括承認`(A-058=A / A-053=A)。2026-09-23 の承認 `20260923_134000_…_cycle3` は Linux CI 修正により superseded
-- delivery: `delivery_prepared` event `20260928_150100_delivery_prepared_eff24f55_ci_linux_fix`
-- 生成日時: 2026-09-28T15:01:00+09:00(イベント列の論理時刻)
+- state: **completed**(仕様への要求 0 件。還流は不要)
+- 承認: `review_approved` event `20261118_005134_review_approved_eff24f55_final`(S9 evidence `20261118_005133_s9_review_generated_eff24f55_no_requests`)。前提 26 件すべて confirmed
+- 取り込み準備: `delivery_prepared` event `20261118_005135_delivery_prepared_eff24f55_job_map_validation_speed_up`
+- 生成日時: 2026-11-18T00:51:33+09:00
 
-## 次に行うこと
+## 2026-11-16 〜 18 の経緯
 
-- PR #11(https://github.com/suwa-sh/relay-gate/pull/11)の CI pass を確認して merge する。branch は `feat:` 1 commit + Linux CI 修正の `fix:` 1 commit(既に push 済みの squash commit を force push で置き換えない方針)。merge は squash merge で main に 1 commit にする
-- PR の存在は GitHub を正とする。PR が無ければ `/distillery-impl:dist-impl-run eff24f55` で git delivery だけを再試行する
-- 次の UC は、この PR が merge され main を fast-forward した後の新しい run で開始する
+| 順 | 内容 |
+|---|---|
+| 1 | 仕様の更新(2026-10 〜 2026-11-16)に追従して全工程を再実行(attempt 6 のまま) |
+| 2 | `--job-map` の検証を速くした(出力と終了コードは不変。2 乗に比例する処理を除いた) |
+| 3 | 重いテストに heavy の印を付け、通常の実行と CI の常時実行から外した |
+| 4 | 性能についての仕様への要求 2 件を用意したが、利用者の決定(2026-11-18)で公開せず取り下げた |
+| 5 | 最終承認(要求 0 件) |
 
-## 到達点
+## 取り込み
 
-- 変更要求 2 サイクル(5 件 + 2 件)はすべて仕様へ反映済み(spec event `20260921_100000_feedback_impl_feedback_eff24f55`、`20260923_112000_feedback_impl_feedback_eff24f55_cycle2`)
-- ゲート 6/6 pass(bats 341 / tier BDD 41 / UC BDD 36 / ATDD 2 / format / lint。macOS と Ubuntu 24.04(LANG 未設定 / C.UTF-8)の両方)。独立検証(gpt-6-astra)blocker 0 / major 0 / minor 30
-- Linux CI 修正(2026-10-06、attempt 6 内): UTF-8 ロケールの読み込み固定 / sed 失敗時の tr 終了状態の無視 / 5,000 行の性能改善(7.06s → 3.16s)/ 空白判定の ASCII 固定(A-058)。学び: learnings/20261006_080400_linux-ci-fails-after-macos-green.md
-- bootstrap の再実行 commit(`impl(bootstrap): …`)が feature branch に含まれ、最終 squash に入る
+- base: `main`(`f2c82b2`)/ feature branch: `feature/define-slot-job-maps`
+- squash commit message: `feat: slot ごとのジョブマップを定義する`
+- 利用者の指示(2026-11-17): 1 コミットにまとめて取り込み依頼を作り、自動検査が通ったらマージする
+- PR の存在は GitHub が正(`gh pr list --state all --head feature/define-slot-job-maps`)
 
-## 既知の情報
+## 次の機能へ引き継ぐ決定
 
-- macOS の BSD mktemp 経路で改名失敗時に作業ファイルが 1 個残る(本番 Linux では通らない)
-- SIGKILL 時の一時コピー残存(仕様で対象外)
+- 性能で見るのは「ムダな処理がないこと」だけ(実際の利用で想定する形の入力で、行数に比例する時間で終わること)。目標から外すために作った入力は測らず、指摘・課題・仕様への要求にしない。性能のために実装の効率が下がるなら、目標のほうを取り下げる(利用者決定 2026-11-18。CLAUDE.md に記載)
+- 重いテスト(heavy の印の 42 件)と仕分けの仕組み(`scripts/ci/heavy-tests.json`、`scripts/ci/heavy-test-files.js`、CI の該当ステップ、CLAUDE.md と impl-config の記載)は、次の機能の実装のはじめに削除する予定(利用者は 2026-11-18 に「削除しても良いくらい」と発言。利用者へ報告済み)
+- 標準の slot runner を実装する機能では、本体を `src/` に置き、`runners/` と `lib/` は数行の入口にする(利用者決定 2026-11-16)
+- 要求に足した受け入れ基準のうち未割当のものは、各機能の開始時に割り当てを確認する
+
+## 残っている事実(合否には使わない)
+
+- `issues/20261116_062901_job-map-bash-only-parse-exceeds-performance-target.md`、`issues/20261116_090543_housekeep-not-in-performance-target-scope.md`: どちらも要求にしない(利用者決定 2026-11-18)
+- tier BDD・UC BDD・ATDD(cucumber)は、Linux では手元で実行していない(CI が実行する)
+
+## 次の UC
+
+`/distillery-impl:dist-impl-run 65b09d93`(slot runner の実体スクリプトを割り当てる)。
+
+## 参照 path
+
+- 実装事実: `docs/impl/latest/eff24f55/feedback/as-built-summary.md`
+- 学び: `docs/impl/latest/eff24f55/learnings/`
+- 承認対話: `docs/impl/latest/eff24f55/review/review-notes.md`
+- レビュー資料(gitignore): `docs/impl/latest/eff24f55/review/index.html`

@@ -289,6 +289,7 @@ setup() {
 	[ ! -s "$BATS_TEST_TMPDIR/err.txt" ]
 }
 
+# bats test_tags=heavy
 @test "feature_flag_config_load_1行が8MBでキーの前後と値の前後に数MBの空白がある場合_10秒以内に空白を除いて載せること" {
 	# Arrange(行の長さに上限は無い。空白の並びが長くても、行の長さに比例する時間で読む)
 	local blanks=" " tabs=$'\t' index
@@ -308,6 +309,7 @@ setup() {
 	[ "$GREEN_IMPL" = "a  b" ]
 }
 
+# bats test_tags=heavy
 @test "feature_flag_config_load_4MBのキーの行と4MBの空白だけの行が2行ある場合_10秒以内にキーと形式違反の行を載せること" {
 	# Arrange(= までが 4 MB のキー、空白だけ 4 MB の行(形式違反))
 	local chunk="abcdefgh" blanks=" " index

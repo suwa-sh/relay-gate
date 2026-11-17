@@ -92,8 +92,13 @@ CSV_STATE_CELL_START="cell_start"
 CSV_STATE_UNQUOTED="unquoted"
 CSV_STATE_QUOTED="quoted"
 CSV_STATE_QUOTE_CLOSED="quote_closed"
-# csv_parse が 1 回に取り込む窓の大きさ(バイト)。解析結果には影響しない(長い行の処理時間だけに効く)
+# csv_parse の窓ありの状態機械が 1 回に取り込む窓の大きさ(バイト)。解析結果には影響しない(長い行の処理時間だけに効く)
 CSV_PARSE_WINDOW_BYTES=1024
+# 窓なしの解析(csv_parse_short。単語分割)を使う行の長さの上限(バイト)。空なら上限なし(すべての行を窓なしで解析する)。
+# 解析結果には影響しない。窓なしの解析は行の長さに比例する時間で終わり、窓ありの状態機械の 1/2〜1/3 の時間で済む
+# (8 MiB 弱の 4,999 行で、窓ありは 2.5〜9.4 秒、窓なしは 1.3〜4.1 秒。macOS の実測)。
+# 窓ありの状態機械は、テストがこの値を 0 にして選び、窓なしの解析と同じ結果になることを確かめる
+CSV_PARSE_SHORT_MAX_BYTES=""
 # csv_parse_short が単語分割(IFS)の前に足す区切り文字。単語分割の分割点になるのは展開の結果だけで、
 # リテラルの区切り文字(`$line,`)は分割点にならないため、変数の展開として足す
 CSV_SPLIT_COMMA=","
@@ -114,8 +119,8 @@ csv_parse() {
   if [ "${LC_ALL:-}" != C ]; then
     local LC_ALL=C
   fi
-  # 窓に収まる長さの行(通常のジョブマップの行)は、窓の取り込みを省いた同じ文法の解析で済ませる(行数に比例して呼ばれるため)
-  if [ "${#1}" -le "$CSV_PARSE_WINDOW_BYTES" ]; then
+  # 窓の取り込みを省いた同じ文法の解析で済ませる(行数に比例して呼ばれるため。CSV_PARSE_SHORT_MAX_BYTES)
+  if [ -z "$CSV_PARSE_SHORT_MAX_BYTES" ] || [ "${#1}" -le "$CSV_PARSE_SHORT_MAX_BYTES" ]; then
     csv_parse_short "$1"
     return
   fi
@@ -203,7 +208,7 @@ csv_parse() {
   return 0
 }
 
-# csv_parse の窓なし版(窓に収まる長さの行だけに使う。受理する文法と結果は窓ありの状態機械と同じ)。
+# csv_parse の窓なし版(CSV_PARSE_SHORT_MAX_BYTES 以下の長さの行に使う。既定はすべての行。受理する文法と結果は窓ありの状態機械と同じ)。
 # 行数に比例して呼ばれるため、文字ごとのパターン照合(位置ごとに照合をやり直すので行の長さに比例した回数になる)ではなく、
 # bash の単語分割(IFS)で区切り文字ごとにまとめて分ける。単語分割は末尾の空の語を 1 つ落とすので、区切り文字を 1 つ足してから分ける
 # (`a,b,` + `,` → a / b / 空。bash 5.2 と 5.3 で同じ)。パス名展開は止めて行う(セルは glob 文字を含む)。
@@ -233,7 +238,10 @@ csv_parse_short_split() {
     local LC_ALL=C
   fi
   local -a pieces cells
-  local piece index=0 count cell="" in_quoted=false
+  # 囲んだセルの値は、`""` で区切られた断片(cell_parts)を最後に二重引用符でつないで作る
+  # (`""` ごとに値へ連結すると、連結のたびに値全体を写すため、長いセルで `""` の数と値の長さの積の時間がかかる)
+  local -a cell_parts=()
+  local piece index=0 count in_quoted=false
   CSV_CELLS=()
   if [[ "$line" != *\"* ]]; then
     IFS=,
@@ -250,20 +258,20 @@ csv_parse_short_split() {
     if [ "$in_quoted" = true ]; then
       if [ -z "$piece" ] && [ "$((index + 1))" -lt "$count" ]; then
         # 囲んだセル内の `""` は二重引用符 1 文字(次の断片も囲みの中)
-        cell+="\"${pieces[index + 1]}"
+        cell_parts+=("${pieces[index + 1]}")
         index=$((index + 2))
         continue
       fi
       if [ -z "$piece" ]; then
-        # 閉じ引用符で行が終わる
-        CSV_CELLS+=("$cell")
+        # 閉じ引用符で行が終わる(IFS は二重引用符)
+        CSV_CELLS+=("${cell_parts[*]}")
         return 0
       fi
       # 閉じ引用符の直後がカンマでも行末でもない
       if [[ "$piece" != ,* ]]; then
         return 1
       fi
-      CSV_CELLS+=("$cell")
+      CSV_CELLS+=("${cell_parts[*]}")
       in_quoted=false
       piece="${piece:1}"
     fi
@@ -280,7 +288,7 @@ csv_parse_short_split() {
         CSV_CELLS+=("${cells[@]}")
         IFS='"'
       fi
-      cell="${pieces[index + 1]}"
+      cell_parts=("${pieces[index + 1]}")
       in_quoted=true
       index=$((index + 2))
       continue

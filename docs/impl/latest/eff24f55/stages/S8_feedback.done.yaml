@@ -1,21 +1,41 @@
 stage: "S8"
 uc_id: "eff24f55"
-manifest_sha256: "85d1ebda8af9b786c1abbfc4e09198f4716663209279349d7e7ad9c947902002"
+manifest_sha256: "d0748fc7bd00fb2a27165e23252a2184ac3143dd29e6f3328e3db19bf759f79e"
 manifest_projection: v2
-mode: "initial"
+mode: "refresh"
+mode_note: "2026-11-18 の利用者の指示で、仕様への要求 2 件(CR-eff24f55-008 / 009)を取り下げ、要求 0 件にした。理由: 仕様を変えると、この機能の全工程の再確認が要り、実装の効率が下がる。現在の仕様は性能を「目標値であり、入力の制限でも合否の検査でもない」と既に書いている。利用者が見たいのは、ムダな処理がないことだけである。これまでの経過: initial(2026-11-16T09:11:58+09:00、draft_sha256 57d58b7c0a1b484939de141b644e1962de9ee5c81064275e48e9d285b8523258)→ refresh(2026-11-17T17:42:39+09:00、draft_sha256 f2aa93acfcf0b5f852003a0b9a561c142301550cd0e712e836a44dd4ce225d7c。両要求の内容を決定)→ refresh(2026-11-18T00:37:33+09:00、draft_sha256 6537a8ca5af98a3a16826f5d17ab1dd46e90a639ef3c86c7ae066fd7367d84e1。CR-008 を「目標はムダな処理がないことの目安」に作り直し)→ 今回の refresh(2 件とも取り下げ)"
 result: pass
-status: "no_request"
-cycle_note: "承認済み実装(2026-09-23)が PR #11 の Linux CI で 5 件失敗し、同じ attempt 6 内で実装を修正(commit 90fb05c: UTF-8 ロケールの read / SIGPIPE 無視の tr / 5,000 行の性能。commit 0a193cb: S5 blocker F-001 の空白判定を ASCII 固定、前提 A-058 追加)した後の再実行。旧 done は invalidated/20260928_100000_stage_invalidated_eff24f55_ci_linux_fix/ に退避済み。公開済みの 20260919_213000_impl_feedback_eff24f55(CR-001〜005)と 20260922_130000_impl_feedback_eff24f55(CR-006 / 007)は仕様へ反映済みで再掲しない"
+status: "no_requests"
+refreshed_at: "2026-11-18T00:39:31+09:00"
+refresh:
+  source: "利用者の指示(2026-11-18、2 通)"
+  user_statements:
+    - "ずっとどうでも良いエッジケースを考えすぎです。大きなデータに意味はなく、ムダな処理がないことを見たいだけです。"
+    - "推奨ですすめるというか、実装の効率が下がるなら仕様を取り下げてもよいです。重いテストも削除しても良いくらいです。"
+  updated: []
+  added: []
+  removed: ["CR-eff24f55-008", "CR-eff24f55-009"]
+  note: "要求 0 件。未公開の draft は公開しない。feedback ID 20261116_090543_impl_feedback_eff24f55 は使わない(公開ファイルは作っていない)"
+  draft_file_removal: "removed (after event 20261118_004308_s8_feedback_completed_eff24f55_refresh_no_requests)"
+cycle_note: "完了済みの UC の、仕様の更新(2026-10〜2026-11-16)に伴う再実行(attempt 6 のまま)。旧 S8 done は invalidated/20261116_045153_stage_invalidated_eff24f55_stale_rerun_20261116/stages/ に退避済み。公開済みの 20260919_213000_impl_feedback_eff24f55(CR-001〜005)と 20260922_130000_impl_feedback_eff24f55(CR-006 / 007)は仕様へ反映済みで再掲しない。CR ID は公開済みの 007 の続きから振った"
 inputs:
   issues_dir: "docs/impl/latest/eff24f55/issues/"
   findings: "docs/impl/latest/eff24f55/stages/attempt-6/S5_verify.tier-facade.findings.yaml"
-  previous_findings_invalidated: "docs/impl/latest/eff24f55/invalidated/20260928_113000_stage_invalidated_eff24f55_f001_fix/stages/attempt-6/S5_verify.tier-facade.findings.yaml"
   assumptions: "docs/impl/latest/eff24f55/stages/attempt-6/S4_tier-impl.tier-facade.assumptions.yaml"
   s4_done: "docs/impl/latest/eff24f55/stages/attempt-6/S4_tier-impl.tier-facade.done.yaml"
   s5_done: "docs/impl/latest/eff24f55/stages/attempt-6/S5_verify.tier-facade.done.yaml"
   s6_done: "docs/impl/latest/eff24f55/stages/S6_uc-bdd.done.yaml"
   s7_done: "docs/impl/latest/eff24f55/stages/S7_atdd.done.yaml"
   review_notes: "docs/impl/latest/eff24f55/review/review-notes.md"
+  policy_docs:
+    - "tmp/RelayGateのしくみ.md"
+    - "tmp/RelayGateの利用イメージ.md"
+  duplicate_check:
+    - "docs/impl/latest/eff24f55/feedback-requests/20260919_213000_impl_feedback_eff24f55.md"
+    - "docs/impl/latest/eff24f55/feedback-requests/20260922_130000_impl_feedback_eff24f55.md"
+    - "docs/impl/latest/fd678b04/feedback-requests/20261115_093126_impl_feedback_fd678b04.md"
+    - "docs/impl/latest/fd678b04/feedback-requests/20261115_145719_impl_feedback_fd678b04.md"
+    - "docs/impl/latest/fd678b04/review/review-notes.md"
 resolution:
   previous_feedback_ids:
     - "20260919_213000_impl_feedback_eff24f55"
@@ -23,80 +43,108 @@ resolution:
   issues:
     - path: "docs/impl/latest/eff24f55/issues/20260919_161456_cross-uc-scenarios.md"
       verdict: "not_spec_issue"
-      evidence: "UC 横断 Scenario の責務分担の記録で、起票時から仕様疑義ではない。S6 / S7 はハーネス注入なしで pass"
+      evidence: "過去の run で処理済み。UC 横断 Scenario の責務分担の記録で仕様疑義ではない。S6 / S7 pass"
     - path: "docs/impl/latest/eff24f55/issues/20260919_183305_control-char-notation-and-internal-error-undefined.md"
       verdict: "resolved"
-      evidence: "cli-command-contract.yaml の conventions.output_format.control_chars と config_input_rules.internal_failure に規定済み(CR-eff24f55-002 / 003 の反映)"
+      evidence: "過去の run で処理済み(CR-eff24f55-002 / 003 の反映)"
     - path: "docs/impl/latest/eff24f55/issues/20260919_195500_malformed-input-policy-undefined.md"
       verdict: "resolved"
-      evidence: "cli-command-contract.yaml の config_input_rules に拒否する異常の一覧と原因別の文言を規定済み(CR-eff24f55-001 の反映)"
+      evidence: "過去の run で処理済み(CR-eff24f55-001 の反映)"
     - path: "docs/impl/latest/eff24f55/issues/20260919_210000_file-replaced-between-scan-and-parse.md"
       verdict: "resolved"
-      evidence: "cli-command-contract.yaml の config_input_rules.snapshot.validate_config に単一スナップショットを規定済み。UC BDD の差し替え Scenario が 5 回連続 pass"
+      evidence: "過去の run で処理済み(config_input_rules.snapshot.validate_config)"
     - path: "docs/impl/latest/eff24f55/issues/20260922_120000_duplicate-job-id-lines-contract-vs-bdd.md"
       verdict: "resolved"
-      evidence: "cli-command-contract.yaml の validate-config.sh stderr、tier-facade.md 列検証表、spec.md の本文と BDD が「初出行を含む全行番号」に統一済み(CR-eff24f55-006 の反映)"
+      evidence: "過去の run で処理済み(CR-eff24f55-006 の反映)"
     - path: "docs/impl/latest/eff24f55/issues/20260922_120100_credential-ref-warning-boundary-undefined.md"
       verdict: "resolved"
-      evidence: "cli-command-contract.yaml の columns.credential_ref.on_format_violation と tier-facade.md が「理由を問わず同じ warn で受理し値は出さない」と明記(CR-eff24f55-007 案 A の反映)"
-  new_issues_in_current_attempt: 0
+      evidence: "過去の run で処理済み(CR-eff24f55-007 案 A の反映)"
+    - path: "docs/impl/latest/eff24f55/issues/20261116_062901_job-map-bash-only-parse-exceeds-performance-target.md"
+      verdict: "not_requested"
+      decided_by: "利用者の 2026-11-18 の決定"
+      withdrawn_request_id: "CR-eff24f55-008"
+      evidence: "要求にしない。現在の仕様は性能を「目標値であり、入力の制限でも合否の検査でもない」と既に書いている(NFR B.1.1.2 / B.2.1.1、config_input_rules.performance_target)。10 秒を超えるのは、目標から外すために作った入力(1 行に `\"\"`・JSON のエスケープ・列が数十万〜数百万個。Linux 39〜97 秒、macOS 103 秒)だけで、所要時間は数に比例する(2 乗ではない)。実際の利用で想定する形の入力は Linux で 3.8〜8.1 秒。作為的な入力の遅さは、仕様の不足として扱わない"
+    - path: "docs/impl/latest/eff24f55/issues/20261116_090543_housekeep-not-in-performance-target-scope.md"
+      verdict: "not_requested"
+      decided_by: "利用者の 2026-11-18 の決定"
+      withdrawn_request_id: "CR-eff24f55-009"
+      raised_in_stage: "S8"
+      decision_reason: "要求にしない。目標は検査ではない。ハウスキープの機能を実装するときに、実装の効率を下げてまで決める事柄ではない"
+      evidence: "config_input_rules.scope(1330 行)は validate-config.sh の 5 検証種別(--housekeep を含む)、performance_target.applies_to(1375 行)と NFR B.1.1.2 / B.2.1.1 は 4 検証種別(--housekeep を含まない)を「すべて」と書く。対象外とする記載も無い。1247 行は「env 形式の 4 検証種別」を --housekeep を含む組の意味で使う。オーケストレータの指摘を現物で確認した"
+  new_issues_in_current_attempt: 2
   findings:
     blocker: 0
     major: 0
-    minor: 30
-    spec_absent: 22
-    restatement: 2
-    category_mismatch: 1
-    unlisted: 5
+    minor: 27
+    spec_absent: 25
+    restatement: 1
+    unlisted: 1
     contradicts: 0
-    resolved_previous_blockers:
-      - "F-001"
-    verdict: "仕様起因の要求なし。前回の blocker F-001(空白判定のロケール依存)は実装側で解消(A-058)。spec_absent の minor 22 件は人が spec_change で却下していないため要求にしない。unlisted 5 件(V-001〜V-005)は前提記録の規則の解釈差で仕様起因ではない"
+    verdict: "findings 起因の要求なし。spec_absent 25 件は人が spec_change で却下していないため要求にしない(うち 22 件は利用者が承認済みの引き継ぎ)。restatement 1 件(F-019)は契約どおり。unlisted 1 件(F-027 / V-001: 検証全体を C ロケールで行う)は前提の記録漏れで仕様起因ではなく、S9 で判断を求める"
   rejected_spec_change: 0
+  rejected_implementation_change: 0
 classification:
   spec_origin: 0
-  implementation_origin_fixed: 2
-  environment_origin: 2
-  out_of_scope: 3
-  note: "実装起因(修正済み)= Linux CI の 5 件失敗(commit 90fb05c)/ S5 blocker F-001(commit 0a193cb)。環境起因 = 開発機 macOS の mktemp(A-052)/ CI runner の SIGPIPE 無視(A-053)。対象外 = 復唱 2 件(F-106 / F-121)/ 分類差 1 件(F-130)/ unlisted 5 件(F-125〜F-129)"
-  linux_ci_fixes:
-    - "job_map_repo: read snapshot under LC_ALL=C (UTF-8 locale read merged a dangling lead byte line with the next line)"
-    - "job_map_repo: when sed fails, ignore tr exit status (SIGPIPE ignored on CI runners makes tr exit 1 instead of 141)"
-    - "performance: 5,000 rows verbose 7.06s -> 3.16s on Ubuntu arm64 (IFS-based CSV fast path, linear join, single setlocale)"
-    - "cli_field: key=value / key: value whitespace test uses the fixed ASCII set under LC_ALL=C (A-058)"
+  not_requested_by_user_decision: 2
+  implementation_origin: 0
+  environment_origin: 3
+  out_of_scope: 2
+  note: "仕様起因の要求 = 0 件。要求にしない(利用者の 2026-11-18 の決定)= 性能の目標と作為的な入力 / --housekeep が目標の対象に並んでいない点。環境起因 = 開発機の負荷による変更していない時間のテストの時間切れ(macOS 11.6 秒 → 単独 7.5 秒、Linux 10.8 秒 → 単独 5.7 秒)/ 独立検証の初回の TMPDIR 共有による BSD mktemp の作成競合 / macOS と Linux の所要時間の差(事実として as-built summary に記載)。対象外 = restatement 1 件(F-019)/ unlisted 1 件(F-027)"
+requests: []
+withdrawn_requests:
+  - id: "CR-eff24f55-008"
+    last_title: "性能の目標は、ムダな処理がないことを確かめるための目安であると書く"
+    withdrawn_at: "2026-11-18"
+    reason: "仕様は変えない。現在の仕様は性能を「目標値であり、入力の制限でも合否の検査でもない」と既に書いている。目標から外すために作った入力で 10 秒を超えることは、仕様の不足として扱わない(利用者が見たいのは、ムダな処理がないことだけ)"
+  - id: "CR-eff24f55-009"
+    last_title: "性能の目標の対象に、ハウスキープ設定の検証(validate-config.sh --housekeep)を含める"
+    withdrawn_at: "2026-11-18"
+    reason: "要求にしない。目標は検査ではない。ハウスキープの機能を実装するときに、実装の効率を下げてまで決める事柄ではない"
+withdrawal_reason: "仕様を変えると、この機能の全工程の再確認が要り、実装の効率が下がる(利用者の 2026-11-18 の指示)"
 assumptions_summary:
-  count: 24
-  consistent: 2
-  spec_absent: 22
+  count: 26
+  carried_over_approved: 22
+  added: ["A-059", "A-060", "A-061", "A-062"]
+  dropped: ["A-050", "A-051"]
+  consistent: 1
+  spec_absent: 25
   contradicts: 0
-  unlisted: 5
+  unlisted: 1
   rejected_spec_change: 0
-  changed_from_previous:
-    added:
-      - "A-058"
-    updated:
-      - "A-053"
+  verdict_changes_from_previous_approval:
+    - {id: "A-016", previous: "consistent", current: "spec_absent", note: "2026-09-23 に案 A で承認済み。内容不変"}
+    - {id: "A-055", previous: "consistent", current: "consistent", note: "判定は不変。findings の kind だけが restatement(復唱)になった"}
+  user_decision_2026_11_17: "26 件と V-001 をすべて承認(却下 0 件。前提由来の新しい要求なし)"
   review_attention:
-    - "A-058"
-    - "A-053"
-  whitespace_definition_decision: "A-058(空白 = ASCII 6 種、ロケール非依存)は仕様変更要求にせず、実装前提として S9 で承認を取る。理由: (1) 契約の他箇所の「空白」は ASCII の意味で使われ、独立検証も contradicts ではなく spec_absent と判定 (2) Unicode 空白の集合は libc で異なり、仕様に含めると実装が環境依存に戻る (3) 要求の対象は人が spec_change で却下した前提だけ (4) 書くなら cross-cutting の出力規約の文言追加で UC の blocker ではない。spec_change で却下されたときだけ refresh で要求にする"
-  note: "今回のレビューは未実施。A-058(今回追加)と A-053(内容更新)を as-built summary の「レビューで確認してほしい前提」に挙げた"
+    - {id: "A-061", answer: "required", reason: "csv_rules の「bash 単独で 1 文字ずつ状態機械で解析する」を受理する文法として読む解釈。CR-008 と同じ箇所", resolved: "2026-11-17 承認"}
+    - {id: "V-001", answer: "required", reason: "F-027。検証全体を C ロケールで行う選択が前提ファイルに無い。S5 verdict と 1:1 の判断が要る", resolved: "2026-11-17 承認(言語設定に左右されない設定で検証する)"}
+    - {id: "A-059", answer: "optional"}
+    - {id: "A-060", answer: "optional"}
+    - {id: "A-062", answer: "optional"}
 feedback_request:
   feedback_id: null
   draft_path: null
+  draft_sha256: null
   request_count: 0
   blocker_count: 0
+  request_ids: []
   supersedes: null
-  note: "有効な要求が 0 件のため draft を作らない。公開済みの 2 ファイルは変更していない"
+  withdrawn_feedback_id: "20261116_090543_impl_feedback_eff24f55"
+  published: false
+  note: "要求 0 件。取り下げた未公開の draft の feedback ID は withdrawn_feedback_id に残す(公開していないため、公開ファイルは無い)"
 as_built_summary: "docs/impl/latest/eff24f55/feedback/as-built-summary.md"
-learnings: 1
+as_built_summary_sha256: "f8f48c49a211e8f1ecdc30413930db561f06813353bd041c7365bc238c821fbf"
+issues_added:
+  - "docs/impl/latest/eff24f55/issues/20261116_090543_housekeep-not-in-performance-target-scope.md"
+learnings: 2
 learning_files:
-  - "docs/impl/latest/eff24f55/learnings/20261006_080400_linux-ci-fails-after-macos-green.md"
+  - "docs/impl/latest/eff24f55/learnings/20261116_090543_heavy-tests-run-only-when-mechanism-changed.md"
+  - "docs/impl/latest/eff24f55/learnings/20261116_090543_output-preserving-perf-change-differential-test.md"
 proposals:
   skill: true
   context: true
 proposal_files:
-  - "docs/impl/latest/eff24f55/learnings/20261006_080400_proposal-skill.md"
-  - "docs/impl/latest/eff24f55/learnings/20261006_080400_proposal-context.md"
-completed_at: "2026-10-06T08:04:00+09:00"
+  - "docs/impl/latest/eff24f55/learnings/20261116_090543_proposal-skill.md"
+  - "docs/impl/latest/eff24f55/learnings/20261116_090543_proposal-context.md"
+completed_at: "2026-11-18T00:39:31+09:00"
 completed_by: "dist-impl-feedback@0.14.1"

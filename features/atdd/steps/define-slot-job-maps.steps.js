@@ -1,6 +1,7 @@
 // ATDD(①)step definition。uc_id=eff24f55 / branch_slug=define-slot-job-maps(S2 skeleton を S7 atdd で実装)。
 // source: features/atdd/SPEC-004-04.feature(@atdd_SPEC-004-04-4)/ features/atdd/SPEC-008-05.feature(@atdd_SPEC-008-05-2)
-//   対象は uc-map eff24f55 の atdd_scenarios に列挙された 2 Scenario のみ(同 feature の他 Scenario は他 UC の担当)。
+//   / features/atdd/SPEC-004-01.feature(@atdd_SPEC-004-01-10。2026-11-16 の S2 再実行で追加)
+//   対象は uc-map eff24f55 の atdd_scenarios に列挙された 3 Scenario のみ(同 feature の他 Scenario は他 UC の担当)。
 // step 文言は feature から転写したリテラルを正規表現で完全一致させる。
 // World / Before / After は features/atdd/steps/configure-feature-flags.steps.js が定義済み(同一 require glob で読まれる)。
 // ここでは setWorldConstructor を呼ばない(World は 1 つだけ)。
@@ -161,4 +162,62 @@ Then(literal('hang_detect_limit_minutes の調整記録(調整日時・調整根
     const expected = `warn: unknown column column=${column} path: ${SPEC_GREEN_MAP}`;
     assert.ok(stderr.includes(expected), `stderr should include line "${expected}"\n${outputDump(this.withRecordColumns)}`);
   }
+});
+
+// ---- @atdd_SPEC-004-01-10 ----
+// 2026-11-16 の S2 再実行で追加(uc-map eff24f55 の atdd_scenarios に SPEC-004-01-10 が加わった。
+// features/atdd/SPEC-004-01.feature の他の Scenario は別の UC の担当で、ここでは step を用意しない)。
+// 受け入れ基準に無い具体値(キー名・パス・行数)は、対応する UC BDD Scenario
+// 「feature flag にジョブマップの場所を書いていても --job-map は渡したパスのジョブマップを検証する(SPEC-004-01)」の値を使う。
+// feature flag に書いた場所のジョブマップ(データ行 3 行)と、渡すパスのジョブマップ(データ行 1 行)で行数を変えてあるので、
+// stdout の rows= でどちらを検証したかが決まる。
+
+const HEADER_LOCAL = 'job_id,work_dir,script,fixed_params,hang_detect_limit_minutes';
+const SPEC_FF_BLUE_MAP = '/srv/relay-gate/maps/blue-jobs.csv';
+const SPEC_BLUE_MAP = '/etc/relay-gate/blue-job-map.csv';
+
+function writeMapAt(world, specPath, mapLines) {
+  const file = world.sandbox(specPath);
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, mapLines.join('\n') + '\n');
+  return file;
+}
+
+function runJobMapAt(world, specPath) {
+  const file = world.sandbox(specPath);
+  assert.ok(fs.existsSync(file), `job map fixture should exist: ${specPath}`);
+  const proc = spawnSync(VALIDATE_CONFIG, ['--job-map', file], {
+    cwd: world.root,
+    encoding: 'utf8',
+    env: { ...process.env, RELAY_GATE_CONFIG_DIR: world.configDir },
+  });
+  assert.equal(proc.error, undefined, `spawn failed: ${proc.error}`);
+  return { status: proc.status, stdout: proc.stdout, stderr: proc.stderr };
+}
+
+Given(literal('feature flag にジョブマップの場所のキーを書いている'), function () {
+  // 設定ファイル置き場(RELAY_GATE_CONFIG_DIR)の feature-flag.env に blue 用のキーを書き、その場所に有効なジョブマップ(3 行)を置く
+  const ffMap = writeMapAt(this, SPEC_FF_BLUE_MAP, [
+    HEADER_LOCAL,
+    'JOB101,/var/app/work,/opt/app/bin/job101.sh,"[]",0',
+    'JOB102,/var/app/work,/opt/app/bin/job102.sh,"[]",0',
+    'JOB103,/var/app/work,/opt/app/bin/job103.sh,"[]",0',
+  ]);
+  fs.writeFileSync(this.envPath, `BLUE_JOB_MAP_CSV=${ffMap}\n`);
+  assert.equal(path.dirname(this.envPath), this.configDir, 'feature-flag.env must be in RELAY_GATE_CONFIG_DIR');
+});
+
+When(literal('ジョブマップ単体の検証コマンドに別のパスを渡して実行する'), function () {
+  // 別のパス = feature flag に書いた場所ではないジョブマップ(1 行)
+  writeMapAt(this, SPEC_BLUE_MAP, [HEADER_LOCAL, 'JOB001,/var/app/work,/opt/app/bin/job001.sh,"[]",0']);
+  assert.notEqual(this.sandbox(SPEC_BLUE_MAP), this.sandbox(SPEC_FF_BLUE_MAP));
+  this.result = runJobMapAt(this, SPEC_BLUE_MAP);
+});
+
+Then(literal('渡したパスのジョブマップが検証される'), function () {
+  assert.equal(this.result.status, 0, `exit code\n${outputDump(this.result)}`);
+  // 渡したパスと、そのファイルの行数(1 行)が出る。feature flag に書いた場所のジョブマップ(3 行)なら rows=3 になる
+  assert.deepEqual(lines(this, this.result.stdout), [`map_path: ${SPEC_BLUE_MAP}`, 'rows=1', 'map_version=-'], outputDump(this.result));
+  const all = this.unsandbox(`${this.result.stdout}\n${this.result.stderr}`);
+  assert.equal(all.includes(SPEC_FF_BLUE_MAP), false, `output must not mention the location written in feature flag\n${outputDump(this.result)}`);
 });

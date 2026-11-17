@@ -7,13 +7,16 @@
 #       _cross-cutting/api/cli-command-contract.yaml config_input_rules(rules / snapshot / internal_failure)
 #       stdout の固定順(map_path, rows, map_version)は cli-command-contract.yaml commands[validate-config.sh].stdout が正。
 #       行の形式(`key=value` / `key: value` / 空値 `-`)は domain/cli_field.sh(ui-design.md 出力フォーマット)に従う。
-# 任意入力(パス・セルの値)を出す行は、制御文字を可視表記にする(cli_field_safe_text。ANSI を出さず 1 行 1 事実を保つ)。
+# 任意入力(パス・セルの値)を出す行は、制御文字を可視表記にする(cli_field_safe_text と同じ規則。ANSI を出さず 1 行 1 事実を保つ)。
 # 報告行(error / warn / info / hint)は domain の job_map_emit で JOB_MAP_REPORT_LINES に溜め、検証を終えてから stderr へ出す。
+# 行ごとの検証の報告行は元の値のまま溜め、出す前にまとめて可視表記にする(JOB_MAP_REPORT_DEFER_ESCAPE。性能の目標値
+# config_input_rules.performance_target に近づけるため。値ごとに bash で置き換えると、制御文字の多い数 MB の入力で 20 秒を超える)。
 # 内部障害(終了コード 6)のときは溜めた行を捨て、error 行 1 つ(+ hint)だけを出す(他の error / warn 行も stdout も出さない)。
 # 依存: domain/job_map.sh, domain/cli_field.sh, repository/job_map_repo.sh
 # 戻り値: 0(検証 OK)/ 2(ファイルなし・読めない・入力の守備範囲の違反・ヘッダー不一致・列名の重複・クォート不正・
 #         列数不一致・列検証違反・job_id 重複)/
-#         6(入力の複製の失敗、または補助コマンド tr / sed / sort / rm(複製の削除)の失敗。conventions.exit_codes の実行エラー。
+#         6(入力の複製の失敗、または補助コマンド tr / sed / sort / rm(複製の削除)の失敗(報告行と map_version の可視表記を
+#           まとめて作る sed / tr の失敗を含む)。conventions.exit_codes の実行エラー。
 #           検証が未完了のまま検証 OK にも検証違反にもしない。stdout は出さない。補助コマンド自身の stderr も出さない)
 
 JOB_MAP_EXIT_OK=0
@@ -26,6 +29,24 @@ validate_job_map_flush_report() {
     printf '%s\n' "${JOB_MAP_REPORT_LINES[@]}" >&2
   fi
   JOB_MAP_REPORT_LINES=()
+}
+
+# 溜めた報告行の可視表記をまとめて作り、stderr へ出す(ヘッダーの検証と行ごとの検証の後に使う。報告行は JOB_MAP_REPORT_DEFER_ESCAPE により
+# 元の値を埋め込んでいる)。行の数と大きさによらず、外部コマンド(sed / tr)の起動は一定回数(cli_field_safe_text_list)。
+# 外部コマンドが失敗したときは、溜めた行を出さずに補助コマンドの失敗の error 行 1 つだけを出す(config_input_rules.internal_failure)
+# 引数: shown_path
+# 戻り値: 0 … 出した / 1 … 補助コマンドの失敗を報告した(呼び出し元は終了コード 6)
+validate_job_map_flush_escaped_report() {
+  local -a shown_report_lines=()
+  if [ "${#JOB_MAP_REPORT_LINES[@]}" -eq 0 ]; then
+    return 0
+  fi
+  if ! cli_field_safe_text_list shown_report_lines "${JOB_MAP_REPORT_LINES[@]}"; then
+    validate_job_map_report_command_failure "$CLI_FIELD_BATCH_FAILED_COMMANDS" "$1"
+    return 1
+  fi
+  JOB_MAP_REPORT_LINES=()
+  printf '%s\n' "${shown_report_lines[@]}" >&2
 }
 
 # クォート不正の行を全件報告する(ヘッダーが使えず列検証に進めないときも、クォート不正は行番号付きで全部出す)
@@ -103,6 +124,9 @@ validate_job_map_report_snapshot_failure() {
 # 引数: path verbose(true|false)
 validate_job_map_query() {
   local path="$1" verbose="${2:-false}" shown_path
+  # 検証はすべてバイト単位(入力の守備範囲・列の値域・可視表記)。検証全体を C ロケールで行う
+  # (UTF-8 ロケールのままだと、数十 MB の報告行の受け渡しと出力が文字単位の処理になり、所要時間が 1.3〜1.4 倍になる。出力のバイト列は変わらない)
+  local LC_ALL=C
   cli_field_safe_text "$path"
   shown_path="$CLI_FIELD_SAFE_TEXT"
 
@@ -116,11 +140,14 @@ validate_job_map_query() {
   fi
 
   # 報告行は検証を終えるまで溜める(内部障害のときに他の行を出さないため)。戻るときに出力先を元に戻す
-  local saved_sink="$JOB_MAP_REPORT_SINK" status
+  # 行ごとの検証の報告行は元の値のまま溜め、出す前にまとめて可視表記にする(validate_job_map_flush_escaped_report)
+  local saved_sink="$JOB_MAP_REPORT_SINK" saved_defer="$JOB_MAP_REPORT_DEFER_ESCAPE" status
   JOB_MAP_REPORT_SINK="$JOB_MAP_REPORT_SINK_ARRAY"
+  JOB_MAP_REPORT_DEFER_ESCAPE=true
   JOB_MAP_REPORT_LINES=()
   validate_job_map_run "$path" "$verbose" "$shown_path" || status=$?
   JOB_MAP_REPORT_SINK="$saved_sink"
+  JOB_MAP_REPORT_DEFER_ESCAPE="$saved_defer"
   return "${status:-0}"
 }
 
@@ -201,9 +228,12 @@ validate_job_map_run() {
     return "$JOB_MAP_EXIT_VALIDATION_ERROR"
   fi
   # ヘッダー不一致(必須列の欠落・host / user の片方だけ)と列名の重複は、列を対応付けられないため列検証に進まない
+  # 未知の列名・重複した列名は元の値のまま溜めている(JOB_MAP_REPORT_DEFER_ESCAPE)。出す前にまとめて可視表記にする
   if ! validate_job_map_header "$path" ${JOB_MAP_HEADER[@]+"${JOB_MAP_HEADER[@]}"}; then
     validate_job_map_report_quote_errors "$shown_path"
-    validate_job_map_flush_report
+    if ! validate_job_map_flush_escaped_report "$shown_path"; then
+      return "$JOB_MAP_EXIT_EXECUTION_ERROR"
+    fi
     return "$JOB_MAP_EXIT_VALIDATION_ERROR"
   fi
   job_map_header_bind "${JOB_MAP_HEADER[@]}"
@@ -232,7 +262,15 @@ validate_job_map_run() {
     return "$JOB_MAP_EXIT_EXECUTION_ERROR"
   fi
 
-  validate_job_map_flush_report
+  # stdout の map_version は全行の版を連ねた値で、数 MB になりうる。可視表記は stderr の行を出す前にまとめて作って控える
+  # (外部コマンドの失敗を、他の行を出す前に報告するため)
+  if [ "$errors" -eq 0 ] && ! cli_field_safe_text_prepare "$JOB_MAP_VERSION_SUMMARY"; then
+    validate_job_map_report_command_failure "$CLI_FIELD_BATCH_FAILED_COMMANDS" "$shown_path"
+    return "$JOB_MAP_EXIT_EXECUTION_ERROR"
+  fi
+  if ! validate_job_map_flush_escaped_report "$shown_path"; then
+    return "$JOB_MAP_EXIT_EXECUTION_ERROR"
+  fi
   if [ "$errors" -ne 0 ]; then
     return "$JOB_MAP_EXIT_VALIDATION_ERROR"
   fi

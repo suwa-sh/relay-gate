@@ -1,6 +1,6 @@
 stage: S6
 uc_id: eff24f55
-manifest_sha256: 85d1ebda8af9b786c1abbfc4e09198f4716663209279349d7e7ad9c947902002
+manifest_sha256: d0748fc7bd00fb2a27165e23252a2184ac3143dd29e6f3328e3db19bf759f79e
 manifest_projection: v2
 result: pass
 branch_slug: define-slot-job-maps
@@ -8,61 +8,60 @@ tiers:
   - tier-facade
 tier_impl_attempt: 6
 rerun: true
-rerun_reason: "blocker_fix_same_attempt (invalidated event 20260928_113000_stage_invalidated_eff24f55_f001_fix)。S5 blocker F-001(key=value / key: value 出力の空白判定がロケール依存)を Linux CI 修正サイクルの attempt 6 内で facade に修正(commit 0a193cb、A-058 追加)。tier-facade attempt-6 の S4 再実行(format / lint / tdd / bdd_tier pass)後に統合テストを再実行した"
-previous_done: "docs/impl/latest/eff24f55/invalidated/20260928_113000_stage_invalidated_eff24f55_f001_fix/stages/S6_uc-bdd.done.yaml"
-rerun_note: "facade 実装の変更は facade/src/domain/cli_field.sh の空白判定(LC_ALL=C 下の固定 ASCII 集合で判定。Unicode 空白は空白扱いしない)だけで、CLI 契約・出力規約は不変。feature / step 定義は変更せず、既存の 24 Scenario がそのまま通ることを確認した"
+rerun_reason: "完了済みの UC の再実行(仕様の変更への追従。invalidated event 20261116_045153_stage_invalidated_eff24f55_stale_rerun_20261116)。S2 で UC BDD に 1 Scenario を追加し、tier-facade attempt-6 の S4(性能改善のみ、出力不変)と S5 verify(blocker 0 / major 0)の後に統合テストを実行した"
+previous_done: "docs/impl/latest/eff24f55/invalidated/20261116_045153_stage_invalidated_eff24f55_stale_rerun_20261116/stages/S6_uc-bdd.done.yaml"
+rerun_note: "feature と step 定義は S2(commit 467db4a)で追加済みのものをそのまま使い、本ステージでは変更していない。追加 1 Scenario を含む 25 Scenario が S4 の性能改善後の実装で通ることを確認した"
 feature: features/uc/define-slot-job-maps.feature
 feature_changed: false
+feature_change_note: "本ステージでは変更なし(S2 で 1 Scenario 追加済み。24 から 25 Scenario)"
 steps: features/uc/steps/define-slot-job-maps.steps.js
 steps_changed: false
-steps_change_summary: "変更なし。git diff --stat 955db41 -- features/ cucumber.cjs が空、git status --short features/ がクリーンであることを確認(HEAD 0a193cb)"
+steps_change_summary: "本ステージでは変更なし。実行前後で git status --short がクリーンであること(HEAD 4fce91c)を確認"
 source: "docs/specs/latest/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/spec.md#E2E完了条件(BDD)"
 tier_impl_changed: true
-tier_impl_change_ref: "commit 0a193cb impl(eff24f55): fix F-001 locale-independent whitespace rule for key=value output (A-058)。facade/src/domain/cli_field.sh のみ(本ステージでは変更していない。S4 再実行の成果物を参照のみ)"
+tier_impl_change_ref: "commit 9ce28e6 impl(eff24f55): S4 tier-facade gates passed(facade/src/domain/job_map.sh / facade/src/repository/job_map_repo.sh / facade/src/usecase/validate_job_map.sh の性能改善。behavior_changed: false)。本ステージでは変更していない(参照のみ)"
 run:
   cwd: "."
   command: "npx cucumber-js --config cucumber.cjs features/uc"
   exit_code: 0
-  summary: "36 scenarios (36 passed), 140 steps (140 passed)"
-  scenarios_total: 36
-  scenarios_passed: 36
+  summary: "55 scenarios (55 passed), 340 steps (340 passed)"
+  scenarios_total: 55
+  scenarios_passed: 55
   scenarios_failed: 0
   undefined_steps: 0
+  pending_steps: 0
   ambiguous_steps: 0
+  by_feature:
+    - feature: features/uc/define-slot-job-maps.feature
+      uc_id: eff24f55
+      scenarios: 25
+    - feature: features/uc/configure-feature-flags.feature
+      uc_id: fd678b04
+      scenarios: 20
+    - feature: features/uc/define-crosscheck-job-map-and-comparison-definitions.feature
+      uc_id: dcd8234d
+      scenarios: 10
+      note: "Scenario 9 件のうち 1 件が Scenario Outline(Examples 2 行)のため実行件数は 10"
 target_feature_run:
   command: "npx cucumber-js --config cucumber.cjs features/uc/define-slot-job-maps.feature"
   exit_code: 0
-  summary: "24 scenarios (24 passed), 91 steps (91 passed)"
-  scenarios_total: 24
-  scenarios_passed: 24
+  summary: "25 scenarios (25 passed), 146 steps (146 passed)"
+  scenarios_total: 25
+  scenarios_passed: 25
   scenarios_failed: 0
-preceding_uc_run:
-  feature: features/uc/configure-feature-flags.feature
-  scenarios_total: 12
-  scenarios_passed: 12
-  note: "全体実行 36 件のうち先行 UC(fd678b04)の 12 件。step 定義は未変更で全件 pass"
-flakiness_check:
-  scenario: "検証中に差し替わったファイルは複製した時点の内容だけで判定される"
-  command: "npx cucumber-js --config cucumber.cjs features/uc/define-slot-job-maps.feature --name '検証中に差し替わったファイル'"
-  repeats: 5
-  passed: 5
-  note: "タイミング依存の Scenario のみ繰り返し実行で安定性を確認。--name はこの確認専用で、done の判定は全体実行の結果"
-linux_equivalent_check:
-  purpose: "F-001 修正後の facade 単体テストが Linux 相当環境(UTF-8 ロケール)で pass することの確認(オーケストレータ指示)"
-  image: "relay-gate-ci:ubuntu24 (Ubuntu 24.04。node は無いため cucumber は macOS で実行)"
-  command: "docker run --rm -e LANG=C.UTF-8 -v \"$PWD:/work\" -w /work/facade relay-gate-ci:ubuntu24 bats -r test"
-  exit_code: 0
-  summary: "1..341, ok 341, not ok 0"
-  note: "S4 attempt-6 rerun の記録(341 tests, 0 not ok on macOS and Ubuntu 24.04)と一致"
+  undefined_steps: 0
+  pending_steps: 0
+  ambiguous_steps: 0
 harness:
-  sandbox_root: "Scenario ごとの一時ディレクトリを root とし、feature の絶対パス(/etc/relay-gate/green-job-map.csv, /etc/relay-gate/blue-job-map.csv)を root 配下の同じ相対位置に実ファイルで配置。出力照合時に root 接頭辞を除去"
-  process: "facade/bin/validate-config.sh を実プロセスとして起動(--job-map <path> [--verbose])。パス省略の When は Given が用意した green-job-map.csv を渡す"
+  sandbox_root: "Scenario ごとの一時ディレクトリを root とし、feature の絶対パス(/etc/relay-gate/green-job-map.csv など)を root 配下の同じ相対位置に実ファイルで配置。出力照合時に root 接頭辞を除去"
+  process: "facade/bin/validate-config.sh を実プロセスとして起動(--job-map <path> [--verbose])"
   external_connections: none
 injections: []
-injections_note: "ハーネス注入なし。UC 横断 Scenario 2 件は fixture 配置と前提の記録だけで成立(根拠: docs/impl/latest/eff24f55/issues/20260919_161456_cross-uc-scenarios.md)。前提の新規抽出なし"
+injections_note: "ハーネス注入なし。前提の新規抽出なし"
 cross_uc_refs:
   - docs/impl/latest/eff24f55/issues/20260919_161456_cross-uc-scenarios.md
 issues: []
-issues_note: "新規起票なし。F-001 修正後も全 Scenario が仕様どおりに通過し、仕様と実装の食い違いは見つからなかった"
-completed_at: '2026-10-06T07:59:00+09:00'
+issues_note: "新規起票なし。全 Scenario が仕様どおりに通過し、仕様と実装の食い違いは見つからなかった。S4 が起票した性能の目標値との差(docs/impl/latest/eff24f55/issues/20261116_062901_job-map-bash-only-parse-exceeds-performance-target.md)は UC BDD の判定対象外(所要時間を合否にしない)"
+test_execution_note: "cucumber は 1 回ずつ逐次に実行した。bats はオーケストレータ指示により本ステージでは実行していない(S4 / S5 で実測済み)"
+completed_at: '2026-11-16T09:01:00+09:00'
 completed_by: dist-impl-implement@0.14.1

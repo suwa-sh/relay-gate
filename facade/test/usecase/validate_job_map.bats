@@ -997,6 +997,7 @@ has_control_byte() {
 	[ "${lines[0]}" = 'info: resolved job_id=J1 host=- user=- exec=local work_dir=/w script=/s fixed_params=["a\tb\nc"] hang_detect_limit_minutes=60' ]
 }
 
+# bats test_tags=heavy
 @test "validate_job_map_query_一意なjob_idが4000行ある場合_10秒以内に0を返すこと" {
 	# Arrange(nfr-grade B.2.1.1 の CLI 応答 10 秒目標。job_id 重複検査と行の取り出しを行数の 2 乗にしない)
 	{

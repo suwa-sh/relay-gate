@@ -2,26 +2,101 @@ stage: "S5"
 tier: "tier-facade"
 attempt: 6
 uc_id: "eff24f55"
-manifest_sha256: "85d1ebda8af9b786c1abbfc4e09198f4716663209279349d7e7ad9c947902002"
+manifest_sha256: "d0748fc7bd00fb2a27165e23252a2184ac3143dd29e6f3328e3db19bf759f79e"
 manifest_projection: "v2"
 result: "pass"
 open_blockers: 0
-open_majors: 0
-open_minors: 30
-assumptions_sha256: "40fd91da14ab9a90f39339c9bf859e223fadbcf4d4c1175618af1aabd21d9d2a"
-assumption_verdicts_sha256: "9d62848cbe1f1a4da15e285abf3698a27fb75dadd20ced0ed64e1c28535d743f"
-assumption_verdicts_summary:
-  consistent: 2
-  spec_absent: 22
-  contradicts: 0
-  unlisted: 5
+completed_at: "2026-11-15T23:57:48.843916+00:00"
+completed_by: "dist-impl-verify@0.14.1"
 gate_reexec:
   format: "pass"
   lint: "pass"
   tdd: "pass"
   bdd_tier: "pass"
+viewpoints_checked:
+  spec_conformance:
+    status: "done"
+    note: "CLI引数・9列の検証・入力守備範囲・stdout固定順・診断順を照合。対象tierのgherkinブロックはfeatureに逐語転写されている。_api-summaryは旧形式のCLI索引でv2ではないためcontract sliceのhash照合は非該当。_model-summary.tables=[]でDB操作なし。UIなしのCLI tier。"
+  readability_maintainability:
+    status: "done"
+    note: "dev-rulesのCLI規約・層境界・定数・コメント・解析経路を確認。format/lint通過。窓あり強制は専用4テストと比較用helperに限定され、本番経路の既存テストを置換していない。"
+  security:
+    status: "done"
+    note: "credential_refの診断への非出力、固定printf書式、glob抑止、文字列を実行しないことを確認。独自のコマンド置換を含む値・パスは実行されなかった。snapshot権限とcleanupはゲートで検証。"
+  performance:
+    status: "done"
+    note: "性能は目標値として扱い、既知の8MB目標未達は再計測しない。120行6552バイトの制御文字CSVは旧0.1690秒/新0.0989秒。並走環境の参考値で一般化しない。Linux heavy42件を1回だけ実行し全通過。"
+  operability:
+    status: "done"
+    note: "利用者指定パスと制御文字の表示、内部障害時の診断抑止、locale復元を実測。異常時を含め特殊パス48比較は完全一致。"
+  fault_tolerance:
+    status: "done"
+    note: "sed/tr/sort/cat/rmの失敗をSIGPIPE通常/無視の10条件で実行。終了コード6、stdoutなし、補助失敗はerror1行、複製失敗はerror+hintだけ。snapshot差替え・signal cleanup・中断の既存テストとBDDも通過。"
+  refactoring:
+    status: "done"
+    note: "追加4テストファイルを一時複製で変異試験。deferred値破壊5件、既定parser変更1件、障害時のwarn漏れ1件、byte-check停止削除3件の失敗を検出。解析の独自差分CSV1097件+JSON2000件を両OSで実行し一致。"
+  assumption_conformance:
+    status: "done"
+    note: "観点1〜7と全ゲートの完了後にid/assumption/targetのみを読み、S4固定指示と仕様で判定後にreason/confidence/spec_refsを参照。A-id26件にexactly-one、独立候補からV-001を追加。A-050/A-051相当の順序・停止はconfig_input_rules.byte_checks.order/hint/stopに明示済み。"
+assumptions_sha256: "67792697d5376cad6683b1208bbef1fb63e7e08e9ad78c15519c4c738fc22437"
+assumption_verdicts_summary:
+  consistent: 1
+  spec_absent: 25
+  contradicts: 0
+  unlisted: 1
+findings_summary:
+  blocker: 0
+  major: 0
+  minor: 27
 environment_failures: []
-completed_at: "2026-10-05T23:02:14.589037+00:00"
-completed_by: "dist-impl-verify@0.14.1"
-findings_path: "docs/impl/latest/eff24f55/stages/attempt-6/S5_verify.tier-facade.findings.yaml"
-note: "前回F-001のロケール差は解消。macOS/Linuxの単体341件ずつとtier BDD41シナリオ通過。A24件とV5件を照合し、分類差1件を含むminor30件。実装・テスト・仕様は未変更。"
+verification_evidence:
+  - check: "repository"
+    result: "pass"
+    detail: "root=/Users/suwa_sh/src/github.com/suwa-sh/relay-gate; branch=feature/define-slot-job-maps; 開始時git status --shortは空。HEAD=9ce28e611a1d036e7221e39bbfc3dd34e43e133e、比較元=467db4aedb9e07f28bbfb858d96e4c073853fe4f。"
+  - check: "environment_probe"
+    result: "pass"
+    detail: "macOSでloopback bindとmktemp配下のinitdb/pg_ctl start/stopを実測。Linux image relay-gate-ci:ubuntu24はBash5.2.21/ShellCheck0.9.0。LinuxのPostgreSQLとnodeは未導入だがfacadeテストにはDB参照なし、cucumberは指示どおりmacOSのみ。"
+  - check: "macos_gates"
+    result: "pass"
+    commands:
+      - "shfmt -d ."
+      - "find src test -name '*.sh' -exec shellcheck -x {} +"
+      - "bats -r --filter-tags '!heavy' test"
+      - "npx cucumber-js --config ../cucumber.cjs features"
+    detail: "format/lintは対象リポfacadeでexit0。Bats/BDDは50ファイルのバイト同一性を確認した一時複製のfacadeで実行。Bats537/537、BDD112/112シナリオ・676/676ステップ、exit0。macOS Bash5.3.15/Bats1.14.0/ShellCheck0.11.0/shfmt3.13.1。"
+  - check: "linux_gates"
+    result: "pass"
+    commands:
+      - "shfmt -d ."
+      - "find src test -name '*.sh' -exec shellcheck -x {} +"
+      - "bats -r --filter-tags '!heavy' test"
+      - "bats -r --filter-tags heavy test"
+    detail: "read-only mountの一時複製facadeで実行。shfmt3.13.1 Linux arm64とShellCheck0.9.0がexit0。通常537/537、heavy42/42、各exit0。heavy実行はこの1回のみ。"
+  - check: "differential_cli"
+    result: "pass"
+    detail: "112入力 x verbose有無 x LC_ALL=C/LANG=C.UTF-8/LANG=ja_JP.UTF-8/locale未設定=896比較を各OSで実行。同じ入力パス・引数・環境で旧/新の終了コードとstdout/stderr生バイトを比較し差0。C0全種・DEL・C1全種・不正UTF8・NUL・引用符・空/空白行・BOM・CRLF・最終LFなし・ヘッダー異常・重複ID・混在版・JSONエスケープ・多数要素・大量診断を含む。Linuxの利用可能localeはC/C.utf8/POSIXでja_JP.UTF-8指定時は未導入localeでの動作確認。"
+  - check: "differential_parser"
+    result: "pass"
+    detail: "固定seed60116。CSVのa/カンマ/引用符の長さ0〜6全組合せと長い引用符列1097件、JSONランダム不正1500+文字列配列500件。各OSで旧/新の戻り値・成功時の配列バイト列に差0。"
+  - check: "special_paths_and_other_kinds"
+    result: "pass"
+    detail: "改行/タブ/ESC/C1/日本語/コマンド置換を含むパスで48比較、差0。--feature-flag/--rapid-crosscheck各10比較、同一RELAY_GATE_HOME/CONFIG_DIRを明示して差0。"
+  - check: "fault_injection"
+    result: "pass"
+    detail: "独自extra.pyのsed/tr/sort/cat/rm、SIGPIPE通常/無視の全10条件で期待する6と出力抑止を確認。local LC_ALLの復元はunset/C/ja_JP.UTF-8の3条件で一致。"
+  - check: "mutation"
+    result: "pass"
+    detail: "一時複製のみを変更。job_map_deferred_escape.bats、job_map_repo_parse_paths.bats、validate_job_map_batch_escape.bats、validate_config_job_map_input_scope.batsはそれぞれ狙った変異でexit1。検出失敗件数は5/1/1/3。"
+  - check: "heavy_selection"
+    result: "pass"
+    detail: "node scripts/ci/heavy-test-files.js --checkがexit0。14ファイルの印と対応表一致。facade HEAD~1は全14を選択。独自入力で無関係README変更は0、共有repository変更は関連10、対応表変更は全14を選択。CIのfetch-depth0/base比較/非heavyとheavyの分離を読解確認。"
+  - check: "bdd_source"
+    result: "pass"
+    detail: "tier-facade.mdのgherkinブロック1個が対象featureに逐語一致。pending/skipなし。"
+observations:
+  - "初回macOS検証は独自差分実行とBatsが同じTMPDIRを共有し、BSD mktempの固定テンプレート作成で競合した。これを合否の根拠から外し、検証系ごとのTMPDIRへ分離して再実行した。通常ゲート537件とCLI896比較は全通過。比較前後の双方で起きた既存BSDフォールバックの並走上の注意として記録する。"
+  - "一時複製の初回shfmtは.editorconfigを含めず既定インデント差を報告した。対象リポで正本.editorconfig付きのコマンドを再実行しexit0、Linux複製にも正本を配置してexit0を確認した。実装の整形違反ではない。"
+  - "性能目標は合否に用いていない。既知の差はdocs/impl/latest/eff24f55/issues/20261116_062901_job-map-bash-only-parse-exceeds-performance-target.mdに記録済みとして再測定していない。参考の120行計測以外に性能網羅測定は行わなかった。"
+  - "read-setにinvalidated配下の過去検証記録は含めていない。S4 doneからはgate結果だけを抽出し、実装者の説明は読んでいない。"
+  - "テスト・変異・比較スクリプトとログは/tmp/relay-verify.TXz3LL配下。リポジトリへの書き込みはS5のdone/findingsのみ。"
+assumption_verdicts_sha256: "42260b6e3d916f556c32f51e93a42d5d4d12bb3d1d1534047ccae37d0583378c"

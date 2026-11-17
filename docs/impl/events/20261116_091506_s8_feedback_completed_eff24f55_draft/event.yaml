@@ -1,0 +1,15 @@
+event_id: 20261116_091506_s8_feedback_completed_eff24f55_draft
+type: stage_completed
+uc_id: eff24f55
+stage: S8
+payload:
+  result: pass
+  mode: initial
+  draft_path: docs/impl/latest/eff24f55/feedback/draft.md
+  draft_sha256: 57d58b7c0a1b484939de141b644e1962de9ee5c81064275e48e9d285b8523258
+  request_count: 2
+  blocker_count: 0
+  published: false
+  manifest_sha256: d0748fc7bd00fb2a27165e23252a2184ac3143dd29e6f3328e3db19bf759f79e
+  manifest_projection: v2
+created_at: '2026-11-16T09:15:06+09:00'

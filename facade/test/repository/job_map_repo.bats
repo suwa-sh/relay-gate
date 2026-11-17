@@ -193,6 +193,8 @@ setup() {
 @test "csv_parse_取り込みの窓が1バイトの場合_窓の境界をまたぐ二重化引用符と閉じ引用符を正しく解析すること" {
 	# Arrange(長い行は窓ごとに取り込む。窓の大きさで結果が変わらないこと)
 	CSV_PARSE_WINDOW_BYTES=1
+	# 窓ありの状態機械を選ぶ(既定はすべての行を窓なしで解析する)
+	CSV_PARSE_SHORT_MAX_BYTES=0
 
 	# Act
 	csv_parse 'J1,"a""b","",x,"[""p2 p3"",""a,b""]",日本語,'
@@ -210,6 +212,8 @@ setup() {
 @test "csv_parse_取り込みの窓が2バイトの場合_窓の末尾の二重引用符を続きと合わせて判定すること" {
 	# Arrange(`""` の 1 文字目が窓の末尾、2 文字目が次の窓の先頭になる位置)
 	CSV_PARSE_WINDOW_BYTES=2
+	# 窓ありの状態機械を選ぶ(既定はすべての行を窓なしで解析する)
+	CSV_PARSE_SHORT_MAX_BYTES=0
 
 	# Act
 	csv_parse '"a""b",c'
@@ -223,6 +227,8 @@ setup() {
 @test "csv_parse_取り込みの窓が3バイトで閉じ引用符の直後に文字がある場合_クォート不正として1を返すこと" {
 	# Arrange
 	CSV_PARSE_WINDOW_BYTES=3
+	# 窓ありの状態機械を選ぶ(既定はすべての行を窓なしで解析する)
+	CSV_PARSE_SHORT_MAX_BYTES=0
 
 	# Act
 	run csv_parse 'J1,"abc"x,60'
@@ -234,6 +240,8 @@ setup() {
 @test "csv_parse_取り込みの窓が1バイトで閉じ引用符が無い場合_クォート不正として1を返すこと" {
 	# Arrange
 	CSV_PARSE_WINDOW_BYTES=1
+	# 窓ありの状態機械を選ぶ(既定はすべての行を窓なしで解析する)
+	CSV_PARSE_SHORT_MAX_BYTES=0
 
 	# Act
 	run csv_parse 'J1,"[""p1""],60'
@@ -642,6 +650,7 @@ setup() {
 	[ "$(job_map_repo_row_count)" -eq 0 ]
 }
 
+# bats test_tags=heavy
 @test "job_map_repo_load_SIGPIPEを無視する環境でsedが失敗する場合_trのwrite_errorを失敗に数えずコマンド名sedだけを返すこと" {
 	# Arrange(CI の runner のように SIGPIPE を無視して起動された環境(無視の設定は子プロセスへ引き継がれる)。
 	#          sed が読まずに終わると、tr はパイプのバッファを超えた書き込みで write error(終了状態 1)になる。
