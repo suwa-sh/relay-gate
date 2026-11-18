@@ -129,11 +129,14 @@ validate_feature_flag_prepare_shown_values() {
   cli_field_safe_text_prepare "${values[@]}"
 }
 
-# 引数: path config_dir(slot ジョブマップの既定の場所の置き場。RELAY_GATE_CONFIG_DIR) verbose(true|false)
-validate_feature_flag_query() {
-  local path="$1" config_dir="$2" verbose="${3:-false}" shown_path load_status=0
-  cli_field_safe_text "$path"
-  shown_path="$CLI_FIELD_SAFE_TEXT"
+# feature-flag.env の存在・読み取り → 入力の複製と読み込み → (i) バイト点検 → (ii) 行の構造の検査。
+# 検証コマンド(validate-config.sh --feature-flag)と実行時の読み手(facade.sh)が同じ関数を使う
+# (契約 commands の facade.sh の config_violation_report.surrounding_lines: (i)(ii) は検証コマンドと同じ順・同じ件数で全件出す)。
+# 止めたときは、その段の error 行(と hint)を stderr に出す。続行するときは何も出さない
+# 引数: path shown_path(表示用に置き換え済みのパス)
+# 戻り値: 0 … (iii) へ進む / 2 … ファイルなし・読めない・(i)(ii) の違反 / 6 … 入力の複製の失敗・補助コマンドの失敗
+validate_feature_flag_load_input() {
+  local path="$1" shown_path="$2" load_status=0
 
   if [ ! -e "$path" ]; then
     printf '%s\n' "error: config file not found path: $shown_path" >&2
@@ -188,6 +191,43 @@ validate_feature_flag_query() {
     printf '%s\n' "${structure_lines[@]}" >&2
     return "$FEATURE_FLAG_EXIT_VALIDATION_ERROR"
   fi
+  return "$FEATURE_FLAG_EXIT_OK"
+}
+
+# (iii) キーごとの検査のうち、検証コマンドと実行時の読み手(facade.sh)に共通の部分: 実体パスとジョブマップの場所の解決 →
+# キー名と表示する値の可視表記の控え → キーの分類 → 検証表(error_order の sequence 1〜5)の error 行(と hint)を報告行の配列へ溜める。
+# 呼び出しの後、報告行の出し先は配列のまま(FEATURE_FLAG_REPORT_SINK_ARRAY)。呼び出し元が溜めた行を出し、出し先を戻す
+# (検証コマンドは続けて対応ジョブマップと runner の問い合わせの行を足す。facade.sh は最初の違反の行だけを出す)
+# 引数: config_dir(RELAY_GATE_CONFIG_DIR) shown_keys_name(キー名の可視表記を載せる配列の名前。FEATURE_FLAG_KEYS と同じ並び)
+# 戻り値: 0 … 違反なし / 1 … 違反あり / 6 … 可視表記をまとめて作る外部コマンドの失敗(出し先は変えずに戻る。呼び出し元が
+#         validate_feature_flag_report_escape_failure で報告する)
+validate_feature_flag_collect_key_errors() {
+  local config_dir="$1" shown_keys_name="$2"
+  # runner / worker の 4 キーを解決後のパスに置き換える(契約 runner_path_resolution。基準は設定ファイルのあるディレクトリ)。
+  # これ以降の実体の検査・runner への問い合わせ・起動・stdout / error 行 / warn 行の表示は、すべて解決後のパスで行う。
+  # 表示する値の可視表記を控える前に行う(控えるのは解決後のパスの可視表記)。作業ディレクトリは省略時と同じ $PWD を明示して渡す
+  feature_flag_resolve_runner_paths "$PWD"
+  # slot ジョブマップの場所を決める(契約 job_map_location。任意の 2 キーの値を同じ規則で解決し、無い・空なら
+  # <config_dir>/<slot>-job-map.csv。off の slot は決めない)
+  feature_flag_resolve_job_map_locations "$config_dir"
+  if ! cli_field_safe_text_list "$shown_keys_name" ${FEATURE_FLAG_KEYS[@]+"${FEATURE_FLAG_KEYS[@]}"} \
+    || ! validate_feature_flag_prepare_shown_values; then
+    return "$FEATURE_FLAG_EXIT_EXECUTION_ERROR"
+  fi
+  # 検証表の行は、サブシェルで受けず、報告行の配列で受ける
+  FEATURE_FLAG_REPORT_SINK="$FEATURE_FLAG_REPORT_SINK_ARRAY"
+  feature_flag_reset_report_lines
+  feature_flag_classify_keys
+  validate_feature_flag_errors "$shown_keys_name"
+}
+
+# 引数: path config_dir(slot ジョブマップの既定の場所の置き場。RELAY_GATE_CONFIG_DIR) verbose(true|false)
+validate_feature_flag_query() {
+  local path="$1" config_dir="$2" verbose="${3:-false}" shown_path index
+  cli_field_safe_text "$path"
+  shown_path="$CLI_FIELD_SAFE_TEXT"
+
+  validate_feature_flag_load_input "$path" "$shown_path" || return $?
 
   # (iii) キーごとの検査。stderr の行は、検査をすべて終えてから出す。順は info 行すべて(--verbose 時のみ)→ 未知キーの warn 行すべて
   # (どちらもキーがファイルに初めて出た順)→ 検証表・対応ジョブマップの error 行(と hint)→ runner --help 問い合わせの warn 行
@@ -198,26 +238,16 @@ validate_feature_flag_query() {
   # キー名の可視表記(FEATURE_FLAG_KEYS と同じ並び)。info 行・未知キーの warn 行・確報制御キーの error 行で使い回す。
   # 可視表記は数十 MB になりうる(制御文字 1 つが 6 バイトになる)ため、info 行と warn 行は配列に溜めず、最後に書式で直接出す
   local -a shown_keys=()
-  # runner / worker の 4 キーを解決後のパスに置き換える(契約 runner_path_resolution。基準は設定ファイルのあるディレクトリ)。
-  # これ以降の実体の検査・runner への問い合わせ・stdout / error 行 / warn 行の表示は、すべて解決後のパスで行う。
-  # 表示する値の可視表記を控える前に行う(控えるのは解決後のパスの可視表記)。作業ディレクトリは省略時と同じ $PWD を明示して渡す
-  feature_flag_resolve_runner_paths "$PWD"
-  # slot ジョブマップの場所を決める(契約 job_map_location。任意の 2 キーの値を同じ規則で解決し、無い・空なら
-  # <config_dir>/<slot>-job-map.csv。off の slot は決めない)。所在の検査・stdout・error 行の map= は、決めた場所を使う
-  feature_flag_resolve_job_map_locations "$config_dir"
-  if ! cli_field_safe_text_list shown_keys ${FEATURE_FLAG_KEYS[@]+"${FEATURE_FLAG_KEYS[@]}"} \
-    || ! validate_feature_flag_prepare_shown_values; then
+  # 実体パスとジョブマップの場所の解決 → 可視表記の控え → 検証表(domain の error 行と hint を全件。未知キーの warn 行は最後に出す)。
+  # 所在の検査・stdout・error 行の map= は、決めたジョブマップの場所を使う。
+  # 対応ジョブマップ・runner の問い合わせの行も、サブシェルで受けず、同じ報告行の配列で受ける
+  local saved_feature_flag_sink="$FEATURE_FLAG_REPORT_SINK" collect_status=0
+  validate_feature_flag_collect_key_errors "$config_dir" shown_keys || collect_status=$?
+  if [ "$collect_status" -eq "$FEATURE_FLAG_EXIT_EXECUTION_ERROR" ]; then
     validate_feature_flag_report_escape_failure "$shown_path"
     return "$FEATURE_FLAG_EXIT_EXECUTION_ERROR"
   fi
-
-  # 検証表(domain の error 行と hint を全件。未知キーの warn 行は最後に出す)・対応ジョブマップ・runner の問い合わせの行は、
-  # サブシェルで受けず、報告行の配列で受ける
-  local saved_feature_flag_sink="$FEATURE_FLAG_REPORT_SINK"
-  FEATURE_FLAG_REPORT_SINK="$FEATURE_FLAG_REPORT_SINK_ARRAY"
-  feature_flag_reset_report_lines
-  feature_flag_classify_keys
-  if ! validate_feature_flag_errors shown_keys; then
+  if [ "$collect_status" -ne 0 ]; then
     errors=$((errors + 1))
   fi
 

@@ -1,0 +1,28 @@
+event_id: 20261118_111642_s4_tier_impl_completed_09730858_facade_attempt3
+type: stage_completed
+uc_id: 09730858
+stage: S4
+tier: tier-facade
+attempt: 3
+payload:
+  result: pass
+  gates:
+    format: pass
+    lint: pass
+    tdd: pass
+    bdd_tier: pass
+  assumptions:
+    path: attempt-3/S4_tier-impl.tier-facade.assumptions.yaml
+    count: 22
+    by_category:
+      input_validation: 1
+      data_format: 3
+      error_handling: 11
+      persistence: 3
+      performance: 0
+      security: 4
+    sha256: e0d335eef89821bc32d528473ff6e558cf55b0e659a7bf7802b983ba20fb0261
+  manifest_sha256: 1f0a15af37a2317307d14e000455451b3bf374c415cd42cef05e8e2daa211344
+  manifest_projection: v2
+  note: 'attempt 3: the runner launch tells apart ''watch started then EOF'' (started), ''failure line'' (exec failed) and ''EOF without the signal'' (launch failed); ordering test added; bats 640, tier BDD 141 passed'
+created_at: '2026-11-18T11:16:42+09:00'

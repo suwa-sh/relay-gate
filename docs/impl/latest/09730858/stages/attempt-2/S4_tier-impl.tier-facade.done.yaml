@@ -1,0 +1,223 @@
+stage: S4
+tier: tier-facade
+attempt: 2
+uc_id: "09730858"
+manifest_sha256: 1f0a15af37a2317307d14e000455451b3bf374c415cd42cef05e8e2daa211344
+manifest_projection: v2
+result: pass
+rerun_mode: blocker_fix
+findings_provided: true
+findings_paths:
+  verify: "docs/impl/latest/09730858/stages/attempt-1/S5_verify.tier-facade.findings.yaml"
+api_summary_check: "_api-summary.yaml に schema_version distillery.api-summary/v2 の記載は無く、_contract-slice.json も無い(契約 slice の hash 照合の対象外。attempt 1 と同じ)"
+base: "attempt 1 の実装(コミット b6cc880)と記録を土台に findings を直した(作り直しではない)"
+findings_resolution:
+  - id: F-009
+    severity: blocker
+    action: fixed
+    note: "exec の成否を子から親へ知らせる仕組みを入れた。起動ごとに TMPDIR の下へ名前付きパイプを作り、runner を exec する層(setsid の後の bash -c)が close-on-exec の coproc のパイプを持つ。exec に成功すると EOF、失敗すると失敗の行が届く。失敗は既存の経路(error 行・started_pids の実行ログ・FAILED への UPDATE・終了コード 6)へ戻す。runner の終了は待たず、PID は runner 自身のもの。bash 5.2(Ubuntu 24)は失敗した exec のリダイレクトを戻さないため、fd をリダイレクトで閉じる方式は使えないことを実測した"
+  - id: F-019
+    severity: blocker
+    action: fixed
+    note: "RAPID_DB_CONN_REF を runner へ渡さない。あわせて runner IF に無い feature-flag.env のキー(BLUE_MODE / GREEN_MODE / BLUE_RUNNER / GREEN_RUNNER / RAPID_CROSSCHECK_WORKER)も、親の環境にあれば外す(facade が printf -v で読んだ値が親の export 属性のまま渡るため)"
+  - id: F-023
+    severity: blocker
+    action: fixed
+    note: "検証エラー(引数・feature-flag.env・rapid-crosscheck.env・RELAY_GATE_NOW)の error 行を、stderr を変えずに実行ログへ run_id 未確定(-)の ERROR で 1 回ずつ残す。検証コマンドと共有する関数の stderr は一時ファイルに受けて出し直す(validate-config.sh の出力・終了コードは変えていない)"
+  - id: F-022
+    severity: major
+    action: fixed
+    note: "STARTED→RUNNING と pid の UPDATE に RETURNING を付け、0 件は成功にしない(INFO status changed を書かず、契約の UPDATE 失敗の定型文 ERROR を残す。終了コードは変えない)"
+  - id: F-021
+    severity: major
+    action: kept_as_assumption_with_drift_test
+    note: "実行時の source は、facade の配置の外(packages/)を読むことになり facade だけを配置した環境で起動できなくなるため行わない。代わりに、repository が送る SQL の表・列の並び・列挙値を生成物の定数と照合するドリフトテスト test/repository/management_db_contract_drift.bats を追加した(A-021 を書き直し)"
+  - id: F-002
+    severity: major
+    action: kept_as_assumption
+    note: "害を再検討した。接続失敗と SQL の失敗の区別と失敗した表は定型文で残り、psql の stderr には接続情報が入るため捨てたままにした(A-002 の理由を補足)"
+  - id: F-003
+    severity: major
+    action: kept_as_assumption
+    note: "害なし。起動前 INSERT は runner の終端 UPDATE より前に確定する必要があり、文ごとの確定が仕様の意図に合う"
+  - id: F-004
+    severity: major
+    action: kept_as_assumption
+    note: "害なし。引用符・バックスラッシュ・改行の往復は attempt 1 の独立検証で実 DB 確認済み。psql の引数に載るのは参照名と業務の引数だけで認証情報ではない"
+  - id: F-001
+    severity: major
+    action: none
+    note: "採用済みの範囲の監査行(対応不要)"
+  - id: F-024
+    severity: minor
+    action: fixed
+    note: "A-011 の分類を error_handling に付け替えた"
+  - id: F-025
+    severity: minor
+    action: fixed
+    note: "A-020 の分類を data_format に付け替えた"
+  - id: F-015
+    severity: minor
+    action: removed_from_record
+    note: "復唱と判定されたため A-015 を前提の記録から外した(excluded_note に記載)"
+  - id: F-016
+    severity: minor
+    action: removed_from_record
+    note: "復唱と判定されたため A-016 を前提の記録から外した(excluded_note に記載)"
+  - id: F-005
+    severity: minor
+    action: kept_as_assumption
+    note: "仕様に記述が無い補完判断のまま前提として残した"
+  - id: F-006
+    severity: minor
+    action: kept_as_assumption
+    note: "仕様に記述が無い補完判断のまま前提として残した"
+  - id: F-007
+    severity: minor
+    action: kept_as_assumption
+    note: "仕様に記述が無い補完判断のまま前提として残した"
+  - id: F-008
+    severity: minor
+    action: kept_as_assumption
+    note: "仕様に記述が無い補完判断のまま前提として残した"
+  - id: F-010
+    severity: minor
+    action: kept_as_assumption
+    note: "仕様に記述が無い補完判断のまま前提として残した"
+  - id: F-011
+    severity: minor
+    action: kept_as_assumption
+    note: "仕様に記述が無い補完判断のまま前提として残した"
+  - id: F-012
+    severity: minor
+    action: kept_as_assumption
+    note: "仕様に記述が無い補完判断のまま前提として残した"
+  - id: F-013
+    severity: minor
+    action: kept_as_assumption
+    note: "仕様に記述が無い補完判断のまま前提として残した"
+  - id: F-017
+    severity: minor
+    action: kept_as_assumption
+    note: "仕様に記述が無い補完判断のまま前提として残した"
+  - id: F-018
+    severity: minor
+    action: kept_as_assumption
+    note: "仕様に記述が無い補完判断のまま前提として残した"
+  - id: F-020
+    severity: minor
+    action: kept_as_assumption
+    note: "仕様に記述が無い補完判断のまま前提として残した"
+  - id: F-014
+    severity: minor
+    action: kept_as_assumption
+    note: "実行ログを最初に開く時点を、引数の検証エラーの報告時または launch_slots の最初に書き直した(F-023 の修正に伴う)"
+implementation:
+  summary: "attempt 1 の実装に、runner の exec 失敗の検知(F-009)、runner の環境から RAPID_DB_CONN_REF などを外す(F-019)、検証エラーの実行ログ(F-023)、0 件の UPDATE を成功にしない(F-022)、契約の生成物とのドリフトテスト(F-021)を加えた"
+  validate_config_changed: false
+  validate_config_change_note: "検証コマンド(validate-config.sh)と共有の検証関数は変えていない。facade の usecase の側で検証関数の stderr を受けて出し直す。検証コマンドの既存テスト(bats)は全件 pass"
+code_changes:
+  added:
+    - facade/test/repository/management_db_contract_drift.bats
+  modified:
+    - path: facade/src/gateway/runner_process_adapter.sh
+      change: "名前付きパイプと close-on-exec の coproc で exec の成否を親へ知らせる(F-009)"
+    - path: facade/src/usecase/launch_slots.sh
+      change: "runner の環境から外す変数を追加(F-019)。実行ログを開く関数・引数の検証エラーの報告・検証関数の stderr を受けて実行ログに残す関数を追加し、検証エラーをすべて実行ログに残す(F-023)。0 件の UPDATE の扱いのコメント(F-022)"
+    - path: facade/src/presentation/facade.sh
+      change: "引数の検証エラーを usecase の launch_slots_reject_arguments で報告する(stderr の行は同じ。実行ログにも残す。F-023)"
+    - path: facade/src/gateway/rdb_client.sh
+      change: "rdb_client_require_rows(RETURNING の行が 0 件か)と RDB_CLIENT_STATUS_NO_ROWS を追加(F-022)"
+    - path: facade/src/repository/parallel_run_repo.sh
+      change: "STARTED→RUNNING の UPDATE に RETURNING を付け 0 件を返す(F-022)"
+    - path: facade/src/repository/slot_execution_repo.sh
+      change: "pid の UPDATE に RETURNING を付け 0 件を返す(F-022)"
+    - path: facade/test/presentation/facade_launch.bats
+      change: "15 件追加(exec 失敗 5 件(setsid を介する経路を含む)、環境 2 件、検証エラーの実行ログ 6 件、0 件の UPDATE 1 件、--help で実行ログを書かない 1 件)。psql のスタブは RETURNING に 1 行を返す(FAKE_PSQL_ROWS=0 で 0 行)"
+    - path: facade/test/gateway/rdb_client.bats
+      change: "rdb_client_require_rows の 2 件を追加"
+  feature_bodies_changed: false
+  standard_runner_changed: false
+  contracts_changed: false
+tdd_red_evidence:
+  - "F-009 の 4 件(exec 失敗)は、facade を一時ディレクトリへ複製して gateway を attempt 1(HEAD)の版に戻すと not ok(setsid の成功経路の 1 件は ok のまま)。新しい版で ok"
+  - "F-019 / F-023 / F-022 の新しいテストは、実装を直す前に not ok を確認してから直した(F-019 2 件、F-023 6 件、F-022 1 件)"
+gates:
+  format: pass
+  lint: pass
+  tdd: pass
+  bdd_tier: pass
+gate_runs:
+  - gate: format
+    cwd: facade
+    command: "shfmt -d ."
+    exit_code: 0
+  - gate: lint
+    cwd: facade
+    command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+    exit_code: 0
+    note: "入口 bin/*.sh も shellcheck -x で個別に確認し exit 0"
+  - gate: tdd
+    cwd: facade
+    command: "bats -r test"
+    exit_code: 0
+    summary: "636 tests, 636 ok, 0 not ok(attempt 1 の 616 件 + 追加 20 件)"
+  - gate: bdd_tier
+    cwd: facade
+    command: "npx cucumber-js --config ../cucumber.cjs features"
+    exit_code: 0
+    summary: "141 scenarios (141 passed), 1170 steps (1170 passed)。一時 PostgreSQL の実 DB で RETURNING 付きの UPDATE が 1 行を返し INFO parallel_run status changed が出ることを含む"
+gate_run_notes:
+  - "macOS(Darwin 25.5.0、arm64、bash 5.3.15)で bats と cucumber を 1 つずつ順に実行した(同時に走らせていない)"
+  - "時間の上限を確かめるテスト・大きな入力を作るテストは追加していない"
+  - "test/gateway/runner_probe.bats の既存の時間に依存するテストは今回の全件実行では落ちなかった"
+linux_runs:
+  environment: "docker イメージ relay-gate-ci:ubuntu24(aarch64、bash 5.2.21、setsid=/usr/bin/setsid)"
+  method: "リポジトリを読み取り専用でマウントし、コンテナ内の一時ディレクトリへ facade と packages/contracts(ドリフトテストが読む)を複製して一般ユーザー ubuntu で LANG=C.UTF-8 で実行した"
+  runs:
+    - gate: tdd
+      command: "bats -r test"
+      exit_code: 0
+      summary: "636 tests, 636 ok"
+    - gate: lint
+      command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+      exit_code: 0
+  limitation: "イメージに node と PostgreSQL が無いため tier BDD は Linux では実行していない(attempt 1 と同じ)。shfmt は macOS で実測"
+  exec_failure_probe: "Linux の実 setsid と bash 5.2.21 で、shebang のインタープリタが無い runner は失敗の行、正常な runner と 2 秒動く runner は EOF(成功。runner の終了を待たない)を返し、PID が runner 自身の PID と一致することを試作で確認した"
+cleanup_check: "実行後、TMPDIR に relay-gate-launch.* / relay-gate-facade-report.* が残っていないこと、sleep 30 のスタブと一時 PostgreSQL のプロセスが残っていないことを確認した"
+environment: "macOS(Darwin 25.5.0、arm64)で 4 ゲートを実測。Linux コンテナで bats / lint を実測"
+real_db_probes:
+  - check: "F-009 の実 DB 確認"
+    evidence: "一時 PostgreSQL(temp-postgres.js)で green background に shebang のインタープリタが無い runner、blue に正常な runner、RAPID_CROSSCHECK_MODE=background。終了コード 6、stderr は runner failed to start の 1 行、slot_executions は green 1 行だけで status=FAILED・pid NULL・completed_at あり、blue は起動されない、parallel_runs は STARTED のまま(起動失敗時の parallel_runs の扱いは仕様に定めが無く、クラッシュ耐性の STARTED が残る経路と同じ)、実行ログに ERROR runner failed to start ... started_pids=-"
+  - check: "F-022 の実 DB 確認"
+    evidence: "parallel_runs に BEFORE UPDATE で NULL を返すトリガーを置いて 0 件にした。終了コード 0、stderr 空、parallel_runs は STARTED、実行ログに status changed の行は 0 件、ERROR management db update failed table=parallel_runs run_id=... が 1 行"
+issues_added: []
+cross_tier_notes:
+  - "UC 横断の確認(読み取りのみ。リポジトリルートで bats と同時に走らせずに実行): UC BDD(npx cucumber-js --config cucumber.cjs features/uc)は 83 scenarios = 62 passed + 21 failed で attempt 1 と同じ。failed はこの機能の 19 件(S6 で実装)と assign-slot-runner-scripts の 2 件だけ。ATDD は CI と同じタグ式(scripts/ci/atdd-tag-expression.js)で 17 scenarios (17 passed)"
+  - "ops / rapid-crosscheck / final-crosscheck は facade の gateway・usecase を source していない(grep で確認)。runner の起動方式と RETURNING の変更は他の tier に及ばない"
+  - "CI の Linux ジョブで bats を facade/ だけを複製して流している場合、ドリフトテスト(management_db_contract_drift.bats)は ../packages/contracts を読むため fail する。リポジトリをそのまま checkout して流す ci.yml の構成では問題ない(ci.yml は読み取りのみ。変更していない)"
+assumptions:
+  path: "attempt-2/S4_tier-impl.tier-facade.assumptions.yaml"
+  count: 22
+  by_category:
+    input_validation: 1
+    data_format: 3
+    error_handling: 11
+    persistence: 3
+    performance: 0
+    security: 4
+  sha256: 33943b263700dfc85cbe9a163f102f1b4739fa684e4f09ab12767038968c6392
+  extraction:
+    candidate_count: 28
+    excluded_as_explicit: 6
+    recorded_count: 22
+  validator: "validateAssumptions.js record: ok true"
+  diff_from_attempt_1:
+    removed: ["A-015 (復唱)", "A-016 (復唱)"]
+    rewritten: ["A-009 (contradicts → exec 失敗の検知方法)", "A-019 (contradicts → 外す変数を追加)", "A-021 (ドリフトテストを追加)", "A-022 (0 件を成功にしない)", "A-014 (実行ログを開く時点)", "A-002 (理由を補足)"]
+    recategorized: ["A-011 input_validation → error_handling", "A-020 input_validation → data_format"]
+    added: ["A-023 (検証エラーの実行ログ)", "A-024 (名前付きパイプの待ちに上限を置かない)"]
+review_refute_loop: not_run
+review_refute_loop_note: "外部レビュー(review-refute-loop)はこの S4 では実行していない。S5 の別モデル Verifier に委ねる"
+completed_at: "2026-11-18T10:40:28+09:00"
+completed_by: dist-impl-implement@0.14.1

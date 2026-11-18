@@ -1,0 +1,119 @@
+event_id: 20261118_120548_review_approved_09730858_final
+type: review_approved
+uc_id: 09730858
+stage: S9
+payload:
+  approval_kind: final_approval
+  review_evidence_event_id: 20261118_120038_s9_review_generated_09730858
+  feedback_review_evidence:
+    feedback_id: null
+    draft_sha256: null
+    request_count: 0
+  implementation_review_evidence:
+    gate_result: 6/6 pass
+    gate_result_note: format / lint / tdd / bdd_tier(S4 attempt 3)と S6 uc-bdd、S7 atdd。記録の転記で、S9 では再実行していない。S6 は 83 件中 82 pass・1 skipped
+    open_blocker_count: 0
+    open_major_count: 7
+    open_major_note: major 7 件はすべて、仕様に記載が無い前提(security / persistence)の確認記録。回答が必須の前提 7 件と同じもの
+    assumption_evidence_sha256: f9cabd94d24863092f499091ca64df96fe57555af6f7053b658b9d63f2a34184
+    assumption_evidence_source: validateAssumptions.js evidence tier-facade(attempt 3 の S5 done の assumptions_sha256 と assumption_verdicts_sha256)
+  assumption_decisions:
+  - tier: tier-facade
+    id: A-001
+    decision: confirmed
+    answered: explicit
+  - tier: tier-facade
+    id: A-002
+    decision: confirmed
+    answered: explicit
+  - tier: tier-facade
+    id: A-003
+    decision: confirmed
+    answered: explicit
+  - tier: tier-facade
+    id: A-004
+    decision: confirmed
+    answered: explicit
+  - tier: tier-facade
+    id: A-005
+    decision: confirmed
+    answered: approved_as_a_whole
+  - tier: tier-facade
+    id: A-006
+    decision: confirmed
+    answered: approved_as_a_whole
+  - tier: tier-facade
+    id: A-007
+    decision: confirmed
+    answered: approved_as_a_whole
+  - tier: tier-facade
+    id: A-008
+    decision: confirmed
+    answered: approved_as_a_whole
+  - tier: tier-facade
+    id: A-009
+    decision: confirmed
+    answered: approved_as_a_whole
+  - tier: tier-facade
+    id: A-010
+    decision: confirmed
+    answered: approved_as_a_whole
+  - tier: tier-facade
+    id: A-011
+    decision: confirmed
+    answered: approved_as_a_whole
+  - tier: tier-facade
+    id: A-012
+    decision: confirmed
+    answered: approved_as_a_whole
+  - tier: tier-facade
+    id: A-013
+    decision: confirmed
+    answered: approved_as_a_whole
+  - tier: tier-facade
+    id: A-014
+    decision: confirmed
+    answered: approved_as_a_whole
+  - tier: tier-facade
+    id: A-017
+    decision: confirmed
+    answered: approved_as_a_whole
+  - tier: tier-facade
+    id: A-018
+    decision: confirmed
+    answered: approved_as_a_whole
+  - tier: tier-facade
+    id: A-019
+    decision: confirmed
+    answered: explicit
+  - tier: tier-facade
+    id: A-020
+    decision: confirmed
+    answered: approved_as_a_whole
+  - tier: tier-facade
+    id: A-021
+    decision: confirmed
+    answered: explicit
+  - tier: tier-facade
+    id: A-022
+    decision: confirmed
+    answered: explicit
+  - tier: tier-facade
+    id: A-023
+    decision: confirmed
+    answered: approved_as_a_whole
+  - tier: tier-facade
+    id: A-024
+    decision: confirmed
+    answered: approved_as_a_whole
+  decisions:
+    implementation: 'approved (facade.sh: mode selection, background first then foreground waited, management DB records when the rapid crosscheck mode is not off; validation rules shared with validate-config.sh)'
+    rdb_client: psql found on PATH, the connection reference name passed as the connection service name; approved, and written into CLAUDE.md so that later features do not decide it again
+    standard_runner_scenario: the UC scenario that names the standard runner is judged up to 'the location is passed to the runner'; the rest stays skipped until a later feature builds the runner's body; spec unchanged
+    postgres_harness: temporary PostgreSQL harness added (facade/features/steps/support/temp-postgres.js), tables from a provisional definition derived from the contract
+    verification_scope_note: the third independent verification was told to keep at minor the behaviors that only appear when basic OS commands are replaced by broken stand-ins; shown in the review and approved
+    spec_requests: '0'
+    git_delivery: squash into 1 commit, open a pull request, and merge it after the checks pass
+  user_answer: 【全体】実装と「推奨で決めたこと」をまとめて承認します(実装者が補った前提 22 件を含む)。 / 【回答が必須の前提】管理 DB への接続と記録に関わる前提 7 件をすべて承認します。 / 【本線への取り込み】1 コミットにまとめて取り込み依頼を作り、自動検査が通ったらマージまで進めてください。
+  confirmed_by: user
+created_at: '2026-11-18T12:05:48+09:00'

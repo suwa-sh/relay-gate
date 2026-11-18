@@ -1,0 +1,121 @@
+stage: S7
+uc_id: "09730858"
+manifest_sha256: 1f0a15af37a2317307d14e000455451b3bf374c415cd42cef05e8e2daa211344
+manifest_projection: v2
+result: pass
+branch_slug: select-slot-mode-and-launch-runners
+tier_impl_attempt: 3
+atdd_confirmed: true
+features:
+  - features/atdd/SPEC-001-01.feature
+  - features/atdd/SPEC-001-02.feature
+  - features/atdd/SPEC-001-04.feature
+  - features/atdd/SPEC-002-01.feature
+  - features/atdd/SPEC-005-06.feature
+  - features/atdd/SPEC-011-01.feature
+  - features/atdd/SPEC-011-04.feature
+feature_changed: false
+steps:
+  - features/atdd/steps/select-slot-mode-and-launch-runners.steps.js
+  - features/uc/steps/support/facade-harness.js
+steps_changed: true
+steps_note: "補助 facade-harness.js は UC BDD と共有(features/atdd/steps からは相対パスの require。複製なし)。S7 で終了を待たない起動 startFacade を足した"
+atdd_scenarios:
+  - SPEC-001-01-1
+  - SPEC-001-01-2
+  - SPEC-001-01-3
+  - SPEC-001-02-1
+  - SPEC-001-04-1
+  - SPEC-001-04-2
+  - SPEC-002-01-1
+  - SPEC-002-01-2
+  - SPEC-005-06-3
+  - SPEC-005-06-4
+  - SPEC-011-01-1
+  - SPEC-011-04-1
+  - SPEC-011-04-2
+  - SPEC-011-04-3
+selection:
+  method: "一意タグ @atdd_{SPEC-ID}-{連番} の完全一致(cucumber tag expression の or 結合)。名前の部分一致フィルタは使わず、feature 全体も回していない"
+  tag_expression: "@atdd_SPEC-001-01-1 or @atdd_SPEC-001-01-2 or @atdd_SPEC-001-01-3 or @atdd_SPEC-001-02-1 or @atdd_SPEC-001-04-1 or @atdd_SPEC-001-04-2 or @atdd_SPEC-002-01-1 or @atdd_SPEC-002-01-2 or @atdd_SPEC-005-06-3 or @atdd_SPEC-005-06-4 or @atdd_SPEC-011-01-1 or @atdd_SPEC-011-04-1 or @atdd_SPEC-011-04-2 or @atdd_SPEC-011-04-3"
+  executed_tags_verified_by: "cucumber JSON レポートから実行 Scenario の @atdd_ タグを抽出し、atdd_scenarios の 14 件と集合一致・全件 passed を確認"
+run:
+  cwd: "."
+  command: "npx cucumber-js --config cucumber.cjs features/atdd --tags '<selection.tag_expression>'"
+  exit_code: 0
+  summary: "14 scenarios (14 passed), 84 steps (84 passed)"
+  scenarios_expected: 14
+  scenarios_executed: 14
+  scenarios_passed: 14
+  scenarios_skipped: 0
+  scenarios_failed: 0
+  undefined_steps: 0
+  ambiguous_steps: 0
+  selected_count_matches_atdd_scenarios: true
+ci_selection:
+  workflow: ".github/workflows/ci.yml の atdd ジョブ"
+  how: "タグ式は scripts/ci/atdd-tag-expression.js が作る。uc-map の use_cases のうち docs/impl/latest/{uc_id}/status.yaml の state が completed の UC の atdd_scenarios を or で結ぶ"
+  includes_this_uc_now: false
+  includes_this_uc_after_completion: true
+  note: "この UC の status.yaml は現時点で state: running のため、現時点のタグ式(17 タグ)にこの UC の 14 件は含まれない。オーケストレータが status.yaml を completed にすると、ci.yml と scripts/ci/atdd-tag-expression.js を変更しなくても 14 件が自動的に入る(17 + 14 = 31 件。重複するタグは無い)"
+  ci_yml_change_required: false
+  current_run:
+    command: "npx cucumber-js --config cucumber.cjs features/atdd --tags \"$(node scripts/ci/atdd-tag-expression.js)\""
+    exit_code: 0
+    summary: "17 scenarios (17 passed), 102 steps (102 passed)"
+    note: "現時点の CI と同じ選び方(先行 UC の 17 件)。この UC の step ファイルと補助を読み込んだ状態で退行なし"
+  after_completion_run:
+    command: "npx cucumber-js --config cucumber.cjs features/atdd --tags \"$(node scripts/ci/atdd-tag-expression.js) or <selection.tag_expression>\""
+    exit_code: 0
+    summary: "31 scenarios (31 passed), 186 steps (186 passed)"
+    note: "この UC の完了後の CI と同じ選択(17 + 14)"
+  ci_environment_note: "CI の atdd ジョブは postgresql を入れて bin を PATH に載せている(一時 PostgreSQL に必要な initdb / pg_ctl / psql)。SPEC-011-04-3 はタイムゾーン Asia/Tokyo を使う(ubuntu-latest の tzdata に含まれる)"
+judgement:
+  - scenario: SPEC-001-01-1
+    method: "BLUE_MODE=foreground / GREEN_MODE=background で facade.sh JOB001 を起動。blue のテスト用 runner が --role blue --mode foreground、green が --role green --mode background の runner IF の引数(完全一致)で 1 回ずつ起動されたことを判定"
+  - scenario: SPEC-001-01-2
+    method: "GREEN_MODE=off(blue は foreground)。green にもテスト用 runner を割り当て、起動記録が無いこと・green/ が作られないこと・blue は起動されたことを判定"
+  - scenario: SPEC-001-01-3
+    method: "確報クロスチェックのキーが無い並行稼働の設定(速報は background、管理 DB あり)で起動。配置ディレクトリと PATH に置いた記録用の final-crosscheck-runner.sh の起動記録が無いことを判定"
+  - scenario: SPEC-001-02-1
+    method: "両 slot foreground。終了コード 2・定型の error 行・両 slot のテスト用 runner の起動記録なし・run ディレクトリなしを判定"
+  - scenario: SPEC-001-04-1
+    method: "名前から slot も実装も読み取れない 2 つの実体を BLUE_RUNNER / GREEN_RUNNER に割り当てて facade.sh JOB001 p1 を起動。どちらも同じ runner IF の引数だけ(完全一致)で 1 回ずつ起動されたことを判定"
+  - scenario: SPEC-001-04-2
+    method: "feature-flag.env の GREEN_RUNNER と GREEN_IMPL だけを書き換えて起動。(a) facade/bin・src・lib・runners の全ファイルと、feature-flag.env 以外の設定ファイル(slot ジョブマップ)の sha256 が書き換えの前後で同じ (b) blue は foreground、差し替えた runner は background で runner IF の引数で起動され、差し替え前の runner は起動されない、を判定。「比較規約」(比較定義・比較ツール)はクロスチェックの UC の担当で、この UC では触れていないことまでを見る(起票済み issue の 6 の判定のしかた)"
+  - scenario: SPEC-002-01-1
+    method: "実行ログの slot started の行の順(行の pid をテスト用 runner の PID と照合)で green → blue を判定。待機の行が blue の PID の 1 行だけで、facade の終了後も green のテスト用 runner が動いていて exitcode.txt が無いことを判定"
+  - scenario: SPEC-002-01-2
+    method: "facade.sh を終了を待たずに起動し、foreground の blue のテスト用 runner が動いている間(3 秒待ってから結果を書く)に、facade・blue・green の 3 プロセスが同時に動いていることを判定。その後 facade が終了コード 0 で終わり、green は動いたままであることも判定"
+  - scenario: SPEC-005-06-3
+    method: "CLI 契約 config_files の rapid-crosscheck.env の owner が「基盤適用設計者(設定所有区分: 速報クロスチェック設定 …)」で、運用者を含まないことを判定(文書の照合。先行 UC の SPEC-001-04-8 と同じ方式)"
+  - scenario: SPEC-005-06-4
+    method: "rapid-crosscheck.env(RAPID_DB_CONN_REF=mgmt-db / RAPID_LEASE_SEC / RAPID_POLL_INTERVAL_SEC)のキーが 3 つだけで、参照名は名前の形、パスワード・接続文字列・接続先の値が無いことを判定。あわせてこの設定で facade.sh を起動し、参照名だけで管理 DB に行が作られ、解決した接続情報の値が実行ログにも stderr にも出ないことを判定"
+  - scenario: SPEC-011-01-1
+    method: "速報 background で起動し、parallel_runs の execution_spec_uri が <RELAY_GATE_ARTIFACT_ROOT>/facade/<run_id>/execution-spec.json であることを判定"
+  - scenario: SPEC-011-04-1
+    method: "速報 background で起動し、facade/ の下のディレクトリ名(1 つ)と parallel_runs.run_id(1 行)が同じ値であることを判定。uc-map では UC 43850d68 の atdd_scenarios にも載っており、step はこの UC が定義した(43850d68 は同じ step を再利用する)"
+  - scenario: SPEC-011-04-2
+    method: "速報 off・管理 DB なし(rapid-crosscheck.env も接続設定も無い)で起動。終了コード 0・run_id 形式の成果物ディレクトリ・runner へ同じ run_id が渡ること・RDB クライアント CLI が 1 回も呼ばれていないことを判定"
+  - scenario: SPEC-011-04-3
+    method: "TZ=Asia/Tokyo・RELAY_GATE_NOW=2026-08-30T11:30:00Z で起動し、run_id が ^20260830T203000-JOB001-[0-9a-f]{8}$(ローカルの 20:30:00。UTC の 11:30:00 ではない)に一致し Z を含まないことを判定"
+tier_impl_changed: false
+harness:
+  process: "facade/bin/facade.sh を実プロセスとして起動(Scenario ごとの一時ディレクトリ)。テスト用 runner と一時 PostgreSQL は UC BDD と同じ補助"
+  external_connections: none
+  repository_writes: none
+  leftover_processes: "none(実行後に sleep 600・facade.sh・一時 PostgreSQL のプロセスが残っていないことを pgrep で確認)"
+injections:
+  - what: "started-at.txt / exitcode.txt を書くテスト用 runner、長く動くテスト用 runner"
+    where: "features/uc/steps/support/facade-harness.js(runnerBody)"
+    basis: "docs/impl/latest/09730858/issues/20261118_091109_cross-uc-scenarios.md の 1〜3"
+  - what: "参照名 mgmt-db を一時 PostgreSQL に結び付ける pg_service.conf(環境変数 PGSERVICEFILE)"
+    where: "features/uc/steps/support/facade-harness.js(startManagementDb / facadeEnv)"
+    basis: "AssumptionRecord A-001(docs/impl/latest/09730858/stages/attempt-3/S4_tier-impl.tier-facade.assumptions.yaml)"
+injections_note: "注入箇所には根拠と「暫定注入・契約確定後に削除」のコメントを付けた。前提の新規抽出なし"
+cross_uc_refs:
+  - docs/impl/latest/09730858/issues/20261118_091109_cross-uc-scenarios.md
+issues: []
+issues_note: "新規起票なし。対象 14 Scenario が仕様どおりに通過した"
+completed_at: '2026-11-18T11:50:00+09:00'
+completed_by: dist-impl-implement@0.14.1

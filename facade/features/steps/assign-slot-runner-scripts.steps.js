@@ -553,9 +553,9 @@ Then(literal('stderr に "warn: runner does not respond to --help" で始まる�
 });
 
 // ---- facade.sh から自作 runner を起動する ----
-// facade.sh は UC「slot 実行モードを選択して runner を起動する」の担当で、この UC の時点では無い
-// (docs/impl/latest/65b09d93/issues/20261118_012630_cross-uc-scenarios.md)。facade.sh を起動する step は、
-// bin/facade.sh が無い間は skipped を返し、有るのに未実装なら失敗させる(その UC が step を実装する)
+// facade.sh は UC「slot 実行モードを選択して runner を起動する」(09730858)が作った(bin/facade.sh)。
+// 以前は facade.sh が無い間だけ When が skipped を返していた(docs/impl/latest/65b09d93/issues/20261118_012630_cross-uc-scenarios.md)。
+// facade.sh を作った UC 09730858 の S4 で、facade.sh を実プロセスとして起動する形に実装した(feature の本文は変えていない)
 
 Given(literal('起動引数と環境変数を記録し Runner Result 3 ファイルを書く自作 runner を GREEN_RUNNER に割り当てる'), function () {
   this.customRunner = writeExecutableAt(path.join(this.workDir, 'custom-runner.sh'), RECORDING_RESULT_RUNNER_STUB);
@@ -563,19 +563,36 @@ Given(literal('起動引数と環境変数を記録し Runner Result 3 ファイ
 });
 
 When(literal('`facade.sh JOB001 x` を BLUE_MODE=off GREEN_MODE=foreground GREEN_IMPL=green-1.4.0 RAPID_CROSSCHECK_MODE=off で実行する'), function () {
-  if (!fs.existsSync(FACADE_SH)) {
-    return 'skipped';
-  }
-  throw new Error(`not implemented: ${FACADE_SH} exists; implement this step in the UC that provides facade.sh`);
+  this.env = { BLUE_MODE: 'off', GREEN_MODE: 'foreground', GREEN_IMPL: 'green-1.4.0', RAPID_CROSSCHECK_MODE: 'off', ...this.env };
+  // facade.sh が読むのは $RELAY_GATE_CONFIG_DIR/feature-flag.env
+  this.envPath = path.join(this.configDir, 'feature-flag.env');
+  flushEnv(this);
+  this.facadeArtifactRoot = path.join(this.workDir, 'artifacts');
+  const env = {
+    ...process.env,
+    RELAY_GATE_CONFIG_DIR: this.configDir,
+    RELAY_GATE_ARTIFACT_ROOT: this.facadeArtifactRoot,
+    RELAY_GATE_LOG_DIR: path.join(this.workDir, 'logs'),
+  };
+  const proc = spawnSync(FACADE_SH, ['JOB001', 'x'], { cwd: this.workDir, encoding: 'utf8', env });
+  assert.equal(proc.error, undefined, `spawn failed: ${proc.error}`);
+  this.result = { status: proc.status, stdout: proc.stdout, stderr: proc.stderr };
 });
 
 Then(
   literal('自作 runner は "--run-id <run_id> --job-id JOB001 --role green --mode foreground -- x" で起動され、facade は exitcode.txt の値で終了する'),
   function () {
-    throw new Error('not implemented: requires facade.sh');
+    const args = fs.readFileSync(`${this.customRunner}.args`, 'utf8').trim();
+    const match = args.match(/^--run-id ([0-9]{8}T[0-9]{6}-JOB001-[0-9a-f]{8}) --job-id JOB001 --role green --mode foreground -- x$/);
+    assert.ok(match, `custom runner args: ${args}`);
+    const exitcode = fs.readFileSync(path.join(this.facadeArtifactRoot, 'facade', match[1], 'green', 'exitcode.txt'), 'utf8').trim();
+    assertExit(this, Number(exitcode));
   },
 );
 
 Then(literal('自作 runner の環境変数に RAPID_CROSSCHECK_MODE=off と GREEN_IMPL=green-1.4.0 があり、RAPID_CROSSCHECK_RUNNER は無い'), function () {
-  throw new Error('not implemented: requires facade.sh');
+  const lines = fs.readFileSync(`${this.customRunner}.env`, 'utf8').split('\n');
+  assert.ok(lines.includes('RAPID_CROSSCHECK_MODE=off'), lines.join('\n'));
+  assert.ok(lines.includes('GREEN_IMPL=green-1.4.0'), lines.join('\n'));
+  assert.deepEqual(lines.filter((l) => l.startsWith('RAPID_CROSSCHECK_RUNNER=')), []);
 });

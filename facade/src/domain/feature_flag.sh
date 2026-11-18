@@ -148,6 +148,32 @@ feature_flag_flush_report_lines() {
   feature_flag_reset_report_lines
 }
 
+# 配列に溜めた報告行(検証表の error 行と hint。error_order の順)のうち、最初の違反の error 行と、その次の行が hint ならその hint だけを
+# stdout へ出して、配列を空にする(契約 commands の facade.sh の config_violation_report。2 つ目以降の違反の行は出さない)。
+# 値の表示を後回しにした行は、feature_flag_flush_report_lines と同じく、ここで値の表示を付ける
+feature_flag_flush_first_violation() {
+  local index
+  for index in 0 1; do
+    if [ "$index" -ge "${#FEATURE_FLAG_REPORT_LINES[@]}" ]; then
+      break
+    fi
+    if [ "$index" -eq 1 ] && { [ -n "${FEATURE_FLAG_REPORT_VALUE_1[index]+x}" ] \
+      || [ "${FEATURE_FLAG_REPORT_LINES[index]:0:5}" != "hint:" ]; }; then
+      break
+    fi
+    printf '%s' "${FEATURE_FLAG_REPORT_LINES[index]}"
+    if [ -n "${FEATURE_FLAG_REPORT_VALUE_1[index]+x}" ]; then
+      feature_flag_print_shown_value "${FEATURE_FLAG_REPORT_VALUE_1[index]}"
+      if [ -n "${FEATURE_FLAG_REPORT_MIDDLE[index]+x}" ]; then
+        printf '%s' "${FEATURE_FLAG_REPORT_MIDDLE[index]}"
+        feature_flag_print_shown_value "${FEATURE_FLAG_REPORT_VALUE_2[index]}"
+      fi
+    fi
+    printf '\n'
+  done
+  feature_flag_reset_report_lines
+}
+
 # 配列に溜めた報告行を捨てる
 feature_flag_reset_report_lines() {
   FEATURE_FLAG_REPORT_LINES=()

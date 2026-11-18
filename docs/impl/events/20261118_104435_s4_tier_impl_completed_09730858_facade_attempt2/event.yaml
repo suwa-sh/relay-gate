@@ -1,0 +1,28 @@
+event_id: 20261118_104435_s4_tier_impl_completed_09730858_facade_attempt2
+type: stage_completed
+uc_id: 09730858
+stage: S4
+tier: tier-facade
+attempt: 2
+payload:
+  result: pass
+  gates:
+    format: pass
+    lint: pass
+    tdd: pass
+    bdd_tier: pass
+  assumptions:
+    path: attempt-2/S4_tier-impl.tier-facade.assumptions.yaml
+    count: 22
+    by_category:
+      input_validation: 1
+      data_format: 3
+      error_handling: 11
+      persistence: 3
+      performance: 0
+      security: 4
+    sha256: 33943b263700dfc85cbe9a163f102f1b4739fa684e4f09ab12767038968c6392
+  manifest_sha256: 1f0a15af37a2317307d14e000455451b3bf374c415cd42cef05e8e2daa211344
+  manifest_projection: v2
+  note: 'attempt 2: fixed the 3 blockers (runner exec failure detected, RAPID_DB_CONN_REF not inherited by runners, validation errors written to the execution log) and the zero-row UPDATE; contract drift test added; bats 636, tier BDD 141 passed'
+created_at: '2026-11-18T10:44:35+09:00'

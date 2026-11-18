@@ -1,0 +1,44 @@
+schema_version: "1.0"
+stage: "S5"
+tier: "tier-facade"
+attempt: 1
+uc_id: "09730858"
+manifest_sha256: "1f0a15af37a2317307d14e000455451b3bf374c415cd42cef05e8e2daa211344"
+manifest_projection: "v2"
+result: "fail"
+gate_reexec:
+  format: "pass"
+  lint: "pass"
+  tdd: "pass"
+  bdd_tier: "pass"
+open_blockers: 3
+open_majors: 5
+assumptions_sha256: "09a2c0c157d7183b64aaf7dbb01f6780543304d1007d783360c3aaaff3963d2d"
+assumption_verdicts_summary:
+  consistent: 2
+  spec_absent: 18
+  contradicts: 2
+  unlisted: 0
+findings_summary:
+  blocker: 3
+  major: 6
+  minor: 16
+environment_failures: []
+completed_at: "2026-11-18T01:16:53.052548+00:00"
+completed_by: "dist-impl-verify@0.14.1"
+findings_path: "docs/impl/latest/09730858/stages/attempt-1/S5_verify.tier-facade.findings.yaml"
+verification_evidence:
+  - check: "macOS"
+    evidence: "bash 5.3.15、ShellCheck 0.11.0、setsidなし。format/lint/bin個別lint終了0。bats616/616、BDD141/141・1170/1170、skipなし。"
+  - check: "Linux"
+    evidence: "relay-gate-ci:ubuntu24、bash5.2.21、ShellCheck0.9.0、setsid=/usr/bin/setsid。src/test lintとbin個別lint終了0。bats616/616終了0。Linuxでcucumber/shfmtは利用者指定どおり対象外。"
+  - check: "mutations"
+    evidence: "一時複製3件。起動順逆転→green must be started before blue、別PID保存→pid UPDATE assertion、off分岐破壊→exit code assertion。各1シナリオが終了1で失敗。元実装のBDDは全件成功。"
+  - check: "independent_probes"
+    evidence: "引用符・空引数・改行のargvとJSON保持、rapid INSERT拒否時rollback、Asia/Tokyo時刻、exec失敗を確認。30ケースの変更前後比較は差分0。ログ欠落・環境継承・0件UPDATEのログも再現。"
+  - check: "cleanup"
+    evidence: "一時PostgreSQLはfinally/AfterAllで停止。BDDおよび変異後に対象postgresとsleep30の残留なし。テストは/tmp/relay-verify.mvzJi1の複製で実行。作業ツリーへの書込みは指定YAML2件のみ。"
+notes:
+  - "ゲートはS4記録のpassと一致するが独立反証3件の仕様違反があるためresult=fail。"
+  - "summary.major=6のうちA-001の採用済み監査行1件をopen_majorsから除外。残る5件はsecurity/persistenceの未規定判断でありゲート失敗ではない。"
+assumption_verdicts_sha256: "b30dacd25d4bbce5b76b02f79ceab11010dfe6dcb82d3c10c523c41dbb924d00"

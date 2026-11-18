@@ -15,6 +15,8 @@
 #   RAPID_CROSSCHECK_ENV_KEYS             … env に現れたキー(出現順・重複なし。--verbose の info に使う)
 #   RAPID_CROSSCHECK_ENV_HAS_COMPARE_COMMAND … RAPID_COMPARE_COMMAND が現れたか(true|false)
 #   RAPID_CROSSCHECK_ENV_COMPARE_COMMAND  … RAPID_COMPARE_COMMAND の値(env 解析後。同じキーの重複があれば空)
+#   RAPID_CROSSCHECK_ENV_DB_CONN_REF      … RAPID_DB_CONN_REF の値(管理 DB 接続の参照名。env 解析後。同じキーの重複があれば空。
+#                                           facade.sh が RAPID_CROSSCHECK_MODE が off 以外のときに使う)
 #   RAPID_CROSSCHECK_ENV_INVALID_LINES    … `=` を含まない・キーが空の行の行番号(昇順)
 #   RAPID_CROSSCHECK_ENV_DUPLICATE_KEYS / RAPID_CROSSCHECK_ENV_DUPLICATE_LINES
 #                                         … 重複したキーと、その全出現行(カンマ区切り)。初出行の昇順
@@ -26,6 +28,7 @@
 # 依存: repository/job_map_repo.sh(複製・バイト点検)
 
 RAPID_CROSSCHECK_ENV_COMPARE_COMMAND_KEY="RAPID_COMPARE_COMMAND"
+RAPID_CROSSCHECK_ENV_DB_CONN_REF_KEY="RAPID_DB_CONN_REF"
 RAPID_CROSSCHECK_ENV_STATUS_COMMAND_FAILED=6
 RAPID_CROSSCHECK_ENV_STATUS_SNAPSHOT_FAILED=7
 # env の空白は半角空白とタブだけ(config_input_rules.env_files。垂直タブ・改ページは空白として除かない)
@@ -35,6 +38,7 @@ rapid_crosscheck_env_reset() {
   RAPID_CROSSCHECK_ENV_KEYS=()
   RAPID_CROSSCHECK_ENV_HAS_COMPARE_COMMAND=false
   RAPID_CROSSCHECK_ENV_COMPARE_COMMAND=""
+  RAPID_CROSSCHECK_ENV_DB_CONN_REF=""
   RAPID_CROSSCHECK_ENV_INVALID_LINES=()
   RAPID_CROSSCHECK_ENV_DUPLICATE_KEYS=()
   RAPID_CROSSCHECK_ENV_DUPLICATE_LINES=()
@@ -122,6 +126,10 @@ rapid_crosscheck_env_read_snapshot() {
       rapid_crosscheck_env_unquote "$RAPID_CROSSCHECK_ENV_TRIMMED"
       RAPID_CROSSCHECK_ENV_HAS_COMPARE_COMMAND=true
       RAPID_CROSSCHECK_ENV_COMPARE_COMMAND="$RAPID_CROSSCHECK_ENV_UNQUOTED"
+    elif [ "$key" = "$RAPID_CROSSCHECK_ENV_DB_CONN_REF_KEY" ]; then
+      rapid_crosscheck_env_trim "${line#*=}"
+      rapid_crosscheck_env_unquote "$RAPID_CROSSCHECK_ENV_TRIMMED"
+      RAPID_CROSSCHECK_ENV_DB_CONN_REF="$RAPID_CROSSCHECK_ENV_UNQUOTED"
     fi
   done <"$snapshot"
   # 事前走査が数えた総行数と読み込んだ行数が合わなければ、走査していない行がある(検証結果として使わない)
@@ -142,6 +150,7 @@ rapid_crosscheck_env_read_snapshot() {
   if [ "${#RAPID_CROSSCHECK_ENV_DUPLICATE_KEYS[@]}" -gt 0 ]; then
     RAPID_CROSSCHECK_ENV_HAS_COMPARE_COMMAND=false
     RAPID_CROSSCHECK_ENV_COMPARE_COMMAND=""
+    RAPID_CROSSCHECK_ENV_DB_CONN_REF=""
   fi
   return 0
 }

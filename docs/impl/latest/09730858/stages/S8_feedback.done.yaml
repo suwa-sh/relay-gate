@@ -1,0 +1,172 @@
+stage: "S8"
+uc_id: "09730858"
+manifest_sha256: "1f0a15af37a2317307d14e000455451b3bf374c415cd42cef05e8e2daa211344"
+manifest_projection: v2
+mode: "initial"
+mode_note: "初回の実行。仕様への要求は 0 件。実装者が補った前提 22 件は仕様と矛盾せず、人が spec_change で却下したものも無いため要求にしない。draft は作っていない"
+result: pass
+status: "no_requests"
+tier_impl_attempt: 3
+policy:
+  source: "CLAUDE.md「方針の正本」と利用者の方針(2026-11-18)"
+  summary: "仕様の変更は、元の方針資料と一致しているかを第一の基準にする。実装者が補った前提は、利用者の判断が要るものを除き、要求にせず as-built の事実として記録する。性能・作為的な条件についての指摘や要求は作らない"
+  precedent: "docs/impl/latest/65b09d93/stages/S8_feedback.done.yaml"
+inputs:
+  issues_dir: "docs/impl/latest/09730858/issues/"
+  findings:
+    - "docs/impl/latest/09730858/stages/attempt-1/S5_verify.tier-facade.findings.yaml"
+    - "docs/impl/latest/09730858/stages/attempt-2/S5_verify.tier-facade.findings.yaml"
+    - "docs/impl/latest/09730858/stages/attempt-3/S5_verify.tier-facade.findings.yaml"
+  ui_review_findings: []
+  assumptions: "docs/impl/latest/09730858/stages/attempt-3/S4_tier-impl.tier-facade.assumptions.yaml"
+  s4_done: "docs/impl/latest/09730858/stages/attempt-3/S4_tier-impl.tier-facade.done.yaml"
+  s5_done: "docs/impl/latest/09730858/stages/attempt-3/S5_verify.tier-facade.done.yaml"
+  s2_done: "docs/impl/latest/09730858/stages/S2_test-scaffold.done.yaml"
+  s6_done: "docs/impl/latest/09730858/stages/S6_uc-bdd.done.yaml"
+  s7_done: "docs/impl/latest/09730858/stages/S7_atdd.done.yaml"
+  review_notes: null
+  review_notes_note: "初回のため review/review-notes.md は無い。人による前提の却下は 0 件"
+  policy_documents:
+    - "tmp/RelayGateのしくみ.md"
+    - "tmp/RelayGateの利用イメージ.md"
+resolution:
+  issues:
+    - path: "docs/impl/latest/09730858/issues/20261118_091109_cross-uc-scenarios.md"
+      verdict: "not_requested"
+      decided_by: "オーケストレータの決定(案 A。仕様は変えない)"
+      decision_reason: "要求にしない。仕様の不足ではなく、機能をまたぐ Scenario の責務分担の記録である。標準の slot runner を名指しする UC BDD の 1 件は、場所を runner へ渡すところまでをこの機能で判定し、残りの Then 2 行は後続の機能まで skipped にする。spec.md の関連 USDM の注記も、解決する側を後続の UC で覆うと書いている"
+      evidence: "S6 done の skipped_scenarios(1 件)と injections。tier BDD の同じ内容の Scenario は pass。標準の slot runner の代役は作っていない"
+  override_of_orchestrator_judgement: "なし"
+  new_issues_in_this_stage: 0
+  findings:
+    attempt_1:
+      blocker: 3
+      major: 6
+      minor: 16
+      verdict: "blocker 3 件(F-009 exec 失敗を成功と扱う / F-019 RAPID_DB_CONN_REF を runner に継承する / F-023 検証エラーを実行ログに残さない)は、仕様に明示された振る舞いを実装が満たしていなかった実装起因。attempt 2 で修正済み。major の F-022(UPDATE 0 件を成功扱い)も attempt 2 で修正。要求にしない"
+    attempt_2:
+      blocker: 1
+      major: 8
+      minor: 14
+      verdict: "blocker 1 件(F-001 setsid が監視層の起動前に失敗すると未起動を成功扱い)は実装起因。major の F-002(起動前 INSERT の順を確かめるテストが変異を検出できない)はテストの弱さ。どちらも attempt 3 で修正済み。要求にしない"
+    attempt_3:
+      blocker: 0
+      major: 7
+      minor: 15
+      spec_absent: 22
+      consistent: 0
+      contradicts: 0
+      unlisted: 0
+      verdict: "findings 起因の要求なし。22 件はすべて前提の確認記録(spec_absent)。人が spec_change で却下していないため要求にしない"
+  rejected_spec_change: 0
+  rejected_implementation_change: 0
+classification:
+  spec_origin: 0
+  not_requested_records: 1
+  implementation_origin: 6
+  implementation_origin_records: 4
+  environment_origin: 2
+  note: "仕様起因の要求 = 0 件。要求にしない記録 = issue 1 件。実装起因 = attempt 1 の blocker 3 件と F-022、attempt 2 の blocker 1 件と F-002(いずれも修正済み)。実装起因の記録 = 前提の分類の付け間違い 2 件と復唱 2 件(attempt 2 で記録を直した)。環境起因 = Linux の再現環境に node と PostgreSQL が無く tier BDD を Linux で流していない / attempt 3 の検証で macOS の bats 1 件が同時実行の一時ファイル名と衝突(単独実行で pass)"
+policy_document_check:
+  result: "no_contradiction"
+  note: "psql と接続サービス名の方式に矛盾する記述は、方針資料 2 件と仕様・契約のどちらにも無い。方針資料は DB クライアントのコマンド名と参照名の渡し方を書いていない。関連する記述(off のとき接続設定なしで slot 実行できる / 認証情報は参照名だけを保存する / RelayGate のデータは PostgreSQL)とは一致する"
+requests: []
+orchestrator_decisions:
+  - key: "db_client"
+    summary: "管理 DB のクライアントは psql。RAPID_DB_CONN_REF の値を接続サービス名として渡す"
+    user_confirmation: "required"
+    related_assumptions: ["A-001"]
+  - key: "standard_runner_scenario"
+    summary: "標準の slot runner を名指しする UC BDD の 1 件は、場所を runner へ渡すところまでを判定し、残りは後続の機能まで skipped。仕様は変えない"
+    user_confirmation: "required"
+    related_assumptions: []
+  - key: "temp_postgres"
+    summary: "テスト用の一時 PostgreSQL を新設。テーブルは契約の生成物から作る暫定の DDL"
+    user_confirmation: "not_required"
+    related_assumptions: []
+  - key: "ten_seconds_scenario"
+    summary: "10 秒以内に終了するという Scenario は、機能の振る舞いとして仕様どおり確かめた"
+    user_confirmation: "not_required"
+    related_assumptions: []
+  - key: "verify_condition"
+    summary: "3 回目の独立検証に、実際の運用で起きない条件でだけ出る挙動は minor までという条件を付けた"
+    user_confirmation: "not_required"
+    related_assumptions: ["A-024"]
+assumptions_summary:
+  count: 22
+  consistent: 0
+  spec_absent: 22
+  contradicts: 0
+  unlisted: 0
+  rejected_spec_change: 0
+  human_decision: "未判断(最後の確認で求める)"
+  answer_required:
+    security: ["A-001", "A-002", "A-004", "A-019"]
+    persistence: ["A-003", "A-021", "A-022"]
+  by_category:
+    security: 4
+    persistence: 3
+    error_handling: 11
+    input_validation: 1
+    data_format: 3
+    performance: 0
+  assumptions_sha256: "e0d335eef89821bc32d528473ff6e558cf55b0e659a7bf7802b983ba20fb0261"
+  assumption_verdicts_sha256: "6058f950748b1b15951768263e5f1773791ecec66a2a50dc286ac144f9b400ac"
+test_results:
+  tdd: "640 tests, 640 ok"
+  bdd_tier: "141 scenarios (141 passed)"
+  uc_bdd: "83 scenarios (82 passed, 1 skipped)"
+  atdd: "14 scenarios (14 passed)"
+  tests_run_in_this_stage: false
+skipped_scenarios:
+  - scenario: "値が空のジョブマップの場所のキーがある slot の runner は固定の名前のジョブマップで実行先を解決する(SPEC-004-01)"
+    judged: "Given・When・Then 1 行目(場所を環境変数で runner へ渡す)"
+    skipped: "Then 2 行目(execution-spec.json の slots.green)と Then 3 行目(green/stderr.log)"
+    until: "標準の slot runner が結果を書くようになるまで(後続の機能)"
+review_attention:
+  - key: "1"
+    topic: "管理 DB へのつなぎ方"
+    summary: "psql を使い、接続の参照名を接続サービス名として渡す。承認または別の方式の指定を求める"
+    related_assumptions: ["A-001"]
+  - key: "2"
+    topic: "安全性とデータの保存にかかわる前提 7 件"
+    summary: "1 件ずつ承認または却下を求める"
+    related_assumptions: ["A-001", "A-002", "A-003", "A-004", "A-019", "A-021", "A-022"]
+  - key: "3"
+    topic: "保留のシナリオ 1 件"
+    summary: "標準の runner の中身が要る確認 2 点を、後続の機能まで保留にする"
+    related_assumptions: []
+  - key: "4"
+    topic: "そのほかの前提 15 件"
+    summary: "まとめて承認でよい"
+    related_assumptions: ["A-005", "A-006", "A-007", "A-008", "A-009", "A-010", "A-011", "A-012", "A-013", "A-014", "A-017", "A-018", "A-020", "A-023", "A-024"]
+feedback_request:
+  feedback_id: null
+  draft_path: null
+  draft_sha256: null
+  request_count: 0
+  blocker_count: 0
+  request_ids: []
+  supersedes: null
+  published: false
+  note: "要求 0 件のため draft を作っていない"
+as_built_summary: "docs/impl/latest/09730858/feedback/as-built-summary.md"
+as_built_summary_sha256: "1e7e969f8e9e8ad5dee831b2083596fdb218697e50a02b577afa497093e18eda"
+issues_added: []
+learnings: 3
+learning_files:
+  - "docs/impl/latest/09730858/learnings/20261118_114340_bash-exec-failure-needs-start-signal-handshake.md"
+  - "docs/impl/latest/09730858/learnings/20261118_114340_parent-exported-vars-leak-to-child.md"
+  - "docs/impl/latest/09730858/learnings/20261118_114340_order-assertion-needs-sync-and-mutation-check.md"
+proposals:
+  skill: true
+  context: true
+proposal_files:
+  - "docs/impl/latest/09730858/learnings/20261118_114340_proposal-skill.md"
+  - "docs/impl/latest/09730858/learnings/20261118_114340_proposal-context.md"
+checks:
+  yaml_parse: "yaml.safe_load で確認"
+  mermaid_lint: "npx md-mermaid-lint docs/impl/latest/09730858/feedback/as-built-summary.md が exit 0(図は flowchart 1 つ)"
+  tests_run: false
+completed_at: "2026-11-18T11:46:24+09:00"
+completed_by: "dist-impl-feedback@0.14.1"

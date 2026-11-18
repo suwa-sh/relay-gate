@@ -1,0 +1,14 @@
+event_id: 20261118_114727_s8_feedback_completed_09730858_no_requests
+type: stage_completed
+uc_id: 09730858
+stage: S8
+payload:
+  result: pass
+  mode: initial
+  request_count: 0
+  blocker_count: 0
+  published: false
+  as_built_summary_sha256: 1e7e969f8e9e8ad5dee831b2083596fdb218697e50a02b577afa497093e18eda
+  manifest_sha256: 1f0a15af37a2317307d14e000455451b3bf374c415cd42cef05e8e2daa211344
+  manifest_projection: v2
+created_at: '2026-11-18T11:47:27+09:00'

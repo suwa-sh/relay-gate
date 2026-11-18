@@ -1,0 +1,136 @@
+stage: S4
+tier: tier-facade
+attempt: 1
+uc_id: "09730858"
+manifest_sha256: 1f0a15af37a2317307d14e000455451b3bf374c415cd42cef05e8e2daa211344
+manifest_projection: v2
+result: pass
+rerun_mode: initial
+findings_provided: false
+api_summary_check: "_api-summary.yaml に schema_version distillery.api-summary/v2 の記載は無く、_contract-slice.json も無い(契約 slice の hash 照合の対象外)"
+implementation:
+  summary: "ジョブを起動するコマンド bin/facade.sh を新設した(bin は薄い入口、本体は src/presentation/facade.sh)。feature-flag.env の読み込みと検査は検証コマンドの関数を共有し(入力の守備範囲 (i)(ii) と、キーごとの検査 (iii) の収集を関数に切り出した)、facade は未知キーの warn 行の後に最初の違反の error 行(と hint)だけを出す。off 以外では rapid-crosscheck.env の RAPID_DB_CONN_REF を読み、parallel_runs + rapid_runs を同一トランザクションで INSERT、slot ごとに起動前 INSERT と起動後 pid UPDATE、全 slot 起動後に STARTED → RUNNING。background を先にすべて起動し、foreground の PID だけを待って exitcode.txt の値で終わる"
+  layers:
+    presentation: "src/presentation/facade.sh(引数・オプションの位置・JOB_ID の文字種)"
+    usecase: "src/usecase/launch_slots.sh(LaunchSlotsCommand)"
+    domain: "src/domain/slot_launch_plan.sh(plan_slot_launch / run_id / parameters / 成果物ディレクトリ)、src/domain/relay_gate_clock.sh(RELAY_GATE_NOW とローカル時刻の表記。date を使わない)、src/domain/feature_flag.sh に feature_flag_flush_first_violation を追加"
+    repository: "src/repository/parallel_run_repo.sh(parallel_runs / rapid_runs)、src/repository/slot_execution_repo.sh、src/repository/rapid_crosscheck_env.sh に RAPID_DB_CONN_REF の取り込みを追加"
+    gateway: "src/gateway/rdb_client.sh(psql)、src/gateway/runner_process_adapter.sh(runner IF での起動・待機)、src/gateway/execution_log.sh"
+  reuse:
+    - "validate_feature_flag_load_input(存在・読み取り・(i)(ii))と validate_feature_flag_collect_key_errors(実体パスとジョブマップの場所の解決・可視表記・検証表)を validate_feature_flag.sh に切り出し、validate-config.sh --feature-flag と facade.sh の両方が使う"
+    - "validate_rapid_crosscheck_load_input(rapid-crosscheck.env の存在・読み取り・(i)(ii))を validate_rapid_crosscheck.sh に切り出し、validate-config.sh --rapid-crosscheck と facade.sh の両方が使う"
+    - "JOB_ID の文字種は job_map_is_valid_job_id、parameters の JSON の文字列エスケープは job_map_json_escape_string を使う"
+  validate_config_changed: true
+  validate_config_change_note: "検証コマンドの関数を切り出しただけで出力は変えていない。切り出しの直後に既存の bats(573 件のうち、まだ facade.sh が無いための 3 件を除く 570 件)が全件 pass することを、facade.sh を作る前に確認した"
+  not_implemented_here:
+    - "foreground の stdout.log / stderr.log の中継と、中継後の parallel_runs RUNNING → COMPLETED(UC「foreground slot の結果をジョブスケジューラへ中継する」の担当)"
+    - "標準の runner(facade/runners/standard-runner.sh)の中身(後続の機能)"
+code_changes:
+  added:
+    - facade/bin/facade.sh
+    - facade/src/presentation/facade.sh
+    - facade/src/usecase/launch_slots.sh
+    - facade/src/domain/slot_launch_plan.sh
+    - facade/src/domain/relay_gate_clock.sh
+    - facade/src/repository/parallel_run_repo.sh
+    - facade/src/repository/slot_execution_repo.sh
+    - facade/src/gateway/rdb_client.sh
+    - facade/src/gateway/runner_process_adapter.sh
+    - facade/src/gateway/execution_log.sh
+    - facade/features/steps/support/temp-postgres.js
+    - facade/test/presentation/facade_launch.bats
+    - facade/test/domain/slot_launch_plan.bats
+    - facade/test/domain/relay_gate_clock.bats
+    - facade/test/domain/feature_flag_first_violation.bats
+    - facade/test/gateway/rdb_client.bats
+  modified:
+    - path: facade/src/usecase/validate_feature_flag.sh
+      change: "(i)(ii) と (iii) の収集を関数に切り出した(出力は変えていない)"
+    - path: facade/src/usecase/validate_rapid_crosscheck.sh
+      change: "存在・読み取り・(i)(ii) を関数に切り出した(出力は変えていない)"
+    - path: facade/src/repository/rapid_crosscheck_env.sh
+      change: "RAPID_DB_CONN_REF の値を RAPID_CROSSCHECK_ENV_DB_CONN_REF に取り込む(同じキーの重複があれば空)"
+    - path: facade/src/domain/feature_flag.sh
+      change: "feature_flag_flush_first_violation(最初の違反の error 行と続く hint だけを出す)を追加"
+    - path: facade/features/steps/select-slot-mode-and-launch-runners.steps.js
+      change: "S2 の skeleton(82 step)を実装。After は長く動く runner スタブの PID を控えた Scenario だけ、AfterAll は一時 PostgreSQL を起動した場合だけ働く"
+    - path: facade/features/steps/assign-slot-runner-scripts.steps.js
+      change: "facade.sh が無い間 skipped を返していた 3 step(UC 65b09d93 の tier BDD 1 Scenario)を、facade.sh を実プロセスとして起動する形に実装した。feature の本文は変えていない"
+  feature_bodies_changed: false
+test_harness:
+  temp_postgres: "facade/features/steps/support/temp-postgres.js。initdb + pg_ctl の一時インスタンス(Unix ソケットだけ。ソケットは /tmp/rgpg-XXXXXX)。プロセスで 1 回起動し Scenario ごとに新しいデータベースを作る。initdb / pg_ctl / psql が PATH に無ければ fail。テーブルは packages/contracts/management-db/schema.json から実行時に組み立てる暫定 DDL(parallel_runs / slot_executions / rapid_runs。先頭に暫定と明記)"
+  conn_ref_binding: "参照名 mgmt-db は一時ディレクトリの pg_service.conf(PGSERVICEFILE)で一時インスタンスに結び付ける"
+  bats_db: "bats は管理 DB を起動しない。psql の呼び出し方(引数・SQL の順・終了コードの読み替え)は PATH の先頭に置く記録用の psql スタブで確かめ、実 DB は tier BDD で確かめる"
+  long_running_stubs: "600 秒 / 30 秒動くテスト用 runner は exec sleep で PID を記録し、bats は teardown、cucumber は After で止める。実行後に postgres と sleep のプロセスが残っていないことを確認した"
+gates:
+  format: pass
+  lint: pass
+  tdd: pass
+  bdd_tier: pass
+gate_runs:
+  - gate: format
+    cwd: facade
+    command: "shfmt -d ."
+    exit_code: 0
+  - gate: lint
+    cwd: facade
+    command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+    exit_code: 0
+    note: "入口 bin/facade.sh も shellcheck -x で個別に確認し exit 0"
+  - gate: tdd
+    cwd: facade
+    command: "bats -r test"
+    exit_code: 0
+    summary: "616 tests, 616 ok, 0 not ok(S2 時点の 573 件 + 追加 43 件。S2 の facade.bats 3 件は green)"
+    note: "最終のコードでの 1 回目の全件実行では、既存の test/gateway/runner_probe.bats の 1 件(--help の応答が待機上限内に返る場合)が 1 度だけ落ちた。この機能では runner_probe を変えていない。単独の再実行と全件の再実行(616 ok)で pass。時間に依存する既存テストの揺れとして記録する"
+  - gate: bdd_tier
+    cwd: facade
+    command: "npx cucumber-js --config ../cucumber.cjs features"
+    exit_code: 0
+    summary: "141 scenarios (141 passed), 1170 steps (1170 passed)。最終のコード(background のスタブの記録を書き終えた印を待つ修正の後)で再実行して同じ結果。skipped 0(先行の機能の facade.sh を起動する 1 Scenario も判定するようになった)。この機能の 18 Scenario を含む"
+gate_run_notes:
+  - "gate_runs は macOS(Darwin 25.5.0、arm64、PostgreSQL 14)での実測。最終のコードで bats と cucumber を 1 つずつ順に実行した"
+  - "時間の上限を確かめるテスト・大きな入力を作るテストは追加していない。仕様のシナリオにある『green は 30 秒 sleep』は、facade が待たずに終わること(終了時に green が動いていること)として確かめた"
+  - "tier BDD『runner 起動前に slot_executions を INSERT し起動後に pid を更新する』の Then 1 行目は、runner スタブの中で書く起動記録と facade の pid の UPDATE の前後が起動直後のプロセスの進み方で入れ替わりうるため、(a) INSERT(slot=green, pid なし)が green の起動記録より前、(b) pid の UPDATE が INSERT より後で、その pid が起動した green runner 自身の PID と同じ(起動の後にしか書けない)、で判定した"
+  - "background で起動したスタブの記録(起動引数・環境変数・PID)は、スタブが記録の最後に書く印(<スタブ>.ready)を上限 10 秒で待ってから読む(facade は background を待たないため)。長く動くスタブの PID は After / teardown の時点で集めて止める"
+  - "tier BDD『green の起動記録が blue より先』は、facade の実行ログの slot started の行(pid は各スタブが記録した自分の PID と同じ)の順で判定した(スタブの中の記録どうしの前後は同じ理由で入れ替わりうる)"
+linux_runs:
+  environment: "docker イメージ relay-gate-ci:ubuntu24(aarch64、Bash 5.2.21、setsid あり)"
+  method: "リポジトリを読み取り専用でマウントし、コンテナ内の一時ディレクトリへ facade を複製して一般ユーザー ubuntu で LANG=C.UTF-8 で実行した"
+  runs:
+    - gate: tdd
+      command: "bats -r test"
+      exit_code: 0
+      summary: "616 tests, 616 ok"
+    - gate: lint
+      command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+      exit_code: 0
+  limitation: "イメージに node と PostgreSQL が無いため、tier BDD(一時 PostgreSQL を使う)は Linux では実行していない。shfmt もイメージに無いため macOS で実測"
+ci_check:
+  postgresql_in_ci: "ci.yml の各ジョブは apt で postgresql を入れ、/usr/lib/postgresql/<最新版>/bin を GITHUB_PATH に足している。initdb / pg_ctl / psql は tier-bdd ジョブの PATH に載る。setsid は ubuntu-latest にある"
+  change_needed: false
+environment: "macOS(Darwin 25.5.0、arm64)で 4 ゲートを実測。Linux コンテナで bats / lint を実測"
+issues_added: []
+cross_tier_notes:
+  - "切り出しの影響の確認(読み取りのみ。リポジトリルートで実行): UC BDD(npx cucumber-js --config cucumber.cjs features/uc)は 83 scenarios = 62 passed + 21 failed(S2 時点: 62 passed + 2 skipped + 19 failed)。failed の内訳はこの機能の 19 件(S6 で実装)と、下記の assign-slot-runner-scripts の 2 件だけで、他の機能の Scenario は変わらず pass。ATDD は CI と同じタグ式(scripts/ci/atdd-tag-expression.js)で 17 scenarios (17 passed)"
+  - "facade.sh を作ったため、リポジトリルートの features/uc/steps/assign-slot-runner-scripts.steps.js の facade.sh を起動する step(UC BDD 2 Scenario)は skipped ではなく not implemented で落ちるようになる。write-set の外のため変更していない(S6 で実装する)"
+assumptions:
+  path: "attempt-1/S4_tier-impl.tier-facade.assumptions.yaml"
+  count: 22
+  by_category:
+    input_validation: 3
+    data_format: 4
+    error_handling: 8
+    persistence: 3
+    performance: 0
+    security: 4
+  sha256: 09a2c0c157d7183b64aaf7dbb01f6780543304d1007d783360c3aaaff3963d2d
+  extraction:
+    candidate_count: 26
+    excluded_as_explicit: 4
+    recorded_count: 22
+  validator: "validateAssumptions.js record: ok true"
+review_refute_loop: not_run
+review_refute_loop_note: "外部レビュー(review-refute-loop)はこの S4 では実行していない。S5 の別モデル Verifier に委ねる"
+completed_at: "2026-11-18T10:03:20+09:00"
+completed_by: dist-impl-implement@0.14.1

@@ -1,0 +1,11 @@
+event_id: 20261118_114229_s6_uc_bdd_completed_09730858
+type: stage_completed
+uc_id: 09730858
+stage: S6
+payload:
+  result: pass
+  done: docs/impl/latest/09730858/stages/S6_uc-bdd.done.yaml
+  manifest_sha256: 1f0a15af37a2317307d14e000455451b3bf374c415cd42cef05e8e2daa211344
+  manifest_projection: v2
+  note: 'uc-bdd: 18 passed / 1 skipped (the Then lines that need the standard runner''s body, judged once a later UC builds it); features/uc as a whole 82 passed / 1 skipped; the 2 scenarios of 65b09d93 that were skipped are now judged and pass'
+created_at: '2026-11-18T11:42:29+09:00'

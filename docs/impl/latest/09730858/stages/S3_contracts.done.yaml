@@ -1,0 +1,14 @@
+stage: S3
+uc_id: 09730858
+manifest_sha256: 1f0a15af37a2317307d14e000455451b3bf374c415cd42cef05e8e2daa211344
+manifest_projection: v2
+result: pass
+contracts_verified:
+- id: management-db
+  type: rdb-schema
+  lock_fresh: true
+  input_sha256: bbe77902949f155ada1a352661e41cc16409fa58b4076cde648cb028b5de11ac
+  uc_scope_check: pass
+  note: every table and column referenced by _model-summary.yaml (parallel_runs, slot_executions, rapid_runs) exists in rdb-schema.yaml
+completed_at: '2026-11-18T09:13:44+09:00'
+completed_by: dist-impl-run@0.14.1

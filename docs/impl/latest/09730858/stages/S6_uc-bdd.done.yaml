@@ -1,0 +1,120 @@
+stage: S6
+uc_id: "09730858"
+manifest_sha256: 1f0a15af37a2317307d14e000455451b3bf374c415cd42cef05e8e2daa211344
+manifest_projection: v2
+result: pass
+branch_slug: select-slot-mode-and-launch-runners
+tiers:
+  - tier-facade
+tier_impl_attempt: 3
+source: "docs/specs/latest/実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/spec.md#E2E完了条件(BDD)"
+feature: features/uc/select-slot-mode-and-launch-runners.feature
+feature_changed: false
+steps:
+  - features/uc/steps/select-slot-mode-and-launch-runners.steps.js
+  - features/uc/steps/assign-slot-runner-scripts.steps.js
+  - features/uc/steps/support/facade-harness.js
+steps_changed: true
+tier_impl_changed: false
+dry_run:
+  command: "npx cucumber-js --config cucumber.cjs features/uc --dry-run"
+  exit_code: 0
+  summary: "83 scenarios (83 skipped), 633 steps (633 skipped)"
+  undefined_steps: 0
+  ambiguous_steps: 0
+target_feature_run:
+  cwd: "."
+  command: "npx cucumber-js --config cucumber.cjs features/uc/select-slot-mode-and-launch-runners.feature"
+  exit_code: 0
+  summary: "19 scenarios (18 passed, 1 skipped), 168 steps (166 passed, 2 skipped)"
+  scenarios_total: 19
+  scenarios_passed: 18
+  scenarios_skipped: 1
+  scenarios_failed: 0
+run:
+  cwd: "."
+  command: "npx cucumber-js --config cucumber.cjs features/uc"
+  exit_code: 0
+  summary: "83 scenarios (82 passed, 1 skipped), 633 steps (631 passed, 2 skipped)"
+  scenarios_total: 83
+  scenarios_passed: 82
+  scenarios_skipped: 1
+  scenarios_failed: 0
+  undefined_steps: 0
+  ambiguous_steps: 0
+  runs: 3
+  runs_note: "全体実行を 3 回流し、3 回とも同じ結果(3 回目は S7 で補助 facade-harness.js に終了を待たない起動 startFacade を足した後の再確認)"
+preceding_uc_run:
+  features:
+    - features/uc/assign-slot-runner-scripts.feature
+    - features/uc/configure-feature-flags.feature
+    - features/uc/define-slot-job-maps.feature
+    - features/uc/define-crosscheck-job-map-and-comparison-definitions.feature
+  scenarios_total: 64
+  scenarios_passed: 64
+  scenarios_skipped: 0
+  note: "全体実行 83 件のうち先行 UC の 64 件。先行 UC「slot runner の実体スクリプトを割り当てる」で保留(skipped)だった 2 件を、この S6 で実装して passed にした(下記 preceding_uc_scenarios_implemented)。それ以外の先行 UC の step 定義は未変更"
+preceding_uc_scenarios_implemented:
+  feature: features/uc/assign-slot-runner-scripts.feature
+  target_feature_run:
+    command: "npx cucumber-js --config cucumber.cjs features/uc/assign-slot-runner-scripts.feature"
+    exit_code: 0
+    summary: "9 scenarios (9 passed), 70 steps (70 passed)"
+  scenarios:
+    - scenario: "runner 実体を差し替えても facade は変更不要である(SPEC-001-04)"
+      method: "facade/ の bin・runners・lib・src を一時ディレクトリの /opt/relay-gate へ複製し、GREEN_RUNNER を自作の runner へ書き換えて validate-config.sh が終了コード 0 を返した後、配置の複製の bin/facade.sh を facade.sh JOB001 で起動。差し替えの前に配置してあった全ファイルの sha256 が起動の後も同じこと、green/ に自作の runner が書いた 3 ファイルが揃うこと、自作の runner が runner IF の引数で起動されたことを判定"
+      note: "blue は標準の slot runner のまま(中身は後続 UC。仮の応答の間は facade の終了コードが 0 にならない)。この Scenario の Then は終了コードを判定していないため、終了コードは見ていない。文言に挙がるファイルのうち実在するのは facade.sh・標準の slot runner・共通ライブラリで、速報クロスチェックの runner / worker・hang-detector.sh・background-rerun.sh・abort-green.sh はまだ無い(配置に加わると同じ判定に入る)"
+    - scenario: "facade は設定された runner を runner IF で起動するだけである(SPEC-002-03)"
+      method: "リポジトリの facade/bin/facade.sh を facade.sh JOB001 x y で起動。green のスタブの起動引数が runner IF の引数と完全一致すること、環境変数に GREEN_IMPL=green-1.4.0 と RAPID_CROSSCHECK_MODE=off があり RAPID_CROSSCHECK_RUNNER が無いことを判定"
+skipped_scenarios:
+  - scenario: "値が空のジョブマップの場所のキーがある slot の runner は固定の名前のジョブマップで実行先を解決する(SPEC-004-01)"
+    judged: "Given 2 行・When・Then 1 行目(green runner は環境変数 GREEN_JOB_MAP_CSV=/etc/relay-gate/green-job-map.csv を受け取って起動される。起動引数も runner IF の引数と完全一致)は実行して passed"
+    skipped_from: "Then 2 行目(execution-spec.json の slots.green)と Then 3 行目(green/stderr.log)"
+    skip_condition: "標準の slot runner が仮の応答の間だけ skipped を返す。判定は実行結果で行う: 本物の標準の slot runner が正しい引数の起動で終了コード 6 を返し、かつ green の role ディレクトリにファイルが 1 つも無く、かつ run ディレクトリに execution-spec.json が無い。3 つのどれかが外れる(後続 UC が中身を作る)と、同じ step がそのまま execution-spec.json と stderr.log を判定する"
+    reason: "標準の slot runner の中身(ジョブマップの解決、execution-spec.json、stderr.log の出力)は後続 UC(ジョブマップで JOB_ID から実行先を解決する / execution-spec.json を確定保存する)の担当。オーケストレータの決定(仕様は変えない。fake の標準 runner は作らない)"
+    ref: docs/impl/latest/09730858/issues/20261118_091109_cross-uc-scenarios.md
+spec_interpretation:
+  - scenario: "mode だけを書いた Given の Scenario(多数)"
+    note: "仕様の Given が要点だけを書いているため、検証を通る値(BLUE_IMPL / GREEN_IMPL、テスト用 runner、速報クロスチェックの runner / worker、rapid-crosscheck.env、起動している管理 DB)を step が補った。書かれた値は変えていない。起票済み issue の「仕様に書かれていない前提(step が補うもの)」の適用で、前提の新規抽出ではない"
+  - scenario: "off の slot は起動しない(SPEC-001-01) / 新実装の単独本番モードでは green だけを起動し管理 DB に触れない(SPEC-001-03)"
+    note: "「起動されない」を観測するため、off の slot にもテスト用 runner を割り当て(feature-flag.env に <SLOT>_RUNNER を書く)、起動記録が無いことを判定した"
+  - scenario: "background を先に起動し foreground だけを待機する(SPEC-002-01)"
+    note: "仕様どおり「facade は blue の終了後 10 秒以内に終了する」を判定した(blue のテスト用 runner が終了の印を書いた時刻から facade の終了までが 10 秒以内)。600 秒の green を待たないという振る舞いの確認で、性能の検査ではない。green のテスト用 runner(sleep 600)は Scenario の終了時に止める"
+  - scenario: "並行稼働モードで blue foreground と green background を起動する(SPEC-001-01) / 次世代並行稼働モードでは blue background と green foreground を起動する(SPEC-001-03)"
+    note: "「foreground の PID だけを待機する」は、(a) 実行ログの待機の行が foreground の runner の PID の 1 行だけ (b) facade の終了後も background のテスト用 runner が動いていて exitcode.txt が無い、の 2 点で判定した。起動の順は実行ログの slot started の行の順(行の pid はテスト用 runner が記録した自分の PID と照合)"
+  - scenario: "RAPID_CROSSCHECK_MODE=background では parallel_run を STARTED から RUNNING にする(SPEC-011-01)"
+    note: "INSERT(STARTED)→ UPDATE(RUNNING)の順は、一時 PostgreSQL のテスト用データベースに置いた履歴の表とトリガ(テストの観測用)で判定した"
+  - scenario: "RAPID_CROSSCHECK_MODE=off では管理 DB に触れない(SPEC-005-04) / 新実装の単独本番モード(SPEC-001-03)"
+    note: "管理 DB の接続設定が存在しない前提のため、「行は作成されない」「管理 DB へ接続せず」は、PATH の先頭に置いた RDB クライアント CLI(psql)の記録用ラッパーが 1 回も呼ばれていないことで判定した"
+  - scenario: "RAPID_CROSSCHECK_MODE=off では速報クロスチェック設定が存在しなくても slot 実行できる(SPEC-005-06)"
+    note: "「終了コードは foreground の exitcode.txt の値である」を 0 以外で確かめるため、foreground のテスト用 runner は exitcode.txt に 3 を書く(facade の終了コード 3 を判定)"
+  - scenario: "RAPID_CROSSCHECK_MODE=background で管理 DB に接続できない"
+    note: "参照名の結び付けと rapid-crosscheck.env を残したまま、一時 PostgreSQL を実際に止めてから facade.sh を起動した"
+  - scenario: "確報クロスチェックを起動しない(SPEC-001-01)"
+    note: "有効な並行稼働の設定を補い、配置ディレクトリ(一時ディレクトリの /opt/relay-gate と /opt/relay-gate/bin)と PATH に記録用の final-crosscheck-runner.sh を置いて、起動記録が無いことを判定した"
+harness:
+  process: "facade/bin/facade.sh を実プロセスとして起動(Scenario ごとの一時ディレクトリを root に、仕様の絶対パス /etc/relay-gate・/opt/relay-gate・/work を root 配下へ写像)。起動・記録の読み取り・後始末は features/uc/steps/support/facade-harness.js に集約(ATDD と共有)"
+  database: "initdb + pg_ctl の一時 PostgreSQL(facade/features/steps/support/temp-postgres.js を require で再利用。複製なし)。Scenario ごとに新しいデータベース。常設のサービスには接続しない"
+  external_connections: none
+  repository_writes: none
+  leftover_processes: "none(実行後に sleep 600 と一時 PostgreSQL のプロセスが残っていないことを pgrep で確認)"
+  facade_spawn_timeout_ms: 120000
+  facade_spawn_timeout_note: "facade が background を待ってしまったときにテストが止まらないための打ち切り。判定の対象ではない"
+injections:
+  - what: "started-at.txt / exitcode.txt(と stdout.log / stderr.log)を書くテスト用 runner、長く動くテスト用 runner(一時ディレクトリの実スクリプト)"
+    where: "features/uc/steps/support/facade-harness.js(runnerBody)"
+    basis: "docs/impl/latest/09730858/issues/20261118_091109_cross-uc-scenarios.md の 1〜3"
+  - what: "参照名 mgmt-db を一時 PostgreSQL に結び付ける pg_service.conf(環境変数 PGSERVICEFILE)"
+    where: "features/uc/steps/support/facade-harness.js(startManagementDb / runFacade)"
+    basis: "AssumptionRecord A-001(docs/impl/latest/09730858/stages/attempt-3/S4_tier-impl.tier-facade.assumptions.yaml)"
+  - what: "標準の slot runner の起動引数と環境変数を記録してから、本物の標準の slot runner へ同じ引数で処理を渡して終了コードを返す包み(標準の slot runner の代わりのスタブではない)"
+    where: "features/uc/steps/select-slot-mode-and-launch-runners.steps.js(STANDARD_RUNNER_RECORDING_WRAPPER)"
+    basis: "docs/impl/latest/09730858/issues/20261118_091109_cross-uc-scenarios.md の 4(案 A)"
+injections_note: "注入箇所には根拠と「暫定注入・契約確定後に削除」のコメントを付けた。前提の新規抽出なし"
+cross_uc_refs:
+  - docs/impl/latest/09730858/issues/20261118_091109_cross-uc-scenarios.md
+  - docs/impl/latest/65b09d93/issues/20261118_012630_cross-uc-scenarios.md
+issues: []
+issues_note: "新規起票なし"
+completed_at: '2026-11-18T11:37:00+09:00'
+completed_by: dist-impl-implement@0.14.1

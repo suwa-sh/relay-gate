@@ -21,6 +21,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
+const harness = require('./support/facade-harness');
 
 const REPO_ROOT = path.resolve(__dirname, '../../..');
 const FACADE_HOME = path.join(REPO_ROOT, 'facade');
@@ -286,13 +287,29 @@ Then(
 );
 
 // ---- facade.sh を起動する 2 Scenario ----
-// facade.sh は UC「slot 実行モードを選択して runner を起動する」の担当で、この UC の時点では無い
-// (docs/impl/latest/65b09d93/issues/20261118_012630_cross-uc-scenarios.md)。facade.sh を起動する step は、
-// facade/bin/facade.sh が無い間は skipped を返し、有るのに未実装なら失敗させる(その UC が step を実装する)。
-// facade.sh の代わりのスタブは注入しない(facade.sh の振る舞いそのものが判定対象のため)。
+// facade.sh は UC「slot 実行モードを選択して runner を起動する」(09730858)が作った(facade/bin/facade.sh)。
+// 以前は facade.sh が無い間だけ When が skipped を返していた(docs/impl/latest/65b09d93/issues/20261118_012630_cross-uc-scenarios.md)。
+// UC 09730858 の S6 で、facade.sh を実プロセスとして起動する形に実装した(feature の本文は変えていない。
+// docs/impl/latest/09730858/issues/20261118_091109_cross-uc-scenarios.md の 8)。
+// 起動と記録の読み取りは support/facade-harness.js(UC 09730858 の step と共有)を使う。
+
+// World の env(この feature の Given が組み立てた feature-flag.env の内容)で facade.sh を起動する
+function runFacadeWithEnv(world, args, facadeSh) {
+  world.flags = world.env;
+  harness.runFacade(world, args, { facadeSh });
+}
+
+function listFiles(dir) {
+  return fs
+    .readdirSync(dir, { withFileTypes: true })
+    .flatMap((entry) => (entry.isDirectory() ? listFiles(path.join(dir, entry.name)) : [path.join(dir, entry.name)]))
+    .sort();
+}
 
 Given(literal('並行稼働モードで green runner が新実装 green-1.x 用である'), function () {
-  deployRelayGate(this);
+  const home = deployRelayGate(this);
+  // facade.sh を起動する Scenario なので、入口の bin/ も配置する
+  fs.cpSync(path.join(FACADE_HOME, 'bin'), path.join(home, 'bin'), { recursive: true });
   writeJobMap(this, 'blue', [JOB001_ROW]);
   writeJobMap(this, 'green', [JOB001_ROW]);
   this.env = {
@@ -318,10 +335,9 @@ Given(
 When(
   literal('feature-flag.env の GREEN_RUNNER を /opt/relay-gate/runners/green-next-runner.sh に変更し validate-config.sh が終了コード 0 を返した後、ジョブスケジューラが facade.sh JOB001 を実行する'),
   function () {
-    // 差し替え前の relay-gate のファイル(この UC の時点で実在する標準の slot runner と共通ライブラリ)の内容を控える
+    // 差し替え前の relay-gate のファイル(配置ディレクトリの bin/・runners/・lib/・src/ の全ファイル)の内容を控える
     const home = this.sandbox(SPEC_HOME);
-    const watched = [path.join(home, 'runners', 'standard-runner.sh'), ...LIB_FILES.map((name) => path.join(home, 'lib', name))];
-    this.hashesBefore = Object.fromEntries(watched.map((file) => [file, sha256(file)]));
+    this.hashesBefore = Object.fromEntries(listFiles(home).map((file) => [file, sha256(file)]));
     this.env.GREEN_RUNNER = this.sandbox(SPEC_GREEN_NEXT_RUNNER);
     fs.writeFileSync(this.envPath, Object.entries(this.env).map(([key, value]) => `${key}=${value}\n`).join(''));
     const proc = spawnSync(VALIDATE_CONFIG, ['--feature-flag', this.envPath], {
@@ -333,10 +349,9 @@ When(
     this.result = { status: proc.status, stdout: proc.stdout, stderr: proc.stderr };
     assertExit(this, 0);
     assertStdoutIncludes(this, `green_runner: ${SPEC_GREEN_NEXT_RUNNER}`);
-    if (!fs.existsSync(FACADE_SH)) {
-      return 'skipped';
-    }
-    throw new Error(`not implemented: ${FACADE_SH} exists; implement this step in the UC that provides facade.sh`);
+    // 配置した relay-gate の facade.sh(一時ディレクトリの /opt/relay-gate/bin/facade.sh)を、ジョブ定義どおり facade.sh JOB001 で起動する。
+    // blue は標準の slot runner のまま(中身は後続 UC。仮の応答の間は facade の終了コードが 0 にならないため、終了コードは判定しない)
+    runFacadeWithEnv(this, ['JOB001'], path.join(home, 'bin', 'facade.sh'));
   },
 );
 
@@ -345,12 +360,30 @@ Then(
     'facade.sh・速報クロスチェック runner(RAPID_CROSSCHECK_RUNNER の実体)・速報クロスチェック worker(RAPID_CROSSCHECK_WORKER の実体)・hang-detector.sh・background-rerun.sh・abort-green.sh・標準の slot runner(runners/standard-runner.sh)・共通ライブラリ(lib/runner-*.sh)のファイルは変更されていない',
   ),
   function () {
-    throw new Error('not implemented: requires facade.sh');
+    // 差し替えの前に配置してあった relay-gate のファイル(bin/・runners/・lib/・src/ の全ファイル)の内容が、差し替えと起動の後も同じ。
+    // 文言に挙がるファイルのうち、この時点で実在するもの(facade.sh・標準の slot runner・共通ライブラリ)は必ず見る。
+    // まだ実在しないもの(速報クロスチェックの runner / worker・hang-detector.sh・background-rerun.sh・abort-green.sh)は、
+    // 配置に加わった時点で同じ判定に入る
+    const home = this.sandbox(SPEC_HOME);
+    for (const required of [path.join(home, 'bin', 'facade.sh'), path.join(home, 'runners', 'standard-runner.sh'), ...LIB_FILES.map((name) => path.join(home, 'lib', name))]) {
+      assert.ok(required in this.hashesBefore, `${this.unsandbox(required)} should be deployed before the change`);
+    }
+    for (const [file, hash] of Object.entries(this.hashesBefore)) {
+      assert.ok(fs.existsSync(file), `${this.unsandbox(file)} should still exist`);
+      assert.equal(sha256(file), hash, `${this.unsandbox(file)} must not be changed`);
+    }
   },
 );
 
 Then(literal('green/ に Runner Result の 3 ファイルが揃う'), function () {
-  throw new Error('not implemented: requires facade.sh');
+  // green は background(facade は待たない)。自作の runner が最後に書く exitcode.txt を待ってから見る
+  const greenDir = path.join(harness.runDir(this), 'green');
+  harness.waitForFile(path.join(greenDir, 'exitcode.txt'));
+  for (const name of ['stdout.log', 'stderr.log', 'exitcode.txt']) {
+    assert.ok(fs.statSync(path.join(greenDir, name)).isFile(), `green/${name} should exist`);
+  }
+  // 起動されたのは差し替え後の自作の runner(runner IF の引数)
+  assert.equal(fs.readFileSync(`${this.sandbox(SPEC_GREEN_NEXT_RUNNER)}.args`, 'utf8').trim(), `--run-id ${this.runId} --job-id JOB001 --role green --mode background --`);
 });
 
 Given(
@@ -383,18 +416,23 @@ Given(literal('両スタブは --help で "runner-if-version=1" を返し、両 
 });
 
 When(literal('ジョブスケジューラが facade.sh JOB001 x y を実行する'), function () {
-  if (!fs.existsSync(FACADE_SH)) {
-    return 'skipped';
-  }
-  throw new Error(`not implemented: ${FACADE_SH} exists; implement this step in the UC that provides facade.sh`);
+  runFacadeWithEnv(this, ['JOB001', 'x', 'y'], FACADE_SH);
 });
 
 Then(literal('スタブは "--run-id <run_id> --job-id JOB001 --role green --mode background -- x y" で起動され、facade は実装固有の引数を追加していない'), function () {
-  throw new Error('not implemented: requires facade.sh');
+  // foreground の blue のスタブが exitcode.txt に 0 を書くので、facade は 0 で終わる
+  assert.equal(this.result.status, 0, `exit code\n${dump(this)}`);
+  // green は background(facade は待たない)。スタブが最後に書く exitcode.txt を待ってから記録を読む
+  harness.waitForFile(path.join(harness.runDir(this), 'green', 'exitcode.txt'));
+  // 起動引数は runner IF の引数だけ(完全一致。実装固有の引数が足されていれば一致しない)
+  assert.equal(fs.readFileSync(`${this.greenStub}.args`, 'utf8').trim(), `--run-id ${this.runId} --job-id JOB001 --role green --mode background -- x y`);
 });
 
 Then(literal('スタブの環境変数に GREEN_IMPL=green-1.4.0 があり、RAPID_CROSSCHECK_RUNNER は渡されていない(RAPID_CROSSCHECK_MODE=off)'), function () {
-  throw new Error('not implemented: requires facade.sh');
+  const env = harness.parseEnv(fs.readFileSync(`${this.greenStub}.env`, 'utf8'));
+  assert.equal(env.GREEN_IMPL, 'green-1.4.0');
+  assert.equal(env.RAPID_CROSSCHECK_MODE, 'off');
+  assert.equal(env.RAPID_CROSSCHECK_RUNNER, undefined, 'RAPID_CROSSCHECK_RUNNER must not be passed');
 });
 
 // ---- runner 実体が存在しない割当は拒否される ----
