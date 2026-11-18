@@ -1,0 +1,213 @@
+schema_version: "1.0"
+uc_id: "09730858"
+tier: "tier-facade"
+attempt: 1
+extraction:
+  candidate_count: 26
+  excluded_as_explicit: 4
+  recorded_count: 22
+  excluded_note: "除外した 4 件(仕様・契約に明示あり): background の起動順 blue → green(tier-facade.md 起動順序 3「仮採用」)/ background の PID を disown する(同 6)/ rapid-crosscheck.env にも入力の守備範囲 (i)(ii) を適用する(契約 config_input_rules。全読み手共通)/ 管理 DB 接続失敗の文言 `error: management db connection failed run_id=... conn_ref=...`(tier-facade.md エラーメッセージ表)"
+assumptions:
+  - id: A-001
+    category: security
+    assumption: "管理 DB のクライアントは PATH の psql とし、RAPID_DB_CONN_REF の値(参照名)を接続サービス名として接続文字列 `service='<参照名>'` で渡す(接続先は pg_service.conf などクライアントの接続設定が決める)。~/.psqlrc は読まない(-X)"
+    target: "facade/src/gateway/rdb_client.sh:28"
+    reason: "仕様は RDB クライアント CLI の呼び出しと参照名の解決を『適用側の運用手順(DB クライアントの接続設定)に委ねる』とだけ書き、コマンド名と参照名の渡し方が無い。オーケストレータの指示(dispatch の可変プロンプト)で psql と service= の形に決めた"
+    confidence: medium
+    spec_refs:
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#conventions.credentials"
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#internal_datastores"
+      - "spec.md#データフロー(gateway RdbClientAdapter)"
+      - "tier-facade.md#読み込む設定(速報クロスチェック設定)"
+  - id: A-002
+    category: security
+    assumption: "psql の stderr は捨てる(実行ログにも facade の stderr にも出さない)。接続失敗の原因の詳細は残らない"
+    target: "facade/src/gateway/rdb_client.sh:49"
+    reason: "psql の stderr には参照名から解決したソケット・ホスト・ポートが入り、『facade は参照名から解決した接続情報を実行ログ・stderr に出さない』に反するため。クライアントの出力の扱いは仕様に無い"
+    confidence: high
+    spec_refs:
+      - "tier-facade.md#読み込む設定(速報クロスチェック設定)"
+      - "docs/specs/latest/_cross-cutting/ux-ui/ui-design.md#実行ログファイル"
+  - id: A-003
+    category: persistence
+    assumption: "1 回の psql の呼び出しを 1 トランザクションにする(SQL は標準入力から -f - で渡し --single-transaction と ON_ERROR_STOP=1)。parallel_runs と rapid_runs の INSERT は 1 回の呼び出しにまとめて同一トランザクションにする。slot_executions の INSERT・pid の UPDATE・parallel_runs の RUNNING への UPDATE はそれぞれ別の呼び出し(別トランザクション)"
+    target: "facade/src/gateway/rdb_client.sh:48"
+    reason: "仕様は parallel_runs と rapid_runs を同一トランザクションにすることだけを定め、クライアントでの実現方法と他の文のトランザクション境界は書いていない"
+    confidence: high
+    spec_refs:
+      - "tier-facade.md#UC ロジック(起動順序 2〜5)"
+      - "_model-summary.yaml#tables.rapid_runs.note"
+      - "docs/specs/latest/_cross-cutting/datastore/rdb-schema.yaml#parallel_runs"
+  - id: A-004
+    category: security
+    assumption: "SQL に入れる値(run_id・job_id・parameters・パス・日時)は psql の変数(-v name=value)で渡し、SQL の中では :'name' の文字列リテラルとして参照する(値を SQL の文字列に連結しない)"
+    target: "facade/src/repository/parallel_run_repo.sh:39"
+    reason: "契約は日時をバインド値で渡すことだけを定め、CLI クライアントでの値の渡し方(SQL インジェクションの防ぎ方)は書いていない。PARAM... は任意の文字列"
+    confidence: high
+    spec_refs:
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#conventions.datetime_generation"
+      - "spec.md#計算ルール一覧(parameters(JSON))"
+  - id: A-005
+    category: error_handling
+    assumption: "psql の終了コード 2(接続できない)と 126 以上(PATH に無い・起動できない)を『管理 DB 接続失敗』(`error: management db connection failed run_id=... conn_ref=...`)、それ以外の非 0 を『INSERT の失敗』(`error: management db insert failed table=... run_id=...`)に読み替える。slot_executions の INSERT で接続できないときも接続失敗の文言を出す"
+    target: "facade/src/gateway/rdb_client.sh:53"
+    reason: "仕様は接続失敗と INSERT 失敗の 2 つの文言を定めるが、どの事象をどちらに数えるかの判定方法は書いていない(psql の終了コードは一時 PostgreSQL で実測して 2 = 接続、3 = SQL の失敗を確認した)"
+    confidence: medium
+    spec_refs:
+      - "tier-facade.md#出力契約(エラーメッセージ表)"
+      - "docs/specs/latest/_cross-cutting/ux-ui/ui-design.md#管理 DB 障害の定型文"
+  - id: A-006
+    category: error_handling
+    assumption: "parallel_runs と rapid_runs をまとめた INSERT が失敗したとき、table= には失敗した文の表を出す。どの文で止まったかは、各文の前に \\echo で出す印(table=<表>)の最後の行で決める"
+    target: "facade/src/repository/parallel_run_repo.sh:16"
+    reason: "文言は `table=parallel_runs|rapid_runs|slot_executions` と定まるが、同一トランザクションの中でどちらの文が失敗したかを知る方法は仕様に無い"
+    confidence: medium
+    spec_refs:
+      - "tier-facade.md#出力契約(管理 DB INSERT 失敗)"
+  - id: A-007
+    category: error_handling
+    assumption: "runner の標準入力を /dev/null、標準出力と標準エラーを /dev/null につないで起動する(facade の stdout / stderr を runner に継承させない)"
+    target: "facade/src/gateway/runner_process_adapter.sh:42"
+    reason: "仕様は facade が stdin を runner に渡さないことと runner が stdout / stderr に出さないことを定めるが、runner の出力先の扱いは書いていない。継承させると facade の終了後も background の runner がジョブスケジューラの出力先を開いたままになる"
+    confidence: medium
+    spec_refs:
+      - "tier-facade.md#引数・オプション(stdin)"
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#commands.$BLUE_RUNNER / $GREEN_RUNNER(stdout / stderr)"
+  - id: A-008
+    category: error_handling
+    assumption: "setsid が PATH にあれば setsid を介して runner を起動し、無い環境(開発機の macOS)ではそのまま `&` で起動する。実行環境(Linux)では常に setsid を通る"
+    target: "facade/src/gateway/runner_process_adapter.sh:31"
+    reason: "仕様は setsid での起動を仮採用とするが、setsid が無い環境の扱いは書いていない(開発機の macOS には setsid が無い)"
+    confidence: medium
+    spec_refs:
+      - "tier-facade.md#UC ロジック(クラッシュ耐性)"
+  - id: A-009
+    category: error_handling
+    assumption: "runner プロセスの起動失敗は、起動の直前に解決後のパスが実行可能なファイルでないことで判定する(exec の失敗は子プロセスの中で起き、親からは区別できないため判定しない)。失敗時は `error: runner failed to start run_id=... role=... runner=<解決後のパス>`(background-rerun.sh と同じ文言)を出し、実行ログに起動済みの PID(started_pids=)を残す"
+    target: "facade/src/gateway/runner_process_adapter.sh:27"
+    reason: "仕様は facade の runner 起動失敗を終了コード 6 とするが、facade の error 行の文言と起動失敗の判定方法は書いていない"
+    confidence: medium
+    spec_refs:
+      - "tier-facade.md#UC ロジック(エラーハンドリング)"
+      - "tier-facade.md#出力契約(エラーメッセージ表)"
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#commands.facade.sh.exit_codes"
+  - id: A-010
+    category: error_handling
+    assumption: "foreground の exitcode.txt が無い・数値でない・255 を超えるときは、stderr に何も出さず、実行ログに `ERROR foreground exit code not available slot=<slot> path: <exitcode.txt のパス>` を残して終了コード 6 にする。stdout.log / stderr.log の中継はしない(UC「foreground slot の結果をジョブスケジューラへ中継する」の担当)"
+    target: "facade/src/usecase/launch_slots.sh:347"
+    reason: "契約は foreground の exitcode.txt なし・非数値を終了コード 6 とするが、その文言は中継の UC に属し、この UC の仕様には無い。foreground 起動後は stderr を汚さない規則に合わせた"
+    confidence: low
+    spec_refs:
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#commands.facade.sh.exit_codes"
+      - "tier-facade.md#出力契約"
+      - "spec.md#処理フロー(以降は UC「foreground slot の結果をジョブスケジューラへ中継する」)"
+  - id: A-011
+    category: input_validation
+    assumption: "JOB_ID の文字種の違反は `error: invalid value key=JOB_ID value=<可視表記の値>` の 1 行(hint なし)で終了コード 2 にする"
+    target: "facade/src/presentation/facade.sh:104"
+    reason: "仕様は JOB_ID の文字種違反を終了コード 2 とするが、エラー文言の表に行が無い"
+    confidence: medium
+    spec_refs:
+      - "tier-facade.md#出力契約(エラーメッセージ表)"
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#commands.facade.sh"
+  - id: A-012
+    category: input_validation
+    assumption: "RELAY_GATE_NOW の形式の検査は、feature-flag.env と(off 以外の)rapid-crosscheck.env の検査をすべて通った後、run_id の発行の前に行う(形式に加えて暦に無い日時も不正とする)"
+    target: "facade/src/usecase/launch_slots.sh:280"
+    reason: "契約は形式不正を終了コード 2 と定めるが、facade の起動時の検査の順(config_violation_report.order_with_other_checks)に RELAY_GATE_NOW の位置が無い"
+    confidence: medium
+    spec_refs:
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#conventions.environment_variables(RELAY_GATE_NOW)"
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#commands.facade.sh.config_violation_report.order_with_other_checks"
+  - id: A-013
+    category: data_format
+    assumption: "実行ログの `INFO feature flag loaded ...` と `INFO run started ...`(と RELAY_GATE_NOW 設定時の `WARN test clock injected now=...`)は run_id を発行した後に書き、run_id 欄に発行した run_id を置く(`-` にしない)"
+    target: "facade/src/usecase/launch_slots.sh:294"
+    reason: "仕様は行の順(feature flag loaded → run started)と run_id が未確定の段階は `-` とすることを定めるが、feature flag loaded をいつ書くか(run_id 発行の前か後か)は書いていない"
+    confidence: medium
+    spec_refs:
+      - "tier-facade.md#UC ロジック(実行ログ)"
+      - "docs/specs/latest/_cross-cutting/ux-ui/ui-design.md#実行ログファイル"
+  - id: A-014
+    category: error_handling
+    assumption: "実行ログの置き場に書き込めないときは、起動の最初に stderr へ `warn: log dir is not writable path: <RELAY_GATE_LOG_DIR>` を 1 行だけ出し、実行ログを書かずに処理を続ける"
+    target: "facade/src/usecase/launch_slots.sh:269"
+    reason: "契約は書き込み不可を『stderr に warn: を出して処理は継続』とするが、warn の文言と出す時点は書いていない"
+    confidence: medium
+    spec_refs:
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#conventions.environment_variables(RELAY_GATE_LOG_DIR)"
+  - id: A-015
+    category: data_format
+    assumption: "slot_executions.artifact_dir には `<RELAY_GATE_ARTIFACT_ROOT>/facade/<run_id>/<slot>/`(成果物ルートを含み、末尾が /)を入れ、parallel_runs.execution_spec_uri には `<RELAY_GATE_ARTIFACT_ROOT>/facade/<run_id>/execution-spec.json` を入れる(RELAY_GATE_ARTIFACT_ROOT は facade が受け取った字面のまま)"
+    target: "facade/src/usecase/launch_slots.sh:190"
+    reason: "_model-summary.yaml と tier-facade.md は artifact_dir を `facade/<run_id>/<slot>/` と書き、契約 rdb-schema.yaml は `<ARTIFACT_ROOT>/facade/<run_id>/<slot>/` と書いていて表記がそろっていない。契約の列の説明に合わせた"
+    confidence: medium
+    spec_refs:
+      - "_model-summary.yaml#tables.slot_executions(artifact_dir)"
+      - "tier-facade.md#データモデル変更(slot_executions)"
+      - "docs/specs/latest/_cross-cutting/datastore/rdb-schema.yaml#slot_executions.artifact_dir"
+  - id: A-016
+    category: data_format
+    assumption: "parameters の JSON 配列は空白を入れずに `[\"a\",\"b\"]` の形で作り、文字列のエスケープはジョブマップの fixed_params の JSON 表記と同じ関数(\\\" \\\\ \\n \\t と \\u00XX)で行う"
+    target: "facade/src/domain/slot_launch_plan.sh:78"
+    reason: "仕様は例 `[\"20260830\",\"full\"]` と空のとき `[]` だけを示し、引用符・制御文字を含む引数のエスケープ規則は書いていない"
+    confidence: high
+    spec_refs:
+      - "spec.md#計算ルール一覧(parameters(JSON))"
+      - "docs/specs/latest/_cross-cutting/datastore/rdb-schema.yaml#parallel_runs.parameters"
+  - id: A-017
+    category: data_format
+    assumption: "管理 DB の日時(requested_at / started_at / completed_at)は、ホストで作ったローカルの `YYYY-MM-DDTHH:MM:SS`(秒精度・指示子なし)の文字列を渡し、DB の timestamp への変換は DB に任せる。run_id の 8 桁 hex は /dev/urandom の 4 バイトを od で 16 進にして作り、作れなければ `error: run_id issue failed job_id=...` で終了コード 6"
+    target: "facade/src/usecase/launch_slots.sh:116"
+    reason: "契約はローカル・秒精度・指示子なしと 4 バイト乱数を定めるが、乱数の取り出し方・DB への渡し方の形・run_id 発行失敗の文言は書いていない"
+    confidence: medium
+    spec_refs:
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#conventions.datetime"
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#shared_rules.run_id.random_source"
+      - "tier-facade.md#出力契約(終了コード 6: run_id 発行失敗)"
+  - id: A-018
+    category: error_handling
+    assumption: "成果物ディレクトリ(run ディレクトリと role のディレクトリ)を作れないときは `error: artifact dir create failed run_id=... path: <パス>` を出して終了コード 6 にする。作るのは run_id の発行の直後、管理 DB の INSERT の前"
+    target: "facade/src/usecase/launch_slots.sh:299"
+    reason: "仕様は成果物ディレクトリ作成失敗を終了コード 6 とするが、文言が無い"
+    confidence: medium
+    spec_refs:
+      - "tier-facade.md#出力契約(終了コード 6)"
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#commands.facade.sh.exit_codes"
+  - id: A-019
+    category: security
+    assumption: "runner の環境は facade のプロセスの環境を引き継ぎ、RELAY_GATE_HOME と相手 slot の <SLOT>_IMPL / <SLOT>_JOB_MAP_CSV と(off のとき)RAPID_CROSSCHECK_RUNNER を外して、契約の環境変数を facade が決めた値で上書きする(env -i で空にはしない。PATH や PGSERVICEFILE などはそのまま渡る)"
+    target: "facade/src/usecase/launch_slots.sh:155"
+    reason: "契約は runner へ渡す環境変数と RELAY_GATE_HOME を渡さないことを定めるが、それ以外の環境変数(PATH・DB クライアントの設定など)を引き継ぐかは書いていない"
+    confidence: medium
+    spec_refs:
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#commands.facade.sh.notes"
+      - "tier-facade.md#起動する runner IF(呼び出し側の契約)"
+  - id: A-020
+    category: input_validation
+    assumption: "--verbose のとき、feature-flag.env に現れたキーごとに実行ログへ `INFO key loaded key=<キー> path: <パス>`(run_id 欄は `-`)を書く(stderr には出さない)"
+    target: "facade/src/usecase/launch_slots.sh:88"
+    reason: "仕様は --verbose を『info を実行ログに出す』とだけ書き、facade が何を info として出すかは定めていない。validate-config.sh の --verbose の info 行と同じ内容にした"
+    confidence: low
+    spec_refs:
+      - "tier-facade.md#引数・オプション(--verbose)"
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#conventions.common_options"
+  - id: A-021
+    category: persistence
+    assumption: "表名・列名・列挙値は SQL に直接書き、契約の生成物 packages/contracts/management-db/management-db.sh(bash の定数)を source しない"
+    target: "facade/src/repository/parallel_run_repo.sh:32"
+    reason: "生成物は facade/ の外(packages/)にあり、facade.sh の配置(RELAY_GATE_HOME = facade の配置ディレクトリ)から読む位置が仕様に無い。列と列挙値は生成物の schema.json と同じ値で書いた(tier BDD は schema.json から作った DDL の実 DB で確かめる)"
+    confidence: medium
+    spec_refs:
+      - "packages/contracts/management-db/README.md"
+      - "docs/impl/latest/contracts.lock.yaml#management-db.generated"
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#conventions.environment_variables(RELAY_GATE_HOME)"
+  - id: A-022
+    category: persistence
+    assumption: "parallel_runs の STARTED → RUNNING の条件付き UPDATE が 0 件だった(STARTED でなかった)ときは、成功と同じに扱い、実行ログに INFO parallel_run status changed を書く(0 件を区別しない)"
+    target: "facade/src/usecase/launch_slots.sh:333"
+    reason: "仕様は UPDATE の失敗を実行ログ ERROR とするが、条件に合わず 0 件だったときの扱いは書いていない"
+    confidence: low
+    spec_refs:
+      - "tier-facade.md#UC ロジック(起動順序 5 / エラーハンドリング)"
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#commands.facade.sh.execution_log"

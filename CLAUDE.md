@@ -107,4 +107,5 @@ dev-rules 正本は `docs/dev-rules/`(coding-rules / test-strategy / tier-rules)
   - 性能の目標(5,000 行・8 MB を 10 秒以内)は目標であり合否の検査ではない。性能のために実装の効率が下がるなら、目標のほうを取り下げる
 - 統合テスト(リポルート): uc_bdd `npx cucumber-js --config cucumber.cjs features/uc` / atdd `npx cucumber-js --config cucumber.cjs features/atdd`
 - 4 段テスト: ATDD `features/atdd/{spec_id}.feature`(S0 生成、`@atdd_{SPEC-ID}-{連番}` タグで選択実行)/ UC BDD `features/uc/{branch_slug}.feature` / tier BDD `{tier_dir}/features/{branch_slug}.feature` / TDD `{tier_dir}/test/`(bats)。step 定義は JavaScript(CommonJS)
-- I/O 境界は実体で検証する(PostgreSQL は `initdb` + `pg_ctl` の一時インスタンス。常設サービスに接続しない。環境不足は fail)
+- I/O 境界は実体で検証する(PostgreSQL は `initdb` + `pg_ctl` の一時インスタンス。常設サービスに接続しない。環境不足は fail)。一時インスタンスの補助は `facade/features/steps/support/temp-postgres.js` を再利用する
+- 管理 DB へは `psql`(PATH から探す)でつなぎ、接続の参照名(`RAPID_DB_CONN_REF` など)を接続サービス名(`service=<参照名>`)として渡す。認証情報の値は読まず、出さない(利用者決定 2026-11-18。仕様にコマンド名と渡し方の記述が無いため、機能ごとに決め直さない)

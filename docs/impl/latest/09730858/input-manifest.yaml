@@ -1,0 +1,50 @@
+schema_version: '1.0'
+uc_id: 09730858
+fixed_at: '2026-11-18T09:01:58+09:00'
+inputs:
+  spec_event:
+    event_id: spec:20261116_021000_feedback_standard_runner_job_map_location
+    sha256: 8aaf650924c43958cf75da8d7f90370dab8e60416382b4d9a7b2217e11d18200
+  spec_md:
+    path: docs/specs/latest/実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/spec.md
+    sha256: 991ba2bc64c1e857544243d019d3ac8710c57fc65e86f33b7d8ce62eb17b2c42
+  tier_mds:
+  - tier: tier-facade
+    path: docs/specs/latest/実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/tier-facade.md
+    sha256: 4d35e0490ec5bc8a26c8a71b132faf4060620c6bfc030a32c5b6dcf3b1322019
+  api_summary:
+    path: docs/specs/latest/実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/_api-summary.yaml
+    sha256: 0d8357212a3de638461fb1f457e8253852320a60f5b33e037cfb62dbf91d9f18
+  shared_spec_refs:
+  - path: docs/specs/latest/_cross-cutting/api/asyncapi.yaml
+    sha256: d7ee3342ea5f162b739f92f9e7d770969692a9d209a04fcd687672b1a46e67b9
+  - path: docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml
+    sha256: a6d7c7942947d73af03ea2ad8c9fc640184396a7efc1f67fe2de06f1eab16d10
+  - path: docs/specs/latest/_cross-cutting/datastore/rdb-schema.yaml
+    sha256: bbe77902949f155ada1a352661e41cc16409fa58b4076cde648cb028b5de11ac
+  - path: docs/specs/latest/_cross-cutting/ux-ui/data-visualization.md
+    sha256: 762c015c99af2d63edee3e9b648b8f3e427c1b872ea42b89e8b311faded18ebf
+  - path: docs/specs/latest/_cross-cutting/ux-ui/ui-design.md
+    sha256: 9241510c007b3f71d14b15d87cc169bab5a1eaf08ab5b532d44a43eebfc1d468
+  model_summary:
+    path: docs/specs/latest/実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/_model-summary.yaml
+    sha256: 5a443b06c339c2cf21311a9315fdf350ef454a9134256ad1614baf932a6a1e31
+  datastore_schema:
+    path: docs/specs/latest/_cross-cutting/datastore/rdb-schema.yaml
+    sha256: bbe77902949f155ada1a352661e41cc16409fa58b4076cde648cb028b5de11ac
+  nfr:
+    path: docs/nfr/latest/nfr-grade.yaml
+    sha256: 02bb857be42015520e925f0386818e1515b6015abfe2e0df0bd34bbaaafbef2d
+  usdm:
+    event_id: 20261116_013000_feedback_standard_runner_job_map_location
+    sha256: 05c1056ed1909eae0293a6ad2a77c2455a5793d19fd4f2d8e8eebc45fcb53cda
+  arch:
+    event_id: 20261116_015000_feedback_standard_runner_job_map_location
+    sha256: c53102258eb87c109a5e44ec19daf68de60dc5770785d80c474f31b1cf8d9879
+  contracts_decl:
+    sha256: 7841f9ba9d00013173c0b90f45ffabb37034ae872ddafdd02d5fdaff26b7d6e5
+  contracts_lock:
+    path: docs/impl/latest/contracts.lock.yaml
+    sha256: 85d0a7048f69781737f394ff299e61a17af70eccf5a4a2d4b245e4c1feb1b324
+  dev_rules_sha256: 6ea5fb63bf9ba32e793f87c4514b912050cd95b958660576b545ba5c484991b2
+lineage_ok: true

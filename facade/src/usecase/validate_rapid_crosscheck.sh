@@ -39,11 +39,16 @@ validate_rapid_crosscheck_print_stopped() {
   cli_field_line violations "$2"
 }
 
-# 引数: path verbose(true|false)
-validate_rapid_crosscheck_command() {
-  local path="$1" verbose="${2:-false}" shown_path load_status=0
-  cli_field_safe_text "$path"
-  shown_path="$CLI_FIELD_SAFE_TEXT"
+# rapid-crosscheck.env の存在・読み取り → 入力の複製と読み込み → (i) バイト点検 → (ii) 行の構造の検査
+# (config_input_rules.env_files の検査の段。検証コマンドと実行時の読み手(facade.sh)が同じ関数を使う)。
+# 止めたときは、その段の error 行(と hint)を stderr に出す。続行するときは何も出さない
+# 引数: path shown_path(表示用に置き換え済みのパス)
+# 戻り値: 0 … (iii) へ進む / 2 … ファイルなし・読めない・(i)(ii) の違反 / 6 … 入力の複製の失敗・補助コマンドの失敗
+# 結果(グローバル): VALIDATE_RAPID_CROSSCHECK_STOPPED_VIOLATIONS … (i)(ii) で止めたときの error 行の数(それ以外は空)
+VALIDATE_RAPID_CROSSCHECK_STOPPED_VIOLATIONS=""
+validate_rapid_crosscheck_load_input() {
+  local path="$1" shown_path="$2" load_status=0
+  VALIDATE_RAPID_CROSSCHECK_STOPPED_VIOLATIONS=""
 
   if [ ! -e "$path" ]; then
     printf '%s\n' "error: config file not found path: $shown_path" >&2
@@ -79,7 +84,7 @@ validate_rapid_crosscheck_command() {
   validate_job_map_flush_report
   JOB_MAP_REPORT_SINK="$saved_sink"
   if [ "$byte_status" -ne 0 ]; then
-    validate_rapid_crosscheck_print_stopped "$path" "$byte_violations"
+    VALIDATE_RAPID_CROSSCHECK_STOPPED_VIOLATIONS="$byte_violations"
     return "$VALIDATE_RAPID_CROSSCHECK_EXIT_VALIDATION_ERROR"
   fi
 
@@ -95,8 +100,25 @@ validate_rapid_crosscheck_command() {
   done
   if [ "${#structure_lines[@]}" -gt 0 ]; then
     printf '%s\n' "${structure_lines[@]}" >&2
-    validate_rapid_crosscheck_print_stopped "$path" "${#structure_lines[@]}"
+    VALIDATE_RAPID_CROSSCHECK_STOPPED_VIOLATIONS="${#structure_lines[@]}"
     return "$VALIDATE_RAPID_CROSSCHECK_EXIT_VALIDATION_ERROR"
+  fi
+  return "$VALIDATE_RAPID_CROSSCHECK_EXIT_OK"
+}
+
+# 引数: path verbose(true|false)
+validate_rapid_crosscheck_command() {
+  local path="$1" verbose="${2:-false}" shown_path load_status=0
+  cli_field_safe_text "$path"
+  shown_path="$CLI_FIELD_SAFE_TEXT"
+
+  validate_rapid_crosscheck_load_input "$path" "$shown_path" || load_status=$?
+  if [ "$load_status" -ne 0 ]; then
+    # (i)(ii) で止めたときも stdout は固定順で出し、値から決まる行は `-` にする
+    if [ -n "$VALIDATE_RAPID_CROSSCHECK_STOPPED_VIOLATIONS" ]; then
+      validate_rapid_crosscheck_print_stopped "$path" "$VALIDATE_RAPID_CROSSCHECK_STOPPED_VIOLATIONS"
+    fi
+    return "$load_status"
   fi
 
   # (iii) キーごとの検査と未知キーの warn。この段の stderr の順は info 行すべて(--verbose 時のみ)→ 未知キーの warn 行すべて

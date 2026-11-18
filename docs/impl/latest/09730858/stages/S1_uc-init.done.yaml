@@ -1,0 +1,34 @@
+stage: S1
+uc_id: 09730858
+manifest_sha256: 2cf3a8f7e07ff0ec0e1d6580e45506a7a4fd0a3392715d0ffdf6db7f2068f82d
+manifest_projection: v2
+result: pass
+input_preflight:
+  files_exist: true
+  yaml_parse: true
+  gherkin_blocks: 3
+  gherkin_blocks_note: spec.md 2 (normal / error) / tier-facade.md 1
+  tier_ids_in_arch:
+  - tier-facade
+  conditional_inputs_consistent: true
+lineage_ok: true
+atdd_scenarios:
+- SPEC-001-01-1
+- SPEC-001-01-2
+- SPEC-001-01-3
+- SPEC-001-02-1
+- SPEC-001-04-1
+- SPEC-001-04-2
+- SPEC-002-01-1
+- SPEC-002-01-2
+- SPEC-005-06-3
+- SPEC-005-06-4
+- SPEC-011-01-1
+- SPEC-011-04-1
+- SPEC-011-04-2
+- SPEC-011-04-3
+atdd_mapping: 'the 14 scenarios confirmed at bootstrap are kept. none of the still unassigned added criteria is assigned here: SPEC-004-01-3..8 need the runner''s job map resolution (the resolve UC), SPEC-001-04-4..7 and SPEC-013-01-3/4 need the standard runner''s execution part or the shared library bodies (later UCs). this UC passes the resolved job map location to the runner; that is covered by the spec''s own scenarios'
+shared_spec_refs_note: spec.md refers to cli-command-contract.yaml and asyncapi.yaml, tier-facade.md to ui-design.md; with the transitive refs it is the same 5 refs as the previous UCs (manifest.py)
+scope_note: 'first run of this UC. it builds facade/bin/facade.sh (mode selection, runner launch, management DB records when the rapid crosscheck mode is not off). handed over from 65b09d93: the scenarios that launch facade.sh return cucumber ''skipped'' while facade/bin/facade.sh is absent (tier BDD 1, UC BDD 2); once this UC builds facade.sh they must be judged, not skipped. the standard runner still answers only --help (placeholder exit 6 otherwise); its body belongs to later UCs, so scenarios here use test runners where the runner''s behavior is needed. performance: only the absence of wasteful processing is looked at; no time-asserting or large-input tests (user decision 2026-11-18)'
+completed_at: '2026-11-18T09:01:58+09:00'
+completed_by: dist-impl-run@0.14.1

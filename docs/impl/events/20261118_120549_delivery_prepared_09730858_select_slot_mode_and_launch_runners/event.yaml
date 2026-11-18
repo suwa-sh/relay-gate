@@ -1,0 +1,15 @@
+event_id: 20261118_120549_delivery_prepared_09730858_select_slot_mode_and_launch_runners
+type: delivery_prepared
+uc_id: 09730858
+stage: S9
+payload:
+  review_approved_event_id: 20261118_120548_review_approved_09730858_final
+  pending_decision_count: 0
+  decisions_applied: true
+  post_decision_gates: pass
+  post_decision_review_aligned: true
+  base_branch: main
+  base_head: 77e44a22b2739ac73f1d4897676bd0eb4aeadd41
+  feature_branch: feature/select-slot-mode-and-launch-runners
+  note: the only change after the review is one line in CLAUDE.md (the management DB connection method, as announced in the review). spec, implementation and tests are unchanged; the gates are those recorded in S4-S7
+created_at: '2026-11-18T12:05:49+09:00'

@@ -1,0 +1,79 @@
+schema_version: "1.0"
+stage: "S5"
+tier: "tier-facade"
+attempt: 2
+uc_id: "09730858"
+manifest_sha256: "1f0a15af37a2317307d14e000455451b3bf374c415cd42cef05e8e2daa211344"
+manifest_projection: "v2"
+result: "fail"
+gate_reexec:
+  format: "pass"
+  lint: "pass"
+  tdd: "pass"
+  bdd_tier: "pass"
+open_blockers: 1
+open_majors: 8
+summary:
+  blocker: 1
+  major: 8
+  minor: 14
+assumptions_sha256: "33943b263700dfc85cbe9a163f102f1b4739fa684e4f09ab12767038968c6392"
+assumption_verdicts_summary:
+  consistent: 0
+  spec_absent: 21
+  contradicts: 1
+  unlisted: 0
+viewpoints_checked:
+  spec_conformance:
+    status: "done"
+    note: "CLI facade/runner IF、mode排他・off除外・順序・引数/環境・パス・run_id・3表INSERT/UPDATEを照合。featureはtierのgherkinと完全一致。141シナリオ通過。起動失敗の反証はF-001へ統合。UI無し。API summaryはCLI索引の旧形式でpaths空、v2 contract slice規則は非該当。"
+  readability_maintainability:
+    status: "done"
+    note: "presentation/usecase/domain/repository/gatewayの責務分離、共通検証関数と日本語コメントを確認。入力検証の共有化で検証コマンド3種の14入力に出力退行なし。"
+  security:
+    status: "done"
+    note: "envをsourceせず、JOB_ID文字種制約、runner argv配列、環境除去、psql変数引用、接続情報非出力を照合。実DBで引用符を含む値を検証。"
+  performance:
+    status: "done"
+    note: "通常の小入力で不要な処理のみ確認。off時のDB/rapid env非参照、backgroundを待たないこと、設定スナップショット共有、主キー条件のUPDATEを確認。所要時間・大入力での性能判定は行わず、索引/migrationはtier-opsの範囲として分離。"
+  operability:
+    status: "done"
+    note: "stderrと実行ログの定型文、設定外出し、run_id相関、検証違反の最初のerror/hintとwarnの順を照合。launcher失敗の虚偽成功ログはF-001。"
+  fault_tolerance:
+    status: "done"
+    note: "実DBトランザクションrollback、接続失敗、exec不可、起動前INSERT、UPDATE0件、foreground失敗時background継続を確認。setsidが監視層を起動する前の失敗を見逃す反証F-001。"
+  refactoring:
+    status: "done"
+    note: "契約ドリフトテスト、共有検証関数、BDDのフックと一時領域を確認。逆起動順・誤PIDの変異は検出、起動後INSERTの変異は2回生存しF-002。"
+  assumption_conformance:
+    status: "done"
+    note: "1〜7完走後に22件のid/assumption/targetだけを読み、S4固定指示と仕様を照合した後にreason/confidence/spec_refsを参照。複合主張は既定動作と追加文言・方式を区別。未記録候補は全て既存A-idで被覆。"
+environment_failures: []
+verification_evidence:
+  - check: "macOS gates"
+    command: "shfmt -d . / find src test -name *.sh -exec shellcheck -x {} + / shellcheck -x bin/*.sh / bats -r test / npx cucumber-js --config ../cucumber.cjs features"
+    result: "pass"
+    detail: "元リポジトリの.editorconfig/.shellcheckrcも含む一時複製で実行。bash5.3.15、ShellCheck0.11.0。Bats636/636、BDD141/141・1170/1170。全コマンドexit0。Bats全件は1回。"
+  - check: "Linux gates"
+    command: "docker run --rm relay-gate-ci:ubuntu24; facade cwdでlint、入口lint、bats -r test"
+    result: "pass"
+    detail: "Ubuntu24、bash5.2.21、ShellCheck0.9.0、実setsidあり。全コマンドexit0、Bats636/636。全件1回。ユーザー指定に従いLinuxのshfmt/cucumberは対象外。"
+  - check: "environment probe"
+    result: "pass"
+    detail: "initdb+pg_ctlで一時PostgreSQLを起動しSELECT 1、停止。Unix socket/shared-memoryの実利用が可能。docker起動・mkfifoも確認。環境失敗なし。"
+  - check: "regression"
+    result: "pass"
+    detail: "git archive 9daed50の一時複製と現行版でvalidate-config3種・14入力の終了コード/stdout/stderrが完全一致。"
+  - check: "fault injection"
+    result: "fail"
+    detail: "setsidのgreen起動のみexit1で起動前失敗を注入。facade exit0、blueのみ起動、green DB状態RUNNING。F-001。実DBで文字列引用・同一トランザクションrollbackは成功。"
+  - check: "mutations"
+    result: "fail"
+    detail: "逆起動順exit1、pid=1更新exit1。slot INSERTをexec確認後へ移した変異は2回ともexit0。F-002。全変異は一時複製だけに適用。"
+  - check: "cleanup"
+    result: "pass"
+    detail: "ゲート・変異後にテスト用PostgreSQL/runner残存なし、一時TMPDIRにrelay-gate-launch FIFOディレクトリ残存なし。元リポジトリは出力2ファイル作成前にclean。"
+findings_file: "docs/impl/latest/09730858/stages/attempt-2/S5_verify.tier-facade.findings.yaml"
+completed_at: "2026-11-18T01:54:28.833498+00:00"
+completed_by: "dist-impl-verify@0.14.1"
+assumption_verdicts_sha256: "f827133796b53ba53bfda4b49e1da6e5eebdf8f7bda53b80eb60d63db41905d4"

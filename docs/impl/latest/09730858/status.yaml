@@ -1,0 +1,63 @@
+schema_version: '1.0'
+uc_id: 09730858
+business: 実装切替業務
+buc: 実装切替ジョブ実行フロー
+uc: slot 実行モードを選択して runner を起動する
+state: completed
+current_attempt: 3
+resolved_models:
+  implementer: claude-opus-5-5
+  verifier: gpt-6-astra
+git_delivery:
+  required: true
+  uc_english_name: Select slot mode and launch runners
+  branch_slug: select-slot-mode-and-launch-runners
+  base_branch: main
+  base_head: 77e44a22b2739ac73f1d4897676bd0eb4aeadd41
+  feature_branch: feature/select-slot-mode-and-launch-runners
+  remote: origin
+stages:
+  S1_uc_init:
+    status: done
+    event: 20261118_090158_s1_uc_init_completed_09730858
+  S2_test_scaffold:
+    status: done
+    event: 20261118_091344_s2_test_scaffold_completed_09730858
+  S3_contracts:
+    status: done
+    event: 20261118_091345_s3_contracts_completed_09730858
+  S4_tier_impl:
+    tier-facade:
+      status: done
+      attempt: 3
+      gates:
+        format: pass
+        lint: pass
+        tdd: pass
+        bdd_tier: pass
+      event: 20261118_111642_s4_tier_impl_completed_09730858_facade_attempt3
+  S5_verify:
+    tier-facade:
+      status: done
+      attempt: 3
+      open_blockers: 0
+      open_major: 7
+      event: 20261118_112603_s5_verify_completed_09730858_facade_attempt3
+  S6_uc_bdd:
+    status: done
+    event: 20261118_114229_s6_uc_bdd_completed_09730858
+  S7_atdd:
+    status: done
+    event: 20261118_114230_s7_atdd_completed_09730858
+  S8_feedback:
+    status: done
+    event: 20261118_114727_s8_feedback_completed_09730858_no_requests
+    request_count: 0
+    blocker_count: 0
+  S9_review:
+    status: approved
+    event: 20261118_120548_review_approved_09730858_final
+    review_evidence_event: 20261118_120038_s9_review_generated_09730858
+    delivery_event: 20261118_120549_delivery_prepared_09730858_select_slot_mode_and_launch_runners
+updated_at: '2026-11-18T12:05:49+09:00'
+completed_at: '2026-11-18T12:05:49+09:00'

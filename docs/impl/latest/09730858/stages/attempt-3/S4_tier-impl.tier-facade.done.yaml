@@ -1,0 +1,194 @@
+stage: S4
+tier: tier-facade
+attempt: 3
+uc_id: "09730858"
+manifest_sha256: 1f0a15af37a2317307d14e000455451b3bf374c415cd42cef05e8e2daa211344
+manifest_projection: v2
+result: pass
+rerun_mode: blocker_fix
+findings_provided: true
+findings_paths:
+  verify: "docs/impl/latest/09730858/stages/attempt-2/S5_verify.tier-facade.findings.yaml"
+api_summary_check: "_api-summary.yaml に schema_version distillery.api-summary/v2 の記載は無く、_contract-slice.json も無い(契約 slice の hash 照合の対象外。attempt 1 / 2 と同じ)"
+base: "attempt 2 の実装(コミット 35ddaf2)と記録を土台に、F-001 と F-002 だけを直した(作り直しではない)"
+findings_resolution:
+  - id: F-001
+    severity: blocker
+    action: fixed
+    note: "runner を exec する層(setsid の後の bash -c)が、見張りの coproc を始めた後に最初に開始の合図の行(watch-started)を名前付きパイプへ書くようにした。親は 1 行目に合図を待ち、合図の後の EOF を exec の成功、合図の後の失敗の行を exec の失敗、合図の無い EOF(setsid の失敗など見張る層が始まる前の失敗)を起動失敗として扱う。起動失敗は既存の経路(error 行・started_pids の実行ログ・起動前に INSERT した行を FAILED で閉じる・後続の slot を起動しない・終了コード 6)へ流れる。runner の終了は待たない"
+  - id: F-002
+    severity: major
+    action: fixed
+    note: "テストを 1 件追加した。runner のスタブは動き出した時点で psql のスタブが記録済みの slot_executions の INSERT の数を記録し、psql のスタブは FAKE_PSQL_SLOT_INSERT_DELAY=1 のとき slot_executions の INSERT を記録する前に 1 秒待つ。INSERT が起動の前なら数は green 1・blue 2。INSERT を起動の後へ移す変異では runner が先に記録するため数が足りず落ちる(一時複製に変異を入れ 3 回とも not ok を確認。green の判定を -ge 1 に緩めた後も 3 回とも not ok)。green は自 slot の 1 件以上(-ge 1)で判定するため、高負荷で green の動き出しが遅れて blue の INSERT まで数えても正しい実装は落ちない。待ちは変異を見逃す側にしか働かない。feature 本文は変えていない"
+  - id: F-003
+    severity: major
+    action: kept_as_assumption
+    note: "仕様に記述が無い前提の確認記録(オーケストレータの判断で対応不要)。前提は attempt 2 のものを attempt 3 として引き継いだ"
+  - id: F-004
+    severity: major
+    action: kept_as_assumption
+    note: "仕様に記述が無い前提の確認記録(オーケストレータの判断で対応不要)。前提は attempt 2 のものを attempt 3 として引き継いだ"
+  - id: F-005
+    severity: major
+    action: kept_as_assumption
+    note: "仕様に記述が無い前提の確認記録(オーケストレータの判断で対応不要)。前提は attempt 2 のものを attempt 3 として引き継いだ"
+  - id: F-006
+    severity: major
+    action: kept_as_assumption
+    note: "仕様に記述が無い前提の確認記録(オーケストレータの判断で対応不要)。前提は attempt 2 のものを attempt 3 として引き継いだ"
+  - id: F-007
+    severity: minor
+    action: kept_as_assumption
+    note: "仕様に記述が無い前提の確認記録(オーケストレータの判断で対応不要)。前提は attempt 2 のものを attempt 3 として引き継いだ"
+  - id: F-008
+    severity: minor
+    action: kept_as_assumption
+    note: "仕様に記述が無い前提の確認記録(オーケストレータの判断で対応不要)。前提は attempt 2 のものを attempt 3 として引き継いだ"
+  - id: F-009
+    severity: minor
+    action: kept_as_assumption
+    note: "仕様に記述が無い前提の確認記録(オーケストレータの判断で対応不要)。前提は attempt 2 のものを attempt 3 として引き継いだ"
+  - id: F-010
+    severity: minor
+    action: kept_as_assumption
+    note: "仕様に記述が無い前提の確認記録(オーケストレータの判断で対応不要)。前提は attempt 2 のものを attempt 3 として引き継いだ"
+  - id: F-011
+    severity: minor
+    action: kept_as_assumption
+    note: "仕様に記述が無い前提の確認記録(オーケストレータの判断で対応不要)。前提は attempt 2 のものを attempt 3 として引き継いだ"
+  - id: F-012
+    severity: minor
+    action: kept_as_assumption
+    note: "仕様に記述が無い前提の確認記録(オーケストレータの判断で対応不要)。前提は attempt 2 のものを attempt 3 として引き継いだ"
+  - id: F-013
+    severity: minor
+    action: kept_as_assumption
+    note: "仕様に記述が無い前提の確認記録(オーケストレータの判断で対応不要)。前提は attempt 2 のものを attempt 3 として引き継いだ"
+  - id: F-014
+    severity: minor
+    action: kept_as_assumption
+    note: "仕様に記述が無い前提の確認記録(オーケストレータの判断で対応不要)。前提は attempt 2 のものを attempt 3 として引き継いだ"
+  - id: F-015
+    severity: minor
+    action: kept_as_assumption
+    note: "仕様に記述が無い前提の確認記録(オーケストレータの判断で対応不要)。前提は attempt 2 のものを attempt 3 として引き継いだ"
+  - id: F-016
+    severity: minor
+    action: kept_as_assumption
+    note: "仕様に記述が無い前提の確認記録(オーケストレータの判断で対応不要)。前提は attempt 2 のものを attempt 3 として引き継いだ"
+  - id: F-017
+    severity: minor
+    action: kept_as_assumption
+    note: "仕様に記述が無い前提の確認記録(オーケストレータの判断で対応不要)。前提は attempt 2 のものを attempt 3 として引き継いだ"
+  - id: F-018
+    severity: major
+    action: kept_as_assumption
+    note: "仕様に記述が無い前提の確認記録(オーケストレータの判断で対応不要)。前提は attempt 2 のものを attempt 3 として引き継いだ"
+  - id: F-019
+    severity: minor
+    action: kept_as_assumption
+    note: "仕様に記述が無い前提の確認記録(オーケストレータの判断で対応不要)。前提は attempt 2 のものを attempt 3 として引き継いだ"
+  - id: F-020
+    severity: major
+    action: kept_as_assumption
+    note: "仕様に記述が無い前提の確認記録(オーケストレータの判断で対応不要)。前提は attempt 2 のものを attempt 3 として引き継いだ"
+  - id: F-021
+    severity: major
+    action: kept_as_assumption
+    note: "仕様に記述が無い前提の確認記録(オーケストレータの判断で対応不要)。前提は attempt 2 のものを attempt 3 として引き継いだ"
+  - id: F-022
+    severity: minor
+    action: kept_as_assumption
+    note: "仕様に記述が無い前提の確認記録(オーケストレータの判断で対応不要)。前提は attempt 2 のものを attempt 3 として引き継いだ"
+  - id: F-023
+    severity: minor
+    action: kept_as_assumption
+    note: "仕様に記述が無い前提の確認記録(オーケストレータの判断で対応不要)。前提は attempt 2 のものを attempt 3 として引き継いだ"
+implementation:
+  summary: "runner の起動の判定に開始の合図を加えた(F-001)。INSERT を起動の後へ移す変異で落ちるテストを加えた(F-002)"
+  validate_config_changed: false
+  validate_config_change_note: "検証コマンド(validate-config.sh)と共有の検証関数は変えていない"
+code_changes:
+  added: []
+  modified:
+    - path: facade/src/gateway/runner_process_adapter.sh
+      change: "exec を見張る層が開始の合図の行を書き、親は合図の後の EOF だけを成功とする(合図の無い EOF・合図以外の行・合図の後の失敗の行は起動失敗)。コメントを更新(F-001)"
+    - path: facade/test/presentation/facade_launch.bats
+      change: "4 件追加。setsid が runner を起動する前に失敗する経路 3 件(facade の終了コード 6 と後続未起動、管理 DB の行を FAILED で閉じる、adapter が失敗を返し PID を残さない)(F-001)と、runner が動き出した時点で自 slot の INSERT が記録済みであること 1 件(F-002)。runner のスタブに INSERT 数の記録、psql のスタブに FAKE_PSQL_SLOT_INSERT_DELAY を追加"
+  feature_bodies_changed: false
+  standard_runner_changed: false
+  contracts_changed: false
+tdd_red_evidence:
+  - "F-001 の 3 件は、adapter を直す前に macOS で not ok を確認した(stderr が空・FAILED への UPDATE が無い・adapter が 0 を返す)。直した後に ok"
+  - "Linux コンテナ(bash 5.2.21、実 setsid)でも、全件 pass の後に複製内の adapter を attempt 2(HEAD)の版へ戻して F-001 の 3 件を流し、3 件とも not ok を確認した"
+  - "F-002 の 1 件は、facade を一時ディレクトリへ複製して launch_slots.sh の slot_executions の INSERT を runner の起動成功の後へ移す変異を入れると 3 回とも not ok(green の INSERT 数が 0)。変異なしでは ok"
+gates:
+  format: pass
+  lint: pass
+  tdd: pass
+  bdd_tier: pass
+gate_runs:
+  - gate: format
+    cwd: facade
+    command: "shfmt -d ."
+    exit_code: 0
+  - gate: lint
+    cwd: facade
+    command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+    exit_code: 0
+    note: "入口 bin/*.sh も shellcheck -x で個別に確認し exit 0"
+  - gate: tdd
+    cwd: facade
+    command: "bats -r test"
+    exit_code: 0
+    summary: "640 tests, 640 ok, 0 not ok(attempt 2 の 636 件 + 追加 4 件)"
+  - gate: bdd_tier
+    cwd: facade
+    command: "npx cucumber-js --config ../cucumber.cjs features"
+    exit_code: 0
+    summary: "141 scenarios (141 passed), 1170 steps (1170 passed)"
+gate_run_notes:
+  - "macOS(Darwin 25.5.0、arm64、bash 5.3.15)で bats と cucumber を 1 つずつ順に実行した(同時に走らせていない)"
+  - "時間の上限を確かめるテスト・大きな入力を作るテストは追加していない(F-002 のテストの 1 秒の待ちは順序を作るためのもので、時間を測っていない)"
+linux_runs:
+  environment: "docker イメージ relay-gate-ci:ubuntu24(aarch64、bash 5.2.21、setsid=/usr/bin/setsid の実物)。一般ユーザー ubuntu、LANG=C.UTF-8"
+  method: "リポジトリを読み取り専用でマウントし、コンテナ内の一時ディレクトリへ facade と packages/contracts(ドリフトテストが読む)を複製して実行した"
+  runs:
+    - gate: tdd
+      command: "bats -r test"
+      exit_code: 0
+      summary: "640 tests, 640 ok, 0 not ok"
+    - gate: lint
+      command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+      exit_code: 0
+  limitation: "イメージに node と PostgreSQL が無いため tier BDD は Linux では実行していない(attempt 1 / 2 と同じ)。shfmt は macOS で実測"
+cleanup_check: "実行後、TMPDIR に relay-gate-launch.* / relay-gate-facade-report.* が残っていないこと、sleep 30 のスタブと一時 PostgreSQL のプロセスが残っていないことを確認した。変異用の一時複製は削除した"
+environment: "macOS(Darwin 25.5.0、arm64)で 4 ゲートを実測。Linux コンテナで bats / lint を実測"
+issues_added: []
+assumptions:
+  path: "attempt-3/S4_tier-impl.tier-facade.assumptions.yaml"
+  count: 22
+  by_category:
+    input_validation: 1
+    data_format: 3
+    error_handling: 11
+    persistence: 3
+    performance: 0
+    security: 4
+  sha256: e0d335eef89821bc32d528473ff6e558cf55b0e659a7bf7802b983ba20fb0261
+  extraction:
+    candidate_count: 28
+    excluded_as_explicit: 6
+    recorded_count: 22
+  validator: "validateAssumptions.js record: ok true"
+  diff_from_attempt_2:
+    removed: []
+    rewritten: ["A-009 (contradicts の解消。開始の合図を入れ、合図の無い EOF を起動失敗にした)"]
+    rewritten_note: "A-009 の reason に、開始の合図の方式が attempt 3 の dispatch の修正方針に従ったものであることを追記"
+    retargeted: ["A-007 / A-008 / A-009 / A-024 の target の行番号を runner_process_adapter.sh の現在の行へ更新"]
+    recategorized: []
+    added: []
+review_refute_loop: not_run
+review_refute_loop_note: "外部レビュー(review-refute-loop)はこの S4 では実行していない。S5 の別モデル Verifier に委ねる"
+completed_at: "2026-11-18T11:16:17+09:00"
+completed_by: dist-impl-implement@0.14.1

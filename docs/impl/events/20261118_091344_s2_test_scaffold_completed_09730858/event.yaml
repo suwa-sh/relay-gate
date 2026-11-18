@@ -1,0 +1,17 @@
+event_id: 20261118_091344_s2_test_scaffold_completed_09730858
+type: stage_completed
+uc_id: 09730858
+stage: S2
+payload:
+  result: pass
+  done: docs/impl/latest/09730858/stages/S2_test-scaffold.done.yaml
+  red_baseline: pass
+  manifest_sha256: 2cf3a8f7e07ff0ec0e1d6580e45506a7a4fd0a3392715d0ffdf6db7f2068f82d
+  manifest_projection: v2
+  orchestrator_decisions:
+    empty_job_map_key_scenario: 'the UC scenario that names the standard runner (empty job map location key): this UC judges its first Then (the location passed to the runner); the Then lines about execution-spec.json and green stderr.log need the standard runner''s body and stay ''skipped'' until the later UCs build it. the spec is not changed (same precedent as 65b09d93)'
+    rdb_client: 'the command and how RAPID_DB_CONN_REF is passed are not in the spec: psql found on PATH, the reference name passed as the connection service name. recorded as an implementer assumption, shown in the final review'
+    postgres_harness: no temporary PostgreSQL harness exists yet; S4 builds one under facade/features and facade/test (initdb + pg_ctl), with a provisional DDL derived from packages/contracts/management-db
+    returns_within_10_seconds: 'kept as the spec writes it (behavior: the foreground exit does not wait for the background); the long test runner is stopped by the step at the end of the scenario'
+    previous_uc_skipped_scenarios: once facade.sh exists, the 3 scenarios of 65b09d93 leave 'skipped'; S4 / S6 implement their steps so that they are judged
+created_at: '2026-11-18T09:13:44+09:00'

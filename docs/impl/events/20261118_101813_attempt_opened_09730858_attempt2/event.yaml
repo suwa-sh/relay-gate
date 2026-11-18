@@ -1,0 +1,13 @@
+event_id: 20261118_101813_attempt_opened_09730858_attempt2
+type: attempt_opened
+uc_id: 09730858
+stage: S4
+attempt: 2
+payload:
+  reason: blocker
+  from_attempt: 1
+  tiers_rerun:
+  - tier-facade
+  findings:
+  - docs/impl/latest/09730858/stages/attempt-1/S5_verify.tier-facade.findings.yaml
+created_at: '2026-11-18T10:18:12+09:00'

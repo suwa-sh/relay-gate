@@ -1,0 +1,186 @@
+stage: S2
+uc_id: 09730858
+manifest_sha256: 2cf3a8f7e07ff0ec0e1d6580e45506a7a4fd0a3392715d0ffdf6db7f2068f82d
+manifest_projection: v2
+result: pass
+scaffold_mode: initial
+rerun: false
+branch_slug: select-slot-mode-and-launch-runners
+tiers:
+  - tier-facade
+red_baseline: pass
+red_baseline_detail:
+  red_total: 54
+  by_stage:
+    - stage: atdd
+      total: 14
+      red: 14
+    - stage: uc_bdd
+      total: 19
+      red: 19
+    - stage: tier_bdd
+      total: 18
+      red: 18
+    - stage: tdd
+      total: 3
+      red: 3
+  reason: "全段が未実装を理由に fail する。ATDD / UC BDD / tier BDD は各 Scenario の最初の step(この UC で新しく定義した skeleton)が 'not implemented: <step 文言>' を投げる。単体テストは facade/bin/facade.sh が無いことを 'not implemented: <path> does not exist' として明示して fail する"
+  red_is_assertion_failure: true
+  undefined_steps: 0
+  ambiguous_steps: 0
+  parse_errors: 0
+transcription_check:
+  method: "spec.md(2 ブロック)と tier-facade.md(1 ブロック)の gherkin をスクリプトで取り出して feature へ書き、# で始まる出典コメント行を除いた本文が仕様のブロックと完全一致することを同じスクリプトで確認した。UC の feature は先行機能と同じく正常系・異常系の 2 ブロックを空行 1 行でつないだ"
+  uc_feature_verbatim: true
+  tier_feature_verbatim: true
+step_reuse:
+  method: "cucumber の --dry-run(json 形式)で、新しい feature の各 step が既存の step 定義に一致するかを調べ、一致しない step だけを新しい step ファイルに skeleton として定義した。既存の step と同じ文言を再定義していない。既存の step ファイルは変更していない"
+  reused:
+    tier_bdd:
+      - "終了コード 2 で stderr に \"error: foreground slot must be exactly one blue_mode=foreground green_mode=foreground\" が出る(facade/features/steps/configure-feature-flags.steps.js。World の result を読む)"
+    uc_bdd: []
+    atdd: []
+  reuse_note: "World と Before / After は各ディレクトリの configure-feature-flags.steps.js のものを使う。新しい step ファイルには Before / After を置いていない(同じディレクトリの全 Scenario に掛かるため)。ATDD の『facade を起動する』は 4 Scenario に出るが定義は 1 つ"
+  directory_runs:
+    - "facade/features 全体(実行): 141 scenarios = 122 passed + 1 skipped + 18 failed。failed は追加した 18 件だけ。undefined 0、ambiguous 0"
+    - "features/uc 全体(実行): 83 scenarios = 62 passed + 2 skipped + 19 failed。failed は追加した 19 件だけ。undefined 0、ambiguous 0"
+    - "features/atdd 全体(dry-run): 209 scenarios、うち 178 は step 未実装の他 UC の ATDD(この UC の追加前は 192)。ambiguous 0"
+generated:
+  atdd:
+    features:
+      - features/atdd/SPEC-001-01.feature
+      - features/atdd/SPEC-001-02.feature
+      - features/atdd/SPEC-001-04.feature
+      - features/atdd/SPEC-002-01.feature
+      - features/atdd/SPEC-005-06.feature
+      - features/atdd/SPEC-011-01.feature
+      - features/atdd/SPEC-011-04.feature
+    feature_body_changed: false
+    steps: features/atdd/steps/select-slot-mode-and-launch-runners.steps.js
+    steps_defined: 39
+    steps_by_keyword:
+      given: 14
+      when: 11
+      then: 14
+    scenarios:
+      - SPEC-001-01-1
+      - SPEC-001-01-2
+      - SPEC-001-01-3
+      - SPEC-001-02-1
+      - SPEC-001-04-1
+      - SPEC-001-04-2
+      - SPEC-002-01-1
+      - SPEC-002-01-2
+      - SPEC-005-06-3
+      - SPEC-005-06-4
+      - SPEC-011-01-1
+      - SPEC-011-04-1
+      - SPEC-011-04-2
+      - SPEC-011-04-3
+  uc_bdd:
+    feature: features/uc/select-slot-mode-and-launch-runners.feature
+    source: "docs/specs/latest/実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/spec.md#E2E完了条件(BDD)"
+    scenarios: 19
+    steps: features/uc/steps/select-slot-mode-and-launch-runners.steps.js
+    steps_defined: 83
+    steps_by_keyword:
+      given: 26
+      when: 5
+      then: 52
+    cross_uc_scenarios: 4
+  tier_bdd:
+    - tier: tier-facade
+      feature: facade/features/select-slot-mode-and-launch-runners.feature
+      source: "docs/specs/latest/実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/tier-facade.md#ティア完了条件(BDD)"
+      scenarios: 18
+      steps: facade/features/steps/select-slot-mode-and-launch-runners.steps.js
+      steps_defined: 82
+      steps_by_keyword:
+        given: 35
+        when: 5
+        then: 42
+      cross_uc_scenarios: 0
+  tdd:
+    - tier: tier-facade
+      file: facade/test/presentation/facade.bats
+      tests: 3
+      red: 3
+      target: "ジョブを起動するコマンド facade/bin/facade.sh の入口。(1) 引数なしで 'error: JOB_ID required' と hint を stderr に出し終了コード 2 (2) 両 slot foreground で error 行を出し終了コード 2、runner を起動せず成果物ディレクトリも作らない (3) blue だけ foreground のとき runner IF の引数(--run-id <run_id> --job-id JOB001 --role blue --mode foreground -- 20260830 full)で起動し、run_id が形式に合い、exitcode.txt の値で終了する。3 件とも RAPID_CROSSCHECK_MODE=off で管理 DB を使わない"
+scaffold_validation:
+  method: "単体テストが正しい実装で通ることを、リポジトリ外の scratchpad に置いた複製と試作の facade.sh(引数の検査、両 foreground の拒否、blue の起動と待機だけ)で確認した。リポジトリに facade/bin/facade.sh は作っていない"
+  results:
+    - "bats(追加 1 ファイル、試作あり): 3 tests, 3 ok"
+    - "bats(リポジトリ、facade.sh なし): 3 tests, 3 not ok(not implemented)"
+  bdd_note: "BDD の 3 段は skeleton(全 step が not implemented)のため、正しい実装での確認は S4 / S6 / S7 で step を実装するときに行う"
+test_runs:
+  - stage: tier_bdd
+    tier: tier-facade
+    cwd: facade
+    command: "npx cucumber-js --config ../cucumber.cjs features/select-slot-mode-and-launch-runners.feature"
+    exit_code: 1
+    summary: "18 scenarios (18 failed), 155 steps (54 passed, 83 skipped, 18 failed)。passed の 54 は既存の hook"
+    total: 18
+    red: 18
+    fail_reason: "18 件とも最初の step の 'not implemented'"
+  - stage: uc_bdd
+    cwd: "."
+    command: "npx cucumber-js --config cucumber.cjs features/uc/select-slot-mode-and-launch-runners.feature"
+    exit_code: 1
+    summary: "19 scenarios (19 failed), 149 steps (38 passed, 92 skipped, 19 failed)。passed の 38 は既存の hook"
+    total: 19
+    red: 19
+    fail_reason: "19 件とも最初の step の 'not implemented'"
+  - stage: atdd
+    cwd: "."
+    command: "npx cucumber-js --config cucumber.cjs features/atdd --tags \"@atdd_SPEC-001-01-1 or @atdd_SPEC-001-01-2 or @atdd_SPEC-001-01-3 or @atdd_SPEC-001-02-1 or @atdd_SPEC-001-04-1 or @atdd_SPEC-001-04-2 or @atdd_SPEC-002-01-1 or @atdd_SPEC-002-01-2 or @atdd_SPEC-005-06-3 or @atdd_SPEC-005-06-4 or @atdd_SPEC-011-01-1 or @atdd_SPEC-011-04-1 or @atdd_SPEC-011-04-2 or @atdd_SPEC-011-04-3\""
+    exit_code: 1
+    summary: "14 scenarios (14 failed), 70 steps (28 passed, 28 skipped, 14 failed)。passed の 28 は既存の hook"
+    total: 14
+    red: 14
+    executed_matches_atdd_scenarios: true
+    fail_reason: "14 件とも Given の 'not implemented'"
+  - stage: tdd
+    tier: tier-facade
+    cwd: facade
+    command: "bats -r test"
+    exit_code: 1
+    summary: "573 tests, 570 ok, 3 not ok。落ちたのは追加した 3 件だけ"
+    total: 573
+    added: 3
+    red: 3
+    fail_reason: "未実装(facade/bin/facade.sh が無い)"
+format_check:
+  tier: tier-facade
+  command: "shfmt -d ."
+  exit_code: 0
+lint:
+  tier: tier-facade
+  command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+  exit_code: 0
+dom_snapshot_tests: not_applicable
+issues:
+  - path: docs/impl/latest/09730858/issues/20261118_091109_cross-uc-scenarios.md
+    kind: cross_uc_scenarios
+    summary: "UC BDD の 4 Scenario が後続の機能の担当(runner が書く started-at.txt / exitcode.txt、実装スクリプトの実行時間、標準の runner によるジョブマップの解決と execution-spec.json)を含む。3 件はテスト用 runner の注入で判定できる。『値が空のジョブマップの場所のキー』の 1 件は Then の 2・3 行目が後続の機能の完了まで判定できず、扱いの決定が要る。先行機能の facade.sh を起動する 3 Scenario は、facade.sh を作ると保留が外れるので、この機能で step を実装する"
+    blocker: false
+decisions_needed:
+  - id: empty-job-map-key-scenario
+    question: "UC BDD『値が空のジョブマップの場所のキーがある slot の runner は固定の名前のジョブマップで実行先を解決する』の Then 2・3 行目(execution-spec.json の中身と green の stderr.log)を、この機能でどう扱うか"
+    recommended: "この機能では Then 1 行目(場所を渡す)だけを判定し、2・3 行目は標準の runner の中身ができるまで保留にして後続の機能で判定する"
+    alternatives:
+      - "仕様の変更要求を出し、Then 2・3 行目を後続の機能の Scenario へ移す"
+    detail: docs/impl/latest/09730858/issues/20261118_091109_cross-uc-scenarios.md
+  - id: rdb-client-invocation
+    question: "管理 DB のクライアントの呼び出し方(コマンド名と、参照名 RAPID_DB_CONN_REF の渡し方)が仕様に無い。実装者が補った前提として記録して進めてよいか"
+    recommended: "psql を PATH から探し、参照名を接続サービス名として渡す。S4 の前提の記録に書く"
+    alternatives:
+      - "仕様の変更要求を出して契約に書いてもらう"
+    detail: docs/impl/latest/09730858/issues/20261118_091109_cross-uc-scenarios.md
+observations:
+  - "管理 DB のテスト用ハーネス(initdb + pg_ctl の一時 PostgreSQL)はリポジトリにまだ無い。ops/migrations/ も空でテーブルの DDL が無い。S4 で facade/features/ と facade/test/ の補助として作り、DDL は契約の生成物 packages/contracts/management-db/schema.json から作って暫定と明記する(test-strategy.md)。この環境には initdb / pg_ctl / psql がある(/opt/homebrew/bin)"
+  - "skeleton は Before / After を持たない。一時 PostgreSQL の起動と停止、600 秒待つテスト用 runner の後始末は、S4 / S6 で step を実装するときに、該当 Scenario だけで働く形で足す"
+  - "UC BDD『background を先に起動し foreground だけを待機する』の『blue の終了後 10 秒以内に終了する』は、仕様のシナリオが定める振る舞い(600 秒の green を待たない)として転写した。仕様に無い時間の検査は足していない。MB 級の入力を作るテストも書いていない"
+  - "単体テストは入口 facade/bin/facade.sh から見える振る舞いだけを判定し、facade/src/ の関数の分け方は固定していない。層ごとの単体テストは S4 の TDD で足す"
+  - "bats と cucumber は 1 つずつ直列に実行した"
+completed_at: '2026-11-18T09:12:10+09:00'
+completed_by: dist-impl-implement@0.14.1

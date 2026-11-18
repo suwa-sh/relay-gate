@@ -1,0 +1,47 @@
+stage: "S5"
+tier: "tier-facade"
+attempt: 3
+uc_id: "09730858"
+manifest_sha256: "1f0a15af37a2317307d14e000455451b3bf374c415cd42cef05e8e2daa211344"
+manifest_projection: "v2"
+result: "pass"
+open_blockers: 0
+open_majors: 7
+gate_reexec:
+  format: "pass"
+  lint: "pass"
+  tdd: "pass"
+  bdd_tier: "pass"
+assumptions_sha256: "e0d335eef89821bc32d528473ff6e558cf55b0e659a7bf7802b983ba20fb0261"
+assumption_verdicts_summary:
+  consistent: 0
+  spec_absent: 22
+  contradicts: 0
+  unlisted: 0
+environment_failures: []
+verification_evidence:
+  - check: "macOS gates"
+    result: "pass after isolated targeted retry"
+    detail: "bash 5.3.15、ShellCheck 0.11.0。shfmt、src/test lint、bin個別lintはexit 0。bats全640件は1回のみ実行、639 pass/1 failでexit 1。追加比較検証とBSD mktempの固定中間名が競合した1件はTMPDIR分離の単独実行でexit 0。全件再実行なし。"
+  - check: "Linux gates"
+    result: "pass"
+    detail: "relay-gate-ci:ubuntu24、bash 5.2.21、ShellCheck 0.9.0、実setsidあり。src/testとbin lint出力なし、bats640件全pass、exit 0。全件実行1回。"
+  - check: "tier BDD"
+    result: "pass"
+    detail: "macOS npx cucumber-js --config ../cucumber.cjs features、exit 0、141 scenarios/1170 stepsすべてpass。bats終了後に実行。"
+  - check: "mutation tests"
+    result: "pass"
+    detail: "一時コピーのみ変更。起動順逆転はstep338、誤PIDはstep467、起動前INSERT除去はstep465のassertionで各exit 1。環境や未実装による失敗ではない。"
+  - check: "independent real DB"
+    result: "pass"
+    detail: "PARAM6種のJSON復元一致、Asia/Tokyo run_id、終了コード7、rapid_runs制約違反時のparallel_runs rollback、実接続失敗の秘匿、インタプリタ不在と不正バイナリで6/FAILED/pid NULL/completed_at設定/FIFO残存無し。"
+  - check: "validator regression"
+    result: "pass"
+    detail: "9daed50のfacadeを一時展開し、feature-flag/job-map/rapid-crosscheckの28ケースで終了コード・stdout・stderr完全一致。比較用TMPDIR分離後に全ケース通過。"
+  - check: "cleanup and scope"
+    result: "pass"
+    detail: "検証終了時にテスト用PostgreSQL・sleep30・relay-gate-runner-execプロセス無し。リポジトリの実装・テスト・仕様を変更していない。成果物作成前git statusはclean。"
+result_note: "実装の仕様違反は立証されず、機能ゲートは通過。major7/minor15はすべて前提照合の必須記録。オーケストレータ既決定の採用方式を実装欠陥として差し戻さない。"
+completed_at: "2026-11-18T02:25:19.810207+00:00"
+completed_by: "dist-impl-verify@0.14.1"
+assumption_verdicts_sha256: "6058f950748b1b15951768263e5f1773791ecec66a2a50dc286ac144f9b400ac"
