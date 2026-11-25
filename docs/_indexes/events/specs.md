@@ -32,3 +32,4 @@
 | 2026-11-15 16:40:00 | [20261115_164000_feedback_runner_relative_path](../../specs/events/20261115_164000_feedback_runner_relative_path) |
 | 2026-11-16 01:00:00 | [20261116_010000_feedback_impl_feedback_fd678b04_cycle4](../../specs/events/20261116_010000_feedback_impl_feedback_fd678b04_cycle4) |
 | 2026-11-16 02:10:00 | [20261116_021000_feedback_standard_runner_job_map_location](../../specs/events/20261116_021000_feedback_standard_runner_job_map_location) |
+| 2026-11-23 20:10:00 | [20261123_201000_feedback_impl_feedback_7c41c7cd](../../specs/events/20261123_201000_feedback_impl_feedback_7c41c7cd) |

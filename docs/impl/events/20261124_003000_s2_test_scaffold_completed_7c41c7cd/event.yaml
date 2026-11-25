@@ -1,0 +1,12 @@
+event_id: 20261124_003000_s2_test_scaffold_completed_7c41c7cd
+type: stage_completed
+uc_id: 7c41c7cd
+stage: S2
+payload:
+  result: pass
+  manifest_sha256: 48085ea1b968b72d9ea62db80e13211b61573aa6df6b04aeb45ba4f3728d5c63
+  manifest_projection: v2
+  scaffold_mode: diff_only
+  tiers:
+  - tier-facade
+created_at: '2026-11-24T00:30:00+09:00'

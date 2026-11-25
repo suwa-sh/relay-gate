@@ -130,11 +130,14 @@ validate_job_map_query() {
   cli_field_safe_text "$path"
   shown_path="$CLI_FIELD_SAFE_TEXT"
 
-  if [ ! -e "$path" ]; then
+  # 所在と読み取り可否の判定は runner の解決関数と同じ(repository の job_map_repo_probe)
+  local probe_status=0
+  job_map_repo_probe "$path" || probe_status=$?
+  if [ "$probe_status" -eq "$JOB_MAP_REPO_PROBE_NOT_FOUND" ]; then
     printf '%s\n' "error: config file not found path: $shown_path" >&2
     return "$JOB_MAP_EXIT_VALIDATION_ERROR"
   fi
-  if [ ! -f "$path" ] || [ ! -r "$path" ]; then
+  if [ "$probe_status" -ne 0 ]; then
     printf '%s\n' "error: config file is not readable path: $shown_path" >&2
     return "$JOB_MAP_EXIT_VALIDATION_ERROR"
   fi

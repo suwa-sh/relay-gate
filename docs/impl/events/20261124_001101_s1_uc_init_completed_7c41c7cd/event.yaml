@@ -1,0 +1,61 @@
+event_id: 20261124_001101_s1_uc_init_completed_7c41c7cd
+type: stage_completed
+uc_id: 7c41c7cd
+stage: S1
+payload:
+  result: pass
+  manifest_sha256: 48085ea1b968b72d9ea62db80e13211b61573aa6df6b04aeb45ba4f3728d5c63
+  manifest_projection: v2
+  done:
+    stage: S1
+    uc_id: 7c41c7cd
+    manifest_sha256: 48085ea1b968b72d9ea62db80e13211b61573aa6df6b04aeb45ba4f3728d5c63
+    manifest_projection: v2
+    result: pass
+    input_preflight:
+      files_exist: true
+      yaml_parse: true
+      gherkin_blocks: 3
+      gherkin_blocks_note: spec.md 2 (normal / error) / tier-facade.md 1
+      tier_ids_in_arch:
+      - tier-facade
+      conditional_inputs_consistent: true
+    lineage_ok: true
+    lineage_note: spec-event 20261123_201000_feedback_impl_feedback_7c41c7cd. its
+      trigger_event (usdm 20261116_013000 / arch 20261116_015000) matches the usdm
+      / arch latest. the reflux changed only the spec stage
+    atdd_scenarios:
+    - SPEC-002-03-1
+    - SPEC-003-02-1
+    - SPEC-004-01-1
+    - SPEC-004-02-1
+    - SPEC-004-04-1
+    - SPEC-004-04-2
+    - SPEC-004-04-3
+    - SPEC-004-01-3
+    - SPEC-004-01-4
+    - SPEC-004-01-5
+    - SPEC-004-01-6
+    - SPEC-004-01-7
+    - SPEC-004-01-8
+    atdd_mapping: 'unchanged from the previous run. the user confirmed the 13 scenarios
+      in the final review of 2026-11-23 (uc-map atdd_confirmed: true)'
+    shared_spec_refs_note: the previous 5 refs plus decisions/spec-decision-041.yaml,
+      which cli-command-contract.yaml now refers to explicitly (config_input_rules.snapshot.work_name.predictability)
+    scope_note: 'redo after the 2026-11-23 spec reflux of the 3 requests this UC published.
+      implementation changes expected in facade: (1) snapshot work name relay-gate-<BASHPID>-XXXXXX.part,
+      rename to the final name, one copy per process, for every reader that copies
+      its input (spec-decision-041); (2) lib/runner-resolve.sh: the 5 functions promised
+      to self-made runners as in runner IF standard_runner.runner_resolve_library,
+      including build_argument_list returning 1 with an empty ARGUMENT_LIST on an
+      invalid JSON array, and RUNNER_RESOLVE_STATUS_NOT_RESOLVED=1 (spec-decision-042);
+      (3) a job map that exists but is not readable or not a regular file is reported
+      as error: config file is not readable path: <location> by the feature flag check
+      (at the job map not found position, blue then green), the job map check and
+      the slot runner (spec-decision-043). (4) issue 20261124_001000: a directory
+      or symlink pre-placed at the predictable final name makes mv move the copy into
+      it and allows swapping the content, against the spec''s promise; fix in the
+      implementation'
+    completed_at: '2026-11-24T00:11:00+09:00'
+    completed_by: dist-impl-run@0.15.0
+created_at: '2026-11-24T00:11:00+09:00'

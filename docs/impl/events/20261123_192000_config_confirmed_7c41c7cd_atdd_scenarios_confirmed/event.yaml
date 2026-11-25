@@ -1,0 +1,13 @@
+event_id: 20261123_192000_config_confirmed_7c41c7cd_atdd_scenarios_confirmed
+type: config_confirmed
+uc_id: 7c41c7cd
+stage: S9
+payload:
+  confirmed_by: user
+  pending_user_confirmation: false
+  confirmed_via: 'chat reply to the final review on 2026-11-23: the 6 provisionally assigned scenarios are confirmed as this UC''s'
+  confirms: docs/impl/events/20261123_141235_config_confirmed_7c41c7cd_atdd_scenarios_provisional/event.yaml
+  items:
+  - key: uc-map[7c41c7cd].atdd_scenarios
+    note: 'no change to the list. SPEC-004-01-3..8 stay assigned; the provisional mark is removed'
+created_at: '2026-11-23T19:20:00+09:00'

@@ -1,0 +1,116 @@
+stage: S4
+tier: tier-facade
+attempt: 1
+uc_id: "7c41c7cd"
+manifest_sha256: 90b95c2c7f67feac241a56c2bb03191b9150a515f82b517c61c7d324e3bdefa1
+manifest_projection: v2
+result: pass
+findings_provided: false
+api_summary_check: "_api-summary.yaml に schema_version distillery.api-summary/v2 の記載は無く、_contract-slice.json も無い(契約 slice の hash 照合の対象外)"
+ddd_guide: "impl-config.yaml の capabilities に has_ddd_plugin が無いため、docs/dev-rules/coding-rules.md の基準だけで実装した"
+implementation:
+  summary: "slot runner の解決フェーズを共通ライブラリ(lib/runner-resolve.sh。本体 src/usecase/runner_resolve.sh)に作り、標準の slot runner が使うようにした。runner IF の引数の検査と違反の報告、ジョブマップの場所の決定、読み込み、バイト点検、ヘッダー、クォート、JOB_ID の行、行の値、引数連結、実行ログ、失敗時の 4 ファイル(started-at.txt / stdout.log / stderr.log / exitcode.txt)まで。execution-spec.json の保存・実装の実行・完了通知・復元起動は作っていない"
+  shared_with_validate_config: "CSV 行分解(csv_parse)、読み込みと 1 時点の複製(job_map_repo_load)、バイト点検の報告(validate_job_map_report_byte_errors)、ヘッダーの検証(validate_job_map_header)、JSON 配列の判定(job_map_fixed_params_parse)、行の値の error 行の文(job_map_empty_cell_error / job_map_value_error)を検証コマンドと同じ関数で使う。新しく書いたのは、runner の順で最初の違反だけを返す行の検査と、失敗時のファイルの公開だけ"
+  validate_config_changed: false
+  validate_config_change_note: "検証コマンド(validate-config.sh)と共有の検証関数は変えていない。出力も変わらない"
+  facade_sh_changed: "exitcode.txt の読み取りを gateway/filesystem_adapter.sh の関数へ移し、facade.sh と runner で共有した(読み方と結果は同じ)"
+  management_db_touched: false
+code_changes:
+  added:
+    - path: facade/src/domain/execution_target.sh
+      change: "ExecutionTarget(行の値をバリデーション (6)〜(9) の順で検査して実行先にする)と build_argument_list(固定引数の後ろに PARAM を順序どおり足す)"
+    - path: facade/src/gateway/filesystem_adapter.sh
+      change: "失敗時の 4 ファイルを一時ファイル → mv で公開する(exitcode.txt は最後)。exitcode.txt の読み取り"
+    - path: facade/test/domain/execution_target.bats
+      change: "17 件"
+    - path: facade/test/gateway/filesystem_adapter.bats
+      change: "7 件"
+    - path: facade/test/usecase/runner_resolve.bats
+      change: "38 件(共通ライブラリを source して関数を直接呼ぶ)"
+  modified:
+    - path: facade/src/usecase/runner_resolve.sh
+      change: "配置だけだったファイルに解決フェーズの本体を実装(resolve_execution_target / runner_resolve_reject_invocation / parse_csv_row)"
+    - path: facade/src/presentation/standard_runner.sh
+      change: "runner IF の引数を読んで違反を報告し、解決フェーズを呼ぶ。置き場の既定を配置ディレクトリから決める。解決に成功した後は仮の終了コード 6(前提 A-004)"
+    - path: facade/src/domain/relay_gate_clock.sh
+      change: "UTC の Z 付きの日時にする関数を追加(started-at.txt 用)"
+    - path: facade/src/usecase/launch_slots.sh
+      change: "exitcode.txt の読み取りを gateway/filesystem_adapter.sh の関数へ委ねた"
+    - path: facade/src/presentation/facade.sh
+      change: "gateway/filesystem_adapter.sh を source する 1 行を追加"
+    - path: facade/features/steps/resolve-execution-target-from-job-map.steps.js
+      change: "skeleton の 55 step を実装(文言は変えていない)"
+    - path: facade/test/presentation/standard_runner.bats
+      change: "--help 以外の起動に一時ディレクトリの置き場を環境変数で渡すようにし、teardown でリポジトリの facade/var と facade/log が無いことを確かめる。仮の応答の判定を解決フェーズの結果に合わせ、引数の違反の報告など 6 件を追加(8 件 → 14 件)"
+    - path: facade/test/presentation/standard_runner_resolve.bats
+      change: "S2 の 4 件は変えず、3 件を追加(解決に成功した後の終わり方、role ディレクトリが無い直接起動、ローカル実行の行の実行ログ)"
+    - path: facade/test/domain/relay_gate_clock.bats
+      change: "1 件追加(UTC の表記とプロセスの TZ を変えないこと)"
+  feature_bodies_changed: false
+  contracts_changed: false
+  outside_write_set: []
+tdd_notes:
+  - "S2 が置いた単体テスト 4 件(standard_runner_resolve.bats)は、実装前は未実装を理由に not ok(S2 の記録)、実装後に ok"
+  - "層ごとの単体テスト(execution_target / filesystem_adapter / runner_resolve)と standard_runner.bats の追加分は、実装と並行して書いた。1 件ずつ先に red を確認してはいない"
+  - "既存の standard_runner.bats を置き場の環境変数なしで流すと、リポジトリの facade/log と facade/var に書くことを実測で確認した(S2 の予告どおり)。書かれた 2 つのディレクトリは削除し、テストを直した後は作られない"
+gates:
+  format: pass
+  lint: pass
+  tdd: pass
+  bdd_tier: pass
+gate_runs:
+  - gate: format
+    cwd: facade
+    command: "shfmt -d ."
+    exit_code: 0
+  - gate: lint
+    cwd: facade
+    command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+    exit_code: 0
+    note: "入口 runners/standard-runner.sh、lib/*.sh、bin/*.sh も shellcheck -x で個別に確認し exit 0"
+  - gate: tdd
+    cwd: facade
+    command: "bats -r test"
+    exit_code: 0
+    summary: "716 tests, 716 ok, 0 not ok(既存 640 件 + S2 の 4 件 + 追加 72 件)"
+  - gate: bdd_tier
+    cwd: facade
+    command: "npx cucumber-js --config ../cucumber.cjs features"
+    exit_code: 0
+    summary: "154 scenarios (154 passed), 1284 steps (1284 passed)。既存 141 件 + この機能の 13 件"
+gate_run_notes:
+  - "macOS(Darwin 25.5.0、arm64、bash 5.3.15)で bats と cucumber を 1 つずつ順に実行した(同時に走らせていない)"
+  - "時間を確かめるテスト、MB 級の入力・作為的な入力のテストは追加していない"
+  - "features/uc/ と features/atdd/ は触っていない(後段の担当)"
+linux_runs:
+  executed: false
+  limitation: "この実行環境に Linux コンテナのイメージ(relay-gate-ci)が無く、Linux では実行していない。UTC の表記は bash の printf の %(...)T に一時的な TZ=UTC を付けて作っており、bash 5.3(macOS)で実測した。bash 5.0〜5.2 の Linux では CI の実行で確かめる"
+cleanup_check: "実行後、リポジトリに facade/log と facade/var が無いこと、TMPDIR に relay-gate-* が残っていないことを確認した"
+environment: "macOS(Darwin 25.5.0、arm64)で 4 ゲートを実測"
+handover_to_later_stages:
+  - "S6: features/uc/steps/select-slot-mode-and-launch-runners.steps.js の『値が空のジョブマップの場所のキー』の保留条件(標準の runner が終了コード 6 で何も書かない間)は、解決に成功した場合はこれまでどおり成り立つ(成果物を書かず 6)。解決に失敗する場合は 4 ファイルと終了コード 2 が出る。行ごとの見直しは issue 20261123_142047 の 6 のとおり S6 で行う"
+  - "S6: features/uc/steps/support/facade-harness.js の記録用の包みの『仮の応答』の前提のコメントと判定は S6 で見直す(このステージの write-set の外)"
+  - "解決結果の受け取り方(共通ライブラリの関数の名前・引数・結果の変数)は前提 A-001 / A-002 / A-003。S6 / S7 の step が直接呼ぶときはこの形を使う"
+issues_added: []
+issues_note: "仕様どおりに実装すると動かない事実は見つからなかった。仕様に無く実装で決めたことは AssumptionRecord に記録した"
+assumptions:
+  path: "attempt-1/S4_tier-impl.tier-facade.assumptions.yaml"
+  count: 23
+  by_category:
+    input_validation: 8
+    data_format: 4
+    error_handling: 7
+    persistence: 2
+    performance: 1
+    security: 1
+  sha256: 50978380ad97802ab23f720c445caad2dad87b540c771d6d81213fe41d6353c1
+  extraction:
+    candidate_count: 30
+    excluded_as_explicit: 7
+    recorded_count: 23
+  validator: "validateAssumptions.js record: ok true"
+  from_variable_prompt: "A-001 / A-004 / A-006 は、dispatch の指示(関数の呼び方、解決に成功した後の終わり方、runner を直接起動したときの role ディレクトリの扱いを実装者が決めて記録する)に従って決めた"
+review_refute_loop: not_run
+review_refute_loop_note: "外部レビュー(review-refute-loop)はこの S4 では実行していない。S5 の別モデル Verifier に委ねる"
+completed_at: "2026-11-23T14:47:11+09:00"
+completed_by: dist-impl-implement@0.15.0

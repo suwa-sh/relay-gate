@@ -46,7 +46,7 @@ JOB_MAP_REPO_STATUS_COMMAND_FAILED=6
 JOB_MAP_REPO_STATUS_SNAPSHOT_FAILED=7
 
 # 入力の複製(単一スナップショット)の名前(config_input_rules.snapshot.validate_config):
-# `${TMPDIR:-/tmp}/relay-gate-XXXXXX.part` を mktemp で作り(作業名)、書き終えたら `.part` を外した最終名へ rename する
+# `${TMPDIR:-/tmp}/relay-gate-<プロセス番号>-XXXXXX.part` を mktemp で作り(作業名)、書き終えたら `.part` を外した最終名へ rename する
 JOB_MAP_SNAPSHOT_PREFIX="relay-gate-"
 JOB_MAP_SNAPSHOT_WORK_SUFFIX=".part"
 
@@ -333,6 +333,25 @@ JOB_MAP_REPO_SNAPSHOT=""
 # 親の trap を trap -p に表示することがあり、EXIT を表示どおりに戻すとサブシェルの終了時に親の EXIT 処理が動いてしまう
 JOB_MAP_REPO_TRAP_SIGNALS=(HUP INT TERM)
 
+# job_map_repo_probe の戻り値(0 = 読める通常ファイル)
+JOB_MAP_REPO_PROBE_NOT_FOUND=1
+JOB_MAP_REPO_PROBE_NOT_READABLE=2
+
+# ジョブマップの所在と読み取り可否を調べる(検証コマンド --job-map と runner の解決関数が同じ判定を使う。文言は usecase が付ける)。
+# 「無い」と「あるが読めない(通常ファイルでない・読み取り権限が無い)」を分ける(ui-design.md エラー表示規約の定型文
+# `config file not found` / `config file is not readable` の区別)
+# 引数: path
+# 戻り値: 0 … 読める通常ファイル / JOB_MAP_REPO_PROBE_NOT_FOUND … 無い / JOB_MAP_REPO_PROBE_NOT_READABLE … あるが読めない
+job_map_repo_probe() {
+  if [ ! -e "$1" ]; then
+    return "$JOB_MAP_REPO_PROBE_NOT_FOUND"
+  fi
+  if [ ! -f "$1" ] || [ ! -r "$1" ]; then
+    return "$JOB_MAP_REPO_PROBE_NOT_READABLE"
+  fi
+  return 0
+}
+
 # ジョブマップ CSV を読み込み、ヘッダーとデータ行をグローバルに載せる。
 # コメント行(行頭 `#`)と空行を除いた最初の行をヘッダー行として扱う。
 # 入力は最初に 1 回だけ一時ファイルへ複製し、事前走査(NUL・不正な UTF-8・BOM・CR)と CSV の解析はどちらも複製だけを読む
@@ -371,27 +390,54 @@ job_map_repo_load() {
 }
 
 # 入力を一時ファイルへ複製し、最終名を JOB_MAP_REPO_SNAPSHOT に載せる(config_input_rules.snapshot.validate_config)。
-#   - mktemp で作業名(`relay-gate-XXXXXX.part`。権限は mktemp の既定 0600)を作る
+#   - mktemp で作業名(`relay-gate-<プロセス番号>-XXXXXX.part`。権限は mktemp の既定 0600)を作る。
+#     mktemp は名前の確保とファイルの作成を 1 回の操作で行う(既にある名前は作らずに失敗する)
+#   - 作業名にプロセス番号(BASHPID。サブシェルでも別の値)を入れる: 末尾以外の X を置き換えない mktemp(BSD 系)は
+#     テンプレートのままの名前で作るため、プロセス番号が無いと同時に動くプロセス(blue と green の slot runner など)が
+#     同じ作業名を取り合う。X を置き換える mktemp(GNU)では X の部分も加わる。作った名前は移し替えずそのまま使う
+#     (移し替えると、移す前の名前を複数のプロセスが共有する間ができる)
 #   - 作業名へ書き終えてから最終名(`.part` を外した名前)へ同一ディレクトリ内で rename する。最終名は rename まで存在させない
-# 戻り値: 0 … 複製完了 / 1 … 一時ファイルを作れない・複製先へ書けない・rename できない(走査していない入力を読み込まない)
+#   - 最終名に先に何か(ファイル・ディレクトリ・リンク)があれば複製の失敗にする(work_name.predictability: X を置き換えない
+#     mktemp では最終名を予測でき、置かれたディレクトリやリンクへ mv すると複製はその中へ移り、最終名の中身をすり替えられる)。
+#     確認と mv の間に置かれた場合に備え、mv の後に「最終名が自分の持つ通常のファイルそのもの」であることも確かめる
+# 戻り値: 0 … 複製完了 / 1 … 一時ファイルを作れない・複製先へ書けない・rename できない・最終名に先に何かある
+#   (走査していない入力を読み込まない。1 のときは作業名を消し、最終名に置かれたものには触れない)
 # 引数: path
 job_map_repo_create_snapshot() {
-  local path="$1" dir="${TMPDIR:-/tmp}" work final
-  if ! work="$(mktemp "$dir/${JOB_MAP_SNAPSHOT_PREFIX}XXXXXX${JOB_MAP_SNAPSHOT_WORK_SUFFIX}" 2>/dev/null)" || [ -z "$work" ]; then
+  # プロセス番号はコマンド置換の外で取る(コマンド置換の中の BASHPID は、mktemp の終了とともに消える子プロセスの番号で、
+  # 複製を持っている間に別のプロセスへ再び割り当てられ得る)
+  local path="$1" dir="${TMPDIR:-/tmp}" owner_pid="$BASHPID" work final
+  if ! work="$(mktemp "$dir/${JOB_MAP_SNAPSHOT_PREFIX}${owner_pid}-XXXXXX${JOB_MAP_SNAPSHOT_WORK_SUFFIX}" 2>/dev/null)" || [ -z "$work" ]; then
     return 1
   fi
-  JOB_MAP_REPO_SNAPSHOT="${work%"$JOB_MAP_SNAPSHOT_WORK_SUFFIX"}"
-  # 末尾以外の X を置き換えない mktemp(BSD 系。実行環境の Linux ではない開発機向け)では、テンプレートのままの名前で
-  # 作られる。プロセス固有の作業名へ移してから使う(最終名の規則は変えない)
-  if [[ "${work##*/}" == *XXXXXX* ]]; then
-    final="$dir/${JOB_MAP_SNAPSHOT_PREFIX}$$-$RANDOM$RANDOM"
-    JOB_MAP_REPO_SNAPSHOT="$final"
-    mv -- "$work" "$final$JOB_MAP_SNAPSHOT_WORK_SUFFIX" 2>/dev/null || return 1
-    work="$final$JOB_MAP_SNAPSHOT_WORK_SUFFIX"
-  fi
+  final="${work%"$JOB_MAP_SNAPSHOT_WORK_SUFFIX"}"
+  JOB_MAP_REPO_SNAPSHOT="$final"
   # オプションと解釈されるパスでも読めるよう、入力はリダイレクトで渡す
-  cat <"$path" >"$work" 2>/dev/null || return 1
-  mv -- "$work" "$JOB_MAP_REPO_SNAPSHOT" 2>/dev/null || return 1
+  if ! cat <"$path" >"$work" 2>/dev/null; then
+    job_map_repo_abandon_snapshot "$work"
+    return 1
+  fi
+  if [ -e "$final" ] || [ -L "$final" ]; then
+    job_map_repo_abandon_snapshot "$work"
+    return 1
+  fi
+  if ! mv -- "$work" "$final" 2>/dev/null; then
+    job_map_repo_abandon_snapshot "$work"
+    return 1
+  fi
+  if [ -L "$final" ] || [ ! -f "$final" ] || [ ! -O "$final" ]; then
+    # 確認の後に置かれたディレクトリの中へ移った複製は、置かれた側の中にあるため最終名の名前だけで消す(リンクはたどらない)
+    rm -f -- "$final/${work##*/}" 2>/dev/null
+    job_map_repo_abandon_snapshot "$work"
+    return 1
+  fi
+}
+
+# 最終名を使わずに複製をあきらめる(作業名だけを消し、最終名に置かれたものには触れない。trap の削除対象からも外す)
+# 引数: work(作業名)
+job_map_repo_abandon_snapshot() {
+  rm -f -- "$1" 2>/dev/null
+  JOB_MAP_REPO_SNAPSHOT=""
 }
 
 # 入力の複製を削除する(trap からも呼ぶ。未作成・削除済みなら何もしない。作業名と最終名の両方を対象にする)。

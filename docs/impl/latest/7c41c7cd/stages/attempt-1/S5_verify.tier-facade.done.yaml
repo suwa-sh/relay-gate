@@ -1,0 +1,18 @@
+stage: "S5"
+tier: "tier-facade"
+attempt: 1
+uc_id: "7c41c7cd"
+manifest_sha256: "90b95c2c7f67feac241a56c2bb03191b9150a515f82b517c61c7d324e3bdefa1"
+manifest_projection: "v2"
+result: "pass"
+open_blockers: 5
+assumptions_sha256: "50978380ad97802ab23f720c445caad2dad87b540c771d6d81213fe41d6353c1"
+assumption_verdicts_sha256: "2bab654fb5e16bbc607d1b8cbd3e80a4385f1335a5cec4aca6e039220a1cb4cb"
+assumption_verdicts_summary:
+  consistent: 3
+  spec_absent: 16
+  contradicts: 4
+  unlisted: 0
+environment_failures: []
+completed_at: "2026-11-23T06:08:48Z"
+completed_by: "dist-impl-verify@0.15.0"

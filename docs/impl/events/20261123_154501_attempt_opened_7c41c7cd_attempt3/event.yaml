@@ -1,0 +1,13 @@
+event_id: 20261123_154501_attempt_opened_7c41c7cd_attempt3
+type: attempt_opened
+uc_id: 7c41c7cd
+stage: S4
+attempt: 3
+payload:
+  reason: blockers_from_s5_verify
+  from_attempt: 2
+  tiers_rerun:
+  - tier-facade
+  open_blockers: 1
+  findings: docs/impl/latest/7c41c7cd/stages/attempt-2/S5_verify.tier-facade.findings.yaml
+created_at: '2026-11-23T15:45:01+09:00'

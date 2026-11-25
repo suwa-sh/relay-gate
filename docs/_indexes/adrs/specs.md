@@ -46,3 +46,6 @@
 | 38 | [slot ジョブマップの場所を feature flag の任意の 2 キー BLUE_JOB_MAP_CSV / GREEN_JOB_MAP_CSV に書けるようにし、書かなければ固定の名前を使う](../../specs/events/20261116_021000_feedback_standard_runner_job_map_location/decisions/spec-decision-038.yaml) | approved |
 | 39 | [ジョブを起動するコマンドは、設定の違反が 2 つ以上あるとき、検証コマンドの error 行の順で最初の違反の 1 行だけを出す](../../specs/events/20261116_021000_feedback_standard_runner_job_map_location/decisions/spec-decision-039.yaml) | approved |
 | 40 | [リランのコマンドは、起動の前に runner / worker の実体を検査せず、起動に失敗したら終了コード 6 にする](../../specs/events/20261116_021000_feedback_standard_runner_job_map_location/decisions/spec-decision-040.yaml) | approved |
+| 41 | [入力の複製の作業名は、プロセスの番号を含むテンプレートを mktemp に渡して作る](../../specs/events/20261123_201000_feedback_impl_feedback_7c41c7cd/decisions/spec-decision-041.yaml) | approved |
+| 42 | [共通ライブラリ lib/runner-resolve.sh の 5 関数を、自作の runner へ約束する入口として仕様に書く](../../specs/events/20261123_201000_feedback_impl_feedback_7c41c7cd/decisions/spec-decision-042.yaml) | approved |
+| 43 | [あるが読めないジョブマップは、どの読み手も config file is not readable で報告する](../../specs/events/20261123_201000_feedback_impl_feedback_7c41c7cd/decisions/spec-decision-043.yaml) | approved |

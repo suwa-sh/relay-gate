@@ -1,0 +1,100 @@
+round: 1
+findings:
+  - id: "R-001"
+    viewpoint: 4
+    severity: "major"
+    target: "_cross-cutting/api/cli-command-contract.yaml(config_files.feature-flag.env.job_map_location.presence_report.judgement)"
+    claim: "ジョブマップの場所がシンボリックリンクのときに「無い」「読めない」「読める」のどれになるかが決まらない。同じ契約の場所の解決は「シンボリックリンクを辿らない」と繰り返し書いているため、判定もリンクそのもの(通常のファイルでないエントリ)で見ると読める。3 つの読み手で結果が分かれ得る。"
+    evidence: |
+      presence_report.judgement は「判定する場所に何も無い(エントリが存在しない)ときは『無い』。何かがあるが通常のファイルでない(ディレクトリなど)、または読み取れないときは『読めない』」。
+      runner_path_resolution(base_dir の 4、resolved_path)と job_map_location の location は「シンボリックリンクを辿らない」「シンボリックリンクも解決しない」。
+      このため次の 2 つの入力で実装の選択が 2 通りある。
+      (a) 決めた場所が通常のファイルを指すシンボリックリンク(版ごとのファイルをリンクで切り替える運用は普通に起こる): リンクを辿って判定すれば「読める」で検査を通る。エントリそのもので判定すれば「通常のファイルでない」で config file is not readable になり、これまで通っていた設定が通らなくなる。
+      (b) リンク先が無いシンボリックリンク: エントリはあるので「読めない」(config file is not readable)とも、リンク先が無いので「無い」(job map not found / config file not found)とも読める。
+      3 つの読み手(feature flag の検証・--job-map・slot runner)が別々に判定を実装すると、同じ状態に別の文言が出て、2026-11-23 の利用者決定(3 つの読み手でそろえる)が崩れる。
+    suggested_fix: "judgement に、判定はリンクを辿った先で行う(場所の文字列はリンクを解決しないまま表示に使う)ことを 1 文足す。例:「シンボリックリンクはリンク先で判定する。リンク先が通常のファイルで読めれば読める、リンク先が無ければ『無い』、リンク先がディレクトリなど・読めなければ『読めない』。表示する場所は location で決めた文字列のまま」。(a) の場面を feature flag の検証か slot runner の BDD に 1 つ足す。"
+  - id: "R-002"
+    viewpoint: 5
+    severity: "major"
+    target: "_cross-cutting/api/cli-command-contract.yaml(commands の slot runner の standard_runner.runner_resolve_library.sourcing)、実装切替業務/実装切替ジョブ実行フロー/ジョブマップで JOB_ID から実行先を解決する/tier-facade.md(Scenario「自作の runner は共通ライブラリの解決の入口を呼んで標準の slot runner と同じ結果を受け取る」)"
+    claim: "契約が約束するのは「source しても set / trap を変えない」だけで、関数を呼んだ後に set / trap が元のままであることと、呼ぶ側が set -u を有効にしていても動くことは約束していない。一方、ティア完了条件のシナリオはその 2 つを検証している。シナリオの期待値が契約に根拠を持たない。"
+    evidence: |
+      sourcing:「source しても、source した側のシェルの設定(set のオプション)と trap を変えない。source した時点では何も出力しない。関数を呼んだときに書くのは成果物(Runner Result)と実行ログだけで、プロセスの stdout / stderr には何も出力しない」。関数の呼び出しについて約束しているのは出力だけ。
+      シナリオの Given「自作の runner が `set -u` と EXIT の trap を設定してから lib/runner-resolve.sh を source する」、Then「source の前後と関数の呼び出しの後で、set のオプションと trap は変わらず」。
+      解決の入口は入力の複製(config_input_rules.snapshot。HUP / INT / TERM で複製を消す)を行い得るため、関数の中で trap を設定する実装は自然に起こる。関数の後で戻すかどうか、set -u の下で未設定の変数を参照しないかは、契約からは 1 つに決まらない。後方互換を保つ約束の範囲(compatibility)にも、この 2 つが入るかが分からない。
+    suggested_fix: "sourcing に「関数を呼んだ後も、呼んだ側の set のオプションと trap は呼ぶ前と同じ(関数の中で一時的に変えたときは戻す)」と「呼ぶ側が set -u を有効にしていても動く」を足し、set -e / pipefail の下での動作を約束するかどうかも書く。約束しないなら、シナリオから該当の Then を外す。"
+  - id: "R-003"
+    viewpoint: 4
+    severity: "major"
+    target: "_cross-cutting/api/cli-command-contract.yaml(commands の slot runner の standard_runner.runner_resolve_library.functions の runner_resolve_reject_invocation.returns)"
+    claim: "run_id か role が分からず成果物を書かない場合に、RUNNER_RESOLVE_EXIT_CODE が 2 か 6 かが 1 つに決まらない。「Runner Result を揃えられなければ 6」がこの場合に当たるとも読める。"
+    evidence: |
+      behavior:「run_id と role が分かれば Runner Result を揃える。run_id か role が分からなければ成果物は書けないため、実行ログにだけ残す」。
+      returns:「RUNNER_RESOLVE_EXIT_CODE は 2。Runner Result を揃えられなければ 6」。
+      runner IF の exit_codes では、6 は「Runner Result 3 ファイルを揃えられない書き込み失敗」、2 は「引数不足」で、run_id が無い起動は 2 に当たると読める。しかし returns の文だけを読むと、run_id が無くて揃えなかった場合も「揃えられなければ」に入り 6 と読める。
+      tier-facade.md のエラーメッセージ表「必須オプション欠落」は「run_id / role が不明なら成果物は書けないため実行ログにのみ残す」で、終了コードを書いていない。BDD も --run-id が無い起動の場面を持たない。自作の runner へ約束した後方互換の対象なので、値を 1 つに決めておく必要がある。
+    suggested_fix: "returns を「run_id か role が分からず成果物を書かないときは 2(書かないのは違反ではない)。6 は run_id と role が分かっていて Runner Result の書き込みに失敗したときだけ」と書き分ける。--run-id の無い起動で終了コード 2・成果物なし・実行ログに ERROR の場面を BDD に 1 つ足す。"
+  - id: "R-004"
+    viewpoint: 4
+    severity: "minor"
+    target: "_cross-cutting/api/cli-command-contract.yaml(config_input_rules.snapshot.work_name.one_copy_per_process)"
+    claim: "規則(1 つのプロセスが同時に持つ複製は 1 つまで)は正しいが、書かれた理由が起こる結果の一部しか表していない。理由を読んだ実装者が「破っても大きな失敗で気づける」と誤解し得る。"
+    evidence: |
+      理由:「X を置き換えない mktemp では、同じプロセスの 2 つ目の作業名が 1 つ目と同じ名前になり、『既にある』で失敗するため」。
+      rename の定めでは、1 つ目の複製は書き終えた時点で `.part` を外した最終名へ移る。このため 1 つ目を最終名で読んでいる間に 2 つ目を作ると、作業名(`.part`)はもう無いので mktemp は成功し、2 つ目の rename が 1 つ目の最終名を黙って置き換える。失敗せず、1 つ目の読み取り中の内容が別のファイルに変わる(snapshot.guarantee の『1 時点の内容だけ』が崩れる)。「既にある」で失敗するのは、1 つ目がまだ作業名のときだけ。
+    suggested_fix: "理由を「X を置き換えない mktemp では同じプロセスの 2 つ目の作業名・最終名が 1 つ目と同じになる。1 つ目が作業名のうちは『既にある』で失敗し、最終名へ移った後は 2 つ目の rename が 1 つ目を黙って置き換える」に直す。"
+  - id: "R-005"
+    viewpoint: 4
+    severity: "minor"
+    target: "_cross-cutting/api/cli-command-contract.yaml(commands の slot runner の standard_runner.runner_resolve_library.compatibility / exit_code_variable)"
+    claim: "RUNNER_RESOLVE_STATUS_NOT_RESOLVED が、ライブラリを source すると定義される変数なのか、仕様上の名前(値は 1)にすぎないのかが書かれていない。後方互換の対象の列挙にも入っていない。"
+    evidence: |
+      exit_code_variable:「resolve_execution_target では、終える値が 0 のときの戻り値は RUNNER_RESOLVE_STATUS_NOT_RESOLVED。値は 1」。
+      compatibility が列挙するのは「関数の名前・引数・結果を受け取る変数と配列の名前・戻り値と RUNNER_RESOLVE_EXIT_CODE の意味」で、RUNNER_RESOLVE_STATUS_NOT_RESOLVED は無い。続けて「functions に無い関数・変数は relay-gate の内部のもので、約束しない」とあり、functions の項目にもこの変数の定義は無い(resolve_execution_target.on_failure で名前が出るだけ)。
+      2026-11-23 の利用者決定は RUNNER_RESOLVE_STATUS_NOT_RESOLVED=1 を約束に含めている。自作の runner が `[ "$rc" -eq "$RUNNER_RESOLVE_STATUS_NOT_RESOLVED" ]` と書いてよいかが決まらない。
+    suggested_fix: "exit_code_variable か functions の前に「source すると RUNNER_RESOLVE_STATUS_NOT_RESOLVED(値 1)が定義される」と書き、compatibility の列挙に RUNNER_RESOLVE_STATUS_NOT_RESOLVED の名前と値を足す。"
+  - id: "R-006"
+    viewpoint: 4
+    severity: "minor"
+    target: "_cross-cutting/api/cli-command-contract.yaml(commands の facade.sh の config_violation_report.checked_items)"
+    claim: "ジョブマップを facade.sh が検査しない理由の説明が、ジョブマップが無い場合の文言(job map not found)だけを挙げていて、今回足した「あるが読めない」場合(config file is not readable)に触れていない。"
+    evidence: |
+      checked_items:「6 の対応ジョブマップは facade.sh では検査しない(ジョブマップの不在は slot runner が Runner Result の exitcode.txt=2 と stderr.log の `error: job map not found ...` で返す)」。
+      presence_report.wording の slot runner は「無い job map not found / 読めない config file is not readable」の 2 通り。error_order の 6 も 2 通りに直してある。
+    suggested_fix: "括弧内を「ジョブマップが無い・読めないときは、slot runner が exitcode.txt=2 と stderr.log の `error: job map not found ...` / `error: config file is not readable path: ...` で返す。job_map_location.presence_report」に直す。"
+  - id: "R-007"
+    viewpoint: 4
+    severity: "minor"
+    target: "適用構成業務/適用構成定義フロー/feature flag を設定する/_api-summary.yaml(commands の validate-config.sh の stderr)"
+    claim: "読めないジョブマップの文言が、job map not found の補足の括弧の中に入っている。「off でない slot のジョブマップが決めた場所に無いとき」の補足の一部に見え、独立した違反の 1 つとして読みにくい。"
+    evidence: "stderr の「off でない slot のジョブマップが決めた場所に無いときは error: job map not found slot=<blue|green> map=<決めた場所>(map= は … 契約 config_files.feature-flag.env.job_map_location、決めた場所にあるが読めない・通常のファイルでない(ディレクトリなど)ときは error: config file is not readable path: <決めた場所>(…))」。閉じ括弧の位置で、config file is not readable の項が job map not found の括弧の内側に入っている。CLI 契約の validate-config.sh の stderr の一覧では、2 つは「/」で区切った別の項になっている。"
+    suggested_fix: "job map not found の括弧を「契約 config_files.feature-flag.env.job_map_location)」で閉じ、続けて「、決めた場所にあるが読めない・通常のファイルでない(ディレクトリなど)ときは error: config file is not readable path: <決めた場所>(…)」を同じ階層の項として並べる。"
+resolved:
+  - id: "R-001"
+    resolution: "fixed"
+    note: "presence_report.judgement に、シンボリックリンクはリンク先で判定し表示は location の文字列のまま、を足した。feature flag の検証の BDD にリンク先が読める・リンク先が無いの場面を足した。判断記録 043 の 3a"
+    by: "orchestrator"
+  - id: "R-002"
+    resolution: "fixed"
+    note: "sourcing に、関数を呼んだ後の set / trap の状態と set -u / set -e / pipefail の下での動作は約束しない、を書いた(実装の説明欄に記載が無いため)。シナリオから set -u と呼び出し後の set / trap の Then を外した"
+    by: "orchestrator"
+  - id: "R-003"
+    resolution: "fixed"
+    note: "runner_resolve_reject_invocation.returns を、run_id か role が分からず成果物を書かないときも 2、6 は書き込みの失敗だけ、に書き分けた。run_id が分からない場面の BDD を足した"
+    by: "orchestrator"
+  - id: "R-004"
+    resolution: "fixed"
+    note: "one_copy_per_process の理由を、作業名のうちは既にあるで失敗し、最終名へ移った後は 2 つ目の rename が 1 つ目を黙って置き換える、に直した"
+    by: "orchestrator"
+  - id: "R-005"
+    resolution: "fixed"
+    note: "exit_code_variable に RUNNER_RESOLVE_STATUS_NOT_RESOLVED は source すると値 1 で定義される変数と書き、compatibility の列挙に名前と値を足した"
+    by: "orchestrator"
+  - id: "R-006"
+    resolution: "fixed"
+    note: "facade.sh の config_violation_report.checked_items の括弧内に、読めないときの config file is not readable と presence_report への参照を足した"
+    by: "orchestrator"
+  - id: "R-007"
+    resolution: "fixed"
+    note: "feature flag を設定するの _api-summary.yaml で、job map not found の括弧を閉じてから config file is not readable の項を同じ階層に並べた"
+    by: "orchestrator"

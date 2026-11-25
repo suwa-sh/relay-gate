@@ -1,0 +1,55 @@
+stage: "S5"
+lane: "verify"
+tier: "tier-facade"
+attempt: 2
+uc_id: "7c41c7cd"
+manifest_sha256: "90b95c2c7f67feac241a56c2bb03191b9150a515f82b517c61c7d324e3bdefa1"
+manifest_projection: "v2"
+result: "pass"
+note: "検証実施完了。open_blockersの1件は修正・再検証が必要。"
+open_blockers: 1
+findings: "docs/impl/latest/7c41c7cd/stages/attempt-2/S5_verify.tier-facade.findings.yaml"
+gate_reexec:
+  format: "pass"
+  lint: "pass"
+  tdd: "pass"
+  bdd_tier: "pass"
+viewpoints_checked:
+  spec_conformance:
+    status: "done"
+    note: "spec.md、tier-facade.md、CLI/UI契約と対象成果物を照合。tierのGherkinは対象featureと13シナリオすべて一致。対象データ契約のsource scopeと生成物も一致。"
+  readability_maintainability:
+    status: "done"
+    note: "domain/usecase/gateway/presentationの責務、bashの命名・日本語コメント・引数配列の扱いを規約と照合。追加の違反なし。"
+  security:
+    status: "done"
+    note: "入力をevalせず配列で保持し、credential_refをログへ露出しないことを確認。引用符・空白・日本語・改行を含む通常の引数とコマンド置換風の文字列がデータとして保持されることを独立実行で確認。"
+  performance:
+    status: "done"
+    note: "通常サイズの入力に対する不要な処理だけを静的確認。行ごとの外部コマンド起動や全組合せ比較はなく、全行の構造検査は線形。時間計測・巨大入力・極端なセルは使用していない。"
+  operability:
+    status: "done"
+    note: "stdout/stderr、実行ログ、診断文、4ファイルと終了コードを照合。複合バイト違反の全件表示、未知列WARNと未定義JOB_ID ERRORの併存も独立確認。"
+  fault_tolerance:
+    status: "done"
+    note: "結果のtmpからrenameによる公開、公開済みexitcode保持、書き込み失敗経路を確認。中止済みslotの成果物上書きをF-001として実際の標準runnerで再現。"
+  refactoring:
+    status: "done"
+    note: "共有のCSV/JSON検証、filesystemの既存exitcode読取、clock/log処理の再利用を確認。対象差分に無関係なリファクタリングや追加の重複は認めない。"
+  assumption_conformance:
+    status: "done"
+    note: "1〜7観点の完走後に前提ファイルを初めて開き、id/assumption/targetのみで23件を判定・独立分類した後にreason/confidence/spec_refsと元categoryを照合。独立抽出した判断候補5件は記録済み前提へ対応しunlistedは0件。A-014の分類差1件を別途記録。"
+summary:
+  blocker: 1
+  major: 4
+  minor: 20
+assumptions_sha256: "c23b46615fe3de04b6116112358b9f51b1463166e883dd181cd04acbbbdee34e"
+assumption_verdicts_sha256: "d3440bb44ad970db7f9a7242cf079d6d98046c42fffabbb3820e7c905f542542"
+assumption_verdicts_summary:
+  consistent: 0
+  spec_absent: 23
+  contradicts: 0
+  unlisted: 0
+environment_failures: []
+completed_at: "2026-11-23T06:40:33Z"
+completed_by: "dist-impl-verify@0.15.0"

@@ -1,0 +1,42 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "specification"
+artifact_id: "spec-decision-003"
+title: "データ正規化レベル: 第 3 正規形・状態履歴テーブルなし・速報/確報モデル分離(rdb-schema.yaml 7 テーブル)"
+status: "approved"
+generated_at: "2026-08-31T00:37:34"
+context: |
+  管理 DB は RDB 1 種(ジョブキュー兼管理 DB)。arch data_architecture.entities は model_type: event_snapshot で、条件「速報と確報のモデル分離」
+  「実行履歴・監査はジョブスケジューラの責務」がある。bash + SQL クライアント CLI で扱うため、JOIN の複雑さと状態履歴の保持範囲を決める必要があった。
+  RAPID_CROSSCHECK_MODE=off では管理 DB 無しで facade / runner が成果物ファイルだけで動く必要がある(方針資料)。
+decision: |
+  - 第 3 正規形。テーブルは parallel_runs / slot_executions / rapid_runs / rapid_crosscheck_requests / comparison_results /
+    final_crosscheck_requests / monitor_records の 7 つ。final_crosscheck_requests は速報側テーブルへの FK を持たず、モデル分離を保つ。
+  - 状態遷移履歴テーブルは持たない。event_snapshot は status 列 + `*_at` 列(requested_at / claimed_at / started_at / completed_at / judged_at 等)で表現する。
+  - 依頼レコード(rapid / final)は stdout / stderr / exit_code を text 列で保持する(RDRA 情報定義どおり。ファイル参照にしない)。
+  - slot 実行の状態はファイル正本(条件「slot 実行の状態導出規則」: exitcode.txt があれば SUCCEEDED / FAILED、無く aborted.txt があれば ABORTED、
+    どちらも無ければ RUNNING)から導出する。slot_executions は RAPID_CROSSCHECK_MODE が off 以外のとき同じ値を保持する二重マッピング(arch E-014 rdb: confidence high)。
+    abort-blue / abort-green は aborted.txt を書いて中止を成立させ、off 以外では加えて管理 DB を条件付き UPDATE する(off でも中止・リランが成立する。2026-09-05 利用者決定)。
+  - monitor_records は監視対象(run_id + role)を主キーに warning 傾向を SQL で集計できるよう保持する(target_type は role からの導出値だが集計用に保持。非正規化の根拠を description に記録)。
+  - 状態 enum は 状態.tsv の値をそのまま英字コードにする(parallel_run: STARTED / RUNNING / COMPLETED / ABORTED、slot: RUNNING / SUCCEEDED / FAILED / ABORTED、
+    依頼: REQUESTED / CLAIMED / RUNNING / SUCCEEDED / FAILED / ABORTED、monitor_status 6 値)。遷移 HANG_SUSPECTED_NOTIFIED → 3 状態、MONITORING → COMPLETED(中止済み終端を含む)、
+    parallel_run の STARTED → ABORTED と RUNNING → COMPLETED(リラン由来 run)は RDRA 状態.tsv に存在する(2026-09-05 利用者決定で反映。仮採用ではない)。
+  - ユニーク制約: rapid_crosscheck_requests.run_id、comparison_results(run_id, comparison_type)。final の同一 business_date + catalog_version の未終端部分ユニークは採用しない(runner 側で検出)。
+  - 管理 DB は relay-gate 内部のデータストア(ジョブキュー兼管理 DB)であり、外部システムではない(RDRA 外部システム.tsv から削除。2026-09-05)。
+  - 分析根拠: `_inference.md` 確認推奨項目 3(high)・7(2026-09-05 利用者決定で解消。DIST-009 / DIST-017)・8(medium)・11(medium)。DDL には変換しない(migration の正本は worker/migrations/)。
+consequences:
+  positive:
+    - "方針資料のデータモデルと 1:1 で対応し、bash + SQL で読み書きしやすい"
+    - "監査・履歴はジョブスケジューラに委ね、relay-gate 側の保持データを最小にできる"
+    - "off モードで管理 DB を要求しない(条件『速報クロスチェック有効判定』を満たす)"
+  negative:
+    - "状態変化の履歴(誰がいつ ABORTED にしたか)は実行ログにしか残らない"
+    - "off モードでは abort-rapid-crosscheck / abort-final-crosscheck は依頼レコードが無く実行できない(abort-blue / abort-green は aborted.txt で成立する)"
+    - "final の重複依頼を DB 制約で防がないため、runner の事前検出ロジックに依存する"
+alternatives_considered:
+  - name: "状態遷移履歴テーブル(*_status_events)を分離した完全イベントソーシング"
+    reason_rejected: "監査に強いが実行履歴・監査はジョブスケジューラの責務(条件)であり過剰"
+  - name: "parallel_run に rapid_run / 依頼を非正規化して 1 テーブル化"
+    reason_rejected: "読み取りは簡単だが速報と確報のモデル分離(条件)に反する"
+  - name: "slot 実行を常に RDB に保持"
+    reason_rejected: "off 時に管理 DB 接続を要求し、方針資料『off の場合も成果物だけで動く』に反する"

@@ -1,0 +1,17 @@
+event_id: 20261123_184500_s8_feedback_completed_7c41c7cd
+type: stage_completed
+uc_id: 7c41c7cd
+stage: S8
+payload:
+  result: pass
+  mode: initial
+  status: draft_created
+  done: docs/impl/latest/7c41c7cd/stages/S8_feedback.done.yaml
+  manifest_sha256: 90b95c2c7f67feac241a56c2bb03191b9150a515f82b517c61c7d324e3bdefa1
+  manifest_projection: v2
+  feedback_id: 20261123_175902_impl_feedback_7c41c7cd
+  draft: docs/impl/latest/7c41c7cd/feedback/draft.md
+  draft_sha256: f2920b01dc027eb4db4fd5c628ea79f57cd916d1cfbc8b740bd79bc77fdc9a3b
+  request_count: 2
+  blocker_count: 0
+created_at: '2026-11-23T18:45:00+09:00'

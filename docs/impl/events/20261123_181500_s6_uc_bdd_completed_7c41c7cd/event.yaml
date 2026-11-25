@@ -1,0 +1,13 @@
+event_id: 20261123_181500_s6_uc_bdd_completed_7c41c7cd
+type: stage_completed
+uc_id: 7c41c7cd
+stage: S6
+payload:
+  result: pass
+  done: docs/impl/latest/7c41c7cd/stages/S6_uc-bdd.done.yaml
+  manifest_sha256: 90b95c2c7f67feac241a56c2bb03191b9150a515f82b517c61c7d324e3bdefa1
+  manifest_projection: v2
+  tier_impl_attempt: 4
+  runs: 'npx cucumber-js --config cucumber.cjs features/uc run 4 times: 99 scenarios, 98 passed, 0 failed, 1 skipped each time'
+  skipped: 'features/uc/select-slot-mode-and-launch-runners.feature:94 waits for the later UC that saves execution-spec.json'
+created_at: '2026-11-23T18:15:00+09:00'

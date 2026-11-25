@@ -1,0 +1,10 @@
+event_id: 20261123_141236_s1_uc_init_completed_7c41c7cd
+type: stage_completed
+uc_id: 7c41c7cd
+stage: S1
+payload:
+  result: pass
+  done: docs/impl/latest/7c41c7cd/stages/S1_uc-init.done.yaml
+  manifest_sha256: 3be8e5d2a120b16dcd7e1ff7ca52d0176819084e8bcea554f474548646aff297
+  manifest_projection: v2
+created_at: '2026-11-23T14:12:36+09:00'

@@ -121,6 +121,12 @@ use_cases:
   - SPEC-004-04-1
   - SPEC-004-04-2
   - SPEC-004-04-3
+  - SPEC-004-01-3
+  - SPEC-004-01-4
+  - SPEC-004-01-5
+  - SPEC-004-01-6
+  - SPEC-004-01-7
+  - SPEC-004-01-8
   atdd_confirmed: true
 - uc_id: 43850d68
   business: 実装切替業務

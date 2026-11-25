@@ -1,0 +1,115 @@
+stage: "S9"
+step: "review_generated"
+uc_id: "7c41c7cd"
+manifest_sha256: "8dd410fbf84a6012b7868a016f42fec481d4e9266e1f4ed66bd66b5bf3f8cf87"
+manifest_projection: v2
+result: pass
+tier_impl_attempt: 5
+review_round: 1
+review_round_note: "仕様の反映(判断記録 spec-decision-041〜043)の後の周回で最初の確認の資料。前回の周回の確認(review/review-notes.md の 2 回)とは別の記録(attempt 5)が対象"
+review_html: "docs/impl/latest/7c41c7cd/review/index.html"
+review_html_note: "gitignore 済みの補助資料。HTML と画像の SHA は記録しない。前回の周回の HTML は上書きした"
+feedback_request_count: 0
+open_blocker_count: 0
+decision_summary:
+  approval_questions: 1
+  selection_questions: 0
+  assumption_questions: 5
+  recommended_choices: 7
+  questions:
+    - label: "実装の承認"
+      question: "いまの実装とテスト結果を承認するか(仕様への要求は 0 件のまま進める)"
+      choices: ["承認する。仕様への要求は 0 件のまま", "承認するが、仕様への要求にしたい項目がある", "差し戻す"]
+      recommended: "承認する。仕様への要求は 0 件のまま"
+      shown_evidence: "今回直した欠陥 2 件(入力の複製の最終名 / 成果物の確定名)と、それぞれの再現テスト"
+      on_other_choice: "要求にしたい項目があれば S8 の refresh と S9 の再生成。差し戻しは実装と独立検証のやり直し(6 回目。上限の再延長が要る)"
+    - label: "安全性にかかわる前提 5 件"
+      question: "仕様に無いため実装者が決めた 5 件を、1 件ずつ承認するか"
+      choices: ["承認", "却下して実装を直す(implementation_change)", "却下して仕様で決める(spec_change)"]
+      recommended: "5 件とも承認"
+      assumption_ids: ["A-006", "A-012", "A-022", "A-029", "A-030"]
+      same_as_previously_approved: ["A-006", "A-012", "A-022"]
+      first_time: ["A-029", "A-030"]
+      answer_form: "1 件ごとに選ぶ。初期選択は 5 件とも承認"
+    - label: "そのほかの前提 18 件"
+      question: "まとめて承認するか"
+      choices: ["まとめて承認", "一部を却下する(対象の名前と種別を補足に書く)"]
+      recommended: "まとめて承認"
+      assumption_ids: ["A-004", "A-005", "A-007", "A-009", "A-011", "A-013", "A-014", "A-015", "A-016", "A-017", "A-018", "A-019", "A-020", "A-023", "A-024", "A-025", "A-026", "A-028"]
+      answer_required: false
+  folded_from_s8:
+    note: "S8 の review_attention の 4 件目(仕様への要求を 0 件とすること)は、問い 1 の選択肢に含めた(利用者の規約: 問いを少なく畳む)"
+feedback_review_evidence:
+  feedback_id: null
+  draft_sha256: null
+  request_count: 0
+  note: "要求 0 件のため draft は無い。前回公開した要求 3 件は仕様に反映済みで、HTML には反映済みとだけ示した"
+implementation_review_evidence:
+  gate_result: "6/6 pass"
+  gate_result_note: "format / lint / tdd(778 件)/ bdd_tier(163 件)は S4 attempt 5 の結果(S5 も再実行して pass)。S6 uc-bdd は 99 件中 98 pass・1 skipped、S7 atdd は 13 件中 12 pass・1 skipped(保留はどちらも後続の機能待ち)。記録の転記で、S9 では再実行していない"
+  open_blocker_count: 0
+  open_major_count: 5
+  open_major_note: "major 5 件はすべて、仕様に記載が無い前提(security / persistence)の確認記録。A-006 / A-012 / A-022 / A-029 / A-030 と同じもの"
+  assumption_evidence_sha256: "407c00e99da46725cdf21272b3ea95257f438c49ad4d6b2115150be67101c730"
+  assumption_evidence_source: "validateAssumptions.js evidence tier-facade(attempt 5 の S5 done の assumptions_sha256 と assumption_verdicts_sha256)"
+assumptions_shown:
+  count: 23
+  answer_required: 5
+  answer_optional: 18
+  unlisted: 0
+  contradicts: 0
+  category_mismatch_shown: "A-022(実装者 security / 検証 persistence)を本文と付録に示した"
+disclosed_limits:
+  - "実装のやり直しは 5 回目で、上限を 5 回へ延ばす利用者の承認を得て行った"
+  - "統合テストと受け入れテストに保留が 1 件ずつある(後続の機能待ち)"
+  - "終了コード 6 になる新しい場合(移す先に先客がある)は、単体テストと独立した検証だけで確かめている"
+  - "Linux では実行していない"
+  - "一時ファイルの名前に他の利用者のファイルがある場合はテストしていない"
+  - "標準の slot runner は、解決に成功しても実装を実行せず終了コード 6 で終える"
+validators:
+  - name: "human-html-review validate.py"
+    result: "VALID"
+    errors: 0
+    warnings: 0
+  - name: "dist-impl-review validateReviewHtml.js"
+    result: "pass"
+    exit_code: 0
+validator_notes:
+  - "validateReviewHtml.js が求める記号の回答書式(機能=A / 相互運用=A / 監査=A / 前提=...)は、本文ではなく付録 2 に置いた。本文の回答欄は利用者の規約どおり、選ぶと文章が組み上がる形にした"
+  - "前提の番号・指摘の番号・機能の ID は本文に出さず、付録だけに置いた"
+  - "回答欄のスクリプトは human-html-review の base.html のものをそのまま使った(S9 固定指示の『script を使わない』より、利用者の規約『選ぶと返信文が組み上がりコピーできる形』を優先した。通信や外部読み込みは無い)"
+diagrams:
+  count: 6
+  types: ["flowchart", "architecture", "flowchart", "architecture", "flowchart", "architecture"]
+  diagram_design: "~/.claude/skills/diagram-design の SKILL.md / style-guide.md / type-architecture.md / type-flowchart.md を読んで適用した。外部フォントは読み込んでいない(human-html-review の制約を優先)"
+  reused: "実装の構成・処理フロー・データフローの 3 枚は、前回の資料の図を元に文言を直した"
+visual_check:
+  method: "ローカルの Chrome を headless で起動して撮影した。操作は、検査用の複製にだけ確認用のスクリプトを足して確かめた(成果物の HTML には足していない)"
+  confirmed:
+    - "1440px の最初の画面が「ユーザーにお願いしたいこと」になる(暗い配色のスクリーンショットを目で確かめた)"
+    - "図 6 枚を画像で目で確かめた(斜め線・線の重なり・接続点の共有・箱の裏を通る線が無い)。1 枚で文字が箱からはみ出していたため直した"
+    - "回答欄の見た目(問い 1、前提 5 件の小さい選択、問い 3、補足、文面)を 1440px の画像で目で確かめた"
+    - "初期状態の回答文が、推奨の 7 行になっている"
+    - "選択を変えると回答文が変わる(前提 5 件目の却下、補足欄)。操作する部品がすべて有効になる"
+    - "1440px と 500px で、ページ全体が横スクロールしない(scrollWidth が画面幅と同じ)"
+  not_confirmed:
+    - "390px 幅そのものでは確かめていない(headless Chrome の最小幅が 500px のため)"
+    - "コピーボタンを押した結果(クリップボードの中身)は確かめていない"
+    - "明るい配色では見ていない(撮影は暗い配色だけ)"
+    - "実機のスマートフォン、Chrome 以外のブラウザでは見ていない"
+  showme_published: false
+  showme_note: "プレビューの提示はオーケストレータが行うため、公開していない"
+facts_verified_in_this_stage:
+  - "再現テストのファイルとテスト名が実在する(facade/test/gateway/filesystem_adapter_final_name.bats 6 件、facade/test/repository/job_map_repo_snapshot_final_name.bats 4 件、config_snapshot_final_name_readers.bats 2 件、facade/test/usecase/runner_resolve_library_contract.bats の 1 件)"
+  - "成果物の公開の関数(facade/src/gateway/filesystem_adapter.sh)に、移す前と移した後の確認がある"
+facts_not_reverified:
+  - "テストの件数と結果は記録からの転記。S9 では流し直していない"
+  - "独立した検証の 24 通りの確認、方針資料との照合、同じ形の箇所が 2 か所だけであることは、記録からの転記"
+  - "取り込みの依頼を作る時機と、6 回目に上限の再延長が要ることは見込み(HTML に『報告のみ』『推測』のラベルを付けた)"
+checks:
+  yaml_parse: "yaml.safe_load で確認"
+  git_commands_executed: false
+  tests_run: false
+  write_set: ["docs/impl/latest/7c41c7cd/review/index.html", "docs/impl/latest/7c41c7cd/stages/S9_review_generated.done.yaml"]
+completed_at: "2026-11-24T10:35:00+09:00"
+completed_by: "dist-impl-review@0.15.0"

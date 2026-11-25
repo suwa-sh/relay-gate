@@ -1,0 +1,259 @@
+stage: "S8"
+uc_id: "7c41c7cd"
+manifest_sha256: "90b95c2c7f67feac241a56c2bb03191b9150a515f82b517c61c7d324e3bdefa1"
+manifest_projection: v2
+mode: "refresh"
+mode_note: "1 回目の最後の確認(2026-11-23)の回答を反映した。仕様への要求は 3 件(どれも spec-gap。作業を止めるものは 0 件)。既存の 2 件は内容を変えず、利用者の回答で 3 件目『読めないジョブマップの報告の文言をそろえる』を足した。実装者が補った前提 27 件と記録に無かった 1 件は、利用者が 28 件とも承認した(却下 0 件)。feedback ID・created_at・既存の要求 ID は引き継いだ"
+result: pass
+status: "published"
+tier_impl_attempt: 4
+policy:
+  source: "CLAUDE.md「方針の正本」と利用者の方針(2026-11-18)"
+  summary: "仕様の変更は、元の方針資料と一致しているかを第一の基準にする。実装者が補った前提は、利用者の判断が要るものを除き、要求にせず as-built の事実として記録する。性能・作為的な条件についての指摘や要求は作らない"
+  precedent: "docs/impl/latest/09730858/stages/S8_feedback.done.yaml"
+inputs:
+  issues_dir: "docs/impl/latest/7c41c7cd/issues/"
+  findings:
+    - "docs/impl/latest/7c41c7cd/stages/attempt-1/S5_verify.tier-facade.findings.yaml"
+    - "docs/impl/latest/7c41c7cd/stages/attempt-2/S5_verify.tier-facade.findings.yaml"
+    - "docs/impl/latest/7c41c7cd/stages/attempt-3/S5_verify.tier-facade.findings.yaml"
+    - "docs/impl/latest/7c41c7cd/stages/attempt-4/S5_verify.tier-facade.findings.yaml"
+  ui_review_findings: []
+  assumptions: "docs/impl/latest/7c41c7cd/stages/attempt-4/S4_tier-impl.tier-facade.assumptions.yaml"
+  s4_done: "docs/impl/latest/7c41c7cd/stages/attempt-4/S4_tier-impl.tier-facade.done.yaml"
+  s5_done: "docs/impl/latest/7c41c7cd/stages/attempt-4/S5_verify.tier-facade.done.yaml"
+  s2_done: "docs/impl/latest/7c41c7cd/stages/S2_test-scaffold.done.yaml"
+  s6_done: "docs/impl/latest/7c41c7cd/stages/S6_uc-bdd.done.yaml"
+  s7_done: "docs/impl/latest/7c41c7cd/stages/S7_atdd.done.yaml"
+  review_notes: "docs/impl/latest/7c41c7cd/review/review-notes.md"
+  review_notes_note: "1 回目の確認(2026-11-23)の回答。前提の却下は 0 件。要求を 1 件足す回答あり"
+  policy_documents:
+    - "tmp/RelayGateのしくみ.md"
+    - "tmp/RelayGateの利用イメージ.md"
+resolution:
+  issues:
+    - path: "docs/impl/latest/7c41c7cd/issues/20261123_142047_cross-uc-scenarios.md"
+      verdict: "partially_requested"
+      decided_by: "課題の 4 の案 A(S6 / S7 の暫定の注入がこの案を根拠にしている)"
+      decision_reason: "課題の 4 のうち『共通ライブラリの呼び方が仕様に無い』は仕様起因として要求 CR-7c41c7cd-002 にした。残り(機能をまたぐシナリオの担当の分け方、テストが用意する前提、前の機能から引き継いだ確認事項、解決に成功した後の終わり方)は記録であり、要求にしない"
+      evidence: "S6 done と S7 done の injections(共通ライブラリの直接呼び出し。暫定の注記つき)"
+  override_of_orchestrator_judgement: "初回は、候補 4(検証コマンドの --feature-flag が読めないジョブマップを job map not found と報告する)を、仕様どおりの動きとして要求にしなかった。利用者の回答(1 回目の確認)により、仕様の 2 か所の書き分けをそろえる要求 CR-7c41c7cd-003 にした。実装が仕様どおりであるという判定は変えていない"
+  new_issues_in_this_stage: 0
+  findings:
+    attempt_1:
+      blocker: 5
+      major: 2
+      minor: 22
+      verdict: "blocker 5 件(F-001 / F-008 / F-010 / F-013 / F-022)は、仕様と共通の契約に書かれた振る舞いを実装が満たしていなかった実装起因。attempt 2 で修正済み。要求にしない。F-022(runner が読めないジョブマップを not found と報告する)は、要求 CR-7c41c7cd-003 の事実の 1 つとして引用した"
+    attempt_2:
+      blocker: 1
+      major: 4
+      minor: 20
+      verdict: "blocker 1 件(F-001 中止済みの slot の成果物を上書きする)は実装起因。attempt 3 で修正済み。要求にしない"
+    attempt_3:
+      blocker: 0
+      major: 3
+      minor: 24
+      verdict: "findings 起因の要求なし。通過の後、機能をまたぐシナリオテストから一時複製の名前の衝突が差し戻され、attempt 4 で直した(要求 CR-7c41c7cd-001 の根拠)"
+    attempt_4:
+      blocker: 0
+      major: 4
+      minor: 25
+      spec_absent: 26
+      consistent: 1
+      contradicts: 0
+      unlisted: 1
+      verdict: "major 4 件と minor 24 件は前提の確認記録。実装の指摘は minor 1 件(F-001 公開先がディレクトリのときの検知。作為的な配置のため掘り下げない)。findings だけを根拠にした要求は無い"
+  rejected_spec_change: 0
+  rejected_implementation_change: 0
+classification:
+  spec_origin: 3
+  not_requested_records: 1
+  implementation_origin: 6
+  implementation_origin_open_minor: 1
+  environment_origin: 1
+  note: "仕様起因 = 3 件(一時複製の作業名の例が mktemp の種類によって固定の名前になる / 共通ライブラリの呼び方が仕様に無い / 読めないジョブマップの報告の文言が機能の仕様と共通の規約で 2 通りある)。要求にしない記録 = issue の残りの項目。実装起因 = attempt 1 の blocker 5 件と attempt 2 の blocker 1 件(いずれも修正済み)。未対応の軽い実装の指摘 = attempt 4 の F-001。環境起因 = Linux で実行していない(4 回とも)"
+policy_document_check:
+  result: "no_contradiction"
+  documents_read: true
+  note: "方針資料 2 件を読んだ(2026-11-23)。一時ファイルの名前の決め方、共通ライブラリ、エラーの文言、読めない設定ファイルの報告のしかたの記述は無い。関連する記述(一時ファイルへ出力してから確定名へリネームできる / 起動方式の違いを runner に閉じ込める / slot runner が JOB_ID をジョブマップで解決する)とは一致する。要求 3 件のどの案も方針と食い違わない"
+requests:
+  - id: "CR-7c41c7cd-001"
+    title: "入力の複製の作業名を、どの mktemp でもプロセスごとに分かれる形に定める"
+    severity: "spec-gap"
+    blocks_work: false
+    recommended_option: "A"
+    user_answer: "出す(内容は変えない。案は推奨のまま)"
+    refresh_change: "unchanged"
+    related_ids: ["SPEC-004-01", "REQ-004"]
+    related_assumptions: ["A-029", "A-022"]
+  - id: "CR-7c41c7cd-002"
+    title: "自作の runner が共通ライブラリを呼ぶときの呼び方を定める"
+    severity: "spec-gap"
+    blocks_work: false
+    recommended_option: "A"
+    user_answer: "出す(内容は変えない。案は推奨のまま)"
+    refresh_change: "unchanged"
+    related_ids: ["SPEC-004-01", "SPEC-004-02", "SPEC-001-04", "REQ-004"]
+    related_assumptions: ["A-001", "A-002", "A-003", "A-026"]
+  - id: "CR-7c41c7cd-003"
+    title: "読めないジョブマップの報告の文言をそろえる"
+    severity: "spec-gap"
+    blocks_work: false
+    recommended_option: "A"
+    recommended_summary: "共通のエラー表示の規約にそろえる。feature flag の検証でも、あるが読めないジョブマップは config file is not readable と報告する。無い場合の job map not found は変えない"
+    options: ["A", "B", "C"]
+    user_answer: "足すことは決定。内容と案の確認は次の確認で受ける"
+    refresh_change: "added"
+    related_ids: ["SPEC-004-01", "REQ-004"]
+    related_assumptions: []
+    related_findings: ["attempt-1 F-022"]
+    facts_verified:
+      - "機能『feature flag を設定する』の tier-facade.md は 2 か所で、存在しない / 読めないを job map not found と定める"
+      - "機能『slot runner の実体スクリプトを割り当てる』の tier-facade.md は、検証項目『存在し読める』の違反を job map not found の 1 つで定める"
+      - "CLI 契約の検証コマンドの共通形式と ui-design.md は、読めない場合を config file is not readable と定める"
+      - "facade/src/domain/feature_flag.sh の validate_slot_runner_assignment は、通常のファイルでない・読み取り権限が無いを 1 つの条件で job map not found にする"
+      - "feature flag の検証で、あるが読めないジョブマップを確かめるテストは無い"
+    impact_if_recommended:
+      implementation: ["facade/src/domain/feature_flag.sh"]
+      tests_expectation_changed: []
+      tests_to_add: ["facade/test/domain/feature_flag.bats", "facade/test/usecase/validate_feature_flag.bats", "facade/features/configure-feature-flags.feature"]
+not_requested_candidates:
+  - key: "runtime_snapshot_dir_owner_credential_warn"
+    summary: "runner も一時複製で読むこと(A-022)、成果物ディレクトリを runner が作ること(A-006)、credential_ref の警告の対象と出し先(A-012)"
+    reason: "仕様と矛盾しない前提。利用者が 3 件とも承認した"
+  - key: "duplicate_option_last_wins"
+    summary: "同じオプションを 2 回渡したときは後のものを採る(V-001。記録に無かった前提)"
+    reason: "記録の漏れであり、仕様と矛盾しない。利用者が承認した"
+  - key: "atdd_assignment"
+    summary: "SPEC-004-01-3 〜 8 の割り当てと、SPEC-004-02-1 の二重の割り当て"
+    reason: "仕様の不足ではなく、機能への割り当ての判断。6 件の割り当ては利用者が確定した"
+  - key: "cross_feature_pending_scenario"
+    summary: "機能をまたぐシナリオ 1 件(execution-spec.json の中身の確認)の保留"
+    reason: "後続の機能の担当。仕様も実行の側を後続の機能で覆うと注記している"
+orchestrator_decisions:
+  - key: "observe_resolution_by_library_call"
+    summary: "解決結果のうち実行ログに出ない項目は、テストが共通ライブラリを直接呼んで確かめる"
+    user_confirmation: "approved"
+    related_assumptions: ["A-001", "A-002", "A-003"]
+  - key: "placeholder_exit_after_resolution"
+    summary: "解決に成功した後、後続の段が無い間は、標準の slot runner は何も書かずに仮の終了コード 6 で終える"
+    user_confirmation: "not_required"
+    related_assumptions: ["A-004"]
+  - key: "attempt_limit_extended"
+    summary: "やり直しの上限を 1 回延ばし、一時複製の名前の衝突を attempt 4 で直した"
+    user_confirmation: "approved"
+    related_assumptions: ["A-029"]
+  - key: "atdd_assignment_confirmed"
+    summary: "SPEC-004-01-3 〜 8 の 6 件を、この機能の担当として確定した"
+    user_confirmation: "approved"
+    related_assumptions: []
+assumptions_summary:
+  count: 27
+  consistent: 1
+  spec_absent: 26
+  contradicts: 0
+  unlisted: 1
+  rejected_spec_change: 0
+  rejected_implementation_change: 0
+  human_decision: "28 件とも承認(1 回目の確認。2026-11-23)"
+  human_decisions:
+    approved_explicit: ["A-006", "A-012", "A-022", "A-029", "V-001"]
+    approved_by_default_count: 23
+    rejected: []
+  open_question: "A-022 について利用者の質問あり(なぜ複製が要るか)。回答は as-built の第 1 節の注。次の確認で却下へ変えられる"
+  by_category:
+    security: 1
+    persistence: 3
+    error_handling: 15
+    input_validation: 2
+    data_format: 5
+    performance: 1
+  assumptions_sha256: "cad27c03d69264dab0bc71fbe6d76ae61d255a463ad3ae1ab58d42eb2db10044"
+  assumption_verdicts_sha256: "fa2418a93037989784fec68378f076ed58cbddb55c39893da9bcdfe02843881b"
+test_results:
+  tdd: "756 tests, 756 ok"
+  bdd_tier: "154 scenarios (154 passed)"
+  uc_bdd: "99 scenarios (98 passed, 1 skipped)"
+  atdd: "13 scenarios (12 passed, 1 skipped)"
+  tests_run_in_this_stage: false
+skipped_scenarios:
+  - scenario: "値が空のジョブマップの場所のキーがある slot の runner は固定の名前のジョブマップで実行先を解決する(SPEC-004-01)"
+    judged: "場所を runner へ渡すことと、固定の名前のジョブマップで解決できたこと"
+    skipped: "execution-spec.json の slots.green の中身"
+    until: "後続の機能が execution-spec.json を保存するまで"
+  - scenario: "SPEC-004-02-1(固定引数の後ろに PARAM を順序保持で連結する)"
+    judged: "解決に成功したことと、組み立てた引数の並び(4 個)"
+    skipped: "実装が実際に受け取った引数"
+    until: "後続の機能が実装を実行するまで"
+review_attention:
+  - key: "1"
+    topic: "足した 3 件目の要求(読めないジョブマップの報告の文言をそろえる)"
+    summary: "この内容で出してよいかと、案(A / B / C)の選択を求める。推奨は案 A"
+    related_assumptions: []
+review_answered:
+  - topic: "実装の承認"
+    answer: "承認"
+  - topic: "仕様への要求 2 件(CR-7c41c7cd-001 / 002)"
+    answer: "出す。内容は変えない。案は推奨のまま"
+  - topic: "安全性とデータの保存にかかわる前提 4 件"
+    answer: "4 件とも承認"
+    related_assumptions: ["A-006", "A-012", "A-022", "A-029"]
+  - topic: "記録に無かった前提 1 件"
+    answer: "承認"
+    related_assumptions: ["V-001"]
+  - topic: "そのほかの前提 23 件"
+    answer: "回答なし(承認扱い)"
+  - topic: "受け入れシナリオ 6 件の割り当て"
+    answer: "確定"
+feedback_request:
+  feedback_id: "20261123_175902_impl_feedback_7c41c7cd"
+  created_at: "2026-11-23T17:59:02+09:00"
+  draft_path: null
+  published_path: "docs/impl/latest/7c41c7cd/feedback-requests/20261123_175902_impl_feedback_7c41c7cd.md"
+  input_sha256: "adf35e772216ab8f53bdf3cf2159615fd435155cd2a6c0a4b2ff848dfe1cf5db"
+  draft_sha256: "adf35e772216ab8f53bdf3cf2159615fd435155cd2a6c0a4b2ff848dfe1cf5db"
+  previous_draft_sha256: "f2920b01dc027eb4db4fd5c628ea79f57cd916d1cfbc8b740bd79bc77fdc9a3b"
+  request_count: 3
+  blocker_count: 0
+  request_ids: ["CR-7c41c7cd-001", "CR-7c41c7cd-002", "CR-7c41c7cd-003"]
+  supersedes: null
+  published: true
+  review_approved_event_id: "20261123_201000_review_approved_7c41c7cd_feedback_publish"
+  review_evidence_event_id: "20261123_195000_s9_review_regenerated_7c41c7cd"
+  publish_started_event_id: "20261123_201500_feedback_request_publish_started_7c41c7cd"
+  published_event_id: "20261123_201501_feedback_request_published_7c41c7cd"
+  published_at: "2026-11-23T20:15:01+09:00"
+  note: "公開済み。承認された下書きを、中身を変えずに公開先へ移した(下書きは残っていない)。公開したファイルは編集しない。訂正するときは新しい feedback ID で出し直す"
+refreshed_at: "2026-11-23T19:21:30+09:00"
+refresh:
+  updated: []
+  added: ["CR-7c41c7cd-003"]
+  removed: []
+  source: "docs/impl/latest/7c41c7cd/review/review-notes.md"
+  unchanged_bytes_note: "CR-7c41c7cd-001 と CR-7c41c7cd-002 の本文は 1 文字も変えていない(3 件目を末尾に足しただけ)"
+as_built_summary: "docs/impl/latest/7c41c7cd/feedback/as-built-summary.md"
+as_built_summary_sha256: "62631debca894db7c395d5166d559d61cb28cb239d0fc811359901f406f29c9c"
+issues_added: []
+learnings: 4
+learning_files:
+  - "docs/impl/latest/7c41c7cd/learnings/20261123_175902_mktemp-template-needs-trailing-x-or-pid.md"
+  - "docs/impl/latest/7c41c7cd/learnings/20261123_175902_assumption-must-be-checked-against-shared-contract.md"
+  - "docs/impl/latest/7c41c7cd/learnings/20261123_175902_pending-step-judges-own-part-first.md"
+  - "docs/impl/latest/7c41c7cd/learnings/20261123_192056_spec-wording-split-is-a-request-candidate.md"
+proposals:
+  skill: true
+  context: true
+proposal_files:
+  - "docs/impl/latest/7c41c7cd/learnings/20261123_175902_proposal-skill.md"
+  - "docs/impl/latest/7c41c7cd/learnings/20261123_175902_proposal-context.md"
+checks:
+  yaml_parse: "yaml.safe_load で確認"
+  draft_format: "feedbackRequest.js verify <draft> --feedback が PASS(3 requests)"
+  mermaid_lint: "npx md-mermaid-lint docs/impl/latest/7c41c7cd/feedback/as-built-summary.md が exit 0(図は flowchart 1 つ)"
+  mktemp_fact: "開発機(macOS)で、X が末尾に無いテンプレートを 2 回続けて実行し、1 回目はテンプレートのままの名前、2 回目は File exists になることを確認(初回の整理での確認。今回は再実行していない)"
+  spec_fact_recheck: "要求 3 の事実は、仕様の該当箇所(2 機能の tier-facade.md、CLI 契約、ui-design.md)と実装・テストを読み直して確認した。コマンドは実行していない"
+  tests_run: false
+  review_refute_loop: "not_run(このステージの書き込み範囲と指示の外。最後の確認の資料で人が確認する)"
+completed_at: "2026-11-23T19:21:30+09:00"
+completed_by: "dist-impl-feedback@0.15.0"

@@ -1,0 +1,14 @@
+stage: S3
+uc_id: 7c41c7cd
+manifest_sha256: 90b95c2c7f67feac241a56c2bb03191b9150a515f82b517c61c7d324e3bdefa1
+manifest_projection: v2
+result: pass
+contracts_verified:
+- id: management-db
+  type: rdb-schema
+  lock_fresh: true
+  input_sha256: bbe77902949f155ada1a352661e41cc16409fa58b4076cde648cb028b5de11ac
+  uc_scope_check: pass
+  note: '_model-summary.yaml has tables: [] (this UC does not touch the management DB). nothing to match against rdb-schema.yaml'
+completed_at: '2026-11-23T14:27:01+09:00'
+completed_by: dist-impl-run@0.15.0

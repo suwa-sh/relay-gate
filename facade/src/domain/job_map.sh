@@ -705,13 +705,20 @@ validate_job_map_row() {
     errors=$((errors + 1))
   fi
 
-  # credential_ref: 秘密らしい値は警告(拒否しない)。値そのものは出力しない
-  if job_map_credential_ref_looks_like_secret "$JOB_MAP_ROW_CREDENTIAL_REF"; then
-    job_map_shown_value "$job_id"
-    job_map_emit "warn: credential_ref looks like a secret or path line=$line job_id=$JOB_MAP_SHOWN"
-  fi
+  job_map_warn_credential_ref "$line" "$job_id"
 
   [ "$errors" -eq 0 ]
+}
+
+# credential_ref(JOB_MAP_ROW_CREDENTIAL_REF)が秘密やパスらしい値なら warn を 1 行出す(拒否しない)。値そのものは出力せず、
+# 位置を line= と job_id= で示す(契約 columns.credential_ref.on_format_violation / output_rule)。
+# 検証コマンドの列ごとの検証と runner の解決(domain/execution_target.sh)が同じ判定・同じ文を使う
+# 引数: line(行番号) job_id(元の値)
+job_map_warn_credential_ref() {
+  if job_map_credential_ref_looks_like_secret "$JOB_MAP_ROW_CREDENTIAL_REF"; then
+    job_map_shown_value "$2"
+    job_map_emit "warn: credential_ref looks like a secret or path line=$1 job_id=$JOB_MAP_SHOWN"
+  fi
 }
 
 # --verbose の解決結果 1 行(契約 validate-config.sh stderr の補助出力)。

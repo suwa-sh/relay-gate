@@ -5,8 +5,8 @@ phases:
     at: '2026-09-16T08:29:17+09:00'
   P2_config:
     status: done
-    at: '2026-11-16T02:34:00+09:00'
-    note: 'content-stable: uc-map derivation identical (34 UC, no add / remove / tier / path / order diff), impl-config unchanged. no file touched, no config_confirmed'
+    at: '2026-11-24T00:00:18+09:00'
+    note: 'content-stable re-run after spec reflux 20261123_201000_feedback_impl_feedback_7c41c7cd: uc-map derivation identical (34 UC, uc_id 8 digits no collision, no add / remove / tier / path / order diff), impl-config unchanged (tiers / contracts / capabilities). no file touched, no config_confirmed'
   P3_skeleton:
     status: done
     at: '2026-11-16T02:34:00+09:00'
@@ -27,7 +27,7 @@ phases:
     at: '2026-11-16T02:34:00+09:00'
     note: 'regenerated from usdm 20261116_013000: 4 features rewritten (19 scenarios appended, no renumbering), 55 features byte-identical and not touched'
 inputs_sha256:
-  spec_event: 8aaf650924c43958cf75da8d7f90370dab8e60416382b4d9a7b2217e11d18200
+  spec_event: 38ed783fb1d5e4d9fbd05e63258cabf795189175fdd07f7a619a5c6b38cdbecd
   arch: c53102258eb87c109a5e44ec19daf68de60dc5770785d80c474f31b1cf8d9879
   usdm: 05c1056ed1909eae0293a6ad2a77c2455a5793d19fd4f2d8e8eebc45fcb53cda
   contracts:
@@ -56,7 +56,7 @@ inputs_sha256:
     cli_command_contract:
       path: docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml
       exists: true
-      sha256: a6d7c7942947d73af03ea2ad8c9fc640184396a7efc1f67fe2de06f1eab16d10
+      sha256: f161f603ce3260c0d8c8df9489d2db54c2dad929d55ab70a1e746ac462c6f8b8
       note: contract-registry.md に対応する種別が無い
     rdb_schema:
       path: docs/specs/latest/_cross-cutting/datastore/rdb-schema.yaml

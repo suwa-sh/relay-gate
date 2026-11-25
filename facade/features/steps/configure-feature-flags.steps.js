@@ -7,6 +7,8 @@
 // Scenario の step を末尾に追加した(既存 step は変更なし)。
 // 2026-11-16 の S2 再実行で、slot ジョブマップの場所を書く任意の 2 キー(BLUE_JOB_MAP_CSV / GREEN_JOB_MAP_CSV)の Scenario の step を
 // 末尾に追加した(既存 step の変更は、GREEN_RUNNER=<value> の正規表現の絞り込み 1 件と、パスの置き場 2 件の追加だけ)。
+// 2026-11-24(UC 7c41c7cd の S4 再実行)で、ジョブマップの「無い」と「あるが読めない」の報告(契約 job_map_location.presence_report、
+// spec-decision-043)の Scenario 3 本の step を末尾に追加した(既存 step は変更なし)。
 // I/O 境界は実体で検証する: Scenario ごとの一時ディレクトリに ff.env / runner スタブ / ジョブマップを置き、
 // bin/validate-config.sh を実プロセスとして起動する(cwd = 一時ディレクトリ。`path: ff.env` は相対パスのまま出る)。
 'use strict';
@@ -1526,3 +1528,79 @@ Then(
     );
   },
 );
+
+// ---- ジョブマップの「無い」と「あるが読めない」(契約 config_files.feature-flag.env.job_map_location.presence_report。spec-decision-043) ----
+
+// arrangeParallel が置いた固定の名前のジョブマップを取り除き、その名前に Scenario の実体を置けるようにする
+function jobMapPath(world, slot) {
+  const file = path.join(world.configDir, `${slot}-job-map.csv`);
+  fs.rmSync(file, { force: true });
+  return file;
+}
+
+Given(literal('有効な並行稼働設定(9 キー)の ff.env があり、両 runner スタブは --help で "runner-if-version=1" を返す'), function () {
+  arrangeParallel(this);
+  assert.equal(Object.keys(this.env).length, 9);
+  for (const key of ['BLUE_RUNNER', 'GREEN_RUNNER']) {
+    assertRespondsVersion(this.env[key], 1);
+  }
+});
+
+Given(
+  literal(
+    'RELAY_GATE_CONFIG_DIR の blue-job-map.csv はディレクトリで、green-job-map.csv は読み取り権限の無いファイルである(テストは root 以外のユーザーで実行する)',
+  ),
+  function () {
+    fs.mkdirSync(jobMapPath(this, 'blue'));
+    const green = jobMapPath(this, 'green');
+    writeJobMap(this, 'green');
+    fs.chmodSync(green, 0o000);
+    // 権限を無視して読める利用者(root)では Given が成り立たない
+    try {
+      fs.accessSync(green, fs.constants.R_OK);
+      return 'skipped';
+    } catch {
+      return undefined;
+    }
+  },
+);
+
+Then(literal('stderr に "job map not found" を含む行も "slot=" を含む行も出ない'), function () {
+  const hits = stderrLines(this).filter((line) => line.includes('job map not found') || line.includes('slot='));
+  assert.deepEqual(hits, [], `stderr\n${this.result.stderr}`);
+});
+
+Given(
+  literal(
+    'RELAY_GATE_CONFIG_DIR の blue-job-map.csv は読める通常のファイルを指すシンボリックリンクで、green-job-map.csv はリンク先が無いシンボリックリンクである',
+  ),
+  function () {
+    const target = path.join(this.workDir, 'real-blue-job-map.csv');
+    fs.writeFileSync(target, 'job_id,work_dir,script,fixed_params,hang_detect_limit_minutes\n');
+    fs.symlinkSync(target, jobMapPath(this, 'blue'));
+    fs.symlinkSync(path.join(this.workDir, 'no-such-job-map.csv'), jobMapPath(this, 'green'));
+  },
+);
+
+Given(
+  literal(
+    'ff.env の 1 行目が BLUE_MODE=foreground、2 行目が GREEN_MODE=background、3 行目が RAPID_CROSSCHECK_MODE=off、4 行目が BLUE_IMPL=blue-1.0.0、5 行目が BLUE_RUNNER=<実行可能な blue スタブ>、6 行目が GREEN_RUNNER=<実行可能な green スタブ> である(GREEN_IMPL は書かない)',
+  ),
+  function () {
+    // 続く「両 runner スタブは …」の step は this.env の 2 キーで実体を確かめる。ff.env には rawEnv の 6 行だけを書く
+    this.env = { BLUE_RUNNER: writeRunner(this, 'blue-runner.sh'), GREEN_RUNNER: writeRunner(this, 'green-runner.sh') };
+    arrangeRawLines(this, [
+      'BLUE_MODE=foreground',
+      'GREEN_MODE=background',
+      'RAPID_CROSSCHECK_MODE=off',
+      'BLUE_IMPL=blue-1.0.0',
+      `BLUE_RUNNER=${this.env.BLUE_RUNNER}`,
+      `GREEN_RUNNER=${this.env.GREEN_RUNNER}`,
+    ]);
+  },
+);
+
+Given(literal('RELAY_GATE_CONFIG_DIR の blue-job-map.csv はディレクトリで、green-job-map.csv は無い'), function () {
+  fs.mkdirSync(jobMapPath(this, 'blue'));
+  assertJobMapAbsent(this, 'green');
+});

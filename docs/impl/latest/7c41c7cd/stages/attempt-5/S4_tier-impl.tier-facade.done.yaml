@@ -1,0 +1,114 @@
+stage: S4
+tier: tier-facade
+attempt: 5
+uc_id: "7c41c7cd"
+manifest_sha256: 8dd410fbf84a6012b7868a016f42fec481d4e9266e1f4ed66bd66b5bf3f8cf87
+manifest_projection: v2
+result: pass
+rerun: true
+rerun_reason: "独立検証(attempt 4)の blocker F-001 による再実行"
+findings_provided: true
+findings_path: "attempt-4/S5_verify.tier-facade.findings.yaml"
+api_summary_check: "_api-summary.yaml に schema_version distillery.api-summary/v2 の記載は無く、_contract-slice.json も無い(契約 slice の hash 照合の対象外。attempt 1〜4 と同じ)"
+ddd_guide: "impl-config.yaml の capabilities に has_ddd_plugin が無いため、docs/dev-rules/coding-rules.md の基準だけで実装した"
+implementation:
+  summary: "Runner Result の公開(一時ファイル → mv)で、確定名に通常のファイルでないもの(ディレクトリ・リンク)が先にあるときは公開の失敗にした。runner は終了コード 6、exitcode.txt を公開せず、実行ログに ERROR runner result write failed を残す。ほかの振る舞いは変えていない"
+  validate_config_output_changed: false
+  management_db_touched: false
+findings_fixed:
+  - id: F-001
+    severity: blocker
+    fix: "filesystem_adapter_publish_file に 3 つの確認を入れた。(1) 書く前: 確定名と一時ファイルの名前が『何も無い』か『リンクでない通常のファイル』でなければ失敗(一時ファイルの名前のリンクはリンクそのものだけ消す。他の利用者の持つ一時ファイルにも書かない)。(2) mv の後: 確定名がリンクでない自分の持つ通常のファイルでなければ失敗(確認と mv の間に置かれたディレクトリの中へ移った一時ファイルは、その中の名前だけで消す)。(3) 失敗のとき、確定名に先に置かれていたものには触れない。started-at.txt / stdout.log / stderr.log / exitcode.txt の 4 つとも同じ関数を通る"
+    same_shape_elsewhere: "facade/ の src・runners・lib・bin で mv を使うのは、この関数と、attempt 4 で直した入力の複製(job_map_repo_create_snapshot)だけ(grep で確認)。同じ形の成果物の書き込みはほかに無い"
+    regular_file_note: "確定名に先にあるものがリンクでない通常のファイルのときは、従来どおり置き換える(exitcode.txt が無い slot に残った前回の途中の成果物は通常起動で上書きする。入力の複製と違い『何かあれば失敗』にはしていない)。前提 A-030"
+    tests: "facade/test/gateway/filesystem_adapter_final_name.bats 6 件(新規)。標準の slot runner の実プロセスと実ファイルで、確定名がディレクトリ(3 名)・ディレクトリへのリンク(4 名)・切れたリンク(exitcode.txt)の場合に終了コード 6・exitcode.txt なし・中へ移さないことを確かめる。関数の単体で、ファイルへのリンク・一時ファイルの名前のリンク・通常のファイルの置き換えを確かめる。直す前の実装では 5 件が失敗し(終了コード 2 で公開)、通常のファイルの置き換えの 1 件だけ成功した"
+  - id: F-005
+    severity: minor
+    fix: "前提 A-006 の分類を security に付け替えた(独立検証の判定に合わせた)"
+  - id: F-016
+    severity: minor
+    fix: "前提 A-018 の分類を input_validation に付け替えた"
+  - id: F-020
+    severity: minor
+    fix: "前提 A-022 の分類を security に付け替えた"
+findings_not_fixed:
+  - ids: "F-004 / F-009 / F-019 / F-026"
+    severity: major
+    reason: "仕様に書かれていない実装側の前提(A-006 / A-012 / A-022 / A-029)。最終確認で利用者に伺う対象のため、挙動を変えず前提ファイルに残した(dispatch の指示)"
+  - ids: "F-002 / F-003 / F-006 / F-007 / F-008 / F-010 / F-011 / F-012 / F-013 / F-014 / F-015 / F-017 / F-018 / F-021 / F-022 / F-023 / F-024 / F-025"
+    severity: minor
+    reason: "どれも『仕様に明示されていない判断がある』という前提の指摘で、実装の欠陥ではない。仕様に照合先が無いため実装側で直す先が無く、採否は最終確認と仕様への反映で決まる。挙動を変えず、同じ id の前提として引き継いだ"
+code_changes:
+  modified:
+    - path: facade/src/gateway/filesystem_adapter.sh
+      change: "filesystem_adapter_name_is_publishable を追加し、filesystem_adapter_publish_file に書く前の確認と mv の後の確認を入れた"
+  added:
+    - path: facade/test/gateway/filesystem_adapter_final_name.bats
+      change: "確定名・一時ファイルの名前にディレクトリやリンクがある場合の 6 件"
+  feature_bodies_changed: false
+  step_definitions_changed: false
+  contracts_changed: false
+  outside_write_set: []
+tdd_notes:
+  - "先に再現テストを書き、直す前の実装で 5 件が失敗することを確かめてから直した(RED → GREEN)"
+  - "時間を確かめるテスト、MB 級の入力・作為的な入力のテストは追加していない"
+gates:
+  format: pass
+  lint: pass
+  tdd: pass
+  bdd_tier: pass
+gate_runs:
+  - gate: format
+    cwd: facade
+    command: "shfmt -d ."
+    exit_code: 0
+  - gate: lint
+    cwd: facade
+    command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+    exit_code: 0
+  - gate: tdd
+    cwd: facade
+    command: "bats -r test"
+    exit_code: 0
+    summary: "778 tests, 778 ok, 0 not ok, 0 skip(attempt 4 の 772 件 + 追加 6 件)"
+  - gate: bdd_tier
+    cwd: facade
+    command: "npx cucumber-js --config ../cucumber.cjs features"
+    exit_code: 0
+    summary: "163 scenarios (163 passed), 1360 steps (1360 passed)"
+gate_run_notes:
+  - "macOS(Darwin 25.5.0、arm64)。root 以外の利用者(uid 503)で実行した。4 ゲートとも最後のソース変更の後に実行した結果"
+  - "PostgreSQL を使うテストは一時インスタンス(initdb + pg_ctl)で、常設サービスには接続していない"
+  - "features/uc/ と features/atdd/ は触っていない"
+linux_runs:
+  executed: false
+  limitation: "この実行環境では Linux で実行していない(attempt 1〜4 と同じ)。追加したテストは mkdir / ln -s / 実プロセスだけを使い、コマンドの差し替えは無い"
+cleanup_check: "実行後、facade/ に log・var が無いこと、TMPDIR に relay-gate-* が残っていないことを確認した"
+issues_resolved: []
+issues_added: []
+issues_note: "仕様どおりに実装すると動かない事実は新たに見つからなかった"
+observations:
+  - "exitcode.txt の確定名がディレクトリ・ディレクトリへのリンクのときは、公開済みの判定(exitcode.txt がある)が先に働き、値を読めないため終了コード 6 になる(前提 A-014 の既存の動き。成果物には触れない)。切れたリンクのときは公開済みと判定されず、今回の確認で公開の失敗になる"
+  - "他の利用者の持つ一時ファイルが残っている場合の確認は、別の利用者を用意できないためテストしていない(コードの確認だけ)"
+assumptions:
+  path: "attempt-5/S4_tier-impl.tier-facade.assumptions.yaml"
+  count: 23
+  by_category:
+    input_validation: 3
+    data_format: 1
+    error_handling: 13
+    persistence: 0
+    performance: 1
+    security: 5
+  sha256: 3194697c1d8300481f2c61dcd20dd5203f5f6de303ec3d7793923425a0161dff
+  extraction:
+    candidate_count: 40
+    excluded_as_explicit: 17
+    recorded_count: 23
+  validator: "validateAssumptions.js record: ok true"
+  changes_from_attempt_4: "attempt 4 の 22 件を同じ id で引き継いだ。追加 1 件(A-030 成果物の確定名の確かめ方と、通常のファイルは置き換えること。security)。分類の付け替え 3 件(A-006 と A-022 を security、A-018 を input_validation)。A-006 の target の行番号を 91 から 114 に付け替えた"
+  from_variable_prompt: "A-030 の直し方は dispatch の指示(入力の複製と同じ考え方を成果物の書き込みにも入れる)に従った。通常のファイルを置き換える範囲は自分で決めた"
+review_refute_loop: not_run
+review_refute_loop_note: "外部レビュー(review-refute-loop)はこの S4 では実行していない。S5 の別モデル Verifier に委ねる"
+completed_at: "2026-11-24T09:56:00+09:00"
+completed_by: dist-impl-implement@0.15.0

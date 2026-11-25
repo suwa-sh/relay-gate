@@ -1,0 +1,53 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "specification"
+artifact_id: "spec-decision-042"
+title: "共通ライブラリ lib/runner-resolve.sh の 5 関数を、自作の runner へ約束する入口として仕様に書く"
+status: "approved"
+generated_at: "2026-11-23T20:10:00Z"
+context: |
+  - CLI 契約は、利用者が runner を自作でき、自作の runner は relay-gate が提供する共通ライブラリ 4 ファイルを読み込んで使える、と定めていた。
+  - UC「ジョブマップで JOB_ID から実行先を解決する」の仕様は「自作の runner も同じライブラリを読み込めば同じ解決になる」と書き、完了条件のシナリオは「CSV 行分解関数を呼ぶ」「引数連結関数を呼ぶ」と、関数を呼ぶ前提で書いていた。
+  - 一方、関数の引数、結果の受け取り方、解決できなかったときの知らせ方、呼ぶ前に要る環境変数は、どこにも書かれていなかった。実装者が決めた呼び方に統合テストと受け入れテストが頼っていた。
+  - USDM と RDRA は「自作する runner のための共通ライブラリの提供は残す」と既に定めており、呼び方の詳細化は spec の責務。
+  - 元の方針資料は、runner を適用ごとに割り当てること、起動方式の違いを runner に閉じ込めることを書く。共通ライブラリの記載は無い。
+  - 利用者は 2026-11-23 に案 A(約束する入口として呼び方を仕様に書く)を選び、約束の範囲を 5 関数すべてとした。
+decision: |
+  1. lib/runner-resolve.sh を、自作の runner へ約束する入口とする。正本は CLI 契約 runner IF の standard_runner.runner_resolve_library(新設)。
+     - custom_runner の記述から参照し、UC「ジョブマップで JOB_ID から実行先を解決する」の spec.md / tier-facade.md は参照と索引の表だけを持つ。
+  2. 約束する 5 関数と、関数ごとに書いたこと(名前・引数・結果の受け取り方・値が無い項目の表し方・解決できなかったときの知らせ方):
+     - runner_resolve_reject_invocation <script> <run_id> <role> <message>: runner IF の引数の違反の報告。戻り値は常に 0 以外。
+     - resolve_execution_target <script> <run_id> <job_id> <role> [PARAM...]: 解決の入口。結果は EXECUTION_TARGET_* の 9 変数(FIXED_PARAMS は配列)、配列 ARGUMENT_LIST、RUNNER_RESOLVE_MAP_PATH。
+     - parse_csv_row <line>: 補助。結果は配列 CSV_CELLS。戻り値 1 はクォート不正。
+     - build_argument_list <fixed_params の JSON 配列の文字列> [PARAM...]: 補助。結果は配列 ARGUMENT_LIST。
+     - runner_resolve_guard_existing_result <run_id> <role>: 二重起動の判定。解決に成功した runner が後続の段へ進む前に呼ぶ。
+  3. 値が無い項目(host / user / credential_ref / map_version)は空文字で表し、execution-spec.json の null に当たる。
+  4. 解決できなかったとき・続けてはいけないときは、戻り値が 0 以外になり、runner が終える値を変数 RUNNER_RESOLVE_EXIT_CODE に入れる。
+     - 戻り値 0 は「解決した」「続けてよい」だけを表す。resolve_execution_target は、終える値が 0(既存の exitcode.txt が 0 の二重起動)のとき、戻り値を RUNNER_RESOLVE_STATUS_NOT_RESOLVED(値は 1)にする。
+     - 通常は 2 か 6 で、関数が Runner Result を揃え済み。中止済みの slot は 6 で成果物を書かない。
+  5. 呼ぶ前に要る環境変数は RELAY_GATE_CONFIG_DIR / RELAY_GATE_ARTIFACT_ROOT / RELAY_GATE_LOG_DIR。ジョブマップの場所は、runner IF の environment と job_map_location の規則(環境変数 BLUE_JOB_MAP_CSV / GREEN_JOB_MAP_CSV)のままで、この節では変えない。
+  6. source しても、source した側の set のオプションと trap を変えない。source しただけでは何も出力しない。関数が書くのは成果物と実行ログだけ。
+     - 関数を呼んだ後の set / trap の状態と、呼ぶ側が set -u / set -e / pipefail を有効にしているときの動作は約束しない(実装の説明欄に記載が無いため)。
+     - RUNNER_RESOLVE_STATUS_NOT_RESOLVED は source すると値 1 で定義される変数で、名前と値も後方互換の対象に含めた。
+     - runner_resolve_reject_invocation は、run_id か role が分からず成果物を書かないときも RUNNER_RESOLVE_EXIT_CODE を 2 にする(6 は Runner Result の書き込みの失敗だけ)。
+  7. 約束した呼び方は後方互換を保つ対象とした。変えるとき、外すときは仕様の変更が要る。約束に無い関数・変数は内部のもの。
+  8. 内容は実装の説明欄の原文に合わせた(要望の本文の表に無かった RUNNER_RESOLVE_MAP_PATH、二重起動で既存の値が 0 のときの戻り値、parse_csv_row の戻り値 1 を含む)。
+  9. 残りの共通ライブラリ 3 ファイル(runner-spec.sh / runner-result.sh / runner-notify.sh)の呼び方は、この約束の対象外とした(まだ実装していない)。
+  10. UC「ジョブマップで JOB_ID から実行先を解決する」のティア完了条件で、補助 2 関数の場面を関数名と結果の配列で書き直し(期待値は変えない)、自作の runner が解決の入口を呼ぶ場面、run_id が分からないときに引数の違反を報告する場面、解決できなかったとき、二重起動の判定の場面を足した。
+  11. build_argument_list に JSON 配列として正しくない文字列を渡したときは、戻り値 1 で ARGUMENT_LIST を空の配列にすることを約束する(2026-11-23 の利用者決定。確認推奨項目への回答)。
+     - parse_csv_row の「戻り値 1 はクォート不正」と同じ書き方にした。Runner Result も実行ログも書かない。
+     - いまの実装は、配列を先に空にし、JSON 配列の解析に失敗すると戻り値 1 を返す(成功なら 0)。約束はこの動きと一致する。
+     - 当初は「約束しない」を推奨したが、利用者は約束する側を選んだ。
+consequences:
+  positive:
+    - "自作の runner が、ソースを読まずに標準の slot runner と同じ解決を使える"
+    - "実装とテストを変えない。テストの暫定の注記を外せる"
+    - "変えてよい範囲(約束の内と外)が決まる"
+  negative:
+    - "約束した呼び方は、後で変えにくくなる(変えるには仕様の変更が要る)"
+    - "結果を受け取る変数名がシェルの大域変数で、自作の runner の変数名と重ならないように使う必要がある"
+alternatives_considered:
+  - name: "約束しないと仕様に書く(共通ライブラリは relay-gate の内部とし、自作の runner が満たすのは runner IF だけとする)"
+    reason_rejected: "自作の runner がジョブマップの解決を自分で作ることになる。完了条件のシナリオの書き方も見直しになる。利用者決定(2026-11-23)は案 A"
+  - name: "解決の入口と補助 2 関数だけを約束し、引数の違反の報告と二重起動の判定は約束しない"
+    reason_rejected: "利用者決定(2026-11-23)で約束の範囲を 5 関数すべてとした。二重起動の判定を約束しないと、自作の runner が runner IF の idempotency を自分で作ることになる"

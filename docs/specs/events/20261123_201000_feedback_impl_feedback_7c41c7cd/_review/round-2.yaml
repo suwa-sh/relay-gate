@@ -1,0 +1,17 @@
+round: 2
+findings:
+  - id: "R-008"
+    viewpoint: 1
+    severity: "minor"
+    target: "decisions/spec-decision-043.yaml(decision の 6)、decisions/spec-decision-042.yaml(decision の 10)"
+    claim: "前ラウンドの修正で足した BDD の場面が、判断記録の「足した場面」の列挙に入っていない。仕様の本文と判断記録の対応が一部途切れている。"
+    evidence: |
+      判断記録 043 の 6 は、feature flag を設定する UC に足した場面を「決めた場所がディレクトリ・読み取り権限の無いファイルの場面、読めない行が job map not found と同じ位置に出る場面」の 2 つとしている。tier-facade.md には 3 つ目の「validate-config_sh_feature-flag はシンボリックリンクのジョブマップをリンク先で判定する」がある(判断記録の 3a は規則だけを書き、場面に触れない)。
+      判断記録 042 の 10 は、ジョブマップで JOB_ID から実行先を解決する UC に足した場面を「自作の runner が解決の入口を呼ぶ場面、解決できなかったとき、二重起動の判定の場面」としている。tier-facade.md には「引数の違反の報告は run_id が分からないとき成果物を書かず RUNNER_RESOLVE_EXIT_CODE を 2 にする」もある(判断記録の 6 は規則だけを書き、場面に触れない)。
+      仕様の本文と契約は一致しており、実装の結果を選び直す必要は無い。後から判断記録を読んで、どの場面がどの決定の検証かを辿るときだけ漏れる。
+    suggested_fix: "判断記録 043 の 6 の UC「feature flag を設定する」の列挙に、シンボリックリンクのジョブマップ(リンク先が読める・リンク先が無い)の場面を足す。判断記録 042 の 10 に、run_id が分からないときの引数の違反の報告の場面を足す。"
+resolved:
+  - id: "R-008"
+    resolution: "fixed"
+    note: "判断記録 043 の 6 にシンボリックリンクの場面を、判断記録 042 の 10 に run_id が分からないときの引数の違反の報告の場面を足した"
+    by: "orchestrator"

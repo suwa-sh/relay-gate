@@ -1,0 +1,133 @@
+stage: S4
+tier: tier-facade
+attempt: 4
+uc_id: "7c41c7cd"
+manifest_sha256: 8dd410fbf84a6012b7868a016f42fec481d4e9266e1f4ed66bd66b5bf3f8cf87
+manifest_projection: v2
+result: pass
+rerun: true
+rerun_reason: "仕様の更新(2026-11-23 の還流。spec-decision-041 / 042 / 043)による stale 再実行。前回の検証の指摘は渡されていない(findings_provided: false)"
+findings_provided: false
+api_summary_check: "_api-summary.yaml に schema_version distillery.api-summary/v2 の記載は無く、_contract-slice.json も無い(契約 slice の hash 照合の対象外。attempt 1〜3 と同じ)"
+ddd_guide: "impl-config.yaml の capabilities に has_ddd_plugin が無いため、docs/dev-rules/coding-rules.md の基準だけで実装した"
+spec_changes_applied:
+  - decision: "spec-decision-041(入力の複製の作業名。CLI 契約 config_input_rules.snapshot.work_name)"
+    change: "起票済みの欠陥 issues/20261124_001000_snapshot-final-name-directory-swap.md を直した。job_map_repo_create_snapshot は、作業名へ書き終えた後、最終名に何か(通常のファイル・ディレクトリ・シンボリックリンク)があれば rename せずに複製の失敗にする。rename の後も、最終名がリンクでない自分の持つ通常のファイルかを確かめる。失敗のときは作業名だけを消し、最終名に置かれたものには触れない(cat / mv の失敗の経路も同じ)。呼び出し側は従来どおり config snapshot failed / 終了コード 6(runner は exitcode.txt=6)を報告する"
+    readers_covered: "複製を作る読み手はすべて同じ関数(repository/job_map_repo.sh の job_map_repo_create_snapshot)を使う: validate-config.sh --job-map、--feature-flag(feature_flag_config_load)、--rapid-crosscheck(rapid_crosscheck_env_read)、slot runner の解決(resolve_execution_target)。ほかに mktemp で入力の複製を作る箇所は facade/ に無い(launch_slots.sh と runner_probe.sh の mktemp は出力の受け取り用で、入力の複製ではない)。ほかの tier に .part の作業名を使う箇所は無いことを grep で確認した"
+    tests: "job_map_repo_snapshot_final_name.bats 4 件(S2 の 3 件 + 最終名に通常のファイルがある場合 1 件を追加)、config_snapshot_final_name_readers.bats 2 件(feature flag の env と速報クロスチェックの env。新規)、runner_resolve_library_contract.bats の 1 件(runner は config snapshot failed / 6)"
+  - decision: "spec-decision-042(共通ライブラリ lib/runner-resolve.sh の呼び方。runner IF の standard_runner.runner_resolve_library)"
+    change: "実装の関数の名前・引数・戻り値は契約どおりだったため、コードの振る舞いは変えていない。コメントの『実装で決めた前提』を契約の参照に書き直した。tier BDD の 5 Scenario の step(自作の runner と同じく別の bash プロセスで source して、step 文言の呼び出しをそのまま実行する)を実装した"
+  - decision: "spec-decision-043(あるが読めない・通常のファイルでないジョブマップは config file is not readable。config_files.feature-flag.env.job_map_location.presence_report)"
+    change: "validate-config.sh --feature-flag の対応ジョブマップの検査(domain/feature_flag.sh の validate_slot_runner_assignment)を、何も無い → job map not found slot= map=、あるが通常のファイルでない・読めない → config file is not readable path: <決めた場所> に分けた(シンボリックリンクはリンク先で判定し、表示は決めた場所のまま。位置は error_order の 6 で blue → green)。slot runner と --job-map は既にこの判定(job_map_repo_probe)で、手で確かめた(ディレクトリ → config file is not readable、リンク先の無いリンク → config file not found)"
+other_uc_feature_transcription:
+  uc: "feature flag を設定する(fd678b04)"
+  feature: facade/features/configure-feature-flags.feature
+  source: "docs/specs/latest/適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md#ティア完了条件(BDD)"
+  scenarios_added: 3
+  verbatim_check: "仕様の gherkin ブロックと、feature の # で始まる行を除いた本文を、スクリプトで行単位に比べて完全一致を確認した(差分は追加の 3 Scenario だけで、仕様と同じ位置)。出典コメントを 1 行足した"
+  steps: "facade/features/steps/configure-feature-flags.steps.js の末尾に、既存の定義に一致しない 5 つの step を追加(既存の step は変更なし)"
+  root_note: "『読み取り権限の無いファイル』の Scenario は、root では権限を無視して読めるため Given が成り立たず skipped を返す。ゲートは root 以外の利用者で実行する(仕様の Given にも明記)"
+other_tier_specs_checked:
+  - spec: "slot runner の実体スクリプトを割り当てる / tier-facade.md"
+    result: "変更はエラー表の対応ジョブマップの行(何も無い / 読めないの 2 文言)。今回の --feature-flag の修正で実装が新しい文言に一致した"
+  - spec: "slot ごとのジョブマップを定義する / tier-facade.md"
+    result: "変更は複製の作業名の参照と、--job-map のエラーハンドリング(何も無い = config file not found、読めない = config file is not readable)。実装は既に一致(job_map_repo_probe)。作業名の規則は今回の修正の対象と同じ関数"
+implementation:
+  summary: "入力の複製の最終名の扱いを約束どおりに直し、--feature-flag のジョブマップの報告を 2 つの文言に分けた。自作の runner の Scenario と、別 UC の feature の 3 Scenario を green にした。execution-spec.json の保存・実装の実行・完了通知・復元起動は作っていない(前の attempt と同じ範囲)"
+  validate_config_output_changed: true
+  validate_config_output_change: "--feature-flag で、決めた場所にあるが読めないジョブマップの error 行が job map not found から config file is not readable path: に変わった(仕様の変更どおり)"
+  management_db_touched: false
+code_changes:
+  modified:
+    - path: facade/src/repository/job_map_repo.sh
+      change: "job_map_repo_create_snapshot に最終名の事前確認と rename 後の確認を追加。失敗の経路は新しい関数 job_map_repo_abandon_snapshot で作業名だけを消す"
+    - path: facade/src/domain/feature_flag.sh
+      change: "validate_slot_runner_assignment で『無い』と『あるが読めない』を分けて報告する"
+    - path: facade/src/usecase/runner_resolve.sh
+      change: "コメントだけ(関数の約束の正本が契約 runner_resolve_library になったことを書いた)"
+    - path: facade/features/steps/resolve-execution-target-from-job-map.steps.js
+      change: "S2 の skeleton 21 件を実装に置き換えた(自作の runner の断片の実行、公開済みの exitcode.txt の用意、ディレクトリのジョブマップ)。先頭のコメントを更新"
+    - path: facade/features/configure-feature-flags.feature
+      change: "仕様に足された 3 Scenario を逐語で転写"
+    - path: facade/features/steps/configure-feature-flags.steps.js
+      change: "3 Scenario の step を末尾に追加"
+    - path: facade/test/repository/job_map_repo_snapshot_final_name.bats
+      change: "最終名に通常のファイルがある場合の 1 件を追加。先頭コメントを更新"
+    - path: facade/test/usecase/validate_feature_flag_job_map_presence.bats
+      change: "先頭コメントだけ更新"
+  added:
+    - path: facade/test/repository/config_snapshot_final_name_readers.bats
+      change: "feature flag の env / 速報クロスチェックの env の読み手も最終名のディレクトリで複製の失敗にすることを確かめる 2 件"
+  feature_bodies_changed: true
+  feature_bodies_change_note: "facade/features/configure-feature-flags.feature に 3 Scenario を転写した(dispatch の指示。仕様の文言のまま)。この UC の feature の本文は変えていない"
+  step_definitions_changed: true
+  contracts_changed: false
+  outside_write_set: []
+tdd_notes:
+  - "S2 で red だった単体テスト 7 件と tier BDD 6 Scenario を、実装を直して green にした。追加した単体テスト 3 件(通常のファイル 1 件、ほかの読み手 2 件)は、直す前の実装(mv が最終名を置き換える・ディレクトリの中へ移す)では成り立たない内容"
+  - "時間を確かめるテスト、MB 級の入力・作為的な入力のテストは追加していない"
+gates:
+  format: pass
+  lint: pass
+  tdd: pass
+  bdd_tier: pass
+gate_runs:
+  - gate: format
+    cwd: facade
+    command: "shfmt -d ."
+    exit_code: 0
+  - gate: lint
+    cwd: facade
+    command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+    exit_code: 0
+  - gate: tdd
+    cwd: facade
+    command: "bats -r test"
+    exit_code: 0
+    summary: "772 tests, 772 ok, 0 not ok, 0 skip(S2 時点の 769 件 + 追加 3 件)"
+  - gate: bdd_tier
+    cwd: facade
+    command: "npx cucumber-js --config ../cucumber.cjs features"
+    exit_code: 0
+    summary: "163 scenarios (163 passed), 1360 steps (1360 passed)。この UC の feature は 19 scenarios すべて passed、configure-feature-flags.feature は 66 scenarios すべて passed"
+gate_run_notes:
+  - "macOS(Darwin 25.5.0、arm64)。最後のソース変更の後に format / lint / tdd を実行した。tier BDD は最後のソース変更(job_map_repo.sh の失敗の経路)より後に始めた実行の結果で、その後 feature と step は変えていない"
+  - "features/uc/ と features/atdd/ は触っていない"
+linux_runs:
+  executed: false
+  limitation: "この実行環境では Linux で実行していない(attempt 1〜3 と同じ)。X を置き換えない mktemp は関数の差し替えで再現しているため、GNU mktemp の環境でも同じ条件で走る"
+cleanup_check: "実行後、facade/ に log・var が無いこと、TMPDIR に relay-gate-<番号>-* が残っていないことを確認した"
+issues_resolved:
+  - path: "docs/impl/latest/7c41c7cd/issues/20261124_001000_snapshot-final-name-directory-swap.md"
+    resolution: fixed
+issues_added: []
+issues_note: "仕様どおりに実装すると動かない事実は新たに見つからなかった"
+observations:
+  - "runner_resolve_guard_existing_result を解決の入口より前に単独で呼ぶと、実行ログを開いていないため WARN は残らない(戻り値と RUNNER_RESOLVE_EXIT_CODE は契約どおり)。前提 A-026"
+  - "確認と rename の間に別の利用者がディレクトリを置いた場合、複製はそのディレクトリの中へ一時的に移るが、読み手は読まずに複製の失敗にし、その名前の複製を消す(所有者だけの 0600 のため中身は読まれない)。前提 A-029"
+  - "step 定義ファイルの prettier の警告はこの再実行の前から同じ(prettier はゲートに無い)"
+  - "リポジトリ直下の features/uc と features/atdd で job map not found を期待する Scenario は、どれもジョブマップが無い場合で、ディレクトリ・読み取り権限の無いファイルを置くものは無い(grep で確認)。参考に features/uc の configure-feature-flags / assign-slot-runner-scripts / resolve-execution-target-from-job-map を実行し 45 scenarios すべて passed(ゲートではない確認。step も feature も変えていない)"
+  - "ほかの tier(rapid-crosscheck / final-crosscheck / ops)の *.sh に mktemp の呼び出しは無く、入力の複製を作る読み手は facade/ の 1 つの関数だけ"
+  - "completed_at は完了時の実際の時計(00:38)。S2 の done の completed_at(00:50)より前に見えるが、S2 の記録時刻の書き方によるもので、この S4 は S2 の後に実行した"
+assumptions:
+  path: "attempt-4/S4_tier-impl.tier-facade.assumptions.yaml"
+  count: 22
+  by_category:
+    input_validation: 2
+    data_format: 1
+    error_handling: 14
+    persistence: 2
+    performance: 1
+    security: 2
+  sha256: 168b03ebab336fed2832fd7dc02b250cadb450da311fadea099d59101c655e63
+  extraction:
+    candidate_count: 39
+    excluded_as_explicit: 17
+    recorded_count: 22
+  validator: "validateAssumptions.js record: ok true"
+  changes_from_attempt_3: "仕様に入ったため除外へ移した 5 件(A-001 / A-002 / A-003 / A-021 / A-027)。A-026 は残った判断(単独で呼んだときに実行ログへ書かない)だけに書き直し、分類を error_handling にした。追加 1 件(A-029 最終名の確認の方法と、置かれたものに触れないこと。security)。runner_resolve.sh の行番号を 1 行ずつ付け替えた"
+  from_variable_prompt: "A-029 の直し方は dispatch で渡された issue の案(最終名に何かあれば複製の失敗、中へ移す動きにしない)から選んだ"
+review_refute_loop: not_run
+review_refute_loop_note: "外部レビュー(review-refute-loop)はこの S4 では実行していない。S5 の別モデル Verifier に委ねる"
+completed_at: "2026-11-24T00:38:00+09:00"
+completed_by: dist-impl-implement@0.15.0

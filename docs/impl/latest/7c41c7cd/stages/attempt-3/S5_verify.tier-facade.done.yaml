@@ -1,0 +1,28 @@
+stage: "S5"
+tier: "tier-facade"
+attempt: 3
+uc_id: "7c41c7cd"
+manifest_sha256: "90b95c2c7f67feac241a56c2bb03191b9150a515f82b517c61c7d324e3bdefa1"
+manifest_projection: "v2"
+result: "pass"
+open_blockers: 0
+findings_path: "docs/impl/latest/7c41c7cd/stages/attempt-3/S5_verify.tier-facade.findings.yaml"
+gate_reexec:
+  format: "pass"
+  lint: "pass"
+  tdd: "pass"
+  bdd_tier: "pass"
+environment_failures: []
+assumptions_sha256: "f632805cc5eeb1a9972ed184e005579e76c2e524f2f5ef31d0889ffdb302dd4b"
+assumption_verdicts_sha256: "0403da6cc59631cfe267e68e48308718cd60656c3045d7017de79f130418ea17"
+assumption_verdicts_summary:
+  consistent: 1
+  spec_absent: 25
+  contradicts: 0
+  unlisted: 0
+summary:
+  blocker: 0
+  major: 3
+  minor: 24
+completed_at: "2026-11-23T07:06:16+00:00"
+completed_by: "dist-impl-verify@0.15.0"

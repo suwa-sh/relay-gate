@@ -1,0 +1,81 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "specification"
+artifact_id: "spec-decision-031"
+title: "hang-detector.sh の未知キーの warn は走査を始めるときに出し、DB 障害・印の置き場の読み取り失敗・設定エラーの回は出さない。確報の設定ファイルは置き場ごとに中身が違うことを契約に明記する"
+status: "approved"
+generated_at: "2026-11-05T09:20:00+09:00"
+context: |
+  - 2026-11-05 の外部レビューで、hang-detector.sh の標準エラーが 1 つに決まらない入力があると指摘された。
+    - CLI 契約は、走査前の検査の (d)(hang-detector.env のキー)を通ったときに `warn: unknown key key=<KEY> path: ...` を出すとしていた。
+    - 一方、RAPID_CROSSCHECK_MODE が off 以外で管理 DB に接続・SELECT できない回は「error 1 行だけ(warn / info / alert 行を出さない)」、
+      off で印の置き場 hang-detector-notified/ を読めない回も「error 1 行だけ」としていた。
+    - 未知キーと DB 障害(または印の置き場の読み取り失敗)が同じ回に重なると、warn を出すか出さないかが仕様から決まらない。
+      (e) RELAY_GATE_ARTIFACT_ROOT が無い回も、(d) を通ったあとなので warn と error の両方が出る書き方だった。
+    - 未知キーが複数あるときの warn 行の順も決まっていなかった。
+  - 同じ日に、インフラ設計が確報クロスチェックの設定ファイルを置き場ごとに別の元ファイルで配るように変えた。
+    - 実行ホスト: FINAL_DB_CONN_REF と FINAL_POLL_INTERVAL_SEC / FINAL_POLL_LIMIT_SEC。FINAL_COMPARE_COMMAND は配らない。
+    - DB セグメント: FINAL_DB_CONN_REF と FINAL_COMPARE_COMMAND と FINAL_LEASE_MINUTES / FINAL_WORKER_POLL_INTERVAL_SEC。
+    - 配置先はどちらも /etc/relay-gate/final-crosscheck.env。validate-config.sh --final-crosscheck は DB セグメントで実行する。
+    - CLI 契約の読み手ごとの必須キー(2026-11-04)とは矛盾しない。ただし契約の note は「全ホストが構築手順で同じようにデプロイされている」と書いており、
+      中身も同じと読める余地があった。実行ホストのファイルに FINAL_COMPARE_COMMAND が無いことも明記されていなかった。
+decision: |
+  1. hang-detector.env の未知キーの warn は、走査を始めるときに出す(契約 shared_rules.hang_alert.unknown_key_warn を新設)。
+     - RAPID_CROSSCHECK_MODE が off 以外: 管理 DB への接続と SELECT が通ったあと。
+     - off: 印の置き場の検査が通ったあと(facade/ を列挙する前)。
+     - キー表に無いキーごとに 1 行、ファイル内の出現順(物理行番号の昇順)に出す。既存の規定に複数の未知キーの順は無かったため、この順で確定した。
+     - stderr の順は「未知キーの warn 行 → error: artifact root is not readable → 走査中の warn 行 → --verbose の info: judged 行 → 対象ごとの行」。
+       未知キーの warn 行は、どの alert 行・対象ごとの行よりも前に出る。
+  2. 次の回は未知キーの warn を出さない。
+     - 走査前の設定エラー(終了コード 2)で止まる回。(a)〜(e) のどこで止まっても同じ。
+     - 管理 DB に接続・SELECT できない回(error 1 行だけ。今のとおり)。
+     - 印の置き場を読めない回(error 1 行だけ。今のとおり)。
+     - off で、成果物ルートの権限が無いなどで印の置き場の存在確認そのものが失敗した回(ENOENT 以外の失敗)は、
+       「あるのに読めない」と同じ扱いにする(error 1 行だけ)。「無い」とみなすのは存在確認が ENOENT で終わったときだけ。
+       これを決めないと、成果物ルートが読めない off の回の stderr が「error 1 行」と「未知キーの warn → artifact root の error」に割れる。
+     - 共通規則 config_input_rules.env_files の (iii) に、未知キーの warn の時点を各設定ファイルの契約が決めるときはそれに従う旨を足した。
+     - 同じく stderr を 1 つに決めるため、走査前の検査 (e) の「成果物ルートが無い」を、存在確認が ENOENT で終わったとき・存在確認そのものが失敗したとき・
+       ディレクトリでないときとし、どれも error: artifact root not found(2)とした。
+     - hang-detector.sh は feature-flag.env の RAPID_CROSSCHECK_MODE だけを検査し、他のキー・未知キー・FINAL_ で始まるキーには warn も error も出さない
+       (それらの検査は facade.sh と validate-config.sh --feature-flag が持つ)。
+     - 同じ扱いを、feature-flag.env を RAPID_CROSSCHECK_MODE だけ読む全読み手に広げて、config_files の feature-flag.env の reader_scope に 1 か所で書いた
+       (facade.sh・background-rerun.sh・validate-config.sh --feature-flag は従来どおり全体を検査する)。
+     - 「成果物ルートが無い」の定義は shared_rules.artifact_root_entries.missing_root に 1 か所で置き、hang-detector.sh と housekeep.sh が参照する。
+       UC「保持日数を過ぎた終了済みの実行と確報比較依頼を判定する」の tier-ops.md にも同じ値と BDD 2 件を足した。
+  3. 揃えた箇所
+     - CLI 契約: shared_rules.hang_alert の order / db_unavailable / notified_mark.directory_unreadable、
+       commands の hang-detector.sh の stderr、config_files の hang-detector.env の note。
+     - 出力規約(ui-design.md「ハング検知の通知出力」)。
+     - UC「background 実行の経過時間と終了状態を判定する」の spec.md(シーケンス)・tier-ops.md(検査の順・出す時点の表・走査手順 0・出力契約・BDD 9 件追加)・_api-summary.yaml。
+     - UC「ハング疑い・実行エラー・比較異常を通知する」の tier-ops.md(並び順)。
+  4. 確報の設定ファイルは、配置先の名前は同じで中身が置き場ごとに違うことを契約 config_files.final-crosscheck.env の note と keys に書く。
+     - 前提の文言を「全ホストが構築手順でデプロイされている」に直した(中身が同じとは読めないようにする)。
+     - 実行ホストのファイルに worker のキーが残っていても runner は読まず、エラーにも warn にもしない(未知キーではない)。新しい拒否は足さない。
+     - abort-final-crosscheck.sh と housekeep.sh は動くホストの置き場のファイルの FINAL_DB_CONN_REF だけを使う。どちらのファイルにもある。
+     - validate-config.sh --final-crosscheck は DB セグメントの置き場のファイルを検証する。実行ホストのファイルを渡すと option required で 2 になる。
+     - 確報の 3 UC の tier-final-crosscheck.md(登録して待機 / claim / 比較実行)に置き場ごとの中身を書いた。
+  5. 実装との照合(2026-11-05 時点)
+     - hang-detector.sh は未実装。ops/src/ は空で、ops/test/ と ops/features/steps/ にも hang-detector のテスト・step は無い。
+       facade/ にも hang-detector.env を読む実装は無い。このため契約と食い違う実装は無い。
+     - features/atdd/steps/ にある step 定義は configure-feature-flags.steps.js / define-crosscheck-job-map-and-comparison-definitions.steps.js /
+       define-slot-job-maps.steps.js の 3 つで、hang-detector の step は無い。
+     - features/atdd/SPEC-008-06.feature は USDM の受け入れ条件の転写で、1 件目の Scenario が「設定された送信コマンドで設定された宛先へメールが送られる」のままになっている。
+       メール通知を廃止した既存の仕様(alert 行と終了コードだけで知らせる)と食い違う(USDM の SPEC-008-06 の受け入れ条件は 2026-11-01 に
+       「通知の宛先・送信コマンド・件名に関する項目は無く、管理 DB 接続参照名がある」へ変わっている)。spec の段階は features/ を変更しないため、
+       この食い違いは 2026-11-05 の差分更新の完了報告で確認推奨項目として返し、ATDD の再転写(USDM の現行の受け入れ条件から)を同じ run の中で実装側に依頼する。
+     - 確報 runner / worker と validate-config.sh --final-crosscheck も未実装で、置き場ごとの中身と食い違う実装は無い。
+consequences:
+  positive:
+    - "未知キーと DB 障害・印の置き場の読み取り失敗・設定エラーがどう重なっても、hang-detector.sh の標準エラーの行数と内容が 1 つに決まる。BDD の期待値が割れない"
+    - "未知キーの warn 行の位置が「走査を始めるとき・stderr の先頭・出現順」に決まり、実装とテストがキー名の並べ替えなどで食い違わない"
+    - "確報の設定ファイルの中身が置き場ごとに違うことが契約から読め、構築手順と食い違わない。validate-config.sh --final-crosscheck を実行ホストで実行しない理由も読める"
+  negative:
+    - "設定エラーで止まる回は未知キーに気付けない。設定エラーを直した次の回に warn が出る"
+    - "管理 DB の障害が続くあいだは未知キーの warn も出ない"
+alternatives_considered:
+  - name: "未知キーの warn を (d) を通ったときに出したまま、DB 障害・印の置き場の回だけ warn を例外として出す(error の前に warn を出す)"
+    reason_rejected: "DB 障害の回を error 1 行だけにした理由(現在の通知済み状態を読めない回は余計な行を出さない)と合わない。ジョブスケジューラの障害通知で読む行が増える"
+  - name: "未知キーの warn をキー名の昇順で出す"
+    reason_rejected: "env の入力の守備範囲の違反(invalid line・duplicate key)は行番号の昇順で出しており、設定ファイルを直す人が上から読む順と揃わない"
+  - name: "実行ホストの置き場のファイルに FINAL_COMPARE_COMMAND があれば runner がエラーにする"
+    reason_rejected: "runner は自分が使うキーだけを検査する既存の規則(2026-11-04)と合わない。構築手順の配置時の検査も中身を見ないため、新しい拒否を足すと正当な移行中の設定で runner が止まる"

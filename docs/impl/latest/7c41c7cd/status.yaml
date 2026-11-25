@@ -1,0 +1,51 @@
+schema_version: '1.0'
+uc_id: 7c41c7cd
+business: 実装切替業務
+buc: 実装切替ジョブ実行フロー
+uc: ジョブマップで JOB_ID から実行先を解決する
+state: completed
+current_attempt: 5
+attempt_limit_extended_to: 5
+resolved_models:
+  implementer: claude-fable-5-2
+  verifier: gpt-6-astra
+git_delivery:
+  required: true
+  uc_english_name: Resolve execution target from job map
+  branch_slug: resolve-execution-target-from-job-map
+  base_branch: main
+  base_head: aa6993823306a84935b99824059fa544779bc212
+  feature_branch: feature/resolve-execution-target-from-job-map
+  remote: origin
+stages:
+  S1_uc_init:
+    status: done
+  S2_test_scaffold:
+    status: done
+  S3_contracts:
+    status: done
+  S4_tier_impl:
+    tier-facade:
+      status: done
+      attempt: 5
+      gates:
+        format: pass
+        lint: pass
+        tdd: pass
+        bdd_tier: pass
+  S5_verify:
+    tier-facade:
+      status: done
+      attempt: 5
+      open_blockers: 0
+      open_majors: 5
+  S6_uc_bdd:
+    status: done
+  S7_atdd:
+    status: done
+  S8_feedback:
+    status: done
+    requests: 0
+  S9_review:
+    status: approved
+updated_at: '2026-11-26T09:00:01+09:00'

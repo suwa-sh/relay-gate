@@ -1,0 +1,18 @@
+event_id: 20261124_021001_attempt_opened_7c41c7cd_attempt5
+type: attempt_opened
+uc_id: 7c41c7cd
+stage: S4
+attempt: 5
+payload:
+  reason: s5_blocker
+  from_attempt: 4
+  tiers_rerun:
+  - tier-facade
+  open_blockers: 1
+  blockers:
+  - 'F-001: a directory placed at a Runner Result final name (stdout.log / stderr.log
+    / started-at.txt) makes mv move the temp file into it; the runner still publishes
+    exitcode.txt instead of exit 6'
+  findings: docs/impl/latest/7c41c7cd/stages/attempt-4/S5_verify.tier-facade.findings.yaml
+  user_confirmation: docs/impl/events/20261124_021000_config_confirmed_7c41c7cd_attempt_limit_extended_to_5/event.yaml
+created_at: '2026-11-24T02:10:01+09:00'

@@ -72,7 +72,7 @@ UC「feature flag を設定する」の契約に以下を追加する。
 | 検証 | 違反時 stderr | 終了コード |
 |---|---|---|
 | runner が存在し実行可能(値は絶対パスでも相対パスでもよい。相対パスは設定ファイルのあるディレクトリを基準に解決し、解決後のパスで検査する。CLI 契約 `config_files.feature-flag.env.runner_path_resolution`) | `error: file not executable key=<SLOT>_RUNNER path=<解決後のパス>` | 2 |
-| 対応するジョブマップが、決めた場所(feature-flag.env の `BLUE_JOB_MAP_CSV` / `GREEN_JOB_MAP_CSV` の値を解決したパス。キーが無い・値が空なら `$RELAY_GATE_CONFIG_DIR/<slot>-job-map.csv`。CLI 契約 `config_files.feature-flag.env.job_map_location`)に存在し読める | `error: job map not found slot=<s> map=<決めた場所>` | 2 |
+| 対応するジョブマップが、決めた場所(feature-flag.env の `BLUE_JOB_MAP_CSV` / `GREEN_JOB_MAP_CSV` の値を解決したパス。キーが無い・値が空なら `$RELAY_GATE_CONFIG_DIR/<slot>-job-map.csv`。CLI 契約 `config_files.feature-flag.env.job_map_location`)に存在し読める(何も無い → 見つからない、あるが読めない・通常のファイルでない → 読めない。契約 `job_map_location.presence_report`) | 何も無い: `error: job map not found slot=<s> map=<決めた場所>` / あるが読めない・通常のファイルでない(ディレクトリなど): `error: config file is not readable path: <決めた場所>`(全コマンド共通の定型文。行の位置は同じ) | 2 |
 | `<runner> --help` が `runner-if-version=1` を返す(問い合わせ規則は契約 `cli-command-contract.yaml` の `validate-config.sh` `runner_help_probe`: 1 slot あたりの待機上限・実行順・上限到達時の停止・「応答しない」の判定基準・版行の採用規則) | `warn: runner does not respond to --help slot=<s> runner=<p>`(「応答しない」の判定基準は契約 `runner_help_probe.no_response_criteria`)(拒否しない。stdout の `<slot>_runner_if_version` は `-`) | 0 |
 | 問い合わせの準備(一時ファイルの作成・プロセスグループでの起動)が成功する | `error: runner probe failed slot=<s> reason=<r>`(runner の未応答とは区別する。契約 `runner_help_probe.preparation_failure`) | 6 |
 

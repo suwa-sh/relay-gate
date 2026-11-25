@@ -108,3 +108,11 @@ relay_gate_clock_format_datetime() {
   # shellcheck disable=SC2034  # 結果のグローバル(呼び出し元が読む)
   printf -v RELAY_GATE_CLOCK_TEXT '%(%Y-%m-%dT%H:%M:%S)T' "$1"
 }
+
+# epoch 秒を UTC の日時(ISO 8601 秒精度、Z 付き。例 2026-08-30T11:30:05Z)にする。結果は RELAY_GATE_CLOCK_TEXT。
+# started-at.txt の中身だけに使う(契約 artifact_layout。表示・実行ログ・DB はローカルの relay_gate_clock_format_datetime)
+# 引数: epoch
+relay_gate_clock_format_utc() {
+  # shellcheck disable=SC2034  # 結果のグローバル(呼び出し元が読む)
+  TZ=UTC printf -v RELAY_GATE_CLOCK_TEXT '%(%Y-%m-%dT%H:%M:%SZ)T' "$1"
+}

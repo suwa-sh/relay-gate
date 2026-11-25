@@ -1,0 +1,13 @@
+event_id: 20261124_041501_s7_atdd_completed_7c41c7cd
+type: stage_completed
+uc_id: 7c41c7cd
+stage: S7
+payload:
+  result: pass
+  manifest_sha256: 8dd410fbf84a6012b7868a016f42fec481d4e9266e1f4ed66bd66b5bf3f8cf87
+  manifest_projection: v2
+  scenarios: '13 run by exact tags (matches atdd_scenarios): 12 passed, 1 skipped
+    (SPEC-004-02-1: the argument order is asserted; the received arguments wait for
+    UC 5ebe8db7). same as the previous accepted S7'
+  skipped_accepted_by: orchestrator (same treatment as the accepted S7 of 2026-11-23)
+created_at: '2026-11-24T04:15:01+09:00'

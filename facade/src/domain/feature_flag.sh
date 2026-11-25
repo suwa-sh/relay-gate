@@ -587,9 +587,15 @@ validate_slot_runner_assignment() {
   if ! feature_flag_mode_is_active "$mode"; then
     return 0
   fi
-  if [ ! -f "$job_map" ] || [ ! -r "$job_map" ]; then
-    cli_field_safe_text "$job_map"
+  # 「無い」と「あるが読めない(通常のファイルでない・読み取れない)」を分ける(契約 job_map_location.presence_report)。
+  # シンボリックリンクはリンク先で判定する(-e / -f / -r はリンクを辿る)。表示はリンクを解決しない決めた場所のまま
+  cli_field_safe_text "$job_map"
+  if [ ! -e "$job_map" ]; then
     feature_flag_emit "error: job map not found slot=$slot map=$CLI_FIELD_SAFE_TEXT"
+    return 1
+  fi
+  if [ ! -f "$job_map" ] || [ ! -r "$job_map" ]; then
+    feature_flag_emit "error: config file is not readable path: $CLI_FIELD_SAFE_TEXT"
     return 1
   fi
   return 0

@@ -1,0 +1,33 @@
+stage: S1
+uc_id: 7c41c7cd
+manifest_sha256: 3be8e5d2a120b16dcd7e1ff7ca52d0176819084e8bcea554f474548646aff297
+manifest_projection: v2
+result: pass
+input_preflight:
+  files_exist: true
+  yaml_parse: true
+  gherkin_blocks: 3
+  gherkin_blocks_note: spec.md 2 (normal / error) / tier-facade.md 1
+  tier_ids_in_arch:
+  - tier-facade
+  conditional_inputs_consistent: true
+lineage_ok: true
+atdd_scenarios:
+- SPEC-002-03-1
+- SPEC-003-02-1
+- SPEC-004-01-1
+- SPEC-004-02-1
+- SPEC-004-04-1
+- SPEC-004-04-2
+- SPEC-004-04-3
+- SPEC-004-01-3
+- SPEC-004-01-4
+- SPEC-004-01-5
+- SPEC-004-01-6
+- SPEC-004-01-7
+- SPEC-004-01-8
+atdd_mapping: 'the 7 scenarios confirmed at bootstrap are kept. SPEC-004-01-3..8 (the runner resolves with the job map at the location decided from the feature flag) are added provisionally by the rule the user accepted for the preceding UCs; the three preceding UCs left them to this UC. to be confirmed or removed in the final review (event 20261123_141235). still unassigned: SPEC-001-04-4..7 and SPEC-013-01-3/4 need the standard runner''s execution part (later UCs)'
+shared_spec_refs_note: spec.md refers to cli-command-contract.yaml and asyncapi.yaml, tier-facade.md to ui-design.md; with the transitive refs it is the same 5 refs as the previous UCs
+scope_note: 'first run of this UC. it builds the resolve phase of the slot runner (runner IF argument parsing, job map CSV reading, ExecutionTarget, argument list, Runner Result files on failure) in the shared library and makes the standard runner use it. handed over from 09730858: (1) the UC BDD scenario of select-slot-mode-and-launch-runners about the empty job map location key has Then steps that return skipped while the standard runner is a placeholder; check whether they are judged once this UC builds the resolve phase (the execution-spec part belongs to the next UC). (2) the standard runner answers only --help (placeholder exit 6 otherwise); revisit the placeholder, its tests and the recording wrapper in features/uc/steps/support/facade-harness.js. (3) management DB access is psql + connection service name (CLAUDE.md); this UC does not touch the DB. performance: only the absence of wasteful processing is looked at; no time-asserting or large-input tests (CLAUDE.md)'
+completed_at: '2026-11-23T14:12:36+09:00'
+completed_by: dist-impl-run@0.15.0

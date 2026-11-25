@@ -1,0 +1,99 @@
+stage: S7
+uc_id: "7c41c7cd"
+manifest_sha256: 8dd410fbf84a6012b7868a016f42fec481d4e9266e1f4ed66bd66b5bf3f8cf87
+manifest_projection: v2
+result: pass
+result_note: "13 件を実行し、12 件が合格、1 件(SPEC-004-02-1)が保留(skipped)。失敗 0 件。保留の 1 件は、この機能で決まる部分(組み立てた引数の並び)を判定した上で、実装の実行(後続の機能 5ebe8db7)が要る部分だけを保留にしている。前回の S7(仕様の反映の前)と同じ内訳。保留を合格として扱うかどうかはオーケストレータの判断"
+branch_slug: resolve-execution-target-from-job-map
+tiers:
+  - tier-facade
+tier_impl_attempt: 5
+rerun_reason: "仕様の反映(判断記録 spec-decision-041〜043)を取り込んだ再実行"
+atdd_confirmed: true
+features_changed: false
+steps:
+  - features/atdd/steps/resolve-execution-target-from-job-map.steps.js
+steps_changed: true
+steps_changed_note: "手直しはコメントだけで、判定のコードは変えていない(S6 の段でまとめて直した)。1) 共通ライブラリの関数 resolve_execution_target の呼び方は契約になった(cli-command-contract.yaml の runner_resolve_library。spec-decision-042)ため、実装者の前提 A-001 / A-002 を根拠にした「暫定注入」の印を外し、根拠を契約へ書き換えた(1 か所)。2) 前提 A-004 の参照先を attempt-4 から attempt-5 の記録へ直した(2 か所。A-004 は attempt-5 に同じ id で存在する)"
+tier_impl_changed: false
+selection:
+  method: "一意タグ @atdd_{SPEC-ID}-{連番} の完全一致を or でつないだタグ式(名前の部分一致フィルタなし。feature 全体は回していない)"
+  command: "npx cucumber-js --config cucumber.cjs features/atdd --tags '@atdd_SPEC-002-03-1 or @atdd_SPEC-003-02-1 or @atdd_SPEC-004-01-1 or @atdd_SPEC-004-02-1 or @atdd_SPEC-004-04-1 or @atdd_SPEC-004-04-2 or @atdd_SPEC-004-04-3 or @atdd_SPEC-004-01-3 or @atdd_SPEC-004-01-4 or @atdd_SPEC-004-01-5 or @atdd_SPEC-004-01-6 or @atdd_SPEC-004-01-7 or @atdd_SPEC-004-01-8'"
+  cwd: "."
+  expected_scenarios: 13
+  executed_scenarios: 13
+  count_matches: true
+  count_note: "JSON レポートで、実行された 13 件のタグが atdd_scenarios の 13 件と 1 対 1 で一致することを確かめた"
+run:
+  exit_code: 0
+  summary: "13 scenarios (12 passed, 1 skipped), 78 steps (77 passed, 1 skipped)"
+  scenarios_total: 13
+  scenarios_passed: 12
+  scenarios_skipped: 1
+  scenarios_failed: 0
+  undefined_steps: 0
+  ambiguous_steps: 0
+  runs: 1
+  runs_note: "コメントの手直しの後に 1 回実行した"
+scenarios:
+  - id: SPEC-002-03-1
+    result: passed
+  - id: SPEC-003-02-1
+    result: passed
+  - id: SPEC-004-01-1
+    result: passed
+  - id: SPEC-004-01-3
+    result: passed
+  - id: SPEC-004-01-4
+    result: passed
+  - id: SPEC-004-01-5
+    result: passed
+  - id: SPEC-004-01-6
+    result: passed
+  - id: SPEC-004-01-7
+    result: passed
+  - id: SPEC-004-01-8
+    result: passed
+  - id: SPEC-004-02-1
+    result: skipped
+    judged: "Given と When は実行して passed。Then は、標準の slot runner が解決に成功したこと、固定引数が p1 と p2 p3 の 2 要素であること、解決の段が組み立てた引数の並びが p1 / p2 p3 / a / b の 4 個であること(共通ライブラリの契約どおりの呼び出し)を判定してから保留を返している(食い違えば保留にならず失敗する)"
+    skipped_from: "Then「p1, \"p2 p3\", a, b の順で 4 引数として渡される」のうち、実装が実際に受け取った引数"
+    reason: "実装の実行と、実装へ引数を渡すことは後続の機能 5ebe8db7(実装スクリプトを実行して Runner Result を出力する)の担当。この機能(7c41c7cd)が作るのは解決の段までで、解決に成功した後の標準の slot runner は実装を実行しない(前提 A-004)"
+    refs:
+      - "docs/impl/latest/7c41c7cd/issues/20261123_142047_cross-uc-scenarios.md の 3"
+      - "docs/impl/latest/7c41c7cd/stages/attempt-5/S4_tier-impl.tier-facade.assumptions.yaml の A-004"
+    handover: "5ebe8db7 の S7 で保留が外れることを確認する(5ebe8db7 の atdd_scenarios にも載っている)"
+  - id: SPEC-004-04-1
+    result: passed
+  - id: SPEC-004-04-2
+    result: passed
+  - id: SPEC-004-04-3
+    result: passed
+harness:
+  process: "relay-gate を Scenario ごとの一時ディレクトリの /opt/relay-gate へ複製し、facade/bin/facade.sh を実プロセスとして起動。facade が両 slot の標準の slot runner(runners/standard-runner.sh)を起動する。仕様の絶対パスは一時ディレクトリの下へ写像"
+  database: "この機能の Scenario は管理 DB に触らない(RAPID_CROSSCHECK_MODE=off。一時 PostgreSQL を起動しない)"
+  external_connections: none
+injections:
+  - what: "標準の slot runner の起動引数と環境変数を記録してから、本物の標準の slot runner へ同じ引数で処理を渡して終了コードを返す包み(代わりのスタブではない)"
+    where: "features/atdd/steps/resolve-execution-target-from-job-map.steps.js"
+    basis: "docs/impl/latest/09730858/issues/20261118_091109_cross-uc-scenarios.md の 4(案 A)、AssumptionRecord A-004(docs/impl/latest/7c41c7cd/stages/attempt-5/S4_tier-impl.tier-facade.assumptions.yaml)"
+  - what: "受け入れ基準の Given が書いていない値(mode・実装版・ジョブマップのほかの列)を、仕様のほかの Scenario の例示の値で補う"
+    where: "features/atdd/steps/resolve-execution-target-from-job-map.steps.js"
+    basis: "docs/impl/latest/7c41c7cd/issues/20261123_142047_cross-uc-scenarios.md の 5"
+injections_removed:
+  - what: "共通ライブラリ(lib/runner-resolve.sh)を source して resolve_execution_target を直接呼ぶ確かめ方"
+    reason: "呼び方が契約になったため、ハーネス注入ではなく契約どおりの呼び出しになった(runner_resolve_library。spec-decision-042)。確かめ方そのものは残している"
+injections_note: "残る注入箇所には根拠と「暫定注入・契約確定後に削除」のコメントが付いている。前提の新規抽出なし"
+not_added: "時間を測るテスト、大きい入力のテスト、作為的な入力のテストは足していない"
+not_verified:
+  - "実装が実際に受け取る引数(SPEC-004-02-1 の保留の部分。5ebe8db7 の担当)"
+  - "成果物の確定名に先にディレクトリなどがあるときの終了コード 6(今回の tier 実装の変更点)。この 13 件の受け入れ基準には無い"
+  - "先に済んだ機能の ATDD(31 件)の再実行。今回の手直しはコメントだけのため流していない"
+  - "Linux での実行(実行したのは macOS だけ)"
+cross_uc_refs:
+  - docs/impl/latest/7c41c7cd/issues/20261123_142047_cross-uc-scenarios.md
+  - docs/impl/latest/09730858/issues/20261118_091109_cross-uc-scenarios.md
+issues: []
+issues_note: "新規起票なし"
+completed_at: '2026-11-24T10:16:00+09:00'
+completed_by: dist-impl-implement@0.15.0

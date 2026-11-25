@@ -2,7 +2,22 @@
 
 ## 変更概要
 
-slot runner の presentation(runner IF の引数解析)、usecase(解決フロー)、domain(ExecutionTarget と引数連結の純粋関数)、repository(ジョブマップ CSV の読み込み)、gateway(未定義時の Runner Result 出力)を新規実装する。runner 実体は `$BLUE_RUNNER` / `$GREEN_RUNNER` として差し替え可能で、本 UC の解決ロジックは relay-gate が提供する共通ライブラリ(`lib/runner-*.sh`)に置く。relay-gate が提供する標準の slot runner(`runners/standard-runner.sh`。ローカル実行と SSH 実行を扱う)は、この共通ライブラリを `source` して解決する。利用者が自作する runner も、この共通ライブラリを `source` すれば同じ解決になる(CLI 契約 runner IF の `standard_runner`。実装固有事項は runner 実体、共通契約はライブラリ)。
+slot runner の presentation(runner IF の引数解析)、usecase(解決フロー)、domain(ExecutionTarget と引数連結の純粋関数)、repository(ジョブマップ CSV の読み込み)、gateway(未定義時の Runner Result 出力)を新規実装する。runner 実体は `$BLUE_RUNNER` / `$GREEN_RUNNER` として差し替え可能で、本 UC の解決ロジックは relay-gate が提供する共通ライブラリ(`lib/runner-*.sh`)に置く。relay-gate が提供する標準の slot runner(`runners/standard-runner.sh`。ローカル実行と SSH 実行を扱う)は、この共通ライブラリを `source` して解決する。利用者が自作する runner も、この共通ライブラリを `source` して約束された関数を呼べば同じ解決になる(CLI 契約 runner IF の `standard_runner`。実装固有事項は runner 実体、共通契約はライブラリ)。
+
+### 共通ライブラリ `lib/runner-resolve.sh` の呼び方(自作の runner へ約束する入口)
+
+正本は CLI 契約 runner IF の `standard_runner.runner_resolve_library`(後方互換を保つ対象。変えるときは仕様の変更が要る)。下表は読むための索引で、引数・戻り値の細部は契約の節だけに従う。
+
+| 関数 | 役割 | 結果の受け取り方 |
+|---|---|---|
+| `runner_resolve_reject_invocation <script> <run_id> <role> <message>` | runner IF の引数の違反の報告(下の「必須オプション欠落」) | 戻り値は常に 0 以外。終了コードは `RUNNER_RESOLVE_EXIT_CODE` |
+| `resolve_execution_target <script> <run_id> <job_id> <role> [PARAM...]` | 解決の入口(本 UC のバリデーション (2)〜(9) と失敗時の Runner Result) | 戻り値 0 で `EXECUTION_TARGET_*`(9 個)・配列 `ARGUMENT_LIST`・`RUNNER_RESOLVE_MAP_PATH`。値が無い host / user / credential_ref / map_version は空文字(execution-spec.json の null)。0 以外なら `RUNNER_RESOLVE_EXIT_CODE` で終える |
+| `parse_csv_row <line>` | 補助。CSV 1 行の分解 | 配列 `CSV_CELLS`。戻り値 1 はクォート不正 |
+| `build_argument_list <fixed_params の JSON 配列の文字列> [PARAM...]` | 補助。引数連結 | 配列 `ARGUMENT_LIST`。戻り値 1 は JSON 配列として不正(`ARGUMENT_LIST` は空) |
+| `runner_resolve_guard_existing_result <run_id> <role>` | 二重起動の判定。解決に成功した runner が後続の段へ進む前に呼ぶ | 戻り値 0 は続けてよい。0 以外なら `RUNNER_RESOLVE_EXIT_CODE` で終える |
+
+- 呼ぶ前に環境変数 `RELAY_GATE_CONFIG_DIR` / `RELAY_GATE_ARTIFACT_ROOT` / `RELAY_GATE_LOG_DIR` を設定しておく。`source` した側の `set` のオプションと `trap` を変えず、`source` しただけでは何も出力しない
+- 残りの共通ライブラリ 3 ファイル(`runner-spec.sh` / `runner-result.sh` / `runner-notify.sh`)の呼び方は約束の対象外
 
 ## コマンド契約
 
@@ -49,7 +64,7 @@ slot runner の presentation(runner IF の引数解析)、usecase(解決フロ�
 | コード | 意味 | 条件 |
 |-------|------|------|
 | 0 | 解決成功 | 次フェーズ(execution-spec 保存)へ進む。runner プロセスとしての終了コードは最終的に実装の exitcode.txt と一致させる |
-| 2 | 入力・設定検証エラー | runner IF の引数不足・列挙外、ジョブマップファイルなし、入力の守備範囲の違反(NUL バイト・UTF-8 として不正なバイト列・BOM・CR。契約 `config_input_rules`)、ヘッダーの必須列欠落・host / user の片方だけ・列名の重複、CSV クォート不正、job_id 未定義、fixed_params 不正、hang_detect_limit_minutes が非負整数でない、host / user の片方だけ空、script / work_dir が空。exitcode.txt にも `2` を書く。script / work_dir のパスの形式(絶対 / 相対 / Windows 形式)は違反にしない |
+| 2 | 入力・設定検証エラー | runner IF の引数不足・列挙外、ジョブマップファイルなし・読めない(通常のファイルでないものを含む)、入力の守備範囲の違反(NUL バイト・UTF-8 として不正なバイト列・BOM・CR。契約 `config_input_rules`)、ヘッダーの必須列欠落・host / user の片方だけ・列名の重複、CSV クォート不正、job_id 未定義、fixed_params 不正、hang_detect_limit_minutes が非負整数でない、host / user の片方だけ空、script / work_dir が空。exitcode.txt にも `2` を書く。script / work_dir のパスの形式(絶対 / 相対 / Windows 形式)は違反にしない |
 | 6 | 実行エラー | 成果物ディレクトリへの書き込み失敗(3 ファイルを揃えられない場合。実行ログに ERROR)、ジョブマップ読み込みの補助コマンドの失敗(契約 `config_input_rules.internal_failure`。stderr.log に `error: internal command failed commands=... path: ...`、exitcode.txt=6) |
 
 エラーメッセージ(stderr.log に書く。stderr ではない)。`map=` / `path:` には使ったジョブマップのパスを出す(下の例は、環境変数が未設定で既定の場所 /etc/relay-gate/green-job-map.csv を使った場合。環境変数 `GREEN_JOB_MAP_CSV=/srv/relay-gate/maps/green-jobs.csv` を受け取った場合は `map=/srv/relay-gate/maps/green-jobs.csv`):
@@ -57,7 +72,8 @@ slot runner の presentation(runner IF の引数解析)、usecase(解決フロ�
 | 状況 | 文言 |
 |---|---|
 | job_id 未定義 | `error: job_id=JOB999 not found in job map slot=green map=/etc/relay-gate/green-job-map.csv` |
-| マップなし | `error: job map not found slot=green map=/etc/relay-gate/green-job-map.csv` |
+| マップなし(使ったパスに何も無い) | `error: job map not found slot=green map=/etc/relay-gate/green-job-map.csv` |
+| マップが読めない(あるが通常のファイルでない(ディレクトリなど)・読み取り権限が無い) | `error: config file is not readable path: /etc/relay-gate/green-job-map.csv`(全コマンド共通の定型文。`slot=` は付かない。判定と文言の正本は契約 `config_files.feature-flag.env.job_map_location.presence_report`) |
 | ヘッダー不一致(必須列欠落 / host・user の片方だけ) | `error: job map header mismatch missing=user path: /etc/relay-gate/green-job-map.csv` |
 | CSV クォート不正 | `error: csv quote is invalid line=2 path: /etc/relay-gate/green-job-map.csv` |
 | 固定引数不正 | `error: fixed_params is not a json array of strings line=3 job_id=JOB003 value=p1 p2` |
@@ -69,7 +85,7 @@ slot runner の presentation(runner IF の引数解析)、usecase(解決フロ�
 
 ## UC ロジック
 
-- **バリデーション**: (1) runner IF の必須オプション → (2) ジョブマップファイルの存在と読み取り権限 → (3) ヘッダー(必須列 5 の存在、host / user は両方あるか両方無い、未知列は warn)→ (4) CSV セルのクォート整合(1 文字ずつの状態機械)→ (5) job_id 行の存在 → (6) host / user の空は両方同時のみ → (7) `fixed_params` が JSON 配列 → (8) `hang_detect_limit_minutes` が `^[0-9]+$` → (9) script / work_dir が非空(パスの形式は検査しない。Windows 形式・相対パスも受理。利用者決定 2026-09-22: ジョブマップは Windows / Linux 両対応のフルパス / 相対パス指定を受け取れる必要がある)。(2) の直後にバイト点検(NUL / UTF-8 / BOM / CR。契約 `config_input_rules`)を行い、違反は validate-config.sh と同じ順・同じ件数で全件出して(契約 `config_input_rules.byte_checks`)、解析せず exitcode.txt=2。JSON 配列の判定・要素抽出は UC「slot ごとのジョブマップを定義する」tier-facade の「JSON 配列の判定」と同じ実装を共有し、bash 単独で行う(契約 `conventions.runtime_prerequisites.external_commands`。jq 非依存。ネストした配列・オブジェクトは非対応で検証エラー)
+- **バリデーション**: (1) runner IF の必須オプション → (2) ジョブマップファイルの存在と読み取り(何も無ければ `job map not found`、あるが通常のファイルでない・読めなければ `config file is not readable`。契約 `job_map_location.presence_report`)→ (3) ヘッダー(必須列 5 の存在、host / user は両方あるか両方無い、未知列は warn)→ (4) CSV セルのクォート整合(1 文字ずつの状態機械)→ (5) job_id 行の存在 → (6) host / user の空は両方同時のみ → (7) `fixed_params` が JSON 配列 → (8) `hang_detect_limit_minutes` が `^[0-9]+$` → (9) script / work_dir が非空(パスの形式は検査しない。Windows 形式・相対パスも受理。利用者決定 2026-09-22: ジョブマップは Windows / Linux 両対応のフルパス / 相対パス指定を受け取れる必要がある)。(2) の直後にバイト点検(NUL / UTF-8 / BOM / CR。契約 `config_input_rules`)を行い、違反は validate-config.sh と同じ順・同じ件数で全件出して(契約 `config_input_rules.byte_checks`)、解析せず exitcode.txt=2。JSON 配列の判定・要素抽出は UC「slot ごとのジョブマップを定義する」tier-facade の「JSON 配列の判定」と同じ実装を共有し、bash 単独で行う(契約 `conventions.runtime_prerequisites.external_commands`。jq 非依存。ネストした配列・オブジェクトは非対応で検証エラー)
 - **確認プロンプト**: なし
 - **冪等性**: 読み取りのみ。同じ入力なら同じ ExecutionTarget を返す。未定義時の 3 ファイルは既存があれば上書きしない(既にこの run の成果物がある = 二重起動。実行ログに WARN)
 - **エラーハンドリング**: 解決失敗は usecase が 1 回だけ実行ログに ERROR を出し、gateway で 3 ファイルを揃えてから終了コード 2 で終了する。3 ファイルの書き込み自体に失敗したら終了コード 6(exitcode.txt が無い状態。ハング検知が上限超過でハング疑いとして拾う)
@@ -120,8 +136,8 @@ Feature: ジョブマップで JOB_ID から実行先を解決する - facade / 
 
   Scenario: parse_csv_row は二重化された二重引用符を 1 文字に戻す
     Given CSV 行 'JOB001,,,/var/app/work,/opt/app/bin/job001.sh,"[""p1"",""p2 p3"",""a,b""]",60' がある
-    When CSV 行分解関数を呼ぶ
-    Then セルは 7 個で、fixed_params セルは ["p1","p2 p3","a,b"] であり host と user のセルは空である
+    When CSV 行分解関数 `parse_csv_row` にこの行を渡して呼ぶ(呼び方は契約 runner IF の standard_runner.runner_resolve_library)
+    Then 戻り値は 0 で、配列 CSV_CELLS のセルは 7 個で、fixed_params セルは ["p1","p2 p3","a,b"] であり host と user のセルは空である
 
   Scenario: runner は host と user の列が無いジョブマップをローカル実行として解決する
     Given RELAY_GATE_CONFIG_DIR/blue-job-map.csv のヘッダーが "job_id,work_dir,script,fixed_params,hang_detect_limit_minutes" である
@@ -142,8 +158,39 @@ Feature: ジョブマップで JOB_ID から実行先を解決する - facade / 
 
   Scenario: build_argument_list は空白とカンマを含む要素を 1 引数として維持する
     Given fixed_params が ["p1","p2 p3","a,b"] で PARAM が x y である
-    When 引数連結関数を呼ぶ
-    Then 引数列は p1 / "p2 p3" / "a,b" / x / y の 5 個である
+    When 引数連結関数 `build_argument_list` に '["p1","p2 p3","a,b"]' と x y を渡して呼ぶ
+    Then 配列 ARGUMENT_LIST は p1 / "p2 p3" / "a,b" / x / y の 5 個である
+
+  Scenario: 自作の runner は共通ライブラリの解決の入口を呼んで標準の slot runner と同じ結果を受け取る
+    Given RELAY_GATE_CONFIG_DIR / RELAY_GATE_ARTIFACT_ROOT / RELAY_GATE_LOG_DIR を設定し、RELAY_GATE_CONFIG_DIR/blue-job-map.csv のヘッダーが "job_id,work_dir,script,fixed_params,hang_detect_limit_minutes" で行 'JOB001,/var/app/work,/opt/app/bin/job001.sh,"[""--mode"",""full""]",0' がある
+    And 自作の runner が EXIT の trap を設定してから lib/runner-resolve.sh を source する
+    When `resolve_execution_target my-runner.sh 20260830T113000-JOB001-3f9a1c2e JOB001 blue 20260830` を呼ぶ
+    Then 戻り値は 0 で、EXECUTION_TARGET_EXEC は local、EXECUTION_TARGET_HOST と EXECUTION_TARGET_USER と EXECUTION_TARGET_CREDENTIAL_REF と EXECUTION_TARGET_MAP_VERSION は空文字、EXECUTION_TARGET_SCRIPT は /opt/app/bin/job001.sh である
+    And 配列 ARGUMENT_LIST は --mode / full / 20260830 の 3 個で、RUNNER_RESOLVE_MAP_PATH は <RELAY_GATE_CONFIG_DIR>/blue-job-map.csv である
+    And source の前後で set のオプションと EXIT の trap は変わらず、source と関数の呼び出しでプロセスの stdout と stderr には何も出ていない
+
+  Scenario: 引数の違反の報告は run_id が分からないとき成果物を書かず RUNNER_RESOLVE_EXIT_CODE を 2 にする
+    When 自作の runner が `runner_resolve_reject_invocation my-runner.sh "" green "option required option=--run-id"` を呼ぶ
+    Then 戻り値は 0 以外で、RUNNER_RESOLVE_EXIT_CODE は 2 である
+    And 実行ログに "ERROR option required option=--run-id" が出て、RELAY_GATE_ARTIFACT_ROOT/facade/ 配下にファイルは作られない
+
+  Scenario: 自作の runner は解決できなかったとき RUNNER_RESOLVE_EXIT_CODE の値で終える
+    Given RELAY_GATE_CONFIG_DIR/green-job-map.csv に JOB999 の行が無い
+    When 自作の runner が `resolve_execution_target my-runner.sh 20260830T113000-JOB999-a1b2c3d4 JOB999 green` を呼ぶ
+    Then 戻り値は 2 で、RUNNER_RESOLVE_EXIT_CODE は 2 である
+    And RELAY_GATE_ARTIFACT_ROOT/facade/20260830T113000-JOB999-a1b2c3d4/green/exitcode.txt は "2" の 1 行である(関数が Runner Result を揃え済み)
+
+  Scenario: 解決の入口は既存の exitcode.txt が 0 の二重起動のとき RUNNER_RESOLVE_STATUS_NOT_RESOLVED を返す
+    Given RELAY_GATE_ARTIFACT_ROOT/facade/20260830T113000-JOB999-a1b2c3d4/green/exitcode.txt が "0" の 1 行で公開済みで、RELAY_GATE_CONFIG_DIR/green-job-map.csv に JOB999 の行が無い
+    When 自作の runner が `resolve_execution_target my-runner.sh 20260830T113000-JOB999-a1b2c3d4 JOB999 green` を呼ぶ
+    Then 戻り値は RUNNER_RESOLVE_STATUS_NOT_RESOLVED(1)で、RUNNER_RESOLVE_EXIT_CODE は 0 である
+    And exitcode.txt は "0" の 1 行のまま変わらない
+
+  Scenario: 二重起動の判定は既存の exitcode.txt が 0 のとき 0 以外を返して終了コード 0 を知らせる
+    Given RELAY_GATE_ARTIFACT_ROOT/facade/20260830T113000-JOB001-3f9a1c2e/green/exitcode.txt が "0" の 1 行で公開済みである
+    When 自作の runner が `runner_resolve_guard_existing_result 20260830T113000-JOB001-3f9a1c2e green` を呼ぶ
+    Then 戻り値は 0 以外で、RUNNER_RESOLVE_EXIT_CODE は 0 である
+    And 成果物ディレクトリのファイルは変わらない
 
   Scenario: runner は job_id 未定義のとき 3 ファイルと started-at.txt を揃えて終了コード 2 で終了する
     Given RELAY_GATE_CONFIG_DIR/green-job-map.csv に JOB999 の行が無い
@@ -187,6 +234,13 @@ Feature: ジョブマップで JOB_ID から実行先を解決する - facade / 
     When `<runner> --run-id 20260830T113000-JOB001-3f9a1c2e --job-id JOB001 --role green --mode background` を実行する
     Then 終了コード 2 で終了し、exitcode.txt は "2" の 1 行である
     And stderr.log は "error: job map not found slot=green map=<maps>/green-jobs.csv" を含む
+
+  Scenario: runner は使ったパスにあるがディレクトリのジョブマップを config file is not readable で報告する
+    Given RELAY_GATE_CONFIG_DIR とは別のディレクトリ maps に green-jobs.csv という名前のディレクトリがある
+    And 環境変数 GREEN_JOB_MAP_CSV=<maps>/green-jobs.csv が設定されている
+    When `<runner> --run-id 20260830T113000-JOB001-3f9a1c2e --job-id JOB001 --role green --mode background` を実行する
+    Then 終了コード 2 で終了し、exitcode.txt は "2" の 1 行である
+    And stderr.log は "error: config file is not readable path: <maps>/green-jobs.csv" を含み、"job map not found" を含まない(契約 job_map_location.presence_report)
 
   Scenario: 標準の slot runner はローカル実行の行と SSH 実行の行をそれぞれ解決する
     Given RELAY_GATE_CONFIG_DIR/blue-job-map.csv のヘッダーが "job_id,host,user,work_dir,script,fixed_params,hang_detect_limit_minutes" で、行 "JOB001,,,/var/app/work,/opt/app/bin/job001.sh,[],0"(host と user が両方空)がある

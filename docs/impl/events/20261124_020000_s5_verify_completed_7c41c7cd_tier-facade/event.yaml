@@ -1,0 +1,18 @@
+event_id: 20261124_020000_s5_verify_completed_7c41c7cd_tier-facade
+type: stage_completed
+uc_id: 7c41c7cd
+stage: S5
+tier: tier-facade
+attempt: 4
+payload:
+  result: fail
+  blockers: 1
+  majors: 4
+  minors: 21
+  manifest_sha256: 8dd410fbf84a6012b7868a016f42fec481d4e9266e1f4ed66bd66b5bf3f8cf87
+  manifest_projection: v2
+  verdicts_sha256: f28b3bd237147ad64a81221dc1c4c30518b9d0b7612f91859c1b09c5642ad663
+  note: 'F-001 blocker: a directory pre-placed at a Runner Result final name (stderr.log
+    / stdout.log / started-at.txt) is not rejected; exitcode.txt is published. attempt
+    limit (extended to 4) reached; awaiting the user decision'
+created_at: '2026-11-24T02:00:00+09:00'

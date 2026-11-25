@@ -1,0 +1,17 @@
+event_id: 20261124_021000_config_confirmed_7c41c7cd_attempt_limit_extended_to_5
+type: config_confirmed
+uc_id: 7c41c7cd
+stage: S5
+payload:
+  confirmed_by: user
+  confirmed_via: 'chat reply on 2026-11-24: 続け方=A(5 回目まで延ばして直す)'
+  decision: continue_beyond_attempt_limit
+  scope: attempt 5 only. fix the S5 attempt-4 blocker (Runner Result final names that
+    already exist as a directory or a link are moved into, and exitcode.txt is still
+    published)
+  review_page: tmp/reviews/attempt-limit-review.html (gitignored)
+  items:
+  - key: status[7c41c7cd].attempt_limit
+    before: 4
+    after: 5
+created_at: '2026-11-24T02:10:00+09:00'

@@ -1,0 +1,79 @@
+stage: "S5"
+lane: "verify"
+tier: "tier-facade"
+attempt: 5
+uc_id: "7c41c7cd"
+manifest_sha256: "8dd410fbf84a6012b7868a016f42fec481d4e9266e1f4ed66bd66b5bf3f8cf87"
+manifest_projection: "v2"
+result: "pass"
+open_blockers: 0
+open_majors: 5
+open_minors: 19
+summary:
+  blocker: 0
+  major: 5
+  minor: 19
+gate_reexec:
+  format: "pass"
+  lint: "pass"
+  tdd: "pass"
+  bdd_tier: "pass"
+viewpoints_checked:
+  spec_conformance:
+    status: "done"
+    note: "runner IFの必須引数・列挙・help、共通ライブラリ5関数、4業務ルール、CSV/JSON/入力バイト規則を突合。対象UCの19シナリオとfeature flagの42シナリオ/アウトラインのGherkinはtier仕様と完全一致。API summaryは旧CLI索引形式でv2 contract slice対象外。両UCのtablesは空。management-dbのscope内6テーブルと生成schemaは一致。UIはない。"
+  readability_maintainability:
+    status: "done"
+    note: "presentation/usecase/domain/repository/gatewayの責務、仕様用語、共有CSV/JSON検証、dev-rulesの命名とAAAを確認。改修対象に立証できる保守性欠陥なし。"
+  security:
+    status: "done"
+    note: "設定をsource/evalせず取り込む範囲、credential_refの値を診断へ出さないこと、制御文字の可視化、複製0600、入力複製・成果物の確定名のディレクトリとリンクへの対処を確認。仕様未定義の選択は観点8で別途記録。"
+  performance:
+    status: "done"
+    note: "NFR B.1.1.2/B.2.1.1とCLAUDE.mdに基づき、通常の入力に対する不要な処理だけを確認。バイト走査・CSV解析・行の構造検査/探索は一定回数、採用行の固定引数解析は1回。時間計測や作為的な大入力による指摘は行っていない。"
+  operability:
+    status: "done"
+    note: "設定パスの優先、元パスでの診断、ERROR/WARN行と終了値を照合。decision-043のmissing/unreadableの文言・blue→green順を、feature flag/ジョブマップ検証/runnerの3読者×9状態で確認。"
+  fault_tolerance:
+    status: "done"
+    note: "二重起動・中止・補助コマンド失敗・複製失敗・部分公開を確認。4成果物名×5種の衝突20件で終了6とプロセス無出力、外部内容不変。公開直前に確定名ディレクトリが作られる4件でも完了マーカー非公開。前回F-001は解消。"
+  refactoring:
+    status: "done"
+    note: "ExecutionTarget/ArgumentListとI/O境界を確認。CSV/JSON/入力複製の処理は共有され、BDDは実プロセス・実ファイルと公開済みライブラリAPIで検証する。立証できる追加の構造欠陥なし。"
+  assumption_conformance:
+    status: "done"
+    note: "観点1〜7と4ゲートを完走後、AssumptionRecordのid/assumption/targetだけを読み、S4固定指示と仕様で23件のverdictを確定。その後category/reason/confidence/spec_refsを補助証拠として読んだ。事前の独立候補4件はA-004/A-005/A-014/A-016/A-009/A-025へ対応し、unlistedなし。分類差1件。"
+findings_file: "attempt-5/S5_verify.tier-facade.findings.yaml"
+assumptions_sha256: "3194697c1d8300481f2c61dcd20dd5203f5f6de303ec3d7793923425a0161dff"
+assumption_verdicts_sha256: "ba9302a68de943be2cb6d262afc1a820c5c161696212d9c1f9bcf31b65f56864"
+assumption_verdicts_summary:
+  consistent: 0
+  spec_absent: 23
+  contradicts: 0
+  unlisted: 0
+assumption_review_required: 5
+environment_failures: []
+verification_counts:
+  tdd_passed: 778
+  tdd_failed: 0
+  tdd_skipped: 0
+  bdd_scenarios_passed: 163
+  bdd_steps_passed: 1360
+  bdd_failed: 0
+  bdd_skipped: 0
+  additional_checks_passed: 51
+  category_mismatch: 1
+result_note: "8観点を完了。4ゲート通過、S4 gate結果と一致。blockerは0。major5件はsecurity/persistenceに関するspec_absentの前提確認で、立証済みの仕様矛盾ではない。前回F-001と入力複製の先行ディレクトリ問題は解消を確認した。"
+write_set:
+  - "docs/impl/latest/7c41c7cd/stages/attempt-5/S5_verify.tier-facade.findings.yaml"
+  - "docs/impl/latest/7c41c7cd/stages/attempt-5/S5_verify.tier-facade.done.yaml"
+protected_files_check:
+  files: 101
+  changed: 0
+repository_context:
+  path: "/Users/suwa_sh/src/github.com/suwa-sh/relay-gate"
+  head_ref: "refs/heads/feature/resolve-execution-target-from-job-map"
+  git_commands_executed: false
+  note: "今回の明示的なgitコマンド禁止を優先。pwd、.git/HEAD、CLAUDE.mdと読み取り専用ハッシュ比較で作業場所・参照先・不改変を確認。git statusによる既存差分の確認は実行していない。"
+completed_at: "2026-11-24T10:08:21+09:00"
+completed_by: "dist-impl-verify@0.15.0"
