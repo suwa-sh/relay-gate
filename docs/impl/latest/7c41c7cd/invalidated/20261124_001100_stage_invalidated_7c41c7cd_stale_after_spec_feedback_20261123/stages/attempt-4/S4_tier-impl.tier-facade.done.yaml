@@ -1,0 +1,121 @@
+stage: S4
+tier: tier-facade
+attempt: 4
+uc_id: "7c41c7cd"
+manifest_sha256: 90b95c2c7f67feac241a56c2bb03191b9150a515f82b517c61c7d324e3bdefa1
+manifest_projection: v2
+result: pass
+findings_provided: false
+findings_note: "独立検証の指摘ではなく、機能をまたぐシナリオテスト(features/uc)からの差し戻し。直す対象は dispatch の指示にある 1 点だけ(利用者がやり直し上限を超えて直すことを承認済み)"
+api_summary_check: "_api-summary.yaml に schema_version distillery.api-summary/v2 の記載は無く、_contract-slice.json も無い(契約 slice の hash 照合の対象外。attempt 1 〜 3 と同じ)"
+ddd_guide: "impl-config.yaml の capabilities に has_ddd_plugin が無いため、docs/dev-rules/coding-rules.md の基準だけで実装した"
+returned_defect:
+  source: "features/uc/select-slot-mode-and-launch-runners.feature:94(統合テスト担当の報告。約半分の確率で失敗)"
+  location: "facade/src/repository/job_map_repo.sh の job_map_repo_create_snapshot"
+  symptom: "blue と green の slot runner がほぼ同時に動くと、片方がジョブマップの複製に失敗する"
+  cause: "mktemp のテンプレートが relay-gate-XXXXXX.part で、X の並びが末尾に無い。macOS(BSD)の mktemp は末尾以外の X を置き換えず、テンプレートのままの名前で作る(既にあれば失敗する)。同時に動く 2 つのプロセスが同じ作業名を取り合い、後から来たほうの mktemp が失敗していた。作った後に別の名前へ移す後処理にも、移す前の名前を共有する間があった"
+  reproduced: "直す前に、追加した単体テスト(2 つのプロセスが同じ TMPDIR で同時に複製を持つ)で片方の複製が失敗することを macOS で確認した"
+  resolution: fixed
+  spec_basis: "契約 config_input_rules.snapshot.validate_config(名前は relay-gate- で始まる / 作業名は最終名 + .part / 作業名を mktemp で作る / 最終名は rename まで存在させない / 権限 0600)を自分で読んで確かめ、どれも変えていない"
+  change: "mktemp に渡すテンプレートを relay-gate-<呼んだプロセスの番号>-XXXXXX.part にし、mktemp が返した名前を移し替えずにそのまま使う。プロセスの番号は BASHPID をコマンド置換の外で取る。X を置き換えない mktemp でも名前がプロセスごとに分かれ、名前の確保は mktemp の 1 回の操作(既にある名前は作らない)のまま。作ってから別の名前へ移す後処理は削除した"
+  why_this_way: "既存のテストと契約が『作業名を mktemp で作ること』『mktemp の失敗は入力の複製の失敗』を前提にしているため、mktemp の呼び出しは残した。OS ごとの分岐を作らず、macOS と Linux が同じ 1 本の経路を通る。書き込み途中の複製を読ませない規約(作業名へ書いてから最終名へ rename)と、接頭辞 relay-gate- と作業名 .part による後片付けは変えていない"
+  tests: "job_map_repo.bats 2 件(別プロセスから呼ぶと名前に呼んだプロセスの番号が入る / 2 つのプロセスが同じ TMPDIR で同時に複製を持つと、別々の最終名でそれぞれの内容を持ち、作業名を残さない)"
+same_pattern_survey:
+  scope: "facade/ 配下の src / lib / runners / test / features と、リポジトリのルートの features を grep(mktemp / XXXXXX / .part / .tmp / RANDOM / relay-gate-)"
+  mktemp_template_with_non_trailing_x:
+    - "facade/src/repository/job_map_repo.sh の job_map_repo_create_snapshot: 今回直した(検証コマンドの env 形式の読み込み feature_flag_config.sh / rapid_crosscheck_env.sh と runner の解決も同じ関数を使うため、まとめて直る)"
+  mktemp_template_with_trailing_x_no_change:
+    - "facade/src/usecase/launch_slots.sh:90(relay-gate-facade-report.XXXXXX)"
+    - "facade/src/gateway/runner_probe.sh:90(relay-gate-runner-probe.XXXXXX)"
+    - "facade/src/gateway/runner_process_adapter.sh:57(mktemp -d relay-gate-launch.XXXXXX)"
+  fixed_name_temp_files_no_change:
+    - "facade/src/gateway/filesystem_adapter.sh の <name>.tmp: 契約 artifact_layout.publish_rule が決めた名前で、置き場は run_id と role ごとのディレクトリ。blue と green は別のディレクトリに書くため共有しない。同じ run_id / role の二重起動は契約 idempotency の扱い"
+  outside_facade: "facade/ の外に同じ型の実装は見つからなかった(ルートの features/uc/steps は複製の名前を接頭辞と .part だけで見ていて、名前の中身には依存していない)"
+implementation:
+  summary: "入力の複製の作業名の作り方 1 点だけを直した。ほかの振る舞いは変えていない"
+  validate_config_output_changed: false
+  management_db_touched: false
+code_changes:
+  modified:
+    - path: facade/src/repository/job_map_repo.sh
+      change: "job_map_repo_create_snapshot の作業名のテンプレートにプロセスの番号を入れ、作った後に別の名前へ移す後処理を削除。コメントを更新"
+    - path: facade/test/repository/job_map_repo.bats
+      change: "2 件追加"
+    - path: facade/features/steps/assign-slot-runner-scripts.steps.js
+      change: "代替の mktemp を置く理由のコメントだけを現状に合わせて更新(処理は変えていない)"
+  feature_bodies_changed: false
+  step_definitions_changed: "facade/features/steps のコメント 2 行だけ(処理は同じ)。features/uc と features/atdd は触っていない"
+  contracts_changed: false
+  outside_write_set: []
+tdd_notes:
+  - "単体テスト 2 件を先に書き、直す前に macOS で 2 件とも not ok になることを確認してから直した"
+  - "時間を確かめるテスト、MB 級の入力・作為的な入力のテスト、OS のコマンドを差し替えるテスト、故障を注入するテストは追加していない"
+gates:
+  format: pass
+  lint: pass
+  tdd: pass
+  bdd_tier: pass
+gate_runs:
+  - gate: format
+    cwd: facade
+    command: "shfmt -d ."
+    exit_code: 0
+  - gate: lint
+    cwd: facade
+    command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+    exit_code: 0
+  - gate: tdd
+    cwd: facade
+    command: "bats -r test"
+    exit_code: 0
+    summary: "756 tests, 756 ok, 0 not ok(attempt 3 の 754 件 + 追加 2 件)"
+  - gate: bdd_tier
+    cwd: facade
+    command: "npx cucumber-js --config ../cucumber.cjs features"
+    exit_code: 0
+    summary: "154 scenarios (154 passed), 1284 steps (1284 passed)"
+gate_run_notes:
+  - "macOS(Darwin 25.5.0、arm64)で、最後のソース変更の後に 4 ゲートを 1 つずつ順に実行した(同時に走らせていない)"
+  - "features/uc/ と features/atdd/ は触っていない(統合テスト担当の未コミットの 4 ファイルもそのまま)"
+cross_feature_scenario_check:
+  command: "npx cucumber-js --config cucumber.cjs features/uc/select-slot-mode-and-launch-runners.feature:94"
+  cwd: "リポジトリのルート"
+  runs: 20
+  exit_code_zero: 20
+  failed: 0
+  scenario_status: "20 回とも『1 scenario (1 skipped)、9 steps (7 passed, 2 skipped)』。skipped は統合テスト担当の step が意図して返す保留(execution-spec.json の保存は後続の機能の担当)で、解決に失敗した回は保留にならず失敗する作りになっている。passed と表示された回は無い"
+  files_changed: false
+linux_runs:
+  executed: false
+  limitation: "この実行環境では Linux で実行していない(attempt 1 〜 3 と同じ)。GNU の mktemp が末尾以外の X を置き換えることは、実行して確かめていない"
+cleanup_check: "実行後、リポジトリに facade/log と facade/var が無いこと、TMPDIR に relay-gate-* が残っていないことを確認した。/tmp/relay-gate-quickstart は 2026-11-15 からあるディレクトリで、今回の実行とは無関係(触っていない)"
+handover_to_later_stages:
+  - "attempt 1 〜 3 の handover はそのまま有効"
+issues_added: []
+issues_note: "仕様どおりに実装すると動かない事実は見つからなかった"
+observations:
+  - "macOS(BSD の mktemp)では、複製の名前に XXXXXX の文字がそのまま残る(例 relay-gate-12345-XXXXXX)。名前はプロセスの番号で分かれる"
+  - "macOS で、強制終了(SIGKILL)で残った作業名と同じ番号のプロセスが後で複製を作ると、作成に失敗して config snapshot failed になる。強制終了で残る複製は契約 snapshot.out_of_scope が守備範囲の外としている。Linux(GNU の mktemp)では X の部分が置き換わるため起きない"
+  - "attempt 3 の observations はそのまま"
+assumptions:
+  path: "attempt-4/S4_tier-impl.tier-facade.assumptions.yaml"
+  count: 27
+  by_category:
+    input_validation: 2
+    data_format: 5
+    error_handling: 15
+    persistence: 3
+    performance: 1
+    security: 1
+  sha256: cad27c03d69264dab0bc71fbe6d76ae61d255a463ad3ae1ab58d42eb2db10044
+  extraction:
+    candidate_count: 38
+    excluded_as_explicit: 11
+    recorded_count: 27
+  validator: "validateAssumptions.js record: ok true"
+  changes_from_attempt_3: "追加 1 件(A-029 複製の作業名の作り方)。文面の更新 1 件(A-022 に、名前の決め方は A-029 のとおりで同時に動いても別々の名前になる旨を足した)。ほかの 25 件は id・文面・行番号とも同じ(今回変えたソースは job_map_repo.sh だけで、ほかの前提の target の行は動いていない)"
+  from_variable_prompt: "A-029 は dispatch の指示(直し方は実装者が決める。条件 4 つ)に従って決めた。attempt 3 までの分(A-001 / A-004 / A-006 / A-012 / A-023 / A-027)はそのまま"
+review_refute_loop: not_run
+review_refute_loop_note: "外部レビュー(review-refute-loop)はこの S4 では実行していない。S5 の別モデル Verifier に委ねる"
+completed_at: "2026-11-23T17:25:00+09:00"
+completed_by: dist-impl-implement@0.15.0

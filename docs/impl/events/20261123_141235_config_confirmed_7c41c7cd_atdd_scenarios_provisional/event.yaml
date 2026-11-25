@@ -1,0 +1,35 @@
+event_id: 20261123_141235_config_confirmed_7c41c7cd_atdd_scenarios_provisional
+type: config_confirmed
+uc_id: 7c41c7cd
+stage: S1
+payload:
+  confirmed_by: orchestrator_provisional
+  pending_user_confirmation: true
+  confirmed_via: not confirmed by the user yet. same rule as the one the user accepted for the preceding UCs (assign the scenarios of the added acceptance criteria that this UC alone can judge). to be confirmed or removed in the final review
+  candidate_rule: 'SPEC-004-01-3..8: the slot runner resolves the execution target with the job map at the location decided from the feature flag (absolute path key / no key / empty key / only one slot has the key / relative path from another current directory / same file as the one the validation command shows). the three preceding UCs left these to this UC'
+  not_assigned: SPEC-001-04-4..7, SPEC-013-01-3, SPEC-013-01-4 need the standard runner's execution part (later UCs)
+  items:
+  - key: uc-map[7c41c7cd].atdd_scenarios
+    before:
+    - SPEC-002-03-1
+    - SPEC-003-02-1
+    - SPEC-004-01-1
+    - SPEC-004-02-1
+    - SPEC-004-04-1
+    - SPEC-004-04-2
+    - SPEC-004-04-3
+    after:
+    - SPEC-002-03-1
+    - SPEC-003-02-1
+    - SPEC-004-01-1
+    - SPEC-004-02-1
+    - SPEC-004-04-1
+    - SPEC-004-04-2
+    - SPEC-004-04-3
+    - SPEC-004-01-3
+    - SPEC-004-01-4
+    - SPEC-004-01-5
+    - SPEC-004-01-6
+    - SPEC-004-01-7
+    - SPEC-004-01-8
+created_at: '2026-11-23T14:12:35+09:00'

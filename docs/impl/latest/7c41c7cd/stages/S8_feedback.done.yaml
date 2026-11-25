@@ -1,0 +1,221 @@
+stage: "S8"
+uc_id: "7c41c7cd"
+manifest_sha256: "8dd410fbf84a6012b7868a016f42fec481d4e9266e1f4ed66bd66b5bf3f8cf87"
+manifest_projection: v2
+mode: "initial"
+mode_note: "仕様の反映(判断記録 spec-decision-041〜043)の後の新しい周回の初回。仕様への新しい要求は 0 件。今回見つかった問題 2 件はどちらも実装の欠陥で、直し済み。実装者が補った前提 23 件は仕様と矛盾せず、人が spec_change で却下したものも無いため要求にしない。draft は作っていない。前回公開した要求 3 件は反映済みのため再度は出していない"
+result: pass
+status: "no_requests"
+tier_impl_attempt: 5
+policy:
+  source: "CLAUDE.md「方針の正本」と利用者の方針(2026-11-18)"
+  summary: "仕様の変更は、元の方針資料と一致しているかを第一の基準にする。実装者が補った前提は、利用者の判断が要るものを除き、要求にせず as-built の事実として記録する。性能・作為的な条件についての指摘や要求は作らない"
+  precedent:
+    - "docs/impl/latest/7c41c7cd/invalidated/20261124_001100_stage_invalidated_7c41c7cd_stale_after_spec_feedback_20261123/stages/S8_feedback.done.yaml"
+    - "docs/impl/latest/09730858/stages/S8_feedback.done.yaml"
+inputs:
+  issues_dir: "docs/impl/latest/7c41c7cd/issues/"
+  findings:
+    - "docs/impl/latest/7c41c7cd/stages/attempt-4/S5_verify.tier-facade.findings.yaml"
+    - "docs/impl/latest/7c41c7cd/stages/attempt-5/S5_verify.tier-facade.findings.yaml"
+  findings_note: "今回の周回(仕様の反映後)の 2 回分。attempt 1〜3 と、やり直す前の attempt 4 は前回の周回で整理済み(前回の done を参照)"
+  ui_review_findings: []
+  assumptions: "docs/impl/latest/7c41c7cd/stages/attempt-5/S4_tier-impl.tier-facade.assumptions.yaml"
+  s4_done: "docs/impl/latest/7c41c7cd/stages/attempt-5/S4_tier-impl.tier-facade.done.yaml"
+  s5_done: "docs/impl/latest/7c41c7cd/stages/attempt-5/S5_verify.tier-facade.done.yaml"
+  s6_done: "docs/impl/latest/7c41c7cd/stages/S6_uc-bdd.done.yaml"
+  s7_done: "docs/impl/latest/7c41c7cd/stages/S7_atdd.done.yaml"
+  review_notes: "docs/impl/latest/7c41c7cd/review/review-notes.md"
+  review_notes_note: "前回の周回の確認(2026-11-23 の 2 回)の記録。前提の却下は 0 件。今回の記録(attempt 5)に対する確認はまだ無い"
+  published_feedback_request: "docs/impl/latest/7c41c7cd/feedback-requests/20261123_175902_impl_feedback_7c41c7cd.md"
+  spec_decisions:
+    - "docs/specs/latest/decisions/spec-decision-041.yaml"
+    - "docs/specs/latest/decisions/spec-decision-042.yaml"
+    - "docs/specs/latest/decisions/spec-decision-043.yaml"
+  policy_documents:
+    - "tmp/RelayGateのしくみ.md"
+    - "tmp/RelayGateの利用イメージ.md"
+resolution:
+  issues:
+    - path: "docs/impl/latest/7c41c7cd/issues/20261124_001000_snapshot-final-name-directory-swap.md"
+      verdict: "not_requested"
+      origin: "implementation"
+      decided_by: "オーケストレータの決定(仕様は変えない。実装を約束に合わせる)"
+      decision_reason: "仕様(CLI 契約の入力の複製の定め。判断記録 041)は『影響は複製の失敗までで、すり替えられない』と結果を約束している。実装が mv の成功だけを見ており、約束を守れていなかった。attempt 4 で修正済み"
+      evidence: "attempt-4 の S4 done の issues_resolved(fixed)と、attempt-5 の検証の regressions_verified(resolved)"
+    - path: "docs/impl/latest/7c41c7cd/issues/20261123_142047_cross-uc-scenarios.md"
+      verdict: "already_handled"
+      origin: "record"
+      decided_by: "前回の周回の整理"
+      decision_reason: "仕様起因の部分(共通ライブラリの呼び方)は前回の要求 2 件目になり、判断記録 042 で反映済み。残りは機能をまたぐシナリオの担当の分け方の記録で、要求にしない。今回新しく足す項目は無い"
+      evidence: "S6 done と S7 done の injections_removed(呼び方が契約になった)"
+  override_of_orchestrator_judgement: "なし"
+  new_issues_in_this_stage: 0
+  findings:
+    attempt_4:
+      blocker: 1
+      major: 4
+      minor: 21
+      spec_absent: 22
+      consistent: 0
+      contradicts: 0
+      unlisted: 0
+      verdict: "blocker 1 件(F-001。成果物の確定名がディレクトリのとき、そろわないまま exitcode.txt を公開する)は、仕様に書かれた振る舞い(そろえられなければ終了コード 6、exitcode.txt を公開しない)を実装が満たしていなかった実装起因。attempt 5 で修正済み。要求にしない。major 4 件と minor 18 件は前提の確認記録、minor 3 件は分類の違いの記録(attempt 5 で記録を直した)"
+    attempt_5:
+      blocker: 0
+      major: 5
+      minor: 19
+      spec_absent: 23
+      consistent: 0
+      contradicts: 0
+      unlisted: 0
+      category_mismatch: 1
+      verdict: "findings 起因の要求なし。major 5 件と minor 18 件は前提の確認記録(spec_absent)。minor 1 件(F-024)は前提 A-022 の分類の違いの記録。実装の欠陥の指摘は 0 件。人が spec_change で却下していないため要求にしない"
+  rejected_spec_change: 0
+  rejected_implementation_change: 0
+classification:
+  spec_origin: 0
+  not_requested_records: 1
+  implementation_origin: 2
+  implementation_origin_records: 3
+  record_only: 1
+  environment_origin: 1
+  note: "仕様起因の要求 = 0 件。要求にしない記録 = 機能をまたぐシナリオの issue 1 件(前回の周回で整理済み)。実装起因 = 入力の複製の最終名の欠陥(issue。attempt 4 で修正)と、成果物の確定名の欠陥(attempt 4 の検証の F-001。attempt 5 で修正)。実装起因の記録 = 前提の分類の付け間違い 3 件(attempt 4 の F-005 / F-016 / F-020。attempt 5 で直した)。記録のみ = attempt 5 の F-024(A-022 の分類が実装者と検証で違う。検証の判定が回によって違うため直さない)。環境起因 = Linux で実行していない"
+policy_document_check:
+  result: "no_contradiction"
+  documents_read: true
+  note: "方針資料 2 件を語(リネーム / 一時ファイル / 権限 / ディレクトリ ほか)で検索して確認した(2026-11-24)。関連する記述は『後続処理が書き込み途中のファイルを読まないよう、一時ファイルへ出力してから確定名へリネームできる』で、直した後の実装と一致する。確定名に先客があるときの扱い、ほかの利用者が先にものを置いた場合、ディレクトリの権限についての記述は無い"
+requests: []
+previous_requests:
+  feedback_id: "20261123_175902_impl_feedback_7c41c7cd"
+  request_ids: ["CR-7c41c7cd-001", "CR-7c41c7cd-002", "CR-7c41c7cd-003"]
+  status: "reflected_in_spec"
+  resubmitted: false
+  note: "3 件とも仕様に反映済み(判断記録 041 / 042 / 043)。今回は出していない。公開済みのファイルは変更していない"
+not_requested_candidates:
+  - key: "snapshot_final_name_check"
+    summary: "入力の複製を最終名へ移すときの確かめ方(A-029)"
+    reason: "仕様は結果(すり替えられない)を約束しており、手段は実装の範囲。仕様と矛盾しない。人が spec_change で却下した場合だけ要求の候補になる"
+  - key: "runner_result_final_name_check"
+    summary: "成果物を確定名へ移すときの確かめ方と、通常のファイルは置き換えること(A-030)"
+    reason: "同上。仕様は結果(そろえられなければ終了コード 6、exitcode.txt を公開しない)を約束している"
+  - key: "previously_approved_assumptions"
+    summary: "成果物ディレクトリを runner が作ること(A-006)、credential_ref の警告の対象と出し先(A-012)、runner も一時複製で読むこと(A-022)"
+    reason: "仕様と矛盾しない。前回の確認で承認済みの内容と同じ(A-022 は 1 文の削除だけ)"
+  - key: "cross_feature_pending_scenarios"
+    summary: "保留のシナリオ 2 件(実行の指示書の中身 / 実装が実際に受け取った引数)"
+    reason: "後続の機能の担当。前回から変更なし"
+orchestrator_decisions:
+  - key: "fix_snapshot_defect_without_spec_change"
+    summary: "入力の複製の最終名の欠陥は、仕様を変えず実装を直す"
+    user_confirmation: "report_at_final_review"
+    related_assumptions: ["A-029"]
+  - key: "attempt_limit_extended_to_5"
+    summary: "成果物の確定名の欠陥を直すために、やり直しの上限を 5 回へ延ばした"
+    user_confirmation: "approved"
+    related_assumptions: ["A-030"]
+  - key: "runner_result_regular_file_replaced"
+    summary: "成果物の確定名の先客が通常のファイルなら置き換える(入力の複製と違い、何かあれば失敗にはしない)"
+    user_confirmation: "required"
+    related_assumptions: ["A-030"]
+  - key: "placeholder_exit_after_resolution"
+    summary: "解決に成功した後、後続の段が無い間は、標準の slot runner は何も書かずに仮の終了コード 6 で終える(前回から変更なし)"
+    user_confirmation: "not_required"
+    related_assumptions: ["A-004"]
+assumptions_summary:
+  count: 23
+  consistent: 0
+  spec_absent: 23
+  contradicts: 0
+  unlisted: 0
+  rejected_spec_change: 0
+  rejected_implementation_change: 0
+  handling: "23 件とも要求にせず、as-built の事実として記録した(feedback/as-built-summary.md の第 5 節と付録 A)"
+  human_decision: "今回の記録(attempt 5)に対しては未判断。最後の確認で求める"
+  answer_required:
+    security: ["A-006", "A-012", "A-022", "A-029", "A-030"]
+  answer_required_note: "独立した検証は A-022 を persistence と判定した(実装者は security)。どちらでも回答は必須"
+  compared_with_previous_review:
+    basis: "前回の確認の対象だった記録(invalidated 配下の attempt 4。27 件)と、今回の記録(attempt 5)の文面の機械的な比較"
+    same_text: ["A-004", "A-005", "A-006", "A-007", "A-009", "A-011", "A-012", "A-013", "A-014", "A-015", "A-016", "A-017", "A-018", "A-019", "A-020", "A-023", "A-024", "A-025", "A-028"]
+    one_sentence_removed: ["A-022"]
+    content_replaced_under_same_id: ["A-026", "A-029"]
+    added: ["A-030"]
+    removed_as_now_in_spec: ["A-001", "A-002", "A-003", "A-021", "A-027"]
+    previous_unlisted: "V-001(同じオプションを 2 回渡したときは後のものを採る)は、今回の検証では unlisted に挙がっていない。該当のコードは今回の変更の対象外"
+  by_category:
+    security: 5
+    persistence: 0
+    error_handling: 13
+    input_validation: 3
+    data_format: 1
+    performance: 1
+  assumptions_sha256: "3194697c1d8300481f2c61dcd20dd5203f5f6de303ec3d7793923425a0161dff"
+  assumption_verdicts_sha256: "ba9302a68de943be2cb6d262afc1a820c5c161696212d9c1f9bcf31b65f56864"
+  sha256_note: "2 つの値は S4 done と S5 done からの転記(このステージでは再計算していない)"
+test_results:
+  tdd: "778 tests, 778 ok"
+  bdd_tier: "163 scenarios (163 passed)"
+  uc_bdd: "99 scenarios (98 passed, 1 skipped)"
+  atdd: "13 scenarios (12 passed, 1 skipped)"
+  tests_run_in_this_stage: false
+skipped_scenarios:
+  - scenario: "値が空のジョブマップの場所のキーがある slot の runner は固定の名前のジョブマップで実行先を解決する(SPEC-004-01)"
+    judged: "場所を runner へ渡すことと、固定の名前のジョブマップで解決できたこと"
+    skipped: "execution-spec.json の slots.green の中身"
+    until: "後続の機能が execution-spec.json を保存するまで"
+  - scenario: "SPEC-004-02-1(固定引数の後ろに PARAM を順序保持で連結する)"
+    judged: "解決に成功したことと、組み立てた引数の並び(4 個)"
+    skipped: "実装が実際に受け取った引数"
+    until: "後続の機能が実装を実行するまで"
+review_attention:
+  - key: "1"
+    topic: "実装の承認"
+    summary: "いまの実装とテスト結果の承認を求める。今回直した欠陥 2 件と再現テストを示す。推奨は承認"
+    related_assumptions: []
+  - key: "2"
+    topic: "安全性にかかわる前提 5 件"
+    summary: "1 件ずつ承認または却下を求める。3 件は前回承認済みの内容と同じ、2 件(入力の複製・成果物を移すときの確認)は今回が初めて。推奨は 5 件とも承認"
+    related_assumptions: ["A-006", "A-012", "A-022", "A-029", "A-030"]
+  - key: "3"
+    topic: "そのほかの前提 18 件"
+    summary: "まとめて承認でよい"
+    related_assumptions: ["A-004", "A-005", "A-007", "A-009", "A-011", "A-013", "A-014", "A-015", "A-016", "A-017", "A-018", "A-019", "A-020", "A-023", "A-024", "A-025", "A-026", "A-028"]
+  - key: "4"
+    topic: "仕様への要求を 0 件とすること"
+    summary: "承認、または要求にしたい項目の指定を求める。推奨は承認"
+    related_assumptions: []
+feedback_request:
+  feedback_id: null
+  draft_path: null
+  draft_sha256: null
+  request_count: 0
+  blocker_count: 0
+  request_ids: []
+  supersedes: null
+  published: false
+  note: "要求 0 件のため draft を作っていない。feedback/ に draft.md は無い。前回公開した feedback-requests/ のファイルには触れていない"
+as_built_summary: "docs/impl/latest/7c41c7cd/feedback/as-built-summary.md"
+as_built_summary_sha256: "9dcf1b2ed342794aec7a5e8d5e23944e46ba7435c5da2a9ab90a6f2f17488869"
+issues_added: []
+learnings: 3
+learning_files:
+  - "docs/impl/latest/7c41c7cd/learnings/20261124_101514_mv-success-does-not-prove-final-name.md"
+  - "docs/impl/latest/7c41c7cd/learnings/20261124_101514_same-shape-search-by-operation-not-by-feature.md"
+  - "docs/impl/latest/7c41c7cd/learnings/20261124_101514_assumption-id-reuse-hides-content-change.md"
+learnings_note: "今回の周回で足した分。前回の周回の 4 件と提案 2 件(20261123_*)は残してあり、変更していない"
+proposals:
+  skill: true
+  context: true
+proposal_files:
+  - "docs/impl/latest/7c41c7cd/learnings/20261124_101514_proposal-skill.md"
+  - "docs/impl/latest/7c41c7cd/learnings/20261124_101514_proposal-context.md"
+checks:
+  yaml_parse: "yaml.safe_load で確認"
+  mermaid_lint: "npx md-mermaid-lint docs/impl/latest/7c41c7cd/feedback/as-built-summary.md が exit 0(図は flowchart 1 つ)"
+  assumption_text_diff: "前回の確認の対象の記録と今回の記録を、スクリプトで id ごとに比べた"
+  tests_run: false
+  git_commands_executed: false
+  review_refute_loop: "not_run(このステージの書き込み範囲と指示の外。最後の確認の資料で人が確認する)"
+completed_at: "2026-11-24T10:18:00+09:00"
+completed_by: "dist-impl-feedback@0.15.0"

@@ -1,0 +1,24 @@
+event_id: 20261123_180000_s5_verify_completed_7c41c7cd_facade_attempt4
+type: stage_completed
+uc_id: 7c41c7cd
+stage: S5
+tier: tier-facade
+attempt: 4
+lane: verify
+payload:
+  result: pass
+  done: docs/impl/latest/7c41c7cd/stages/attempt-4/S5_verify.tier-facade.done.yaml
+  findings: docs/impl/latest/7c41c7cd/stages/attempt-4/S5_verify.tier-facade.findings.yaml
+  open_blockers: 0
+  open_major: 4
+  minor: 25
+  assumptions_sha256: cad27c03d69264dab0bc71fbe6d76ae61d255a463ad3ae1ab58d42eb2db10044
+  assumption_verdicts_sha256: fa2418a93037989784fec68378f076ed58cbddb55c39893da9bcdfe02843881b
+  assumption_verdicts_summary:
+    consistent: 1
+    spec_absent: 26
+    contradicts: 0
+    unlisted: 1
+  requires_answer: 4
+  verifier: 'gpt-6-astra via codex exec, sandbox off. write-set checked with git status: only the done and findings files'
+created_at: '2026-11-23T18:00:00+09:00'

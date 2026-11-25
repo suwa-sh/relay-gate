@@ -46,6 +46,8 @@ source "$FACADE_SRC_DIR/repository/slot_execution_repo.sh"
 source "$FACADE_SRC_DIR/gateway/runner_process_adapter.sh"
 # shellcheck source=../gateway/execution_log.sh
 source "$FACADE_SRC_DIR/gateway/execution_log.sh"
+# shellcheck source=../gateway/filesystem_adapter.sh
+source "$FACADE_SRC_DIR/gateway/filesystem_adapter.sh"
 # shellcheck source=../usecase/validate_job_map.sh
 source "$FACADE_SRC_DIR/usecase/validate_job_map.sh"
 # shellcheck source=../usecase/validate_feature_flag.sh

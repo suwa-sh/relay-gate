@@ -67,7 +67,7 @@ x_cli_commands:
         description: "検証の詳細を stderr の info: に出す"
     stdin: "なし"
     stdout: "feature flag の出力に blue_job_map / green_job_map / blue_runner_if_version / green_runner_if_version を追記(blue_job_map / green_job_map は決めた場所: feature-flag.env の BLUE_JOB_MAP_CSV / GREEN_JOB_MAP_CSV の値を解決したパスで、キーが無い・値が空なら $RELAY_GATE_CONFIG_DIR/<slot>-job-map.csv。契約 config_files.feature-flag.env.job_map_location。off の slot と --help 未応答の slot は -。--help 問い合わせの規則は契約 validate-config.sh の runner_help_probe)"
-    stderr: "error: file not executable key=<SLOT>_RUNNER path=...(path= は解決後のパス。相対パスの runner は設定ファイルのあるディレクトリを基準に解決する) / error: job map not found slot=... map=...(map= は決めた場所) / warn: runner does not respond to --help slot=... runner=... / error: runner probe failed slot=... reason=...(問い合わせの準備失敗)"
+    stderr: "error: file not executable key=<SLOT>_RUNNER path=...(path= は解決後のパス。相対パスの runner は設定ファイルのあるディレクトリを基準に解決する) / error: job map not found slot=... map=...(map= は決めた場所) / error: config file is not readable path: ...(決めた場所にあるが読めない・通常のファイルでない。path: は決めた場所。契約 job_map_location.presence_report) / warn: runner does not respond to --help slot=... runner=... / error: runner probe failed slot=... reason=...(問い合わせの準備失敗)"
     exit_codes:
       - code: 0
         meaning: "検証 OK"

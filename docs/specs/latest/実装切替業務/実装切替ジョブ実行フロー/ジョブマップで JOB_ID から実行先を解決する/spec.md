@@ -2,7 +2,7 @@
 
 ## 概要
 
-slot runner(`$BLUE_RUNNER` / `$GREEN_RUNNER`)が、自 slot のジョブマップ(CSV。1 行目ヘッダー、1 行 1 job_id)から JOB_ID に対応する host・user・script・work_dir・fixed_params(JSON 配列を格納する CSV セル)・hang_detect_limit_minutes と、末尾の任意列 credential_ref・map_version を解決する。host / user はローカル実行の slot では省略でき、両方無い(または両方空)ならローカル実行として解決する。実装版はジョブマップに持たず feature flag(BLUE_IMPL / GREEN_IMPL)が所有する。固定引数の後ろに facade から渡された PARAM... を順序を変えずに連結する。ジョブマップに JOB_ID の行が無い場合も Runner Result の 3 ファイルを可能な限り出力して非 0 で終了する。ジョブマップの場所は、facade が feature flag から決めて環境変数 `BLUE_JOB_MAP_CSV` / `GREEN_JOB_MAP_CSV`(自 slot の分)で渡した値を使い、未設定・空なら既定の場所 `$RELAY_GATE_CONFIG_DIR/<slot>-job-map.csv` を使う(CLI 契約 `config_files.feature-flag.env.job_map_location`)。relay-gate が提供する標準の slot runner(ローカル実行と SSH 実行を扱う)は、共通ライブラリでこの解決を行う。利用者が自作する runner も、同じ共通ライブラリを使えば同じ解決になる。
+slot runner(`$BLUE_RUNNER` / `$GREEN_RUNNER`)が、自 slot のジョブマップ(CSV。1 行目ヘッダー、1 行 1 job_id)から JOB_ID に対応する host・user・script・work_dir・fixed_params(JSON 配列を格納する CSV セル)・hang_detect_limit_minutes と、末尾の任意列 credential_ref・map_version を解決する。host / user はローカル実行の slot では省略でき、両方無い(または両方空)ならローカル実行として解決する。実装版はジョブマップに持たず feature flag(BLUE_IMPL / GREEN_IMPL)が所有する。固定引数の後ろに facade から渡された PARAM... を順序を変えずに連結する。ジョブマップに JOB_ID の行が無い場合も Runner Result の 3 ファイルを可能な限り出力して非 0 で終了する。ジョブマップの場所は、facade が feature flag から決めて環境変数 `BLUE_JOB_MAP_CSV` / `GREEN_JOB_MAP_CSV`(自 slot の分)で渡した値を使い、未設定・空なら既定の場所 `$RELAY_GATE_CONFIG_DIR/<slot>-job-map.csv` を使う(CLI 契約 `config_files.feature-flag.env.job_map_location`)。relay-gate が提供する標準の slot runner(ローカル実行と SSH 実行を扱う)は、共通ライブラリ `lib/runner-resolve.sh` でこの解決を行う。利用者が自作する runner も、同じ共通ライブラリを `source` して約束された関数を呼べば同じ解決になる。関数の名前・引数・結果の受け取り方・値が無い項目の表し方・解決できなかったときの知らせ方・呼ぶ前に要る環境変数は、CLI 契約 runner IF の `standard_runner.runner_resolve_library` が正本で、後方互換を保つ対象である(本書に複写しない)。
 
 ## データフロー
 
@@ -259,6 +259,6 @@ Feature: ジョブマップで JOB_ID から実行先を解決する
 
 ### 統合契約
 
-- [CLI コマンド契約](../../../_cross-cutting/api/cli-command-contract.yaml)(runner IF を uses)
+- [CLI コマンド契約](../../../_cross-cutting/api/cli-command-contract.yaml)(runner IF を uses。共通ライブラリ `lib/runner-resolve.sh` の呼び方は runner IF の `standard_runner.runner_resolve_library`)
 - [AsyncAPI Spec](../../../_cross-cutting/api/asyncapi.yaml)(この UC は publish / subscribe しない)
 - 設定契約の正本: [slot ごとのジョブマップを定義する](../../../適用構成業務/適用構成定義フロー/slot%20ごとのジョブマップを定義する/tier-facade.md)。設定ファイル共通の入力の守備範囲は CLI 契約 `config_input_rules`、bash の最低版(5.0)と行単位の外部コマンド利用の許容は `conventions.runtime_prerequisites`

@@ -13,6 +13,7 @@
 # 依存: domain/feature_flag.sh, domain/cli_field.sh, domain/slot_launch_plan.sh, domain/relay_gate_clock.sh,
 #       repository/feature_flag_config.sh, repository/rapid_crosscheck_env.sh, repository/parallel_run_repo.sh,
 #       repository/slot_execution_repo.sh, gateway/runner_process_adapter.sh, gateway/rdb_client.sh, gateway/execution_log.sh,
+#       gateway/filesystem_adapter.sh(exitcode.txt の読み取り)、
 #       usecase/validate_feature_flag.sh(validate_feature_flag_load_input / validate_feature_flag_collect_key_errors)、
 #       usecase/validate_rapid_crosscheck.sh(validate_rapid_crosscheck_load_input)
 
@@ -290,21 +291,10 @@ launch_slots_start_slot() {
 # 戻り値: 0 … 読めた / 1 … 無い・数値でない
 LAUNCH_SLOTS_FOREGROUND_EXIT_CODE=""
 launch_slots_read_exit_code() {
-  local file="$1/$LAUNCH_SLOTS_EXITCODE_FILE" value=""
   LAUNCH_SLOTS_FOREGROUND_EXIT_CODE=""
-  # 読めないときのエラーも stderr に出さない(foreground の起動後は stderr を汚さない。リダイレクトは 2>/dev/null を先に置く)
-  if [ ! -f "$file" ] || ! IFS= read -r value 2>/dev/null <"$file"; then
-    if [ -z "$value" ]; then
-      return 1
-    fi
-  fi
-  if [ "${LC_ALL:-}" != C ]; then
-    local LC_ALL=C
-  fi
-  if [[ ! "$value" =~ ^[0-9]{1,3}$ ]] || [ $((10#$value)) -gt 255 ]; then
-    return 1
-  fi
-  LAUNCH_SLOTS_FOREGROUND_EXIT_CODE=$((10#$value))
+  # 読み方は runner と同じ関数(gateway/filesystem_adapter.sh。読めないときのエラーも stderr に出さない)
+  filesystem_adapter_read_exit_code "$1" || return 1
+  LAUNCH_SLOTS_FOREGROUND_EXIT_CODE="$FILESYSTEM_ADAPTER_EXIT_CODE"
 }
 
 # LaunchSlotsCommand

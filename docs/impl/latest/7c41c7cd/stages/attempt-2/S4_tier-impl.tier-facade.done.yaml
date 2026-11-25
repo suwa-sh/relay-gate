@@ -1,0 +1,150 @@
+stage: S4
+tier: tier-facade
+attempt: 2
+uc_id: "7c41c7cd"
+manifest_sha256: 90b95c2c7f67feac241a56c2bb03191b9150a515f82b517c61c7d324e3bdefa1
+manifest_projection: v2
+result: pass
+findings_provided: true
+findings_path: "docs/impl/latest/7c41c7cd/stages/attempt-1/S5_verify.tier-facade.findings.yaml"
+api_summary_check: "_api-summary.yaml に schema_version distillery.api-summary/v2 の記載は無く、_contract-slice.json も無い(契約 slice の hash 照合の対象外。attempt 1 と同じ)"
+ddd_guide: "impl-config.yaml の capabilities に has_ddd_plugin が無いため、docs/dev-rules/coding-rules.md の基準だけで実装した"
+blocker_resolutions:
+  - finding: F-001
+    resolution: fixed
+    spec_basis: "契約 commands の runner IF の idempotency『同じ run_id / role の exitcode.txt が既にあれば既存の値で終了』"
+    change: "解決しなかったときに runner が終える値を変数 RUNNER_RESOLVE_EXIT_CODE で返し、関数の戻り値 0 は『解決した』だけにした。標準の slot runner は、解決しなかったときこの変数の値で終える。既存の exitcode.txt が 0 の二重起動で解決に失敗しても、終了コードは 0(成果物は変えない)"
+    tests: "runner_resolve.bats の既存の exitcode.txt が 0 / 非 0 の 2 件と reject_invocation の 1 件、standard_runner_resolve.bats の 2 件"
+  - finding: F-008
+    resolution: fixed
+    spec_basis: "契約 config_input_rules.rules『ヘッダー列名の重複』の『重複した列名ごとに 1 行』"
+    change: "ヘッダーの検証の error 行を、検証コマンドと同じ関数の結果のまま全件 stderr.log に書く(列名の重複は列名ごとに 1 行)。実行ログの ERROR は 1 行目と同じ文の 1 回のまま"
+    tests: "runner_resolve.bats の重複した列名が 2 つの 1 件、重複と必須列の欠落が両方の 1 件"
+  - finding: F-010
+    resolution: fixed
+    spec_basis: "契約 config_input_rules.scope / principle / rules『空白だけの行』(1 セルのデータ行として列数不一致。slot runner を含む全読み手)"
+    change: "列数の検査を全行に広げた(JOB_ID の行探しと同じ 1 回の走査の中)。空白だけの行を含め、列数がヘッダーと違う行がどこにあっても exitcode.txt=2"
+    tests: "runner_resolve.bats のほかの行の列数不一致、空白だけの行、列数不一致とクォート不正が両方の 3 件"
+  - finding: F-013
+    resolution: fixed
+    spec_basis: "契約 config_files の <slot>-job-map.csv の columns.credential_ref の on_format_violation と output_rule"
+    change: "採用した行の credential_ref に検証コマンドと同じ判定を当て、同じ文の warn を実行ログに WARN で出す(値は出さない。受理して解決は続ける)。判定と文は domain の 1 つの関数にまとめ、検証コマンドもその関数を呼ぶ"
+    tests: "execution_target.bats の 3 件、runner_resolve.bats の 3 件、standard_runner_resolve.bats の 1 件"
+  - finding: F-022
+    resolution: fixed
+    spec_basis: "ui-design.md エラー表示規約『設定ファイル不在・必須キー欠落の定型文(全コマンド共通)』の『読めないときは error: config file is not readable path: ...』"
+    change: "存在と読み取り可否を分けた。無いときは job map not found slot= map=(tier-facade.md の表のまま)、あるが読めないときは config file is not readable path:。判定は repository の 1 つの関数にまとめ、検証コマンド --job-map もその関数を呼ぶ"
+    tests: "job_map_repo.bats の 4 件、runner_resolve.bats の 2 件、standard_runner_resolve.bats の 1 件"
+blockers_not_fixed: []
+major_handling:
+  - finding: F-007
+    assumption: A-006
+    action: "実装は変えていない。前提の説明に、作るディレクトリの範囲・権限・後始末をしないことを足した"
+  - finding: F-023
+    assumption: A-022
+    action: "実装は変えていない。前提の説明に、runner の実行に TMPDIR へ書けることが要ること、複製に入る内容を足した"
+minor_handling:
+  fixed_in_record:
+    - "F-025 / F-027 / F-028 / F-029: 前提の分類を error_handling に直した(A-011 / A-017 / A-018 / A-021)"
+    - "F-026: 前提 A-014 の分類を persistence に直した"
+    - "F-009 / F-011: 仕様の復唱と判定された A-008 / A-010 を前提の記録から外した(除外の件数に数えた)"
+    - "F-015: A-014 から仕様の復唱の部分(exitcode.txt の有無で判定し既存の値で終える)を外し、仕様に無い部分(WARN の文、既存の値を読めないときの 6)だけにした"
+  kept_as_assumption:
+    - "F-002 / F-003 / F-004 / F-005 / F-006 / F-012 / F-014 / F-016 / F-017 / F-018 / F-019 / F-020 / F-021 / F-024: 仕様に記載が無いという判定(spec_absent)で、実装は変えず前提の記録に残した(A-001 / A-002 / A-003 / A-004 / A-005 / A-011 / A-013 / A-015 / A-016 / A-017 / A-018 / A-019 / A-020 / A-023)。A-001 は F-001 の修正に合わせて受け取り方の説明を更新した"
+  code_changed_for_minor: 0
+implementation:
+  summary: "独立検証の blocker 5 件を仕様・契約に合わせて直した。execution-spec.json の保存・実装の実行・完了通知・復元起動は作っていない"
+  shared_with_validate_config: "attempt 1 の共有に加えて、ジョブマップの所在と読み取り可否の判定(job_map_repo_probe)と、credential_ref の警告の判定と文(job_map_warn_credential_ref)を検証コマンドと同じ関数にした"
+  validate_config_output_changed: false
+  validate_config_change_note: "検証コマンドの内部は、上の 2 つの関数を呼ぶ形に変えた(判定の条件と出力の文は同じ)。検証コマンドの既存の単体テストと BDD は変更なしで全件通過"
+  management_db_touched: false
+code_changes:
+  modified:
+    - path: facade/src/usecase/runner_resolve.sh
+      change: "終了コードの受け渡し(RUNNER_RESOLVE_EXIT_CODE)、読めないマップの文、ヘッダーの error 行の全件、全行の列数の検査、credential_ref の WARN"
+    - path: facade/src/presentation/standard_runner.sh
+      change: "解決しなかったときは RUNNER_RESOLVE_EXIT_CODE で終える"
+    - path: facade/src/domain/execution_target.sh
+      change: "採用した行の credential_ref の warn 行を出す"
+    - path: facade/src/domain/job_map.sh
+      change: "credential_ref の警告を関数 job_map_warn_credential_ref に切り出した(検証コマンドの出力は同じ)"
+    - path: facade/src/repository/job_map_repo.sh
+      change: "所在と読み取り可否の判定 job_map_repo_probe を追加"
+    - path: facade/src/usecase/validate_job_map.sh
+      change: "所在と読み取り可否の判定を job_map_repo_probe に置き換えた(出力は同じ)"
+    - path: facade/test/usecase/runner_resolve.bats
+      change: "38 件 → 51 件(3 件を仕様に合わせて書き直し、13 件を追加)"
+    - path: facade/test/presentation/standard_runner_resolve.bats
+      change: "7 件 → 11 件"
+    - path: facade/test/domain/execution_target.bats
+      change: "17 件 → 20 件"
+    - path: facade/test/repository/job_map_repo.bats
+      change: "4 件追加"
+  feature_bodies_changed: false
+  step_definitions_changed: false
+  contracts_changed: false
+  outside_write_set: []
+tdd_notes:
+  - "直した挙動の単体テストを先に書き(追加 24 件、書き直し 3 件)、実装前に 22 件が not ok になることを確認してから実装した。残りの 5 件は、直す前から成り立つ振る舞いを固定するテストで実装前から ok(引数の違反で既存の exitcode.txt が 0 の場合、参照名の形の credential_ref やほかの行の credential_ref で warn が出ない場合、ほかの行の値の違反で解決する場合、解決に成功したとき終了コードの変数が空の場合)"
+  - "時間を確かめるテスト、MB 級の入力・作為的な入力のテストは追加していない"
+gates:
+  format: pass
+  lint: pass
+  tdd: pass
+  bdd_tier: pass
+gate_runs:
+  - gate: format
+    cwd: facade
+    command: "shfmt -d ."
+    exit_code: 0
+  - gate: lint
+    cwd: facade
+    command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+    exit_code: 0
+    note: "入口 runners/standard-runner.sh、lib/*.sh、bin/*.sh も shellcheck -x で確認し exit 0"
+  - gate: tdd
+    cwd: facade
+    command: "bats -r test"
+    exit_code: 0
+    summary: "740 tests, 740 ok, 0 not ok, 0 skip(attempt 1 の 716 件 + 追加 24 件)"
+  - gate: bdd_tier
+    cwd: facade
+    command: "npx cucumber-js --config ../cucumber.cjs features"
+    exit_code: 0
+    summary: "154 scenarios (154 passed), 1284 steps (1284 passed)"
+gate_run_notes:
+  - "macOS(Darwin 25.5.0、arm64)で、最後のソース変更の後に 4 ゲートを 1 つずつ順に実行した(同時に走らせていない)"
+  - "features/uc/ と features/atdd/ は触っていない"
+linux_runs:
+  executed: false
+  limitation: "この実行環境では Linux で実行していない(attempt 1 と同じ)。読み取り権限の無いファイルのテスト 2 件は、権限を無視して読める利用者(root)で実行すると skip になる"
+cleanup_check: "実行後、リポジトリに facade/log と facade/var が無いこと、TMPDIR に relay-gate-* が残っていないことを確認した"
+handover_to_later_stages:
+  - "S6 / S7: 共通ライブラリを直接呼ぶ step は、解決しなかったときの終了コードを戻り値ではなく RUNNER_RESOLVE_EXIT_CODE で読む(前提 A-001。通常の失敗では戻り値も同じ 2 / 6 のため、既存の step はそのまま通る)"
+  - "attempt 1 の handover(features/uc の保留条件と記録用の包みの見直し)はそのまま有効"
+issues_added: []
+issues_note: "仕様どおりに実装すると動かない事実は見つからなかった"
+observations:
+  - "検証コマンド --feature-flag の対応ジョブマップの検査(前の機能)は、あるが読めないジョブマップも job map not found と報告する(facade/src/domain/feature_flag.sh の validate_slot_runner_assignment)。今回の runner の修正とは別の機能の出力で、検証コマンドの出力は変えない指示のため触っていない"
+assumptions:
+  path: "attempt-2/S4_tier-impl.tier-facade.assumptions.yaml"
+  count: 23
+  by_category:
+    input_validation: 2
+    data_format: 4
+    error_handling: 12
+    persistence: 3
+    performance: 1
+    security: 1
+  sha256: c23b46615fe3de04b6116112358b9f51b1463166e883dd181cd04acbbbdee34e
+  extraction:
+    candidate_count: 32
+    excluded_as_explicit: 9
+    recorded_count: 23
+  validator: "validateAssumptions.js record: ok true"
+  changes_from_attempt_1: "削除 2 件(A-008 / A-010。仕様の復唱)。書き直し 4 件(A-007 / A-009 / A-012 / A-021。矛盾と判定された部分を実装ごと直し、残った判断だけにした)。追加 2 件(A-024 ヘッダーの違反が重なったときの順、A-025 行の構造の違反は行番号が最小の 1 件)。説明の更新 5 件(A-001 / A-006 / A-014 / A-022 / A-023)。分類の変更 5 件(A-011 / A-014 / A-017 / A-018 / A-021)"
+  from_variable_prompt: "A-001(終了コードの受け渡し)/ A-004 / A-006 / A-023(全行の列数の検査を 1 回の走査で済ませる)は dispatch の指示に、A-001 と A-012 の一部は独立検証の findings の suggested_fix に従って決めた"
+review_refute_loop: not_run
+review_refute_loop_note: "外部レビュー(review-refute-loop)はこの S4 では実行していない。S5 の別モデル Verifier に委ねる"
+completed_at: "2026-11-23T15:24:00+09:00"
+completed_by: dist-impl-implement@0.15.0

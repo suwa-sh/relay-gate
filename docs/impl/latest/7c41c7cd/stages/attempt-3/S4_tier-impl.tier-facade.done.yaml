@@ -1,0 +1,142 @@
+stage: S4
+tier: tier-facade
+attempt: 3
+uc_id: "7c41c7cd"
+manifest_sha256: 90b95c2c7f67feac241a56c2bb03191b9150a515f82b517c61c7d324e3bdefa1
+manifest_projection: v2
+result: pass
+findings_provided: true
+findings_path: "docs/impl/latest/7c41c7cd/stages/attempt-2/S5_verify.tier-facade.findings.yaml"
+api_summary_check: "_api-summary.yaml に schema_version distillery.api-summary/v2 の記載は無く、_contract-slice.json も無い(契約 slice の hash 照合の対象外。attempt 1 / 2 と同じ)"
+ddd_guide: "impl-config.yaml の capabilities に has_ddd_plugin が無いため、docs/dev-rules/coding-rules.md の基準だけで実装した"
+blocker_resolutions:
+  - finding: F-001
+    resolution: fixed
+    spec_basis: "契約 commands の runner IF の exit_codes の 6『中止済み slot での再起動(exitcode.txt なし・aborted.txt あり。exitcode.txt は書かない)』、idempotency『実行ログに WARN slot already aborted run_id=... role=... を残して exitcode.txt を書かずに終了コード 6』、execution_log の同じ WARN の行、artifact_layout.files の aborted.txt の readers『slot runner(起動時の二重起動判定のみ)』。findings の evidence ではなく契約の該当箇所を読んで確かめた"
+    change: "成果物を書く前の判定を 1 つの関数(runner_resolve_guard_existing_result)にまとめ、exitcode.txt が無く aborted.txt がある slot では、既存の成果物に触れず、実行ログに WARN slot already aborted を残して終了コード 6 で終えるようにした。exitcode.txt と aborted.txt の両方があるときは exitcode.txt を優先して既存の値で終える。失敗を公開する関数の中で判定するため、解決の失敗・RELAY_GATE_NOW の形式不正・引数の違反の 3 つの入口すべてに当たる"
+    tests: "filesystem_adapter.bats 3 件、runner_resolve.bats 6 件(解決失敗 / RELAY_GATE_NOW 不正 / 両方ある場合 / 引数の違反 / 判定の関数 2 件)、standard_runner_resolve.bats 2 件(解決失敗 / 引数の違反)"
+blockers_not_fixed: []
+self_check_fixes:
+  - item: "解決に成功した回の二重起動(契約 runner IF の idempotency)"
+    mismatch: "同じ run_id / role の exitcode.txt が既にある回に解決が成功すると、標準の slot runner は WARN を残さず仮の終了コード 6 で終えていた(契約は既存の値で終了 + WARN)。中止済みの slot で解決が成功した回は、終了コード 6 は合っていたが WARN slot already aborted が無かった"
+    change: "標準の slot runner が、解決に成功した後・後続の段へ進む前に同じ判定の関数を呼ぶようにした。解決の関数(resolve_execution_target)の成功の戻り値は変えていない。前提 A-027 に記録"
+    tests: "standard_runner_resolve.bats 2 件"
+  - item: "引数の違反の経路のテスト用の現在時刻(契約 conventions.environment_variables の RELAY_GATE_NOW)"
+    mismatch: "引数の違反で成果物を揃える経路は、started-at.txt に RELAY_GATE_NOW の値を書くのに、実行ログに WARN test clock injected を残していなかった"
+    change: "引数の違反の経路でも、RELAY_GATE_NOW が正しい形式で設定されていれば同じ WARN を 1 行残す(解決の経路と同じ関数)"
+    tests: "runner_resolve.bats 1 件"
+major_handling:
+  - finding: F-007
+    assumption: A-006
+    action: "実装は変えていない(最終確認で利用者が判断する)"
+  - finding: F-011
+    assumption: A-012
+    action: "実装は変えていない(最終確認で利用者が判断する)"
+  - finding: F-013
+    assumption: A-014
+    action: "実装は変えていない(最終確認で利用者が判断する)。分類だけ F-025 に従って error_handling に直した"
+  - finding: F-021
+    assumption: A-022
+    action: "実装は変えていない(最終確認で利用者が判断する)"
+minor_handling:
+  fixed_in_record:
+    - "F-025: 前提 A-014 の分類を error_handling に直した"
+  kept_as_assumption:
+    - "F-002 / F-003 / F-004 / F-005 / F-006 / F-008 / F-009 / F-010 / F-012 / F-014 / F-015 / F-016 / F-017 / F-018 / F-019 / F-020 / F-022 / F-023 / F-024: 19 件とも『仕様に記載が無い判断』という判定で、仕様との食い違いの指摘ではない。実装は変えず前提の記録に残した"
+  code_changed_for_minor: 0
+implementation:
+  summary: "中止済みの slot の扱い(blocker 1 件)と、自己点検で見つけた 2 件を契約に合わせて直した。execution-spec.json の保存・実装の実行・完了通知・復元起動は作っていない"
+  shared_judgement: "公開済み・中止済みの判定は gateway の 1 つの関数(filesystem_adapter_slot_state)と usecase の 1 つの関数(runner_resolve_guard_existing_result)にあり、解決の失敗・引数の違反・解決の成功の 3 経路が同じ関数を使う"
+  validate_config_output_changed: false
+  management_db_touched: false
+code_changes:
+  modified:
+    - path: facade/src/gateway/filesystem_adapter.sh
+      change: "aborted.txt の名前と、slot の状態(公開済み / 中止済み / どちらでもない)を返す関数を追加"
+    - path: facade/src/usecase/runner_resolve.sh
+      change: "二重起動の判定の関数を追加し、失敗を公開する関数がそれを使う。テスト用の現在時刻の WARN を関数にまとめ、引数の違反の経路でも残す"
+    - path: facade/src/presentation/standard_runner.sh
+      change: "解決に成功した後、後続の段へ進む前に二重起動の判定を呼ぶ"
+    - path: facade/test/gateway/filesystem_adapter.bats
+      change: "3 件追加"
+    - path: facade/test/usecase/runner_resolve.bats
+      change: "7 件追加"
+    - path: facade/test/presentation/standard_runner_resolve.bats
+      change: "4 件追加"
+  feature_bodies_changed: false
+  step_definitions_changed: false
+  contracts_changed: false
+  outside_write_set: []
+tdd_notes:
+  - "単体テスト 14 件を先に書き、実装前に 13 件が not ok になることを確認してから実装した。残りの 1 件(exitcode.txt と aborted.txt の両方がある場合に exitcode.txt を優先する)は直す前から成り立つ振る舞いを固定するテスト"
+  - "時間を確かめるテスト、MB 級の入力・作為的な入力のテスト、OS のコマンドを差し替えるテストは追加していない"
+gates:
+  format: pass
+  lint: pass
+  tdd: pass
+  bdd_tier: pass
+gate_runs:
+  - gate: format
+    cwd: facade
+    command: "shfmt -d ."
+    exit_code: 0
+  - gate: lint
+    cwd: facade
+    command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+    exit_code: 0
+    note: "入口 runners/standard-runner.sh と lib/*.sh も shellcheck -x で確認し exit 0"
+  - gate: tdd
+    cwd: facade
+    command: "bats -r test"
+    exit_code: 0
+    summary: "754 tests, 754 ok, 0 not ok, 0 skip(attempt 2 の 740 件 + 追加 14 件)"
+  - gate: bdd_tier
+    cwd: facade
+    command: "npx cucumber-js --config ../cucumber.cjs features"
+    exit_code: 0
+    summary: "154 scenarios (154 passed), 1284 steps (1284 passed)"
+gate_run_notes:
+  - "macOS(Darwin 25.5.0、arm64)で、最後のソース変更の後に 4 ゲートを 1 つずつ順に実行した(同時に走らせていない)"
+  - "features/uc/ と features/atdd/ は触っていない"
+linux_runs:
+  executed: false
+  limitation: "この実行環境では Linux で実行していない(attempt 1 / 2 と同じ)"
+cleanup_check: "実行後、リポジトリに facade/log と facade/var が無いこと、TMPDIR に relay-gate-* が残っていないことを確認した"
+handover_to_later_stages:
+  - "後続の機能(実装の実行): 二重起動の判定は runner_resolve_guard_existing_result にある。標準の slot runner は今、解決の後に呼んでいる。execution-spec の保存より前に置くことだけ保てば、呼ぶ位置は後続の機能で動かしてよい(前提 A-027)"
+  - "attempt 1 / 2 の handover はそのまま有効"
+issues_added: []
+issues_note: "仕様どおりに実装すると動かない事実は見つからなかった"
+observations:
+  - "自己点検 1(runner IF exit_codes の 2): 引数不足・job_id 未定義・マップなし・バイト点検・ヘッダー不一致・クォート不正・host / user の片方だけ空・work_dir / script が空・fixed_params 不正・上限不正は、どれも exitcode.txt=2 と同じ終了コードで一致。BLUE_IMPL / GREEN_IMPL の未設定、速報クロスチェックの設定、復元起動の条件は後続の機能の担当で対象外"
+  - "自己点検 2(exit_codes の 6): 補助コマンドの失敗と入力の複製の失敗は exitcode.txt=6 で一致。成果物を揃えられないときは ERROR + 6(exitcode.txt 無し)で一致。中止済みの slot は食い違い(F-001)で、今回直した"
+  - "自己点検 3(idempotency): 公開済みで解決に失敗した回は一致。公開済み・中止済みで解決に成功した回は食い違いで、今回直した。started-at.txt だけがある回は上書きで一致"
+  - "自己点検 4(stdout / stderr の規則): プロセスの stdout / stderr に出さないこと、exitcode.txt 公開後に stderr.log を変えないことは一致(公開済み・中止済みの回は 1 ファイルも書かない)"
+  - "自己点検 5(config_input_rules): バイト点検の全件と順と hint、止め方、空白だけの行、空のファイル、データ行 0 件、列名の重複、最終行の改行なし、1 時点の内容での判定、内部障害の 2 種の文言は一致(検証コマンドと同じ関数を使用)"
+  - "自己点検 6(config_files の slot ジョブマップ): 列の対応付け、未知列の WARN、host / user の規則、work_dir / script の形式を検査しないこと、credential_ref の警告と値を出さない規則、map_version、制御文字の可視表記は一致"
+  - "自己点検 7(conventions): 実行ログの行形式と run_id 未確定の `-` は一致。RELAY_GATE_NOW の WARN は引数の違反の経路で欠けていたため今回直した。実行ログに書けないときの扱いは前提 A-016 のまま"
+  - "自己点検 8(tier-facade.md): エラーメッセージ表の 10 種、終了コード表、失敗時の 4 ファイル、ティア完了条件 13 シナリオは一致"
+  - "中止済みの slot・公開済みの run で引数の違反になった回に RELAY_GATE_NOW が設定されていると、成果物を書かないのに WARN test clock injected が 1 行残る(契約は『設定されていれば起動時に残す』なので食い違いではない)"
+  - "attempt 2 の observations(検証コマンド --feature-flag が読めないジョブマップを job map not found と報告する件)はそのまま"
+assumptions:
+  path: "attempt-3/S4_tier-impl.tier-facade.assumptions.yaml"
+  count: 26
+  by_category:
+    input_validation: 2
+    data_format: 5
+    error_handling: 15
+    persistence: 2
+    performance: 1
+    security: 1
+  sha256: f632805cc5eeb1a9972ed184e005579e76c2e524f2f5ef31d0889ffdb302dd4b
+  extraction:
+    candidate_count: 37
+    excluded_as_explicit: 11
+    recorded_count: 26
+  validator: "validateAssumptions.js record: ok true"
+  changes_from_attempt_2: "追加 3 件(A-026 二重起動の判定の関数の形、A-027 解決に成功した回も判定すること、A-028 引数の違反と RELAY_GATE_NOW の形式不正が重なったときの報告)。文面の更新 2 件(A-004 に A-027 の場合を除く旨、A-014 は場面の限定を外し分類を error_handling へ)。行番号の付け替え 17 件(文面は同じ)。ほかは id と文面を保った"
+  from_variable_prompt: "A-027 は dispatch の指示(自己点検で解決フェーズが終了コードに触れる経路を契約と突き合わせる)に従って足した。attempt 2 までの分(A-001 / A-004 / A-006 / A-012 / A-023)はそのまま"
+review_refute_loop: not_run
+review_refute_loop_note: "外部レビュー(review-refute-loop)はこの S4 では実行していない。S5 の別モデル Verifier に委ねる"
+completed_at: "2026-11-23T16:20:00+09:00"
+completed_by: dist-impl-implement@0.15.0

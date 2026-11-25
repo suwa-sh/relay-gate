@@ -1,0 +1,233 @@
+schema_version: "1.0"
+uc_id: "7c41c7cd"
+tier: "tier-facade"
+attempt: 2
+extraction:
+  candidate_count: 32
+  excluded_as_explicit: 9
+  recorded_count: 23
+  excluded_note: "除外した 9 件(仕様・契約に明示あり)。attempt 1 からの 7 件: 引数の違反でも run_id と role が分かれば exitcode.txt=2 を含む成果物を揃え、分からなければ実行ログだけに残す(tier-facade.md 終了コード表 2 とエラーメッセージ表『必須オプション欠落』)/ RELAY_GATE_NOW の形式不正の文言と、設定時に実行ログへ WARN test clock injected を残すこと(契約 conventions.environment_variables の RELAY_GATE_NOW)/ 入力の複製の失敗・補助コマンドの失敗の文言と exitcode.txt=6(契約 config_input_rules.internal_failure)/ 実行ログの run_id 欄の未確定の表記 `-` と、任意入力の制御文字の可視表記(契約 conventions.execution_log / output_format.control_chars)/ `option required option=--xxx` と `unknown option option=--foo` の文言(ui-design.md の定型文、契約 conventions.option_style)/ ジョブマップが無いときの `job map not found slot= map=`(tier-facade.md エラーメッセージ表)/ 実行ログのファイル名と行の {script} が runner のスクリプト名であること(契約 conventions.execution_log)。attempt 2 で除外へ移した 2 件(独立検証が仕様の復唱と判定した attempt 1 の A-008 と A-010): クォート不正の行はどの行にあっても解決失敗にする(tier-facade.md UC ロジックのバリデーションの順 (4) → (5))/ 列はヘッダー名で対応付け、列数がヘッダーと違う行は `column count mismatch` で拒否する(契約 config_input_rules.scope / rules)。attempt 1 で仕様と矛盾すると判定された 4 件(A-007 / A-009 / A-012 / A-021)は実装を仕様に合わせ、仕様が決めている部分(列名の重複は列名ごとに 1 行、空白だけの行を含む列数不一致はどの行でも拒否、credential_ref の warn を出す、読めないときは config file is not readable)を記録から外して、残った自分の判断だけを同じ id で書き直した"
+assumptions:
+  - id: A-001
+    category: data_format
+    assumption: "共通ライブラリ lib/runner-resolve.sh の解決の入口は関数 `resolve_execution_target <script> <run_id> <job_id> <role> [PARAM...]` とする。戻り値 0 は『解決した』だけを表し、結果は bash のグローバル変数(EXECUTION_TARGET_HOST / _USER / _SCRIPT / _WORK_DIR / _FIXED_PARAMS(配列)/ _HANG_DETECT_LIMIT_MINUTES / _CREDENTIAL_REF / _MAP_VERSION / _EXEC(local か ssh)、ARGUMENT_LIST(配列)、RUNNER_RESOLVE_MAP_PATH)で受け取る。戻り値が非 0 のときは解決しておらず、runner が終える値をグローバル変数 RUNNER_RESOLVE_EXIT_CODE で受け取る(通常は戻り値と同じ 2 / 6。同じ run_id / role の exitcode.txt が既にあれば既存の値で、それが 0 のときだけ戻り値は 1)。呼ぶ側は RELAY_GATE_CONFIG_DIR / RELAY_GATE_ARTIFACT_ROOT / RELAY_GATE_LOG_DIR を設定しておく"
+    target: "facade/src/usecase/runner_resolve.sh:175"
+    reason: "仕様は『自作の runner も共通ライブラリを source すれば同じ解決になる』と書くが、関数の名前・引数・結果の受け取り方が無い。関数名は spec.md 分岐条件一覧の適用箇所 usecase resolve_execution_target から取った。attempt 2 で、既存の exitcode.txt が 0 の二重起動を解決成功と区別するために、終了コードの受け渡しを戻り値から変数へ分けた(独立検証の指摘 F-001 の suggested_fix。オーケストレータの指示(dispatch の可変プロンプト)で、実装者が決めて記録することになった)"
+    confidence: medium
+    spec_refs:
+      - "spec.md#概要"
+      - "spec.md#分岐条件一覧"
+      - "tier-facade.md#変更概要"
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#commands($BLUE_RUNNER / $GREEN_RUNNER).standard_runner.custom_runner"
+  - id: A-002
+    category: data_format
+    assumption: "解決結果の null(host / user / credential_ref / map_version の列が無い・値が空)は、結果の変数では空文字で表す"
+    target: "facade/src/domain/execution_target.sh:13"
+    reason: "仕様は解決結果を null と書くが、bash の変数での表し方が無い。execution-spec.json へ null と書くのは次の機能の担当"
+    confidence: high
+    spec_refs:
+      - "spec.md#処理フロー"
+      - "tier-facade.md#ティア完了条件(BDD)"
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#commands($BLUE_RUNNER / $GREEN_RUNNER).notes"
+  - id: A-003
+    category: data_format
+    assumption: "共通ライブラリの補助の関数は `parse_csv_row <1 行>`(結果は配列 CSV_CELLS、戻り値 1 はクォート不正)と `build_argument_list <fixed_params の JSON 配列の文字列> [PARAM...]`(結果は配列 ARGUMENT_LIST、戻り値 1 は JSON 配列でない)とする"
+    target: "facade/src/usecase/runner_resolve.sh:72"
+    reason: "関数の名前は tier-facade.md のティア完了条件の題と spec.md 分岐条件一覧の適用箇所にあるが、引数と結果の受け取り方が無い。build_argument_list の本体は facade/src/domain/execution_target.sh:107"
+    confidence: medium
+    spec_refs:
+      - "tier-facade.md#ティア完了条件(BDD)"
+      - "spec.md#分岐条件一覧"
+      - "spec.md#計算ルール一覧"
+  - id: A-004
+    category: error_handling
+    assumption: "解決に成功した後、後続の段(execution-spec の保存・実装の実行)がまだ無い間、標準の slot runner は成果物を 1 つも書かず(exitcode.txt も started-at.txt も無い)、仮の終了コード 6 で終える。実行ログには `INFO job map resolved ...` だけが残る"
+    target: "facade/src/presentation/standard_runner.sh:185"
+    reason: "tier-facade.md の終了コード表は『0 = 解決成功。次フェーズへ進む。最終的に実装の exitcode.txt と一致させる』で、次フェーズが無い時点の終わり方が無い。前の機能の仮の応答(終了コード 6、何も書かない)を、解決に成功した場合にだけ残した。オーケストレータの指示(dispatch の可変プロンプト)で、実装者が最小の前提を決めることになった"
+    confidence: medium
+    spec_refs:
+      - "tier-facade.md#出力契約(終了コード)"
+      - "tier-facade.md#UC ロジック(クラッシュ耐性)"
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#commands($BLUE_RUNNER / $GREEN_RUNNER).exit_codes"
+  - id: A-005
+    category: error_handling
+    assumption: "--execution-spec を付けた起動(復元起動)はこの機能では扱わない。引数が正しければジョブマップを読まず、実行ログにも成果物にも何も書かずに仮の終了コード 6。空の値の --execution-spec と PARAM の併用は、何も書かずに終了コード 2(どちらも前の機能のまま)"
+    target: "facade/src/presentation/standard_runner.sh:174"
+    reason: "tier-facade.md は --execution-spec を『指定時はジョブマップを読まず、このファイルから実行先を復元する(UC「実装スクリプトを実行して Runner Result を出力する」の復元起動)』と書き、この機能の範囲での扱いと違反の文言が無い"
+    confidence: medium
+    spec_refs:
+      - "tier-facade.md#コマンド契約(引数・オプション)"
+      - "tier-facade.md#出力契約(エラーメッセージ)"
+  - id: A-006
+    category: persistence
+    assumption: "解決に失敗して成果物(started-at.txt / stdout.log / stderr.log / exitcode.txt)を揃えるとき、role ディレクトリ(<RELAY_GATE_ARTIFACT_ROOT>/facade/<run_id>/<role>/)が無ければ、runner が途中の親ディレクトリ(facade/ と <run_id>/)ごと作る。facade.sh を介さずに runner を直接起動した場合でも成果物が揃う。ディレクトリの権限は runner のプロセスの umask に任せ、作ったディレクトリを後で消すことはしない"
+    target: "facade/src/gateway/filesystem_adapter.sh:67"
+    reason: "role ディレクトリを作るのは facade.sh(前の機能)で、runner を直接起動するときに誰が作るか、作るときの権限をどうするかが仕様に無い。『解決失敗でも 3 ファイルを揃える』(Runner Result 完備条件)を優先した。オーケストレータの指示(dispatch の可変プロンプト)で、実装者が最小の前提を決めることになった"
+    confidence: medium
+    spec_refs:
+      - "tier-facade.md#出力契約(成果物)"
+      - "spec.md#分岐条件一覧(Runner Result 完備条件)"
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#artifact_layout"
+  - id: A-007
+    category: error_handling
+    assumption: "実行ログの ERROR は、stderr.log に error 行を複数書く場合(バイト点検の全件、ヘッダーの列名の重複)も、stderr.log の 1 行目と同じ文の 1 回だけにする(2 行目以降の error 行と hint 行は stderr.log にだけ書く)"
+    target: "facade/src/usecase/runner_resolve.sh:114"
+    reason: "tier-facade.md は実行ログを『usecase が 1 回だけ ERROR』と書くが、契約が stderr.log に複数の error 行を求める違反(config_input_rules.byte_checks の全件、rules『ヘッダー列名の重複』の列名ごと)のときに実行ログへ何行出すかが無い。attempt 1 の『列名の重複も最初の 1 件だけ』は契約と矛盾していたため、列名ごとに全件を stderr.log に書くよう直した(独立検証の指摘 F-008)。この記録に残したのは実行ログの件数の判断だけ"
+    confidence: medium
+    spec_refs:
+      - "tier-facade.md#出力契約(成果物)"
+      - "tier-facade.md#UC ロジック(エラーハンドリング)"
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#config_input_rules.byte_checks"
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#config_input_rules.rules(ヘッダー列名の重複)"
+  - id: A-009
+    category: input_validation
+    assumption: "行の値((6)〜(9))を検査するのは、採用した行(JOB_ID が完全一致する先頭の行)だけ。ほかの行の値の違反と、ほかの job_id の重複は、解決の結果に影響させず、実行ログにも出さない(行の構造 = クォートと列数は全行を検査する)"
+    target: "facade/src/usecase/runner_resolve.sh:325"
+    reason: "仕様のエラーメッセージ例は該当行の line= と job_id= を持つが、ほかの行の値に違反があるときの扱いが無い(全行の値を検査するのは検証コマンド)。attempt 1 は列数も採用した行だけにしていて契約と矛盾したため、列数(空白だけの行を含む)は全行で拒否するよう直した(独立検証の指摘 F-010)。この記録に残したのは値の検査の範囲だけ"
+    confidence: medium
+    spec_refs:
+      - "tier-facade.md#UC ロジック(バリデーション)"
+      - "tier-facade.md#出力契約(エラーメッセージ)"
+      - "spec.md#分岐条件一覧(ジョブマップ解決条件)"
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#config_input_rules.rules"
+  - id: A-011
+    category: error_handling
+    assumption: "採用した行の fixed_params / hang_detect_limit_minutes のセルが空のときは、検証コマンドと同じ文 `error: <列名> is empty line=N job_id=<v> value=` にする(`is not a json array of strings` / `is not a non-negative integer` ではなく)"
+    target: "facade/src/domain/execution_target.sh:61"
+    reason: "runner のエラーメッセージ表は『固定引数不正』『上限不正』の文だけを持ち、セルが空のときの文が無い。列の検証ルールの正本(UC「slot ごとのジョブマップを定義する」)の検証コマンドの文にそろえた"
+    confidence: medium
+    spec_refs:
+      - "tier-facade.md#出力契約(エラーメッセージ)"
+      - "tier-facade.md#設定契約"
+  - id: A-012
+    category: security
+    assumption: "credential_ref が秘密やパスらしい値のときの警告は、採用した行についてだけ、実行ログに `WARN credential_ref looks like a secret or path line=N job_id=<v>` を 1 行出す(値は出さない)。採用した行の値の検査で解決に失敗する場合にも出す。ほかの行の credential_ref は調べない。stderr.log には書かない"
+    target: "facade/src/domain/execution_target.sh:51"
+    reason: "契約は警告の文・受理すること・値を出さないことを決めているが、runner が全行のうちどの行について出すか、解決に失敗する回にも出すか、出力先が実行ログだけかが無い。attempt 1 の『runner は警告を出さない』は契約と矛盾していたため、検証コマンドと同じ判定・同じ文で出すよう直した(独立検証の指摘 F-013。出力先を実行ログにしたのはその suggested_fix)。この記録に残したのは対象の行・出す回・出力先の判断だけ"
+    confidence: medium
+    spec_refs:
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#config_files(<slot>-job-map.csv).columns(credential_ref).on_format_violation"
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#config_files(<slot>-job-map.csv).columns(credential_ref).output_rule"
+      - "tier-facade.md#出力契約(実行ログ)"
+  - id: A-013
+    category: input_validation
+    assumption: "runner は --job-id の値と採用した行の job_id の文字種(英数字・_・-)を検査しない。ジョブマップの job_id のセルと完全一致するかどうかだけで決める"
+    target: "facade/src/usecase/runner_resolve.sh:300"
+    reason: "runner の終了コード 2 の条件に job_id の文字種が無い(文字種を検査するのは facade.sh と検証コマンド)"
+    confidence: high
+    spec_refs:
+      - "tier-facade.md#コマンド契約(引数・オプション)"
+      - "tier-facade.md#出力契約(終了コード)"
+  - id: A-014
+    category: persistence
+    assumption: "同じ run_id / role の exitcode.txt が既にある状態で引数の違反・解決の失敗になったとき、実行ログに残す WARN の文は `runner result already published run_id=... role=...` とし、既存の exitcode.txt の値を数値(0〜255)として読めなければ終了コード 6 で終える(どちらの場合も 4 ファイルは書かない)"
+    target: "facade/src/usecase/runner_resolve.sh:120"
+    reason: "exitcode.txt の有無で二重起動を判定し既存の値で終えることは契約 idempotency に明示がある(この記録に含めない)。WARN の文と、既存の exitcode.txt の中身が壊れているときの終了コードが仕様に無い"
+    confidence: medium
+    spec_refs:
+      - "tier-facade.md#UC ロジック(冪等性)"
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#commands($BLUE_RUNNER / $GREEN_RUNNER).idempotency"
+  - id: A-015
+    category: error_handling
+    assumption: "成果物を揃えられないとき(role ディレクトリを作れない・どれかを書けない)は、実行ログに `ERROR runner result write failed run_id=... role=... path: <role ディレクトリ>` を残して終了コード 6 で終える(解決の ERROR とは別の 2 行目の ERROR。書きかけの .tmp は消し、書けたファイルは残す)"
+    target: "facade/src/usecase/runner_resolve.sh:133"
+    reason: "tier-facade.md は『3 ファイルを揃えられない場合。実行ログに ERROR』『終了コード 6(exitcode.txt が無い状態)』と書くが、ERROR の文と、途中まで書けたファイルの扱いが無い"
+    confidence: medium
+    spec_refs:
+      - "tier-facade.md#出力契約(終了コード 6)"
+      - "tier-facade.md#UC ロジック(エラーハンドリング)"
+  - id: A-016
+    category: error_handling
+    assumption: "実行ログの置き場に書けないとき、runner は stderr に warn を出さず、実行ログを書かないまま解決を続ける"
+    target: "facade/src/usecase/runner_resolve.sh:87"
+    reason: "契約 RELAY_GATE_LOG_DIR の on_missing は『stderr に warn: を出して処理は継続』、runner IF は『runner はプロセスの stdout / stderr に出さない』で、runner での扱いが決まっていない。runner IF の側を優先した"
+    confidence: medium
+    spec_refs:
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#conventions.environment_variables(RELAY_GATE_LOG_DIR)"
+      - "tier-facade.md#出力契約(stdout / stderr)"
+  - id: A-017
+    category: error_handling
+    assumption: "--role / --mode の値が列挙外のときの文は `error: invalid value option=--role value=<v>`(--mode も同じ形)にする"
+    target: "facade/src/presentation/standard_runner.sh:131"
+    reason: "runner IF の列挙外は終了コード 2 とだけあり、文が無い(tier-facade.md の表にあるのは必須オプション欠落の文だけ。契約の invalid value は key= / env= の形で、オプションの形が無い)"
+    confidence: medium
+    spec_refs:
+      - "tier-facade.md#出力契約(エラーメッセージ)"
+      - "docs/specs/latest/_cross-cutting/ux-ui/ui-design.md#エラー表示規約"
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#conventions.option_style"
+  - id: A-018
+    category: error_handling
+    assumption: "runner IF の引数の違反が複数あるときは最初の 1 件だけを報告する。引数を前から読んで見つけた違反(未知のオプション、値の欠落・空)が先で、次に必須オプションの欠落を書式の並び(--run-id → --job-id → --role → --mode)の順、最後に列挙外。値が空のオプションは欠落と同じ `option required option=--xxx` にする"
+    target: "facade/src/presentation/standard_runner.sh:117"
+    reason: "違反が複数あるときの順と、空の値の文が仕様に無い(前の機能は空の値を『引数不足』として終了コード 2 にしていたが、文を出していなかった)"
+    confidence: medium
+    spec_refs:
+      - "tier-facade.md#出力契約(エラーメッセージ)"
+      - "tier-facade.md#UC ロジック(バリデーション)"
+  - id: A-019
+    category: error_handling
+    assumption: "RELAY_GATE_NOW の形式が不正なときも、ジョブマップを読む前に解決失敗として成果物を揃える(exitcode.txt=2)。そのときの started-at.txt にはホストの実時刻を書く"
+    target: "facade/src/usecase/runner_resolve.sh:212"
+    reason: "契約は形式不正を終了コード 2 と文言で定めるが、runner で成果物を揃えるかどうかと、時刻を決められないときの started-at.txt の値が無い"
+    confidence: medium
+    spec_refs:
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#conventions.environment_variables(RELAY_GATE_NOW)"
+      - "tier-facade.md#データモデル変更(ファイル(失敗時の出力))"
+  - id: A-020
+    category: data_format
+    assumption: "解決に失敗したときの started-at.txt の時刻は、成果物を揃える時点の現在時刻(RELAY_GATE_NOW 設定時はその値)にする。runner のプロセスが始まった時刻を別に控えない"
+    target: "facade/src/usecase/runner_resolve.sh:128"
+    reason: "tier-facade.md は『起動時刻』、契約 artifact_layout は『実装実行(SSH)の直前』と書くが、実装を実行しない失敗の経路でどの時点の時刻を書くかが無い(解決フェーズは 1 秒に満たないため差は秒精度に収まる想定)"
+    confidence: medium
+    spec_refs:
+      - "tier-facade.md#データモデル変更(ファイル(失敗時の出力))"
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#artifact_layout.files(started-at.txt)"
+  - id: A-021
+    category: error_handling
+    assumption: "ジョブマップのパスに何かがあるが通常ファイルでないとき(ディレクトリなど)も、読み取り権限が無いときと同じ『読めない』として `error: config file is not readable path: <使ったパス>` にする(slot= / map= は付けない。検証コマンド --job-map と同じ判定)。パスに何も無いとき(リンク先の無いシンボリックリンクを含む)だけを `job map not found slot=<role> map=<path>` にする"
+    target: "facade/src/usecase/runner_resolve.sh:238"
+    reason: "ui-design.md エラー表示規約は『読めないときは config file is not readable』と書くが、通常ファイルでないパスを『無い』と『読めない』のどちらにするか、runner の『読めない』の文に slot= を付けるかが無い。attempt 1 の『読めないときも job map not found』は共通の定型文と矛盾していたため、存在と読み取り可否を分けるよう直した(独立検証の指摘 F-022)。この記録に残したのは境界と文の形の判断だけ"
+    confidence: medium
+    spec_refs:
+      - "docs/specs/latest/_cross-cutting/ux-ui/ui-design.md#エラー表示規約(設定ファイル不在・必須キー欠落の定型文)"
+      - "tier-facade.md#UC ロジック(バリデーション)"
+      - "tier-facade.md#出力契約(エラーメッセージ)"
+  - id: A-022
+    category: persistence
+    assumption: "runner は、起動のたびにジョブマップを TMPDIR(未設定なら /tmp)の一時ファイル relay-gate-* へ 1 回複製し、バイト点検と解析は複製だけを読む(検証コマンドの読み込みの関数をそのまま使う)。複製の権限は 0600 で、読み終えたら成功・失敗を問わず削除し、HUP / INT / TERM を受けたときも削除する。このため runner の実行には TMPDIR に書けることが要り、書けなければ `config snapshot failed` で exitcode.txt=6 になる。複製にはジョブマップの内容(credential_ref の参照名を含む)がそのまま入る"
+    target: "facade/src/usecase/runner_resolve.sh:249"
+    reason: "契約 config_input_rules.snapshot.runtime_readers は『1 時点の内容だけで判定』を求め、実現手段を縛らない(1 回 open して読み切れば一時ファイルは不要とも書く)。読み込み・バイト点検・CSV 解析を検証コマンドと共有して同じ判定にするため、検証コマンドの複製の方式(snapshot.validate_config)を runner にも使うことにした"
+    confidence: medium
+    spec_refs:
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#config_input_rules.snapshot"
+      - "tier-facade.md#コマンド契約(ジョブマップ。入力の守備範囲)"
+  - id: A-023
+    category: performance
+    assumption: "runner は grep などで候補行を絞らず、ジョブマップの全行を 1 回ずつセルに分け、その 1 回の走査で行の構造(クォート・列数)の検査と JOB_ID の行探しを済ませる(行数に比例する時間。行の値の検査と固定引数の解析は採用した 1 行だけ)"
+    target: "facade/src/usecase/runner_resolve.sh:290"
+    reason: "仕様は候補行の絞り込みを『してよい』と書くだけで、するかどうかは決めていない。列数とクォートの違反をどの行でも拒否することと、重複した JOB_ID の全行番号の WARN に全行が要るため、検証コマンドと同じ読み込みを共有した。全行の列数の検査を足しても 1 回の走査で済ませることは、オーケストレータの指示(dispatch の可変プロンプト)にもある"
+    confidence: medium
+    spec_refs:
+      - "tier-facade.md#コマンド契約(ジョブマップ。1 行取り出しの性能)"
+      - "spec.md#計算ルール一覧(CSV 行の分解)"
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#conventions.runtime_prerequisites.external_commands"
+  - id: A-024
+    category: error_handling
+    assumption: "ヘッダーに列名の重複と必須列の欠落(host / user の片方だけを含む)が両方あるときは、検証コマンドと同じ順(`duplicate column` を重複した列名ごとに 1 行ずつ → `job map header mismatch` を 1 行)で全件を stderr.log に書く"
+    target: "facade/src/usecase/runner_resolve.sh:277"
+    reason: "契約は列名の重複を『重複した列名ごとに 1 行』と決めているが、同じヘッダーに必須列の欠落もあるときに runner がどちらを・どの順で書くかが無い(tier-facade.md の stderr.log は『error: 1 行』)。ヘッダーの検証を検証コマンドと同じ関数で行い、その error 行をそのまま書くことにした"
+    confidence: medium
+    spec_refs:
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#config_input_rules.rules(ヘッダー列名の重複)"
+      - "tier-facade.md#出力契約(成果物)"
+      - "tier-facade.md#出力契約(エラーメッセージ)"
+  - id: A-025
+    category: error_handling
+    assumption: "行の構造の違反(クォート不正・列数不一致。空白だけの行を含む)が複数の行にあるときは、種類を問わず行番号が最小の 1 件だけを stderr.log に 1 行書いて止める(検証コマンドは全件を出す)。構造の違反は、求める JOB_ID の行が見つかるかどうかより先に報告する"
+    target: "facade/src/usecase/runner_resolve.sh:292"
+    reason: "契約は列数不一致とクォート不正を拒否することと文言を決めているが、runner が複数の行の違反を何件書くか、クォート不正と列数不一致のどちらを先にするかが無い(tier-facade.md の stderr.log は『error: 1 行』で、バリデーションの順に列数の検査の位置が無い)。全件の報告を契約が明示する違反(バイト点検、列名の重複)以外は 1 行にした"
+    confidence: medium
+    spec_refs:
+      - "tier-facade.md#出力契約(成果物)"
+      - "tier-facade.md#UC ロジック(バリデーション)"
+      - "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml#config_input_rules.rules(空白だけの行)"

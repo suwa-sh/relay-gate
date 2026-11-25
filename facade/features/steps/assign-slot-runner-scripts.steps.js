@@ -517,8 +517,8 @@ Given(
     const snapshotDir = path.join(this.workDir, 'snapshot-tmp');
     fs.mkdirSync(snapshotDir);
     const fakeBin = path.join(this.workDir, 'fake-bin');
-    // 作業名は代替の mktemp が自分で作る(X を置き換えた名前・権限 0600)。本物の mktemp に .part のテンプレートを渡すと、
-    // 末尾以外の X を置き換えない mktemp(BSD 系)では実装が TMPDIR の下へ移し直そうとして失敗するため
+    // 作業名は代替の mktemp が自分で作る(X を置き換えた名前・権限 0600)。置き場所を存在しない TMPDIR から
+    // Scenario 専用のディレクトリへ変えるため、本物の mktemp へは通さない(実装は mktemp が返した名前をそのまま使う)
     writeExecutableAt(
       path.join(fakeBin, 'mktemp'),
       '#!/usr/bin/env bash\n' +

@@ -1,0 +1,36 @@
+{
+  "schema_version": "distillery.feedback-routing-policy/v1",
+  "policy_version": "1.1.0",
+  "modes": [
+    "interactive",
+    "recommended_auto"
+  ],
+  "decision_states": [
+    "resolved",
+    "recommendable",
+    "unresolved"
+  ],
+  "confidence_values": [
+    "high",
+    "medium",
+    "low"
+  ],
+  "auto_accept": {
+    "ambiguity_kinds": [
+      "pipeline_stage_ownership"
+    ],
+    "requires_unique_rank_one": true,
+    "requires_pipeline_internal_options": true,
+    "requires_safe_recommendation": true,
+    "requires_non_low_confidence": true,
+    "requires_route_only_semantic_equivalence": true
+  },
+  "always_stop_flags": [
+    "requirement_reinterpretation",
+    "conflicting_requests",
+    "missing_evidence",
+    "pipeline_boundary_uncertain",
+    "destructive_scope_expansion",
+    "stage_internal_design_decision"
+  ]
+}

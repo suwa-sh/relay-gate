@@ -829,6 +829,84 @@ setup() {
 	[ -z "$(ls -A "$TMPDIR")" ]
 }
 
+@test "job_map_repo_create_snapshot_別プロセスから呼ぶ場合_複製の名前に呼んだプロセスの番号が入ること" {
+	# Arrange(同時に動くプロセスが同じ作業名を取り合わない。末尾以外の X を置き換えない mktemp でも名前がプロセスごとに分かれる)
+	export TMPDIR="$BATS_TEST_TMPDIR/tmp"
+	mkdir "$TMPDIR"
+	printf '%s\n' 'job_id,work_dir' >"$MAP"
+	local result="$BATS_TEST_TMPDIR/result.txt"
+
+	# Act(サブシェル = 親と別のプロセス番号を持つプロセス)
+	(
+		job_map_repo_create_snapshot "$MAP"
+		printf '%s\n' "$BASHPID" "${JOB_MAP_REPO_SNAPSHOT##*/}" >"$result"
+		job_map_repo_remove_snapshot
+	)
+
+	# Assert
+	local child_pid snapshot_name
+	{
+		read -r child_pid
+		read -r snapshot_name
+	} <"$result"
+	[ "$child_pid" != "$$" ]
+	[[ "$snapshot_name" == "relay-gate-$child_pid-"* ]]
+	[ -z "$(ls -A "$TMPDIR")" ]
+}
+
+@test "job_map_repo_create_snapshot_2つのプロセスが同じTMPDIRで同時に複製を持つ場合_別々の最終名でそれぞれの内容を持ち作業名を残さないこと" {
+	# Arrange(blue と green の slot runner がほぼ同時にジョブマップを読む場面。複製を持ったまま合図を待たせ、2 つが同時に存在する状態を作る)
+	export TMPDIR="$BATS_TEST_TMPDIR/tmp"
+	mkdir "$TMPDIR"
+	local release="$BATS_TEST_TMPDIR/release" role waited=0
+	local repo="$BATS_TEST_DIRNAME/../../src/repository/job_map_repo.sh"
+	# shellcheck disable=SC2016
+	local child='
+		source "$1"
+		if job_map_repo_create_snapshot "$2"; then
+			printf "%s\n" "$JOB_MAP_REPO_SNAPSHOT" >"$3.tmp"
+		else
+			printf "%s\n" "FAILED" >"$3.tmp"
+		fi
+		mv "$3.tmp" "$3"
+		while [ ! -e "$4" ]; do sleep 0.05; done
+		job_map_repo_remove_snapshot
+	'
+	for role in blue green; do
+		printf '%s\n' 'job_id,work_dir' "$role,/w" >"$BATS_TEST_TMPDIR/$role.csv"
+	done
+
+	# Act
+	for role in blue green; do
+		bash -c "$child" snapshot-holder "$repo" "$BATS_TEST_TMPDIR/$role.csv" "$BATS_TEST_TMPDIR/$role.name" "$release" 3>&- &
+	done
+	while [ ! -e "$BATS_TEST_TMPDIR/blue.name" ] || [ ! -e "$BATS_TEST_TMPDIR/green.name" ]; do
+		waited=$((waited + 1))
+		if [ "$waited" -gt 200 ]; then
+			break
+		fi
+		sleep 0.05
+	done
+	local blue_snapshot green_snapshot blue_content green_content names_while_held
+	blue_snapshot="$(cat "$BATS_TEST_TMPDIR/blue.name")"
+	green_snapshot="$(cat "$BATS_TEST_TMPDIR/green.name")"
+	blue_content="$(cat "$blue_snapshot")" || true
+	green_content="$(cat "$green_snapshot")" || true
+	names_while_held="$(ls -A "$TMPDIR")"
+	: >"$release"
+	wait
+
+	# Assert
+	[ "$blue_snapshot" != "FAILED" ]
+	[ "$green_snapshot" != "FAILED" ]
+	[ "$blue_snapshot" != "$green_snapshot" ]
+	[ "$blue_content" = "$(cat "$BATS_TEST_TMPDIR/blue.csv")" ]
+	[ "$green_content" = "$(cat "$BATS_TEST_TMPDIR/green.csv")" ]
+	[[ "$names_while_held" != *.part* ]]
+	[ "$(printf '%s\n' "$names_while_held" | wc -l | command tr -d ' ')" -eq 2 ]
+	[ -z "$(ls -A "$TMPDIR")" ]
+}
+
 @test "job_map_repo_load_sedが終了状態0のまま何も出力しない場合_走査完了の証跡が無いため失敗の状態を返すこと" {
 	# Arrange(出力なしが「異常な行なし」を意味しないこと。NUL を落とした行を ok にしない)
 	{
@@ -920,6 +998,55 @@ setup() {
 	job_map_repo_row 0
 	[ "${JOB_MAP_ROW[0]}" = "J1" ]
 	[ "${JOB_MAP_ROW[1]}" = "/old" ]
+}
+
+@test "job_map_repo_probe_読める通常ファイルの場合_0であること" {
+	# Arrange
+	printf '%s\n' 'job_id' >"$MAP"
+
+	# Act
+	probe_status=0
+	job_map_repo_probe "$MAP" || probe_status=$?
+
+	# Assert
+	[ "$probe_status" -eq 0 ]
+}
+
+@test "job_map_repo_probe_ファイルが無い場合_NOT_FOUNDであること" {
+	# Act
+	probe_status=0
+	job_map_repo_probe "$MAP" || probe_status=$?
+
+	# Assert
+	[ "$probe_status" -eq "$JOB_MAP_REPO_PROBE_NOT_FOUND" ]
+}
+
+@test "job_map_repo_probe_ディレクトリの場合_NOT_READABLEであること" {
+	# Arrange(存在するが通常ファイルではない)
+	mkdir "$MAP"
+
+	# Act
+	probe_status=0
+	job_map_repo_probe "$MAP" || probe_status=$?
+
+	# Assert
+	[ "$probe_status" -eq "$JOB_MAP_REPO_PROBE_NOT_READABLE" ]
+}
+
+@test "job_map_repo_probe_読み取り権限が無いファイルの場合_NOT_READABLEであること" {
+	# Arrange(権限を無視して読める利用者(root)では成り立たないため、その環境では確かめない)
+	printf '%s\n' 'job_id' >"$MAP"
+	chmod 000 "$MAP"
+	if [ -r "$MAP" ]; then
+		skip "the test user can read a file without the read permission"
+	fi
+
+	# Act
+	probe_status=0
+	job_map_repo_probe "$MAP" || probe_status=$?
+
+	# Assert
+	[ "$probe_status" -eq "$JOB_MAP_REPO_PROBE_NOT_READABLE" ]
 }
 
 @test "job_map_repo_load_読み込みを終えた場合_呼び出し前のEXITとTERMのtrapを元に戻すこと" {

@@ -43,7 +43,7 @@ feature flag 設定(env)の 9 キーと任意の 2 キー(slot ジョブマッ�
 | GREEN_RUNNER | path | GREEN_MODE≠off のとき Yes | 絶対パスまたは相対パス | 同上(key=GREEN_RUNNER) | green slot runner 実体 |
 | RAPID_CROSSCHECK_RUNNER | path | RAPID_CROSSCHECK_MODE≠off のとき Yes | 絶対パスまたは相対パス | 同上(key=RAPID_CROSSCHECK_RUNNER) | slot runner が完了通知(blue-completed / green-completed)を送る速報クロスチェック runner の実体 |
 | RAPID_CROSSCHECK_WORKER | path | RAPID_CROSSCHECK_MODE≠off のとき Yes | 絶対パスまたは相対パス | 同上(key=RAPID_CROSSCHECK_WORKER) | 速報クロスチェック worker の実体(ジョブスケジューラの worker ジョブ定義 / 常駐起動が参照する実体) |
-| BLUE_JOB_MAP_CSV | path | No(任意) | 絶対パスまたは相対パス。無い・空なら `$RELAY_GATE_CONFIG_DIR/blue-job-map.csv` | BLUE_MODE≠off のとき、決めた場所にジョブマップが存在しない / 読めないは `error: job map not found slot=blue map=<決めた場所>`。キーが無い・値が空は違反にも warn にもしない | blue の slot ジョブマップの場所 |
+| BLUE_JOB_MAP_CSV | path | No(任意) | 絶対パスまたは相対パス。無い・空なら `$RELAY_GATE_CONFIG_DIR/blue-job-map.csv` | BLUE_MODE≠off のとき、決めた場所に何も無いは `error: job map not found slot=blue map=<決めた場所>`、あるが読めない・通常のファイルでない(ディレクトリなど)は `error: config file is not readable path: <決めた場所>`。キーが無い・値が空は違反にも warn にもしない | blue の slot ジョブマップの場所 |
 | GREEN_JOB_MAP_CSV | path | No(任意) | 絶対パスまたは相対パス。無い・空なら `$RELAY_GATE_CONFIG_DIR/green-job-map.csv` | 同上(GREEN_MODE≠off のとき。slot=green) | green の slot ジョブマップの場所 |
 
 - **slot ジョブマップの場所**: 上表の `BLUE_JOB_MAP_CSV` / `GREEN_JOB_MAP_CSV` は任意のキーで、この 2 キーを書かない 9 キーだけの設定はそのまま通る。規則の正本は CLI 契約 `config_files.feature-flag.env.job_map_location` で、下表はその要約(実装は契約の節だけに従う)。値からパスを決める規則は、次項の runner / worker の 4 キーと同じ 1 つの規則(`runner_path_resolution`)で、本書は規則を持たない
@@ -55,7 +55,7 @@ feature flag 設定(env)の 9 キーと任意の 2 キー(slot ジョブマッ�
 | キーが無い、または値が空(`BLUE_JOB_MAP_CSV=` の行を含む) | `$RELAY_GATE_CONFIG_DIR/<slot>-job-map.csv`(検証に渡したファイルのあるディレクトリではない) | 同左 |
 | mode が off の slot(キーの有無・値によらない) | 決めない(値を解決せず、所在も検査しない) | `-` |
 
-  - 決めた場所にジョブマップが無い・読めないときは `error: job map not found slot=<blue|green> map=<決めた場所>`(終了コード 2)。キーに書いた場所に無ければ、固定の名前のファイルがあっても違反
+  - 決めた場所に何も無いときは `error: job map not found slot=<blue|green> map=<決めた場所>`、あるが読めない・通常のファイルでない(ディレクトリなど)ときは全コマンド共通の定型文 `error: config file is not readable path: <決めた場所>`(`slot=` は付かず、`path:` は feature-flag.env のパスではなく決めた場所)。どちらも終了コード 2 で、行の位置は同じ(契約 `error_order` の 6。blue → green)。判定と文言の正本は契約 `job_map_location.presence_report`(ジョブマップの検証・slot runner と同じ考え方)。キーに書いた場所に無ければ、固定の名前のファイルがあっても違反
   - 値の内容(拡張子・ファイル名)は検査しない。blue と green に同じ場所を書いてもよい
   - 2 キーは未知キーではない(`warn: unknown key` を出さない)。同じキーの重複の判定はほかのキーと同じ
   - mode の値が列挙外・欠落・空の slot は「off でない」として、場所を決めて所在を検査する
@@ -424,6 +424,31 @@ Feature: feature flag を設定する - facade / slot runner ティア
     When `validate-config.sh --feature-flag ff.env` を実行する
     Then 終了コード 2 で stdout は 0 行、stderr は次の 2 行だけがこの順に出る(契約 config_files.feature-flag.env の job_map_location / error_order)
       | error: job map not found slot=blue map=<maps の絶対パス>/missing.csv              |
+      | error: job map not found slot=green map=<RELAY_GATE_CONFIG_DIR>/green-job-map.csv |
+
+  Scenario: validate-config_sh_feature-flag は決めた場所にあるが読めないジョブマップを config file is not readable で報告する
+    Given 有効な並行稼働設定(9 キー)の ff.env があり、両 runner スタブは --help で "runner-if-version=1" を返す
+    And RELAY_GATE_CONFIG_DIR の blue-job-map.csv はディレクトリで、green-job-map.csv は読み取り権限の無いファイルである(テストは root 以外のユーザーで実行する)
+    When `validate-config.sh --feature-flag ff.env` を実行する
+    Then 終了コード 2 で stdout は 0 行、stderr は次の 2 行だけがこの順に出る(契約 config_files.feature-flag.env の job_map_location.presence_report / error_order)
+      | error: config file is not readable path: <RELAY_GATE_CONFIG_DIR>/blue-job-map.csv  |
+      | error: config file is not readable path: <RELAY_GATE_CONFIG_DIR>/green-job-map.csv |
+    And stderr に "job map not found" を含む行も "slot=" を含む行も出ない
+
+  Scenario: validate-config_sh_feature-flag はシンボリックリンクのジョブマップをリンク先で判定する
+    Given 有効な並行稼働設定(9 キー)の ff.env があり、両 runner スタブは --help で "runner-if-version=1" を返す
+    And RELAY_GATE_CONFIG_DIR の blue-job-map.csv は読める通常のファイルを指すシンボリックリンクで、green-job-map.csv はリンク先が無いシンボリックリンクである
+    When `validate-config.sh --feature-flag ff.env` を実行する
+    Then 終了コード 2 で stdout は 0 行、stderr は "error: job map not found slot=green map=<RELAY_GATE_CONFIG_DIR>/green-job-map.csv" の 1 行だけである(blue はリンク先が読めるため違反にしない。契約 job_map_location.presence_report)
+
+  Scenario: validate-config_sh_feature-flag は読めないジョブマップの行を job map not found と同じ位置に出す
+    Given ff.env の 1 行目が BLUE_MODE=foreground、2 行目が GREEN_MODE=background、3 行目が RAPID_CROSSCHECK_MODE=off、4 行目が BLUE_IMPL=blue-1.0.0、5 行目が BLUE_RUNNER=<実行可能な blue スタブ>、6 行目が GREEN_RUNNER=<実行可能な green スタブ> である(GREEN_IMPL は書かない)
+    And 両 runner スタブは --help で "runner-if-version=1" を返す
+    And RELAY_GATE_CONFIG_DIR の blue-job-map.csv はディレクトリで、green-job-map.csv は無い
+    When `validate-config.sh --feature-flag ff.env` を実行する
+    Then 終了コード 2 で stdout は 0 行、stderr は次の 3 行だけがこの順に出る(契約 config_files.feature-flag.env.error_order の 3 → 6。6 の中は blue → green)
+      | error: option required option=GREEN_IMPL path: ff.env                             |
+      | error: config file is not readable path: <RELAY_GATE_CONFIG_DIR>/blue-job-map.csv |
       | error: job map not found slot=green map=<RELAY_GATE_CONFIG_DIR>/green-job-map.csv |
 
   Scenario: validate-config_sh_feature-flag は off の slot のジョブマップの場所を解決も検査もしない

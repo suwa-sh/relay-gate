@@ -1,0 +1,180 @@
+stage: S2
+uc_id: 7c41c7cd
+manifest_sha256: 3be8e5d2a120b16dcd7e1ff7ca52d0176819084e8bcea554f474548646aff297
+manifest_projection: v2
+result: pass
+scaffold_mode: initial
+rerun: false
+branch_slug: resolve-execution-target-from-job-map
+tiers:
+  - tier-facade
+red_baseline: pass
+red_baseline_detail:
+  red_total: 46
+  by_stage:
+    - stage: atdd
+      total: 13
+      red: 13
+    - stage: uc_bdd
+      total: 16
+      red: 16
+    - stage: tier_bdd
+      total: 13
+      red: 13
+    - stage: tdd
+      total: 4
+      red: 4
+  reason: "全段が未実装を理由に fail する。ATDD / UC BDD / tier BDD は各 Scenario の最初の step(この UC で新しく定義した skeleton)が 'not implemented: <step 文言>' を投げる。単体テストは、標準の slot runner が正しい引数に仮の終了コード 6 を返して何も書かない状態を 'not implemented: <path> answers the placeholder exit code 6 without resolving the job map' として明示して fail する"
+  red_is_assertion_failure: true
+  undefined_steps: 0
+  ambiguous_steps: 0
+  parse_errors: 0
+transcription_check:
+  method: "spec.md(2 ブロック)と tier-facade.md(1 ブロック)の gherkin をスクリプトで取り出して feature へ書き、# で始まる出典コメント行を除いた本文が仕様のブロックと完全一致することを同じスクリプトで確認した。UC の feature は先行機能と同じく正常系・異常系の 2 ブロックを空行 1 行でつないだ"
+  uc_feature_verbatim: true
+  tier_feature_verbatim: true
+step_reuse:
+  method: "cucumber の --dry-run(json 形式)で、新しい feature の各 step が既存の step 定義に一致するかを調べ、一致しない step だけを新しい step ファイルに skeleton として定義した。既存の step と同じ文言を再定義していない。既存の step ファイル・補助(facade-harness.js / temp-postgres.js)は変更していない"
+  reused:
+    tier_bdd: []
+    uc_bdd: []
+    atdd:
+      - "facade を起動する(features/atdd/steps/select-slot-mode-and-launch-runners.steps.js。SPEC-004-01-7 の When)"
+  reuse_note: "World と Before / After は各ディレクトリの configure-feature-flags.steps.js のものを使う。新しい step ファイルには Before / After を置いていない。この機能は管理 DB に触らないため、一時 PostgreSQL の補助は使っていない"
+  directory_runs:
+    - "facade/features 全体(実行): 154 scenarios = 141 passed + 13 failed。failed は追加した 13 件だけ。undefined 0、ambiguous 0"
+    - "features/uc 全体(実行): 99 scenarios = 82 passed + 1 skipped + 16 failed。failed は追加した 16 件だけ。undefined 0、ambiguous 0"
+    - "features/atdd 全体(dry-run): 209 scenarios、うち 165 は step 未実装の他 UC の ATDD(この UC の追加前は 178)。ambiguous 0"
+generated:
+  atdd:
+    features:
+      - features/atdd/SPEC-002-03.feature
+      - features/atdd/SPEC-003-02.feature
+      - features/atdd/SPEC-004-01.feature
+      - features/atdd/SPEC-004-02.feature
+      - features/atdd/SPEC-004-04.feature
+    feature_body_changed: false
+    feature_note: "5 ファイルとも bootstrap で生成済みで、一意タグも付いている。今回は読んだだけで、書き換えていない"
+    steps: features/atdd/steps/resolve-execution-target-from-job-map.steps.js
+    steps_defined: 35
+    steps_by_keyword:
+      given: 13
+      when: 9
+      then: 13
+    scenarios:
+      - SPEC-002-03-1
+      - SPEC-003-02-1
+      - SPEC-004-01-1
+      - SPEC-004-02-1
+      - SPEC-004-04-1
+      - SPEC-004-04-2
+      - SPEC-004-04-3
+      - SPEC-004-01-3
+      - SPEC-004-01-4
+      - SPEC-004-01-5
+      - SPEC-004-01-6
+      - SPEC-004-01-7
+      - SPEC-004-01-8
+  uc_bdd:
+    feature: features/uc/resolve-execution-target-from-job-map.feature
+    source: "docs/specs/latest/実装切替業務/実装切替ジョブ実行フロー/ジョブマップで JOB_ID から実行先を解決する/spec.md#E2E完了条件(BDD)"
+    scenarios: 16
+    steps: features/uc/steps/resolve-execution-target-from-job-map.steps.js
+    steps_defined: 64
+    steps_by_keyword:
+      given: 26
+      when: 12
+      then: 26
+    cross_uc_scenarios: 10
+  tier_bdd:
+    - tier: tier-facade
+      feature: facade/features/resolve-execution-target-from-job-map.feature
+      source: "docs/specs/latest/実装切替業務/実装切替ジョブ実行フロー/ジョブマップで JOB_ID から実行先を解決する/tier-facade.md#ティア完了条件(BDD)"
+      scenarios: 13
+      steps: facade/features/steps/resolve-execution-target-from-job-map.steps.js
+      steps_defined: 55
+      steps_by_keyword:
+        given: 23
+        when: 10
+        then: 22
+      cross_uc_scenarios: 0
+  tdd:
+    - tier: tier-facade
+      file: facade/test/presentation/standard_runner_resolve.bats
+      tests: 4
+      red: 4
+      target: "標準の slot runner(facade/runners/standard-runner.sh)の解決フェーズを、入口から見える結果で判定する。(1) JOB_ID の行が無いとき started-at.txt と 3 ファイルを揃え、exitcode.txt が 2、stderr.log に 'error: job_id=JOB999 not found in job map slot=green map=<path>'、.tmp を残さず、プロセスの stdout / stderr に出さず終了コード 2 (2) ジョブマップのファイルが無いとき 'error: job map not found slot=green map=<path>' で終了コード 2 (3) 環境変数 GREEN_JOB_MAP_CSV で受け取った場所を map= に出す (4) 行があるとき実行ログ standard-runner.sh.log に 'INFO job map resolved job_id=JOB001 slot=green host=host-green-01 map_version=map-v3' を行形式どおりに出す。4 件とも RAPID_CROSSCHECK_MODE=off で管理 DB を使わない"
+scaffold_validation:
+  method: "単体テストが正しい実装で通ることを、リポジトリ外の scratchpad に置いた複製と試作の runner(場所の決定、行の検索、失敗時の 4 ファイル、実行ログの 1 行だけ)で確認した。リポジトリの実装(facade/runners / facade/lib / facade/src)は変更していない"
+  results:
+    - "bats(追加 1 ファイル、試作あり): 4 tests, 4 ok"
+    - "bats(リポジトリ、解決フェーズなし): 4 tests, 4 not ok(not implemented)"
+  bdd_note: "BDD の 3 段は skeleton(全 step が not implemented)のため、正しい実装での確認は S4 / S6 / S7 で step を実装するときに行う"
+test_runs:
+  - stage: tier_bdd
+    tier: tier-facade
+    cwd: facade
+    command: "npx cucumber-js --config ../cucumber.cjs features/resolve-execution-target-from-job-map.feature"
+    exit_code: 1
+    summary: "13 scenarios (13 failed), 114 steps (52 passed, 49 skipped, 13 failed)。passed の 52 は既存の hook"
+    total: 13
+    red: 13
+    fail_reason: "13 件とも最初の step の 'not implemented'"
+  - stage: uc_bdd
+    cwd: "."
+    command: "npx cucumber-js --config cucumber.cjs features/uc/resolve-execution-target-from-job-map.feature"
+    exit_code: 1
+    summary: "16 scenarios (16 failed), 120 steps (48 passed, 56 skipped, 16 failed)。passed の 48 は既存の hook"
+    total: 16
+    red: 16
+    fail_reason: "16 件とも最初の step の 'not implemented'"
+  - stage: atdd
+    cwd: "."
+    command: "npx cucumber-js --config cucumber.cjs features/atdd --tags \"@atdd_SPEC-002-03-1 or @atdd_SPEC-003-02-1 or @atdd_SPEC-004-01-1 or @atdd_SPEC-004-02-1 or @atdd_SPEC-004-04-1 or @atdd_SPEC-004-04-2 or @atdd_SPEC-004-04-3 or @atdd_SPEC-004-01-3 or @atdd_SPEC-004-01-4 or @atdd_SPEC-004-01-5 or @atdd_SPEC-004-01-6 or @atdd_SPEC-004-01-7 or @atdd_SPEC-004-01-8\""
+    exit_code: 1
+    summary: "13 scenarios (13 failed), 78 steps (39 passed, 26 skipped, 13 failed)。passed の 39 は既存の hook"
+    total: 13
+    red: 13
+    executed_matches_atdd_scenarios: true
+    fail_reason: "13 件とも Given の 'not implemented'"
+  - stage: tdd
+    tier: tier-facade
+    cwd: facade
+    command: "bats -r test"
+    exit_code: 1
+    summary: "644 tests, 640 ok, 4 not ok。落ちたのは追加した 4 件だけ"
+    total: 644
+    added: 4
+    red: 4
+    fail_reason: "未実装(標準の slot runner が仮の終了コード 6 を返し、ジョブマップを解決しない)"
+format_check:
+  tier: tier-facade
+  command: "shfmt -d ."
+  exit_code: 0
+lint:
+  tier: tier-facade
+  command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+  exit_code: 0
+dom_snapshot_tests: not_applicable
+issues:
+  - path: docs/impl/latest/7c41c7cd/issues/20261123_142047_cross-uc-scenarios.md
+    kind: cross_uc_scenarios
+    summary: "UC BDD の正常系 10 Scenario は、解決結果のうち実行ログの行(host と map_version)に出ない項目(user / script / work_dir / hang_detect_limit_minutes / credential_ref / fixed_params / 実装へ渡す引数)を Then に含む。runner を 1 プロセスとして起動しただけでは、execution-spec.json(次の機能)か実装の実行(その次の機能)ができるまで外から見えない。異常系 6 Scenario と tier BDD 13 Scenario はこの機能だけで判定できる。共通ライブラリの関数の呼び方と、解決に成功した後(後続の段が無い間)の runner の終わり方は仕様に無い。前の機能から引き継いだ 3 点(保留中の Then、標準の runner の既存の単体テスト、記録用の包み)の事実と対応先も記録した"
+    blocker: false
+decisions_needed:
+  - id: how-to-observe-resolution-result
+    question: "解決結果のうち実行ログに出ない項目(user / script / work_dir / 引数列など)を、この機能のテストで何を使って確かめるか"
+    recommended: "step と単体テストが共通ライブラリ(lib/runner-resolve.sh)を source して関数を直接呼ぶ。関数の名前と結果の受け取り方は実装者が決め、補った前提として S4 の記録に書く。あわせて S8 で、共通ライブラリの呼び方を仕様に書く要望を出す"
+    alternatives:
+      - "実行ログの行(host と map_version)だけで判定し、残りの項目は execution-spec.json ができる次の機能まで保留にする"
+    detail: docs/impl/latest/7c41c7cd/issues/20261123_142047_cross-uc-scenarios.md
+observations:
+  - "単体テストは入口 facade/runners/standard-runner.sh から見える結果だけを判定し、共通ライブラリの関数の名前と分け方は固定していない(仕様に無いため)。層ごとの単体テストは S4 の TDD で足す"
+  - "単体テストは、runner を直接起動する前に role ディレクトリ(facade/<run_id>/<role>/)を用意する。作るのは facade で、runner を直接起動するときに誰が作るかは仕様に無い。どちらの実装でも通る形にした"
+  - "解決に成功したときの runner の終了コードは判定していない(後続の段が無い間の終わり方が仕様に無い)。実行ログの行だけを見る"
+  - "前の機能の UC BDD『値が空のジョブマップの場所のキー』の保留は、標準の runner が終了コード 6 で何も書かない間だけ働く。この機能が解決の段を作ると保留が外れ、execution-spec.json を見る Then は次の機能まで満たせない。S6 で保留の条件を行ごとに分ける必要がある(issue の 6)"
+  - "既存の facade/test/presentation/standard_runner.bats は RELAY_GATE_LOG_DIR を渡さずに runner を起動する。解決の段ができると実行ログの既定の出力先がリポジトリの中になりうるため、S4 で仮の応答とあわせて見直す(issue の 6)"
+  - "時間を確かめるテスト、MB 級の入力を作るテスト、作為的な巨大入力のテストは書いていない"
+  - "bats と cucumber は 1 つずつ直列に実行した。tier BDD・UC BDD・ATDD・bats は macOS の手元で実行した"
+completed_at: '2026-11-23T14:27:00+09:00'
+completed_by: dist-impl-implement@0.15.0

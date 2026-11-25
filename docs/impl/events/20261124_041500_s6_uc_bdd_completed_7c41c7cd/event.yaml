@@ -1,0 +1,11 @@
+event_id: 20261124_041500_s6_uc_bdd_completed_7c41c7cd
+type: stage_completed
+uc_id: 7c41c7cd
+stage: S6
+payload:
+  result: pass
+  manifest_sha256: 8dd410fbf84a6012b7868a016f42fec481d4e9266e1f4ed66bd66b5bf3f8cf87
+  manifest_projection: v2
+  scenarios: this UC feature 16/16 passed; features/uc 98 passed + 1 pending (select-slot-mode-and-launch-runners.feature:94,
+    waits for a later UC)
+created_at: '2026-11-24T04:15:00+09:00'

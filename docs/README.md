@@ -2,7 +2,7 @@
 
 > 既存実装(blue)と新実装(green)をジョブスケジューラの同一ジョブ定義から並行稼働させ、クロスチェックで整合性を検証しながら段階的に切り替えるための feature flag 付きストラングラーファサード型の実行基盤。facade が feature flag(BLUE_MODE / GREEN_MODE / RAPID_CROSSCHECK_MODE / BLUE_IMPL / GREEN_IMPL / BLUE_RUNNER / GREEN_RUNNER / RAPID_CROSSCHECK_RUNNER / RAPID_CROSSCHECK_WORKER)で slot ごとの実行モード(foreground / background / off)を選択し、background slot を先に起動してから foreground の Runner Result(stdout.log / stderr.log / exitcode.txt)だけをジョブスケジューラへ中継する。slot runner がジョブマップで JOB_ID から実行先を解決し execution-spec.json として確定保存する。速報クロスチェックはジョブ実行ごとに blue / green の完了結果を非同期に比較し、確報クロスチェックは別ジョブ定義から全テーブル・全ファイルの日次全量比較を行って stdout・stderr・exitcode をジョブスケジューラへ返す。ハング検知の定期ジョブが background 実行の異常を自身の終了結果(警告終了 / 失敗)と標準エラーで運用者へ知らせ、運用者は中止スクリプトで停止確認済みの実行を ABORTED にしてから background 側リランで元の execution-spec.json から再実行する。ハウスキープの定期ジョブが、保持日数を過ぎた終了済みの実行の成果物と管理 DB の履歴、終端した確報比較依頼を削除する。シェルスクリプトと relay-gate 内部のデータストアである RDB(ジョブキュー兼管理 DB。外部システムではなく relay-gate の構成要素)で構成し、実装固有のホスト配置(リモート実行ホストへの SSH 接続など)は適用側の関心事として slot の runner に閉じ込め、UI 画面を持たず CLI と定期ジョブだけで動作する。
 
-**最終更新**: 2026-11-16 02:10:00 feedback standard runner job map location (specs)
+**最終更新**: 2026-11-23 20:10:00 feedback impl feedback 7c41c7cd (specs)
 
 ## 成果物一覧
 
@@ -14,7 +14,7 @@
 | [Arch（アーキテクチャ）](#archアーキテクチャ) | [arch/latest/](arch/latest/) | 14 |
 | [Infra（インフラ設計）](#infraインフラ設計) | [infra/latest/](infra/latest/) | 17 |
 | [Design（デザイン）](#designデザイン) | - | 0 |
-| [Specs（詳細仕様）](#specs詳細仕様) | [specs/latest/](specs/latest/) | 26 |
+| [Specs（詳細仕様）](#specs詳細仕様) | [specs/latest/](specs/latest/) | 27 |
 
 ## USDM（要求分解）
 
@@ -317,13 +317,13 @@ design ステージは pipeline-config の `skip_steps` で skip されている
 
 ## ADRs（設計判断記録）
 
-全72件。ドメイン別の一覧から個別の判断記録を参照できます。
+全75件。ドメイン別の一覧から個別の判断記録を参照できます。
 
 | ドメイン | 件数 | 一覧 |
 |---------|-----:|------|
 | Arch | 27 | [判断記録を開く](_indexes/adrs/arch.md) |
 | Infra | 5 | [判断記録を開く](_indexes/adrs/infra.md) |
-| Specs | 40 | [判断記録を開く](_indexes/adrs/specs.md) |
+| Specs | 43 | [判断記録を開く](_indexes/adrs/specs.md) |
 
 ## Pipeline feedback runs
 
@@ -357,10 +357,11 @@ distillery-impl が公開した feedback-request Markdown を `dist-pipeline` �
 | 20261115_145719_impl_feedback_fd678b04 | completed | 1 | 1 | 0 | 0 | spec | [feedback-runs/](pipeline/feedback-runs/20261115_145719_impl_feedback_fd678b04) |
 | 20261115_runner_relative_path | completed | 1 | 1 | 0 | 0 | spec | [feedback-runs/](pipeline/feedback-runs/20261115_runner_relative_path) |
 | 20261116_standard_runner_job_map_location | completed | 4 | 4 | 0 | 0 | requirements → quality_attributes → architecture → infrastructure → spec | [feedback-runs/](pipeline/feedback-runs/20261116_standard_runner_job_map_location) |
+| 20261123_175902_impl_feedback_7c41c7cd | completed | 3 | 3 | 0 | 0 | spec | [feedback-runs/](pipeline/feedback-runs/20261123_175902_impl_feedback_7c41c7cd) |
 
 ## イベント履歴
 
-全94件。ドメイン別の履歴から個別のイベントを参照できます。
+全95件。ドメイン別の履歴から個別のイベントを参照できます。
 
 | ドメイン | 件数 | 履歴 |
 |---------|-----:|------|
@@ -369,7 +370,7 @@ distillery-impl が公開した feedback-request Markdown を `dist-pipeline` �
 | NFR（非機能要求） | 13 | [履歴を開く](_indexes/events/nfr.md) |
 | Arch（アーキテクチャ） | 14 | [履歴を開く](_indexes/events/arch.md) |
 | Infra（インフラ設計） | 17 | [履歴を開く](_indexes/events/infra.md) |
-| Specs（詳細仕様） | 26 | [履歴を開く](_indexes/events/specs.md) |
+| Specs（詳細仕様） | 27 | [履歴を開く](_indexes/events/specs.md) |
 
 ---
 

@@ -1,0 +1,34 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "specification"
+artifact_id: "spec-decision-016"
+title: "クロスチェックの比較定義は比較ツール起動コマンド 1 行とし、設定は env に置く。worker は DB の依頼レコードと自身の設定だけで起動する"
+status: "approved"
+generated_at: "2026-10-10T20:40:00Z"
+context: |
+  - 元の方針資料は「比較対象の定義は適用側(比較ツール側)が持つ」「worker は起動した実装の stdout / stderr / exitcode を依頼レコードへ保存する」「速報と確報は同じ比較パターンで違いは対象の量」と定める。
+  - 従来仕様は、ジョブ ID ごとの比較定義 CSV(crosscheck-job-map.csv の行構造)と対象カタログ(target-catalog.csv)を relay-gate が持ち、成果物ディレクトリの URI をファイルパスで比較ツールへ渡し、比較結果を別レコード(comparison_results)へ登録していた。
+  - 想定環境では runner と worker が別ネットワークセグメントで動き、worker は runner 側のファイルパスを読めない。成果物 URI の受け渡しと worker 側のファイル保存は環境制約に合わない。
+  - 2026-10-10 の実装フィードバックのレビューで、利用者はクロスチェック全体を元の構想へ戻す簡素化を確定した。設定の置き場と速報依頼レコードの列の持ち方は、要求が仕様側の決定として委ねた(推奨案つき)。
+decision: |
+  1. クロスチェックの比較定義は、速報・確報それぞれ比較ツール起動コマンド 1 行の文字列にする。
+     設定は既存の env ファイルにキーを 1 つずつ追加する: 速報 = rapid-crosscheck.env の RAPID_COMPARE_COMMAND(プレースホルダ {job_id} 必須、{run_id} / {params} / {blue_exit_code} / {green_exit_code} 任意)、確報 = final-crosscheck.env の FINAL_COMPARE_COMMAND(プレースホルダ無し)。
+     理由: 速報・確報の worker がすでに読む設定ファイルで読み手・所有者が同じであり、CSV 解析を必要としない。ジョブ ID ごとの行構造が無くなった後に CSV を残す理由が無い。crosscheck-job-map.csv / target-catalog.csv は廃止する。
+  2. worker が読む入力は DB の依頼レコードと自身の設定ファイル(env)だけにする。比較ツールへ渡す値は依頼レコードの値だけとし、ファイルパス(成果物 URI・対象カタログのパス)を渡さない。
+     速報 worker は RAPID_COMPARE_COMMAND のプレースホルダを依頼レコード(rapid_crosscheck_requests の run_id / job_id / parameters / blue_exit_code / green_exit_code)で置換して起動する。確報 worker は FINAL_COMPARE_COMMAND をそのまま起動する。
+  3. worker は比較ツールの stdout / stderr / exit_code を依頼レコードの列へ保存する。exit_code 0 → SUCCEEDED、非 0 または起動失敗 → FAILED。成果物 3 ファイル保存(facade/<run_id>/rapid-crosscheck/、facade/<final_crosscheck_id>/final-crosscheck/)と、速報比較結果レコード(comparison_results テーブル・difference_count / report_uri 抽出)を廃止する。速報比較の結果は依頼レコードの stdout / stderr / exit_code で参照する。
+  4. 速報依頼レコード(rapid_crosscheck_requests)に parameters / blue_exit_code / green_exit_code の列を直接持つ(dispatcher が両系成功時に parallel_runs.parameters を複製し、exit_code はともに 0)。完了通知で DB に入れる値は run_id / job_id / exit_code のみ(rapid-crosscheck-runner.sh の --artifact-uri と rapid_runs.blue_artifact_uri / green_artifact_uri を廃止)。
+  5. 確報依頼レコード(final_crosscheck_requests)は識別子・状態・時刻・結果だけにし、business_date / catalog_version を削除する。final-crosscheck-runner.sh は引数なしで起動され、依頼を 1 件登録して終端まで polling し保存値をそのまま返す。
+consequences:
+  positive:
+    - "relay-gate が比較対象の定義を持たず、方針資料の『比較対象の定義は適用側』に一致する"
+    - "worker が DB の依頼レコードと自身の設定だけで起動でき、別ネットワークセグメントの環境制約(ファイルパスを読めない)に合う"
+    - "管理 DB が 7 テーブルから 6 テーブルへ減り、設定ファイルから CSV 2 ファイルが消え、検証ルールが大きく縮退する"
+  negative:
+    - "ジョブ ID ごとに比較内容を変える運用はできなくなる(起動コマンドは速報 1 行・確報 1 行に統一。比較内容の出し分けは比較ツール側が {job_id} で行う)"
+    - "速報比較の差分件数・レポート URI を構造化レコードで持たず、依頼レコードの stdout / stderr の本文を人が読む(--show-output)"
+alternatives_considered:
+  - name: "設定の置き場を crosscheck-job-map.csv を速報・確報の 2 行に縮小した CSV にする"
+    reason_rejected: "ジョブ ID ごとの行構造が無くなった後に CSV を残す理由が無い。worker が読む env に 1 キー追加する案のほうが読み手・所有者が同じで CSV 解析も要らない"
+  - name: "速報の起動値(parameters / exit_code)を rapid_runs / parallel_runs から同一トランザクションで引く"
+    reason_rejected: "arch が E-017(速報比較依頼)に属性を追加する決定をしており、依頼レコードに直接列を持つほうが worker が 1 レコードで起動値を揃えられる"

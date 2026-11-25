@@ -1,0 +1,83 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "specification"
+artifact_id: "spec-decision-028"
+title: "env 形式の設定で同じキーが 2 行以上あれば、全 env 設定ファイル共通で設定エラー(終了コード 2)にし、どちらの行の値も使わない"
+status: "approved"
+generated_at: "2026-11-03T15:10:00Z"
+context: |
+  - CLI 契約の env 形式の入力規則(config_input_rules.env_files)は、同じキーが複数の行に書かれたときの扱いを定めていなかった。
+    CSV(slot ジョブマップ)には `error: duplicate job_id job_id=<v> lines=<n1,n2,...>` の規則(spec-decision-014)があるが、env 形式には対応する規則が無かった。
+  - 実装の feature flag 設定の読み込み(facade の repository の feature_flag_config.sh)と速報クロスチェック設定の読み込み(同 rapid_crosscheck_env.sh)は、どちらも後の行の値を使う。
+  - 2026-11-03 の前回の仕様の更新の段階のレビューがこの欠落を見つけ、範囲外として残していた。
+  - 2026-11-03 に利用者が、同じキーが 2 行以上ある設定を設定エラーとして拒否すると決めた。書き間違い(例: `BLUE_MODE=off` の後に `BLUE_MODE=foreground`)に気付けるようにするため。
+    要求(SPEC-004-04 / REQ-004)と RDRA は行の形式を持たないため、仕様(CLI 契約)だけの変更とする。
+  - 契約には、invalid line と他のエラーが同時に起きたときの報告の順、invalid line があるときにキーごとの検査を行うかも書かれていなかった。
+    重複キーの報告の順を決めるにはこれも決める必要があるため、今回まとめて決める。
+decision: |
+  1. config_input_rules.env_files に同じキーの重複の規則を加える。
+     - コメント行・0 バイトの空行・invalid line を除いた行で、取り出し方 (2) でキーの前後の空白を除いた結果が同じキーになる行が 2 行以上あれば設定エラー(終了コード 2)。
+     - そのファイルの値を 1 つも使わない(先の行・後の行のどちらの値も採らない)。
+     - キーの比較は大文字小文字を区別した完全一致。`BLUE_MODE` と ` BLUE_MODE ` は同じキー、`BLUE_MODE` と `blue_mode` は別のキー。
+     - 値が同じ行、値が空の行、各設定契約で未知キー(warn)になるキーの行、その読み手が使わないキーの行も数える。
+       判定はファイル全体の全キーに対して行い、読み手が一部のキーだけを読む場合(例: feature-flag.env の RAPID_CROSSCHECK_MODE だけを読むコマンド、
+       final-crosscheck.env の FINAL_DB_CONN_REF だけを読む housekeep.sh)も同じ結果にする。
+  2. 文言は CSV の重複 job_id に揃える: `error: duplicate key key=<KEY> lines=<n1,n2,...> path: <path>`。
+     - key= は前後の空白を除いたキーを、制御文字の可視表記(conventions.output_format.control_chars)で出す。
+     - lines= は CSV と同じ規則。そのキーが現れた全行の物理行番号を、初出行を含めて出現順(昇順)にカンマ区切り・空白なしで並べる。重複したキー 1 つにつき error 行は 1 行。
+     - 例: 2 行目と 5 行目なら `lines=2,5`、2・3・4 行目なら `lines=2,3,4`。
+  3. 1 つの env ファイルの検査の段と報告の順を決める(validate-config.sh と実行時の読み手で同じ)。
+     - (i) バイト・改行の検査(NUL / UTF-8 / BOM / CR)。違反があればその error 行だけを出して止める。CSV(slot ジョブマップ)の BDD と同じ扱い。
+     - (ii) 行の構造の検査。invalid line を行番号の昇順に全件出し、続けて duplicate key を重複したキーの初出行の昇順に全件出す。CSV の「行ごとの検査 → job_id 重複」の順に揃える。
+     - (ii) の違反が 1 件でもあれば、そのファイルの値を使わず、(iii) を行わない。
+     - (iii) キーごとの検査(必須キー・enum・パス・`FINAL_` で始まるキー・保持日数・プレースホルダ・foreground の組合せ)と未知キーの warn。
+     - 例: 1 行目 `BLUE_MODE=foreground`、2 行目 `GREEN_MODE=background`、3 行目 `BLUE_MODE`、4 行目 `BLUE_MODE=off`、5 行目 `GREEN_MODE=background` の ff.env では、
+       `error: invalid line line=3 path: ff.env` → `error: duplicate key key=BLUE_MODE lines=1,4 path: ff.env` → `error: duplicate key key=GREEN_MODE lines=2,5 path: ff.env` の順。
+  4. validate-config.sh の stdout を決める。
+     - --feature-flag は検証 OK のときだけ出す今の規則のまま(出さない)。
+     - --rapid-crosscheck / --final-crosscheck / --housekeep は (i) または (ii) で止まったときも固定順の行を出す。値から決まる行(command_path / has_job_id_placeholder / retention_days)は `-`、status=invalid、violations=<その段で出した error 行の数(hint 行は数えない)>。
+       has_job_id_placeholder の値は true|false|- になる。
+       --housekeep の「終了コード 0 と 2 の検証結果で stdout を出す」という今の規則に揃える。
+  5. 実行時の読み手(facade.sh / background-rerun.sh / 各 worker / hang-detector.sh / housekeep.sh / 運用系コマンド)は、(ii) の error 行を validate-config.sh と同じ順・同じ件数で出し、
+     そのファイルの値に依存する処理を行わず、終了コード 2 で終える。validate-config.sh の検査と、各コマンドが設定を読む時点の結果を一致させる。
+     - 全コマンド共通の終了コード 2(conventions.exit_codes)に「読んだ設定ファイルの入力の守備範囲の違反(invalid line・同じキーの重複を含む)」を加え、各コマンドの condition に列挙が無くても 2 とする。
+     - abort-final-crosscheck.sh は final-crosscheck.env の入力の守備範囲の違反を 2 とし、重複で値を使わないことを『FINAL_DB_CONN_REF 欠落(管理 DB なし = 3)』とは扱わない。管理 DB なしの判定は入力の守備範囲の検査を通った後に行う。
+  6. 独自に書いていた箇所を揃える。
+     - CLI 契約: shared_rules.compare_command_argv.split の再掲、shared_rules.housekeep_rules.db_requirement(final-crosscheck.env の FINAL_DB_CONN_REF 以外のキーの重複も設定エラー)、
+       housekeep.sh の stderr、validate-config.sh の stdout・stderr・終了コード 2 の条件、config_input_rules.rules の表(同じキーの重複(env)の行を追加)、
+       config_files の feature-flag.env の validation_rules、conventions.exit_codes の 2、conventions.output_format.stderr(入力の守備範囲の違反は該当行ごとに 1 行の例外)、abort-final-crosscheck.sh の 2 と 3。
+     - 出力規約(ui-design.md)の入力の守備範囲の定型文、終了コード規約の 2、エラーは 1 回だけの規則の例外。
+     - UC「現在状態を確認して停止確認に応答する」(spec.md の処理フロー / tier-ops.md / _api-summary.yaml): abort-final-crosscheck の final-crosscheck.env の入力の守備範囲の違反を 2 とし、管理 DB なし(3)より先に判定する。
+     - UC「保持日数を過ぎた終了済みの実行と確報比較依頼を判定する」の spec.md: 確報クロスチェックを使う設置の判定は入力の守備範囲の検査を通った後に行う。
+     - UC「feature flag を設定する」(spec.md の構成表と処理フロー / tier-facade.md / _api-summary.yaml)、UC「クロスチェックのジョブマップと比較定義を定義する」(spec.md / tier-facade.md / _api-summary.yaml)、
+       UC「保持日数を過ぎた終了済みの実行と確報比較依頼を判定する」(tier-facade.md / tier-ops.md / _api-summary.yaml)、
+       UC「比較ツールで日次全量比較を実行して結果を保存する」(spec.md / tier-final-crosscheck.md / _api-summary.yaml)、設定ファイルを読む各 UC の tier の「設定ファイルの読み込み」の参照文。
+  7. BDD を加える(ティアの BDD だけ。E2E の受け入れ条件の数は変えない)。
+     - UC「feature flag を設定する」の tier-facade.md: 値が同じ・キーの前後の空白・値が空・未知キー・3 行の重複・invalid line との同時発生の例と、大文字小文字の違うキーを重複にしない例。
+     - UC「クロスチェックのジョブマップと比較定義を定義する」の tier-facade.md: RAPID_COMPARE_COMMAND が 2 行ある例(stdout の `-` と violations=1 を含む)。
+     - UC「保持日数を過ぎた終了済みの実行と確報比較依頼を判定する」の tier-facade.md: HOUSEKEEP_RETENTION_DAYS が同じ値で 2 行ある例。
+       UC「現在状態を確認して停止確認に応答する」の tier-ops.md: FINAL_DB_CONN_REF が 2 行ある final-crosscheck.env で abort-final-crosscheck.sh が 3 ではなく 2 を返す例。
+       同じ UC(ハウスキープ)の tier-ops.md: 実行時の読み手の例として、housekeep.sh が使わない final-crosscheck.env のキー(FINAL_POLL_INTERVAL_SEC)の重複で何も削除せず 2 で終える例。
+  8. 実装は変えない(実装を契約に合わせる対象として記録する)。実装との差分:
+     - feature flag 設定の読み込み(facade の repository の feature_flag_config.sh)は、同じキーが重複したら後の行の値を使い、エラーにしない。新しい契約では duplicate key で終了コード 2。
+       また `=` の無い行をキーだけ・値が空の行として読み、キーごとの検査に進める。この差分は spec-decision-023 に記録済みで、本決定の段の規則((ii) で止めて (iii) を行わない)とも合わない。
+     - 速報クロスチェック設定の読み込み(同 rapid_crosscheck_env.sh)は、同じキーが重複したら後の行の値を使う。新しい契約では duplicate key で終了コード 2。
+       同じ検証(facade の usecase の validate_rapid_crosscheck.sh)は、バイト・改行の違反と invalid line で止めたときに stdout を出さない。新しい契約では固定順の行を出す(command_path: - / has_job_id_placeholder=- / status=invalid / violations=N)。
+       バイト・改行の違反で止める扱いと、invalid line を全件出してキーごとの検査に進まない扱いは、新しい契約どおり。
+     - hang-detector.env / final-crosscheck.env / housekeep.env の読み込みは未実装のため、差分は無い。実装時に本決定の規則で作る。
+consequences:
+  positive:
+    - "同じキーを 2 回書いた設定が、どの env 設定ファイル・どのコマンドでも同じ結果(設定エラー)になり、書き間違いに気付ける"
+    - "重複した全行が 1 行の error で分かり、CSV の重複 job_id と同じ読み方で直せる"
+    - "invalid line と他のエラーが同時に起きたときの報告の順と件数が決まり、検証と実行時で結果が揃う"
+  negative:
+    - "feature flag 設定と速報クロスチェック設定の読み込みは、実装を契約に合わせるまで契約と一致しない(実装の変更が必要)"
+    - "後の行で上書きする書き方(既定値を先に書き、後で上書きする)に依存した設定は、エラーになるため直す必要がある"
+    - "invalid line や重複があると、キーごとの違反(必須キーの欠落など)は直した後の再検証まで分からない"
+alternatives_considered:
+  - name: "後の行の値を使う(今の実装の扱いを契約にする)"
+    reason_rejected: "書き間違いに気付けない。利用者は設定エラーとして拒否すると決めた"
+  - name: "先の行の値を使い、重複は warn にする"
+    reason_rejected: "どちらの値で動くかが読み手に分かりにくく、warn は既存の規則(未知キー・認証情報らしい値など)にだけ使う契約の原則に反する"
+  - name: "重複したキーだけを使わず、他のキーの検査は続ける"
+    reason_rejected: "必須キーの欠落など重複キーに依存する検査の結果が決まらない。invalid line と同じ段で止める方が、検証と実行時の結果を揃えやすい"

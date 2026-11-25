@@ -1,0 +1,42 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "specification"
+artifact_id: "spec-decision-024"
+title: "管理 DB に接続しないハウスキープの振る舞いを、要求の受け入れ基準どおり UC の BDD と判定表に揃える(CLI 契約の振る舞いは変えない)"
+status: "approved"
+generated_at: "2026-11-03T08:50:00Z"
+context: |
+  - CLI 契約の housekeep.sh は、2026-11-01 の仕様の更新で、RAPID_CROSSCHECK_MODE=off で HOUSEKEEP_DB_CONN_REF が無い・空のときの振る舞いを定めていた
+    (起動のたびに `warn: management db is not configured ...` を 1 行出して管理 DB に接続しない、execution-spec.json の rapid_crosscheck_mode が off でない実行を
+    `warn: run kept rapid crosscheck mode ...` を出して単位ごと残す。shared_rules.housekeep_rules.member_source)。
+  - 2026-11-03 に要求が、この振る舞いを仕様文と受け入れ基準に加えた(SPEC-014-08 の新設、SPEC-014-03 / SPEC-014-04 の受け入れ基準の条件の追加)。
+    アーキテクチャ設計(削除判定と削除順序、ハウスキープ設定の接続参照名の省略可能、ハウスキープからの feature flag の読み取り)とインフラ設計も同じ趣旨に追従済み。
+  - UC「保持日数を過ぎた終了済みの実行と確報比較依頼を判定する」は、契約の rapid crosscheck mode の規則を処理の順序に書いていたが、成果物だけの判定表・判定の継続の warn の表・BDD に持っていなかった。
+    成果物だけで消える BDD は、execution-spec.json の rapid_crosscheck_mode を書いておらず、管理 DB に接続しない設定では契約の規則と食い違い得た。
+  - 契約は rapid_crosscheck_mode が無い・foreground / background / off のどれでもない execution-spec.json の扱いを書いておらず、member_source の「off でない」と stderr 一覧の mode=<foreground|background> の範囲が字面で食い違っていた。
+decision: |
+  1. CLI 契約の housekeep.sh の振る舞い(member_source の規則、warn の文言、HOUSEKEEP_DB_CONN_REF が無いときの手順 2)は変えない(端の扱いの書き足しは 5)。要求・アーキテクチャ設計・インフラ設計と表現と条件が一致することを確認した。
+  2. 判定 UC の spec.md: 分岐 B-08(管理 DB に接続せず rapid_crosscheck_mode が off でない実行は warn を出して残す)をシーケンスと分岐条件の表に加え、管理 DB に接続しないときはこの規則がほかの分岐より優先すると書く。
+     要求 SPEC-014-08 の受け入れ基準 4 件を BDD にする(確報比較依頼と管理 DB の行を消さない warn 1 行 / off でない実行を残す / off の期間の実行を消す / warn があっても終了コード 0)。
+     確報比較依頼の warn のシナリオは SPEC-014-04 から SPEC-014-08 へ付け替える。
+  3. SPEC-014-03 / SPEC-014-04 の受け入れ基準に追加された条件を BDD に反映する: 成果物だけで判定するシナリオに「execution-spec.json の rapid_crosscheck_mode が off」を書き、
+     確報比較依頼を消すシナリオに「管理 DB に接続する設定」を書く。SPEC-014-03 の成果物だけで消すシナリオは、管理 DB に接続する設定(行が無い実行)で書き、管理 DB に接続しない設定は SPEC-014-08 のシナリオで書く。
+  4. 判定 UC の tier-ops.md: 成果物だけの判定表に順 3(管理 DB に接続しないとき rapid_crosscheck_mode が foreground / background なら判定できない。終了ファイルは見ない)を加え、
+     判定の継続の warn の表に `warn: run kept rapid crosscheck mode run_id=<run_id> mode=<foreground|background>` を加える。管理 DB に接続するときは rapid_crosscheck_mode を判定に使わない(契約の member_source のとおり)。
+  5. 契約に無かった端の扱いを決め、契約 shared_rules.housekeep_rules.member_source と housekeep.sh の stderr 一覧に書き足す(定義済みの場合の振る舞いは変えない):
+     「off でない」は foreground / background を指す。管理 DB に接続しないとき、rapid_crosscheck_mode が無い・foreground / background / off のどれでもない execution-spec.json は、
+     既存の `warn: run kept execution-spec invalid ...` を出して判定できないものとして残す(新しい文言は作らない)。この判定は execution-spec.json を読めた後、slot のディレクトリと終了ファイルの確認より先に行う。
+     管理 DB に接続するときはこのキーを見ない。契約の stderr 一覧が mode=<foreground|background> に限っていたことと、member_source の「off でない」の字面の食い違いを解消する。
+  6. 削除 UC の tier-ops.md の、管理 DB に接続しない設定で成果物を削除するシナリオに「execution-spec.json の rapid_crosscheck_mode が off」を書く。
+  7. USDM の受け入れ条件の対応(spec-event.yaml の use_cases[].usdm、usdm-acceptance-matrix.md、UC 依存表)を揃える。
+consequences:
+  positive:
+    - "要求の受け入れ基準から作る ATDD のテストが、UC の BDD と判定表から推測なしに 1 つに決まる"
+    - "管理 DB に接続しない設定で、off 以外の期間に作られた実行を成果物だけで消す実装を、受け入れテストで止められる"
+  negative:
+    - "rapid_crosscheck_mode が無い古い execution-spec.json は、管理 DB に接続しない設定では消えずに残る(warn で知らせる)"
+alternatives_considered:
+  - name: "rapid_crosscheck_mode が無い execution-spec.json を off とみなして成果物で判定する"
+    reason_rejected: "off 以外の期間に作られた実行を消すおそれがあり、要求 SPEC-014-08 の保守的な趣旨(判定できないものは残す)に反する"
+  - name: "rapid_crosscheck_mode が無い場合も `warn: run kept rapid crosscheck mode` を mode=- で出す"
+    reason_rejected: "契約の warn は mode=<foreground|background> と定めている。キーの欠落は execution-spec.json の形式の問題で、既存の invalid の warn が意味に合う"

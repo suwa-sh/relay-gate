@@ -1,0 +1,93 @@
+stage: "S9"
+step: "review_generated"
+uc_id: "7c41c7cd"
+manifest_sha256: "90b95c2c7f67feac241a56c2bb03191b9150a515f82b517c61c7d324e3bdefa1"
+manifest_projection: v2
+result: pass
+tier_impl_attempt: 4
+review_round: 2
+review_round_note: "2 回目の確認の資料。1 回目の回答(review/review-notes.md)を反映し、問いを 2 つに絞った。実装は 1 回目から変わっていない"
+review_html: "docs/impl/latest/7c41c7cd/review/index.html"
+review_html_note: "gitignore 済みの補助資料。HTML と画像の SHA は記録しない"
+feedback_request_count: 3
+open_blocker_count: 0
+decision_summary:
+  approval_questions: 0
+  selection_questions: 1
+  assumption_questions: 1
+  recommended_choices: 2
+  questions:
+    - label: "仕様への要望"
+      question: "3 件(一時ファイルの名前の定めを直す / 自作の runner が共通ライブラリを呼ぶときの呼び方を定める / 読めないジョブマップの報告の文言をそろえる)をこの内容で出してよいか"
+      choices: ["3 件を出す。3 件目は案 A", "3 件目を案 B に変えて出す", "3 件目を案 C に変えて出す", "3 件目を外して 2 件で出す"]
+      recommended: "3 件を出す。3 件目は案 A(共通のエラー表示の決まりにそろえる)"
+      request_ids: ["CR-7c41c7cd-001", "CR-7c41c7cd-002", "CR-7c41c7cd-003"]
+      on_other_choice: "下書きが変わるため、S8 の refresh と S9 の再生成・再レビューが要る"
+    - label: "一時ファイルへの複製"
+      question: "前提「runner もジョブマップを一時ファイルに複製してから読む」を、質問への回答を読んだうえで承認のままにするか"
+      choices: ["承認のまま", "却下して実装を直す(1 回で読み切る形に変える)"]
+      recommended: "承認のまま"
+      assumption_ids: ["A-022"]
+      on_other_choice: "implementation_change の却下。実装と独立検証をもう 1 回やり直す(5 回目。上限の再延長が要る)"
+  decided_in_round_1:
+    source: "docs/impl/latest/7c41c7cd/review/review-notes.md"
+    implementation_approved: true
+    assumptions_approved: ["A-006", "A-012", "A-022", "A-029", "V-001"]
+    optional_assumptions_auto_confirmed: 23
+    atdd_assignment_confirmed: ["SPEC-004-01-3", "SPEC-004-01-4", "SPEC-004-01-5", "SPEC-004-01-6", "SPEC-004-01-7", "SPEC-004-01-8"]
+    feedback: "3 件を出す。取り込みの依頼は仕様の反映後でよい"
+feedback_review_evidence:
+  feedback_id: "20261123_175902_impl_feedback_7c41c7cd"
+  draft_sha256: "adf35e772216ab8f53bdf3cf2159615fd435155cd2a6c0a4b2ff848dfe1cf5db"
+  request_count: 3
+implementation_review_evidence:
+  gate_result: "6/6 pass"
+  gate_result_note: "format / lint / tdd / bdd_tier(S4 attempt 4。S5 も再実行して pass)と S6 uc-bdd、S7 atdd。記録の転記で、S9 では再実行していない。S6 は 99 件中 98 pass・1 skipped、S7 は 13 件中 12 pass・1 skipped"
+  open_blocker_count: 0
+  open_major_count: 4
+  open_major_note: "major 4 件はすべて、仕様に記載が無い前提(security 1 / persistence 3)の確認記録。A-006 / A-012 / A-022 / A-029 と同じもの(1 回目で承認済み)"
+  assumption_evidence_sha256: "a8d72dc4d6a93f37af8f43f64f7d82eb8ac706d59f88483eca629cd94074fab9"
+  assumption_evidence_source: "validateAssumptions.js evidence tier-facade(attempt 4 の S5 done の assumptions_sha256 と assumption_verdicts_sha256)。2 回目の生成時に取り直し、1 回目と同じ値になることを確かめた"
+feedback_draft_check:
+  draft_path: "docs/impl/latest/7c41c7cd/feedback/draft.md"
+  sha256_source: "S9 で実ファイルから shasum を取り直した値"
+  sha256_matches_s8_done: true
+  request_headings_in_draft: 3
+  note: "下書きの全文は HTML の付録 3 に、ファイルの内容をそのまま載せた"
+validators:
+  - name: "human-html-review validate.py"
+    result: "VALID"
+    errors: 0
+    warnings: 0
+  - name: "dist-impl-review validateReviewHtml.js"
+    result: "pass"
+    exit_code: 0
+validator_notes:
+  - "validateReviewHtml.js が求める記号の回答書式(機能=A / 相互運用=A / 監査=A)は、本文ではなく付録 4 に、問いとの対応を添えて置いた。本文の回答文は利用者の指定どおり文章にした"
+  - "前提の番号と要望の管理番号は本文に出さず、付録だけに置いた(利用者の指定)"
+  - "実装の構成・処理フロー・データフロー・動かし方・テスト・開示事項は、1 回目の資料と同じ内容を回答欄の後ろに残した"
+  - "案 A とあわせて決める 2 点の初期値(同じ位置に出す / 読めないと報告する)は、下書きには無いこの資料の提案。本文に『推測』のラベルを付け、決めるのは仕様の工程と書いた"
+  - "次に実行するコマンドの公開先のパスは、公開の決まり(feedback-requests/{feedback_id}.md)から導いた見込み。本文に『推測』のラベルを付けた"
+visual_check:
+  method: "ローカルの Chrome を headless で起動して撮影した。操作は、検査用の複製にだけ確認用のスクリプトを足して確かめた(成果物の HTML には足していない)"
+  confirmed:
+    - "1440px の最初の画面が「ユーザーにお願いしたいこと」になり、2 回目の確認であることと 1 回目で決まったことの表が続く(暗い配色のスクリーンショットを目で確かめた)"
+    - "390px 幅(幅 390 の枠に入れて表示)で、問い 1 の節のスクリーンショットを目で確かめた"
+    - "新しい図 2 枚(現在地、読み方の 2 案)を 1440px のスクリーンショットで目で確かめた(線の重なり・斜め線・箱の裏を通る線が無い)"
+    - "390px と 1440px で、ページ全体が横スクロールしない(scrollWidth が画面幅と同じ。はみ出す要素は表と図の個別スクロールの中だけ)"
+    - "初期状態の回答文が、推奨の 2 行になっている"
+    - "選択を変えると回答文が変わる(問い 1 の 2 件案、問い 2 の却下、補足欄)"
+  not_confirmed:
+    - "コピーボタンを押した結果(クリップボードの中身)は確かめていない。ボタンが有効になることだけ確かめた"
+    - "明るい配色では見ていない(撮影は暗い配色だけ)"
+    - "1 回目から再利用した図 4 枚は、2 回目の画像では見直していない(1 回目に 1440px の画像で確かめた。中身は同じ)"
+    - "実機のスマートフォン、Chrome 以外のブラウザでは見ていない"
+  showme_published: false
+  showme_note: "プレビューの提示はオーケストレータが行うため、公開していない"
+facts_not_reverified:
+  - "テストの件数と結果は記録からの転記。S9 では流し直していない"
+  - "テストは macOS だけで実行した記録である。Linux では一度も実行していない"
+  - "複製する理由(検証コマンドの読み込み処理がファイルを複数回読む)と、3 つの読み手の文言は、確認の記録と下書きからの転記。S9 ではコードを読んで確かめていない"
+  - "複製をやめる案が検証コマンドとの共用を保てるかは未確認(資料にも未確認と書いた)"
+completed_at: "2026-11-23"
+completed_by: "dist-impl-review@0.15.0"

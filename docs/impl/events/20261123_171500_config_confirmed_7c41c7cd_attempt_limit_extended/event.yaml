@@ -1,0 +1,15 @@
+event_id: 20261123_171500_config_confirmed_7c41c7cd_attempt_limit_extended
+type: config_confirmed
+uc_id: 7c41c7cd
+stage: S6
+payload:
+  confirmed_by: user
+  confirmed_via: 'chat reply on 2026-11-23: extend the implementation retry to a 4th attempt and fix the temporary file name defect'
+  decision: continue_beyond_attempt_limit
+  scope: 'attempt 4 only. fix how the job map snapshot names its temporary file (job_map_repo_create_snapshot); nothing else'
+  reason: 'the UC BDD run after attempt 3 found that the blue and green runners collide on the snapshot work file on macOS, because BSD mktemp does not replace an X that is not at the end of the template. one existing scenario fails about half of the time'
+  items:
+  - key: status[7c41c7cd].attempt_limit
+    before: 3
+    after: 4
+created_at: '2026-11-23T17:15:00+09:00'

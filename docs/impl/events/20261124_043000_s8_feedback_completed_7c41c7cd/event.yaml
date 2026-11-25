@@ -1,0 +1,14 @@
+event_id: 20261124_043000_s8_feedback_completed_7c41c7cd
+type: stage_completed
+uc_id: 7c41c7cd
+stage: S8
+payload:
+  result: pass
+  mode: initial
+  status: no_requests
+  manifest_sha256: 8dd410fbf84a6012b7868a016f42fec481d4e9266e1f4ed66bd66b5bf3f8cf87
+  manifest_projection: v2
+  requests: 0
+  blockers: 0
+  learnings: 3
+created_at: '2026-11-24T04:30:00+09:00'

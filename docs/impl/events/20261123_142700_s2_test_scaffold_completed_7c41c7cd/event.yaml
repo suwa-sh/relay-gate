@@ -1,0 +1,13 @@
+event_id: 20261123_142700_s2_test_scaffold_completed_7c41c7cd
+type: stage_completed
+uc_id: 7c41c7cd
+stage: S2
+payload:
+  result: pass
+  done: docs/impl/latest/7c41c7cd/stages/S2_test-scaffold.done.yaml
+  manifest_sha256: 3be8e5d2a120b16dcd7e1ff7ca52d0176819084e8bcea554f474548646aff297
+  manifest_projection: v2
+  red_baseline: pass
+  red_total: 46
+  decision_taken: 'how-to-observe-resolution-result: the recommended option is taken by the orchestrator (steps and unit tests source the shared library and call its functions; the implementer records the function names as assumptions). shown to the user in the final review'
+created_at: '2026-11-23T14:27:00+09:00'

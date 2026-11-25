@@ -46,7 +46,7 @@ x_cli_commands:
       - code: "exitcode.txt の値"
         meaning: "解決成功時は後続フェーズ(実装実行)の終了コードと一致する"
       - code: 2
-        meaning: "job_id 未定義 / ジョブマップなし / ヘッダーの必須列欠落・host と user の片方だけ / CSV クォート不正 / fixed_params 不正 / hang_detect_limit_minutes 不正 / host と user の片方だけ空 / runner IF 必須オプション欠落(error: option required option=--xxx)。exitcode.txt=2"
+        meaning: "job_id 未定義 / ジョブマップなし(error: job map not found ...)・読めない(通常のファイルでないものを含む。error: config file is not readable path: ...) / ヘッダーの必須列欠落・host と user の片方だけ / CSV クォート不正 / fixed_params 不正 / hang_detect_limit_minutes 不正 / host と user の片方だけ空 / runner IF 必須オプション欠落(error: option required option=--xxx)。exitcode.txt=2"
       - code: 6
         meaning: "成果物ディレクトリへの書き込み失敗"
 async_events: []

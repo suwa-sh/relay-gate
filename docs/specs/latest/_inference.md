@@ -674,3 +674,20 @@ UI 画面が無いため可視化は「出力の集計・表形式」に限る�
 - 実装との差分: 実装済みの feature flag の検証コマンドは 9 キー前提で、任意の 2 キーを未知キーとして扱い、固定の名前のジョブマップだけを検査する(spec-decision-038 の 9)。ジョブマップ単体の検証と比較ツール起動コマンドの検証は契約が変わらない
 - 課題一覧: DIST-032(facade.sh / background-rerun.sh の起動時検証で出す error 行)を決定済みとして閉じた
 - Step6.5 反証レビュー: `_review/round-*.yaml` と `_review/implementation-readiness.md`
+
+## 差分更新履歴(event 20261123_201000_feedback_impl_feedback_7c41c7cd)
+
+- trigger_event: `rdra:20261116_013000_feedback_standard_runner_job_map_location`, `arch:20261116_015000_feedback_standard_runner_job_map_location`(上流は今回どれも変わらない。spec だけの差分更新)
+- design_available: false(引数で指定)。UC ツリー(34 UC / 8 BUC / 6 業務)とティア構成は不変。RDRA の要素の追加なし(網羅率の分母・分子は変わらない)
+- 反映した決定(利用者決定 2026-11-23。3 件とも案 A。確認推奨項目にせず決めた):
+
+| 決定 | 仕様で決めたこと | 正本 | 判断記録 |
+|---|---|---|---|
+| 入力の複製の作業名 | テンプレート `relay-gate-<プロセスの番号>-XXXXXX.part` を mktemp に渡す。番号は BASHPID をコマンド置換の外で取る。`.part` を外した最終名へ rename。1 つのプロセスが同時に持つ複製は 1 つまで。予測可能性の代償を記録 | CLI 契約 `config_input_rules.snapshot.work_name`(新設)と `runtime_readers` | spec-decision-041 |
+| 共通ライブラリ `lib/runner-resolve.sh` の呼び方 | 5 関数(引数の違反の報告・解決の入口・補助 2 つ・二重起動の判定)の名前・引数・結果の受け取り方・値が無い項目・知らせ方・環境変数・source の性質。後方互換を保つ対象 | CLI 契約 runner IF の `standard_runner.runner_resolve_library`(新設) | spec-decision-042 |
+| 読めないジョブマップの報告 | 無い → `job map not found`、あるが読めない・通常のファイルでない → `config file is not readable path: <決めた場所>`。3 つの読み手でそろえる。読めない行は `job map not found` と同じ位置(blue → green) | CLI 契約 `config_files.feature-flag.env.job_map_location.presence_report`(新設)と `error_order` の 6 | spec-decision-043 |
+
+- 影響した UC: ジョブマップで JOB_ID から実行先を解決する(spec / tier-facade / _api-summary)、feature flag を設定する(spec / tier-facade / _api-summary)、slot runner の実体スクリプトを割り当てる(tier-facade / _api-summary)、slot ごとのジョブマップを定義する(tier-facade)。横断: CLI 契約、ui-design.md
+- 方針資料との照合: 3 件とも元の方針資料(しくみ・利用イメージ)に記載が無く、食い違いは無い
+- 実装との差分: feature flag の検証の「読めない」の判定と文言だけが変わる(spec-decision-043 の 7)。作業名と共通ライブラリの呼び方は、いまの実装の形を仕様にした
+- Step6.5 反証レビュー: `_review/round-*.yaml` と `_review/implementation-readiness.md`

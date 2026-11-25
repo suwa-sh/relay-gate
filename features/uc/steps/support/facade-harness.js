@@ -6,9 +6,12 @@
 // I/O 境界は実体で検証する:
 //   - facade.sh(facade/bin/facade.sh)を実プロセスとして起動する
 //   - runner は Scenario の一時ディレクトリ(World の root)に置く実スクリプトのテスト用 runner。
-//     暫定注入・契約確定後に削除: started-at.txt / exitcode.txt を書く runner の中身は後続 UC の担当で、標準の slot runner は
-//     --help 以外は仮の応答のため、テスト用 runner が代わりに書く
-//     (根拠: docs/impl/latest/09730858/issues/20261118_091109_cross-uc-scenarios.md の 1〜3)
+//     暫定注入・契約確定後に削除: 実装を実行して started-at.txt / exitcode.txt を書く runner の中身は後続 UC の担当で、
+//     標準の slot runner が今できるのはジョブマップの解決まで(解決に失敗したときだけ成果物を揃える。解決に成功した後は、
+//     成果物を書かずに仮の終了コードで終わる)。このため、成功した実行の成果物が要る Scenario はテスト用 runner が代わりに書く
+//     (根拠: docs/impl/latest/09730858/issues/20261118_091109_cross-uc-scenarios.md の 1〜3、
+//      docs/impl/latest/7c41c7cd/stages/attempt-5/S4_tier-impl.tier-facade.assumptions.yaml の前提 A-004)
+//   - 標準の slot runner そのものを起動する Scenario は、実行ログ(standard-runner.sh.log)の解決の行で判定する
 //   - 管理 DB は initdb + pg_ctl の一時 PostgreSQL(facade/features/steps/support/temp-postgres.js を再利用)。常設のサービスに接続しない
 //   - 暫定注入・契約確定後に削除: 参照名(RAPID_DB_CONN_REF=mgmt-db)を一時の pg_service.conf(環境変数 PGSERVICEFILE)で
 //     一時 PostgreSQL に結び付ける。参照名の解決方法は仕様に無く、実装者の前提 A-001
@@ -363,6 +366,17 @@ function executionLog(world) {
   return fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
 }
 
+// 標準の slot runner の実行ログの行のうち、指定した run_id のものの `{LEVEL} {message}`
+// (行形式 `{script} {run_id} {ローカル日時} {LEVEL} {message}`。置き場は facade と同じ RELAY_GATE_LOG_DIR)
+function standardRunnerLogEntries(world, runId) {
+  const file = path.join(world.logDir, 'standard-runner.sh.log');
+  const prefix = `standard-runner.sh ${runId} `;
+  return (fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '')
+    .split('\n')
+    .filter((line) => line.startsWith(prefix))
+    .map((line) => line.slice(prefix.length).replace(/^\S+ /, ''));
+}
+
 // 実行ログの `slot started` の行の位置(行の pid は、その slot のテスト用 runner が記録した自分の PID と同じ)
 function slotStartedIndex(world, slot, mode) {
   const pid = runnerPid(runnerOf(world, slot));
@@ -453,6 +467,7 @@ module.exports = {
   assertExit,
   assertStderrIncludes,
   executionLog,
+  standardRunnerLogEntries,
   assertStartedInOrder,
   assertWaitedOnly,
   cleanup,

@@ -1,0 +1,30 @@
+Spec 差分更新(design 無しモード): 2026-11-23 の利用者決定 3 件(3 件とも案 A)を仕様へ反映した(dist-pipeline feedback mode。spec 単独)。上流(usdm / rdra / nfr / arch / infra)は今回どれも変わらない。
+
+feedback_request_id: 20261123_175902_impl_feedback_7c41c7cd
+input_sha256: adf35e772216ab8f53bdf3cf2159615fd435155cd2a6c0a4b2ff848dfe1cf5db
+request_ids: CR-7c41c7cd-001, CR-7c41c7cd-002, CR-7c41c7cd-003
+direct_work_unit_ids: CR-7c41c7cd-001#1, CR-7c41c7cd-002#1, CR-7c41c7cd-003#1
+causal_work_unit_ids: CR-7c41c7cd-001#1, CR-7c41c7cd-002#1, CR-7c41c7cd-003#1
+packet: docs/pipeline/feedback-runs/20261123_175902_impl_feedback_7c41c7cd/stage-packets/spec.md
+trigger_event: rdra:20261116_013000_feedback_standard_runner_job_map_location, arch:20261116_015000_feedback_standard_runner_job_map_location
+previous_event_ref: 20261116_021000_feedback_standard_runner_job_map_location
+
+CR-7c41c7cd-001#1(spec 直接所有): 入力の複製の作業名。
+- 作業名はテンプレート relay-gate-<プロセスの番号>-XXXXXX.part を mktemp に渡して作る。名前の確保とファイルの作成は mktemp の 1 回の操作のまま。
+- プロセスの番号は BASHPID。コマンド置換の中で取らず、先に変数へ取り出す(例: pid=$BASHPID の後に work=$(mktemp "${TMPDIR:-/tmp}/relay-gate-${pid}-XXXXXX.part"))。
+- X を置き換える mktemp では X の部分も加わり、置き換えない mktemp では名前がプロセスの番号だけで決まる。作業名は移し替えずに使い、.part を外した最終名へ rename する(最終名を先に確保しない定めと両立)。
+- 1 つのプロセスが同時に持つ入力の複製は 1 つまで(作る → 読む → 消す)。複製を作る実行時の読み手(slot runner など)にも同じ規則を適用する。
+- 予測可能性の代償(影響は複製の失敗まで。内容は守られる)を判断記録に残した。X の並びが末尾に無くプロセスの番号も含まないテンプレートの例は、仕様から消した。
+- 正本: CLI 契約 config_input_rules.snapshot.work_name。判断記録: decisions/spec-decision-041。
+
+CR-7c41c7cd-002#1(spec 直接所有): 共通ライブラリ lib/runner-resolve.sh の呼び方。
+- 自作の runner へ約束する入口として 5 関数(runner_resolve_reject_invocation / resolve_execution_target / parse_csv_row / build_argument_list / runner_resolve_guard_existing_result)の名前・引数・結果の受け取り方・値が無い項目の表し方・解決できなかったときの知らせ方(戻り値と RUNNER_RESOLVE_EXIT_CODE、RUNNER_RESOLVE_STATUS_NOT_RESOLVED=1)・呼ぶ前に要る環境変数(RELAY_GATE_CONFIG_DIR / RELAY_GATE_ARTIFACT_ROOT / RELAY_GATE_LOG_DIR)・source した側の set / trap を変えず何も出力しない性質を書いた。内容は実装の説明欄の原文に合わせた。
+- 約束した呼び方は後方互換を保つ対象。残りの共通ライブラリ 3 ファイルは対象外。
+- 正本: CLI 契約 runner IF の standard_runner.runner_resolve_library。UC「ジョブマップで JOB_ID から実行先を解決する」の spec.md / tier-facade.md から参照し、完了条件のシナリオを呼び方にそろえた。判断記録: decisions/spec-decision-042。
+
+CR-7c41c7cd-003#1(spec 直接所有): 読めないジョブマップの報告の文言。
+- 無い → error: job map not found slot=<slot> map=<決めた場所>(変えない)。あるが読めない・通常のファイルでない(ディレクトリなど) → error: config file is not readable path: <決めた場所>。feature flag の検証・ジョブマップの検証・slot runner の 3 つの読み手でそろえた。
+- 読めない行の位置は job map not found と同じ(error_order の 6。blue → green)。
+- 正本: CLI 契約 config_files.feature-flag.env.job_map_location.presence_report。UC「feature flag を設定する」「slot runner の実体スクリプトを割り当てる」「ジョブマップで JOB_ID から実行先を解決する」「slot ごとのジョブマップを定義する」の記述を直し、読めない場合の BDD を足した(既存のシナリオの期待値は変えない)。ui-design.md には例外が無いことが読める 1 文を足した。判断記録: decisions/spec-decision-043。
+
+元の方針資料(tmp/RelayGateのしくみ.md / tmp/RelayGateの利用イメージ.md)との照合: 3 件とも方針資料に記載が無く(mktemp・共通ライブラリ・読めない場合の文言のどれも書かれていない)、食い違いは無い。

@@ -1,0 +1,25 @@
+event_id: 20261124_040000_s5_verify_completed_7c41c7cd_tier-facade_attempt5
+type: stage_completed
+uc_id: 7c41c7cd
+stage: S5
+attempt: 5
+tier: tier-facade
+payload:
+  result: pass
+  manifest_sha256: 8dd410fbf84a6012b7868a016f42fec481d4e9266e1f4ed66bd66b5bf3f8cf87
+  manifest_projection: v2
+  verifier_model: gpt-6-astra
+  open_blockers: 0
+  open_majors: 5
+  assumptions_sha256: 3194697c1d8300481f2c61dcd20dd5203f5f6de303ec3d7793923425a0161dff
+  assumption_verdicts_sha256: ba9302a68de943be2cb6d262afc1a820c5c161696212d9c1f9bcf31b65f56864
+  assumption_verdicts_summary:
+    consistent: 0
+    spec_absent: 23
+    contradicts: 0
+    unlisted: 0
+  requires_answer: 5
+  note: the attempt-4 blocker (Runner Result final name pre-placed as a directory)
+    is confirmed fixed. the 5 majors are spec_absent assumptions to answer at S9 (A-006
+    / A-012 / A-022 / A-029 / A-030)
+created_at: '2026-11-24T04:00:00+09:00'

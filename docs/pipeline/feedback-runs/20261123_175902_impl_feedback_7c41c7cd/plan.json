@@ -1,0 +1,345 @@
+{
+  "schema_version": "distillery.feedback-plan/v1",
+  "feedback_request_id": "20261123_175902_impl_feedback_7c41c7cd",
+  "input_sha256": "adf35e772216ab8f53bdf3cf2159615fd435155cd2a6c0a4b2ff848dfe1cf5db",
+  "ambiguity_policy": "interactive",
+  "routing_basis": {
+    "ownership_catalog_version": "1.0.0",
+    "ownership_catalog_sha256": "801750c2abe99945a3de9387b82339b2bc96ccb2da564f9923cc0e9b76a2bd39",
+    "routing_policy_version": "1.1.0",
+    "routing_policy_sha256": "3873275bf4adb3d9d7b7c41c22c9463d054a3614df7bbcab7514f0c1e23e166e",
+    "prompt_schema_sha256": "bf7c7f34d7a2fc5976ccd2589a454172a4630e1448c509966b620f88029732c4",
+    "stage_packet_renderer_version": "1",
+    "skipped_stages": [
+      "design_system",
+      "spec_stories"
+    ],
+    "repository_head": "65f62b0dbbd80e46f1dce820b8c7b31ed53a74a2",
+    "latest_domain_event_ids": {
+      "requirements": {
+        "rdra/events": "20261116_013000_feedback_standard_runner_job_map_location",
+        "usdm/events": "20261116_013000_feedback_standard_runner_job_map_location"
+      },
+      "quality_attributes": {
+        "nfr/events": "20261116_014000_feedback_standard_runner_job_map_location"
+      },
+      "architecture": {
+        "arch/events": "20261116_015000_feedback_standard_runner_job_map_location"
+      },
+      "infrastructure": {
+        "infra/events": "20261116_020000_feedback_standard_runner_job_map_location"
+      },
+      "design_system": {
+        "design/events": null
+      },
+      "spec": {
+        "specs/events": "20261116_021000_feedback_standard_runner_job_map_location"
+      },
+      "spec_stories": {
+        "design/events": null
+      }
+    },
+    "domain_event_root_snapshots": {
+      "rdra/events": {
+        "head_event_id": "20261116_013000_feedback_standard_runner_job_map_location",
+        "head_event_sha256": "758385a692477c72fdb910828f0f3328da65ea659a5fa76f707933c162707dec",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency",
+          "20260908_011000_feedback_slot_status_wording",
+          "20260921_084000_feedback_impl_feedback_eff24f55",
+          "20261010_200000_feedback_impl_feedback_dcd8234d",
+          "20261101_101000_feedback_impl_feedback_dcd8234d",
+          "20261101_121000_feedback_mail_removal_housekeeping",
+          "20261103_081000_feedback_housekeeping_followups",
+          "20261103_131000_feedback_housekeeping_db_required",
+          "20261116_013000_feedback_standard_runner_job_map_location"
+        ],
+        "event_set_sha256": "8e2c2b393aee48b70ce3eff47aa5f2e196eed6db1a09761a2a75c91ed7c97064",
+        "latest_tree_sha256": "a0ccc8f89943b0a769be8be672e1d3cf43c2f3c32a6503a5ef8c801ca22fd9f2"
+      },
+      "usdm/events": {
+        "head_event_id": "20261116_013000_feedback_standard_runner_job_map_location",
+        "head_event_sha256": "1282000f4877536f1163b9adadaa58a8f8cb406f48a7dc741d2853befc0e2775",
+        "event_ids": [
+          "20260830_181841_initial_build",
+          "20260905_083000_feedback_todo_resolution",
+          "20260907_011000_feedback_todo_followup",
+          "20260907_114000_feedback_abort_consistency",
+          "20260908_011000_feedback_slot_status_wording",
+          "20260921_084000_feedback_impl_feedback_eff24f55",
+          "20261010_200000_feedback_impl_feedback_dcd8234d",
+          "20261101_101000_feedback_impl_feedback_dcd8234d",
+          "20261101_121000_feedback_mail_removal_housekeeping",
+          "20261103_081000_feedback_housekeeping_followups",
+          "20261103_131000_feedback_housekeeping_db_required",
+          "20261116_013000_feedback_standard_runner_job_map_location"
+        ],
+        "event_set_sha256": "8e2c2b393aee48b70ce3eff47aa5f2e196eed6db1a09761a2a75c91ed7c97064",
+        "latest_tree_sha256": "c85fad1166d8725ddf2aa4e1e74932c12fe26eb2420c0f2c1470e97f92f84e7b"
+      },
+      "nfr/events": {
+        "head_event_id": "20261116_014000_feedback_standard_runner_job_map_location",
+        "head_event_sha256": "38bb0ee2349828c8a850f4ed85a3f2813526c9c060be368ca21c245e4c1c0cf1",
+        "event_ids": [
+          "20260830_183726_initial_nfr",
+          "20260905_085000_feedback_todo_resolution",
+          "20260907_013000_feedback_todo_followup",
+          "20260907_120000_feedback_abort_consistency",
+          "20260908_013000_feedback_slot_status_wording",
+          "20260921_090000_feedback_impl_feedback_eff24f55",
+          "20261010_201000_feedback_impl_feedback_dcd8234d",
+          "20261101_102000_feedback_impl_feedback_dcd8234d",
+          "20261101_122000_feedback_mail_removal_housekeeping",
+          "20261103_082000_feedback_housekeeping_followups",
+          "20261103_132000_feedback_housekeeping_db_required",
+          "20261115_135000_feedback_impl_feedback_fd678b04_cycle3",
+          "20261116_014000_feedback_standard_runner_job_map_location"
+        ],
+        "event_set_sha256": "d1aa1df52c9e9d9e880d9b9849c6c10f2532c657565f70af8da17be7065693b2",
+        "latest_tree_sha256": "12490438310ace0b863320236a1aae4659b2f7f60aaf92cbb84bb57b3805d572"
+      },
+      "arch/events": {
+        "head_event_id": "20261116_015000_feedback_standard_runner_job_map_location",
+        "head_event_sha256": "0480eec377d4e5171de7f2c280f379eec0d8535ab0b1cbbffbb4dc288f314ab7",
+        "event_ids": [
+          "20260830_184457_initial_arch",
+          "20260830_202427_arch_infra_feedback_20260830_190412_infra_product_design",
+          "20260905_091000_feedback_todo_resolution",
+          "20260907_015000_feedback_todo_followup",
+          "20260907_122000_feedback_abort_consistency",
+          "20260908_015000_feedback_slot_status_wording",
+          "20260921_092000_feedback_impl_feedback_eff24f55",
+          "20261010_202000_feedback_impl_feedback_dcd8234d",
+          "20261101_103000_feedback_impl_feedback_dcd8234d",
+          "20261101_123000_feedback_mail_removal_housekeeping",
+          "20261103_083000_feedback_housekeeping_followups",
+          "20261103_133000_feedback_housekeeping_db_required",
+          "20261115_140000_feedback_impl_feedback_fd678b04_cycle3",
+          "20261116_015000_feedback_standard_runner_job_map_location"
+        ],
+        "event_set_sha256": "a1c8751a87e69b96af7148ec69704a5989b317882662b86ba02b5411f0c8104f",
+        "latest_tree_sha256": "d60f3ea6cc61bdede57012574e0abe7c18b91176381d2305d1720e8630d0f892"
+      },
+      "infra/events": {
+        "head_event_id": "20261116_020000_feedback_standard_runner_job_map_location",
+        "head_event_sha256": "093f75bf0de2b6bf432bccd8cdf7cbdb002d7eaa85880c2be290d38c8fbff5e9",
+        "event_ids": [
+          "20260830_190412_infra_product_design",
+          "20260905_093000_feedback_todo_resolution",
+          "20260907_021000_feedback_todo_followup",
+          "20260907_124000_feedback_abort_consistency",
+          "20260908_021000_feedback_slot_status_wording",
+          "20260921_094000_feedback_impl_feedback_eff24f55",
+          "20261010_203000_feedback_impl_feedback_dcd8234d",
+          "20261101_104000_feedback_impl_feedback_dcd8234d",
+          "20261101_124000_feedback_mail_removal_housekeeping",
+          "20261103_084000_feedback_housekeeping_followups",
+          "20261103_134000_feedback_housekeeping_db_required",
+          "20261104_091000_feedback_external_review_fixes",
+          "20261104_101000_feedback_rapid_env_deploy_check",
+          "20261105_091000_feedback_final_env_per_segment",
+          "20261105_111000_feedback_single_management_db",
+          "20261115_141000_feedback_impl_feedback_fd678b04_cycle3",
+          "20261116_020000_feedback_standard_runner_job_map_location"
+        ],
+        "event_set_sha256": "b89c15113e8ee255c81265f99e8a49d0d68b4582ba29da67e0c5b8e6a4387725",
+        "latest_tree_sha256": "4fecf467480b70fb9074010cc475dc5e9275ab6fc71a422ce203e93ae5e4ebd6"
+      },
+      "design/events": {
+        "head_event_id": null,
+        "head_event_sha256": null,
+        "event_ids": [],
+        "event_set_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "latest_tree_sha256": null
+      },
+      "specs/events": {
+        "head_event_id": "20261116_021000_feedback_standard_runner_job_map_location",
+        "head_event_sha256": "046c4bafcab34fcc9ff3332170d7533b3eef19bddbd3be8f1750da39b0c93e2b",
+        "event_ids": [
+          "20260830_202851_spec_generation",
+          "20260905_100000_feedback_todo_resolution",
+          "20260907_024000_feedback_todo_followup",
+          "20260907_131000_feedback_abort_consistency",
+          "20260908_024000_feedback_slot_status_wording",
+          "20260908_062000_feedback_spec_machine_readable",
+          "20260917_050000_feedback_impl_feedback_fd678b04",
+          "20260917_100000_feedback_impl_feedback_fd678b04_cycle2",
+          "20260921_100000_feedback_impl_feedback_eff24f55",
+          "20260923_112000_feedback_impl_feedback_eff24f55_cycle2",
+          "20261010_204000_feedback_impl_feedback_dcd8234d",
+          "20261027_055000_feedback_impl_feedback_dcd8234d",
+          "20261101_105000_feedback_impl_feedback_dcd8234d",
+          "20261101_125000_feedback_mail_removal_housekeeping",
+          "20261103_085000_feedback_housekeeping_followups",
+          "20261103_135000_feedback_housekeeping_db_required",
+          "20261103_151000_feedback_env_duplicate_key",
+          "20261104_092000_feedback_external_review_fixes",
+          "20261104_102000_feedback_rapid_env_deploy_check",
+          "20261105_092000_feedback_external_review_round2",
+          "20261105_112000_feedback_single_management_db",
+          "20261110_153000_feedback_impl_feedback_dcd8234d",
+          "20261115_142000_feedback_impl_feedback_fd678b04_cycle3",
+          "20261115_164000_feedback_runner_relative_path",
+          "20261116_010000_feedback_impl_feedback_fd678b04_cycle4",
+          "20261116_021000_feedback_standard_runner_job_map_location"
+        ],
+        "event_set_sha256": "89a6a77c804044dc947ea12d16f8f5cc57d87d57e5ce3c7e14da0efe328146c0",
+        "latest_tree_sha256": "fb2b39dddbff455d50cf0451cf018ead026fe7cc4842c23e0913179713a9d0b1"
+      }
+    }
+  },
+  "request_ids": [
+    "CR-7c41c7cd-001",
+    "CR-7c41c7cd-002",
+    "CR-7c41c7cd-003"
+  ],
+  "work_units": [
+    {
+      "request_id": "CR-7c41c7cd-001",
+      "constraint_key": "input-snapshot-work-name-per-process",
+      "direct_stage": "spec",
+      "reason": "入力の複製の作業名の決め方を、どの mktemp でも同時に動くプロセスごとに名前が分かれる形に CLI 契約で定める要求。利用者は 2026-11-23 に案 A(作業名は relay-gate-<プロセスの番号>-XXXXXX.part を mktemp に渡して作る。名前の確保は mktemp の 1 回の操作のまま)を選択した。あわせて「1 つのプロセスが同時に持つ入力の複製は 1 つまで」を書き添える。変更対象は spec の CLI 契約のみ。USDM SPEC-004-01 / REQ-004 は複製の名前の決め方を持たないため文脈参照とする",
+      "evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "SPEC-004-01"
+        },
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-004"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml"
+        },
+        {
+          "kind": "request_text",
+          "value": "入力の複製の作業名の決め方を、同時に動く複数のプロセスで名前が分かれる形に定める"
+        },
+        {
+          "kind": "user_decision",
+          "value": "2026-11-23 利用者決定: 案 A(作業名 relay-gate-<プロセスの番号>-XXXXXX.part を mktemp で作る)。あわせて 1 プロセスが同時に持つ複製は 1 つまでと書き添える"
+        }
+      ],
+      "id": "CR-7c41c7cd-001#1",
+      "required_closure_stages": [
+        "spec"
+      ]
+    },
+    {
+      "request_id": "CR-7c41c7cd-002",
+      "constraint_key": "runner-resolve-library-public-interface",
+      "direct_stage": "spec",
+      "reason": "共通ライブラリ lib/runner-resolve.sh の関数を、自作の runner へ約束する入口として仕様に書くかを定める要求。利用者は 2026-11-23 に案 A(約束する入口として呼び方を仕様に書く)を選択し、約束の範囲は引数の違反の報告・解決の入口・補助 2 つ・二重起動の判定の全部とした。USDM REQ-004 と RDRA は既に「自作する runner のための共通ライブラリの提供は残す」と定めており、呼び方の詳細化は spec の責務。変更対象は spec の CLI 契約と UC 別仕様のみ",
+      "evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "SPEC-004-01"
+        },
+        {
+          "kind": "related_id_prefix",
+          "value": "SPEC-004-02"
+        },
+        {
+          "kind": "related_id_prefix",
+          "value": "SPEC-001-04"
+        },
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-004"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/実装切替業務/実装切替ジョブ実行フロー/ジョブマップで JOB_ID から実行先を解決する/tier-facade.md"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/実装切替業務/実装切替ジョブ実行フロー/ジョブマップで JOB_ID から実行先を解決する/spec.md"
+        },
+        {
+          "kind": "request_text",
+          "value": "共通ライブラリ lib/runner-resolve.sh を、自作の runner へ約束する入口として扱うかどうかを定める"
+        },
+        {
+          "kind": "user_decision",
+          "value": "2026-11-23 利用者決定: 案 A(約束する入口として呼び方を仕様に書く)。約束の範囲は runner_resolve_reject_invocation / resolve_execution_target / parse_csv_row / build_argument_list / runner_resolve_guard_existing_result の全部"
+        }
+      ],
+      "id": "CR-7c41c7cd-002#1",
+      "required_closure_stages": [
+        "spec"
+      ]
+    },
+    {
+      "request_id": "CR-7c41c7cd-003",
+      "constraint_key": "unreadable-job-map-report-wording",
+      "direct_stage": "spec",
+      "reason": "「あるが読めないジョブマップ」の報告を、feature flag の検証・ジョブマップの検証・slot runner で 1 つの考え方にそろえる要求。利用者は 2026-11-23 に案 A(共通のエラー表示の規約にそろえ、feature flag の検証でも error: config file is not readable path: <決めた場所> と報告する)を選択した。読めない行は現在の job map not found と同じ位置(blue → green)に出し、ディレクトリなど通常のファイルでないものは「読めない」と報告する。変更対象は spec の 2 機能の tier-facade.md と CLI 契約(ui-design.md は文脈参照)",
+      "evidence": [
+        {
+          "kind": "related_id_prefix",
+          "value": "SPEC-004-01"
+        },
+        {
+          "kind": "related_id_prefix",
+          "value": "REQ-004"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/tier-facade.md"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml"
+        },
+        {
+          "kind": "related_path_pattern",
+          "value": "docs/specs/latest/_cross-cutting/ux-ui/ui-design.md"
+        },
+        {
+          "kind": "request_text",
+          "value": "「あるが読めないジョブマップ」の報告を、読み手によらず 1 つの考え方にそろえる"
+        },
+        {
+          "kind": "user_decision",
+          "value": "2026-11-23 利用者決定: 案 A(config file is not readable にそろえる)。読めない行は job map not found と同じ位置(blue → green)。ディレクトリなどは「読めない」と報告し 3 つの読み手をそろえる"
+        }
+      ],
+      "id": "CR-7c41c7cd-003#1",
+      "required_closure_stages": [
+        "spec"
+      ]
+    }
+  ],
+  "execution_stages": [
+    {
+      "id": "spec",
+      "steps": [
+        "6"
+      ],
+      "direct_work_unit_ids": [
+        "CR-7c41c7cd-001#1",
+        "CR-7c41c7cd-002#1",
+        "CR-7c41c7cd-003#1"
+      ],
+      "causal_work_unit_ids": [
+        "CR-7c41c7cd-001#1",
+        "CR-7c41c7cd-002#1",
+        "CR-7c41c7cd-003#1"
+      ],
+      "stage_packet": "stage-packets/spec.md"
+    }
+  ],
+  "outside_work_unit_ids": []
+}

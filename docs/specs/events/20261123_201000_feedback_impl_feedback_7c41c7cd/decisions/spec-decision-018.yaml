@@ -1,0 +1,33 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "specification"
+artifact_id: "spec-decision-018"
+title: "比較ツール起動コマンドを引数の並びとして解釈・起動する共通規則を CLI 契約に 1 か所で定める(文字列をシェルに解釈させない)"
+status: "approved"
+generated_at: "2026-10-27T05:50:00Z"
+context: |
+  - クロスチェック簡素化(spec-decision-016 / 017)の反映後、速報 worker は RAPID_COMPARE_COMMAND(1 行)のプレースホルダを依頼レコードの値で置換し「置換後の文字列をコマンドとして起動する」と書かれていた。確報 worker は FINAL_COMPARE_COMMAND を「そのまま起動する」と書かれていた。
+  - この書き方は、文字列をシェルに解釈させる実装(eval / bash -c / 引用符なしの展開)を許し、ジョブスケジューラ由来の parameters(任意の文字を含みうる JSON 配列)に `;` / `|` / `$(...)` / バッククォート / 空白 / `*` が入ると、意図しないコマンド実行・引数の分割・ファイル名展開が起きる。自動のセキュリティレビュー(2026-10-11)が medium のコマンドインジェクション余地として指摘した。
+  - parameters の JSON 配列をどう展開するか(1 項目 1 引数か、配列の文字列のまま 1 引数か)が未定義で、実装ごとに比較ツールが受け取る引数が変わりうる。起動コマンドを引数に分ける規則が無いため、validate-config.sh の「コマンド部分(先頭の語)」と worker が実際に起動するコマンドが一致する保証も無かった。置換に使う job_id / run_id は形式規則を持つが、置換の前に検査する決まりが無かった。
+  - 利用者は 2026-10-27 のレビューで、引数ごとに分けて起動する決まりを仕様に書く案(案 A)を選んだ(CR-dcd8234d-008)。
+decision: |
+  1. CLI 契約の shared_rules に `compare_command_argv` を 1 か所だけ新設し、速報 worker(rapid-crosscheck-worker.sh)・確報 worker(final-crosscheck-worker.sh)・validate-config.sh(--rapid-crosscheck / --final-crosscheck)がこの 1 か所を参照する。他の節に同じ規則を複写しない。
+  2. 分割: 設定読込時(env 解析後 = KEY=VALUE の値の先頭末尾の " / ' を 1 組除去。source しない)に、値を空白(スペース・タブの 1 個以上の連続)で区切って引数の並び(argv)に分ける。クォート・エスケープ・$・バッククォート・; / | / & / * 等のシェル記法は解釈せず文字として扱う。空の引数は作らない。先頭の引数をコマンド部分とし、validate-config.sh の「コマンド部分(先頭の語)」はこの先頭の引数と同一とする。
+  3. 置換: プレースホルダの置換は分けた引数 1 つの中だけで行い、引数の数・区切りは変わらない。{job_id} / {run_id} / {blue_exit_code} / {green_exit_code} は引数の一部としても置換できる(例 --job={job_id})。{params} は引数 1 つ全体がちょうど {params} のときだけ使え、parameters の JSON 配列を順序どおり 1 項目 1 引数へ展開する([] は 0 個)。それ以外の位置の {params} は設定の違反とし、validate-config.sh --rapid-crosscheck が `error: placeholder {params} must be a whole argument key=RAPID_COMPARE_COMMAND value=...`(終了コード 2)を出す。確報 FINAL_COMPARE_COMMAND はプレースホルダを持たず置換しない。
+  4. 起動: 分けた引数の並びをそのまま渡して起動する("${argv[@]}" 相当)。eval / bash -c / sh -c / 引用符なしの変数展開による起動を禁止すると明記する。確報も同じ規則で分けて argv として起動する。
+  5. 置換前の検査(速報 worker): job_id は shared_rules.run_id.job_id_charset、run_id は shared_rules.run_id.format に合うこと、parameters は JSON 配列として読めることを検査し、不適合なら比較ツールを起動せず依頼を FAILED / exit_code=6 / error_summary=`invalid request value: <field>`(field は job_id | run_id | parameters)で終端し、stderr に `error: compare request value is invalid run_id=... field=...` を出す(worker 自身は 6)。依頼状態と終了コードは既存の起動失敗(launch failed)と同じで、error_summary と stderr の文言だけを分けて診断できるようにする。確報はプレースホルダ無しのため置換値の検査はしない。
+  6. 変えないこと: 設定 1 行 + プレースホルダという形、必須・任意のプレースホルダの集合、検証の 2 点(コマンド部分が絶対パスで存在・実行可能、速報に {job_id} がある)、worker が依頼レコードと自身の設定だけを読むこと。記号を含む設定を検証で拒否する規則は追加しない(引数として渡せば記号は文字として届くため)。
+consequences:
+  positive:
+    - "parameters に記号・空白・$(...) を含む値が入っても比較ツールは各値を 1 引数として受け取り、ほかのコマンドは実行されない(コマンドインジェクションの余地が消える)"
+    - "parameters の展開(1 項目 1 引数、[] は 0 個)が一意になり、実装ごとに比較ツールが受け取る引数が変わらない"
+    - "起動コマンドを引数に分ける規則が 1 か所に定まり、validate-config.sh の『コマンド部分(先頭の語)』と worker が実際に起動するコマンドが一致する"
+    - "置換前の形式検査で、形式に合わない job_id / run_id / parameters による起動を止められる"
+  negative:
+    - "設定で 1 つの引数の中に空白を含める(引用符で囲んで 1 引数にする)ことはできない。空白を含む値はプレースホルダ({params} の 1 項目など)経由で渡す運用になる"
+    - "既存の起動失敗(launch failed)に加えて invalid request value の終端経路が増え、依頼の FAILED 理由が 2 種類になる(error_summary で区別する)"
+alternatives_considered:
+  - name: "記号を含む設定を validate-config.sh で拒否する(入力を制限してシェル解釈のリスクを避ける)"
+    reason_rejected: "parameters はジョブスケジューラ由来で任意の文字を含みうるため設定検証で防げない。引数の並びとして渡せば記号は文字として届くので、入力制限ではなく起動方式(argv・シェル非解釈)で解く案 A を利用者が選んだ"
+  - name: "置換後の文字列を eval / bash -c で起動する実装を許し、設定側でエスケープを徹底する運用にする"
+    reason_rejected: "エスケープの徹底を人手の運用に委ねるとコマンドインジェクションの余地が残る。argv 配列起動なら仕様としてシェル解釈を排除できる"

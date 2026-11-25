@@ -1,0 +1,16 @@
+event_id: 20261126_090001_delivery_prepared_7c41c7cd_resolve_execution_target_from_job_map
+type: delivery_prepared
+uc_id: 7c41c7cd
+stage: S9
+payload:
+  review_approved_event_id: 20261126_090000_review_approved_7c41c7cd_final
+  pending_decision_count: 0
+  decisions_applied: true
+  post_decision_gates: pass
+  post_decision_review_aligned: true
+  base_branch: main
+  base_head: aa6993823306a84935b99824059fa544779bc212
+  feature_branch: feature/resolve-execution-target-from-job-map
+  note: no change after the review. the feature branch also carries the bootstrap
+    P2 rerun commit (spec reflux only on this branch), which the squash includes
+created_at: '2026-11-26T09:00:01+09:00'

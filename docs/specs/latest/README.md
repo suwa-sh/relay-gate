@@ -1,6 +1,6 @@
 # Spec 一覧
 
-> 最新イベント: `20261116_021000_feedback_standard_runner_job_map_location`(design 無しモード。UI 画面なし。2026-11-16: 標準の slot runner `runners/standard-runner.sh` を正式な提供物とし、feature-flag.env に slot ジョブマップの場所を書く任意の 2 キー `BLUE_JOB_MAP_CSV` / `GREEN_JOB_MAP_CSV` を足した。facade.sh は設定の違反が 2 つ以上あるとき最初の違反の error 行だけを出し、background-rerun.sh は起動の前に runner / worker の実体を検査しない)。UC 34 件 / BUC 8 件。
+> 最新イベント: `20261123_201000_feedback_impl_feedback_7c41c7cd`(design 無しモード。UI 画面なし。2026-11-23: 入力の複製の作業名をプロセスの番号を含むテンプレートで作る形に定め、共通ライブラリ `lib/runner-resolve.sh` の 5 関数を自作の runner へ約束する入口として呼び方を定め、あるが読めないジョブマップの報告を全コマンド共通の `config file is not readable` にそろえた)。UC 34 件 / BUC 8 件。
 
 ## UC 仕様
 
@@ -32,12 +32,12 @@
 | 実装切替業務 | 実装切替ジョブ実行フロー | [execution-spec.json を確定保存する](実装切替業務/実装切替ジョブ実行フロー/execution-spec.json を確定保存する/spec.md) | 0 | 無 | 20261010_204000_feedback_impl_feedback_dcd8234d |
 | 実装切替業務 | 実装切替ジョブ実行フロー | [foreground slot の結果をジョブスケジューラへ中継する](実装切替業務/実装切替ジョブ実行フロー/foreground slot の結果をジョブスケジューラへ中継する/spec.md) | 0 | 無 | 20261101_125000_feedback_mail_removal_housekeeping |
 | 実装切替業務 | 実装切替ジョブ実行フロー | [slot 実行モードを選択して runner を起動する](実装切替業務/実装切替ジョブ実行フロー/slot 実行モードを選択して runner を起動する/spec.md) | 0 | 無 | 20261116_021000_feedback_standard_runner_job_map_location |
-| 実装切替業務 | 実装切替ジョブ実行フロー | [ジョブマップで JOB_ID から実行先を解決する](実装切替業務/実装切替ジョブ実行フロー/ジョブマップで JOB_ID から実行先を解決する/spec.md) | 0 | 無 | 20261116_021000_feedback_standard_runner_job_map_location |
+| 実装切替業務 | 実装切替ジョブ実行フロー | [ジョブマップで JOB_ID から実行先を解決する](実装切替業務/実装切替ジョブ実行フロー/ジョブマップで JOB_ID から実行先を解決する/spec.md) | 0 | 無 | 20261123_201000_feedback_impl_feedback_7c41c7cd |
 | 実装切替業務 | 実装切替ジョブ実行フロー | [実装スクリプトを実行して Runner Result を出力する](実装切替業務/実装切替ジョブ実行フロー/実装スクリプトを実行して Runner Result を出力する/spec.md) | 0 | 有 | 20261116_021000_feedback_standard_runner_job_map_location |
 | 実装切替業務 | 実装切替ジョブ実行フロー | [業務ジョブの実行結果を確認する](実装切替業務/実装切替ジョブ実行フロー/業務ジョブの実行結果を確認する/spec.md) | 0 | 無 | 20261101_125000_feedback_mail_removal_housekeeping |
-| 適用構成業務 | 適用構成定義フロー | [feature flag を設定する](適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md) | 0 | 無 | 20261116_021000_feedback_standard_runner_job_map_location |
-| 適用構成業務 | 適用構成定義フロー | [slot runner の実体スクリプトを割り当てる](適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/spec.md) | 0 | 有 | 20261116_021000_feedback_standard_runner_job_map_location |
-| 適用構成業務 | 適用構成定義フロー | [slot ごとのジョブマップを定義する](適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/spec.md) | 0 | 無 | 20261116_021000_feedback_standard_runner_job_map_location |
+| 適用構成業務 | 適用構成定義フロー | [feature flag を設定する](適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md) | 0 | 無 | 20261123_201000_feedback_impl_feedback_7c41c7cd |
+| 適用構成業務 | 適用構成定義フロー | [slot runner の実体スクリプトを割り当てる](適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/spec.md) | 0 | 有 | 20261123_201000_feedback_impl_feedback_7c41c7cd |
+| 適用構成業務 | 適用構成定義フロー | [slot ごとのジョブマップを定義する](適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/spec.md) | 0 | 無 | 20261123_201000_feedback_impl_feedback_7c41c7cd |
 | 適用構成業務 | 適用構成定義フロー | [クロスチェックのジョブマップと比較定義を定義する](適用構成業務/適用構成定義フロー/クロスチェックのジョブマップと比較定義を定義する/spec.md) | 0 | 無 | 20261110_153000_feedback_impl_feedback_dcd8234d |
 | 適用構成業務 | 適用構成定義フロー | [切り替えた運用モードで業務ジョブを実行する](適用構成業務/適用構成定義フロー/切り替えた運用モードで業務ジョブを実行する/spec.md) | 0 | 無 | 20261116_021000_feedback_standard_runner_job_map_location |
 

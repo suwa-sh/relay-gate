@@ -1,0 +1,82 @@
+schema_version: "1.0"
+stage: "S5"
+tier: "tier-facade"
+attempt: 4
+uc_id: "7c41c7cd"
+manifest_sha256: "8dd410fbf84a6012b7868a016f42fec481d4e9266e1f4ed66bd66b5bf3f8cf87"
+manifest_projection: "v2"
+result: "fail"
+verification_completed: true
+open_blockers: 1
+open_majors: 4
+summary:
+  blocker: 1
+  major: 4
+  minor: 21
+gate_reexec:
+  format: "pass"
+  lint: "pass"
+  tdd: "pass"
+  bdd_tier: "pass"
+gate_evidence:
+  - gate: "format"
+    cwd: "facade/"
+    command: "shfmt -d ."
+    exit_code: 0
+  - gate: "lint"
+    cwd: "facade/"
+    command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+    exit_code: 0
+  - gate: "tdd"
+    cwd: "facade/"
+    command: "bats -r test"
+    exit_code: 0
+    passed: 772
+    failed: 0
+    skipped: 0
+  - gate: "bdd_tier"
+    cwd: "facade/"
+    command: "npx cucumber-js --config ../cucumber.cjs features"
+    exit_code: 0
+    scenarios_passed: 163
+    steps_passed: 1360
+    hooks_passed: 1
+    failed: 0
+    skipped: 0
+viewpoints_checked:
+  spec_conformance:
+    status: "done"
+    note: "runner IFと公開5関数、9結果変数・ARGUMENT_LIST・RUNNER_RESOLVE_MAP_PATH、バリデーション順、失敗成果物を突合。対象featureの19シナリオ宣言とfeature flagの42シナリオ宣言はtier仕様gherkinと完全一致。api-summaryは旧CLI形式でv2 slice要件は非該当。model-summaryはtables=[]。management-dbのscope6テーブルは生成schemaと一致。UI無し。"
+  readability_maintainability:
+    status: "done"
+    note: "dev-rulesの命名・責務・日本語コメント・AAAと、解決本体/CSV/値検査/成果物gatewayの分割を確認。既存テストに一部複数Actがあるが、同等入力の表形式検証であり重大な保守欠陥は立証せず。"
+  security:
+    status: "done"
+    note: "設定をsourceせず、値のコマンド展開をせず、credential_refを診断に出さない経路を確認。実mktempで最終名に通常ファイル・ディレクトリ・リンクを先置きし、snapshot status7・セル0・作業名残存なしを確認。外部エントリの内容を採用しない。セキュリティ関連の前提は観点8で評価。"
+  performance:
+    status: "done"
+    note: "CLAUDE.mdに従い、通常入力に対する不要処理のみ確認。1回の入力複製、バイト走査、CSV解析、行走査はいずれも入力行数に比例し、採用行の固定引数は再解析せず連結。DBアクセスなし。時間計測や作為的な巨大入力を合否・指摘に使っていない。"
+  operability:
+    status: "done"
+    note: "解決先・使用mapパス・行番号・未知列・重複の診断を確認。判断043について、欠落/ディレクトリ/読取不可/各リンク先の7状態を3読み手で実行し、文言・コードを突合。エラー順はblue→greenでfeature flag仕様と一致。"
+  fault_tolerance:
+    status: "done"
+    note: "複製失敗・補助コマンド失敗・既存exitcode・aborted・成果物書込失敗・一時ファイル処理を検証。ゲート外の実体反証で確定名ディレクトリへの誤公開を再現しF-001とした。"
+  refactoring:
+    status: "done"
+    note: "JSON配列/CSV/ヘッダー/バイト点検とsnapshotは共有関数で実装。公開入口と実装内部を分離し、I/O境界は一時実ファイルと実プロセス、管理DBを使うゲートは一時PostgreSQL。後続UCの未実装期間の仮動作は前提判定へ分離。"
+  assumption_conformance:
+    status: "done"
+    note: "観点1〜7と4ゲート完了後に初めて前提を開いた。id/assumption/targetだけで仕様・S4固定指示と照合しverdictと独立分類を確定、その後にcategory/reason/confidence/spec_refsを参照。全22件に専用findingを付与。独立候補はA-004/A-005/A-016と対応しunlistedなし。分類差3件。"
+environment_failures: []
+assumptions_sha256: "168b03ebab336fed2832fd7dc02b250cadb450da311fadea099d59101c655e63"
+assumption_verdicts_summary:
+  consistent: 0
+  spec_absent: 22
+  contradicts: 0
+  unlisted: 0
+assumption_requires_answer: 4
+findings_path: "docs/impl/latest/7c41c7cd/stages/attempt-4/S5_verify.tier-facade.findings.yaml"
+completed_at: "2026-11-23T15:51:09+00:00"
+completed_by: "dist-impl-verify@0.15.0"
+assumption_verdicts_sha256: "f28b3bd237147ad64a81221dc1c4c30518b9d0b7612f91859c1b09c5642ad663"

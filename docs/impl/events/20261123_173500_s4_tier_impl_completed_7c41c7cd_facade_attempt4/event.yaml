@@ -1,0 +1,24 @@
+event_id: 20261123_173500_s4_tier_impl_completed_7c41c7cd_facade_attempt4
+type: stage_completed
+uc_id: 7c41c7cd
+stage: S4
+tier: tier-facade
+attempt: 4
+payload:
+  result: pass
+  done: docs/impl/latest/7c41c7cd/stages/attempt-4/S4_tier-impl.tier-facade.done.yaml
+  manifest_sha256: 90b95c2c7f67feac241a56c2bb03191b9150a515f82b517c61c7d324e3bdefa1
+  manifest_projection: v2
+  gates:
+    format: pass
+    lint: pass
+    tdd: pass
+    bdd_tier: pass
+  assumptions:
+    count: 27
+    sha256: cad27c03d69264dab0bc71fbe6d76ae61d255a463ad3ae1ab58d42eb2db10044
+  fix: 'the snapshot work file name now carries the calling process id (BASHPID) before the X run, and the rename after mktemp was removed'
+  same_class_search: 'no other mktemp template with a non-trailing X run in facade; none found outside facade'
+  uc_scenario_repeat: 'select-slot-mode-and-launch-runners.feature:94 run 20 times by the implementer: 0 failures (reported, not rerun by the orchestrator)'
+  linux_run: not_executed
+created_at: '2026-11-23T17:35:00+09:00'

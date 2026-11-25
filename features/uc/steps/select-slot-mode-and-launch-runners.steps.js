@@ -429,11 +429,18 @@ Then(literal('blue runner の環境変数 BLUE_JOB_MAP_CSV は /work/blue-jobs.c
 });
 
 // ---- 値が空のジョブマップの場所のキーがある slot の runner は固定の名前のジョブマップで実行先を解決する(SPEC-004-01) ----
-// この Scenario は標準の slot runner を名指しする。標準の slot runner の中身(ジョブマップの解決、execution-spec.json、stderr.log の出力)は
-// 後続 UC が作る(docs/impl/latest/09730858/issues/20261118_091109_cross-uc-scenarios.md の 4。オーケストレータの決定は案 A):
-//   - Then 1 行目(場所を runner へ渡す)はこの UC の担当なので判定する
-//   - Then 2・3 行目(execution-spec.json の中身、green の stderr.log)は、標準の slot runner が仮の応答(正しい引数で終了コード 6、
-//     何も書かない)の間だけ cucumber の skipped を返す。後続 UC が中身を作ると、同じ step がそのまま判定する
+// この Scenario は標準の slot runner を名指しする。標準の slot runner の中身は機能ごとに順に作る
+// (docs/impl/latest/09730858/issues/20261118_091109_cross-uc-scenarios.md の 4。オーケストレータの決定は案 A)。
+// UC「ジョブマップで JOB_ID から実行先を解決する」(7c41c7cd)で解決の段ができたので、保留の条件を行ごとに分けた
+// (docs/impl/latest/7c41c7cd/issues/20261123_142047_cross-uc-scenarios.md の 6):
+//   - Then 1 行目(場所を runner へ渡す): facade の担当。判定する
+//   - Then 2 行目(execution-spec.json の中身): execution-spec.json の保存は後続 UC(43850d68)の担当。標準の slot runner が解決に
+//     成功し、まだ execution-spec.json を保存せず結果も公開していない間だけ cucumber の skipped を返す。
+//     後続 UC が保存を作ると、同じ step がそのまま判定する。解決に失敗しているときは保留にせず失敗させる
+//   - Then 3 行目(green の stderr.log): 判定する。固定の名前のジョブマップで解決できたことを実行ログの解決の行で確かめ、
+//     stderr.log があれば該当の行が無いことを見る(解決に成功した回は、今は stderr.log を書かない)。
+//     cucumber は skipped の step より後ろを実行しないため、2 行目が保留の間は、2 行目の step が保留を返す前にこの判定を済ませる
+//     (レポートの上では 3 行目も skipped と表示される)
 //   - 標準の slot runner の代わりのスタブは作らない。暫定注入・契約確定後に削除: 標準の slot runner は受け取った環境変数を
 //     記録しないため、配置の複製の runners/standard-runner.sh の位置に「起動引数と環境変数を記録してから、本物の標準の slot runner
 //     (同じディレクトリの standard-runner.real.sh へ名前を変えた複製)へ同じ引数で処理を渡し、その終了コードを返す」包みを置く(同 issue の 4 の案 A)
@@ -457,12 +464,33 @@ function standardRunnerRecord(world, slot, kind) {
   return fs.readFileSync(file, 'utf8');
 }
 
-// 標準の slot runner が仮の応答の間か: 正しい引数の起動が終了コード 6 で終わり、role ディレクトリにも run ディレクトリにも何も書いていない
-function standardRunnerIsProvisional(world) {
-  const status = standardRunnerRecord(world, 'green', 'status').trim();
-  const greenFiles = fs.readdirSync(slotDir(world, 'green'));
+// green の標準の slot runner が、固定の名前のジョブマップ(host と user が空のローカル実行の行)で解決に成功したか。
+// runner の終了を待ってから、実行ログの解決の行(この run_id のもの)を見る
+function greenResolvedFromDefaultMap(world) {
+  standardRunnerRecord(world, 'green', 'status');
+  return h.standardRunnerLogEntries(world, world.runId).includes('INFO job map resolved job_id=JOB001 slot=green host=- map_version=-');
+}
+
+// execution-spec.json の保存(後続 UC 43850d68)がまだ無い間か: 解決には成功しているが、execution-spec.json が無く、
+// green の結果(exitcode.txt)も公開されていない。解決に失敗した回はこれに当たらない(保留にしない)
+function executionSpecNotProvidedYet(world) {
+  const resolved = greenResolvedFromDefaultMap(world);
   const specExists = fs.existsSync(path.join(h.runDir(world), 'execution-spec.json'));
-  return status === '6' && greenFiles.length === 0 && !specExists;
+  const published = fs.existsSync(path.join(slotDir(world, 'green'), 'exitcode.txt'));
+  return resolved && !specExists && !published;
+}
+
+// Then 3 行目の判定
+function assertGreenStderrLogHasNoJobMapNotFound(world) {
+  // 固定の名前のジョブマップで解決できている(runner の終了を待ってから実行ログを見る)
+  assert.ok(
+    greenResolvedFromDefaultMap(world),
+    `green runner should resolve JOB001 from the default job map\n${h.standardRunnerLogEntries(world, world.runId).join('\n')}\n${h.dump(world)}`,
+  );
+  // 解決に成功した回は、今は stderr.log を書かない(書くのは実装を実行する後続 UC)。あれば該当の行が無いことを見る
+  const stderrLog = path.join(slotDir(world, 'green'), 'stderr.log');
+  const lines = fs.existsSync(stderrLog) ? fs.readFileSync(stderrLog, 'utf8').split('\n') : [];
+  assert.deepEqual(lines.filter((l) => l.startsWith('error: job map not found')), []);
 }
 
 Given(literal('設定ファイル置き場が /etc/relay-gate で、/etc/relay-gate/feature-flag.env に BLUE_MODE=foreground GREEN_MODE=background RAPID_CROSSCHECK_MODE=off BLUE_IMPL=v1 GREEN_IMPL=v2 と、標準の slot runner /opt/relay-gate/runners/standard-runner.sh を指す BLUE_RUNNER / GREEN_RUNNER と、値が空の行 `GREEN_JOB_MAP_CSV=` が定義されている'), function () {
@@ -493,10 +521,18 @@ Then(literal('green runner は環境変数 GREEN_JOB_MAP_CSV=/etc/relay-gate/gre
 });
 
 Then(literal('facade/<run_id>/execution-spec.json の slots.green は script=/opt/app/bin/green-job001.sh work_dir=/var/app/work hang_detect_limit_minutes=60 である(/etc/relay-gate/green-job-map.csv の JOB001 の行)'), function () {
-  if (standardRunnerIsProvisional(this)) {
+  if (executionSpecNotProvidedYet(this)) {
+    // cucumber は、skipped を返した step より後ろの step を実行しない。3 行目(green の stderr.log)の判定は保留の対象ではないため、
+    // 保留を返す前にここで済ませる(食い違えばこの step が失敗する)。後続 UC が execution-spec.json を保存すると、3 行目の step がそのまま判定する
+    assertGreenStderrLogHasNoJobMapNotFound(this);
     return 'skipped';
   }
-  const spec = JSON.parse(fs.readFileSync(path.join(h.runDir(this), 'execution-spec.json'), 'utf8'));
+  const specFile = path.join(h.runDir(this), 'execution-spec.json');
+  assert.ok(
+    fs.existsSync(specFile),
+    `execution-spec.json should exist (green runner status ${standardRunnerRecord(this, 'green', 'status').trim()})\n--- standard runner log ---\n${h.standardRunnerLogEntries(this, this.runId).join('\n')}\n--- green files ---\n${fs.readdirSync(slotDir(this, 'green')).join(' ')}\n${h.dump(this)}`,
+  );
+  const spec = JSON.parse(fs.readFileSync(specFile, 'utf8'));
   const green = spec.slots && spec.slots.green;
   assert.ok(green, `execution-spec.json should have slots.green: ${JSON.stringify(spec)}`);
   assert.equal(green.script, '/opt/app/bin/green-job001.sh');
@@ -506,14 +542,7 @@ Then(literal('facade/<run_id>/execution-spec.json の slots.green は script=/op
 });
 
 Then(literal('facade/<run_id>/green/stderr.log に "error: job map not found" で始まる行は無い'), function () {
-  if (standardRunnerIsProvisional(this)) {
-    return 'skipped';
-  }
-  const stderrLog = path.join(slotDir(this, 'green'), 'stderr.log');
-  h.waitForFile(stderrLog);
-  const hits = fs.readFileSync(stderrLog, 'utf8').split('\n').filter((l) => l.startsWith('error: job map not found'));
-  assert.deepEqual(hits, []);
-  return undefined;
+  assertGreenStderrLogHasNoJobMapNotFound(this);
 });
 
 // ---- run_id はローカルタイムゾーンの時刻と job_id と 8 桁 hex で発行され成果物と管理 DB で同値である(SPEC-011-04) ----

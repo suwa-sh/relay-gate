@@ -1,0 +1,79 @@
+stage: S6
+uc_id: "7c41c7cd"
+manifest_sha256: 8dd410fbf84a6012b7868a016f42fec481d4e9266e1f4ed66bd66b5bf3f8cf87
+manifest_projection: v2
+result: pass
+branch_slug: resolve-execution-target-from-job-map
+tiers:
+  - tier-facade
+tier_impl_attempt: 5
+rerun_reason: "仕様の反映(判断記録 spec-decision-041〜043)を取り込んだ再実行"
+source: "docs/specs/latest/実装切替業務/実装切替ジョブ実行フロー/ジョブマップで JOB_ID から実行先を解決する/spec.md#E2E完了条件(BDD)"
+feature: features/uc/resolve-execution-target-from-job-map.feature
+feature_changed: false
+feature_changed_note: "S2 の再実行の記録(uc_feature: untouched。spec.md の E2E 完了条件と行単位で一致)のとおり、feature 本文は変わっていない"
+steps:
+  - features/uc/steps/resolve-execution-target-from-job-map.steps.js
+  - features/uc/steps/support/facade-harness.js
+steps_changed: true
+steps_changed_note: "手直しはコメントだけで、判定のコードは変えていない。1) 共通ライブラリの関数 resolve_execution_target の呼び方と、値が無い項目を空文字で表すことは、仕様の反映で契約になった(cli-command-contract.yaml の runner_resolve_library。spec-decision-042)。このため、実装者の前提 A-001 / A-002 を根拠にした「暫定注入」の印を外し、根拠を契約へ書き換えた(resolve-execution-target-from-job-map.steps.js の 3 か所)。2) 前提 A-004 の参照先を attempt-4 から attempt-5 の記録へ直した(support/facade-harness.js の 1 か所。A-004 は attempt-5 に同じ id で存在する)"
+tier_impl_changed: false
+target_feature_run:
+  cwd: "."
+  command: "npx cucumber-js --config cucumber.cjs features/uc/resolve-execution-target-from-job-map.feature"
+  exit_code: 0
+  summary: "16 scenarios (16 passed), 120 steps (120 passed)"
+  scenarios_total: 16
+  scenarios_passed: 16
+  scenarios_skipped: 0
+  scenarios_failed: 0
+  note: "コメントの手直しの前に実行。手直しの後は、下の全体実行で確かめた"
+run:
+  cwd: "."
+  command: "npx cucumber-js --config cucumber.cjs features/uc"
+  exit_code: 0
+  summary: "99 scenarios (98 passed, 1 skipped), 753 steps (751 passed, 2 skipped)"
+  scenarios_total: 99
+  scenarios_passed: 98
+  scenarios_skipped: 1
+  scenarios_failed: 0
+  undefined_steps: 0
+  ambiguous_steps: 0
+  runs: 2
+  runs_note: "コメントの手直しの後に全体を 2 回流し、2 回とも同じ結果"
+skipped_scenarios:
+  - scenario: "値が空のジョブマップの場所のキーがある slot の runner は固定の名前のジョブマップで実行先を解決する(SPEC-004-01)"
+    location: "features/uc/select-slot-mode-and-launch-runners.feature:94"
+    owner_uc_of_feature: "09730858(slot 実行モードを選択して runner を起動する)"
+    reason: "この機能の feature ではない。Then 2 行目(execution-spec.json の slots.green の中身)が、後続の機能 43850d68(execution-spec.json を確定保存する)の担当のため、保存される前の間だけ保留を返す。前回の S6 と同じ状態"
+    identified_by: "前回の S6 の記録と、件数(99 件中 98 合格・保留 1、step の保留 2)が一致することで判断した。今回は Scenario 名を出力で確かめ直していない"
+    refs:
+      - "docs/impl/latest/7c41c7cd/issues/20261123_142047_cross-uc-scenarios.md の 6"
+      - "docs/impl/latest/7c41c7cd/stages/attempt-5/S4_tier-impl.tier-facade.assumptions.yaml の A-004"
+    handover: "43850d68 の S6 で保留が外れることを確認する"
+harness:
+  process: "relay-gate を Scenario ごとの一時ディレクトリの /opt/relay-gate へ複製し、標準の slot runner(runners/standard-runner.sh)と facade.sh を実プロセスとして起動。仕様の絶対パスは一時ディレクトリの下へ写像"
+  database: "この機能の Scenario は管理 DB に触らない。全体実行に含まれる先行の機能の Scenario は initdb + pg_ctl の一時 PostgreSQL を使う(常設のサービスには接続しない)"
+  external_connections: none
+injections:
+  - what: "固定の run_id を書く Scenario で、facade が渡すのと同じ環境変数と runner IF の引数で runner を直接起動する。role ディレクトリは起動の前に step が作る"
+    where: "features/uc/steps/resolve-execution-target-from-job-map.steps.js"
+    basis: "docs/impl/latest/7c41c7cd/issues/20261123_142047_cross-uc-scenarios.md の 5"
+  - what: "成功した実行の成果物(started-at.txt / exitcode.txt など)が要る Scenario で使うテスト用 runner"
+    where: "features/uc/steps/support/facade-harness.js"
+    basis: "docs/impl/latest/09730858/issues/20261118_091109_cross-uc-scenarios.md の 1〜3、AssumptionRecord A-004(docs/impl/latest/7c41c7cd/stages/attempt-5/S4_tier-impl.tier-facade.assumptions.yaml)"
+injections_removed:
+  - what: "共通ライブラリ(lib/runner-resolve.sh)を source して resolve_execution_target を直接呼ぶ確かめ方"
+    reason: "呼び方が契約になったため、ハーネス注入ではなく契約どおりの呼び出しになった(runner_resolve_library。spec-decision-042)。確かめ方そのものは残している"
+injections_note: "残る注入箇所には根拠と「暫定注入・契約確定後に削除」のコメントが付いている。前提の新規抽出なし"
+not_added: "時間を測るテスト、大きい入力のテスト、作為的な入力のテストは足していない"
+not_verified:
+  - "成果物の確定名に先にディレクトリなどがあるときの終了コード 6(今回の tier 実装の変更点)。この機能の UC BDD の Scenario には無く、tier の側のテストの範囲。統合の Scenario を新しく足していない(feature は仕様からの転写のため)"
+  - "Linux での実行(実行したのは macOS だけ)"
+cross_uc_refs:
+  - docs/impl/latest/7c41c7cd/issues/20261123_142047_cross-uc-scenarios.md
+  - docs/impl/latest/09730858/issues/20261118_091109_cross-uc-scenarios.md
+issues: []
+issues_note: "新規起票なし"
+completed_at: '2026-11-24T10:12:30+09:00'
+completed_by: dist-impl-implement@0.15.0

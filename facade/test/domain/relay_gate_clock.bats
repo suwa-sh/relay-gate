@@ -86,3 +86,18 @@ setup() {
 	run relay_gate_clock_injection_is_valid
 	[ "$status" -ne 0 ]
 }
+
+@test "relay_gate_clock_format_utc_ローカルタイムゾーンがUTCでない場合_UTCのZ付きの日時にしてプロセスのTZを変えないこと" {
+	# Arrange(UC 7c41c7cd: started-at.txt の中身だけは UTC の Z 付き。契約 artifact_layout)
+	export TZ="Asia/Tokyo"
+
+	# Act
+	relay_gate_clock_format_utc 1788089400
+	local utc_text="$RELAY_GATE_CLOCK_TEXT"
+	relay_gate_clock_format_datetime 1788089400
+
+	# Assert
+	[ "$utc_text" = "2026-08-30T11:30:00Z" ]
+	[ "$RELAY_GATE_CLOCK_TEXT" = "2026-08-30T20:30:00" ]
+	[ "$TZ" = "Asia/Tokyo" ]
+}

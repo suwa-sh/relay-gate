@@ -1,0 +1,43 @@
+schema_version: "1.0"
+artifact_type: "decision_record"
+skill_type: "specification"
+artifact_id: "spec-decision-043"
+title: "あるが読めないジョブマップは、どの読み手も config file is not readable で報告する"
+status: "approved"
+generated_at: "2026-11-23T20:10:00Z"
+context: |
+  - ジョブマップが「あるが読めない」とき、読み手によって報告の文言が違った(終了コードはどれも 2)。
+    - feature flag の検証(validate-config.sh --feature-flag)は、無いときと同じ `error: job map not found slot=<slot> map=<場所>` を出していた。
+    - ジョブマップの検証(validate-config.sh --job-map)と slot runner は `error: config file is not readable path: <場所>` を出していた。
+  - 仕様も分かれていた。UC「feature flag を設定する」の tier は「存在しない / 読めない」を 1 つの文言 job map not found にまとめ、全コマンド共通のエラー表示の規約(ui-design.md)は「読めないときは config file is not readable」と定めていた。どちらが優先かは書かれていなかった。
+  - feature flag の検証が「見つからない」と報告するため、運用者はファイルを置き直そうとするが、直すべきなのは権限である。
+  - 元の方針資料は、slot runner がジョブマップで実行先を解決することを書く。エラーの文言の記載は無い。
+  - 利用者は 2026-11-23 に案 A(共通のエラー表示の規約にそろえる)を選び、読めない行の位置と、ディレクトリなど通常のファイルでないものの扱いも決めた。
+decision: |
+  1. 3 つの読み手(feature flag の検証・ジョブマップの検証・slot runner)の判定と文言を 1 つの考え方にそろえた。正本は CLI 契約 config_files.feature-flag.env.job_map_location.presence_report(新設)。
+     - 判定する場所に何も無い → 「無い」。何かがあるが通常のファイルでない(ディレクトリなど)、または読み取れない → 「読めない」。
+     - feature flag の検証: 無い `error: job map not found slot=<slot> map=<決めた場所>`(変えない)/ 読めない `error: config file is not readable path: <決めた場所>`。
+     - ジョブマップの検証と slot runner: 従来どおり(無い → 見つからない、読めない → config file is not readable)。
+  2. 読めない行の path: には、map= と同じ決めた場所を出す(利用者が指定した feature-flag.env のパスではない)。slot= は付かず、場所で見分ける。
+  3. 読めない行の位置は、job map not found と同じ位置(error_order の 6。blue → green)。1 つの slot の行は 1 行だけ。
+  3a. 細部(利用者決定より踏み込んで決めたこと): シンボリックリンクはリンク先で判定する(リンク先が読める通常のファイルなら読める、リンク先が無ければ無い、リンク先がディレクトリ・読めなければ読めない)。表示する場所は、リンクを解決しない場所の文字列のまま。3 つの読み手の判定が分かれないようにするため。
+  4. 全コマンド共通のエラー表示の規約に例外を設けない。ui-design.md には、例外が無いことが読めるように 1 文を足した。新しい文言は足していない。
+  5. 直した仕様: CLI 契約(validate-config.sh の stderr の feature flag の一覧、error_messages、error_order の 6、job_map_location の usage、slot runner の終了コード 2 の条件)、UC「feature flag を設定する」(tier の表と規則、spec の処理フロー、_api-summary)、UC「slot runner の実体スクリプトを割り当てる」(tier の検証項目、_api-summary)、UC「ジョブマップで JOB_ID から実行先を解決する」(tier のエラーメッセージ表・終了コード・バリデーション、_api-summary)、UC「slot ごとのジョブマップを定義する」(tier のエラーハンドリング)。
+  6. 判定する BDD を足した。既存のシナリオの期待値は変えていない。
+     - UC「feature flag を設定する」: 決めた場所がディレクトリ・読み取り権限の無いファイルの場面、読めない行が job map not found と同じ位置に出る場面。
+     - UC「feature flag を設定する」(続き): シンボリックリンクのジョブマップをリンク先で判定する場面(リンク先が読める・リンク先が無い)。
+     - UC「ジョブマップで JOB_ID から実行先を解決する」: slot runner が使ったパスのディレクトリを読めないと報告する場面。
+  7. 実装との関係: feature flag の検証(存在の判定と読み取りの判定を分ける)の変更が要る。ジョブマップの検証と slot runner は変わらない。
+consequences:
+  positive:
+    - "同じ状態に 1 つの文言だけが対応し、運用者が権限の問題だと分かる"
+    - "機能の仕様と全コマンド共通の規約が食い違わない"
+    - "新しい文言を足さない"
+  negative:
+    - "feature flag の検証の実装を直す必要がある"
+    - "読めない行には slot= が付かず、場所で見分ける"
+alternatives_considered:
+  - name: "いまの書き分けを残し、共通の規約に例外として明記する"
+    reason_rejected: "同じ状態に 2 通りの文言が残り、運用者が原因を取り違える点が直らない"
+  - name: "ジョブマップ専用の文言(slot= 付きの読めない文言)を新しく定める"
+    reason_rejected: "文言が 1 つ増え、直したばかりの slot runner とそのテストも変わる。ジョブマップの検証とは文言が分かれたままになる"

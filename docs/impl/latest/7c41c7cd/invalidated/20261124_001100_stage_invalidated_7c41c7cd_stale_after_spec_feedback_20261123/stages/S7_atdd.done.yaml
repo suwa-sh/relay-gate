@@ -1,0 +1,148 @@
+stage: S7
+uc_id: "7c41c7cd"
+manifest_sha256: 90b95c2c7f67feac241a56c2bb03191b9150a515f82b517c61c7d324e3bdefa1
+manifest_projection: v2
+result: pass
+result_note: "13 件を実行し、12 件が合格、1 件(SPEC-004-02-1)が保留(skipped)。失敗 0 件。保留の 1 件は、この機能で決まる部分(組み立てた引数の並び)を判定した上で、実装の実行(後続の機能 5ebe8db7)が要る部分だけを保留にしている。保留を合格として扱うかどうかはオーケストレータの判断"
+branch_slug: resolve-execution-target-from-job-map
+tiers:
+  - tier-facade
+tier_impl_attempt: 4
+atdd_confirmed: true
+features_changed: false
+steps:
+  - features/atdd/steps/resolve-execution-target-from-job-map.steps.js
+steps_reused:
+  - "features/atdd/steps/configure-feature-flags.steps.js(World と Before / After)"
+  - "features/atdd/steps/select-slot-mode-and-launch-runners.steps.js(SPEC-004-01-7 の When「facade を起動する」と、後始末の After)"
+  - "features/uc/steps/support/facade-harness.js(require で再利用。書き換えていない)"
+tier_impl_changed: false
+selection:
+  method: "一意タグ @atdd_{SPEC-ID}-{連番} の完全一致を or でつないだタグ式(名前の部分一致フィルタなし。feature 全体は回していない)"
+  command: "npx cucumber-js --config cucumber.cjs features/atdd --tags '@atdd_SPEC-002-03-1 or @atdd_SPEC-003-02-1 or @atdd_SPEC-004-01-1 or @atdd_SPEC-004-02-1 or @atdd_SPEC-004-04-1 or @atdd_SPEC-004-04-2 or @atdd_SPEC-004-04-3 or @atdd_SPEC-004-01-3 or @atdd_SPEC-004-01-4 or @atdd_SPEC-004-01-5 or @atdd_SPEC-004-01-6 or @atdd_SPEC-004-01-7 or @atdd_SPEC-004-01-8'"
+  cwd: "."
+  expected_scenarios: 13
+  executed_scenarios: 13
+  count_matches: true
+run:
+  exit_code: 0
+  summary: "13 scenarios (12 passed, 1 skipped), 78 steps (77 passed, 1 skipped)"
+  scenarios_total: 13
+  scenarios_passed: 12
+  scenarios_skipped: 1
+  scenarios_failed: 0
+  undefined_steps: 0
+  ambiguous_steps: 0
+  runs: 3
+  runs_detail:
+    - run: 1
+      exit_code: 0
+      summary: "13 scenarios (12 passed, 1 skipped), 78 steps (77 passed, 1 skipped)"
+    - run: 2
+      exit_code: 0
+      summary: "13 scenarios (12 passed, 1 skipped), 78 steps (77 passed, 1 skipped)"
+    - run: 3
+      exit_code: 0
+      summary: "13 scenarios (12 passed, 1 skipped), 78 steps (77 passed, 1 skipped)"
+  runs_note: "続けて 3 回流し、3 回とも Scenario ごとの結果が同じ(JSON レポートで Scenario 単位に突き合わせた)。step の件数 78 は hook を含む数え方(Scenario の本文の step は 1 件あたり 3)"
+dry_run:
+  selected:
+    command: "同じタグ式に --dry-run を付けて実行"
+    exit_code: 0
+    summary: "13 scenarios (13 skipped), 78 steps (78 skipped)"
+    undefined_steps: 0
+    ambiguous_steps: 0
+  whole_directory:
+    command: "npx cucumber-js --config cucumber.cjs features/atdd --dry-run"
+    exit_code: 0
+    summary: "209 scenarios (44 skipped, 165 undefined), 1254 steps (768 skipped, 486 undefined)"
+    ambiguous_steps: 0
+    note: "未定義の 165 件は、後続の機能に割り当てた Scenario(step がまだ無い)。定義済みの 44 件 = 先に済んだ機能の 31 件 + この機能の 13 件。重複した step の定義は 0 件"
+prior_scenarios_check:
+  note: "先に済んだ機能の ATDD(uc-map で 7c41c7cd より前の機能の atdd_scenarios。31 件)を、同じく一意タグの完全一致で選んで 1 回実行し、壊していないことを確かめた"
+  exit_code: 0
+  summary: "31 scenarios (31 passed), 186 steps (186 passed)"
+scenarios:
+  - id: SPEC-002-03-1
+    result: passed
+    judged: "facade.sh を JOB_ID と PARAM だけで起動し、両 slot の標準の slot runner が runner IF の引数(--job-id JOB001 と PARAM)で起動され、固定の名前のジョブマップで解決したこと(実行ログの解決の行)"
+  - id: SPEC-003-02-1
+    result: passed
+    judged: "ジョブマップに無い JOB999 で起動し、両 slot に stdout.log(空)・stderr.log・exitcode.txt が揃い、exitcode.txt と runner の終了コードが 2、stderr.log に `error: job_id=JOB999 not found in job map slot=... map=...` の行があること"
+    shared_with: "5ebe8db7 の atdd_scenarios にも載っている。JOB_ID が未定義の経路はこの機能の担当で、判定済み"
+  - id: SPEC-004-01-1
+    result: passed
+    judged: "green のジョブマップの行から host / user / script / work_dir / 固定引数(2 要素)/ hang_detect_limit_minutes が得られること(実行ログの host と、共通ライブラリの直接呼び出し)"
+  - id: SPEC-004-01-3
+    result: passed
+    judged: "BLUE_JOB_MAP_CSV に絶対パスを書き、固定の名前のジョブマップも置いた状態で、blue の runner がキーの場所を受け取り、その場所のジョブマップで解決したこと(ジョブマップごとに変えた map_version で見分けた)"
+  - id: SPEC-004-01-4
+    result: passed
+    judged: "場所のキーが無いとき、blue と green の runner が設定ファイル置き場の固定の名前のジョブマップを受け取り、それで解決したこと"
+  - id: SPEC-004-01-5
+    result: passed
+    judged: "値が空の行 `GREEN_JOB_MAP_CSV=` のとき、green の runner が固定の名前のジョブマップを受け取り、それで解決したこと"
+  - id: SPEC-004-01-6
+    result: passed
+    judged: "green 用のキーだけを書いたとき、green はキーの場所、blue は固定の名前のジョブマップで解決したこと"
+  - id: SPEC-004-01-7
+    result: passed
+    judged: "相対パスのキーを書き、feature-flag.env のディレクトリとは別のカレントディレクトリで facade を起動したとき、feature-flag.env のディレクトリ基準の場所(/etc/relay-gate/./maps/green-jobs.csv)で解決したこと。カレントディレクトリ基準の同じ相対パスにも別のジョブマップを置き、そちらを読んでいないことを見た"
+  - id: SPEC-004-01-8
+    result: passed
+    judged: "検証コマンド(validate-config.sh --feature-flag)が終了コード 0 で stdout に表示した blue_job_map / green_job_map の場所と、同じ設定で起動した facade から runner が受け取った場所が、文字列として同じで同じ実体を指し、runner がそのジョブマップで解決したこと"
+  - id: SPEC-004-02-1
+    result: skipped
+    judged: "Given と When は実行して passed。Then は、標準の slot runner が解決に成功したこと、固定引数が p1 と p2 p3 の 2 要素であること、解決フェーズが組み立てた引数の並びが p1 / p2 p3 / a / b の 4 個であること(共通ライブラリの直接呼び出し)を判定してから保留を返している(食い違えば保留にならず失敗する)"
+    skipped_from: "Then「p1, \"p2 p3\", a, b の順で 4 引数として渡される」のうち、実装が実際に受け取った引数"
+    skip_condition: "ジョブマップの script に置いた記録用の実スクリプトの記録が無く、かつ blue の exitcode.txt が無い間だけ skipped を返す。解決に失敗した回は保留にせず失敗させる。後続の機能が実装を実行すると、同じ step が、実装が受け取った引数の記録で判定する"
+    reason: "実装の実行と、実装へ引数を渡すことは後続の機能 5ebe8db7(実装スクリプトを実行して Runner Result を出力する)の担当。この機能(7c41c7cd)が作るのは解決の段までで、解決に成功した後の標準の slot runner は実装を実行しない(前提 A-004)"
+    refs:
+      - "docs/impl/latest/7c41c7cd/issues/20261123_142047_cross-uc-scenarios.md の 3"
+      - "docs/impl/latest/7c41c7cd/stages/attempt-4/S4_tier-impl.tier-facade.assumptions.yaml の A-004"
+    handover: "5ebe8db7 の S7 で保留が外れることを確認する(5ebe8db7 の atdd_scenarios にも載っている)"
+  - id: SPEC-004-04-1
+    result: passed
+    judged: "元資料どおりの 7 列のジョブマップから、列名の読み替えなしに host / user / script / work_dir / fixed_params(空)/ hang_detect_limit_minutes が得られること"
+  - id: SPEC-004-04-2
+    result: passed
+    judged: "二重引用符で囲み、中の二重引用符を二重化した fixed_params セルが、p1 と p2 p3 の 2 要素として得られ、セルの中のカンマで後ろの列がずれないこと"
+  - id: SPEC-004-04-3
+    result: passed
+    judged: "host と user の列が無いジョブマップで、解決結果の実行方法が local、host と user が空であること(実行ログの host=-)"
+    shared_with: "5ebe8db7 の atdd_scenarios にも載っている(ローカル実行の実行の側)。この機能で決まる解決結果までを判定済み"
+harness:
+  process: "relay-gate を Scenario ごとの一時ディレクトリの /opt/relay-gate へ複製し、facade/bin/facade.sh を実プロセスとして起動。facade が両 slot の標準の slot runner(runners/standard-runner.sh)を起動する。仕様の絶対パスは一時ディレクトリの下へ写像"
+  database: "この機能の Scenario は管理 DB に触らない(RAPID_CROSSCHECK_MODE=off。一時 PostgreSQL を起動しない)"
+  external_connections: none
+  repository_writes: none
+  leftovers:
+    repository: "none(facade/log・facade/var・log・var のどれも存在しない。git status の変更は features/atdd/steps/resolve-execution-target-from-job-map.steps.js と、この done だけ)"
+    tmpdir: "none(TMPDIR の直下に relay-gate-* は 0 件。/tmp の rgpg-* も 0 件)"
+    tmpdir_note: "/tmp/relay-gate-quickstart が 1 件あるが、今回の実行より前からあるもの(S6 の done に同じ記録がある)。テストが作る名前(relay-gate-atdd- など)とも置き場(TMPDIR)とも違う。触っていない"
+    processes: "none(pgrep で standard-runner・sleep 600・一時 PostgreSQL のプロセスが無いことを確認)"
+injections:
+  - what: "標準の slot runner の起動引数と環境変数を記録してから、本物の標準の slot runner へ同じ引数で処理を渡して終了コードを返す包み(代わりのスタブではない。background の runner の終了を待つ印にも使う)"
+    where: "features/atdd/steps/resolve-execution-target-from-job-map.steps.js(STANDARD_RUNNER_RECORDING_WRAPPER)"
+    basis: "docs/impl/latest/09730858/issues/20261118_091109_cross-uc-scenarios.md の 4(案 A)、AssumptionRecord A-004(docs/impl/latest/7c41c7cd/stages/attempt-4/S4_tier-impl.tier-facade.assumptions.yaml)"
+  - what: "共通ライブラリ(配置した lib/runner-resolve.sh)を source して resolve_execution_target を直接呼び、結果の変数(EXECUTION_TARGET_* / ARGUMENT_LIST。null は空文字)で、実行ログに出ない解決結果と引数の並びを確かめる"
+    where: "features/atdd/steps/resolve-execution-target-from-job-map.steps.js(RESOLVE_SCRIPT / resolvedTarget)"
+    basis: "AssumptionRecord A-001 / A-002(docs/impl/latest/7c41c7cd/stages/attempt-4/S4_tier-impl.tier-facade.assumptions.yaml)、docs/impl/latest/7c41c7cd/issues/20261123_142047_cross-uc-scenarios.md の 4(案 A)"
+  - what: "受け入れ基準の Given が書いていない値(mode・実装版・ジョブマップのほかの列)を、仕様のほかの Scenario の例示の値で補う"
+    where: "features/atdd/steps/resolve-execution-target-from-job-map.steps.js"
+    basis: "docs/impl/latest/7c41c7cd/issues/20261123_142047_cross-uc-scenarios.md の 5"
+injections_note: "注入箇所には根拠と「暫定注入・契約確定後に削除」のコメントが付いている。前提の新規抽出なし"
+not_added: "時間を測るテスト、作為的な入力のテストは足していない"
+not_verified:
+  - "実装が実際に受け取る引数(SPEC-004-02-1 の保留の部分。5ebe8db7 の担当)"
+  - "execution-spec.json の中身(43850d68 の担当。この 13 件の Then には出てこない)"
+  - "SSH 実行そのもの(host のある行は解決結果だけを見ている。5ebe8db7 の担当)"
+  - "解決に成功した後の facade.sh の終了コード(後続の機能ができるまで標準の slot runner は仮の終了コードで終わるため、判定していない)"
+  - "Linux での実行(実行したのは macOS だけ)"
+cross_uc_refs:
+  - docs/impl/latest/7c41c7cd/issues/20261123_142047_cross-uc-scenarios.md
+  - docs/impl/latest/09730858/issues/20261118_091109_cross-uc-scenarios.md
+issues: []
+issues_note: "新規起票なし"
+completed_at: '2026-11-23T17:55:01+09:00'
+completed_by: dist-impl-implement@0.15.0

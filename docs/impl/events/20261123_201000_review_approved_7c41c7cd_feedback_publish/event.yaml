@@ -1,0 +1,149 @@
+event_id: 20261123_201000_review_approved_7c41c7cd_feedback_publish
+type: review_approved
+uc_id: 7c41c7cd
+stage: S9
+payload:
+  approval_kind: feedback_publish_approval
+  approved_by: user
+  approved_via: 'chat replies on 2026-11-23 (round 1: implementation, 5 assumptions,
+    3 requests, 6 acceptance scenarios; round 2: both recommended options = publish
+    the 3 requests with option A for the third, keep the snapshot assumption confirmed)'
+  review_evidence_event_id: 20261123_195000_s9_review_regenerated_7c41c7cd
+  review_notes: docs/impl/latest/7c41c7cd/review/review-notes.md
+  feedback_review_evidence:
+    feedback_id: 20261123_175902_impl_feedback_7c41c7cd
+    draft_path: docs/impl/latest/7c41c7cd/feedback/draft.md
+    draft_sha256: adf35e772216ab8f53bdf3cf2159615fd435155cd2a6c0a4b2ff848dfe1cf5db
+    request_count: 3
+    blocker_count: 0
+    request_ids:
+    - CR-7c41c7cd-001
+    - CR-7c41c7cd-002
+    - CR-7c41c7cd-003
+  implementation_review_evidence:
+    gate_result: 6/6 pass
+    open_blocker_count: 0
+    open_major_count: 4
+    assumption_evidence_sha256: a8d72dc4d6a93f37af8f43f64f7d82eb8ac706d59f88483eca629cd94074fab9
+    tiers:
+    - tier: tier-facade
+      attempt: 4
+      assumptions_sha256: cad27c03d69264dab0bc71fbe6d76ae61d255a463ad3ae1ab58d42eb2db10044
+      assumption_verdicts_sha256: fa2418a93037989784fec68378f076ed58cbddb55c39893da9bcdfe02843881b
+  assumption_decisions:
+  - tier: tier-facade
+    id: A-001
+    decision: auto_confirmed
+    answered: not_answered
+  - tier: tier-facade
+    id: A-002
+    decision: auto_confirmed
+    answered: not_answered
+  - tier: tier-facade
+    id: A-003
+    decision: auto_confirmed
+    answered: not_answered
+  - tier: tier-facade
+    id: A-004
+    decision: auto_confirmed
+    answered: not_answered
+  - tier: tier-facade
+    id: A-005
+    decision: auto_confirmed
+    answered: not_answered
+  - tier: tier-facade
+    id: A-006
+    decision: confirmed
+    answered: explicit
+  - tier: tier-facade
+    id: A-007
+    decision: auto_confirmed
+    answered: not_answered
+  - tier: tier-facade
+    id: A-009
+    decision: auto_confirmed
+    answered: not_answered
+  - tier: tier-facade
+    id: A-011
+    decision: auto_confirmed
+    answered: not_answered
+  - tier: tier-facade
+    id: A-012
+    decision: confirmed
+    answered: explicit
+  - tier: tier-facade
+    id: A-013
+    decision: auto_confirmed
+    answered: not_answered
+  - tier: tier-facade
+    id: A-014
+    decision: auto_confirmed
+    answered: not_answered
+  - tier: tier-facade
+    id: A-015
+    decision: auto_confirmed
+    answered: not_answered
+  - tier: tier-facade
+    id: A-016
+    decision: auto_confirmed
+    answered: not_answered
+  - tier: tier-facade
+    id: A-017
+    decision: auto_confirmed
+    answered: not_answered
+  - tier: tier-facade
+    id: A-018
+    decision: auto_confirmed
+    answered: not_answered
+  - tier: tier-facade
+    id: A-019
+    decision: auto_confirmed
+    answered: not_answered
+  - tier: tier-facade
+    id: A-020
+    decision: auto_confirmed
+    answered: not_answered
+  - tier: tier-facade
+    id: A-021
+    decision: auto_confirmed
+    answered: not_answered
+  - tier: tier-facade
+    id: A-022
+    decision: confirmed
+    answered: explicit
+  - tier: tier-facade
+    id: A-023
+    decision: auto_confirmed
+    answered: not_answered
+  - tier: tier-facade
+    id: A-024
+    decision: auto_confirmed
+    answered: not_answered
+  - tier: tier-facade
+    id: A-025
+    decision: auto_confirmed
+    answered: not_answered
+  - tier: tier-facade
+    id: A-026
+    decision: auto_confirmed
+    answered: not_answered
+  - tier: tier-facade
+    id: A-027
+    decision: auto_confirmed
+    answered: not_answered
+  - tier: tier-facade
+    id: A-028
+    decision: auto_confirmed
+    answered: not_answered
+  - tier: tier-facade
+    id: A-029
+    decision: confirmed
+    answered: explicit
+  - tier: tier-facade
+    id: V-001
+    decision: confirmed
+    answered: explicit
+    note: 'found by the verifier (unlisted): the last one wins when the same option
+      is given twice'
+  not_a_delivery_approval: true
+created_at: '2026-11-23T20:10:00+09:00'

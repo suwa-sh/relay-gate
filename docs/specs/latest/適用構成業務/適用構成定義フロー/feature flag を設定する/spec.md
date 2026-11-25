@@ -82,6 +82,8 @@ sequenceDiagram
   end
   alt 設定所有区分: off でない slot のジョブマップが、決めた場所に無い
     Dom-->>UC: 違反 "job map not found slot=<slot> map=<決めた場所>"
+  else 決めた場所にあるが読めない・通常のファイルでない(ディレクトリなど)
+    Dom-->>UC: 違反 "config file is not readable path: <決めた場所>"(全コマンド共通の定型文。同じ位置)
   end
   alt 違反なし
     Dom-->>UC: 運用モード名(parallel / green_only / next_gen_parallel / custom)

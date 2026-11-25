@@ -1,0 +1,113 @@
+event_id: 20261126_090000_review_approved_7c41c7cd_final
+type: review_approved
+uc_id: 7c41c7cd
+stage: S9
+payload:
+  approval_kind: final_approval
+  review_evidence_event_id: 20261124_050000_s9_review_generated_7c41c7cd
+  feedback_review_evidence:
+    feedback_id: null
+    draft_sha256: null
+    request_count: 0
+  implementation_review_evidence:
+    gate_result: 6/6 pass
+    open_blocker_count: 0
+    open_major_count: 5
+    assumption_evidence_sha256: 407c00e99da46725cdf21272b3ea95257f438c49ad4d6b2115150be67101c730
+  assumption_decisions:
+  - tier: tier-facade
+    id: A-004
+    decision: confirmed
+    answered: approved_as_a_whole
+  - tier: tier-facade
+    id: A-005
+    decision: confirmed
+    answered: approved_as_a_whole
+  - tier: tier-facade
+    id: A-006
+    decision: confirmed
+    answered: explicit
+  - tier: tier-facade
+    id: A-007
+    decision: confirmed
+    answered: approved_as_a_whole
+  - tier: tier-facade
+    id: A-009
+    decision: confirmed
+    answered: approved_as_a_whole
+  - tier: tier-facade
+    id: A-011
+    decision: confirmed
+    answered: approved_as_a_whole
+  - tier: tier-facade
+    id: A-012
+    decision: confirmed
+    answered: explicit
+  - tier: tier-facade
+    id: A-013
+    decision: confirmed
+    answered: approved_as_a_whole
+  - tier: tier-facade
+    id: A-014
+    decision: confirmed
+    answered: approved_as_a_whole
+  - tier: tier-facade
+    id: A-015
+    decision: confirmed
+    answered: approved_as_a_whole
+  - tier: tier-facade
+    id: A-016
+    decision: confirmed
+    answered: approved_as_a_whole
+  - tier: tier-facade
+    id: A-017
+    decision: confirmed
+    answered: approved_as_a_whole
+  - tier: tier-facade
+    id: A-018
+    decision: confirmed
+    answered: approved_as_a_whole
+  - tier: tier-facade
+    id: A-019
+    decision: confirmed
+    answered: approved_as_a_whole
+  - tier: tier-facade
+    id: A-020
+    decision: confirmed
+    answered: approved_as_a_whole
+  - tier: tier-facade
+    id: A-022
+    decision: confirmed
+    answered: explicit
+  - tier: tier-facade
+    id: A-023
+    decision: confirmed
+    answered: approved_as_a_whole
+  - tier: tier-facade
+    id: A-024
+    decision: confirmed
+    answered: approved_as_a_whole
+  - tier: tier-facade
+    id: A-025
+    decision: confirmed
+    answered: approved_as_a_whole
+  - tier: tier-facade
+    id: A-026
+    decision: confirmed
+    answered: approved_as_a_whole
+  - tier: tier-facade
+    id: A-028
+    decision: confirmed
+    answered: approved_as_a_whole
+  - tier: tier-facade
+    id: A-029
+    decision: confirmed
+    answered: explicit
+  - tier: tier-facade
+    id: A-030
+    decision: confirmed
+    answered: explicit
+  user_reply: 'chat reply on 2026-11-26: the 7 recommended lines unchanged (approve
+    the implementation with 0 spec requests; approve the 5 safety assumptions one
+    by one; approve the other 18 as a whole)'
+created_at: '2026-11-26T09:00:00+09:00'

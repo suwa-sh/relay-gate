@@ -350,7 +350,8 @@ When(
     assertExit(this, 0);
     assertStdoutIncludes(this, `green_runner: ${SPEC_GREEN_NEXT_RUNNER}`);
     // 配置した relay-gate の facade.sh(一時ディレクトリの /opt/relay-gate/bin/facade.sh)を、ジョブ定義どおり facade.sh JOB001 で起動する。
-    // blue は標準の slot runner のまま(中身は後続 UC。仮の応答の間は facade の終了コードが 0 にならないため、終了コードは判定しない)
+    // blue は標準の slot runner のまま(今できるのはジョブマップの解決まで。実装の実行は後続 UC で、解決に成功した後は仮の終了コードで
+    // 終わるため facade の終了コードが 0 にならない。終了コードは判定しない)
     runFacadeWithEnv(this, ['JOB001'], path.join(home, 'bin', 'facade.sh'));
   },
 );

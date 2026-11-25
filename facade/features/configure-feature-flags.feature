@@ -3,6 +3,7 @@
 # 追記: spec event 20261115_142000_feedback_impl_feedback_fd678b04_cycle3 で足された末尾の Scenario 4 本と Scenario Outline 1 本(error 行の順 / mode が列挙外・空・欠落の slot の検査 / 9 キー以外の値を取り込まない)を転写(2026-11-15 の S2 再実行。既存 Scenario は変更なし)
 # 追記: spec event 20261115_164000_feedback_runner_relative_path で足された末尾の Scenario 4 本と Scenario Outline 2 本(相対パスの解決 / 基準は作業ディレクトリではない / 設定ファイルのパスが相対パス / シンボリックリンク / 実体が無いとき / ~・環境変数・コマンド置換を展開しない)を転写し、error_order の Scenario の Given 1 行・When・表の 5 行目を仕様の置換どおりに差し替えた(2026-11-15 の S2 再実行。ほかの Scenario は変更なし)
 # 追記: 2026-11-16 の仕様更新(slot ジョブマップの場所を書く任意の 2 キー BLUE_JOB_MAP_CSV / GREEN_JOB_MAP_CSV。契約 config_files.feature-flag.env.job_map_location、spec-decision-036 / 038)で足された Scenario 6 本と Scenario Outline 2 本(同じ絶対パス / 2 キーが無いときの固定の名前 / 値が空のキー / 相対パスの基準 / 作業ディレクトリにだけある / 書いた場所に無い / off の slot / 名前が違うキー)を仕様と同じ位置へ転写し、duplicate key の Examples に 1 行を足し、Scenario「9 キー以外のキーの値をプロセスの環境へ取り込まない」の名前を仕様の改名どおりに差し替えた(2026-11-16 の S2 再実行。ほかの Scenario は変更なし)
+# 追記: 2026-11-23 の仕様更新(ジョブマップの『無い』と『あるが読めない』の報告の文言。契約 config_files.feature-flag.env.job_map_location.presence_report、spec-decision-043)で足された Scenario 3 本(読めないジョブマップを config file is not readable で報告する / シンボリックリンクをリンク先で判定する / 読めない行を job map not found と同じ位置に出す)を仕様と同じ位置へ転写した(2026-11-24、UC 7c41c7cd の S4 再実行。ほかの Scenario は変更なし)
 Feature: feature flag を設定する - facade / slot runner ティア
 
   Scenario: validate-config_sh_feature-flag は有効な並行稼働設定に終了コード 0 と operation_mode=parallel を返す
@@ -271,6 +272,31 @@ Feature: feature flag を設定する - facade / slot runner ティア
     When `validate-config.sh --feature-flag ff.env` を実行する
     Then 終了コード 2 で stdout は 0 行、stderr は次の 2 行だけがこの順に出る(契約 config_files.feature-flag.env の job_map_location / error_order)
       | error: job map not found slot=blue map=<maps の絶対パス>/missing.csv              |
+      | error: job map not found slot=green map=<RELAY_GATE_CONFIG_DIR>/green-job-map.csv |
+
+  Scenario: validate-config_sh_feature-flag は決めた場所にあるが読めないジョブマップを config file is not readable で報告する
+    Given 有効な並行稼働設定(9 キー)の ff.env があり、両 runner スタブは --help で "runner-if-version=1" を返す
+    And RELAY_GATE_CONFIG_DIR の blue-job-map.csv はディレクトリで、green-job-map.csv は読み取り権限の無いファイルである(テストは root 以外のユーザーで実行する)
+    When `validate-config.sh --feature-flag ff.env` を実行する
+    Then 終了コード 2 で stdout は 0 行、stderr は次の 2 行だけがこの順に出る(契約 config_files.feature-flag.env の job_map_location.presence_report / error_order)
+      | error: config file is not readable path: <RELAY_GATE_CONFIG_DIR>/blue-job-map.csv  |
+      | error: config file is not readable path: <RELAY_GATE_CONFIG_DIR>/green-job-map.csv |
+    And stderr に "job map not found" を含む行も "slot=" を含む行も出ない
+
+  Scenario: validate-config_sh_feature-flag はシンボリックリンクのジョブマップをリンク先で判定する
+    Given 有効な並行稼働設定(9 キー)の ff.env があり、両 runner スタブは --help で "runner-if-version=1" を返す
+    And RELAY_GATE_CONFIG_DIR の blue-job-map.csv は読める通常のファイルを指すシンボリックリンクで、green-job-map.csv はリンク先が無いシンボリックリンクである
+    When `validate-config.sh --feature-flag ff.env` を実行する
+    Then 終了コード 2 で stdout は 0 行、stderr は "error: job map not found slot=green map=<RELAY_GATE_CONFIG_DIR>/green-job-map.csv" の 1 行だけである(blue はリンク先が読めるため違反にしない。契約 job_map_location.presence_report)
+
+  Scenario: validate-config_sh_feature-flag は読めないジョブマップの行を job map not found と同じ位置に出す
+    Given ff.env の 1 行目が BLUE_MODE=foreground、2 行目が GREEN_MODE=background、3 行目が RAPID_CROSSCHECK_MODE=off、4 行目が BLUE_IMPL=blue-1.0.0、5 行目が BLUE_RUNNER=<実行可能な blue スタブ>、6 行目が GREEN_RUNNER=<実行可能な green スタブ> である(GREEN_IMPL は書かない)
+    And 両 runner スタブは --help で "runner-if-version=1" を返す
+    And RELAY_GATE_CONFIG_DIR の blue-job-map.csv はディレクトリで、green-job-map.csv は無い
+    When `validate-config.sh --feature-flag ff.env` を実行する
+    Then 終了コード 2 で stdout は 0 行、stderr は次の 3 行だけがこの順に出る(契約 config_files.feature-flag.env.error_order の 3 → 6。6 の中は blue → green)
+      | error: option required option=GREEN_IMPL path: ff.env                             |
+      | error: config file is not readable path: <RELAY_GATE_CONFIG_DIR>/blue-job-map.csv |
       | error: job map not found slot=green map=<RELAY_GATE_CONFIG_DIR>/green-job-map.csv |
 
   Scenario: validate-config_sh_feature-flag は off の slot のジョブマップの場所を解決も検査もしない

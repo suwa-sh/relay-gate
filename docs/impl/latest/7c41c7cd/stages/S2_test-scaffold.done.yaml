@@ -1,0 +1,167 @@
+stage: S2
+uc_id: 7c41c7cd
+manifest_sha256: 48085ea1b968b72d9ea62db80e13211b61573aa6df6b04aeb45ba4f3728d5c63
+manifest_projection: v2
+result: pass
+scaffold_mode: diff_only
+rerun: true
+rerun_reason: "stale after the 2026-11-23 spec reflux of the 3 requests this UC published (spec-event 20261123_201000_feedback_impl_feedback_7c41c7cd, spec-decision-041 / 042 / 043; invalidated by 20261124_001100_stage_invalidated_7c41c7cd_stale_after_spec_feedback_20261123)"
+previous_done: "git 1a19297:docs/impl/latest/7c41c7cd/stages/S2_test-scaffold.done.yaml (the invalidated/ folder of this run has no S2 copy)"
+branch_slug: resolve-execution-target-from-job-map
+tiers:
+  - tier-facade
+scaffold_scope:
+  tiers:
+    - tier-facade
+  uc_feature: untouched
+  atdd: untouched
+scaffold_scope_note: "既存の実装が残る再実行のため、dist-impl-implement mode=test-scaffold の再実行時の done 条件(parse 可能かつ実行可能。新規・変更 Scenario の fail は未実装が理由のものだけ許容)で判定した。初回の red_baseline: pass は記録しない。実測の結果を red_baseline_measured に記録する。uc_feature: untouched の理由は、spec.md は変わったが変更は概要と統合契約の文だけで、E2E 完了条件の gherkin 2 ブロックは既存の features/uc/resolve-execution-target-from-job-map.feature と行単位で一致した(スクリプトで照合)ため。atdd: untouched は features/atdd の feature 本文と step 定義の両方"
+red_baseline_measured:
+  red_total: 13
+  by_stage:
+    - stage: atdd
+      total: 13
+      added: 0
+      updated: 0
+      red: 0
+      note: "対象外(untouched)。実行していない"
+    - stage: uc_bdd
+      total: 16
+      added: 0
+      updated: 0
+      red: 0
+      note: "対象外(untouched)。feature も step も変えていないため実行していない"
+    - stage: tier_bdd
+      total: 19
+      added: 6
+      updated: 2
+      red: 6
+      green: 13
+    - stage: tdd
+      total: 769
+      added: 13
+      updated: 0
+      red: 7
+      green: 762
+  reason: "tier BDD の red 6 件は、追加した Scenario の step skeleton が 'not implemented: <step 文言>' を投げるため(中身は S4 の再実行で書く)。単体テストの red 7 件はすべて assertion failure で、理由は 2 つの未実装。(1) 入力の複製の最終名に先にディレクトリ・ディレクトリへのリンクがあると、いまの実装の mv がその中へ複製を移す(issue 20261124_001000。仕様は複製の失敗 = config snapshot failed / 終了コード 6。いまは internal command failed commands=tr,rm になる)。(2) validate-config.sh --feature-flag が、決めた場所にあるが読めない・通常のファイルでないジョブマップを job map not found で報告する(spec-decision-043 の presence_report は config file is not readable)"
+  red_is_assertion_failure: true
+  undefined_steps: 0
+  ambiguous_steps: 0
+  parse_errors: 0
+  red_tests:
+    tier_bdd:
+      - "自作の runner は共通ライブラリの解決の入口を呼んで標準の slot runner と同じ結果を受け取る"
+      - "引数の違反の報告は run_id が分からないとき成果物を書かず RUNNER_RESOLVE_EXIT_CODE を 2 にする"
+      - "自作の runner は解決できなかったとき RUNNER_RESOLVE_EXIT_CODE の値で終える"
+      - "解決の入口は既存の exitcode.txt が 0 の二重起動のとき RUNNER_RESOLVE_STATUS_NOT_RESOLVED を返す"
+      - "二重起動の判定は既存の exitcode.txt が 0 のとき 0 以外を返して終了コード 0 を知らせる"
+      - "runner は使ったパスにあるがディレクトリのジョブマップを config file is not readable で報告する"
+    tdd:
+      - "facade/test/repository/job_map_repo_snapshot_final_name.bats の 3 件すべて(最終名にディレクトリ / ディレクトリへのリンク / load の状態)。いまの実装では、create_snapshot は 0 を返し、複製(relay-gate-<pid>-XXXXXX.part)が置かれたディレクトリ・リンク先のディレクトリの中へ移ることを確認した(テストが実装の使う最終名を狙っていることの確認)。load は複製失敗(7)ではなく補助コマンドの失敗(6)を返す"
+      - "facade/test/usecase/runner_resolve_library_contract.bats の 1 件(最終名にディレクトリがあるとき resolve_execution_target が config snapshot failed で 6)"
+      - "facade/test/usecase/validate_feature_flag_job_map_presence.bats の 3 件(blue がディレクトリ・green が読み取り権限の無いファイル / ディレクトリへのリンク / 必須キー欠落と読めない・無いの並び)"
+  green_added_note: "追加した単体テストのうち 6 件は、前回の S4 で先に実装されていたため最初から green。runner_resolve_library_contract.bats の 5 件(source しても set のオプションと EXIT の trap を変えず何も出力しない / RUNNER_RESOLVE_STATUS_NOT_RESOLVED が 1 / 二重起動で既存の exitcode.txt が 0 のとき戻り値 1・RUNNER_RESOLVE_EXIT_CODE 0 / reject_invocation で run_id が分からないとき RUNNER_RESOLVE_EXIT_CODE 2 / build_argument_list が不正な JSON 配列で前の結果を空にする)と、validate_feature_flag_job_map_presence.bats の 1 件(シンボリックリンクをリンク先で判定する)。いずれも契約 runner_resolve_library / presence_report の約束を固定する回帰の見張りとして残した。変更 2 件の tier BDD Scenario(parse_csv_row / build_argument_list)も green"
+spec_changes_applied:
+  - "tier-facade.md ティア完了条件: 13 Scenario から 19 Scenario へ。追加は自作の runner が共通ライブラリを呼ぶ Scenario 5 本(spec-decision-042)と、ディレクトリのジョブマップを config file is not readable で報告する Scenario 1 本(spec-decision-043)。変更は parse_csv_row / build_argument_list の 2 本(When / Then が関数名と結果の配列名を明示する文言になった)"
+  - "tier-facade.md 共通ライブラリ lib/runner-resolve.sh の呼び方の表と、CLI 契約 runner IF の standard_runner.runner_resolve_library(sourcing / exit_code_variable / functions の returns・on_failure)を、tier BDD が判定しない細部として単体テストで判定する"
+  - "CLI 契約 config_input_rules.snapshot.work_name の predictability(影響は複製の失敗まで。すり替えられない)を、issue 20261124_001000 の再現テストとして単体テストで判定する。X を置き換えない mktemp を関数で差し替えて最終名を予測できる状態を作るため、GNU mktemp の環境でも同じ条件で走る"
+  - "CLI 契約 config_files.feature-flag.env.job_map_location.presence_report の --feature-flag 側(error_order の 6 の位置、blue → green、シンボリックリンクはリンク先で判定、表示はリンクのパスのまま)を単体テストで判定する。slot runner と --job-map の側は既存の単体テストが判定済み"
+  - "work_name の template / process_number / one_copy_per_process / rename は、既存の job_map_repo.bats(プロセス番号入りの名前・2 プロセス同時・最終名だけが 0600 で存在)が判定済みのため足していない"
+  - "ui-design.md の変更は文言の追加で、上の presence_report と同じ内容のため、別のテストは足していない"
+  - "性能を合否とするテスト、大きな入力を作るテストは足していない"
+transcription_check:
+  method: "tier-facade.md の gherkin 1 ブロックをスクリプトで取り出して feature 本文へ書き、# で始まる出典コメント行を除いた本文が仕様のブロックと行単位で完全一致することを同じスクリプトで確認した。出典コメントは既存の 2 行を残し、再転写の旨の 1 行を足した。spec.md の 2 ブロックは既存の UC feature と一致したため書き換えていない"
+  uc_feature_verbatim: true
+  tier_feature_verbatim: true
+generated:
+  atdd:
+    feature_body_changed: false
+    steps_changed: false
+    note: "対象外(untouched)"
+  uc_bdd:
+    feature: features/uc/resolve-execution-target-from-job-map.feature
+    feature_regenerated: false
+    steps_changed: false
+    cross_uc_scenarios_added: 0
+    cross_uc_note: "E2E の gherkin は変わっていないため、UC 横断 Scenario の一覧(issues/20261123_142047_cross-uc-scenarios.md)はそのまま。tier に足した 6 Scenario の Then は、共通ライブラリの戻り値・変数・この UC の Runner Result と実行ログだけで、他 UC の責務を含まない"
+  tier_bdd:
+    - tier: tier-facade
+      feature: facade/features/resolve-execution-target-from-job-map.feature
+      feature_regenerated: true
+      feature_change: "仕様と同じ位置に Scenario 6 本を追加し、2 本の When / Then の文言を仕様の新しい文言に置き換えた。出典コメントを 1 行追加。ほかの Scenario の本文は変更なし"
+      steps: facade/features/steps/resolve-execution-target-from-job-map.steps.js
+      steps_changed: true
+      steps_change_summary: "(1) 文言が変わった 4 つの step(CSV 行分解関数 / 引数連結関数の When と Then)は、呼ぶ関数と確かめる内容が前と同じため、既存の step 定義の文言だけを新しい文言へ置き換えた(古い文言の定義は残していない)。(2) 新しい 6 Scenario の step のうち、既存の step 定義に一致しない 21 件(Given 5 / When 4 / Then 12)を、'not implemented: <文言>' を投げる skeleton として末尾に追加した。既存の step と同じ文言は再定義していない(GREEN_JOB_MAP_CSV=<maps>/green-jobs.csv の Given、--role green --mode background を実行する When、終了コード 2 で終了し exitcode.txt は 2 の 1 行である Then は既存の定義を使う)"
+      source: "docs/specs/latest/実装切替業務/実装切替ジョブ実行フロー/ジョブマップで JOB_ID から実行先を解決する/tier-facade.md#ティア完了条件(BDD)"
+      scenarios: 19
+      scenarios_added: 6
+      scenarios_updated: 2
+  tdd:
+    - tier: tier-facade
+      file: facade/test/usecase/runner_resolve_library_contract.bats
+      change: added
+      tests: 6
+      red: 1
+      target: "lib/runner-resolve.sh を自作の runner と同じく source して呼ぶ(契約 runner_resolve_library の sourcing / exit_code_variable / resolve_execution_target の二重起動 / reject_invocation の RUNNER_RESOLVE_EXIT_CODE / build_argument_list の on_failure)と、最終名にディレクトリがあるときの config snapshot failed"
+    - tier: tier-facade
+      file: facade/test/repository/job_map_repo_snapshot_final_name.bats
+      change: added
+      tests: 3
+      red: 3
+      target: "job_map_repo_create_snapshot / job_map_repo_load(issue 20261124_001000 の再現テスト)"
+    - tier: tier-facade
+      file: facade/test/usecase/validate_feature_flag_job_map_presence.bats
+      change: added
+      tests: 4
+      red: 3
+      target: "facade/bin/validate-config.sh --feature-flag(エントリポイント経由)。presence_report の --feature-flag 側"
+legacy_rule_expectations_found:
+  note: "--feature-flag の所在の検査で、ディレクトリ・読めないファイルを job map not found とする前提のテストを facade/test と facade/features で探した。facade/test には無い。facade/features/configure-feature-flags.feature(UC『feature flag を設定する』の tier BDD)は仕様側で 3 Scenario が足されたが、その UC の feature のため書き換えていない(下の observations)"
+  updated: []
+test_runs:
+  - stage: tier_bdd
+    tier: tier-facade
+    cwd: facade
+    command: "npx cucumber-js --config ../cucumber.cjs features --dry-run"
+    exit_code: 0
+    summary: "160 scenarios (160 skipped), 1334 steps (1334 skipped)。undefined 0、ambiguous 0"
+  - stage: tier_bdd
+    tier: tier-facade
+    cwd: facade
+    command: "npx cucumber-js --config ../cucumber.cjs features"
+    exit_code: 1
+    summary: "160 scenarios (154 passed, 6 failed), 1334 steps (1309 passed, 19 skipped, 6 failed)。再実行前は 154 scenarios で全件 passed"
+    target_feature_summary: "19 scenarios (13 passed, 6 failed)"
+    total: 19
+    red: 6
+    fail_reason: "未実装(追加した step skeleton の not implemented)。6 件とも各 Scenario の最初の未実装 step で fail"
+    undefined_steps: 0
+    ambiguous_steps: 0
+  - stage: tdd
+    tier: tier-facade
+    cwd: facade
+    command: "bats -r test"
+    exit_code: 1
+    summary: "769 tests, 762 ok, 7 not ok。再実行前は 756 tests で全件 ok"
+    total: 769
+    added: 13
+    updated: 0
+    red: 7
+    fail_reason: "未実装(最終名の扱い / --feature-flag の読めないジョブマップの文言)。7 件とも追加したテストで、assertion failure"
+format_check:
+  tier: tier-facade
+  command: "shfmt -d ."
+  exit_code: 0
+lint:
+  tier: tier-facade
+  command: "find src test -name '*.sh' -exec shellcheck -x {} +"
+  exit_code: 0
+dom_snapshot_tests: not_applicable
+issues: []
+issues_note: "新規起票は無し。仕様と契約の間に矛盾は見つからなかった。最終名の扱いは既存の issue 20261124_001000 の再現テストを足した"
+observations:
+  - "同じ仕様の反映(commit bd93f85)で、UC『feature flag を設定する』の tier-facade.md にも 3 Scenario が足された(読めないジョブマップを config file is not readable で報告する / シンボリックリンクをリンク先で判定する / 読めない行を job map not found と同じ位置に出す)。facade/features/configure-feature-flags.feature にはまだ無い。その UC の feature のためこの実行では書き換えていない。同じ規則は単体テスト validate_feature_flag_job_map_presence.bats で判定する。オーケストレータは、その UC(fd678b04)の tier BDD の再転写の要否を判断すること。UC『slot runner の実体スクリプトを割り当てる』と『slot ごとのジョブマップを定義する』の gherkin は既存の feature と一致した"
+  - "UC BDD と ATDD は対象外(untouched)のため実行していない。step も feature も変えていない"
+  - "step 定義ファイルは prettier --check で警告が出るが、この再実行の前から同じ(コマンドの正は impl-config の commands で、prettier はゲートに無い)"
+completed_at: '2026-11-24T00:50:00+09:00'
+completed_by: dist-impl-implement@0.15.0

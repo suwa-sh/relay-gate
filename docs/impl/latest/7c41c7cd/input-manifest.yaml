@@ -1,0 +1,52 @@
+schema_version: '1.0'
+uc_id: 7c41c7cd
+fixed_at: '2026-11-24T00:10:00+09:00'
+inputs:
+  spec_event:
+    event_id: spec:20261123_201000_feedback_impl_feedback_7c41c7cd
+    sha256: 38ed783fb1d5e4d9fbd05e63258cabf795189175fdd07f7a619a5c6b38cdbecd
+  spec_md:
+    path: docs/specs/latest/実装切替業務/実装切替ジョブ実行フロー/ジョブマップで JOB_ID から実行先を解決する/spec.md
+    sha256: d02f18b87d7272ea1aae388cdb8fd029028b9e60e4b64ef9b4a7c18f386f92be
+  tier_mds:
+  - tier: tier-facade
+    path: docs/specs/latest/実装切替業務/実装切替ジョブ実行フロー/ジョブマップで JOB_ID から実行先を解決する/tier-facade.md
+    sha256: a154a8f830cc788dab0b87b5f25d841431379a1086cd07621cf5dd86a21761ea
+  api_summary:
+    path: docs/specs/latest/実装切替業務/実装切替ジョブ実行フロー/ジョブマップで JOB_ID から実行先を解決する/_api-summary.yaml
+    sha256: aea3effb776d6458719509ce88169fb0d38070a2d1ffcdebfbb4a44f70626289
+  shared_spec_refs:
+  - path: docs/specs/latest/_cross-cutting/api/asyncapi.yaml
+    sha256: d7ee3342ea5f162b739f92f9e7d770969692a9d209a04fcd687672b1a46e67b9
+  - path: docs/specs/latest/_cross-cutting/api/cli-command-contract.yaml
+    sha256: f161f603ce3260c0d8c8df9489d2db54c2dad929d55ab70a1e746ac462c6f8b8
+  - path: docs/specs/latest/_cross-cutting/datastore/rdb-schema.yaml
+    sha256: bbe77902949f155ada1a352661e41cc16409fa58b4076cde648cb028b5de11ac
+  - path: docs/specs/latest/_cross-cutting/ux-ui/data-visualization.md
+    sha256: 762c015c99af2d63edee3e9b648b8f3e427c1b872ea42b89e8b311faded18ebf
+  - path: docs/specs/latest/_cross-cutting/ux-ui/ui-design.md
+    sha256: 1bd6189af25782bd1f896bd687af37793374d1abe7d2dd146bcd458680b89892
+  - path: docs/specs/latest/decisions/spec-decision-041.yaml
+    sha256: 1c9ae869c0e1be2facb277ee3702bfd0962f2ddb571926c6871450a6c1e3c38a
+  model_summary:
+    path: docs/specs/latest/実装切替業務/実装切替ジョブ実行フロー/ジョブマップで JOB_ID から実行先を解決する/_model-summary.yaml
+    sha256: 71c6c892b6951f101e2ee34256df7fee413a4ed199228479b5077d7cb73c0575
+  datastore_schema:
+    path: docs/specs/latest/_cross-cutting/datastore/rdb-schema.yaml
+    sha256: bbe77902949f155ada1a352661e41cc16409fa58b4076cde648cb028b5de11ac
+  nfr:
+    path: docs/nfr/latest/nfr-grade.yaml
+    sha256: 02bb857be42015520e925f0386818e1515b6015abfe2e0df0bd34bbaaafbef2d
+  usdm:
+    event_id: 20261116_013000_feedback_standard_runner_job_map_location
+    sha256: 05c1056ed1909eae0293a6ad2a77c2455a5793d19fd4f2d8e8eebc45fcb53cda
+  arch:
+    event_id: 20261116_015000_feedback_standard_runner_job_map_location
+    sha256: c53102258eb87c109a5e44ec19daf68de60dc5770785d80c474f31b1cf8d9879
+  contracts_decl:
+    sha256: 7841f9ba9d00013173c0b90f45ffabb37034ae872ddafdd02d5fdaff26b7d6e5
+  contracts_lock:
+    path: docs/impl/latest/contracts.lock.yaml
+    sha256: 85d0a7048f69781737f394ff299e61a17af70eccf5a4a2d4b245e4c1feb1b324
+  dev_rules_sha256: 6ea5fb63bf9ba32e793f87c4514b912050cd95b958660576b545ba5c484991b2
+lineage_ok: true

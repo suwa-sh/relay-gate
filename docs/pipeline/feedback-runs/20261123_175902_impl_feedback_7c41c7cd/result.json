@@ -1,0 +1,98 @@
+{
+  "schema_version": "distillery.feedback-result/v1",
+  "run_id": "feedback-20261123_175902_impl_feedback_7c41c7cd-20261123_195726-56889",
+  "attempt": 1,
+  "feedback_request_id": "20261123_175902_impl_feedback_7c41c7cd",
+  "input_sha256": "adf35e772216ab8f53bdf3cf2159615fd435155cd2a6c0a4b2ff848dfe1cf5db",
+  "status": "completed",
+  "stages": [
+    {
+      "stage_id": "spec",
+      "state": "succeeded",
+      "event_ids": [
+        "20261123_201000_feedback_stage_spec"
+      ],
+      "direct_work_unit_ids": [
+        "CR-7c41c7cd-001#1",
+        "CR-7c41c7cd-002#1",
+        "CR-7c41c7cd-003#1"
+      ],
+      "causal_work_unit_ids": [
+        "CR-7c41c7cd-001#1",
+        "CR-7c41c7cd-002#1",
+        "CR-7c41c7cd-003#1"
+      ]
+    }
+  ],
+  "work_units": [
+    {
+      "work_unit_id": "CR-7c41c7cd-001#1",
+      "disposition": "applied",
+      "reason": "At least one required closure stage changed its domain artifacts.",
+      "artifact_refs": [
+        "specs/events/20261123_201000_feedback_impl_feedback_7c41c7cd/spec-event.yaml",
+        "specs/events/20261123_201000_feedback_impl_feedback_7c41c7cd/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20261123_201000_feedback_impl_feedback_7c41c7cd/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/tier-facade.md",
+        "specs/events/20261123_201000_feedback_impl_feedback_7c41c7cd/decisions/spec-decision-041.yaml"
+      ]
+    },
+    {
+      "work_unit_id": "CR-7c41c7cd-002#1",
+      "disposition": "applied",
+      "reason": "At least one required closure stage changed its domain artifacts.",
+      "artifact_refs": [
+        "specs/events/20261123_201000_feedback_impl_feedback_7c41c7cd/spec-event.yaml",
+        "specs/events/20261123_201000_feedback_impl_feedback_7c41c7cd/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20261123_201000_feedback_impl_feedback_7c41c7cd/実装切替業務/実装切替ジョブ実行フロー/ジョブマップで JOB_ID から実行先を解決する/spec.md",
+        "specs/events/20261123_201000_feedback_impl_feedback_7c41c7cd/実装切替業務/実装切替ジョブ実行フロー/ジョブマップで JOB_ID から実行先を解決する/tier-facade.md",
+        "specs/events/20261123_201000_feedback_impl_feedback_7c41c7cd/decisions/spec-decision-042.yaml"
+      ]
+    },
+    {
+      "work_unit_id": "CR-7c41c7cd-003#1",
+      "disposition": "applied",
+      "reason": "At least one required closure stage changed its domain artifacts.",
+      "artifact_refs": [
+        "specs/events/20261123_201000_feedback_impl_feedback_7c41c7cd/spec-event.yaml",
+        "specs/events/20261123_201000_feedback_impl_feedback_7c41c7cd/_cross-cutting/api/cli-command-contract.yaml",
+        "specs/events/20261123_201000_feedback_impl_feedback_7c41c7cd/_cross-cutting/ux-ui/ui-design.md",
+        "specs/events/20261123_201000_feedback_impl_feedback_7c41c7cd/適用構成業務/適用構成定義フロー/feature flag を設定する/spec.md",
+        "specs/events/20261123_201000_feedback_impl_feedback_7c41c7cd/適用構成業務/適用構成定義フロー/feature flag を設定する/tier-facade.md",
+        "specs/events/20261123_201000_feedback_impl_feedback_7c41c7cd/適用構成業務/適用構成定義フロー/feature flag を設定する/_api-summary.yaml",
+        "specs/events/20261123_201000_feedback_impl_feedback_7c41c7cd/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/tier-facade.md",
+        "specs/events/20261123_201000_feedback_impl_feedback_7c41c7cd/適用構成業務/適用構成定義フロー/slot runner の実体スクリプトを割り当てる/_api-summary.yaml",
+        "specs/events/20261123_201000_feedback_impl_feedback_7c41c7cd/実装切替業務/実装切替ジョブ実行フロー/ジョブマップで JOB_ID から実行先を解決する/tier-facade.md",
+        "specs/events/20261123_201000_feedback_impl_feedback_7c41c7cd/実装切替業務/実装切替ジョブ実行フロー/ジョブマップで JOB_ID から実行先を解決する/_api-summary.yaml",
+        "specs/events/20261123_201000_feedback_impl_feedback_7c41c7cd/適用構成業務/適用構成定義フロー/slot ごとのジョブマップを定義する/tier-facade.md",
+        "specs/events/20261123_201000_feedback_impl_feedback_7c41c7cd/decisions/spec-decision-043.yaml"
+      ]
+    }
+  ],
+  "requests": [
+    {
+      "request_id": "CR-7c41c7cd-001",
+      "work_unit_ids": [
+        "CR-7c41c7cd-001#1"
+      ],
+      "disposition": "applied",
+      "reason": "At least one work unit was applied and all work units completed successfully."
+    },
+    {
+      "request_id": "CR-7c41c7cd-002",
+      "work_unit_ids": [
+        "CR-7c41c7cd-002#1"
+      ],
+      "disposition": "applied",
+      "reason": "At least one work unit was applied and all work units completed successfully."
+    },
+    {
+      "request_id": "CR-7c41c7cd-003",
+      "work_unit_ids": [
+        "CR-7c41c7cd-003#1"
+      ],
+      "disposition": "applied",
+      "reason": "At least one work unit was applied and all work units completed successfully."
+    }
+  ],
+  "terminal_event_id": "20261123_203000_feedback_run_completed"
+}

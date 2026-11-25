@@ -2,8 +2,11 @@
 # UC 65b09d93 × tier-facade: 標準の slot runner(runners/standard-runner.sh)の入口と共通ライブラリ lib/runner-*.sh の配置の単体テスト。
 # 配置ディレクトリ(RELAY_GATE_HOME)は tier dir(facade/)。契約 standard_runner.home: runners/ の 1 つ上。
 # この UC の範囲は入口(--help で runner-if-version=1)と 4 ファイルの配置まで。
-# 解決・実行・結果の出力・通知の中身は後続の 4 機能の担当で、ここでは判定しない。
+# UC 7c41c7cd(ジョブマップで JOB_ID から実行先を解決する)で、runner IF の引数の違反の報告(実行ログと Runner Result)を足した。
+# 解決フェーズそのものは standard_runner_resolve.bats、実行・結果の出力・通知の中身は後続の機能の担当で、ここでは判定しない。
 # 時間を確かめるテストは書かない。リポジトリの中にファイルを書かない(書くのは BATS_TEST_TMPDIR だけ)。
+# 標準の slot runner は、置き場を環境変数で受け取らないと配置ディレクトリ(facade/)の config / var / log を使うため、
+# --help 以外の起動には一時ディレクトリの置き場を環境変数で渡す(teardown でリポジトリに書いていないことも確かめる)。
 
 bats_require_minimum_version 1.5.0
 
@@ -11,6 +14,16 @@ setup() {
 	HOME_DIR="$(cd "$BATS_TEST_DIRNAME/../.." && pwd)"
 	RUNNER="$HOME_DIR/runners/standard-runner.sh"
 	LIB_DIR="$HOME_DIR/lib"
+	export RELAY_GATE_CONFIG_DIR="$BATS_TEST_TMPDIR/config"
+	export RELAY_GATE_ARTIFACT_ROOT="$BATS_TEST_TMPDIR/artifacts"
+	export RELAY_GATE_LOG_DIR="$BATS_TEST_TMPDIR/logs"
+	RUNNER_LOG="$RELAY_GATE_LOG_DIR/standard-runner.sh.log"
+	mkdir -p "$RELAY_GATE_CONFIG_DIR"
+}
+
+teardown() {
+	[ ! -e "$HOME_DIR/var" ]
+	[ ! -e "$HOME_DIR/log" ]
 }
 
 @test "standard-runner_sh_--helpの場合_usage行とrunner-if-version=1をstdoutに出して終了コード0であること" {
@@ -36,7 +49,7 @@ setup() {
 }
 
 @test "standard-runner_sh_ほかのオプションの後に--helpを付けた場合_使い方を出して終了コード0であること" {
-	# Arrange(--help は `--` より前のどこにあってもよい。前提 A-003)
+	# Arrange(--help は `--` より前のどこにあってもよい)
 	[ -x "$RUNNER" ]
 
 	# Act
@@ -53,18 +66,19 @@ setup() {
 	local work="$BATS_TEST_TMPDIR/work"
 	mkdir -p "$work"
 
-	# Act(--help 以外の起動。runner IF の処理は後続 UC が実装するまで仮置きの終了コードで終える。前提 A-004)
+	# Act(--help 以外の起動。`--` より後の --help は PARAM で、解決フェーズへ進む。ここではジョブマップを置いていない)
 	run --separate-stderr bash -c 'cd "$1" && "$2" --run-id r1 --job-id JOB001 --role green --mode foreground -- --help' _ "$work" "$RUNNER"
 
-	# Assert(runner は stdout / stderr に出さない。Runner Result の不変条件 (3))
-	[ "$status" -ne 0 ]
+	# Assert(runner は stdout / stderr に出さない。Runner Result の不変条件 (3)。作業ディレクトリにも書かない)
+	[ "$status" -eq 2 ]
 	[ -z "$output" ]
 	[ -z "$stderr" ]
 	[ -z "$(ls -A "$work")" ]
+	grep -qF "ERROR job map not found slot=green map=$RELAY_GATE_CONFIG_DIR/green-job-map.csv" "$RUNNER_LOG"
 }
 
 @test "standard-runner_sh_runner IFの引数が不正な場合_何も出力せず終了コード2であること" {
-	# Arrange(契約 exit_codes の 2: runner IF 引数不正。exitcode.txt の公開は後続 UC。前提 A-004)
+	# Arrange(契約 exit_codes の 2: runner IF 引数不正)
 	local work="$BATS_TEST_TMPDIR/work"
 	mkdir -p "$work"
 	local -a cases=(
@@ -82,6 +96,9 @@ setup() {
 	local args
 
 	for args in "${cases[@]}"; do
+		# 前の組が揃えた成果物を残さない(同じ run_id と role の exitcode.txt があると二重起動の扱いになる)
+		rm -rf "$RELAY_GATE_ARTIFACT_ROOT"
+
 		# Act(引数は空白で分ける。どの値も空白を含まない)
 		# shellcheck disable=SC2086
 		run --separate-stderr bash -c 'cd "$1" && shift && "$@"' _ "$work" "$RUNNER" $args
@@ -106,6 +123,7 @@ setup() {
 	local -a args
 
 	for option in --run-id --job-id --role --mode --execution-spec; do
+		rm -rf "$RELAY_GATE_ARTIFACT_ROOT"
 		args=(--run-id r1 --job-id JOB001 --role green --mode foreground)
 		case "$option" in
 		--run-id) args[1]="" ;;
@@ -177,4 +195,91 @@ setup() {
 	[ "$status" -eq 0 ]
 	[ "$output" = "sourced-all" ]
 	[ -z "$stderr" ]
+}
+
+# ---- UC 7c41c7cd: runner IF の引数の違反の報告(tier-facade.md エラーメッセージ表「必須オプション欠落」)----
+
+@test "standard-runner_sh_--job-idが無くrun_idとroleが分かる場合_実行ログにERRORを残し3ファイルとstarted-at_txtを揃えて終了コード2であること" {
+	# Arrange
+	local role_dir="$RELAY_GATE_ARTIFACT_ROOT/facade/r1/green"
+
+	# Act
+	run --separate-stderr "$RUNNER" --run-id r1 --role green --mode background
+
+	# Assert(実行ログの行形式: {script} {run_id} {ローカル日時} {LEVEL} {message})
+	[ "$status" -eq 2 ]
+	[ -z "$output" ]
+	[ -z "$stderr" ]
+	grep -qE '^standard-runner\.sh r1 [0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2} ERROR option required option=--job-id$' "$RUNNER_LOG"
+	[ "$(grep -c ' ERROR ' "$RUNNER_LOG")" = "1" ]
+	[ -f "$role_dir/started-at.txt" ]
+	[ -f "$role_dir/stdout.log" ]
+	[ ! -s "$role_dir/stdout.log" ]
+	[ "$(cat "$role_dir/stderr.log")" = "error: option required option=--job-id" ]
+	[ "$(cat "$role_dir/exitcode.txt")" = "2" ]
+}
+
+@test "standard-runner_sh_--run-idが無い場合_実行ログのrun_id欄を-にしてERRORを残し成果物を書かないこと" {
+	# Act
+	run --separate-stderr "$RUNNER" --job-id JOB001 --role green --mode background
+
+	# Assert(run_id が分からなければ成果物は書けないため、実行ログにだけ残す)
+	[ "$status" -eq 2 ]
+	[ -z "$output" ]
+	[ -z "$stderr" ]
+	grep -qE '^standard-runner\.sh - [0-9T:-]+ ERROR option required option=--run-id$' "$RUNNER_LOG"
+	[ ! -e "$RELAY_GATE_ARTIFACT_ROOT" ]
+}
+
+@test "standard-runner_sh_--roleが列挙外の場合_実行ログにinvalid valueを残し成果物を書かないこと" {
+	# Act
+	run --separate-stderr "$RUNNER" --run-id r1 --job-id JOB001 --role red --mode background
+
+	# Assert(role が分からなければ成果物ディレクトリが決まらない)
+	[ "$status" -eq 2 ]
+	grep -qF ' r1 ' "$RUNNER_LOG"
+	grep -qE ' ERROR invalid value option=--role value=red$' "$RUNNER_LOG"
+	[ ! -e "$RELAY_GATE_ARTIFACT_ROOT" ]
+}
+
+@test "standard-runner_sh_未知のオプションがある場合_実行ログにunknown optionを残して終了コード2であること" {
+	# Act
+	run --separate-stderr "$RUNNER" --run-id r1 --job-id JOB001 --role green --mode background --unknown x
+
+	# Assert(契約 conventions.option_style の定型文)
+	[ "$status" -eq 2 ]
+	grep -qE ' ERROR unknown option option=--unknown$' "$RUNNER_LOG"
+	[ "$(cat "$RELAY_GATE_ARTIFACT_ROOT/facade/r1/green/exitcode.txt")" = "2" ]
+}
+
+@test "standard-runner_sh_--execution-specを付けた正しい引数の場合_ジョブマップを読まず何も書かずに仮の終了コードであること" {
+	# Arrange(復元起動は後続の機能の担当。ジョブマップを置いても読まない)
+	printf '%s\n' "job_id,work_dir,script,fixed_params,hang_detect_limit_minutes" "JOB001,/w,/s.sh,[],0" >"$RELAY_GATE_CONFIG_DIR/green-job-map.csv"
+
+	# Act
+	run --separate-stderr "$RUNNER" --run-id r1 --job-id JOB001 --role green --mode background --execution-spec "$BATS_TEST_TMPDIR/spec.json"
+
+	# Assert
+	[ "$status" -eq 6 ]
+	[ -z "$output" ]
+	[ -z "$stderr" ]
+	[ ! -e "$RUNNER_LOG" ]
+	[ ! -e "$RELAY_GATE_ARTIFACT_ROOT" ]
+}
+
+@test "standard-runner_sh_置き場を環境変数で受け取らない場合_配置ディレクトリのconfigとvarとlogを既定にすること" {
+	# Arrange(配置ディレクトリ全体を一時ディレクトリへ複製する。リポジトリの facade/ には書かない。契約 standard_runner.home)
+	local home="$BATS_TEST_TMPDIR/home"
+	mkdir -p "$home"
+	cp -R "$HOME_DIR/runners" "$HOME_DIR/lib" "$HOME_DIR/src" "$home/"
+
+	# Act(環境変数 RELAY_GATE_HOME が別の場所を指していても使わない)
+	run --separate-stderr env -i PATH="$PATH" RELAY_GATE_HOME="$BATS_TEST_TMPDIR/elsewhere" \
+		"$home/runners/standard-runner.sh" --run-id r1 --job-id JOB001 --role blue --mode foreground
+
+	# Assert
+	[ "$status" -eq 2 ]
+	[ "$(cat "$home/var/facade/r1/blue/stderr.log")" = "error: job map not found slot=blue map=$home/config/blue-job-map.csv" ]
+	[ -f "$home/log/standard-runner.sh.log" ]
+	[ ! -e "$BATS_TEST_TMPDIR/elsewhere" ]
 }
